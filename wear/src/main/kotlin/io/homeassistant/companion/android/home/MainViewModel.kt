@@ -4,9 +4,11 @@ import android.app.Application
 import android.content.ComponentName
 import android.content.pm.PackageManager
 import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.core.app.NotificationManagerCompat
@@ -83,11 +85,11 @@ class MainViewModel @Inject constructor(
         val isFavoritesOnly: Boolean = false,
         val loadingState: LoadingState = LoadingState.LOADING,
         val entitiesByAreaOrder: List<String> = emptyList(),
-        val entitiesByArea: Map<String, List<Entity>> = emptyMap(),
+        val entitiesByArea: Map<String, List<String>> = emptyMap(),
         val areas: List<AreaRegistryResponse> = emptyList(),
         val entitiesByDomainFilteredOrder: List<String> = emptyList(),
-        val entitiesByDomainFiltered: Map<String, List<Entity>> = emptyMap(),
-        val entitiesByDomain: Map<String, List<Entity>> = emptyMap(),
+        val entitiesByDomainFiltered: Map<String, List<String>> = emptyMap(),
+        val entitiesByDomain: Map<String, List<String>> = emptyMap(),
     )
 
     private val app = application
@@ -156,12 +158,12 @@ class MainViewModel @Inject constructor(
         private set
 
     // Content of EntityListView
-    var entityLists = mutableStateMapOf<String, List<Entity>>()
+    var entityListIds = mutableStateMapOf<String, List<String>>()
     var entityListsOrder = mutableStateListOf<String>()
     var entityListFilter: (Entity) -> Boolean = { true }
 
     // settings
-    var loadingState = mutableStateOf(LoadingState.LOADING)
+    var loadingState by mutableStateOf(LoadingState.LOADING)
         private set
     var isHapticEnabled = mutableStateOf(false)
         private set
@@ -171,11 +173,11 @@ class MainViewModel @Inject constructor(
         private set
     var templateTiles = mutableStateMapOf<Int, TemplateTileConfig>()
         private set
-    var isFavoritesOnly = mutableStateOf(false)
+    var isFavoritesOnly by mutableStateOf(false)
         private set
-    var isAssistantAppAllowed = mutableStateOf(true)
+    var isAssistantAppAllowed by mutableStateOf(true)
         private set
-    var areNotificationsAllowed = mutableStateOf(false)
+    var areNotificationsAllowed by mutableStateOf(false)
         private set
 
     init {
@@ -204,13 +206,13 @@ class MainViewModel @Inject constructor(
             isShowShortcutTextEnabled.value = homePresenter.getShowShortcutText()
             templateTiles.clear()
             templateTiles.putAll(homePresenter.getAllTemplateTiles())
-            isFavoritesOnly.value = homePresenter.getWearFavoritesOnly()
+            isFavoritesOnly = homePresenter.getWearFavoritesOnly()
 
             val assistantAppComponent = ComponentName(
                 BuildConfig.APPLICATION_ID,
                 "io.homeassistant.companion.android.conversation.AssistantActivity",
             )
-            isAssistantAppAllowed.value =
+            isAssistantAppAllowed =
                 app.packageManager.getComponentEnabledSetting(assistantAppComponent) !=
                 PackageManager.COMPONENT_ENABLED_STATE_DISABLED
 
@@ -240,7 +242,7 @@ class MainViewModel @Inject constructor(
             if (!homePresenter.isConnected()) return@launch
             try {
                 // Load initial state
-                loadingState.value = LoadingState.LOADING
+                loadingState = LoadingState.LOADING
                 updateUI()
 
                 // Finished initial load, update state
@@ -249,7 +251,7 @@ class MainViewModel @Inject constructor(
                     homePresenter.onInvalidAuthorization()
                     return@launch
                 }
-                loadingState.value = if (webSocketState == WebSocketState.Active) {
+                loadingState = if (webSocketState == WebSocketState.Active) {
                     LoadingState.READY
                 } else {
                     LoadingState.ERROR
@@ -257,7 +259,7 @@ class MainViewModel @Inject constructor(
                 updateMainViewUiState()
             } catch (e: Exception) {
                 Timber.e(e, "Exception while loading entities")
-                loadingState.value = LoadingState.ERROR
+                loadingState = LoadingState.ERROR
                 updateMainViewUiState()
             }
         }
@@ -280,7 +282,7 @@ class MainViewModel @Inject constructor(
         val getEntityRegistry = async { homePresenter.getEntityRegistry() }
         val getEntities = async { homePresenter.getEntities() }
 
-        if (!isFavoritesOnly.value) {
+        if (!isFavoritesOnly) {
             areaRegistry = getAreaRegistry.await()?.also {
                 areas.clear()
                 areas.addAll(it)
@@ -301,7 +303,7 @@ class MainViewModel @Inject constructor(
             val climateEntities = it.filter { entity -> entity.domain == "climate" }
             climateEntitiesMap["climate"] = mutableStateListOf<Entity>().apply { addAll(climateEntities) }
         }
-        if (!isFavoritesOnly.value) {
+        if (!isFavoritesOnly) {
             updateEntityDomains()
         } else {
             updateMainViewUiState()
@@ -314,14 +316,14 @@ class MainViewModel @Inject constructor(
         }
         homePresenter.getEntityUpdates(supportedEntities.value)?.collect {
             updateEntityStates(it)
-            if (!isFavoritesOnly.value) {
+            if (!isFavoritesOnly) {
                 updateEntityDomains()
             }
         }
     }
 
     suspend fun areaUpdates() {
-        if (!homePresenter.isConnected() || isFavoritesOnly.value) {
+        if (!homePresenter.isConnected() || isFavoritesOnly) {
             return
         }
         homePresenter.getAreaRegistryUpdates()?.throttleLatest(1000)?.collect {
@@ -335,7 +337,7 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun deviceUpdates() {
-        if (!homePresenter.isConnected() || isFavoritesOnly.value) {
+        if (!homePresenter.isConnected() || isFavoritesOnly) {
             return
         }
         homePresenter.getDeviceRegistryUpdates()?.throttleLatest(1000)?.collect {
@@ -365,18 +367,19 @@ class MainViewModel @Inject constructor(
      * This should be called on a background thread whenever state changes.
      */
     private fun updateMainViewUiState() {
-        Timber.e("Hello doing an update? ")
         _mainViewUiState.value = MainViewUiState(
             entities = entities.toMap(),
             favoriteCaches = favoriteCaches.toList(),
-            isFavoritesOnly = isFavoritesOnly.value,
-            loadingState = loadingState.value,
+            isFavoritesOnly = isFavoritesOnly,
+            loadingState = loadingState,
             entitiesByAreaOrder = entitiesByAreaOrder.toList(),
-            entitiesByArea = entitiesByArea.mapValues { it.value.toList() },
+            entitiesByArea = entitiesByArea.mapValues { (_, entities) -> entities.map { it.entityId } },
             areas = areas.toList(),
             entitiesByDomainFilteredOrder = entitiesByDomainFilteredOrder.toList(),
-            entitiesByDomainFiltered = entitiesByDomainFiltered.mapValues { it.value.toList() },
-            entitiesByDomain = entitiesByDomain.mapValues { it.value.toList() },
+            entitiesByDomainFiltered = entitiesByDomainFiltered.mapValues { (_, entities) ->
+                entities.map { it.entityId }
+            },
+            entitiesByDomain = entitiesByDomain.mapValues { (_, entities) -> entities.map { it.entityId } },
         )
     }
 
@@ -697,7 +700,7 @@ class MainViewModel @Inject constructor(
     fun setWearFavoritesOnly(enabled: Boolean) {
         viewModelScope.launch {
             homePresenter.setWearFavoritesOnly(enabled)
-            isFavoritesOnly.value = enabled
+            isFavoritesOnly = enabled
         }
     }
 
@@ -722,7 +725,7 @@ class MainViewModel @Inject constructor(
             favoritesDao.delete(entityId)
             favoriteCachesDao.delete(entityId)
 
-            if (favoritesDao.getAll().isEmpty() && isFavoritesOnly.value) {
+            if (favoritesDao.getAll().isEmpty() && isFavoritesOnly) {
                 setWearFavoritesOnly(false)
             }
         }
@@ -752,11 +755,11 @@ class MainViewModel @Inject constructor(
             },
             PackageManager.DONT_KILL_APP,
         )
-        isAssistantAppAllowed.value = allowed
+        isAssistantAppAllowed = allowed
     }
 
     fun refreshNotificationPermission() {
-        areNotificationsAllowed.value = NotificationManagerCompat.from(app).areNotificationsEnabled()
+        areNotificationsAllowed = NotificationManagerCompat.from(app).areNotificationsEnabled()
     }
 
     fun logout() {

@@ -55,7 +55,7 @@ fun MainView(
     onRetryLoadEntitiesClicked: () -> Unit,
     onSettingsClicked: () -> Unit,
     onNavigationClicked: (
-        entityLists: Map<String, List<Entity>>,
+        entityIdLists: Map<String, List<String>>,
         listOrder: List<String>,
         filter: (Entity) -> Boolean,
     ) -> Unit,
@@ -216,10 +216,10 @@ fun MainView(
                                 ListHeader(id = commonR.string.areas)
                             }
                             for (id in uiState.entitiesByAreaOrder) {
-                                val areaEntities = uiState.entitiesByArea[id]
-                                val entitiesToShow = areaEntities?.filter {
-                                    it.entityId !in entitiesWithCategory &&
-                                        it.entityId !in entitiesHidden
+                                val areaEntityIds = uiState.entitiesByArea[id]
+                                val entitiesToShow = areaEntityIds?.filter { entityId ->
+                                    entityId !in entitiesWithCategory &&
+                                        entityId !in entitiesHidden
                                 }
                                 if (!entitiesToShow.isNullOrEmpty()) {
                                     val area = uiState.areas.firstOrNull { it.areaId == id }
@@ -230,7 +230,7 @@ fun MainView(
                                                 label = { Text(area.name) },
                                                 onClick = {
                                                     onNavigationClicked(
-                                                        mapOf(area.name to areaEntities),
+                                                        mapOf(area.name to areaEntityIds),
                                                         listOf(area.name),
                                                     ) {
                                                         it.entityId !in entitiesWithCategory &&
@@ -253,9 +253,9 @@ fun MainView(
 
                         // Buttons for each domain with filtered entities
                         for (domain in uiState.entitiesByDomainFilteredOrder) {
-                            val domainEntitiesFiltered = uiState.entitiesByDomainFiltered[domain]
+                            val domainEntityIds = uiState.entitiesByDomainFiltered[domain]
                             val domainName = mainViewModel.stringForDomain(domain)
-                            if (domainEntitiesFiltered != null && domainName != null) {
+                            if (domainEntityIds != null && domainName != null) {
                                 item {
                                     Button(
                                         modifier = Modifier.fillMaxWidth(),
@@ -269,7 +269,7 @@ fun MainView(
                                         label = { Text(domainName) },
                                         onClick = {
                                             onNavigationClicked(
-                                                mapOf(domainName to domainEntitiesFiltered),
+                                                mapOf(domainName to domainEntityIds),
                                                 listOf(domainName),
                                             ) { true }
                                         },
