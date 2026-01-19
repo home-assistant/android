@@ -250,7 +250,7 @@ class AssistViewModel @Inject constructor(
                 stopRecording(sendRecorded = false)
                 // Remove placeholder message if present from proactive recording
                 if (_conversation.lastOrNull()?.let { it.isPlaceholder && it.isInput } == true) {
-                    _conversation.removeLast()
+                    _conversation.removeAt(_conversation.size - 1)
                 }
                 inputMode = AssistInputMode.TEXT
             }
