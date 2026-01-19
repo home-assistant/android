@@ -17,8 +17,15 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -29,6 +36,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -267,32 +275,26 @@ internal fun EntityPicker(
         }
 
         if (isCompactScreen) {
-            // Bottom sheet for small screens
             if (isExpanded) {
-                val screenHeight = safeScreenHeight() - HADimens.SPACE16
-                HAModalBottomSheet(
-                    bottomSheetState = bottomSheetState,
+                EntityPickerBottomSheet(
+                    entities = entities,
+                    searchQuery = searchQuery,
+                    onSearchQueryChange = { searchQuery = it },
+                    onEntitySelected = { entity ->
+                        scope.launch {
+                            bottomSheetState.hide()
+                            onEntitySelectedId(entity.entityId)
+                            isExpanded = false
+                            searchQuery = ""
+                        }
+                    },
                     onDismissRequest = {
                         isExpanded = false
                         searchQuery = ""
                     },
-                ) {
-                    EntityPickerContent(
-                        entities = entities,
-                        searchQuery = searchQuery,
-                        onSearchQueryChange = { searchQuery = it },
-                        onEntitySelected = { entity ->
-                            scope.launch {
-                                bottomSheetState.hide()
-                                onEntitySelectedId(entity.entityId)
-                                isExpanded = false
-                                searchQuery = ""
-                            }
-                        },
-                        modifier = Modifier.height(screenHeight),
-                        dispatcher = dispatcher,
-                    )
-                }
+                    bottomSheetState = bottomSheetState,
+                    dispatcher = dispatcher,
+                )
             }
         } else {
             // Inline dropdown for tablets
@@ -389,6 +391,53 @@ private fun Modifier.enclosureBorder(colorScheme: HAColorScheme): Modifier {
             shape = RoundedCornerShape(HARadius.XL),
         )
         .background(colorScheme.colorSurfaceDefault)
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EntityPickerBottomSheet(
+    entities: List<EntityPickerItem>,
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    onEntitySelected: (EntityPickerItem) -> Unit,
+    onDismissRequest: () -> Unit,
+    bottomSheetState: SheetState,
+    dispatcher: CoroutineContext,
+) {
+    val screenHeight = safeScreenHeight() - HADimens.SPACE16
+
+    // Consume fling velocity at content boundaries to prevent BottomSheet bounce
+    val consumeFlingNestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource,
+            ): Offset = available
+
+            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity = available
+        }
+    }
+
+    HAModalBottomSheet(
+        bottomSheetState = bottomSheetState,
+        onDismissRequest = onDismissRequest,
+    ) {
+        EntityPickerContent(
+            entities = entities,
+            searchQuery = searchQuery,
+            onSearchQueryChange = onSearchQueryChange,
+            onEntitySelected = onEntitySelected,
+            modifier = Modifier
+                .height(screenHeight)
+                .nestedScroll(consumeFlingNestedScrollConnection)
+                .pointerInput(Unit) {
+                    // Consume vertical drag gestures to prevent BottomSheet from interpreting them as collapse gestures
+                    detectVerticalDragGestures { _, _ -> }
+                },
+            dispatcher = dispatcher,
+        )
+    }
 }
 
 @Composable
