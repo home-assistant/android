@@ -174,7 +174,7 @@ class EntityWidget : BaseWidgetProvider<StaticWidgetEntity, StaticWidgetDao>() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Fail to get options")
+                Timber.e(e, "Failed to get options")
                 null
             }
         } else {

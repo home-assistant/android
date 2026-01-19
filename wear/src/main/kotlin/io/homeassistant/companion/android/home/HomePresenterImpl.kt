@@ -190,7 +190,7 @@ class HomePresenterImpl @Inject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.e(e, "Fail to get WebSocketState")
+            Timber.e(e, "Failed to get WebSocketState")
             null
         }
     }
@@ -201,7 +201,7 @@ class HomePresenterImpl @Inject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.e(e, "Fail to get area registry")
+            Timber.e(e, "Failed to get area registry")
             null
         }
     }
@@ -212,7 +212,7 @@ class HomePresenterImpl @Inject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.e(e, "Fail to get device registry")
+            Timber.e(e, "Failed to get device registry")
             null
         }
     }
@@ -223,7 +223,7 @@ class HomePresenterImpl @Inject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.e(e, "Fail to get entity registry")
+            Timber.e(e, "Failed to get entity registry")
             null
         }
     }
@@ -234,7 +234,7 @@ class HomePresenterImpl @Inject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.e(e, "Fail to get area registry updates")
+            Timber.e(e, "Failed to get area registry updates")
             null
         }
     }
@@ -245,7 +245,7 @@ class HomePresenterImpl @Inject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.e(e, "Fail to get device registry updates")
+            Timber.e(e, "Failed to get device registry updates")
             null
         }
     }
@@ -256,7 +256,7 @@ class HomePresenterImpl @Inject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.e(e, "Fail to get entity registry updates")
+            Timber.e(e, "Failed to get entity registry updates")
             null
         }
     }

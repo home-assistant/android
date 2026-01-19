@@ -160,7 +160,7 @@ class HaCarAppService : CarAppService() {
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    Timber.e(e, "Fail to get entity updates")
+                    Timber.e(e, "Failed to get entity updates")
                 }
             } else {
                 Timber.w("No entities found?")

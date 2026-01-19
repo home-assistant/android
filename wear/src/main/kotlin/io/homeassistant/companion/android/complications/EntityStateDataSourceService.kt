@@ -67,7 +67,7 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Fail to get entity registry for $entityId")
+                Timber.e(e, "Failed to get entity registry for $entityId")
                 null
             }
         } else {

@@ -176,7 +176,7 @@ class HomeActivity :
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    Timber.e(e, "Fail to update UI")
+                    Timber.e(e, "Failed to update UI")
                 }
             }
         }

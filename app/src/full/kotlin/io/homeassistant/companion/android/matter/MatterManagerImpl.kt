@@ -29,7 +29,7 @@ class MatterManagerImpl @Inject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.e(e, "Fail to get config")
+            Timber.e(e, "Failed to get config")
             null
         }
         return config != null && config.components.contains("matter")

@@ -152,7 +152,7 @@ class SettingsWearRepository @Inject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: IntegrationException) {
-            Timber.e(e, "Fail to get entities")
+            Timber.e(e, "Failed to get entities")
             emptyList()
         }
     }

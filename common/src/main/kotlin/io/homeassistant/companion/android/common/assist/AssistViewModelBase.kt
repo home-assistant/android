@@ -146,7 +146,7 @@ abstract class AssistViewModelBase(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Fail to start assist pipeline")
+                Timber.e(e, "Failed to start assist pipeline")
                 null
             }
 
@@ -356,7 +356,7 @@ abstract class AssistViewModelBase(
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    Timber.e(e, "Fail to finalize recording")
+                    Timber.e(e, "Failed to finalize recording")
                 }
             }
             clearRecorderState()

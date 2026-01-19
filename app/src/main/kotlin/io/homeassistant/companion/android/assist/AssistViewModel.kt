@@ -174,7 +174,7 @@ class AssistViewModel @Inject constructor(
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    Timber.e(e, "Fail to load assist pipelines")
+                    Timber.e(e, "Failed to load assist pipelines")
                     null
                 }
 
@@ -208,12 +208,10 @@ class AssistViewModel @Inject constructor(
             allPipelines[selectedServerId]?.firstOrNull { it.id == id }
                 ?: try {
                     serverManager.webSocketRepository(selectedServerId).getAssistPipeline(id)
-                } catch (
-                    e: CancellationException,
-                ) {
+                } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    Timber.e(e, "Fail to get assist pipeline")
+                    Timber.e(e, "Failed to get assist pipeline")
                     null
                 }
         selectedPipeline?.let {
@@ -228,7 +226,7 @@ class AssistViewModel @Inject constructor(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Fail to set last used pipeline")
+                Timber.e(e, "Failed to set last used pipeline")
             }
 
             _conversation.clear()

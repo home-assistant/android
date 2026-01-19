@@ -62,7 +62,7 @@ class AssistShortcutViewModel @Inject constructor(val serverManager: ServerManag
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Fail to get config")
+                Timber.e(e, "Failed to get config")
                 null
             }
 
@@ -75,7 +75,7 @@ class AssistShortcutViewModel @Inject constructor(val serverManager: ServerManag
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    Timber.e(e, "Fail to get assist pipelines")
+                    Timber.e(e, "Failed to get assist pipelines")
                     null
                 }
             }

@@ -96,7 +96,7 @@ class MainVehicleScreen(
                         } catch (e: CancellationException) {
                             throw e
                         } catch (e: Exception) {
-                            Timber.e(e, "Fail to get entity registry")
+                            Timber.e(e, "Failed to get entity registry")
                             null
                         }
                     }

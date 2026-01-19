@@ -68,7 +68,7 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    Timber.e(e, "Fail to get entities")
+                    Timber.e(e, "Failed to get entities")
                     emptyList()
                 }
             } else {

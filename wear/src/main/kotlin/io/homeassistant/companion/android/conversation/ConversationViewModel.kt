@@ -106,7 +106,7 @@ class ConversationViewModel @Inject constructor(
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    Timber.e(e, "Fail to load pipelines")
+                    Timber.e(e, "Failed to load pipelines")
                 }
             }
 
@@ -117,7 +117,7 @@ class ConversationViewModel @Inject constructor(
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: Exception) {
-                        Timber.e(e, "Fail to get last used pipeline id")
+                        Timber.e(e, "Failed to get last used pipeline id")
                         null
                     }
                 } else {
@@ -211,7 +211,7 @@ class ConversationViewModel @Inject constructor(
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    Timber.e(e, "Fail to set last used pipeline")
+                    Timber.e(e, "Failed to set last used pipeline")
                 }
             }
 

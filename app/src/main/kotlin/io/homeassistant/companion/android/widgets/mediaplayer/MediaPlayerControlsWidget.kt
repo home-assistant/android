@@ -514,7 +514,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Fail to call previous track action")
+                Timber.e(e, "Failed to call previous track action")
             }
         }
     }
