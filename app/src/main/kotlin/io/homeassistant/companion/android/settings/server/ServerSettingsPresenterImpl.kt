@@ -181,7 +181,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
     override fun setAppActive(active: Boolean) = runBlocking {
         try {
             serverManager.integrationRepository(serverId).setAppActive(active)
-        } catch (e: IllegalArgumentException) {
+        } catch (e: IllegalStateException) {
             Timber.w(e, "Cannot set app active $active for server $serverId")
         }
     }
