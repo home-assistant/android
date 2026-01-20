@@ -7,7 +7,6 @@ import android.os.ext.SdkExtensions
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
-import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.HttpEngineDataSource
 import androidx.media3.datasource.cronet.CronetDataSource
@@ -64,15 +63,50 @@ suspend fun initializePlayer(context: Context, dataSourceFactory: DataSource.Fac
     }
 
 /**
- * Creates a [DataSource.Factory] for ExoPlayer, preferring Cronet with QUIC support.
- * Falls back to [DefaultHttpDataSource] if Cronet providers are unavailable on the device.
+ * Creates a [DataSource.Factory] for ExoPlayer, selecting the most optimal HTTP stack
+ * available on the device to improve streaming performance.
+ *
+ * The selection logic is as follows:
+ * 1.  **HttpEngine (Android 12+):** On devices running Android 12 with a sufficient extension
+ *     level (SDK 31, extension 7+), it uses the platform's native `HttpEngine`. This provides
+ *     Cronet capabilities, including QUIC and HTTP/3 support, without adding a dependency
+ *     on Google Play Services. A cache directory is configured to store QUIC handshake data.
+ * 2.  **Cronet (via GMS or embedded):** If `HttpEngine` is not available, it attempts to build
+ *     a `CronetEngine`. This can come from Google Play Services (in the `full` flavor) or be
+ *     embedded directly (in the `minimal` flavor). This also provides QUIC support.
+ * 3.  **OkHttp:** If Cronet cannot be initialized, it falls back to using the app's shared
+ *     `OkHttpClient` instance. This provides modern features like HTTP/2 but lacks QUIC.
  */
 @OptIn(UnstableApi::class)
-internal fun createDataSourceFactory(
-    context: Context,
-    okHttpClientProvider: Lazy<OkHttpClient?>,
-    cacheDirectory: File,
-): DataSource.Factory {
+internal fun createDataSourceFactory(context: Context, okHttpClientProvider: Lazy<OkHttpClient>): DataSource.Factory {
+    val httpEngineFactory = buildHttpEngineFactory(context)
+
+    return if (httpEngineFactory != null) {
+        httpEngineFactory
+    } else {
+        val cronetEngine = CronetUtil.buildCronetEngine(context, null, true)
+
+        if (cronetEngine != null) {
+            Timber.i("Using CronetDataSource for media")
+            // assumed to be singleton scoped, so app lifetime for executor
+            val singleThreadExecutor = Executors.newSingleThreadExecutor()
+            CronetDataSource.Factory(cronetEngine, singleThreadExecutor)
+        } else {
+            // Reuse OkHttpClient instance for Http/2 support
+            Timber.w("Failed to build cronet engine fallback to OkHttpDataSource")
+            OkHttpDataSource.Factory(okHttpClientProvider.get())
+        }
+    }
+}
+
+/**
+ * Builds and configures an `HttpEngineDataSource.Factory` for use with ExoPlayer on
+ * devices supporting the platform's native `HttpEngine` (Android 12 with extension 7+).
+ */
+@OptIn(UnstableApi::class)
+internal fun buildHttpEngineFactory(context: Context): DataSource.Factory? {
+    // https://developer.android.com/reference/android/net/http/HttpEngine
+    // Added in API level 34 also in S Extensions 7
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
         SdkExtensions.getExtensionVersion(Build.VERSION_CODES.S) >= 7
     ) {
@@ -80,7 +114,7 @@ internal fun createDataSourceFactory(
         val httpEngine = HttpEngine.Builder(context)
             .apply {
                 // Cache QUIC data for faster initial connections
-                val storageDirectory = cacheDirectory.resolve("httpEngineStorage")
+                val storageDirectory = File(context.cacheDir, "httpEngineStorage")
                 storageDirectory.mkdirs()
                 if (storageDirectory.exists()) {
                     setStoragePath(storageDirectory.path)
@@ -88,23 +122,28 @@ internal fun createDataSourceFactory(
             }
             .build()
         Timber.i("Using HttpEngineDataSource for media")
-        HttpEngineDataSource.Factory(httpEngine, Executors.newSingleThreadExecutor())
+        // assumed to be singleton scoped, so app lifetime for executor
+        val singleThreadExecutor = Executors.newSingleThreadExecutor()
+        HttpEngineDataSource.Factory(httpEngine, singleThreadExecutor)
     } else {
-        val cronetEngine = CronetUtil.buildCronetEngine(context, null, true)
+        null
+    }
+}
 
-        if (cronetEngine != null) {
-            Timber.i("Using CronetDataSource for media")
-            CronetDataSource.Factory(cronetEngine, Executors.newSingleThreadExecutor())
-        } else {
-            val okHttpClient = okHttpClientProvider.get()
-            if (okHttpClient != null) {
-                // Reuse OkHttpClient instance for Http/2 support
-                Timber.w("Failed to build cronet engine fallback to OkHttpDataSource")
-                OkHttpDataSource.Factory(okHttpClient)
-            } else {
-                Timber.w("Failed to build cronet engine fallback to DefaultDataSource")
-                DefaultDataSource.Factory(context)
-            }
-        }
+/**
+ * A [DataSource.Factory] that defers the creation of its underlying (delegate) factory
+ * until a [DataSource] is actually requested.
+ *
+ * This is useful for expensive factory creation processes, such as those involving I/O
+ * or complex initialization (like building a `CronetEngine`). By wrapping the creation
+ * logic in a lambda and passing it to this class, the expensive work is postponed
+ * from the initial setup phase to the moment playback is about to begin.
+ */
+class DeferredCreationDataSource(private val factory: () -> DataSource.Factory) : DataSource.Factory {
+    val delegate by lazy { factory() }
+
+    @OptIn(UnstableApi::class)
+    override fun createDataSource(): DataSource {
+        return delegate.createDataSource()
     }
 }
