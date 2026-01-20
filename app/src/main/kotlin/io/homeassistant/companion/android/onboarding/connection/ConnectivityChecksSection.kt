@@ -107,6 +107,9 @@ private fun CheckResultRow(label: String, result: ConnectivityCheckResult) {
         label = "iconTint",
     )
 
+    val iconModifier = Modifier.size(24.dp)
+    val textStyle = HATextStyle.BodyMedium.copy(fontSize = HAFontSize.S)
+
     Row(
         modifier = Modifier
             .fillMaxWidth(),
@@ -124,13 +127,13 @@ private fun CheckResultRow(label: String, result: ConnectivityCheckResult) {
                 is ConnectivityCheckResult.Success -> Icon(
                     imageVector = Icons.Outlined.CheckCircle,
                     contentDescription = stringResource(commonR.string.successful),
-                    modifier = Modifier.size(24.dp),
+                    modifier = iconModifier,
                     tint = iconTint,
                 )
                 is ConnectivityCheckResult.Failure -> Icon(
                     imageVector = Icons.Outlined.ErrorOutline,
                     contentDescription = stringResource(commonR.string.state_error),
-                    modifier = Modifier.size(24.dp),
+                    modifier = iconModifier,
                     tint = iconTint,
                 )
                 is ConnectivityCheckResult.NotApplicable -> Icon(
@@ -138,13 +141,13 @@ private fun CheckResultRow(label: String, result: ConnectivityCheckResult) {
                     contentDescription = stringResource(
                         commonR.string.not_applicable_content_description,
                     ),
-                    modifier = Modifier.size(24.dp),
+                    modifier = iconModifier,
                     tint = iconTint,
                 )
                 is ConnectivityCheckResult.InProgress,
                 is ConnectivityCheckResult.Pending,
                 -> CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
+                    modifier = iconModifier,
                     color = iconTint,
                     strokeWidth = 2.dp,
                 )
@@ -168,7 +171,7 @@ private fun CheckResultRow(label: String, result: ConnectivityCheckResult) {
                     is ConnectivityCheckResult.Success -> {
                         Text(
                             text = animatedResult.details ?: stringResource(animatedResult.messageResId),
-                            style = HATextStyle.BodyMedium.copy(fontSize = HAFontSize.S),
+                            style = textStyle,
                             color = LocalHAColorScheme.current.colorTextSecondary,
                         )
                     }
@@ -176,7 +179,7 @@ private fun CheckResultRow(label: String, result: ConnectivityCheckResult) {
                     is ConnectivityCheckResult.Failure -> {
                         Text(
                             text = stringResource(animatedResult.messageResId),
-                            style = HATextStyle.BodyMedium.copy(fontSize = HAFontSize.S),
+                            style = textStyle,
                             color = LocalHAColorScheme.current.colorOnDangerQuiet,
                         )
                     }
@@ -184,7 +187,7 @@ private fun CheckResultRow(label: String, result: ConnectivityCheckResult) {
                     is ConnectivityCheckResult.NotApplicable -> {
                         Text(
                             text = stringResource(animatedResult.messageResId),
-                            style = HATextStyle.BodyMedium.copy(fontSize = HAFontSize.S),
+                            style = textStyle,
                             color = LocalHAColorScheme.current.colorTextSecondary,
                         )
                     }
@@ -194,7 +197,7 @@ private fun CheckResultRow(label: String, result: ConnectivityCheckResult) {
                     -> {
                         Text(
                             text = stringResource(commonR.string.loading),
-                            style = HATextStyle.BodyMedium.copy(fontSize = HAFontSize.S),
+                            style = textStyle,
                             color = LocalHAColorScheme.current.colorOnNeutralQuiet,
                         )
                     }
