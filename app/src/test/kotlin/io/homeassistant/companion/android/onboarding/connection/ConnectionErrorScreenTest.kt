@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding.connection
 
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -14,10 +15,18 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
+import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
+import io.mockk.Runs
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.verify
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -46,6 +55,8 @@ class ConnectionErrorScreenTest {
                     url = null,
                     onCloseClick = {},
                     onOpenExternalLink = {},
+                    connectivityCheckState = ConnectivityCheckState(),
+                    onRetryConnectivityCheck = {},
                 )
             }
             onRoot().assertIsNotDisplayed()
@@ -64,6 +75,8 @@ class ConnectionErrorScreenTest {
                     onCloseClick = {
                         onCloseClicked = true
                     },
+                    connectivityCheckState = ConnectivityCheckState(),
+                    onRetryConnectivityCheck = {},
                     onOpenExternalLink = {
                         urlClicked = it.toString()
                     },
@@ -116,6 +129,8 @@ class ConnectionErrorScreenTest {
                     url = url,
                     onCloseClick = {},
                     onOpenExternalLink = {},
+                    connectivityCheckState = ConnectivityCheckState(),
+                    onRetryConnectivityCheck = {},
                 )
             }
 
@@ -123,6 +138,58 @@ class ConnectionErrorScreenTest {
             onNodeWithText(stringResource(commonR.string.tls_cert_expired_message)).assertIsDisplayed()
             onNodeWithTag(URL_INFO_TAG).assertIsDisplayed()
             onNodeWithText("${stringResource(commonR.string.connection_error_url_info)}\n$url").assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun `Given ConnectionErrorScreen with viewmodel when retry is clicked then connectivity check is retried`() {
+        val viewModel = mockk<ConnectionViewModel>()
+        val error = ConnectionError.UnreachableError(
+            commonR.string.tls_cert_expired_message,
+            "details",
+            "errorType",
+        )
+        every { viewModel.urlFlow } returns MutableStateFlow("http://ha.org")
+        every { viewModel.errorFlow } returns MutableStateFlow<ConnectionError?>(error)
+        every { viewModel.connectivityCheckState } returns MutableStateFlow(
+            ConnectivityCheckState(
+                dnsResolution = ConnectivityCheckResult.Success(commonR.string.connection_check_dns, "1.1.1.1"),
+                portReachability = ConnectivityCheckResult.Success(commonR.string.connection_check_port, "80"),
+                tlsCertificate = ConnectivityCheckResult.NotApplicable(
+                    commonR.string.connection_check_tls_not_applicable,
+                ),
+                serverConnection = ConnectivityCheckResult.Success(
+                    commonR.string.connection_check_server,
+                    "ok",
+                ),
+                homeAssistantVerification = ConnectivityCheckResult.Success(
+                    commonR.string.connection_check_home_assistant,
+                    "ok",
+                ),
+            ),
+        )
+        every { viewModel.runConnectivityChecks() } just Runs
+
+        composeTestRule.apply {
+            setContent {
+                ConnectionErrorScreen(
+                    viewModel = viewModel,
+                    onOpenExternalLink = {},
+                    onCloseClick = {},
+                )
+            }
+
+            onNodeWithText(stringResource(commonR.string.connection_error_more_details))
+                .performScrollTo()
+                .performClick()
+
+            onNodeWithText(stringResource(commonR.string.retry))
+                .performScrollTo()
+                .performClick()
+
+            runOnIdle {
+                verify(exactly = 1) { viewModel.runConnectivityChecks() }
+            }
         }
     }
 }

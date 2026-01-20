@@ -12,7 +12,9 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineListResponse
 import io.homeassistant.companion.android.database.server.Server
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @HiltViewModel
 class AssistShortcutViewModel @Inject constructor(val serverManager: ServerManager, application: Application) :
@@ -55,11 +57,27 @@ class AssistShortcutViewModel @Inject constructor(val serverManager: ServerManag
             supported = null
             pipelines = null
 
+            val config = try {
+                serverManager.webSocketRepository(serverId).getConfig()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to get config")
+                null
+            }
+
             // Update data
             supported = serverManager.getServer(serverId)?.version?.isAtLeast(2023, 5) == true &&
-                serverManager.webSocketRepository(serverId).getConfig()?.components?.contains("assist_pipeline") == true
+                config?.components?.contains("assist_pipeline") == true
             if (supported == true) {
-                pipelines = serverManager.webSocketRepository(serverId).getAssistPipelines()
+                pipelines = try {
+                    serverManager.webSocketRepository(serverId).getAssistPipelines()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to get assist pipelines")
+                    null
+                }
             }
         }
     }

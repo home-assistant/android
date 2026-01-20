@@ -27,6 +27,7 @@ import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
 import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -59,10 +60,17 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
         .distinctUntilChanged()
         .mapLatest { serverId ->
             if (serverManager.isRegistered()) {
-                serverManager.integrationRepository(serverId)
-                    .getEntities()
-                    .orEmpty()
-                    .filter { entity -> entity.domain == TODO_DOMAIN }
+                try {
+                    serverManager.integrationRepository(serverId)
+                        .getEntities()
+                        .orEmpty()
+                        .filter { entity -> entity.domain == TODO_DOMAIN }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to get entities")
+                    emptyList()
+                }
             } else {
                 Timber.w("No server registered")
                 emptyList()
