@@ -26,7 +26,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.SheetState
@@ -65,6 +64,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.ButtonSize
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
+import io.homeassistant.companion.android.common.compose.composable.HAHorizontalDivider
 import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
 import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.theme.HABorderWidth
@@ -499,11 +499,7 @@ private fun EntityPickerContent(
                         onClick = { onEntitySelected(entity) },
                         modifier = Modifier.padding(horizontal = HADimens.SPACE3),
                     )
-                    HorizontalDivider(
-                        modifier = Modifier.padding(
-                            start = HADimens.SPACE12,
-                        ),
-                    )
+                    HAHorizontalDivider(modifier = Modifier.padding(start = HADimens.SPACE12))
                 }
             }
         } else {
