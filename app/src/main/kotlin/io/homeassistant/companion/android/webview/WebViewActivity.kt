@@ -827,13 +827,14 @@ class WebViewActivity :
             removeJavascriptInterface(javascriptInterface)
             addJavascriptInterface(
                 object : Any() {
-                    // TODO This feature is deprecated and should be removed after 2022.6
                     @JavascriptInterface
-                    fun onHomeAssistantSetTheme() {
+                    fun onHomeAssistantSetTheme(onlyForInsets: Boolean) {
                         // We need to launch the getAndSetStatusBarNavigationBarColors in another thread, because otherwise the evaluateJavascript inside the method
                         // will not trigger it's callback method :/
                         lifecycleScope.launch(Dispatchers.Main) {
-                            getAndSetStatusBarNavigationBarColors()
+                            if (!onlyForInsets || serverHandleInsets.value) {
+                                getAndSetStatusBarNavigationBarColors()
+                            }
                         }
                     }
 
@@ -894,16 +895,22 @@ class WebViewActivity :
                                         ),
                                     )
 
-                                    // TODO This feature is deprecated and should be removed after 2022.6
                                     getAndSetStatusBarNavigationBarColors()
 
-                                    // TODO This feature is deprecated and should be removed after 2022.6
                                     // Set event lister for HA theme change
                                     webView.evaluateJavascript(
                                         "document.addEventListener('settheme', function ()" +
                                             "{" +
-                                            "window.externalApp.onHomeAssistantSetTheme();" +
+                                            "window.externalApp.onHomeAssistantSetTheme(false);" +
                                             "});",
+                                        null,
+                                    )
+                                    // Set event listener for page change (for updating styles with insets)
+                                    webView.evaluateJavascript(
+                                        """navigation.addEventListener('currententrychange', function () {
+                                              window.externalApp.onHomeAssistantSetTheme(true);
+                                            });
+                                        """.trimIndent(),
                                         null,
                                     )
                                 }
@@ -1122,9 +1129,17 @@ class WebViewActivity :
 
     private fun getAndSetStatusBarNavigationBarColors() {
         val htmlArraySpacer = "-SPACER-"
+        val jsHeaderColor = if (serverHandleInsets.value &&
+            webView.url?.matches(".*://.*/(config|hassio)/*.*".toRegex()) == true
+        ) {
+            "document.querySelector('home-assistant').shadowRoot.querySelector('home-assistant-main').shadowRoot.querySelector('ha-panel-config').computedStyleMap().get('--app-header-background-color')[0],"
+        } else {
+            "document.getElementsByTagName('html')[0].computedStyleMap().get('--app-header-background-color')[0],"
+        }
+
         webView.evaluateJavascript(
             "[" +
-                "document.getElementsByTagName('html')[0].computedStyleMap().get('--app-header-background-color')[0]," +
+                jsHeaderColor +
                 "document.getElementsByTagName('html')[0].computedStyleMap().get('--primary-background-color')[0]" +
                 "].join('" + htmlArraySpacer + "')",
         ) { webViewColors ->

@@ -462,13 +462,12 @@ class WebViewPresenterImpl @Inject constructor(
     override suspend fun parseWebViewColor(webViewColor: String): Int = withContext(Dispatchers.IO) {
         var color = 0
 
-        Timber.d("Try getting color from webview color \"$webViewColor\".")
         if (webViewColor.isNotEmpty() && webViewColor != "null") {
             try {
                 color = parseColorWithRgb(webViewColor)
                 Timber.i("Found color $color.")
             } catch (e: Exception) {
-                Timber.w(e, "Could not get color from webview.")
+                Timber.w(e, "Could not get color from webview color \"$webViewColor\".")
             }
         } else {
             Timber.w("Could not get color from webview. Color \"$webViewColor\" is not a valid color.")
