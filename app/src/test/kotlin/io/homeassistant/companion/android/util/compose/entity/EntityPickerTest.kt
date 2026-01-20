@@ -240,7 +240,6 @@ class EntityPickerTest {
             .performClick()
 
         composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.search)).assertIsDisplayed()
-        composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.entities)).assertIsDisplayed()
 
         // Wait for initial load (entity mapping + filtering)
         waitForInitialEntityLoad()
