@@ -88,6 +88,7 @@ internal fun HANavHost(
                         )
                         activity?.finish()
                     },
+                    onShowSnackbar = onShowSnackbar,
                     urlToOnboard = startDestination.urlToOnboard,
                     wearNameToOnboard = startDestination.wearName,
                 )
