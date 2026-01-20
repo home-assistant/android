@@ -17,7 +17,7 @@ suspend fun NavController.navigateToUriCatching(
         AndroidUriHandler(context).openUri(uri)
     } catch (e: IllegalArgumentException) {
         // Don't log e to not leak the URL in the log
-        Timber.e("Fail to navigate to uri")
+        Timber.e("Failed to navigate to uri")
         onShowSnackbar(context.getString(commonR.string.fail_to_navigate_to_uri, uri), null)
     }
 }
