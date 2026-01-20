@@ -26,8 +26,10 @@ import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.tiles.OpenTileSettingsActivity
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @AndroidEntryPoint
 class HomeActivity :
@@ -169,7 +171,13 @@ class HomeActivity :
 
         lifecycleScope.launch {
             if (mainViewModel.loadingState.value == MainViewModel.LoadingState.READY) {
-                mainViewModel.updateUI()
+                try {
+                    mainViewModel.updateUI()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to update UI")
+                }
             }
         }
         if (

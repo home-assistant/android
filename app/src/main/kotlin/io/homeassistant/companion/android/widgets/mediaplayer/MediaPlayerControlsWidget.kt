@@ -29,6 +29,7 @@ import io.homeassistant.companion.android.util.hasActiveConnection
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.common.RemoteViewsTarget
 import java.util.LinkedList
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -506,7 +507,15 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
 
             val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
 
-            serverManager.integrationRepository().callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
+            try {
+                serverManager.integrationRepository(
+                    entity.serverId,
+                ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to call previous track action")
+            }
         }
     }
 
@@ -563,6 +572,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                 serverManager.integrationRepository(
                     entity.serverId,
                 ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Timber.e(e, "Exception calling rewind action")
             }
@@ -598,6 +609,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                 serverManager.integrationRepository(
                     entity.serverId,
                 ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Timber.e(e, "Exception calling play pause action")
             }
@@ -621,6 +634,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
 
             val currentEntityInfo = try {
                 serverManager.integrationRepository(entity.serverId).getEntity(entity.entityId)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 null
             }
@@ -657,6 +672,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                 serverManager.integrationRepository(
                     entity.serverId,
                 ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Timber.e(e, "Exception calling fast forward action")
             }
@@ -692,6 +709,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                 serverManager.integrationRepository(
                     entity.serverId,
                 ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Timber.e(e, "Exception calling next track action")
             }
@@ -727,6 +746,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                 serverManager.integrationRepository(
                     entity.serverId,
                 ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Timber.e(e, "Exception calling volume down action")
             }
@@ -762,6 +783,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                 serverManager.integrationRepository(
                     entity.serverId,
                 ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Timber.e(e, "Exception calling volume up action")
             }

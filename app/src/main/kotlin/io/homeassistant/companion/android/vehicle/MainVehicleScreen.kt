@@ -32,12 +32,14 @@ import io.homeassistant.companion.android.util.vehicle.getDomainList
 import io.homeassistant.companion.android.util.vehicle.getHeaderBuilder
 import io.homeassistant.companion.android.util.vehicle.getNavigationGridItem
 import io.homeassistant.companion.android.util.vehicle.nativeModeAction
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @RequiresApi(Build.VERSION_CODES.O)
 class MainVehicleScreen(
@@ -89,7 +91,14 @@ class MainVehicleScreen(
                         domainsAdded = false
                         domainsAddedFor = server
                         invalidate() // Show loading state
-                        entityRegistry = serverManager.webSocketRepository(server).getEntityRegistry()
+                        entityRegistry = try {
+                            serverManager.webSocketRepository(server).getEntityRegistry()
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            Timber.e(e, "Failed to get entity registry")
+                            null
+                        }
                     }
 
                     if (domainsJob?.isActive == true) domainsJob?.cancel()

@@ -18,6 +18,7 @@ import io.homeassistant.companion.android.common.util.AudioRecorder
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
 import io.homeassistant.companion.android.conversation.views.AssistMessage
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -100,14 +101,25 @@ class ConversationViewModel @Inject constructor(
             )
         } else {
             if (serverManager.getServer()?.version?.isAtLeast(2023, 5) == true) {
-                viewModelScope.launch {
+                try {
                     loadPipelines()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to load pipelines")
                 }
             }
 
             return setPipeline(
                 if (useAssistPipeline) {
-                    serverManager.integrationRepository().getLastUsedPipelineId()
+                    try {
+                        serverManager.integrationRepository().getLastUsedPipelineId()
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Timber.e(e, "Failed to get last used pipeline id")
+                        null
+                    }
                 } else {
                     null
                 },
@@ -178,7 +190,14 @@ class ConversationViewModel @Inject constructor(
 
     private suspend fun setPipeline(id: String?): Boolean {
         val pipeline = if (useAssistPipeline) {
-            _pipelines.firstOrNull { it.id == id } ?: serverManager.webSocketRepository().getAssistPipeline(id)
+            _pipelines.firstOrNull { it.id == id } ?: try {
+                serverManager.webSocketRepository().getAssistPipeline(id)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Fail get assist pipeline")
+                null
+            }
         } else {
             null
         }
@@ -187,7 +206,13 @@ class ConversationViewModel @Inject constructor(
         if (pipeline != null || !useAssistPipeline) {
             currentPipeline = pipeline
             currentPipeline?.let {
-                serverManager.integrationRepository().setLastUsedPipeline(it.id, pipeline?.sttEngine != null)
+                try {
+                    serverManager.integrationRepository().setLastUsedPipeline(it.id, pipeline?.sttEngine != null)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to set last used pipeline")
+                }
             }
 
             _conversation.clear()

@@ -22,6 +22,7 @@ import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import retrofit2.HttpException
 import timber.log.Timber
 
@@ -61,7 +62,14 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
             entity.canSupportPrecision() &&
             serverManager.getServer()?.version?.isAtLeast(2023, 3) == true
         ) {
-            serverManager.webSocketRepository().getEntityRegistryFor(entityId)?.options
+            try {
+                serverManager.webSocketRepository().getEntityRegistryFor(entityId)?.options
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to get entity registry for $entityId")
+                null
+            }
         } else {
             null
         }
