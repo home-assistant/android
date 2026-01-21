@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.onboarding.wearmtls.navigation
 
 import android.net.Uri
-import androidx.annotation.VisibleForTesting
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -11,8 +10,8 @@ import androidx.navigation.toRoute
 import io.homeassistant.companion.android.onboarding.wearmtls.WearMTLSScreen
 import kotlinx.serialization.Serializable
 
-@VisibleForTesting
-const val URL_MTLS_DOCUMENTATION = "https://companion.home-assistant.io/docs/getting_started/#tls-client-authentication"
+internal const val URL_MTLS_DOCUMENTATION =
+    "https://companion.home-assistant.io/docs/getting_started/#tls-client-authentication"
 
 @Serializable
 internal class WearMTLSRoute(val deviceName: String, val serverUrl: String, val authCode: String)
