@@ -1209,7 +1209,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/ManageShortcutsViewModel.kt"
-            line="175"
+            line="207"
             column="13"/>
     </issue>
 
@@ -1594,7 +1594,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/views/ManageShortcutsView.kt"
-            line="50"
+            line="51"
             column="5"/>
     </issue>
 
@@ -2133,7 +2133,7 @@
         errorLine2="^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/views/ManageShortcutsView.kt"
-            line="79"
+            line="80"
             column="1"/>
     </issue>
 
@@ -2392,6 +2392,105 @@
 
     <issue
         id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Entity> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entities: ImmutableList&lt;Entity>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesList(val items: List&lt;Entity>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    entities: List&lt;Entity>,"
+        errorLine2="              ~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/entity/EntityPicker.kt"
+            line="188"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;EntityRegistryResponse>? is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entityRegistry: ImmutableList&lt;EntityRegistryResponse>?` or create an `@Immutable` wrapper for this class: `@Immutable data class EntityRegistryList(val items: List&lt;EntityRegistryResponse>?)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    entityRegistry: List&lt;EntityRegistryResponse>? = null,"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/entity/EntityPicker.kt"
+            line="193"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;DeviceRegistryResponse>? is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `deviceRegistry: ImmutableList&lt;DeviceRegistryResponse>?` or create an `@Immutable` wrapper for this class: `@Immutable data class DeviceRegistryList(val items: List&lt;DeviceRegistryResponse>?)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    deviceRegistry: List&lt;DeviceRegistryResponse>? = null,"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/entity/EntityPicker.kt"
+            line="194"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;AreaRegistryResponse>? is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `areaRegistry: ImmutableList&lt;AreaRegistryResponse>?` or create an `@Immutable` wrapper for this class: `@Immutable data class AreaRegistryList(val items: List&lt;AreaRegistryResponse>?)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    areaRegistry: List&lt;AreaRegistryResponse>? = null,"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/entity/EntityPicker.kt"
+            line="195"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;EntityPickerItem> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entities: ImmutableList&lt;EntityPickerItem>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesList(val items: List&lt;EntityPickerItem>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    entities: List&lt;EntityPickerItem>,"
+        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/entity/EntityPicker.kt"
+            line="232"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;EntityPickerItem> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entities: ImmutableList&lt;EntityPickerItem>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesList(val items: List&lt;EntityPickerItem>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    entities: List&lt;EntityPickerItem>,"
+        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/entity/EntityPicker.kt"
+            line="399"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;EntityPickerItem> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entities: ImmutableList&lt;EntityPickerItem>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesList(val items: List&lt;EntityPickerItem>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    entities: List&lt;EntityPickerItem>,"
+        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/entity/EntityPicker.kt"
+            line="442"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;EntityPickerItem> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entities: ImmutableList&lt;EntityPickerItem>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesList(val items: List&lt;EntityPickerItem>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    entities: List&lt;EntityPickerItem>,"
+        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/entity/EntityPicker.kt"
+            line="469"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;EntityPickerItem> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entities: ImmutableList&lt;EntityPickerItem>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesList(val items: List&lt;EntityPickerItem>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    entities: List&lt;EntityPickerItem>,"
+        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/entity/EntityPickerFilter.kt"
+            line="74"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
         message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;String> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `keys: ImmutableList&lt;String>` or create an `@Immutable` wrapper for this class: `@Immutable data class KeysList(val items: List&lt;String>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
         errorLine1="    keys: List&lt;String>,"
         errorLine2="          ~~~~~~~~~~~~">
@@ -2562,7 +2661,7 @@
         errorLine2="              ~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/util/compose/SingleEntityPicker.kt"
-            line="43"
+            line="44"
             column="15"/>
     </issue>
 
