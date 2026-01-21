@@ -13,7 +13,7 @@ import io.homeassistant.companion.android.onboarding.BaseOnboardingNavigationTes
 import io.homeassistant.companion.android.onboarding.URL_GETTING_STARTED_DOCUMENTATION
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.compose.navigateToUri
-import io.mockk.verify
+import io.mockk.coVerify
 import junit.framework.TestCase.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -36,7 +36,7 @@ internal class WelcomeNavigationTest : BaseOnboardingNavigationTest() {
                 .performScrollTo()
                 .assertIsDisplayed()
                 .performClick()
-            verify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION) }
+            coVerify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, any()) }
         }
     }
 }

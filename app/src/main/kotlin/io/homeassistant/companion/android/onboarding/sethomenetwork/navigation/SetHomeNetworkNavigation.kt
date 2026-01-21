@@ -15,7 +15,7 @@ internal fun NavController.navigateToSetHomeNetworkRoute(serverId: Int, navOptio
     navigate(SetHomeNetworkRoute(serverId), navOptions)
 }
 
-internal fun NavGraphBuilder.setHomeNetworkScreen(onGotoNextScreen: () -> Unit, onHelpClick: () -> Unit) {
+internal fun NavGraphBuilder.setHomeNetworkScreen(onGotoNextScreen: () -> Unit, onHelpClick: suspend () -> Unit) {
     composable<SetHomeNetworkRoute> {
         SetHomeNetworkScreen(
             onGotoNextScreen = onGotoNextScreen,

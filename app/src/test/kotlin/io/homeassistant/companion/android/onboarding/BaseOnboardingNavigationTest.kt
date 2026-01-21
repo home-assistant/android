@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.util.LocationPermissionActivityResultRegistry
 import io.homeassistant.companion.android.util.compose.navigateToUri
 import io.mockk.Runs
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockkStatic
@@ -50,7 +51,7 @@ internal abstract class BaseOnboardingNavigationTest {
     @Before
     fun baseSetup() {
         mockkStatic(NavController::navigateToUri)
-        every { any<NavController>().navigateToUri(any()) } just Runs
+        coEvery { any<NavController>().navigateToUri(any(), any()) } just Runs
     }
 
     protected fun setContent(
