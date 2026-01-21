@@ -46,7 +46,7 @@ import io.homeassistant.companion.android.util.compose.HAPreviews
 @Composable
 internal fun NameYourDeviceScreen(
     onBackClick: () -> Unit,
-    onHelpClick: () -> Unit,
+    onHelpClick: suspend () -> Unit,
     viewModel: NameYourDeviceViewModel,
     modifier: Modifier = Modifier,
 ) {
@@ -68,7 +68,7 @@ internal fun NameYourDeviceScreen(
 
 @Composable
 internal fun NameYourDeviceScreen(
-    onHelpClick: () -> Unit,
+    onHelpClick: suspend () -> Unit,
     onBackClick: () -> Unit,
     deviceName: String,
     onDeviceNameChange: (String) -> Unit,

@@ -19,7 +19,7 @@ internal fun NavController.navigateToManualServer(navOptions: NavOptions? = null
 internal fun NavGraphBuilder.manualServerScreen(
     onBackClick: () -> Unit,
     onConnectTo: (URL) -> Unit,
-    onHelpClick: () -> Unit,
+    onHelpClick: suspend () -> Unit,
 ) {
     composable<ManualServerRoute> {
         ManualServerScreen(

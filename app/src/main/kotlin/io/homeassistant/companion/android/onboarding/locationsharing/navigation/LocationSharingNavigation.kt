@@ -21,7 +21,7 @@ internal fun NavController.navigateToLocationSharing(
 }
 
 internal fun NavGraphBuilder.locationSharingScreen(
-    onHelpClick: () -> Unit,
+    onHelpClick: suspend () -> Unit,
     onGotoNextScreen: (serverId: Int, hasPlainTextAccess: Boolean) -> Unit,
 ) {
     composable<LocationSharingRoute> {
