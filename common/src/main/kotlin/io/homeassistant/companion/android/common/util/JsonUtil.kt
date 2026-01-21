@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.common.util
 
 import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
+import io.homeassistant.companion.android.common.frontend.externalbus.incoming.IncomingExternalBusMessage
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlinx.serialization.DeserializationStrategy
@@ -65,7 +66,7 @@ val kotlinJsonMapper = Json {
     encodeDefaults = true
     prettyPrint = false
     // explicitNulls = true // default is to print null values in the JSON send if you don't want this behavior you need a custom serializer
-    serializersModule = serializersModule + SocketResponse.socketResponseSerializerModuler
+    serializersModule += SocketResponse.socketResponseSerializerModuler + IncomingExternalBusMessage.serializersModule
 }
 
 /**
