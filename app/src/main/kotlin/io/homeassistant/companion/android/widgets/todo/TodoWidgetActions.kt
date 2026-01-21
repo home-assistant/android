@@ -126,7 +126,7 @@ class ToggleTodoAction : ActionCallback {
         )
 
         if (!result) {
-            Timber.e("Fail to toggle $todoItem")
+            Timber.e("Failed to toggle $todoItem")
             // We cannot update the UI from an action nor send a toast, we don't have any UI context.
             // TODO we could modify the entry in DB to add the error message
         }
