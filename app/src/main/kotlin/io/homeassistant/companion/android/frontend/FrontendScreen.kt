@@ -39,10 +39,13 @@ import io.homeassistant.companion.android.common.compose.composable.HAAccentButt
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
+import io.homeassistant.companion.android.common.frontend.externalbus.WebViewScript
 import io.homeassistant.companion.android.frontend.error.FrontendError
 import io.homeassistant.companion.android.frontend.error.FrontendErrorScreen
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.compose.webview.HAWebView
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import timber.log.Timber
 
 /**
@@ -56,6 +59,7 @@ import timber.log.Timber
  */
 @Composable
 internal fun FrontendScreen(
+    onBackClick: () -> Unit,
     onOpenExternalLink: (Uri) -> Unit,
     onNavigateToSecurityLevel: (serverId: Int) -> Unit,
     onNavigateToInsecure: (serverId: Int) -> Unit,
@@ -76,8 +80,11 @@ internal fun FrontendScreen(
     }
 
     FrontendScreen(
+        onBackClick = onBackClick,
         viewState = viewState,
         webViewClient = viewModel.webViewClient,
+        javascriptInterface = viewModel.javascriptInterface,
+        scriptsToEvaluate = viewModel.scriptsToEvaluate,
         onRetry = viewModel::onRetry,
         onOpenExternalLink = onOpenExternalLink,
         modifier = modifier,
@@ -90,23 +97,46 @@ internal fun FrontendScreen(
  * The WebView is always rendered at the base layer to prevent expensive recreation.
  * Loading indicators and error screens are overlaid on top. Navigation states
  * (SecurityLevelRequired, Insecure) show a loading indicator while navigation occurs.
+ *
+ * @param viewState Current UI state
+ * @param webViewClient WebViewClient for handling page loads, errors, and JavaScript interface attachment
+ * @param scriptsToEvaluate Flow of scripts to evaluate in the WebView (external bus messages, auth callbacks)
+ * @param onRetry Callback when user taps retry
+ * @param onOpenExternalLink Callback to open external links
+ * @param modifier Modifier for the screen
  */
 @Composable
 internal fun FrontendScreen(
+    onBackClick: () -> Unit,
     viewState: FrontendViewState,
     webViewClient: WebViewClient,
+    javascriptInterface: FrontendJavascriptInterface,
+    scriptsToEvaluate: Flow<WebViewScript>,
     onRetry: () -> Unit,
     onOpenExternalLink: (Uri) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Track WebView reference for URL loading
+    // Track WebView reference for URL loading and JS evaluation
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
 
     // Load URL when it changes
     val currentUrl = viewState.url
-    LaunchedEffect(webViewRef, currentUrl) {
-        Timber.v("Load url ${if (BuildConfig.DEBUG) currentUrl else ""}")
-        webViewRef?.loadUrl(currentUrl)
+    if (webViewRef != null) {
+        LaunchedEffect(webViewRef, currentUrl) {
+            Timber.v("Load url ${if (BuildConfig.DEBUG) currentUrl else ""}")
+            webViewRef?.loadUrl(currentUrl)
+        }
+    }
+
+    // Collect scripts to evaluate in the WebView (external bus messages, auth callbacks)
+    LaunchedEffect(webViewRef) {
+        val webView = webViewRef ?: return@LaunchedEffect
+        scriptsToEvaluate.collect { webViewScript ->
+            Timber.d("Evaluating script: ${webViewScript.script}")
+            webView.evaluateJavascript(webViewScript.script) { result ->
+                webViewScript.result.complete(result)
+            }
+        }
     }
 
     // Extract insets-related properties from Content state
@@ -118,8 +148,10 @@ internal fun FrontendScreen(
     Box(modifier = modifier.fillMaxSize()) {
         // Always render WebView at base layer with safe area insets handling
         SafeHAWebView(
+            onBackClick = onBackClick,
             onWebViewCreated = { webViewRef = it },
             webViewClient = webViewClient,
+            javascriptInterface = javascriptInterface,
             serverHandleInsets = serverHandleInsets,
             nightModeTheme = nightModeTheme,
             statusBarColor = statusBarColor,
@@ -171,8 +203,10 @@ internal fun FrontendScreen(
  */
 @Composable
 private fun SafeHAWebView(
+    onBackClick: () -> Unit,
     onWebViewCreated: (WebView) -> Unit,
     webViewClient: WebViewClient,
+    javascriptInterface: FrontendJavascriptInterface,
     serverHandleInsets: Boolean,
     nightModeTheme: NightModeTheme?,
     statusBarColor: Color?,
@@ -211,9 +245,12 @@ private fun SafeHAWebView(
                     .background(Color.Transparent),
                 configure = {
                     onWebViewCreated(this)
+                    // Injecting the javascript interface should happen as early as possible in the process
+                    // even before loading the server URL.
+                    javascriptInterface.attachToWebView(this)
                     this.webViewClient = webViewClient
-                    Timber.e("webview client set")
                 },
+                onBackPressed = onBackClick,
             )
 
             // Right safe area
@@ -253,11 +290,14 @@ private fun Color.Overlay(modifier: Modifier = Modifier) {
 private fun FrontendScreenLoadingPreview() {
     HAThemeForPreview {
         FrontendScreen(
+            onBackClick = {},
             viewState = FrontendViewState.Loading(
                 serverId = 1,
                 url = "https://example.com",
             ),
             webViewClient = WebViewClient(),
+            javascriptInterface = FrontendJavascriptInterface.noOp,
+            scriptsToEvaluate = emptyFlow(),
             onRetry = {},
             onOpenExternalLink = {},
         )
@@ -269,6 +309,7 @@ private fun FrontendScreenLoadingPreview() {
 private fun FrontendScreenErrorPreview() {
     HAThemeForPreview {
         FrontendScreen(
+            onBackClick = {},
             viewState = FrontendViewState.Error(
                 serverId = 1,
                 url = "https://example.com",
@@ -279,6 +320,8 @@ private fun FrontendScreenErrorPreview() {
                 ),
             ),
             webViewClient = WebViewClient(),
+            javascriptInterface = FrontendJavascriptInterface.noOp,
+            scriptsToEvaluate = emptyFlow(),
             onRetry = {},
             onOpenExternalLink = {},
         )

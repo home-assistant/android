@@ -59,6 +59,7 @@ internal fun NavGraphBuilder.frontendScreen(
             val viewModel: FrontendViewModel = hiltViewModel()
 
             FrontendScreen(
+                onBackClick = navController::popBackStack,
                 onOpenExternalLink = onOpenExternalLink,
                 onNavigateToSecurityLevel = onNavigateToSecurityLevel,
                 onNavigateToInsecure = onNavigateToInsecure,
