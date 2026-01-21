@@ -85,6 +85,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
@@ -251,6 +252,9 @@ class WebViewActivity :
 
     @Inject
     lateinit var entityAddToHandler: EntityAddToHandler
+
+    @Inject
+    lateinit var dataSourceFactory: DataSource.Factory
 
     private lateinit var webView: WebView
     private var loadedUrl: Uri? = null
@@ -1255,7 +1259,7 @@ class WebViewActivity :
         val uri = payload?.getStringOrNull("url")?.toUri() ?: return
         val isMuted = payload.getBooleanOrElse("muted", false)
         lifecycleScope.launch {
-            exoPlayer.value = initializePlayer(this@WebViewActivity).apply {
+            exoPlayer.value = initializePlayer(this@WebViewActivity, dataSourceFactory).apply {
                 setMediaItem(MediaItem.fromUri(uri))
                 playWhenReady = true
                 addListener(

@@ -38,10 +38,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mikepenz.iconics.compose.IconicsPainter
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsViewModel
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
-import io.homeassistant.companion.android.util.compose.SingleEntityPicker
+import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
@@ -249,18 +250,23 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
             modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
         )
     } else {
-        SingleEntityPicker(
-            entities = viewModel.entities[shortcut.serverId.value].orEmpty(),
-            currentEntity = viewModel.shortcuts[i].path.value.split(":").getOrNull(1),
-            onEntityCleared = {
-                viewModel.shortcuts[i].path.value = ""
-            },
-            onEntitySelected = {
-                viewModel.shortcuts[i].path.value = "entityId:$it"
-                return@SingleEntityPicker true
-            },
-            modifier = Modifier.padding(bottom = 16.dp),
-        )
+        // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6258
+        HATheme {
+            EntityPicker(
+                entities = viewModel.entities[shortcut.serverId.value].orEmpty(),
+                entityRegistry = viewModel.entityRegistry[shortcut.serverId.value],
+                deviceRegistry = viewModel.deviceRegistry[shortcut.serverId.value],
+                areaRegistry = viewModel.areaRegistry[shortcut.serverId.value],
+                selectedEntityId = viewModel.shortcuts[i].path.value.split(":").getOrNull(1),
+                onEntitySelectedId = { entityId ->
+                    viewModel.shortcuts[i].path.value = "entityId:$entityId"
+                },
+                onEntityCleared = {
+                    viewModel.shortcuts[i].path.value = ""
+                },
+                modifier = Modifier.padding(bottom = 16.dp),
+            )
+        }
     }
     for (item in viewModel.dynamicShortcuts) {
         if (item.id == shortcutId) {

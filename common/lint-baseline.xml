@@ -129,7 +129,7 @@
         errorLine2="                  ~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="835"
+            line="837"
             column="19"/>
     </issue>
 
@@ -140,7 +140,7 @@
         errorLine2="                  ~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="836"
+            line="838"
             column="19"/>
     </issue>
 
@@ -151,7 +151,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="378"
+            line="379"
             column="5"/>
     </issue>
 
