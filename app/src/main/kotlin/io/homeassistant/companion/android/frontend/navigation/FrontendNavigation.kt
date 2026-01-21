@@ -1,7 +1,11 @@
 package io.homeassistant.companion.android.frontend.navigation
 
 import android.net.Uri
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
@@ -12,6 +16,7 @@ import io.homeassistant.companion.android.WIPFeature
 import io.homeassistant.companion.android.common.data.servers.ServerManager.Companion.SERVER_ID_ACTIVE
 import io.homeassistant.companion.android.frontend.FrontendScreen
 import io.homeassistant.companion.android.frontend.FrontendViewModel
+import io.homeassistant.companion.android.frontend.FrontendViewState
 import io.homeassistant.companion.android.launch.HAStartDestinationRoute
 import io.homeassistant.companion.android.util.getActivity
 import io.homeassistant.companion.android.webview.WebViewActivity
@@ -55,15 +60,24 @@ internal fun NavGraphBuilder.frontendScreen(
     onNavigateToInsecure: (serverId: Int) -> Unit = {},
 ) {
     if (WIPFeature.USE_FRONTEND_V2) {
-        composable<FrontendRoute> { backStackEntry ->
+        composable<FrontendRoute> {
             val viewModel: FrontendViewModel = hiltViewModel()
+            val viewState by viewModel.viewState.collectAsStateWithLifecycle()
+
+            FrontendNavigationHandler(
+                viewState = viewState,
+                onNavigateToSecurityLevel = onNavigateToSecurityLevel,
+                onNavigateToInsecure = onNavigateToInsecure,
+            )
 
             FrontendScreen(
                 onBackClick = navController::popBackStack,
+                viewState = viewState,
+                webViewClient = viewModel.webViewClient,
+                javascriptInterface = viewModel.javascriptInterface,
+                scriptsToEvaluate = viewModel.scriptsToEvaluate,
+                onRetry = viewModel::onRetry,
                 onOpenExternalLink = onOpenExternalLink,
-                onNavigateToSecurityLevel = onNavigateToSecurityLevel,
-                onNavigateToInsecure = onNavigateToInsecure,
-                viewModel = viewModel,
             )
         }
     } else {
@@ -75,6 +89,31 @@ internal fun NavGraphBuilder.frontendScreen(
 
         activity<FrontendActivityRoute> {
             activityClass = WebViewActivity::class
+        }
+    }
+}
+
+/**
+ * Handles navigation side effects based on the current [FrontendViewState].
+ *
+ * Triggers navigation callbacks when the view state requires navigating to other screens
+ * (security level configuration or insecure connection warning).
+ */
+@Composable
+internal fun FrontendNavigationHandler(
+    viewState: FrontendViewState,
+    onNavigateToSecurityLevel: (serverId: Int) -> Unit,
+    onNavigateToInsecure: (serverId: Int) -> Unit,
+) {
+    LaunchedEffect(viewState) {
+        when (viewState) {
+            is FrontendViewState.SecurityLevelRequired -> {
+                onNavigateToSecurityLevel(viewState.serverId)
+            }
+            is FrontendViewState.Insecure -> {
+                onNavigateToInsecure(viewState.serverId)
+            }
+            else -> { /* No navigation needed */ }
         }
     }
 }

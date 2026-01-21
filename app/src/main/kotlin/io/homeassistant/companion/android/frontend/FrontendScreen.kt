@@ -31,8 +31,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
@@ -47,49 +45,6 @@ import io.homeassistant.companion.android.util.compose.webview.HAWebView
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import timber.log.Timber
-
-/**
- * Composable entry point for the Frontend screen with ViewModel.
- *
- * @param onOpenExternalLink Callback to open external links
- * @param onNavigateToSecurityLevel Callback to navigate to security level configuration screen
- * @param onNavigateToInsecure Callback to navigate to insecure connection screen
- * @param modifier Modifier for the screen
- * @param viewModel The FrontendViewModel to drive the screen state
- */
-@Composable
-internal fun FrontendScreen(
-    onBackClick: () -> Unit,
-    onOpenExternalLink: (Uri) -> Unit,
-    onNavigateToSecurityLevel: (serverId: Int) -> Unit,
-    onNavigateToInsecure: (serverId: Int) -> Unit,
-    modifier: Modifier = Modifier,
-    viewModel: FrontendViewModel = hiltViewModel(),
-) {
-    val viewState by viewModel.viewState.collectAsStateWithLifecycle()
-
-    // Handle navigation to security level screen
-    when (viewState) {
-        is FrontendViewState.SecurityLevelRequired -> {
-            onNavigateToSecurityLevel(viewState.serverId)
-        }
-        is FrontendViewState.Insecure -> {
-            onNavigateToInsecure(viewState.serverId)
-        }
-        else -> { /* No navigation needed */ }
-    }
-
-    FrontendScreen(
-        onBackClick = onBackClick,
-        viewState = viewState,
-        webViewClient = viewModel.webViewClient,
-        javascriptInterface = viewModel.javascriptInterface,
-        scriptsToEvaluate = viewModel.scriptsToEvaluate,
-        onRetry = viewModel::onRetry,
-        onOpenExternalLink = onOpenExternalLink,
-        modifier = modifier,
-    )
-}
 
 /**
  * Pure UI Frontend screen that renders based on the current view state.
