@@ -19,16 +19,16 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import io.homeassistant.companion.android.common.BuildConfig
@@ -36,10 +36,12 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.frontend.externalbus.WebViewScript
 import io.homeassistant.companion.android.frontend.error.FrontendError
 import io.homeassistant.companion.android.frontend.error.FrontendErrorScreen
+import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.compose.webview.HAWebView
 import kotlinx.coroutines.flow.Flow
@@ -121,9 +123,7 @@ internal fun FrontendScreen(
             is FrontendViewState.Insecure,
             -> {
                 // Show loading indicator while waiting for URL or navigating to other screens
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center),
-                )
+                LoadingScreen(modifier = Modifier.background(LocalHAColorScheme.current.colorSurfaceDefault))
             }
 
             is FrontendViewState.Content -> {
@@ -169,6 +169,7 @@ private fun SafeHAWebView(
 ) {
     val insets = WindowInsets.safeDrawing
     val insetsPaddingValues = insets.asPaddingValues()
+    val isInPreview = LocalInspectionMode.current
 
     Column(modifier = Modifier.fillMaxSize()) {
         // Status bar overlay (when server doesn't handle insets)
@@ -193,20 +194,31 @@ private fun SafeHAWebView(
                 )
             }
 
-            HAWebView(
-                nightModeTheme = nightModeTheme,
-                modifier = Modifier
-                    .weight(1f)
-                    .background(Color.Transparent),
-                configure = {
-                    onWebViewCreated(this)
-                    // Injecting the javascript interface should happen as early as possible in the process
-                    // even before loading the server URL.
-                    javascriptInterface.attachToWebView(this)
-                    this.webViewClient = webViewClient
-                },
-                onBackPressed = onBackClick,
-            )
+            // In preview/screenshot mode, show a placeholder instead of WebView
+            // to avoid having issue with the javascript auto attach.
+            if (isInPreview) {
+                Text(
+                    text = "WebviewPlaceholder",
+                    modifier = Modifier
+                        .weight(1f)
+                        .background(Color.Transparent),
+                )
+            } else {
+                HAWebView(
+                    nightModeTheme = nightModeTheme,
+                    modifier = Modifier
+                        .weight(1f)
+                        .background(Color.Transparent),
+                    configure = {
+                        onWebViewCreated(this)
+                        // Injecting the javascript interface should happen as early as possible in the process
+                        // even before loading the server URL.
+                        javascriptInterface.attachToWebView(this)
+                        this.webViewClient = webViewClient
+                    },
+                    onBackPressed = onBackClick,
+                )
+            }
 
             // Right safe area
             if (!serverHandleInsets) {
