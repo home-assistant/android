@@ -104,7 +104,7 @@ internal fun createDataSourceFactory(context: Context, okHttpClientProvider: Laz
  * devices supporting the platform's native `HttpEngine` (Android 12 with extension 7+).
  */
 @OptIn(UnstableApi::class)
-internal fun buildHttpEngineFactory(context: Context): DataSource.Factory? {
+private fun buildHttpEngineFactory(context: Context): DataSource.Factory? {
     // https://developer.android.com/reference/android/net/http/HttpEngine
     // Added in API level 34 also in S Extensions 7
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
