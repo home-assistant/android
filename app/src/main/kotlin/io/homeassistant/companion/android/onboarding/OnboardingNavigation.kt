@@ -40,6 +40,7 @@ import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeR
 import io.homeassistant.companion.android.onboarding.welcome.navigation.welcomeScreen
 import io.homeassistant.companion.android.util.canGoBack
 import io.homeassistant.companion.android.util.compose.navigateToUri
+import io.homeassistant.companion.android.util.compose.navigateToUriCatching
 import kotlinx.serialization.Serializable
 
 @VisibleForTesting
@@ -134,7 +135,7 @@ internal fun NavGraphBuilder.onboarding(
                 navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION)
             },
         )
-        commonScreens(navController = navController)
+        commonScreens(navController = navController, onShowSnackbar = onShowSnackbar)
         nameYourDeviceScreen(
             onBackClick = navController::popBackStack,
             onDeviceNamed = { serverId, hasPlainTextAccess, isPubliclyAccessible ->
@@ -235,7 +236,11 @@ internal fun NavGraphBuilder.onboarding(
  * - Manual server entry: Direct URL input for server connection
  * - Connection: Authentication and server validation
  */
-private fun NavGraphBuilder.commonScreens(navController: NavController, wearNameToOnboard: String? = null) {
+private fun NavGraphBuilder.commonScreens(
+    navController: NavController,
+    onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
+    wearNameToOnboard: String? = null,
+) {
     serverDiscoveryScreen(
         onConnectClick = {
             navController.navigateToConnection(it.toString())
@@ -290,7 +295,7 @@ private fun NavGraphBuilder.commonScreens(navController: NavController, wearName
         },
         onBackClick = navController::popBackStack,
         onOpenExternalLink = {
-            navController.navigateToUri(it.toString())
+            navController.navigateToUriCatching(it.toString(), onShowSnackbar = onShowSnackbar)
         },
     )
 }
@@ -388,6 +393,7 @@ internal fun NavGraphBuilder.wearOnboarding(
         certUri: Uri?,
         certPassword: String?,
     ) -> Unit,
+    onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     urlToOnboard: String?,
     wearNameToOnboard: String,
 ) {
@@ -398,7 +404,11 @@ internal fun NavGraphBuilder.wearOnboarding(
     }
 
     navigation<WearOnboardingRoute>(startDestination = startRoute) {
-        commonScreens(navController = navController, wearNameToOnboard = wearNameToOnboard)
+        commonScreens(
+            navController = navController,
+            onShowSnackbar = onShowSnackbar,
+            wearNameToOnboard = wearNameToOnboard,
+        )
         nameYourWearDeviceScreen(
             onBackClick = navController::popBackStack,
             onDeviceNamed = { deviceName, serverUrl, authCode, neededMTLS ->

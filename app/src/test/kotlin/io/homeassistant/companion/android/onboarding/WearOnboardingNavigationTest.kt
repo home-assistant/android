@@ -175,6 +175,7 @@ internal class WearOnboardingNavigationTest {
                             this@WearOnboardingNavigationTest.certUri = certUri
                             this@WearOnboardingNavigationTest.certPassword = certPassword
                         },
+                        onShowSnackbar = { _, _ -> true },
                         urlToOnboard = urlToOnboard,
                         wearNameToOnboard = WEAR_NAME,
                     )

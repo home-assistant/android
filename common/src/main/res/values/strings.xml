@@ -1435,4 +1435,5 @@
     <string name="connection_check_error_not_home_assistant">Server is not Home Assistant</string>
     <string name="entity_picker_no_entity_found">No entity found</string>
     <string name="entity_picker_no_entity_found_for">No entity found for %s</string>
+    <string name="fail_to_navigate_to_uri">No app available to open %s</string>
 </resources>

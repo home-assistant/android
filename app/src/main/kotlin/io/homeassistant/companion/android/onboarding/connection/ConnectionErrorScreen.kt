@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -52,6 +53,7 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.util.compose.HAPreviews
+import kotlinx.coroutines.launch
 
 private val MaxContentWidth = MaxButtonWidth
 
@@ -66,7 +68,7 @@ private const val URL_DISCORD = "https://discord.com/channels/330944238910963714
 @Composable
 internal fun ConnectionErrorScreen(
     viewModel: ConnectionViewModel,
-    onOpenExternalLink: (Uri) -> Unit,
+    onOpenExternalLink: suspend (Uri) -> Unit,
     onCloseClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -91,7 +93,7 @@ internal fun ConnectionErrorScreen(
     error: ConnectionError?,
     connectivityCheckState: ConnectivityCheckState,
     onRetryConnectivityCheck: () -> Unit,
-    onOpenExternalLink: (Uri) -> Unit,
+    onOpenExternalLink: suspend (Uri) -> Unit,
     onCloseClick: () -> Unit,
     modifier: Modifier = Modifier,
     errorDetailsExpanded: Boolean = false,
@@ -123,7 +125,7 @@ internal fun ConnectionErrorScreen(
 
 @Composable
 internal fun ConnectionErrorScreen(
-    onOpenExternalLink: (Uri) -> Unit,
+    onOpenExternalLink: suspend (Uri) -> Unit,
     icon: ImageVector,
     title: String,
     subtitle: String,
@@ -159,7 +161,7 @@ internal fun ConnectionErrorScreen(
 
 @Composable
 private fun ConnectionErrorContent(
-    onOpenExternalLink: (Uri) -> Unit,
+    onOpenExternalLink: suspend (Uri) -> Unit,
     title: String,
     subtitle: String,
     errorDescription: String,
@@ -230,13 +232,14 @@ private fun ColumnScope.Header(icon: ImageVector, title: String, subtitle: Strin
 }
 
 @Composable
-private fun UrlInfo(url: String?, onOpenExternalLink: (Uri) -> Unit) {
+private fun UrlInfo(url: String?, onOpenExternalLink: suspend (Uri) -> Unit) {
     url?.let { url ->
         HABanner(
             modifier = Modifier
                 .width(MaxContentWidth)
                 .testTag(URL_INFO_TAG),
         ) {
+            val coroutineContext = rememberCoroutineScope()
             val annotatedString = buildAnnotatedString {
                 append(stringResource(commonR.string.connection_error_url_info))
                 appendLine()
@@ -245,7 +248,9 @@ private fun UrlInfo(url: String?, onOpenExternalLink: (Uri) -> Unit) {
                         url,
                         styles = HATextStyle.Link,
                         linkInteractionListener = {
-                            onOpenExternalLink(url.toUri())
+                            coroutineContext.launch {
+                                onOpenExternalLink(url.toUri())
+                            }
                         },
                     ),
                 ) {
@@ -314,7 +319,8 @@ private fun ErrorDetails(
 }
 
 @Composable
-private fun ColumnScope.GetMoreHelp(onOpenExternalLink: (Uri) -> Unit) {
+private fun ColumnScope.GetMoreHelp(onOpenExternalLink: suspend (Uri) -> Unit) {
+    val coroutineScope = rememberCoroutineScope()
     Text(stringResource(commonR.string.connection_error_help), style = HATextStyle.Body)
 
     Row {
@@ -322,28 +328,36 @@ private fun ColumnScope.GetMoreHelp(onOpenExternalLink: (Uri) -> Unit) {
             icon = Icons.Outlined.Newspaper,
             contentDescription = stringResource(commonR.string.connection_error_documentation_content_description),
             onClick = {
-                onOpenExternalLink(URL_DOCUMENTATION.toUri())
+                coroutineScope.launch {
+                    onOpenExternalLink(URL_DOCUMENTATION.toUri())
+                }
             },
         )
         HAIconButton(
             icon = Icons.Outlined.Forum,
             contentDescription = stringResource(commonR.string.connection_error_forum_content_description),
             onClick = {
-                onOpenExternalLink(URL_COMMUNITY_FORUM.toUri())
+                coroutineScope.launch {
+                    onOpenExternalLink(URL_COMMUNITY_FORUM.toUri())
+                }
             },
         )
         HAIconButton(
             icon = ImageVector.vectorResource(R.drawable.github),
             contentDescription = stringResource(commonR.string.connection_error_github_content_description),
             onClick = {
-                onOpenExternalLink(URL_GITHUB_ISSUES.toUri())
+                coroutineScope.launch {
+                    onOpenExternalLink(URL_GITHUB_ISSUES.toUri())
+                }
             },
         )
         HAIconButton(
             icon = ImageVector.vectorResource(R.drawable.discord),
             contentDescription = stringResource(commonR.string.connection_error_discord_content_description),
             onClick = {
-                onOpenExternalLink(URL_DISCORD.toUri())
+                coroutineScope.launch {
+                    onOpenExternalLink(URL_DISCORD.toUri())
+                }
             },
         )
     }
