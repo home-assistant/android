@@ -100,22 +100,27 @@ internal class TodoWidgetStateUpdater @Inject constructor(
                 val serverId = todoEntity.serverId
                 val listEntityId = todoEntity.entityId
 
-                getAndSubscribeEntityUpdates(
-                    serverId,
-                    listEntityId,
-                )?.filterNotNull()?.distinctUntilChanged()?.map { entity ->
-                    Timber.d("Got an update of the entity $entity getting todos")
-                    val todos = serverManager.webSocketRepository(serverId).getTodoItems(listEntityId)
-                    // We update the DAO to keep it up to date for the next update of the widget
-                    todoWidgetDao.updateWidgetLastUpdate(
-                        widgetId = widgetId,
-                        lastUpdateData = TodoWidgetEntity.LastUpdateData(
-                            entityName = entity.friendlyName,
-                            todos = todos,
-                        ),
-                    )
-                    TodoStateWithData.from(todoEntity, entity, todos)
-                } ?: flowOf(TodoStateWithData.from(todoEntity))
+                if (serverManager.getServer(serverId) == null) {
+                    Timber.w("Server has been removed and the widget needs to be reconfigured")
+                    flowOf(TodoStateWithData.from(todoEntity))
+                } else {
+                    getAndSubscribeEntityUpdates(
+                        serverId,
+                        listEntityId,
+                    )?.filterNotNull()?.distinctUntilChanged()?.map { entity ->
+                        Timber.d("Got an update of the entity $entity getting todos")
+                        val todos = serverManager.webSocketRepository(serverId).getTodoItems(listEntityId)
+                        // We update the DAO to keep it up to date for the next update of the widget
+                        todoWidgetDao.updateWidgetLastUpdate(
+                            widgetId = widgetId,
+                            lastUpdateData = TodoWidgetEntity.LastUpdateData(
+                                entityName = entity.friendlyName,
+                                todos = todos,
+                            ),
+                        )
+                        TodoStateWithData.from(todoEntity, entity, todos)
+                    } ?: flowOf(TodoStateWithData.from(todoEntity))
+                }
             }
 
         // Initial state should emit before watch but if an issue occur make it explicit in the flow
