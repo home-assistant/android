@@ -23,7 +23,6 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.integration.getIcon
@@ -43,6 +42,7 @@ import io.homeassistant.companion.android.util.vehicle.getDomainList
 import io.homeassistant.companion.android.util.vehicle.getDomainsGridItem
 import io.homeassistant.companion.android.util.vehicle.getHeaderBuilder
 import io.homeassistant.companion.android.util.vehicle.getNavigationGridItem
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -66,11 +66,16 @@ class EntityGridVehicleScreen(
     private var loading = true
     var entities: List<Entity> = listOf()
     private val isFavorites = title == carContext.getString(R.string.favorites)
-    private val shouldSwitchServers = serverManager.defaultServers.size > 1
+    private var shouldSwitchServers = false
 
     init {
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                if (serverManager.servers().size > 1 && !shouldSwitchServers) {
+                    shouldSwitchServers = true
+                    invalidate()
+                }
+
                 entitiesFlow.collect {
                     loading = false
                     val hasChanged = entities.size != it.size || entities.toSet() != it.toSet()
@@ -124,6 +129,7 @@ class EntityGridVehicleScreen(
                 listBuilder.addItem(
                     getChangeServerGridItem(
                         carContext,
+                        lifecycleScope,
                         screenManager,
                         serverManager,
                         serverId,
@@ -190,7 +196,13 @@ class EntityGridVehicleScreen(
 
                                 in SUPPORTED_DOMAINS -> {
                                     lifecycleScope.launch {
-                                        entity.onPressed(integrationRepositoryProvider())
+                                        try {
+                                            entity.onPressed(integrationRepositoryProvider())
+                                        } catch (e: CancellationException) {
+                                            throw e
+                                        } catch (e: Exception) {
+                                            Timber.e(e, "Failed to handle entity onPressed")
+                                        }
                                     }
                                 }
 

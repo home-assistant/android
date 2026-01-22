@@ -102,6 +102,45 @@
         tools:ignore="GoogleAppIndexingWarning,UnusedAttribute"
         tools:targetApi="tiramisu">
 
+        <!--
+        WARNING: Do not change the fully qualified name of this activity.
+        Android shortcuts are tied to its component name; renaming it will permanently
+        break all user-created shortcuts from previous versions.
+        -->
+        <activity
+            android:name="io.homeassistant.companion.android.launch.LaunchActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.LaunchScreen">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+        WARNING: Do not change the fully qualified name of this alias.
+        It is hardcoded in settings to enable it programmatically. Renaming it would also
+        break the app for users who set it as their default launcher when updating.
+        -->
+        <activity-alias
+            android:name="io.homeassistant.companion.android.launch.LauncherAlias"
+            android:enabled="false"
+            android:exported="true"
+            android:targetActivity="io.homeassistant.companion.android.launch.LaunchActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
+
         <!-- Start things like SensorWorker on device boot -->
         <receiver android:name=".websocket.WebsocketBroadcastReceiver"
             android:exported="true">
@@ -357,11 +396,6 @@
                     android:scheme="homeassistant" />
             </intent-filter>
         </activity>
-
-        <activity
-            android:name=".onboarding.OnboardingActivity"
-            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation"
-            android:theme="@style/Theme.HomeAssistant.Config" />
 
         <activity
             android:name=".settings.wear.SettingsWearActivity"

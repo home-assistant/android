@@ -3,22 +3,28 @@ package io.homeassistant.companion.android.webview
 import android.content.Context
 import android.content.IntentSender
 import androidx.activity.result.ActivityResult
+import androidx.lifecycle.Lifecycle
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
+import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.json.JsonObject
 
 interface WebViewPresenter {
 
-    fun onViewReady(path: String?)
+    suspend fun load(
+        lifecycle: Lifecycle,
+        path: String? = null,
+        isInternalOverride: ((ServerConnectionInfo) -> Boolean)? = null,
+    )
 
     fun getActiveServer(): Int
     suspend fun getActiveServerName(): String?
     suspend fun updateActiveServer()
     suspend fun setActiveServer(id: Int)
-    suspend fun switchActiveServer(id: Int)
-    suspend fun nextServer()
-    suspend fun previousServer()
+    suspend fun switchActiveServer(lifecycle: Lifecycle, id: Int)
+    suspend fun nextServer(lifecycle: Lifecycle)
+    suspend fun previousServer(lifecycle: Lifecycle)
 
     fun onGetExternalAuth(context: Context, callback: String, force: Boolean)
 
@@ -52,6 +58,15 @@ interface WebViewPresenter {
 
     suspend fun isSsidUsed(): Boolean
 
+    /**
+     * Marks the security level screen as having been shown for the current server.
+     * Should be called when the user dismisses
+     * the [io.homeassistant.companion.android.settings.ConnectionSecurityLevelFragment].
+     */
+    fun onConnectionSecurityLevelShown()
+
+    suspend fun getAllowInsecureConnection(): Boolean?
+
     suspend fun getAuthorizationHeader(): String
 
     suspend fun parseWebViewColor(webViewColor: String): Int
@@ -80,4 +95,7 @@ interface WebViewPresenter {
     /** @return `true` if the app tried starting scanning or `false` if it was missing permissions */
     fun startScanningForImprov(): Boolean
     fun stopScanningForImprov(force: Boolean)
+
+    suspend fun onNotificationPermissionResult(granted: Boolean)
+    suspend fun shouldAskNotificationPermission(): Boolean
 }

@@ -16,7 +16,7 @@ import io.homeassistant.companion.android.common.bluetooth.ble.MonitoringManager
 import io.homeassistant.companion.android.common.bluetooth.ble.TransmitterManager
 import io.homeassistant.companion.android.common.bluetooth.ble.name
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
-import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.DatabaseEntryPoint
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.util.UUID
@@ -119,7 +119,7 @@ class BluetoothSensorManager : SensorManager {
         )
 
         suspend fun enableDisableBLETransmitter(context: Context, transmitEnabled: Boolean) {
-            val sensorDao = AppDatabase.getInstance(context).sensorDao()
+            val sensorDao = DatabaseEntryPoint.resolve(context).sensorDao()
             val sensorEntity = sensorDao.get(bleTransmitter.id)
             if (sensorEntity.none { it.enabled }) {
                 return
@@ -136,7 +136,7 @@ class BluetoothSensorManager : SensorManager {
         }
 
         suspend fun enableDisableBeaconMonitor(context: Context, monitorEnabled: Boolean) {
-            val sensorDao = AppDatabase.getInstance(context).sensorDao()
+            val sensorDao = DatabaseEntryPoint.resolve(context).sensorDao()
             val sensorEntity = sensorDao.get(beaconMonitor.id)
             if (sensorEntity.none { it.enabled }) {
                 return
@@ -283,8 +283,11 @@ class BluetoothSensorManager : SensorManager {
         )
     }
 
-    private fun isPermittedOnThisNetwork(context: Context) = serverManager(context).defaultServers.any {
-        it.connection.isInternal(requiresUrl = false)
+    private suspend fun isPermittedOnThisNetwork(context: Context): Boolean {
+        val serverMgr = serverManager(context)
+        return serverMgr.servers().any { server ->
+            serverMgr.connectionStateProvider(server.id).isInternal(requiresUrl = false)
+        }
     }
 
     private suspend fun updateBLEDevice(context: Context) {
@@ -480,7 +483,7 @@ class BluetoothSensorManager : SensorManager {
         }
 
         val lastState =
-            AppDatabase.getInstance(context).sensorDao().get(bleTransmitter.id).firstOrNull()?.state ?: STATE_UNKNOWN
+            sensorDao(context).get(bleTransmitter.id).firstOrNull()?.state ?: STATE_UNKNOWN
         val state = if (isBtOn(context)) bleTransmitterDevice.state else "Bluetooth is turned off"
         val icon = if (bleTransmitterDevice.transmitting) "mdi:bluetooth" else "mdi:bluetooth-off"
         onSensorUpdated(

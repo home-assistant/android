@@ -22,8 +22,13 @@ class WebViewContentScreenScreenshotTest {
             playerTop = 0.dp,
             playerLeft = 0.dp,
             currentAppLocked = false,
+            shouldAskNotificationPermission = false,
+            webViewInitialized = true,
             customViewFromWebView = null,
-        ) { }
+            onFullscreenClicked = {},
+            onNotificationPermissionResult = {},
+            serverHandleInsets = false,
+        )
     }
 
     @PreviewTest
@@ -38,8 +43,13 @@ class WebViewContentScreenScreenshotTest {
             playerTop = 0.dp,
             playerLeft = 0.dp,
             currentAppLocked = true,
+            shouldAskNotificationPermission = false,
+            webViewInitialized = true,
             customViewFromWebView = null,
-        ) { }
+            onFullscreenClicked = {},
+            onNotificationPermissionResult = {},
+            serverHandleInsets = false,
+        )
     }
 
     @PreviewTest
@@ -54,7 +64,34 @@ class WebViewContentScreenScreenshotTest {
             playerTop = 50.dp,
             playerLeft = 10.dp,
             currentAppLocked = false,
+            shouldAskNotificationPermission = false,
+            webViewInitialized = true,
             customViewFromWebView = null,
-        ) { }
+            onFullscreenClicked = {},
+            onNotificationPermissionResult = {},
+            serverHandleInsets = false,
+        )
+    }
+
+    @PreviewTest
+    @Preview
+    @Composable
+    fun `WebView request notification permission`() {
+        WebViewContentScreen(
+            webView = null,
+            player = null,
+            snackbarHostState = SnackbarHostState(),
+            playerSize = null,
+            playerTop = 0.dp,
+            playerLeft = 0.dp,
+            currentAppLocked = false,
+            shouldAskNotificationPermission = true,
+            webViewInitialized = true,
+            customViewFromWebView = null,
+            onFullscreenClicked = {},
+            onNotificationPermissionResult = {},
+            supportsNotificationPermission = true,
+            serverHandleInsets = false,
+        )
     }
 }

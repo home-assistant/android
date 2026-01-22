@@ -5,27 +5,12 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkStatic
-import io.mockk.unmockkStatic
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class EntityAddToActionTest {
 
-    private lateinit var context: Context
-
-    @BeforeEach
-    fun setUp() {
-        context = mockk(relaxed = true)
-        mockkStatic("io.homeassistant.companion.android.common.util.ContextExtKt")
-    }
-
-    @AfterEach
-    fun tearDown() {
-        unmockkStatic("io.homeassistant.companion.android.common.util.ContextExtKt")
-    }
+    private val context: Context = mockk(relaxed = true)
 
     @Test
     fun `Given automotive context when testing AndroidAutoFavorite then return correct attributes`() {

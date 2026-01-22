@@ -20,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.prefs.AutoFavorite
@@ -27,7 +28,7 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.settings.vehicle.ManageAndroidAutoViewModel
 import io.homeassistant.companion.android.util.compose.FavoriteEntityRow
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
-import io.homeassistant.companion.android.util.compose.SingleEntityPicker
+import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import io.homeassistant.companion.android.util.vehicle.isVehicleDomain
@@ -90,17 +91,22 @@ fun AndroidAutoFavoritesSettings(
             }
         }
         item {
-            SingleEntityPicker(
-                entities = validEntities,
-                currentEntity = null,
-                onEntityCleared = { /* Nothing */ },
-                onEntitySelected = {
-                    androidAutoViewModel.onEntitySelected(true, it, selectedServer)
-                    return@SingleEntityPicker false // Clear input
-                },
-                modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
-                label = { Text(stringResource(commonR.string.add_favorite)) },
-            )
+            // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6302
+            HATheme {
+                EntityPicker(
+                    entities = validEntities,
+                    selectedEntityId = null,
+                    onEntityCleared = { /* Nothing */ },
+                    onEntitySelectedId = {
+                        androidAutoViewModel.onEntitySelected(true, it, selectedServer)
+                    },
+                    addButtonText = stringResource(commonR.string.add_favorite),
+                    entityRegistry = androidAutoViewModel.entityRegistry,
+                    deviceRegistry = androidAutoViewModel.deviceRegistry,
+                    areaRegistry = androidAutoViewModel.areaRegistry,
+                    modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
+                )
+            }
         }
         if (favoriteEntities.isNotEmpty() && androidAutoViewModel.sortedEntities.isNotEmpty()) {
             items(favoriteEntities.size, { favoriteEntities[it] }) { index ->

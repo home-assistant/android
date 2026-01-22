@@ -5,7 +5,6 @@ import android.content.Context
 import android.os.SystemClock
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
-import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.database.sensor.toSensorWithAttributes
@@ -62,7 +61,7 @@ class LastRebootSensorManager : SensorManager {
         var local = ""
         var utc = STATE_UNAVAILABLE
 
-        val sensorDao = AppDatabase.getInstance(context).sensorDao()
+        val sensorDao = sensorDao(context)
         val fullSensor = sensorDao.getFull(lastRebootSensor.id).toSensorWithAttributes()
         val sensorSetting = sensorDao.getSettings(lastRebootSensor.id)
         val lastTimeMillis =

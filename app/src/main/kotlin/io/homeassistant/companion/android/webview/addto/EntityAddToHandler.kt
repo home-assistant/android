@@ -8,7 +8,6 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationDom
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.IMAGE_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.TODO_DOMAIN
-import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.prefs.AutoFavorite
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -21,8 +20,10 @@ import io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureAc
 import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControlsWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.todo.TodoWidgetConfigureActivity
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 /**
  * Handles the "Add To" functionality for Home Assistant entities, allowing users to add entities
@@ -72,29 +73,35 @@ class EntityAddToHandler @Inject constructor(
         return withContext(Dispatchers.Default) {
             val actions = mutableListOf<EntityAddToAction>()
             serverManager.getServer()?.let { server ->
-                serverManager.integrationRepository(server.id).getEntity(entityId)
-                    ?.let { entity ->
-                        if (!isAutomotive && !isQuest) {
-                            actions.add(EntityAddToAction.EntityWidget)
+                try {
+                    serverManager.integrationRepository(server.id).getEntity(entityId)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to get entity for id $entityId")
+                    null
+                }?.let { entity ->
+                    if (!isAutomotive && !isQuest) {
+                        actions.add(EntityAddToAction.EntityWidget)
 
-                            if (entity.domain == MEDIA_PLAYER_DOMAIN) {
-                                actions.add(EntityAddToAction.MediaPlayerWidget)
-                            }
-
-                            if (entity.domain == TODO_DOMAIN) {
-                                actions.add(EntityAddToAction.TodoWidget)
-                            }
-
-                            if (entity.domain == CAMERA_DOMAIN || entity.domain == IMAGE_DOMAIN) {
-                                actions.add(EntityAddToAction.CameraWidget)
-                            }
+                        if (entity.domain == MEDIA_PLAYER_DOMAIN) {
+                            actions.add(EntityAddToAction.MediaPlayerWidget)
                         }
 
-                        if (isVehicleDomain(entity) && (isFullFlavor || isAutomotive)) {
-                            // We could check if it already exist but the action won't do anything so we can keep it
-                            actions.add(EntityAddToAction.AndroidAutoFavorite)
+                        if (entity.domain == TODO_DOMAIN) {
+                            actions.add(EntityAddToAction.TodoWidget)
+                        }
+
+                        if (entity.domain == CAMERA_DOMAIN || entity.domain == IMAGE_DOMAIN) {
+                            actions.add(EntityAddToAction.CameraWidget)
                         }
                     }
+
+                    if (isVehicleDomain(entity) && (isFullFlavor || isAutomotive)) {
+                        // We could check if it already exist but the action won't do anything so we can keep it
+                        actions.add(EntityAddToAction.AndroidAutoFavorite)
+                    }
+                }
             }
             actions
         }

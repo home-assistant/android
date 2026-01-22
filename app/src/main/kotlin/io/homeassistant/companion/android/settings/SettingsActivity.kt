@@ -27,6 +27,7 @@ import io.homeassistant.companion.android.settings.notification.NotificationHist
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
 import io.homeassistant.companion.android.settings.sensor.SensorDetailFragment
 import io.homeassistant.companion.android.settings.server.ServerSettingsFragment
+import io.homeassistant.companion.android.settings.ssid.SsidFragment
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
 import io.homeassistant.companion.android.util.applySafeDrawingInsets
 import javax.inject.Inject
@@ -62,6 +63,7 @@ class SettingsActivity : BaseActivity() {
     @Parcelize
     sealed interface Deeplink : Parcelable {
         data object Developer : Deeplink
+        data class HomeNetwork(val serverId: Int) : Deeplink
         data object NotificationHistory : Deeplink
         data class QSTile(val tileId: String) : Deeplink
         data class Sensor(val sensorId: String) : Deeplink
@@ -90,45 +92,52 @@ class SettingsActivity : BaseActivity() {
 
         if (savedInstanceState == null) {
             val settingsNavigation = IntentCompat.getParcelableExtra(intent, EXTRA_FRAGMENT, Deeplink::class.java)
-            supportFragmentManager.commit {
-                replace(
-                    R.id.content,
-                    when (settingsNavigation) {
-                        Deeplink.Websocket -> if (serverManager.defaultServers.size == 1) {
-                            WebsocketSettingFragment::class.java
-                        } else {
-                            SettingsFragment::class.java
-                        }
-                        Deeplink.Developer -> DeveloperSettingsFragment::class.java
-                        Deeplink.NotificationHistory -> NotificationHistoryFragment::class.java
-                        is Deeplink.Sensor -> SensorDetailFragment::class.java
-                        is Deeplink.QSTile -> ManageTilesFragment::class.java
-                        else -> SettingsFragment::class.java
-                    },
-                    when (settingsNavigation) {
-                        is Deeplink.Sensor -> {
-                            SensorDetailFragment.newInstance(settingsNavigation.sensorId).arguments
-                        }
-
-                        is Deeplink.QSTile -> {
-                            val tileId = settingsNavigation.tileId
-                            Bundle().apply { putString("id", tileId) }
-                        }
-
-                        Deeplink.Websocket -> {
-                            val servers = serverManager.defaultServers
-                            if (servers.size == 1) {
-                                Bundle().apply { putInt(WebsocketSettingFragment.EXTRA_SERVER, servers[0].id) }
+            lifecycleScope.launch {
+                supportFragmentManager.commit {
+                    replace(
+                        R.id.content,
+                        when (settingsNavigation) {
+                            Deeplink.Websocket -> if (serverManager.servers().size == 1) {
+                                WebsocketSettingFragment::class.java
                             } else {
+                                SettingsFragment::class.java
+                            }
+                            Deeplink.Developer -> DeveloperSettingsFragment::class.java
+                            is Deeplink.HomeNetwork -> SsidFragment::class.java
+                            Deeplink.NotificationHistory -> NotificationHistoryFragment::class.java
+                            is Deeplink.Sensor -> SensorDetailFragment::class.java
+                            is Deeplink.QSTile -> ManageTilesFragment::class.java
+                            else -> SettingsFragment::class.java
+                        },
+                        when (settingsNavigation) {
+                            is Deeplink.HomeNetwork -> {
+                                Bundle().apply { putInt(SsidFragment.EXTRA_SERVER, settingsNavigation.serverId) }
+                            }
+
+                            is Deeplink.Sensor -> {
+                                SensorDetailFragment.newInstance(settingsNavigation.sensorId).arguments
+                            }
+
+                            is Deeplink.QSTile -> {
+                                val tileId = settingsNavigation.tileId
+                                Bundle().apply { putString("id", tileId) }
+                            }
+
+                            Deeplink.Websocket -> {
+                                val servers = serverManager.servers()
+                                if (servers.size == 1) {
+                                    Bundle().apply { putInt(WebsocketSettingFragment.EXTRA_SERVER, servers[0].id) }
+                                } else {
+                                    null
+                                }
+                            }
+
+                            else -> {
                                 null
                             }
-                        }
-
-                        else -> {
-                            null
-                        }
-                    },
-                )
+                        },
+                    )
+                }
             }
         }
     }

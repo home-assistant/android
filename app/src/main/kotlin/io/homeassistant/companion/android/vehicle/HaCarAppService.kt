@@ -20,6 +20,7 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import java.util.Collections
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -136,17 +137,30 @@ class HaCarAppService : CarAppService() {
             serverId.value = id
             val entities: MutableMap<String, Entity>? =
                 if (serverManager.getServer(id) != null) {
-                    serverManager.integrationRepository(id).getEntities()
-                        ?.associate { it.entityId to it }
-                        ?.toMutableMap()
+                    try {
+                        serverManager.integrationRepository(id).getEntities()
+                            ?.associate { it.entityId to it }
+                            ?.toMutableMap()
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Timber.e(e, "Failed to get entities")
+                        null
+                    }
                 } else {
                     null
                 }
             if (entities != null) {
                 allEntities.emit(entities.toImmutableMap())
-                serverManager.integrationRepository(id).getEntityUpdates()?.collect { entity ->
-                    entities[entity.entityId] = entity
-                    allEntities.emit(entities.toImmutableMap())
+                try {
+                    serverManager.integrationRepository(id).getEntityUpdates()?.collect { entity ->
+                        entities[entity.entityId] = entity
+                        allEntities.emit(entities.toImmutableMap())
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to get entity updates")
                 }
             } else {
                 Timber.w("No entities found?")

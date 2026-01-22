@@ -18,6 +18,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.util.AudioRecorder
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -164,11 +165,19 @@ class AssistViewModel @Inject constructor(
     }
 
     private suspend fun loadPipelines() {
-        val serverIds = filteredServerId?.let { listOf(it) } ?: serverManager.defaultServers.map { it.id }
+        val serverIds = filteredServerId?.let { listOf(it) } ?: serverManager.servers().map { it.id }
         serverIds.forEach { serverId ->
             viewModelScope.launch {
                 val server = serverManager.getServer(serverId)
-                val serverPipelines = serverManager.webSocketRepository(serverId).getAssistPipelines()
+                val serverPipelines = try {
+                    serverManager.webSocketRepository(serverId).getAssistPipelines()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to load assist pipelines")
+                    null
+                }
+
                 allPipelines[serverId] = serverPipelines?.pipelines ?: emptyList()
                 _pipelines.addAll(
                     serverPipelines?.pipelines.orEmpty().map {
@@ -197,7 +206,14 @@ class AssistViewModel @Inject constructor(
     private suspend fun setPipeline(id: String?) {
         selectedPipeline =
             allPipelines[selectedServerId]?.firstOrNull { it.id == id }
-                ?: serverManager.webSocketRepository(selectedServerId).getAssistPipeline(id)
+                ?: try {
+                    serverManager.webSocketRepository(selectedServerId).getAssistPipeline(id)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to get assist pipeline")
+                    null
+                }
         selectedPipeline?.let {
             currentPipeline = AssistUiPipeline(
                 serverId = selectedServerId,
@@ -205,7 +221,13 @@ class AssistViewModel @Inject constructor(
                 id = it.id,
                 name = it.name,
             )
-            serverManager.integrationRepository(selectedServerId).setLastUsedPipeline(it.id, it.sttEngine != null)
+            try {
+                serverManager.integrationRepository(selectedServerId).setLastUsedPipeline(it.id, it.sttEngine != null)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to set last used pipeline")
+            }
 
             _conversation.clear()
             _conversation.add(startMessage)
@@ -248,6 +270,10 @@ class AssistViewModel @Inject constructor(
             }
             AssistInputMode.VOICE_ACTIVE -> {
                 stopRecording(sendRecorded = false)
+                // Remove placeholder message if present from proactive recording
+                if (_conversation.lastOrNull()?.let { it.isPlaceholder && it.isInput } == true) {
+                    _conversation.removeAt(_conversation.size - 1)
+                }
                 inputMode = AssistInputMode.TEXT
             }
         }
@@ -280,9 +306,9 @@ class AssistViewModel @Inject constructor(
         }
 
         if (recording) {
-            if (!recorderProactive) setupRecorderQueue()
+            if (!recorderProactive) setupRecorder()
             inputMode = AssistInputMode.VOICE_ACTIVE
-            if (proactive == true) _conversation.add(AssistMessage("…", isInput = true))
+            if (proactive == true) _conversation.add(AssistMessage.placeholder(isInput = true))
             if (proactive != true) runAssistPipeline(null)
         } else {
             _conversation.add(
@@ -296,9 +322,9 @@ class AssistViewModel @Inject constructor(
         val isVoice = text == null
         stopPlayback()
 
-        val userMessage = AssistMessage(text ?: "…", isInput = true)
+        val userMessage = text?.let { AssistMessage(it, isInput = true) } ?: AssistMessage.placeholder(isInput = true)
         _conversation.add(userMessage)
-        val haMessage = AssistMessage("…", isInput = false)
+        val haMessage = AssistMessage.placeholder(isInput = false)
         if (!isVoice) _conversation.add(haMessage)
         var message = if (isVoice) userMessage else haMessage
 

@@ -71,3 +71,10 @@ annotation class NamedInstallId
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class LocationTrackingSupport
+
+/**
+ * Qualifier for a [Boolean] dependency indicating whether the device is an Android Automotive device.
+ */
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class IsAutomotive

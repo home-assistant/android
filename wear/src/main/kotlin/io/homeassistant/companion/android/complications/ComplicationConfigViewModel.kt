@@ -13,7 +13,6 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
@@ -97,11 +96,11 @@ class ComplicationConfigViewModel @Inject constructor(
 
                 // Finished initial load, update state
                 val webSocketState = serverManager.webSocketRepository().getConnectionState()
-                if (webSocketState == WebSocketState.CLOSED_AUTH) {
+                if (webSocketState == WebSocketState.ClosedAuth) {
                     loadingState = LoadingState.ERROR
                     return@launch
                 }
-                loadingState = if (webSocketState == WebSocketState.ACTIVE) {
+                loadingState = if (webSocketState == WebSocketState.Active) {
                     LoadingState.READY
                 } else {
                     LoadingState.ERROR

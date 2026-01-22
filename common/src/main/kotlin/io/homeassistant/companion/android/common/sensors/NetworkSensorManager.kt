@@ -15,7 +15,6 @@ import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.getStringOrElse
 import io.homeassistant.companion.android.common.util.toJsonObjectOrNull
-import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.lang.reflect.Method
@@ -295,7 +294,7 @@ class NetworkSensorManager : SensorManager {
         var bssid = if (conInfo?.bssid == null) "<not connected>" else conInfo.bssid
 
         val settingName = "network_replace_mac_var1:$bssid:"
-        val sensorDao = AppDatabase.getInstance(context).sensorDao()
+        val sensorDao = sensorDao(context)
         val sensorSettings = sensorDao.getSettings(bssidState.id)
         val getCurrentBSSID = sensorSettings.firstOrNull { it.name == SETTING_GET_CURRENT_BSSID }?.value ?: "false"
         val currentSetting = sensorSettings.firstOrNull { it.name == settingName }?.value ?: ""

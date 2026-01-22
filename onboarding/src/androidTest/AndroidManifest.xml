@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!--Since the tests are running in this gradle module it doesn't know the application theme and
-we need one otherwise the activities cannot start properly.-->
-    <application android:theme="@style/Theme.AppCompat" />
-</manifest>

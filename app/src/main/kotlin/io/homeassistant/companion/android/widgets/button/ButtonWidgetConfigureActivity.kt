@@ -50,6 +50,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+// TODO Migrate to compose https://github.com/home-assistant/android/issues/6305
 @AndroidEntryPoint
 class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEntity, ButtonWidgetDao>() {
     private var actions = mutableMapOf<Int, HashMap<String, Action>>()
@@ -309,31 +310,33 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEn
         binding.widgetTextConfigService.setAdapter(actionAdapter)
         binding.widgetTextConfigService.onFocusChangeListener = dropDownOnFocus
 
-        serverManager.defaultServers.forEach { server ->
-            lifecycleScope.launch {
-                try {
-                    actions[server.id] = HashMap()
-                    serverManager.integrationRepository(server.id).getServices()?.forEach {
-                        actions[server.id]!![getActionString(it)] = it
+        lifecycleScope.launch {
+            serverManager.servers().forEach { server ->
+                launch {
+                    try {
+                        actions[server.id] = HashMap()
+                        serverManager.integrationRepository(server.id).getServices()?.forEach {
+                            actions[server.id]!![getActionString(it)] = it
+                        }
+                        if (server.id == selectedServerId) setAdapterActions(server.id)
+                    } catch (e: Exception) {
+                        // Custom components can cause actions to not load
+                        // Display error text
+                        Timber.e(e, "Unable to load actions from Home Assistant")
+                        if (server.id == selectedServerId) binding.widgetConfigServiceError.visibility = View.VISIBLE
                     }
-                    if (server.id == selectedServerId) setAdapterActions(server.id)
-                } catch (e: Exception) {
-                    // Custom components can cause actions to not load
-                    // Display error text
-                    Timber.e(e, "Unable to load actions from Home Assistant")
-                    if (server.id == selectedServerId) binding.widgetConfigServiceError.visibility = View.VISIBLE
                 }
-            }
-            lifecycleScope.launch {
-                try {
-                    entities[server.id] = HashMap()
-                    serverManager.integrationRepository(server.id).getEntities()?.forEach {
-                        entities[server.id]!![it.entityId] = it
+                launch {
+                    try {
+                        entities[server.id] = HashMap()
+                        serverManager.integrationRepository(server.id).getEntities()?.forEach {
+                            entities[server.id]!![it.entityId] = it
+                        }
+                        if (server.id == selectedServerId) setAdapterActions(server.id)
+                    } catch (e: Exception) {
+                        // If entities fail to load, it's okay to pass
+                        // an empty map to the dynamicFieldAdapter
                     }
-                    if (server.id == selectedServerId) setAdapterActions(server.id)
-                } catch (e: Exception) {
-                    // If entities fail to load, it's okay to pass
-                    // an empty map to the dynamicFieldAdapter
                 }
             }
         }

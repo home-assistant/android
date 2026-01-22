@@ -1,27 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.13.1" type="baseline" client="gradle" dependencies="false" name="AGP (8.13.1)" variant="all" version="8.13.1">
-
-    <issue
-        id="MissingPermission"
-        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
-        errorLine1="                notify(NOTIFICATION_ID, notification)"
-        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/AppDatabase.kt"
-            line="1034"
-            column="17"/>
-    </issue>
-
-    <issue
-        id="MissingPermission"
-        message="Missing permissions required by NotificationManagerCompat.notify: android.permission.POST_NOTIFICATIONS"
-        errorLine1="                notify(NOTIFICATION_ID, notification)"
-        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/AppDatabase.kt"
-            line="1034"
-            column="17"/>
-    </issue>
+<issues format="6" by="lint 8.13.2" type="baseline" client="gradle" dependencies="false" name="AGP (8.13.2)" variant="all" version="8.13.2">
 
     <issue
         id="MissingPermission"
@@ -101,6 +79,28 @@
     </issue>
 
     <issue
+        id="MissingPermission"
+        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
+        errorLine1="        notify(NOTIFICATION_ID, notification)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/database/migration/Utils.kt"
+            line="53"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="MissingPermission"
+        message="Missing permissions required by NotificationManagerCompat.notify: android.permission.POST_NOTIFICATIONS"
+        errorLine1="        notify(NOTIFICATION_ID, notification)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/database/migration/Utils.kt"
+            line="53"
+            column="9"/>
+    </issue>
+
+    <issue
         id="DefaultLocale"
         message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
         errorLine1="        val sizeWithThousandsSeparator = String.format(&quot;%,d&quot;, sizeLong)"
@@ -123,58 +123,25 @@
     </issue>
 
     <issue
-        id="BatteryLife"
-        message="Use of `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` violates the Play Store Content Policy regarding acceptable use cases, as described in https://developer.android.com/training/monitoring-device-state/doze-standby.html"
-        errorLine1="                Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,"
-        errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/common/util/ContextExt.kt"
-            line="53"
-            column="26"/>
-    </issue>
-
-    <issue
         id="PrivateResource"
-        message="Overriding `@string/state_off` which is marked as private in androidx.compose.ui:ui-android:1.10.0. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name."
+        message="Overriding `@string/state_off` which is marked as private in androidx.compose.ui:ui-android:1.10.1. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name."
         errorLine1="    &lt;string name=&quot;state_off&quot;>Off&lt;/string>"
         errorLine2="                  ~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="908"
+            line="837"
             column="19"/>
     </issue>
 
     <issue
         id="PrivateResource"
-        message="Overriding `@string/state_on` which is marked as private in androidx.compose.ui:ui-android:1.10.0. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name."
+        message="Overriding `@string/state_on` which is marked as private in androidx.compose.ui:ui-android:1.10.1. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name."
         errorLine1="    &lt;string name=&quot;state_on&quot;>On&lt;/string>"
         errorLine2="                  ~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="909"
+            line="838"
             column="19"/>
-    </issue>
-
-    <issue
-        id="PluralsCandidate"
-        message="Formatting %d followed by words (&quot;sensors&quot;): This should probably be a plural rather than a string"
-        errorLine1="    &lt;string name=&quot;disable_all_sensors&quot;>Disable all %1$d sensors&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="30"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="PluralsCandidate"
-        message="Formatting %d followed by words (&quot;sensors&quot;): This should probably be a plural rather than a string"
-        errorLine1="    &lt;string name=&quot;enable_remaining_sensors&quot;>Enable %1$d sensors&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="247"
-            column="5"/>
     </issue>
 
     <issue
@@ -184,18 +151,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="413"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="PluralsCandidate"
-        message="Formatting %d followed by words (&quot;available&quot;): This should probably be a plural rather than a string"
-        errorLine1="    &lt;string name=&quot;manage_all_sensors_summary&quot;>This device has %1$d available sensors to utilize.&lt;/string>"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="474"
+            line="379"
             column="5"/>
     </issue>
 
@@ -272,7 +228,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/data/authentication/impl/AuthenticationRepositoryImpl.kt"
-            line="77"
+            line="55"
             column="13"/>
     </issue>
 
@@ -283,30 +239,30 @@
         errorLine2="                                                            ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/SensorManager.kt"
-            line="303"
+            line="298"
             column="61"/>
     </issue>
 
     <issue
         id="AvoidAnySerializer"
         message="Prefer polymorphic serializer over AnySerializer."
-        errorLine1="                                kotlinJsonMapper.encodeToString(MapAnySerializer, supportedFeaturesMessage),"
-        errorLine2="                                                                ~~~~~~~~~~~~~~~~">
+        errorLine1="                    kotlinJsonMapper.encodeToString(MapAnySerializer, outbound),"
+        errorLine2="                                                    ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/data/websocket/impl/WebSocketCoreImpl.kt"
-            line="233"
-            column="65"/>
+            line="273"
+            column="53"/>
     </issue>
 
     <issue
         id="AvoidAnySerializer"
         message="Prefer polymorphic serializer over AnySerializer."
-        errorLine1="                                    kotlinJsonMapper.encodeToString(MapAnySerializer, outbound),"
-        errorLine2="                                                                    ~~~~~~~~~~~~~~~~">
+        errorLine1="                MapAnySerializer,"
+        errorLine2="                ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/data/websocket/impl/WebSocketCoreImpl.kt"
-            line="273"
-            column="69"/>
+            line="534"
+            column="17"/>
     </issue>
 
 </issues>

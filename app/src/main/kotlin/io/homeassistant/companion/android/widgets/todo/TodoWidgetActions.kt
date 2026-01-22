@@ -118,6 +118,11 @@ class ToggleTodoAction : ActionCallback {
             return
         }
 
+        if (serverManager.getServer(widgetEntity.serverId) == null) {
+            Timber.w("Aborting the server has been removed, widget needs to be configured again")
+            return
+        }
+
         val result = serverManager.webSocketRepository(widgetEntity.serverId).updateTodo(
             entityId = widgetEntity.entityId,
             todoItem = todoItem.uid,
@@ -126,7 +131,7 @@ class ToggleTodoAction : ActionCallback {
         )
 
         if (!result) {
-            Timber.e("Fail to toggle $todoItem")
+            Timber.e("Failed to toggle $todoItem")
             // We cannot update the UI from an action nor send a toast, we don't have any UI context.
             // TODO we could modify the entry in DB to add the error message
         }

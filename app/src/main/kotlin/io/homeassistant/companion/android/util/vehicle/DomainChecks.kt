@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.util.vehicle
 
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.integration.supportsAlarmControlPanelArmAway
 
 val SUPPORTED_DOMAINS_WITH_STRING = mapOf(

@@ -18,7 +18,6 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.IMAGE_DOMAIN
-import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
@@ -30,6 +29,7 @@ import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+// TODO Migrate to compose https://github.com/home-assistant/android/issues/6306
 @AndroidEntryPoint
 class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity<CameraWidgetEntity, CameraWidgetDao>() {
 
@@ -70,16 +70,14 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity<CameraWidgetEn
         binding.root.applySafeDrawingInsets()
 
         binding.addButton.setOnClickListener {
-            if (requestLauncherSetup) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && isValidServerId() && selectedEntity != null) {
-                    lifecycleScope.launch {
+            lifecycleScope.launch {
+                if (requestLauncherSetup) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && isValidServerId() && selectedEntity != null) {
                         requestWidgetCreation()
+                    } else {
+                        showAddWidgetError()
                     }
                 } else {
-                    showAddWidgetError()
-                }
-            } else {
-                lifecycleScope.launch {
                     updateWidget()
                 }
             }
@@ -139,17 +137,19 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity<CameraWidgetEn
         binding.widgetTextConfigEntityId.onFocusChangeListener = dropDownOnFocus
         binding.widgetTextConfigEntityId.onItemClickListener = entityDropDownOnItemClick
 
-        serverManager.defaultServers.forEach { server ->
-            lifecycleScope.launch {
-                try {
-                    val fetchedEntities = serverManager.integrationRepository(server.id).getEntities().orEmpty()
-                        .filter { it.domain == CAMERA_DOMAIN || it.domain == IMAGE_DOMAIN }
-                    entities[server.id] = fetchedEntities
-                    if (server.id == selectedServerId) setAdapterEntities(server.id)
-                } catch (e: Exception) {
-                    // If entities fail to load, it's okay to pass
-                    // an empty map to the dynamicFieldAdapter
-                    Timber.e(e, "Failed to query entities")
+        lifecycleScope.launch {
+            serverManager.servers().forEach { server ->
+                launch {
+                    try {
+                        val fetchedEntities = serverManager.integrationRepository(server.id).getEntities().orEmpty()
+                            .filter { it.domain == CAMERA_DOMAIN || it.domain == IMAGE_DOMAIN }
+                        entities[server.id] = fetchedEntities
+                        if (server.id == selectedServerId) setAdapterEntities(server.id)
+                    } catch (e: Exception) {
+                        // If entities fail to load, it's okay to pass
+                        // an empty map to the dynamicFieldAdapter
+                        Timber.e(e, "Failed to query entities")
+                    }
                 }
             }
         }

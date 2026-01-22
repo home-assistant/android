@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import timber.log.Timber
@@ -60,7 +59,7 @@ class LastUpdateManager : SensorManager {
             mapOf(),
         )
 
-        val sensorDao = AppDatabase.getInstance(context).sensorDao()
+        val sensorDao = sensorDao(context)
         val (settingsToRemove, allSettings) = sensorDao.getSettings(lastUpdate.id).partition { setting ->
             setting.value.isEmpty()
         }

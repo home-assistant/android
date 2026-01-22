@@ -1,12 +1,13 @@
 package io.homeassistant.companion.android.database.server
 
+import android.os.Parcelable
 import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
-import androidx.room.Ignore
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
+import kotlinx.parcelize.Parcelize
 
 @Entity(tableName = "servers")
 @TypeConverters(InternalSsidTypeConverter::class)
@@ -21,8 +22,6 @@ data class Server(
     val _version: String? = null,
     @ColumnInfo(name = "device_registry_id")
     val deviceRegistryId: String? = null,
-    @Ignore
-    val type: ServerType = ServerType.DEFAULT,
     @ColumnInfo(name = "list_order")
     val listOrder: Int = -1,
     @ColumnInfo(name = "device_name")
@@ -31,31 +30,20 @@ data class Server(
     @Embedded val session: ServerSessionInfo,
     @Embedded val user: ServerUserInfo,
 ) {
-    constructor(
-        id: Int,
-        _name: String,
-        nameOverride: String?,
-        _version: String?,
-        deviceRegistryId: String?,
-        listOrder: Int,
-        deviceName: String?,
-        connection: ServerConnectionInfo,
-        session: ServerSessionInfo,
-        user: ServerUserInfo,
-    ) :
-        this(
-            id,
-            _name,
-            nameOverride,
-            _version,
-            deviceRegistryId,
-            ServerType.DEFAULT,
-            listOrder,
-            deviceName,
-            connection,
-            session,
-            user,
-        )
+
+    companion object {
+        fun fromTemporaryServer(temporaryServer: TemporaryServer): Server {
+            return Server(
+                _name = "",
+                connection = ServerConnectionInfo(
+                    externalUrl = temporaryServer.externalUrl,
+                    allowInsecureConnection = temporaryServer.allowInsecureConnection,
+                ),
+                session = temporaryServer.session,
+                user = ServerUserInfo(),
+            )
+        }
+    }
 
     val friendlyName: String
         get() = nameOverride ?: _name.ifBlank { connection.externalUrl }
@@ -64,7 +52,9 @@ data class Server(
         get() = _version?.let { HomeAssistantVersion.fromString(_version) }
 }
 
-enum class ServerType {
-    TEMPORARY,
-    DEFAULT,
-}
+@Parcelize
+data class TemporaryServer(
+    val externalUrl: String,
+    val session: ServerSessionInfo,
+    val allowInsecureConnection: Boolean?,
+) : Parcelable

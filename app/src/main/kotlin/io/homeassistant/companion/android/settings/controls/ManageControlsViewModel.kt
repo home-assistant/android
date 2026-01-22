@@ -16,15 +16,17 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.controls.HaControlsPanelActivity
 import io.homeassistant.companion.android.controls.HaControlsProviderService
+import io.homeassistant.companion.android.database.server.Server
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @HiltViewModel
@@ -53,12 +55,14 @@ class ManageControlsViewModel @Inject constructor(
     var structureEnabled by mutableStateOf(false)
         private set
 
-    val defaultServers = serverManager.defaultServers
+    var servers by mutableStateOf<List<Server>>(emptyList())
+        private set
 
     var defaultServerId by mutableIntStateOf(0)
 
     init {
         viewModelScope.launch {
+            servers = serverManager.servers()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                 panelEnabled =
                     application.packageManager.getComponentEnabledSetting(
@@ -81,15 +85,22 @@ class ManageControlsViewModel @Inject constructor(
 
             defaultServerId = serverManager.getServer()?.id ?: 0
 
-            serverManager.defaultServers.map { server ->
+            servers.map { server ->
                 async {
-                    val entities = serverManager.integrationRepository(server.id).getEntities()
-                        ?.filter { it.domain in HaControlsProviderService.getSupportedDomains() }
-                        ?.sortedWith(
-                            compareBy(String.CASE_INSENSITIVE_ORDER) {
-                                it.attributes["friendly_name"].toString()
-                            },
-                        )
+                    val entities = try {
+                        serverManager.integrationRepository(server.id).getEntities()
+                            ?.filter { it.domain in HaControlsProviderService.getSupportedDomains() }
+                            ?.sortedWith(
+                                compareBy(String.CASE_INSENSITIVE_ORDER) {
+                                    it.attributes["friendly_name"].toString()
+                                },
+                            )
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Timber.e(e, "Failed to get entities")
+                        null
+                    }
                     if (entities != null) {
                         entitiesList[server.id] = entities
                     }

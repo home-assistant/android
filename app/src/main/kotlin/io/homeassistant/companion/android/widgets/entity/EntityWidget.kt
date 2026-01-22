@@ -26,6 +26,7 @@ import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.util.getAttribute
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -160,6 +161,8 @@ class EntityWidget : BaseWidgetProvider<StaticWidgetEntity, StaticWidgetDao>() {
             } else {
                 entityId?.let { serverManager.integrationRepository(serverId).getEntity(it) }
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.e(e, "Unable to fetch entity")
             entityCaughtException = true
@@ -168,7 +171,14 @@ class EntityWidget : BaseWidgetProvider<StaticWidgetEntity, StaticWidgetDao>() {
             entity?.canSupportPrecision() == true &&
             serverManager.getServer(serverId)?.version?.isAtLeast(2023, 3) == true
         ) {
-            serverManager.webSocketRepository(serverId).getEntityRegistryFor(entity.entityId)?.options
+            try {
+                serverManager.webSocketRepository(serverId).getEntityRegistryFor(entity.entityId)?.options
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to get options")
+                null
+            }
         } else {
             null
         }

@@ -29,9 +29,9 @@ jobs:
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
-      - uses: ruby/setup-ruby@d697be2f83c6234b20877c3b5eac7a7f342f0d0c # v1.269.0
+      - uses: ruby/setup-ruby@708024e6c902387ab41de36e1669e43b5ee7085e # v1.283.0
         with:
-          ruby-version: "3.4.7"
+          ruby-version: "4.0.1"
           bundler-cache: true
 
       - uses: ./.github/actions/create-release-number
@@ -69,7 +69,7 @@ jobs:
           ./gradlew :common:assemble :app:assembleRelease :wear:assembleRelease :automotive:assembleRelease
 
       - name: Archive Build
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: release-apks
           path: ./**/*.apk
@@ -139,9 +139,9 @@ jobs:
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
-      - uses: ruby/setup-ruby@d697be2f83c6234b20877c3b5eac7a7f342f0d0c # v1.269.0
+      - uses: ruby/setup-ruby@708024e6c902387ab41de36e1669e43b5ee7085e # v1.283.0
         with:
-          ruby-version: "3.4.7"
+          ruby-version: "4.0.1"
           bundler-cache: true
 
       - uses: ./.github/actions/create-release-number
@@ -179,7 +179,7 @@ jobs:
           ./gradlew :common:assemble :app:bundleFullRelease :wear:bundleRelease :automotive:bundleFullRelease
 
       - name: Archive Build
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: release-aabs
           path: ./**/*.aab
