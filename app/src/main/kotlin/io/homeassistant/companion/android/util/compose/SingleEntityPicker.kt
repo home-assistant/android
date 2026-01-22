@@ -37,6 +37,7 @@ import io.homeassistant.companion.android.common.data.integration.friendlyName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+@Deprecated("A new version more powerful is available.", replaceWith = ReplaceWith("EntityPicker"))
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun SingleEntityPicker(

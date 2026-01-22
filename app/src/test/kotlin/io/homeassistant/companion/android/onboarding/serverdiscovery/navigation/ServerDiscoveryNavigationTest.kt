@@ -36,9 +36,9 @@ import io.homeassistant.companion.android.onboarding.serverdiscovery.ServerDisco
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.compose.navigateToUri
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import java.net.URL
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.channels.Channel
@@ -99,7 +99,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
 
             onNodeWithContentDescription(stringResource(commonR.string.get_help)).performClick()
-            verify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION) }
+            coVerify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, any()) }
 
             onNodeWithContentDescription(stringResource(commonR.string.navigate_up))
                 .assertIsDisplayed()
@@ -140,7 +140,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ManualServerRoute>() == true)
 
             onNodeWithContentDescription(stringResource(commonR.string.get_help)).performClick()
-            verify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION) }
+            coVerify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, any()) }
 
             onNodeWithContentDescription(stringResource(commonR.string.navigate_up))
                 .assertIsDisplayed()
@@ -165,7 +165,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
             )
 
             onNodeWithContentDescription(stringResource(commonR.string.get_help)).performClick()
-            verify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION) }
+            coVerify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, any()) }
 
             waitUntilAtLeastOneExists(
                 hasText(instanceUrl),

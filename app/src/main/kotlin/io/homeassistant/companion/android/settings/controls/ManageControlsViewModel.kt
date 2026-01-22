@@ -22,9 +22,11 @@ import io.homeassistant.companion.android.controls.HaControlsPanelActivity
 import io.homeassistant.companion.android.controls.HaControlsProviderService
 import io.homeassistant.companion.android.database.server.Server
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @HiltViewModel
@@ -85,13 +87,20 @@ class ManageControlsViewModel @Inject constructor(
 
             servers.map { server ->
                 async {
-                    val entities = serverManager.integrationRepository(server.id).getEntities()
-                        ?.filter { it.domain in HaControlsProviderService.getSupportedDomains() }
-                        ?.sortedWith(
-                            compareBy(String.CASE_INSENSITIVE_ORDER) {
-                                it.attributes["friendly_name"].toString()
-                            },
-                        )
+                    val entities = try {
+                        serverManager.integrationRepository(server.id).getEntities()
+                            ?.filter { it.domain in HaControlsProviderService.getSupportedDomains() }
+                            ?.sortedWith(
+                                compareBy(String.CASE_INSENSITIVE_ORDER) {
+                                    it.attributes["friendly_name"].toString()
+                                },
+                            )
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Timber.e(e, "Failed to get entities")
+                        null
+                    }
                     if (entities != null) {
                         entitiesList[server.id] = entities
                     }

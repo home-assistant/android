@@ -241,6 +241,7 @@
     </plurals>
     <string name="entity_attribute_checkbox">Append attribute value</string>
     <string name="entity_id_name">Entity ID: %1$s</string>
+    <string name="entity_picker_add_entity">Add entity</string>
     <string name="entity_widget_desc">View any entity\'s current state and toggle it</string>
     <string name="todo_widget_desc">View any configured to-do list and mark items as completed</string>
     <string name="error_auth_revoked">It appears that your authorization was revoked, please reconnect to Home Assistant.</string>
@@ -552,6 +553,7 @@
     <string name="save">Save</string>
     <string name="scenes">Scenes</string>
     <string name="scripts">Scripts</string>
+    <string name="search">Search</string>
     <string name="search_clear_selection">Clear selection</string>
     <string name="search_icons">Search icons</string>
     <string name="search_icons_in_english">Search icons (in English)</string>
@@ -1431,4 +1433,7 @@
     <string name="connection_check_home_assistant">Home Assistant verification</string>
     <string name="connection_check_home_assistant_success">Verified as Home Assistant</string>
     <string name="connection_check_error_not_home_assistant">Server is not Home Assistant</string>
+    <string name="entity_picker_no_entity_found">No entity found</string>
+    <string name="entity_picker_no_entity_found_for">No entity found for %s</string>
+    <string name="fail_to_navigate_to_uri">No app available to open %s</string>
 </resources>

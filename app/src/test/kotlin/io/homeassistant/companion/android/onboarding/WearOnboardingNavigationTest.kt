@@ -50,6 +50,7 @@ import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryRoute
 import io.homeassistant.companion.android.onboarding.wearmtls.WearMTLSUiState
 import io.homeassistant.companion.android.onboarding.wearmtls.WearMTLSViewModel
+import io.homeassistant.companion.android.onboarding.wearmtls.navigation.URL_MTLS_DOCUMENTATION
 import io.homeassistant.companion.android.onboarding.wearmtls.navigation.WearMTLSRoute
 import io.homeassistant.companion.android.onboarding.wearmtls.navigation.navigateToWearMTLS
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
@@ -58,11 +59,12 @@ import io.homeassistant.companion.android.util.LocationPermissionActivityResultR
 import io.homeassistant.companion.android.util.compose.navigateToUri
 import io.homeassistant.companion.android.util.compose.webview.HA_WEBVIEW_TAG
 import io.mockk.Runs
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkStatic
-import io.mockk.verify
 import java.net.URL
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.channels.Channel
@@ -148,7 +150,7 @@ internal class WearOnboardingNavigationTest {
     @Before
     fun setup() {
         mockkStatic(NavController::navigateToUri)
-        every { any<NavController>().navigateToUri(any()) } just Runs
+        coEvery { any<NavController>().navigateToUri(any(), any()) } just Runs
     }
 
     private fun setContent(urlToOnboard: String? = null) {
@@ -175,6 +177,7 @@ internal class WearOnboardingNavigationTest {
                             this@WearOnboardingNavigationTest.certUri = certUri
                             this@WearOnboardingNavigationTest.certPassword = certPassword
                         },
+                        onShowSnackbar = { _, _ -> true },
                         urlToOnboard = urlToOnboard,
                         wearNameToOnboard = WEAR_NAME,
                     )
@@ -266,7 +269,7 @@ internal class WearOnboardingNavigationTest {
             onNodeWithText(WEAR_NAME).assertIsDisplayed()
 
             onNodeWithContentDescription(stringResource(commonR.string.get_help)).performClick()
-            verify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION) }
+            coVerify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, any()) }
 
             onNodeWithText(stringResource(commonR.string.name_your_device_save)).performScrollTo().assertIsDisplayed().performClick()
 
@@ -315,7 +318,7 @@ internal class WearOnboardingNavigationTest {
             onNodeWithText(stringResource(commonR.string.wear_mtls_content)).assertIsDisplayed()
 
             onNodeWithContentDescription(stringResource(commonR.string.get_help)).performClick()
-            verify { any<NavController>().navigateToUri("https://companion.home-assistant.io/docs/getting_started/#tls-client-authentication") }
+            coVerify { any<NavController>().navigateToUri(URL_MTLS_DOCUMENTATION, any()) }
 
             onNodeWithText(stringResource(commonR.string.wear_mtls_next)).performScrollTo().assertIsDisplayed().assertIsEnabled().performClick()
 

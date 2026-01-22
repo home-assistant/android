@@ -14,6 +14,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DataSource
 import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
@@ -44,10 +45,10 @@ class AudioUrlPlayer @VisibleForTesting constructor(
     private val playerCreator: suspend (ExoPlayer.() -> Unit) -> ExoPlayer,
 ) {
 
-    constructor(context: Context, audioManager: AudioManager?) : this(
+    constructor(context: Context, audioManager: AudioManager?, dataSourceFactory: DataSource.Factory) : this(
         audioManager,
         {
-            val player = initializePlayer(context)
+            val player = initializePlayer(context, dataSourceFactory)
             player.apply(it)
         },
     )

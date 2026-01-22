@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.common.util
 import android.content.Context
 import android.media.AudioManager
 import androidx.core.content.getSystemService
+import androidx.media3.datasource.DataSource
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -21,6 +22,8 @@ object UtilModule {
 
     @Provides
     @Singleton
-    fun provideAudioUrlPlayer(@ApplicationContext appContext: Context): AudioUrlPlayer =
-        AudioUrlPlayer(appContext, appContext.getSystemService<AudioManager>())
+    fun provideAudioUrlPlayer(
+        @ApplicationContext appContext: Context,
+        dataSourceFactory: DataSource.Factory,
+    ): AudioUrlPlayer = AudioUrlPlayer(appContext, appContext.getSystemService<AudioManager>(), dataSourceFactory)
 }
