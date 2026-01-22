@@ -155,7 +155,7 @@ internal class LauncherViewModel @AssistedInject constructor(
     ): Boolean {
         Timber.i("Current network state $state")
         return when (state) {
-            NetworkState.READY_LOCAL, NetworkState.READY_REMOTE -> {
+            NetworkState.READY_INTERNAL, NetworkState.READY_NET_VALIDATED, NetworkState.READY_NET_LOCAL -> {
                 workManager.enqueueResyncRegistration()
                 _navigationEventsFlow.emit(destinationOnReady)
                 true

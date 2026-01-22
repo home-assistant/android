@@ -9,6 +9,7 @@ import io.homeassistant.companion.android.util.isPubliclyAccessible
 import java.net.URL
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -25,24 +26,36 @@ interface NetworkStatusMonitor {
 
 /**
  * Represents the current network connectivity state, especially relevant to server access.
+ *
+ * The `READY_*` states indicate the app can proceed with connection attempts.
+ * Different states help with debugging and logging to understand the network conditions.
  */
 enum class NetworkState {
     /**
-     * A local network is available and the current connection matches internal criteria (e.g., SSID, Ethernet, VPN).
-     * This typically indicates the server can be reached via its internal URL.
+     * Device is connected to the configured internal/home network (matched by SSID, Ethernet, or VPN).
+     * The server can be reached via its internal URL. Network validation status is irrelevant.
      */
-    READY_LOCAL,
+    READY_INTERNAL,
 
     /**
-     * Network is available and validated (e.g., internet is reachable),
-     * but we are not considered to be on the internal network.
-     * Server will be accessed through external/cloud URL.
+     * Network is available and validated by Android (internet connectivity confirmed).
+     * Not on the internal network, so server will be accessed through external/cloud URL.
      */
-    READY_REMOTE,
+    READY_NET_VALIDATED,
+
+    /**
+     * Network is available but NOT validated (no internet connectivity).
+     * However, the configured external URL points to a private/local address
+     * (e.g., 192.168.x.x, 10.x.x.x, .local, .home), so connection can proceed.
+     *
+     * This handles LAN-only networks (e.g., isolated IoT VLANs) where Android's
+     * NET_CAPABILITY_VALIDATED is never set because there's no internet access.
+     */
+    READY_NET_LOCAL,
 
     /**
      * Network connection exists but has not yet been validated or identified as internal.
-     * This is a transitional state while we wait for system validation or SSID checks.
+     * This is a transitional state while waiting for system validation or SSID checks.
      */
     CONNECTING,
 
@@ -98,10 +111,10 @@ internal class NetworkStatusMonitorImpl @Inject constructor(
      *
      * Priority of checks:
      * 1. If no active network -> [NetworkState.UNAVAILABLE]
-     * 2. If device is considered internal (SSID, VPN, Ethernet match) -> [NetworkState.READY_LOCAL]
-     * 3. If network is validated (but not internal) -> [NetworkState.READY_REMOTE]
+     * 2. If device is on internal network (SSID, VPN, Ethernet match) -> [NetworkState.READY_INTERNAL]
+     * 3. If network is validated (internet reachable) -> [NetworkState.READY_NET_VALIDATED]
      * 4. If network exists but not validated:
-     *    - If the external URL is a private address -> [NetworkState.READY_REMOTE] (assume LAN-only network)
+     *    - If external URL is a private address -> [NetworkState.READY_NET_LOCAL] (LAN-only network)
      *    - Otherwise -> [NetworkState.CONNECTING] (wait for validation)
      *
      * Note: Both internal and validated may be true, but internal takes precedence
@@ -114,17 +127,17 @@ internal class NetworkStatusMonitorImpl @Inject constructor(
 
         return when {
             !hasActiveNetwork -> NetworkState.UNAVAILABLE
-            isInternal -> NetworkState.READY_LOCAL
-            isValidated -> NetworkState.READY_REMOTE
+            isInternal -> NetworkState.READY_INTERNAL
+            isValidated -> NetworkState.READY_NET_VALIDATED
             else -> {
                 // Check URL only when we need it - when network exists but not validated and not internal
-                val urlIsPrivate = serverConfig.externalUrl?.let { urlString ->
-                    try {
-                        !URL(urlString).isPubliclyAccessible()
-                    } catch (e: Exception) {
-                        false
-                    }
-                } ?: false
+                val urlIsPrivate = try {
+                    !URL(serverConfig.externalUrl).isPubliclyAccessible()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    false
+                }
 
                 if (urlIsPrivate) {
                     // Fix for issue #6099: On LAN-only networks without internet access,
@@ -132,7 +145,7 @@ internal class NetworkStatusMonitorImpl @Inject constructor(
                     // and the external URL is a local/private address (e.g., http://192.168.1.100:8123,
                     // http://ha.local, http://ha.home), assume the network is ready and attempt connection.
                     // The WebView/API layer will handle actual connectivity failures.
-                    NetworkState.READY_REMOTE
+                    NetworkState.READY_NET_LOCAL
                 } else {
                     NetworkState.CONNECTING
                 }

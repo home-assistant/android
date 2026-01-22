@@ -47,7 +47,7 @@ class LauncherViewModelTest {
     }
 
     @ParameterizedTest
-    @EnumSource(NetworkState::class, names = ["READY_LOCAL", "READY_REMOTE"])
+    @EnumSource(NetworkState::class, names = ["READY_INTERNAL", "READY_NET_VALIDATED", "READY_NET_LOCAL"])
     fun `Given active server connected and registered, when network is READY, then navigate to frontend and resync registration`(
         state: NetworkState,
     ) = runTest {
@@ -126,7 +126,7 @@ class LauncherViewModelTest {
         assertTrue(viewModel.navigationEventsFlow.replayCache.isEmpty())
         assertEquals(1, networkStateFlow.subscriptionCount.value)
 
-        networkStateFlow.emit(NetworkState.READY_REMOTE)
+        networkStateFlow.emit(NetworkState.READY_NET_VALIDATED)
         advanceUntilIdle()
 
         assertEquals(1, viewModel.navigationEventsFlow.replayCache.size)
@@ -277,7 +277,7 @@ class LauncherViewModelTest {
         coEvery { serverManager.getServer(serverId) } returns server
         coEvery { serverManager.isRegistered() } returns true
         coEvery { serverManager.authenticationRepository().getSessionState() } returns SessionState.CONNECTED
-        val networkStateFlow = MutableStateFlow(NetworkState.READY_REMOTE)
+        val networkStateFlow = MutableStateFlow(NetworkState.READY_NET_VALIDATED)
         coEvery { networkStatusMonitor.observeNetworkStatus(any()) } returns networkStateFlow
 
         createViewModel(LauncherActivity.DeepLink.NavigateTo("/path", serverId))

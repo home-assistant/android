@@ -80,7 +80,7 @@ class NetworkStatusMonitorImplTest {
     }
 
     @Test
-    fun `Given on local setup when active network then state is READY_LOCAL`() = runTest {
+    fun `Given on local setup when active network then state is READY_INTERNAL`() = runTest {
         // Given
         every { networkHelper.hasActiveNetwork() } returns true
         every { networkHelper.isNetworkValidated() } returns false
@@ -90,11 +90,11 @@ class NetworkStatusMonitorImplTest {
         val result = networkMonitor.observeNetworkStatus(serverConfig).first()
 
         // Then
-        assertEquals(NetworkState.READY_LOCAL, result)
+        assertEquals(NetworkState.READY_INTERNAL, result)
     }
 
     @Test
-    fun `Given on observing network on external setup when validated network then state is READY_REMOTE`() = runTest {
+    fun `Given on observing network on external setup when validated network then state is READY_NET_VALIDATED`() = runTest {
         // Given
         every { networkHelper.hasActiveNetwork() } returns true
         every { serverConfig.isInternal(false) } returns false
@@ -104,7 +104,7 @@ class NetworkStatusMonitorImplTest {
         val result = networkMonitor.observeNetworkStatus(serverConfig).first()
 
         // Then
-        assertEquals(NetworkState.READY_REMOTE, result)
+        assertEquals(NetworkState.READY_NET_VALIDATED, result)
     }
 
     @Test
@@ -120,7 +120,7 @@ class NetworkStatusMonitorImplTest {
     }
 
     @Test
-    fun `Given LAN-only network when network is not validated but external URL is local IP then state is READY_REMOTE (issue 6099)`() = runTest {
+    fun `Given LAN-only network when network is not validated but external URL is local IP then state is READY_NET_LOCAL (issue 6099)`() = runTest {
         // Given - Simulating a LAN-only network without internet (like an isolated IoT VLAN)
         every { networkHelper.hasActiveNetwork() } returns true
         every { serverConfig.isInternal(false) } returns false
@@ -130,8 +130,8 @@ class NetworkStatusMonitorImplTest {
         // When
         val result = networkMonitor.observeNetworkStatus(serverConfig).first()
 
-        // Then - Should be READY_REMOTE instead of stuck in CONNECTING
-        assertEquals(NetworkState.READY_REMOTE, result)
+        // Then - Should be READY_NET_LOCAL instead of stuck in CONNECTING
+        assertEquals(NetworkState.READY_NET_LOCAL, result)
     }
 
     @Test
@@ -150,7 +150,7 @@ class NetworkStatusMonitorImplTest {
     }
 
     @Test
-    fun `Given network becomes ready when callback triggered then state updates from UNAVAILABLE to READY_LOCAL`() = runTest {
+    fun `Given network becomes ready when callback triggered then state updates from UNAVAILABLE to READY_INTERNAL`() = runTest {
         every { networkHelper.hasActiveNetwork() } returnsMany listOf(false, true)
         every { serverConfig.isInternal(any()) } returns true
         every { networkHelper.isNetworkValidated() } returns false
@@ -163,11 +163,11 @@ class NetworkStatusMonitorImplTest {
         callbackSlot.captured.onAvailable(network)
         advanceUntilIdle()
         job.cancel()
-        assertEquals(listOf(NetworkState.UNAVAILABLE, NetworkState.READY_LOCAL), states)
+        assertEquals(listOf(NetworkState.UNAVAILABLE, NetworkState.READY_INTERNAL), states)
     }
 
     @Test
-    fun `Given network becomes ready when callback triggered then state updates from UNAVAILABLE to READY_REMOTE`() = runTest {
+    fun `Given network becomes ready when callback triggered then state updates from UNAVAILABLE to READY_NET_VALIDATED`() = runTest {
         every { serverConfig.isInternal(false) } returns false
         every { networkHelper.hasActiveNetwork() } returnsMany listOf(false, true)
         every { serverConfig.externalUrl } returns ""
@@ -182,6 +182,6 @@ class NetworkStatusMonitorImplTest {
         callbackSlot.captured.onAvailable(network)
         advanceUntilIdle()
         job.cancel()
-        assertEquals(listOf(NetworkState.UNAVAILABLE, NetworkState.READY_REMOTE), states)
+        assertEquals(listOf(NetworkState.UNAVAILABLE, NetworkState.READY_NET_VALIDATED), states)
     }
 }

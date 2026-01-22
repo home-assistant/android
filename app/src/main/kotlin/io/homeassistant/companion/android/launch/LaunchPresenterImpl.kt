@@ -61,7 +61,7 @@ class LaunchPresenterImpl @Inject constructor(
     private suspend fun handleNetworkState(state: NetworkState): Boolean {
         Timber.i("Current network state $state")
         return when (state) {
-            NetworkState.READY_LOCAL, NetworkState.READY_REMOTE -> {
+            NetworkState.READY_INTERNAL, NetworkState.READY_NET_VALIDATED, NetworkState.READY_NET_LOCAL -> {
                 view.dismissDialog()
                 workManager.enqueueResyncRegistration()
                 view.displayWebView()
