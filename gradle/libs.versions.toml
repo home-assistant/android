@@ -79,6 +79,8 @@ room = "2.8.4"
 runtimeLint = "1.10.1"
 screenshot = "0.0.1-alpha13" # On the next update, replace the hack in AndroidComposeConvertionPlugin with the real fix
 sentry-android = "8.30.0"
+litert = "2.1.0"
+play-services-tflite = "16.4.0"
 timber = "5.0.1"
 tools-desugar-jdk-libs = "2.1.5"
 turbine = "1.2.1"
@@ -243,6 +245,8 @@ retrofit-converter-kotlinx-serialization = { module = "com.squareup.retrofit2:co
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 screenshot-validation-api = { group = "com.android.tools.screenshot", name = "screenshot-validation-api", version.ref = "screenshot" }
 sentry-android-core = { module = "io.sentry:sentry-android-core", version.ref = "sentry-android" }
+litert = { module = "com.google.ai.edge.litert:litert", version.ref = "litert" }
+play-services-tflite = { module = "com.google.android.gms:play-services-tflite-java", version.ref = "play-services-tflite" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 tools-desugar-jdk = { module = "com.android.tools:desugar_jdk_libs", version.ref = "tools-desugar-jdk-libs" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
