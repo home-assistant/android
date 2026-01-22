@@ -238,7 +238,7 @@ private fun TodoWidgetConfigureView(
                 )
             }
 
-            // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6258
+            // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6303
             HATheme {
                 EntityPicker(
                     entities = entities,

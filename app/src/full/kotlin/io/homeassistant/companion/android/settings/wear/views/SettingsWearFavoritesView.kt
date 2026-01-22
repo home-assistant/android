@@ -102,7 +102,7 @@ fun LoadWearFavoritesSettings(
                 )
             }
             item {
-                // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6258
+                // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6300
                 HATheme {
                     EntityPicker(
                         entities = validEntities,

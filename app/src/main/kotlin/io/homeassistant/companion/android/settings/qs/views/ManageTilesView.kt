@@ -140,7 +140,7 @@ fun ManageTilesView(viewModel: ManageTilesViewModel, onShowIconDialog: (tag: Str
                     )
                 }
 
-                // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6258
+                // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6301
                 HATheme {
                     EntityPicker(
                         entities = viewModel.sortedEntities,
