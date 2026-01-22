@@ -269,17 +269,19 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     }
 
     private fun createNotificationChannel() {
-        val channel = NotificationChannel(
-            CHANNEL_ID,
-            getString(commonR.string.assist_listening_channel),
-            NotificationManager.IMPORTANCE_LOW,
-        ).apply {
-            description = getString(commonR.string.assist_listening_channel_description)
-            setShowBadge(false)
-        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                getString(commonR.string.assist_listening_channel),
+                NotificationManager.IMPORTANCE_LOW,
+            ).apply {
+                description = getString(commonR.string.assist_listening_channel_description)
+                setShowBadge(false)
+            }
 
-        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.createNotificationChannel(channel)
+            val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
