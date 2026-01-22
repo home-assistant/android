@@ -118,6 +118,11 @@ class ToggleTodoAction : ActionCallback {
             return
         }
 
+        if (serverManager.getServer(widgetEntity.serverId) == null) {
+            Timber.w("Aborting the server has been removed, widget needs to be configured again")
+            return
+        }
+
         val result = serverManager.webSocketRepository(widgetEntity.serverId).updateTodo(
             entityId = widgetEntity.entityId,
             todoItem = todoItem.uid,
