@@ -47,6 +47,7 @@ import io.homeassistant.companion.android.util.icondialog.mdiName
 import io.homeassistant.companion.android.webview.WebViewActivity
 import io.homeassistant.companion.android.widgets.assist.AssistShortcutActivity
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -126,6 +127,8 @@ class ManageShortcutsViewModel @Inject constructor(
                     entities[server.id] = try {
                         serverManager.integrationRepository(server.id).getEntities().orEmpty()
                             .sortedBy { it.entityId }
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         Timber.e(e, "Couldn't load entities for server")
                         emptyList()
@@ -134,6 +137,8 @@ class ManageShortcutsViewModel @Inject constructor(
                 launch {
                     entityRegistry[server.id] = try {
                         serverManager.webSocketRepository(server.id).getEntityRegistry().orEmpty()
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         Timber.e(e, "Couldn't load entity registry for server")
                         emptyList()
@@ -142,6 +147,8 @@ class ManageShortcutsViewModel @Inject constructor(
                 launch {
                     deviceRegistry[server.id] = try {
                         serverManager.webSocketRepository(server.id).getDeviceRegistry().orEmpty()
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         Timber.e(e, "Couldn't load device registry for server")
                         emptyList()
@@ -150,6 +157,8 @@ class ManageShortcutsViewModel @Inject constructor(
                 launch {
                     areaRegistry[server.id] = try {
                         serverManager.webSocketRepository(server.id).getAreaRegistry().orEmpty()
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         Timber.e(e, "Couldn't load area registry for server")
                         emptyList()
