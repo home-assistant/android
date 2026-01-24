@@ -49,7 +49,7 @@ private sealed class CatalogScreen(val title: String, val icon: ImageVector) {
 }
 
 @Composable
-fun HAComposeCatalogScreen() {
+fun HAComposeCatalogScreen(modifier: Modifier = Modifier) {
     val screens = listOf(
         CatalogScreen.ButtonsAndIndicators,
         CatalogScreen.UserInput,
@@ -83,6 +83,7 @@ fun HAComposeCatalogScreen() {
                     }
                 }
             },
+            modifier = modifier,
         ) { scaffoldPadding ->
             val layoutDirection = LocalLayoutDirection.current
             LazyColumn(

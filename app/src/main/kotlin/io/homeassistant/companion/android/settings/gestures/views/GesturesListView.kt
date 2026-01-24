@@ -26,9 +26,14 @@ import io.homeassistant.companion.android.util.safeBottomPaddingValues
  * @param onGestureClicked Called when a gesture is selected
  */
 @Composable
-fun GesturesListView(gestureActions: Map<HAGesture, GestureAction>, onGestureClicked: (HAGesture) -> Unit) {
+fun GesturesListView(
+    gestureActions: Map<HAGesture, GestureAction>,
+    onGestureClicked: (HAGesture) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     LazyColumn(
         contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
+        modifier = modifier,
     ) {
         item {
             Text(

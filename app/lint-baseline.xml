@@ -1227,72 +1227,6 @@
     <issue
         id="ComposeModifierMissing"
         message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun ExternalUrlInputView(url: String?, focusRequester: FocusRequester, onSaveUrl: (String) -> Unit) {"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/url/views/ExternalUrlInputView.kt"
-            line="36"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun ExternalUrlView("
-        errorLine2="    ~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/url/views/ExternalUrlView.kt"
-            line="27"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun ExternalUrlCloudView(useCloud: Boolean, onUseCloudToggle: (Boolean) -> Unit) {"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/url/views/ExternalUrlView.kt"
-            line="64"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun GesturesListView(gestureActions: Map&lt;HAGesture, GestureAction>, onGestureClicked: (HAGesture) -> Unit) {"
-        errorLine2="    ~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/gestures/views/GesturesListView.kt"
-            line="29"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun HAComposeCatalogScreen() {"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/debug/kotlin/io/homeassistant/companion/android/developer/catalog/HAComposeCatalogScreen.kt"
-            line="52"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun HaAlert("
-        errorLine2="    ~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/HaAlert.kt"
-            line="42"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
         errorLine1="    fun LockedPanelView() {"
         errorLine2="        ~~~~~~~~~~~~~~~">
         <location
@@ -1959,17 +1893,6 @@
             file="src/main/kotlin/io/homeassistant/companion/android/barcode/view/BarcodeScannerOverlay.kt"
             line="22"
             column="27"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierWithoutDefault"
-        message="This @Composable function has a modifier parameter but it doesn&apos;t have a default value.See https://slackhq.github.io/compose-lints/rules/#modifiers-should-have-default-parameters for more information."
-        errorLine1="private fun VariantDropdownMenu(onVariantClick: (ButtonVariant) -> Unit, modifier: Modifier) {"
-        errorLine2="                                                                         ~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/debug/kotlin/io/homeassistant/companion/android/developer/catalog/HAComposeCatalogScreen.kt"
-            line="109"
-            column="74"/>
     </issue>
 
     <issue
