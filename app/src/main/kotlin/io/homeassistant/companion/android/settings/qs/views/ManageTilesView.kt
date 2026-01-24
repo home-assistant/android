@@ -47,7 +47,11 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
 @Composable
-fun ManageTilesView(viewModel: ManageTilesViewModel, onShowIconDialog: (tag: String?) -> Unit) {
+fun ManageTilesView(
+    viewModel: ManageTilesViewModel,
+    onShowIconDialog: (tag: String?) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
     var expandedTile by remember { mutableStateOf(false) }
@@ -62,6 +66,7 @@ fun ManageTilesView(viewModel: ManageTilesViewModel, onShowIconDialog: (tag: Str
     }
 
     Scaffold(
+        modifier = modifier,
         scaffoldState = scaffoldState,
         snackbarHost = {
             SnackbarHost(

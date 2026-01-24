@@ -34,10 +34,11 @@ fun WebsocketSettingView(
     hasWifi: Boolean,
     onSettingChanged: (WebsocketSetting) -> Unit,
     onBackgroundAccessTapped: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
-    Box(modifier = Modifier.verticalScroll(scrollState)) {
+    Box(modifier = modifier.verticalScroll(scrollState)) {
         Column(
             modifier = Modifier
                 .padding(safeBottomPaddingValues(applyHorizontal = false))

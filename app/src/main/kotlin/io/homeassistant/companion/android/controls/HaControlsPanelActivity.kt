@@ -90,10 +90,10 @@ class HaControlsPanelActivity : AppCompatActivity() {
     }
 
     @Composable
-    fun LockedPanelView() {
+    fun LockedPanelView(modifier: Modifier = Modifier) {
         HomeAssistantAppTheme {
             Column(
-                modifier = Modifier.fillMaxSize(),
+                modifier = modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {

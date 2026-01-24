@@ -97,6 +97,7 @@ fun AssistSheetView(
     onTextInput: (String) -> Unit,
     onMicrophoneInput: () -> Unit,
     onHide: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val coroutineScope = rememberCoroutineScope()
     val state = rememberModalBottomSheetState(
@@ -116,7 +117,7 @@ fun AssistSheetView(
         sheetState = state,
         sheetShape = RoundedCornerShape(topStart = sheetCornerRadius, topEnd = sheetCornerRadius),
         scrimColor = Color.Transparent,
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         sheetContent = {
             Box(
                 Modifier
@@ -246,11 +247,11 @@ fun AssistSheetControls(
 ) = Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
     if (inputMode == null) { // Pipeline info has not yet loaded, empty space for now
         Spacer(modifier = Modifier.height(64.dp))
-        return
+        return@Row
     }
 
     if (inputMode == AssistViewModelBase.AssistInputMode.BLOCKED) { // No info and not recoverable, no space
-        return
+        return@Row
     }
 
     val focusRequester = remember { FocusRequester() }

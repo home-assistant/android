@@ -55,8 +55,10 @@ fun SettingsWearTemplateTile(
     onContentChanged: (String) -> Unit,
     onRefreshIntervalChanged: (Int) -> Unit,
     onBackClicked: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Scaffold(
+        modifier = modifier,
         topBar = {
             SettingsWearTopAppBar(
                 title = { Text(stringResource(commonR.string.template_tile)) },
