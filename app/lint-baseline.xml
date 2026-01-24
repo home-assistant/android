@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.13.1" type="baseline" client="gradle" dependencies="false" name="AGP (8.13.1)" variant="all" version="8.13.1">
+<issues format="6" by="lint 8.13.2" type="baseline" client="gradle" dependencies="false" name="AGP (8.13.2)" variant="all" version="8.13.2">
 
     <issue
         id="MissingPermission"
@@ -129,7 +129,7 @@
         errorLine2="                             ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/controls/HaControlsProviderService.kt"
-            line="47"
+            line="46"
             column="30"/>
     </issue>
 
@@ -448,7 +448,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/barcode/view/BarcodeScannerView.kt"
-            line="131"
+            line="132"
             column="25"/>
     </issue>
 
@@ -459,7 +459,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/barcode/view/BarcodeScannerView.kt"
-            line="132"
+            line="133"
             column="25"/>
     </issue>
 
@@ -492,7 +492,7 @@
         errorLine2="                                                             ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/qs/views/ManageTilesView.kt"
-            line="59"
+            line="63"
             column="62"/>
     </issue>
 
@@ -514,7 +514,7 @@
         errorLine2="                                                             ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/nfc/views/NfcNavigationView.kt"
-            line="60"
+            line="65"
             column="62"/>
     </issue>
 
@@ -525,7 +525,7 @@
         errorLine2="                                                    ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/notification/views/NotificationChannelView.kt"
-            line="98"
+            line="99"
             column="53"/>
     </issue>
 
@@ -536,7 +536,7 @@
         errorLine2="                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/notification/views/NotificationChannelView.kt"
-            line="102"
+            line="103"
             column="53"/>
     </issue>
 
@@ -547,7 +547,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="118"
+            line="120"
             column="17"/>
     </issue>
 
@@ -558,7 +558,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="119"
+            line="121"
             column="17"/>
     </issue>
 
@@ -569,7 +569,7 @@
         errorLine2="                                     ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/SensorDetailViewModel.kt"
-            line="355"
+            line="368"
             column="38"/>
     </issue>
 
@@ -1198,7 +1198,7 @@
         errorLine2="                                                          ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/button/ButtonWidgetConfigureActivity.kt"
-            line="416"
+            line="418"
             column="59"/>
     </issue>
 
@@ -1209,7 +1209,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/ManageShortcutsViewModel.kt"
-            line="171"
+            line="174"
             column="13"/>
     </issue>
 
@@ -1225,630 +1225,14 @@
     </issue>
 
     <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun IconDialogSearch(value: String, onValueChange: (String) -> Unit) {"
-        errorLine2="    ~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/util/icondialog/IconDialogSearch.kt"
-            line="24"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun ImprovPermissionView(needsBluetooth: Boolean, needsLocation: Boolean, onContinue: () -> Unit, onSkip: () -> Unit) {"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/improv/ui/ImprovPermissionView.kt"
-            line="30"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun ImprovSheetView("
-        errorLine2="    ~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/improv/ui/ImprovSheetView.kt"
-            line="56"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun ImprovDeviceRow(device: ImprovDevice, onClick: (ImprovDevice) -> Unit) {"
-        errorLine2="    ~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/improv/ui/ImprovSheetView.kt"
-            line="169"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun ImprovWifiInput(activeSsid: String?, onSubmit: (String, String) -> Unit) {"
-        errorLine2="    ~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/improv/ui/ImprovSheetView.kt"
-            line="189"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun ImprovTextWithIcon(icon: IIcon, text: String, onButtonClick: () -> Unit) {"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/improv/ui/ImprovSheetView.kt"
-            line="236"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun InfoNotification(infoString: Int, channelId: String, buttonString: Int) {"
-        errorLine2="    ~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/InfoNotification.kt"
-            line="25"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun LinkActivityScreen() {"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/launch/link/LinkActivity.kt"
-            line="117"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun LocationTrackingView("
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/developer/location/views/LocationTrackingView.kt"
-            line="68"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun LocationTrackingHistoryRow(item: LocationHistoryItem?, servers: List&lt;Server>) {"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/developer/location/views/LocationTrackingView.kt"
-            line="140"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun ReadOnlyRow(primaryText: String, secondaryText: String, selectingEnabled: Boolean = true) = ReadOnlyRow("
-        errorLine2="    ~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/developer/location/views/LocationTrackingView.kt"
-            line="287"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun ReadOnlyRow(primarySlot: @Composable () -> Unit, secondarySlot: @Composable () -> Unit) {"
-        errorLine2="    ~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/developer/location/views/LocationTrackingView.kt"
-            line="299"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun ManageControlsView("
-        errorLine2="    ~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/controls/views/ManageControlsView.kt"
-            line="70"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun ManageControlsEntity(entityName: String, entityDomain: String, selected: Boolean, onClick: () -> Unit) {"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/controls/views/ManageControlsView.kt"
-            line="305"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun ManageShortcutsView(viewModel: ManageShortcutsViewModel, showIconDialog: (tag: String) -> Unit) {"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/views/ManageShortcutsView.kt"
-            line="50"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun ManageTilesView(viewModel: ManageTilesViewModel, onShowIconDialog: (tag: String?) -> Unit) {"
-        errorLine2="    ~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/qs/views/ManageTilesView.kt"
-            line="50"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun ManageWidgetsView(viewModel: ManageWidgetsViewModel) {"
-        errorLine2="    ~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/widgets/views/ManageWidgetsView.kt"
-            line="71"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun MatterCommissioningView("
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/full/kotlin/io/homeassistant/companion/android/matter/views/MatterCommissioningView.kt"
-            line="50"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun MatterCommissioningViewHeader() {"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/full/kotlin/io/homeassistant/companion/android/matter/views/MatterCommissioningView.kt"
-            line="211"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun MdcAlertDialog("
-        errorLine2="    ~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/MdcAlertDialog.kt"
-            line="43"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun ModalBottomSheet(title: String?, showHandle: Boolean = true, content: @Composable () -> Unit) {"
-        errorLine2="    ~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/ModalBottomSheet.kt"
-            line="36"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun NfcEditView("
-        errorLine2="    ~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/nfc/views/NfcEditView.kt"
-            line="36"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun NfcCodeContainer(text: String) {"
-        errorLine2="    ~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/nfc/views/NfcEditView.kt"
-            line="104"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun LoadNfcView(viewModel: NfcViewModel, startDestination: String, pressedUpAtRoot: () -> Unit) {"
-        errorLine2="    ~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/nfc/views/NfcNavigationView.kt"
-            line="37"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun NfcReadView() {"
-        errorLine2="    ~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/nfc/views/NfcReadView.kt"
-            line="24"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun NfcWelcomeView(isNfcEnabled: Boolean, onReadClicked: () -> Unit, onWriteClicked: () -> Unit) {"
-        errorLine2="    ~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/nfc/views/NfcWelcomeView.kt"
-            line="23"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun NfcWriteView(isNfcEnabled: Boolean, identifier: String?, onSetIdentifier: ((String) -> Unit)? = null) {"
-        errorLine2="    ~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/nfc/views/NfcWriteView.kt"
-            line="38"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun NfcWriteIdentifierDialog(onCancel: () -> Unit, onSubmit: (String) -> Unit) {"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/nfc/views/NfcWriteView.kt"
-            line="91"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun NotificationChannelView(notificationViewModel: NotificationViewModel) {"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/notification/views/NotificationChannelView.kt"
-            line="40"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun LoadNotification(notification: NotificationItem) {"
-        errorLine2="    ~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/notification/views/NotificationDetailView.kt"
-            line="28"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun NotificationDetailViewHeader(@StringRes stringId: Int) {"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/notification/views/NotificationDetailView.kt"
-            line="83"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun RadioButtonRow(text: String, selected: Boolean, onClick: () -> Unit) {"
-        errorLine2="    ~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/RadioButtonRow.kt"
-            line="16"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun SensorDetailView("
-        errorLine2="    ~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="92"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun SensorDetailTopPanel("
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="344"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun SensorDetailEnableRow("
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="453"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun SensorDetailRow("
-        errorLine2="    ~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="505"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun SensorDetailSettingDialog("
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="565"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun SensorDetailUpdateInfoDialog("
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="654"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun SensorDetailSettingRow(label: String, checked: Boolean, multiple: Boolean, onClick: (Boolean) -> Unit) {"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="716"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun SensorListView(viewModel: SensorSettingsViewModel, onSensorClicked: (String) -> Unit) {"
-        errorLine2="    ~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorListView.kt"
-            line="27"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun SensorUpdateFrequencyView("
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorUpdateFrequencyView.kt"
-            line="23"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun ServerChooserView(servers: List&lt;Server>, onServerSelected: (Int) -> Unit) {"
-        errorLine2="    ~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/server/ServerChooserView.kt"
-            line="27"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun ServerChooserRow(server: Server, onServerSelected: (Int) -> Unit) {"
-        errorLine2="    ~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/server/ServerChooserView.kt"
-            line="37"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun SettingsRow(primaryText: String, secondaryText: String, mdiIcon: IIcon?, enabled: Boolean, onClicked: () -> Unit) {"
-        errorLine2="    ~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/views/SettingsRow.kt"
-            line="33"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun SettingsRow(primaryText: String, secondaryText: String, icon: (@Composable () -> Unit)?, onClicked: () -> Unit) {"
-        errorLine2="    ~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/views/SettingsRow.kt"
-            line="67"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun LoadWearFavoritesSettings("
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/full/kotlin/io/homeassistant/companion/android/settings/wear/views/SettingsWearFavoritesView.kt"
-            line="41"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun SettingsWearTopAppBar(title: @Composable () -> Unit, onBackClicked: () -> Unit, docsLink: String? = null) {"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/full/kotlin/io/homeassistant/companion/android/settings/wear/views/SettingsWearHomeView.kt"
-            line="105"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun SettingWearLandingView("
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/full/kotlin/io/homeassistant/companion/android/settings/wear/views/SettingsWearLandingView.kt"
-            line="38"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun SettingsWearTemplateTile("
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/full/kotlin/io/homeassistant/companion/android/settings/wear/views/SettingsWearTemplateTile.kt"
-            line="51"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun SettingsWearTemplateTileList("
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/full/kotlin/io/homeassistant/companion/android/settings/wear/views/SettingsWearTemplateTileList.kt"
-            line="26"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun CatalogRow(content: @Composable () -> Unit) {"
-        errorLine2="    ~~~~~~~~~~">
-        <location
-            file="src/debug/kotlin/io/homeassistant/companion/android/developer/catalog/Shared.kt"
-            line="14"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun SsidView("
-        errorLine2="    ~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/ssid/views/SsidView.kt"
-            line="69"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun SsidInput(onSubmit: (String) -> Boolean) {"
-        errorLine2="    ~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/ssid/views/SsidView.kt"
-            line="296"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun SsidPrioritizeInternal(prioritize: Boolean, onChanged: (Boolean) -> Unit) {"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/ssid/views/SsidView.kt"
-            line="347"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun TagReaderView() {"
-        errorLine2="    ~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/nfc/views/TagReaderView.kt"
-            line="23"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="ComposeModifierMissing"
-        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
-        errorLine1="fun WebsocketSettingView("
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/websocket/views/WebsocketSettingView.kt"
-            line="31"
-            column="5"/>
-    </issue>
-
-    <issue
         id="ComposeModifierWithoutDefault"
         message="This @Composable function has a modifier parameter but it doesn&apos;t have a default value.See https://slackhq.github.io/compose-lints/rules/#modifiers-should-have-default-parameters for more information."
-        errorLine1="fun BarcodeScannerOverlay(modifier: Modifier, cutout: Dp) {"
-        errorLine2="                          ~~~~~~~~~~~~~~~~~~">
+        errorLine1="private fun VariantDropdownMenu(onVariantClick: (ButtonVariant) -> Unit, modifier: Modifier) {"
+        errorLine2="                                                                         ~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/kotlin/io/homeassistant/companion/android/barcode/view/BarcodeScannerOverlay.kt"
-            line="22"
-            column="27"/>
+            file="src/debug/kotlin/io/homeassistant/companion/android/developer/catalog/HAComposeCatalogScreen.kt"
+            line="110"
+            column="74"/>
     </issue>
 
     <issue
@@ -1874,112 +1258,13 @@
     </issue>
 
     <issue
-        id="ComposeMultipleContentEmitters"
-        message="Composable functions should only be emitting content into the composition from one source at their top level.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#do-not-emit-multiple-pieces-of-content for more information."
-        errorLine1="@Composable"
-        errorLine2="^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/improv/ui/ImprovSheetView.kt"
-            line="168"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="ComposeMultipleContentEmitters"
-        message="Composable functions should only be emitting content into the composition from one source at their top level.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#do-not-emit-multiple-pieces-of-content for more information."
-        errorLine1="@Composable"
-        errorLine2="^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/improv/ui/ImprovSheetView.kt"
-            line="235"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="ComposeMultipleContentEmitters"
-        message="Composable functions should only be emitting content into the composition from one source at their top level.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#do-not-emit-multiple-pieces-of-content for more information."
-        errorLine1="@RequiresApi(Build.VERSION_CODES.O)"
-        errorLine2="^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/InfoNotification.kt"
-            line="23"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="ComposeMultipleContentEmitters"
-        message="Composable functions should only be emitting content into the composition from one source at their top level.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#do-not-emit-multiple-pieces-of-content for more information."
-        errorLine1="@RequiresApi(Build.VERSION_CODES.N_MR1)"
-        errorLine2="^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/views/ManageShortcutsView.kt"
-            line="79"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="ComposeMultipleContentEmitters"
-        message="Composable functions should only be emitting content into the composition from one source at their top level.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#do-not-emit-multiple-pieces-of-content for more information."
-        errorLine1="@Composable"
-        errorLine2="^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/RadioButtonRow.kt"
-            line="15"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="ComposeMultipleContentEmitters"
-        message="Composable functions should only be emitting content into the composition from one source at their top level.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#do-not-emit-multiple-pieces-of-content for more information."
-        errorLine1="@Composable"
-        errorLine2="^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/server/ServerChooserView.kt"
-            line="36"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="ComposeParameterOrder"
-        message="Parameters in a composable function should be ordered following this pattern: params without defaults, modifiers, params with defaults and optionally, a trailing function that might not have a default param.&#xA;Current params are: [iconFilter: IconFilter = DefaultIconFilter(), onSelect: (IIcon) -> Unit, onDismissRequest: () -> Unit] but should be [onSelect: (IIcon) -> Unit, iconFilter: IconFilter = DefaultIconFilter(), onDismissRequest: () -> Unit].&#xA;See https://slackhq.github.io/compose-lints/rules/#ordering-composable-parameters-properly for more information."
-        errorLine1="fun IconDialog(iconFilter: IconFilter = DefaultIconFilter(), onSelect: (IIcon) -> Unit, onDismissRequest: () -> Unit) {"
-        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/util/icondialog/IconDialog.kt"
-            line="36"
-            column="15"/>
-    </issue>
-
-    <issue
-        id="ComposeParameterOrder"
-        message="Parameters in a composable function should be ordered following this pattern: params without defaults, modifiers, params with defaults and optionally, a trailing function that might not have a default param.&#xA;Current params are: [modifier: Modifier = Modifier, description: String, example: String] but should be [description: String, example: String, modifier: Modifier = Modifier].&#xA;See https://slackhq.github.io/compose-lints/rules/#ordering-composable-parameters-properly for more information."
-        errorLine1="fun NfcTriggerExample(modifier: Modifier = Modifier, description: String, example: String) {"
-        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/nfc/views/NfcEditView.kt"
-            line="121"
-            column="22"/>
-    </issue>
-
-    <issue
-        id="ComposeParameterOrder"
-        message="Parameters in a composable function should be ordered following this pattern: params without defaults, modifiers, params with defaults and optionally, a trailing function that might not have a default param.&#xA;Current params are: [modifier: Modifier = Modifier, text: String, icon: IIcon? = null, onClick: () -> Unit] but should be [text: String, modifier: Modifier = Modifier, icon: IIcon? = null, onClick: () -> Unit].&#xA;See https://slackhq.github.io/compose-lints/rules/#ordering-composable-parameters-properly for more information."
-        errorLine1="fun TransparentChip(modifier: Modifier = Modifier, text: String, icon: IIcon? = null, onClick: () -> Unit) {"
-        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/TransparentChip.kt"
-            line="27"
-            column="20"/>
-    </issue>
-
-    <issue
         id="ComposePreviewPublic"
         message="Composables annotated with @Preview that are used only for previewing the UI should not be public.See https://slackhq.github.io/compose-lints/rules/#preview-composables-should-not-be-public for more information."
         errorLine1="@Preview"
         errorLine2="^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/url/views/ExternalUrlView.kt"
-            line="88"
+            line="89"
             column="1"/>
     </issue>
 
@@ -1990,7 +1275,7 @@
         errorLine2="^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/url/views/ExternalUrlView.kt"
-            line="100"
+            line="101"
             column="1"/>
     </issue>
 
@@ -2001,117 +1286,7 @@
         errorLine2="^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/url/views/ExternalUrlView.kt"
-            line="112"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="ComposePreviewPublic"
-        message="Composables annotated with @Preview that are used only for previewing the UI should not be public.See https://slackhq.github.io/compose-lints/rules/#preview-composables-should-not-be-public for more information."
-        errorLine1="@Preview"
-        errorLine2="^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/improv/ui/ImprovPermissionView.kt"
-            line="114"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="ComposePreviewPublic"
-        message="Composables annotated with @Preview that are used only for previewing the UI should not be public.See https://slackhq.github.io/compose-lints/rules/#preview-composables-should-not-be-public for more information."
-        errorLine1="@Preview"
-        errorLine2="^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/improv/ui/ImprovSheetView.kt"
-            line="253"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="ComposePreviewPublic"
-        message="Composables annotated with @Preview that are used only for previewing the UI should not be public.See https://slackhq.github.io/compose-lints/rules/#preview-composables-should-not-be-public for more information."
-        errorLine1="@Preview"
-        errorLine2="^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/improv/ui/ImprovSheetView.kt"
-            line="269"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="ComposePreviewPublic"
-        message="Composables annotated with @Preview that are used only for previewing the UI should not be public.See https://slackhq.github.io/compose-lints/rules/#preview-composables-should-not-be-public for more information."
-        errorLine1="@Preview"
-        errorLine2="^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/improv/ui/ImprovSheetView.kt"
-            line="285"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="ComposePreviewPublic"
-        message="Composables annotated with @Preview that are used only for previewing the UI should not be public.See https://slackhq.github.io/compose-lints/rules/#preview-composables-should-not-be-public for more information."
-        errorLine1="@Preview"
-        errorLine2="^">
-        <location
-            file="src/full/kotlin/io/homeassistant/companion/android/matter/views/MatterCommissioningView.kt"
-            line="232"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="ComposePreviewPublic"
-        message="Composables annotated with @Preview that are used only for previewing the UI should not be public.See https://slackhq.github.io/compose-lints/rules/#preview-composables-should-not-be-public for more information."
-        errorLine1="@Preview(showSystemUi = true)"
-        errorLine2="^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/nfc/views/NfcEditView.kt"
-            line="151"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="ComposePreviewPublic"
-        message="Composables annotated with @Preview that are used only for previewing the UI should not be public.See https://slackhq.github.io/compose-lints/rules/#preview-composables-should-not-be-public for more information."
-        errorLine1="@Preview(showSystemUi = true)"
-        errorLine2="^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/nfc/views/NfcWelcomeView.kt"
-            line="75"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="ComposePreviewPublic"
-        message="Composables annotated with @Preview that are used only for previewing the UI should not be public.See https://slackhq.github.io/compose-lints/rules/#preview-composables-should-not-be-public for more information."
-        errorLine1="@Preview(showSystemUi = true)"
-        errorLine2="^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/nfc/views/NfcWriteView.kt"
-            line="111"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="ComposePreviewPublic"
-        message="Composables annotated with @Preview that are used only for previewing the UI should not be public.See https://slackhq.github.io/compose-lints/rules/#preview-composables-should-not-be-public for more information."
-        errorLine1="@Preview(showSystemUi = true)"
-        errorLine2="^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/nfc/views/NfcWriteView.kt"
-            line="117"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="ComposePreviewPublic"
-        message="Composables annotated with @Preview that are used only for previewing the UI should not be public.See https://slackhq.github.io/compose-lints/rules/#preview-composables-should-not-be-public for more information."
-        errorLine1="@Preview(showSystemUi = true)"
-        errorLine2="^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/nfc/views/TagReaderView.kt"
-            line="43"
+            line="113"
             column="1"/>
     </issue>
 
@@ -2155,7 +1330,7 @@
         errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/assist/ui/AssistSheetView.kt"
-            line="168"
+            line="169"
             column="16"/>
     </issue>
 
@@ -2195,12 +1370,12 @@
     <issue
         id="ComposeUnstableCollections"
         message="The Compose Compiler cannot infer the stability of a parameter if a Map&lt;HAGesture, GestureAction> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `gestureActions: ImmutableMap&lt;HAGesture, GestureAction>` or create an `@Immutable` wrapper for this class: `@Immutable data class GestureActionsMap(val items: Map&lt;HAGesture, GestureAction>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="fun GesturesListView(gestureActions: Map&lt;HAGesture, GestureAction>, onGestureClicked: (HAGesture) -> Unit) {"
-        errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="    gestureActions: Map&lt;HAGesture, GestureAction>,"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/gestures/views/GesturesListView.kt"
-            line="29"
-            column="38"/>
+            line="30"
+            column="21"/>
     </issue>
 
     <issue
@@ -2217,12 +1392,12 @@
     <issue
         id="ComposeUnstableCollections"
         message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;IIcon> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `icons: ImmutableList&lt;IIcon>` or create an `@Immutable` wrapper for this class: `@Immutable data class IconsList(val items: List&lt;IIcon>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="fun IconDialogGrid(icons: List&lt;IIcon>, tint: Color = MaterialTheme.colors.onSurface, onClick: (IIcon) -> Unit) {"
-        errorLine2="                          ~~~~~~~~~~~">
+        errorLine1="    icons: List&lt;IIcon>,"
+        errorLine2="           ~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/util/icondialog/IconDialogGrid.kt"
-            line="37"
-            column="27"/>
+            line="38"
+            column="12"/>
     </issue>
 
     <issue
@@ -2239,11 +1414,11 @@
     <issue
         id="ComposeUnstableCollections"
         message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Server> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `servers: ImmutableList&lt;Server>` or create an `@Immutable` wrapper for this class: `@Immutable data class ServersList(val items: List&lt;Server>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="fun LocationTrackingHistoryRow(item: LocationHistoryItem?, servers: List&lt;Server>) {"
+        errorLine1="fun LocationTrackingHistoryRow(item: LocationHistoryItem?, servers: List&lt;Server>, modifier: Modifier = Modifier) {"
         errorLine2="                                                                    ~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/developer/location/views/LocationTrackingView.kt"
-            line="140"
+            line="142"
             column="69"/>
     </issue>
 
@@ -2254,7 +1429,7 @@
         errorLine2="                      ~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/controls/views/ManageControlsView.kt"
-            line="73"
+            line="72"
             column="23"/>
     </issue>
 
@@ -2265,7 +1440,7 @@
         errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/controls/views/ManageControlsView.kt"
-            line="75"
+            line="74"
             column="19"/>
     </issue>
 
@@ -2276,7 +1451,7 @@
         errorLine2="                 ~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/controls/views/ManageControlsView.kt"
-            line="77"
+            line="76"
             column="18"/>
     </issue>
 
@@ -2298,7 +1473,7 @@
         errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="346"
+            line="356"
             column="15"/>
     </issue>
 
@@ -2309,18 +1484,18 @@
         errorLine2="                 ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="348"
+            line="358"
             column="18"/>
     </issue>
 
     <issue
         id="ComposeUnstableCollections"
         message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Server> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `servers: ImmutableList&lt;Server>` or create an `@Immutable` wrapper for this class: `@Immutable data class ServersList(val items: List&lt;Server>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="fun ServerChooserView(servers: List&lt;Server>, onServerSelected: (Int) -> Unit) {"
+        errorLine1="fun ServerChooserView(servers: List&lt;Server>, onServerSelected: (Int) -> Unit, modifier: Modifier = Modifier) {"
         errorLine2="                               ~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/server/ServerChooserView.kt"
-            line="27"
+            line="28"
             column="32"/>
     </issue>
 
@@ -2393,7 +1568,7 @@
     <issue
         id="ComposeUnstableReceiver"
         message="Instance composable functions on non-stable classes will always be recomposed. If possible, make the receiver type stable or refactor this function if that isn&apos;t possible. See https://slackhq.github.io/compose-lints/rules/#unstable-receivers for more information."
-        errorLine1="    fun LockedPanelView() {"
+        errorLine1="    fun LockedPanelView(modifier: Modifier = Modifier) {"
         errorLine2="        ~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/controls/HaControlsPanelActivity.kt"
@@ -2441,7 +1616,7 @@
         errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/entity/EntityWidgetConfigureActivity.kt"
-            line="134"
+            line="131"
             column="42"/>
     </issue>
 
