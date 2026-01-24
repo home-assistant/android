@@ -49,11 +49,11 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @AndroidEntryPoint
-class ButtonWidget : AppWidgetProvider() {
+open class ButtonWidget : AppWidgetProvider() {
     companion object {
         const val CALL_SERVICE =
             "io.homeassistant.companion.android.widgets.button.ButtonWidget.CALL_SERVICE"
-        private const val CALL_SERVICE_AUTH =
+        const val CALL_SERVICE_AUTH =
             "io.homeassistant.companion.android.widgets.button.ButtonWidget.CALL_SERVICE_AUTH"
 
         // Vector icon rendering resolution fallback (if we can't infer via AppWidgetManager for some reason)
@@ -81,18 +81,20 @@ class ButtonWidget : AppWidgetProvider() {
     private fun updateAllWidgets(context: Context) {
         mainScope.launch {
             val appWidgetManager = AppWidgetManager.getInstance(context) ?: return@launch
-            val systemWidgetIds = appWidgetManager.getAppWidgetIds(ComponentName(context, ButtonWidget::class.java))
+            val systemWidgetIds = appWidgetManager.getAppWidgetIds(ComponentName(context, ButtonWidget::class.java)).toSet()
+            val ids2x2 = appWidgetManager.getAppWidgetIds(ComponentName(context, ButtonWidget2x2::class.java)).toSet()
             val dbWidgetList = buttonWidgetDao.getAll()
 
+            val allSystemWidgetIds = systemWidgetIds + ids2x2
             val invalidWidgetIds = dbWidgetList
-                .filter { !systemWidgetIds.contains(it.id) }
+                .filter { !allSystemWidgetIds.contains(it.id) }
                 .map { it.id }
             if (invalidWidgetIds.isNotEmpty()) {
                 Timber.i("Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted")
                 onDeleted(context, invalidWidgetIds.toIntArray())
             }
 
-            val buttonWidgetEntityList = dbWidgetList.filter { systemWidgetIds.contains(it.id) }
+            val buttonWidgetEntityList = dbWidgetList.filter { allSystemWidgetIds.contains(it.id) }
             if (buttonWidgetEntityList.isNotEmpty()) {
                 Timber.d("Updating all widgets")
                 for (item in buttonWidgetEntityList) {
@@ -169,7 +171,7 @@ class ButtonWidget : AppWidgetProvider() {
         context.startActivity(intent)
     }
 
-    private suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews {
+    protected open suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews {
         // Every time AppWidgetManager.updateAppWidget(...) is called, the button listener
         // and label need to be re-assigned, or the next time the layout updates
         // (e.g home screen rotation) the widget will fall back on its default layout
@@ -178,7 +180,11 @@ class ButtonWidget : AppWidgetProvider() {
         val widget = buttonWidgetDao.get(appWidgetId)
         val auth = widget?.requireAuthentication == true
 
-        val intent = Intent(context, ButtonWidget::class.java).apply {
+        // Determine if this is a 2x2 widget for Samsung Z Flip cover screen
+        val is2x2Widget = isWidget2x2(context, appWidgetId)
+        val targetClass = if (is2x2Widget) ButtonWidget2x2::class.java else ButtonWidget::class.java
+
+        val intent = Intent(context, targetClass).apply {
             action = if (auth) CALL_SERVICE_AUTH else CALL_SERVICE
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
@@ -217,7 +223,7 @@ class ButtonWidget : AppWidgetProvider() {
             }
             val icon = DrawableCompat.wrap(iconDrawable)
             if (widget?.backgroundType == WidgetBackgroundType.TRANSPARENT) {
-                setInt(R.id.widgetImageButton, "setColorFilter", textColor)
+                                    setInt(R.id.widgetImageButton, "setColorFilter", textColor)
             }
 
             // Determine reasonable dimensions for drawing vector icon as a bitmap
@@ -275,6 +281,15 @@ class ButtonWidget : AppWidgetProvider() {
     private fun setLabelVisibility(views: RemoteViews, widget: ButtonWidgetEntity?) {
         val labelVisibility = if (widget?.label.isNullOrBlank()) View.GONE else View.VISIBLE
         views.setViewVisibility(R.id.widgetLabelLayout, labelVisibility)
+    }
+
+    // Determine if a widget is a 2x2 type for Samsung Z Flip cover screen
+    private fun isWidget2x2(context: Context, appWidgetId: Int): Boolean {
+        val appWidgetManager = AppWidgetManager.getInstance(context)
+        val widgetInfo = appWidgetManager.getAppWidgetInfo(appWidgetId)
+        return widgetInfo?.let {
+            it.targetCellWidth == 2 && it.targetCellHeight == 2
+        } ?: false
     }
 
     private fun callConfiguredAction(context: Context, appWidgetId: Int) {
