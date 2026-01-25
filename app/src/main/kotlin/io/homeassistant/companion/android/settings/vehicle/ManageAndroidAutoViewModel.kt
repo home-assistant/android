@@ -43,8 +43,12 @@ class ManageAndroidAutoViewModel @Inject constructor(
 
     var defaultServerId by mutableIntStateOf(0)
 
+    var isLoading by mutableStateOf(true)
+        private set
+
     init {
         viewModelScope.launch {
+            isLoading = true
             servers = serverManager.servers()
             defaultServerId = serverManager.getServer()?.id ?: 0
             favoritesList.addAll(prefsRepository.getAutoFavorites())
@@ -62,6 +66,7 @@ class ManageAndroidAutoViewModel @Inject constructor(
                 }
             }.awaitAll()
             loadEntities(serverManager.getServer()?.id ?: 0)
+            isLoading = false
         }
     }
 
