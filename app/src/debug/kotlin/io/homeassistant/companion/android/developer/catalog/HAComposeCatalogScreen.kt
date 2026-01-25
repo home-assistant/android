@@ -107,7 +107,7 @@ fun HAComposeCatalogScreen(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun VariantDropdownMenu(onVariantClick: (ButtonVariant) -> Unit, modifier: Modifier) {
+private fun VariantDropdownMenu(onVariantClick: (ButtonVariant) -> Unit, modifier: Modifier = Modifier) {
     var expanded by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.padding(HADimens.SPACE4)) {
