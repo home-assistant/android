@@ -2,11 +2,16 @@ package io.homeassistant.companion.android.settings.vehicle.views
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -15,6 +20,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -54,7 +60,12 @@ fun AndroidAutoFavoritesSettings(
 
     val favoriteEntities = androidAutoViewModel.favoritesList.toList()
     var validEntities by remember { mutableStateOf<List<Entity>>(emptyList()) }
-    LaunchedEffect(favoriteEntities.size, androidAutoViewModel.sortedEntities.size, selectedServer) {
+
+    LaunchedEffect(
+        favoriteEntities.size,
+        androidAutoViewModel.sortedEntities.size,
+        selectedServer,
+    ) {
         validEntities = withContext(Dispatchers.IO) {
             androidAutoViewModel.sortedEntities
                 .filter {
@@ -67,73 +78,100 @@ fun AndroidAutoFavoritesSettings(
 
     LazyColumn(
         state = lazyListState,
-        contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
+        contentPadding = PaddingValues(vertical = 16.dp) +
+            safeBottomPaddingValues(applyHorizontal = false),
     ) {
         item {
             Text(
                 text = stringResource(commonR.string.aa_set_favorites),
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 16.dp),
             )
         }
 
-        if (serversList.size > 1) {
+        // Show content only once entities are loaded
+        if (androidAutoViewModel.sortedEntities.isNotEmpty()) {
+
+            if (serversList.size > 1) {
+                item {
+                    ServerExposedDropdownMenu(
+                        servers = serversList,
+                        current = selectedServer,
+                        onSelected = {
+                            androidAutoViewModel.loadEntities(it)
+                            selectedServer = it
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .padding(bottom = 16.dp),
+                    )
+                }
+            }
+
             item {
-                ServerExposedDropdownMenu(
-                    servers = serversList,
-                    current = selectedServer,
-                    onSelected = {
-                        androidAutoViewModel.loadEntities(it)
-                        selectedServer = it
-                    },
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 16.dp),
-                )
+                // TODO use new theme for Material3 components
+                // https://github.com/home-assistant/android/issues/6302
+                HATheme {
+                    EntityPicker(
+                        entities = validEntities,
+                        selectedEntityId = null,
+                        onEntityCleared = { /* Nothing */ },
+                        onEntitySelectedId = {
+                            androidAutoViewModel.onEntitySelected(true, it, selectedServer)
+                        },
+                        addButtonText = stringResource(commonR.string.add_favorite),
+                        entityRegistry = androidAutoViewModel.entityRegistry,
+                        deviceRegistry = androidAutoViewModel.deviceRegistry,
+                        areaRegistry = androidAutoViewModel.areaRegistry,
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .padding(bottom = 16.dp),
+                    )
+                }
             }
-        }
-        item {
-            // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6302
-            HATheme {
-                EntityPicker(
-                    entities = validEntities,
-                    selectedEntityId = null,
-                    onEntityCleared = { /* Nothing */ },
-                    onEntitySelectedId = {
-                        androidAutoViewModel.onEntitySelected(true, it, selectedServer)
-                    },
-                    addButtonText = stringResource(commonR.string.add_favorite),
-                    entityRegistry = androidAutoViewModel.entityRegistry,
-                    deviceRegistry = androidAutoViewModel.deviceRegistry,
-                    areaRegistry = androidAutoViewModel.areaRegistry,
-                    modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
-                )
-            }
-        }
-        if (favoriteEntities.isNotEmpty() && androidAutoViewModel.sortedEntities.isNotEmpty()) {
-            items(favoriteEntities.size, { favoriteEntities[it] }) { index ->
-                val favoriteEntity = favoriteEntities[index]
-                androidAutoViewModel.sortedEntities.firstOrNull {
-                    it.entityId == favoriteEntity.entityId &&
-                        favoriteEntity.serverId == selectedServer
-                }?.let {
-                    ReorderableItem(
-                        state = reorderState,
-                        key = favoriteEntities[index],
-                    ) { isDragging ->
-                        FavoriteEntityRow(
-                            entityName = it.friendlyName,
-                            entityId = it.entityId,
-                            onClick = {
-                                androidAutoViewModel.onEntitySelected(
-                                    false,
-                                    it.entityId,
-                                    selectedServer,
-                                )
-                            },
-                            checked = true,
-                            draggable = true,
-                            isDragging = isDragging,
-                        )
+
+            if (favoriteEntities.isNotEmpty()) {
+                items(favoriteEntities, key = { it }) { favoriteEntity ->
+                    androidAutoViewModel.sortedEntities.firstOrNull {
+                        it.entityId == favoriteEntity.entityId &&
+                            favoriteEntity.serverId == selectedServer
+                    }?.let { entity ->
+                        ReorderableItem(
+                            state = reorderState,
+                            key = favoriteEntity,
+                        ) { isDragging ->
+                            FavoriteEntityRow(
+                                entityName = entity.friendlyName,
+                                entityId = entity.entityId,
+                                onClick = {
+                                    androidAutoViewModel.onEntitySelected(
+                                        false,
+                                        entity.entityId,
+                                        selectedServer,
+                                    )
+                                },
+                                checked = true,
+                                draggable = true,
+                                isDragging = isDragging,
+                            )
+                        }
                     }
+                }
+            }
+
+        } else {
+            // Loader while entities are being fetched
+            item {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                    )
                 }
             }
         }
