@@ -19,6 +19,7 @@ import dagger.hilt.android.testing.HiltTestApplication
 import dagger.hilt.android.testing.UninstallModules
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
+import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.onboarding.BaseOnboardingNavigationTest
 import io.homeassistant.companion.android.onboarding.URL_GETTING_STARTED_DOCUMENTATION
 import io.homeassistant.companion.android.onboarding.connection.CONNECTION_SCREEN_TAG
@@ -35,9 +36,9 @@ import io.homeassistant.companion.android.onboarding.serverdiscovery.ServerDisco
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.compose.navigateToUri
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import java.net.URL
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.channels.Channel
@@ -79,6 +80,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
         every { isLoadingFlow } returns MutableStateFlow(false)
         every { navigationEventsFlow } returns connectionNavigationEventFlow
         every { errorFlow } returns MutableStateFlow(null)
+        every { connectivityCheckState } returns MutableStateFlow(ConnectivityCheckState())
     }
 
     @Test
@@ -97,7 +99,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
 
             onNodeWithContentDescription(stringResource(commonR.string.get_help)).performClick()
-            verify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION) }
+            coVerify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, any()) }
 
             onNodeWithContentDescription(stringResource(commonR.string.navigate_up))
                 .assertIsDisplayed()
@@ -138,7 +140,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ManualServerRoute>() == true)
 
             onNodeWithContentDescription(stringResource(commonR.string.get_help)).performClick()
-            verify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION) }
+            coVerify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, any()) }
 
             onNodeWithContentDescription(stringResource(commonR.string.navigate_up))
                 .assertIsDisplayed()
@@ -163,7 +165,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
             )
 
             onNodeWithContentDescription(stringResource(commonR.string.get_help)).performClick()
-            verify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION) }
+            coVerify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, any()) }
 
             waitUntilAtLeastOneExists(
                 hasText(instanceUrl),

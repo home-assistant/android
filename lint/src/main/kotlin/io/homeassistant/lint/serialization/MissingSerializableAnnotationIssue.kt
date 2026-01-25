@@ -200,7 +200,7 @@ private object EncodeToStringVisitor {
         val argument = node.getArgumentForParameter(valueIndexParam)
         if (argument == null) {
             Logger.warn(
-                "Fail to get argument value in $ENCODE_TO_STRING_METHOD_NAME call, check $ISSUE_CLASS_NAME code.",
+                "Failed to get argument value in $ENCODE_TO_STRING_METHOD_NAME call, check $ISSUE_CLASS_NAME code.",
             )
             return null
         }

@@ -25,7 +25,7 @@ internal fun NavGraphBuilder.nameYourDeviceScreen(
     onBackClick: () -> Unit,
     onDeviceNamed: (serverId: Int, hasPlainTextAccess: Boolean, isPubliclyAccessible: Boolean) -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
-    onHelpClick: () -> Unit,
+    onHelpClick: suspend () -> Unit,
 ) {
     composable<NameYourDeviceRoute> {
         val viewModel: NameYourDeviceViewModel = hiltViewModel()

@@ -39,10 +39,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mikepenz.iconics.compose.IconicsPainter
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsViewModel
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
-import io.homeassistant.companion.android.util.compose.SingleEntityPicker
+import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
@@ -147,15 +148,20 @@ private fun CreateShortcutView(
                             )
                         }
 
-                        DropdownMenu(expanded = expandedPinnedShortcuts, onDismissRequest = {
-                            expandedPinnedShortcuts =
-                                false
-                        }) {
+                        DropdownMenu(
+                            expanded = expandedPinnedShortcuts,
+                            onDismissRequest = {
+                                expandedPinnedShortcuts =
+                                    false
+                            },
+                        ) {
                             for (item in pinnedShortCutIds) {
-                                DropdownMenuItem(onClick = {
-                                    viewModel.setPinnedShortcutData(item)
-                                    expandedPinnedShortcuts = false
-                                }) {
+                                DropdownMenuItem(
+                                    onClick = {
+                                        viewModel.setPinnedShortcutData(item)
+                                        expandedPinnedShortcuts = false
+                                    },
+                                ) {
                                     Text(item)
                                 }
                             }
@@ -179,9 +185,11 @@ private fun CreateShortcutView(
                 fontSize = 15.sp,
                 modifier = Modifier.padding(end = 10.dp),
             )
-            OutlinedButton(onClick = {
-                showIconDialog(shortcutId)
-            }) {
+            OutlinedButton(
+                onClick = {
+                    showIconDialog(shortcutId)
+                },
+            ) {
                 val icon = viewModel.shortcuts[i].selectedIcon.value
                 val painter = if (icon != null) {
                     remember(icon) { IconicsPainter(icon) }
@@ -261,18 +269,23 @@ private fun CreateShortcutView(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
             )
         } else {
-            SingleEntityPicker(
-                entities = viewModel.entities[shortcut.serverId.value].orEmpty(),
-                currentEntity = viewModel.shortcuts[i].path.value.split(":").getOrNull(1),
-                onEntityCleared = {
-                    viewModel.shortcuts[i].path.value = ""
-                },
-                onEntitySelected = {
-                    viewModel.shortcuts[i].path.value = "entityId:$it"
-                    return@SingleEntityPicker true
-                },
-                modifier = Modifier.padding(bottom = 16.dp),
-            )
+            // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6258
+            HATheme {
+                EntityPicker(
+                    entities = viewModel.entities[shortcut.serverId.value].orEmpty(),
+                    entityRegistry = viewModel.entityRegistry[shortcut.serverId.value],
+                    deviceRegistry = viewModel.deviceRegistry[shortcut.serverId.value],
+                    areaRegistry = viewModel.areaRegistry[shortcut.serverId.value],
+                    selectedEntityId = viewModel.shortcuts[i].path.value.split(":").getOrNull(1),
+                    onEntitySelectedId = { entityId ->
+                        viewModel.shortcuts[i].path.value = "entityId:$entityId"
+                    },
+                    onEntityCleared = {
+                        viewModel.shortcuts[i].path.value = ""
+                    },
+                    modifier = Modifier.padding(bottom = 16.dp),
+                )
+            }
         }
         for (item in viewModel.dynamicShortcuts) {
             if (item.id == shortcutId) {
@@ -341,16 +354,8 @@ private fun CreateShortcutView(
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
-private fun ShortcutRadioButtonRow(
-    viewModel: ManageShortcutsViewModel,
-    type: String,
-    index: Int,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+private fun ShortcutRadioButtonRow(viewModel: ManageShortcutsViewModel, type: String, index: Int) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
         RadioButton(
             selected = viewModel.shortcuts[index].type.value == type,
             onClick = { viewModel.shortcuts[index].type.value = type },
@@ -361,14 +366,8 @@ private fun ShortcutRadioButtonRow(
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
-private fun AddDeleteButton(
-    viewModel: ManageShortcutsViewModel,
-    shortcutId: String,
-    index: Int,
-    modifier: Modifier = Modifier,
-) {
+private fun AddDeleteButton(viewModel: ManageShortcutsViewModel, shortcutId: String, index: Int) {
     Button(
-        modifier = modifier,
         onClick = {
             viewModel.deleteShortcut(shortcutId)
             viewModel.shortcuts[index].delete.value = false

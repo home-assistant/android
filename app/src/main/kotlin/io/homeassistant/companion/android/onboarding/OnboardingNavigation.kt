@@ -34,6 +34,7 @@ import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.serverDiscoveryScreen
 import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.navigateToSetHomeNetworkRoute
 import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.setHomeNetworkScreen
+import io.homeassistant.companion.android.onboarding.wearmtls.navigation.URL_MTLS_DOCUMENTATION
 import io.homeassistant.companion.android.onboarding.wearmtls.navigation.navigateToWearMTLS
 import io.homeassistant.companion.android.onboarding.wearmtls.navigation.wearMTLSScreen
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
@@ -131,10 +132,10 @@ internal fun NavGraphBuilder.onboarding(
                 }
             },
             onLearnMoreClick = {
-                navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION)
+                navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, onShowSnackbar)
             },
         )
-        commonScreens(navController = navController)
+        commonScreens(navController = navController, onShowSnackbar = onShowSnackbar)
         nameYourDeviceScreen(
             onBackClick = navController::popBackStack,
             onDeviceNamed = { serverId, hasPlainTextAccess, isPubliclyAccessible ->
@@ -155,7 +156,7 @@ internal fun NavGraphBuilder.onboarding(
             },
             onShowSnackbar = onShowSnackbar,
             onHelpClick = {
-                navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION)
+                navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, onShowSnackbar)
             },
         )
         localFirstScreen(
@@ -182,7 +183,7 @@ internal fun NavGraphBuilder.onboarding(
         )
         locationSharingScreen(
             onHelpClick = {
-                navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION)
+                navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, onShowSnackbar)
             },
             onGotoNextScreen = { serverId, hasPlainTextAccess ->
                 navController.navigateToLocationForSecureConnectionConditionally(
@@ -198,7 +199,7 @@ internal fun NavGraphBuilder.onboarding(
         )
         locationForSecureConnectionScreen(
             onHelpClick = {
-                navController.navigateToUri(URL_SECURITY_LEVEL_DOCUMENTATION)
+                navController.navigateToUri(URL_SECURITY_LEVEL_DOCUMENTATION, onShowSnackbar)
             },
             onGotoNextScreen = { allowInsecureConnection, serverId ->
                 if (allowInsecureConnection) {
@@ -218,7 +219,7 @@ internal fun NavGraphBuilder.onboarding(
 
         setHomeNetworkScreen(
             onHelpClick = {
-                navController.navigateToUri(URL_SECURITY_LEVEL_DOCUMENTATION)
+                navController.navigateToUri(URL_SECURITY_LEVEL_DOCUMENTATION, onShowSnackbar)
             },
             onGotoNextScreen = {
                 onOnboardingDone()
@@ -235,7 +236,11 @@ internal fun NavGraphBuilder.onboarding(
  * - Manual server entry: Direct URL input for server connection
  * - Connection: Authentication and server validation
  */
-private fun NavGraphBuilder.commonScreens(navController: NavController, wearNameToOnboard: String? = null) {
+private fun NavGraphBuilder.commonScreens(
+    navController: NavController,
+    onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
+    wearNameToOnboard: String? = null,
+) {
     serverDiscoveryScreen(
         onConnectClick = {
             navController.navigateToConnection(it.toString())
@@ -252,7 +257,7 @@ private fun NavGraphBuilder.commonScreens(navController: NavController, wearName
         },
         onManualSetupClick = navController::navigateToManualServer,
         onHelpClick = {
-            navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION)
+            navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, onShowSnackbar)
         },
     )
     manualServerScreen(
@@ -261,7 +266,7 @@ private fun NavGraphBuilder.commonScreens(navController: NavController, wearName
             navController.navigateToConnection(it.toString())
         },
         onHelpClick = {
-            navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION)
+            navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, onShowSnackbar)
         },
     )
     connectionScreen(
@@ -290,7 +295,7 @@ private fun NavGraphBuilder.commonScreens(navController: NavController, wearName
         },
         onBackClick = navController::popBackStack,
         onOpenExternalLink = {
-            navController.navigateToUri(it.toString())
+            navController.navigateToUri(it.toString(), onShowSnackbar = onShowSnackbar)
         },
     )
 }
@@ -388,6 +393,7 @@ internal fun NavGraphBuilder.wearOnboarding(
         certUri: Uri?,
         certPassword: String?,
     ) -> Unit,
+    onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     urlToOnboard: String?,
     wearNameToOnboard: String,
 ) {
@@ -398,7 +404,11 @@ internal fun NavGraphBuilder.wearOnboarding(
     }
 
     navigation<WearOnboardingRoute>(startDestination = startRoute) {
-        commonScreens(navController = navController, wearNameToOnboard = wearNameToOnboard)
+        commonScreens(
+            navController = navController,
+            onShowSnackbar = onShowSnackbar,
+            wearNameToOnboard = wearNameToOnboard,
+        )
         nameYourWearDeviceScreen(
             onBackClick = navController::popBackStack,
             onDeviceNamed = { deviceName, serverUrl, authCode, neededMTLS ->
@@ -413,15 +423,13 @@ internal fun NavGraphBuilder.wearOnboarding(
                 }
             },
             onHelpClick = {
-                navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION)
+                navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, onShowSnackbar)
             },
         )
         wearMTLSScreen(
             onBackClick = navController::popBackStack,
             onHelpClick = {
-                navController.navigateToUri(
-                    "https://companion.home-assistant.io/docs/getting_started/#tls-client-authentication",
-                )
+                navController.navigateToUri(URL_MTLS_DOCUMENTATION, onShowSnackbar)
             },
             onNext = onOnboardingDone,
         )
