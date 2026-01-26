@@ -22,13 +22,10 @@ import timber.log.Timber
  *
  * Thanks to [brownard](https://github.com/brownard/Ava) for the inspiration on the native implementation.
  *
+ * @param stepSizeMs Step size between frames in milliseconds
  * @param sampleRate Audio sample rate in Hz (default: 16000)
- * @param stepSizeMs Step size between frames in milliseconds (default: 10)
  */
-class MicroFrontend(
-    private val sampleRate: Int = DEFAULT_SAMPLE_RATE,
-    private val stepSizeMs: Int = DEFAULT_STEP_SIZE_MS,
-) : Closeable {
+class MicroFrontend(private val stepSizeMs: Int, private val sampleRate: Int = DEFAULT_SAMPLE_RATE) : Closeable {
 
     private var nativeHandle: Long = 0
 
@@ -75,7 +72,6 @@ class MicroFrontend(
 
     private companion object {
         const val DEFAULT_SAMPLE_RATE = 16000
-        const val DEFAULT_STEP_SIZE_MS = 10
 
         init {
             System.loadLibrary("microfrontend")

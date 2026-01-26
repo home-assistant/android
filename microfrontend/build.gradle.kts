@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "io.homeassistant.companion.android.microfrontend"
-    ndkVersion = libs.versions.andrdoiNdk.get()
+    ndkVersion = libs.versions.androidNdk.get()
 
     defaultConfig {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
