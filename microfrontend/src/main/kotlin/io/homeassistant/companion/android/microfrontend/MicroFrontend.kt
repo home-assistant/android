@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.microfrontend
 
-import java.io.Closeable
 import timber.log.Timber
 
 /**
@@ -25,7 +24,7 @@ import timber.log.Timber
  * @param stepSizeMs Step size between frames in milliseconds
  * @param sampleRate Audio sample rate in Hz (default: 16000)
  */
-class MicroFrontend(private val stepSizeMs: Int, private val sampleRate: Int = DEFAULT_SAMPLE_RATE) : Closeable {
+class MicroFrontend(private val stepSizeMs: Int, private val sampleRate: Int = DEFAULT_SAMPLE_RATE) : FeatureExtractor {
 
     private var nativeHandle: Long = 0
 
@@ -42,7 +41,7 @@ class MicroFrontend(private val stepSizeMs: Int, private val sampleRate: Int = D
      *
      * @param samples 16-bit PCM audio samples at [sampleRate] sample rate
      */
-    fun processSamples(samples: ShortArray): List<FloatArray> {
+    override fun processSamples(samples: ShortArray): List<FloatArray> {
         check(nativeHandle != 0L) { "MicroFrontend has been closed" }
         @Suppress("UNCHECKED_CAST")
         return nativeProcessSamples(nativeHandle, samples) as List<FloatArray>
@@ -52,7 +51,7 @@ class MicroFrontend(private val stepSizeMs: Int, private val sampleRate: Int = D
      * Reset internal state (noise estimates, PCAN state, sample buffer).
      * Call this when starting a new audio stream.
      */
-    fun reset() {
+    override fun reset() {
         check(nativeHandle != 0L) { "MicroFrontend has been closed" }
         nativeReset(nativeHandle)
         Timber.d("MicroFrontend reset")

@@ -24,7 +24,6 @@ import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
-import io.homeassistant.companion.android.common.util.HAStrictMode
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
@@ -35,8 +34,6 @@ import io.homeassistant.companion.android.themes.NightModeManager
 import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.util.QuestUtil
 import io.homeassistant.companion.android.util.initCrashSaving
-import io.homeassistant.companion.android.util.threadPolicyIgnoredViolationRules
-import io.homeassistant.companion.android.util.vmPolicyIgnoredViolationRules
 import io.homeassistant.companion.android.websocket.WebsocketBroadcastReceiver
 import io.homeassistant.companion.android.widgets.button.ButtonWidget
 import io.homeassistant.companion.android.widgets.entity.EntityWidget
@@ -88,10 +85,10 @@ open class HomeAssistantApplication :
             BuildConfig.DEBUG &&
             !BuildConfig.NO_STRICT_MODE
         ) {
-            HAStrictMode.enable(
-                vmPolicyIgnoredViolationRules = vmPolicyIgnoredViolationRules,
-                threadPolicyIgnoredViolationRules = threadPolicyIgnoredViolationRules,
-            )
+//            HAStrictMode.enable(
+//                vmPolicyIgnoredViolationRules = vmPolicyIgnoredViolationRules,
+//                threadPolicyIgnoredViolationRules = threadPolicyIgnoredViolationRules,
+//            )
         }
 
         // We should initialize the logger as early as possible in the lifecycle of the application
