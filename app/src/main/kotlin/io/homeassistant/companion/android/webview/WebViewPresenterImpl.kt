@@ -500,15 +500,54 @@ class WebViewPresenterImpl @Inject constructor(
 
     override fun appCanCommissionMatterDevice(): Boolean = matterUseCase.appSupportsCommissioning()
 
-    override fun startCommissioningMatterDevice(context: Context) {
+    override fun startCommissioningMatterDevice(context: Context, tlv: String?, borderAgentId: String?) {
         if (mutableMatterThreadStep.value != MatterThreadStep.REQUESTED) {
             mutableMatterThreadStep.tryEmit(MatterThreadStep.REQUESTED)
 
-            // The app used to sync Thread credentials here until commit 26a472a, but it was
-            // (temporarily?) removed due to slowing down the Matter commissioning flow for the user
-            // and limited usefulness of the result (because of API limitations)
+            mainScope.launch {
+                if (tlv != null && borderAgentId != null) {
+                    Timber.d("Matter commissioning payload has preferred Thread dataset, comparing")
+                    val isPreferred = threadUseCase.isPreferredDatasetByDevice(context, tlv)
 
-            startMatterCommissioningFlow(context)
+                    if (isPreferred) {
+                        Timber.d("Device prefers core preferred dataset, starting commissioning")
+                        startMatterCommissioningFlow(context)
+                    } else if (!threadUseCase.hasSyncedPreferredDataset(serverId)) {
+                        // We only sync if the server has never synced, as a full sync can be slow
+                        Timber.d("Device doesn't prefer core preferred dataset, starting first sync")
+                        val deviceThreadIntent = try {
+                            val result = threadUseCase.syncPreferredDataset(
+                                context = context,
+                                serverId = serverId,
+                                exportOnly = false,
+                                scope = CoroutineScope(mainScope.coroutineContext + SupervisorJob()),
+                            )
+                            when (result) {
+                                is ThreadManager.SyncResult.OnlyOnDevice -> result.exportIntent
+                                is ThreadManager.SyncResult.AllHaveCredentials -> result.exportIntent
+                                else -> null
+                            }
+                        } catch (e: Exception) {
+                            Timber.w(e, "Unable to sync preferred Thread dataset, continuing")
+                            null
+                        }
+                        if (deviceThreadIntent != null) {
+                            matterThreadIntentSender = deviceThreadIntent
+                            mutableMatterThreadStep.tryEmit(MatterThreadStep.THREAD_EXPORT_TO_SERVER_MATTER)
+                        } else {
+                            startMatterCommissioningFlow(context)
+                        }
+                    } else {
+                        Timber.d(
+                            "Device doesn't prefer core preferred dataset but has previously synced, starting commissioning",
+                        )
+                        startMatterCommissioningFlow(context)
+                    }
+                } else {
+                    Timber.d("Matter commissioning payload doesn't have Thread, starting commissioning")
+                    startMatterCommissioningFlow(context)
+                }
+            }
         } // else already waiting for a result, don't send another request
     }
 

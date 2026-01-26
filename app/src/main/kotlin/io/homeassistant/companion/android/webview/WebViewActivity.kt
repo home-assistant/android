@@ -937,7 +937,7 @@ class WebViewActivity :
                                         ),
                                     )
 
-                                "matter/commission" -> presenter.startCommissioningMatterDevice(this@WebViewActivity)
+                                "matter/commission" -> startMatterCommissioning(json)
                                 "thread/import_credentials" -> {
                                     presenter.exportThreadCredentials(this@WebViewActivity)
 
@@ -1006,6 +1006,13 @@ class WebViewActivity :
                 javascriptInterface,
             )
         }
+    }
+
+    private fun startMatterCommissioning(json: JsonObject) {
+        val payload = json["payload"]?.jsonObjectOrNull()
+        val tlv = payload?.getStringOrNull("active_operational_dataset")
+        val borderAgentId = payload?.getStringOrNull("border_agent_id")
+        presenter.startCommissioningMatterDevice(this@WebViewActivity, tlv, borderAgentId)
     }
 
     private fun addEntityTo(json: JsonObject) {

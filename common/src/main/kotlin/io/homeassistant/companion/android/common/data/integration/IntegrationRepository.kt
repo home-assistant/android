@@ -69,6 +69,12 @@ interface IntegrationRepository {
 
     suspend fun setLastUsedPipeline(pipelineId: String, supportsStt: Boolean)
 
+    /** @return Whether Thread credentials have ever been synced to or from this server */
+    suspend fun getThreadCredentialsSynced(): Boolean
+
+    /** Set whether Thread credentials have ever been synced to or from this server */
+    suspend fun setThreadCredentialsSynced(synced: Boolean)
+
     /** @return List of border agent IDs added to this device from the server */
     suspend fun getThreadBorderAgentIds(): List<String>
 
