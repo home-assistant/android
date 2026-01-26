@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Color
 import android.os.Handler
 import android.os.Looper
@@ -48,8 +49,23 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+/** Default button widget registered in the manifest */
 @AndroidEntryPoint
-sealed class ButtonWidget : AppWidgetProvider() {
+class ButtonWidget : ButtonWidgetBase()
+
+/**
+ * 2x2 variant of the Button widget for the Samsung Z Flip cover screen.
+ */
+@AndroidEntryPoint
+class ButtonWidget2x2 : ButtonWidgetBase()
+
+
+/**
+ * Base sealed class for all button widget variants.
+ * Use to be able to list of ButtonWidget variant using `sealedSubclasses`
+ */
+@AndroidEntryPoint
+sealed class ButtonWidgetBase : AppWidgetProvider() {
     companion object {
         const val CALL_SERVICE =
             "io.homeassistant.companion.android.widgets.button.ButtonWidget.CALL_SERVICE"
@@ -81,7 +97,7 @@ sealed class ButtonWidget : AppWidgetProvider() {
     private fun updateAllWidgets(context: Context) {
         mainScope.launch {
             val appWidgetManager = AppWidgetManager.getInstance(context) ?: return@launch
-            val systemWidgetIds = ButtonWidget::class.sealedSubclasses.flatMap {
+            val systemWidgetIds = ButtonWidgetBase::class.sealedSubclasses.flatMap {
                 appWidgetManager.getAppWidgetIds(ComponentName(context, it.java)).toList()
             }
             val dbWidgetList = buttonWidgetDao.getAll()
