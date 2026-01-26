@@ -29,6 +29,7 @@ import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+// TODO Migrate to compose https://github.com/home-assistant/android/issues/6306
 @AndroidEntryPoint
 class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity<CameraWidgetEntity, CameraWidgetDao>() {
 

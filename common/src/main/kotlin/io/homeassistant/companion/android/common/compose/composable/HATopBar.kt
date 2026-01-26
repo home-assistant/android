@@ -12,6 +12,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -19,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import kotlinx.coroutines.launch
 
 /**
  * Generic top bar for Home Assistant screens with optional buttons
@@ -32,13 +34,14 @@ import io.homeassistant.companion.android.common.compose.theme.LocalHAColorSchem
 fun HATopBar(
     modifier: Modifier = Modifier,
     title: @Composable () -> Unit = {},
-    onHelpClick: (() -> Unit)? = null,
+    onHelpClick: (suspend () -> Unit)? = null,
     onBackClick: (() -> Unit)? = null,
     onCloseClick: (() -> Unit)? = null,
 ) {
     require(onBackClick == null || onCloseClick == null) {
         "onBackClick and onCloseClick are mutually exclusive and cannot be set together"
     }
+    val coroutineScope = rememberCoroutineScope()
     HATopBar(
         title = title,
         navigationIcon = {
@@ -61,7 +64,11 @@ fun HATopBar(
         },
         actions = {
             onHelpClick?.let {
-                IconButton(onClick = onHelpClick) {
+                IconButton(
+                    onClick = {
+                        coroutineScope.launch { onHelpClick() }
+                    },
+                ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
                         contentDescription = stringResource(commonR.string.get_help),

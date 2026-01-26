@@ -38,6 +38,7 @@ import io.homeassistant.companion.android.widgets.common.WidgetUtils
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+// TODO Migrate to compose https://github.com/home-assistant/android/issues/6307
 @AndroidEntryPoint
 class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity<StaticWidgetEntity, StaticWidgetDao>() {
 

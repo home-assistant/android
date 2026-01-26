@@ -179,6 +179,7 @@ internal data class EntityPickerItem(
  * @param onEntitySelectedId Callback invoked when an entity is selected
  * @param onEntityCleared Callback invoked when the selection is cleared
  * @param modifier The modifier to apply to this composable
+ * @param addButtonText The text to display on the "Add entity" button when no entity is selected
  * @param entityRegistry Optional list of entity registry entries for displaying metadata (area, device)
  * @param deviceRegistry Optional list of device registry entries for displaying device names
  * @param areaRegistry Optional list of area registry entries for displaying area names
@@ -190,6 +191,7 @@ fun EntityPicker(
     onEntitySelectedId: (String) -> Unit,
     onEntityCleared: () -> Unit,
     modifier: Modifier = Modifier,
+    addButtonText: String = defaultAddText(),
     entityRegistry: List<EntityRegistryResponse>? = null,
     deviceRegistry: List<DeviceRegistryResponse>? = null,
     areaRegistry: List<AreaRegistryResponse>? = null,
@@ -213,6 +215,7 @@ fun EntityPicker(
         },
         onEntityCleared = onEntityCleared,
         modifier = modifier,
+        addButtonText = addButtonText,
     )
 }
 
@@ -234,6 +237,7 @@ internal fun EntityPicker(
     onEntitySelectedId: (String) -> Unit,
     onEntityCleared: () -> Unit,
     modifier: Modifier = Modifier,
+    addButtonText: String = defaultAddText(),
     isExpanded: Boolean = false,
     dispatcher: CoroutineContext = Dispatchers.Default,
 ) {
@@ -247,21 +251,20 @@ internal fun EntityPicker(
     val scope = rememberCoroutineScope()
 
     Column(modifier = modifier) {
-        if (selectedEntityId != null) {
-            val entity = entities.firstOrNull { it.entityId == selectedEntityId }
-            if (entity != null) {
-                SelectedEntityChip(
-                    entity = entity,
-                    onClearClick = {
-                        onEntityCleared()
-                        searchQuery = ""
-                    },
-                    onExpandClick = { isExpanded = !isExpanded },
-                )
-            }
+        val selectedEntity = selectedEntityId?.takeIf { it.isNotBlank() }
+            ?.let { id -> entities.firstOrNull { it.entityId == id } }
+        if (selectedEntity != null) {
+            SelectedEntityChip(
+                entity = selectedEntity,
+                onClearClick = {
+                    onEntityCleared()
+                    searchQuery = ""
+                },
+                onExpandClick = { isExpanded = !isExpanded },
+            )
         } else {
             HAFilledButton(
-                text = stringResource(commonR.string.entity_picker_add_entity),
+                text = addButtonText,
                 onClick = { isExpanded = true },
                 size = ButtonSize.SMALL,
                 prefix = {
@@ -315,6 +318,9 @@ internal fun EntityPicker(
         }
     }
 }
+
+@Composable
+private fun defaultAddText(): String = stringResource(commonR.string.entity_picker_add_entity)
 
 @Composable
 private fun SelectedEntityChip(

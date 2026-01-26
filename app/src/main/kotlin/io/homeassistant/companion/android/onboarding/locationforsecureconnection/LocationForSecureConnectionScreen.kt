@@ -64,7 +64,7 @@ private enum class SelectionKey {
 fun LocationForSecureConnectionScreen(
     viewModel: LocationForSecureConnectionViewModel,
     onGoToNextScreen: (allowInsecureConnection: Boolean) -> Unit,
-    onHelpClick: () -> Unit,
+    onHelpClick: suspend () -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     modifier: Modifier = Modifier,
     onBackClick: (() -> Unit)? = null,
@@ -92,7 +92,7 @@ fun LocationForSecureConnectionScreen(
 internal fun LocationForSecureConnectionScreen(
     initialAllowInsecureConnection: Boolean?,
     onAllowInsecureConnection: (allowInsecureConnection: Boolean) -> Unit,
-    onHelpClick: () -> Unit,
+    onHelpClick: suspend () -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     modifier: Modifier = Modifier,
     onBackClick: (() -> Unit)? = null,
