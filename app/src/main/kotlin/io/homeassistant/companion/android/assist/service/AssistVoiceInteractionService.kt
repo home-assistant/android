@@ -13,10 +13,12 @@ import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.os.Build
 import android.service.voice.VoiceInteractionService
+import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import io.homeassistant.companion.android.assist.AssistActivity
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWord
+import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModel
 import io.homeassistant.companion.android.assist.wakeword.TfLiteInitializerImpl
 import io.homeassistant.companion.android.common.R as commonR
 import kotlin.time.Duration.Companion.seconds
@@ -97,9 +99,18 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
                 // Initialize TFLite runtime (required for Play Services TFLite)
                 TfLiteInitializerImpl().initialize(this@AssistVoiceInteractionService)
 
-                // Initialize wake word detector
-                wakeWordDetector = MicroWakeWord(this@AssistVoiceInteractionService)
-                Timber.d("MicroWakeWord detector initialized")
+                // Load available wake word models and select the first one
+                // TODO: Allow user to select which wake word model to use
+                val availableModels = MicroWakeWordModel.loadAvailableModels(this@AssistVoiceInteractionService)
+                if (availableModels.isEmpty()) {
+                    throw IllegalStateException("No wake word models found in assets")
+                }
+                val selectedModel = availableModels.first()
+                Timber.d("Available wake word models: ${availableModels.map { it.wakeWord }}")
+
+                // Initialize wake word detector with selected model
+                wakeWordDetector = MicroWakeWord(this@AssistVoiceInteractionService, selectedModel)
+                Timber.d("MicroWakeWord detector initialized with '${selectedModel.wakeWord}'")
 
                 isListening = true
                 isStartingUp = false
@@ -311,12 +322,15 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
                 context,
                 AssistVoiceInteractionService::class.java,
             )
-            return VoiceInteractionService.isActiveService(context, componentName)
+            return isActiveService(context, componentName)
         }
 
         /**
-         * Start listening for wake word (requires service to be running).
+         * Start listening for wake word.
+         *
+         * Requires [Manifest.permission.RECORD_AUDIO] permission to access the microphone.
          */
+        @RequiresPermission(Manifest.permission.RECORD_AUDIO)
         fun startListening(context: Context) {
             val intent = Intent(context, AssistVoiceInteractionService::class.java).apply {
                 action = ACTION_START_LISTENING

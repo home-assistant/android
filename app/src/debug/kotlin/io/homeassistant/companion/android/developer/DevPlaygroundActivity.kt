@@ -1,7 +1,9 @@
 package io.homeassistant.companion.android.developer
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
@@ -21,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import io.homeassistant.companion.android.assist.service.AssistVoiceInteractionService
 import io.homeassistant.companion.android.barcode.BarcodeScannerActivity
 import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
@@ -131,9 +134,20 @@ private fun DevPlayGroundScreen(context: Context? = null) {
                     text = "Start Wake Word Detection",
                     onClick = {
                         context?.let { ctx ->
-                            AssistVoiceInteractionService.startListening(ctx)
-                            scope.launch {
-                                snackbarHostState.showSnackbar("Listening for 'Hey Jarvis'")
+                            val hasPermission = ContextCompat.checkSelfPermission(
+                                ctx,
+                                Manifest.permission.RECORD_AUDIO,
+                            ) == PackageManager.PERMISSION_GRANTED
+
+                            if (hasPermission) {
+                                AssistVoiceInteractionService.startListening(ctx)
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("Listening for wake word")
+                                }
+                            } else {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("Microphone permission not granted")
+                                }
                             }
                         }
                     },
