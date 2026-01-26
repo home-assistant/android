@@ -99,6 +99,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         private const val PREF_SEC_WARNING_NEXT = "sec_warning_last"
         private const val PREF_LAST_USED_PIPELINE_ID = "last_used_pipeline"
         private const val PREF_LAST_USED_PIPELINE_STT = "last_used_pipeline_stt"
+        private const val PREF_THREAD_CREDENTIALS_SYNCED = "thread_credentials_synced"
         private const val PREF_THREAD_BORDER_AGENT_IDS = "thread_border_agent_ids"
 
         @VisibleForTesting internal const val PREF_ASK_NOTIFICATION_PERMISSION = "ask_notification_permission"
@@ -439,6 +440,13 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     override suspend fun setLastUsedPipeline(pipelineId: String, supportsStt: Boolean) {
         localStorage.putString("${serverId}_$PREF_LAST_USED_PIPELINE_ID", pipelineId)
         localStorage.putBoolean("${serverId}_$PREF_LAST_USED_PIPELINE_STT", supportsStt)
+    }
+
+    override suspend fun getThreadCredentialsSynced(): Boolean =
+        localStorage.getBoolean("${serverId}_$PREF_THREAD_CREDENTIALS_SYNCED")
+
+    override suspend fun setThreadCredentialsSynced(synced: Boolean) {
+        localStorage.putBoolean("${serverId}_$PREF_THREAD_CREDENTIALS_SYNCED", synced)
     }
 
     override suspend fun getThreadBorderAgentIds(): List<String> =

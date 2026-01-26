@@ -23,6 +23,9 @@ interface ThreadManager {
         object NoneHaveCredentials : SyncResult()
     }
 
+    /** Exception related to Thread Network operations */
+    class ThreadNetworkException(message: String?) : Exception()
+
     /**
      * Indicates if the app on this device supports Thread credential management.
      */
@@ -53,6 +56,13 @@ interface ThreadManager {
     ): SyncResult
 
     /**
+     * Check if there was ever a Thread dataset synchronization to or from the specified server.
+     * @see syncPreferredDataset for syncing details.
+     * @return `true` if the server has ever synced, `false` if the server has never synced.
+     */
+    suspend fun hasSyncedPreferredDataset(serverId: Int): Boolean
+
+    /**
      * Get the preferred Thread dataset from the server.
      */
     suspend fun getPreferredDatasetFromServer(serverId: Int): ThreadDatasetResponse?
@@ -78,6 +88,14 @@ interface ThreadManager {
      * @throws Exception if it is not possible to get the preferred dataset
      */
     suspend fun getPreferredDatasetFromDevice(context: Context): IntentSender?
+
+    /**
+     * Compares the supplied dataset to what is preferred by the device.
+     * @return `true` if preferred by the device, `false` otherwise
+     * @throws IllegalArgumentException if the tlv is malformed
+     * @throws ThreadNetworkException if it is not possible to get the preferred dataset
+     */
+    suspend fun isPreferredDatasetByDevice(context: Context, tlv: String): Boolean
 
     /**
      * Process the result from [syncPreferredDataset] or [getPreferredDatasetFromDevice]'s intent
