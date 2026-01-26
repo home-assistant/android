@@ -20,24 +20,24 @@ pluginManagement {
 
 plugins {
     // So we can't reach the libs.plugins.* aliases from here so we need to declare them the old way...
-//    id("org.ajoberstar.reckon.settings").version("1.0.1")
+    id("org.ajoberstar.reckon.settings").version("1.0.1")
 }
 
-// reckon {
-//    val isCiBuild = providers.environmentVariable("CI").isPresent
-//
-//    setDefaultInferredScope("patch")
-//    if (!isCiBuild) {
-//        // Use a snapshot version scheme with Reckon when not running in CI, which allows caching to
-//        // improve performance. Background: https://github.com/home-assistant/android/issues/5220.
-//        snapshots()
-//    } else {
-//        stages("beta", "final")
-//    }
-//    setScopeCalc { java.util.Optional.of(org.ajoberstar.reckon.core.Scope.PATCH) }
-//    setStageCalc(calcStageFromProp())
-//    setTagWriter { it.toString() }
-// }
+ reckon {
+    val isCiBuild = providers.environmentVariable("CI").isPresent
+
+    setDefaultInferredScope("patch")
+    if (!isCiBuild) {
+        // Use a snapshot version scheme with Reckon when not running in CI, which allows caching to
+        // improve performance. Background: https://github.com/home-assistant/android/issues/5220.
+        snapshots()
+    } else {
+        stages("beta", "final")
+    }
+    setScopeCalc { java.util.Optional.of(org.ajoberstar.reckon.core.Scope.PATCH) }
+    setStageCalc(calcStageFromProp())
+    setTagWriter { it.toString() }
+ }
 
 dependencyResolutionManagement {
     repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
