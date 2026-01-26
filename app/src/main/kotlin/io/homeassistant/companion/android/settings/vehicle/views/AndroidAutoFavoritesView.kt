@@ -93,7 +93,6 @@ fun AndroidAutoFavoritesSettings(
 
         // Show content only once entities are loaded
         if (androidAutoViewModel.sortedEntities.isNotEmpty()) {
-
             if (serversList.size > 1) {
                 item {
                     ServerExposedDropdownMenu(
@@ -161,7 +160,6 @@ fun AndroidAutoFavoritesSettings(
                     }
                 }
             }
-
         } else {
             // Loader while entities are being fetched
             item {
