@@ -53,7 +53,7 @@ sealed class ButtonWidget : AppWidgetProvider() {
     companion object {
         const val CALL_SERVICE =
             "io.homeassistant.companion.android.widgets.button.ButtonWidget.CALL_SERVICE"
-        const val CALL_SERVICE_AUTH =
+        private const val CALL_SERVICE_AUTH =
             "io.homeassistant.companion.android.widgets.button.ButtonWidget.CALL_SERVICE_AUTH"
 
         // Vector icon rendering resolution fallback (if we can't infer via AppWidgetManager for some reason)
