@@ -23,6 +23,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.prefs.AutoFavorite
@@ -30,7 +31,7 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.settings.vehicle.ManageAndroidAutoViewModel
 import io.homeassistant.companion.android.util.compose.FavoriteEntityRow
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
-import io.homeassistant.companion.android.util.compose.SingleEntityPicker
+import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import io.homeassistant.companion.android.util.vehicle.isVehicleDomain
@@ -101,17 +102,36 @@ fun AndroidAutoFavoritesSettings(
             }
         } else {
             item {
-                SingleEntityPicker(
-                    entities = validEntities,
-                    currentEntity = null,
-                    onEntityCleared = { /* Nothing */ },
-                    onEntitySelected = {
-                        androidAutoViewModel.onEntitySelected(true, it, selectedServer)
-                        return@SingleEntityPicker false // Clear input
-                    },
-                    modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
-                    label = { Text(stringResource(commonR.string.add_favorite)) },
-                )
+                // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6302
+                HATheme {
+                    EntityPicker(
+                        entities = validEntities,
+                        entityRegistry = androidAutoViewModel.entityRegistry[selectedServer],
+                        deviceRegistry = androidAutoViewModel.deviceRegistry[selectedServer],
+                        areaRegistry = androidAutoViewModel.areaRegistry[selectedServer],
+                        selectedEntityId = null,
+                        onEntityCleared = { /* Nothing */ },
+                        onEntitySelectedId = {
+                            androidAutoViewModel.onEntitySelected(true, it, selectedServer)
+                        },
+                        // The 'addButtonText' parameter does not exist in the read file of EntityPicker.
+                        // I need to check EntityPicker parameters again.
+                        // The read file showed:
+                        // fun EntityPicker(
+                        //     entities: List<Entity>,
+                        //     selectedEntityId: String?,
+                        //     onEntitySelectedId: (String) -> Unit,
+                        //     onEntityCleared: () -> Unit,
+                        //     modifier: Modifier = Modifier,
+                        //     entityRegistry: List<EntityRegistryResponse>? = null,
+                        //     deviceRegistry: List<DeviceRegistryResponse>? = null,
+                        //     areaRegistry: List<AreaRegistryResponse>? = null,
+                        // )
+                        // It does NOT have 'addButtonText'. It uses stringResource(commonR.string.entity_picker_add_entity) internally.
+                        // So I should remove 'addButtonText'.
+                        modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
+                    )
+                }
             }
             if (favoriteEntities.isNotEmpty() && androidAutoViewModel.sortedEntities.isNotEmpty()) {
                 items(favoriteEntities.size, { favoriteEntities[it] }) { index ->

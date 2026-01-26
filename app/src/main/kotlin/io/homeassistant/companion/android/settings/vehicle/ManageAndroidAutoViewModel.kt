@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
@@ -16,6 +17,9 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.prefs.AutoFavorite
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.util.vehicle.isVehicleDomain
 import javax.inject.Inject
@@ -37,6 +41,12 @@ class ManageAndroidAutoViewModel @Inject constructor(
     var sortedEntities by mutableStateOf<List<Entity>>(emptyList())
         private set
     val entities = mutableMapOf<Int, List<Entity>>()
+    var entityRegistry = mutableStateMapOf<Int, List<EntityRegistryResponse>>()
+        private set
+    var deviceRegistry = mutableStateMapOf<Int, List<DeviceRegistryResponse>>()
+        private set
+    var areaRegistry = mutableStateMapOf<Int, List<AreaRegistryResponse>>()
+        private set
 
     var servers by mutableStateOf(emptyList<Server>())
         private set
@@ -52,16 +62,40 @@ class ManageAndroidAutoViewModel @Inject constructor(
             servers = serverManager.servers()
             defaultServerId = serverManager.getServer()?.id ?: 0
             favoritesList.addAll(prefsRepository.getAutoFavorites())
-            servers.map {
+            servers.map { server ->
                 async {
-                    entities[it.id] = try {
-                        serverManager.integrationRepository(it.id).getEntities().orEmpty()
+                    entities[server.id] = try {
+                        serverManager.integrationRepository(server.id).getEntities().orEmpty()
                             .filter {
                                 isVehicleDomain(it)
                             }
                     } catch (e: Exception) {
                         Timber.e(e, "Couldn't load entities for server")
                         emptyList()
+                    }
+                    launch {
+                        entityRegistry[server.id] = try {
+                            serverManager.webSocketRepository(server.id).getEntityRegistry().orEmpty()
+                        } catch (e: Exception) {
+                            Timber.e(e, "Couldn't load entity registry for server")
+                            emptyList()
+                        }
+                    }
+                    launch {
+                        deviceRegistry[server.id] = try {
+                            serverManager.webSocketRepository(server.id).getDeviceRegistry().orEmpty()
+                        } catch (e: Exception) {
+                            Timber.e(e, "Couldn't load device registry for server")
+                            emptyList()
+                        }
+                    }
+                    launch {
+                        areaRegistry[server.id] = try {
+                            serverManager.webSocketRepository(server.id).getAreaRegistry().orEmpty()
+                        } catch (e: Exception) {
+                            Timber.e(e, "Couldn't load area registry for server")
+                            emptyList()
+                        }
                     }
                 }
             }.awaitAll()
