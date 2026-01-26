@@ -65,7 +65,7 @@ class ButtonWidget2x2 : ButtonWidgetBase()
  * Use to be able to list of ButtonWidget variant using `sealedSubclasses`
  */
 @AndroidEntryPoint
-sealed class ButtonWidgetBase : AppWidgetProvider() {
+abstract class ButtonWidgetBase : AppWidgetProvider() {
     companion object {
         const val CALL_SERVICE =
             "io.homeassistant.companion.android.widgets.button.ButtonWidget.CALL_SERVICE"
@@ -97,9 +97,8 @@ sealed class ButtonWidgetBase : AppWidgetProvider() {
     private fun updateAllWidgets(context: Context) {
         mainScope.launch {
             val appWidgetManager = AppWidgetManager.getInstance(context) ?: return@launch
-            val systemWidgetIds = ButtonWidgetBase::class.sealedSubclasses.flatMap {
-                appWidgetManager.getAppWidgetIds(ComponentName(context, it.java)).toList()
-            }
+            val systemWidgetIds = listOf(ButtonWidget::class.java, ButtonWidget2x2::class.java)
+                .flatMap { appWidgetManager.getAppWidgetIds(ComponentName(context, it)).toList() }
             val dbWidgetList = buttonWidgetDao.getAll()
 
             val invalidWidgetIds = dbWidgetList
