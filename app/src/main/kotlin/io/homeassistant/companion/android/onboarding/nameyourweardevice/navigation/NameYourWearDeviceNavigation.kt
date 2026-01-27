@@ -35,7 +35,7 @@ internal fun NavController.navigateToNameYourWearDevice(
 
 internal fun NavGraphBuilder.nameYourWearDeviceScreen(
     onBackClick: () -> Unit,
-    onHelpClick: () -> Unit,
+    onHelpClick: suspend () -> Unit,
     onDeviceNamed: (deviceName: String, serverUrl: String, authCode: String, neededMTLS: Boolean) -> Unit,
 ) {
     composable<NameYourWearDeviceRoute> {

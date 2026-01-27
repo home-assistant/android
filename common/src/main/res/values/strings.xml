@@ -1010,6 +1010,7 @@
     <string name="widget_static_image_description">Entity state</string>
     <string name="todo_widgets">To-do widgets</string>
     <string name="todo_widget">To-do widget</string>
+    <string name="todo_widget_select_list">Select list</string>
     <string name="widget_todo_add">Add to-do</string>
     <string name="widget_todo_refresh">Refresh to-do</string>
     <string name="widget_todo_label">To-do list</string>

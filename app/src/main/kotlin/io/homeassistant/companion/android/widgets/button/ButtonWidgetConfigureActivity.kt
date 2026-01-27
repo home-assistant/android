@@ -50,6 +50,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+// TODO Migrate to compose https://github.com/home-assistant/android/issues/6305
 @AndroidEntryPoint
 class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEntity, ButtonWidgetDao>() {
     private var actions = mutableMapOf<Int, HashMap<String, Action>>()

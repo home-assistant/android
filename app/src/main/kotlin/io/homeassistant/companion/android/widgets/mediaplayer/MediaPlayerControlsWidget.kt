@@ -244,9 +244,16 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                 )
 
                 val entityPictureUrl = entity?.attributes?.get("entity_picture")?.toString()
-                val baseUrl = serverManager.connectionStateProvider(
-                    widget.serverId,
-                ).urlFlow().firstUrlOrNull()?.toString()?.removeSuffix("/") ?: ""
+                val baseUrl = try {
+                    serverManager.connectionStateProvider(
+                        widget.serverId,
+                    )
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: IllegalStateException) {
+                    Timber.e(e, "The server does not exist anymore, could have been removed")
+                    null
+                }?.urlFlow()?.firstUrlOrNull()?.toString()?.removeSuffix("/") ?: ""
                 val url = if (entityPictureUrl?.startsWith("http") ==
                     true
                 ) {
@@ -427,8 +434,10 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                 }
                 return entities[0]
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
-            Timber.d("Failed to fetch entity or entity does not exist")
+            Timber.d(e, "Failed to fetch entity or entity does not exist")
             if (lastIntent == UPDATE_MEDIA_IMAGE) {
                 Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
             }
