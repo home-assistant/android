@@ -9,7 +9,8 @@ import timber.log.Timber
  * the ESPHome microWakeWord implementation, ensuring compatibility with
  * models trained using the TFLite Micro Frontend.
  *
- * Configuration matches ESPHome [preprocessor_settings.h](https://github.com/esphome/esphome/blob/8d1379a2752291d2f4e33d5831d51c2afd59f7ce/esphome/components/micro_wake_word/preprocessor_settings.h):
+ * The native implementation uses hardcoded settings that match ESPHome
+ * [preprocessor_settings.h](https://github.com/esphome/esphome/blob/8d1379a2752291d2f4e33d5831d51c2afd59f7ce/esphome/components/micro_wake_word/preprocessor_settings.h):
  * - 40 mel filterbank bins
  * - 125-7500 Hz frequency range
  * - 30ms window size
@@ -22,7 +23,8 @@ import timber.log.Timber
  * Thanks to [brownard](https://github.com/brownard/Ava) for the inspiration on the native implementation.
  *
  * @param stepSizeMs Step size between frames in milliseconds
- * @param sampleRate Audio sample rate in Hz (default: 16000)
+ * @param sampleRate Audio sample rate in Hz
+ * @see FeatureExtractor
  */
 class MicroFrontend(private val stepSizeMs: Int, private val sampleRate: Int = DEFAULT_SAMPLE_RATE) : FeatureExtractor {
 
@@ -39,7 +41,8 @@ class MicroFrontend(private val stepSizeMs: Int, private val sampleRate: Int = D
     /**
      * Process audio samples and extract spectrogram features.
      *
-     * @param samples 16-bit PCM audio samples at [sampleRate] sample rate
+     * @param samples 16-bit PCM audio samples at the configured sample rate
+     * @return List of feature frames, each containing 40 mel filterbank values
      */
     override fun processSamples(samples: ShortArray): List<FloatArray> {
         check(nativeHandle != 0L) { "MicroFrontend has been closed" }
@@ -65,6 +68,10 @@ class MicroFrontend(private val stepSizeMs: Int, private val sampleRate: Int = D
         }
     }
 
+    /**
+     * Safety net to release native resources if [close] was not called.
+     * Prefer calling [close] explicitly when done with this instance.
+     */
     protected fun finalize() {
         close()
     }

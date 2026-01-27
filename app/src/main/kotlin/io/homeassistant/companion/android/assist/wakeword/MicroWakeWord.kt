@@ -33,7 +33,7 @@ import timber.log.Timber
  * Use [create] to instantiate this class.
  */
 class MicroWakeWord @VisibleForTesting internal constructor(
-    private val modelConfig: MicroWakeWordModel,
+    private val modelConfig: MicroWakeWordModelConfig,
     private val interpreter: InterpreterApi,
     private val featureExtractor: FeatureExtractor,
 ) : Closeable {
@@ -113,7 +113,7 @@ class MicroWakeWord @VisibleForTesting internal constructor(
         val detected = detectionState.addProbabilityAndCheckDetection(probability)
         if (detected) {
             Timber.i(
-                "Wake word '${modelConfig.wakeWord}' detected! avgProbability=${detectionState.getAverageProbability()}",
+                "Wake word '${modelConfig.wakeWord}' detected! probability was $probability",
             )
             featureExtractor.reset()
         }
@@ -207,13 +207,13 @@ class MicroWakeWord @VisibleForTesting internal constructor(
          *
          * This is a suspend function to allow cancellation during model loading.
          */
-        suspend fun create(context: Context, modelConfig: MicroWakeWordModel): MicroWakeWord {
+        suspend fun create(context: Context, modelConfig: MicroWakeWordModelConfig): MicroWakeWord {
             val interpreter = createInterpreter(context, modelConfig)
             val featureExtractor = MicroFrontend(stepSizeMs = modelConfig.micro.featureStepSize)
             return MicroWakeWord(modelConfig, interpreter, featureExtractor)
         }
 
-        private suspend fun createInterpreter(context: Context, modelConfig: MicroWakeWordModel): InterpreterApi =
+        private suspend fun createInterpreter(context: Context, modelConfig: MicroWakeWordModelConfig): InterpreterApi =
             withContext(Dispatchers.IO) {
                 Timber.d("Loading wake word model: ${modelConfig.wakeWord} (${modelConfig.modelAssetPath})")
                 val modelBuffer = loadModelFile(context, modelConfig.modelAssetPath)

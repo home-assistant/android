@@ -14,7 +14,7 @@ import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import io.homeassistant.companion.android.assist.AssistActivity
-import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModel
+import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
 import io.homeassistant.companion.android.assist.wakeword.WakeWordListener
 import io.homeassistant.companion.android.common.R as commonR
 import kotlin.time.Clock
@@ -69,11 +69,16 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     }
 
     /**
-     * Start listening for a given wake word to trigger the assistant.
+     * Start listening for wake words to trigger the assistant.
+     *
+     * Loads the first available wake word model and begins detection.
+     * If already listening, this is a no-op. To change the model, call [stopListening] first.
+     *
      * Requires RECORD_AUDIO permission to be granted.
      */
     fun startListening() {
         if (wakeWordListener.isListening) {
+            // TODO we might want to remove this check to let allow the user to change the model loaded or simply restart
             Timber.d("Already listening")
             return
         }
@@ -89,11 +94,11 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         }
     }
 
-    private suspend fun loadWakeWordModel(): MicroWakeWordModel {
+    private suspend fun loadWakeWordModel(): MicroWakeWordModelConfig {
         // TODO: Allow user to select which wake word model to use
         // TODO: Allow user to set sensibility https://github.com/esphome/home-assistant-voice-pe/blob/a379b8c5c1a35eeebc8f9925c19aab68743517a4/home-assistant-voice.yaml#L1775
         // TODO: When to start/stop listening
-        val availableModels = MicroWakeWordModel.loadAvailableModels(this)
+        val availableModels = MicroWakeWordModelConfig.loadAvailableModels(this)
         if (availableModels.isEmpty()) {
             throw IllegalStateException("No wake word models found in assets")
         }
@@ -102,7 +107,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         return availableModels.first()
     }
 
-    private fun onListenerReady(model: MicroWakeWordModel) {
+    private fun onListenerReady(model: MicroWakeWordModelConfig) {
         serviceScope.launch {
             startForegroundWithNotification(model)
         }
@@ -116,10 +121,12 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
      * Stop listening for wake word.
      */
     fun stopListening() {
-        wakeWordListener.stop()
+        serviceScope.launch {
+            wakeWordListener.stop()
+        }
     }
 
-    private fun onWakeWordDetected(model: MicroWakeWordModel) {
+    private fun onWakeWordDetected(model: MicroWakeWordModelConfig) {
         val now = Clock.System.now()
         val lastTrigger = lastTriggerTime
 
@@ -138,7 +145,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) ==
             PackageManager.PERMISSION_GRANTED
 
-    private fun startForegroundWithNotification(model: MicroWakeWordModel) {
+    private fun startForegroundWithNotification(model: MicroWakeWordModelConfig) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startForeground(
                 NOTIFICATION_ID,
@@ -166,7 +173,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         startActivity(intent)
     }
 
-    private fun createNotification(modelConfig: MicroWakeWordModel): Notification {
+    private fun createNotification(modelConfig: MicroWakeWordModelConfig): Notification {
         createNotificationChannel()
 
         val stopIntent = Intent(this, AssistVoiceInteractionService::class.java).apply {
@@ -238,7 +245,9 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         }
 
         /**
-         * Start listening for wake word.
+         * Start listening for wake words.
+         *
+         * Sends an intent to start the service and begin wake word detection.
          *
          * Requires [Manifest.permission.RECORD_AUDIO] permission to access the microphone.
          */

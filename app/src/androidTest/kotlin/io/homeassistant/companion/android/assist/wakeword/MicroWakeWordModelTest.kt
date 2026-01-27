@@ -17,7 +17,7 @@ class MicroWakeWordModelTest {
 
     @Test
     fun loadsModelsFromAppAssets_verify_models_config_files() = runTest {
-        val models = MicroWakeWordModel.loadAvailableModels(appContext)
+        val models = MicroWakeWordModelConfig.loadAvailableModels(appContext)
 
         assertTrue("Expected at least one wake word model", models.isNotEmpty())
 
@@ -38,7 +38,7 @@ class MicroWakeWordModelTest {
     @Test
     fun microWakeWord_loadsAndProcessesAudio_withAllModels() = runTest {
         TfLiteInitializerImpl().initialize(appContext)
-        val models = MicroWakeWordModel.loadAvailableModels(appContext)
+        val models = MicroWakeWordModelConfig.loadAvailableModels(appContext)
 
         for (model in models) {
             val detector = MicroWakeWord.create(appContext, model)
@@ -62,7 +62,7 @@ class MicroWakeWordModelTest {
     @Test
     fun microWakeWord_canResetState_withoutCrashing() = runTest {
         TfLiteInitializerImpl().initialize(appContext)
-        val models = MicroWakeWordModel.loadAvailableModels(appContext)
+        val models = MicroWakeWordModelConfig.loadAvailableModels(appContext)
         val model = models.first()
 
         val detector = MicroWakeWord.create(appContext, model)

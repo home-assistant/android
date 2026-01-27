@@ -6,12 +6,15 @@ import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import androidx.annotation.RequiresPermission
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -34,64 +37,67 @@ import timber.log.Timber
  */
 class WakeWordListener(
     private val context: Context,
-    private val onListenerReady: (MicroWakeWordModel) -> Unit = {},
-    private val onWakeWordDetected: (MicroWakeWordModel) -> Unit,
+    private val onListenerReady: (MicroWakeWordModelConfig) -> Unit = {},
+    private val onWakeWordDetected: (MicroWakeWordModelConfig) -> Unit,
     private val onListenerStopped: () -> Unit = {},
     private val tfLiteInitializer: TfLiteInitializer = TfLiteInitializerImpl(),
     private val microWakeWordFactory: suspend (
-        MicroWakeWordModel,
+        MicroWakeWordModelConfig,
     ) -> MicroWakeWord = { modelConfig -> MicroWakeWord.create(context, modelConfig) },
     private val audioRecordFactory: () -> AudioRecord = { createDefaultAudioRecord() },
 ) {
+    private val detectionMutex = Mutex()
     private var detectionJob: Job? = null
 
     /**
      * Whether the listener is currently active.
      */
     val isListening: Boolean
-        get() = detectionJob != null
+        get() = detectionJob?.isActive == true
 
     /**
      * Start listening for wake words.
      *
      * This method initializes the TFLite runtime, loads the first available wake word model,
-     * and starts processing audio from the microphone. If already listening, this is a no-op.
+     * and starts processing audio from the microphone. If already listening, the existing
+     * detection is cancelled before starting the new one (to support model changes).
      *
      * Requires RECORD_AUDIO permission to be granted.
      */
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    fun start(coroutineScope: CoroutineScope, modelConfig: MicroWakeWordModel) {
-        if (detectionJob != null) {
-            Timber.d("WakeWordListener already running")
-            return
-        }
+    suspend fun start(
+        coroutineScope: CoroutineScope,
+        modelConfig: MicroWakeWordModelConfig,
+        coroutineContext: CoroutineContext = Dispatchers.Default,
+    ) {
+        detectionMutex.withLock {
+            detectionJob?.cancel()
+            detectionJob = coroutineScope.launch {
+                // Run detection on background thread to avoid blocking Main
+                withContext(coroutineContext) {
+                    var microWakeWord: MicroWakeWord? = null
+                    var recorder: AudioRecord? = null
 
-        detectionJob = coroutineScope.launch {
-            // Run detection on background thread to avoid blocking Main
-            withContext(Dispatchers.Default) {
-                var detector: MicroWakeWord? = null
-                var recorder: AudioRecord? = null
+                    try {
+                        microWakeWord = initializeMicroWakeWord(modelConfig)
+                        recorder = audioRecordFactory()
+                        recorder.startRecording()
 
-                try {
-                    detector = initializeDetector(modelConfig)
-                    recorder = audioRecordFactory()
-                    recorder.startRecording()
+                        onListenerReady(modelConfig)
 
-                    onListenerReady(modelConfig)
-
-                    runDetectionLoop(modelConfig, detector, recorder)
-                } finally {
-                    cleanupResources(detector, recorder)
+                        runDetectionLoop(modelConfig, microWakeWord, recorder)
+                    } finally {
+                        cleanupResources(microWakeWord, recorder)
+                    }
                 }
-            }
-        }.apply {
-            invokeOnCompletion { cause ->
-                detectionJob = null
-                onListenerStopped()
-                if (cause != null && cause !is CancellationException) {
-                    Timber.w(cause, "DetectionJob completed with exception")
-                } else {
-                    Timber.d("DetectionJob completed normally")
+            }.apply {
+                invokeOnCompletion { cause ->
+                    onListenerStopped()
+                    if (cause != null && cause !is CancellationException) {
+                        Timber.w(cause, "DetectionJob completed with exception")
+                    } else {
+                        Timber.d("DetectionJob completed normally")
+                    }
                 }
             }
         }
@@ -102,23 +108,25 @@ class WakeWordListener(
      *
      * This cancels the detection job and cleans up all resources.
      */
-    fun stop() {
-        Timber.d("Stopping WakeWordListener")
-        detectionJob?.cancel()
+    suspend fun stop() {
+        detectionMutex.withLock {
+            Timber.d("Stopping WakeWordListener")
+            detectionJob?.cancel()
+        }
     }
 
-    private suspend fun initializeDetector(modelConfig: MicroWakeWordModel): MicroWakeWord {
+    private suspend fun initializeMicroWakeWord(modelConfig: MicroWakeWordModelConfig): MicroWakeWord {
         tfLiteInitializer.initialize(context)
 
-        val detector = microWakeWordFactory(modelConfig)
-        Timber.d("MicroWakeWord detector initialized with '$modelConfig'")
+        val microWakeWord = microWakeWordFactory(modelConfig)
+        Timber.d("MicroWakeWord initialized with '$modelConfig'")
 
-        return detector
+        return microWakeWord
     }
 
     private fun CoroutineScope.runDetectionLoop(
-        modelConfig: MicroWakeWordModel,
-        detector: MicroWakeWord,
+        modelConfig: MicroWakeWordModelConfig,
+        microWakeWord: MicroWakeWord,
         recorder: AudioRecord,
     ) {
         val buffer = ShortArray(CHUNK_SIZE_SAMPLES)
@@ -127,7 +135,7 @@ class WakeWordListener(
             val readResult = recorder.read(buffer, 0, buffer.size)
 
             when {
-                readResult > 0 -> processAudioChunk(modelConfig, detector, buffer, readResult)
+                readResult > 0 -> processAudioChunk(modelConfig, microWakeWord, buffer, readResult)
                 readResult < 0 -> {
                     Timber.e("AudioRecord read error: $readResult")
                     break
@@ -137,24 +145,20 @@ class WakeWordListener(
     }
 
     private fun processAudioChunk(
-        modelConfig: MicroWakeWordModel,
-        detector: MicroWakeWord,
+        modelConfig: MicroWakeWordModelConfig,
+        microWakeWord: MicroWakeWord,
         buffer: ShortArray,
         readResult: Int,
     ) {
-        val detected = detector.processAudio(buffer.copyOf(readResult))
+        val detected = microWakeWord.processAudio(buffer.copyOf(readResult))
         if (!detected) return
 
-        Timber.i("Wake word detected!")
-
-        // Reset detector state to prevent immediate re-triggering
-        detector.reset()
+        // Reset microWakeWord state to prevent immediate re-triggering
+        microWakeWord.reset()
         onWakeWordDetected(modelConfig)
     }
 
-    private fun cleanupResources(detector: MicroWakeWord?, recorder: AudioRecord?) {
-        Timber.d("Cleaning up resources")
-
+    private fun cleanupResources(microWakeWord: MicroWakeWord?, recorder: AudioRecord?) {
         recorder?.apply {
             try {
                 stop()
@@ -164,7 +168,7 @@ class WakeWordListener(
             }
         }
 
-        detector?.close()
+        microWakeWord?.close()
     }
 
     companion object {

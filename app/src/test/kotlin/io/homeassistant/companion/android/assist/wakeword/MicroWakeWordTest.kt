@@ -21,14 +21,14 @@ class MicroWakeWordTest {
     private lateinit var mockInputTensor: Tensor
     private lateinit var mockOutputTensor: Tensor
 
-    private val testModel = MicroWakeWordModel(
+    private val testModel = MicroWakeWordModelConfig(
         wakeWord = "test_wake_word",
         author = "test",
         website = "https://test.com",
         model = "test.tflite",
         trainedLanguages = listOf("en"),
         version = 1,
-        micro = MicroWakeWordModel.MicroFrontendConfig(
+        micro = MicroWakeWordModelConfig.MicroFrontendConfig(
             probabilityCutoff = 0.5f,
             slidingWindowSize = 3,
             featureStepSize = 10,

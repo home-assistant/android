@@ -23,7 +23,7 @@ import timber.log.Timber
  * @param micro MicroFrontend specific configuration parameters
  */
 @Serializable
-data class MicroWakeWordModel(
+data class MicroWakeWordModelConfig(
     val wakeWord: String,
     val author: String,
     val website: String,
@@ -54,31 +54,32 @@ data class MicroWakeWordModel(
          * Load all available wake word models from assets.
          *
          * Scans the wakeword/ assets directory for .json configuration files
-         * and parses them into [MicroWakeWordModel] instances.
+         * and parses them into [MicroWakeWordModelConfig] instances.
          *
          * @param context Android context for accessing assets
          * @return List of available wake word models
          */
-        suspend fun loadAvailableModels(context: Context): List<MicroWakeWordModel> = withContext(Dispatchers.IO) {
-            val models = mutableListOf<MicroWakeWordModel>()
+        suspend fun loadAvailableModels(context: Context): List<MicroWakeWordModelConfig> =
+            withContext(Dispatchers.IO) {
+                val models = mutableListOf<MicroWakeWordModelConfig>()
 
-            val assetFiles = context.assets.list(WAKEWORD_ASSET_DIR) ?: emptyArray()
+                val assetFiles = context.assets.list(WAKEWORD_ASSET_DIR) ?: emptyArray()
 
-            for (fileName in assetFiles) {
-                if (fileName.endsWith(".json")) {
-                    FailFast.failOnCatch {
-                        val jsonContent = context.assets
-                            .open("$WAKEWORD_ASSET_DIR/$fileName")
-                            .bufferedReader()
-                            .use { it.readText() }
+                for (fileName in assetFiles) {
+                    if (fileName.endsWith(".json")) {
+                        FailFast.failOnCatch {
+                            val jsonContent = context.assets
+                                .open("$WAKEWORD_ASSET_DIR/$fileName")
+                                .bufferedReader()
+                                .use { it.readText() }
 
-                        val model = kotlinJsonMapper.decodeFromString<MicroWakeWordModel>(jsonContent)
-                        models.add(model)
-                        Timber.d("Loaded wake word model: ${model.wakeWord}")
+                            val model = kotlinJsonMapper.decodeFromString<MicroWakeWordModelConfig>(jsonContent)
+                            models.add(model)
+                            Timber.d("Loaded wake word model: ${model.wakeWord}")
+                        }
                     }
                 }
+                models.sortedBy { it.wakeWord }
             }
-            models.sortedBy { it.wakeWord }
-        }
     }
 }
