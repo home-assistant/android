@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.assist.service
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -76,6 +77,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
      *
      * Requires RECORD_AUDIO permission to be granted.
      */
+    @SuppressLint("MissingPermission")
     fun startListening() {
         if (wakeWordListener.isListening) {
             // TODO we might want to remove this check to let allow the user to change the model loaded or simply restart

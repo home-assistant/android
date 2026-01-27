@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.assist.wakeword
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.media.AudioFormat
 import android.media.AudioRecord
@@ -35,6 +36,7 @@ import timber.log.Timber
  * @param onWakeWordDetected Callback invoked when a wake word is detected
  * @param onListenerStopped Callback invoked when the listener stops (normally or due to error)
  */
+@SuppressLint("MissingPermission")
 class WakeWordListener(
     private val context: Context,
     private val onListenerReady: (MicroWakeWordModelConfig) -> Unit = {},
