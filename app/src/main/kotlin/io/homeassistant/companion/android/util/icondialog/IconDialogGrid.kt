@@ -34,10 +34,15 @@ import kotlinx.coroutines.withContext
  * @param onClick Invoked when the user clicks on the given icon
  */
 @Composable
-fun IconDialogGrid(icons: List<IIcon>, tint: Color = MaterialTheme.colors.onSurface, onClick: (IIcon) -> Unit) {
+fun IconDialogGrid(
+    icons: List<IIcon>,
+    modifier: Modifier = Modifier,
+    tint: Color = MaterialTheme.colors.onSurface,
+    onClick: (IIcon) -> Unit,
+) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 48.dp),
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
     ) {
         items(icons) { icon ->
             IconButton(onClick = { onClick(icon) }) {
@@ -63,6 +68,7 @@ fun IconDialogGrid(icons: List<IIcon>, tint: Color = MaterialTheme.colors.onSurf
 fun IconDialogGrid(
     typeface: ITypeface,
     searchQuery: String,
+    modifier: Modifier = Modifier,
     iconFilter: IconFilter = DefaultIconFilter(),
     tint: Color = MaterialTheme.colors.onSurface,
     onClick: (IIcon) -> Unit,
@@ -72,7 +78,12 @@ fun IconDialogGrid(
         icons = withContext(Dispatchers.IO) { iconFilter.queryIcons(typeface, searchQuery) }
     }
 
-    IconDialogGrid(icons = icons, tint = tint, onClick = onClick)
+    IconDialogGrid(
+        icons = icons,
+        modifier = modifier,
+        tint = tint,
+        onClick = onClick,
+    )
 }
 
 @Preview

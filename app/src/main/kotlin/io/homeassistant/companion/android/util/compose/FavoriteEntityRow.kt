@@ -37,6 +37,7 @@ fun ReorderableCollectionItemScope.FavoriteEntityRow(
     entityId: String,
     onClick: () -> Unit,
     checked: Boolean,
+    modifier: Modifier = Modifier,
     draggable: Boolean = false,
     isDragging: Boolean = false,
 ) {
@@ -47,6 +48,7 @@ fun ReorderableCollectionItemScope.FavoriteEntityRow(
     }
     Surface(
         elevation = surfaceElevation.value,
+        modifier = modifier,
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,

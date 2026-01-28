@@ -33,7 +33,12 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun ExternalUrlInputView(url: String?, focusRequester: FocusRequester, onSaveUrl: (String) -> Unit) {
+fun ExternalUrlInputView(
+    url: String?,
+    focusRequester: FocusRequester,
+    onSaveUrl: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
 
@@ -41,7 +46,7 @@ fun ExternalUrlInputView(url: String?, focusRequester: FocusRequester, onSaveUrl
     var urlError by remember { mutableStateOf(false) }
 
     Column(
-        modifier = Modifier.padding(horizontal = 16.dp),
+        modifier = modifier.padding(horizontal = 16.dp),
     ) {
         TextField(
             value = urlInput ?: "",

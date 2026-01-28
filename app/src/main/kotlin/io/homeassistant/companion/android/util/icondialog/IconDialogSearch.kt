@@ -21,10 +21,10 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 
 @Composable
-fun IconDialogSearch(value: String, onValueChange: (String) -> Unit) {
+fun IconDialogSearch(value: String, onValueChange: (String) -> Unit, modifier: Modifier = Modifier) {
     val isEnglish by remember { mutableStateOf(Locale.current.language == "en") }
     TextField(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         value = value,
         onValueChange = onValueChange,
         singleLine = true,

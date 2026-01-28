@@ -27,8 +27,10 @@ fun SettingsWearTemplateTileList(
     templateTiles: Map<Int, TemplateTileConfig>,
     onTemplateTileClicked: (tileId: Int) -> Unit,
     onBackClicked: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Scaffold(
+        modifier = modifier,
         topBar = {
             SettingsWearTopAppBar(
                 title = { Text(stringResource(commonR.string.template_tiles)) },

@@ -45,9 +45,10 @@ fun HaAlert(
     onActionClicked: (() -> Unit)?,
     backgroundColor: Color,
     onBackgroundColor: Color,
+    modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .background(backgroundColor, MaterialTheme.shapes.medium)
             .padding(all = 8.dp),

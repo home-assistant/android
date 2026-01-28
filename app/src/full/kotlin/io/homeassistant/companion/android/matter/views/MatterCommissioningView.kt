@@ -55,6 +55,7 @@ fun MatterCommissioningView(
     onConfirmCommissioning: () -> Unit,
     onClose: () -> Unit,
     onContinue: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     if (step == CommissioningFlowStep.NotStarted) return
 
@@ -66,7 +67,7 @@ fun MatterCommissioningView(
     )
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .verticalScroll(rememberScrollState()),
     ) {
@@ -208,8 +209,8 @@ fun MatterCommissioningView(
 }
 
 @Composable
-fun MatterCommissioningViewHeader() {
-    Column(modifier = Modifier.fillMaxWidth()) {
+fun MatterCommissioningViewHeader(modifier: Modifier = Modifier) {
+    Column(modifier = modifier.fillMaxWidth()) {
         Spacer(modifier = Modifier.height(32.dp))
         Image(
             imageVector = ImageVector.vectorResource(R.drawable.ic_matter),
@@ -231,7 +232,7 @@ fun MatterCommissioningViewHeader() {
 
 @Preview
 @Composable
-fun PreviewMatterCommissioningView(
+private fun PreviewMatterCommissioningView(
     @PreviewParameter(MatterCommissioningViewPreviewStates::class) step: CommissioningFlowStep,
 ) {
     HomeAssistantAppTheme {

@@ -34,7 +34,12 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
 @Composable
-fun LoadNfcView(viewModel: NfcViewModel, startDestination: String, pressedUpAtRoot: () -> Unit) {
+fun LoadNfcView(
+    viewModel: NfcViewModel,
+    startDestination: String,
+    pressedUpAtRoot: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current
 
     val navController = rememberNavController()
@@ -63,6 +68,7 @@ fun LoadNfcView(viewModel: NfcViewModel, startDestination: String, pressedUpAtRo
     }
 
     Scaffold(
+        modifier = modifier,
         scaffoldState = scaffoldState,
         snackbarHost = {
             SnackbarHost(

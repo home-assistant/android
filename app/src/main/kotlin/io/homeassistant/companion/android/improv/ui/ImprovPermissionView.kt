@@ -27,8 +27,17 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.util.compose.ModalBottomSheet
 
 @Composable
-fun ImprovPermissionView(needsBluetooth: Boolean, needsLocation: Boolean, onContinue: () -> Unit, onSkip: () -> Unit) {
-    ModalBottomSheet(title = null) {
+fun ImprovPermissionView(
+    needsBluetooth: Boolean,
+    needsLocation: Boolean,
+    onContinue: () -> Unit,
+    onSkip: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    ModalBottomSheet(
+        modifier = modifier,
+        title = null,
+    ) {
         Column(
             modifier = Modifier
                 .padding(horizontal = 16.dp)
@@ -69,8 +78,8 @@ fun ImprovPermissionView(needsBluetooth: Boolean, needsLocation: Boolean, onCont
 }
 
 @Composable
-private fun Header() {
-    Column(modifier = Modifier.fillMaxWidth()) {
+private fun Header(modifier: Modifier = Modifier) {
+    Column(modifier = modifier.fillMaxWidth()) {
         Spacer(modifier = Modifier.height(32.dp))
         Image(
             asset = CommunityMaterial.Icon3.cmd_radar,
@@ -92,10 +101,10 @@ private fun Header() {
 }
 
 @Composable
-private fun PermissionBullet(icon: IIcon, text: String) {
+private fun PermissionBullet(icon: IIcon, text: String, modifier: Modifier = Modifier) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(vertical = 12.dp),
+        modifier = modifier.padding(vertical = 12.dp),
     ) {
         Image(
             asset = icon,
@@ -113,7 +122,7 @@ private fun PermissionBullet(icon: IIcon, text: String) {
 
 @Preview
 @Composable
-fun ImprovPermissionViewPreview() {
+private fun ImprovPermissionViewPreview() {
     ImprovPermissionView(
         needsBluetooth = true,
         needsLocation = true,

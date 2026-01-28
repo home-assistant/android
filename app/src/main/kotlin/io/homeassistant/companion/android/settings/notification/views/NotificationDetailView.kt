@@ -25,12 +25,12 @@ import java.util.GregorianCalendar
 import kotlinx.serialization.json.Json
 
 @Composable
-fun LoadNotification(notification: NotificationItem) {
+fun LoadNotification(notification: NotificationItem, modifier: Modifier = Modifier) {
     val scrollState = rememberScrollState()
     val valueModifier = Modifier.padding(start = 24.dp)
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .verticalScroll(scrollState)
             .padding(safeBottomPaddingValues(applyHorizontal = false)),
     ) {
@@ -80,12 +80,12 @@ fun LoadNotification(notification: NotificationItem) {
 }
 
 @Composable
-fun NotificationDetailViewHeader(@StringRes stringId: Int) {
+fun NotificationDetailViewHeader(@StringRes stringId: Int, modifier: Modifier = Modifier) {
     Text(
         text = stringResource(stringId),
         fontWeight = FontWeight.ExtraBold,
         fontSize = 20.sp,
-        modifier = Modifier
+        modifier = modifier
             .padding(top = 32.dp, bottom = 16.dp, start = 16.dp),
     )
 }

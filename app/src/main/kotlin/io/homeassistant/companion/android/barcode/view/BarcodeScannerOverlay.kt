@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
  * Based on https://stackoverflow.com/a/73533699/4214819.
  */
 @Composable
-fun BarcodeScannerOverlay(modifier: Modifier, cutout: Dp) {
+fun BarcodeScannerOverlay(cutout: Dp, modifier: Modifier = Modifier) {
     val widthInPx: Float
     val heightInPx: Float
     val cornerInPx: Float

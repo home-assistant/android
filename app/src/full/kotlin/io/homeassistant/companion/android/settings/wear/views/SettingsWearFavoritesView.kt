@@ -43,6 +43,7 @@ fun LoadWearFavoritesSettings(
     settingsWearViewModel: SettingsWearViewModel,
     onBackClicked: () -> Unit,
     events: SharedFlow<String>,
+    modifier: Modifier = Modifier,
 ) {
     val lazyListState = rememberLazyListState()
     val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
@@ -73,6 +74,7 @@ fun LoadWearFavoritesSettings(
     }
 
     Scaffold(
+        modifier = modifier,
         scaffoldState = scaffoldState,
         snackbarHost = {
             SnackbarHost(

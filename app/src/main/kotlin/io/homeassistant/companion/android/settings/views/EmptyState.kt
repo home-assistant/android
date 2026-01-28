@@ -20,11 +20,11 @@ import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.IIcon
 
 @Composable
-fun EmptyState(icon: IIcon, title: String?, subtitle: String?) {
+fun EmptyState(icon: IIcon, title: String?, subtitle: String?, modifier: Modifier = Modifier) {
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(top = 64.dp),
     ) {

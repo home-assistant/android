@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings.server
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,8 +25,11 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.util.compose.ModalBottomSheet
 
 @Composable
-fun ServerChooserView(servers: List<Server>, onServerSelected: (Int) -> Unit) {
-    ModalBottomSheet(title = stringResource(commonR.string.server_select)) {
+fun ServerChooserView(servers: List<Server>, onServerSelected: (Int) -> Unit, modifier: Modifier = Modifier) {
+    ModalBottomSheet(
+        modifier = modifier,
+        title = stringResource(commonR.string.server_select),
+    ) {
         servers.forEach {
             ServerChooserRow(server = it, onServerSelected = onServerSelected)
         }
@@ -34,22 +38,24 @@ fun ServerChooserView(servers: List<Server>, onServerSelected: (Int) -> Unit) {
 }
 
 @Composable
-fun ServerChooserRow(server: Server, onServerSelected: (Int) -> Unit) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 56.dp)
-            .clickable { onServerSelected(server.id) }
-            .padding(horizontal = 16.dp),
-    ) {
-        Text(server.friendlyName)
-        Icon(
-            imageVector = Icons.AutoMirrored.Default.ArrowForwardIos,
-            contentDescription = null,
-            modifier = Modifier.size(24.dp).padding(4.dp),
-        )
+fun ServerChooserRow(server: Server, onServerSelected: (Int) -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 56.dp)
+                .clickable { onServerSelected(server.id) }
+                .padding(horizontal = 16.dp),
+        ) {
+            Text(server.friendlyName)
+            Icon(
+                imageVector = Icons.AutoMirrored.Default.ArrowForwardIos,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp).padding(4.dp),
+            )
+        }
+        Divider(modifier = Modifier.padding(horizontal = 16.dp))
     }
-    Divider(modifier = Modifier.padding(horizontal = 16.dp))
 }

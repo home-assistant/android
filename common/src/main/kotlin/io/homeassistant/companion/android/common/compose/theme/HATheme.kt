@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.common.compose.theme
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -42,10 +41,12 @@ fun HATheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () 
  * - applies the theme
  * - adds a container with a background color around the content
  */
-@SuppressLint("ComposeModifierMissing")
 @Composable
-fun HAThemeForPreview(content: @Composable BoxScope.() -> Unit) {
+fun HAThemeForPreview(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
     HATheme {
-        Box(modifier = Modifier.background(LocalHAColorScheme.current.colorSurfaceDefault), content = content)
+        Box(
+            modifier = modifier.background(LocalHAColorScheme.current.colorSurfaceDefault),
+            content = content,
+        )
     }
 }
