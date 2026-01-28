@@ -124,20 +124,18 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     }
 
     private suspend fun loadWakeWordModel(): MicroWakeWordModelConfig {
-        val availableModels = assistRepository.getAvailableModels()
-        if (availableModels.isEmpty()) {
-            throw IllegalStateException("No wake word models found in assets")
-        }
-
-        val selectedWakeWord = assistRepository.getSelectedWakeWord()
-        val selectedModel = availableModels.find { it.wakeWord == selectedWakeWord }
-
+        val selectedModel = assistRepository.getSelectedWakeWordModel()
         if (selectedModel != null) {
             Timber.d("Using selected wake word model: ${selectedModel.wakeWord}")
             return selectedModel
         }
 
         // Fall back to first available model if none selected
+        val availableModels = assistRepository.getAvailableModels()
+        if (availableModels.isEmpty()) {
+            throw IllegalStateException("No wake word models found in assets")
+        }
+
         val fallbackModel = availableModels.first()
         Timber.d("No model selected, using fallback: ${fallbackModel.wakeWord}")
         return fallbackModel
