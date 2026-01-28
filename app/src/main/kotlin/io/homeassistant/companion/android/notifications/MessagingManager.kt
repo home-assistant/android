@@ -80,6 +80,8 @@ import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.NotificationSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.SettingsActivity
+import io.homeassistant.companion.android.settings.assist.AssistRepository
+import io.homeassistant.companion.android.settings.assist.DefaultAssistantManager
 import io.homeassistant.companion.android.util.FlashlightHelper
 import io.homeassistant.companion.android.util.PermissionRequestMediator
 import io.homeassistant.companion.android.util.UrlUtil
@@ -119,6 +121,8 @@ class MessagingManager @Inject constructor(
     private val textToSpeechClient: TextToSpeechClient,
     private val flashlightHelper: FlashlightHelper,
     private val permissionRequestMediator: PermissionRequestMediator,
+    private val assistRepository: AssistRepository,
+    private val defaultAssistantManager: DefaultAssistantManager,
 ) {
     companion object {
         const val APP_PREFIX = "app://"
@@ -181,6 +185,8 @@ class MessagingManager @Inject constructor(
         const val COMMAND_SCREEN_OFF_TIMEOUT = "command_screen_off_timeout"
         const val COMMAND_FLASHLIGHT = "command_flashlight"
 
+        const val COMMAND_WAKE_WORD = "command_wake_word"
+
         // DND commands
         const val DND_PRIORITY_ONLY = "priority_only"
         const val DND_ALARMS_ONLY = "alarms_only"
@@ -236,6 +242,7 @@ class MessagingManager @Inject constructor(
             COMMAND_SCREEN_BRIGHTNESS_LEVEL,
             COMMAND_SCREEN_OFF_TIMEOUT,
             COMMAND_FLASHLIGHT,
+            COMMAND_WAKE_WORD,
         )
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
@@ -593,6 +600,15 @@ class MessagingManager @Inject constructor(
                                 sendNotification(jsonData)
                             }
                         }
+                        COMMAND_WAKE_WORD -> {
+                            val command = jsonData[NotificationData.COMMAND]
+                            if (command in DeviceCommandData.ENABLE_COMMANDS) {
+                                handleDeviceCommands(jsonData)
+                            } else {
+                                Timber.d("Invalid flashlight command received, posting notification to device")
+                                sendNotification(jsonData)
+                            }
+                        }
 
                         else -> Timber.d("No command received")
                     }
@@ -845,6 +861,33 @@ class MessagingManager @Inject constructor(
                         Toast.makeText(context, commonR.string.missing_camera_permission, Toast.LENGTH_LONG).show()
                     }
                     requestCameraPermission()
+                }
+            }
+
+            COMMAND_WAKE_WORD -> {
+                val enabled = when (command) {
+                    DeviceCommandData.TURN_OFF -> false
+                    DeviceCommandData.TURN_ON -> true
+                    else -> return
+                }
+
+                if (enabled && !defaultAssistantManager.isDefaultAssistant()) {
+                    Timber.w("Cannot enable wake word: app is not the default assistant")
+                    Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(context, commonR.string.assist_not_default_assistant, Toast.LENGTH_LONG).show()
+                    }
+                    return
+                }
+
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) ==
+                    PackageManager.PERMISSION_GRANTED
+                ) {
+                    assistRepository.setWakeWordEnabled(enabled)
+                } else {
+                    Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(context, commonR.string.missing_mic_permission, Toast.LENGTH_LONG).show()
+                    }
+                    requestMicPermission()
                 }
             }
 
@@ -1736,6 +1779,8 @@ class MessagingManager @Inject constructor(
     }
 
     private fun requestCameraPermission() = requestRuntimePermission(Manifest.permission.CAMERA)
+
+    private fun requestMicPermission() = requestRuntimePermission(Manifest.permission.RECORD_AUDIO)
 
     private fun getKeyEvent(key: String): Int {
         return when (key) {
