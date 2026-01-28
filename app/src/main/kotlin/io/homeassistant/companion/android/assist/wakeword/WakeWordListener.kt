@@ -39,8 +39,8 @@ import timber.log.Timber
 @SuppressLint("MissingPermission")
 class WakeWordListener(
     private val context: Context,
-    private val onListenerReady: (MicroWakeWordModelConfig) -> Unit = {},
     private val onWakeWordDetected: (MicroWakeWordModelConfig) -> Unit,
+    private val onListenerReady: (MicroWakeWordModelConfig) -> Unit = {},
     private val onListenerStopped: () -> Unit = {},
     private val tfLiteInitializer: TfLiteInitializer = TfLiteInitializerImpl(),
     private val microWakeWordFactory: suspend (
