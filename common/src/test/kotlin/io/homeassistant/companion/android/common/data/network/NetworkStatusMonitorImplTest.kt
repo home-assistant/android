@@ -136,6 +136,21 @@ class NetworkStatusMonitorImplTest {
     }
 
     @Test
+    fun `Given getExternalUrl throws when network is not validated then state is CONNECTING`() = runTest {
+        // Given - getExternalUrl throws an exception
+        every { networkHelper.hasActiveNetwork() } returns true
+        coEvery { connectionStateProvider.isInternal(false) } returns false
+        every { networkHelper.isNetworkValidated() } returns false
+        coEvery { connectionStateProvider.getExternalUrl() } throws RuntimeException("Server not found")
+
+        // When
+        val result = networkMonitor.observeNetworkStatus(connectionStateProvider).first()
+
+        // Then - Should fall back to CONNECTING
+        assertEquals(NetworkState.CONNECTING, result)
+    }
+
+    @Test
     fun `Given public URL when network is not validated then state is CONNECTING`() = runTest {
         // Given - Public URL that requires internet validation
         every { networkHelper.hasActiveNetwork() } returns true

@@ -9,6 +9,7 @@ import io.homeassistant.companion.android.util.isPubliclyAccessible
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.cancellation.CancellationException
+import timber.log.Timber
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -136,6 +137,7 @@ internal class NetworkStatusMonitorImpl @Inject constructor(
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
+                    Timber.e(e, "Failed to check external URL accessibility")
                     false
                 }
 
