@@ -12,7 +12,7 @@ class MicroFrontendInstrumentedTest {
 
     @Test
     fun createProcessAndClose() {
-        val microFrontend = MicroFrontend()
+        val microFrontend = MicroFrontend(stepSizeMs = 10)
 
         // Generate garbage audio data (1 second of random samples at 16kHz)
         val garbageData =

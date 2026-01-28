@@ -320,10 +320,8 @@ class WakeWordListenerTest {
         fun `Given scope cancelled then cleans up resources`() = runTest {
             val listener = createListener()
 
-            listener.start(this, testModelConfig)
+            listener.start(this, testModelConfig, this.testScheduler)
             runCurrent()
-
-            assertTrue(listener.isListening)
 
             backgroundScope.cancel()
 

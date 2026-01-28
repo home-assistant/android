@@ -1,3 +1,5 @@
+import org.gradle.api.tasks.testing.Test
+
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.homeassistant.android.common)
@@ -32,4 +34,9 @@ android {
 
 dependencies {
     androidTestImplementation(libs.bundles.androidx.test)
+}
+
+// If we ever add unit test to this module we could remove this block
+tasks.withType<Test>().configureEach {
+    failOnNoDiscoveredTests = false
 }
