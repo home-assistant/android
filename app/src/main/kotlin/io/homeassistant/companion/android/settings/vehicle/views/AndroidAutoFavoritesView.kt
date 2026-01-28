@@ -80,20 +80,6 @@ fun AndroidAutoFavoritesSettings(
             )
         }
 
-        if (serversList.size > 1) {
-            item {
-                ServerExposedDropdownMenu(
-                    servers = serversList,
-                    current = selectedServer,
-                    onSelected = {
-                        androidAutoViewModel.loadEntities(it)
-                        selectedServer = it
-                    },
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 16.dp),
-                )
-            }
-        }
-
         if (androidAutoViewModel.isLoading) {
             item {
                 Box(modifier = Modifier.fillMaxWidth().padding(top = 16.dp), contentAlignment = Alignment.Center) {
@@ -101,34 +87,33 @@ fun AndroidAutoFavoritesSettings(
                 }
             }
         } else {
+            if (serversList.size > 1) {
+                item {
+                    ServerExposedDropdownMenu(
+                        servers = serversList,
+                        current = selectedServer,
+                        onSelected = {
+                            androidAutoViewModel.loadEntities(it)
+                            selectedServer = it
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 16.dp),
+                    )
+                }
+            }
+
             item {
                 // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6302
                 HATheme {
                     EntityPicker(
                         entities = validEntities,
-                        entityRegistry = androidAutoViewModel.entityRegistry[selectedServer],
-                        deviceRegistry = androidAutoViewModel.deviceRegistry[selectedServer],
-                        areaRegistry = androidAutoViewModel.areaRegistry[selectedServer],
+                        entityRegistry = androidAutoViewModel.entityRegistry,
+                        deviceRegistry = androidAutoViewModel.deviceRegistry,
+                        areaRegistry = androidAutoViewModel.areaRegistry,
                         selectedEntityId = null,
                         onEntityCleared = { /* Nothing */ },
                         onEntitySelectedId = {
                             androidAutoViewModel.onEntitySelected(true, it, selectedServer)
                         },
-                        // The 'addButtonText' parameter does not exist in the read file of EntityPicker.
-                        // I need to check EntityPicker parameters again.
-                        // The read file showed:
-                        // fun EntityPicker(
-                        //     entities: List<Entity>,
-                        //     selectedEntityId: String?,
-                        //     onEntitySelectedId: (String) -> Unit,
-                        //     onEntityCleared: () -> Unit,
-                        //     modifier: Modifier = Modifier,
-                        //     entityRegistry: List<EntityRegistryResponse>? = null,
-                        //     deviceRegistry: List<DeviceRegistryResponse>? = null,
-                        //     areaRegistry: List<AreaRegistryResponse>? = null,
-                        // )
-                        // It does NOT have 'addButtonText'. It uses stringResource(commonR.string.entity_picker_add_entity) internally.
-                        // So I should remove 'addButtonText'.
                         modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
                     )
                 }
