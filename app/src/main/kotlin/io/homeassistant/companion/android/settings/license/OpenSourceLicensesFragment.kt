@@ -5,17 +5,18 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.stringResource
 import androidx.fragment.app.Fragment
 import com.mikepenz.aboutlibraries.ui.compose.android.produceLibraries
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.util.safeBottomWindowInsets
 
 class OpenSourceLicensesFragment : Fragment() {
 
@@ -38,12 +39,15 @@ class OpenSourceLicensesFragment : Fragment() {
 @Composable
 private fun OpenSourceLicensesView() {
     val libraries by produceLibraries()
-    Scaffold { contentPadding ->
+    Scaffold(
+        contentWindowInsets = safeBottomWindowInsets(applyHorizontal = false),
+    ) { contentPadding ->
         LibrariesContainer(
             libraries = libraries,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(contentPadding),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = contentPadding,
+            // Override default value to provide translatable string
+            licenseDialogConfirmText = stringResource(commonR.string.ok),
         )
     }
 }
