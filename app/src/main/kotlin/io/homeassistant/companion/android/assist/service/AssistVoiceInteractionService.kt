@@ -15,11 +15,14 @@ import android.service.voice.VoiceInteractionService
 import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-import io.homeassistant.companion.android.assist.AssistActivity
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
 import io.homeassistant.companion.android.assist.wakeword.WakeWordListener
+import io.homeassistant.companion.android.assist.wakeword.WakeWordListenerFactory
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.settings.assist.AssistRepository
 import io.homeassistant.companion.android.common.util.CHANNEL_ASSIST_LISTENING
+import javax.inject.Inject
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
@@ -42,27 +45,44 @@ import timber.log.Timber
  * This service also manages wake word detection via [WakeWordListener]. When listening is enabled,
  * it runs as a foreground service with microphone access to detect configured wake words.
  */
+@AndroidEntryPoint
 class AssistVoiceInteractionService : VoiceInteractionService() {
+    @Inject
+    lateinit var clock: Clock
+
+    @Inject
+    lateinit var assistRepository: AssistRepository
+
+    @Inject
+    lateinit var wakeWordListenerFactory: WakeWordListenerFactory
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    private var wakeWordListener = WakeWordListener(
-        context = this,
-        onListenerReady = ::onListenerReady,
-        onWakeWordDetected = ::onWakeWordDetected,
-        onListenerStopped = ::onListenerStopped,
-    )
+    private val wakeWordListener: WakeWordListener by lazy {
+        wakeWordListenerFactory.create(
+            onWakeWordDetected = ::onWakeWordDetected,
+            onListenerReady = ::onListenerReady,
+            onListenerStopped = ::onListenerStopped,
+        )
+    }
     private var lastTriggerTime: Instant? = null
 
     override fun onReady() {
         super.onReady()
         Timber.d("VoiceInteractionService is ready")
-        // Wake word detection is not started automatically - use startListening() to enable
+        serviceScope.launch {
+            if (assistRepository.isWakeWordEnabled()) {
+                Timber.d("Wake word detection is enabled, starting listener")
+                startListening()
+            } else {
+                Timber.d("Wake word detection is disabled")
+            }
+        }
     }
 
     override fun onShutdown() {
         super.onShutdown()
         Timber.d("VoiceInteractionService is shutting down")
-        stopListening()
+        // Don't use stopListening() as it launches a coroutine that may not complete before cancel
         serviceScope.cancel()
     }
 
@@ -71,44 +91,56 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         launchAssist()
     }
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        when (intent?.action) {
+            ACTION_START_LISTENING -> startListening()
+            ACTION_STOP_LISTENING -> stopListening()
+        }
+        return super.onStartCommand(intent, flags, startId)
+    }
+
     /**
      * Start listening for wake words to trigger the assistant.
      *
-     * Loads the first available wake word model and begins detection.
-     * If already listening, this is a no-op. To change the model, call [stopListening] first.
+     * Loads the currently selected wake word model and begins detection.
+     * If already listening, the current listener is stopped and restarted with the
+     * currently selected model. Call this method after changing the wake word selection
+     * to apply the new model.
      *
      * Requires RECORD_AUDIO permission to be granted.
      */
     @SuppressLint("MissingPermission")
-    fun startListening() {
-        if (wakeWordListener.isListening) {
-            // TODO we might want to remove this check to let allow the user to change the model loaded or simply restart
-            Timber.d("Already listening")
-            return
-        }
-
+    private fun startListening() {
         if (!hasRecordAudioPermission()) {
             Timber.w("RECORD_AUDIO permission not granted, cannot start listening")
             return
         }
 
         serviceScope.launch {
+            wakeWordListener.stop()
             val model = loadWakeWordModel()
             wakeWordListener.start(this, model)
         }
     }
 
     private suspend fun loadWakeWordModel(): MicroWakeWordModelConfig {
-        // TODO: Allow user to select which wake word model to use
-        // TODO: Allow user to set sensibility https://github.com/esphome/home-assistant-voice-pe/blob/a379b8c5c1a35eeebc8f9925c19aab68743517a4/home-assistant-voice.yaml#L1775
-        // TODO: When to start/stop listening
-        val availableModels = MicroWakeWordModelConfig.loadAvailableModels(this)
+        val availableModels = assistRepository.getAvailableModels()
         if (availableModels.isEmpty()) {
             throw IllegalStateException("No wake word models found in assets")
         }
 
-        Timber.d("Available wake word models: ${availableModels.map { it.wakeWord }}")
-        return availableModels.first()
+        val selectedWakeWord = assistRepository.getSelectedWakeWord()
+        val selectedModel = availableModels.find { it.wakeWord == selectedWakeWord }
+
+        if (selectedModel != null) {
+            Timber.d("Using selected wake word model: ${selectedModel.wakeWord}")
+            return selectedModel
+        }
+
+        // Fall back to first available model if none selected
+        val fallbackModel = availableModels.first()
+        Timber.d("No model selected, using fallback: ${fallbackModel.wakeWord}")
+        return fallbackModel
     }
 
     private fun onListenerReady(model: MicroWakeWordModelConfig) {
@@ -124,14 +156,14 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     /**
      * Stop listening for wake word.
      */
-    fun stopListening() {
+    private fun stopListening() {
         serviceScope.launch {
             wakeWordListener.stop()
         }
     }
 
     private fun onWakeWordDetected(model: MicroWakeWordModelConfig) {
-        val now = Clock.System.now()
+        val now = clock.now()
         val lastTrigger = lastTriggerTime
 
         // Debounce: only trigger if enough time has passed since last detection
@@ -220,14 +252,6 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         }
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        when (intent?.action) {
-            ACTION_START_LISTENING -> startListening()
-            ACTION_STOP_LISTENING -> stopListening()
-        }
-        return super.onStartCommand(intent, flags, startId)
-    }
-
     companion object {
         private const val NOTIFICATION_ID = 9001
 
@@ -254,11 +278,15 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
          * Start listening for wake words.
          *
          * Sends an intent to start the service and begin wake word detection.
+         * If already listening, the current listener is stopped and restarted with the
+         * currently selected wake word model. Call this method after changing the wake word
+         * selection to apply the new model.
          *
          * Requires [Manifest.permission.RECORD_AUDIO] permission to access the microphone.
          */
         @RequiresPermission(Manifest.permission.RECORD_AUDIO)
         fun startListening(context: Context) {
+            Timber.e("Send start listening is service started ${isActiveService(context)}")
             val intent = Intent(context, AssistVoiceInteractionService::class.java).apply {
                 action = ACTION_START_LISTENING
             }

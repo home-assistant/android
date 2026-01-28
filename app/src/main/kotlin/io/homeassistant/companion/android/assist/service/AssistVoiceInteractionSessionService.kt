@@ -16,6 +16,6 @@ class AssistVoiceInteractionSessionService : VoiceInteractionSessionService() {
 
     override fun onNewSession(args: Bundle?): VoiceInteractionSession {
         Timber.d("Creating new VoiceInteractionSession")
-        return AssistVoiceInteractionSession(this)
+        return AssistVoiceInteractionSession(applicationContext)
     }
 }
