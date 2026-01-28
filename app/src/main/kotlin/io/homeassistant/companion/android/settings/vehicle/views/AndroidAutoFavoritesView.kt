@@ -110,10 +110,9 @@ fun AndroidAutoFavoritesSettings(
                         entities = validEntities,
                         selectedEntityId = null,
                         onEntityCleared = { /* Nothing */ },
-                        onEntitySelectedId = {
-                            androidAutoViewModel.onEntitySelected(true, it, selectedServer)
+                        onEntitySelectedId = { entityId ->
+                            androidAutoViewModel.onEntitySelected(true, entityId, selectedServer)
                         },
-                        addButtonText = stringResource(commonR.string.add_favorite),
                         entityRegistry = androidAutoViewModel.entityRegistry,
                         deviceRegistry = androidAutoViewModel.deviceRegistry,
                         areaRegistry = androidAutoViewModel.areaRegistry,
