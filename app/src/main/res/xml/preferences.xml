@@ -135,6 +135,11 @@
     <PreferenceCategory
         android:title="@string/assist"
         android:key="assist">
+        <Preference
+            android:key="assist_settings"
+            android:icon="@drawable/ic_comment_processing_outline"
+            android:title="@string/assist"
+            android:summary="@string/assist_summary" />
         <SwitchPreference
             android:key="assist_voice_command_intent"
             android:icon="@drawable/ic_headphones_settings"
