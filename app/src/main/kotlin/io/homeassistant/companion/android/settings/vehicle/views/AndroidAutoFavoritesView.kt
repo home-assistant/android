@@ -104,6 +104,7 @@ fun AndroidAutoFavoritesSettings(
             }
 
             item {
+                // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6302
                 HATheme {
                     EntityPicker(
                         entities = validEntities,
@@ -112,6 +113,7 @@ fun AndroidAutoFavoritesSettings(
                         onEntitySelectedId = {
                             androidAutoViewModel.onEntitySelected(true, it, selectedServer)
                         },
+                        addButtonText = stringResource(commonR.string.add_favorite),
                         entityRegistry = androidAutoViewModel.entityRegistry,
                         deviceRegistry = androidAutoViewModel.deviceRegistry,
                         areaRegistry = androidAutoViewModel.areaRegistry,
