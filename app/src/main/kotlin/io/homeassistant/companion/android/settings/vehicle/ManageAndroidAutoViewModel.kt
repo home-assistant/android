@@ -7,7 +7,6 @@ import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
@@ -23,6 +22,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.En
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.util.vehicle.isVehicleDomain
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
@@ -40,13 +40,20 @@ class ManageAndroidAutoViewModel @Inject constructor(
 
     var sortedEntities by mutableStateOf<List<Entity>>(emptyList())
         private set
-    val entities = mutableMapOf<Int, List<Entity>>()
-    var entityRegistry = mutableStateMapOf<Int, List<EntityRegistryResponse>>()
+
+    // Properties from main
+    var entityRegistry by mutableStateOf<List<EntityRegistryResponse>>(emptyList())
         private set
-    var deviceRegistry = mutableStateMapOf<Int, List<DeviceRegistryResponse>>()
+    var deviceRegistry by mutableStateOf<List<DeviceRegistryResponse>>(emptyList())
         private set
-    var areaRegistry = mutableStateMapOf<Int, List<AreaRegistryResponse>>()
+    var areaRegistry by mutableStateOf<List<AreaRegistryResponse>>(emptyList())
         private set
+
+    // Backing maps from main
+    private val entities = mutableMapOf<Int, List<Entity>>()
+    private val entityRegistries = mutableMapOf<Int, List<EntityRegistryResponse>>()
+    private val deviceRegistries = mutableMapOf<Int, List<DeviceRegistryResponse>>()
+    private val areaRegistries = mutableMapOf<Int, List<AreaRegistryResponse>>()
 
     var servers by mutableStateOf(emptyList<Server>())
         private set
@@ -63,40 +70,12 @@ class ManageAndroidAutoViewModel @Inject constructor(
             defaultServerId = serverManager.getServer()?.id ?: 0
             favoritesList.addAll(prefsRepository.getAutoFavorites())
             servers.map { server ->
+                val serverId = server.id
                 async {
-                    entities[server.id] = try {
-                        serverManager.integrationRepository(server.id).getEntities().orEmpty()
-                            .filter {
-                                isVehicleDomain(it)
-                            }
-                    } catch (e: Exception) {
-                        Timber.e(e, "Couldn't load entities for server")
-                        emptyList()
-                    }
-                    launch {
-                        entityRegistry[server.id] = try {
-                            serverManager.webSocketRepository(server.id).getEntityRegistry().orEmpty()
-                        } catch (e: Exception) {
-                            Timber.e(e, "Couldn't load entity registry for server")
-                            emptyList()
-                        }
-                    }
-                    launch {
-                        deviceRegistry[server.id] = try {
-                            serverManager.webSocketRepository(server.id).getDeviceRegistry().orEmpty()
-                        } catch (e: Exception) {
-                            Timber.e(e, "Couldn't load device registry for server")
-                            emptyList()
-                        }
-                    }
-                    launch {
-                        areaRegistry[server.id] = try {
-                            serverManager.webSocketRepository(server.id).getAreaRegistry().orEmpty()
-                        } catch (e: Exception) {
-                            Timber.e(e, "Couldn't load area registry for server")
-                            emptyList()
-                        }
-                    }
+                    launch { entities[serverId] = loadEntitiesForServer(serverId) }
+                    launch { entityRegistries[serverId] = loadEntityRegistry(serverId) }
+                    launch { deviceRegistries[serverId] = loadDeviceRegistry(serverId) }
+                    launch { areaRegistries[serverId] = loadAreaRegistry(serverId) }
                 }
             }.awaitAll()
             loadEntities(serverManager.getServer()?.id ?: 0)
@@ -121,6 +100,9 @@ class ManageAndroidAutoViewModel @Inject constructor(
 
     fun loadEntities(serverId: Int) {
         sortedEntities = entities[serverId] ?: emptyList()
+        entityRegistry = entityRegistries[serverId] ?: emptyList()
+        deviceRegistry = deviceRegistries[serverId] ?: emptyList()
+        areaRegistry = areaRegistries[serverId] ?: emptyList()
     }
 
     fun onEntitySelected(checked: Boolean, entityId: String, serverId: Int) {
@@ -131,5 +113,42 @@ class ManageAndroidAutoViewModel @Inject constructor(
             favoritesList.remove(favorite)
         }
         viewModelScope.launch { prefsRepository.setAutoFavorites(favoritesList.toList()) }
+    }
+
+    private suspend fun loadEntitiesForServer(serverId: Int): List<Entity> = try {
+        serverManager.integrationRepository(serverId).getEntities().orEmpty()
+            .filter { isVehicleDomain(it) }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Timber.e(e, "Couldn't load entities for server")
+        emptyList()
+    }
+
+    private suspend fun loadEntityRegistry(serverId: Int): List<EntityRegistryResponse> = try {
+        serverManager.webSocketRepository(serverId).getEntityRegistry().orEmpty()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Timber.e(e, "Couldn't load entity registry for server")
+        emptyList()
+    }
+
+    private suspend fun loadDeviceRegistry(serverId: Int): List<DeviceRegistryResponse> = try {
+        serverManager.webSocketRepository(serverId).getDeviceRegistry().orEmpty()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Timber.e(e, "Couldn't load device registry for server")
+        emptyList()
+    }
+
+    private suspend fun loadAreaRegistry(serverId: Int): List<AreaRegistryResponse> = try {
+        serverManager.webSocketRepository(serverId).getAreaRegistry().orEmpty()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Timber.e(e, "Couldn't load area registry for server")
+        emptyList()
     }
 }
