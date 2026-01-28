@@ -13,7 +13,7 @@ import io.homeassistant.companion.android.onboarding.BaseOnboardingNavigationTes
 import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.SetHomeNetworkRoute
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.compose.navigateToUri
-import io.mockk.verify
+import io.mockk.coVerify
 import junit.framework.TestCase.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -37,7 +37,7 @@ internal class LocationForSecureConnectionNavigationTest : BaseOnboardingNavigat
             )
 
             onNodeWithContentDescription(stringResource(commonR.string.get_help)).performClick()
-            verify { any<NavController>().navigateToUri(URL_SECURITY_LEVEL_DOCUMENTATION) }
+            coVerify { any<NavController>().navigateToUri(URL_SECURITY_LEVEL_DOCUMENTATION, any()) }
 
             onNodeWithText(stringResource(commonR.string.connection_security_most_secure))
                 .performScrollTo()
@@ -59,7 +59,7 @@ internal class LocationForSecureConnectionNavigationTest : BaseOnboardingNavigat
             )
 
             onNodeWithContentDescription(stringResource(commonR.string.get_help)).performClick()
-            verify { any<NavController>().navigateToUri(URL_SECURITY_LEVEL_DOCUMENTATION) }
+            coVerify { any<NavController>().navigateToUri(URL_SECURITY_LEVEL_DOCUMENTATION, any()) }
 
             onNodeWithText(stringResource(commonR.string.connection_security_less_secure))
                 .performScrollTo()

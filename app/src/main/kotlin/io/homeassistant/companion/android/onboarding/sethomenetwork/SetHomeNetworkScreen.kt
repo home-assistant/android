@@ -56,7 +56,7 @@ internal const val VPN_TAG = "vpn_tag"
 
 @Composable
 fun SetHomeNetworkScreen(
-    onHelpClick: () -> Unit,
+    onHelpClick: suspend () -> Unit,
     onGotoNextScreen: () -> Unit,
     viewModel: SetHomeNetworkViewModel,
     modifier: Modifier = Modifier,
@@ -85,7 +85,7 @@ fun SetHomeNetworkScreen(
 
 @Composable
 internal fun SetHomeNetworkScreen(
-    onHelpClick: () -> Unit,
+    onHelpClick: suspend () -> Unit,
     onNextClick: () -> Unit,
     currentWifiNetwork: String,
     onCurrentWifiNetworkChange: (String) -> Unit,

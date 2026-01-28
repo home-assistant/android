@@ -49,6 +49,11 @@ internal class TodoWidgetStateUpdater @Inject constructor(
     }
 
     private suspend fun getAndSubscribeEntityUpdates(serverId: Int, listEntityId: String): Flow<Entity?>? {
+        if (serverManager.getServer(serverId) == null) {
+            Timber.w("Server has been removed and the widget needs to be reconfigured")
+            return null
+        }
+
         // Since we might be re-subscribing we might not have get the entity update when subscribing so we query it first
         val currentEntity = serverManager.integrationRepository(serverId).getEntity(listEntityId)
 

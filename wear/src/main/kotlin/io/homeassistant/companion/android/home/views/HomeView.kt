@@ -5,6 +5,8 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -85,9 +87,9 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                     },
                     onRetryLoadEntitiesClicked = mainViewModel::loadEntities,
                     onSettingsClicked = { swipeDismissableNavController.navigate(SCREEN_SETTINGS) },
-                    onNavigationClicked = { lists, order, filter ->
-                        mainViewModel.entityLists.clear()
-                        mainViewModel.entityLists.putAll(lists)
+                    onNavigationClicked = { entityIdLists, order, filter ->
+                        mainViewModel.entityListIds.clear()
+                        mainViewModel.entityListIds.putAll(entityIdLists)
                         mainViewModel.entityListsOrder.clear()
                         mainViewModel.entityListsOrder.addAll(order)
                         mainViewModel.entityListFilter = filter
@@ -130,8 +132,18 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                 }
             }
             composable(SCREEN_ENTITY_LIST) {
+                // Build entity lists by looking up entities from the live entities map
+                // This ensures real-time state updates when entities change
+                // Using derivedStateOf to only recompute when entityListIds or entities change
+                val entityLists by remember {
+                    derivedStateOf {
+                        mainViewModel.entityListIds.mapValues { (_, entityIds) ->
+                            entityIds.mapNotNull { entityId -> mainViewModel.entities[entityId] }
+                        }
+                    }
+                }
                 EntityViewList(
-                    entityLists = mainViewModel.entityLists,
+                    entityLists = entityLists,
                     entityListsOrder = mainViewModel.entityListsOrder,
                     entityListFilter = mainViewModel.entityListFilter,
                     onEntityClicked = { entityId, state ->
@@ -150,7 +162,7 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                         mainViewModel.refreshNotificationPermission()
                     }
                 SettingsView(
-                    loadingState = mainViewModel.loadingState.value,
+                    loadingState = mainViewModel.loadingState,
                     favorites = mainViewModel.favoriteEntityIds.value,
                     onClickSetFavorites = {
                         swipeDismissableNavController.navigate(

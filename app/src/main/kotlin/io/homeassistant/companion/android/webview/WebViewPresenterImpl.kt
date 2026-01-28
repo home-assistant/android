@@ -226,7 +226,8 @@ class WebViewPresenterImpl @Inject constructor(
                         url = urlWithAuth,
                         keepHistory = !isNewServer,
                         openInApp = it.baseIsEqual(baseUrl),
-                        serverHandleInsets = serverManager.getServer(serverId)?.version?.isAtLeast(2025, 12) == true,
+                        // We need the frontend to notify us of the mode to use for the status bar https://github.com/home-assistant/frontend/issues/29125
+                        serverHandleInsets = false,
                     )
                 }
             }

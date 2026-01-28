@@ -38,16 +38,20 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
 import io.homeassistant.companion.android.BaseActivity
-import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.util.compose.ExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
-import io.homeassistant.companion.android.util.compose.SingleEntityPicker
 import io.homeassistant.companion.android.util.compose.WidgetBackgroundTypeExposedDropdownMenu
+import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
 import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.util.previewEntity1
@@ -82,7 +86,7 @@ class TodoWidgetConfigureActivity : BaseActivity() {
 
     private val supportedTextColors: List<String>
         get() = listOf(
-            application.getHexForColor(R.color.colorWidgetButtonLabelBlack),
+            application.getHexForColor(commonR.color.colorWidgetButtonLabelBlack),
             application.getHexForColor(android.R.color.white),
         )
 
@@ -150,11 +154,11 @@ class TodoWidgetConfigureActivity : BaseActivity() {
     }
 
     private fun showAddWidgetError() {
-        Toast.makeText(applicationContext, R.string.widget_creation_error, Toast.LENGTH_LONG).show()
+        Toast.makeText(applicationContext, commonR.string.widget_creation_error, Toast.LENGTH_LONG).show()
     }
 
     private fun showUpdateWidgetError() {
-        Toast.makeText(applicationContext, R.string.widget_update_error, Toast.LENGTH_LONG).show()
+        Toast.makeText(applicationContext, commonR.string.widget_update_error, Toast.LENGTH_LONG).show()
     }
 }
 
@@ -162,6 +166,9 @@ class TodoWidgetConfigureActivity : BaseActivity() {
 private fun TodoWidgetConfigureScreen(viewModel: TodoWidgetConfigureViewModel, onActionClick: () -> Unit) {
     val servers by viewModel.servers.collectAsStateWithLifecycle(emptyList())
     val entities by viewModel.entities.collectAsStateWithLifecycle()
+    val entityRegistry by viewModel.entityRegistry.collectAsStateWithLifecycle()
+    val deviceRegistry by viewModel.deviceRegistry.collectAsStateWithLifecycle()
+    val areaRegistry by viewModel.areaRegistry.collectAsStateWithLifecycle()
 
     TodoWidgetConfigureView(
         servers = servers,
@@ -178,6 +185,9 @@ private fun TodoWidgetConfigureScreen(viewModel: TodoWidgetConfigureViewModel, o
         onTextColorSelected = { viewModel.textColorIndex = it },
         isUpdateWidget = viewModel.isUpdateWidget,
         onActionClick = onActionClick,
+        entityRegistry = entityRegistry,
+        deviceRegistry = deviceRegistry,
+        areaRegistry = areaRegistry,
     )
 }
 
@@ -197,14 +207,17 @@ private fun TodoWidgetConfigureView(
     onTextColorSelected: (Int) -> Unit,
     isUpdateWidget: Boolean,
     onActionClick: () -> Unit,
+    entityRegistry: List<EntityRegistryResponse>? = null,
+    deviceRegistry: List<DeviceRegistryResponse>? = null,
+    areaRegistry: List<AreaRegistryResponse>? = null,
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.widget_todo_label)) },
+                title = { Text(stringResource(commonR.string.widget_todo_label)) },
                 windowInsets = safeTopWindowInsets(),
-                backgroundColor = colorResource(R.color.colorBackground),
-                contentColor = colorResource(R.color.colorOnBackground),
+                backgroundColor = colorResource(commonR.color.colorBackground),
+                contentColor = colorResource(commonR.color.colorOnBackground),
             )
         },
     ) { padding ->
@@ -225,21 +238,25 @@ private fun TodoWidgetConfigureView(
                 )
             }
 
-            SingleEntityPicker(
-                entities = entities,
-                currentEntity = selectedEntityId,
-                onEntityCleared = { onEntitySelected(null) },
-                onEntitySelected = {
-                    onEntitySelected(it)
-                    true
-                },
-            )
+            // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6303
+            HATheme {
+                EntityPicker(
+                    entities = entities,
+                    selectedEntityId = selectedEntityId,
+                    onEntitySelectedId = { onEntitySelected(it) },
+                    onEntityCleared = { onEntitySelected(null) },
+                    entityRegistry = entityRegistry,
+                    deviceRegistry = deviceRegistry,
+                    areaRegistry = areaRegistry,
+                    addButtonText = stringResource(commonR.string.todo_widget_select_list),
+                )
+            }
 
             Row(
                 modifier = Modifier.clickable { onShowCompletedChanged(!showCompleted) },
             ) {
                 Text(
-                    text = stringResource(R.string.widget_todo_show_completed),
+                    text = stringResource(commonR.string.widget_todo_show_completed),
                     modifier = Modifier
                         .align(Alignment.CenterVertically)
                         .weight(1f),
@@ -249,7 +266,7 @@ private fun TodoWidgetConfigureView(
                     checked = showCompleted,
                     onCheckedChange = { onShowCompletedChanged(it) },
                     colors = SwitchDefaults.colors(
-                        uncheckedThumbColor = colorResource(R.color.colorSwitchUncheckedThumb),
+                        uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb),
                     ),
                 )
             }
@@ -262,10 +279,10 @@ private fun TodoWidgetConfigureView(
 
             if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
                 ExposedDropdownMenu(
-                    label = stringResource(R.string.widget_text_color_title),
+                    label = stringResource(commonR.string.widget_text_color_title),
                     keys = listOf(
-                        stringResource(R.string.widget_text_color_black),
-                        stringResource(R.string.widget_text_color_white),
+                        stringResource(commonR.string.widget_text_color_black),
+                        stringResource(commonR.string.widget_text_color_white),
                     ),
                     currentIndex = textColorIndex,
                     onSelected = { onTextColorSelected(it) },
@@ -277,7 +294,7 @@ private fun TodoWidgetConfigureView(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { onActionClick() },
             ) {
-                Text(stringResource(if (isUpdateWidget) R.string.update_widget else R.string.add_widget))
+                Text(stringResource(if (isUpdateWidget) commonR.string.update_widget else commonR.string.add_widget))
             }
         }
     }

@@ -34,13 +34,13 @@ import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.serverDiscoveryScreen
 import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.navigateToSetHomeNetworkRoute
 import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.setHomeNetworkScreen
+import io.homeassistant.companion.android.onboarding.wearmtls.navigation.URL_MTLS_DOCUMENTATION
 import io.homeassistant.companion.android.onboarding.wearmtls.navigation.navigateToWearMTLS
 import io.homeassistant.companion.android.onboarding.wearmtls.navigation.wearMTLSScreen
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.onboarding.welcome.navigation.welcomeScreen
 import io.homeassistant.companion.android.util.canGoBack
 import io.homeassistant.companion.android.util.compose.navigateToUri
-import io.homeassistant.companion.android.util.compose.navigateToUriCatching
 import kotlinx.serialization.Serializable
 
 @VisibleForTesting
@@ -132,7 +132,7 @@ internal fun NavGraphBuilder.onboarding(
                 }
             },
             onLearnMoreClick = {
-                navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION)
+                navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, onShowSnackbar)
             },
         )
         commonScreens(navController = navController, onShowSnackbar = onShowSnackbar)
@@ -156,7 +156,7 @@ internal fun NavGraphBuilder.onboarding(
             },
             onShowSnackbar = onShowSnackbar,
             onHelpClick = {
-                navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION)
+                navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, onShowSnackbar)
             },
         )
         localFirstScreen(
@@ -183,7 +183,7 @@ internal fun NavGraphBuilder.onboarding(
         )
         locationSharingScreen(
             onHelpClick = {
-                navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION)
+                navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, onShowSnackbar)
             },
             onGotoNextScreen = { serverId, hasPlainTextAccess ->
                 navController.navigateToLocationForSecureConnectionConditionally(
@@ -199,7 +199,7 @@ internal fun NavGraphBuilder.onboarding(
         )
         locationForSecureConnectionScreen(
             onHelpClick = {
-                navController.navigateToUri(URL_SECURITY_LEVEL_DOCUMENTATION)
+                navController.navigateToUri(URL_SECURITY_LEVEL_DOCUMENTATION, onShowSnackbar)
             },
             onGotoNextScreen = { allowInsecureConnection, serverId ->
                 if (allowInsecureConnection) {
@@ -219,7 +219,7 @@ internal fun NavGraphBuilder.onboarding(
 
         setHomeNetworkScreen(
             onHelpClick = {
-                navController.navigateToUri(URL_SECURITY_LEVEL_DOCUMENTATION)
+                navController.navigateToUri(URL_SECURITY_LEVEL_DOCUMENTATION, onShowSnackbar)
             },
             onGotoNextScreen = {
                 onOnboardingDone()
@@ -257,7 +257,7 @@ private fun NavGraphBuilder.commonScreens(
         },
         onManualSetupClick = navController::navigateToManualServer,
         onHelpClick = {
-            navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION)
+            navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, onShowSnackbar)
         },
     )
     manualServerScreen(
@@ -266,7 +266,7 @@ private fun NavGraphBuilder.commonScreens(
             navController.navigateToConnection(it.toString())
         },
         onHelpClick = {
-            navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION)
+            navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, onShowSnackbar)
         },
     )
     connectionScreen(
@@ -295,7 +295,7 @@ private fun NavGraphBuilder.commonScreens(
         },
         onBackClick = navController::popBackStack,
         onOpenExternalLink = {
-            navController.navigateToUriCatching(it.toString(), onShowSnackbar = onShowSnackbar)
+            navController.navigateToUri(it.toString(), onShowSnackbar = onShowSnackbar)
         },
     )
 }
@@ -423,15 +423,13 @@ internal fun NavGraphBuilder.wearOnboarding(
                 }
             },
             onHelpClick = {
-                navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION)
+                navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, onShowSnackbar)
             },
         )
         wearMTLSScreen(
             onBackClick = navController::popBackStack,
             onHelpClick = {
-                navController.navigateToUri(
-                    "https://companion.home-assistant.io/docs/getting_started/#tls-client-authentication",
-                )
+                navController.navigateToUri(URL_MTLS_DOCUMENTATION, onShowSnackbar)
             },
             onNext = onOnboardingDone,
         )

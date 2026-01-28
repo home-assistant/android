@@ -64,11 +64,33 @@ Initial state emission
             awaitClose()
         }
         coEvery { dao.get(widgetId) } returns todoWidgetEntity
+        coEvery { serverManager.getServer(any<Int>()) } returns mockk()
         coJustAwait { integrationRepository.getEntity(entityId) }
 
         updater.stateFlow(42).test {
             val state = awaitItem()
             assertEquals(TodoStateWithData.from(todoWidgetEntity), state)
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given widgetId in DAO with a removed server when subscribing to stateFlow then emits DAO Entry current state out of sync`() = runTest {
+        val widgetId = 42
+        val entityId = "test"
+        val todoWidgetEntity = TodoWidgetEntity(widgetId, 1, entityId)
+
+        coEvery { dao.getFlow(widgetId) } returns channelFlow {
+            send(todoWidgetEntity)
+            awaitClose()
+        }
+        coEvery { dao.get(widgetId) } returns todoWidgetEntity
+        coEvery { serverManager.getServer(any<Int>()) } returns null
+        coJustAwait { integrationRepository.getEntity(entityId) }
+
+        updater.stateFlow(42).test {
+            assertEquals(TodoStateWithData.from(todoWidgetEntity), awaitItem())
+            assertEquals(TodoStateWithData.from(todoWidgetEntity), awaitItem())
             expectNoEvents()
         }
     }
@@ -106,6 +128,7 @@ Watch for update
             awaitClose()
         }
         coJustRun { dao.updateWidgetLastUpdate(any(), any()) }
+        coEvery { serverManager.getServer(any<Int>()) } returns mockk()
 
         coEvery { integrationRepository.getEntity(entityId) } returns serverEntity
         coEvery { integrationRepository.getEntityUpdates(any()) } returns channelFlow {
@@ -156,6 +179,7 @@ Watch for update
             awaitClose()
         }
         coJustRun { dao.updateWidgetLastUpdate(any(), any()) }
+        coEvery { serverManager.getServer(any<Int>()) } returns mockk()
 
         coEvery { integrationRepository.getEntity(entityId) } returns serverEntity
         coEvery { integrationRepository.getEntityUpdates(any()) } returns channelFlow {
@@ -212,6 +236,7 @@ Watch for update
             awaitClose()
         }
         coJustRun { dao.updateWidgetLastUpdate(any(), any()) }
+        coEvery { serverManager.getServer(any<Int>()) } returns mockk()
 
         coEvery { integrationRepository.getEntity(entityId) } returns serverEntity
         coEvery { integrationRepository.getEntityUpdates(any()) } returns null

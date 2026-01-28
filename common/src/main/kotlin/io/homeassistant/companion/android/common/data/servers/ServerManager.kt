@@ -81,7 +81,7 @@ interface ServerManager {
      *
      * @param serverId the server ID, or [SERVER_ID_ACTIVE] for the currently active server
      * @return [AuthenticationRepository] for the server
-     * @throws IllegalArgumentException if there is no server with the provided ID
+     * @throws IllegalStateException if there is no server with the provided ID
      */
     suspend fun authenticationRepository(serverId: Int = SERVER_ID_ACTIVE): AuthenticationRepository
 
@@ -90,7 +90,7 @@ interface ServerManager {
      *
      * @param serverId the server ID, or [SERVER_ID_ACTIVE] for the currently active server
      * @return [IntegrationRepository] for the server
-     * @throws IllegalArgumentException if there is no server with the provided ID
+     * @throws IllegalStateException if there is no server with the provided ID
      */
     suspend fun integrationRepository(serverId: Int = SERVER_ID_ACTIVE): IntegrationRepository
 
@@ -99,7 +99,7 @@ interface ServerManager {
      *
      * @param serverId the server ID, or [SERVER_ID_ACTIVE] for the currently active server
      * @return [WebSocketRepository] for the server
-     * @throws IllegalArgumentException if there is no server with the provided ID
+     * @throws IllegalStateException if there is no server with the provided ID
      */
     suspend fun webSocketRepository(serverId: Int = SERVER_ID_ACTIVE): WebSocketRepository
 
@@ -108,7 +108,7 @@ interface ServerManager {
      *
      * @param serverId the server ID, or [SERVER_ID_ACTIVE] for the currently active server
      * @return [ServerConnectionStateProvider] for the server
-     * @throws IllegalArgumentException if there is no server with the provided ID
+     * @throws IllegalStateException if there is no server with the provided ID
      */
     suspend fun connectionStateProvider(serverId: Int = SERVER_ID_ACTIVE): ServerConnectionStateProvider
 }

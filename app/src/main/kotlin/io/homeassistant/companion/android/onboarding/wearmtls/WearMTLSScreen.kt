@@ -56,7 +56,7 @@ private val MaxTextWidth = MaxButtonWidth
 
 @Composable
 internal fun WearMTLSScreen(
-    onHelpClick: () -> Unit,
+    onHelpClick: suspend () -> Unit,
     onBackClick: () -> Unit,
     onNext: (certUri: Uri, certPassword: String) -> Unit,
     viewModel: WearMTLSViewModel,
@@ -81,7 +81,7 @@ internal fun WearMTLSScreen(
 
 @Composable
 internal fun WearMTLSScreen(
-    onHelpClick: () -> Unit,
+    onHelpClick: suspend () -> Unit,
     onBackClick: () -> Unit,
     onNext: (certUri: Uri, certPassword: String) -> Unit,
     onPasswordChange: (String) -> Unit,

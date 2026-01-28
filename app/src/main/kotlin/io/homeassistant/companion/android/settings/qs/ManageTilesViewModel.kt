@@ -23,6 +23,9 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.integration.isUsableInTile
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
 import io.homeassistant.companion.android.database.qs.getHighestInUse
@@ -73,6 +76,7 @@ import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import io.homeassistant.companion.android.util.icondialog.mdiName
 import java.util.concurrent.Executors
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -147,6 +151,12 @@ class ManageTilesViewModel @Inject constructor(
         private set
     var sortedEntities by mutableStateOf<List<Entity>>(emptyList())
         private set
+    var entityRegistry by mutableStateOf<List<EntityRegistryResponse>>(emptyList())
+        private set
+    var deviceRegistry by mutableStateOf<List<DeviceRegistryResponse>>(emptyList())
+        private set
+    var areaRegistry by mutableStateOf<List<AreaRegistryResponse>>(emptyList())
+        private set
     var selectedServerId by mutableIntStateOf(ServerManager.SERVER_ID_ACTIVE)
         private set
     var selectedIconId by mutableStateOf<String?>(null)
@@ -164,6 +174,9 @@ class ManageTilesViewModel @Inject constructor(
     private var selectedTileAdded = false
 
     private val entities = mutableMapOf<Int, List<Entity>>()
+    private val entityRegistries = mutableMapOf<Int, List<EntityRegistryResponse>>()
+    private val deviceRegistries = mutableMapOf<Int, List<DeviceRegistryResponse>>()
+    private val areaRegistries = mutableMapOf<Int, List<AreaRegistryResponse>>()
 
     private val _tileInfoSnackbar = MutableSharedFlow<Int>(replay = 1)
     var tileInfoSnackbar = _tileInfoSnackbar.asSharedFlow()
@@ -183,15 +196,13 @@ class ManageTilesViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val servers = serverManager.servers()
             this@ManageTilesViewModel.servers = servers
-            servers.map {
+            servers.map { server ->
+                val serverId = server.id
                 async {
-                    entities[it.id] = try {
-                        serverManager.integrationRepository(it.id).getEntities().orEmpty()
-                            .filter(Entity::isUsableInTile)
-                    } catch (e: Exception) {
-                        Timber.e(e, "Couldn't load entities for server")
-                        emptyList()
-                    }
+                    launch { entities[serverId] = loadEntitiesForServer(serverId) }
+                    launch { entityRegistries[serverId] = loadEntityRegistry(serverId) }
+                    launch { deviceRegistries[serverId] = loadDeviceRegistry(serverId) }
+                    launch { areaRegistries[serverId] = loadAreaRegistry(serverId) }
                 }
             }.awaitAll()
             withContext(Dispatchers.Main) {
@@ -240,6 +251,9 @@ class ManageTilesViewModel @Inject constructor(
 
     private fun loadEntities(serverId: Int) {
         sortedEntities = entities[serverId] ?: emptyList()
+        entityRegistry = entityRegistries[serverId] ?: emptyList()
+        deviceRegistry = deviceRegistries[serverId] ?: emptyList()
+        areaRegistry = areaRegistries[serverId] ?: emptyList()
     }
 
     fun selectEntityId(entityId: String) {
@@ -313,5 +327,42 @@ class ManageTilesViewModel @Inject constructor(
                 _tileInfoSnackbar.emit(commonR.string.tile_updated)
             }
         }
+    }
+
+    private suspend fun loadEntitiesForServer(serverId: Int): List<Entity> = try {
+        serverManager.integrationRepository(serverId).getEntities().orEmpty()
+            .filter(Entity::isUsableInTile)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Timber.e(e, "Couldn't load entities for server")
+        emptyList()
+    }
+
+    private suspend fun loadEntityRegistry(serverId: Int): List<EntityRegistryResponse> = try {
+        serverManager.webSocketRepository(serverId).getEntityRegistry().orEmpty()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Timber.e(e, "Couldn't load entity registry for server")
+        emptyList()
+    }
+
+    private suspend fun loadDeviceRegistry(serverId: Int): List<DeviceRegistryResponse> = try {
+        serverManager.webSocketRepository(serverId).getDeviceRegistry().orEmpty()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Timber.e(e, "Couldn't load device registry for server")
+        emptyList()
+    }
+
+    private suspend fun loadAreaRegistry(serverId: Int): List<AreaRegistryResponse> = try {
+        serverManager.webSocketRepository(serverId).getAreaRegistry().orEmpty()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Timber.e(e, "Couldn't load area registry for server")
+        emptyList()
     }
 }

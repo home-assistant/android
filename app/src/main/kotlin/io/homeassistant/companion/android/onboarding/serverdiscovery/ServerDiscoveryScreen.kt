@@ -95,7 +95,7 @@ private val MaxContentWidth = MaxButtonWidth
 internal fun ServerDiscoveryScreen(
     onBackClick: () -> Unit,
     onConnectClick: (server: URL) -> Unit,
-    onHelpClick: () -> Unit,
+    onHelpClick: suspend () -> Unit,
     onManualSetupClick: () -> Unit,
     viewModel: ServerDiscoveryViewModel,
     modifier: Modifier = Modifier,
@@ -119,7 +119,7 @@ internal fun ServerDiscoveryScreen(
     onBackClick: () -> Unit,
     onConnectClick: (server: URL) -> Unit,
     onDismissOneServerFound: () -> Unit,
-    onHelpClick: () -> Unit,
+    onHelpClick: suspend () -> Unit,
     onManualSetupClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {

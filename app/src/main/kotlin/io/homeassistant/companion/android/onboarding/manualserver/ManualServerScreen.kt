@@ -53,7 +53,7 @@ private val delayBeforeError = 500.milliseconds
 internal fun ManualServerScreen(
     onBackClick: () -> Unit,
     onConnectTo: (URL) -> Unit,
-    onHelpClick: () -> Unit,
+    onHelpClick: suspend () -> Unit,
     viewModel: ManualServerViewModel,
     modifier: Modifier = Modifier,
 ) {
@@ -79,7 +79,7 @@ internal fun ManualServerScreen(
     isServerUrlValid: Boolean,
     onBackClick: () -> Unit,
     onConnectClick: () -> Unit,
-    onHelpClick: () -> Unit,
+    onHelpClick: suspend () -> Unit,
     onServerUrlChange: (String) -> Unit,
     serverUrl: String,
     modifier: Modifier = Modifier,

@@ -21,11 +21,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.settings.wear.SettingsWearViewModel
 import io.homeassistant.companion.android.util.compose.FavoriteEntityRow
-import io.homeassistant.companion.android.util.compose.SingleEntityPicker
+import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
@@ -101,17 +102,22 @@ fun LoadWearFavoritesSettings(
                 )
             }
             item {
-                SingleEntityPicker(
-                    entities = validEntities,
-                    currentEntity = null,
-                    onEntityCleared = { /* Nothing */ },
-                    onEntitySelected = {
-                        settingsWearViewModel.onEntitySelected(true, it)
-                        return@SingleEntityPicker false // Clear input
-                    },
-                    modifier = Modifier.padding(all = 16.dp),
-                    label = { Text(stringResource(commonR.string.add_favorite)) },
-                )
+                // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6300
+                HATheme {
+                    EntityPicker(
+                        entities = validEntities,
+                        selectedEntityId = null,
+                        onEntityCleared = { /* Nothing */ },
+                        onEntitySelectedId = {
+                            settingsWearViewModel.onEntitySelected(true, it)
+                        },
+                        addButtonText = stringResource(commonR.string.add_favorite),
+                        modifier = Modifier.padding(all = 16.dp),
+                        // In order to have the info about the area/device/zone we need the websocket, it would
+                        // requires SettingsWearRepository to be able to use the WebSocket which is a significant
+                        // work.
+                    )
+                }
             }
             items(favoriteEntities.size, { favoriteEntities[it] }) { index ->
                 val favoriteEntityID = favoriteEntities[index].replace("[", "").replace("]", "")

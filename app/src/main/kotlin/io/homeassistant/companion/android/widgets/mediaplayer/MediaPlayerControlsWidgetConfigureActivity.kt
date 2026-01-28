@@ -30,6 +30,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
+// TODO Migrate to compose https://github.com/home-assistant/android/issues/6308
 @AndroidEntryPoint
 class MediaPlayerControlsWidgetConfigureActivity :
     BaseWidgetConfigureActivity<MediaPlayerControlsWidgetEntity, MediaPlayerControlsWidgetDao>() {

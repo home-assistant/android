@@ -38,9 +38,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.settings.qs.ManageTilesViewModel
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
-import io.homeassistant.companion.android.util.compose.SingleEntityPicker
+import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import kotlinx.coroutines.flow.launchIn
@@ -139,19 +140,25 @@ fun ManageTilesView(viewModel: ManageTilesViewModel, onShowIconDialog: (tag: Str
                     )
                 }
 
-                SingleEntityPicker(
-                    entities = viewModel.sortedEntities,
-                    currentEntity = viewModel.selectedEntityId,
-                    onEntityCleared = { viewModel.selectEntityId("") },
-                    onEntitySelected = {
-                        viewModel.selectEntityId(it)
-                        return@SingleEntityPicker true
-                    },
-                    modifier = Modifier
-                        .padding(vertical = 16.dp)
-                        .fillMaxWidth(),
-                    label = { Text(stringResource(R.string.tile_entity)) },
-                )
+                // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6301
+                HATheme {
+                    EntityPicker(
+                        entities = viewModel.sortedEntities,
+                        selectedEntityId = viewModel.selectedEntityId,
+                        onEntitySelectedId = {
+                            viewModel.selectEntityId(it)
+                        },
+                        onEntityCleared = {
+                            viewModel.selectEntityId("")
+                        },
+                        modifier = Modifier
+                            .padding(vertical = 16.dp),
+                        addButtonText = stringResource(R.string.tile_entity),
+                        entityRegistry = viewModel.entityRegistry,
+                        deviceRegistry = viewModel.deviceRegistry,
+                        areaRegistry = viewModel.areaRegistry,
+                    )
+                }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(

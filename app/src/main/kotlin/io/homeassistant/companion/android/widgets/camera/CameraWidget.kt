@@ -35,6 +35,7 @@ import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.w
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
 import io.homeassistant.companion.android.widgets.common.RemoteViewsTarget
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -127,21 +128,28 @@ class CameraWidget : AppWidgetProvider() {
         var widgetCameraError = false
         var url: String? = null
         if (widget != null) {
-            try {
-                val entityPictureUrl = retrieveCameraImageUrl(widget.serverId, widget.entityId)
-
-                val urlState = serverManager.connectionStateProvider(
-                    widget.serverId,
-                ).urlFlow().first()
-                if (urlState is UrlState.HasUrl) {
-                    val baseUrl = urlState.url?.toString()?.removeSuffix("/") ?: ""
-                    url = "$baseUrl$entityPictureUrl"
-                } else {
-                    throw IllegalStateException("No URL available to retrieve picture")
-                }
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to fetch entity or entity does not exist")
+            if (serverManager.getServer(widget.serverId) == null) {
+                Timber.w("Widget is attached to a server that has been removed")
                 widgetCameraError = true
+            } else {
+                try {
+                    val entityPictureUrl = retrieveCameraImageUrl(widget.serverId, widget.entityId)
+
+                    val urlState = serverManager.connectionStateProvider(
+                        widget.serverId,
+                    ).urlFlow().first()
+                    if (urlState is UrlState.HasUrl) {
+                        val baseUrl = urlState.url?.toString()?.removeSuffix("/") ?: ""
+                        url = "$baseUrl$entityPictureUrl"
+                    } else {
+                        throw IllegalStateException("No URL available to retrieve picture")
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to fetch entity or entity does not exist")
+                    widgetCameraError = true
+                }
             }
         }
 

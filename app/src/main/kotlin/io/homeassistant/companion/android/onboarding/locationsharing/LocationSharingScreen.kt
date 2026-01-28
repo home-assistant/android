@@ -40,7 +40,7 @@ private val MaxContentWidth = MaxButtonWidth
 
 @Composable
 internal fun LocationSharingScreen(
-    onHelpClick: () -> Unit,
+    onHelpClick: suspend () -> Unit,
     onGoToNextScreen: () -> Unit,
     viewModel: LocationSharingViewModel,
     modifier: Modifier = Modifier,
@@ -55,7 +55,7 @@ internal fun LocationSharingScreen(
 
 @Composable
 internal fun LocationSharingScreen(
-    onHelpClick: () -> Unit,
+    onHelpClick: suspend () -> Unit,
     onGoToNextScreen: () -> Unit,
     onLocationSharingResponse: (enabled: Boolean) -> Unit,
     modifier: Modifier = Modifier,

@@ -200,7 +200,7 @@ internal class LaunchViewModel @VisibleForTesting constructor(
     private fun handleNetworkState(state: NetworkState, path: String?, serverId: Int): Boolean {
         Timber.i("Current network state $state")
         return when (state) {
-            NetworkState.READY_LOCAL, NetworkState.READY_REMOTE -> {
+            NetworkState.READY_INTERNAL, NetworkState.READY_NET_VALIDATED, NetworkState.READY_NET_LOCAL -> {
                 workManager.enqueueResyncRegistration()
                 _uiState.value = LaunchUiState.Ready(
                     if (shouldNavigateToAutomotive) {

@@ -21,7 +21,7 @@ import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.navigateToServerDiscovery
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.compose.navigateToUri
-import io.mockk.verify
+import io.mockk.coVerify
 import junit.framework.TestCase.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -49,7 +49,7 @@ internal class ManualServerNavigationTest : BaseOnboardingNavigationTest() {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ManualServerRoute>() == true)
 
             onNodeWithContentDescription(stringResource(commonR.string.get_help)).performClick()
-            verify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION) }
+            coVerify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, any()) }
 
             onNodeWithText("http://homeassistant.local:8123").performTextInput("http://ha.local")
 

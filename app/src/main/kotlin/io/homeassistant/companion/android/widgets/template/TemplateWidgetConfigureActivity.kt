@@ -30,6 +30,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
 import timber.log.Timber
 
+// TODO Migrate to compose https://github.com/home-assistant/android/issues/6304
 @AndroidEntryPoint
 class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity<TemplateWidgetEntity, TemplateWidgetDao>() {
     private lateinit var binding: WidgetTemplateConfigureBinding

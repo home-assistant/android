@@ -17,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -32,12 +33,17 @@ import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.util.compose.HAPreviews
+import kotlinx.coroutines.launch
 
 private val ICON_SIZE = 120.dp
 private val MaxTextWidth = MaxButtonWidth
 
 @Composable
-internal fun WelcomeScreen(onConnectClick: () -> Unit, onLearnMoreClick: () -> Unit, modifier: Modifier = Modifier) {
+internal fun WelcomeScreen(
+    onConnectClick: () -> Unit,
+    onLearnMoreClick: suspend () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -80,7 +86,9 @@ private fun ColumnScope.WelcomeText() {
 }
 
 @Composable
-private fun BottomButtons(onConnectClick: () -> Unit, onLearnMoreClick: () -> Unit) {
+private fun BottomButtons(onConnectClick: () -> Unit, onLearnMoreClick: suspend () -> Unit) {
+    val coroutineScope = rememberCoroutineScope()
+
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -94,7 +102,11 @@ private fun BottomButtons(onConnectClick: () -> Unit, onLearnMoreClick: () -> Un
 
         HAPlainButton(
             text = stringResource(commonR.string.welcome_learn_more),
-            onClick = onLearnMoreClick,
+            onClick = {
+                coroutineScope.launch {
+                    onLearnMoreClick()
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = HADimens.SPACE6),

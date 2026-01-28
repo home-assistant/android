@@ -20,7 +20,7 @@ internal fun NavController.navigateToLocationForSecureConnection(serverId: Int, 
 }
 
 internal fun NavGraphBuilder.locationForSecureConnectionScreen(
-    onHelpClick: () -> Unit,
+    onHelpClick: suspend () -> Unit,
     onGotoNextScreen: (allowInsecureConnection: Boolean, serverId: Int) -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
 ) {

@@ -21,6 +21,9 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.TODO_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.database.widget.TodoWidgetDao
 import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -76,6 +79,60 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
                 emptyList()
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), emptyList())
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val entityRegistry: StateFlow<List<EntityRegistryResponse>?> = snapshotFlow { selectedServerId }
+        .distinctUntilChanged()
+        .mapLatest { serverId ->
+            if (serverManager.isRegistered()) {
+                try {
+                    serverManager.webSocketRepository(serverId).getEntityRegistry()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to get entity registry")
+                    null
+                }
+            } else {
+                null
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), null)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val deviceRegistry: StateFlow<List<DeviceRegistryResponse>?> = snapshotFlow { selectedServerId }
+        .distinctUntilChanged()
+        .mapLatest { serverId ->
+            if (serverManager.isRegistered()) {
+                try {
+                    serverManager.webSocketRepository(serverId).getDeviceRegistry()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to get device registry")
+                    null
+                }
+            } else {
+                null
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), null)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val areaRegistry: StateFlow<List<AreaRegistryResponse>?> = snapshotFlow { selectedServerId }
+        .distinctUntilChanged()
+        .mapLatest { serverId ->
+            if (serverManager.isRegistered()) {
+                try {
+                    serverManager.webSocketRepository(serverId).getAreaRegistry()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to get area registry")
+                    null
+                }
+            } else {
+                null
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), null)
 
     // We need a mutex since the update of the entities might happen concurrently with onSetup and the viewModel creation
     private val selectedEntityMutex = Mutex()
