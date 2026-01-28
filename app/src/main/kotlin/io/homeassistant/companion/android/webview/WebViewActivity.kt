@@ -1056,7 +1056,7 @@ class WebViewActivity :
                 }
 
                 GestureAction.QUICKBAR_DEFAULT -> {
-                    if (serverManager.getServer(presenter.getActiveServer())?.version?.isAtLeast(2026, 2, 0) == true) {
+                    if (serverManager.getServer(presenter.getActiveServer())?.version?.isAtLeast(2026, 2) == true) {
                         webView.dispatchKeyDownEventToDocument("k", "KeyK", keyCode = 75, ctrlKey = true)
                     } else {
                         webView.dispatchKeyDownEventToDocument("e", "KeyE", keyCode = 69)
