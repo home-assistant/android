@@ -3,17 +3,39 @@ package io.homeassistant.companion.android.assist.wakeword
 import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import io.homeassistant.companion.android.BuildConfig
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import timber.log.Timber
 
 @RunWith(AndroidJUnit4::class)
 class MicroWakeWordModelTest {
 
     private val appContext: Context
         get() = InstrumentationRegistry.getInstrumentation().targetContext
+
+    /**
+     * Initializes TfLite and returns true if successful.
+     * Returns false if initialization fails (e.g., full flavor without GMS).
+     */
+    private suspend fun tryInitializeTfLite(): Boolean {
+        return try {
+            TfLiteInitializerImpl().initialize(appContext)
+            true
+        } catch (e: Exception) {
+            Timber.w(e, "TfLite initialization failed, skipping test")
+            if (BuildConfig.FLAVOR == "full") {
+                false
+            } else {
+                // In minimal the test should run since we use the embedded version of TfLite
+                throw e
+            }
+        }
+    }
 
     @Test
     fun loadsModelsFromAppAssets_verify_models_config_files() = runTest {
@@ -37,7 +59,7 @@ class MicroWakeWordModelTest {
 
     @Test
     fun microWakeWord_loadsAndProcessesAudio_withAllModels() = runTest {
-        TfLiteInitializerImpl().initialize(appContext)
+        assumeTrue("TfLite not available", tryInitializeTfLite())
         val models = MicroWakeWordModelConfig.loadAvailableModels(appContext)
 
         for (model in models) {
@@ -61,7 +83,7 @@ class MicroWakeWordModelTest {
 
     @Test
     fun microWakeWord_canResetState_withoutCrashing() = runTest {
-        TfLiteInitializerImpl().initialize(appContext)
+        assumeTrue("TfLite not available", tryInitializeTfLite())
         val models = MicroWakeWordModelConfig.loadAvailableModels(appContext)
         val model = models.first()
 
