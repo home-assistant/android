@@ -81,11 +81,20 @@ class ManageAndroidAutoViewModel @Inject constructor(
     }
 
     fun onMove(fromItem: LazyListItemInfo, toItem: LazyListItemInfo) {
-        favoritesList.apply {
-            add(
-                favoritesList.indexOfFirst { it == toItem.key },
-                removeAt(favoritesList.indexOfFirst { it == fromItem.key }),
-            )
+        val fromIndex = favoritesList.indexOfFirst { it == fromItem.key }
+        if (fromIndex == -1) return
+        val item = favoritesList.removeAt(fromIndex)
+
+        val toIndex = favoritesList.indexOfFirst { it == toItem.key }
+        if (toIndex == -1) {
+            favoritesList.add(fromIndex, item)
+            return
+        }
+
+        if (fromItem.index < toItem.index) {
+            favoritesList.add(toIndex + 1, item)
+        } else {
+            favoritesList.add(toIndex, item)
         }
     }
 

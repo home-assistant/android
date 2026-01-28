@@ -46,6 +46,7 @@ fun AndroidAutoFavoritesSettings(
     androidAutoViewModel: ManageAndroidAutoViewModel,
     serversList: List<Server>,
     defaultServer: Int,
+    modifier: Modifier = Modifier,
 ) {
     val lazyListState = rememberLazyListState()
     val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
@@ -55,7 +56,7 @@ fun AndroidAutoFavoritesSettings(
 
     var selectedServer by remember(defaultServer) { mutableIntStateOf(defaultServer) }
 
-    val favoriteEntities = androidAutoViewModel.favoritesList.toList()
+    val favoriteEntities = androidAutoViewModel.favoritesList.filter { it.serverId == selectedServer }
     var validEntities by remember { mutableStateOf<List<Entity>>(emptyList()) }
     LaunchedEffect(favoriteEntities.size, androidAutoViewModel.sortedEntities.size, selectedServer) {
         validEntities = withContext(Dispatchers.IO) {
@@ -69,6 +70,7 @@ fun AndroidAutoFavoritesSettings(
     }
 
     LazyColumn(
+        modifier = modifier,
         state = lazyListState,
         contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
     ) {
@@ -121,8 +123,7 @@ fun AndroidAutoFavoritesSettings(
                 items(favoriteEntities.size, { favoriteEntities[it] }) { index ->
                     val favoriteEntity = favoriteEntities[index]
                     androidAutoViewModel.sortedEntities.firstOrNull {
-                        it.entityId == favoriteEntity.entityId &&
-                            favoriteEntity.serverId == selectedServer
+                        it.entityId == favoriteEntity.entityId
                     }?.let {
                         ReorderableItem(
                             state = reorderState,
