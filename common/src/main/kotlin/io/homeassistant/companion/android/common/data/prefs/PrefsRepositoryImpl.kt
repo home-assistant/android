@@ -44,6 +44,8 @@ private const val PREF_IMPROV_PERMISSION_DISPLAYED = "improv_permission_displaye
 private const val PREF_GESTURE_ACTION_PREFIX = "gesture_action"
 private const val PREF_CHANGE_LOG_POPUP_ENABLED = "change_log_popup_enabled"
 private const val PREF_SHOW_PRIVACY_HINT = "show_privacy_hint"
+private const val PREF_WAKE_WORD_ENABLED = "wake_word_enabled"
+private const val PREF_SELECTED_WAKE_WORD = "selected_wake_word"
 
 /**
  * This class ensure that when we use the local storage in [PrefsRepositoryImpl] the migrations has been made
@@ -362,5 +364,21 @@ internal class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setShowPrivacyHint(showPrivacyHint: Boolean) {
         localStorage().putBoolean(PREF_SHOW_PRIVACY_HINT, showPrivacyHint)
+    }
+
+    override suspend fun isWakeWordEnabled(): Boolean {
+        return localStorage().getBoolean(PREF_WAKE_WORD_ENABLED)
+    }
+
+    override suspend fun setWakeWordEnabled(enabled: Boolean) {
+        localStorage().putBoolean(PREF_WAKE_WORD_ENABLED, enabled)
+    }
+
+    override suspend fun getSelectedWakeWord(): String? {
+        return localStorage().getString(PREF_SELECTED_WAKE_WORD)
+    }
+
+    override suspend fun setSelectedWakeWord(wakeWord: String) {
+        localStorage().putString(PREF_SELECTED_WAKE_WORD, wakeWord)
     }
 }
