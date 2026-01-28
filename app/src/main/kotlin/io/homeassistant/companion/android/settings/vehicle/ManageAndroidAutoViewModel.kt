@@ -41,7 +41,6 @@ class ManageAndroidAutoViewModel @Inject constructor(
     var sortedEntities by mutableStateOf<List<Entity>>(emptyList())
         private set
 
-    // Properties from main
     var entityRegistry by mutableStateOf<List<EntityRegistryResponse>>(emptyList())
         private set
     var deviceRegistry by mutableStateOf<List<DeviceRegistryResponse>>(emptyList())
@@ -49,7 +48,6 @@ class ManageAndroidAutoViewModel @Inject constructor(
     var areaRegistry by mutableStateOf<List<AreaRegistryResponse>>(emptyList())
         private set
 
-    // Backing maps from main
     private val entities = mutableMapOf<Int, List<Entity>>()
     private val entityRegistries = mutableMapOf<Int, List<EntityRegistryResponse>>()
     private val deviceRegistries = mutableMapOf<Int, List<DeviceRegistryResponse>>()
