@@ -108,7 +108,7 @@ fun AssistSettingsScreen(viewModel: AssistSettingsViewModel) {
                 viewModel.onToggleWakeWord(enabled)
             }
         },
-        onSelectWakeWord = viewModel::onSelectWakeWord,
+        onSelectWakeWord = viewModel::onSelectWakeWordModel,
         onStartTestWakeWord = {
             if (testPermissionState.status.isGranted) {
                 viewModel.startTestWakeWord()
@@ -127,7 +127,7 @@ internal fun AssistSettingsScreen(
     hasAudioPermission: Boolean,
     onSetDefaultAssistant: () -> Unit,
     onToggleWakeWord: (Boolean) -> Unit,
-    onSelectWakeWord: (String) -> Unit,
+    onSelectWakeWord: (MicroWakeWordModelConfig) -> Unit,
     onStartTestWakeWord: () -> Unit,
     onStopTestWakeWord: () -> Unit,
 ) {
@@ -180,7 +180,7 @@ private fun ColumnScope.WakeWordSection(
     uiState: AssistSettingsUiState,
     hasAudioPermission: Boolean,
     onToggleWakeWord: (Boolean) -> Unit,
-    onSelectWakeWord: (String) -> Unit,
+    onSelectWakeWord: (MicroWakeWordModelConfig) -> Unit,
     onStartTestWakeWord: () -> Unit,
     onStopTestWakeWord: () -> Unit,
 ) {
@@ -194,9 +194,9 @@ private fun ColumnScope.WakeWordSection(
     AnimatedVisibility(visible = isWakeWordEnabled) {
         Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4)) {
             WakeWordModelSelector(
-                selectedWakeWord = uiState.selectedWakeWord,
+                selectedModel = uiState.selectedWakeWordModel,
                 availableModels = uiState.availableModels,
-                onSelectWakeWord = onSelectWakeWord,
+                onSelectModel = onSelectWakeWord,
             )
 
             HAHint(
@@ -205,7 +205,7 @@ private fun ColumnScope.WakeWordSection(
             )
 
             WakeWordTestSection(
-                wakeWordName = uiState.selectedWakeWord,
+                wakeWordName = uiState.selectedWakeWordModel?.wakeWord,
                 isTesting = uiState.isTestingWakeWord,
                 detected = uiState.wakeWordDetected,
                 onStartTest = onStartTestWakeWord,
@@ -296,9 +296,9 @@ private fun WakeWordEnableRow(enabled: Boolean, canEnable: Boolean, onToggle: (B
 
 @Composable
 private fun WakeWordModelSelector(
-    selectedWakeWord: String?,
+    selectedModel: MicroWakeWordModelConfig?,
     availableModels: List<MicroWakeWordModelConfig>,
-    onSelectWakeWord: (String) -> Unit,
+    onSelectModel: (MicroWakeWordModelConfig) -> Unit,
 ) {
     val colorScheme = LocalHAColorScheme.current
     var expanded by remember { mutableStateOf(false) }
@@ -317,7 +317,7 @@ private fun WakeWordModelSelector(
             color = colorScheme.colorTextSecondary,
         )
         Text(
-            text = selectedWakeWord ?: "",
+            text = selectedModel?.wakeWord ?: "",
             style = HATextStyle.Body,
             color = colorScheme.colorTextPrimary,
             modifier = Modifier.padding(top = HADimens.SPACE1),
@@ -331,7 +331,7 @@ private fun WakeWordModelSelector(
                 DropdownMenuItem(
                     text = { Text(model.wakeWord) },
                     onClick = {
-                        onSelectWakeWord(model.wakeWord)
+                        onSelectModel(model)
                         expanded = false
                     },
                 )
@@ -415,7 +415,7 @@ private fun AssistSettingsScreenPreview() {
                 isLoading = false,
                 isDefaultAssistant = true,
                 isWakeWordEnabled = true,
-                selectedWakeWord = "Okay Nabu",
+                selectedWakeWordModel = null,
                 availableModels = emptyList(),
                 isTestingWakeWord = true,
                 wakeWordDetected = false,
@@ -439,7 +439,7 @@ private fun AssistSettingsScreenNotDefaultPreview() {
                 isLoading = false,
                 isDefaultAssistant = false,
                 isWakeWordEnabled = false,
-                selectedWakeWord = "Okay Nabu",
+                selectedWakeWordModel = null,
                 availableModels = emptyList(),
             ),
             hasAudioPermission = false,
