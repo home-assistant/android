@@ -28,6 +28,9 @@
 # Compiled class file
 *.class
 
+### CPP ###
+**/.cxx/*
+
 # Log file
 *.log
 

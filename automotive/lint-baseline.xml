@@ -663,6 +663,28 @@
 
     <issue
         id="ObsoleteSdkInt"
+        message="Unnecessary; `SDK_INT` is always >= 29"
+        errorLine1="        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/assist/service/AssistVoiceInteractionService.kt"
+            line="151"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="Unnecessary; `SDK_INT` is always >= 29"
+        errorLine1="        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/assist/service/AssistVoiceInteractionService.kt"
+            line="272"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
         message="Unnecessary; `SDK_INT` is always >= 26"
         errorLine1="    @RequiresApi(Build.VERSION_CODES.O)"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
@@ -833,7 +855,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/HomeAssistantApplication.kt"
-            line="236"
+            line="233"
             column="13"/>
     </issue>
 
@@ -844,7 +866,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/HomeAssistantApplication.kt"
-            line="246"
+            line="243"
             column="13"/>
     </issue>
 
@@ -855,7 +877,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/HomeAssistantApplication.kt"
-            line="301"
+            line="298"
             column="13"/>
     </issue>
 
@@ -2674,6 +2696,17 @@
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/values/styles.xml"
             line="67"
             column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.xml.voice_interaction_service` appears to be unused"
+        errorLine1="&lt;voice-interaction-service xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="^">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/xml/voice_interaction_service.xml"
+            line="3"
+            column="1"/>
     </issue>
 
     <issue

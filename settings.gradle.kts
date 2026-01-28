@@ -1,4 +1,4 @@
-include(":common", ":app", ":wear", ":automotive", ":testing-unit", ":lint")
+include(":common", ":app", ":wear", ":automotive", ":testing-unit", ":lint", ":microfrontend")
 
 rootProject.name = "home-assistant-android"
 
