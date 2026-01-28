@@ -267,6 +267,53 @@ class ServerManagerImplTest {
 
             assertNull(result)
         }
+
+        @Test
+        fun `Given stale active server ID when getServer with SERVER_ID_ACTIVE then removes stale ID and returns last server`() = runTest {
+            val staleServerId = 5
+            val lastServerId = 7
+            val lastServer = createServer(id = lastServerId)
+
+            coEvery { localStorage.getInt("active_server") } returns staleServerId
+            coEvery { serverDao.get(staleServerId) } returns null // Server no longer exists
+            coEvery { localStorage.remove("active_server") } just Runs
+            coEvery { serverDao.getLastServerId() } returns lastServerId
+            coEvery { serverDao.get(lastServerId) } returns lastServer
+
+            val result = serverManager.getServer(SERVER_ID_ACTIVE)
+
+            assertEquals(lastServer, result)
+            coVerify { localStorage.remove("active_server") }
+        }
+
+        @Test
+        fun `Given stale active server ID and no other servers when getServer with SERVER_ID_ACTIVE then removes stale ID and returns null`() = runTest {
+            val staleServerId = 5
+
+            coEvery { localStorage.getInt("active_server") } returns staleServerId
+            coEvery { serverDao.get(staleServerId) } returns null // Server no longer exists
+            coEvery { localStorage.remove("active_server") } just Runs
+            coEvery { serverDao.getLastServerId() } returns null // No other servers
+
+            val result = serverManager.getServer(SERVER_ID_ACTIVE)
+
+            assertNull(result)
+            coVerify { localStorage.remove("active_server") }
+        }
+
+        @Test
+        fun `Given valid active server ID when getServer with SERVER_ID_ACTIVE then does not remove from localStorage`() = runTest {
+            val activeServerId = 3
+            val server = createServer(id = activeServerId)
+
+            coEvery { localStorage.getInt("active_server") } returns activeServerId
+            coEvery { serverDao.get(activeServerId) } returns server
+
+            val result = serverManager.getServer(SERVER_ID_ACTIVE)
+
+            assertEquals(server, result)
+            coVerify(exactly = 0) { localStorage.remove("active_server") }
+        }
     }
 
     @Nested
