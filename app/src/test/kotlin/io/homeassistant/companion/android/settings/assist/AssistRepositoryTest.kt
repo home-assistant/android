@@ -144,61 +144,70 @@ class AssistRepositoryTest {
     }
 
     @Nested
-    inner class GetSelectedWakeWordTest {
+    inner class GetSelectedWakeWordModelTest {
 
         @Test
-        fun `Given wake word selected when getSelectedWakeWord then return selected wake word`() = runTest {
+        fun `Given wake word selected when getSelectedWakeWordModel then return selected model`() = runTest {
             coEvery { prefsRepository.getSelectedWakeWord() } returns "Okay Nabu"
 
-            val result = repository.getSelectedWakeWord()
+            val result = repository.getSelectedWakeWordModel()
 
-            assertEquals("Okay Nabu", result)
+            assertEquals(testModels[0], result)
         }
 
         @Test
-        fun `Given no wake word selected when getSelectedWakeWord then return null`() = runTest {
+        fun `Given no wake word selected when getSelectedWakeWordModel then return null`() = runTest {
             coEvery { prefsRepository.getSelectedWakeWord() } returns null
 
-            val result = repository.getSelectedWakeWord()
+            val result = repository.getSelectedWakeWordModel()
+
+            assertNull(result)
+        }
+
+        @Test
+        fun `Given unknown wake word selected when getSelectedWakeWordModel then return null`() = runTest {
+            coEvery { prefsRepository.getSelectedWakeWord() } returns "Unknown Model"
+
+            val result = repository.getSelectedWakeWordModel()
 
             assertNull(result)
         }
     }
 
     @Nested
-    inner class SetSelectedWakeWordTest {
+    inner class SetSelectedWakeWordModelTest {
 
         @Test
-        fun `Given wake word changed and enabled when setSelectedWakeWord then save and restart service`() = runTest {
+        fun `Given model changed and enabled when setSelectedWakeWordModel then save and restart service`() = runTest {
             coEvery { prefsRepository.getSelectedWakeWord() } returns "Okay Nabu"
             coEvery { prefsRepository.isWakeWordEnabled() } returns true
             coEvery { prefsRepository.setSelectedWakeWord(any()) } just Runs
 
-            repository.setSelectedWakeWord("Hey Jarvis")
+            repository.setSelectedWakeWordModel(testModels[1])
 
             coVerify { prefsRepository.setSelectedWakeWord("Hey Jarvis") }
             coVerify { AssistVoiceInteractionService.startListening(context) }
         }
 
         @Test
-        fun `Given wake word changed but disabled when setSelectedWakeWord then save without restart`() = runTest {
+        fun `Given model changed but disabled when setSelectedWakeWordModel then save without restart`() = runTest {
             coEvery { prefsRepository.getSelectedWakeWord() } returns "Okay Nabu"
             coEvery { prefsRepository.isWakeWordEnabled() } returns false
             coEvery { prefsRepository.setSelectedWakeWord(any()) } just Runs
 
-            repository.setSelectedWakeWord("Hey Jarvis")
+            repository.setSelectedWakeWordModel(testModels[1])
 
             coVerify { prefsRepository.setSelectedWakeWord("Hey Jarvis") }
             coVerify(exactly = 0) { AssistVoiceInteractionService.startListening(any()) }
         }
 
         @Test
-        fun `Given same wake word when setSelectedWakeWord then save without restart`() = runTest {
+        fun `Given same model when setSelectedWakeWordModel then save without restart`() = runTest {
             coEvery { prefsRepository.getSelectedWakeWord() } returns "Okay Nabu"
             coEvery { prefsRepository.isWakeWordEnabled() } returns true
             coEvery { prefsRepository.setSelectedWakeWord(any()) } just Runs
 
-            repository.setSelectedWakeWord("Okay Nabu")
+            repository.setSelectedWakeWordModel(testModels[0])
 
             coVerify { prefsRepository.setSelectedWakeWord("Okay Nabu") }
             coVerify(exactly = 0) { AssistVoiceInteractionService.startListening(any()) }

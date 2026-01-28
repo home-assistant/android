@@ -110,7 +110,7 @@ class AssistVoiceInteractionServiceTest {
     @Test
     fun `Given wake word enabled when onReady then start listening`() = runTest {
         coEvery { assistRepository.isWakeWordEnabled() } returns true
-        coEvery { assistRepository.getSelectedWakeWord() } returns "Okay Nabu"
+        coEvery { assistRepository.getSelectedWakeWordModel() } returns testModels[0]
 
         service.onReady()
         advanceUntilIdle()
@@ -130,7 +130,7 @@ class AssistVoiceInteractionServiceTest {
 
     @Test
     fun `Given START_LISTENING action when onStartCommand then start listening`() = runTest {
-        coEvery { assistRepository.getSelectedWakeWord() } returns "Okay Nabu"
+        coEvery { assistRepository.getSelectedWakeWordModel() } returns testModels[0]
         val intent = Intent().apply {
             action = "io.homeassistant.companion.android.START_LISTENING"
         }
@@ -164,7 +164,7 @@ class AssistVoiceInteractionServiceTest {
 
     @Test
     fun `Given selected wake word exists when starting then use selected model`() = runTest {
-        coEvery { assistRepository.getSelectedWakeWord() } returns testModels[1].wakeWord
+        coEvery { assistRepository.getSelectedWakeWordModel() } returns testModels[1]
         val intent = Intent().apply {
             action = "io.homeassistant.companion.android.START_LISTENING"
         }
@@ -177,7 +177,7 @@ class AssistVoiceInteractionServiceTest {
 
     @Test
     fun `Given no wake word selected when starting then use first model`() = runTest {
-        coEvery { assistRepository.getSelectedWakeWord() } returns null
+        coEvery { assistRepository.getSelectedWakeWordModel() } returns null
         val intent = Intent().apply {
             action = "io.homeassistant.companion.android.START_LISTENING"
         }
@@ -190,7 +190,8 @@ class AssistVoiceInteractionServiceTest {
 
     @Test
     fun `Given unknown wake word selected when starting then use first model`() = runTest {
-        coEvery { assistRepository.getSelectedWakeWord() } returns "Unknown"
+        // When an unknown wake word is stored, getSelectedWakeWordModel returns null
+        coEvery { assistRepository.getSelectedWakeWordModel() } returns null
         val intent = Intent().apply {
             action = "io.homeassistant.companion.android.START_LISTENING"
         }
@@ -220,7 +221,7 @@ class AssistVoiceInteractionServiceTest {
     @Test
     fun `Given wake word detected when callback invoked then callback executes`() = runTest {
         val shadow = Shadows.shadowOf(service) as ShadowVoiceInteractionService
-        coEvery { assistRepository.getSelectedWakeWord() } returns testModels[0].wakeWord
+        coEvery { assistRepository.getSelectedWakeWordModel() } returns testModels[0]
 
         // Call onReady() to make showSession() available (isWakeWordEnabled defaults to false)
         service.onReady()
@@ -244,7 +245,7 @@ class AssistVoiceInteractionServiceTest {
     fun `Given wake word detected twice quickly when callback invoked then debounce`() = runTest {
         val shadow = Shadows.shadowOf(service) as ShadowVoiceInteractionService
         clock.currentInstant = Instant.fromEpochMilliseconds(0)
-        coEvery { assistRepository.getSelectedWakeWord() } returns testModels[0].wakeWord
+        coEvery { assistRepository.getSelectedWakeWordModel() } returns testModels[0]
 
         // Call onReady() to make showSession() available (isWakeWordEnabled defaults to false)
         service.onReady()

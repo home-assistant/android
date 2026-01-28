@@ -26,7 +26,7 @@ data class AssistSettingsUiState(
     val isLoading: Boolean = true,
     val isDefaultAssistant: Boolean = false,
     val isWakeWordEnabled: Boolean = false,
-    val selectedWakeWord: String? = null,
+    val selectedWakeWordModel: MicroWakeWordModelConfig? = null,
     val availableModels: List<MicroWakeWordModelConfig> = emptyList(),
     val isTestingWakeWord: Boolean = false,
     val wakeWordDetected: Boolean = false,
@@ -60,7 +60,7 @@ class AssistSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val models = assistRepository.getAvailableModels()
             var isEnabled = assistRepository.isWakeWordEnabled()
-            val selectedWakeWord = assistRepository.getSelectedWakeWord()
+            val selectedModel = assistRepository.getSelectedWakeWordModel() ?: models.firstOrNull()
             val isDefaultAssistant = defaultAssistantManager.isDefaultAssistant()
 
             if (!isDefaultAssistant && isEnabled) {
@@ -74,7 +74,7 @@ class AssistSettingsViewModel @Inject constructor(
                     isLoading = false,
                     isDefaultAssistant = defaultAssistantManager.isDefaultAssistant(),
                     isWakeWordEnabled = isEnabled,
-                    selectedWakeWord = selectedWakeWord,
+                    selectedWakeWordModel = selectedModel,
                     availableModels = models,
                 )
             }
@@ -113,10 +113,10 @@ class AssistSettingsViewModel @Inject constructor(
      * Select a wake word model.
      */
     @SuppressLint("MissingPermission")
-    fun onSelectWakeWord(wakeWord: String) {
+    fun onSelectWakeWordModel(model: MicroWakeWordModelConfig) {
         viewModelScope.launch {
-            assistRepository.setSelectedWakeWord(wakeWord)
-            _uiState.update { it.copy(selectedWakeWord = wakeWord) }
+            assistRepository.setSelectedWakeWordModel(model)
+            _uiState.update { it.copy(selectedWakeWordModel = model) }
 
             // If currently testing, restart with new model
             if (_uiState.value.isTestingWakeWord) {
@@ -134,7 +134,7 @@ class AssistSettingsViewModel @Inject constructor(
     @RequiresPermission(android.Manifest.permission.RECORD_AUDIO)
     fun startTestWakeWord() {
         val state = _uiState.value
-        val modelConfig = state.availableModels.find { it.wakeWord == state.selectedWakeWord } ?: return
+        val modelConfig = state.selectedWakeWordModel ?: state.availableModels.firstOrNull() ?: return
 
         _uiState.update { it.copy(isTestingWakeWord = true, wakeWordDetected = false) }
 

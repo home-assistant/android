@@ -21,6 +21,7 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -81,7 +82,7 @@ class AssistSettingsViewModelTest {
     fun setUp() {
         coEvery { assistRepository.getAvailableModels() } returns testModels
         coEvery { assistRepository.isWakeWordEnabled() } returns false
-        coEvery { assistRepository.getSelectedWakeWord() } returns testModels[0].wakeWord
+        coEvery { assistRepository.getSelectedWakeWordModel() } returns testModels[0]
         every { defaultAssistantManager.isDefaultAssistant() } returns true
     }
 
@@ -100,7 +101,7 @@ class AssistSettingsViewModelTest {
         fun `Given default assistant when initialized then load state correctly`() = runTest {
             every { defaultAssistantManager.isDefaultAssistant() } returns true
             coEvery { assistRepository.isWakeWordEnabled() } returns true
-            coEvery { assistRepository.getSelectedWakeWord() } returns testModels[0].wakeWord
+            coEvery { assistRepository.getSelectedWakeWordModel() } returns testModels[0]
 
             viewModel = createViewModel()
             runCurrent()
@@ -109,7 +110,7 @@ class AssistSettingsViewModelTest {
             assertFalse(state.isLoading)
             assertTrue(state.isDefaultAssistant)
             assertTrue(state.isWakeWordEnabled)
-            assertEquals(testModels[0].wakeWord, state.selectedWakeWord)
+            assertEquals(testModels[0], state.selectedWakeWordModel)
             assertEquals(testModels, state.availableModels)
         }
 
@@ -139,6 +140,29 @@ class AssistSettingsViewModelTest {
             assertFalse(state.isDefaultAssistant)
             assertFalse(state.isWakeWordEnabled)
             coVerify(exactly = 0) { assistRepository.setWakeWordEnabled(any()) }
+        }
+
+        @Test
+        fun `Given no selected model when initialized then use first available model`() = runTest {
+            coEvery { assistRepository.getSelectedWakeWordModel() } returns null
+
+            viewModel = createViewModel()
+            runCurrent()
+
+            val state = viewModel.uiState.value
+            assertEquals(testModels[0], state.selectedWakeWordModel)
+        }
+
+        @Test
+        fun `Given no selected model and no available models when initialized then selectedModel is null`() = runTest {
+            coEvery { assistRepository.getSelectedWakeWordModel() } returns null
+            coEvery { assistRepository.getAvailableModels() } returns emptyList()
+
+            viewModel = createViewModel()
+            runCurrent()
+
+            val state = viewModel.uiState.value
+            assertNull(state.selectedWakeWordModel)
         }
     }
 
@@ -222,22 +246,22 @@ class AssistSettingsViewModelTest {
     }
 
     @Nested
-    inner class SelectWakeWordTest {
+    inner class SelectWakeWordModelTest {
 
         @Test
-        fun `Given wake word selected when onSelectWakeWord then update state and save`() = runTest {
+        fun `Given wake word selected when onSelectWakeWordModel then update state and save`() = runTest {
             viewModel = createViewModel()
             runCurrent()
 
-            viewModel.onSelectWakeWord("Hey Jarvis")
+            viewModel.onSelectWakeWordModel(testModels[1])
             runCurrent()
 
-            assertEquals("Hey Jarvis", viewModel.uiState.value.selectedWakeWord)
-            coVerify { assistRepository.setSelectedWakeWord("Hey Jarvis") }
+            assertEquals(testModels[1], viewModel.uiState.value.selectedWakeWordModel)
+            coVerify { assistRepository.setSelectedWakeWordModel(testModels[1]) }
         }
 
         @Test
-        fun `Given currently testing when onSelectWakeWord then restart listener with new model`() = runTest {
+        fun `Given currently testing when onSelectWakeWordModel then restart listener with new model`() = runTest {
             coEvery { wakeWordListener.stop() } just Runs
             coEvery { wakeWordListener.start(any(), any(), any()) } just Runs
             viewModel = createViewModel()
@@ -249,7 +273,7 @@ class AssistSettingsViewModelTest {
             assertTrue(viewModel.uiState.value.isTestingWakeWord)
 
             // Change wake word while testing
-            viewModel.onSelectWakeWord("Hey Jarvis")
+            viewModel.onSelectWakeWordModel(testModels[1])
             runCurrent()
 
             // Should stop and restart
@@ -276,8 +300,9 @@ class AssistSettingsViewModelTest {
         }
 
         @Test
-        fun `Given no matching model when startTestWakeWord then do nothing`() = runTest {
-            coEvery { assistRepository.getSelectedWakeWord() } returns "Unknown Model"
+        fun `Given no selected model and no available models when startTestWakeWord then do nothing`() = runTest {
+            coEvery { assistRepository.getSelectedWakeWordModel() } returns null
+            coEvery { assistRepository.getAvailableModels() } returns emptyList()
             viewModel = createViewModel()
             runCurrent()
 
@@ -286,6 +311,20 @@ class AssistSettingsViewModelTest {
 
             assertFalse(viewModel.uiState.value.isTestingWakeWord)
             coVerify(exactly = 0) { wakeWordListener.start(any(), any(), any()) }
+        }
+
+        @Test
+        fun `Given no selected model but available models when startTestWakeWord then use first model`() = runTest {
+            coEvery { assistRepository.getSelectedWakeWordModel() } returns null
+            coEvery { wakeWordListener.start(any(), any(), any()) } just Runs
+            viewModel = createViewModel()
+            runCurrent()
+
+            viewModel.startTestWakeWord()
+            runCurrent()
+
+            assertTrue(viewModel.uiState.value.isTestingWakeWord)
+            coVerify { wakeWordListener.start(any(), testModels[0], any()) }
         }
 
         @Test

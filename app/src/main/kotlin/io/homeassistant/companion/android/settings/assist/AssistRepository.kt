@@ -33,18 +33,21 @@ interface AssistRepository {
     suspend fun setWakeWordEnabled(enabled: Boolean)
 
     /**
-     * Returns the currently selected wake word model name.
+     * Returns the currently selected wake word model.
+     *
+     * Returns null if no model is selected or if the previously selected model
+     * is no longer available.
      */
-    suspend fun getSelectedWakeWord(): String?
+    suspend fun getSelectedWakeWordModel(): MicroWakeWordModelConfig?
 
     /**
-     * Sets the selected wake word model by name.
+     * Sets the selected wake word model.
      *
      * If wake word detection is enabled and the selection changed, restarts the service
      * to apply the new model.
      */
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    suspend fun setSelectedWakeWord(wakeWord: String)
+    suspend fun setSelectedWakeWordModel(model: MicroWakeWordModelConfig)
 }
 
 class AssistRepositoryImpl @Inject constructor(
@@ -68,14 +71,17 @@ class AssistRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getSelectedWakeWord(): String? = prefsRepository.getSelectedWakeWord()
+    override suspend fun getSelectedWakeWordModel(): MicroWakeWordModelConfig? {
+        val wakeWordName = prefsRepository.getSelectedWakeWord() ?: return null
+        return models.get().find { it.wakeWord == wakeWordName }
+    }
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    override suspend fun setSelectedWakeWord(wakeWord: String) {
+    override suspend fun setSelectedWakeWordModel(model: MicroWakeWordModelConfig) {
         val previousWakeWord = prefsRepository.getSelectedWakeWord()
-        prefsRepository.setSelectedWakeWord(wakeWord)
+        prefsRepository.setSelectedWakeWord(model.wakeWord)
 
-        if (wakeWord != previousWakeWord && prefsRepository.isWakeWordEnabled()) {
+        if (model.wakeWord != previousWakeWord && prefsRepository.isWakeWordEnabled()) {
             AssistVoiceInteractionService.startListening(context)
         }
     }
