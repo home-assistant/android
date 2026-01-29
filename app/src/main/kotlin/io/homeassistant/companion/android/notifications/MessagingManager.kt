@@ -600,12 +600,13 @@ class MessagingManager @Inject constructor(
                                 sendNotification(jsonData)
                             }
                         }
+
                         COMMAND_WAKE_WORD -> {
                             val command = jsonData[NotificationData.COMMAND]
                             if (command in DeviceCommandData.ENABLE_COMMANDS) {
                                 handleDeviceCommands(jsonData)
                             } else {
-                                Timber.d("Invalid flashlight command received, posting notification to device")
+                                Timber.d("Invalid wake word command received, posting notification to device")
                                 sendNotification(jsonData)
                             }
                         }
@@ -648,7 +649,7 @@ class MessagingManager @Inject constructor(
                 val notificationManager =
                     context.getSystemService<NotificationManager>()
                 if (notificationManager?.isNotificationPolicyAccessGranted == false) {
-                    notifyMissingPermission(message.toString(), serverId)
+                    notifyMissingPermission(message, serverId)
                 } else {
                     when (command) {
                         DND_ALARMS_ONLY -> notificationManager?.setInterruptionFilter(
@@ -677,7 +678,7 @@ class MessagingManager @Inject constructor(
                 val notificationManager =
                     context.getSystemService<NotificationManager>()
                 if (notificationManager?.isNotificationPolicyAccessGranted == false) {
-                    notifyMissingPermission(message.toString(), serverId)
+                    notifyMissingPermission(message, serverId)
                 } else {
                     processRingerMode(audioManager!!, command)
                 }
@@ -715,7 +716,7 @@ class MessagingManager @Inject constructor(
                     context.getSystemService<AudioManager>()
                 val notificationManager = context.getSystemService<NotificationManager>()
                 if (notificationManager?.isNotificationPolicyAccessGranted == false) {
-                    notifyMissingPermission(message.toString(), serverId)
+                    notifyMissingPermission(message, serverId)
                 } else {
                     processStreamVolume(
                         audioManager!!,
@@ -735,7 +736,7 @@ class MessagingManager @Inject constructor(
 
                         else -> {
                             Timber.e("Missing Bluetooth permissions, notifying user to grant permissions")
-                            notifyMissingPermission(message.toString(), serverId)
+                            notifyMissingPermission(message, serverId)
                         }
                     }
                 }
@@ -765,7 +766,7 @@ class MessagingManager @Inject constructor(
 
             COMMAND_ACTIVITY -> {
                 if (!Settings.canDrawOverlays(context)) {
-                    notifyMissingPermission(message.toString(), serverId)
+                    notifyMissingPermission(message, serverId)
                 } else if (ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) !=
                     PackageManager.PERMISSION_GRANTED &&
                     data["tag"] == Intent.ACTION_CALL
@@ -789,7 +790,7 @@ class MessagingManager @Inject constructor(
 
             COMMAND_WEBVIEW -> {
                 if (!Settings.canDrawOverlays(context)) {
-                    notifyMissingPermission(message.toString(), serverId)
+                    notifyMissingPermission(message, serverId)
                 } else {
                     openWebview(command, data)
                 }
@@ -817,7 +818,7 @@ class MessagingManager @Inject constructor(
                 if (!NotificationManagerCompat.getEnabledListenerPackages(context)
                         .contains(context.packageName)
                 ) {
-                    notifyMissingPermission(message.toString(), serverId)
+                    notifyMissingPermission(message, serverId)
                 } else {
                     processMediaCommand(data)
                 }
@@ -825,7 +826,7 @@ class MessagingManager @Inject constructor(
 
             COMMAND_LAUNCH_APP -> {
                 if (!Settings.canDrawOverlays(context)) {
-                    notifyMissingPermission(message.toString(), serverId)
+                    notifyMissingPermission(message, serverId)
                 } else {
                     launchApp(data)
                 }
@@ -844,7 +845,7 @@ class MessagingManager @Inject constructor(
                         sendNotification(data)
                     }
                 } else {
-                    notifyMissingPermission(message.toString(), serverId)
+                    notifyMissingPermission(message, serverId)
                 }
             }
 
@@ -857,10 +858,7 @@ class MessagingManager @Inject constructor(
                         DeviceCommandData.TURN_ON -> flashlightHelper.turnOnFlashlight()
                     }
                 } else {
-                    Handler(Looper.getMainLooper()).post {
-                        Toast.makeText(context, commonR.string.missing_camera_permission, Toast.LENGTH_LONG).show()
-                    }
-                    requestCameraPermission()
+                    notifyMissingPermission(message, serverId)
                 }
             }
 
@@ -873,9 +871,7 @@ class MessagingManager @Inject constructor(
 
                 if (enabled && !defaultAssistantManager.isDefaultAssistant()) {
                     Timber.w("Cannot enable wake word: app is not the default assistant")
-                    Handler(Looper.getMainLooper()).post {
-                        Toast.makeText(context, commonR.string.assist_not_default_assistant, Toast.LENGTH_LONG).show()
-                    }
+                    notifyMissingPermission(message, serverId)
                     return
                 }
 
@@ -884,10 +880,7 @@ class MessagingManager @Inject constructor(
                 ) {
                     assistRepository.setWakeWordEnabled(enabled)
                 } else {
-                    Handler(Looper.getMainLooper()).post {
-                        Toast.makeText(context, commonR.string.missing_mic_permission, Toast.LENGTH_LONG).show()
-                    }
-                    requestMicPermission()
+                    notifyMissingPermission(message, serverId)
                 }
             }
 
@@ -1780,7 +1773,18 @@ class MessagingManager @Inject constructor(
 
     private fun requestCameraPermission() = requestRuntimePermission(Manifest.permission.CAMERA)
 
-    private fun requestMicPermission() = requestRuntimePermission(Manifest.permission.RECORD_AUDIO)
+    private fun requestMicPermission() {
+        if (defaultAssistantManager.isDefaultAssistant()) {
+            requestRuntimePermission(Manifest.permission.RECORD_AUDIO)
+        } else {
+            context.startActivity(
+                defaultAssistantManager.getSetDefaultAssistantIntent().apply {
+                    flags =
+                        Intent.FLAG_ACTIVITY_NEW_TASK
+                },
+            )
+        }
+    }
 
     private fun getKeyEvent(key: String): Int {
         return when (key) {
@@ -2089,6 +2093,8 @@ class MessagingManager @Inject constructor(
                             COMMAND_AUTO_SCREEN_BRIGHTNESS,
                             COMMAND_SCREEN_OFF_TIMEOUT,
                             -> requestWriteSystemPermission()
+                            COMMAND_FLASHLIGHT -> requestCameraPermission()
+                            COMMAND_WAKE_WORD -> requestMicPermission()
                         }
                     }
                 }
