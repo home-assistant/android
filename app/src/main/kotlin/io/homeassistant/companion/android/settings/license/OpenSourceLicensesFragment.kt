@@ -12,10 +12,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.fragment.app.Fragment
+import com.mikepenz.aboutlibraries.ui.compose.DefaultChipColors
+import com.mikepenz.aboutlibraries.ui.compose.DefaultLibraryColors
 import com.mikepenz.aboutlibraries.ui.compose.android.produceLibraries
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
 
 class OpenSourceLicensesFragment : Fragment() {
@@ -39,6 +42,7 @@ class OpenSourceLicensesFragment : Fragment() {
 @Composable
 private fun OpenSourceLicensesView() {
     val libraries by produceLibraries()
+    val colorScheme = LocalHAColorScheme.current
     Scaffold(
         contentWindowInsets = safeBottomWindowInsets(applyHorizontal = false),
     ) { contentPadding ->
@@ -48,6 +52,25 @@ private fun OpenSourceLicensesView() {
             contentPadding = contentPadding,
             // Override default value to provide translatable string
             licenseDialogConfirmText = stringResource(commonR.string.ok),
+            colors = DefaultLibraryColors(
+                libraryBackgroundColor = colorScheme.colorSurfaceDefault,
+                libraryContentColor = colorScheme.colorTextPrimary,
+                versionChipColors = DefaultChipColors(
+                    containerColor = colorScheme.colorFillNeutralNormalResting,
+                    contentColor = colorScheme.colorOnNeutralNormal,
+                ),
+                licenseChipColors = DefaultChipColors(
+                    containerColor = colorScheme.colorFillPrimaryNormalResting,
+                    contentColor = colorScheme.colorOnPrimaryNormal,
+                ),
+                fundingChipColors = DefaultChipColors(
+                    containerColor = colorScheme.colorFillPrimaryNormalResting,
+                    contentColor = colorScheme.colorOnPrimaryNormal,
+                ),
+                dialogBackgroundColor = colorScheme.colorSurfaceDefault,
+                dialogContentColor = colorScheme.colorTextPrimary,
+                dialogConfirmButtonColor = colorScheme.colorOnPrimaryNormal,
+            ),
         )
     }
 }
