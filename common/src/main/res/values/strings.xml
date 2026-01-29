@@ -1208,7 +1208,6 @@
     <string name="assist_default_assistant_enabled">Home Assistant is your default assistant</string>
     <string name="assist_default_assistant_disabled">Home Assistant is not your default assistant</string>
     <string name="assist_set_default">Set as default</string>
-    <string name="assist_not_default_assistant">Wake word requires Home Assistant to be the default assistant</string>
     <string name="assist_summary">Configure Assist for this device</string>
     <string name="assist_wake_word_title">Wake word</string>
     <string name="assist_wake_word_enable">Enable wake word detection</string>
