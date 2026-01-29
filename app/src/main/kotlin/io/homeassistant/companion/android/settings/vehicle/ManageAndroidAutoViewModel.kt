@@ -63,16 +63,19 @@ class ManageAndroidAutoViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            isLoading = true
             servers = serverManager.servers()
             defaultServerId = serverManager.getServer()?.id ?: 0
             favoritesList.addAll(prefsRepository.getAutoFavorites())
             servers.map { server ->
                 val serverId = server.id
                 async {
-                    launch { entities[serverId] = loadEntitiesForServer(serverId) }
-                    launch { entityRegistries[serverId] = loadEntityRegistry(serverId) }
-                    launch { deviceRegistries[serverId] = loadDeviceRegistry(serverId) }
-                    launch { areaRegistries[serverId] = loadAreaRegistry(serverId) }
+                    listOf(
+                        async { entities[serverId] = loadEntitiesForServer(serverId) },
+                        async { entityRegistries[serverId] = loadEntityRegistry(serverId) },
+                        async { deviceRegistries[serverId] = loadDeviceRegistry(serverId) },
+                        async { areaRegistries[serverId] = loadAreaRegistry(serverId) }
+                    ).awaitAll()
                 }
             }.awaitAll()
             loadEntities(serverManager.getServer()?.id ?: 0)
@@ -81,20 +84,11 @@ class ManageAndroidAutoViewModel @Inject constructor(
     }
 
     fun onMove(fromItem: LazyListItemInfo, toItem: LazyListItemInfo) {
-        val fromIndex = favoritesList.indexOfFirst { it == fromItem.key }
-        if (fromIndex == -1) return
-        val item = favoritesList.removeAt(fromIndex)
-
-        val toIndex = favoritesList.indexOfFirst { it == toItem.key }
-        if (toIndex == -1) {
-            favoritesList.add(fromIndex, item)
-            return
-        }
-
-        if (fromItem.index < toItem.index) {
-            favoritesList.add(toIndex + 1, item)
-        } else {
-            favoritesList.add(toIndex, item)
+        favoritesList.apply {
+            add(
+                favoritesList.indexOfFirst { it == toItem.key },
+                removeAt(favoritesList.indexOfFirst { it == fromItem.key }),
+            )
         }
     }
 

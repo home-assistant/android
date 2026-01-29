@@ -46,7 +46,6 @@ fun AndroidAutoFavoritesSettings(
     androidAutoViewModel: ManageAndroidAutoViewModel,
     serversList: List<Server>,
     defaultServer: Int,
-    modifier: Modifier = Modifier,
 ) {
     val lazyListState = rememberLazyListState()
     val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
@@ -56,7 +55,7 @@ fun AndroidAutoFavoritesSettings(
 
     var selectedServer by remember(defaultServer) { mutableIntStateOf(defaultServer) }
 
-    val favoriteEntities = androidAutoViewModel.favoritesList.filter { it.serverId == selectedServer }
+    val favoriteEntities = androidAutoViewModel.favoritesList.toList()
     var validEntities by remember { mutableStateOf<List<Entity>>(emptyList()) }
     LaunchedEffect(favoriteEntities.size, androidAutoViewModel.sortedEntities.size, selectedServer) {
         validEntities = withContext(Dispatchers.IO) {
@@ -70,7 +69,6 @@ fun AndroidAutoFavoritesSettings(
     }
 
     LazyColumn(
-        modifier = modifier,
         state = lazyListState,
         contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
     ) {
@@ -108,14 +106,14 @@ fun AndroidAutoFavoritesSettings(
                 HATheme {
                     EntityPicker(
                         entities = validEntities,
-                        selectedEntityId = null,
-                        onEntityCleared = { /* Nothing */ },
-                        onEntitySelectedId = { entityId ->
-                            androidAutoViewModel.onEntitySelected(true, entityId, selectedServer)
-                        },
                         entityRegistry = androidAutoViewModel.entityRegistry,
                         deviceRegistry = androidAutoViewModel.deviceRegistry,
                         areaRegistry = androidAutoViewModel.areaRegistry,
+                        selectedEntityId = null,
+                        onEntityCleared = { /* Nothing */ },
+                        onEntitySelectedId = {
+                            androidAutoViewModel.onEntitySelected(true, it, selectedServer)
+                        },
                         modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
                     )
                 }
@@ -124,7 +122,8 @@ fun AndroidAutoFavoritesSettings(
                 items(favoriteEntities.size, { favoriteEntities[it] }) { index ->
                     val favoriteEntity = favoriteEntities[index]
                     androidAutoViewModel.sortedEntities.firstOrNull {
-                        it.entityId == favoriteEntity.entityId
+                        it.entityId == favoriteEntity.entityId &&
+                            favoriteEntity.serverId == selectedServer
                     }?.let {
                         ReorderableItem(
                             state = reorderState,
