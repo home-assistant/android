@@ -285,7 +285,8 @@
     <string name="gestures_action_open_app_developer">Open app troubleshooting</string>
     <string name="gestures_action_open_assist">Open Assist</string>
     <string name="gestures_action_quickbar_commands">Search commands</string>
-    <string name="gestures_action_quickbar_default">Search entities</string>
+    <string name="gestures_action_quickbar_default">Quick search</string>
+    <string name="gestures_action_quickbar_entities">Search entities</string>
     <string name="gestures_action_quickbar_devices">Search devices</string>
     <string name="gestures_action_server_list">Servers list</string>
     <string name="gestures_action_server_next">Next server</string>
@@ -1010,6 +1011,7 @@
     <string name="widget_static_image_description">Entity state</string>
     <string name="todo_widgets">To-do widgets</string>
     <string name="todo_widget">To-do widget</string>
+    <string name="todo_widget_select_list">Select list</string>
     <string name="widget_todo_add">Add to-do</string>
     <string name="widget_todo_refresh">Refresh to-do</string>
     <string name="widget_todo_label">To-do list</string>
