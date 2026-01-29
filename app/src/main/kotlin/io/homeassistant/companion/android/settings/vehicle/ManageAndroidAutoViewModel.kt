@@ -63,7 +63,6 @@ class ManageAndroidAutoViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            isLoading = true
             servers = serverManager.servers()
             defaultServerId = serverManager.getServer()?.id ?: 0
             favoritesList.addAll(prefsRepository.getAutoFavorites())
