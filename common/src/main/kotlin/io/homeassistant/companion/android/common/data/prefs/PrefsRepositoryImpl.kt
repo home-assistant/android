@@ -44,6 +44,8 @@ private const val PREF_IMPROV_PERMISSION_DISPLAYED = "improv_permission_displaye
 private const val PREF_GESTURE_ACTION_PREFIX = "gesture_action"
 private const val PREF_CHANGE_LOG_POPUP_ENABLED = "change_log_popup_enabled"
 private const val PREF_SHOW_PRIVACY_HINT = "show_privacy_hint"
+private const val PREF_SHORTCUTS_V2_MOCK_ENABLED = "shortcuts_v2_mock_enabled"
+private const val PREF_SHORTCUTS_V2_MOCK_PIN_SUPPORT_ENABLED = "shortcuts_v2_mock_pin_support_enabled"
 
 /**
  * This class ensure that when we use the local storage in [PrefsRepositoryImpl] the migrations has been made
@@ -341,6 +343,22 @@ internal class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setChangeLogPopupEnabled(enabled: Boolean) {
         localStorage().putBoolean(PREF_CHANGE_LOG_POPUP_ENABLED, enabled)
+    }
+
+    override suspend fun isShortcutsV2MockEnabled(): Boolean {
+        return localStorage().getBooleanOrNull(PREF_SHORTCUTS_V2_MOCK_ENABLED) ?: true
+    }
+
+    override suspend fun setShortcutsV2MockEnabled(enabled: Boolean) {
+        localStorage().putBoolean(PREF_SHORTCUTS_V2_MOCK_ENABLED, enabled)
+    }
+
+    override suspend fun isShortcutsV2MockPinSupportEnabled(): Boolean {
+        return localStorage().getBooleanOrNull(PREF_SHORTCUTS_V2_MOCK_PIN_SUPPORT_ENABLED) ?: true
+    }
+
+    override suspend fun setShortcutsV2MockPinSupportEnabled(enabled: Boolean) {
+        localStorage().putBoolean(PREF_SHORTCUTS_V2_MOCK_PIN_SUPPORT_ENABLED, enabled)
     }
 
     override suspend fun removeServer(serverId: Int) {

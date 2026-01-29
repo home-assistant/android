@@ -433,6 +433,7 @@
     <string name="lovelace">Dashboard</string>
     <string name="manage_shortcuts_summary">Manage launcher shortcuts</string>
     <string name="manage_shortcuts">Manage shortcuts</string>
+    <string name="manage_shortcuts_v2">Manage shortcuts (V2)</string>
     <string name="manage_ssids_ethernet">Ethernet connected</string>
     <string name="manage_ssids_input_exists">This SSID already exists</string>
     <string name="manage_ssids_input">New Wi-Fi SSID</string>
@@ -786,13 +787,23 @@
     <string name="share_success">Shared with Home Assistant</string>
     <string name="shortcut_icon">Select an icon for this shortcut</string>
     <string name="shortcut_instruction_desc">Use the below sections to create your shortcuts. Once you have added a shortcut you will need to drag it on your home screen after long pressing on the app icon. Although Android supports up to 5 dynamic shortcuts most launchers will only show 4 shortcuts.</string>
+    <string name="shortcut_no_servers">No servers configured. Add a server to create shortcuts.</string>
+    <string name="shortcuts_empty_title">No shortcuts yet</string>
+    <string name="shortcuts_empty_subtitle">Create a shortcut to quickly open a Home Assistant view or entity.</string>
+    <string name="shortcut_dynamic_header">Dynamic shortcuts</string>
     <string name="shortcut_n">Shortcut %d</string>
+    <string name="shortcut_label_n">Shortcut %1$d label</string>
+    <string name="shortcut_description_n">Shortcut %1$d description</string>
     <string name="shortcut_pinned_desc">Pinned shortcut description</string>
     <string name="shortcut_pinned_id">Pinned shortcut ID</string>
     <string name="shortcut_pinned_label">Pinned shortcut label</string>
     <string name="shortcut_pinned_list">Select a pinned shortcut ID to edit</string>
     <string name="shortcut_pinned_note">Make sure to change the ID below for each new shortcut you want to add otherwise the existing ID will be updated. There are no limits to the amount of pinned shortcuts you can create.</string>
+    <string name="shortcut_type_dynamic">Dynamic shortcut</string>
+    <string name="shortcut_type_pinned">Pinned shortcut</string>
     <string name="shortcut_type">Select shortcut type</string>
+    <string name="shortcut_pin_requested">Pin request sent</string>
+    <string name="shortcut_pin_not_supported">Pinned shortcuts aren\'t supported on this device</string>
     <string name="shortcut_updated">Shortcut updated</string>
     <string name="shortcut">Shortcut</string>
     <string name="shortcuts_choose">Choose shortcuts</string>
@@ -1437,4 +1448,9 @@
     <string name="entity_picker_no_entity_found">No entity found</string>
     <string name="entity_picker_no_entity_found_for">No entity found for %s</string>
     <string name="fail_to_navigate_to_uri">No app available to open %s</string>
+    <!-- TODO: Remove shortcut mock strings before merging. -->
+    <string name="shortcuts_v2_mock_title">Use mock data for shortcuts (V2)</string>
+    <string name="shortcuts_v2_mock_summary">Show sample servers, entities, and shortcuts in the V2 screen</string>
+    <string name="shortcuts_v2_mock_pin_support_title">Enable pinned shortcuts for mock data</string>
+    <string name="shortcuts_v2_mock_pin_support_summary">Show pinned shortcuts and pin actions in the V2 mock screen</string>
 </resources>

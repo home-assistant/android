@@ -179,6 +179,22 @@
             android:icon="@drawable/ic_shortcut"
             android:title="@string/manage_shortcuts"
             android:summary="@string/manage_shortcuts_summary" />
+        <Preference
+            android:key="manage_shortcuts_v2"
+            android:icon="@drawable/ic_shortcut"
+            android:title="@string/manage_shortcuts_v2"
+            android:summary="@string/manage_shortcuts_summary" />
+        <SwitchPreference
+            android:key="shortcuts_v2_mock_enabled"
+            android:icon="@drawable/ic_android_debug_bridge"
+            android:title="@string/shortcuts_v2_mock_title"
+            android:summary="@string/shortcuts_v2_mock_summary" />
+        <SwitchPreference
+            android:key="shortcuts_v2_mock_pin_support_enabled"
+            android:icon="@drawable/ic_android_debug_bridge"
+            android:title="@string/shortcuts_v2_mock_pin_support_title"
+            android:summary="@string/shortcuts_v2_mock_pin_support_summary"
+            android:dependency="shortcuts_v2_mock_enabled" />
     </PreferenceCategory>
     <PreferenceCategory
         android:key="widgets"

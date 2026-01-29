@@ -1,0 +1,296 @@
+package io.homeassistant.companion.android.settings.shortcuts.v2.ui.preview
+
+import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutSummary
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutTargetValue
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutType
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
+import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.database.server.ServerConnectionInfo
+import io.homeassistant.companion.android.database.server.ServerSessionInfo
+import io.homeassistant.companion.android.database.server.ServerUserInfo
+import io.homeassistant.companion.android.settings.shortcuts.v2.DynamicShortcutEditorUiState
+import io.homeassistant.companion.android.settings.shortcuts.v2.DynamicShortcutItem
+import io.homeassistant.companion.android.settings.shortcuts.v2.PinnedShortcutEditorUiState
+import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListUiState
+import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.ShortcutEditorScreenState
+import java.time.LocalDateTime
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toPersistentMap
+
+private const val PREVIEW_MAX_DYNAMIC_SHORTCUTS = 5
+private const val PREVIEW_DYNAMIC_SHORTCUT_PREFIX = "shortcut"
+private const val PREVIEW_DYNAMIC_DRAFT_PREFIX = "dynamic_draft"
+
+internal object ShortcutPreviewData {
+    internal fun dynamicShortcutId(index: Int): String {
+        return "${PREVIEW_DYNAMIC_SHORTCUT_PREFIX}_${index + 1}"
+    }
+
+    internal fun dynamicDraftSeedId(index: Int): String {
+        return "${PREVIEW_DYNAMIC_DRAFT_PREFIX}_${index + 1}"
+    }
+
+    fun buildDynamicState(
+        isLoading: Boolean = false,
+        selectedIndex: Int = 0,
+        draftSeed: ShortcutDraft = buildDraft(id = dynamicDraftSeedId(selectedIndex)),
+        isCreated: Boolean = true,
+        servers: ImmutableList<Server> = previewServers,
+        entities: ImmutableMap<Int, ImmutableList<Entity>> = persistentMapOf(),
+        entityRegistry: ImmutableMap<Int, ImmutableList<EntityRegistryResponse>> = persistentMapOf(),
+        deviceRegistry: ImmutableMap<Int, ImmutableList<DeviceRegistryResponse>> = persistentMapOf(),
+        areaRegistry: ImmutableMap<Int, ImmutableList<AreaRegistryResponse>> = persistentMapOf(),
+    ): DynamicShortcutEditorUiState {
+        return DynamicShortcutEditorUiState(
+            screen = buildScreenState(
+                isLoading = isLoading,
+                servers = servers,
+                entities = entities,
+                entityRegistry = entityRegistry,
+                deviceRegistry = deviceRegistry,
+                areaRegistry = areaRegistry,
+            ),
+            selectedIndex = selectedIndex,
+            draftSeed = draftSeed,
+            isCreated = isCreated,
+        )
+    }
+
+    fun buildPinnedState(
+        isLoading: Boolean = false,
+        pinnedIds: ImmutableList<String> = buildPinnedIds(),
+        pinnedDraft: ShortcutDraft = buildPinnedDraft(),
+        servers: ImmutableList<Server> = previewServers,
+        entities: ImmutableMap<Int, ImmutableList<Entity>> = persistentMapOf(),
+        entityRegistry: ImmutableMap<Int, ImmutableList<EntityRegistryResponse>> = persistentMapOf(),
+        deviceRegistry: ImmutableMap<Int, ImmutableList<DeviceRegistryResponse>> = persistentMapOf(),
+        areaRegistry: ImmutableMap<Int, ImmutableList<AreaRegistryResponse>> = persistentMapOf(),
+    ): PinnedShortcutEditorUiState {
+        return PinnedShortcutEditorUiState(
+            screen = buildScreenState(
+                isLoading = isLoading,
+                servers = servers,
+                entities = entities,
+                entityRegistry = entityRegistry,
+                deviceRegistry = deviceRegistry,
+                areaRegistry = areaRegistry,
+            ),
+            draftSeed = pinnedDraft,
+            pinnedIds = pinnedIds,
+        )
+    }
+
+    fun buildScreenState(
+        isLoading: Boolean = false,
+        servers: ImmutableList<Server> = previewServers,
+        entities: ImmutableMap<Int, ImmutableList<Entity>> = persistentMapOf(),
+        entityRegistry: ImmutableMap<Int, ImmutableList<EntityRegistryResponse>> = persistentMapOf(),
+        deviceRegistry: ImmutableMap<Int, ImmutableList<DeviceRegistryResponse>> = persistentMapOf(),
+        areaRegistry: ImmutableMap<Int, ImmutableList<AreaRegistryResponse>> = persistentMapOf(),
+    ): ShortcutEditorScreenState {
+        return ShortcutEditorScreenState(
+            isLoading = isLoading,
+            servers = servers,
+            entities = entities,
+            entityRegistry = entityRegistry,
+            deviceRegistry = deviceRegistry,
+            areaRegistry = areaRegistry,
+        )
+    }
+
+    fun buildDraft(
+        type: ShortcutType = ShortcutType.LOVELACE,
+        id: String = dynamicDraftSeedId(0),
+        serverId: Int = 1,
+    ): ShortcutDraft {
+        return ShortcutDraft(
+            id = id,
+            serverId = serverId,
+            selectedIcon = null,
+            label = if (type == ShortcutType.ENTITY_ID) "Lights" else "Shortcut",
+            description = if (type == ShortcutType.ENTITY_ID) "Toggle living room lights" else "Description",
+            target = if (type == ShortcutType.ENTITY_ID) {
+                ShortcutTargetValue.Entity("light.living_room")
+            } else {
+                ShortcutTargetValue.Lovelace("/lovelace/shortcut")
+            },
+        )
+    }
+
+    fun buildDynamicDrafts(count: Int, type: ShortcutType): ImmutableList<ShortcutDraft> {
+        return List(count) { index ->
+            val number = index + 1
+            ShortcutDraft(
+                id = dynamicShortcutId(index),
+                serverId = 1,
+                selectedIcon = null,
+                label = if (type == ShortcutType.ENTITY_ID) "Lights" else "Shortcut $number",
+                description = if (type == ShortcutType.ENTITY_ID) {
+                    "Toggle living room lights"
+                } else {
+                    "Description $number"
+                },
+                target = if (type == ShortcutType.ENTITY_ID) {
+                    ShortcutTargetValue.Entity("light.living_room")
+                } else {
+                    ShortcutTargetValue.Lovelace("/lovelace/shortcut$number")
+                },
+            )
+        }.toImmutableList()
+    }
+
+    fun buildDynamicSummaries(count: Int, type: ShortcutType, createdIndex: Int?): ImmutableList<ShortcutSummary> {
+        return buildDynamicDrafts(count = count, type = type).mapIndexed { index, draft ->
+            ShortcutSummary(
+                id = draft.id,
+                serverId = draft.serverId,
+                selectedIcon = draft.selectedIcon,
+                label = draft.label,
+                description = draft.description,
+                target = draft.target,
+                isCreated = createdIndex != null && index == createdIndex,
+            )
+        }.toImmutableList()
+    }
+
+    fun buildDynamicCreatedFlags(count: Int, createdIndex: Int?): ImmutableList<Boolean> {
+        return List(count) { index ->
+            createdIndex != null && index == createdIndex
+        }.toImmutableList()
+    }
+
+    fun buildPinnedDraft(): ShortcutDraft {
+        return ShortcutDraft(
+            id = "pinned_1",
+            serverId = 1,
+            selectedIcon = null,
+            label = "Pinned",
+            description = "Pinned shortcut",
+            target = ShortcutTargetValue.Lovelace("/lovelace/pinned"),
+        )
+    }
+
+    fun buildPinnedSummaries(): ImmutableList<ShortcutSummary> {
+        return listOf(
+            ShortcutSummary(
+                id = "pinned_1",
+                serverId = 1,
+                selectedIcon = null,
+                label = "Pinned",
+                description = "Pinned shortcut",
+                target = ShortcutTargetValue.Lovelace("/lovelace/pinned"),
+                isCreated = true,
+            ),
+        ).toImmutableList()
+    }
+
+    fun buildPinnedIds(): ImmutableList<String> {
+        return buildPinnedSummaries().map { it.id }.toImmutableList()
+    }
+
+    fun buildListState(
+        isLoading: Boolean = false,
+        dynamicSummaries: ImmutableList<ShortcutSummary> = buildDynamicSummaries(
+            count = 2,
+            type = ShortcutType.LOVELACE,
+            createdIndex = 0,
+        ),
+        pinnedSummaries: ImmutableList<ShortcutSummary> = buildPinnedSummaries(),
+        servers: ImmutableList<Server> = previewServers,
+        canPinShortcuts: Boolean = true,
+    ): ShortcutsListUiState {
+        val dynamicItems = dynamicSummaries.mapIndexedNotNull { index, summary ->
+            if (summary.isCreated) DynamicShortcutItem(index, summary) else null
+        }.toImmutableList()
+        val pinnedItems = if (canPinShortcuts) pinnedSummaries else persistentListOf()
+        val canCreateDynamic = dynamicSummaries.any { !it.isCreated } ||
+            dynamicSummaries.size < PREVIEW_MAX_DYNAMIC_SHORTCUTS
+
+        if (isLoading) {
+            return ShortcutsListUiState.Loading(
+                canPinShortcuts = canPinShortcuts,
+                canCreateDynamic = canCreateDynamic,
+            )
+        }
+
+        return if (dynamicItems.isEmpty() && pinnedItems.isEmpty()) {
+            ShortcutsListUiState.Empty(
+                canPinShortcuts = canPinShortcuts,
+                canCreateDynamic = canCreateDynamic,
+                hasServers = servers.isNotEmpty(),
+            )
+        } else {
+            ShortcutsListUiState.Content(
+                canPinShortcuts = canPinShortcuts,
+                canCreateDynamic = canCreateDynamic,
+                dynamicItems = dynamicItems,
+                pinnedShortcuts = pinnedItems,
+            )
+        }
+    }
+
+    val previewServers = listOf(
+        Server(
+            id = 1,
+            _name = "Home",
+            connection = ServerConnectionInfo(externalUrl = "https://home.example.com"),
+            session = ServerSessionInfo(),
+            user = ServerUserInfo(),
+        ),
+        Server(
+            id = 2,
+            _name = "Office",
+            connection = ServerConnectionInfo(externalUrl = "https://office.example.com"),
+            session = ServerSessionInfo(),
+            user = ServerUserInfo(),
+        ),
+    ).toImmutableList()
+
+    val previewEntitiesByServer = mapOf(
+        1 to listOf(
+            Entity(
+                entityId = "light.living_room",
+                state = "on",
+                attributes = mapOf("friendly_name" to "Living Room"),
+                lastChanged = LocalDateTime.now(),
+                lastUpdated = LocalDateTime.now(),
+            ),
+        ).toImmutableList(),
+    ).toPersistentMap()
+
+    val previewEntityRegistryByServer = mapOf(
+        1 to listOf(
+            EntityRegistryResponse(
+                entityId = "light.living_room",
+                areaId = "living_room",
+                deviceId = "device_1",
+            ),
+        ).toImmutableList(),
+    ).toPersistentMap()
+
+    val previewDeviceRegistryByServer = mapOf(
+        1 to listOf(
+            DeviceRegistryResponse(
+                id = "device_1",
+                name = "Ceiling Lights",
+            ),
+        ).toImmutableList(),
+    ).toPersistentMap()
+
+    val previewAreaRegistryByServer = mapOf(
+        1 to listOf(
+            AreaRegistryResponse(
+                areaId = "living_room",
+                name = "Living Room",
+            ),
+        ).toImmutableList(),
+    ).toPersistentMap()
+}

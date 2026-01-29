@@ -1,0 +1,107 @@
+package io.homeassistant.companion.android.settings.shortcuts.v2.ui.components
+
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.compose.composable.HATextField
+import io.homeassistant.companion.android.common.compose.theme.HADimens
+import io.homeassistant.companion.android.common.compose.theme.HATextStyle
+import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
+import io.homeassistant.companion.android.settings.shortcuts.v2.PinnedShortcutEditorUiState
+import io.homeassistant.companion.android.settings.shortcuts.v2.ui.preview.ShortcutPreviewData
+import io.homeassistant.companion.android.settings.shortcuts.v2.ui.selector.ShortcutIconPicker
+@RequiresApi(Build.VERSION_CODES.N_MR1)
+@Composable
+internal fun PinnedShortcutEditor(
+    draft: ShortcutDraft,
+    state: PinnedShortcutEditorUiState,
+    onDraftChange: (ShortcutDraft) -> Unit,
+    onIconClick: () -> Unit,
+    onSubmit: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    val isCreated = draft.id in state.pinnedIds
+    val canSubmit by remember(draft, state.screen.servers) {
+        derivedStateOf {
+            canSubmit(draft = draft, screen = state.screen, requireId = true)
+        }
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE3),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.shortcut_pinned),
+                style = HATextStyle.HeadlineMedium,
+                color = LocalHAColorScheme.current.colorFillPrimaryLoudResting,
+                textAlign = TextAlign.Start,
+                modifier = Modifier.weight(1f),
+            )
+
+            ShortcutIconPicker(
+                selectedIcon = draft.selectedIcon,
+                onIconClick = onIconClick,
+            )
+        }
+
+        Text(
+            text = stringResource(R.string.shortcut_pinned_note),
+            style = HATextStyle.Body,
+        )
+
+        HATextField(
+            value = draft.id,
+            onValueChange = { onDraftChange(draft.copy(id = it)) },
+            label = {
+                Text(stringResource(R.string.shortcut_pinned_id))
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        ShortcutEditorForm(
+            draft = draft,
+            labelText = stringResource(R.string.shortcut_pinned_label),
+            descriptionText = stringResource(R.string.shortcut_pinned_desc),
+            screen = state.screen,
+            onDraftChange = onDraftChange,
+            isCreated = isCreated,
+            canSubmit = canSubmit,
+            onSubmit = onSubmit,
+            onDelete = onDelete,
+        )
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.N_MR1)
+@Preview(name = "Pinned Shortcut Editor")
+@Composable
+private fun PinnedShortcutEditorPreview() {
+    HAThemeForPreview {
+        PinnedShortcutEditor(
+            draft = ShortcutPreviewData.buildPinnedDraft(),
+            state = ShortcutPreviewData.buildPinnedState(),
+            onDraftChange = {},
+            onIconClick = {},
+            onSubmit = {},
+            onDelete = {},
+        )
+    }
+}
