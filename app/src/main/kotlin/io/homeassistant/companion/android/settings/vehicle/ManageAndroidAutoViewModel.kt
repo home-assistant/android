@@ -43,10 +43,8 @@ class ManageAndroidAutoViewModel @Inject constructor(
 
     var entityRegistry by mutableStateOf<List<EntityRegistryResponse>>(emptyList())
         private set
-
     var deviceRegistry by mutableStateOf<List<DeviceRegistryResponse>>(emptyList())
         private set
-
     var areaRegistry by mutableStateOf<List<AreaRegistryResponse>>(emptyList())
         private set
 
@@ -69,7 +67,6 @@ class ManageAndroidAutoViewModel @Inject constructor(
             servers = serverManager.servers()
             defaultServerId = serverManager.getServer()?.id ?: 0
             favoritesList.addAll(prefsRepository.getAutoFavorites())
-
             servers.map { server ->
                 val serverId = server.id
                 async {
@@ -81,7 +78,6 @@ class ManageAndroidAutoViewModel @Inject constructor(
                     ).awaitAll()
                 }
             }.awaitAll()
-
             loadEntities(serverManager.getServer()?.id ?: 0)
             isLoading = false
         }

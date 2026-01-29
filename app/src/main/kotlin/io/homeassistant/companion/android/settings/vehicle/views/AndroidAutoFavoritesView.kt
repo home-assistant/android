@@ -57,7 +57,6 @@ fun AndroidAutoFavoritesSettings(
 
     val favoriteEntities = androidAutoViewModel.favoritesList.toList()
     var validEntities by remember { mutableStateOf<List<Entity>>(emptyList()) }
-
     LaunchedEffect(favoriteEntities.size, androidAutoViewModel.sortedEntities.size, selectedServer) {
         validEntities = withContext(Dispatchers.IO) {
             androidAutoViewModel.sortedEntities
@@ -119,7 +118,6 @@ fun AndroidAutoFavoritesSettings(
                     )
                 }
             }
-
             if (favoriteEntities.isNotEmpty() && androidAutoViewModel.sortedEntities.isNotEmpty()) {
                 items(favoriteEntities.size, { favoriteEntities[it] }) { index ->
                     val favoriteEntity = favoriteEntities[index]
