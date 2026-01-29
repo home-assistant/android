@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.core.app.NotificationManagerCompat
@@ -365,22 +366,37 @@ class MainViewModel @Inject constructor(
     /**
      * Updates the main view UI state with thread-safe snapshots of all data.
      * This should be called on a background thread whenever state changes.
+     *
+     * Uses [Snapshot.takeSnapshot] to create a consistent read-only view of all
+     * Compose state, preventing [ConcurrentModificationException] when concurrent
+     * updates modify the underlying [SnapshotStateList] collections.
      */
     private fun updateMainViewUiState() {
-        _mainViewUiState.value = MainViewUiState(
-            entities = entities.toMap(),
-            favoriteCaches = favoriteCaches.toList(),
-            isFavoritesOnly = isFavoritesOnly,
-            loadingState = loadingState,
-            entitiesByAreaOrder = entitiesByAreaOrder.toList(),
-            entitiesByArea = entitiesByArea.mapValues { (_, entities) -> entities.map { it.entityId } },
-            areas = areas.toList(),
-            entitiesByDomainFilteredOrder = entitiesByDomainFilteredOrder.toList(),
-            entitiesByDomainFiltered = entitiesByDomainFiltered.mapValues { (_, entities) ->
-                entities.map { it.entityId }
-            },
-            entitiesByDomain = entitiesByDomain.mapValues { (_, entities) -> entities.map { it.entityId } },
-        )
+        val snapshot = Snapshot.takeSnapshot()
+        try {
+            _mainViewUiState.value = snapshot.enter {
+                MainViewUiState(
+                    entities = entities.toMap(),
+                    favoriteCaches = favoriteCaches.toList(),
+                    isFavoritesOnly = isFavoritesOnly,
+                    loadingState = loadingState,
+                    entitiesByAreaOrder = entitiesByAreaOrder.toList(),
+                    entitiesByArea = entitiesByArea.mapValues { (_, entities) ->
+                        entities.map { it.entityId }
+                    },
+                    areas = areas.toList(),
+                    entitiesByDomainFilteredOrder = entitiesByDomainFilteredOrder.toList(),
+                    entitiesByDomainFiltered = entitiesByDomainFiltered.mapValues { (_, entities) ->
+                        entities.map { it.entityId }
+                    },
+                    entitiesByDomain = entitiesByDomain.mapValues { (_, entities) ->
+                        entities.map { it.entityId }
+                    },
+                )
+            }
+        } finally {
+            snapshot.dispose()
+        }
     }
 
     /**
