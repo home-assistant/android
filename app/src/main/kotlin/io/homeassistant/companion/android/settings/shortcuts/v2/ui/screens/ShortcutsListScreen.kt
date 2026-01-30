@@ -34,7 +34,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -257,8 +256,6 @@ private fun CreateShortcutDialog(
                     ShortcutTypeOptionRow(
                         icon = CommunityMaterial.Icon2.cmd_flash,
                         label = stringResource(R.string.shortcut_type_dynamic),
-                        subtitle = null,
-                        enabled = true,
                         onClick = onCreateDynamic,
                     )
                 }
@@ -266,8 +263,6 @@ private fun CreateShortcutDialog(
                     ShortcutTypeOptionRow(
                         icon = CommunityMaterial.Icon3.cmd_view_dashboard,
                         label = stringResource(R.string.shortcut_type_pinned),
-                        subtitle = null,
-                        enabled = true,
                         onClick = onCreatePinned,
                     )
                 }
@@ -278,18 +273,11 @@ private fun CreateShortcutDialog(
 }
 
 @Composable
-private fun ShortcutTypeOptionRow(
-    icon: IIcon,
-    label: String,
-    subtitle: String?,
-    enabled: Boolean,
-    onClick: () -> Unit,
-) {
+private fun ShortcutTypeOptionRow(icon: IIcon, label: String, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .alpha(if (enabled) 1f else 0.5f)
-            .clickable(enabled = enabled, onClick = onClick)
+            .clickable(onClick = onClick)
             .padding(horizontal = HADimens.SPACE4, vertical = HADimens.SPACE3),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE3),
@@ -309,15 +297,6 @@ private fun ShortcutTypeOptionRow(
                 style = HATextStyle.BodyMedium,
                 color = LocalHAColorScheme.current.colorTextPrimary,
             )
-            if (!subtitle.isNullOrBlank()) {
-                Text(
-                    text = subtitle,
-                    style = HATextStyle.BodyMedium,
-                    color = LocalHAColorScheme.current.colorTextSecondary,
-                    textAlign = TextAlign.Start,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
         }
     }
 }
