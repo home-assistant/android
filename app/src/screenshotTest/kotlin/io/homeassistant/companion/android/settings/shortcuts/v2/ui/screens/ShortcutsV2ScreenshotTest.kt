@@ -5,6 +5,7 @@ import com.android.tools.screenshot.PreviewTest
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutTargetValue
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutType
+import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutEditorUiState
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListAction
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.preview.ShortcutPreviewData
 import io.homeassistant.companion.android.util.compose.HAPreviews
@@ -115,8 +116,11 @@ class ShortcutsV2ScreenshotTest {
     @Composable
     fun `DynamicShortcutEditor loading`() {
         HAThemeForPreview {
-            DynamicShortcutEditorScreen(
-                state = ShortcutPreviewData.buildDynamicState(isLoading = true),
+            ShortcutEditorScreen(
+                state = ShortcutEditorUiState(
+                    screen = ShortcutPreviewData.buildScreenState(isLoading = true),
+                    editor = ShortcutPreviewData.buildDynamicEditorState(),
+                ),
                 dispatch = { _: ShortcutEditAction -> },
             )
         }
@@ -127,17 +131,21 @@ class ShortcutsV2ScreenshotTest {
     @Composable
     fun `DynamicShortcutEditor entity target`() {
         HAThemeForPreview {
-            DynamicShortcutEditorScreen(
-                state = ShortcutPreviewData.buildDynamicState(
-                    draftSeed = ShortcutPreviewData.buildDraft(
-                        type = ShortcutType.ENTITY_ID,
-                        id = ShortcutPreviewData.dynamicShortcutId(0),
+            ShortcutEditorScreen(
+                state = ShortcutEditorUiState(
+                    screen = ShortcutPreviewData.buildScreenState(
+                        entities = ShortcutPreviewData.previewEntitiesByServer,
+                        entityRegistry = ShortcutPreviewData.previewEntityRegistryByServer,
+                        deviceRegistry = ShortcutPreviewData.previewDeviceRegistryByServer,
+                        areaRegistry = ShortcutPreviewData.previewAreaRegistryByServer,
                     ),
-                    isCreated = true,
-                    entities = ShortcutPreviewData.previewEntitiesByServer,
-                    entityRegistry = ShortcutPreviewData.previewEntityRegistryByServer,
-                    deviceRegistry = ShortcutPreviewData.previewDeviceRegistryByServer,
-                    areaRegistry = ShortcutPreviewData.previewAreaRegistryByServer,
+                    editor = ShortcutPreviewData.buildDynamicEditorState(
+                        draftSeed = ShortcutPreviewData.buildDraft(
+                            type = ShortcutType.ENTITY_ID,
+                            id = ShortcutPreviewData.dynamicShortcutId(0),
+                        ),
+                        isCreated = true,
+                    ),
                 ),
                 dispatch = { _: ShortcutEditAction -> },
             )
@@ -149,8 +157,11 @@ class ShortcutsV2ScreenshotTest {
     @Composable
     fun `PinnedShortcutEditor loading`() {
         HAThemeForPreview {
-            PinnedShortcutEditorScreen(
-                state = ShortcutPreviewData.buildPinnedState(isLoading = true),
+            ShortcutEditorScreen(
+                state = ShortcutEditorUiState(
+                    screen = ShortcutPreviewData.buildScreenState(isLoading = true),
+                    editor = ShortcutPreviewData.buildPinnedEditorState(),
+                ),
                 dispatch = { _: ShortcutEditAction -> },
             )
         }
@@ -161,10 +172,13 @@ class ShortcutsV2ScreenshotTest {
     @Composable
     fun `PinnedShortcutEditor default`() {
         HAThemeForPreview {
-            PinnedShortcutEditorScreen(
-                state = ShortcutPreviewData.buildPinnedState(
-                    pinnedIds = ShortcutPreviewData.buildPinnedIds(),
-                    pinnedDraft = ShortcutPreviewData.buildPinnedDraft(),
+            ShortcutEditorScreen(
+                state = ShortcutEditorUiState(
+                    screen = ShortcutPreviewData.buildScreenState(),
+                    editor = ShortcutPreviewData.buildPinnedEditorState(
+                        pinnedDraft = ShortcutPreviewData.buildPinnedDraft(),
+                        isCreated = true,
+                    ),
                 ),
                 dispatch = { _: ShortcutEditAction -> },
             )
