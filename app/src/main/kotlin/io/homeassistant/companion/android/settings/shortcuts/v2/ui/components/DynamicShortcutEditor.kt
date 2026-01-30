@@ -59,7 +59,7 @@ internal fun DynamicShortcutEditor(
             )
 
             ShortcutIconPicker(
-                selectedIcon = draft.selectedIcon,
+                selectedIconName = draft.selectedIconName,
                 onIconClick = onIconClick,
             )
         }

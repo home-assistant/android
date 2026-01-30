@@ -96,7 +96,7 @@ internal object ShortcutPreviewData {
         return ShortcutDraft(
             id = id,
             serverId = serverId,
-            selectedIcon = null,
+            selectedIconName = null,
             label = if (type == ShortcutType.ENTITY_ID) "Lights" else "Shortcut",
             description = if (type == ShortcutType.ENTITY_ID) "Toggle living room lights" else "Description",
             target = if (type == ShortcutType.ENTITY_ID) {
@@ -113,7 +113,7 @@ internal object ShortcutPreviewData {
             ShortcutDraft(
                 id = dynamicShortcutId(index),
                 serverId = 1,
-                selectedIcon = null,
+                selectedIconName = null,
                 label = if (type == ShortcutType.ENTITY_ID) "Lights" else "Shortcut $number",
                 description = if (type == ShortcutType.ENTITY_ID) {
                     "Toggle living room lights"
@@ -133,7 +133,7 @@ internal object ShortcutPreviewData {
         return buildDynamicDrafts(count = count, type = type).map { draft ->
             ShortcutSummary(
                 id = draft.id,
-                selectedIcon = draft.selectedIcon,
+                selectedIconName = draft.selectedIconName,
                 label = draft.label,
             )
         }.toImmutableList()
@@ -143,7 +143,7 @@ internal object ShortcutPreviewData {
         return ShortcutDraft(
             id = "pinned_1",
             serverId = 1,
-            selectedIcon = null,
+            selectedIconName = null,
             label = "Pinned",
             description = "Pinned shortcut",
             target = ShortcutTargetValue.Lovelace("/lovelace/pinned"),
@@ -154,7 +154,7 @@ internal object ShortcutPreviewData {
         return listOf(
             ShortcutSummary(
                 id = "pinned_1",
-                selectedIcon = null,
+                selectedIconName = null,
                 label = "Pinned",
             ),
         ).toImmutableList()

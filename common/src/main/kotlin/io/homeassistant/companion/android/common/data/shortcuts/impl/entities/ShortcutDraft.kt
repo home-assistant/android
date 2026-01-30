@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.common.data.shortcuts.impl.entities
 
 import androidx.compose.runtime.Immutable
-import com.mikepenz.iconics.typeface.IIcon
 
 private const val DYNAMIC_DRAFT_SEED_PREFIX = "dynamic_draft"
 private fun dynamicDraftSeedId(index: Int): String {
@@ -13,7 +12,7 @@ private fun dynamicDraftSeedId(index: Int): String {
  *
  * @param id The shortcut ID (generated for dynamic shortcuts, user-defined for pinned shortcuts)
  * @param serverId The server ID this shortcut is associated with
- * @param selectedIcon The icon selected for this shortcut
+ * @param selectedIconName The MDI icon identifier selected for this shortcut (ex: "mdi:account-alert")
  * @param label The short label for the shortcut
  * @param description The long description for the shortcut
  * @param target The target value for the shortcut
@@ -22,7 +21,7 @@ private fun dynamicDraftSeedId(index: Int): String {
 data class ShortcutDraft(
     val id: String,
     val serverId: Int,
-    val selectedIcon: IIcon?,
+    val selectedIconName: String?,
     val label: String,
     val description: String,
     val target: ShortcutTargetValue,
@@ -34,7 +33,7 @@ fun ShortcutDraft.Companion.empty(id: String): ShortcutDraft {
     return ShortcutDraft(
         id = id,
         serverId = 0,
-        selectedIcon = null,
+        selectedIconName = null,
         label = "",
         description = "",
         target = ShortcutTargetValue.Lovelace(""),
@@ -48,7 +47,7 @@ fun ShortcutDraft.Companion.empty(index: Int): ShortcutDraft {
 fun ShortcutDraft.toSummary(): ShortcutSummary {
     return ShortcutSummary(
         id = id,
-        selectedIcon = selectedIcon,
+        selectedIconName = selectedIconName,
         label = label,
     )
 }

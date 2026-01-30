@@ -11,17 +11,21 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.mikepenz.iconics.compose.IconicsPainter
-import com.mikepenz.iconics.typeface.IIcon
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 
 @Composable
-internal fun ShortcutIconPicker(selectedIcon: IIcon?, onIconClick: () -> Unit) {
+internal fun ShortcutIconPicker(selectedIconName: String?, onIconClick: () -> Unit) {
     OutlinedButton(onClick = onIconClick) {
-        val painter = if (selectedIcon != null) {
-            remember(selectedIcon) { IconicsPainter(selectedIcon) }
+        val icon = remember(selectedIconName) {
+            selectedIconName?.let(CommunityMaterial::getIconByMdiName)
+        }
+        val painter = if (icon != null) {
+            remember(icon) { IconicsPainter(icon) }
         } else {
             painterResource(R.drawable.ic_stat_ic_notification_blue)
         }
@@ -40,7 +44,7 @@ internal fun ShortcutIconPicker(selectedIcon: IIcon?, onIconClick: () -> Unit) {
 private fun ShortcutIconPickerPreview() {
     HAThemeForPreview {
         ShortcutIconPicker(
-            selectedIcon = null,
+            selectedIconName = null,
             onIconClick = {},
         )
     }

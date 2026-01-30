@@ -28,6 +28,7 @@ import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.Em
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.EmptyStateContentSlots
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.PinnedShortcutEditor
 import io.homeassistant.companion.android.util.icondialog.IconDialog
+import io.homeassistant.companion.android.util.icondialog.mdiName
 import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
@@ -135,7 +136,7 @@ private fun ShortcutEditorContent(
         if (showIconDialog) {
             IconDialog(
                 onSelect = {
-                    updateDraft(draft.copy(selectedIcon = it))
+                    updateDraft(draft.copy(selectedIconName = it.mdiName))
                     showIconDialog = false
                 },
                 onDismissRequest = { showIconDialog = false },

@@ -4,7 +4,6 @@ import android.content.Context
 import android.os.Build
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.shortcuts.ShortcutFactory
@@ -25,7 +24,6 @@ import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.Sh
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.empty
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.toSummary
 import io.homeassistant.companion.android.database.IconDialogCompat
-import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -348,14 +346,13 @@ internal class ShortcutsRepositoryImpl @Inject constructor(
         val serverId = extras?.getInt(EXTRA_SERVER, defaultServerId) ?: defaultServerId
         val path = extras?.getString(ShortcutIntentKeys.EXTRA_SHORTCUT_PATH) ?: intent.action.orEmpty()
 
-        val selectedIcon = shortcutIntentCodec.parseIcon(extras, iconIdToName)
-            ?.let(CommunityMaterial::getIconByMdiName)
+        val selectedIconName = shortcutIntentCodec.parseIcon(extras, iconIdToName)
         val target = shortcutIntentCodec.parseTarget(extras, path)
 
         return ShortcutDraft(
             id = id,
             serverId = serverId,
-            selectedIcon = selectedIcon,
+            selectedIconName = selectedIconName,
             label = shortLabel.toString(),
             description = longLabel?.toString().orEmpty(),
             target = target,

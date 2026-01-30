@@ -60,6 +60,7 @@ import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListUiS
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.EmptyStateContent
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.preview.ShortcutPreviewData
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
+import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import kotlinx.collections.immutable.ImmutableList
@@ -162,7 +163,7 @@ private fun ShortcutsList(
                 }
                 ShortcutGridItem(
                     label = label,
-                    icon = item.summary.selectedIcon,
+                    iconName = item.summary.selectedIconName,
                     onClick = { onEditDynamic(item.index) },
                 )
             }
@@ -176,7 +177,7 @@ private fun ShortcutsList(
                 val label = summary.label.ifBlank { summary.id }
                 ShortcutGridItem(
                     label = label,
-                    icon = summary.selectedIcon,
+                    iconName = summary.selectedIconName,
                     onClick = { onEditPinned(summary.id) },
                 )
             }
@@ -196,7 +197,7 @@ private fun SectionHeader(text: String) {
 }
 
 @Composable
-private fun ShortcutGridItem(label: String, icon: IIcon?, onClick: () -> Unit) {
+private fun ShortcutGridItem(label: String, iconName: String?, onClick: () -> Unit) {
     val colors = LocalHAColorScheme.current
     Surface(
         onClick = onClick,
@@ -214,7 +215,7 @@ private fun ShortcutGridItem(label: String, icon: IIcon?, onClick: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             ShortcutListIcon(
-                icon = icon,
+                iconName = iconName,
                 modifier = Modifier.size(HADimens.SPACE7),
             )
             Text(
@@ -231,7 +232,8 @@ private fun ShortcutGridItem(label: String, icon: IIcon?, onClick: () -> Unit) {
 }
 
 @Composable
-private fun ShortcutListIcon(icon: IIcon?, modifier: Modifier = Modifier) {
+private fun ShortcutListIcon(iconName: String?, modifier: Modifier = Modifier) {
+    val icon = remember(iconName) { iconName?.let(CommunityMaterial::getIconByMdiName) }
     val painter = if (icon != null) {
         remember(icon) { IconicsPainter(icon) }
     } else {

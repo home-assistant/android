@@ -108,7 +108,7 @@ class ShortcutsViewModelTest {
         return ShortcutDraft(
             id = id,
             serverId = serverId,
-            selectedIcon = null,
+            selectedIconName = null,
             label = id,
             description = "Description for $id",
             target = ShortcutTargetValue.Lovelace("/lovelace/$id"),

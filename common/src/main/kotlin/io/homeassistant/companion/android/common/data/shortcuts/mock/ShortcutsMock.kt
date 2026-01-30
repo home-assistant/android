@@ -1,7 +1,5 @@
 package io.homeassistant.companion.android.common.data.shortcuts.mock
 
-import com.mikepenz.iconics.typeface.IIcon
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutTargetValue
@@ -94,16 +92,14 @@ internal object ShortcutsMock {
         )
     }
 
-    private val dynamicIcons: List<IIcon> by lazy {
-        runCatching {
-            listOf(
-                CommunityMaterial.Icon2.cmd_lightbulb,
-                CommunityMaterial.Icon3.cmd_view_dashboard,
-                CommunityMaterial.Icon2.cmd_flash,
-                CommunityMaterial.Icon.cmd_camera_image,
-                CommunityMaterial.Icon3.cmd_map_marker,
-            )
-        }.getOrElse { emptyList() }
+    private val dynamicIcons: List<String> by lazy {
+        listOf(
+            "mdi:lightbulb",
+            "mdi:view-dashboard",
+            "mdi:flash",
+            "mdi:camera-image",
+            "mdi:map-marker",
+        )
     }
 
     private val dynamicShortcutsStore: MutableList<ShortcutDraft> by lazy {
@@ -122,7 +118,7 @@ internal object ShortcutsMock {
             ShortcutDraft(
                 id = "pinned_$number",
                 serverId = DEFAULT_SERVER_ID,
-                selectedIcon = null,
+                selectedIconName = null,
                 label = "Pinned $number",
                 description = "Pinned shortcut $number",
                 target = ShortcutTargetValue.Lovelace("/lovelace/pinned_$number"),
@@ -175,7 +171,7 @@ internal object ShortcutsMock {
         return ShortcutDraft(
             id = MockDynamicShortcutId.build(index),
             serverId = serverId,
-            selectedIcon = dynamicIcons.getOrNull(index),
+            selectedIconName = dynamicIcons.getOrNull(index),
             label = if (isEntity) "Lights" else "Shortcut $number",
             description = if (isEntity) "Toggle living room lights" else "Description $number",
             target = if (isEntity) {

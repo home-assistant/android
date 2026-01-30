@@ -2,11 +2,8 @@ package io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens
 
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutTargetValue
-import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
-import io.homeassistant.companion.android.util.icondialog.mdiName
 
 private const val TARGET_TYPE_LOVELACE = "lovelace"
 private const val TARGET_TYPE_ENTITY = "entity"
@@ -24,7 +21,7 @@ internal val ShortcutDraftSaver: Saver<ShortcutDraft, Any> = listSaver(
         listOf(
             draft.id,
             draft.serverId,
-            draft.selectedIcon?.mdiName,
+            draft.selectedIconName,
             draft.label,
             draft.description,
             targetType,
@@ -47,7 +44,7 @@ internal val ShortcutDraftSaver: Saver<ShortcutDraft, Any> = listSaver(
         ShortcutDraft(
             id = id,
             serverId = serverId,
-            selectedIcon = iconName?.let(CommunityMaterial::getIconByMdiName),
+            selectedIconName = iconName,
             label = label,
             description = description,
             target = target,

@@ -58,7 +58,7 @@ internal fun PinnedShortcutEditor(
             )
 
             ShortcutIconPicker(
-                selectedIcon = draft.selectedIcon,
+                selectedIconName = draft.selectedIconName,
                 onIconClick = onIconClick,
             )
         }

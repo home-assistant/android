@@ -46,7 +46,7 @@ class ShortcutEditViewModelTest {
     private val pinnedDraft = ShortcutDraft(
         id = "pinned_1",
         serverId = server.id,
-        selectedIcon = null,
+        selectedIconName = null,
         label = "Pinned",
         description = "Pinned shortcut",
         target = ShortcutTargetValue.Lovelace("/lovelace/pinned"),
@@ -207,7 +207,7 @@ class ShortcutEditViewModelTest {
         return ShortcutDraft(
             id = id,
             serverId = serverId,
-            selectedIcon = null,
+            selectedIconName = null,
             label = id,
             description = "Description for $id",
             target = ShortcutTargetValue.Lovelace("/lovelace/$id"),
