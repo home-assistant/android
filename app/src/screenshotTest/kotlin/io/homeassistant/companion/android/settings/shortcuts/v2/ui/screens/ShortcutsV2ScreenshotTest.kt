@@ -16,9 +16,9 @@ class ShortcutsV2ScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `Shortcuts loading`() {
+    fun `ShortcutsList loading`() {
         HAThemeForPreview {
-            ShortcutsScreen(
+            ShortcutsListScreen(
                 state = ShortcutPreviewData.buildListState(isLoading = true),
                 dispatch = { _: ShortcutsListAction -> },
             )
@@ -28,9 +28,9 @@ class ShortcutsV2ScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `Shortcuts empty no servers`() {
+    fun `ShortcutsList empty no servers`() {
         HAThemeForPreview {
-            ShortcutsScreen(
+            ShortcutsListScreen(
                 state = ShortcutPreviewData.buildListState(
                     dynamicSummaries = persistentListOf(),
                     pinnedSummaries = persistentListOf(),
@@ -44,7 +44,7 @@ class ShortcutsV2ScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `Shortcuts content max`() {
+    fun `ShortcutsList content max`() {
         val dynamicSummaries = ShortcutPreviewData.buildDynamicSummaries(
             count = 5,
             type = ShortcutType.LOVELACE,
@@ -58,7 +58,7 @@ class ShortcutsV2ScreenshotTest {
             )
         }.toImmutableList()
         HAThemeForPreview {
-            ShortcutsScreen(
+            ShortcutsListScreen(
                 state = ShortcutPreviewData.buildListState(
                     dynamicSummaries = dynamicSummaries,
                     pinnedSummaries = pinnedSummaries,
@@ -71,13 +71,13 @@ class ShortcutsV2ScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `Shortcuts content dynamic only`() {
+    fun `ShortcutsList content dynamic only`() {
         val dynamicSummaries = ShortcutPreviewData.buildDynamicSummaries(
             count = 3,
             type = ShortcutType.LOVELACE,
         ).toImmutableList()
         HAThemeForPreview {
-            ShortcutsScreen(
+            ShortcutsListScreen(
                 state = ShortcutPreviewData.buildListState(
                     dynamicSummaries = dynamicSummaries,
                     pinnedSummaries = persistentListOf(),
@@ -90,9 +90,9 @@ class ShortcutsV2ScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `Shortcuts content pinned only`() {
+    fun `ShortcutsList content pinned only`() {
         HAThemeForPreview {
-            ShortcutsScreen(
+            ShortcutsListScreen(
                 state = ShortcutPreviewData.buildListState(
                     dynamicSummaries = persistentListOf(),
                     pinnedSummaries = ShortcutPreviewData.buildPinnedSummaries(),

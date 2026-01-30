@@ -23,7 +23,7 @@ import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutEditView
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListAction
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsViewModel
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.ShortcutEditorScreen
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.ShortcutsScreen
+import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.ShortcutsListScreen
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -134,7 +134,7 @@ private fun ShortcutsListRouteScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    ShortcutsScreen(
+    ShortcutsListScreen(
         state = uiState,
         dispatch = onNavigate,
     )

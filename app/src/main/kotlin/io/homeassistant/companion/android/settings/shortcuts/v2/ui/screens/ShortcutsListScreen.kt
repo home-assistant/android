@@ -73,7 +73,7 @@ import kotlinx.collections.immutable.toImmutableList
  */
 @RequiresApi(Build.VERSION_CODES.N_MR1) // TODO: Check why do we need N_MR1 here
 @Composable
-internal fun ShortcutsScreen(
+internal fun ShortcutsListScreen(
     state: ShortcutsListState,
     dispatch: (ShortcutsListAction) -> Unit,
     modifier: Modifier = Modifier,
@@ -326,7 +326,7 @@ private fun ShortcutTypeOptionRow(
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @Preview(name = "Manage Shortcuts")
 @Composable
-private fun ShortcutsScreenPreview() {
+private fun ShortcutsListScreenPreview() {
     val dynamicSummaries = ShortcutPreviewData.buildDynamicSummaries(
         count = 4,
         type = ShortcutType.LOVELACE,
@@ -344,7 +344,7 @@ private fun ShortcutsScreenPreview() {
         ),
     ).toImmutableList()
     HAThemeForPreview {
-        ShortcutsScreen(
+        ShortcutsListScreen(
             state = ShortcutPreviewData.buildListState(
                 dynamicSummaries = dynamicSummaries,
                 pinnedSummaries = pinnedSummaries,
@@ -357,9 +357,9 @@ private fun ShortcutsScreenPreview() {
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @Preview(name = "Manage Shortcuts Loading")
 @Composable
-private fun ShortcutsScreenLoadingPreview() {
+private fun ShortcutsListScreenLoadingPreview() {
     HAThemeForPreview {
-        ShortcutsScreen(
+        ShortcutsListScreen(
             state = ShortcutPreviewData.buildListState(isLoading = true),
             dispatch = {},
         )
@@ -369,9 +369,9 @@ private fun ShortcutsScreenLoadingPreview() {
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @Preview(name = "Manage Shortcuts Empty")
 @Composable
-private fun ShortcutsScreenEmptyPreview() {
+private fun ShortcutsListScreenEmptyPreview() {
     HAThemeForPreview {
-        ShortcutsScreen(
+        ShortcutsListScreen(
             state = ShortcutPreviewData.buildListState(
                 dynamicSummaries = persistentListOf(),
                 pinnedSummaries = persistentListOf(),
