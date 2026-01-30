@@ -8,8 +8,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.shortcuts.ShortcutsRepository
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.DynamicShortcutsData
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutRepositoryError
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutRepositoryResult
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutError
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutResult
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutSummary
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutsListData
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.toSummary
@@ -88,13 +88,13 @@ internal class ShortcutsViewModel @Inject constructor(private val shortcutsRepos
             try {
                 val serversResult = shortcutsRepository.getServers()
                 val servers = when (serversResult) {
-                    is ShortcutRepositoryResult.Success -> serversResult.data.servers.toImmutableList()
-                    is ShortcutRepositoryResult.Error -> persistentListOf()
+                    is ShortcutResult.Success -> serversResult.data.servers.toImmutableList()
+                    is ShortcutResult.Error -> persistentListOf()
                 }
                 val listResult = shortcutsRepository.loadShortcutsList()
                 val listData = when (listResult) {
-                    is ShortcutRepositoryResult.Success -> listResult.data
-                    is ShortcutRepositoryResult.Error -> ShortcutsListData(
+                    is ShortcutResult.Success -> listResult.data
+                    is ShortcutResult.Error -> ShortcutsListData(
                         dynamic = DynamicShortcutsData(maxDynamicShortcuts = 0, shortcuts = emptyMap()),
                         pinned = emptyList(),
                         pinnedError = listResult.error,
@@ -103,16 +103,14 @@ internal class ShortcutsViewModel @Inject constructor(private val shortcutsRepos
                 val maxDynamicShortcuts = listData.dynamic.maxDynamicShortcuts
                 val dynamicItems = (0 until maxDynamicShortcuts).mapNotNull { index ->
                     listData.dynamic.shortcuts[index]
-                        ?.toSummary(isCreated = true)
+                        ?.toSummary()
                         ?.let { summary -> DynamicShortcutItem(index, summary) }
                 }.toImmutableList()
                 val canCreateDynamic = (0 until maxDynamicShortcuts).any { index ->
                     !listData.dynamic.shortcuts.containsKey(index)
                 }
-                val canPinShortcuts = listData.pinnedError != ShortcutRepositoryError.PinnedNotSupported
-                val pinnedSummaries = listData.pinned
-                    .map { it.toSummary(isCreated = true) }
-                    .toImmutableList()
+                val canPinShortcuts = listData.pinnedError != ShortcutError.PinnedNotSupported
+                val pinnedSummaries = listData.pinned.toImmutableList()
                 val hasServers = servers.isNotEmpty()
 
                 _uiState.value = if (dynamicItems.isEmpty() && pinnedSummaries.isEmpty()) {

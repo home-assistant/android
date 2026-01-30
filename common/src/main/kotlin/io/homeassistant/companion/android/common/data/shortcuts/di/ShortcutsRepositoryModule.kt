@@ -21,8 +21,8 @@ import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.Pi
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ServersData
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutEditorData
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutRepositoryError
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutRepositoryResult
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutError
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutResult
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutsListData
 import io.homeassistant.companion.android.common.data.shortcuts.mock.ShortcutsMockRepositoryImpl
 import java.util.Optional
@@ -63,47 +63,43 @@ internal abstract class ShortcutsRepositoryModule {
             }
 
             val fallbackRepository = object : ShortcutsRepository {
-                override suspend fun getServers(): ShortcutRepositoryResult<ServersData> =
-                    ShortcutRepositoryResult.Error(ShortcutRepositoryError.NoServers)
-                override suspend fun loadShortcutsList(): ShortcutRepositoryResult<ShortcutsListData> =
-                    ShortcutRepositoryResult.Success(
-                        ShortcutsListData(
-                            dynamic = DynamicShortcutsData(maxDynamicShortcuts = 0, shortcuts = emptyMap()),
-                            pinned = emptyList(),
-                            pinnedError = ShortcutRepositoryError.PinnedNotSupported,
-                        ),
-                    )
+                override suspend fun getServers(): ShortcutResult<ServersData> =
+                    ShortcutResult.Error(ShortcutError.NoServers)
+                override suspend fun loadShortcutsList(): ShortcutResult<ShortcutsListData> = ShortcutResult.Success(
+                    ShortcutsListData(
+                        dynamic = DynamicShortcutsData(maxDynamicShortcuts = 0, shortcuts = emptyMap()),
+                        pinned = emptyList(),
+                        pinnedError = ShortcutError.PinnedNotSupported,
+                    ),
+                )
 
-                override suspend fun loadEditorData(): ShortcutRepositoryResult<ShortcutEditorData> =
-                    ShortcutRepositoryResult.Error(ShortcutRepositoryError.NoServers)
+                override suspend fun loadEditorData(): ShortcutResult<ShortcutEditorData> =
+                    ShortcutResult.Error(ShortcutError.NoServers)
 
-                override suspend fun loadDynamicEditor(index: Int): ShortcutRepositoryResult<DynamicEditorData> =
-                    ShortcutRepositoryResult.Error(ShortcutRepositoryError.InvalidIndex)
+                override suspend fun loadDynamicEditor(index: Int): ShortcutResult<DynamicEditorData> =
+                    ShortcutResult.Error(ShortcutError.InvalidIndex)
 
-                override suspend fun loadDynamicEditorFirstAvailable(): ShortcutRepositoryResult<DynamicEditorData> =
-                    ShortcutRepositoryResult.Error(ShortcutRepositoryError.NoServers)
+                override suspend fun loadDynamicEditorFirstAvailable(): ShortcutResult<DynamicEditorData> =
+                    ShortcutResult.Error(ShortcutError.NoServers)
 
-                override suspend fun loadPinnedEditor(shortcutId: String): ShortcutRepositoryResult<PinnedEditorData> =
-                    ShortcutRepositoryResult.Error(ShortcutRepositoryError.PinnedNotSupported)
+                override suspend fun loadPinnedEditor(shortcutId: String): ShortcutResult<PinnedEditorData> =
+                    ShortcutResult.Error(ShortcutError.PinnedNotSupported)
 
-                override suspend fun loadPinnedEditorForCreate(): ShortcutRepositoryResult<PinnedEditorData> =
-                    ShortcutRepositoryResult.Error(ShortcutRepositoryError.PinnedNotSupported)
+                override suspend fun loadPinnedEditorForCreate(): ShortcutResult<PinnedEditorData> =
+                    ShortcutResult.Error(ShortcutError.PinnedNotSupported)
 
                 override suspend fun upsertDynamicShortcut(
                     index: Int,
                     shortcut: ShortcutDraft,
                     isEditing: Boolean,
-                ): ShortcutRepositoryResult<DynamicEditorData> =
-                    ShortcutRepositoryResult.Error(ShortcutRepositoryError.InvalidIndex)
-                override suspend fun deleteDynamicShortcut(index: Int): ShortcutRepositoryResult<Unit> =
-                    ShortcutRepositoryResult.Error(ShortcutRepositoryError.InvalidIndex)
-                override suspend fun upsertPinnedShortcut(
-                    shortcut: ShortcutDraft,
-                ): ShortcutRepositoryResult<PinResult> =
-                    ShortcutRepositoryResult.Error(ShortcutRepositoryError.PinnedNotSupported)
+                ): ShortcutResult<DynamicEditorData> = ShortcutResult.Error(ShortcutError.InvalidIndex)
+                override suspend fun deleteDynamicShortcut(index: Int): ShortcutResult<Unit> =
+                    ShortcutResult.Error(ShortcutError.InvalidIndex)
+                override suspend fun upsertPinnedShortcut(shortcut: ShortcutDraft): ShortcutResult<PinResult> =
+                    ShortcutResult.Error(ShortcutError.PinnedNotSupported)
 
-                override suspend fun deletePinnedShortcut(shortcutId: String): ShortcutRepositoryResult<Unit> =
-                    ShortcutRepositoryResult.Error(ShortcutRepositoryError.PinnedNotSupported)
+                override suspend fun deletePinnedShortcut(shortcutId: String): ShortcutResult<Unit> =
+                    ShortcutResult.Error(ShortcutError.PinnedNotSupported)
             }
 
             suspend fun activeRepository(): ShortcutsRepository {
@@ -117,43 +113,41 @@ internal abstract class ShortcutsRepositoryModule {
             fun activeRepositoryBlocking(): ShortcutsRepository = runBlocking { activeRepository() }
 
             return object : ShortcutsRepository {
-                override suspend fun getServers(): ShortcutRepositoryResult<ServersData> =
-                    activeRepository().getServers()
+                override suspend fun getServers(): ShortcutResult<ServersData> = activeRepository().getServers()
 
-                override suspend fun loadShortcutsList(): ShortcutRepositoryResult<ShortcutsListData> =
+                override suspend fun loadShortcutsList(): ShortcutResult<ShortcutsListData> =
                     activeRepository().loadShortcutsList()
 
-                override suspend fun loadEditorData(): ShortcutRepositoryResult<ShortcutEditorData> =
+                override suspend fun loadEditorData(): ShortcutResult<ShortcutEditorData> =
                     activeRepository().loadEditorData()
 
-                override suspend fun loadDynamicEditor(index: Int): ShortcutRepositoryResult<DynamicEditorData> =
+                override suspend fun loadDynamicEditor(index: Int): ShortcutResult<DynamicEditorData> =
                     activeRepository().loadDynamicEditor(index)
 
-                override suspend fun loadDynamicEditorFirstAvailable(): ShortcutRepositoryResult<DynamicEditorData> =
+                override suspend fun loadDynamicEditorFirstAvailable(): ShortcutResult<DynamicEditorData> =
                     activeRepository().loadDynamicEditorFirstAvailable()
 
-                override suspend fun loadPinnedEditor(shortcutId: String): ShortcutRepositoryResult<PinnedEditorData> =
+                override suspend fun loadPinnedEditor(shortcutId: String): ShortcutResult<PinnedEditorData> =
                     activeRepository().loadPinnedEditor(shortcutId)
 
-                override suspend fun loadPinnedEditorForCreate(): ShortcutRepositoryResult<PinnedEditorData> =
+                override suspend fun loadPinnedEditorForCreate(): ShortcutResult<PinnedEditorData> =
                     activeRepository().loadPinnedEditorForCreate()
 
                 override suspend fun upsertDynamicShortcut(
                     index: Int,
                     shortcut: ShortcutDraft,
                     isEditing: Boolean,
-                ): ShortcutRepositoryResult<DynamicEditorData> {
+                ): ShortcutResult<DynamicEditorData> {
                     return activeRepository().upsertDynamicShortcut(index, shortcut, isEditing)
                 }
 
-                override suspend fun deleteDynamicShortcut(index: Int): ShortcutRepositoryResult<Unit> =
+                override suspend fun deleteDynamicShortcut(index: Int): ShortcutResult<Unit> =
                     activeRepository().deleteDynamicShortcut(index)
 
-                override suspend fun upsertPinnedShortcut(
-                    shortcut: ShortcutDraft,
-                ): ShortcutRepositoryResult<PinResult> = activeRepository().upsertPinnedShortcut(shortcut)
+                override suspend fun upsertPinnedShortcut(shortcut: ShortcutDraft): ShortcutResult<PinResult> =
+                    activeRepository().upsertPinnedShortcut(shortcut)
 
-                override suspend fun deletePinnedShortcut(shortcutId: String): ShortcutRepositoryResult<Unit> =
+                override suspend fun deletePinnedShortcut(shortcutId: String): ShortcutResult<Unit> =
                     activeRepository().deletePinnedShortcut(shortcutId)
             }
         }

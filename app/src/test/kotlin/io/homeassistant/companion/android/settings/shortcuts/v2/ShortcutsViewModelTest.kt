@@ -5,10 +5,11 @@ import io.homeassistant.companion.android.common.data.shortcuts.ShortcutsReposit
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.DynamicShortcutsData
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ServersData
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutRepositoryError
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutRepositoryResult
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutError
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutResult
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutTargetValue
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutsListData
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.toSummary
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
@@ -41,10 +42,10 @@ class ShortcutsViewModelTest {
 
     @BeforeEach
     fun setup() {
-        coEvery { shortcutsRepository.getServers() } returns ShortcutRepositoryResult.Success(
+        coEvery { shortcutsRepository.getServers() } returns ShortcutResult.Success(
             ServersData(listOf(server), server.id),
         )
-        coEvery { shortcutsRepository.loadShortcutsList() } returns ShortcutRepositoryResult.Success(
+        coEvery { shortcutsRepository.loadShortcutsList() } returns ShortcutResult.Success(
             ShortcutsListData(
                 dynamic = DynamicShortcutsData(
                     maxDynamicShortcuts = 5,
@@ -53,7 +54,7 @@ class ShortcutsViewModelTest {
                         2 to buildDraft(id = "shortcut_3", serverId = server.id),
                     ),
                 ),
-                pinned = listOf(buildDraft(id = "pinned_1", serverId = server.id)),
+                pinned = listOf(buildDraft(id = "pinned_1", serverId = server.id).toSummary()),
             ),
         )
     }
@@ -77,17 +78,17 @@ class ShortcutsViewModelTest {
 
     @Test
     fun `Given no shortcuts and no servers when viewModel initializes then empty state has no servers`() = runTest {
-        coEvery { shortcutsRepository.getServers() } returns ShortcutRepositoryResult.Error(
-            ShortcutRepositoryError.NoServers,
+        coEvery { shortcutsRepository.getServers() } returns ShortcutResult.Error(
+            ShortcutError.NoServers,
         )
-        coEvery { shortcutsRepository.loadShortcutsList() } returns ShortcutRepositoryResult.Success(
+        coEvery { shortcutsRepository.loadShortcutsList() } returns ShortcutResult.Success(
             ShortcutsListData(
                 dynamic = DynamicShortcutsData(
                     maxDynamicShortcuts = 5,
                     shortcuts = emptyMap(),
                 ),
                 pinned = emptyList(),
-                pinnedError = ShortcutRepositoryError.PinnedNotSupported,
+                pinnedError = ShortcutError.PinnedNotSupported,
             ),
         )
 

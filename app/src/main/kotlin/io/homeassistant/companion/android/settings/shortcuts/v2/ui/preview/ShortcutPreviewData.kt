@@ -129,8 +129,8 @@ internal object ShortcutPreviewData {
         }.toImmutableList()
     }
 
-    fun buildDynamicSummaries(count: Int, type: ShortcutType, createdIndex: Int?): ImmutableList<ShortcutSummary> {
-        return buildDynamicDrafts(count = count, type = type).mapIndexed { index, draft ->
+    fun buildDynamicSummaries(count: Int, type: ShortcutType): ImmutableList<ShortcutSummary> {
+        return buildDynamicDrafts(count = count, type = type).map { draft ->
             ShortcutSummary(
                 id = draft.id,
                 serverId = draft.serverId,
@@ -138,14 +138,7 @@ internal object ShortcutPreviewData {
                 label = draft.label,
                 description = draft.description,
                 target = draft.target,
-                isCreated = createdIndex != null && index == createdIndex,
             )
-        }.toImmutableList()
-    }
-
-    fun buildDynamicCreatedFlags(count: Int, createdIndex: Int?): ImmutableList<Boolean> {
-        return List(count) { index ->
-            createdIndex != null && index == createdIndex
         }.toImmutableList()
     }
 
@@ -169,7 +162,6 @@ internal object ShortcutPreviewData {
                 label = "Pinned",
                 description = "Pinned shortcut",
                 target = ShortcutTargetValue.Lovelace("/lovelace/pinned"),
-                isCreated = true,
             ),
         ).toImmutableList()
     }
@@ -179,18 +171,17 @@ internal object ShortcutPreviewData {
         dynamicSummaries: ImmutableList<ShortcutSummary> = buildDynamicSummaries(
             count = 2,
             type = ShortcutType.LOVELACE,
-            createdIndex = 0,
         ),
+        maxDynamicShortcuts: Int = PREVIEW_MAX_DYNAMIC_SHORTCUTS,
         pinnedSummaries: ImmutableList<ShortcutSummary> = buildPinnedSummaries(),
         servers: ImmutableList<Server> = previewServers,
         canPinShortcuts: Boolean = true,
     ): ShortcutsListUiState {
-        val dynamicItems = dynamicSummaries.mapIndexedNotNull { index, summary ->
-            if (summary.isCreated) DynamicShortcutItem(index, summary) else null
+        val dynamicItems = dynamicSummaries.mapIndexed { index, summary ->
+            DynamicShortcutItem(index, summary)
         }.toImmutableList()
         val pinnedItems = if (canPinShortcuts) pinnedSummaries else persistentListOf()
-        val canCreateDynamic = dynamicSummaries.any { !it.isCreated } ||
-            dynamicSummaries.size < PREVIEW_MAX_DYNAMIC_SHORTCUTS
+        val canCreateDynamic = dynamicSummaries.size < maxDynamicShortcuts
 
         if (isLoading) {
             return ShortcutsListUiState.Loading(

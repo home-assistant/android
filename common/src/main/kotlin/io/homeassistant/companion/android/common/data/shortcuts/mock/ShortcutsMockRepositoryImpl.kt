@@ -11,10 +11,11 @@ import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.Se
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ServersData
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutEditorData
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutRepositoryError
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutRepositoryResult
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutError
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutResult
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutsListData
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.empty
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.toSummary
 import javax.inject.Inject
 import timber.log.Timber
 
@@ -25,12 +26,12 @@ internal class ShortcutsMockRepositoryImpl @Inject constructor(private val prefs
 
     private suspend fun currentServerId(): Int = ShortcutsMock.defaultServerId
 
-    override suspend fun getServers(): ShortcutRepositoryResult<ServersData> {
+    override suspend fun getServers(): ShortcutResult<ServersData> {
         val servers = ShortcutsMock.servers
-        if (servers.isEmpty()) return ShortcutRepositoryResult.Error(ShortcutRepositoryError.NoServers)
+        if (servers.isEmpty()) return ShortcutResult.Error(ShortcutError.NoServers)
         val currentId = currentServerId()
         val defaultId = servers.firstOrNull { it.id == currentId }?.id ?: servers.first().id
-        return ShortcutRepositoryResult.Success(ServersData(servers, defaultId))
+        return ShortcutResult.Success(ServersData(servers, defaultId))
     }
 
     private suspend fun loadServerData(serverId: Int): ServerData {
@@ -63,33 +64,33 @@ internal class ShortcutsMockRepositoryImpl @Inject constructor(private val prefs
         )
     }
 
-    override suspend fun loadShortcutsList(): ShortcutRepositoryResult<ShortcutsListData> {
+    override suspend fun loadShortcutsList(): ShortcutResult<ShortcutsListData> {
         val dynamic = loadDynamicShortcuts()
         if (!canPinShortcuts()) {
-            return ShortcutRepositoryResult.Success(
+            return ShortcutResult.Success(
                 ShortcutsListData(
                     dynamic = dynamic,
                     pinned = emptyList(),
-                    pinnedError = ShortcutRepositoryError.PinnedNotSupported,
+                    pinnedError = ShortcutError.PinnedNotSupported,
                 ),
             )
         }
 
-        return ShortcutRepositoryResult.Success(
+        return ShortcutResult.Success(
             ShortcutsListData(
                 dynamic = dynamic,
-                pinned = ShortcutsMock.pinnedShortcuts(),
+                pinned = ShortcutsMock.pinnedShortcuts().map { it.toSummary() },
             ),
         )
     }
 
-    override suspend fun loadEditorData(): ShortcutRepositoryResult<ShortcutEditorData> {
+    override suspend fun loadEditorData(): ShortcutResult<ShortcutEditorData> {
         return when (val serversResult = getServers()) {
-            is ShortcutRepositoryResult.Success -> {
+            is ShortcutResult.Success -> {
                 val dataById = serversResult.data.servers.associate { server ->
                     server.id to loadServerData(server.id)
                 }
-                ShortcutRepositoryResult.Success(
+                ShortcutResult.Success(
                     ShortcutEditorData(
                         servers = serversResult.data.servers,
                         serverDataById = dataById,
@@ -97,17 +98,17 @@ internal class ShortcutsMockRepositoryImpl @Inject constructor(private val prefs
                 )
             }
 
-            is ShortcutRepositoryResult.Error -> ShortcutRepositoryResult.Error(serversResult.error)
+            is ShortcutResult.Error -> ShortcutResult.Error(serversResult.error)
         }
     }
 
-    override suspend fun loadDynamicEditor(index: Int): ShortcutRepositoryResult<DynamicEditorData> {
+    override suspend fun loadDynamicEditor(index: Int): ShortcutResult<DynamicEditorData> {
         if (index !in 0 until maxDynamicShortcuts) {
-            return ShortcutRepositoryResult.Error(ShortcutRepositoryError.InvalidIndex)
+            return ShortcutResult.Error(ShortcutError.InvalidIndex)
         }
         val defaultServerId = when (val servers = getServers()) {
-            is ShortcutRepositoryResult.Success -> servers.data.defaultServerId
-            is ShortcutRepositoryResult.Error -> return ShortcutRepositoryResult.Error(servers.error)
+            is ShortcutResult.Success -> servers.data.defaultServerId
+            is ShortcutResult.Error -> return ShortcutResult.Error(servers.error)
         }
         val shortcuts = loadDynamicShortcuts().shortcuts
         val existingDraft = shortcuts[index]
@@ -117,34 +118,34 @@ internal class ShortcutsMockRepositoryImpl @Inject constructor(private val prefs
         } else {
             DynamicEditorData.Create(index = index, draftSeed = draft)
         }
-        return ShortcutRepositoryResult.Success(data)
+        return ShortcutResult.Success(data)
     }
 
-    override suspend fun loadDynamicEditorFirstAvailable(): ShortcutRepositoryResult<DynamicEditorData> {
+    override suspend fun loadDynamicEditorFirstAvailable(): ShortcutResult<DynamicEditorData> {
         val defaultServerId = when (val servers = getServers()) {
-            is ShortcutRepositoryResult.Success -> servers.data.defaultServerId
-            is ShortcutRepositoryResult.Error -> return ShortcutRepositoryResult.Error(servers.error)
+            is ShortcutResult.Success -> servers.data.defaultServerId
+            is ShortcutResult.Error -> return ShortcutResult.Error(servers.error)
         }
         val shortcuts = loadDynamicShortcuts().shortcuts
         val firstAvailableIndex = (0 until maxDynamicShortcuts).firstOrNull { candidate ->
             !shortcuts.containsKey(candidate)
-        } ?: return ShortcutRepositoryResult.Error(ShortcutRepositoryError.SlotsFull)
+        } ?: return ShortcutResult.Error(ShortcutError.SlotsFull)
         val draft = ShortcutDraft.empty(firstAvailableIndex).copy(serverId = defaultServerId)
-        return ShortcutRepositoryResult.Success(
+        return ShortcutResult.Success(
             DynamicEditorData.Create(index = firstAvailableIndex, draftSeed = draft),
         )
     }
 
-    override suspend fun loadPinnedEditor(shortcutId: String): ShortcutRepositoryResult<PinnedEditorData> {
+    override suspend fun loadPinnedEditor(shortcutId: String): ShortcutResult<PinnedEditorData> {
         if (!canPinShortcuts()) {
-            return ShortcutRepositoryResult.Error(ShortcutRepositoryError.PinnedNotSupported)
+            return ShortcutResult.Error(ShortcutError.PinnedNotSupported)
         }
         if (shortcutId.isBlank()) {
-            return ShortcutRepositoryResult.Error(ShortcutRepositoryError.InvalidInput)
+            return ShortcutResult.Error(ShortcutError.InvalidInput)
         }
         val defaultServerId = when (val servers = getServers()) {
-            is ShortcutRepositoryResult.Success -> servers.data.defaultServerId
-            is ShortcutRepositoryResult.Error -> return ShortcutRepositoryResult.Error(servers.error)
+            is ShortcutResult.Success -> servers.data.defaultServerId
+            is ShortcutResult.Error -> return ShortcutResult.Error(servers.error)
         }
         val pinnedShortcuts = ShortcutsMock.pinnedShortcuts()
         val pinned = pinnedShortcuts.firstOrNull { it.id == shortcutId }
@@ -154,66 +155,66 @@ internal class ShortcutsMockRepositoryImpl @Inject constructor(private val prefs
         } else {
             PinnedEditorData.Create(draftSeed = draft)
         }
-        return ShortcutRepositoryResult.Success(data)
+        return ShortcutResult.Success(data)
     }
 
-    override suspend fun loadPinnedEditorForCreate(): ShortcutRepositoryResult<PinnedEditorData> {
+    override suspend fun loadPinnedEditorForCreate(): ShortcutResult<PinnedEditorData> {
         if (!canPinShortcuts()) {
-            return ShortcutRepositoryResult.Error(ShortcutRepositoryError.PinnedNotSupported)
+            return ShortcutResult.Error(ShortcutError.PinnedNotSupported)
         }
         val defaultServerId = when (val servers = getServers()) {
-            is ShortcutRepositoryResult.Success -> servers.data.defaultServerId
-            is ShortcutRepositoryResult.Error -> return ShortcutRepositoryResult.Error(servers.error)
+            is ShortcutResult.Success -> servers.data.defaultServerId
+            is ShortcutResult.Error -> return ShortcutResult.Error(servers.error)
         }
         val draft = ShortcutDraft.empty("").copy(serverId = defaultServerId)
-        return ShortcutRepositoryResult.Success(PinnedEditorData.Create(draftSeed = draft))
+        return ShortcutResult.Success(PinnedEditorData.Create(draftSeed = draft))
     }
 
     override suspend fun upsertDynamicShortcut(
         index: Int,
         shortcut: ShortcutDraft,
         isEditing: Boolean,
-    ): ShortcutRepositoryResult<DynamicEditorData> {
+    ): ShortcutResult<DynamicEditorData> {
         if (index !in 0 until maxDynamicShortcuts) {
-            return ShortcutRepositoryResult.Error(ShortcutRepositoryError.InvalidIndex)
+            return ShortcutResult.Error(ShortcutError.InvalidIndex)
         }
         val shortcuts = loadDynamicShortcuts().shortcuts
         val exists = shortcuts.containsKey(index)
         if (!isEditing && exists) {
-            return ShortcutRepositoryResult.Error(ShortcutRepositoryError.SlotsFull)
+            return ShortcutResult.Error(ShortcutError.SlotsFull)
         }
         ShortcutsMock.upsertDynamic(index, shortcut)
         val normalized = shortcut.copy(id = MockDynamicShortcutId.build(index))
-        return ShortcutRepositoryResult.Success(DynamicEditorData.Edit(index = index, draftSeed = normalized))
+        return ShortcutResult.Success(DynamicEditorData.Edit(index = index, draftSeed = normalized))
     }
 
-    override suspend fun deleteDynamicShortcut(index: Int): ShortcutRepositoryResult<Unit> {
+    override suspend fun deleteDynamicShortcut(index: Int): ShortcutResult<Unit> {
         if (index !in 0 until maxDynamicShortcuts) {
-            return ShortcutRepositoryResult.Error(ShortcutRepositoryError.InvalidIndex)
+            return ShortcutResult.Error(ShortcutError.InvalidIndex)
         }
         ShortcutsMock.removeDynamic(index)
-        return ShortcutRepositoryResult.Success(Unit)
+        return ShortcutResult.Success(Unit)
     }
 
-    override suspend fun upsertPinnedShortcut(shortcut: ShortcutDraft): ShortcutRepositoryResult<PinResult> {
+    override suspend fun upsertPinnedShortcut(shortcut: ShortcutDraft): ShortcutResult<PinResult> {
         if (!canPinShortcuts()) {
-            return ShortcutRepositoryResult.Error(ShortcutRepositoryError.PinnedNotSupported)
+            return ShortcutResult.Error(ShortcutError.PinnedNotSupported)
         }
         val existed = ShortcutsMock.pinnedShortcuts().any { it.id == shortcut.id && shortcut.id.isNotBlank() }
         ShortcutsMock.upsertPinned(shortcut)
         val result = if (existed) PinResult.Updated else PinResult.Requested
-        return ShortcutRepositoryResult.Success(result)
+        return ShortcutResult.Success(result)
     }
 
-    override suspend fun deletePinnedShortcut(shortcutId: String): ShortcutRepositoryResult<Unit> {
+    override suspend fun deletePinnedShortcut(shortcutId: String): ShortcutResult<Unit> {
         if (!canPinShortcuts()) {
-            return ShortcutRepositoryResult.Error(ShortcutRepositoryError.PinnedNotSupported)
+            return ShortcutResult.Error(ShortcutError.PinnedNotSupported)
         }
         if (shortcutId.isBlank()) {
-            return ShortcutRepositoryResult.Error(ShortcutRepositoryError.InvalidInput)
+            return ShortcutResult.Error(ShortcutError.InvalidInput)
         }
         ShortcutsMock.removePinned(shortcutId)
-        return ShortcutRepositoryResult.Success(Unit)
+        return ShortcutResult.Success(Unit)
     }
 
     private suspend fun canPinShortcuts(): Boolean {

@@ -21,7 +21,7 @@ import androidx.compose.ui.Modifier
 import io.homeassistant.companion.android.common.compose.composable.HALoading
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutRepositoryError
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutError
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutEditorUiState
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.DynamicShortcutEditor
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.EmptyStateContent
@@ -43,7 +43,7 @@ internal fun ShortcutEditorScreen(
         is ShortcutEditorUiState.EditorState.Dynamic -> {
             when {
                 noServers -> EmptyStateContent(hasServers = false)
-                state.screen.error == ShortcutRepositoryError.SlotsFull -> EmptyStateContentSlots()
+                state.screen.error == ShortcutError.SlotsFull -> EmptyStateContentSlots()
                 else -> ShortcutEditorContent(
                     screenState = state.screen,
                     draftSeed = editor.draftSeed,

@@ -8,7 +8,7 @@ import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.Pi
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ServerData
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutEditorData
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutRepositoryResult
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutResult
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutTargetValue
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
@@ -54,37 +54,37 @@ class ShortcutEditViewModelTest {
 
     @BeforeEach
     fun setup() {
-        coEvery { shortcutsRepository.loadEditorData() } returns ShortcutRepositoryResult.Success(
+        coEvery { shortcutsRepository.loadEditorData() } returns ShortcutResult.Success(
             ShortcutEditorData(
                 servers = listOf(server),
                 serverDataById = mapOf(server.id to ServerData()),
             ),
         )
-        coEvery { shortcutsRepository.loadDynamicEditor(0) } returns ShortcutRepositoryResult.Success(
+        coEvery { shortcutsRepository.loadDynamicEditor(0) } returns ShortcutResult.Success(
             DynamicEditorData.Edit(
                 index = 0,
                 draftSeed = buildDraft(id = dynamicShortcutId(0), serverId = server.id),
             ),
         )
-        coEvery { shortcutsRepository.loadPinnedEditor(pinnedDraft.id) } returns ShortcutRepositoryResult.Success(
+        coEvery { shortcutsRepository.loadPinnedEditor(pinnedDraft.id) } returns ShortcutResult.Success(
             PinnedEditorData.Edit(draftSeed = pinnedDraft),
         )
-        coEvery { shortcutsRepository.loadPinnedEditorForCreate() } returns ShortcutRepositoryResult.Success(
+        coEvery { shortcutsRepository.loadPinnedEditorForCreate() } returns ShortcutResult.Success(
             PinnedEditorData.Create(draftSeed = pinnedDraft.copy(id = "")),
         )
-        coEvery { shortcutsRepository.upsertPinnedShortcut(any()) } returns ShortcutRepositoryResult.Success(
+        coEvery { shortcutsRepository.upsertPinnedShortcut(any()) } returns ShortcutResult.Success(
             PinResult.Requested,
         )
         coEvery {
             shortcutsRepository.upsertDynamicShortcut(any(), any(), any())
-        } returns ShortcutRepositoryResult.Success(
+        } returns ShortcutResult.Success(
             DynamicEditorData.Edit(
                 index = 0,
                 draftSeed = buildDraft(id = dynamicShortcutId(0), serverId = server.id),
             ),
         )
-        coEvery { shortcutsRepository.deleteDynamicShortcut(any()) } returns ShortcutRepositoryResult.Success(Unit)
-        coEvery { shortcutsRepository.deletePinnedShortcut(any()) } returns ShortcutRepositoryResult.Success(Unit)
+        coEvery { shortcutsRepository.deleteDynamicShortcut(any()) } returns ShortcutResult.Success(Unit)
+        coEvery { shortcutsRepository.deletePinnedShortcut(any()) } returns ShortcutResult.Success(Unit)
     }
 
     @Test

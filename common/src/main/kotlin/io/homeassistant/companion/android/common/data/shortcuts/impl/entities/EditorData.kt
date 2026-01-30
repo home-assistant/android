@@ -8,3 +8,11 @@ sealed interface DynamicEditorData {
 
     data class Edit(override val index: Int, override val draftSeed: ShortcutDraft) : DynamicEditorData
 }
+
+sealed interface PinnedEditorData {
+    val draftSeed: ShortcutDraft
+
+    data class Create(override val draftSeed: ShortcutDraft) : PinnedEditorData
+
+    data class Edit(override val draftSeed: ShortcutDraft) : PinnedEditorData
+}

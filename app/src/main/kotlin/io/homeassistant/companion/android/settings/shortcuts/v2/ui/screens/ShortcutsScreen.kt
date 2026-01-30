@@ -336,12 +336,9 @@ private fun ShortcutTypeOptionRow(
 @Composable
 private fun ShortcutsScreenPreview() {
     val dynamicSummaries = ShortcutPreviewData.buildDynamicSummaries(
-        count = 6,
+        count = 4,
         type = ShortcutType.LOVELACE,
-        createdIndex = null,
-    ).mapIndexed { index, summary ->
-        summary.copy(isCreated = index < 4)
-    }.toImmutableList()
+    ).toImmutableList()
     val basePinned = ShortcutPreviewData.buildPinnedSummaries().first()
     val pinnedSummaries = listOf(
         basePinned,
@@ -363,6 +360,7 @@ private fun ShortcutsScreenPreview() {
             state = ShortcutPreviewData.buildListState(
                 dynamicSummaries = dynamicSummaries,
                 pinnedSummaries = pinnedSummaries,
+                maxDynamicShortcuts = 6,
             ),
             dispatch = {},
         )

@@ -11,6 +11,11 @@ sealed interface ShortcutTargetValue {
     data class Entity(val entityId: String) : ShortcutTargetValue
 }
 
+enum class ShortcutType {
+    LOVELACE,
+    ENTITY_ID,
+}
+
 fun ShortcutTargetValue.toShortcutType(): ShortcutType {
     return when (this) {
         is ShortcutTargetValue.Lovelace -> ShortcutType.LOVELACE

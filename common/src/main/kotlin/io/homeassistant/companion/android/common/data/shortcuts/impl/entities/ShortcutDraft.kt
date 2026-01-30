@@ -47,7 +47,7 @@ private fun dynamicDraftSeedId(index: Int): String {
     return "${DYNAMIC_DRAFT_SEED_PREFIX}_${index + 1}"
 }
 
-fun ShortcutDraft.toSummary(isCreated: Boolean): ShortcutSummary {
+fun ShortcutDraft.toSummary(): ShortcutSummary {
     return ShortcutSummary(
         id = id,
         serverId = serverId,
@@ -55,6 +55,5 @@ fun ShortcutDraft.toSummary(isCreated: Boolean): ShortcutSummary {
         label = label,
         description = description,
         target = target,
-        isCreated = isCreated,
     )
 }

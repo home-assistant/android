@@ -12,7 +12,6 @@ import com.mikepenz.iconics.typeface.IIcon
  * @param label The short label for the shortcut
  * @param description The long description for the shortcut
  * @param target The target value for the shortcut
- * @param isCreated Whether this shortcut has been created/added to the Android system
  */
 @Immutable
 data class ShortcutSummary(
@@ -22,5 +21,4 @@ data class ShortcutSummary(
     val label: String,
     val description: String,
     val target: ShortcutTargetValue,
-    val isCreated: Boolean,
 )
