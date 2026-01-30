@@ -23,7 +23,8 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.util.vehicle.isVehicleDomain
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -65,15 +66,17 @@ class ManageAndroidAutoViewModel @Inject constructor(
             servers = serverManager.servers()
             defaultServerId = serverManager.getServer()?.id ?: 0
             favoritesList.addAll(prefsRepository.getAutoFavorites())
-            coroutineScope {
-                servers.forEach { server ->
-                    val serverId = server.id
-                    launch { entities[serverId] = loadEntitiesForServer(serverId) }
-                    launch { entityRegistries[serverId] = loadEntityRegistry(serverId) }
-                    launch { deviceRegistries[serverId] = loadDeviceRegistry(serverId) }
-                    launch { areaRegistries[serverId] = loadAreaRegistry(serverId) }
+            servers.map { server ->
+                val serverId = server.id
+                async {
+                    listOf(
+                        async { entities[serverId] = loadEntitiesForServer(serverId) },
+                        async { entityRegistries[serverId] = loadEntityRegistry(serverId) },
+                        async { deviceRegistries[serverId] = loadDeviceRegistry(serverId) },
+                        async { areaRegistries[serverId] = loadAreaRegistry(serverId) }
+                    ).awaitAll()
                 }
-            }
+            }.awaitAll()
             loadEntities(serverManager.getServer()?.id ?: 0)
             isLoading = false
         }
