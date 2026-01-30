@@ -8,6 +8,7 @@ import kotlin.math.abs
 enum class GestureAction(@StringRes val description: Int, val category: GestureActionCategory) {
     NONE(R.string.none, GestureActionCategory.NONE),
     QUICKBAR_DEFAULT(R.string.gestures_action_quickbar_default, GestureActionCategory.FRONTEND),
+    QUICKBAR_ENTITIES(R.string.gestures_action_quickbar_entities, GestureActionCategory.FRONTEND),
     QUICKBAR_DEVICES(R.string.gestures_action_quickbar_devices, GestureActionCategory.FRONTEND),
     QUICKBAR_COMMANDS(R.string.gestures_action_quickbar_commands, GestureActionCategory.FRONTEND),
     SHOW_SIDEBAR(R.string.gestures_action_show_sidebar, GestureActionCategory.FRONTEND),

@@ -98,6 +98,7 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
 
                     "implementation"(libs.reorderable)
                     "implementation"(libs.changeLog)
+                    "implementation"(libs.aboutlibraries.compose.m3)
 
                     "implementation"(libs.zxing)
                     "implementation"(libs.improv)
