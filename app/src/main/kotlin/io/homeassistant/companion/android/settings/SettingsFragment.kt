@@ -40,6 +40,7 @@ import io.homeassistant.companion.android.settings.controls.ManageControlsSettin
 import io.homeassistant.companion.android.settings.developer.DeveloperSettingsFragment
 import io.homeassistant.companion.android.settings.gestures.GesturesFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
+import io.homeassistant.companion.android.settings.license.LicensesFragment
 import io.homeassistant.companion.android.settings.notification.NotificationChannelFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
@@ -358,6 +359,14 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
         findPreference<Preference>("version")?.let {
             it.isCopyingEnabled = true
             it.summary = BuildConfig.VERSION_NAME
+        }
+
+        findPreference<Preference>("licenses")?.setOnPreferenceClickListener {
+            parentFragmentManager.commit {
+                replace(R.id.content, LicensesFragment::class.java, null)
+                addToBackStack(getString(commonR.string.licenses))
+            }
+            return@setOnPreferenceClickListener true
         }
 
         findPreference<ListPreference>("languages")?.let {

@@ -42,6 +42,7 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.compose.rememberLocationPermission
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 private val MaxContentWidth = MaxButtonWidth
@@ -72,6 +73,7 @@ fun LocationForSecureConnectionScreen(
     isStandaloneScreen: Boolean = false,
 ) {
     val initialAllowInsecureConnection by viewModel.allowInsecureConnection.collectAsState(null)
+    val coroutineScope = rememberCoroutineScope()
 
     LocationForSecureConnectionScreen(
         initialAllowInsecureConnection = initialAllowInsecureConnection,
@@ -79,8 +81,10 @@ fun LocationForSecureConnectionScreen(
         onCloseClick = onCloseClick,
         isStandaloneScreen = isStandaloneScreen,
         onAllowInsecureConnection = { allowInsecureConnection ->
-            viewModel.allowInsecureConnection(allowInsecureConnection)
-            onGoToNextScreen(allowInsecureConnection)
+            coroutineScope.launch {
+                viewModel.allowInsecureConnection(allowInsecureConnection)
+                onGoToNextScreen(allowInsecureConnection)
+            }
         },
         onHelpClick = onHelpClick,
         onShowSnackbar = onShowSnackbar,

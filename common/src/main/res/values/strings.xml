@@ -520,6 +520,8 @@
     <string name="ok">OK</string>
     <string name="open_with_headphone_button">Open with headset button</string>
     <string name="open_with_headphone_button_summary">Use Assist with the assistant/voice command button on supported headphones and earbuds</string>
+    <string name="licenses">Licenses</string>
+    <string name="licenses_summary">View licenses for third-party libraries</string>
     <string name="other_settings">Other settings</string>
     <string name="other">Other</string>
     <string name="password">Password</string>
