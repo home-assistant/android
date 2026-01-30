@@ -70,8 +70,6 @@ class SettingsPresenterImpl @Inject constructor(
             "autoplay_video" -> prefsRepository.isAutoPlayVideoEnabled()
             "always_show_first_view_on_app_start" -> prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled()
             "change_log_popup_enabled" -> prefsRepository.isChangeLogPopupEnabled()
-            "shortcuts_v2_mock_enabled" -> prefsRepository.isShortcutsV2MockEnabled()
-            "shortcuts_v2_mock_pin_support_enabled" -> prefsRepository.isShortcutsV2MockPinSupportEnabled()
             "assist_voice_command_intent" -> {
                 val componentSetting = view.getPackageManager()?.getComponentEnabledSetting(voiceCommandAppComponent)
                 componentSetting != null && componentSetting != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
@@ -95,9 +93,6 @@ class SettingsPresenterImpl @Inject constructor(
                 "autoplay_video" -> prefsRepository.setAutoPlayVideo(value)
                 "always_show_first_view_on_app_start" -> prefsRepository.setAlwaysShowFirstViewOnAppStart(value)
                 "change_log_popup_enabled" -> prefsRepository.setChangeLogPopupEnabled(value)
-                "shortcuts_v2_mock_enabled" -> prefsRepository.setShortcutsV2MockEnabled(value)
-                "shortcuts_v2_mock_pin_support_enabled" ->
-                    prefsRepository.setShortcutsV2MockPinSupportEnabled(value)
                 "assist_voice_command_intent" ->
                     view.getPackageManager()?.setComponentEnabledSetting(
                         voiceCommandAppComponent,

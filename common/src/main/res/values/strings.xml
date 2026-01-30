@@ -1451,9 +1451,4 @@
     <string name="entity_picker_no_entity_found">No entity found</string>
     <string name="entity_picker_no_entity_found_for">No entity found for %s</string>
     <string name="fail_to_navigate_to_uri">No app available to open %s</string>
-    <!-- TODO: Remove shortcut mock strings before merging. -->
-    <string name="shortcuts_v2_mock_title">Use mock data for shortcuts (V2)</string>
-    <string name="shortcuts_v2_mock_summary">Show sample servers, entities, and shortcuts in the V2 screen</string>
-    <string name="shortcuts_v2_mock_pin_support_title">Enable pinned shortcuts for mock data</string>
-    <string name="shortcuts_v2_mock_pin_support_summary">Show pinned shortcuts and pin actions in the V2 mock screen</string>
 </resources>

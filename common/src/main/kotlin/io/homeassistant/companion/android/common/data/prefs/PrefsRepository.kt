@@ -126,14 +126,6 @@ interface PrefsRepository {
 
     suspend fun setChangeLogPopupEnabled(enabled: Boolean)
 
-    suspend fun isShortcutsV2MockEnabled(): Boolean
-
-    suspend fun setShortcutsV2MockEnabled(enabled: Boolean)
-
-    suspend fun isShortcutsV2MockPinSupportEnabled(): Boolean
-
-    suspend fun setShortcutsV2MockPinSupportEnabled(enabled: Boolean)
-
     /** Clean up any app-level preferences that might reference servers */
     suspend fun removeServer(serverId: Int)
 
