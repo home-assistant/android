@@ -73,7 +73,7 @@ class ManageAndroidAutoViewModel @Inject constructor(
                         async { entities[serverId] = loadEntitiesForServer(serverId) },
                         async { entityRegistries[serverId] = loadEntityRegistry(serverId) },
                         async { deviceRegistries[serverId] = loadDeviceRegistry(serverId) },
-                        async { areaRegistries[serverId] = loadAreaRegistry(serverId) }
+                        async { areaRegistries[serverId] = loadAreaRegistry(serverId) },
                     ).awaitAll()
                 }
             }.awaitAll()
