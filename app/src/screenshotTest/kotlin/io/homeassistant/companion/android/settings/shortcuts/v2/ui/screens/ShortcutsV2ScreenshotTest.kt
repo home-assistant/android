@@ -21,6 +21,7 @@ class ShortcutsV2ScreenshotTest {
             ShortcutsListScreen(
                 state = ShortcutPreviewData.buildListState(isLoading = true),
                 dispatch = { _: ShortcutsListAction -> },
+                onRetry = {},
             )
         }
     }
@@ -37,6 +38,20 @@ class ShortcutsV2ScreenshotTest {
                     servers = persistentListOf(),
                 ),
                 dispatch = { _: ShortcutsListAction -> },
+                onRetry = {},
+            )
+        }
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `ShortcutsList error`() {
+        HAThemeForPreview {
+            ShortcutsListScreen(
+                state = ShortcutPreviewData.buildListState(isError = true),
+                dispatch = { _: ShortcutsListAction -> },
+                onRetry = {},
             )
         }
     }
@@ -64,6 +79,7 @@ class ShortcutsV2ScreenshotTest {
                     pinnedSummaries = pinnedSummaries,
                 ),
                 dispatch = { _: ShortcutsListAction -> },
+                onRetry = {},
             )
         }
     }
@@ -83,6 +99,7 @@ class ShortcutsV2ScreenshotTest {
                     pinnedSummaries = persistentListOf(),
                 ),
                 dispatch = { _: ShortcutsListAction -> },
+                onRetry = {},
             )
         }
     }
@@ -98,6 +115,7 @@ class ShortcutsV2ScreenshotTest {
                     pinnedSummaries = ShortcutPreviewData.buildPinnedSummaries(),
                 ),
                 dispatch = { _: ShortcutsListAction -> },
+                onRetry = {},
             )
         }
     }
