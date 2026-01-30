@@ -63,11 +63,6 @@ internal fun PinnedShortcutEditor(
             )
         }
 
-        Text(
-            text = stringResource(R.string.shortcut_pinned_note),
-            style = HATextStyle.Body,
-        )
-
         ShortcutEditorForm(
             draft = draft,
             labelText = stringResource(R.string.shortcut_pinned_label),
