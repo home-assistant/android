@@ -21,6 +21,7 @@ import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.testing.TestNavHostController
 import androidx.navigation.toRoute
 import androidx.savedstate.SavedState
+import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -34,6 +35,7 @@ import io.homeassistant.companion.android.onboarding.OnboardingRoute
 import io.homeassistant.companion.android.onboarding.WearOnboardApp
 import io.homeassistant.companion.android.onboarding.WearOnboardingRoute
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
+import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModel
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.navigateToLocationForSecureConnection
 import io.homeassistant.companion.android.onboarding.nameyourweardevice.navigation.navigateToNameYourWearDevice
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryRoute
@@ -41,7 +43,9 @@ import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeR
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.compose.webview.HA_WEBVIEW_TAG
+import io.mockk.coJustRun
 import io.mockk.every
+import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.spyk
 import io.mockk.verify
@@ -68,6 +72,18 @@ class HAAppTest {
 
     @get:Rule(order = 2)
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
+
+    // Mock the ViewModel to prevent the real allowInsecureConnection() from executing.
+    // Without this, the suspend function switches to Dispatchers.IO and the coroutine resumes
+    // on a non-main thread, causing navigation to fail with "Method setCurrentState must be
+    // called on the main thread" because LifecycleRegistry requires main thread access.
+    // This occurs due to the interaction between Robolectric, Compose testing, and coroutines,
+    // where dispatcher context is not properly preserved across suspend function boundaries.
+    @BindValue
+    @JvmField
+    val locationForSecureConnectionViewModel = spyk(LocationForSecureConnectionViewModel(0, mockk())).apply {
+        coJustRun { this@apply.allowInsecureConnection(any()) }
+    }
 
     private lateinit var navController: TestNavHostController
 
