@@ -23,7 +23,7 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutTargetValue
-import io.homeassistant.companion.android.settings.shortcuts.v2.DynamicShortcutEditorUiState
+import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutEditorUiState
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.preview.ShortcutPreviewData
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.ShortcutEditorScreenState
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.selector.ShortcutIconPicker
@@ -32,15 +32,16 @@ import io.homeassistant.companion.android.settings.shortcuts.v2.ui.selector.Shor
 @Composable
 internal fun DynamicShortcutEditor(
     draft: ShortcutDraft,
-    state: DynamicShortcutEditorUiState,
+    state: ShortcutEditorUiState.EditorState.Dynamic,
+    screen: ShortcutEditorScreenState,
     onDraftChange: (ShortcutDraft) -> Unit,
     onIconClick: () -> Unit,
     onSubmit: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    val canSubmit by remember(draft, state.screen.servers) {
+    val canSubmit by remember(draft, screen.servers) {
         derivedStateOf {
-            canSubmit(draft = draft, screen = state.screen, requireId = false)
+            canSubmit(draft = draft, screen = screen, requireId = false)
         }
     }
     Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4)) {
@@ -67,7 +68,7 @@ internal fun DynamicShortcutEditor(
             draft = draft,
             labelText = stringResource(R.string.shortcut_label_n, state.selectedIndex + 1),
             descriptionText = stringResource(R.string.shortcut_description_n, state.selectedIndex + 1),
-            screen = state.screen,
+            screen = screen,
             onDraftChange = onDraftChange,
             isCreated = state.isCreated,
             canSubmit = canSubmit,
@@ -96,7 +97,8 @@ private fun DynamicShortcutEditorPreview() {
     HAThemeForPreview {
         DynamicShortcutEditor(
             draft = ShortcutPreviewData.buildDraft(),
-            state = ShortcutPreviewData.buildDynamicState(),
+            state = ShortcutPreviewData.buildDynamicEditorState(),
+            screen = ShortcutPreviewData.buildScreenState(),
             onDraftChange = {},
             onIconClick = {},
             onSubmit = {},

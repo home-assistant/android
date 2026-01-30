@@ -19,12 +19,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.PinResult
-import io.homeassistant.companion.android.settings.shortcuts.v2.DynamicShortcutEditViewModel
-import io.homeassistant.companion.android.settings.shortcuts.v2.PinnedShortcutEditViewModel
+import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutEditViewModel
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListAction
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsViewModel
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.DynamicShortcutEditorScreen
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.PinnedShortcutEditorScreen
+import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.ShortcutEditorScreen
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.ShortcutsScreen
 import kotlinx.serialization.Serializable
 
@@ -143,14 +141,14 @@ private fun ShortcutsListRouteScreen(
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
-private fun CreateDynamicRouteScreen(viewModel: DynamicShortcutEditViewModel = hiltViewModel()) {
+private fun CreateDynamicRouteScreen(viewModel: ShortcutEditViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        viewModel.selectFirstAvailable()
+        viewModel.createDynamicFirstAvailable()
     }
 
-    DynamicShortcutEditorScreen(
+    ShortcutEditorScreen(
         state = uiState,
         dispatch = viewModel::dispatch,
     )
@@ -159,7 +157,7 @@ private fun CreateDynamicRouteScreen(viewModel: DynamicShortcutEditViewModel = h
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
 private fun CreatePinnedRouteScreen(
-    viewModel: PinnedShortcutEditViewModel = hiltViewModel(),
+    viewModel: ShortcutEditViewModel = hiltViewModel(),
     onShowSnackbar: suspend (message: String) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -168,7 +166,7 @@ private fun CreatePinnedRouteScreen(
     val shortcutPinNotSupportedMessage = stringResource(R.string.shortcut_pin_not_supported)
 
     LaunchedEffect(Unit) {
-        viewModel.newPinned()
+        viewModel.openCreatePinned()
     }
 
     LaunchedEffect(viewModel) {
@@ -181,7 +179,7 @@ private fun CreatePinnedRouteScreen(
         }
     }
 
-    PinnedShortcutEditorScreen(
+    ShortcutEditorScreen(
         state = uiState,
         dispatch = viewModel::dispatch,
     )
@@ -191,13 +189,13 @@ private fun CreatePinnedRouteScreen(
 @Composable
 private fun EditDynamicRouteScreen(
     route: EditDynamicRoute,
-    viewModel: DynamicShortcutEditViewModel = hiltViewModel(),
+    viewModel: ShortcutEditViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(route.index) {
-        viewModel.selectIndex(route.index)
+        viewModel.openDynamic(route.index)
     }
 
     LaunchedEffect(viewModel) {
@@ -206,7 +204,7 @@ private fun EditDynamicRouteScreen(
         }
     }
 
-    DynamicShortcutEditorScreen(
+    ShortcutEditorScreen(
         state = uiState,
         dispatch = viewModel::dispatch,
     )
@@ -217,7 +215,7 @@ private fun EditDynamicRouteScreen(
 private fun EditPinnedRouteScreen(
     route: EditPinnedRoute,
     onNavigateBack: () -> Unit,
-    viewModel: PinnedShortcutEditViewModel = hiltViewModel(),
+    viewModel: ShortcutEditViewModel = hiltViewModel(),
     onShowSnackbar: suspend (message: String) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -245,7 +243,7 @@ private fun EditPinnedRouteScreen(
         }
     }
 
-    PinnedShortcutEditorScreen(
+    ShortcutEditorScreen(
         state = uiState,
         dispatch = viewModel::dispatch,
     )

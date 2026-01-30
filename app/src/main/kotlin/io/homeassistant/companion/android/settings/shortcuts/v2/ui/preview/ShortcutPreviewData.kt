@@ -12,9 +12,8 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
-import io.homeassistant.companion.android.settings.shortcuts.v2.DynamicShortcutEditorUiState
 import io.homeassistant.companion.android.settings.shortcuts.v2.DynamicShortcutItem
-import io.homeassistant.companion.android.settings.shortcuts.v2.PinnedShortcutEditorUiState
+import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutEditorUiState
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListUiState
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.ShortcutEditorScreenState
 import java.time.LocalDateTime
@@ -38,51 +37,23 @@ internal object ShortcutPreviewData {
         return "${PREVIEW_DYNAMIC_DRAFT_PREFIX}_${index + 1}"
     }
 
-    fun buildDynamicState(
-        isLoading: Boolean = false,
+    fun buildDynamicEditorState(
         selectedIndex: Int = 0,
         draftSeed: ShortcutDraft = buildDraft(id = dynamicDraftSeedId(selectedIndex)),
         isCreated: Boolean = true,
-        servers: ImmutableList<Server> = previewServers,
-        entities: ImmutableMap<Int, ImmutableList<Entity>> = persistentMapOf(),
-        entityRegistry: ImmutableMap<Int, ImmutableList<EntityRegistryResponse>> = persistentMapOf(),
-        deviceRegistry: ImmutableMap<Int, ImmutableList<DeviceRegistryResponse>> = persistentMapOf(),
-        areaRegistry: ImmutableMap<Int, ImmutableList<AreaRegistryResponse>> = persistentMapOf(),
-    ): DynamicShortcutEditorUiState {
-        return DynamicShortcutEditorUiState(
-            screen = buildScreenState(
-                isLoading = isLoading,
-                servers = servers,
-                entities = entities,
-                entityRegistry = entityRegistry,
-                deviceRegistry = deviceRegistry,
-                areaRegistry = areaRegistry,
-            ),
+    ): ShortcutEditorUiState.EditorState.Dynamic {
+        return ShortcutEditorUiState.EditorState.Dynamic(
             selectedIndex = selectedIndex,
             draftSeed = draftSeed,
             isCreated = isCreated,
         )
     }
 
-    fun buildPinnedState(
-        isLoading: Boolean = false,
+    fun buildPinnedEditorState(
         pinnedIds: ImmutableList<String> = buildPinnedIds(),
         pinnedDraft: ShortcutDraft = buildPinnedDraft(),
-        servers: ImmutableList<Server> = previewServers,
-        entities: ImmutableMap<Int, ImmutableList<Entity>> = persistentMapOf(),
-        entityRegistry: ImmutableMap<Int, ImmutableList<EntityRegistryResponse>> = persistentMapOf(),
-        deviceRegistry: ImmutableMap<Int, ImmutableList<DeviceRegistryResponse>> = persistentMapOf(),
-        areaRegistry: ImmutableMap<Int, ImmutableList<AreaRegistryResponse>> = persistentMapOf(),
-    ): PinnedShortcutEditorUiState {
-        return PinnedShortcutEditorUiState(
-            screen = buildScreenState(
-                isLoading = isLoading,
-                servers = servers,
-                entities = entities,
-                entityRegistry = entityRegistry,
-                deviceRegistry = deviceRegistry,
-                areaRegistry = areaRegistry,
-            ),
+    ): ShortcutEditorUiState.EditorState.Pinned {
+        return ShortcutEditorUiState.EditorState.Pinned(
             draftSeed = pinnedDraft,
             pinnedIds = pinnedIds,
         )

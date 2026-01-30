@@ -23,23 +23,25 @@ import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
-import io.homeassistant.companion.android.settings.shortcuts.v2.PinnedShortcutEditorUiState
+import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutEditorUiState
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.preview.ShortcutPreviewData
+import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.ShortcutEditorScreenState
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.selector.ShortcutIconPicker
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
 internal fun PinnedShortcutEditor(
     draft: ShortcutDraft,
-    state: PinnedShortcutEditorUiState,
+    state: ShortcutEditorUiState.EditorState.Pinned,
+    screen: ShortcutEditorScreenState,
     onDraftChange: (ShortcutDraft) -> Unit,
     onIconClick: () -> Unit,
     onSubmit: () -> Unit,
     onDelete: () -> Unit,
 ) {
     val isCreated = draft.id in state.pinnedIds
-    val canSubmit by remember(draft, state.screen.servers) {
+    val canSubmit by remember(draft, screen.servers) {
         derivedStateOf {
-            canSubmit(draft = draft, screen = state.screen, requireId = true)
+            canSubmit(draft = draft, screen = screen, requireId = true)
         }
     }
     Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4)) {
@@ -80,7 +82,7 @@ internal fun PinnedShortcutEditor(
             draft = draft,
             labelText = stringResource(R.string.shortcut_pinned_label),
             descriptionText = stringResource(R.string.shortcut_pinned_desc),
-            screen = state.screen,
+            screen = screen,
             onDraftChange = onDraftChange,
             isCreated = isCreated,
             canSubmit = canSubmit,
@@ -97,7 +99,8 @@ private fun PinnedShortcutEditorPreview() {
     HAThemeForPreview {
         PinnedShortcutEditor(
             draft = ShortcutPreviewData.buildPinnedDraft(),
-            state = ShortcutPreviewData.buildPinnedState(),
+            state = ShortcutPreviewData.buildPinnedEditorState(),
+            screen = ShortcutPreviewData.buildScreenState(),
             onDraftChange = {},
             onIconClick = {},
             onSubmit = {},

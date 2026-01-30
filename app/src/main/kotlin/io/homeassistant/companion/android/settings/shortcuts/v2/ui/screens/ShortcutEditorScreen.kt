@@ -27,8 +27,7 @@ import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
-import io.homeassistant.companion.android.settings.shortcuts.v2.DynamicShortcutEditorUiState
-import io.homeassistant.companion.android.settings.shortcuts.v2.PinnedShortcutEditorUiState
+import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutEditorUiState
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.DynamicShortcutEditor
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.PinnedShortcutEditor
 import io.homeassistant.companion.android.util.icondialog.IconDialog
@@ -37,49 +36,49 @@ import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
-internal fun DynamicShortcutEditorScreen(
-    state: DynamicShortcutEditorUiState,
+internal fun ShortcutEditorScreen(
+    state: ShortcutEditorUiState,
     dispatch: (ShortcutEditAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    ShortcutEditorContent(
-        screenState = state.screen,
-        draftSeed = state.draftSeed,
-        dispatch = dispatch,
-        modifier = modifier,
-    ) { draft, onDraftChange, onIconClick, onSubmit, onDelete ->
-        DynamicShortcutEditor(
-            draft = draft,
-            state = state,
-            onDraftChange = onDraftChange,
-            onIconClick = onIconClick,
-            onSubmit = onSubmit,
-            onDelete = onDelete,
-        )
-    }
-}
+    when (val editor = state.editor) {
+        is ShortcutEditorUiState.EditorState.Dynamic -> {
+            ShortcutEditorContent(
+                screenState = state.screen,
+                draftSeed = editor.draftSeed,
+                dispatch = dispatch,
+                modifier = modifier,
+            ) { draft, onDraftChange, onIconClick, onSubmit, onDelete ->
+                DynamicShortcutEditor(
+                    draft = draft,
+                    state = editor,
+                    screen = state.screen,
+                    onDraftChange = onDraftChange,
+                    onIconClick = onIconClick,
+                    onSubmit = onSubmit,
+                    onDelete = onDelete,
+                )
+            }
+        }
 
-@RequiresApi(Build.VERSION_CODES.N_MR1)
-@Composable
-internal fun PinnedShortcutEditorScreen(
-    state: PinnedShortcutEditorUiState,
-    dispatch: (ShortcutEditAction) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    ShortcutEditorContent(
-        screenState = state.screen,
-        draftSeed = state.draftSeed,
-        dispatch = dispatch,
-        modifier = modifier,
-    ) { draft, onDraftChange, onIconClick, onSubmit, onDelete ->
-        PinnedShortcutEditor(
-            draft = draft,
-            state = state,
-            onDraftChange = onDraftChange,
-            onIconClick = onIconClick,
-            onSubmit = onSubmit,
-            onDelete = onDelete,
-        )
+        is ShortcutEditorUiState.EditorState.Pinned -> {
+            ShortcutEditorContent(
+                screenState = state.screen,
+                draftSeed = editor.draftSeed,
+                dispatch = dispatch,
+                modifier = modifier,
+            ) { draft, onDraftChange, onIconClick, onSubmit, onDelete ->
+                PinnedShortcutEditor(
+                    draft = draft,
+                    state = editor,
+                    screen = state.screen,
+                    onDraftChange = onDraftChange,
+                    onIconClick = onIconClick,
+                    onSubmit = onSubmit,
+                    onDelete = onDelete,
+                )
+            }
+        }
     }
 }
 
