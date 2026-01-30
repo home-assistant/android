@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings.shortcuts.v2
 
 import app.cash.turbine.turbineScope
 import io.homeassistant.companion.android.common.data.shortcuts.ShortcutsRepository
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ServersResult
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutTargetValue
 import io.homeassistant.companion.android.database.server.Server
@@ -39,7 +40,7 @@ class ShortcutsViewModelTest {
     fun setup() {
         every { shortcutsRepository.canPinShortcuts } returns true
         every { shortcutsRepository.maxDynamicShortcuts } returns 5
-        coEvery { shortcutsRepository.getServers() } returns listOf(server)
+        coEvery { shortcutsRepository.getServers() } returns ServersResult.Success(listOf(server), server.id)
         coEvery { shortcutsRepository.loadDynamicShortcuts() } returns mapOf(
             0 to buildDraft(id = "shortcut_1", serverId = server.id),
             2 to buildDraft(id = "shortcut_3", serverId = server.id),
@@ -68,7 +69,7 @@ class ShortcutsViewModelTest {
 
     @Test
     fun `Given no shortcuts and no servers when viewModel initializes then empty state has no servers`() = runTest {
-        coEvery { shortcutsRepository.getServers() } returns emptyList()
+        coEvery { shortcutsRepository.getServers() } returns ServersResult.NoServers
         coEvery { shortcutsRepository.loadDynamicShortcuts() } returns emptyMap()
         coEvery { shortcutsRepository.loadPinnedShortcuts() } returns emptyList()
 
