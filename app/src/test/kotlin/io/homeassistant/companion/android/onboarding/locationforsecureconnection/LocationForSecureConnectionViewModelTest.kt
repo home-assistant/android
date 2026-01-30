@@ -13,7 +13,6 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -59,7 +58,6 @@ class LocationForSecureConnectionViewModelTest {
         coEvery { serverManager.getServer(serverId) } returns server
 
         viewModel.allowInsecureConnection(allow)
-        runCurrent()
 
         val serverSlot = slot<Server>()
         coVerify {
@@ -76,7 +74,6 @@ class LocationForSecureConnectionViewModelTest {
         coEvery { serverManager.getServer(serverId) } throws exception
 
         viewModel.allowInsecureConnection(allow)
-        runCurrent()
 
         coVerify {
             serverManager.getServer(serverId)
