@@ -361,3 +361,16 @@ private fun ShortcutsListScreenEmptyPreview() {
         )
     }
 }
+
+@RequiresApi(Build.VERSION_CODES.N_MR1)
+@Preview(name = "Manage Shortcuts Error")
+@Composable
+private fun ShortcutsListScreenErrorPreview() {
+    HAThemeForPreview {
+        ShortcutsListScreen(
+            state = ShortcutPreviewData.buildListState(isError = true),
+            dispatch = {},
+            onRetry = {},
+        )
+    }
+}
