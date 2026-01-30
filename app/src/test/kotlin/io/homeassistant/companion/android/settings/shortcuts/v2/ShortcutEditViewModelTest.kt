@@ -2,10 +2,13 @@ package io.homeassistant.companion.android.settings.shortcuts.v2
 
 import app.cash.turbine.turbineScope
 import io.homeassistant.companion.android.common.data.shortcuts.ShortcutsRepository
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.DynamicEditorData
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.PinResult
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.PinnedEditorData
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ServerData
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ServersResult
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutEditorData
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutRepositoryResult
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutTargetValue
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
@@ -15,16 +18,13 @@ import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.Short
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
-import io.mockk.coJustRun
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -54,18 +54,37 @@ class ShortcutEditViewModelTest {
 
     @BeforeEach
     fun setup() {
-        every { shortcutsRepository.canPinShortcuts } returns true
-        every { shortcutsRepository.maxDynamicShortcuts } returns 5
-        coEvery { shortcutsRepository.getServers() } returns ServersResult.Success(listOf(server), server.id)
-        coEvery { shortcutsRepository.loadServerData(server.id) } returns ServerData()
-        coEvery { shortcutsRepository.loadDynamicShortcuts() } returns mapOf(
-            0 to buildDraft(id = dynamicShortcutId(0), serverId = server.id),
+        coEvery { shortcutsRepository.loadEditorData() } returns ShortcutRepositoryResult.Success(
+            ShortcutEditorData(
+                servers = listOf(server),
+                serverDataById = mapOf(server.id to ServerData()),
+            ),
         )
-        coEvery { shortcutsRepository.loadPinnedShortcuts() } returns listOf(pinnedDraft)
-        coEvery { shortcutsRepository.upsertPinnedShortcut(any()) } returns PinResult.Requested
-        coJustRun { shortcutsRepository.upsertDynamicShortcut(any(), any()) }
-        coJustRun { shortcutsRepository.deleteDynamicShortcut(any()) }
-        coJustRun { shortcutsRepository.deletePinnedShortcut(any()) }
+        coEvery { shortcutsRepository.loadDynamicEditor(0) } returns ShortcutRepositoryResult.Success(
+            DynamicEditorData.Edit(
+                index = 0,
+                draftSeed = buildDraft(id = dynamicShortcutId(0), serverId = server.id),
+            ),
+        )
+        coEvery { shortcutsRepository.loadPinnedEditor(pinnedDraft.id) } returns ShortcutRepositoryResult.Success(
+            PinnedEditorData.Edit(draftSeed = pinnedDraft),
+        )
+        coEvery { shortcutsRepository.loadPinnedEditorForCreate() } returns ShortcutRepositoryResult.Success(
+            PinnedEditorData.Create(draftSeed = pinnedDraft.copy(id = "")),
+        )
+        coEvery { shortcutsRepository.upsertPinnedShortcut(any()) } returns ShortcutRepositoryResult.Success(
+            PinResult.Requested,
+        )
+        coEvery {
+            shortcutsRepository.upsertDynamicShortcut(any(), any(), any())
+        } returns ShortcutRepositoryResult.Success(
+            DynamicEditorData.Edit(
+                index = 0,
+                draftSeed = buildDraft(id = dynamicShortcutId(0), serverId = server.id),
+            ),
+        )
+        coEvery { shortcutsRepository.deleteDynamicShortcut(any()) } returns ShortcutRepositoryResult.Success(Unit)
+        coEvery { shortcutsRepository.deletePinnedShortcut(any()) } returns ShortcutRepositoryResult.Success(Unit)
     }
 
     @Test
@@ -79,9 +98,9 @@ class ShortcutEditViewModelTest {
             advanceUntilIdle()
 
             val state = uiState.expectMostRecentItem()
-            val editor = state.editor as ShortcutEditorUiState.EditorState.Dynamic
+            val editor = state.editor as ShortcutEditorUiState.EditorState.DynamicEdit
             assertFalse(state.screen.isLoading)
-            assertTrue(editor.isCreated)
+            assertEquals(0, editor.index)
         }
     }
 
@@ -112,6 +131,7 @@ class ShortcutEditViewModelTest {
                         it.description == "Updated description" &&
                         it.target == ShortcutTargetValue.Entity("light.kitchen")
                 },
+                true,
             )
         }
     }
@@ -137,6 +157,7 @@ class ShortcutEditViewModelTest {
             shortcutsRepository.upsertDynamicShortcut(
                 0,
                 match { it.id == dynamicShortcutId(0) },
+                true,
             )
         }
     }
@@ -152,9 +173,8 @@ class ShortcutEditViewModelTest {
             advanceUntilIdle()
 
             val state = uiState.expectMostRecentItem()
-            val editor = state.editor as ShortcutEditorUiState.EditorState.Pinned
+            val editor = state.editor as ShortcutEditorUiState.EditorState.PinnedEdit
             assertEquals(pinnedDraft.id, editor.draftSeed.id)
-            assertTrue(editor.isCreated)
         }
     }
 

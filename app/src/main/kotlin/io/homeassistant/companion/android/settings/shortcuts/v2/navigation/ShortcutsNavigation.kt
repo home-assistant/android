@@ -158,14 +158,13 @@ private fun CreateDynamicRouteScreen(viewModel: ShortcutEditViewModel = hiltView
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
 private fun CreatePinnedRouteScreen(
-    viewModel: ShortcutEditViewModel = hiltViewModel(),
     onShowSnackbar: suspend (message: String) -> Unit,
+    viewModel: ShortcutEditViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val shortcutPinRequestedMessage = stringResource(R.string.shortcut_pin_requested)
     val shortcutUpdatedMessage = stringResource(R.string.shortcut_updated)
-    val shortcutPinNotSupportedMessage = stringResource(R.string.shortcut_pin_not_supported)
 
     LaunchedEffect(Unit) {
         viewModel.openCreatePinned()
@@ -176,7 +175,6 @@ private fun CreatePinnedRouteScreen(
             val message = when (result) {
                 PinResult.Requested -> shortcutPinRequestedMessage
                 PinResult.Updated -> shortcutUpdatedMessage
-                PinResult.NotSupported -> shortcutPinNotSupportedMessage
             }
             onShowSnackbar(message)
         }
@@ -230,7 +228,6 @@ private fun EditPinnedRouteScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val shortcutUpdatedMessage = stringResource(R.string.shortcut_updated)
     val shortcutPinRequestedMessage = stringResource(R.string.shortcut_pin_requested)
-    val shortcutPinNotSupportedMessage = stringResource(R.string.shortcut_pin_not_supported)
 
     LaunchedEffect(route.id) {
         viewModel.editPinned(route.id)
@@ -241,7 +238,6 @@ private fun EditPinnedRouteScreen(
             val message = when (result) {
                 PinResult.Requested -> shortcutPinRequestedMessage
                 PinResult.Updated -> shortcutUpdatedMessage
-                PinResult.NotSupported -> shortcutPinNotSupportedMessage
             }
             onShowSnackbar(message)
         }

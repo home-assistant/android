@@ -58,8 +58,8 @@ import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.Sh
 import io.homeassistant.companion.android.settings.shortcuts.v2.DynamicShortcutItem
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListAction
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListUiState
+import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.EmptyStateContent
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.preview.ShortcutPreviewData
-import io.homeassistant.companion.android.settings.views.EmptyState
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
@@ -116,7 +116,6 @@ internal fun ShortcutsScreen(
             canCreateDynamic = state.canCreateDynamic,
             canCreatePinned = state.canPinShortcuts,
             onCreateDynamic = {
-                if (!state.canCreateDynamic) return@CreateShortcutDialog
                 dismissCreateDialog()
                 dispatch(ShortcutsListAction.CreateDynamic)
             },
@@ -137,19 +136,6 @@ private fun LoadingState() {
     ) {
         HALoading()
     }
-}
-
-@Composable
-private fun EmptyStateContent(hasServers: Boolean) {
-    EmptyState(
-        icon = CommunityMaterial.Icon2.cmd_flash,
-        title = stringResource(R.string.shortcuts_empty_title),
-        subtitle = if (hasServers) {
-            stringResource(R.string.shortcuts_empty_subtitle)
-        } else {
-            stringResource(R.string.shortcut_no_servers)
-        },
-    )
 }
 
 @Composable
@@ -279,7 +265,7 @@ private fun CreateShortcutDialog(
                         subtitle = canCreateDynamic
                             .takeIf { !it }
                             ?.let { stringResource(R.string.add_to_shortcut_limit) },
-                        enabled = canCreateDynamic,
+                        enabled = true,
                         onClick = onCreateDynamic,
                     )
                 }
@@ -290,7 +276,7 @@ private fun CreateShortcutDialog(
                         subtitle = canCreatePinned
                             .takeIf { !it }
                             ?.let { stringResource(R.string.shortcut_pin_not_supported) },
-                        enabled = canCreatePinned,
+                        enabled = true,
                         onClick = onCreatePinned,
                     )
                 }

@@ -40,23 +40,34 @@ internal object ShortcutPreviewData {
     fun buildDynamicEditorState(
         selectedIndex: Int = 0,
         draftSeed: ShortcutDraft = buildDraft(id = dynamicDraftSeedId(selectedIndex)),
-        isCreated: Boolean = true,
+        isEditing: Boolean = true,
     ): ShortcutEditorUiState.EditorState.Dynamic {
-        return ShortcutEditorUiState.EditorState.Dynamic(
-            selectedIndex = selectedIndex,
-            draftSeed = draftSeed,
-            isCreated = isCreated,
-        )
+        return if (isEditing) {
+            ShortcutEditorUiState.EditorState.DynamicEdit(
+                index = selectedIndex,
+                draftSeed = draftSeed,
+            )
+        } else {
+            ShortcutEditorUiState.EditorState.DynamicCreate(
+                index = selectedIndex,
+                draftSeed = draftSeed,
+            )
+        }
     }
 
     fun buildPinnedEditorState(
         pinnedDraft: ShortcutDraft = buildPinnedDraft(),
-        isCreated: Boolean = true,
+        isEditing: Boolean = true,
     ): ShortcutEditorUiState.EditorState.Pinned {
-        return ShortcutEditorUiState.EditorState.Pinned(
-            draftSeed = pinnedDraft,
-            isCreated = isCreated,
-        )
+        return if (isEditing) {
+            ShortcutEditorUiState.EditorState.PinnedEdit(
+                draftSeed = pinnedDraft,
+            )
+        } else {
+            ShortcutEditorUiState.EditorState.PinnedCreate(
+                draftSeed = pinnedDraft,
+            )
+        }
     }
 
     fun buildScreenState(

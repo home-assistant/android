@@ -788,6 +788,7 @@
     <string name="shortcut_icon">Select an icon for this shortcut</string>
     <string name="shortcut_instruction_desc">Use the below sections to create your shortcuts. Once you have added a shortcut you will need to drag it on your home screen after long pressing on the app icon. Although Android supports up to 5 dynamic shortcuts most launchers will only show 4 shortcuts.</string>
     <string name="shortcut_no_servers">No servers configured. Add a server to create shortcuts.</string>
+    <string name="shortcut_dynamic_slots_full">All dynamic shortcut slots are in use. Delete one to add a new shortcut.</string>
     <string name="shortcuts_empty_title">No shortcuts yet</string>
     <string name="shortcuts_empty_subtitle">Create a shortcut to quickly open a Home Assistant view or entity.</string>
     <string name="shortcut_dynamic_header">Dynamic shortcuts</string>

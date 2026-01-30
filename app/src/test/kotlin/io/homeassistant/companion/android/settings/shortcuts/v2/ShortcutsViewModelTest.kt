@@ -2,9 +2,13 @@ package io.homeassistant.companion.android.settings.shortcuts.v2
 
 import app.cash.turbine.turbineScope
 import io.homeassistant.companion.android.common.data.shortcuts.ShortcutsRepository
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ServersResult
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.DynamicShortcutsData
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ServersData
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutRepositoryError
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutRepositoryResult
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutTargetValue
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutsListData
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
@@ -12,7 +16,6 @@ import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
-import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -38,15 +41,20 @@ class ShortcutsViewModelTest {
 
     @BeforeEach
     fun setup() {
-        every { shortcutsRepository.canPinShortcuts } returns true
-        every { shortcutsRepository.maxDynamicShortcuts } returns 5
-        coEvery { shortcutsRepository.getServers() } returns ServersResult.Success(listOf(server), server.id)
-        coEvery { shortcutsRepository.loadDynamicShortcuts() } returns mapOf(
-            0 to buildDraft(id = "shortcut_1", serverId = server.id),
-            2 to buildDraft(id = "shortcut_3", serverId = server.id),
+        coEvery { shortcutsRepository.getServers() } returns ShortcutRepositoryResult.Success(
+            ServersData(listOf(server), server.id),
         )
-        coEvery { shortcutsRepository.loadPinnedShortcuts() } returns listOf(
-            buildDraft(id = "pinned_1", serverId = server.id),
+        coEvery { shortcutsRepository.loadShortcutsList() } returns ShortcutRepositoryResult.Success(
+            ShortcutsListData(
+                dynamic = DynamicShortcutsData(
+                    maxDynamicShortcuts = 5,
+                    shortcuts = mapOf(
+                        0 to buildDraft(id = "shortcut_1", serverId = server.id),
+                        2 to buildDraft(id = "shortcut_3", serverId = server.id),
+                    ),
+                ),
+                pinned = listOf(buildDraft(id = "pinned_1", serverId = server.id)),
+            ),
         )
     }
 
@@ -69,9 +77,19 @@ class ShortcutsViewModelTest {
 
     @Test
     fun `Given no shortcuts and no servers when viewModel initializes then empty state has no servers`() = runTest {
-        coEvery { shortcutsRepository.getServers() } returns ServersResult.NoServers
-        coEvery { shortcutsRepository.loadDynamicShortcuts() } returns emptyMap()
-        coEvery { shortcutsRepository.loadPinnedShortcuts() } returns emptyList()
+        coEvery { shortcutsRepository.getServers() } returns ShortcutRepositoryResult.Error(
+            ShortcutRepositoryError.NoServers,
+        )
+        coEvery { shortcutsRepository.loadShortcutsList() } returns ShortcutRepositoryResult.Success(
+            ShortcutsListData(
+                dynamic = DynamicShortcutsData(
+                    maxDynamicShortcuts = 5,
+                    shortcuts = emptyMap(),
+                ),
+                pinned = emptyList(),
+                pinnedError = ShortcutRepositoryError.PinnedNotSupported,
+            ),
+        )
 
         val viewModel = ShortcutsViewModel(shortcutsRepository)
         turbineScope {

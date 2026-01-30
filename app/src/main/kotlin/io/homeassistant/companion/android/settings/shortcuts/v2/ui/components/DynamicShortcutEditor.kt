@@ -51,7 +51,7 @@ internal fun DynamicShortcutEditor(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = stringResource(R.string.shortcut_n, state.selectedIndex + 1),
+                text = stringResource(R.string.shortcut_n, state.index + 1),
                 style = HATextStyle.HeadlineMedium,
                 color = LocalHAColorScheme.current.colorFillPrimaryLoudResting,
                 textAlign = TextAlign.Start,
@@ -66,11 +66,11 @@ internal fun DynamicShortcutEditor(
 
         ShortcutEditorForm(
             draft = draft,
-            labelText = stringResource(R.string.shortcut_label_n, state.selectedIndex + 1),
-            descriptionText = stringResource(R.string.shortcut_description_n, state.selectedIndex + 1),
+            labelText = stringResource(R.string.shortcut_label_n, state.index + 1),
+            descriptionText = stringResource(R.string.shortcut_description_n, state.index + 1),
             screen = screen,
             onDraftChange = onDraftChange,
-            isCreated = state.isCreated,
+            isEditing = state is ShortcutEditorUiState.EditorState.DynamicEdit,
             canSubmit = canSubmit,
             onSubmit = onSubmit,
             onDelete = onDelete,

@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,16 +18,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.compose.composable.HALoading
 import io.homeassistant.companion.android.common.compose.theme.HADimens
-import io.homeassistant.companion.android.common.compose.theme.HATextStyle
-import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutRepositoryError
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutEditorUiState
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.DynamicShortcutEditor
+import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.EmptyStateContent
+import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.EmptyStateContentSlots
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.PinnedShortcutEditor
 import io.homeassistant.companion.android.util.icondialog.IconDialog
 import io.homeassistant.companion.android.util.plus
@@ -41,42 +38,52 @@ internal fun ShortcutEditorScreen(
     dispatch: (ShortcutEditAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val noServers = state.screen.servers.isEmpty()
     when (val editor = state.editor) {
         is ShortcutEditorUiState.EditorState.Dynamic -> {
-            ShortcutEditorContent(
-                screenState = state.screen,
-                draftSeed = editor.draftSeed,
-                dispatch = dispatch,
-                modifier = modifier,
-            ) { draft, onDraftChange, onIconClick, onSubmit, onDelete ->
-                DynamicShortcutEditor(
-                    draft = draft,
-                    state = editor,
-                    screen = state.screen,
-                    onDraftChange = onDraftChange,
-                    onIconClick = onIconClick,
-                    onSubmit = onSubmit,
-                    onDelete = onDelete,
-                )
+            when {
+                noServers -> EmptyStateContent(hasServers = false)
+                state.screen.error == ShortcutRepositoryError.SlotsFull -> EmptyStateContentSlots()
+                else -> ShortcutEditorContent(
+                    screenState = state.screen,
+                    draftSeed = editor.draftSeed,
+                    dispatch = dispatch,
+                    modifier = modifier,
+                ) { draft, onDraftChange, onIconClick, onSubmit, onDelete ->
+                    DynamicShortcutEditor(
+                        draft = draft,
+                        state = editor,
+                        screen = state.screen,
+                        onDraftChange = onDraftChange,
+                        onIconClick = onIconClick,
+                        onSubmit = onSubmit,
+                        onDelete = onDelete,
+                    )
+                }
             }
         }
 
         is ShortcutEditorUiState.EditorState.Pinned -> {
-            ShortcutEditorContent(
-                screenState = state.screen,
-                draftSeed = editor.draftSeed,
-                dispatch = dispatch,
-                modifier = modifier,
-            ) { draft, onDraftChange, onIconClick, onSubmit, onDelete ->
-                PinnedShortcutEditor(
-                    draft = draft,
-                    state = editor,
-                    screen = state.screen,
-                    onDraftChange = onDraftChange,
-                    onIconClick = onIconClick,
-                    onSubmit = onSubmit,
-                    onDelete = onDelete,
-                )
+            when {
+                noServers -> EmptyStateContent(hasServers = false)
+                else -> {
+                    ShortcutEditorContent(
+                        screenState = state.screen,
+                        draftSeed = editor.draftSeed,
+                        dispatch = dispatch,
+                        modifier = modifier,
+                    ) { draft, onDraftChange, onIconClick, onSubmit, onDelete ->
+                        PinnedShortcutEditor(
+                            draft = draft,
+                            state = editor,
+                            screen = state.screen,
+                            onDraftChange = onDraftChange,
+                            onIconClick = onIconClick,
+                            onSubmit = onSubmit,
+                            onDelete = onDelete,
+                        )
+                    }
+                }
             }
         }
     }
@@ -122,7 +129,7 @@ private fun ShortcutEditorContent(
         }
         var showIconDialog by rememberSaveable { mutableStateOf(false) }
         val updateDraft: (ShortcutDraft) -> Unit = { updated ->
-            draft = updated.copy(isDirty = true)
+            draft = updated.copy()
         }
 
         if (showIconDialog) {
@@ -132,14 +139,6 @@ private fun ShortcutEditorContent(
                     showIconDialog = false
                 },
                 onDismissRequest = { showIconDialog = false },
-            )
-        }
-        if (screenState.servers.isEmpty()) {
-            Text(
-                text = stringResource(R.string.shortcut_no_servers),
-                style = HATextStyle.Body,
-                color = LocalHAColorScheme.current.colorTextSecondary,
-                textAlign = TextAlign.Start,
             )
         }
         editor(

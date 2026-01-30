@@ -144,7 +144,7 @@ class ShortcutsV2ScreenshotTest {
                             type = ShortcutType.ENTITY_ID,
                             id = ShortcutPreviewData.dynamicShortcutId(0),
                         ),
-                        isCreated = true,
+                        isEditing = true,
                     ),
                 ),
                 dispatch = { _: ShortcutEditAction -> },
@@ -177,7 +177,7 @@ class ShortcutsV2ScreenshotTest {
                     screen = ShortcutPreviewData.buildScreenState(),
                     editor = ShortcutPreviewData.buildPinnedEditorState(
                         pinnedDraft = ShortcutPreviewData.buildPinnedDraft(),
-                        isCreated = true,
+                        isEditing = true,
                     ),
                 ),
                 dispatch = { _: ShortcutEditAction -> },

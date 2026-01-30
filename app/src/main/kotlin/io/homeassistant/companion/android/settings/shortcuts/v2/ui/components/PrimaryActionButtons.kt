@@ -19,19 +19,19 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
 internal fun PrimaryActionButtons(
-    isCreated: Boolean,
+    isEditing: Boolean,
     canSubmit: Boolean,
     onSubmit: () -> Unit,
     onDelete: (() -> Unit)?,
 ) {
-    val labelRes = if (isCreated) R.string.update_shortcut else R.string.add_shortcut
+    val labelRes = if (isEditing) R.string.update_shortcut else R.string.add_shortcut
 
     Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
         ) {
-            if (isCreated && onDelete != null) {
+            if (isEditing && onDelete != null) {
                 HAFilledButton(
                     text = stringResource(R.string.delete_shortcut),
                     onClick = onDelete,
@@ -56,7 +56,7 @@ internal fun PrimaryActionButtons(
 private fun PrimaryActionButtonsPreview() {
     HAThemeForPreview {
         PrimaryActionButtons(
-            isCreated = true,
+            isEditing = true,
             canSubmit = true,
             onSubmit = {},
             onDelete = {},

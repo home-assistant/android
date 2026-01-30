@@ -110,6 +110,9 @@ internal object ShortcutsMock {
         mutableListOf(
             buildDynamicDraft(index = 0, type = ShortcutType.LOVELACE, serverId = DEFAULT_SERVER_ID),
             buildDynamicDraft(index = 1, type = ShortcutType.ENTITY_ID, serverId = DEFAULT_SERVER_ID),
+            buildDynamicDraft(index = 2, type = ShortcutType.ENTITY_ID, serverId = DEFAULT_SERVER_ID),
+            buildDynamicDraft(index = 3, type = ShortcutType.ENTITY_ID, serverId = DEFAULT_SERVER_ID),
+            buildDynamicDraft(index = 4, type = ShortcutType.ENTITY_ID, serverId = DEFAULT_SERVER_ID),
         )
     }
 
@@ -123,7 +126,6 @@ internal object ShortcutsMock {
                 label = "Pinned $number",
                 description = "Pinned shortcut $number",
                 target = ShortcutTargetValue.Lovelace("/lovelace/pinned_$number"),
-                isDirty = false,
             )
         }
     }
@@ -181,7 +183,6 @@ internal object ShortcutsMock {
             } else {
                 ShortcutTargetValue.Lovelace("/lovelace/shortcut$number")
             },
-            isDirty = false,
         )
     }
 
@@ -217,7 +218,6 @@ internal object ShortcutsMock {
     private fun ShortcutDraft.normalized(id: String = this.id, defaultServerId: Int): ShortcutDraft = copy(
         id = id,
         serverId = serverId.takeIf { it != 0 } ?: defaultServerId,
-        isDirty = false,
     )
 
     private fun <T> MutableList<T>.replaceOrAdd(predicate: (T) -> Boolean, value: T) {

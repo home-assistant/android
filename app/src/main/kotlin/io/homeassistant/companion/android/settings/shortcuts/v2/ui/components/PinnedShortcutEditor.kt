@@ -69,7 +69,7 @@ internal fun PinnedShortcutEditor(
             descriptionText = stringResource(R.string.shortcut_pinned_desc),
             screen = screen,
             onDraftChange = onDraftChange,
-            isCreated = state.isCreated,
+            isEditing = state is ShortcutEditorUiState.EditorState.PinnedEdit,
             canSubmit = canSubmit,
             onSubmit = onSubmit,
             onDelete = onDelete,

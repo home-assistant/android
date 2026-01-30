@@ -25,7 +25,7 @@ internal fun ShortcutEditorForm(
     descriptionText: String,
     screen: ShortcutEditorScreenState,
     onDraftChange: (ShortcutDraft) -> Unit,
-    isCreated: Boolean,
+    isEditing: Boolean,
     canSubmit: Boolean,
     onSubmit: () -> Unit,
     onDelete: (() -> Unit)? = null,
@@ -54,7 +54,7 @@ internal fun ShortcutEditorForm(
         )
 
         PrimaryActionButtons(
-            isCreated = isCreated,
+            isEditing = isEditing,
             canSubmit = canSubmit,
             onSubmit = onSubmit,
             onDelete = onDelete,
@@ -86,7 +86,7 @@ private fun ShortcutEditorFormPreview() {
             descriptionText = "Description",
             screen = ShortcutPreviewData.buildScreenState(servers = ShortcutPreviewData.previewServers),
             onDraftChange = {},
-            isCreated = true,
+            isEditing = true,
             canSubmit = true,
             onSubmit = {},
             onDelete = {},

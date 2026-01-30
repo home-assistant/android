@@ -22,10 +22,11 @@ data class ShortcutDraft(
     val label: String,
     val description: String,
     val target: ShortcutTargetValue,
-    val isDirty: Boolean = false,
 ) {
     companion object
 }
+
+private const val DYNAMIC_DRAFT_SEED_PREFIX = "dynamic_draft"
 
 fun ShortcutDraft.Companion.empty(id: String): ShortcutDraft {
     return ShortcutDraft(
@@ -35,8 +36,15 @@ fun ShortcutDraft.Companion.empty(id: String): ShortcutDraft {
         label = "",
         description = "",
         target = ShortcutTargetValue.Lovelace(""),
-        isDirty = false,
     )
+}
+
+fun ShortcutDraft.Companion.empty(index: Int): ShortcutDraft {
+    return empty(dynamicDraftSeedId(index))
+}
+
+private fun dynamicDraftSeedId(index: Int): String {
+    return "${DYNAMIC_DRAFT_SEED_PREFIX}_${index + 1}"
 }
 
 fun ShortcutDraft.toSummary(isCreated: Boolean): ShortcutSummary {

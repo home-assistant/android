@@ -23,18 +23,4 @@ data class ShortcutSummary(
     val description: String,
     val target: ShortcutTargetValue,
     val isCreated: Boolean,
-) {
-    companion object
-}
-
-fun ShortcutSummary.Companion.empty(id: String): ShortcutSummary {
-    return ShortcutSummary(
-        id = id,
-        serverId = 0,
-        selectedIcon = null,
-        label = "",
-        description = "",
-        target = ShortcutTargetValue.Lovelace(""),
-        isCreated = false,
-    )
-}
+)
