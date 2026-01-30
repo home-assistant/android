@@ -204,8 +204,6 @@ class MicroWakeWord @VisibleForTesting internal constructor(
 
         /**
          * Create a new MicroWakeWord instance.
-         *
-         * This is a suspend function to allow cancellation during model loading.
          */
         suspend fun create(context: Context, modelConfig: MicroWakeWordModelConfig): MicroWakeWord {
             val interpreter = createInterpreter(context, modelConfig)
