@@ -246,10 +246,10 @@
             android:title="@string/application_version"
             android:summary="1.0.0 (1)"/>
         <Preference
-            android:key="open_source_licenses"
+            android:key="licenses"
             android:icon="@drawable/ic_license"
-            android:title="@string/open_source_licenses"
-            android:summary="@string/open_source_licenses_summary"/>
+            android:title="@string/licenses"
+            android:summary="@string/licenses_summary"/>
         <Preference
             android:key="privacy"
             android:icon="@drawable/ic_incognito"

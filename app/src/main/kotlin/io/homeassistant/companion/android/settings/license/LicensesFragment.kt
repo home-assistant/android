@@ -5,7 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.Scaffold
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -21,13 +21,13 @@ import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
 
-class OpenSourceLicensesFragment : Fragment() {
+class LicensesFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 HATheme {
-                    OpenSourceLicensesView()
+                    LicensesContent()
                 }
             }
         }
@@ -35,12 +35,12 @@ class OpenSourceLicensesFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        activity?.title = getString(commonR.string.open_source_licenses)
+        activity?.title = getString(commonR.string.licenses)
     }
 }
 
 @Composable
-private fun OpenSourceLicensesView() {
+private fun LicensesContent() {
     val libraries by produceLibraries()
     val colorScheme = LocalHAColorScheme.current
     Scaffold(
