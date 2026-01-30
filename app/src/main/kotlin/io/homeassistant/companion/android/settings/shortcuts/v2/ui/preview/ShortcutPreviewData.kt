@@ -133,11 +133,8 @@ internal object ShortcutPreviewData {
         return buildDynamicDrafts(count = count, type = type).map { draft ->
             ShortcutSummary(
                 id = draft.id,
-                serverId = draft.serverId,
                 selectedIcon = draft.selectedIcon,
                 label = draft.label,
-                description = draft.description,
-                target = draft.target,
             )
         }.toImmutableList()
     }
@@ -157,11 +154,8 @@ internal object ShortcutPreviewData {
         return listOf(
             ShortcutSummary(
                 id = "pinned_1",
-                serverId = 1,
                 selectedIcon = null,
                 label = "Pinned",
-                description = "Pinned shortcut",
-                target = ShortcutTargetValue.Lovelace("/lovelace/pinned"),
             ),
         ).toImmutableList()
     }

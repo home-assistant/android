@@ -50,10 +50,7 @@ private fun dynamicDraftSeedId(index: Int): String {
 fun ShortcutDraft.toSummary(): ShortcutSummary {
     return ShortcutSummary(
         id = id,
-        serverId = serverId,
         selectedIcon = selectedIcon,
         label = label,
-        description = description,
-        target = target,
     )
 }

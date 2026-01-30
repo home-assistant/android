@@ -53,7 +53,6 @@ import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutSummary
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutTargetValue
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutType
 import io.homeassistant.companion.android.settings.shortcuts.v2.DynamicShortcutItem
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListAction
@@ -345,14 +344,10 @@ private fun ShortcutsScreenPreview() {
         basePinned.copy(
             id = "pinned_2",
             label = "Pinned 2",
-            description = "Pinned shortcut 2",
-            target = ShortcutTargetValue.Lovelace("/lovelace/pinned2"),
         ),
         basePinned.copy(
             id = "pinned_3",
             label = "Pinned 3",
-            description = "Pinned shortcut 3",
-            target = ShortcutTargetValue.Lovelace("/lovelace/pinned3"),
         ),
     ).toImmutableList()
     HAThemeForPreview {

@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutTargetValue
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutType
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutEditorUiState
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListAction
@@ -56,8 +55,6 @@ class ShortcutsV2ScreenshotTest {
             basePinned.copy(
                 id = "pinned_$number",
                 label = "Pinned $number",
-                description = "Pinned shortcut $number",
-                target = ShortcutTargetValue.Lovelace("/lovelace/pinned$number"),
             )
         }.toImmutableList()
         HAThemeForPreview {
