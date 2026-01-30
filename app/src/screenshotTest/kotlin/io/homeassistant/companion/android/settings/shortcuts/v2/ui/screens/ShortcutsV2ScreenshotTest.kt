@@ -49,10 +49,7 @@ class ShortcutsV2ScreenshotTest {
         val dynamicSummaries = ShortcutPreviewData.buildDynamicSummaries(
             count = 5,
             type = ShortcutType.LOVELACE,
-            createdIndex = 0,
-        ).map { summary ->
-            summary.copy(isCreated = true)
-        }.toImmutableList()
+        ).toImmutableList()
         val basePinned = ShortcutPreviewData.buildPinnedSummaries().first()
         val pinnedSummaries = List(20) { index ->
             val number = index + 1
@@ -81,10 +78,7 @@ class ShortcutsV2ScreenshotTest {
         val dynamicSummaries = ShortcutPreviewData.buildDynamicSummaries(
             count = 3,
             type = ShortcutType.LOVELACE,
-            createdIndex = 0,
-        ).map { summary ->
-            summary.copy(isCreated = true)
-        }.toImmutableList()
+        ).toImmutableList()
         HAThemeForPreview {
             ShortcutsScreen(
                 state = ShortcutPreviewData.buildListState(
