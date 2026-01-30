@@ -137,6 +137,7 @@ private fun ShortcutsListRouteScreen(
     ShortcutsListScreen(
         state = uiState,
         dispatch = onNavigate,
+        onRetry = { viewModel.refresh(showLoading = true) },
     )
 }
 

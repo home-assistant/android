@@ -7,10 +7,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.shortcuts.ShortcutsRepository
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.DynamicShortcutsData
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutError
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutResult
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutSummary
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutsListData
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.toSummary
 import javax.inject.Inject
 import kotlinx.collections.immutable.ImmutableList
@@ -18,6 +17,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @Immutable
@@ -26,6 +26,8 @@ internal data class DynamicShortcutItem(val index: Int, val summary: ShortcutSum
 @Immutable
 internal data class ShortcutsListState(
     val isLoading: Boolean = true,
+    val isError: Boolean = false,
+    val isPinSupported: Boolean = false, // Not used for now
     val dynamicItems: ImmutableList<DynamicShortcutItem> = persistentListOf(),
     val pinnedItems: ImmutableList<ShortcutSummary> = persistentListOf(),
 ) {
@@ -47,19 +49,15 @@ internal class ShortcutsViewModel @Inject constructor(private val shortcutsRepos
         viewModelScope.launch {
             val previous = _uiState.value
             if (showLoading) {
-                _uiState.value = previous.copy(isLoading = true)
+                _uiState.value = previous.copy(isLoading = true, isError = false)
             }
 
             val listData = when (val result = shortcutsRepository.loadShortcutsList()) {
                 is ShortcutResult.Success -> result.data
-                is ShortcutResult.Error -> ShortcutsListData(
-                    dynamic = DynamicShortcutsData(
-                        maxDynamicShortcuts = 0,
-                        shortcuts = emptyMap(),
-                    ),
-                    pinned = emptyList(),
-                    pinnedError = result.error,
-                )
+                is ShortcutResult.Error -> {
+                    _uiState.update { it.copy(isLoading = false, isError = true) }
+                    return@launch
+                }
             }
 
             val dynamicItems = listData.dynamic.shortcuts
@@ -68,10 +66,14 @@ internal class ShortcutsViewModel @Inject constructor(private val shortcutsRepos
                 .map { (index, draft) -> DynamicShortcutItem(index, draft.toSummary()) }
                 .toImmutableList()
 
+            val pinnedItems = listData.pinned.toImmutableList()
+            val pinNotSupported = listData.pinnedError == ShortcutError.PinnedNotSupported
             _uiState.value = ShortcutsListState(
                 isLoading = false,
+                isError = false,
+                isPinSupported = !pinNotSupported,
                 dynamicItems = dynamicItems,
-                pinnedItems = listData.pinned.toImmutableList(),
+                pinnedItems = pinnedItems,
             )
         }
     }

@@ -791,6 +791,8 @@
     <string name="shortcut_dynamic_slots_full">All dynamic shortcut slots are in use. Delete one to add a new shortcut.</string>
     <string name="shortcuts_empty_title">No shortcuts yet</string>
     <string name="shortcuts_empty_subtitle">Create a shortcut to quickly open a Home Assistant view or entity.</string>
+    <string name="shortcuts_error_title">Unable to load shortcuts</string>
+    <string name="shortcuts_error_subtitle">Please try again.</string>
     <string name="shortcut_dynamic_header">Dynamic shortcuts</string>
     <string name="shortcut_n">Shortcut %d</string>
     <string name="shortcut_label_n">Shortcut %1$d label</string>

@@ -161,6 +161,7 @@ internal object ShortcutPreviewData {
 
     fun buildListState(
         isLoading: Boolean = false,
+        isError: Boolean = false,
         dynamicSummaries: ImmutableList<ShortcutSummary> = buildDynamicSummaries(
             count = 2,
             type = ShortcutType.LOVELACE,
@@ -174,6 +175,7 @@ internal object ShortcutPreviewData {
         val pinnedItems = if (canPinShortcuts) pinnedSummaries else persistentListOf()
         return ShortcutsListState(
             isLoading = isLoading,
+            isError = isError,
             dynamicItems = dynamicItems,
             pinnedItems = pinnedItems,
         )

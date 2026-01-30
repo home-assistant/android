@@ -147,24 +147,30 @@ internal class ShortcutsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun loadShortcutsList(): ShortcutResult<ShortcutsListData> {
-        val dynamic = loadDynamicShortcuts()
-        if (!canPinShortcuts) {
-            return ShortcutResult.Success(
-                ShortcutsListData(
-                    dynamic = dynamic,
-                    pinned = emptyList(),
-                    pinnedError = ShortcutError.PinnedNotSupported,
-                ),
-            )
+        return try {
+            val dynamic = loadDynamicShortcuts()
+            if (!canPinShortcuts) {
+                ShortcutResult.Success(
+                    ShortcutsListData(
+                        dynamic = dynamic,
+                        pinned = emptyList(),
+                        pinnedError = ShortcutError.PinnedNotSupported,
+                    ),
+                )
+            } else {
+                val pinned = loadPinnedShortcutsInternal(currentServerId())
+                ShortcutResult.Success(
+                    ShortcutsListData(
+                        dynamic = dynamic,
+                        pinned = pinned.map { it.toSummary() },
+                    ),
+                )
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            ShortcutResult.Error(ShortcutError.Unknown, e)
         }
-
-        val pinned = loadPinnedShortcutsInternal(currentServerId())
-        return ShortcutResult.Success(
-            ShortcutsListData(
-                dynamic = dynamic,
-                pinned = pinned.map { it.toSummary() },
-            ),
-        )
     }
 
     override suspend fun loadEditorData(): ShortcutResult<ShortcutEditorData> = coroutineScope {

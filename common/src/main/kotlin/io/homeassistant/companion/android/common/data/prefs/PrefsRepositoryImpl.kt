@@ -346,7 +346,7 @@ internal class PrefsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun isShortcutsV2MockEnabled(): Boolean {
-        return localStorage().getBooleanOrNull(PREF_SHORTCUTS_V2_MOCK_ENABLED) ?: true
+        return localStorage().getBooleanOrNull(PREF_SHORTCUTS_V2_MOCK_ENABLED) ?: false
     }
 
     override suspend fun setShortcutsV2MockEnabled(enabled: Boolean) {
@@ -354,7 +354,7 @@ internal class PrefsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun isShortcutsV2MockPinSupportEnabled(): Boolean {
-        return localStorage().getBooleanOrNull(PREF_SHORTCUTS_V2_MOCK_PIN_SUPPORT_ENABLED) ?: true
+        return localStorage().getBooleanOrNull(PREF_SHORTCUTS_V2_MOCK_PIN_SUPPORT_ENABLED) ?: false
     }
 
     override suspend fun setShortcutsV2MockPinSupportEnabled(enabled: Boolean) {

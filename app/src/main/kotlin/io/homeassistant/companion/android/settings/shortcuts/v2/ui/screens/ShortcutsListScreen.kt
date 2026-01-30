@@ -56,6 +56,7 @@ import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.Sh
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListAction
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListState
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.EmptyStateContent
+import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.ErrorStateContent
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.preview.ShortcutPreviewData
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
@@ -73,6 +74,7 @@ import kotlinx.collections.immutable.toImmutableList
 internal fun ShortcutsListScreen(
     state: ShortcutsListState,
     dispatch: (ShortcutsListAction) -> Unit,
+    onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showCreateDialog by remember { mutableStateOf(false) }
@@ -94,6 +96,9 @@ internal fun ShortcutsListScreen(
         Box(modifier = Modifier.padding(contentPadding)) {
             when {
                 state.isLoading -> LoadingState()
+                state.isError -> {
+                    ErrorStateContent(onRetry = onRetry)
+                }
                 state.isEmpty -> {
                     EmptyStateContent(hasServers = true)
                 }
@@ -344,6 +349,7 @@ private fun ShortcutsListScreenPreview() {
                 pinnedSummaries = pinnedSummaries,
             ),
             dispatch = {},
+            onRetry = {},
         )
     }
 }
@@ -356,6 +362,7 @@ private fun ShortcutsListScreenLoadingPreview() {
         ShortcutsListScreen(
             state = ShortcutPreviewData.buildListState(isLoading = true),
             dispatch = {},
+            onRetry = {},
         )
     }
 }
@@ -371,6 +378,7 @@ private fun ShortcutsListScreenEmptyPreview() {
                 pinnedSummaries = persistentListOf(),
             ),
             dispatch = {},
+            onRetry = {},
         )
     }
 }
