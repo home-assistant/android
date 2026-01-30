@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.shortcuts.ShortcutsRepository
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ServersResult
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutSummary
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.toSummary
 import javax.inject.Inject
@@ -84,7 +85,11 @@ internal class ShortcutsViewModel @Inject constructor(private val shortcutsRepos
                 )
             }
             try {
-                val servers = shortcutsRepository.getServers().toImmutableList()
+                val serversResult = shortcutsRepository.getServers()
+                val servers = when (serversResult) {
+                    is ServersResult.Success -> serversResult.servers.toImmutableList()
+                    ServersResult.NoServers -> persistentListOf()
+                }
                 val dynamicDrafts = shortcutsRepository.loadDynamicShortcuts()
                 val dynamicItems = (0 until maxDynamicShortcuts).mapNotNull { index ->
                     dynamicDrafts[index]

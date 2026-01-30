@@ -16,9 +16,9 @@ import io.homeassistant.companion.android.common.data.shortcuts.impl.ShortcutInt
 import io.homeassistant.companion.android.common.data.shortcuts.impl.ShortcutsRepositoryImpl
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.PinResult
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ServerData
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ServersResult
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
 import io.homeassistant.companion.android.common.data.shortcuts.mock.ShortcutsMockRepositoryImpl
-import io.homeassistant.companion.android.database.server.Server
 import java.util.Optional
 import javax.inject.Singleton
 import kotlinx.coroutines.runBlocking
@@ -61,7 +61,7 @@ internal abstract class ShortcutsRepositoryModule {
                 override val canPinShortcuts: Boolean = false
 
                 override suspend fun currentServerId(): Int = 0
-                override suspend fun getServers(): List<Server> = emptyList()
+                override suspend fun getServers(): ServersResult = ServersResult.NoServers
                 override suspend fun loadServerData(serverId: Int): ServerData = ServerData()
                 override suspend fun loadDynamicShortcuts(): Map<Int, ShortcutDraft> = emptyMap()
                 override suspend fun loadPinnedShortcuts(): List<ShortcutDraft> = emptyList()

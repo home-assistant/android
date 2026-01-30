@@ -70,6 +70,7 @@ fun ShortcutsNavHost(onToolbarTitleChanged: (String) -> Unit, onShowSnackbar: su
         composable<CreatePinnedRoute> {
             CreatePinnedRouteScreen(
                 onShowSnackbar = onShowSnackbar,
+                onNavigateBack = { navController.popBackStack() },
             )
         }
 
@@ -159,10 +160,11 @@ private fun CreateDynamicRouteScreen(viewModel: ShortcutEditViewModel = hiltView
 private fun CreatePinnedRouteScreen(
     viewModel: ShortcutEditViewModel = hiltViewModel(),
     onShowSnackbar: suspend (message: String) -> Unit,
+    onNavigateBack: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val shortcutUpdatedMessage = stringResource(R.string.shortcut_updated)
     val shortcutPinRequestedMessage = stringResource(R.string.shortcut_pin_requested)
+    val shortcutUpdatedMessage = stringResource(R.string.shortcut_updated)
     val shortcutPinNotSupportedMessage = stringResource(R.string.shortcut_pin_not_supported)
 
     LaunchedEffect(Unit) {
@@ -171,11 +173,18 @@ private fun CreatePinnedRouteScreen(
 
     LaunchedEffect(viewModel) {
         viewModel.pinResultEvents.collect { result ->
-            when (result) {
-                PinResult.Updated -> onShowSnackbar(shortcutUpdatedMessage)
-                PinResult.Requested -> onShowSnackbar(shortcutPinRequestedMessage)
-                PinResult.NotSupported -> onShowSnackbar(shortcutPinNotSupportedMessage)
+            val message = when (result) {
+                PinResult.Requested -> shortcutPinRequestedMessage
+                PinResult.Updated -> shortcutUpdatedMessage
+                PinResult.NotSupported -> shortcutPinNotSupportedMessage
             }
+            onShowSnackbar(message)
+        }
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.closeEvents.collect {
+            onNavigateBack()
         }
     }
 
@@ -199,7 +208,7 @@ private fun EditDynamicRouteScreen(
     }
 
     LaunchedEffect(viewModel) {
-        viewModel.deleteEvents.collect {
+        viewModel.closeEvents.collect {
             onNavigateBack()
         }
     }
@@ -229,16 +238,17 @@ private fun EditPinnedRouteScreen(
 
     LaunchedEffect(viewModel) {
         viewModel.pinResultEvents.collect { result ->
-            when (result) {
-                PinResult.Updated -> onShowSnackbar(shortcutUpdatedMessage)
-                PinResult.Requested -> onShowSnackbar(shortcutPinRequestedMessage)
-                PinResult.NotSupported -> onShowSnackbar(shortcutPinNotSupportedMessage)
+            val message = when (result) {
+                PinResult.Requested -> shortcutPinRequestedMessage
+                PinResult.Updated -> shortcutUpdatedMessage
+                PinResult.NotSupported -> shortcutPinNotSupportedMessage
             }
+            onShowSnackbar(message)
         }
     }
 
     LaunchedEffect(viewModel) {
-        viewModel.deleteEvents.collect {
+        viewModel.closeEvents.collect {
             onNavigateBack()
         }
     }

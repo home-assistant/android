@@ -13,9 +13,11 @@ import io.homeassistant.companion.android.common.data.shortcuts.ShortcutIntentKe
 import io.homeassistant.companion.android.common.data.shortcuts.ShortcutsRepository
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.PinResult
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ServerData
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ServersResult
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
 import io.homeassistant.companion.android.database.IconDialogCompat
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
@@ -28,6 +30,7 @@ internal const val MAX_DYNAMIC_SHORTCUTS = 5
 internal const val EXTRA_SERVER = "server"
 internal const val ASSIST_SHORTCUT_PREFIX = ".ha_assist_"
 private const val DYNAMIC_SHORTCUT_PREFIX = "shortcut"
+private const val PINNED_SHORTCUT_PREFIX = "pinned"
 
 private object DynamicShortcutId {
     fun build(index: Int): String = "${DYNAMIC_SHORTCUT_PREFIX}_${index + 1}"
@@ -61,7 +64,13 @@ internal class ShortcutsRepositoryImpl @Inject constructor(
 
     override suspend fun currentServerId(): Int = serverManager.getServer()?.id ?: 0
 
-    override suspend fun getServers() = serverManager.servers()
+    override suspend fun getServers(): ServersResult {
+        val servers = serverManager.servers()
+        if (servers.isEmpty()) return ServersResult.NoServers
+        val currentId = currentServerId()
+        val defaultId = servers.firstOrNull { it.id == currentId }?.id ?: servers.first().id
+        return ServersResult.Success(servers, defaultId)
+    }
 
     override suspend fun loadServerData(serverId: Int): ServerData = coroutineScope {
         val integrationRepository = serverManager.integrationRepository(serverId)
@@ -145,25 +154,25 @@ internal class ShortcutsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun upsertPinnedShortcut(shortcut: ShortcutDraft): PinResult {
-        if (!canPinShortcuts) {
-            return PinResult.NotSupported
+        if (!canPinShortcuts) return PinResult.NotSupported
+        val normalized = if (shortcut.id.isBlank()) {
+            shortcut.copy(id = newPinnedId())
+        } else {
+            shortcut
         }
-
-        val shortcutInfo = shortcutFactory.createShortcutInfo(shortcut)
-
+        val shortcutInfo = shortcutFactory.createShortcutInfo(normalized)
         val pinnedShortcuts = ShortcutManagerCompat.getShortcuts(
             app,
             ShortcutManagerCompat.FLAG_MATCH_PINNED,
         ).filter { !it.id.startsWith(ASSIST_SHORTCUT_PREFIX) }
 
-        val exists = pinnedShortcuts.any { it.id == shortcut.id }
-
+        val exists = pinnedShortcuts.any { it.id == normalized.id }
         return if (exists) {
-            Timber.d("Updating pinned shortcut: ${shortcut.id}")
+            Timber.d("Updating pinned shortcut: ${normalized.id}")
             ShortcutManagerCompat.updateShortcuts(app, listOf(shortcutInfo))
             PinResult.Updated
         } else {
-            Timber.d("Requesting pin for shortcut: ${shortcut.id}")
+            Timber.d("Requesting pin for shortcut: ${normalized.id}")
             ShortcutManagerCompat.requestPinShortcut(app, shortcutInfo, null)
             PinResult.Requested
         }
@@ -204,5 +213,9 @@ internal class ShortcutsRepositoryImpl @Inject constructor(
             Timber.e(e, "Couldn't load $what for server $serverId")
             emptyList()
         }
+    }
+
+    private fun newPinnedId(): String {
+        return "${PINNED_SHORTCUT_PREFIX}_${UUID.randomUUID()}"
     }
 }

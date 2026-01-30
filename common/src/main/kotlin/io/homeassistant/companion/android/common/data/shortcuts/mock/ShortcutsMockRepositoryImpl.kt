@@ -5,6 +5,7 @@ import io.homeassistant.companion.android.common.data.shortcuts.ShortcutsReposit
 import io.homeassistant.companion.android.common.data.shortcuts.impl.MAX_DYNAMIC_SHORTCUTS
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.PinResult
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ServerData
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ServersResult
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
@@ -20,7 +21,13 @@ internal class ShortcutsMockRepositoryImpl @Inject constructor(private val prefs
 
     override suspend fun currentServerId(): Int = ShortcutsMock.defaultServerId
 
-    override suspend fun getServers() = ShortcutsMock.servers
+    override suspend fun getServers(): ServersResult {
+        val servers = ShortcutsMock.servers
+        if (servers.isEmpty()) return ServersResult.NoServers
+        val currentId = currentServerId()
+        val defaultId = servers.firstOrNull { it.id == currentId }?.id ?: servers.first().id
+        return ServersResult.Success(servers, defaultId)
+    }
 
     override suspend fun loadServerData(serverId: Int): ServerData {
         return ServerData(
@@ -63,7 +70,7 @@ internal class ShortcutsMockRepositoryImpl @Inject constructor(private val prefs
 
     override suspend fun upsertPinnedShortcut(shortcut: ShortcutDraft): PinResult {
         if (!canPinShortcuts) return PinResult.NotSupported
-        val existed = ShortcutsMock.pinnedShortcuts().any { it.id == shortcut.id }
+        val existed = ShortcutsMock.pinnedShortcuts().any { it.id == shortcut.id && shortcut.id.isNotBlank() }
         ShortcutsMock.upsertPinned(shortcut)
         return if (existed) PinResult.Updated else PinResult.Requested
     }

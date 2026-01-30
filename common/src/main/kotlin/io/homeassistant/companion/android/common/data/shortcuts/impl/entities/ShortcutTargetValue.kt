@@ -17,4 +17,3 @@ fun ShortcutTargetValue.toShortcutType(): ShortcutType {
         is ShortcutTargetValue.Entity -> ShortcutType.ENTITY_ID
     }
 }
-

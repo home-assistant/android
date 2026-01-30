@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import java.time.LocalDateTime
+import java.util.UUID
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.persistentListOf
@@ -60,7 +61,11 @@ internal object ShortcutsMock {
                 entityRegistry(entityId = "switch.coffee_maker", areaId = "kitchen", deviceId = "device_kitchen"),
             ).toImmutableList(),
             SECONDARY_SERVER_ID to listOf(
-                entityRegistry(entityId = "light.conference_room", areaId = "conference_room", deviceId = "device_conference"),
+                entityRegistry(
+                    entityId = "light.conference_room",
+                    areaId = "conference_room",
+                    deviceId = "device_conference",
+                ),
             ).toImmutableList(),
         )
     }
@@ -150,9 +155,8 @@ internal object ShortcutsMock {
     }
 
     fun upsertPinned(draft: ShortcutDraft) {
-        if (draft.id.isBlank()) return
-
         val normalized = draft.normalized(
+            id = draft.id.ifBlank { newPinnedId() },
             defaultServerId = DEFAULT_SERVER_ID,
         )
 
@@ -206,28 +210,24 @@ internal object ShortcutsMock {
     private fun entityRegistry(entityId: String, areaId: String, deviceId: String) =
         EntityRegistryResponse(entityId = entityId, areaId = areaId, deviceId = deviceId)
 
-    private fun deviceRegistry(id: String, name: String) =
-        DeviceRegistryResponse(id = id, name = name)
+    private fun deviceRegistry(id: String, name: String) = DeviceRegistryResponse(id = id, name = name)
 
-    private fun areaRegistry(areaId: String, name: String) =
-        AreaRegistryResponse(areaId = areaId, name = name)
+    private fun areaRegistry(areaId: String, name: String) = AreaRegistryResponse(areaId = areaId, name = name)
 
-    private fun ShortcutDraft.normalized(
-        id: String = this.id,
-        defaultServerId: Int,
-    ): ShortcutDraft = copy(
+    private fun ShortcutDraft.normalized(id: String = this.id, defaultServerId: Int): ShortcutDraft = copy(
         id = id,
         serverId = serverId.takeIf { it != 0 } ?: defaultServerId,
         isDirty = false,
     )
 
-    private fun <T> MutableList<T>.replaceOrAdd(
-        predicate: (T) -> Boolean,
-        value: T,
-    ) {
+    private fun <T> MutableList<T>.replaceOrAdd(predicate: (T) -> Boolean, value: T) {
         val idx = indexOfFirst(predicate)
         if (idx >= 0) this[idx] = value else add(value)
     }
+}
+
+private fun newPinnedId(): String {
+    return "pinned_${UUID.randomUUID()}"
 }
 
 private const val MOCK_DYNAMIC_SHORTCUT_PREFIX = "shortcut"

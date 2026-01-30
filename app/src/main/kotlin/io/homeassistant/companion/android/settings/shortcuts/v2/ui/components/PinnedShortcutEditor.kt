@@ -17,7 +17,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
@@ -27,6 +26,7 @@ import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutEditorUi
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.preview.ShortcutPreviewData
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.ShortcutEditorScreenState
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.selector.ShortcutIconPicker
+
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
 internal fun PinnedShortcutEditor(
@@ -38,10 +38,9 @@ internal fun PinnedShortcutEditor(
     onSubmit: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    val isCreated = draft.id in state.pinnedIds
     val canSubmit by remember(draft, screen.servers) {
         derivedStateOf {
-            canSubmit(draft = draft, screen = screen, requireId = true)
+            canSubmit(draft = draft, screen = screen, requireId = false)
         }
     }
     Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4)) {
@@ -69,22 +68,13 @@ internal fun PinnedShortcutEditor(
             style = HATextStyle.Body,
         )
 
-        HATextField(
-            value = draft.id,
-            onValueChange = { onDraftChange(draft.copy(id = it)) },
-            label = {
-                Text(stringResource(R.string.shortcut_pinned_id))
-            },
-            modifier = Modifier.fillMaxWidth(),
-        )
-
         ShortcutEditorForm(
             draft = draft,
             labelText = stringResource(R.string.shortcut_pinned_label),
             descriptionText = stringResource(R.string.shortcut_pinned_desc),
             screen = screen,
             onDraftChange = onDraftChange,
-            isCreated = isCreated,
+            isCreated = state.isCreated,
             canSubmit = canSubmit,
             onSubmit = onSubmit,
             onDelete = onDelete,

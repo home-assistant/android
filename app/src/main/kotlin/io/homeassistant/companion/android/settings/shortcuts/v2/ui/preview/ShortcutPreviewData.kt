@@ -50,12 +50,12 @@ internal object ShortcutPreviewData {
     }
 
     fun buildPinnedEditorState(
-        pinnedIds: ImmutableList<String> = buildPinnedIds(),
         pinnedDraft: ShortcutDraft = buildPinnedDraft(),
+        isCreated: Boolean = true,
     ): ShortcutEditorUiState.EditorState.Pinned {
         return ShortcutEditorUiState.EditorState.Pinned(
             draftSeed = pinnedDraft,
-            pinnedIds = pinnedIds,
+            isCreated = isCreated,
         )
     }
 
@@ -161,10 +161,6 @@ internal object ShortcutPreviewData {
                 isCreated = true,
             ),
         ).toImmutableList()
-    }
-
-    fun buildPinnedIds(): ImmutableList<String> {
-        return buildPinnedSummaries().map { it.id }.toImmutableList()
     }
 
     fun buildListState(

@@ -8,12 +8,12 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.shortcuts.ShortcutsRepository
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.PinResult
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ServersResult
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.empty
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.ShortcutEditAction
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.ShortcutEditorScreenState
 import javax.inject.Inject
-import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toPersistentMap
@@ -40,24 +40,18 @@ data class ShortcutEditorUiState(
         val draftSeed: ShortcutDraft
 
         @Immutable
-        data class Pinned(
-            override val draftSeed: ShortcutDraft,
-            val pinnedIds: ImmutableList<String>,
-        ) : EditorState {
+        data class Pinned(override val draftSeed: ShortcutDraft, val isCreated: Boolean) : EditorState {
             companion object {
-                fun initial() = Pinned(
-                    draftSeed = ShortcutDraft.empty(""),
-                    pinnedIds = persistentListOf(),
+                fun initial(id: String, isCreated: Boolean = false) = Pinned(
+                    draftSeed = ShortcutDraft.empty(id),
+                    isCreated = isCreated,
                 )
             }
         }
 
         @Immutable
-        data class Dynamic(
-            val selectedIndex: Int,
-            override val draftSeed: ShortcutDraft,
-            val isCreated: Boolean,
-        ) : EditorState {
+        data class Dynamic(val selectedIndex: Int, override val draftSeed: ShortcutDraft, val isCreated: Boolean) :
+            EditorState {
             companion object {
                 fun initial(index: Int) = Dynamic(
                     selectedIndex = index,
@@ -79,9 +73,7 @@ class ShortcutEditViewModel @Inject constructor(private val shortcutsRepository:
 
     private val _uiState = MutableStateFlow(ShortcutEditorUiState())
     private val _pinResultEvents = MutableSharedFlow<PinResult>(extraBufferCapacity = 1)
-    private val _deleteEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
-
-    private var currentServerId: Int = 0
+    private val _closeEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
     val uiState: StateFlow<ShortcutEditorUiState> = _uiState.stateIn(
         scope = viewModelScope,
@@ -89,7 +81,7 @@ class ShortcutEditViewModel @Inject constructor(private val shortcutsRepository:
         initialValue = _uiState.value,
     )
     val pinResultEvents = _pinResultEvents.asSharedFlow()
-    val deleteEvents = _deleteEvents.asSharedFlow()
+    val closeEvents = _closeEvents.asSharedFlow()
 
     init {
         viewModelScope.launch {
@@ -99,11 +91,13 @@ class ShortcutEditViewModel @Inject constructor(private val shortcutsRepository:
 
     private suspend fun loadData() {
         try {
-            currentServerId = shortcutsRepository.currentServerId()
-
-            val servers = shortcutsRepository.getServers().toImmutableList()
+            val serversResult = shortcutsRepository.getServers()
+            val servers = when (serversResult) {
+                is ServersResult.Success -> serversResult.servers.toImmutableList()
+                ServersResult.NoServers -> persistentListOf()
+            }
             updateScreen { it.copy(servers = servers) }
-            applyServerIdToSeed(resolveAvailableServerId())
+            applyServerIdToSeed(serversResult)
 
             supervisorScope {
                 servers.map { server ->
@@ -144,22 +138,23 @@ class ShortcutEditViewModel @Inject constructor(private val shortcutsRepository:
 
     fun openCreatePinned() {
         if (!canPinShortcuts) return
-            openPinnedEditor { state, _ -> state
+        viewModelScope.launch {
+            val serverId = resolveServerId(shortcutsRepository.getServers())
+            val draft = buildPinnedDraft(serverId = serverId)
+            updateEditor { ShortcutEditorUiState.EditorState.Pinned(draftSeed = draft, isCreated = false) }
         }
     }
 
     fun editPinned(shortcutId: String) {
         if (!canPinShortcuts) return
-        openPinnedEditor { state, pinnedShortcuts ->
-            val pinned = pinnedShortcuts.firstOrNull { it.id == shortcutId }
-            state.copy(draftSeed = pinned ?: state.draftSeed)
-        }
+        openPinnedEditor(shortcutId)
     }
 
     fun openDynamic(index: Int) {
         if (index !in 0 until maxDynamicShortcuts) return
-        setDynamicEditor(index)
         viewModelScope.launch {
+            val serverId = resolveServerId(shortcutsRepository.getServers())
+            setDynamicEditor(index, serverId)
             refreshDynamicShortcuts(updateSeed = true)
         }
     }
@@ -170,7 +165,8 @@ class ShortcutEditViewModel @Inject constructor(private val shortcutsRepository:
             val index = (0 until maxDynamicShortcuts).firstOrNull { candidate ->
                 !dynamicDrafts.containsKey(candidate)
             } ?: return@launch
-            setDynamicEditor(index)
+            val serverId = resolveServerId(shortcutsRepository.getServers())
+            setDynamicEditor(index, serverId)
             refreshDynamicShortcuts(updateSeed = true)
         }
     }
@@ -178,9 +174,12 @@ class ShortcutEditViewModel @Inject constructor(private val shortcutsRepository:
     private fun upsertPinned(draft: ShortcutDraft) {
         if (!canPinShortcuts) return
         viewModelScope.launch {
+            val isEditing = (_uiState.value.editor as? ShortcutEditorUiState.EditorState.Pinned)?.isCreated == true
             val result = shortcutsRepository.upsertPinnedShortcut(draft)
-            handlePinResult(result)
-            refreshPinnedShortcuts()
+            _pinResultEvents.emit(result)
+            if (!isEditing && result != PinResult.NotSupported) {
+                _closeEvents.emit(Unit)
+            }
         }
     }
 
@@ -189,7 +188,7 @@ class ShortcutEditViewModel @Inject constructor(private val shortcutsRepository:
         if (shortcutId.isBlank()) return
         viewModelScope.launch {
             shortcutsRepository.deletePinnedShortcut(shortcutId)
-            _deleteEvents.emit(Unit)
+            _closeEvents.emit(Unit)
         }
     }
 
@@ -206,7 +205,8 @@ class ShortcutEditViewModel @Inject constructor(private val shortcutsRepository:
         deleteDynamicShortcut(editor.selectedIndex)
     }
 
-    private fun applyServerIdToSeed(serverId: Int) {
+    private fun applyServerIdToSeed(result: ServersResult) {
+        val serverId = resolveServerId(result) ?: return
         updateEditor { editor ->
             if (editor.draftSeed.serverId != 0) {
                 return@updateEditor editor
@@ -221,20 +221,6 @@ class ShortcutEditViewModel @Inject constructor(private val shortcutsRepository:
                 }
             }
         }
-    }
-
-    private suspend fun refreshPinnedShortcuts() {
-        if (!canPinShortcuts) return
-        if (_uiState.value.editor !is ShortcutEditorUiState.EditorState.Pinned) return
-        val pinnedShortcuts = shortcutsRepository.loadPinnedShortcuts()
-        updatePinned { state ->
-            state.copy(pinnedIds = pinnedShortcuts.map { it.id }.toImmutableList())
-        }
-        Timber.d("We have ${pinnedShortcuts.size} pinned shortcuts")
-    }
-
-    private suspend fun handlePinResult(result: PinResult) {
-        _pinResultEvents.emit(result)
     }
 
     private suspend fun loadServerData(serverId: Int) {
@@ -280,13 +266,11 @@ class ShortcutEditViewModel @Inject constructor(private val shortcutsRepository:
         if (index !in 0 until maxDynamicShortcuts) return
         viewModelScope.launch {
             shortcutsRepository.deleteDynamicShortcut(index)
-            _deleteEvents.emit(Unit)
+            _closeEvents.emit(Unit)
         }
     }
 
-    private fun updateEditor(
-        updater: (ShortcutEditorUiState.EditorState) -> ShortcutEditorUiState.EditorState,
-    ) {
+    private fun updateEditor(updater: (ShortcutEditorUiState.EditorState) -> ShortcutEditorUiState.EditorState) {
         _uiState.update { state ->
             state.copy(editor = updater(state.editor))
         }
@@ -316,47 +300,53 @@ class ShortcutEditViewModel @Inject constructor(private val shortcutsRepository:
         }
     }
 
-    private fun setDynamicEditor(index: Int) {
+    private fun setDynamicEditor(index: Int, serverId: Int?) {
         updateEditor {
-            buildDynamicState(index = index, serverId = resolveAvailableServerId())
+            buildDynamicState(index = index, serverId = serverId ?: 0)
         }
     }
 
-    private fun buildPinnedState(serverId: Int): ShortcutEditorUiState.EditorState.Pinned {
-        val initial = ShortcutEditorUiState.EditorState.Pinned.initial()
-        return initial.copy(draftSeed = initial.draftSeed.copy(serverId = serverId))
+    private fun buildPinnedDraft(serverId: Int?): ShortcutDraft {
+        val draft = ShortcutDraft.empty("")
+        return if (serverId != null) draft.copy(serverId = serverId) else draft
     }
 
-    private fun openPinnedEditor(
-        updater: (ShortcutEditorUiState.EditorState.Pinned, List<ShortcutDraft>) -> ShortcutEditorUiState.EditorState.Pinned,
-    ) {
-        updateEditor { buildPinnedState(resolveAvailableServerId()) }
+    private fun openPinnedEditor(shortcutId: String) {
+        updateEditor {
+            ShortcutEditorUiState.EditorState.Pinned(
+                draftSeed = ShortcutDraft.empty(shortcutId),
+                isCreated = true,
+            )
+        }
         viewModelScope.launch {
+            val serverId = resolveServerId(shortcutsRepository.getServers())
             val pinnedShortcuts = shortcutsRepository.loadPinnedShortcuts()
-            val pinnedIds = pinnedShortcuts.map { it.id }.toImmutableList()
             updatePinned { state ->
-                updater(state, pinnedShortcuts).copy(pinnedIds = pinnedIds)
+                val pinned = pinnedShortcuts.firstOrNull { it.id == shortcutId }
+                if (pinned != null) {
+                    state.copy(draftSeed = pinned, isCreated = true)
+                } else {
+                    val draftSeed = if (serverId != null) {
+                        state.draftSeed.copy(serverId = serverId)
+                    } else {
+                        state.draftSeed
+                    }
+                    state.copy(draftSeed = draftSeed, isCreated = false)
+                }
             }
         }
     }
 
-    private fun buildDynamicState(
-        index: Int,
-        serverId: Int,
-    ): ShortcutEditorUiState.EditorState.Dynamic {
+    private fun buildDynamicState(index: Int, serverId: Int): ShortcutEditorUiState.EditorState.Dynamic {
         val initial = ShortcutEditorUiState.EditorState.Dynamic.initial(index)
         return initial.copy(draftSeed = initial.draftSeed.copy(serverId = serverId))
     }
 
-    private fun resolveAvailableServerId(): Int {
-        val servers = _uiState.value.screen.servers
-        val editorServerId = _uiState.value.editor.draftSeed.serverId
-        if (editorServerId != 0 && servers.any { it.id == editorServerId }) {
-            return editorServerId
+    private fun resolveServerId(result: ServersResult): Int? {
+        return when (result) {
+            is ServersResult.Success -> result.defaultServerId
+            ServersResult.NoServers -> null
         }
-        return servers.firstOrNull { it.id == currentServerId }?.id
-            ?: servers.firstOrNull()?.id
-            ?: 0
     }
 }
 
