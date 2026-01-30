@@ -29,7 +29,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
- * Voice interaction service that allows the app to function as the system's default assistant.
+ * Voice interaction service used when the app is set as the system's default assistant.
  *
  * When the user sets this app as their default assistant, this service is kept running by the
  * system. It can respond to:

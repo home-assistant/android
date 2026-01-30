@@ -1193,9 +1193,9 @@
     <string name="assist_shortcut">Assist shortcut</string>
     <string name="assist_start_listening">Start listening</string>
     <string name="assist_stop_listening">Stop listening</string>
-    <string name="assist_listening_title">Listening for activation</string>
+    <string name="assist_listening_title">Listening for wake word</string>
     <string name="assist_listening_wakeword">Say \"%s\" to activate Assist</string>
-    <string name="assist_listening_channel">Assist activation</string>
+    <string name="assist_listening_channel">Assist wake word</string>
     <string name="assist_listening_channel_description">Shows when the app is listening for sounds to activate Assist</string>
     <string name="not_registered">Please open the Home Assistant app and log in to start using Assist</string>
     <string name="ha_assist">HA: Assist</string>
