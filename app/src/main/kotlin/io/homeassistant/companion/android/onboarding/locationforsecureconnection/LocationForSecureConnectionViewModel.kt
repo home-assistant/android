@@ -8,8 +8,10 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.LocationForSecureConnectionRoute
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 @HiltViewModel
@@ -33,7 +35,7 @@ class LocationForSecureConnectionViewModel @VisibleForTesting constructor(
         }
     }
 
-    suspend fun allowInsecureConnection(allowInsecureConnection: Boolean) {
+    suspend fun allowInsecureConnection(allowInsecureConnection: Boolean) = withContext(Dispatchers.Main) {
         try {
             serverManager.getServer(serverId)?.let { server ->
                 serverManager.updateServer(

@@ -179,6 +179,8 @@ class HAAppTest {
             onNodeWithText(stringResource(R.string.connection_security_less_secure)).performScrollTo().performClick()
             onNodeWithText(stringResource(R.string.location_secure_connection_next)).performScrollTo().assertIsEnabled().assertIsDisplayed().performClick()
 
+            composeTestRule.waitForIdle()
+
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<FrontendRoute>() == true)
         }
     }
@@ -190,6 +192,8 @@ class HAAppTest {
 
             onNodeWithText(stringResource(R.string.connection_security_less_secure)).performScrollTo().performClick()
             onNodeWithText(stringResource(R.string.location_secure_connection_next)).performScrollTo().assertIsEnabled().assertIsDisplayed().performClick()
+
+            composeTestRule.waitForIdle()
 
             verify(exactly = 1) {
                 activityNavigator.navigate(
