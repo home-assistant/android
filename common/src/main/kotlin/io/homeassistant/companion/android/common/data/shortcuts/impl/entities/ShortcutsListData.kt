@@ -5,3 +5,5 @@ data class ShortcutsListData(
     val pinned: List<ShortcutSummary>,
     val pinnedError: ShortcutError? = null,
 )
+
+data class DynamicShortcutsData(val maxDynamicShortcuts: Int, val shortcuts: Map<Int, ShortcutDraft>)

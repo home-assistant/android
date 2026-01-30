@@ -3,6 +3,11 @@ package io.homeassistant.companion.android.common.data.shortcuts.impl.entities
 import androidx.compose.runtime.Immutable
 import com.mikepenz.iconics.typeface.IIcon
 
+private const val DYNAMIC_DRAFT_SEED_PREFIX = "dynamic_draft"
+private fun dynamicDraftSeedId(index: Int): String {
+    return "${DYNAMIC_DRAFT_SEED_PREFIX}_${index + 1}"
+}
+
 /**
  * Draft values for a shortcut editor.
  *
@@ -12,7 +17,6 @@ import com.mikepenz.iconics.typeface.IIcon
  * @param label The short label for the shortcut
  * @param description The long description for the shortcut
  * @param target The target value for the shortcut
- * @param isDirty Whether the user has edited the draft
  */
 @Immutable
 data class ShortcutDraft(
@@ -25,8 +29,6 @@ data class ShortcutDraft(
 ) {
     companion object
 }
-
-private const val DYNAMIC_DRAFT_SEED_PREFIX = "dynamic_draft"
 
 fun ShortcutDraft.Companion.empty(id: String): ShortcutDraft {
     return ShortcutDraft(
@@ -41,10 +43,6 @@ fun ShortcutDraft.Companion.empty(id: String): ShortcutDraft {
 
 fun ShortcutDraft.Companion.empty(index: Int): ShortcutDraft {
     return empty(dynamicDraftSeedId(index))
-}
-
-private fun dynamicDraftSeedId(index: Int): String {
-    return "${DYNAMIC_DRAFT_SEED_PREFIX}_${index + 1}"
 }
 
 fun ShortcutDraft.toSummary(): ShortcutSummary {
