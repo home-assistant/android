@@ -1509,12 +1509,12 @@ class WebViewActivity :
             }
             supportFragmentManager.clearFragmentResultListener(BlockInsecureFragment.RESULT_KEY)
 
-            clearHistory = !keepHistory
             val oldUrl = loadedUrl
             // It means that if we loaded an URL with a path previously and we try to load the same URL without
             // a path we don't do anything.
             val shouldLoadUrl = !url.hasSameOrigin(oldUrl) || url.hasNonRootPath()
             if (shouldLoadUrl) {
+                clearHistory = !keepHistory
                 loadedUrl = url
                 webView.loadUrl(url.toString())
                 waitForConnection()
