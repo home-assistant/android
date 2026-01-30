@@ -14,7 +14,7 @@ import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.settings.shortcuts.v2.DynamicShortcutItem
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutEditorUiState
-import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListUiState
+import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListState
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.ShortcutEditorScreenState
 import java.time.LocalDateTime
 import kotlinx.collections.immutable.ImmutableList
@@ -24,7 +24,6 @@ import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toPersistentMap
 
-private const val PREVIEW_MAX_DYNAMIC_SHORTCUTS = 5
 private const val PREVIEW_DYNAMIC_SHORTCUT_PREFIX = "shortcut"
 private const val PREVIEW_DYNAMIC_DRAFT_PREFIX = "dynamic_draft"
 
@@ -166,38 +165,18 @@ internal object ShortcutPreviewData {
             count = 2,
             type = ShortcutType.LOVELACE,
         ),
-        maxDynamicShortcuts: Int = PREVIEW_MAX_DYNAMIC_SHORTCUTS,
         pinnedSummaries: ImmutableList<ShortcutSummary> = buildPinnedSummaries(),
-        servers: ImmutableList<Server> = previewServers,
         canPinShortcuts: Boolean = true,
-    ): ShortcutsListUiState {
+    ): ShortcutsListState {
         val dynamicItems = dynamicSummaries.mapIndexed { index, summary ->
             DynamicShortcutItem(index, summary)
         }.toImmutableList()
         val pinnedItems = if (canPinShortcuts) pinnedSummaries else persistentListOf()
-        val canCreateDynamic = dynamicSummaries.size < maxDynamicShortcuts
-
-        if (isLoading) {
-            return ShortcutsListUiState.Loading(
-                canPinShortcuts = canPinShortcuts,
-                canCreateDynamic = canCreateDynamic,
-            )
-        }
-
-        return if (dynamicItems.isEmpty() && pinnedItems.isEmpty()) {
-            ShortcutsListUiState.Empty(
-                canPinShortcuts = canPinShortcuts,
-                canCreateDynamic = canCreateDynamic,
-                hasServers = servers.isNotEmpty(),
-            )
-        } else {
-            ShortcutsListUiState.Content(
-                canPinShortcuts = canPinShortcuts,
-                canCreateDynamic = canCreateDynamic,
-                dynamicItems = dynamicItems,
-                pinnedShortcuts = pinnedItems,
-            )
-        }
+        return ShortcutsListState(
+            isLoading = isLoading,
+            dynamicItems = dynamicItems,
+            pinnedShortcuts = pinnedItems,
+        )
     }
 
     val previewServers = listOf(

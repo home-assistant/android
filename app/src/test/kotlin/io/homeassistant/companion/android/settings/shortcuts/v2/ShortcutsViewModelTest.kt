@@ -67,17 +67,17 @@ class ShortcutsViewModelTest {
             advanceUntilIdle()
 
             val state = uiState.expectMostRecentItem()
-            Assertions.assertTrue(state is ShortcutsListUiState.Content)
-            val content = state as ShortcutsListUiState.Content
-            Assertions.assertTrue(content.canPinShortcuts)
-            Assertions.assertTrue(content.canCreateDynamic)
-            Assertions.assertEquals(listOf(0, 2), content.dynamicItems.map { it.index })
-            Assertions.assertEquals(1, content.pinnedShortcuts.size)
+            Assertions.assertFalse(state.isLoading)
+            Assertions.assertFalse(state.isEmpty)
+            Assertions.assertTrue(state.canPinShortcuts)
+            Assertions.assertTrue(state.canCreateDynamic)
+            Assertions.assertEquals(listOf(0, 2), state.dynamicItems.map { it.index })
+            Assertions.assertEquals(1, state.pinnedShortcuts.size)
         }
     }
 
     @Test
-    fun `Given no shortcuts and no servers when viewModel initializes then empty state has no servers`() = runTest {
+    fun `Given no shortcuts and no servers when viewModel initializes then empty state is shown`() = runTest {
         coEvery { shortcutsRepository.getServers() } returns ShortcutResult.Error(
             ShortcutError.NoServers,
         )
@@ -98,9 +98,7 @@ class ShortcutsViewModelTest {
             advanceUntilIdle()
 
             val state = uiState.expectMostRecentItem()
-            Assertions.assertTrue(state is ShortcutsListUiState.Empty)
-            val empty = state as ShortcutsListUiState.Empty
-            Assertions.assertFalse(empty.hasServers)
+            Assertions.assertTrue(state.isEmpty)
         }
     }
 

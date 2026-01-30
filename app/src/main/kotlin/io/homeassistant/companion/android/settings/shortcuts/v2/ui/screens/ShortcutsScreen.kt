@@ -56,7 +56,7 @@ import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.Sh
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutType
 import io.homeassistant.companion.android.settings.shortcuts.v2.DynamicShortcutItem
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListAction
-import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListUiState
+import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListState
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.EmptyStateContent
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.preview.ShortcutPreviewData
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
@@ -74,7 +74,7 @@ import kotlinx.collections.immutable.toImmutableList
 @RequiresApi(Build.VERSION_CODES.N_MR1) // TODO: Check why do we need N_MR1 here
 @Composable
 internal fun ShortcutsScreen(
-    state: ShortcutsListUiState,
+    state: ShortcutsListState,
     dispatch: (ShortcutsListAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -95,13 +95,12 @@ internal fun ShortcutsScreen(
         modifier = modifier,
     ) { contentPadding ->
         Box(modifier = Modifier.padding(contentPadding)) {
-            when (state) {
-                is ShortcutsListUiState.Loading -> LoadingState()
-                is ShortcutsListUiState.Empty -> {
-                    EmptyStateContent(hasServers = state.hasServers)
+            when {
+                state.isLoading -> LoadingState()
+                state.isEmpty -> {
+                    EmptyStateContent(hasServers = true)
                 }
-
-                is ShortcutsListUiState.Content -> ShortcutsList(
+                else -> ShortcutsList(
                     dynamicItems = state.dynamicItems,
                     pinnedItems = state.pinnedShortcuts,
                     onEditDynamic = { dispatch(ShortcutsListAction.EditDynamic(it)) },
@@ -113,8 +112,6 @@ internal fun ShortcutsScreen(
 
     if (showCreateDialog) {
         CreateShortcutDialog(
-            canCreateDynamic = state.canCreateDynamic,
-            canCreatePinned = state.canPinShortcuts,
             onCreateDynamic = {
                 dismissCreateDialog()
                 dispatch(ShortcutsListAction.CreateDynamic)
@@ -248,8 +245,6 @@ private fun ShortcutListIcon(iconName: String?, modifier: Modifier = Modifier) {
 
 @Composable
 private fun CreateShortcutDialog(
-    canCreateDynamic: Boolean,
-    canCreatePinned: Boolean,
     onCreateDynamic: () -> Unit,
     onCreatePinned: () -> Unit,
     onDismissRequest: () -> Unit,
@@ -263,9 +258,7 @@ private fun CreateShortcutDialog(
                     ShortcutTypeOptionRow(
                         icon = CommunityMaterial.Icon2.cmd_flash,
                         label = stringResource(R.string.shortcut_type_dynamic),
-                        subtitle = canCreateDynamic
-                            .takeIf { !it }
-                            ?.let { stringResource(R.string.add_to_shortcut_limit) },
+                        subtitle = null,
                         enabled = true,
                         onClick = onCreateDynamic,
                     )
@@ -274,9 +267,7 @@ private fun CreateShortcutDialog(
                     ShortcutTypeOptionRow(
                         icon = CommunityMaterial.Icon3.cmd_view_dashboard,
                         label = stringResource(R.string.shortcut_type_pinned),
-                        subtitle = canCreatePinned
-                            .takeIf { !it }
-                            ?.let { stringResource(R.string.shortcut_pin_not_supported) },
+                        subtitle = null,
                         enabled = true,
                         onClick = onCreatePinned,
                     )
@@ -357,7 +348,6 @@ private fun ShortcutsScreenPreview() {
             state = ShortcutPreviewData.buildListState(
                 dynamicSummaries = dynamicSummaries,
                 pinnedSummaries = pinnedSummaries,
-                maxDynamicShortcuts = 6,
             ),
             dispatch = {},
         )
@@ -385,23 +375,6 @@ private fun ShortcutsScreenEmptyPreview() {
             state = ShortcutPreviewData.buildListState(
                 dynamicSummaries = persistentListOf(),
                 pinnedSummaries = persistentListOf(),
-                servers = ShortcutPreviewData.previewServers,
-            ),
-            dispatch = {},
-        )
-    }
-}
-
-@RequiresApi(Build.VERSION_CODES.N_MR1)
-@Preview(name = "Manage Shortcuts Empty (No Servers)")
-@Composable
-private fun ShortcutsScreenEmptyNoServersPreview() {
-    HAThemeForPreview {
-        ShortcutsScreen(
-            state = ShortcutPreviewData.buildListState(
-                dynamicSummaries = persistentListOf(),
-                pinnedSummaries = persistentListOf(),
-                servers = persistentListOf(),
             ),
             dispatch = {},
         )
