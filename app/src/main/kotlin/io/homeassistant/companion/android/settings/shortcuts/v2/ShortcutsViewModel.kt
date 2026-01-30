@@ -27,9 +27,9 @@ internal data class DynamicShortcutItem(val index: Int, val summary: ShortcutSum
 internal data class ShortcutsListState(
     val isLoading: Boolean = true,
     val dynamicItems: ImmutableList<DynamicShortcutItem> = persistentListOf(),
-    val pinnedShortcuts: ImmutableList<ShortcutSummary> = persistentListOf(),
+    val pinnedItems: ImmutableList<ShortcutSummary> = persistentListOf(),
 ) {
-    val isEmpty: Boolean get() = dynamicItems.isEmpty() && pinnedShortcuts.isEmpty()
+    val isEmpty: Boolean get() = dynamicItems.isEmpty() && pinnedItems.isEmpty()
 }
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
@@ -71,7 +71,7 @@ internal class ShortcutsViewModel @Inject constructor(private val shortcutsRepos
             _uiState.value = ShortcutsListState(
                 isLoading = false,
                 dynamicItems = dynamicItems,
-                pinnedShortcuts = listData.pinned.toImmutableList(),
+                pinnedItems = listData.pinned.toImmutableList(),
             )
         }
     }

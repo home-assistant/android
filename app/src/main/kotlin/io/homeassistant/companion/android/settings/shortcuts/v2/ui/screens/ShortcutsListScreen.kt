@@ -52,9 +52,7 @@ import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutSummary
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutType
-import io.homeassistant.companion.android.settings.shortcuts.v2.DynamicShortcutItem
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListAction
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListState
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.EmptyStateContent
@@ -63,7 +61,6 @@ import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
-import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 
@@ -101,8 +98,7 @@ internal fun ShortcutsListScreen(
                     EmptyStateContent(hasServers = true)
                 }
                 else -> ShortcutsList(
-                    dynamicItems = state.dynamicItems,
-                    pinnedItems = state.pinnedShortcuts,
+                    state = state,
                     onEditDynamic = { dispatch(ShortcutsListAction.EditDynamic(it)) },
                     onEditPinned = { dispatch(ShortcutsListAction.EditPinned(it)) },
                 )
@@ -136,12 +132,10 @@ private fun LoadingState() {
 }
 
 @Composable
-private fun ShortcutsList(
-    dynamicItems: ImmutableList<DynamicShortcutItem>,
-    pinnedItems: ImmutableList<ShortcutSummary>,
-    onEditDynamic: (Int) -> Unit,
-    onEditPinned: (String) -> Unit,
-) {
+private fun ShortcutsList(state: ShortcutsListState, onEditDynamic: (Int) -> Unit, onEditPinned: (String) -> Unit) {
+    val pinnedItems = state.pinnedItems
+    val dynamicItems = state.dynamicItems
+
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         contentPadding = PaddingValues(all = HADimens.SPACE4) +

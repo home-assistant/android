@@ -175,7 +175,7 @@ internal object ShortcutPreviewData {
         return ShortcutsListState(
             isLoading = isLoading,
             dynamicItems = dynamicItems,
-            pinnedShortcuts = pinnedItems,
+            pinnedItems = pinnedItems,
         )
     }
 

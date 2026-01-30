@@ -72,7 +72,7 @@ class ShortcutsViewModelTest {
             Assertions.assertTrue(state.canPinShortcuts)
             Assertions.assertTrue(state.canCreateDynamic)
             Assertions.assertEquals(listOf(0, 2), state.dynamicItems.map { it.index })
-            Assertions.assertEquals(1, state.pinnedShortcuts.size)
+            Assertions.assertEquals(1, state.pinnedItems.size)
         }
     }
 
