@@ -15,7 +15,7 @@ import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject
 
-class WebViewShortcutFactory @Inject constructor(
+internal class WebViewShortcutFactory @Inject constructor(
     @ApplicationContext private val app: Context,
     private val shortcutIntentCodec: ShortcutIntentCodec,
 ) : ShortcutFactory {
