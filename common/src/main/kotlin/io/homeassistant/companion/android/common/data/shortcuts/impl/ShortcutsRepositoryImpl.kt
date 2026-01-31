@@ -72,7 +72,7 @@ internal class ShortcutsRepositoryImpl @Inject constructor(
 
     private suspend fun currentServerId(): Int = serverManager.getServer()?.id ?: 0
 
-    override suspend fun getServers(): ShortcutResult<ServersData> {
+    private suspend fun getServers(): ShortcutResult<ServersData> {
         val servers = serverManager.servers()
         if (servers.isEmpty()) {
             return ShortcutResult.Error(ShortcutError.NoServers)

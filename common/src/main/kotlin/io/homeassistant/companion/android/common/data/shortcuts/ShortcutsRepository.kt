@@ -3,16 +3,12 @@ package io.homeassistant.companion.android.common.data.shortcuts
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.DynamicEditorData
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.PinResult
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.PinnedEditorData
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ServersData
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutEditorData
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutResult
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutsListData
 
 interface ShortcutsRepository {
-    // Server metadata
-    suspend fun getServers(): ShortcutResult<ServersData>
-
     // Shortcuts list (dynamic + pinned)
     suspend fun loadShortcutsList(): ShortcutResult<ShortcutsListData>
 
