@@ -53,7 +53,7 @@ private object DynamicShortcutId {
 }
 
 @Singleton
-internal class ShortcutsRepositoryImpl @Inject constructor(
+class ShortcutsRepositoryImpl @Inject constructor(
     @ApplicationContext private val app: Context,
     // TODO Check warning: See https://youtrack.jetbrains.com/issue/KT-73255 for more details.
     private val serverManager: ServerManager,
