@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.settings.server
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -39,23 +38,23 @@ fun ServerChooserView(servers: List<Server>, onServerSelected: (Int) -> Unit, mo
 
 @Composable
 fun ServerChooserRow(server: Server, onServerSelected: (Int) -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier = modifier) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = 56.dp)
+            .clickable { onServerSelected(server.id) }
+            .padding(horizontal = 16.dp),
+    ) {
+        Text(server.friendlyName)
+        Icon(
+            imageVector = Icons.AutoMirrored.Default.ArrowForwardIos,
+            contentDescription = null,
             modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 56.dp)
-                .clickable { onServerSelected(server.id) }
-                .padding(horizontal = 16.dp),
-        ) {
-            Text(server.friendlyName)
-            Icon(
-                imageVector = Icons.AutoMirrored.Default.ArrowForwardIos,
-                contentDescription = null,
-                modifier = Modifier.size(24.dp).padding(4.dp),
-            )
-        }
-        Divider(modifier = Modifier.padding(horizontal = 16.dp))
+                .size(24.dp)
+                .padding(4.dp),
+        )
     }
+    Divider(modifier = Modifier.padding(horizontal = 16.dp))
 }

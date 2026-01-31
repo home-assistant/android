@@ -4,7 +4,6 @@ import android.content.Intent
 import android.os.Build
 import android.provider.Settings
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Icon
@@ -25,30 +24,30 @@ import io.homeassistant.companion.android.common.R
 @Composable
 fun InfoNotification(infoString: Int, channelId: String, buttonString: Int, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    Column(modifier = modifier) {
-        Icon(
-            Icons.Outlined.Info,
-            contentDescription = stringResource(id = R.string.info),
-            modifier = Modifier.padding(top = 40.dp),
+    Icon(
+        Icons.Outlined.Info,
+        contentDescription = stringResource(id = R.string.info),
+        modifier = Modifier.padding(top = 40.dp),
+    )
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.padding(top = 20.dp),
+    ) {
+        Text(
+            text = stringResource(id = infoString),
+            fontSize = 15.sp,
         )
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(top = 20.dp),
-        ) {
-            Text(
-                text = stringResource(id = infoString),
-                fontSize = 15.sp,
-            )
-        }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = {
+    }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        TextButton(
+            onClick = {
                 val intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
                 intent.putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
                 intent.putExtra(Settings.EXTRA_CHANNEL_ID, channelId)
                 context.startActivity(intent)
-            }) {
-                Text(stringResource(buttonString))
-            }
+            },
+        ) {
+            Text(stringResource(buttonString))
         }
     }
 }

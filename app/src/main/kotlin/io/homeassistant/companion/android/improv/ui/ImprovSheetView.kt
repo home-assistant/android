@@ -92,8 +92,7 @@ fun ImprovSheetView(
         ) {
             if (selectedAddress != null && !submittedWifi) {
                 ImprovWifiInput(
-                    activeSsid = if (
-                        screenState.activeSsid?.isNotBlank() == true &&
+                    activeSsid = if (screenState.activeSsid?.isNotBlank() == true &&
                         (
                             Build.VERSION.SDK_INT < Build.VERSION_CODES.R ||
                                 screenState.activeSsid !== WifiManager.UNKNOWN_SSID
@@ -159,7 +158,9 @@ fun ImprovSheetView(
                             commonR.string.state_unknown
                         },
                     ),
-                    modifier = Modifier.fillMaxWidth(0.8f).padding(top = 16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .padding(top = 16.dp),
                     textAlign = TextAlign.Center,
                 )
             }
@@ -169,24 +170,24 @@ fun ImprovSheetView(
 
 @Composable
 fun ImprovDeviceRow(device: ImprovDevice, onClick: (ImprovDevice) -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier = modifier) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .clickable { onClick(device) },
+    ) {
+        Text(device.name.takeUnless { it.isNullOrBlank() } ?: device.address)
+        Icon(
+            imageVector = Icons.AutoMirrored.Default.ArrowForwardIos,
+            contentDescription = null,
             modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .clickable { onClick(device) },
-        ) {
-            Text(device.name.takeUnless { it.isNullOrBlank() } ?: device.address)
-            Icon(
-                imageVector = Icons.AutoMirrored.Default.ArrowForwardIos,
-                contentDescription = null,
-                modifier = Modifier.size(24.dp).padding(4.dp),
-            )
-        }
-        Divider()
+                .size(24.dp)
+                .padding(4.dp),
+        )
     }
+    Divider()
 }
 
 @Composable
@@ -211,11 +212,13 @@ fun ImprovWifiInput(activeSsid: String?, onSubmit: (String, String) -> Unit, mod
             singleLine = true,
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = {
-                if (ssidInput.isNotBlank() && passwordInput.isNotBlank()) {
-                    onSubmit(ssidInput, passwordInput)
-                }
-            }),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    if (ssidInput.isNotBlank() && passwordInput.isNotBlank()) {
+                        onSubmit(ssidInput, passwordInput)
+                    }
+                },
+            ),
             trailingIcon = {
                 val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                 val description =
@@ -227,7 +230,9 @@ fun ImprovWifiInput(activeSsid: String?, onSubmit: (String, String) -> Unit, mod
             modifier = Modifier.fillMaxWidth(),
         )
         Button(
-            modifier = Modifier.padding(vertical = 8.dp).align(Alignment.CenterHorizontally),
+            modifier = Modifier
+                .padding(vertical = 8.dp)
+                .align(Alignment.CenterHorizontally),
             enabled = ssidInput.isNotBlank(),
             onClick = { onSubmit(ssidInput, passwordInput) },
         ) {
@@ -238,24 +243,21 @@ fun ImprovWifiInput(activeSsid: String?, onSubmit: (String, String) -> Unit, mod
 
 @Composable
 fun ImprovTextWithIcon(icon: IIcon, text: String, onButtonClick: () -> Unit, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Image(
-            asset = icon,
-            contentDescription = null,
-            colorFilter = ColorFilter.tint(LocalContentColor.current),
-            modifier = Modifier.size(40.dp),
-        )
-        Text(
-            text = text,
-            modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 16.dp),
-            textAlign = TextAlign.Center,
-        )
-        Button(onButtonClick) {
-            Text(stringResource(commonR.string.continue_connect))
-        }
+    Image(
+        asset = icon,
+        contentDescription = null,
+        colorFilter = ColorFilter.tint(LocalContentColor.current),
+        modifier = Modifier.size(40.dp),
+    )
+    Text(
+        text = text,
+        modifier = modifier
+            .fillMaxWidth(0.8f)
+            .padding(vertical = 16.dp),
+        textAlign = TextAlign.Center,
+    )
+    Button(onButtonClick) {
+        Text(stringResource(commonR.string.continue_connect))
     }
 }
 

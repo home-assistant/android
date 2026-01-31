@@ -976,7 +976,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/compose/InfoNotification.kt"
-            line="24"
+            line="23"
             column="1"/>
     </issue>
 
@@ -1108,7 +1108,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/views/ManageShortcutsView.kt"
-            line="50"
+            line="49"
             column="1"/>
     </issue>
 
@@ -1119,7 +1119,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/views/ManageShortcutsView.kt"
-            line="86"
+            line="85"
             column="1"/>
     </issue>
 
@@ -1130,7 +1130,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/views/ManageShortcutsView.kt"
-            line="355"
+            line="352"
             column="1"/>
     </issue>
 
@@ -1141,7 +1141,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/views/ManageShortcutsView.kt"
-            line="367"
+            line="364"
             column="1"/>
     </issue>
 
@@ -2833,6 +2833,61 @@
     </issue>
 
     <issue
+        id="ComposeMultipleContentEmitters"
+        message="Composable functions should only be emitting content into the composition from one source at their top level.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#do-not-emit-multiple-pieces-of-content for more information."
+        errorLine1="@Composable"
+        errorLine2="^">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/improv/ui/ImprovSheetView.kt"
+            line="171"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeMultipleContentEmitters"
+        message="Composable functions should only be emitting content into the composition from one source at their top level.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#do-not-emit-multiple-pieces-of-content for more information."
+        errorLine1="@Composable"
+        errorLine2="^">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/improv/ui/ImprovSheetView.kt"
+            line="244"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeMultipleContentEmitters"
+        message="Composable functions should only be emitting content into the composition from one source at their top level.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#do-not-emit-multiple-pieces-of-content for more information."
+        errorLine1="@RequiresApi(Build.VERSION_CODES.O)"
+        errorLine2="^">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/compose/InfoNotification.kt"
+            line="23"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeMultipleContentEmitters"
+        message="Composable functions should only be emitting content into the composition from one source at their top level.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#do-not-emit-multiple-pieces-of-content for more information."
+        errorLine1="@RequiresApi(Build.VERSION_CODES.N_MR1)"
+        errorLine2="^">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/views/ManageShortcutsView.kt"
+            line="85"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeMultipleContentEmitters"
+        message="Composable functions should only be emitting content into the composition from one source at their top level.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#do-not-emit-multiple-pieces-of-content for more information."
+        errorLine1="@Composable"
+        errorLine2="^">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/server/ServerChooserView.kt"
+            line="39"
+            column="1"/>
+    </issue>
+
+    <issue
         id="ComposePreviewPublic"
         message="Composables annotated with @Preview that are used only for previewing the UI should not be public.See https://slackhq.github.io/compose-lints/rules/#preview-composables-should-not-be-public for more information."
         errorLine1="@Preview"
@@ -3169,7 +3224,7 @@
         errorLine2="                               ~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/server/ServerChooserView.kt"
-            line="28"
+            line="27"
             column="32"/>
     </issue>
 
