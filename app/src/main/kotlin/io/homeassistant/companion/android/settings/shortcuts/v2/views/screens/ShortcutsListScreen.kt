@@ -1,13 +1,15 @@
 package io.homeassistant.companion.android.settings.shortcuts.v2.views.screens
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -32,19 +34,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.mikepenz.iconics.compose.IconicsPainter
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.compose.composable.HALoading
-import io.homeassistant.companion.android.common.compose.theme.HABorderWidth
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
@@ -59,11 +62,14 @@ import io.homeassistant.companion.android.settings.shortcuts.v2.views.components
 import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.NotSupportedStateContent
 import io.homeassistant.companion.android.settings.shortcuts.v2.views.preview.ShortcutPreviewData
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
+import io.homeassistant.companion.android.util.compose.screenWidth
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+
+private val COMPACT_WIDTH_BREAKPOINT = 600.dp
 
 /**
  * Pure UI composable for the Manage Shortcuts screen.
@@ -143,9 +149,11 @@ private fun LoadingState() {
 private fun ShortcutsList(state: ShortcutsListState, onEditDynamic: (Int) -> Unit, onEditPinned: (String) -> Unit) {
     val pinnedItems = state.pinnedItems
     val dynamicItems = state.dynamicItems
+    val isCompactScreen = screenWidth() < COMPACT_WIDTH_BREAKPOINT
+    val columnsCount = if (isCompactScreen) 2 else 3
 
     LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
+        columns = GridCells.Fixed(columnsCount),
         contentPadding = PaddingValues(all = HADimens.SPACE4) +
             safeBottomPaddingValues(applyHorizontal = false) +
             PaddingValues(bottom = HADimens.SPACE18),
@@ -198,25 +206,42 @@ private fun SectionHeader(text: String) {
 @Composable
 private fun ShortcutGridItem(label: String, iconName: String?, onClick: () -> Unit) {
     val colors = LocalHAColorScheme.current
+    val isCompactScreen = screenWidth() < COMPACT_WIDTH_BREAKPOINT
+    val badgeSize = if (isCompactScreen) HADimens.SPACE12 else HADimens.SPACE14
+    val iconSize = if (isCompactScreen) HADimens.SPACE7 else HADimens.SPACE9
+    val labelGap = HADimens.SPACE3
     Surface(
         onClick = onClick,
         shape = MaterialTheme.shapes.large,
-        border = BorderStroke(HABorderWidth.S, colors.colorBorderNeutralQuiet),
         color = colors.colorSurfaceLow,
         contentColor = colors.colorTextPrimary,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(1.1f),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = HADimens.SPACE3, vertical = HADimens.SPACE3),
-            verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
+                .padding(horizontal = HADimens.SPACE3, vertical = HADimens.SPACE4),
+            verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            ShortcutListIcon(
-                iconName = iconName,
-                modifier = Modifier.size(HADimens.SPACE7),
-            )
+            Box(
+                modifier = Modifier
+                    .size(badgeSize)
+                    .background(
+                        color = colors.colorFillPrimaryQuietResting,
+                        shape = MaterialTheme.shapes.large,
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                ShortcutListIcon(
+                    iconName = iconName,
+                    modifier = Modifier.size(iconSize),
+                    tint = colors.colorFillPrimaryLoudResting,
+                )
+            }
+            Spacer(modifier = Modifier.size(labelGap))
             Text(
                 text = label,
                 style = HATextStyle.BodyMedium,
@@ -231,7 +256,7 @@ private fun ShortcutGridItem(label: String, iconName: String?, onClick: () -> Un
 }
 
 @Composable
-private fun ShortcutListIcon(iconName: String?, modifier: Modifier = Modifier) {
+private fun ShortcutListIcon(iconName: String?, tint: Color, modifier: Modifier = Modifier) {
     val icon = remember(iconName) { iconName?.let(CommunityMaterial::getIconByMdiName) }
     val painter = if (icon != null) {
         remember(icon) { IconicsPainter(icon) }
@@ -242,6 +267,7 @@ private fun ShortcutListIcon(iconName: String?, modifier: Modifier = Modifier) {
         painter = painter,
         contentDescription = null, // TODO: Add content description
         modifier = modifier,
+        tint = tint,
     )
 }
 
