@@ -12,6 +12,7 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import java.net.URL
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
@@ -70,6 +71,7 @@ class NetworkStatusMonitorImplTest {
     fun `Given no active network when monitoring starts then state is UNAVAILABLE`() = runTest {
         // Given
         every { networkHelper.hasActiveNetwork() } returns false
+        every { networkHelper.isNetworkValidated() } returns false
 
         // When
         val result = networkMonitor.observeNetworkStatus(connectionStateProvider).first()
@@ -79,7 +81,7 @@ class NetworkStatusMonitorImplTest {
     }
 
     @Test
-    fun `Given on local setup when active network then state is READY_LOCAL`() = runTest {
+    fun `Given on local setup when active network then state is READY_INTERNAL`() = runTest {
         // Given
         every { networkHelper.hasActiveNetwork() } returns true
         every { networkHelper.isNetworkValidated() } returns false
@@ -89,11 +91,11 @@ class NetworkStatusMonitorImplTest {
         val result = networkMonitor.observeNetworkStatus(connectionStateProvider).first()
 
         // Then
-        assertEquals(NetworkState.READY_LOCAL, result)
+        assertEquals(NetworkState.READY_INTERNAL, result)
     }
 
     @Test
-    fun `Given on observing network on external setup when validated network then state is READY_REMOTE`() = runTest {
+    fun `Given on observing network on external setup when validated network then state is READY_NET_VALIDATED`() = runTest {
         // Given
         every { networkHelper.hasActiveNetwork() } returns true
         coEvery { connectionStateProvider.isInternal(false) } returns false
@@ -103,14 +105,15 @@ class NetworkStatusMonitorImplTest {
         val result = networkMonitor.observeNetworkStatus(connectionStateProvider).first()
 
         // Then
-        assertEquals(NetworkState.READY_REMOTE, result)
+        assertEquals(NetworkState.READY_NET_VALIDATED, result)
     }
 
     @Test
-    fun `Given observing network when network exists but not validated then state is CONNECTING`() = runTest {
+    fun `Given observing network when network exists but not validated and no external URL then state is CONNECTING`() = runTest {
         every { networkHelper.hasActiveNetwork() } returns true
         coEvery { connectionStateProvider.isInternal(false) } returns false
         every { networkHelper.isNetworkValidated() } returns false
+        coEvery { connectionStateProvider.getExternalUrl() } returns null
 
         val result = networkMonitor.observeNetworkStatus(connectionStateProvider).first()
 
@@ -118,7 +121,52 @@ class NetworkStatusMonitorImplTest {
     }
 
     @Test
-    fun `Given network becomes ready when callback triggered then state updates from UNAVAILABLE to READY_LOCAL`() = runTest {
+    fun `Given LAN-only network when network is not validated but external URL is local IP then state is READY_NET_LOCAL (issue 6099)`() = runTest {
+        // Given - Simulating a LAN-only network without internet (like an isolated IoT VLAN)
+        every { networkHelper.hasActiveNetwork() } returns true
+        coEvery { connectionStateProvider.isInternal(false) } returns false
+        every { networkHelper.isNetworkValidated() } returns false // Network not validated because no internet
+        coEvery { connectionStateProvider.getExternalUrl() } returns URL("http://192.168.1.100:8123") // Local IP address
+
+        // When
+        val result = networkMonitor.observeNetworkStatus(connectionStateProvider).first()
+
+        // Then - Should be READY_NET_LOCAL instead of stuck in CONNECTING
+        assertEquals(NetworkState.READY_NET_LOCAL, result)
+    }
+
+    @Test
+    fun `Given getExternalUrl throws when network is not validated then state is CONNECTING`() = runTest {
+        // Given - getExternalUrl throws an exception
+        every { networkHelper.hasActiveNetwork() } returns true
+        coEvery { connectionStateProvider.isInternal(false) } returns false
+        every { networkHelper.isNetworkValidated() } returns false
+        coEvery { connectionStateProvider.getExternalUrl() } throws RuntimeException("Server not found")
+
+        // When
+        val result = networkMonitor.observeNetworkStatus(connectionStateProvider).first()
+
+        // Then - Should fall back to CONNECTING
+        assertEquals(NetworkState.CONNECTING, result)
+    }
+
+    @Test
+    fun `Given public URL when network is not validated then state is CONNECTING`() = runTest {
+        // Given - Public URL that requires internet validation
+        every { networkHelper.hasActiveNetwork() } returns true
+        coEvery { connectionStateProvider.isInternal(false) } returns false
+        every { networkHelper.isNetworkValidated() } returns false
+        coEvery { connectionStateProvider.getExternalUrl() } returns URL("https://my-ha.duckdns.org") // Public URL
+
+        // When
+        val result = networkMonitor.observeNetworkStatus(connectionStateProvider).first()
+
+        // Then - Should wait for validation (CONNECTING) for public URLs
+        assertEquals(NetworkState.CONNECTING, result)
+    }
+
+    @Test
+    fun `Given network becomes ready when callback triggered then state updates from UNAVAILABLE to READY_INTERNAL`() = runTest {
         every { networkHelper.hasActiveNetwork() } returnsMany listOf(false, true)
         coEvery { connectionStateProvider.isInternal(any()) } returns true
         every { networkHelper.isNetworkValidated() } returns false
@@ -131,13 +179,15 @@ class NetworkStatusMonitorImplTest {
         callbackSlot.captured.onAvailable(network)
         advanceUntilIdle()
         job.cancel()
-        assertEquals(listOf(NetworkState.UNAVAILABLE, NetworkState.READY_LOCAL), states)
+        assertEquals(listOf(NetworkState.UNAVAILABLE, NetworkState.READY_INTERNAL), states)
     }
 
     @Test
-    fun `Given network becomes ready when callback triggered then state updates from UNAVAILABLE to READY_REMOTE`() = runTest {
+    fun `Given network becomes ready when callback triggered then state updates from UNAVAILABLE to READY_NET_VALIDATED`() = runTest {
         coEvery { connectionStateProvider.isInternal(false) } returns false
         every { networkHelper.hasActiveNetwork() } returnsMany listOf(false, true)
+        coEvery { connectionStateProvider.getExternalUrl() } returns null
+        every { networkHelper.isNetworkValidated() } returnsMany listOf(false, true)
 
         val states = mutableListOf<NetworkState>()
         val job = launch {
@@ -145,10 +195,9 @@ class NetworkStatusMonitorImplTest {
         }
         advanceUntilIdle()
 
-        every { networkHelper.isNetworkValidated() } returns true
         callbackSlot.captured.onAvailable(network)
         advanceUntilIdle()
         job.cancel()
-        assertEquals(listOf(NetworkState.UNAVAILABLE, NetworkState.READY_REMOTE), states)
+        assertEquals(listOf(NetworkState.UNAVAILABLE, NetworkState.READY_NET_VALIDATED), states)
     }
 }
