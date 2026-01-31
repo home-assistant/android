@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.settings.shortcuts.v2
 import app.cash.turbine.turbineScope
 import io.homeassistant.companion.android.common.data.shortcuts.ShortcutsRepository
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.DynamicShortcutsData
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ServersData
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutError
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutResult
@@ -42,9 +41,6 @@ class ShortcutsViewModelTest {
 
     @BeforeEach
     fun setup() {
-        coEvery { shortcutsRepository.getServers() } returns ShortcutResult.Success(
-            ServersData(listOf(server), server.id),
-        )
         coEvery { shortcutsRepository.loadShortcutsList() } returns ShortcutResult.Success(
             ShortcutsListData(
                 dynamic = DynamicShortcutsData(
@@ -60,7 +56,7 @@ class ShortcutsViewModelTest {
     }
 
     @Test
-    fun `Given shortcuts when viewModel initializes then content state is populated`() = runTest {
+    fun `Given shortcuts when init then state has items`() = runTest {
         val viewModel = ShortcutsViewModel(shortcutsRepository)
         turbineScope {
             val uiState = viewModel.uiState.testIn(backgroundScope)
@@ -68,19 +64,38 @@ class ShortcutsViewModelTest {
 
             val state = uiState.expectMostRecentItem()
             Assertions.assertFalse(state.isLoading)
+            Assertions.assertFalse(state.isError)
             Assertions.assertFalse(state.isEmpty)
-            Assertions.assertTrue(state.canPinShortcuts)
-            Assertions.assertTrue(state.canCreateDynamic)
+            Assertions.assertTrue(state.isPinSupported)
             Assertions.assertEquals(listOf(0, 2), state.dynamicItems.map { it.index })
             Assertions.assertEquals(1, state.pinnedItems.size)
         }
     }
 
     @Test
-    fun `Given no shortcuts and no servers when viewModel initializes then empty state is shown`() = runTest {
-        coEvery { shortcutsRepository.getServers() } returns ShortcutResult.Error(
-            ShortcutError.NoServers,
+    fun `Given empty shortcuts when init then empty state shown`() = runTest {
+        coEvery { shortcutsRepository.loadShortcutsList() } returns ShortcutResult.Success(
+            ShortcutsListData(
+                dynamic = DynamicShortcutsData(
+                    maxDynamicShortcuts = 5,
+                    shortcuts = emptyMap(),
+                ),
+                pinned = emptyList(),
+            ),
         )
+
+        val viewModel = ShortcutsViewModel(shortcutsRepository)
+        turbineScope {
+            val uiState = viewModel.uiState.testIn(backgroundScope)
+            advanceUntilIdle()
+
+            val state = uiState.expectMostRecentItem()
+            Assertions.assertTrue(state.isEmpty)
+        }
+    }
+
+    @Test
+    fun `Given pinned not supported when init then pin support is false`() = runTest {
         coEvery { shortcutsRepository.loadShortcutsList() } returns ShortcutResult.Success(
             ShortcutsListData(
                 dynamic = DynamicShortcutsData(
@@ -98,7 +113,26 @@ class ShortcutsViewModelTest {
             advanceUntilIdle()
 
             val state = uiState.expectMostRecentItem()
-            Assertions.assertTrue(state.isEmpty)
+            Assertions.assertFalse(state.isLoading)
+            Assertions.assertFalse(state.isError)
+            Assertions.assertFalse(state.isPinSupported)
+        }
+    }
+
+    @Test
+    fun `Given load error when init then error state shown`() = runTest {
+        coEvery { shortcutsRepository.loadShortcutsList() } returns ShortcutResult.Error(
+            ShortcutError.NoServers,
+        )
+
+        val viewModel = ShortcutsViewModel(shortcutsRepository)
+        turbineScope {
+            val uiState = viewModel.uiState.testIn(backgroundScope)
+            advanceUntilIdle()
+
+            val state = uiState.expectMostRecentItem()
+            Assertions.assertFalse(state.isLoading)
+            Assertions.assertTrue(state.isError)
         }
     }
 

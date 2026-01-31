@@ -5,6 +5,7 @@ import com.android.tools.screenshot.PreviewTest
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutError
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutTargetValue
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
@@ -14,17 +15,16 @@ import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutEditorUiState
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutError
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import java.time.LocalDateTime
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.toImmutableList
 
-private const val defaultServerId = 1
+private const val DEFAULT_SERVER_ID = 1
 private val fixedTimestamp: LocalDateTime = LocalDateTime.of(2024, 1, 1, 12, 0)
 private val mockServers = listOf(
     Server(
-        id = defaultServerId,
+        id = DEFAULT_SERVER_ID,
         _name = "Home",
         connection = ServerConnectionInfo(externalUrl = "https://home.example.com"),
         session = ServerSessionInfo(),
@@ -33,7 +33,7 @@ private val mockServers = listOf(
 ).toImmutableList()
 private val mockLovelaceDraft = ShortcutDraft(
     id = "dynamic_draft_1",
-    serverId = defaultServerId,
+    serverId = DEFAULT_SERVER_ID,
     selectedIconName = null,
     label = "Shortcut",
     description = "Description",
@@ -41,7 +41,7 @@ private val mockLovelaceDraft = ShortcutDraft(
 )
 private val mockEntityDraft = ShortcutDraft(
     id = "dynamic_draft_1",
-    serverId = defaultServerId,
+    serverId = DEFAULT_SERVER_ID,
     selectedIconName = null,
     label = "Lights",
     description = "Toggle living room lights",
@@ -49,14 +49,14 @@ private val mockEntityDraft = ShortcutDraft(
 )
 private val mockPinnedDraft = ShortcutDraft(
     id = "pinned_1",
-    serverId = defaultServerId,
+    serverId = DEFAULT_SERVER_ID,
     selectedIconName = null,
     label = "Pinned",
     description = "Pinned shortcut",
     target = ShortcutTargetValue.Lovelace("/lovelace/pinned"),
 )
 private val mockEntitiesByServer = persistentMapOf(
-    defaultServerId to listOf(
+    DEFAULT_SERVER_ID to listOf(
         Entity(
             entityId = "light.living_room",
             state = "on",
@@ -67,7 +67,7 @@ private val mockEntitiesByServer = persistentMapOf(
     ).toImmutableList(),
 )
 private val mockEntityRegistryByServer = persistentMapOf(
-    defaultServerId to listOf(
+    DEFAULT_SERVER_ID to listOf(
         EntityRegistryResponse(
             entityId = "light.living_room",
             areaId = "living_room",
@@ -76,7 +76,7 @@ private val mockEntityRegistryByServer = persistentMapOf(
     ).toImmutableList(),
 )
 private val mockDeviceRegistryByServer = persistentMapOf(
-    defaultServerId to listOf(
+    DEFAULT_SERVER_ID to listOf(
         DeviceRegistryResponse(
             id = "device_1",
             name = "Ceiling Lights",
@@ -84,7 +84,7 @@ private val mockDeviceRegistryByServer = persistentMapOf(
     ).toImmutableList(),
 )
 private val mockAreaRegistryByServer = persistentMapOf(
-    defaultServerId to listOf(
+    DEFAULT_SERVER_ID to listOf(
         AreaRegistryResponse(
             areaId = "living_room",
             name = "Living Room",
