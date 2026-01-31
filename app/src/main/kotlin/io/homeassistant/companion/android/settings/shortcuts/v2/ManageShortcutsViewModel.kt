@@ -36,7 +36,7 @@ internal data class ShortcutsListState(
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @HiltViewModel
-internal class ShortcutsViewModel @Inject constructor(private val shortcutsRepository: ShortcutsRepository) :
+internal class ManageShortcutsViewModel @Inject constructor(private val shortcutsRepository: ShortcutsRepository) :
     ViewModel() {
     private val _uiState = MutableStateFlow(ShortcutsListState())
     val uiState: StateFlow<ShortcutsListState> = _uiState

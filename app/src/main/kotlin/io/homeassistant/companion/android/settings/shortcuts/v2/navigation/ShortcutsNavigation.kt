@@ -19,9 +19,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.PinResult
+import io.homeassistant.companion.android.settings.shortcuts.v2.ManageShortcutsViewModel
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutEditViewModel
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListAction
-import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsViewModel
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.ShortcutEditorScreen
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.ShortcutsListScreen
 import kotlinx.serialization.Serializable
@@ -119,7 +119,7 @@ fun ShortcutsNavHost(onToolbarTitleChanged: (String) -> Unit, onShowSnackbar: su
 @Composable
 private fun ShortcutsListRouteScreen(
     onNavigate: (ShortcutsListAction) -> Unit,
-    viewModel: ShortcutsViewModel = hiltViewModel(),
+    viewModel: ManageShortcutsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current

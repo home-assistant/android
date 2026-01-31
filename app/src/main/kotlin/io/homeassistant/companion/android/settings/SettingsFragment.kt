@@ -47,7 +47,6 @@ import io.homeassistant.companion.android.settings.sensor.SensorSettingsFragment
 import io.homeassistant.companion.android.settings.sensor.SensorUpdateFrequencyFragment
 import io.homeassistant.companion.android.settings.server.ServerSettingsFragment
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment
-import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListFragment
 import io.homeassistant.companion.android.settings.vehicle.ManageAndroidAutoSettingsFragment
 import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
 import io.homeassistant.companion.android.settings.wear.SettingsWearDetection
@@ -213,7 +212,7 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
                 }
                 findPreference<Preference>("manage_shortcuts_v2")?.setOnPreferenceClickListener {
                     parentFragmentManager.commit {
-                        replace(R.id.content, ShortcutsListFragment::class.java, null)
+                        replace(R.id.content, ManageShortcutsSettingsFragment::class.java, null)
                         addToBackStack(getString(commonR.string.shortcuts))
                     }
                     return@setOnPreferenceClickListener true

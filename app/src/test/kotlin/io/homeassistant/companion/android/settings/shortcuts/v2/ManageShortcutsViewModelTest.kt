@@ -27,7 +27,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @ExtendWith(MainDispatcherJUnit5Extension::class, ConsoleLogExtension::class)
-class ShortcutsViewModelTest {
+class ManageShortcutsViewModelTest {
 
     private val shortcutsRepository: ShortcutsRepository = mockk()
 
@@ -57,7 +57,7 @@ class ShortcutsViewModelTest {
 
     @Test
     fun `Given shortcuts when init then state has items`() = runTest {
-        val viewModel = ShortcutsViewModel(shortcutsRepository)
+        val viewModel = ManageShortcutsViewModel(shortcutsRepository)
         turbineScope {
             val uiState = viewModel.uiState.testIn(backgroundScope)
             advanceUntilIdle()
@@ -84,7 +84,7 @@ class ShortcutsViewModelTest {
             ),
         )
 
-        val viewModel = ShortcutsViewModel(shortcutsRepository)
+        val viewModel = ManageShortcutsViewModel(shortcutsRepository)
         turbineScope {
             val uiState = viewModel.uiState.testIn(backgroundScope)
             advanceUntilIdle()
@@ -107,7 +107,7 @@ class ShortcutsViewModelTest {
             ),
         )
 
-        val viewModel = ShortcutsViewModel(shortcutsRepository)
+        val viewModel = ManageShortcutsViewModel(shortcutsRepository)
         turbineScope {
             val uiState = viewModel.uiState.testIn(backgroundScope)
             advanceUntilIdle()
@@ -125,7 +125,7 @@ class ShortcutsViewModelTest {
             ShortcutError.NoServers,
         )
 
-        val viewModel = ShortcutsViewModel(shortcutsRepository)
+        val viewModel = ManageShortcutsViewModel(shortcutsRepository)
         turbineScope {
             val uiState = viewModel.uiState.testIn(backgroundScope)
             advanceUntilIdle()

@@ -27,7 +27,7 @@ import io.homeassistant.companion.android.util.safeBottomWindowInsets
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @AndroidEntryPoint
-class ShortcutsListFragment : Fragment() {
+class ManageShortcutsSettingsFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
