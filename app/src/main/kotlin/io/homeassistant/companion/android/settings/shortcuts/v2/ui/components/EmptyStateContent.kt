@@ -8,16 +8,22 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.settings.views.EmptyState
 
+// TODO: Keep separate for clarity for now, but this should be improved later.
 @Composable
-internal fun EmptyStateContent(hasServers: Boolean) {
+internal fun EmptyStateContent() {
     EmptyState(
         icon = CommunityMaterial.Icon2.cmd_flash,
         title = stringResource(R.string.shortcuts_empty_title),
-        subtitle = if (hasServers) {
-            stringResource(R.string.shortcuts_empty_subtitle)
-        } else {
-            stringResource(R.string.shortcut_no_servers)
-        },
+        subtitle = stringResource(R.string.shortcuts_empty_subtitle),
+    )
+}
+
+@Composable
+internal fun EmptyStateNoServers() {
+    EmptyState(
+        icon = CommunityMaterial.Icon2.cmd_flash,
+        title = stringResource(R.string.shortcuts_empty_title),
+        subtitle = stringResource(R.string.shortcut_no_servers),
     )
 }
 
@@ -39,11 +45,11 @@ internal fun NotSupportedStateContent() {
     )
 }
 
-@Preview(name = "Empty State Content - Has Servers")
+@Preview(name = "Empty State Content")
 @Composable
-private fun EmptyStateContentHasServersPreview() {
+private fun EmptyStateContentPreview() {
     HAThemeForPreview {
-        EmptyStateContent(hasServers = true)
+        EmptyStateContent()
     }
 }
 
@@ -51,6 +57,22 @@ private fun EmptyStateContentHasServersPreview() {
 @Composable
 private fun EmptyStateContentNoServersPreview() {
     HAThemeForPreview {
-        EmptyStateContent(hasServers = false)
+        EmptyStateNoServers()
+    }
+}
+
+@Preview(name = "Empty State Content - Slots Full")
+@Composable
+private fun EmptyStateContentSlotsPreview() {
+    HAThemeForPreview {
+        EmptyStateContentSlots()
+    }
+}
+
+@Preview(name = "Empty State Content - Not Supported")
+@Composable
+private fun NotSupportedStateContentPreview() {
+    HAThemeForPreview {
+        NotSupportedStateContent()
     }
 }

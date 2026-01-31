@@ -54,6 +54,7 @@ import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.Sh
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListAction
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListState
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.EmptyStateContent
+import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.EmptyStateNoServers
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.ErrorStateContent
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.NotSupportedStateContent
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.preview.ShortcutPreviewData
@@ -97,11 +98,12 @@ internal fun ShortcutsListScreen(
             when {
                 state.isLoading -> LoadingState()
                 state.error == ShortcutError.ApiNotSupported -> NotSupportedStateContent()
-                state.error != null -> {
+                state.error == ShortcutError.NoServers -> EmptyStateNoServers()
+                state.hasError -> {
                     ErrorStateContent(onRetry = onRetry)
                 }
                 state.isEmpty -> {
-                    EmptyStateContent(hasServers = true)
+                    EmptyStateContent()
                 }
                 else -> ShortcutsList(
                     state = state,

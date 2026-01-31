@@ -152,6 +152,9 @@ internal class ShortcutsRepositoryImpl @Inject constructor(
         if (!isShortcutsSupported) {
             return ShortcutResult.Error(ShortcutError.ApiNotSupported)
         }
+        if (serverManager.servers().isEmpty()) {
+            return ShortcutResult.Error(ShortcutError.NoServers)
+        }
         return try {
             val dynamic = loadDynamicShortcuts()
             if (!canPinShortcuts) {

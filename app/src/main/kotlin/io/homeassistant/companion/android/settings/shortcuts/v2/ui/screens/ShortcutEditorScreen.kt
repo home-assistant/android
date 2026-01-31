@@ -26,6 +26,7 @@ import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutEditorUi
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.DynamicShortcutEditor
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.EmptyStateContent
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.EmptyStateContentSlots
+import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.EmptyStateNoServers
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.NotSupportedStateContent
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.PinnedShortcutEditor
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.preview.ShortcutPreviewData
@@ -46,7 +47,7 @@ internal fun ShortcutEditorScreen(
         is ShortcutEditorUiState.EditorState.Dynamic -> {
             when {
                 notSupported -> NotSupportedStateContent()
-                noServers -> EmptyStateContent(hasServers = false)
+                noServers -> EmptyStateNoServers()
                 state.screen.error == ShortcutError.SlotsFull -> EmptyStateContentSlots()
                 else -> ShortcutEditorContent(
                     screenState = state.screen,
@@ -70,7 +71,7 @@ internal fun ShortcutEditorScreen(
         is ShortcutEditorUiState.EditorState.Pinned -> {
             when {
                 notSupported -> NotSupportedStateContent()
-                noServers -> EmptyStateContent(hasServers = false)
+                noServers -> EmptyStateNoServers()
                 else -> {
                     ShortcutEditorContent(
                         screenState = state.screen,

@@ -29,6 +29,7 @@ internal data class ShortcutsListState(
     val dynamicItems: ImmutableList<DynamicShortcutItem> = persistentListOf(),
     val pinnedItems: ImmutableList<ShortcutSummary> = persistentListOf(),
 ) {
+    val hasError: Boolean get() = error != null
     val isEmpty: Boolean get() = dynamicItems.isEmpty() && pinnedItems.isEmpty()
 }
 
