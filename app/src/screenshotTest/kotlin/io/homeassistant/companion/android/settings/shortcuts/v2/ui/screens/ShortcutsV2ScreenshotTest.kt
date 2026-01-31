@@ -29,13 +29,12 @@ class ShortcutsV2ScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `ShortcutsList empty no servers`() {
+    fun `ShortcutsList empty`() {
         HAThemeForPreview {
             ShortcutsListScreen(
                 state = ShortcutPreviewData.buildListState(
                     dynamicSummaries = persistentListOf(),
                     pinnedSummaries = persistentListOf(),
-                    servers = persistentListOf(),
                 ),
                 dispatch = { _: ShortcutsListAction -> },
                 onRetry = {},
