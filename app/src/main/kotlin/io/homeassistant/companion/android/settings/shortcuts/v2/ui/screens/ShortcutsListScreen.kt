@@ -302,7 +302,7 @@ private fun ShortcutTypeOptionRow(icon: IIcon, label: String, onClick: () -> Uni
 }
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
-@Preview(name = "Manage Shortcuts")
+@Preview(name = "Shortcuts List")
 @Composable
 private fun ShortcutsListScreenPreview() {
     val dynamicSummaries = ShortcutPreviewData.buildDynamicSummaries(
@@ -334,7 +334,7 @@ private fun ShortcutsListScreenPreview() {
 }
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
-@Preview(name = "Manage Shortcuts Loading")
+@Preview(name = "Shortcuts List Loading")
 @Composable
 private fun ShortcutsListScreenLoadingPreview() {
     HAThemeForPreview {
@@ -347,7 +347,7 @@ private fun ShortcutsListScreenLoadingPreview() {
 }
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
-@Preview(name = "Manage Shortcuts Empty")
+@Preview(name = "Shortcuts List Empty")
 @Composable
 private fun ShortcutsListScreenEmptyPreview() {
     HAThemeForPreview {
@@ -363,7 +363,7 @@ private fun ShortcutsListScreenEmptyPreview() {
 }
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
-@Preview(name = "Manage Shortcuts Error")
+@Preview(name = "Shortcuts List Error")
 @Composable
 private fun ShortcutsListScreenErrorPreview() {
     HAThemeForPreview {

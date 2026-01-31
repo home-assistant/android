@@ -9,9 +9,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.settings.views.EmptyState
 
 @Composable
@@ -26,5 +28,13 @@ internal fun ErrorStateContent(onRetry: () -> Unit) {
         Button(onClick = onRetry) {
             Text(text = stringResource(R.string.retry))
         }
+    }
+}
+
+@Preview(name = "Error State Content")
+@Composable
+private fun ErrorStateContentPreview() {
+    HAThemeForPreview {
+        ErrorStateContent(onRetry = {})
     }
 }

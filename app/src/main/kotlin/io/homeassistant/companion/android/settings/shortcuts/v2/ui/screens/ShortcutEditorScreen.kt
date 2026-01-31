@@ -18,8 +18,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import io.homeassistant.companion.android.common.compose.composable.HALoading
 import io.homeassistant.companion.android.common.compose.theme.HADimens
+import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutError
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutEditorUiState
@@ -27,6 +29,7 @@ import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.Dy
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.EmptyStateContent
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.EmptyStateContentSlots
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.PinnedShortcutEditor
+import io.homeassistant.companion.android.settings.shortcuts.v2.ui.preview.ShortcutPreviewData
 import io.homeassistant.companion.android.util.icondialog.IconDialog
 import io.homeassistant.companion.android.util.icondialog.mdiName
 import io.homeassistant.companion.android.util.plus
@@ -148,6 +151,40 @@ private fun ShortcutEditorContent(
             { showIconDialog = true },
             { dispatch(ShortcutEditAction.Submit(draft)) },
             { dispatch(ShortcutEditAction.Delete(draft.id)) },
+        )
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.N_MR1)
+@Preview(name = "Shortcut Editor Dynamic")
+@Composable
+private fun ShortcutEditorScreenDynamicPreview() {
+    HAThemeForPreview {
+        ShortcutEditorScreen(
+            state = ShortcutEditorUiState(
+                screen = ShortcutPreviewData.buildScreenState(
+                    servers = ShortcutPreviewData.previewServers,
+                ),
+                editor = ShortcutPreviewData.buildDynamicEditorState(),
+            ),
+            dispatch = {},
+        )
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.N_MR1)
+@Preview(name = "Shortcut Editor Pinned")
+@Composable
+private fun ShortcutEditorScreenPinnedPreview() {
+    HAThemeForPreview {
+        ShortcutEditorScreen(
+            state = ShortcutEditorUiState(
+                screen = ShortcutPreviewData.buildScreenState(
+                    servers = ShortcutPreviewData.previewServers,
+                ),
+                editor = ShortcutPreviewData.buildPinnedEditorState(),
+            ),
+            dispatch = {},
         )
     }
 }
