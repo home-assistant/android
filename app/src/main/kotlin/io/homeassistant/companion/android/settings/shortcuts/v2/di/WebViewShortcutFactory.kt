@@ -23,29 +23,30 @@ class WebViewShortcutFactory @Inject constructor(
 ) : ShortcutFactory {
     override fun createShortcutInfo(draft: ShortcutDraft): ShortcutInfoCompat {
         val encodedPath = shortcutIntentCodec.encodeTarget(draft.target)
-        val intent = Intent(
-            WebViewActivity.newInstance(app, encodedPath, draft.serverId).addFlags(
-                Intent.FLAG_ACTIVITY_NEW_TASK,
-            ),
-        )
-        intent.action = Intent.ACTION_VIEW
-        intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-        intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
-        intent.putExtra(ShortcutIntentKeys.EXTRA_SHORTCUT_PATH, encodedPath)
-        draft.selectedIconName?.let { intent.putExtra(ShortcutIntentKeys.EXTRA_ICON_NAME, it) }
-        intent.putExtra(ShortcutIntentKeys.EXTRA_TYPE, draft.target.toShortcutType().name)
+        val intent = WebViewActivity.newInstance(app, encodedPath, draft.serverId).apply {
+            action = Intent.ACTION_VIEW
+            addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_MULTIPLE_TASK or
+                    Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS,
+            )
+            putExtra(ShortcutIntentKeys.EXTRA_SHORTCUT_PATH, encodedPath)
+            draft.selectedIconName?.let { putExtra(ShortcutIntentKeys.EXTRA_ICON_NAME, it) }
+            putExtra(ShortcutIntentKeys.EXTRA_TYPE, draft.target.toShortcutType().name)
+        }
 
-        return ShortcutInfoCompat.Builder(app, draft.id)
+        val builder = ShortcutInfoCompat.Builder(app, draft.id)
             .setShortLabel(draft.label)
-            .setLongLabel(draft.description)
             .setIcon(
                 draft.selectedIconName
                     ?.let(CommunityMaterial::getIconByMdiName)
                     ?.let { ShortcutIconRenderer.renderAdaptiveIcon(app, it) }
-                    ?: // Use launcher icon that is an AdaptiveIcon so it gets themed properly by the system
-                    IconCompat.createWithResource(app, R.mipmap.ic_launcher),
+                    ?: IconCompat.createWithResource(app, R.mipmap.ic_launcher),
             )
             .setIntent(intent)
-            .build()
+
+        draft.description.takeIf { it.isNotBlank() }?.let(builder::setLongLabel)
+
+        return builder.build()
     }
 }
