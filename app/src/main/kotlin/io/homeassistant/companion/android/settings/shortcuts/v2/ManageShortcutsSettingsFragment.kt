@@ -1,11 +1,9 @@
 package io.homeassistant.companion.android.settings.shortcuts.v2
 
-import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
@@ -25,7 +23,6 @@ import io.homeassistant.companion.android.settings.shortcuts.v2.navigation.Short
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
 
-@RequiresApi(Build.VERSION_CODES.N_MR1)
 @AndroidEntryPoint
 class ManageShortcutsSettingsFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {

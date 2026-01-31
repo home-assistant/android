@@ -64,7 +64,7 @@ class ManageShortcutsViewModelTest {
 
             val state = uiState.expectMostRecentItem()
             Assertions.assertFalse(state.isLoading)
-            Assertions.assertFalse(state.isError)
+            Assertions.assertNull(state.error)
             Assertions.assertFalse(state.isEmpty)
             Assertions.assertTrue(state.isPinSupported)
             Assertions.assertEquals(listOf(0, 2), state.dynamicItems.map { it.index })
@@ -114,7 +114,7 @@ class ManageShortcutsViewModelTest {
 
             val state = uiState.expectMostRecentItem()
             Assertions.assertFalse(state.isLoading)
-            Assertions.assertFalse(state.isError)
+            Assertions.assertNull(state.error)
             Assertions.assertFalse(state.isPinSupported)
         }
     }
@@ -132,7 +132,7 @@ class ManageShortcutsViewModelTest {
 
             val state = uiState.expectMostRecentItem()
             Assertions.assertFalse(state.isLoading)
-            Assertions.assertTrue(state.isError)
+            Assertions.assertEquals(ShortcutError.NoServers, state.error)
         }
     }
 

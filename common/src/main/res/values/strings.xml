@@ -793,6 +793,7 @@
     <string name="shortcuts_empty_subtitle">Create a shortcut to quickly open a Home Assistant view or entity.</string>
     <string name="shortcuts_error_title">Unable to load shortcuts</string>
     <string name="shortcuts_error_subtitle">Please try again.</string>
+    <string name="shortcuts_not_supported_subtitle">Shortcuts require Android 7.1 or later.</string>
     <string name="shortcut_dynamic_header">Dynamic shortcuts</string>
     <string name="shortcut_n">Shortcut %d</string>
     <string name="shortcut_label_n">Shortcut %1$d label</string>

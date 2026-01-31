@@ -1,7 +1,5 @@
 package io.homeassistant.companion.android.settings.shortcuts.v2.ui.components
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,7 +14,6 @@ import io.homeassistant.companion.android.common.compose.composable.HAFilledButt
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 
-@RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
 internal fun PrimaryActionButtons(
     isEditing: Boolean,
@@ -50,7 +47,6 @@ internal fun PrimaryActionButtons(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.N_MR1)
 @Preview(name = "Primary Action Buttons")
 @Composable
 private fun PrimaryActionButtonsPreview() {

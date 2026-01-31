@@ -30,6 +30,15 @@ internal fun EmptyStateContentSlots() {
     )
 }
 
+@Composable
+internal fun NotSupportedStateContent() {
+    EmptyState(
+        icon = CommunityMaterial.Icon.cmd_alert,
+        title = stringResource(R.string.failed_unsupported),
+        subtitle = stringResource(R.string.shortcuts_not_supported_subtitle),
+    )
+}
+
 @Preview(name = "Empty State Content - Has Servers")
 @Composable
 private fun EmptyStateContentHasServersPreview() {

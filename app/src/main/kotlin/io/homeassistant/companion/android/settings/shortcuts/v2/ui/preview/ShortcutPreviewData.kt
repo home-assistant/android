@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.settings.shortcuts.v2.ui.preview
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutSummary
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutError
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutTargetValue
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutType
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
@@ -161,7 +162,7 @@ internal object ShortcutPreviewData {
 
     fun buildListState(
         isLoading: Boolean = false,
-        isError: Boolean = false,
+        error: ShortcutError? = null,
         dynamicSummaries: ImmutableList<ShortcutSummary> = buildDynamicSummaries(
             count = 2,
             type = ShortcutType.LOVELACE,
@@ -175,7 +176,7 @@ internal object ShortcutPreviewData {
         val pinnedItems = if (canPinShortcuts) pinnedSummaries else persistentListOf()
         return ShortcutsListState(
             isLoading = isLoading,
-            isError = isError,
+            error = error,
             dynamicItems = dynamicItems,
             pinnedItems = pinnedItems,
         )

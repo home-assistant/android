@@ -1,7 +1,5 @@
 package io.homeassistant.companion.android.settings.shortcuts.v2
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -26,7 +24,7 @@ internal data class DynamicShortcutItem(val index: Int, val summary: ShortcutSum
 @Immutable
 internal data class ShortcutsListState(
     val isLoading: Boolean = true,
-    val isError: Boolean = false,
+    val error: ShortcutError? = null,
     val isPinSupported: Boolean = false, // Not used for now
     val dynamicItems: ImmutableList<DynamicShortcutItem> = persistentListOf(),
     val pinnedItems: ImmutableList<ShortcutSummary> = persistentListOf(),
@@ -34,7 +32,6 @@ internal data class ShortcutsListState(
     val isEmpty: Boolean get() = dynamicItems.isEmpty() && pinnedItems.isEmpty()
 }
 
-@RequiresApi(Build.VERSION_CODES.N_MR1)
 @HiltViewModel
 internal class ManageShortcutsViewModel @Inject constructor(private val shortcutsRepository: ShortcutsRepository) :
     ViewModel() {
@@ -49,13 +46,15 @@ internal class ManageShortcutsViewModel @Inject constructor(private val shortcut
         viewModelScope.launch {
             val previous = _uiState.value
             if (showLoading) {
-                _uiState.value = previous.copy(isLoading = true, isError = false)
+                _uiState.value = previous.copy(isLoading = true, error = null)
             }
 
             val listData = when (val result = shortcutsRepository.loadShortcutsList()) {
                 is ShortcutResult.Success -> result.data
                 is ShortcutResult.Error -> {
-                    _uiState.update { it.copy(isLoading = false, isError = true) }
+                    _uiState.update {
+                        it.copy(isLoading = false, error = result.error)
+                    }
                     return@launch
                 }
             }
@@ -70,7 +69,7 @@ internal class ManageShortcutsViewModel @Inject constructor(private val shortcut
             val pinNotSupported = listData.pinnedError == ShortcutError.PinnedNotSupported
             _uiState.value = ShortcutsListState(
                 isLoading = false,
-                isError = false,
+                error = null,
                 isPinSupported = !pinNotSupported,
                 dynamicItems = dynamicItems,
                 pinnedItems = pinnedItems,

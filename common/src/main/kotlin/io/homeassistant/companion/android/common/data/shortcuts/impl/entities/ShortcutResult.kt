@@ -11,6 +11,7 @@ enum class PinResult {
 }
 
 enum class ShortcutError {
+    ApiNotSupported,
     NoServers,
     SlotsFull,
     InvalidIndex,

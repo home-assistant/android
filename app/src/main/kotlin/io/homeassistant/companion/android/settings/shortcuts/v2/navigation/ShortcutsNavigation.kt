@@ -1,7 +1,5 @@
 package io.homeassistant.companion.android.settings.shortcuts.v2.navigation
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -41,7 +39,6 @@ private data class EditDynamicRoute(val index: Int)
 @Serializable
 private data class EditPinnedRoute(val id: String)
 
-@RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
 fun ShortcutsNavHost(onToolbarTitleChanged: (String) -> Unit, onShowSnackbar: suspend (message: String) -> Unit) {
     val navController = rememberNavController()
@@ -115,7 +112,6 @@ fun ShortcutsNavHost(onToolbarTitleChanged: (String) -> Unit, onShowSnackbar: su
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
 private fun ShortcutsListRouteScreen(
     onNavigate: (ShortcutsListAction) -> Unit,
@@ -141,7 +137,6 @@ private fun ShortcutsListRouteScreen(
     )
 }
 
-@RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
 private fun CreateDynamicRouteScreen(viewModel: ShortcutEditViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -156,7 +151,6 @@ private fun CreateDynamicRouteScreen(viewModel: ShortcutEditViewModel = hiltView
     )
 }
 
-@RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
 private fun CreatePinnedRouteScreen(
     onShowSnackbar: suspend (message: String) -> Unit,
@@ -193,7 +187,6 @@ private fun CreatePinnedRouteScreen(
     )
 }
 
-@RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
 private fun EditDynamicRouteScreen(
     route: EditDynamicRoute,
@@ -218,7 +211,6 @@ private fun EditDynamicRouteScreen(
     )
 }
 
-@RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
 private fun EditPinnedRouteScreen(
     route: EditPinnedRoute,

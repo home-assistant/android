@@ -1,7 +1,5 @@
 package io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -51,11 +49,13 @@ import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutError
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutType
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListAction
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListState
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.EmptyStateContent
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.ErrorStateContent
+import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.NotSupportedStateContent
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.preview.ShortcutPreviewData
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
@@ -68,7 +68,6 @@ import kotlinx.collections.immutable.toImmutableList
  * Pure UI composable for the Manage Shortcuts screen.
  * This composable has no ViewModel dependencies and can be previewed.
  */
-@RequiresApi(Build.VERSION_CODES.N_MR1) // TODO: Check why do we need N_MR1 here
 @Composable
 internal fun ShortcutsListScreen(
     state: ShortcutsListState,
@@ -80,14 +79,16 @@ internal fun ShortcutsListScreen(
     val dismissCreateDialog: () -> Unit = { showCreateDialog = false }
     Scaffold(
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                modifier = Modifier.padding(safeBottomPaddingValues(applyHorizontal = false)),
-                containerColor = LocalHAColorScheme.current.colorFillPrimaryLoudResting,
-                contentColor = LocalHAColorScheme.current.colorOnPrimaryLoud,
-                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                text = { Text(stringResource(R.string.add_shortcut)) },
-                onClick = { showCreateDialog = true },
-            )
+            if (state.error != ShortcutError.ApiNotSupported) {
+                ExtendedFloatingActionButton(
+                    modifier = Modifier.padding(safeBottomPaddingValues(applyHorizontal = false)),
+                    containerColor = LocalHAColorScheme.current.colorFillPrimaryLoudResting,
+                    contentColor = LocalHAColorScheme.current.colorOnPrimaryLoud,
+                    icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                    text = { Text(stringResource(R.string.add_shortcut)) },
+                    onClick = { showCreateDialog = true },
+                )
+            }
         },
         contentWindowInsets = WindowInsets(0, 0, 0, 0), // TODO: Check how to avoid this
         modifier = modifier,
@@ -95,7 +96,8 @@ internal fun ShortcutsListScreen(
         Box(modifier = Modifier.padding(contentPadding)) {
             when {
                 state.isLoading -> LoadingState()
-                state.isError -> {
+                state.error == ShortcutError.ApiNotSupported -> NotSupportedStateContent()
+                state.error != null -> {
                     ErrorStateContent(onRetry = onRetry)
                 }
                 state.isEmpty -> {
@@ -301,7 +303,6 @@ private fun ShortcutTypeOptionRow(icon: IIcon, label: String, onClick: () -> Uni
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.N_MR1)
 @Preview(name = "Shortcuts List")
 @Composable
 private fun ShortcutsListScreenPreview() {
@@ -333,7 +334,6 @@ private fun ShortcutsListScreenPreview() {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.N_MR1)
 @Preview(name = "Shortcuts List Loading")
 @Composable
 private fun ShortcutsListScreenLoadingPreview() {
@@ -346,7 +346,6 @@ private fun ShortcutsListScreenLoadingPreview() {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.N_MR1)
 @Preview(name = "Shortcuts List Empty")
 @Composable
 private fun ShortcutsListScreenEmptyPreview() {
@@ -362,13 +361,24 @@ private fun ShortcutsListScreenEmptyPreview() {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.N_MR1)
 @Preview(name = "Shortcuts List Error")
 @Composable
 private fun ShortcutsListScreenErrorPreview() {
     HAThemeForPreview {
         ShortcutsListScreen(
-            state = ShortcutPreviewData.buildListState(isError = true),
+            state = ShortcutPreviewData.buildListState(error = ShortcutError.Unknown),
+            dispatch = {},
+            onRetry = {},
+        )
+    }
+}
+
+@Preview(name = "Shortcuts List Not Supported")
+@Composable
+private fun ShortcutsListScreenNotSupportedPreview() {
+    HAThemeForPreview {
+        ShortcutsListScreen(
+            state = ShortcutsListState(isLoading = false, error = ShortcutError.ApiNotSupported),
             dispatch = {},
             onRetry = {},
         )

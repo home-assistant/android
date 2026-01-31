@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutError
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutSummary
 import io.homeassistant.companion.android.settings.shortcuts.v2.DynamicShortcutItem
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListAction
@@ -34,7 +35,6 @@ class ShortcutsListScreenScreenshotTest {
             ShortcutsListScreen(
                 state = ShortcutsListState(
                     isLoading = false,
-                    isError = false,
                     dynamicItems = persistentListOf(),
                     pinnedItems = persistentListOf(),
                 ),
@@ -50,7 +50,7 @@ class ShortcutsListScreenScreenshotTest {
     fun `ShortcutsListScreen error`() {
         HAThemeForPreview {
             ShortcutsListScreen(
-                state = ShortcutsListState(isLoading = false, isError = true),
+                state = ShortcutsListState(isLoading = false, error = ShortcutError.Unknown),
                 dispatch = { _: ShortcutsListAction -> },
                 onRetry = {},
             )
@@ -67,7 +67,6 @@ class ShortcutsListScreenScreenshotTest {
             ShortcutsListScreen(
                 state = ShortcutsListState(
                     isLoading = false,
-                    isError = false,
                     dynamicItems = dynamicItems,
                     pinnedItems = pinnedItems,
                 ),
@@ -86,7 +85,6 @@ class ShortcutsListScreenScreenshotTest {
             ShortcutsListScreen(
                 state = ShortcutsListState(
                     isLoading = false,
-                    isError = false,
                     dynamicItems = dynamicItems,
                     pinnedItems = persistentListOf(),
                 ),
@@ -104,7 +102,6 @@ class ShortcutsListScreenScreenshotTest {
             ShortcutsListScreen(
                 state = ShortcutsListState(
                     isLoading = false,
-                    isError = false,
                     dynamicItems = persistentListOf(),
                     pinnedItems = mockPinnedItems(count = 1),
                 ),

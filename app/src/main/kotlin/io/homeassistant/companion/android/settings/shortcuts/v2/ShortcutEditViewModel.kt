@@ -1,7 +1,5 @@
 package io.homeassistant.companion.android.settings.shortcuts.v2
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -73,7 +71,6 @@ data class ShortcutEditorUiState(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.N_MR1)
 @HiltViewModel
 class ShortcutEditViewModel @Inject constructor(private val shortcutsRepository: ShortcutsRepository) :
     ViewModel() {

@@ -1,8 +1,6 @@
 package io.homeassistant.companion.android.settings.shortcuts.views
 
-import android.os.Build
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -46,7 +44,6 @@ import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
-@RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
 fun ManageShortcutsView(viewModel: ManageShortcutsViewModel, showIconDialog: (tag: String) -> Unit) {
     LazyColumn(
@@ -77,7 +74,6 @@ fun ManageShortcutsView(viewModel: ManageShortcutsViewModel, showIconDialog: (ta
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
 private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, showIconDialog: (tag: String) -> Unit) {
     val context = LocalContext.current
@@ -332,7 +328,6 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
 private fun ShortcutRadioButtonRow(viewModel: ManageShortcutsViewModel, type: String, index: Int) {
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -344,7 +339,6 @@ private fun ShortcutRadioButtonRow(viewModel: ManageShortcutsViewModel, type: St
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
 private fun AddDeleteButton(viewModel: ManageShortcutsViewModel, shortcutId: String, index: Int) {
     Button(

@@ -1,7 +1,5 @@
 package io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +26,7 @@ import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutEditorUi
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.DynamicShortcutEditor
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.EmptyStateContent
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.EmptyStateContentSlots
+import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.NotSupportedStateContent
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.PinnedShortcutEditor
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.preview.ShortcutPreviewData
 import io.homeassistant.companion.android.util.icondialog.IconDialog
@@ -35,7 +34,6 @@ import io.homeassistant.companion.android.util.icondialog.mdiName
 import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
-@RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
 internal fun ShortcutEditorScreen(
     state: ShortcutEditorUiState,
@@ -43,9 +41,11 @@ internal fun ShortcutEditorScreen(
     modifier: Modifier = Modifier,
 ) {
     val noServers = state.screen.servers.isEmpty()
+    val notSupported = state.screen.error == ShortcutError.ApiNotSupported
     when (val editor = state.editor) {
         is ShortcutEditorUiState.EditorState.Dynamic -> {
             when {
+                notSupported -> NotSupportedStateContent()
                 noServers -> EmptyStateContent(hasServers = false)
                 state.screen.error == ShortcutError.SlotsFull -> EmptyStateContentSlots()
                 else -> ShortcutEditorContent(
@@ -69,6 +69,7 @@ internal fun ShortcutEditorScreen(
 
         is ShortcutEditorUiState.EditorState.Pinned -> {
             when {
+                notSupported -> NotSupportedStateContent()
                 noServers -> EmptyStateContent(hasServers = false)
                 else -> {
                     ShortcutEditorContent(
@@ -155,7 +156,6 @@ private fun ShortcutEditorContent(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.N_MR1)
 @Preview(name = "Shortcut Editor Dynamic")
 @Composable
 private fun ShortcutEditorScreenDynamicPreview() {
@@ -172,7 +172,6 @@ private fun ShortcutEditorScreenDynamicPreview() {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.N_MR1)
 @Preview(name = "Shortcut Editor Pinned")
 @Composable
 private fun ShortcutEditorScreenPinnedPreview() {

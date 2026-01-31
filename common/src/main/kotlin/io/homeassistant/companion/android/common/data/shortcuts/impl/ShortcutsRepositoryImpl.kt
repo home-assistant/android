@@ -63,6 +63,8 @@ internal class ShortcutsRepositoryImpl @Inject constructor(
 
     private val maxDynamicShortcuts: Int = MAX_DYNAMIC_SHORTCUTS
 
+    private val isShortcutsSupported: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1
+
     private val canPinShortcuts: Boolean by lazy {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
             ShortcutManagerCompat.isRequestPinShortcutSupported(app)
@@ -147,6 +149,9 @@ internal class ShortcutsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun loadShortcutsList(): ShortcutResult<ShortcutsListData> {
+        if (!isShortcutsSupported) {
+            return ShortcutResult.Error(ShortcutError.ApiNotSupported)
+        }
         return try {
             val dynamic = loadDynamicShortcuts()
             if (!canPinShortcuts) {
@@ -174,6 +179,9 @@ internal class ShortcutsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun loadEditorData(): ShortcutResult<ShortcutEditorData> = coroutineScope {
+        if (!isShortcutsSupported) {
+            return@coroutineScope ShortcutResult.Error(ShortcutError.ApiNotSupported)
+        }
         when (val serversResult = getServers()) {
             is ShortcutResult.Success -> {
                 val dataById = serversResult.data.servers.map { server ->
@@ -196,6 +204,9 @@ internal class ShortcutsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun loadDynamicEditor(index: Int): ShortcutResult<DynamicEditorData> {
+        if (!isShortcutsSupported) {
+            return ShortcutResult.Error(ShortcutError.ApiNotSupported)
+        }
         if (index !in 0 until maxDynamicShortcuts) {
             return ShortcutResult.Error(ShortcutError.InvalidIndex)
         }
@@ -215,6 +226,9 @@ internal class ShortcutsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun loadDynamicEditorFirstAvailable(): ShortcutResult<DynamicEditorData> {
+        if (!isShortcutsSupported) {
+            return ShortcutResult.Error(ShortcutError.ApiNotSupported)
+        }
         val defaultServerId = when (val servers = getServers()) {
             is ShortcutResult.Success -> servers.data.defaultServerId
             is ShortcutResult.Error -> return ShortcutResult.Error(servers.error)
@@ -230,6 +244,9 @@ internal class ShortcutsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun loadPinnedEditor(shortcutId: String): ShortcutResult<PinnedEditorData> {
+        if (!isShortcutsSupported) {
+            return ShortcutResult.Error(ShortcutError.ApiNotSupported)
+        }
         if (!canPinShortcuts) {
             return ShortcutResult.Error(ShortcutError.PinnedNotSupported)
         }
@@ -252,6 +269,9 @@ internal class ShortcutsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun loadPinnedEditorForCreate(): ShortcutResult<PinnedEditorData> {
+        if (!isShortcutsSupported) {
+            return ShortcutResult.Error(ShortcutError.ApiNotSupported)
+        }
         if (!canPinShortcuts) {
             return ShortcutResult.Error(ShortcutError.PinnedNotSupported)
         }
@@ -268,6 +288,9 @@ internal class ShortcutsRepositoryImpl @Inject constructor(
         shortcut: ShortcutDraft,
         isEditing: Boolean,
     ): ShortcutResult<DynamicEditorData> {
+        if (!isShortcutsSupported) {
+            return ShortcutResult.Error(ShortcutError.ApiNotSupported)
+        }
         if (index !in 0 until maxDynamicShortcuts) {
             return ShortcutResult.Error(ShortcutError.InvalidIndex)
         }
@@ -288,6 +311,9 @@ internal class ShortcutsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun deleteDynamicShortcut(index: Int): ShortcutResult<Unit> {
+        if (!isShortcutsSupported) {
+            return ShortcutResult.Error(ShortcutError.ApiNotSupported)
+        }
         if (index !in 0 until maxDynamicShortcuts) {
             return ShortcutResult.Error(ShortcutError.InvalidIndex)
         }
@@ -303,6 +329,9 @@ internal class ShortcutsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun upsertPinnedShortcut(shortcut: ShortcutDraft): ShortcutResult<PinResult> {
+        if (!isShortcutsSupported) {
+            return ShortcutResult.Error(ShortcutError.ApiNotSupported)
+        }
         if (!canPinShortcuts) {
             return ShortcutResult.Error(ShortcutError.PinnedNotSupported)
         }
@@ -333,6 +362,9 @@ internal class ShortcutsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun deletePinnedShortcut(shortcutId: String): ShortcutResult<Unit> {
+        if (!isShortcutsSupported) {
+            return ShortcutResult.Error(ShortcutError.ApiNotSupported)
+        }
         if (!canPinShortcuts) {
             return ShortcutResult.Error(ShortcutError.PinnedNotSupported)
         }

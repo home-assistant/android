@@ -1,7 +1,5 @@
 package io.homeassistant.companion.android.settings.shortcuts.v2.ui.components
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,7 +26,6 @@ import io.homeassistant.companion.android.settings.shortcuts.v2.ui.preview.Short
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.ShortcutEditorScreenState
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.selector.ShortcutIconPicker
 
-@RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
 internal fun DynamicShortcutEditor(
     draft: ShortcutDraft,
@@ -90,7 +87,6 @@ internal fun canSubmit(draft: ShortcutDraft, screen: ShortcutEditorScreenState, 
         screen.servers.any { it.id == draft.serverId }
 }
 
-@RequiresApi(Build.VERSION_CODES.N_MR1)
 @Preview(name = "Dynamic Shortcut Editor")
 @Composable
 private fun DynamicShortcutEditorPreview() {

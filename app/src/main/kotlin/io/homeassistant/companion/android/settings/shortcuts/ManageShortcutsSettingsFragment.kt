@@ -58,7 +58,6 @@ class ManageShortcutsSettingsFragment : Fragment() {
         addHelpMenuProvider("https://companion.home-assistant.io/docs/integrations/android-shortcuts")
     }
 
-    @RequiresApi(Build.VERSION_CODES.N_MR1)
     override fun onResume() {
         super.onResume()
 

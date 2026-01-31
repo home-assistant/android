@@ -1,7 +1,5 @@
 package io.homeassistant.companion.android.settings.shortcuts.v2.ui.components
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
@@ -17,7 +15,6 @@ import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.Short
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.selector.ShortcutTargetInput
 import io.homeassistant.companion.android.settings.shortcuts.v2.ui.selector.ShortcutTypeSelector
 
-@RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
 internal fun ShortcutEditorForm(
     draft: ShortcutDraft,
@@ -75,7 +72,6 @@ private fun ShortcutDraft.withType(type: ShortcutType): ShortcutDraft {
     return copy(target = newTarget)
 }
 
-@RequiresApi(Build.VERSION_CODES.N_MR1)
 @Preview(name = "Shortcut Editor Form")
 @Composable
 private fun ShortcutEditorFormPreview() {

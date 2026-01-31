@@ -46,7 +46,8 @@ import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
 import io.homeassistant.companion.android.settings.sensor.SensorSettingsFragment
 import io.homeassistant.companion.android.settings.sensor.SensorUpdateFrequencyFragment
 import io.homeassistant.companion.android.settings.server.ServerSettingsFragment
-import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment
+import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment as ManageShortcutsSettingsFragmentV1
+import io.homeassistant.companion.android.settings.shortcuts.v2.ManageShortcutsSettingsFragment as ManageShortcutsSettingsFragmentV2
 import io.homeassistant.companion.android.settings.vehicle.ManageAndroidAutoSettingsFragment
 import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
 import io.homeassistant.companion.android.settings.wear.SettingsWearDetection
@@ -205,14 +206,14 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
                 }
                 findPreference<Preference>("manage_shortcuts")?.setOnPreferenceClickListener {
                     parentFragmentManager.commit {
-                        replace(R.id.content, ManageShortcutsSettingsFragment::class.java, null)
+                        replace(R.id.content, ManageShortcutsSettingsFragmentV1::class.java, null)
                         addToBackStack(getString(commonR.string.shortcuts))
                     }
                     return@setOnPreferenceClickListener true
                 }
                 findPreference<Preference>("manage_shortcuts_v2")?.setOnPreferenceClickListener {
                     parentFragmentManager.commit {
-                        replace(R.id.content, ManageShortcutsSettingsFragment::class.java, null)
+                        replace(R.id.content, ManageShortcutsSettingsFragmentV2::class.java, null)
                         addToBackStack(getString(commonR.string.shortcuts))
                     }
                     return@setOnPreferenceClickListener true
