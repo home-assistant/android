@@ -1,10 +1,11 @@
 package io.homeassistant.companion.android.common.data.shortcuts.impl
 
+import android.content.Intent
 import android.os.Bundle
 import io.homeassistant.companion.android.common.data.shortcuts.ShortcutIntentCodec
-import io.homeassistant.companion.android.common.data.shortcuts.ShortcutIntentKeys
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutTargetValue
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutType
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.toShortcutType
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -14,13 +15,13 @@ internal class ShortcutIntentCodecImpl @Inject constructor() : ShortcutIntentCod
         val bundle = extras ?: return null
 
         return when {
-            bundle.containsKey(ShortcutIntentKeys.EXTRA_ICON_NAME) -> {
-                val iconName = bundle.getString(ShortcutIntentKeys.EXTRA_ICON_NAME) ?: return null
+            bundle.containsKey(EXTRA_ICON_NAME) -> {
+                val iconName = bundle.getString(EXTRA_ICON_NAME) ?: return null
                 if (iconName.startsWith(MDI_PREFIX)) iconName else "$MDI_PREFIX$iconName"
             }
 
-            bundle.containsKey(ShortcutIntentKeys.EXTRA_ICON_ID) -> {
-                val iconId = bundle.getInt(ShortcutIntentKeys.EXTRA_ICON_ID)
+            bundle.containsKey(EXTRA_ICON_ID) -> {
+                val iconId = bundle.getInt(EXTRA_ICON_ID)
                 if (iconId == 0) return null
                 val iconName = iconIdToName[iconId] ?: return null
                 if (iconName.startsWith(MDI_PREFIX)) iconName else "$MDI_PREFIX$iconName"
@@ -47,14 +48,24 @@ internal class ShortcutIntentCodecImpl @Inject constructor() : ShortcutIntentCod
         }
     }
 
+    override fun applyShortcutExtras(intent: Intent, target: ShortcutTargetValue, path: String, iconName: String?) {
+        intent.putExtra(EXTRA_SHORTCUT_PATH, path)
+        iconName?.let { intent.putExtra(EXTRA_ICON_NAME, it) }
+        intent.putExtra(EXTRA_TYPE, target.toShortcutType().name)
+    }
+
     private fun parseShortcutType(extras: Bundle?, path: String): ShortcutType {
-        val raw = extras?.getString(ShortcutIntentKeys.EXTRA_TYPE)
+        val raw = extras?.getString(EXTRA_TYPE)
         val fromExtra = raw?.let { ShortcutType.entries.firstOrNull { e -> e.name == it } }
         return fromExtra ?: if (path.startsWith(ENTITY_PREFIX)) ShortcutType.ENTITY_ID else ShortcutType.LOVELACE
     }
 
-    private companion object {
+    internal companion object {
         private const val ENTITY_PREFIX = "entityId:"
         private const val MDI_PREFIX = "mdi:"
+        private const val EXTRA_ICON_ID = "iconId"
+        const val EXTRA_ICON_NAME = "iconName"
+        const val EXTRA_SHORTCUT_PATH = "shortcutPath"
+        const val EXTRA_TYPE = "type"
     }
 }

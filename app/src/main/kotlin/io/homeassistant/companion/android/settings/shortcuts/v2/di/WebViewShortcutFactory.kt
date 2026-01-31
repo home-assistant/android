@@ -9,9 +9,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.shortcuts.ShortcutFactory
 import io.homeassistant.companion.android.common.data.shortcuts.ShortcutIntentCodec
-import io.homeassistant.companion.android.common.data.shortcuts.ShortcutIntentKeys
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.toShortcutType
 import io.homeassistant.companion.android.settings.shortcuts.v2.util.ShortcutIconRenderer
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import io.homeassistant.companion.android.webview.WebViewActivity
@@ -30,9 +28,12 @@ class WebViewShortcutFactory @Inject constructor(
                     Intent.FLAG_ACTIVITY_MULTIPLE_TASK or
                     Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS,
             )
-            putExtra(ShortcutIntentKeys.EXTRA_SHORTCUT_PATH, encodedPath)
-            draft.selectedIconName?.let { putExtra(ShortcutIntentKeys.EXTRA_ICON_NAME, it) }
-            putExtra(ShortcutIntentKeys.EXTRA_TYPE, draft.target.toShortcutType().name)
+            shortcutIntentCodec.applyShortcutExtras(
+                intent = this,
+                target = draft.target,
+                path = encodedPath,
+                iconName = draft.selectedIconName,
+            )
         }
 
         val builder = ShortcutInfoCompat.Builder(app, draft.id)

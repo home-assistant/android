@@ -8,8 +8,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.shortcuts.ShortcutFactory
 import io.homeassistant.companion.android.common.data.shortcuts.ShortcutIntentCodec
-import io.homeassistant.companion.android.common.data.shortcuts.ShortcutIntentKeys
 import io.homeassistant.companion.android.common.data.shortcuts.ShortcutsRepository
+import io.homeassistant.companion.android.common.data.shortcuts.impl.ShortcutIntentCodecImpl.Companion.EXTRA_SHORTCUT_PATH
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.DynamicEditorData
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.DynamicShortcutsData
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.PinResult
@@ -385,7 +385,7 @@ internal class ShortcutsRepositoryImpl @Inject constructor(
     private fun ShortcutInfoCompat.toDraft(defaultServerId: Int, iconIdToName: Map<Int, String>): ShortcutDraft {
         val extras = intent.extras
         val serverId = extras?.getInt(EXTRA_SERVER, defaultServerId) ?: defaultServerId
-        val path = extras?.getString(ShortcutIntentKeys.EXTRA_SHORTCUT_PATH) ?: intent.action.orEmpty()
+        val path = extras?.getString(EXTRA_SHORTCUT_PATH) ?: intent.action.orEmpty()
 
         val selectedIconName = shortcutIntentCodec.parseIcon(extras, iconIdToName)
         val target = shortcutIntentCodec.parseTarget(extras, path)
