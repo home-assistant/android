@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens
+package io.homeassistant.companion.android.settings.shortcuts.v2.views.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,13 +23,12 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutError
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutEditorUiState
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.DynamicShortcutEditor
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.EmptyStateContent
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.EmptyStateContentSlots
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.EmptyStateNoServers
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.NotSupportedStateContent
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.PinnedShortcutEditor
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.preview.ShortcutPreviewData
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.DynamicShortcutEditor
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.EmptyStateContentSlots
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.EmptyStateNoServers
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.NotSupportedStateContent
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.PinnedShortcutEditor
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.preview.ShortcutPreviewData
 import io.homeassistant.companion.android.util.icondialog.IconDialog
 import io.homeassistant.companion.android.util.icondialog.mdiName
 import io.homeassistant.companion.android.util.plus

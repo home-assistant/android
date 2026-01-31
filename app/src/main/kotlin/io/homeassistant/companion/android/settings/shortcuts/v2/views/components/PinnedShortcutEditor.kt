@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.settings.shortcuts.v2.ui.components
+package io.homeassistant.companion.android.settings.shortcuts.v2.views.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,16 +20,15 @@ import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutTargetValue
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutEditorUiState
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.preview.ShortcutPreviewData
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.ShortcutEditorScreenState
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.selector.ShortcutIconPicker
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.preview.ShortcutPreviewData
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.screens.ShortcutEditorScreenState
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.selector.ShortcutIconPicker
 
 @Composable
-internal fun DynamicShortcutEditor(
+internal fun PinnedShortcutEditor(
     draft: ShortcutDraft,
-    state: ShortcutEditorUiState.EditorState.Dynamic,
+    state: ShortcutEditorUiState.EditorState.Pinned,
     screen: ShortcutEditorScreenState,
     onDraftChange: (ShortcutDraft) -> Unit,
     onIconClick: () -> Unit,
@@ -48,7 +47,7 @@ internal fun DynamicShortcutEditor(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = stringResource(R.string.shortcut_n, state.index + 1),
+                text = stringResource(R.string.shortcut_pinned),
                 style = HATextStyle.HeadlineMedium,
                 color = LocalHAColorScheme.current.colorFillPrimaryLoudResting,
                 textAlign = TextAlign.Start,
@@ -63,11 +62,11 @@ internal fun DynamicShortcutEditor(
 
         ShortcutEditorForm(
             draft = draft,
-            labelText = stringResource(R.string.shortcut_label_n, state.index + 1),
-            descriptionText = stringResource(R.string.shortcut_description_n, state.index + 1),
+            labelText = stringResource(R.string.shortcut_pinned_label),
+            descriptionText = stringResource(R.string.shortcut_pinned_desc),
             screen = screen,
             onDraftChange = onDraftChange,
-            isEditing = state is ShortcutEditorUiState.EditorState.DynamicEdit,
+            isEditing = state is ShortcutEditorUiState.EditorState.PinnedEdit,
             canSubmit = canSubmit,
             onSubmit = onSubmit,
             onDelete = onDelete,
@@ -75,25 +74,13 @@ internal fun DynamicShortcutEditor(
     }
 }
 
-internal fun canSubmit(draft: ShortcutDraft, screen: ShortcutEditorScreenState, requireId: Boolean): Boolean {
-    val hasValidTarget = when (val target = draft.target) {
-        is ShortcutTargetValue.Lovelace -> target.path.isNotBlank()
-        is ShortcutTargetValue.Entity -> target.entityId.isNotBlank()
-    }
-    return (!requireId || draft.id.isNotEmpty()) &&
-        draft.label.isNotEmpty() &&
-        draft.description.isNotEmpty() &&
-        hasValidTarget &&
-        screen.servers.any { it.id == draft.serverId }
-}
-
-@Preview(name = "Dynamic Shortcut Editor")
+@Preview(name = "Pinned Shortcut Editor")
 @Composable
-private fun DynamicShortcutEditorPreview() {
+private fun PinnedShortcutEditorPreview() {
     HAThemeForPreview {
-        DynamicShortcutEditor(
-            draft = ShortcutPreviewData.buildDraft(),
-            state = ShortcutPreviewData.buildDynamicEditorState(),
+        PinnedShortcutEditor(
+            draft = ShortcutPreviewData.buildPinnedDraft(),
+            state = ShortcutPreviewData.buildPinnedEditorState(),
             screen = ShortcutPreviewData.buildScreenState(),
             onDraftChange = {},
             onIconClick = {},

@@ -20,8 +20,8 @@ import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.Pi
 import io.homeassistant.companion.android.settings.shortcuts.v2.ManageShortcutsViewModel
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutEditViewModel
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListAction
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.ShortcutEditorScreen
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.ShortcutsListScreen
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.screens.ShortcutEditorScreen
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.screens.ShortcutsListScreen
 import kotlinx.serialization.Serializable
 
 @Serializable

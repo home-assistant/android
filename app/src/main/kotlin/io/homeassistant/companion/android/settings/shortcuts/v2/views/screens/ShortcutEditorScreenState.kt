@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens
+package io.homeassistant.companion.android.settings.shortcuts.v2.views.screens
 
 import androidx.compose.runtime.Immutable
 import io.homeassistant.companion.android.common.data.integration.Entity

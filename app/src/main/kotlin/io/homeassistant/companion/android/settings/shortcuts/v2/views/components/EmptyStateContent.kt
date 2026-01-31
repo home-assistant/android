@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.settings.shortcuts.v2.ui.components
+package io.homeassistant.companion.android.settings.shortcuts.v2.views.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource

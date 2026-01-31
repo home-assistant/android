@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.settings.shortcuts.v2.ui.preview
+package io.homeassistant.companion.android.settings.shortcuts.v2.views.preview
 
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
@@ -16,7 +16,7 @@ import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.settings.shortcuts.v2.DynamicShortcutItem
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutEditorUiState
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListState
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.ShortcutEditorScreenState
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.screens.ShortcutEditorScreenState
 import java.time.LocalDateTime
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap

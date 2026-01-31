@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens
+package io.homeassistant.companion.android.settings.shortcuts.v2.views.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -53,11 +53,11 @@ import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.Sh
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutType
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListAction
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListState
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.EmptyStateContent
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.EmptyStateNoServers
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.ErrorStateContent
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.components.NotSupportedStateContent
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.preview.ShortcutPreviewData
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.EmptyStateContent
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.EmptyStateNoServers
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.ErrorStateContent
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.NotSupportedStateContent
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.preview.ShortcutPreviewData
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import io.homeassistant.companion.android.util.plus

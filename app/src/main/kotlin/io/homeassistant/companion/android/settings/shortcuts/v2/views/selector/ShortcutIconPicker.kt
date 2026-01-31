@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.settings.shortcuts.v2.ui.selector
+package io.homeassistant.companion.android.settings.shortcuts.v2.views.selector
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.size

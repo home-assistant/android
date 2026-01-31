@@ -15,7 +15,7 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.ShortcutEditAction
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.screens.ShortcutEditAction
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery

@@ -13,8 +13,8 @@ import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.Sh
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutError
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutResult
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.empty
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.ShortcutEditAction
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.ShortcutEditorScreenState
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.screens.ShortcutEditAction
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.screens.ShortcutEditorScreenState
 import javax.inject.Inject
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toPersistentMap

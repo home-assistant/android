@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.settings.shortcuts.v2.ui.selector
+package io.homeassistant.companion.android.settings.shortcuts.v2.views.selector
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,8 +17,8 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutTargetValue
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.preview.ShortcutPreviewData
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.ShortcutEditorScreenState
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.preview.ShortcutPreviewData
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.screens.ShortcutEditorScreenState
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import kotlinx.collections.immutable.persistentListOf
 

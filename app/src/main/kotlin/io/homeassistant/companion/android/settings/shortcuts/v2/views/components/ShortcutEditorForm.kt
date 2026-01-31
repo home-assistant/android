@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.settings.shortcuts.v2.ui.components
+package io.homeassistant.companion.android.settings.shortcuts.v2.views.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,10 +10,10 @@ import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.Sh
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutTargetValue
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutType
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.toShortcutType
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.preview.ShortcutPreviewData
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.screens.ShortcutEditorScreenState
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.selector.ShortcutTargetInput
-import io.homeassistant.companion.android.settings.shortcuts.v2.ui.selector.ShortcutTypeSelector
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.preview.ShortcutPreviewData
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.screens.ShortcutEditorScreenState
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.selector.ShortcutTargetInput
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.selector.ShortcutTypeSelector
 
 @Composable
 internal fun ShortcutEditorForm(
