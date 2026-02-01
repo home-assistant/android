@@ -246,6 +246,11 @@
             android:title="@string/application_version"
             android:summary="1.0.0 (1)"/>
         <Preference
+            android:key="licenses"
+            android:icon="@drawable/ic_license"
+            android:title="@string/licenses"
+            android:summary="@string/licenses_summary"/>
+        <Preference
             android:key="privacy"
             android:icon="@drawable/ic_incognito"
             android:title="@string/privacy_policy"
