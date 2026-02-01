@@ -2,4 +2,4 @@
 <samsung-appwidget-provider
     display="sub_screen"
     parentComponent="io.homeassistant.companion.android/io.homeassistant.companion.android.widgets.button.ButtonWidget"
-    privacyWidget="true" />
+    privacyWidget="false" />
