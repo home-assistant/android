@@ -69,12 +69,10 @@ class ManageAndroidAutoViewModel @Inject constructor(
             servers.map { server ->
                 val serverId = server.id
                 async {
-                    listOf(
-                        async { entities[serverId] = loadEntitiesForServer(serverId) },
-                        async { entityRegistries[serverId] = loadEntityRegistry(serverId) },
-                        async { deviceRegistries[serverId] = loadDeviceRegistry(serverId) },
-                        async { areaRegistries[serverId] = loadAreaRegistry(serverId) },
-                    ).awaitAll()
+                    async { entities[serverId] = loadEntitiesForServer(serverId) }
+                    async { entityRegistries[serverId] = loadEntityRegistry(serverId) }
+                    async { deviceRegistries[serverId] = loadDeviceRegistry(serverId) }
+                    async { areaRegistries[serverId] = loadAreaRegistry(serverId) }
                 }
             }.awaitAll()
             loadEntities(serverManager.getServer()?.id ?: 0)
