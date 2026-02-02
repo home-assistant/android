@@ -170,7 +170,7 @@ class HomeActivity :
         mainViewModel.initAllSensors()
 
         lifecycleScope.launch {
-            if (mainViewModel.loadingState.value == MainViewModel.LoadingState.READY) {
+            if (mainViewModel.loadingState == MainViewModel.LoadingState.READY) {
                 try {
                     mainViewModel.updateUI()
                 } catch (e: CancellationException) {

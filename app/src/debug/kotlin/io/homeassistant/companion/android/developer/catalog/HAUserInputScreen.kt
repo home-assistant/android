@@ -27,9 +27,16 @@ import io.homeassistant.companion.android.common.compose.composable.RadioOption
 import io.homeassistant.companion.android.common.compose.composable.rememberSelectedOption
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
+import io.homeassistant.companion.android.util.compose.entity.EntityPicker
+import java.time.LocalDateTime
 
 fun LazyListScope.catalogUserInputSection() {
     input()
+    entityPicker()
     switches()
     radioGroupSection()
 }
@@ -219,6 +226,82 @@ private fun LazyListScope.switches() {
         }
     }
 }
+
+private fun LazyListScope.entityPicker() {
+    catalogSection(title = "Entity Pickers") {
+        var selectedEntityId by remember { mutableStateOf<String?>(null) }
+
+        EntityPicker(
+            entities = sampleEntities,
+            entityRegistry = sampleEntityRegistry,
+            deviceRegistry = sampleDeviceRegistry,
+            areaRegistry = sampleAreaRegistry,
+            selectedEntityId = selectedEntityId,
+            onEntitySelectedId = { selectedEntityId = it },
+            onEntityCleared = { selectedEntityId = null },
+        )
+    }
+}
+
+private val now = LocalDateTime.now()
+
+private val sampleAreaRegistry = listOf(
+    AreaRegistryResponse(areaId = "living_room", name = "Living Room"),
+    AreaRegistryResponse(areaId = "bedroom", name = "Bedroom"),
+)
+
+private val sampleDeviceRegistry = listOf(
+    DeviceRegistryResponse(id = "device_1", name = "Smart Bulb Pro", areaId = "living_room"),
+)
+
+private val sampleEntityRegistry = listOf(
+    EntityRegistryResponse(entityId = "light.living_room", deviceId = "device_1", areaId = "living_room"),
+)
+
+private val sampleEntities = listOf(
+    Entity(
+        entityId = "light.living_room",
+        state = "on",
+        attributes = mapOf("friendly_name" to "Living Room Light", "icon" to "mdi:lightbulb"),
+        lastChanged = now,
+        lastUpdated = now,
+    ),
+    Entity(
+        entityId = "light.bedroom",
+        state = "off",
+        attributes = mapOf("friendly_name" to "Bedroom Light"),
+        lastChanged = now,
+        lastUpdated = now,
+    ),
+    Entity(
+        entityId = "sensor.temperature",
+        state = "22.5",
+        attributes = mapOf("friendly_name" to "Temperature Sensor", "unit_of_measurement" to "°C"),
+        lastChanged = now,
+        lastUpdated = now,
+    ),
+    Entity(
+        entityId = "switch.fan",
+        state = "off",
+        attributes = mapOf("friendly_name" to "Ceiling Fan"),
+        lastChanged = now,
+        lastUpdated = now,
+    ),
+    Entity(
+        entityId = "binary_sensor.motion",
+        state = "off",
+        attributes = mapOf("friendly_name" to "Motion Sensor", "device_class" to "motion"),
+        lastChanged = now,
+        lastUpdated = now,
+    ),
+    Entity(
+        entityId = "cover.garage_door",
+        state = "closed",
+        attributes = mapOf("friendly_name" to "Garage Door", "device_class" to "garage"),
+        lastChanged = now,
+        lastUpdated = now,
+    ),
+)
 
 @Preview(showBackground = true, device = TABLET)
 @Composable

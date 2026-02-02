@@ -37,6 +37,9 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.database.IconDialogCompat
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
@@ -44,6 +47,7 @@ import io.homeassistant.companion.android.util.icondialog.mdiName
 import io.homeassistant.companion.android.webview.WebViewActivity
 import io.homeassistant.companion.android.widgets.assist.AssistShortcutActivity
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -70,6 +74,12 @@ class ManageShortcutsViewModel @Inject constructor(
     var servers by mutableStateOf(emptyList<Server>())
         private set
     var entities = mutableStateMapOf<Int, List<Entity>>()
+        private set
+    var entityRegistry = mutableStateMapOf<Int, List<EntityRegistryResponse>>()
+        private set
+    var deviceRegistry = mutableStateMapOf<Int, List<DeviceRegistryResponse>>()
+        private set
+    var areaRegistry = mutableStateMapOf<Int, List<AreaRegistryResponse>>()
         private set
 
     private suspend fun currentServerId() = serverManager.getServer()?.id ?: 0
@@ -117,8 +127,40 @@ class ManageShortcutsViewModel @Inject constructor(
                     entities[server.id] = try {
                         serverManager.integrationRepository(server.id).getEntities().orEmpty()
                             .sortedBy { it.entityId }
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         Timber.e(e, "Couldn't load entities for server")
+                        emptyList()
+                    }
+                }
+                launch {
+                    entityRegistry[server.id] = try {
+                        serverManager.webSocketRepository(server.id).getEntityRegistry().orEmpty()
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Timber.e(e, "Couldn't load entity registry for server")
+                        emptyList()
+                    }
+                }
+                launch {
+                    deviceRegistry[server.id] = try {
+                        serverManager.webSocketRepository(server.id).getDeviceRegistry().orEmpty()
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Timber.e(e, "Couldn't load device registry for server")
+                        emptyList()
+                    }
+                }
+                launch {
+                    areaRegistry[server.id] = try {
+                        serverManager.webSocketRepository(server.id).getAreaRegistry().orEmpty()
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Timber.e(e, "Couldn't load area registry for server")
                         emptyList()
                     }
                 }

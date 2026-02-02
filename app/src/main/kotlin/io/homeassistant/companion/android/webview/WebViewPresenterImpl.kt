@@ -107,10 +107,11 @@ class WebViewPresenterImpl @Inject constructor(
         lifecycle: Lifecycle,
         path: String?,
         isInternalOverride: ((ServerConnectionInfo) -> Boolean)?,
+        isNewServer: Boolean?,
     ) {
         urlFlowJob?.cancel()
 
-        val isNewServer = ensureServerIsAvailable()
+        val isNewServer = isNewServer ?: ensureServerIsAvailable()
         if (!isSessionConnected()) return
 
         urlFlowJob = lifecycle.cancelOnLifecycle(Lifecycle.State.STARTED) {
@@ -226,7 +227,8 @@ class WebViewPresenterImpl @Inject constructor(
                         url = urlWithAuth,
                         keepHistory = !isNewServer,
                         openInApp = it.baseIsEqual(baseUrl),
-                        serverHandleInsets = serverManager.getServer(serverId)?.version?.isAtLeast(2025, 12) == true,
+                        // We need the frontend to notify us of the mode to use for the status bar https://github.com/home-assistant/frontend/issues/29125
+                        serverHandleInsets = false,
                     )
                 }
             }
@@ -259,11 +261,12 @@ class WebViewPresenterImpl @Inject constructor(
     }
 
     override suspend fun switchActiveServer(lifecycle: Lifecycle, id: Int) {
+        val isNewServer = serverId != id
         if (serverId != id && serverId != ServerManager.SERVER_ID_ACTIVE) {
             setAppActive(false) // 'Lock' old server
         }
         setActiveServer(id)
-        load(lifecycle = lifecycle)
+        load(lifecycle, isNewServer = isNewServer)
         view.unlockAppIfNeeded()
     }
 

@@ -161,6 +161,8 @@ class EntityWidget : BaseWidgetProvider<StaticWidgetEntity, StaticWidgetDao>() {
             } else {
                 entityId?.let { serverManager.integrationRepository(serverId).getEntity(it) }
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.e(e, "Unable to fetch entity")
             entityCaughtException = true
