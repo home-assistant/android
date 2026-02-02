@@ -285,7 +285,8 @@
     <string name="gestures_action_open_app_developer">Open app troubleshooting</string>
     <string name="gestures_action_open_assist">Open Assist</string>
     <string name="gestures_action_quickbar_commands">Search commands</string>
-    <string name="gestures_action_quickbar_default">Search entities</string>
+    <string name="gestures_action_quickbar_default">Quick search</string>
+    <string name="gestures_action_quickbar_entities">Search entities</string>
     <string name="gestures_action_quickbar_devices">Search devices</string>
     <string name="gestures_action_server_list">Servers list</string>
     <string name="gestures_action_server_next">Next server</string>
@@ -519,6 +520,8 @@
     <string name="ok">OK</string>
     <string name="open_with_headphone_button">Open with headset button</string>
     <string name="open_with_headphone_button_summary">Use Assist with the assistant/voice command button on supported headphones and earbuds</string>
+    <string name="licenses">Licenses</string>
+    <string name="licenses_summary">View licenses for third-party libraries</string>
     <string name="other_settings">Other settings</string>
     <string name="other">Other</string>
     <string name="password">Password</string>

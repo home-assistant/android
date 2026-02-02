@@ -16,6 +16,7 @@ interface WebViewPresenter {
         lifecycle: Lifecycle,
         path: String? = null,
         isInternalOverride: ((ServerConnectionInfo) -> Boolean)? = null,
+        isNewServer: Boolean? = null,
     )
 
     fun getActiveServer(): Int

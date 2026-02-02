@@ -1056,7 +1056,15 @@ class WebViewActivity :
                 }
 
                 GestureAction.QUICKBAR_DEFAULT -> {
-                    webView.dispatchKeyDownEventToDocument("e", "KeyE", 69)
+                    if (serverManager.getServer(presenter.getActiveServer())?.version?.isAtLeast(2026, 2) == true) {
+                        webView.dispatchKeyDownEventToDocument("k", "KeyK", keyCode = 75, ctrlKey = true)
+                    } else {
+                        webView.dispatchKeyDownEventToDocument("e", "KeyE", keyCode = 69)
+                    }
+                }
+
+                GestureAction.QUICKBAR_ENTITIES -> {
+                    webView.dispatchKeyDownEventToDocument("e", "KeyE", keyCode = 69)
                 }
 
                 GestureAction.QUICKBAR_DEVICES -> {
@@ -1501,12 +1509,12 @@ class WebViewActivity :
             }
             supportFragmentManager.clearFragmentResultListener(BlockInsecureFragment.RESULT_KEY)
 
-            clearHistory = !keepHistory
             val oldUrl = loadedUrl
             // It means that if we loaded an URL with a path previously and we try to load the same URL without
             // a path we don't do anything.
             val shouldLoadUrl = !url.hasSameOrigin(oldUrl) || url.hasNonRootPath()
             if (shouldLoadUrl) {
+                clearHistory = !keepHistory
                 loadedUrl = url
                 webView.loadUrl(url.toString())
                 waitForConnection()
@@ -1990,13 +1998,19 @@ class WebViewActivity :
      * [WebView.dispatchKeyEvent] function, this does not used the focused element (to avoid text inputs).
      * The parameters should provide a JavaScript KeyboardEvent's properties.
      */
-    private fun WebView.dispatchKeyDownEventToDocument(key: String, code: String, keyCode: Int) {
+    private fun WebView.dispatchKeyDownEventToDocument(
+        key: String,
+        code: String,
+        keyCode: Int,
+        ctrlKey: Boolean = false,
+    ) {
         val eventCode = """
         var event = new KeyboardEvent('keydown', {
             key: '$key',
             code: '$code',
             keyCode: $keyCode,
             which: $keyCode,
+            ctrlKey: $ctrlKey,
             bubbles: true,
             cancelable: true
         });
