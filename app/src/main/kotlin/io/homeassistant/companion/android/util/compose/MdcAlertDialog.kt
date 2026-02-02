@@ -44,6 +44,7 @@ fun MdcAlertDialog(
     onDismissRequest: () -> Unit,
     title: @Composable () -> Unit,
     content: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
     onCancel: (() -> Unit)? = null,
     onSave: (() -> Unit)? = null,
     onOK: (() -> Unit)? = null,
@@ -51,6 +52,7 @@ fun MdcAlertDialog(
 ) {
     Dialog(onDismissRequest = onDismissRequest) {
         Surface(
+            modifier = modifier,
             shape = MaterialTheme.shapes.medium,
             color = MaterialTheme.colors.surface,
         ) {

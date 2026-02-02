@@ -44,6 +44,7 @@ fun SettingWearLandingView(
     loginWearOs: () -> Unit,
     onBackClicked: () -> Unit,
     events: Flow<String>,
+    modifier: Modifier = Modifier,
 ) {
     val scaffoldState = rememberScaffoldState()
     LaunchedEffect("snackbar") {
@@ -53,6 +54,7 @@ fun SettingWearLandingView(
     }
 
     Scaffold(
+        modifier = modifier,
         scaffoldState = scaffoldState,
         snackbarHost = {
             SnackbarHost(

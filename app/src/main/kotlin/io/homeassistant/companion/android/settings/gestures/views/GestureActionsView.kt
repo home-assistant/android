@@ -32,11 +32,15 @@ import io.homeassistant.companion.android.util.safeBottomPaddingValues
  * @param onActionClicked Called when an action is selected
  */
 @Composable
-fun GestureActionsView(selectedAction: GestureAction, onActionClicked: (GestureAction) -> Unit) {
+fun GestureActionsView(
+    selectedAction: GestureAction,
+    onActionClicked: (GestureAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val actionsGrouped = GestureAction.entries.minus(GestureAction.NONE).groupBy { it.category }
     LazyColumn(
         contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
-        modifier = Modifier.selectableGroup(),
+        modifier = modifier.selectableGroup(),
     ) {
         item {
             // GestureAction.NONE is here so it's always first in the list with no header

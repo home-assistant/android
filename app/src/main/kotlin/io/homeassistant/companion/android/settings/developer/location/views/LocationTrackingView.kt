@@ -70,10 +70,12 @@ fun LocationTrackingView(
     onSetHistory: (Boolean) -> Unit,
     history: Flow<PagingData<LocationHistoryItem>>,
     serversList: List<Server>,
+    modifier: Modifier = Modifier,
 ) {
     val historyState = history.collectAsLazyPagingItems()
 
     LazyColumn(
+        modifier = modifier,
         contentPadding = safeBottomPaddingValues(applyHorizontal = false),
     ) {
         item("history.use") {
@@ -137,7 +139,7 @@ fun LocationTrackingView(
 }
 
 @Composable
-fun LocationTrackingHistoryRow(item: LocationHistoryItem?, servers: List<Server>) {
+fun LocationTrackingHistoryRow(item: LocationHistoryItem?, servers: List<Server>, modifier: Modifier = Modifier) {
     var opened by rememberSaveable { mutableStateOf(false) }
     val elevation by animateDpAsState(if (opened) 8.dp else 0.dp, label = "HistoryRow elevation")
     val date by remember(item?.id) {
@@ -150,7 +152,7 @@ fun LocationTrackingHistoryRow(item: LocationHistoryItem?, servers: List<Server>
         )
     }
 
-    Box(Modifier.zIndex(if (opened) 1f else 0f)) {
+    Box(modifier.zIndex(if (opened) 1f else 0f)) {
         Surface(
             shape = RoundedCornerShape(elevation),
             color = if (opened) MaterialTheme.colors.surface else MaterialTheme.colors.background,
@@ -284,21 +286,31 @@ fun LocationTrackingHistoryRow(item: LocationHistoryItem?, servers: List<Server>
 }
 
 @Composable
-fun ReadOnlyRow(primaryText: String, secondaryText: String, selectingEnabled: Boolean = true) = ReadOnlyRow(
-    { Text(text = primaryText, style = MaterialTheme.typography.body1) },
-    {
+fun ReadOnlyRow(
+    primaryText: String,
+    secondaryText: String,
+    modifier: Modifier = Modifier,
+    selectingEnabled: Boolean = true,
+) = ReadOnlyRow(
+    primarySlot = { Text(text = primaryText, style = MaterialTheme.typography.body1) },
+    secondarySlot = {
         if (selectingEnabled) {
             SelectionContainer { Text(text = secondaryText, style = MaterialTheme.typography.body2) }
         } else {
             Text(text = secondaryText, style = MaterialTheme.typography.body2)
         }
     },
+    modifier = modifier,
 )
 
 @Composable
-fun ReadOnlyRow(primarySlot: @Composable () -> Unit, secondarySlot: @Composable () -> Unit) {
+fun ReadOnlyRow(
+    primarySlot: @Composable () -> Unit,
+    secondarySlot: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .heightIn(min = 56.dp)
             .padding(all = 16.dp),
         verticalArrangement = Arrangement.Center,

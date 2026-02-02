@@ -72,6 +72,7 @@ fun BarcodeScannerView(
     requestPermission: () -> Unit,
     onResult: (String, BarcodeFormat) -> Unit,
     onCancel: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
     resultTimeoutMillis: Long = 1500L,
 ) {
     val context = LocalContext.current
@@ -101,7 +102,7 @@ fun BarcodeScannerView(
     // Main screen structure:
     // - Starting with composables that should go edge to edge (background)
     // - Box with overlay fitting inside insets for main contents/controls
-    Box {
+    Box(modifier = modifier) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = { barcodeView },

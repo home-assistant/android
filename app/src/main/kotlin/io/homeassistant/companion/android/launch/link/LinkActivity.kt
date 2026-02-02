@@ -105,9 +105,9 @@ class LinkActivity : BaseActivity() {
 
 @Composable
 @VisibleForTesting
-fun LinkActivityScreen() {
+fun LinkActivityScreen(modifier: Modifier = Modifier) {
     HomeAssistantAppTheme {
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = modifier.fillMaxSize()) {
             Image(
                 imageVector = ImageVector.vectorResource(R.drawable.app_icon_launch),
                 contentDescription = null,

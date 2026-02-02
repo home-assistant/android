@@ -24,8 +24,11 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.util.compose.ModalBottomSheet
 
 @Composable
-fun ServerChooserView(servers: List<Server>, onServerSelected: (Int) -> Unit) {
-    ModalBottomSheet(title = stringResource(commonR.string.server_select)) {
+fun ServerChooserView(servers: List<Server>, onServerSelected: (Int) -> Unit, modifier: Modifier = Modifier) {
+    ModalBottomSheet(
+        modifier = modifier,
+        title = stringResource(commonR.string.server_select),
+    ) {
         servers.forEach {
             ServerChooserRow(server = it, onServerSelected = onServerSelected)
         }
@@ -34,11 +37,11 @@ fun ServerChooserView(servers: List<Server>, onServerSelected: (Int) -> Unit) {
 }
 
 @Composable
-fun ServerChooserRow(server: Server, onServerSelected: (Int) -> Unit) {
+fun ServerChooserRow(server: Server, onServerSelected: (Int) -> Unit, modifier: Modifier = Modifier) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 56.dp)
             .clickable { onServerSelected(server.id) }
@@ -48,7 +51,9 @@ fun ServerChooserRow(server: Server, onServerSelected: (Int) -> Unit) {
         Icon(
             imageVector = Icons.AutoMirrored.Default.ArrowForwardIos,
             contentDescription = null,
-            modifier = Modifier.size(24.dp).padding(4.dp),
+            modifier = Modifier
+                .size(24.dp)
+                .padding(4.dp),
         )
     }
     Divider(modifier = Modifier.padding(horizontal = 16.dp))
