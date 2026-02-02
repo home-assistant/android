@@ -27,7 +27,6 @@ val MAP_DOMAINS = listOf(
 )
 
 val NOT_ACTIONABLE_DOMAINS = listOf(
-    "alarm_control_panel",
     "binary_sensor",
     "sensor",
 )
@@ -44,10 +43,4 @@ fun canNavigate(entity: Entity): Boolean {
             ((entity.attributes["latitude"] as? Number)?.toDouble() != null) &&
             ((entity.attributes["longitude"] as? Number)?.toDouble() != null)
         )
-}
-
-fun alarmHasNoCode(entity: Entity): Boolean {
-    return entity.domain == "alarm_control_panel" &&
-        entity.attributes["code_format"] as? String == null &&
-        entity.supportsAlarmControlPanelArmAway()
 }
