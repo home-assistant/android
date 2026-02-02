@@ -269,6 +269,14 @@ fun Entity.getCoverPosition(): EntityPosition? {
     }
 }
 
+fun Entity.alarmHasNoCode(): Boolean {
+    return domain == "alarm_control_panel" && attributes["code_format"] as? String == null
+}
+
+fun Entity.alarmCanBeArmedWithoutCode(): Boolean {
+    return domain == "alarm_control_panel" && attributes["code_arm_required"] as? Boolean == true
+}
+
 fun Entity.supportsAlarmControlPanelArmAway(): Boolean {
     return try {
         if (domain != "alarm_control_panel") return false
@@ -916,7 +924,13 @@ suspend fun Entity.onPressed(integrationRepository: IntegrationRepository) {
         }
 
         "alarm_control_panel" -> {
-            if (state != "disarmed") "alarm_disarm" else "alarm_arm_away"
+            if (state == "disarmed" && supportsAlarmControlPanelArmAway() && alarmCanBeArmedWithoutCode()) {
+                "alarm_arm_away"
+            } else if (state != "disarmed" && alarmHasNoCode()) {
+                "alarm_disarm"
+            } else {
+                null
+            }
         }
 
         in EntityExt.DOMAINS_PRESS -> "press"
@@ -931,6 +945,8 @@ suspend fun Entity.onPressed(integrationRepository: IntegrationRepository) {
         "scene" -> "turn_on"
         else -> "toggle"
     }
+
+    if (action == null) return;
 
     integrationRepository.callAction(
         domain = this.domain,
