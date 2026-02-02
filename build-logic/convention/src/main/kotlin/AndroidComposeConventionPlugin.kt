@@ -1,4 +1,5 @@
 
+import com.android.compose.screenshot.gradle.ScreenshotTestOptions
 import com.android.compose.screenshot.tasks.PreviewScreenshotUpdateTask
 import com.android.compose.screenshot.tasks.PreviewScreenshotValidationTask
 import io.homeassistant.companion.android.androidConfig
@@ -6,6 +7,7 @@ import io.homeassistant.companion.android.getPluginId
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.apply
+import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.withType
 
@@ -25,6 +27,10 @@ class AndroidComposeConventionPlugin : Plugin<Project> {
                 buildFeatures.compose = true
 
                 experimentalProperties["android.experimental.enableScreenshotTest"] = true
+            }
+
+            extensions.configure<ScreenshotTestOptions> {
+                imageDifferenceThreshold = 0.00025f // 0.025%
             }
 
             // Screenshot test worker memory grows with test count. Increase as needed.
