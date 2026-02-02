@@ -507,7 +507,7 @@ class WebViewPresenterImpl @Inject constructor(
             mainScope.launch {
                 if (tlv != null && borderAgentId != null) {
                     Timber.d("Matter commissioning payload has preferred Thread dataset, comparing")
-                    compareThreadCredentialsForCommissioning(context, tlv)
+                    compareThreadDatasetForCommissioning(context, tlv)
                 } else {
                     Timber.d("Matter commissioning payload doesn't have Thread, starting commissioning")
                     startMatterCommissioningFlow(context)
@@ -517,15 +517,15 @@ class WebViewPresenterImpl @Inject constructor(
     }
 
     /**
-     * Compare Thread credentials supplied for Matter commissioning, and take action depending on the device state:
-     * - Device prefers credentials: start (external) Matter commissioning flow
-     * - Device doesn't prefer credentials:
-     *    - Has never synced Thread for the server: do a full Thread credentials sync (this will usually result in the
-     *    credentials becoming preferred)
+     * Compare Thread dataset supplied for Matter commissioning, and take action depending on the device state:
+     * - Device prefers dataset: start (external) Matter commissioning flow
+     * - Device doesn't prefer dataset:
+     *    - Has never synced Thread for the server: do a full Thread dataset sync (this will usually result in the
+     *    dataset becoming preferred, if the device has no other Thread dataset)
      *    - Has previously synced Thread for the server: start (external) Matter commissioning flow (the app is
      *    expected to be unable to change the preferred state by syncing)
      */
-    private suspend fun compareThreadCredentialsForCommissioning(context: Context, tlv: String) {
+    private suspend fun compareThreadDatasetForCommissioning(context: Context, tlv: String) {
         val isPreferred = threadUseCase.isPreferredDatasetByDevice(context, tlv)
 
         if (isPreferred) {
