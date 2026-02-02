@@ -11,8 +11,9 @@ import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 
 @Composable
-fun CatalogRow(content: @Composable () -> Unit) {
+fun CatalogRow(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     FlowRow(
+        modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
         verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
     ) {

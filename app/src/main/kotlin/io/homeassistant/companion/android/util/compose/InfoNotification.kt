@@ -22,7 +22,7 @@ import io.homeassistant.companion.android.common.R
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun InfoNotification(infoString: Int, channelId: String, buttonString: Int) {
+fun InfoNotification(infoString: Int, channelId: String, buttonString: Int, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     Icon(
         Icons.Outlined.Info,
@@ -31,7 +31,7 @@ fun InfoNotification(infoString: Int, channelId: String, buttonString: Int) {
     )
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(top = 20.dp),
+        modifier = modifier.padding(top = 20.dp),
     ) {
         Text(
             text = stringResource(id = infoString),
@@ -39,12 +39,14 @@ fun InfoNotification(infoString: Int, channelId: String, buttonString: Int) {
         )
     }
     Row(verticalAlignment = Alignment.CenterVertically) {
-        TextButton(onClick = {
-            val intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
-            intent.putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-            intent.putExtra(Settings.EXTRA_CHANNEL_ID, channelId)
-            context.startActivity(intent)
-        }) {
+        TextButton(
+            onClick = {
+                val intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+                intent.putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                intent.putExtra(Settings.EXTRA_CHANNEL_ID, channelId)
+                context.startActivity(intent)
+            },
+        ) {
             Text(stringResource(buttonString))
         }
     }

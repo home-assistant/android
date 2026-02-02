@@ -49,7 +49,7 @@ private sealed class CatalogScreen(val title: String, val icon: ImageVector) {
 }
 
 @Composable
-fun HAComposeCatalogScreen() {
+fun HAComposeCatalogScreen(modifier: Modifier = Modifier) {
     val screens = listOf(
         CatalogScreen.ButtonsAndIndicators,
         CatalogScreen.UserInput,
@@ -83,6 +83,7 @@ fun HAComposeCatalogScreen() {
                     }
                 }
             },
+            modifier = modifier,
         ) { scaffoldPadding ->
             val layoutDirection = LocalLayoutDirection.current
             LazyColumn(
@@ -106,7 +107,7 @@ fun HAComposeCatalogScreen() {
 }
 
 @Composable
-private fun VariantDropdownMenu(onVariantClick: (ButtonVariant) -> Unit, modifier: Modifier) {
+private fun VariantDropdownMenu(onVariantClick: (ButtonVariant) -> Unit, modifier: Modifier = Modifier) {
     var expanded by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.padding(HADimens.SPACE4)) {

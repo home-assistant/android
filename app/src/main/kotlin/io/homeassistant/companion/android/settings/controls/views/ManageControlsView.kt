@@ -82,6 +82,7 @@ fun ManageControlsView(
     onSelectEntity: (String, Int) -> Unit,
     onSetPanelSetting: (String, Int) -> Unit,
     onSetStructureEnabled: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var selectedServer by remember(defaultServer) { mutableIntStateOf(defaultServer) }
     val initialPanelEnabled by rememberSaveable { mutableStateOf(panelEnabled) }
@@ -89,6 +90,7 @@ fun ManageControlsView(
     var panelPath by remember(panelSetting?.first) { mutableStateOf(panelSetting?.first ?: "") }
 
     LazyColumn(
+        modifier = modifier,
         contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
     ) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -301,9 +303,15 @@ fun ManageControlsView(
 }
 
 @Composable
-fun ManageControlsEntity(entityName: String, entityDomain: String, selected: Boolean, onClick: () -> Unit) {
+fun ManageControlsEntity(
+    entityName: String,
+    entityDomain: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .clickable { onClick() }
             .fillMaxWidth()
             .padding(all = 16.dp),

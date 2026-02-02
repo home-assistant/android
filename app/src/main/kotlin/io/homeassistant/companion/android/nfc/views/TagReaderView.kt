@@ -20,9 +20,9 @@ import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R
 
 @Composable
-fun TagReaderView() {
+fun TagReaderView(modifier: Modifier = Modifier) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.safeDrawing)
             .padding(all = 16.dp),
@@ -42,6 +42,6 @@ fun TagReaderView() {
 
 @Preview(showSystemUi = true)
 @Composable
-fun TagReaderViewPreview() {
+private fun TagReaderViewPreview() {
     TagReaderView()
 }

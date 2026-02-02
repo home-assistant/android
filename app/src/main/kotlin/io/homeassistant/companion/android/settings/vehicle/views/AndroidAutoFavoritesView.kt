@@ -46,6 +46,7 @@ fun AndroidAutoFavoritesSettings(
     androidAutoViewModel: ManageAndroidAutoViewModel,
     serversList: List<Server>,
     defaultServer: Int,
+    modifier: Modifier = Modifier,
 ) {
     val lazyListState = rememberLazyListState()
     val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
@@ -71,6 +72,7 @@ fun AndroidAutoFavoritesSettings(
     LazyColumn(
         state = lazyListState,
         contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
+        modifier = modifier,
     ) {
         item {
             Text(
