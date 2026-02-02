@@ -39,53 +39,53 @@ android {
     sourceSets {
         getByName("main") {
             kotlin {
-                srcDirs("../app/src/main/kotlin")
+                directories += "../app/src/main/kotlin"
             }
             assets {
-                srcDirs("../app/src/main/assets")
+                directories += "../app/src/main/assets"
             }
             res {
-                srcDirs("../app/src/main/res")
+                directories += "../app/src/main/res"
             }
         }
         getByName("full") {
             kotlin {
-                srcDirs("../app/src/full/kotlin")
+                directories += "../app/src/full/kotlin"
             }
             res {
-                srcDirs("../app/src/full/res")
+                directories += "../app/src/full/res"
             }
         }
         getByName("minimal") {
             kotlin {
-                srcDirs("../app/src/minimal/kotlin")
+                directories += "../app/src/minimal/kotlin"
             }
             res {
-                srcDirs("../app/src/minimal/res")
+                directories += "../app/src/minimal/res"
             }
         }
         getByName("debug") {
             kotlin {
-                srcDirs("../app/src/debug/kotlin")
+                directories += "../app/src/debug/kotlin"
             }
             res {
-                srcDirs("../app/src/debug/res")
+                directories += "../app/src/debug/res"
             }
         }
         getByName("release") {
             kotlin {
-                srcDirs("../app/src/release/kotlin")
+                directories += "../app/src/release/kotlin"
             }
         }
         getByName("androidTest") {
             kotlin {
-                srcDirs("../app/src/androidTest/kotlin")
+                directories += "../app/src/androidTest/kotlin"
             }
             assets {
-                srcDirs("../app/src/androidTest/assets")
+                directories += "../app/src/androidTest/assets"
             }
             res {
-                srcDirs("../app/src/androidTest/res")
+                directories += "../app/src/androidTest/res"
             }
         }
     }

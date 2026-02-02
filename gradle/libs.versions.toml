@@ -2,7 +2,7 @@
 # You need to update the lock if you update or add a dependency
 # you can do that with `./gradlew alldependencies --write-locks`
 [versions]
-aboutlibraries = "13.2.1"
+aboutlibraries = "14.0.0-b02"
 accompanist = "0.37.3"
 activity-compose = "1.12.3"
 androidBeaconLibrary = "2.21.2"
@@ -17,6 +17,7 @@ androidTools = "32.0.0"
 androidxConcurrent = "1.3.0"
 androidxHiltNavigationCompose = "1.3.0"
 androidxTestCore = "1.7.0"
+androidxTestEspresso = "3.7.0"
 androidxTestExt = "1.3.0"
 androidxTestRules = "1.7.0"
 androidxTestRunner = "1.7.0"
@@ -102,7 +103,6 @@ android-lint = { id = "com.android.lint", version.ref = "androidGradlePlugin" }
 firebase-appdistribution = { id = "com.google.firebase.appdistribution", version.ref = "firebaseAppdistributionGradle" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
@@ -149,6 +149,7 @@ androidx-runtime-lint = { module = "androidx.compose.runtime:runtime-lint", vers
 androidx-watchface-complications-data-source-ktx = { module = "androidx.wear.watchface:watchface-complications-data-source-ktx", version.ref = "watchfaceComplicationsDataSourceKtx" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntime" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
+androidx-test-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "androidxTestEspresso" }
 androidx-test-ext = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "androidxTestExt" }
 androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "androidxTestRules" }
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidxTestRunner" }
@@ -263,7 +264,7 @@ webkit = { module = "androidx.webkit:webkit", version.ref = "webkit" }
 zxing = { module = "com.journeyapps:zxing-android-embedded", version.ref = "zxing" }
 
 [bundles]
-androidx-test =["androidx-test-core", "androidx-test-ext", "androidx-test-rules", "androidx-test-runner"]
+androidx-test =["androidx-test-core", "androidx-test-espresso-core", "androidx-test-ext", "androidx-test-rules", "androidx-test-runner"]
 androidx-compose-ui-test = ["compose-ui-test", "compose-ui-testManifest"]
 androidx-glance = ["androidx-glance-appwidget", "androidx-glance-appwidget-preview", "androidx-glance-material", "androidx-glance-preview"]
 androidx-glance-testing = ["androidx-glance-testing", "androidx-glance-appwidget-testing"]
