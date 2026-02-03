@@ -33,6 +33,7 @@ class AssistViewModel @Inject constructor(
     private var filteredServerId: Int? = null
     private val allPipelines = mutableMapOf<Int, List<AssistPipelineResponse>>()
     private var selectedPipeline: AssistPipelineResponse? = null
+    private var wakeWordPhrase: String? = null
 
     private var recorderAutoStart = true
     private var requestPermission: (() -> Unit)? = null
@@ -55,9 +56,16 @@ class AssistViewModel @Inject constructor(
     var userCanManagePipelines by mutableStateOf(false)
         private set
 
-    fun onCreate(hasPermission: Boolean, serverId: Int?, pipelineId: String?, startListening: Boolean?) {
+    fun onCreate(
+        hasPermission: Boolean,
+        serverId: Int?,
+        pipelineId: String?,
+        startListening: Boolean?,
+        fromWakeWord: String?,
+    ) {
         viewModelScope.launch {
             this@AssistViewModel.hasPermission = hasPermission
+            this@AssistViewModel.wakeWordPhrase = fromWakeWord
             serverId?.let {
                 filteredServerId = serverId
                 selectedServerId = serverId
@@ -328,9 +336,13 @@ class AssistViewModel @Inject constructor(
         if (!isVoice) _conversation.add(haMessage)
         var message = if (isVoice) userMessage else haMessage
 
+        // Capture and clear wake word phrase - it should only be sent once for the initial command
+        val wakeWord = wakeWordPhrase.also { wakeWordPhrase = null }
+
         runAssistPipelineInternal(
-            text,
-            selectedPipeline,
+            text = text,
+            pipeline = selectedPipeline,
+            fromWakeWord = wakeWord,
         ) { event ->
             when (event) {
                 is AssistEvent.Message -> {
