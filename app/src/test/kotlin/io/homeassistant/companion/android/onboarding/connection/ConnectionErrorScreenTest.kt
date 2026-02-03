@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.onboarding.connection
 
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -17,6 +16,9 @@ import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
+import io.homeassistant.companion.android.frontend.error.FrontendError
+import io.homeassistant.companion.android.frontend.error.FrontendErrorScreen
+import io.homeassistant.companion.android.frontend.error.URL_INFO_TAG
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.mockk.Runs
@@ -25,7 +27,6 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.verify
 import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Rule
 import org.junit.Test
@@ -47,16 +48,13 @@ class ConnectionErrorScreenTest {
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
     @Test
-    fun `Given ConnectionErrorScreen when error is null then nothing is displayed`() {
+    fun `Given FrontendErrorScreen when error is null then nothing is displayed`() {
         composeTestRule.apply {
             setContent {
-                ConnectionErrorScreen(
+                FrontendErrorScreen(
                     error = null,
                     url = null,
-                    onCloseClick = {},
                     onOpenExternalLink = {},
-                    connectivityCheckState = ConnectivityCheckState(),
-                    onRetryConnectivityCheck = {},
                 )
             }
             onRoot().assertIsNotDisplayed()
@@ -64,19 +62,13 @@ class ConnectionErrorScreenTest {
     }
 
     @Test
-    fun `Given ConnectionErrorScreen when error is not null and url is null then url info is not displayed but the error is`() {
+    fun `Given FrontendErrorScreen when error is not null and url is null then url info is not displayed but the error is`() {
         composeTestRule.apply {
             var urlClicked: String? = null
-            var onCloseClicked: Boolean = false
             setContent {
-                ConnectionErrorScreen(
-                    error = ConnectionError.UnknownError(commonR.string.tls_cert_expired_message, "details", "errorType"),
+                FrontendErrorScreen(
+                    error = FrontendError.UnknownError(commonR.string.tls_cert_expired_message, "details", "errorType"),
                     url = null,
-                    onCloseClick = {
-                        onCloseClicked = true
-                    },
-                    connectivityCheckState = ConnectivityCheckState(),
-                    onRetryConnectivityCheck = {},
                     onOpenExternalLink = {
                         urlClicked = it.toString()
                     },
@@ -113,24 +105,18 @@ class ConnectionErrorScreenTest {
             onNodeWithContentDescription(stringResource(commonR.string.connection_error_discord_content_description))
                 .performScrollTo().assertIsDisplayed().performClick()
             assertEquals("https://discord.com/channels/330944238910963714/1284965926336335993", urlClicked)
-
-            onNodeWithText(stringResource(commonR.string.back)).performScrollTo().assertIsDisplayed().performClick()
-            assertTrue(onCloseClicked)
         }
     }
 
     @Test
-    fun `Given ConnectionErrorScreen when error and url are not null then error and url info are displayed`() {
+    fun `Given FrontendErrorScreen when error and url are not null then error and url info are displayed`() {
         composeTestRule.apply {
             val url = "http://ha.org"
             setContent {
-                ConnectionErrorScreen(
-                    error = ConnectionError.AuthenticationError(commonR.string.tls_cert_expired_message, "details", "errorType"),
+                FrontendErrorScreen(
+                    error = FrontendError.AuthenticationError(commonR.string.tls_cert_expired_message, "details", "errorType"),
                     url = url,
-                    onCloseClick = {},
                     onOpenExternalLink = {},
-                    connectivityCheckState = ConnectivityCheckState(),
-                    onRetryConnectivityCheck = {},
                 )
             }
 
@@ -144,13 +130,13 @@ class ConnectionErrorScreenTest {
     @Test
     fun `Given ConnectionErrorScreen with viewmodel when retry is clicked then connectivity check is retried`() {
         val viewModel = mockk<ConnectionViewModel>()
-        val error = ConnectionError.UnreachableError(
+        val error = FrontendError.UnreachableError(
             commonR.string.tls_cert_expired_message,
             "details",
             "errorType",
         )
         every { viewModel.urlFlow } returns MutableStateFlow("http://ha.org")
-        every { viewModel.errorFlow } returns MutableStateFlow<ConnectionError?>(error)
+        every { viewModel.errorFlow } returns MutableStateFlow<FrontendError?>(error)
         every { viewModel.connectivityCheckState } returns MutableStateFlow(
             ConnectivityCheckState(
                 dnsResolution = ConnectivityCheckResult.Success(commonR.string.connection_check_dns, "1.1.1.1"),
@@ -173,7 +159,7 @@ class ConnectionErrorScreenTest {
         composeTestRule.apply {
             setContent {
                 ConnectionErrorScreen(
-                    viewModel = viewModel,
+                    stateProvider = viewModel,
                     onOpenExternalLink = {},
                     onCloseClick = {},
                 )
