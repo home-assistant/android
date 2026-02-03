@@ -65,7 +65,7 @@ val kotlinJsonMapper = Json {
     encodeDefaults = true
     prettyPrint = false
     // explicitNulls = true // default is to print null values in the JSON send if you don't want this behavior you need a custom serializer
-    serializersModule = serializersModule + SocketResponse.socketResponseSerializerModuler
+    serializersModule += SocketResponse.socketResponseSerializerModuler
 }
 
 /**
