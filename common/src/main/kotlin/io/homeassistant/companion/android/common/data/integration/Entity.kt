@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Co
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryOptions
 import io.homeassistant.companion.android.common.util.LocalDateTimeSerializer
 import io.homeassistant.companion.android.common.util.MapAnySerializer
+import io.homeassistant.companion.android.common.util.getAlarmOnPressedAction
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
@@ -167,25 +168,6 @@ fun Entity.getCoverPosition(): EntityPosition? {
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get getCoverPosition")
         null
-    }
-}
-
-fun Entity.alarmHasNoCode(): Boolean {
-    return domain == "alarm_control_panel" && attributes["code_format"] as? String == null
-}
-
-fun Entity.alarmCanBeArmedWithoutCode(): Boolean {
-    return domain == "alarm_control_panel" && attributes["code_arm_required"] as? Boolean == true
-}
-
-fun Entity.supportsAlarmControlPanelArmAway(): Boolean {
-    return try {
-        if (domain != "alarm_control_panel") return false
-        (attributes["supported_features"] as Number).toInt() and
-            EntityExt.ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY == EntityExt.ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY
-    } catch (e: Exception) {
-        Timber.tag(EntityExt.TAG).e(e, "Unable to get supportsArmedAway")
-        false
     }
 }
 
@@ -811,20 +793,12 @@ private fun sensorIcon(state: String?, entity: Entity): IIcon {
 }
 
 suspend fun Entity.onPressed(integrationRepository: IntegrationRepository) {
-    val action = when (domain) {
+    val action: String? = when (domain) {
         "lock" -> {
             if (state == "unlocked") "lock" else "unlock"
         }
 
-        "alarm_control_panel" -> {
-            if (state == "disarmed" && supportsAlarmControlPanelArmAway() && alarmCanBeArmedWithoutCode()) {
-                "alarm_arm_away"
-            } else if (state != "disarmed" && alarmHasNoCode()) {
-                "alarm_disarm"
-            } else {
-                null
-            }
-        }
+        "alarm_control_panel" -> getAlarmOnPressedAction(this)
 
         in EntityExt.DOMAINS_PRESS -> "press"
         "fan",
@@ -839,7 +813,7 @@ suspend fun Entity.onPressed(integrationRepository: IntegrationRepository) {
         else -> "toggle"
     }
 
-    if (action == null) return;
+    if (action == null) return
 
     integrationRepository.callAction(
         domain = this.domain,
