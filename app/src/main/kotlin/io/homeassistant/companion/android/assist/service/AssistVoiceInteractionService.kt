@@ -141,7 +141,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
 
         lastTriggerTime = now
         Timber.i("Wake word '${model.wakeWord}' detected, launching Assist")
-        launchAssistActivity()
+        launchAssist(wakeWord = model.wakeWord)
     }
 
     private fun hasRecordAudioPermission(): Boolean =
@@ -169,11 +169,11 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         }
     }
 
-    private fun launchAssistActivity() {
-        val intent = Intent(this, AssistActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    private fun launchAssist(wakeWord: String? = null) {
+        val args = Bundle().apply {
+            wakeWord?.let { putString(EXTRA_WAKE_WORD, it) }
         }
-        startActivity(intent)
+        showSession(args, 0)
     }
 
     private fun createNotification(modelConfig: MicroWakeWordModelConfig): Notification {
@@ -232,6 +232,9 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
 
         private const val ACTION_START_LISTENING = "io.homeassistant.companion.android.START_LISTENING"
         private const val ACTION_STOP_LISTENING = "io.homeassistant.companion.android.STOP_LISTENING"
+
+        /** Bundle key for passing the detected wake word phrase to the session. */
+        const val EXTRA_WAKE_WORD = "wake_word"
 
         private val DEBOUNCE_DURATION = 3.seconds
 
