@@ -19,7 +19,7 @@ internal fun NavController.navigateToCarAppActivity(navOptions: NavOptions? = nu
 }
 
 internal fun NavGraphBuilder.carAppActivity(navController: NavController) {
-    // Inspired from activity<T> { } to be able to give a ComponentName instead of a class since :onboarding doesn't know :automotive
+    // Inspired from activity<T> { } to be able to give a ComponentName instead of a class since :app doesn't know :automotive
     val destination = ActivityNavigatorDestinationBuilder(
         provider[ActivityNavigator::class],
         AutomotiveRoute::class,

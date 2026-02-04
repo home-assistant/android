@@ -13,7 +13,6 @@
           <option value=":app:connectedFullDebugAndroidTest" />
           <option value=":app:connectedMinimalDebugAndroidTest" />
           <option value=":common:connectedDebugAndroidTest" />
-          <option value=":onboarding:connectedDebugAndroidTest" />
         </list>
       </option>
       <option name="vmOptions" />
