@@ -185,7 +185,7 @@ class MessagingManager @Inject constructor(
         const val COMMAND_SCREEN_OFF_TIMEOUT = "command_screen_off_timeout"
         const val COMMAND_FLASHLIGHT = "command_flashlight"
 
-        const val COMMAND_WAKE_WORD = "command_wake_word"
+        const val COMMAND_WAKE_WORD_DETECTION = "command_wake_word_detection"
 
         // DND commands
         const val DND_PRIORITY_ONLY = "priority_only"
@@ -242,7 +242,7 @@ class MessagingManager @Inject constructor(
             COMMAND_SCREEN_BRIGHTNESS_LEVEL,
             COMMAND_SCREEN_OFF_TIMEOUT,
             COMMAND_FLASHLIGHT,
-            COMMAND_WAKE_WORD,
+            COMMAND_WAKE_WORD_DETECTION,
         )
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
@@ -601,7 +601,7 @@ class MessagingManager @Inject constructor(
                             }
                         }
 
-                        COMMAND_WAKE_WORD -> {
+                        COMMAND_WAKE_WORD_DETECTION -> {
                             val command = jsonData[NotificationData.COMMAND]
                             if (command in DeviceCommandData.ENABLE_COMMANDS) {
                                 handleDeviceCommands(jsonData)
@@ -862,7 +862,7 @@ class MessagingManager @Inject constructor(
                 }
             }
 
-            COMMAND_WAKE_WORD -> {
+            COMMAND_WAKE_WORD_DETECTION -> {
                 val enabled = when (command) {
                     DeviceCommandData.TURN_OFF -> false
                     DeviceCommandData.TURN_ON -> true
@@ -2094,7 +2094,7 @@ class MessagingManager @Inject constructor(
                             COMMAND_SCREEN_OFF_TIMEOUT,
                             -> requestWriteSystemPermission()
                             COMMAND_FLASHLIGHT -> requestCameraPermission()
-                            COMMAND_WAKE_WORD -> requestMicPermission()
+                            COMMAND_WAKE_WORD_DETECTION -> requestMicPermission()
                         }
                     }
                 }
