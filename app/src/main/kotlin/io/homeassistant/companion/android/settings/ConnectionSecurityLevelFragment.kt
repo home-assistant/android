@@ -23,14 +23,15 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.createViewModelLazy
 import androidx.fragment.app.setFragmentResult
-import androidx.lifecycle.DEFAULT_ARGS_KEY
-import androidx.lifecycle.viewmodel.MutableCreationExtras
+import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.lifecycle.withCreationCallback
 import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModel
+import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModelFactory
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.URL_SECURITY_LEVEL_DOCUMENTATION
 
 /**
@@ -77,16 +78,12 @@ class ConnectionSecurityLevelFragment : Fragment() {
         }
     }
 
-    private val viewModel: LocationForSecureConnectionViewModel by createViewModelLazy(
-        viewModelClass = LocationForSecureConnectionViewModel::class,
-        storeProducer = { viewModelStore },
+    private val viewModel: LocationForSecureConnectionViewModel by viewModels(
         extrasProducer = {
-            // Extract serverId from Fragment arguments and inject into SavedStateHandle
-            // to satisfy LocationForSecureConnectionRoute requirements
-            val serverId = arguments?.getInt(EXTRA_SERVER, -1) ?: -1
-            MutableCreationExtras(defaultViewModelCreationExtras).apply {
-                // Key need to match the name of the attribute in the route
-                set(DEFAULT_ARGS_KEY, bundleOf("serverId" to serverId))
+            val serverId =
+                arguments?.getInt(EXTRA_SERVER, ServerManager.SERVER_ID_ACTIVE) ?: ServerManager.SERVER_ID_ACTIVE
+            defaultViewModelCreationExtras.withCreationCallback<LocationForSecureConnectionViewModelFactory> { factory ->
+                factory.create(serverId)
             }
         },
     )
