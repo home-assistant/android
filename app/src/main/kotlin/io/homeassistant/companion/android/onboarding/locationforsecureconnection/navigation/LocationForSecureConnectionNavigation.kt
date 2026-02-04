@@ -7,6 +7,7 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionScreen
+import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModel
 import kotlinx.serialization.Serializable
 
 internal const val URL_SECURITY_LEVEL_DOCUMENTATION =
@@ -25,11 +26,18 @@ internal fun NavGraphBuilder.locationForSecureConnectionScreen(
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
 ) {
     composable<LocationForSecureConnectionRoute> {
+        val route = it.toRoute<LocationForSecureConnectionRoute>()
+        val viewModel = hiltViewModel<
+            LocationForSecureConnectionViewModel,
+            LocationForSecureConnectionViewModel.Factory,
+            >(
+            creationCallback = { factory -> factory.create(route.serverId) },
+        )
         LocationForSecureConnectionScreen(
-            viewModel = hiltViewModel(),
+            viewModel = viewModel,
             onHelpClick = onHelpClick,
             onGoToNextScreen = { allowInsecureConnection ->
-                onGotoNextScreen(allowInsecureConnection, it.toRoute<LocationForSecureConnectionRoute>().serverId)
+                onGotoNextScreen(allowInsecureConnection, route.serverId)
             },
             onShowSnackbar = onShowSnackbar,
         )
