@@ -24,7 +24,7 @@ val isWorktree = settings.settingsDir.resolve(".git").isFile
 
 plugins {
     // So we can't reach the libs.plugins.* aliases from here so we need to declare them the old way...
-    id("org.ajoberstar.reckon.settings").version("1.0.1").apply(false)
+    id("org.ajoberstar.reckon.settings").version("2.0.0").apply(false)
 }
 
 if (!isWorktree) {
