@@ -1,27 +1,34 @@
 package io.homeassistant.companion.android.onboarding.locationforsecureconnection
 
-import androidx.annotation.VisibleForTesting
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import androidx.navigation.toRoute
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.LocationForSecureConnectionRoute
-import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import timber.log.Timber
 
-@HiltViewModel
-class LocationForSecureConnectionViewModel @VisibleForTesting constructor(
-    private val serverId: Int,
+/**
+ * ViewModel for the security level configuration screen.
+ *
+ * Uses assisted injection to receive the serverId. When used via navigation,
+ * the caller extracts serverId from the route and passes it to [Factory.create].
+ */
+@HiltViewModel(assistedFactory = LocationForSecureConnectionViewModel.Factory::class)
+class LocationForSecureConnectionViewModel @AssistedInject constructor(
+    @Assisted private val serverId: Int,
     private val serverManager: ServerManager,
 ) : ViewModel() {
-    @Inject
-    constructor(
-        savedStateHandle: SavedStateHandle,
-        serverManager: ServerManager,
-    ) : this(savedStateHandle.toRoute<LocationForSecureConnectionRoute>().serverId, serverManager)
+
+    /**
+     * Factory for creating instances with a specific serverId.
+     */
+    @AssistedFactory
+    interface Factory {
+        fun create(serverId: Int): LocationForSecureConnectionViewModel
+    }
 
     val allowInsecureConnection: Flow<Boolean?> = flow {
         try {
