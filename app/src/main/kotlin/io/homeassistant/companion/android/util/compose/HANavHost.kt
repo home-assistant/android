@@ -94,6 +94,7 @@ internal fun HANavHost(
                 )
             }
             frontendScreen(navController)
+            settingsScreen()
             if (isAutomotive) {
                 carAppActivity(navController)
             }
