@@ -42,6 +42,8 @@ import io.homeassistant.companion.android.onboarding.locationforsecureconnection
 import io.homeassistant.companion.android.onboarding.nameyourweardevice.navigation.navigateToNameYourWearDevice
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryRoute
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
+import io.homeassistant.companion.android.settings.navigation.SettingsRoute
+import io.homeassistant.companion.android.settings.navigation.navigateToSettings
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.compose.webview.HA_WEBVIEW_TAG
@@ -250,6 +252,24 @@ class HAAppTest {
             assertNull(output.tlsClientCertificatePassword)
 
             verify { spyActivity.finish() }
+        }
+    }
+
+    @Test
+    fun `Given FrontendRoute when navigateToSettings then navigate to SettingsActivity`() {
+        testApp(FrontendRoute()) {
+            navController.navigateToSettings()
+
+            verify(exactly = 1) {
+                activityNavigator.navigate(
+                    match {
+                        it.route == SettingsRoute.serializer().descriptor.serialName
+                    },
+                    any<SavedState>(),
+                    any(),
+                    any(),
+                )
+            }
         }
     }
 }
