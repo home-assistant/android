@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 class AndroidCommonConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
-            apply(plugin = libs.plugins.kotlin.android.getPluginId())
             apply(plugin = libs.plugins.kotlin.serialization.getPluginId())
             apply(plugin = libs.plugins.ksp.getPluginId())
             apply(plugin = libs.plugins.hilt.getPluginId())
@@ -38,16 +37,14 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
             androidConfig {
                 compileSdk = libs.versions.androidSdk.compile.get().toInt()
 
-                defaultConfig {
+                with(defaultConfig) {
                     minSdk = libs.versions.androidSdk.min.get().toInt()
                     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
                 }
 
-                buildFeatures {
-                    buildConfig = true
-                }
+                buildFeatures.buildConfig = true
 
-                compileOptions {
+                with(compileOptions) {
                     sourceCompatibility(libs.versions.javaVersion.get())
                     targetCompatibility(libs.versions.javaVersion.get())
                     isCoreLibraryDesugaringEnabled = true
@@ -59,16 +56,16 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                     }
                 }
 
-                testOptions {
+                with(testOptions) {
                     unitTests {
                         isReturnDefaultValues = true
                         isIncludeAndroidResources = true
                     }
                 }
 
-                sourceSets {
+                with(sourceSets) {
                     named("test") {
-                        resources.srcDir(testResourcesDir)
+                        resources.directories += testResourcesDir.path
                     }
                 }
 
@@ -76,7 +73,7 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                     useJUnitPlatform()
                 }
 
-                lint {
+                with(lint) {
                     checkReleaseBuilds = false
                     // Lint task should fail if there are issues so the CI doesn't allow addition of lint issue.
                     abortOnError = true
