@@ -18,6 +18,7 @@ import io.homeassistant.companion.android.assist.AssistActivity
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
 import io.homeassistant.companion.android.assist.wakeword.WakeWordListener
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.util.CHANNEL_ASSIST_LISTENING
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
@@ -188,7 +189,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
-        return NotificationCompat.Builder(this, CHANNEL_ID)
+        return NotificationCompat.Builder(this, CHANNEL_ASSIST_LISTENING)
             .setContentTitle(getString(commonR.string.assist_listening_title))
             .setContentText(getString(commonR.string.assist_listening_wakeword, modelConfig.wakeWord))
             .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
@@ -205,7 +206,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
-                CHANNEL_ID,
+                CHANNEL_ASSIST_LISTENING,
                 getString(commonR.string.assist_listening_channel),
                 NotificationManager.IMPORTANCE_LOW,
             ).apply {
@@ -227,7 +228,6 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     }
 
     companion object {
-        private const val CHANNEL_ID = "assist_listening"
         private const val NOTIFICATION_ID = 9001
 
         private const val ACTION_START_LISTENING = "io.homeassistant.companion.android.START_LISTENING"
