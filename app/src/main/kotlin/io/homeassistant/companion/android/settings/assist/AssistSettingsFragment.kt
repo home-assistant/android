@@ -28,8 +28,7 @@ class AssistSettingsFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        // TODO new docs
-        addHelpMenuProvider("https://companion.home-assistant.io/")
+        addHelpMenuProvider("https://www.home-assistant.io/voice_control/android/")
     }
 
     override fun onResume() {

@@ -4,6 +4,7 @@ import android.content.Context
 import io.homeassistant.companion.android.assist.service.AssistVoiceInteractionService
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.util.microWakeWordModelConfigs
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -28,41 +29,12 @@ class AssistRepositoryTest {
     private val prefsRepository: PrefsRepository = mockk(relaxed = true)
     private lateinit var repository: AssistRepositoryImpl
 
-    private val testModels = listOf(
-        MicroWakeWordModelConfig(
-            wakeWord = "Okay Nabu",
-            author = "test",
-            website = "https://test.com",
-            model = "okay_nabu.tflite",
-            trainedLanguages = listOf("en"),
-            version = 1,
-            micro = MicroWakeWordModelConfig.MicroFrontendConfig(
-                probabilityCutoff = 0.5f,
-                featureStepSize = 10,
-                slidingWindowSize = 20,
-            ),
-        ),
-        MicroWakeWordModelConfig(
-            wakeWord = "Hey Jarvis",
-            author = "test",
-            website = "https://test.com",
-            model = "hey_jarvis.tflite",
-            trainedLanguages = listOf("en"),
-            version = 1,
-            micro = MicroWakeWordModelConfig.MicroFrontendConfig(
-                probabilityCutoff = 0.5f,
-                featureStepSize = 10,
-                slidingWindowSize = 20,
-            ),
-        ),
-    )
-
     @BeforeEach
     fun setUp() {
         mockkObject(MicroWakeWordModelConfig.Companion)
         mockkObject(AssistVoiceInteractionService.Companion)
 
-        coEvery { MicroWakeWordModelConfig.loadAvailableModels(any()) } returns testModels
+        coEvery { MicroWakeWordModelConfig.loadAvailableModels(any()) } returns microWakeWordModelConfigs
         every { AssistVoiceInteractionService.startListening(any()) } just Runs
         every { AssistVoiceInteractionService.stopListening(any()) } just Runs
 
@@ -121,7 +93,7 @@ class AssistRepositoryTest {
     inner class SetWakeWordEnabledTest {
 
         @Test
-        fun `Given enabled true when setWakeWordEnabled then save preference and start service`() = runTest {
+        fun `Given enabled true when setWakeWordEnabled then save preference and start listening`() = runTest {
             coEvery { prefsRepository.setWakeWordEnabled(any()) } just Runs
 
             repository.setWakeWordEnabled(true)
@@ -132,7 +104,7 @@ class AssistRepositoryTest {
         }
 
         @Test
-        fun `Given enabled false when setWakeWordEnabled then save preference and stop service`() = runTest {
+        fun `Given enabled false when setWakeWordEnabled then save preference and stop listening`() = runTest {
             coEvery { prefsRepository.setWakeWordEnabled(any()) } just Runs
 
             repository.setWakeWordEnabled(false)
@@ -152,7 +124,7 @@ class AssistRepositoryTest {
 
             val result = repository.getSelectedWakeWordModel()
 
-            assertEquals(testModels[0], result)
+            assertEquals(microWakeWordModelConfigs[0], result)
         }
 
         @Test
@@ -183,7 +155,7 @@ class AssistRepositoryTest {
             coEvery { prefsRepository.isWakeWordEnabled() } returns true
             coEvery { prefsRepository.setSelectedWakeWord(any()) } just Runs
 
-            repository.setSelectedWakeWordModel(testModels[1])
+            repository.setSelectedWakeWordModel(microWakeWordModelConfigs[1])
 
             coVerify { prefsRepository.setSelectedWakeWord("Hey Jarvis") }
             coVerify { AssistVoiceInteractionService.startListening(context) }
@@ -195,7 +167,7 @@ class AssistRepositoryTest {
             coEvery { prefsRepository.isWakeWordEnabled() } returns false
             coEvery { prefsRepository.setSelectedWakeWord(any()) } just Runs
 
-            repository.setSelectedWakeWordModel(testModels[1])
+            repository.setSelectedWakeWordModel(microWakeWordModelConfigs[1])
 
             coVerify { prefsRepository.setSelectedWakeWord("Hey Jarvis") }
             coVerify(exactly = 0) { AssistVoiceInteractionService.startListening(any()) }
@@ -207,7 +179,7 @@ class AssistRepositoryTest {
             coEvery { prefsRepository.isWakeWordEnabled() } returns true
             coEvery { prefsRepository.setSelectedWakeWord(any()) } just Runs
 
-            repository.setSelectedWakeWordModel(testModels[0])
+            repository.setSelectedWakeWordModel(microWakeWordModelConfigs[0])
 
             coVerify { prefsRepository.setSelectedWakeWord("Okay Nabu") }
             coVerify(exactly = 0) { AssistVoiceInteractionService.startListening(any()) }

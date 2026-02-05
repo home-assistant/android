@@ -109,4 +109,29 @@ class AssistSettingsScreenScreenshotTest {
             )
         }
     }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `Assist settings testing wake word with no detection`() {
+        HAThemeForPreview {
+            AssistSettingsScreen(
+                uiState = AssistSettingsUiState(
+                    isLoading = false,
+                    isDefaultAssistant = true,
+                    isWakeWordEnabled = true,
+                    selectedWakeWordModel = testModels[0],
+                    availableModels = testModels,
+                    isTestingWakeWord = true,
+                    wakeWordDetected = false,
+                ),
+                hasAudioPermission = true,
+                onSetDefaultAssistant = {},
+                onToggleWakeWord = {},
+                onSelectWakeWord = {},
+                onStartTestWakeWord = {},
+                onStopTestWakeWord = {},
+            )
+        }
+    }
 }

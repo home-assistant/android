@@ -11,6 +11,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -54,6 +55,8 @@ import io.homeassistant.companion.android.common.compose.theme.HARadius
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.util.plus
+import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import org.jetbrains.annotations.VisibleForTesting
 
 /* List of settings
@@ -135,7 +138,7 @@ internal fun AssistSettingsScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(HADimens.SPACE4),
+            .padding(PaddingValues(all = HADimens.SPACE4) + safeBottomPaddingValues(applyHorizontal = false)),
         verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
     ) {
         if (uiState.isLoading) {
@@ -326,10 +329,16 @@ private fun WakeWordModelSelector(
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
+            containerColor = colorScheme.colorSurfaceDefault,
         ) {
             availableModels.forEach { model ->
                 DropdownMenuItem(
-                    text = { Text(model.wakeWord) },
+                    text = {
+                        Text(
+                            text = model.wakeWord,
+                            style = HATextStyle.BodyMedium,
+                        )
+                    },
                     onClick = {
                         onSelectModel(model)
                         expanded = false
