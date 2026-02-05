@@ -16,6 +16,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
+import io.homeassistant.companion.android.common.util.launchAsync
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.isAutomotive
 import java.util.concurrent.TimeUnit
@@ -74,8 +75,8 @@ class ActivitySensorManager :
 
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
-            ACTION_UPDATE_ACTIVITY -> ioScope.launch { handleActivityUpdate(intent, context) }
-            ACTION_SLEEP_ACTIVITY -> ioScope.launch { handleSleepUpdate(intent, context) }
+            ACTION_UPDATE_ACTIVITY -> launchAsync(ioScope) { handleActivityUpdate(intent, context) }
+            ACTION_SLEEP_ACTIVITY -> launchAsync(ioScope) { handleSleepUpdate(intent, context) }
             else -> Timber.w("Unknown intent action: ${intent.action}!")
         }
     }

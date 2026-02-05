@@ -7,12 +7,19 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.onEntityPressedWithoutState
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.launchAsync
 import javax.inject.Inject
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import timber.log.Timber
 
 @AndroidEntryPoint
 class TileActionReceiver : BroadcastReceiver() {
+
+    companion object {
+        private val receiverScope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    }
 
     @Inject
     lateinit var serverManager: ServerManager
@@ -24,7 +31,7 @@ class TileActionReceiver : BroadcastReceiver() {
         val entityId: String? = intent?.getStringExtra("entity_id")
 
         if (entityId != null) {
-            runBlocking {
+            launchAsync(receiverScope) {
                 if (wearPrefsRepository.getWearHapticFeedback() && context != null) hapticClick(context)
 
                 try {
