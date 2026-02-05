@@ -36,7 +36,7 @@ class AssistActivity : BaseActivity() {
         private const val EXTRA_PIPELINE = "pipeline"
         private const val EXTRA_START_LISTENING = "start_listening"
         private const val EXTRA_FROM_FRONTEND = "from_frontend"
-        private const val EXTRA_FROM_WAKE_WORD = "from_wake_word"
+        private const val EXTRA_FROM_WAKE_WORD_PHRASE = "from_wake_word_phrase"
 
         fun newInstance(
             context: Context,
@@ -44,14 +44,14 @@ class AssistActivity : BaseActivity() {
             pipelineId: String? = null,
             startListening: Boolean = true,
             fromFrontend: Boolean = true,
-            fromWakeWord: String? = null,
+            wakeWordPhrase: String? = null,
         ): Intent {
             return Intent(context, AssistActivity::class.java).apply {
                 putExtra(EXTRA_SERVER, serverId)
                 putExtra(EXTRA_PIPELINE, pipelineId)
                 putExtra(EXTRA_START_LISTENING, startListening)
                 putExtra(EXTRA_FROM_FRONTEND, fromFrontend)
-                putExtra(EXTRA_FROM_WAKE_WORD, fromWakeWord)
+                putExtra(EXTRA_FROM_WAKE_WORD_PHRASE, wakeWordPhrase)
             }
         }
     }
@@ -92,7 +92,7 @@ class AssistActivity : BaseActivity() {
                 } else {
                     null
                 },
-                fromWakeWord = intent.getStringExtra(EXTRA_FROM_WAKE_WORD),
+                wakeWordPhrase = intent.getStringExtra(EXTRA_FROM_WAKE_WORD_PHRASE),
             )
         }
 

@@ -31,7 +31,7 @@ class AssistVoiceInteractionSession(context: Context) : VoiceInteractionSession(
         // We use the activity because it already has all the Assist logic implemented
         val intent = AssistActivity.newInstance(
             context = context,
-            fromWakeWord = wakeWord,
+            wakeWordPhrase = wakeWord,
         ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         context.startActivity(intent)
 

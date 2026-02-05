@@ -257,7 +257,7 @@ class WebSocketRepositoryImpl internal constructor(
         outputTts: Boolean,
         pipelineId: String?,
         conversationId: String?,
-        fromWakeWord: String?,
+        wakeWordPhrase: String?,
     ): Flow<AssistPipelineEvent>? {
         val data = buildMap {
             put("start_stage", "stt")
@@ -266,9 +266,7 @@ class WebSocketRepositoryImpl internal constructor(
                 "input",
                 buildMap<String, Any?> {
                     put("sample_rate", sampleRate)
-                    if (fromWakeWord != null) {
-                        put("wake_word_phrase", fromWakeWord)
-                    }
+                    wakeWordPhrase?.let { put("wake_word_phrase", it) }
                 },
             )
             put("conversation_id", conversationId)

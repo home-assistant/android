@@ -10,6 +10,7 @@ import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
+import io.mockk.CapturingSlot
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -24,6 +25,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 
 @ExtendWith(ConsoleLogExtension::class)
 class WebSocketRepositoryImplTest {
@@ -47,8 +50,7 @@ class WebSocketRepositoryImplTest {
     @Nested
     inner class RunAssistPipelineForVoice {
 
-        @Test
-        fun `Given wake word When running pipeline Then wake_word_phrase is included in input`() = runTest {
+        private fun captureSubscribeData(server: Server? = null): CapturingSlot<Map<String, Any?>> {
             val dataSlot = slot<Map<String, Any?>>()
             coEvery {
                 webSocketCore.subscribeTo<AssistPipelineEvent>(
@@ -57,14 +59,20 @@ class WebSocketRepositoryImplTest {
                     timeout = any(),
                 )
             } returns emptyFlow()
-            coEvery { webSocketCore.server() } returns null
+            coEvery { webSocketCore.server() } returns server
+            return dataSlot
+        }
+
+        @Test
+        fun `Given wake word When running pipeline Then wake_word_phrase is included in input`() = runTest {
+            val dataSlot = captureSubscribeData()
 
             repository.runAssistPipelineForVoice(
                 sampleRate = AudioRecorder.SAMPLE_RATE,
                 outputTts = true,
                 pipelineId = null,
                 conversationId = null,
-                fromWakeWord = "okay nabu",
+                wakeWordPhrase = "okay nabu",
             )
 
             coVerify {
@@ -75,104 +83,57 @@ class WebSocketRepositoryImplTest {
                 )
             }
 
-            val capturedData = dataSlot.captured
-
             @Suppress("UNCHECKED_CAST")
-            val input = capturedData["input"] as Map<String, Any?>
+            val input = dataSlot.captured["input"] as Map<String, Any?>
             assertEquals("okay nabu", input["wake_word_phrase"])
         }
 
         @Test
         fun `Given no wake word When running pipeline Then wake_word_phrase is not included`() = runTest {
-            val dataSlot = slot<Map<String, Any?>>()
-            coEvery {
-                webSocketCore.subscribeTo<AssistPipelineEvent>(
-                    type = SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
-                    data = capture(dataSlot),
-                    timeout = any(),
-                )
-            } returns emptyFlow()
-            coEvery { webSocketCore.server() } returns null
+            val dataSlot = captureSubscribeData()
 
             repository.runAssistPipelineForVoice(
                 sampleRate = AudioRecorder.SAMPLE_RATE,
                 outputTts = true,
                 pipelineId = null,
                 conversationId = null,
-                fromWakeWord = null,
+                wakeWordPhrase = null,
             )
 
-            val capturedData = dataSlot.captured
-
             @Suppress("UNCHECKED_CAST")
-            val input = capturedData["input"] as Map<String, Any?>
+            val input = dataSlot.captured["input"] as Map<String, Any?>
             assertFalse(input.containsKey("wake_word_phrase"))
         }
 
-        @Test
-        fun `Given outputTts true When running pipeline Then end_stage is tts`() = runTest {
-            val dataSlot = slot<Map<String, Any?>>()
-            coEvery {
-                webSocketCore.subscribeTo<AssistPipelineEvent>(
-                    type = SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
-                    data = capture(dataSlot),
-                    timeout = any(),
-                )
-            } returns emptyFlow()
-            coEvery { webSocketCore.server() } returns null
+        @ParameterizedTest(name = "Given outputTts={0} When running pipeline Then end_stage is {1}")
+        @CsvSource("true, tts", "false, intent")
+        fun `Given outputTts When running pipeline Then end_stage matches`(
+            outputTts: Boolean,
+            expectedEndStage: String,
+        ) = runTest {
+            val dataSlot = captureSubscribeData()
 
             repository.runAssistPipelineForVoice(
                 sampleRate = AudioRecorder.SAMPLE_RATE,
-                outputTts = true,
+                outputTts = outputTts,
                 pipelineId = null,
                 conversationId = null,
-                fromWakeWord = null,
+                wakeWordPhrase = null,
             )
 
-            assertEquals("tts", dataSlot.captured["end_stage"])
-        }
-
-        @Test
-        fun `Given outputTts false When running pipeline Then end_stage is intent`() = runTest {
-            val dataSlot = slot<Map<String, Any?>>()
-            coEvery {
-                webSocketCore.subscribeTo<AssistPipelineEvent>(
-                    type = SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
-                    data = capture(dataSlot),
-                    timeout = any(),
-                )
-            } returns emptyFlow()
-            coEvery { webSocketCore.server() } returns null
-
-            repository.runAssistPipelineForVoice(
-                sampleRate = AudioRecorder.SAMPLE_RATE,
-                outputTts = false,
-                pipelineId = null,
-                conversationId = null,
-                fromWakeWord = null,
-            )
-
-            assertEquals("intent", dataSlot.captured["end_stage"])
+            assertEquals(expectedEndStage, dataSlot.captured["end_stage"])
         }
 
         @Test
         fun `Given pipelineId When running pipeline Then pipeline is included`() = runTest {
-            val dataSlot = slot<Map<String, Any?>>()
-            coEvery {
-                webSocketCore.subscribeTo<AssistPipelineEvent>(
-                    type = SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
-                    data = capture(dataSlot),
-                    timeout = any(),
-                )
-            } returns emptyFlow()
-            coEvery { webSocketCore.server() } returns null
+            val dataSlot = captureSubscribeData()
 
             repository.runAssistPipelineForVoice(
                 sampleRate = AudioRecorder.SAMPLE_RATE,
                 outputTts = true,
                 pipelineId = "my-pipeline-id",
                 conversationId = null,
-                fromWakeWord = null,
+                wakeWordPhrase = null,
             )
 
             assertEquals("my-pipeline-id", dataSlot.captured["pipeline"])
@@ -180,22 +141,14 @@ class WebSocketRepositoryImplTest {
 
         @Test
         fun `Given no pipelineId When running pipeline Then pipeline is not included`() = runTest {
-            val dataSlot = slot<Map<String, Any?>>()
-            coEvery {
-                webSocketCore.subscribeTo<AssistPipelineEvent>(
-                    type = SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
-                    data = capture(dataSlot),
-                    timeout = any(),
-                )
-            } returns emptyFlow()
-            coEvery { webSocketCore.server() } returns null
+            val dataSlot = captureSubscribeData()
 
             repository.runAssistPipelineForVoice(
                 sampleRate = AudioRecorder.SAMPLE_RATE,
                 outputTts = true,
                 pipelineId = null,
                 conversationId = null,
-                fromWakeWord = null,
+                wakeWordPhrase = null,
             )
 
             assertFalse(dataSlot.captured.containsKey("pipeline"))
@@ -203,22 +156,14 @@ class WebSocketRepositoryImplTest {
 
         @Test
         fun `Given server with deviceRegistryId When running pipeline Then device_id is included`() = runTest {
-            val dataSlot = slot<Map<String, Any?>>()
-            coEvery {
-                webSocketCore.subscribeTo<AssistPipelineEvent>(
-                    type = SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
-                    data = capture(dataSlot),
-                    timeout = any(),
-                )
-            } returns emptyFlow()
-            coEvery { webSocketCore.server() } returns createServer(deviceRegistryId = "device-123")
+            val dataSlot = captureSubscribeData(server = createServer(deviceRegistryId = "device-123"))
 
             repository.runAssistPipelineForVoice(
                 sampleRate = AudioRecorder.SAMPLE_RATE,
                 outputTts = true,
                 pipelineId = null,
                 conversationId = null,
-                fromWakeWord = null,
+                wakeWordPhrase = null,
             )
 
             assertEquals("device-123", dataSlot.captured["device_id"])
@@ -226,22 +171,14 @@ class WebSocketRepositoryImplTest {
 
         @Test
         fun `Given server without deviceRegistryId When running pipeline Then device_id is not included`() = runTest {
-            val dataSlot = slot<Map<String, Any?>>()
-            coEvery {
-                webSocketCore.subscribeTo<AssistPipelineEvent>(
-                    type = SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
-                    data = capture(dataSlot),
-                    timeout = any(),
-                )
-            } returns emptyFlow()
-            coEvery { webSocketCore.server() } returns createServer(deviceRegistryId = null)
+            val dataSlot = captureSubscribeData(server = createServer(deviceRegistryId = null))
 
             repository.runAssistPipelineForVoice(
                 sampleRate = AudioRecorder.SAMPLE_RATE,
                 outputTts = true,
                 pipelineId = null,
                 conversationId = null,
-                fromWakeWord = null,
+                wakeWordPhrase = null,
             )
 
             assertFalse(dataSlot.captured.containsKey("device_id"))
@@ -249,22 +186,14 @@ class WebSocketRepositoryImplTest {
 
         @Test
         fun `Given conversationId When running pipeline Then conversation_id is included`() = runTest {
-            val dataSlot = slot<Map<String, Any?>>()
-            coEvery {
-                webSocketCore.subscribeTo<AssistPipelineEvent>(
-                    type = SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
-                    data = capture(dataSlot),
-                    timeout = any(),
-                )
-            } returns emptyFlow()
-            coEvery { webSocketCore.server() } returns null
+            val dataSlot = captureSubscribeData()
 
             repository.runAssistPipelineForVoice(
                 sampleRate = AudioRecorder.SAMPLE_RATE,
                 outputTts = true,
                 pipelineId = null,
                 conversationId = "conv-456",
-                fromWakeWord = null,
+                wakeWordPhrase = null,
             )
 
             assertEquals("conv-456", dataSlot.captured["conversation_id"])
@@ -272,22 +201,14 @@ class WebSocketRepositoryImplTest {
 
         @Test
         fun `Given sampleRate When running pipeline Then sample_rate is included in input`() = runTest {
-            val dataSlot = slot<Map<String, Any?>>()
-            coEvery {
-                webSocketCore.subscribeTo<AssistPipelineEvent>(
-                    type = SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
-                    data = capture(dataSlot),
-                    timeout = any(),
-                )
-            } returns emptyFlow()
-            coEvery { webSocketCore.server() } returns null
+            val dataSlot = captureSubscribeData()
 
             repository.runAssistPipelineForVoice(
                 sampleRate = 16000,
                 outputTts = true,
                 pipelineId = null,
                 conversationId = null,
-                fromWakeWord = null,
+                wakeWordPhrase = null,
             )
 
             @Suppress("UNCHECKED_CAST")
@@ -297,22 +218,14 @@ class WebSocketRepositoryImplTest {
 
         @Test
         fun `When running pipeline Then start_stage is always stt`() = runTest {
-            val dataSlot = slot<Map<String, Any?>>()
-            coEvery {
-                webSocketCore.subscribeTo<AssistPipelineEvent>(
-                    type = SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
-                    data = capture(dataSlot),
-                    timeout = any(),
-                )
-            } returns emptyFlow()
-            coEvery { webSocketCore.server() } returns null
+            val dataSlot = captureSubscribeData()
 
             repository.runAssistPipelineForVoice(
                 sampleRate = AudioRecorder.SAMPLE_RATE,
                 outputTts = true,
                 pipelineId = null,
                 conversationId = null,
-                fromWakeWord = null,
+                wakeWordPhrase = null,
             )
 
             assertEquals("stt", dataSlot.captured["start_stage"])
