@@ -25,10 +25,15 @@ class AssistVoiceInteractionSession(context: Context) : VoiceInteractionSession(
         super.onShow(args, showFlags)
         Timber.d("VoiceInteractionSession onShow, flags: $showFlags")
 
+        val wakeWord = args?.getString(AssistVoiceInteractionService.EXTRA_WAKE_WORD)
+
         // Launch AssistActivity to handle the interaction
         // We use the activity because it already has all the Assist logic implemented
-        // TODO support AssistActivity params?
-        context.startActivity(AssistActivity.newInstance(context).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        val intent = AssistActivity.newInstance(
+            context = context,
+            wakeWordPhrase = wakeWord,
+        ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
 
         // Finish this session since the activity will handle everything
         finish()
