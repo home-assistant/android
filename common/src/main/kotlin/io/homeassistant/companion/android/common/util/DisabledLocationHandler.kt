@@ -17,6 +17,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
+import android.annotation.SuppressLint
 import io.homeassistant.companion.android.common.R as commonR
 
 object DisabledLocationHandler {
@@ -60,6 +61,9 @@ object DisabledLocationHandler {
             .cancel(DISABLED_LOCATION_WARN_ID, DISABLED_LOCATION_WARN_ID.hashCode())
     }
 
+    // Suppressing QueryPermissionsNeeded: System Settings intents are always visible per Android's
+    // package visibility documentation, and the app has QUERY_ALL_PACKAGES permission.
+    @SuppressLint("QueryPermissionsNeeded")
     fun showLocationDisabledWarnDialog(
         context: Context,
         settings: Array<String>,

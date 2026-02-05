@@ -508,6 +508,41 @@ class WebViewPresenterImplTest {
     }
 
     @Test
+    fun `Given url to load when server is changed then history should not be kept`() = runTest {
+        val server1 = mockk<Server>(relaxed = true)
+        every { server1.id } returns 1
+        coEvery { serverManager.getServer(1) } returns server1
+        coEvery { serverManager.getServer(ServerManager.SERVER_ID_ACTIVE) } returns server1
+
+        coEvery { authenticationRepository.getSessionState() } returns SessionState.CONNECTED
+        coEvery { connectionStateProvider.urlFlow(any()) } returns flowOf(UrlState.HasUrl(URL("https://example.com")))
+
+        lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
+        lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_START)
+
+        createPresenter()
+        advanceUntilIdle()
+
+        // Simulate initial load
+        presenter.load(lifecycle, path = null, isInternalOverride = null)
+        advanceUntilIdle()
+
+        // Initial load - server didn't change so history should be kept
+        verify(exactly = 1) { webView.loadUrl(url = any(), keepHistory = true, openInApp = any(), serverHandleInsets = any()) }
+
+        // Switch server
+        val server2 = mockk<Server>(relaxed = true)
+        every { server2.id } returns 2
+        coEvery { serverManager.getServer(2) } returns server2
+
+        presenter.switchActiveServer(lifecycle, server2.id)
+        advanceUntilIdle()
+
+        // Server change should trigger load - server changed so history should not be kept
+        verify(exactly = 1) { webView.loadUrl(url = any(), keepHistory = false, openInApp = any(), serverHandleInsets = any()) }
+    }
+
+    @Test
     fun `Given security level not set when load called then shows security level fragment`() = runTest(testDispatcher) {
         val server = mockk<Server>(relaxed = true)
         val connection = mockk<ServerConnectionInfo>(relaxed = true)

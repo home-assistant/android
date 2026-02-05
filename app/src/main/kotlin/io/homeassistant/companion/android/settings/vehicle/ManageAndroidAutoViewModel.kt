@@ -40,12 +40,14 @@ class ManageAndroidAutoViewModel @Inject constructor(
 
     var sortedEntities by mutableStateOf<List<Entity>>(emptyList())
         private set
+
     var entityRegistry by mutableStateOf<List<EntityRegistryResponse>>(emptyList())
         private set
     var deviceRegistry by mutableStateOf<List<DeviceRegistryResponse>>(emptyList())
         private set
     var areaRegistry by mutableStateOf<List<AreaRegistryResponse>>(emptyList())
         private set
+
     private val entities = mutableMapOf<Int, List<Entity>>()
     private val entityRegistries = mutableMapOf<Int, List<EntityRegistryResponse>>()
     private val deviceRegistries = mutableMapOf<Int, List<DeviceRegistryResponse>>()
@@ -55,6 +57,9 @@ class ManageAndroidAutoViewModel @Inject constructor(
         private set
 
     var defaultServerId by mutableIntStateOf(0)
+
+    var isLoading by mutableStateOf(true)
+        private set
 
     init {
         viewModelScope.launch {
@@ -71,6 +76,7 @@ class ManageAndroidAutoViewModel @Inject constructor(
                 }
             }.awaitAll()
             loadEntities(serverManager.getServer()?.id ?: 0)
+            isLoading = false
         }
     }
 

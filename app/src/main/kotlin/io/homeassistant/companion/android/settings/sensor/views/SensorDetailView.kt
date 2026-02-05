@@ -96,6 +96,7 @@ fun SensorDetailView(
     onToggleSettingSubmitted: (SensorSetting) -> Unit,
     onDialogSettingClicked: (SensorSetting) -> Unit,
     onDialogSettingSubmitted: (SensorDetailViewModel.Companion.SettingDialogState) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     var sensorUpdateTypeInfo by remember { mutableStateOf(false) }
@@ -142,6 +143,7 @@ fun SensorDetailView(
     }
 
     Scaffold(
+        modifier = modifier,
         scaffoldState = scaffoldState,
         snackbarHost = {
             SnackbarHost(
@@ -355,11 +357,15 @@ fun SensorDetailTopPanel(
     sensorsExpanded: Boolean,
     serverNames: Map<Int, String>,
     onSetEnabled: (Boolean, Int?) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val sensor = dbSensor.map { it.sensor }.maxByOrNull { it.enabled }
 
-    Surface(color = colorResource(commonR.color.colorSensorTopBackground)) {
+    Surface(
+        modifier = modifier,
+        color = colorResource(commonR.color.colorSensorTopBackground),
+    ) {
         Column {
             CompositionLocalProvider(
                 LocalContentAlpha provides (if (sensor?.enabled == true) ContentAlpha.high else ContentAlpha.disabled),
@@ -463,6 +469,7 @@ fun SensorDetailEnableRow(
     enabled: Boolean,
     serverName: String?,
     onSetEnabled: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val enableBarModifier = Modifier
         .fillMaxWidth()
@@ -476,14 +483,16 @@ fun SensorDetailEnableRow(
         },
     )
     Box(
-        modifier =
-        if (enabled) {
-            Modifier
-                .background(colorResource(commonR.color.colorSensorTopEnabled))
-                .then(enableBarModifier)
-        } else {
-            enableBarModifier
-        },
+        modifier = modifier
+            .then(
+                if (enabled) {
+                    Modifier
+                        .background(colorResource(commonR.color.colorSensorTopEnabled))
+                        .then(enableBarModifier)
+                } else {
+                    enableBarModifier
+                },
+            ),
         contentAlignment = Alignment.Center,
     ) {
         Row(
@@ -512,6 +521,7 @@ fun SensorDetailEnableRow(
 @Composable
 fun SensorDetailRow(
     title: String,
+    modifier: Modifier = Modifier,
     summary: String? = null,
     switch: Boolean? = null,
     selectingEnabled: Boolean = false,
@@ -529,7 +539,7 @@ fun SensorDetailRow(
             .then(rowModifier)
     }
     Row(
-        modifier = rowModifier,
+        modifier = modifier.then(rowModifier),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         CompositionLocalProvider(
@@ -575,6 +585,7 @@ fun SensorDetailSettingDialog(
     state: SensorDetailViewModel.Companion.SettingDialogState,
     onDismiss: () -> Unit,
     onSubmit: (SensorDetailViewModel.Companion.SettingDialogState) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val listSettingDialog = state.setting.valueType.listType
@@ -583,6 +594,7 @@ fun SensorDetailSettingDialog(
         remember(state.loading) { mutableStateListOf<String>().also { it.addAll(state.entriesSelected) } }
 
     MdcAlertDialog(
+        modifier = modifier,
         onDismissRequest = onDismiss,
         title = { Text(viewModel.getSettingTranslatedTitle(state.setting.name)) },
         content = {
@@ -664,8 +676,10 @@ fun SensorDetailUpdateInfoDialog(
     sensorEnabled: Boolean,
     userSetting: SensorUpdateFrequencySetting,
     onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     MdcAlertDialog(
+        modifier = modifier,
         onDismissRequest = onDismiss,
         title = { Text(stringResource(commonR.string.sensor_update_type_info_title)) },
         content = {
@@ -721,9 +735,15 @@ fun SensorDetailUpdateInfoDialog(
 }
 
 @Composable
-fun SensorDetailSettingRow(label: String, checked: Boolean, multiple: Boolean, onClick: (Boolean) -> Unit) {
+fun SensorDetailSettingRow(
+    label: String,
+    checked: Boolean,
+    multiple: Boolean,
+    onClick: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .clickable { onClick(!checked) }
             .padding(horizontal = 12.dp)
             .fillMaxWidth(),

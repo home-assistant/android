@@ -48,8 +48,13 @@ import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
-fun ManageShortcutsView(viewModel: ManageShortcutsViewModel, showIconDialog: (tag: String) -> Unit) {
+fun ManageShortcutsView(
+    viewModel: ManageShortcutsViewModel,
+    showIconDialog: (tag: String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     LazyColumn(
+        modifier = modifier,
         contentPadding = PaddingValues(all = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
     ) {
         item {
@@ -86,7 +91,6 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
     val index = i + 1
     val shortcut = viewModel.shortcuts[i]
     val shortcutId = ManageShortcutsSettingsFragment.SHORTCUT_PREFIX + "_" + index
-
     Text(
         text = if (index < 6) {
             stringResource(id = R.string.shortcut) + " $index"
@@ -136,15 +140,20 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
                         )
                     }
 
-                    DropdownMenu(expanded = expandedPinnedShortcuts, onDismissRequest = {
-                        expandedPinnedShortcuts =
-                            false
-                    }) {
+                    DropdownMenu(
+                        expanded = expandedPinnedShortcuts,
+                        onDismissRequest = {
+                            expandedPinnedShortcuts =
+                                false
+                        },
+                    ) {
                         for (item in pinnedShortCutIds) {
-                            DropdownMenuItem(onClick = {
-                                viewModel.setPinnedShortcutData(item)
-                                expandedPinnedShortcuts = false
-                            }) {
+                            DropdownMenuItem(
+                                onClick = {
+                                    viewModel.setPinnedShortcutData(item)
+                                    expandedPinnedShortcuts = false
+                                },
+                            ) {
                                 Text(item)
                             }
                         }
@@ -168,9 +177,11 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
             fontSize = 15.sp,
             modifier = Modifier.padding(end = 10.dp),
         )
-        OutlinedButton(onClick = {
-            showIconDialog(shortcutId)
-        }) {
+        OutlinedButton(
+            onClick = {
+                showIconDialog(shortcutId)
+            },
+        ) {
             val icon = viewModel.shortcuts[i].selectedIcon.value
             val painter = if (icon != null) {
                 remember(icon) { IconicsPainter(icon) }
@@ -199,7 +210,9 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
                 },
             )
         },
-        modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp),
     )
 
     TextField(
@@ -214,7 +227,9 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
                 },
             )
         },
-        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp),
     )
 
     if (viewModel.servers.size > 1 || viewModel.servers.none { it.id == shortcut.serverId.value }) {
@@ -247,7 +262,9 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
                 autoCorrectEnabled = false,
                 keyboardType = KeyboardType.Uri,
             ),
-            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
         )
     } else {
         // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6258

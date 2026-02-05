@@ -21,9 +21,9 @@ import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
-fun NfcReadView() {
+fun NfcReadView(modifier: Modifier = Modifier) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.safeDrawing)
             .padding(all = 16.dp),

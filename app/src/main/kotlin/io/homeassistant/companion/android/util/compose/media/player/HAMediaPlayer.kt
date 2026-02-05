@@ -228,7 +228,12 @@ private fun BoxScope.ShowControlsButton(action: () -> Unit) {
 }
 
 @Composable
-private fun BottomControls(player: Player, isFullScreen: Boolean, onClickFullscreen: () -> Unit, modifier: Modifier) {
+private fun BottomControls(
+    player: Player,
+    isFullScreen: Boolean,
+    onClickFullscreen: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Row(
         modifier = modifier
             .height(BottomControlsHeight)
@@ -312,7 +317,7 @@ private fun RowScope.TimeText(player: Player) {
 
 @Composable
 @OptIn(UnstableApi::class)
-private fun PlayPauseButton(player: Player, modifier: Modifier) {
+private fun PlayPauseButton(player: Player, modifier: Modifier = Modifier) {
     val state = rememberPlayPauseButtonState(player)
     val icon = if (state.showPlay) Icons.Default.PlayArrow else Icons.Default.Pause
     val contentDescription =

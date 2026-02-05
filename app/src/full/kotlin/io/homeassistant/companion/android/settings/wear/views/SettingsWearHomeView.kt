@@ -33,10 +33,15 @@ fun LoadSettingsHomeView(
     deviceName: String,
     loginWearOs: () -> Unit,
     onStartBackClicked: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     HomeAssistantAppTheme {
         val navController = rememberNavController()
-        NavHost(navController = navController, startDestination = SettingsWearMainView.LANDING) {
+        NavHost(
+            navController = navController,
+            startDestination = SettingsWearMainView.LANDING,
+            modifier = modifier,
+        ) {
             composable(SettingsWearMainView.FAVORITES) {
                 LoadWearFavoritesSettings(
                     settingsWearViewModel = settingsWearViewModel,
@@ -102,11 +107,16 @@ fun LoadSettingsHomeView(
 }
 
 @Composable
-fun SettingsWearTopAppBar(title: @Composable () -> Unit, onBackClicked: () -> Unit, docsLink: String? = null) {
+fun SettingsWearTopAppBar(
+    title: @Composable () -> Unit,
+    onBackClicked: () -> Unit,
+    modifier: Modifier = Modifier,
+    docsLink: String? = null,
+) {
     val context = LocalContext.current
     TopAppBar(
         title = title,
-        modifier = Modifier.windowInsetsPadding(safeTopWindowInsets()),
+        modifier = modifier.windowInsetsPadding(safeTopWindowInsets()),
         navigationIcon = {
             IconButton(onClick = onBackClicked) {
                 Image(

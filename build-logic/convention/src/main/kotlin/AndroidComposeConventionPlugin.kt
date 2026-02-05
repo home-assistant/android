@@ -24,15 +24,13 @@ class AndroidComposeConventionPlugin : Plugin<Project> {
             apply(plugin = libs.plugins.screenshot.getPluginId())
 
             androidConfig {
-                buildFeatures {
-                    compose = true
-                }
+                buildFeatures.compose = true
 
                 experimentalProperties["android.experimental.enableScreenshotTest"] = true
+            }
 
-                extensions.configure<ScreenshotTestOptions> {
-                    imageDifferenceThreshold = 0.00025f // 0.025%
-                }
+            extensions.configure<ScreenshotTestOptions> {
+                imageDifferenceThreshold = 0.00025f // 0.025%
             }
 
             // Screenshot test worker memory grows with test count. Increase as needed.

@@ -24,8 +24,13 @@ import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun SensorListView(viewModel: SensorSettingsViewModel, onSensorClicked: (String) -> Unit) {
+fun SensorListView(
+    viewModel: SensorSettingsViewModel,
+    onSensorClicked: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     LazyColumn(
+        modifier = modifier,
         contentPadding = safeBottomPaddingValues(applyHorizontal = false),
     ) {
         viewModel.allSensors.filter { it.value.isNotEmpty() }.forEach { (manager, currentSensors) ->
@@ -62,7 +67,12 @@ fun SensorListView(viewModel: SensorSettingsViewModel, onSensorClicked: (String)
 }
 
 @Composable
-fun SensorRow(basicSensor: SensorManager.BasicSensor, dbSensor: Sensor?, onSensorClicked: (String) -> Unit) {
+fun SensorRow(
+    basicSensor: SensorManager.BasicSensor,
+    dbSensor: Sensor?,
+    onSensorClicked: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current
     var iconToUse = basicSensor.statelessIcon
     if (dbSensor?.enabled == true && dbSensor.icon.isNotBlank()) {
@@ -91,5 +101,6 @@ fun SensorRow(basicSensor: SensorManager.BasicSensor, dbSensor: Sensor?, onSenso
         },
         mdiIcon = mdiIcon,
         enabled = dbSensor?.enabled == true,
+        modifier = modifier,
     ) { onSensorClicked(basicSensor.id) }
 }

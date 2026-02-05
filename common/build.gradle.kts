@@ -22,7 +22,7 @@ android {
 
     sourceSets {
         // Adds exported schema location as test app assets.
-        getByName("androidTest").assets.srcDirs("$projectDir/schemas")
+        getByName("androidTest").assets.directories += "$projectDir/schemas"
     }
 }
 
@@ -81,4 +81,7 @@ dependencies {
         exclude(group = "com.google.android.gms", module = "play-services-cronet")
     }
     implementation(libs.cronet.api)
+
+    // Force patched protobuf-javalite version to fix CVE-2024-7254 (DoS via StackOverflow in nested groups/map fields)
+    implementation(libs.protobuf.javalite)
 }
