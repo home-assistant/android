@@ -61,11 +61,11 @@ class AssistViewModel @Inject constructor(
         serverId: Int?,
         pipelineId: String?,
         startListening: Boolean?,
-        fromWakeWord: String?,
+        wakeWordPhrase: String?,
     ) {
         viewModelScope.launch {
             this@AssistViewModel.hasPermission = hasPermission
-            this@AssistViewModel.wakeWordPhrase = fromWakeWord
+            this@AssistViewModel.wakeWordPhrase = wakeWordPhrase
             serverId?.let {
                 filteredServerId = serverId
                 selectedServerId = serverId
@@ -342,7 +342,7 @@ class AssistViewModel @Inject constructor(
         runAssistPipelineInternal(
             text = text,
             pipeline = selectedPipeline,
-            fromWakeWord = wakeWord,
+            wakeWordPhrase = wakeWord,
         ) { event ->
             when (event) {
                 is AssistEvent.Message -> {
