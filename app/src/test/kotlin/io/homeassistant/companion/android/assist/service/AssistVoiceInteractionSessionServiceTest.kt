@@ -1,0 +1,26 @@
+package io.homeassistant.companion.android.assist.service
+
+import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.Robolectric
+import org.robolectric.RobolectricTestRunner
+
+@RunWith(RobolectricTestRunner::class)
+class AssistVoiceInteractionSessionServiceTest {
+
+    @get:Rule
+    val consoleLogRule = ConsoleLogRule()
+
+    @Test
+    fun `Given service when onNewSession then return AssistVoiceInteractionSession`() {
+        val serviceController = Robolectric.buildService(AssistVoiceInteractionSessionService::class.java)
+        val service = serviceController.get()
+
+        val session = service.onNewSession(null)
+
+        assertTrue(session is AssistVoiceInteractionSession)
+    }
+}

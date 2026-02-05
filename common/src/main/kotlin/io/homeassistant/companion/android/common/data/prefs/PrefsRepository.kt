@@ -132,4 +132,12 @@ interface PrefsRepository {
     suspend fun showPrivacyHint(): Boolean
 
     suspend fun setShowPrivacyHint(showPrivacyHint: Boolean)
+
+    suspend fun isWakeWordEnabled(): Boolean
+
+    suspend fun setWakeWordEnabled(enabled: Boolean)
+
+    suspend fun getSelectedWakeWord(): String?
+
+    suspend fun setSelectedWakeWord(wakeWord: String)
 }
