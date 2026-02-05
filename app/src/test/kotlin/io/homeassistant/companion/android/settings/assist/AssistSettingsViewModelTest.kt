@@ -6,6 +6,7 @@ import io.homeassistant.companion.android.assist.wakeword.WakeWordListener
 import io.homeassistant.companion.android.assist.wakeword.WakeWordListenerFactory
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
+import io.homeassistant.companion.android.util.microWakeWordModelConfigs
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -47,42 +48,13 @@ class AssistSettingsViewModelTest {
         } returns wakeWordListener
     }
 
-    private val testModels = listOf(
-        MicroWakeWordModelConfig(
-            wakeWord = "Okay Nabu",
-            author = "test",
-            website = "https://test.com",
-            model = "okay_nabu.tflite",
-            trainedLanguages = listOf("en"),
-            version = 1,
-            micro = MicroWakeWordModelConfig.MicroFrontendConfig(
-                probabilityCutoff = 0.5f,
-                featureStepSize = 10,
-                slidingWindowSize = 20,
-            ),
-        ),
-        MicroWakeWordModelConfig(
-            wakeWord = "Hey Jarvis",
-            author = "test",
-            website = "https://test.com",
-            model = "hey_jarvis.tflite",
-            trainedLanguages = listOf("en"),
-            version = 1,
-            micro = MicroWakeWordModelConfig.MicroFrontendConfig(
-                probabilityCutoff = 0.5f,
-                featureStepSize = 10,
-                slidingWindowSize = 20,
-            ),
-        ),
-    )
-
     private lateinit var viewModel: AssistSettingsViewModel
 
     @BeforeEach
     fun setUp() {
-        coEvery { assistRepository.getAvailableModels() } returns testModels
+        coEvery { assistRepository.getAvailableModels() } returns microWakeWordModelConfigs
         coEvery { assistRepository.isWakeWordEnabled() } returns false
-        coEvery { assistRepository.getSelectedWakeWordModel() } returns testModels[0]
+        coEvery { assistRepository.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
         every { defaultAssistantManager.isDefaultAssistant() } returns true
     }
 
@@ -101,7 +73,7 @@ class AssistSettingsViewModelTest {
         fun `Given default assistant when initialized then load state correctly`() = runTest {
             every { defaultAssistantManager.isDefaultAssistant() } returns true
             coEvery { assistRepository.isWakeWordEnabled() } returns true
-            coEvery { assistRepository.getSelectedWakeWordModel() } returns testModels[0]
+            coEvery { assistRepository.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
 
             viewModel = createViewModel()
             runCurrent()
@@ -110,8 +82,8 @@ class AssistSettingsViewModelTest {
             assertFalse(state.isLoading)
             assertTrue(state.isDefaultAssistant)
             assertTrue(state.isWakeWordEnabled)
-            assertEquals(testModels[0], state.selectedWakeWordModel)
-            assertEquals(testModels, state.availableModels)
+            assertEquals(microWakeWordModelConfigs[0], state.selectedWakeWordModel)
+            assertEquals(microWakeWordModelConfigs, state.availableModels)
         }
 
         @Test
@@ -150,7 +122,7 @@ class AssistSettingsViewModelTest {
             runCurrent()
 
             val state = viewModel.uiState.value
-            assertEquals(testModels[0], state.selectedWakeWordModel)
+            assertEquals(microWakeWordModelConfigs[0], state.selectedWakeWordModel)
         }
 
         @Test
@@ -253,11 +225,11 @@ class AssistSettingsViewModelTest {
             viewModel = createViewModel()
             runCurrent()
 
-            viewModel.onSelectWakeWordModel(testModels[1])
+            viewModel.onSelectWakeWordModel(microWakeWordModelConfigs[1])
             runCurrent()
 
-            assertEquals(testModels[1], viewModel.uiState.value.selectedWakeWordModel)
-            coVerify { assistRepository.setSelectedWakeWordModel(testModels[1]) }
+            assertEquals(microWakeWordModelConfigs[1], viewModel.uiState.value.selectedWakeWordModel)
+            coVerify { assistRepository.setSelectedWakeWordModel(microWakeWordModelConfigs[1]) }
         }
 
         @Test
@@ -273,7 +245,7 @@ class AssistSettingsViewModelTest {
             assertTrue(viewModel.uiState.value.isTestingWakeWord)
 
             // Change wake word while testing
-            viewModel.onSelectWakeWordModel(testModels[1])
+            viewModel.onSelectWakeWordModel(microWakeWordModelConfigs[1])
             runCurrent()
 
             // Should stop and restart
@@ -296,7 +268,7 @@ class AssistSettingsViewModelTest {
 
             assertTrue(viewModel.uiState.value.isTestingWakeWord)
             assertFalse(viewModel.uiState.value.wakeWordDetected)
-            coVerify { wakeWordListener.start(any(), testModels[0], any()) }
+            coVerify { wakeWordListener.start(any(), microWakeWordModelConfigs[0], any()) }
         }
 
         @Test
@@ -324,7 +296,7 @@ class AssistSettingsViewModelTest {
             runCurrent()
 
             assertTrue(viewModel.uiState.value.isTestingWakeWord)
-            coVerify { wakeWordListener.start(any(), testModels[0], any()) }
+            coVerify { wakeWordListener.start(any(), microWakeWordModelConfigs[0], any()) }
         }
 
         @Test
@@ -355,7 +327,7 @@ class AssistSettingsViewModelTest {
             runCurrent()
 
             // Trigger wake word detected callback
-            onWakeWordDetectedSlot.captured.invoke(testModels[0])
+            onWakeWordDetectedSlot.captured.invoke(microWakeWordModelConfigs[0])
             runCurrent()
 
             assertTrue(viewModel.uiState.value.wakeWordDetected)
