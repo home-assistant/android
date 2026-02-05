@@ -70,6 +70,7 @@ play-services-home = "16.0.0"
 play-services-location = "21.3.0"
 play-services-wearable = "19.0.0"
 preference-ktx = "1.2.1"
+protobuf-javalite = "3.25.8"
 recyclerview = "1.4.0"
 reorderable = "3.0.0"
 retrofit-bom = "3.0.0"
@@ -233,6 +234,7 @@ mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 paging-runtime = { module = "androidx.paging:paging-runtime", version.ref = "paging" }
 paging-compose = { module = "androidx.paging:paging-compose", version.ref = "paging" }
 play-services-threadnetwork = { module = "com.google.android.gms:play-services-threadnetwork", version.ref = "play-services-threadnetwork" }
+protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobuf-javalite" }
 play-services-home = { module = "com.google.android.gms:play-services-home", version.ref = "play-services-home" }
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "play-services-location" }
 play-services-wearable = { module = "com.google.android.gms:play-services-wearable", version.ref = "play-services-wearable" }
