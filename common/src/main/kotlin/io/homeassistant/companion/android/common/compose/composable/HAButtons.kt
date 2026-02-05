@@ -24,7 +24,10 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -235,6 +238,36 @@ fun HAIconButton(
     variant: ButtonVariant = ButtonVariant.PRIMARY,
     enabled: Boolean = true,
 ) {
+    HAIconButton(
+        icon = rememberVectorPainter(icon),
+        onClick = onClick,
+        contentDescription = contentDescription,
+        modifier = modifier,
+        variant = variant,
+        enabled = enabled
+    )
+}
+
+/**
+ * A Home Assistant styled icon button using a [Painter].
+ * Use painterResource instead of vector resource for API < 24 compatibility.
+ *
+ * @param icon The [Painter] to display.
+ * @param onClick The callback to be invoked when the button is clicked.
+ * @param contentDescription The content description of the button.
+ * @param modifier Optional [androidx.compose.ui.Modifier] to be applied to the button.
+ * @param variant The [ButtonVariant] that determines the button's color scheme. Defaults to [ButtonVariant.PRIMARY].
+ * @param enabled Controls the enabled state of the button. When `false`, the button will not be clickable.
+ */
+@Composable
+fun HAIconButton(
+    icon: Painter,
+    onClick: () -> Unit,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    variant: ButtonVariant = ButtonVariant.PRIMARY,
+    enabled: Boolean = true,
+) {
     val colors = LocalHAColorScheme.current.iconButtonColorsFromVariant(variant)
 
     RippleConfigurationLocalProvider(colors.rippleColor) {
@@ -246,7 +279,7 @@ fun HAIconButton(
             colors = colors.buttonColors,
         ) {
             Icon(
-                imageVector = icon,
+                painter = icon,
                 contentDescription = contentDescription,
                 // We only support one size for now
                 modifier = Modifier.size(24.dp),

@@ -27,9 +27,8 @@ import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -213,7 +212,8 @@ fun MatterCommissioningViewHeader(modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth()) {
         Spacer(modifier = Modifier.height(32.dp))
         Image(
-            imageVector = ImageVector.vectorResource(R.drawable.ic_matter),
+            // Use painterResource instead of vector resource for API < 24
+            painter = painterResource(R.drawable.ic_matter),
             contentDescription = null,
             modifier = Modifier
                 .size(48.dp)
