@@ -247,23 +247,23 @@ jobs:
             arch: x86_64
             profile: "Nexus 5"
             target: "google_apis"
-            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest :microfrontend:connectedDebugAndroidTest"
           - api-level: 36
             arch: x86_64
             profile: "pixel_7"
             target: "google_apis"
-            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest :microfrontend:connectedDebugAndroidTest"
           - api-level: 33
             arch: x86_64
             profile: "automotive_1024p_landscape"
             target: "android-automotive"
-            gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+            gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest :microfrontend:connectedDebugAndroidTest"
           - api-level: "34"
             system-image-api-level: "34-ext9"
             arch: x86_64
             profile: "automotive_1024p_landscape"
             target: "android-automotive"
-            gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+            gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest :microfrontend:connectedDebugAndroidTest"
           - api-level: 26
             arch: x86
             profile: "wearos_square"
@@ -273,7 +273,7 @@ jobs:
             arch: x86_64
             profile: "wearos_small_round"
             target: "android-wear"
-            gradle_target: ":wear:connectedDebugAndroidTest :common:connectedDebugAndroidTest"
+            gradle_target: ":wear:connectedDebugAndroidTest :common:connectedDebugAndroidTest :microfrontend:connectedDebugAndroidTest"
     steps:
       - name: Delete unnecessary tools 🔧
         uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
