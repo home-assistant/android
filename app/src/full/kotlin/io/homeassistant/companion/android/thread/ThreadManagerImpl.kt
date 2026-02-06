@@ -15,6 +15,7 @@ import com.google.android.gms.threadnetwork.ThreadNetworkStatusCodes
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetTlvResponse
 import io.homeassistant.companion.android.common.util.isAutomotive
 import javax.inject.Inject
 import kotlin.coroutines.resume
@@ -114,6 +115,7 @@ class ThreadManagerImpl @Inject constructor(
                     serverManager.integrationRepository(serverId).setThreadBorderAgentIds(listOf(it))
                 } // else added using placeholder, will be removed when core is updated
                 Timber.d("Thread import to device completed")
+                serverManager.integrationRepository(serverId).setThreadCredentialsSynced(true)
                 ThreadManager.SyncResult.OnlyOnServer(imported = true)
             } catch (e: Exception) {
                 Timber.e(e, "Thread import to device failed")
@@ -160,13 +162,18 @@ class ThreadManagerImpl @Inject constructor(
                                     serverId,
                                 )
                                 serverManager.servers().forEach {
-                                    serverManager.integrationRepository(it.id).setThreadBorderAgentIds(
-                                        if (it.id == serverId && coreThreadDataset.preferredBorderAgentId != null) {
-                                            listOf(coreThreadDataset.preferredBorderAgentId!!)
-                                        } else {
-                                            emptyList()
-                                        },
-                                    )
+                                    val syncedThis =
+                                        it.id == serverId && coreThreadDataset.preferredBorderAgentId != null
+                                    serverManager.integrationRepository(it.id).apply {
+                                        setThreadBorderAgentIds(
+                                            if (syncedThis) {
+                                                listOf(coreThreadDataset.preferredBorderAgentId!!)
+                                            } else {
+                                                emptyList()
+                                            },
+                                        )
+                                        setThreadCredentialsSynced(syncedThis)
+                                    }
                                 }
                                 Timber.d("Thread update device completed: deleted ${localIds.size} datasets, updated 1")
                                 true
@@ -179,7 +186,10 @@ class ThreadManagerImpl @Inject constructor(
                                     }
                                 }
                                 serverManager.servers().forEach {
-                                    serverManager.integrationRepository(it.id).setThreadBorderAgentIds(emptyList())
+                                    serverManager.integrationRepository(it.id).apply {
+                                        setThreadBorderAgentIds(emptyList())
+                                        setThreadCredentialsSynced(false)
+                                    }
                                 }
                                 Timber.d("Thread update device completed: deleted ${localIds.size} datasets")
                                 false
@@ -212,6 +222,9 @@ class ThreadManagerImpl @Inject constructor(
             ThreadManager.SyncResult.NoneHaveCredentials
         }
     }
+
+    override suspend fun hasSyncedPreferredDataset(serverId: Int): Boolean =
+        serverManager.integrationRepository(serverId).getThreadCredentialsSynced()
 
     override suspend fun getPreferredDatasetFromServer(serverId: Int): ThreadDatasetResponse? =
         getDatasetsFromServer(serverId)?.firstOrNull { it.preferred }
@@ -250,6 +263,12 @@ class ThreadManagerImpl @Inject constructor(
         } else {
             cont.resumeWithException(IllegalStateException("Thread is not supported on SDK <27"))
         }
+    }
+
+    override suspend fun isPreferredDatasetByDevice(context: Context, tlv: String): Boolean {
+        val tlv = ThreadDatasetTlvResponse(tlv).tlvAsByteArray
+        val threadNetworkCredentials = ThreadNetworkCredentials.fromActiveOperationalDataset(tlv)
+        return isPreferredCredentials(context, threadNetworkCredentials)
     }
 
     private suspend fun isPreferredDatasetByDevice(context: Context, datasetId: String, serverId: Int): Boolean {
@@ -292,7 +311,7 @@ class ThreadManagerImpl @Inject constructor(
             ThreadNetwork.getNetworkClient(context)
                 .isPreferredCredentials(credentials)
                 .addOnSuccessListener { cont.resume(it == IsPreferredCredentialsResult.PREFERRED_CREDENTIALS_MATCHED) }
-                .addOnFailureListener { cont.resumeWithException(it) }
+                .addOnFailureListener { cont.resumeWithException(ThreadManager.ThreadNetworkException(it.message)) }
         }
 
     override suspend fun sendThreadDatasetExportResult(result: ActivityResult, serverId: Int): String? {
@@ -302,7 +321,10 @@ class ThreadManagerImpl @Inject constructor(
                 val added = serverManager.webSocketRepository(
                     serverId,
                 ).addThreadDataset(threadNetworkCredentials.activeOperationalDataset)
-                if (added) return threadNetworkCredentials.networkName
+                if (added) {
+                    serverManager.integrationRepository(serverId).setThreadCredentialsSynced(true)
+                    return threadNetworkCredentials.networkName
+                }
             } catch (e: Exception) {
                 Timber.e(e, "Error while executing server new Thread credentials request")
             }
