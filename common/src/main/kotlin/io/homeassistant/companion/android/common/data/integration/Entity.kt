@@ -16,7 +16,6 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Co
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryOptions
 import io.homeassistant.companion.android.common.util.LocalDateTimeSerializer
 import io.homeassistant.companion.android.common.util.MapAnySerializer
-import io.homeassistant.companion.android.common.util.getAlarmOnPressedAction
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
@@ -56,7 +55,6 @@ object EntityExt {
     val LIGHT_MODE_NO_BRIGHTNESS_SUPPORT = listOf("unknown", "onoff")
     const val LIGHT_SUPPORT_BRIGHTNESS_DEPR = 1
     const val LIGHT_SUPPORT_COLOR_TEMP_DEPR = 2
-    const val ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY = 2
     const val MEDIA_PLAYER_SUPPORT_VOLUME_SET = 4
 
     val DOMAINS_PRESS = listOf("button", "input_button")
@@ -798,7 +796,7 @@ suspend fun Entity.onPressed(integrationRepository: IntegrationRepository) {
             if (state == "unlocked") "lock" else "unlock"
         }
 
-        "alarm_control_panel" -> getAlarmOnPressedAction(this)
+        "alarm_control_panel" -> getAlarmOnPressedAction()
 
         in EntityExt.DOMAINS_PRESS -> "press"
         "fan",
@@ -813,7 +811,10 @@ suspend fun Entity.onPressed(integrationRepository: IntegrationRepository) {
         else -> "toggle"
     }
 
-    if (action == null) return
+    if (action == null) {
+        Timber.tag(EntityExt.TAG).w("No action returned when entity '%s' was pressed", entityId)
+        return
+    }
 
     integrationRepository.callAction(
         domain = this.domain,

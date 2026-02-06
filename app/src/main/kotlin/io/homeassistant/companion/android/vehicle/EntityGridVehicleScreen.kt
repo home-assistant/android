@@ -27,6 +27,7 @@ import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.integration.isActive
+import io.homeassistant.companion.android.common.data.integration.isAlarmActionable
 import io.homeassistant.companion.android.common.data.integration.isExecuting
 import io.homeassistant.companion.android.common.data.integration.onPressed
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
@@ -173,7 +174,7 @@ class EntityGridVehicleScreen(
             if (entity.isExecuting()) {
                 gridItem.setLoading(entity.isExecuting())
             } else {
-                if (entity.domain !in NOT_ACTIONABLE_DOMAINS || canNavigate(entity)) {
+                if (entity.domain !in NOT_ACTIONABLE_DOMAINS || canNavigate(entity) || entity.isAlarmActionable()) {
                     gridItem
                         .setOnClickListener {
                             Timber.i("${entity.entityId} clicked")
