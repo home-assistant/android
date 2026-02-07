@@ -967,6 +967,8 @@
     <string name="webview_error_description">Encountered error:</string>
     <string name="webview_error_FAILED_SSL_HANDSHAKE">Failed to perform SSL handshake, please ensure your certificate is valid.</string>
     <string name="webview_error_HOST_LOOKUP">Server or proxy hostname lookup failed, please check that the URL is a valid Home Assistant URL.</string>
+    <string name="webview_error_TIMEOUT">Connection timed out, please check your network connection and server availability.</string>
+    <string name="webview_error_CONNECT">Failed to connect to the server, please check your network connection and server availability.</string>
     <string name="webview_error_PROXY_AUTHENTICATION">User authentication failed on proxy, please check proxy settings.</string>
     <string name="webview_error_SSL_DATE_INVALID">The date of the Home Assistant certificate is invalid, please review the Home Assistant certificate or the connection settings and try again.</string>
     <string name="webview_error_SSL_EXPIRED">The Home Assistant certificate has expired, please review the Home Assistant certificate or the connection settings and try again.</string>
