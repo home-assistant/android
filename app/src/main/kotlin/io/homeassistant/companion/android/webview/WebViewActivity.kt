@@ -26,6 +26,7 @@ import android.view.HapticFeedbackConstants
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.view.WindowManager
 import android.webkit.CookieManager
 import android.webkit.HttpAuthHandler
@@ -282,6 +283,15 @@ class WebViewActivity :
     private var playerLeft = mutableStateOf(0.dp)
     private var statusBarColor = mutableStateOf<Color?>(null)
     private var backgroundColor = mutableStateOf<Color?>(null)
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var keepScreenOnClearRunnable: Runnable? = null
+
+    /**
+     * Interval for clearing [WebView.keepScreenOn] when "Keep screen on" is disabled.
+     * Inline video causes Chromium to set keepScreenOn; we override it periodically.
+     * Longer interval reduces battery impact.
+     */
+    private val keepScreenOnClearIntervalMs = 5000L
 
     /**
      * Flag to know when the webview has been fully initialized (loadUrl called).
@@ -419,10 +429,6 @@ class WebViewActivity :
                 customViewFromWebView,
                 shouldAskNotificationPermission = shouldAskNotificationPermission,
                 webViewInitialized = webViewInitialized,
-                serverHandleInsets = serverHandleInsets,
-                nightModeTheme = nightModeTheme,
-                statusBarColor = statusBarColor,
-                backgroundColor = backgroundColor,
                 onFullscreenClicked = { isFullScreen ->
                     isExoFullScreen = isFullScreen
                     if (isFullScreen) hideSystemUI() else showSystemUI()
@@ -433,6 +439,11 @@ class WebViewActivity :
                         shouldAskNotificationPermission = false
                     }
                 },
+                onOpenAppSettings = { startActivity(SettingsActivity.newInstance(this@WebViewActivity)) },
+                serverHandleInsets = serverHandleInsets,
+                nightModeTheme = nightModeTheme,
+                statusBarColor = statusBarColor,
+                backgroundColor = backgroundColor,
             )
         }
 
@@ -713,6 +724,11 @@ class WebViewActivity :
                 }
 
                 override fun onShowCustomView(view: View, callback: CustomViewCallback) {
+                    lifecycleScope.launch {
+                        if (!presenter.isKeepScreenOnEnabled()) {
+                            runOnUiThread { clearKeepScreenOnRecursive(view) }
+                        }
+                    }
                     customViewFromWebView.value = view
                     hideSystemUI()
                     isVideoFullScreen = true
@@ -1199,9 +1215,16 @@ class WebViewActivity :
             }
 
             if (presenter.isKeepScreenOnEnabled()) {
+                cancelKeepScreenOnClear()
                 window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             } else {
                 window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                runOnUiThread {
+                    if (::webView.isInitialized) {
+                        webView.keepScreenOn = false
+                    }
+                }
+                scheduleKeepScreenOnClearWhenDisabled()
             }
 
             checkAndWarnForDisabledLocation()
@@ -1222,10 +1245,48 @@ class WebViewActivity :
 
     override fun onPause() {
         super.onPause()
+        cancelKeepScreenOnClear()
         lifecycleScope.launch {
             presenter.setAppActive(false)
         }
         if (!isFinishing && !isRelaunching) SensorReceiver.updateAllSensors(this)
+    }
+
+    /**
+     * Clears [View.keepScreenOn] on the given view and all its descendants.
+     * WebView/Chromium sets keepScreenOn on the custom fullscreen video view, which prevents
+     * the device screen timeout when "Keep screen on" is disabled (issue #3953).
+     */
+    private fun clearKeepScreenOnRecursive(view: View) {
+        view.keepScreenOn = false
+        if (view is ViewGroup) {
+            for (i in 0 until view.childCount) {
+                clearKeepScreenOnRecursive(view.getChildAt(i))
+            }
+        }
+    }
+
+    /**
+     * Schedules a repeating task that clears [WebView.keepScreenOn] when "Keep screen on" is
+     * disabled. Inline video causes Chromium to set keepScreenOn on the WebView; we override it
+     * periodically so the system screen timeout still applies. Interval is chosen to limit battery impact.
+     */
+    private fun scheduleKeepScreenOnClearWhenDisabled() {
+        cancelKeepScreenOnClear()
+        keepScreenOnClearRunnable = Runnable {
+            if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED) &&
+                ::webView.isInitialized
+            ) {
+                webView.keepScreenOn = false
+            }
+            keepScreenOnClearRunnable?.let { mainHandler.postDelayed(it, keepScreenOnClearIntervalMs) }
+        }
+        mainHandler.postDelayed(keepScreenOnClearRunnable!!, keepScreenOnClearIntervalMs)
+    }
+
+    private fun cancelKeepScreenOnClear() {
+        keepScreenOnClearRunnable?.let { mainHandler.removeCallbacks(it) }
+        keepScreenOnClearRunnable = null
     }
 
     private suspend fun checkAndWarnForDisabledLocation() {
