@@ -30,10 +30,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
@@ -107,7 +107,8 @@ internal fun ConnectionErrorScreen(
 
         ConnectionErrorScreen(
             onOpenExternalLink = onOpenExternalLink,
-            icon = ImageVector.vectorResource(icon),
+            // Use painterResource instead of vector resource for API < 24
+            icon = painterResource(icon),
             title = stringResource(error.title),
             subtitle = stringResource(error.message),
             url = url,
@@ -126,7 +127,7 @@ internal fun ConnectionErrorScreen(
 @Composable
 internal fun ConnectionErrorScreen(
     onOpenExternalLink: suspend (Uri) -> Unit,
-    icon: ImageVector,
+    icon: Painter,
     title: String,
     subtitle: String,
     url: String?,
@@ -169,7 +170,7 @@ private fun ConnectionErrorContent(
     url: String?,
     connectivityCheckState: ConnectivityCheckState,
     onRetryConnectivityCheck: () -> Unit,
-    icon: ImageVector,
+    icon: Painter,
     errorDetailsExpanded: Boolean,
     actions: @Composable () -> Unit,
     modifier: Modifier = Modifier,
@@ -206,7 +207,7 @@ private fun ConnectionErrorContent(
 }
 
 @Composable
-private fun ColumnScope.Header(icon: ImageVector, title: String, subtitle: String) {
+private fun ColumnScope.Header(icon: Painter, title: String, subtitle: String) {
     Image(
         modifier = Modifier
             // This padding and size are adjusted to have image
@@ -214,7 +215,7 @@ private fun ColumnScope.Header(icon: ImageVector, title: String, subtitle: Strin
             .padding(top = HADimens.SPACE6)
             .padding(all = 20.dp)
             .size(120.dp),
-        imageVector = icon,
+        painter = icon,
         contentDescription = null,
     )
 
@@ -343,7 +344,8 @@ private fun ColumnScope.GetMoreHelp(onOpenExternalLink: suspend (Uri) -> Unit) {
             },
         )
         HAIconButton(
-            icon = ImageVector.vectorResource(R.drawable.github),
+            // Use painterResource instead of vector resource for API < 24
+            icon = painterResource(R.drawable.github),
             contentDescription = stringResource(commonR.string.connection_error_github_content_description),
             onClick = {
                 coroutineScope.launch {
@@ -352,7 +354,8 @@ private fun ColumnScope.GetMoreHelp(onOpenExternalLink: suspend (Uri) -> Unit) {
             },
         )
         HAIconButton(
-            icon = ImageVector.vectorResource(R.drawable.discord),
+            // Use painterResource instead of vector resource for API < 24
+            icon = painterResource(R.drawable.discord),
             contentDescription = stringResource(commonR.string.connection_error_discord_content_description),
             onClick = {
                 coroutineScope.launch {
@@ -387,7 +390,8 @@ private fun ConnectionErrorScreenPreview() {
             url = "http://ha.org",
             connectivityCheckState = ConnectivityCheckState(),
             onRetryConnectivityCheck = {},
-            icon = ImageVector.vectorResource(R.drawable.ic_casita_no_connection),
+            // Use painterResource instead of vector resource for API < 24
+            icon = painterResource(R.drawable.ic_casita_no_connection),
             errorDetailsExpanded = true,
             actions = {
                 CloseAction { }

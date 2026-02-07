@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.R
@@ -108,7 +109,8 @@ private fun ErrorPlaceholder() {
         contentAlignment = Alignment.Center,
     ) {
         Image(
-            imageVector = ImageVector.vectorResource(R.drawable.ic_home_assistant_branding),
+            // Use painterResource instead of vector resource for API < 24
+            painter = painterResource(R.drawable.ic_home_assistant_branding),
             contentDescription = null,
             modifier = Modifier.size(ICON_SIZE),
         )

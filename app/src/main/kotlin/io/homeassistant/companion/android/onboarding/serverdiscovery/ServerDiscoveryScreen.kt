@@ -57,10 +57,9 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -291,7 +290,8 @@ private fun ServerItemContent(server: ServerDiscovered, onConnectClick: (URL) ->
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Image(
-            imageVector = ImageVector.vectorResource(R.drawable.ic_home_assistant_branding),
+            // Use painterResource instead of vector resource for API < 24
+            painter = painterResource(R.drawable.ic_home_assistant_branding),
             contentDescription = null,
             modifier = Modifier
                 .size(ICON_SIZE)
@@ -371,7 +371,8 @@ private fun AnimatedIcon() {
             label = "icon_pulse_value",
         )
         Image(
-            imageVector = ImageVector.vectorResource(R.drawable.dots),
+            // Use painterResource instead of vector resource for API < 24
+            painter = painterResource(R.drawable.dots),
             contentDescription = null,
             modifier = Modifier
                 .size(220.dp)
@@ -386,7 +387,8 @@ private fun AnimatedIcon() {
                 .background(HABrandColors.Blue, CircleShape),
         ) {
             Icon(
-                imageVector = ImageVector.vectorResource(commonR.drawable.ic_stat_ic_notification_blue),
+                // Use painterResource instead of vector resource for API < 24
+                painter = painterResource(commonR.drawable.ic_stat_ic_notification_blue),
                 contentDescription = null,
                 modifier = Modifier
                     .align(Alignment.Center)
