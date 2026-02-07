@@ -27,7 +27,9 @@ import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.util.getAttribute
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -209,53 +211,49 @@ class EntityWidget : BaseWidgetProvider<StaticWidgetEntity, StaticWidgetDao>() {
     }
 
     override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity) {
-        widgetScope?.launch {
-            val views = getWidgetRemoteViews(context, appWidgetId, entity as Entity)
-            AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, views)
-        }
+        val views = getWidgetRemoteViews(context, appWidgetId, entity)
+        AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, views)
     }
 
-    private fun toggleEntity(context: Context, appWidgetId: Int) {
-        widgetScope?.launch {
-            // Show progress bar as feedback
-            val appWidgetManager = AppWidgetManager.getInstance(context)
-            val loadingViews = RemoteViews(context.packageName, R.layout.widget_static)
-            loadingViews.setViewVisibility(R.id.widgetProgressBar, View.VISIBLE)
-            loadingViews.setViewVisibility(R.id.widgetTextLayout, View.GONE)
-            appWidgetManager.partiallyUpdateAppWidget(appWidgetId, loadingViews)
+    private suspend fun toggleEntity(context: Context, appWidgetId: Int) {
+        // Show progress bar as feedback
+        val appWidgetManager = AppWidgetManager.getInstance(context)
+        val loadingViews = RemoteViews(context.packageName, R.layout.widget_static)
+        loadingViews.setViewVisibility(R.id.widgetProgressBar, View.VISIBLE)
+        loadingViews.setViewVisibility(R.id.widgetTextLayout, View.GONE)
+        appWidgetManager.partiallyUpdateAppWidget(appWidgetId, loadingViews)
 
-            var success = false
-            dao.get(appWidgetId)?.let {
-                try {
-                    onEntityPressedWithoutState(
-                        it.entityId,
-                        serverManager.integrationRepository(it.serverId),
-                    )
-                    success = true
-                } catch (e: Exception) {
-                    Timber.e(e, "Unable to send toggle service call")
-                }
+        var success = false
+        dao.get(appWidgetId)?.let {
+            try {
+                onEntityPressedWithoutState(
+                    it.entityId,
+                    serverManager.integrationRepository(it.serverId),
+                )
+                success = true
+            } catch (e: Exception) {
+                Timber.e(e, "Unable to send toggle service call")
+            }
+        }
+
+        if (!success) {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, commonR.string.action_failure, Toast.LENGTH_LONG).show()
             }
 
-            if (!success) {
-                Toast.makeText(context, commonR.string.action_failure, Toast.LENGTH_LONG).show()
-
-                val views = getWidgetRemoteViews(context, appWidgetId)
-                appWidgetManager.updateAppWidget(appWidgetId, views)
-            } // else update will be triggered by websocket subscription
-        }
+            val views = getWidgetRemoteViews(context, appWidgetId)
+            appWidgetManager.updateAppWidget(appWidgetId, views)
+        } // else update will be triggered by websocket subscription
     }
 
-    override fun onReceive(context: Context, intent: Intent) {
-        val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
-        super.onReceive(context, intent)
-        when (lastIntent) {
+    override suspend fun onReceiveIntentNotHandled(context: Context, intent: Intent, appWidgetId: Int) {
+        when (intent.action.toString()) {
             TOGGLE_ENTITY -> toggleEntity(context, appWidgetId)
         }
     }
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        widgetScope?.launch {
+        widgetScope.launch {
             dao.deleteAll(appWidgetIds)
             appWidgetIds.forEach { removeSubscription(it) }
         }
