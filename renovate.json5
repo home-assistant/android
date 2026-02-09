@@ -2,14 +2,16 @@
     $schema: 'https://docs.renovatebot.com/renovate-schema.json',
     configMigration: true,
     extends: [
-        'config:recommended',
+        'config:best-practices',
         'group:linters',
         'group:monorepos',
         'group:recommended',
     ],
-    lockFileMaintenance: {
-        enabled: true,
-    },
+    // Lockfile updates are handled by the renovate-lockfiles CI workflow because
+    // Renovate's environment lacks the Android NDK/CMake required by :microfrontend.
+    updateLockFiles: false,
+    // Allow Renovate to continue managing PRs after the CI bot commits lockfile updates.
+    gitIgnoredAuthors: ['github-actions[bot]@users.noreply.github.com'],
     minimumReleaseAge: '3 days',
     hostRules: [
         {
