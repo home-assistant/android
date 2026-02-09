@@ -6,8 +6,6 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.os.Handler
-import android.os.Looper
 import android.view.View
 import android.widget.RemoteViews
 import android.widget.Toast
@@ -22,6 +20,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
+import io.homeassistant.companion.android.common.util.launchAsync
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -30,7 +29,9 @@ import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.common.RemoteViewsTarget
 import java.util.LinkedList
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -57,33 +58,6 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
 
     override fun getWidgetProvider(context: Context): ComponentName =
         ComponentName(context, MediaPlayerControlsWidget::class.java)
-
-    override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
-        // There may be multiple widgets active, so update all of them
-        appWidgetIds.forEach { appWidgetId ->
-            updateView(
-                context,
-                appWidgetId,
-                appWidgetManager,
-            )
-        }
-    }
-
-    private fun updateView(
-        context: Context,
-        appWidgetId: Int,
-        appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context),
-    ) {
-        if (!context.hasActiveConnection()) {
-            Timber.d("Skipping widget update since network connection is not active")
-            return
-        }
-        widgetScope?.launch {
-            val views = getWidgetRemoteViews(context, appWidgetId)
-            appWidgetManager.updateAppWidget(appWidgetId, views)
-            onScreenOn(context)
-        }
-    }
 
     override suspend fun getWidgetRemoteViews(
         context: Context,
@@ -280,17 +254,15 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                         View.GONE,
                     )
                     Timber.d("Fetching media preview image")
-                    Handler(Looper.getMainLooper()).post {
-                        try {
-                            val request = ImageRequest.Builder(context)
-                                .data(url)
-                                .target(RemoteViewsTarget(context, appWidgetId, this, R.id.widgetMediaImage))
-                                .size(1024)
-                                .build()
-                            context.imageLoader.enqueue(request)
-                        } catch (e: Exception) {
-                            Timber.e(e, "Unable to load image")
-                        }
+                    try {
+                        val request = ImageRequest.Builder(context)
+                            .data(url)
+                            .target(RemoteViewsTarget(context, appWidgetId, this, R.id.widgetMediaImage))
+                            .size(1024)
+                            .build()
+                        context.imageLoader.enqueue(request)
+                    } catch (e: Exception) {
+                        Timber.e(e, "Unable to load image")
                     }
                 }
 
@@ -439,7 +411,9 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
         } catch (e: Exception) {
             Timber.d(e, "Failed to fetch entity or entity does not exist")
             if (lastIntent == UPDATE_MEDIA_IMAGE) {
-                Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+                }
             }
             return null
         }
@@ -447,26 +421,19 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
         return entity
     }
 
-    override fun onReceive(context: Context, intent: Intent) {
-        lastIntent = intent.action.toString()
+    override suspend fun onReceiveIntentNotHandled(context: Context, intent: Intent, appWidgetId: Int) {
+        val action = intent.action.toString()
         val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
 
         Timber.d(
             "Broadcast received: " + System.lineSeparator() +
-                "Broadcast action: " + lastIntent + System.lineSeparator() +
+                "Broadcast action: " + action + System.lineSeparator() +
                 "AppWidgetId: " + appWidgetId,
         )
 
-        super.onReceive(context, intent)
-        when (lastIntent) {
-            UPDATE_VIEW -> updateView(
-                context,
-                appWidgetId,
-            )
-            UPDATE_WIDGETS -> {
-                super.onScreenOn(context)
-            }
-            UPDATE_MEDIA_IMAGE -> updateView(context, appWidgetId)
+        when (action) {
+            UPDATE_WIDGETS -> super.onScreenOn(context)
+            UPDATE_VIEW, UPDATE_MEDIA_IMAGE -> updateView(context, appWidgetId)
             CALL_PREV_TRACK -> callPreviousTrackAction(context, appWidgetId)
             CALL_REWIND -> callRewindAction(context, appWidgetId)
             CALL_PLAYPAUSE -> callPlayPauseAction(context, appWidgetId)
@@ -474,334 +441,323 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
             CALL_NEXT_TRACK -> callNextTrackAction(context, appWidgetId)
             CALL_VOLUME_DOWN -> callVolumeDownAction(context, appWidgetId)
             CALL_VOLUME_UP -> callVolumeUpAction(context, appWidgetId)
+            else -> {} // no-op
         }
     }
 
     override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity) {
         dao.get(appWidgetId)?.let {
-            widgetScope?.launch {
-                val views =
-                    getWidgetRemoteViews(
-                        context,
-                        appWidgetId,
-                        getEntity(context, it.serverId, it.entityId.split(","), null),
-                    )
-                AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, views)
-            }
+            val views =
+                getWidgetRemoteViews(
+                    context,
+                    appWidgetId,
+                    getEntity(context, it.serverId, it.entityId.split(","), null),
+                )
+            AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, views)
         }
     }
 
-    private fun callPreviousTrackAction(context: Context, appWidgetId: Int) {
-        widgetScope?.launch {
-            Timber.d("Retrieving media player entity for app widget $appWidgetId")
-            val entity: MediaPlayerControlsWidgetEntity? = dao.get(appWidgetId)
+    private suspend fun callPreviousTrackAction(context: Context, appWidgetId: Int) {
+        Timber.d("Retrieving media player entity for app widget $appWidgetId")
+        val entity: MediaPlayerControlsWidgetEntity? = dao.get(appWidgetId)
 
-            if (entity == null) {
-                Timber.d("Failed to retrieve media player entity")
-                return@launch
-            }
+        if (entity == null) {
+            Timber.d("Failed to retrieve media player entity")
+            return
+        }
 
-            Timber.d(
-                "Calling previous track action:" + System.lineSeparator() +
-                    "entity id: " + entity.entityId + System.lineSeparator(),
-            )
+        Timber.d(
+            "Calling previous track action:" + System.lineSeparator() +
+                "entity id: " + entity.entityId + System.lineSeparator(),
+        )
 
-            val action = "media_previous_track"
-            val entityId: String = getEntity(
-                context,
+        val action = "media_previous_track"
+        val entityId: String = getEntity(
+            context,
+            entity.serverId,
+            entity.entityId.split(","),
+            null,
+        )?.entityId.toString()
+
+        val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
+
+        try {
+            serverManager.integrationRepository(
                 entity.serverId,
-                entity.entityId.split(","),
-                null,
-            )?.entityId.toString()
-
-            val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
-
-            try {
-                serverManager.integrationRepository(
-                    entity.serverId,
-                ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to call previous track action")
-            }
+            ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to call previous track action")
         }
     }
 
-    private fun callRewindAction(context: Context, appWidgetId: Int) {
-        widgetScope?.launch {
-            Timber.d("Retrieving media player entity for app widget $appWidgetId")
-            val entity: MediaPlayerControlsWidgetEntity? = dao.get(appWidgetId)
+    private suspend fun callRewindAction(context: Context, appWidgetId: Int) {
+        Timber.d("Retrieving media player entity for app widget $appWidgetId")
+        val entity: MediaPlayerControlsWidgetEntity? = dao.get(appWidgetId)
 
-            if (entity == null) {
-                Timber.d("Failed to retrieve media player entity")
-                return@launch
-            }
+        if (entity == null) {
+            Timber.d("Failed to retrieve media player entity")
+            return
+        }
 
-            Timber.d(
-                "Calling rewind action:" + System.lineSeparator() +
-                    "entity id: " + entity.entityId + System.lineSeparator(),
-            )
+        Timber.d(
+            "Calling rewind action:" + System.lineSeparator() +
+                "entity id: " + entity.entityId + System.lineSeparator(),
+        )
 
-            val currentEntityInfo = try {
-                serverManager.integrationRepository(entity.serverId).getEntity(entity.entityId)
-            } catch (e: Exception) {
-                null
-            }
-            if (currentEntityInfo == null) {
-                Timber.d("Failed to fetch entity or entity does not exist")
-                if (lastIntent != Intent.ACTION_SCREEN_ON) {
+        val currentEntityInfo = try {
+            serverManager.integrationRepository(entity.serverId).getEntity(entity.entityId)
+        } catch (e: Exception) {
+            null
+        }
+        if (currentEntityInfo == null) {
+            Timber.d("Failed to fetch entity or entity does not exist")
+            if (lastIntent != Intent.ACTION_SCREEN_ON) {
+                withContext(Dispatchers.Main) {
                     Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
                 }
-                return@launch
             }
+            return
+        }
 
-            val fetchedAttributes = currentEntityInfo.attributes
-            val currentTime = fetchedAttributes["media_position"]?.toString()?.toDoubleOrNull()
+        val fetchedAttributes = currentEntityInfo.attributes
+        val currentTime = fetchedAttributes["media_position"]?.toString()?.toDoubleOrNull()
 
-            if (currentTime == null) {
-                Timber.d("Failed to get entity current time, aborting call")
-                return@launch
-            }
+        if (currentTime == null) {
+            Timber.d("Failed to get entity current time, aborting call")
+            return
+        }
 
-            val action = "media_seek"
-            val entityId: String = getEntity(
-                context,
+        val action = "media_seek"
+        val entityId: String = getEntity(
+            context,
+            entity.serverId,
+            entity.entityId.split(","),
+            null,
+        )?.entityId.toString()
+
+        val actionDataMap: HashMap<String, Any> = hashMapOf(
+            "entity_id" to entityId,
+            "seek_position" to currentTime - 10,
+        )
+
+        try {
+            serverManager.integrationRepository(
                 entity.serverId,
-                entity.entityId.split(","),
-                null,
-            )?.entityId.toString()
-
-            val actionDataMap: HashMap<String, Any> = hashMapOf(
-                "entity_id" to entityId,
-                "seek_position" to currentTime - 10,
-            )
-
-            try {
-                serverManager.integrationRepository(
-                    entity.serverId,
-                ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Timber.e(e, "Exception calling rewind action")
-            }
+            ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Exception calling rewind action")
         }
     }
 
-    private fun callPlayPauseAction(context: Context, appWidgetId: Int) {
-        widgetScope?.launch {
-            Timber.d("Retrieving media player entity for app widget $appWidgetId")
-            val entity: MediaPlayerControlsWidgetEntity? = dao.get(appWidgetId)
+    private suspend fun callPlayPauseAction(context: Context, appWidgetId: Int) {
+        Timber.d("Retrieving media player entity for app widget $appWidgetId")
+        val entity: MediaPlayerControlsWidgetEntity? = dao.get(appWidgetId)
 
-            if (entity == null) {
-                Timber.d("Failed to retrieve media player entity")
-                return@launch
-            }
+        if (entity == null) {
+            Timber.d("Failed to retrieve media player entity")
+            return
+        }
 
-            Timber.d(
-                "Calling play/pause action:" + System.lineSeparator() +
-                    "entity id: " + entity.entityId + System.lineSeparator(),
-            )
+        Timber.d(
+            "Calling play/pause action:" + System.lineSeparator() +
+                "entity id: " + entity.entityId + System.lineSeparator(),
+        )
 
-            val action = "media_play_pause"
-            val entityId: String = getEntity(
-                context,
+        val action = "media_play_pause"
+        val entityId: String = getEntity(
+            context,
+            entity.serverId,
+            entity.entityId.split(","),
+            null,
+        )?.entityId.toString()
+
+        val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
+
+        try {
+            serverManager.integrationRepository(
                 entity.serverId,
-                entity.entityId.split(","),
-                null,
-            )?.entityId.toString()
-
-            val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
-
-            try {
-                serverManager.integrationRepository(
-                    entity.serverId,
-                ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Timber.e(e, "Exception calling play pause action")
-            }
+            ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Exception calling play pause action")
         }
     }
 
-    private fun callFastForwardAction(context: Context, appWidgetId: Int) {
-        widgetScope?.launch {
-            Timber.d("Retrieving media player entity for app widget $appWidgetId")
-            val entity: MediaPlayerControlsWidgetEntity? = dao.get(appWidgetId)
+    private suspend fun callFastForwardAction(context: Context, appWidgetId: Int) {
+        Timber.d("Retrieving media player entity for app widget $appWidgetId")
+        val entity: MediaPlayerControlsWidgetEntity? = dao.get(appWidgetId)
 
-            if (entity == null) {
-                Timber.d("Failed to retrieve media player entity")
-                return@launch
-            }
+        if (entity == null) {
+            Timber.d("Failed to retrieve media player entity")
+            return
+        }
 
-            Timber.d(
-                "Calling fast forward action:" + System.lineSeparator() +
-                    "entity id: " + entity.entityId + System.lineSeparator(),
-            )
+        Timber.d(
+            "Calling fast forward action:" + System.lineSeparator() +
+                "entity id: " + entity.entityId + System.lineSeparator(),
+        )
 
-            val currentEntityInfo = try {
-                serverManager.integrationRepository(entity.serverId).getEntity(entity.entityId)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                null
-            }
-            if (currentEntityInfo == null) {
-                Timber.d("Failed to fetch entity or entity does not exist")
-                if (lastIntent != Intent.ACTION_SCREEN_ON) {
+        val currentEntityInfo = try {
+            serverManager.integrationRepository(entity.serverId).getEntity(entity.entityId)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            null
+        }
+        if (currentEntityInfo == null) {
+            Timber.d("Failed to fetch entity or entity does not exist")
+            if (lastIntent != Intent.ACTION_SCREEN_ON) {
+                withContext(Dispatchers.Main) {
                     Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
                 }
-                return@launch
             }
+            return
+        }
 
-            val fetchedAttributes = currentEntityInfo.attributes
-            val currentTime = fetchedAttributes["media_position"]?.toString()?.toDoubleOrNull()
+        val fetchedAttributes = currentEntityInfo.attributes
+        val currentTime = fetchedAttributes["media_position"]?.toString()?.toDoubleOrNull()
 
-            if (currentTime == null) {
-                Timber.d("Failed to get entity current time, aborting call")
-                return@launch
-            }
+        if (currentTime == null) {
+            Timber.d("Failed to get entity current time, aborting call")
+            return
+        }
 
-            val action = "media_seek"
-            val entityId: String = getEntity(
-                context,
+        val action = "media_seek"
+        val entityId: String = getEntity(
+            context,
+            entity.serverId,
+            entity.entityId.split(","),
+            null,
+        )?.entityId.toString()
+
+        val actionDataMap: HashMap<String, Any> = hashMapOf(
+            "entity_id" to entityId,
+            "seek_position" to currentTime + 10,
+        )
+
+        try {
+            serverManager.integrationRepository(
                 entity.serverId,
-                entity.entityId.split(","),
-                null,
-            )?.entityId.toString()
-
-            val actionDataMap: HashMap<String, Any> = hashMapOf(
-                "entity_id" to entityId,
-                "seek_position" to currentTime + 10,
-            )
-
-            try {
-                serverManager.integrationRepository(
-                    entity.serverId,
-                ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Timber.e(e, "Exception calling fast forward action")
-            }
+            ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Exception calling fast forward action")
         }
     }
 
-    private fun callNextTrackAction(context: Context, appWidgetId: Int) {
-        widgetScope?.launch {
-            Timber.d("Retrieving media player entity for app widget $appWidgetId")
-            val entity: MediaPlayerControlsWidgetEntity? = dao.get(appWidgetId)
+    private suspend fun callNextTrackAction(context: Context, appWidgetId: Int) {
+        Timber.d("Retrieving media player entity for app widget $appWidgetId")
+        val entity: MediaPlayerControlsWidgetEntity? = dao.get(appWidgetId)
 
-            if (entity == null) {
-                Timber.d("Failed to retrieve media player entity")
-                return@launch
-            }
+        if (entity == null) {
+            Timber.d("Failed to retrieve media player entity")
+            return
+        }
 
-            Timber.d(
-                "Calling next track action:" + System.lineSeparator() +
-                    "entity id: " + entity.entityId + System.lineSeparator(),
-            )
+        Timber.d(
+            "Calling next track action:" + System.lineSeparator() +
+                "entity id: " + entity.entityId + System.lineSeparator(),
+        )
 
-            val action = "media_next_track"
-            val entityId: String = getEntity(
-                context,
+        val action = "media_next_track"
+        val entityId: String = getEntity(
+            context,
+            entity.serverId,
+            entity.entityId.split(","),
+            null,
+        )?.entityId.toString()
+
+        val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
+
+        try {
+            serverManager.integrationRepository(
                 entity.serverId,
-                entity.entityId.split(","),
-                null,
-            )?.entityId.toString()
-
-            val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
-
-            try {
-                serverManager.integrationRepository(
-                    entity.serverId,
-                ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Timber.e(e, "Exception calling next track action")
-            }
+            ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Exception calling next track action")
         }
     }
 
-    private fun callVolumeDownAction(context: Context, appWidgetId: Int) {
-        widgetScope?.launch {
-            Timber.d("Retrieving media player entity for app widget $appWidgetId")
-            val entity: MediaPlayerControlsWidgetEntity? = dao.get(appWidgetId)
+    private suspend fun callVolumeDownAction(context: Context, appWidgetId: Int) {
+        Timber.d("Retrieving media player entity for app widget $appWidgetId")
+        val entity: MediaPlayerControlsWidgetEntity? = dao.get(appWidgetId)
 
-            if (entity == null) {
-                Timber.d("Failed to retrieve media player entity")
-                return@launch
-            }
+        if (entity == null) {
+            Timber.d("Failed to retrieve media player entity")
+            return
+        }
 
-            Timber.d(
-                "Calling volume down action:" + System.lineSeparator() +
-                    "entity id: " + entity.entityId + System.lineSeparator(),
-            )
+        Timber.d(
+            "Calling volume down action:" + System.lineSeparator() +
+                "entity id: " + entity.entityId + System.lineSeparator(),
+        )
 
-            val action = "volume_down"
-            val entityId: String = getEntity(
-                context,
+        val action = "volume_down"
+        val entityId: String = getEntity(
+            context,
+            entity.serverId,
+            entity.entityId.split(","),
+            null,
+        )?.entityId.toString()
+
+        val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
+
+        try {
+            serverManager.integrationRepository(
                 entity.serverId,
-                entity.entityId.split(","),
-                null,
-            )?.entityId.toString()
-
-            val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
-
-            try {
-                serverManager.integrationRepository(
-                    entity.serverId,
-                ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Timber.e(e, "Exception calling volume down action")
-            }
+            ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Exception calling volume down action")
         }
     }
 
-    private fun callVolumeUpAction(context: Context, appWidgetId: Int) {
-        widgetScope?.launch {
-            Timber.d("Retrieving media player entity for app widget $appWidgetId")
-            val entity: MediaPlayerControlsWidgetEntity? = dao.get(appWidgetId)
+    private suspend fun callVolumeUpAction(context: Context, appWidgetId: Int) {
+        Timber.d("Retrieving media player entity for app widget $appWidgetId")
+        val entity: MediaPlayerControlsWidgetEntity? = dao.get(appWidgetId)
 
-            if (entity == null) {
-                Timber.d("Failed to retrieve media player entity")
-                return@launch
-            }
+        if (entity == null) {
+            Timber.d("Failed to retrieve media player entity")
+            return
+        }
 
-            Timber.d(
-                "Calling volume up action:" + System.lineSeparator() +
-                    "entity id: " + entity.entityId + System.lineSeparator(),
-            )
+        Timber.d(
+            "Calling volume up action:" + System.lineSeparator() +
+                "entity id: " + entity.entityId + System.lineSeparator(),
+        )
 
-            val action = "volume_up"
-            val entityId: String = getEntity(
-                context,
+        val action = "volume_up"
+        val entityId: String = getEntity(
+            context,
+            entity.serverId,
+            entity.entityId.split(","),
+            null,
+        )?.entityId.toString()
+
+        val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
+
+        try {
+            serverManager.integrationRepository(
                 entity.serverId,
-                entity.entityId.split(","),
-                null,
-            )?.entityId.toString()
-
-            val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
-
-            try {
-                serverManager.integrationRepository(
-                    entity.serverId,
-                ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Timber.e(e, "Exception calling volume up action")
-            }
+            ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Exception calling volume up action")
         }
     }
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        widgetScope?.launch {
+        widgetScope.launch {
             dao.deleteAll(appWidgetIds)
             appWidgetIds.forEach { removeSubscription(it) }
         }

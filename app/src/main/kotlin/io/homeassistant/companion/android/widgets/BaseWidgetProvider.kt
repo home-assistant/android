@@ -11,12 +11,14 @@ import androidx.core.content.ContextCompat
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.common.util.launchAsync
 import io.homeassistant.companion.android.database.widget.WidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetEntity
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -33,9 +35,9 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
         const val UPDATE_WIDGETS =
             "io.homeassistant.companion.android.widgets.UPDATE_WIDGETS"
 
-        var widgetScope: CoroutineScope? = null
-        val widgetEntities = mutableMapOf<Int, List<String>>()
-        val widgetJobs = mutableMapOf<Int, Job>()
+        private var widgetScope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+        private val widgetEntities = mutableMapOf<Int, List<String>>()
+        private val widgetJobs = mutableMapOf<Int, Job>()
     }
 
     @Inject
@@ -44,7 +46,6 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
     @Inject
     lateinit var dao: DAO
 
-    private var thisSetScope = false
     protected var lastIntent = ""
 
     init {
@@ -52,36 +53,36 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
     }
 
     private fun setupWidgetScope() {
-        if (widgetScope == null || !widgetScope!!.isActive) {
-            widgetScope = CoroutineScope(Dispatchers.Main + Job())
-            thisSetScope = true
+        if (!widgetScope.isActive) {
+            Companion.widgetScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
         }
     }
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         // There may be multiple widgets active, so update all of them
         for (appWidgetId in appWidgetIds) {
-            updateView(context, appWidgetId, appWidgetManager)
+            widgetScope.launch {
+                updateView(context, appWidgetId, appWidgetManager)
+            }
         }
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        lastIntent = intent.action.toString()
         val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
 
         super.onReceive(context, intent)
-        when (lastIntent) {
-            UPDATE_VIEW -> updateView(context, appWidgetId)
-            UPDATE_WIDGETS -> {
-                onScreenOn(context)
-            }
-            Intent.ACTION_SCREEN_ON -> onScreenOn(context)
+
+        setupWidgetScope()
+
+        when (intent.action.toString()) {
+            UPDATE_VIEW -> launchAsync(widgetScope) { updateView(context, appWidgetId) }
+            UPDATE_WIDGETS, Intent.ACTION_SCREEN_ON -> launchAsync(widgetScope) { onScreenOn(context) }
             Intent.ACTION_SCREEN_OFF -> onScreenOff()
             ACTION_APPWIDGET_CREATED -> {
-                if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
-                    FailFast.fail { "Missing appWidgetId in intent to add widget in DAO" }
-                } else {
-                    widgetScope?.launch {
+                launchAsync(widgetScope) {
+                    if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+                        FailFast.fail { "Missing appWidgetId in intent to add widget in DAO" }
+                    } else {
                         // Use deprecated function to not have to specify the class of T
                         @Suppress("DEPRECATION", "UNCHECKED_CAST")
                         val entity = intent.getSerializableExtra(EXTRA_WIDGET_ENTITY) as? T
@@ -89,62 +90,67 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
                             dao.add(entity.copyWithWidgetId(appWidgetId))
                         } ?: FailFast.fail { "Missing $EXTRA_WIDGET_ENTITY or it's of the wrong type in intent." }
                     }
+                    onScreenOn(context)
                 }
-                onScreenOn(context)
             }
+
+            else -> launchAsync(widgetScope) { onReceiveIntentNotHandled(context, intent, appWidgetId) }
         }
     }
 
-    fun onScreenOn(context: Context) {
-        setupWidgetScope()
-        widgetScope!!.launch {
-            if (!serverManager.isRegistered()) return@launch
-            updateAllWidgets(context)
+    abstract suspend fun onReceiveIntentNotHandled(context: Context, intent: Intent, appWidgetId: Int)
 
-            val allWidgets = getAllWidgetIdsWithEntities(context)
-            val widgetsWithDifferentEntities = allWidgets.filter { it.value.second != widgetEntities[it.key] }
-            if (widgetsWithDifferentEntities.isNotEmpty()) {
-                ContextCompat.registerReceiver(
-                    context.applicationContext,
-                    this@BaseWidgetProvider,
-                    IntentFilter(Intent.ACTION_SCREEN_OFF),
-                    ContextCompat.RECEIVER_NOT_EXPORTED,
-                )
+    suspend fun onScreenOn(context: Context) {
+        if (!serverManager.isRegistered()) return
+        updateAllWidgets(context)
 
-                widgetsWithDifferentEntities.forEach { (id, pair) ->
-                    widgetJobs[id]?.cancel()
+        val allWidgets = getAllWidgetIdsWithEntities(context)
+        val widgetsWithDifferentEntities = allWidgets.filter { it.value.second != widgetEntities[it.key] }
+        if (widgetsWithDifferentEntities.isNotEmpty()) {
+            ContextCompat.registerReceiver(
+                context.applicationContext,
+                this@BaseWidgetProvider,
+                IntentFilter(Intent.ACTION_SCREEN_OFF),
+                ContextCompat.RECEIVER_NOT_EXPORTED,
+            )
 
-                    val (serverId, entities) = pair.first to pair.second
-                    val entityUpdates =
-                        if (serverManager.getServer(serverId) != null) {
-                            serverManager.integrationRepository(serverId).getEntityUpdates(entities)
-                        } else {
-                            null
-                        }
-                    if (entityUpdates != null) {
-                        widgetEntities[id] = entities
-                        widgetJobs[id] = widgetScope!!.launch {
-                            entityUpdates.collect {
-                                onEntityStateChanged(context, id, it)
-                            }
-                        }
-                    } else { // Remove data to make it retry on the next update
-                        widgetEntities.remove(id)
-                        widgetJobs.remove(id)
+            widgetsWithDifferentEntities.forEach { (id, pair) ->
+                widgetJobs[id]?.cancel()
+
+                val (serverId, entities) = pair.first to pair.second
+                val entityUpdates =
+                    if (serverManager.getServer(serverId) != null) {
+                        serverManager.integrationRepository(serverId).getEntityUpdates(entities)
+                    } else {
+                        null
                     }
+                if (entityUpdates != null) {
+                    widgetEntities[id] = entities
+                    widgetJobs[id] = widgetScope.launch {
+                        entityUpdates.collect {
+                            onEntityStateChanged(context, id, it)
+                        }
+                    }
+                } else { // Remove data to make it retry on the next update
+                    widgetEntities.remove(id)
+                    widgetJobs.remove(id)
                 }
             }
         }
     }
 
     private fun onScreenOff() {
-        if (thisSetScope) {
-            widgetScope?.cancel()
-            thisSetScope = false
-            widgetEntities.clear()
-            widgetJobs.clear()
+        try {
+            widgetScope.cancel()
+        } catch (e: IllegalStateException) {
+            Timber.w(e, "Calling onScreenOff without any job started")
         }
+        widgetEntities.clear()
+        widgetJobs.clear()
     }
+
+    protected val widgetScope
+        get() = Companion.widgetScope
 
     private suspend fun updateAllWidgets(context: Context) {
         val widgetProvider = getWidgetProvider(context)
@@ -165,15 +171,13 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
         }
     }
 
-    private fun updateView(
+    protected suspend fun updateView(
         context: Context,
         appWidgetId: Int,
         appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context),
     ) {
-        widgetScope?.launch {
-            val views = getWidgetRemoteViews(context, appWidgetId)
-            appWidgetManager.updateAppWidget(appWidgetId, views)
-        }
+        val views = getWidgetRemoteViews(context, appWidgetId)
+        appWidgetManager.updateAppWidget(appWidgetId, views)
     }
 
     protected fun removeSubscription(appWidgetId: Int) {
