@@ -20,7 +20,7 @@ import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConf
 import io.homeassistant.companion.android.assist.wakeword.WakeWordListener
 import io.homeassistant.companion.android.assist.wakeword.WakeWordListenerFactory
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.settings.assist.AssistRepository
+import io.homeassistant.companion.android.settings.assist.AssistConfigManager
 import io.homeassistant.companion.android.common.util.CHANNEL_ASSIST_LISTENING
 import javax.inject.Inject
 import kotlin.time.Clock
@@ -51,7 +51,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     lateinit var clock: Clock
 
     @Inject
-    lateinit var assistRepository: AssistRepository
+    lateinit var assistConfigManager: AssistConfigManager
 
     @Inject
     lateinit var wakeWordListenerFactory: WakeWordListenerFactory
@@ -70,7 +70,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         super.onReady()
         Timber.d("VoiceInteractionService is ready")
         serviceScope.launch {
-            if (assistRepository.isWakeWordEnabled()) {
+            if (assistConfigManager.isWakeWordEnabled()) {
                 Timber.d("Wake word detection is enabled, starting listener")
                 startListening()
             } else {
@@ -124,14 +124,14 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     }
 
     private suspend fun loadWakeWordModel(): MicroWakeWordModelConfig {
-        val selectedModel = assistRepository.getSelectedWakeWordModel()
+        val selectedModel = assistConfigManager.getSelectedWakeWordModel()
         if (selectedModel != null) {
             Timber.d("Using selected wake word model: ${selectedModel.wakeWord}")
             return selectedModel
         }
 
         // Fall back to first available model if none selected
-        val availableModels = assistRepository.getAvailableModels()
+        val availableModels = assistConfigManager.getAvailableModels()
         if (availableModels.isEmpty()) {
             throw IllegalStateException("No wake word models found in assets")
         }

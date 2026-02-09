@@ -23,11 +23,11 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
-class AssistRepositoryTest {
+class AssistConfigManagerTest {
 
     private val context: Context = mockk(relaxed = true)
     private val prefsRepository: PrefsRepository = mockk(relaxed = true)
-    private lateinit var repository: AssistRepositoryImpl
+    private lateinit var manager: AssistConfigManagerImpl
 
     @BeforeEach
     fun setUp() {
@@ -38,7 +38,7 @@ class AssistRepositoryTest {
         every { AssistVoiceInteractionService.startListening(any()) } just Runs
         every { AssistVoiceInteractionService.stopListening(any()) } just Runs
 
-        repository = AssistRepositoryImpl(context, prefsRepository)
+        manager = AssistConfigManagerImpl(context, prefsRepository)
     }
 
     @AfterEach
@@ -51,7 +51,7 @@ class AssistRepositoryTest {
 
         @Test
         fun `Given models available when getAvailableModels then return all models`() = runTest {
-            val result = repository.getAvailableModels()
+            val result = manager.getAvailableModels()
 
             assertEquals(2, result.size)
             assertEquals("Okay Nabu", result[0].wakeWord)
@@ -60,8 +60,8 @@ class AssistRepositoryTest {
 
         @Test
         fun `Given models already loaded when getAvailableModels called twice then load only once`() = runTest {
-            repository.getAvailableModels()
-            repository.getAvailableModels()
+            manager.getAvailableModels()
+            manager.getAvailableModels()
 
             coVerify(exactly = 1) { MicroWakeWordModelConfig.loadAvailableModels(any()) }
         }
@@ -74,7 +74,7 @@ class AssistRepositoryTest {
         fun `Given wake word enabled when isWakeWordEnabled then return true`() = runTest {
             coEvery { prefsRepository.isWakeWordEnabled() } returns true
 
-            val result = repository.isWakeWordEnabled()
+            val result = manager.isWakeWordEnabled()
 
             assertTrue(result)
         }
@@ -83,7 +83,7 @@ class AssistRepositoryTest {
         fun `Given wake word disabled when isWakeWordEnabled then return false`() = runTest {
             coEvery { prefsRepository.isWakeWordEnabled() } returns false
 
-            val result = repository.isWakeWordEnabled()
+            val result = manager.isWakeWordEnabled()
 
             assertFalse(result)
         }
@@ -96,7 +96,7 @@ class AssistRepositoryTest {
         fun `Given enabled true when setWakeWordEnabled then save preference and start listening`() = runTest {
             coEvery { prefsRepository.setWakeWordEnabled(any()) } just Runs
 
-            repository.setWakeWordEnabled(true)
+            manager.setWakeWordEnabled(true)
 
             coVerify { prefsRepository.setWakeWordEnabled(true) }
             coVerify { AssistVoiceInteractionService.startListening(context) }
@@ -107,7 +107,7 @@ class AssistRepositoryTest {
         fun `Given enabled false when setWakeWordEnabled then save preference and stop listening`() = runTest {
             coEvery { prefsRepository.setWakeWordEnabled(any()) } just Runs
 
-            repository.setWakeWordEnabled(false)
+            manager.setWakeWordEnabled(false)
 
             coVerify { prefsRepository.setWakeWordEnabled(false) }
             coVerify { AssistVoiceInteractionService.stopListening(context) }
@@ -122,7 +122,7 @@ class AssistRepositoryTest {
         fun `Given wake word selected when getSelectedWakeWordModel then return selected model`() = runTest {
             coEvery { prefsRepository.getSelectedWakeWord() } returns "Okay Nabu"
 
-            val result = repository.getSelectedWakeWordModel()
+            val result = manager.getSelectedWakeWordModel()
 
             assertEquals(microWakeWordModelConfigs[0], result)
         }
@@ -131,7 +131,7 @@ class AssistRepositoryTest {
         fun `Given no wake word selected when getSelectedWakeWordModel then return null`() = runTest {
             coEvery { prefsRepository.getSelectedWakeWord() } returns null
 
-            val result = repository.getSelectedWakeWordModel()
+            val result = manager.getSelectedWakeWordModel()
 
             assertNull(result)
         }
@@ -140,7 +140,7 @@ class AssistRepositoryTest {
         fun `Given unknown wake word selected when getSelectedWakeWordModel then return null`() = runTest {
             coEvery { prefsRepository.getSelectedWakeWord() } returns "Unknown Model"
 
-            val result = repository.getSelectedWakeWordModel()
+            val result = manager.getSelectedWakeWordModel()
 
             assertNull(result)
         }
@@ -155,7 +155,7 @@ class AssistRepositoryTest {
             coEvery { prefsRepository.isWakeWordEnabled() } returns true
             coEvery { prefsRepository.setSelectedWakeWord(any()) } just Runs
 
-            repository.setSelectedWakeWordModel(microWakeWordModelConfigs[1])
+            manager.setSelectedWakeWordModel(microWakeWordModelConfigs[1])
 
             coVerify { prefsRepository.setSelectedWakeWord("Hey Jarvis") }
             coVerify { AssistVoiceInteractionService.startListening(context) }
@@ -167,7 +167,7 @@ class AssistRepositoryTest {
             coEvery { prefsRepository.isWakeWordEnabled() } returns false
             coEvery { prefsRepository.setSelectedWakeWord(any()) } just Runs
 
-            repository.setSelectedWakeWordModel(microWakeWordModelConfigs[1])
+            manager.setSelectedWakeWordModel(microWakeWordModelConfigs[1])
 
             coVerify { prefsRepository.setSelectedWakeWord("Hey Jarvis") }
             coVerify(exactly = 0) { AssistVoiceInteractionService.startListening(any()) }
@@ -179,7 +179,7 @@ class AssistRepositoryTest {
             coEvery { prefsRepository.isWakeWordEnabled() } returns true
             coEvery { prefsRepository.setSelectedWakeWord(any()) } just Runs
 
-            repository.setSelectedWakeWordModel(microWakeWordModelConfigs[0])
+            manager.setSelectedWakeWordModel(microWakeWordModelConfigs[0])
 
             coVerify { prefsRepository.setSelectedWakeWord("Okay Nabu") }
             coVerify(exactly = 0) { AssistVoiceInteractionService.startListening(any()) }

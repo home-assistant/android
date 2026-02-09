@@ -13,7 +13,7 @@ import javax.inject.Inject
 /**
  * Repository for Assist settings and wake word model information.
  */
-interface AssistRepository {
+interface AssistConfigManager {
     /**
      * Returns a list of all available wake word models.
      */
@@ -50,10 +50,10 @@ interface AssistRepository {
     suspend fun setSelectedWakeWordModel(model: MicroWakeWordModelConfig)
 }
 
-class AssistRepositoryImpl @Inject constructor(
+class AssistConfigManagerImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val prefsRepository: PrefsRepository,
-) : AssistRepository {
+) : AssistConfigManager {
 
     private val models = SuspendLazy { MicroWakeWordModelConfig.loadAvailableModels(context) }
 

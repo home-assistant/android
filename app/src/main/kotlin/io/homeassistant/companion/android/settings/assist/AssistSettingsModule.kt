@@ -12,7 +12,7 @@ abstract class AssistSettingsModule {
 
     @Binds
     @Singleton
-    abstract fun assistRepository(assistRepositoryImpl: AssistRepositoryImpl): AssistRepository
+    abstract fun assistConfigManaer(assistConfigManagerImpl: AssistConfigManagerImpl): AssistConfigManager
 
     @Binds
     @Singleton

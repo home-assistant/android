@@ -38,7 +38,7 @@ val WAKE_WORD_TEST_DEBOUNCE = 3.seconds
 @HiltViewModel
 class AssistSettingsViewModel @Inject constructor(
     private val defaultAssistantManager: DefaultAssistantManager,
-    private val assistRepository: AssistRepository,
+    private val assistConfigManager: AssistConfigManager,
     private val wakeWordListenerFactory: WakeWordListenerFactory,
 ) : ViewModel() {
 
@@ -58,14 +58,14 @@ class AssistSettingsViewModel @Inject constructor(
 
     private fun loadState() {
         viewModelScope.launch {
-            val models = assistRepository.getAvailableModels()
-            var isEnabled = assistRepository.isWakeWordEnabled()
-            val selectedModel = assistRepository.getSelectedWakeWordModel() ?: models.firstOrNull()
+            val models = assistConfigManager.getAvailableModels()
+            var isEnabled = assistConfigManager.isWakeWordEnabled()
+            val selectedModel = assistConfigManager.getSelectedWakeWordModel() ?: models.firstOrNull()
             val isDefaultAssistant = defaultAssistantManager.isDefaultAssistant()
 
             if (!isDefaultAssistant && isEnabled) {
                 // The assistant has changed and wake word cannot be enabled
-                assistRepository.setWakeWordEnabled(false)
+                assistConfigManager.setWakeWordEnabled(false)
                 isEnabled = false
             }
 
@@ -104,7 +104,7 @@ class AssistSettingsViewModel @Inject constructor(
     @SuppressLint("MissingPermission")
     fun onToggleWakeWord(enabled: Boolean) {
         viewModelScope.launch {
-            assistRepository.setWakeWordEnabled(enabled)
+            assistConfigManager.setWakeWordEnabled(enabled)
             _uiState.update { it.copy(isWakeWordEnabled = enabled) }
         }
     }
@@ -115,7 +115,7 @@ class AssistSettingsViewModel @Inject constructor(
     @SuppressLint("MissingPermission")
     fun onSelectWakeWordModel(model: MicroWakeWordModelConfig) {
         viewModelScope.launch {
-            assistRepository.setSelectedWakeWordModel(model)
+            assistConfigManager.setSelectedWakeWordModel(model)
             _uiState.update { it.copy(selectedWakeWordModel = model) }
 
             // If currently testing, restart with new model

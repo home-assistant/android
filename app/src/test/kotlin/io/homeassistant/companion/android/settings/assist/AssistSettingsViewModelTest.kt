@@ -34,7 +34,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 class AssistSettingsViewModelTest {
 
     private val defaultAssistantManager: DefaultAssistantManager = mockk(relaxed = true)
-    private val assistRepository: AssistRepository = mockk(relaxed = true)
+    private val assistConfigManager: AssistConfigManager = mockk(relaxed = true)
     private val wakeWordListener: WakeWordListener = mockk(relaxed = true)
     private val onWakeWordDetectedSlot = slot<(MicroWakeWordModelConfig) -> Unit>()
     private val onListenerStoppedSlot = slot<() -> Unit>()
@@ -52,16 +52,16 @@ class AssistSettingsViewModelTest {
 
     @BeforeEach
     fun setUp() {
-        coEvery { assistRepository.getAvailableModels() } returns microWakeWordModelConfigs
-        coEvery { assistRepository.isWakeWordEnabled() } returns false
-        coEvery { assistRepository.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
+        coEvery { assistConfigManager.getAvailableModels() } returns microWakeWordModelConfigs
+        coEvery { assistConfigManager.isWakeWordEnabled() } returns false
+        coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
         every { defaultAssistantManager.isDefaultAssistant() } returns true
     }
 
     private fun createViewModel(): AssistSettingsViewModel {
         return AssistSettingsViewModel(
             defaultAssistantManager = defaultAssistantManager,
-            assistRepository = assistRepository,
+            assistConfigManager = assistConfigManager,
             wakeWordListenerFactory = wakeWordListenerFactory,
         )
     }
@@ -72,8 +72,8 @@ class AssistSettingsViewModelTest {
         @Test
         fun `Given default assistant when initialized then load state correctly`() = runTest {
             every { defaultAssistantManager.isDefaultAssistant() } returns true
-            coEvery { assistRepository.isWakeWordEnabled() } returns true
-            coEvery { assistRepository.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
+            coEvery { assistConfigManager.isWakeWordEnabled() } returns true
+            coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
 
             viewModel = createViewModel()
             runCurrent()
@@ -89,7 +89,7 @@ class AssistSettingsViewModelTest {
         @Test
         fun `Given not default assistant and wake word enabled when initialized then disable wake word`() = runTest {
             every { defaultAssistantManager.isDefaultAssistant() } returns false
-            coEvery { assistRepository.isWakeWordEnabled() } returns true
+            coEvery { assistConfigManager.isWakeWordEnabled() } returns true
 
             viewModel = createViewModel()
             runCurrent()
@@ -97,13 +97,13 @@ class AssistSettingsViewModelTest {
             val state = viewModel.uiState.value
             assertFalse(state.isDefaultAssistant)
             assertFalse(state.isWakeWordEnabled)
-            coVerify { assistRepository.setWakeWordEnabled(false) }
+            coVerify { assistConfigManager.setWakeWordEnabled(false) }
         }
 
         @Test
         fun `Given not default assistant and wake word disabled when initialized then keep disabled`() = runTest {
             every { defaultAssistantManager.isDefaultAssistant() } returns false
-            coEvery { assistRepository.isWakeWordEnabled() } returns false
+            coEvery { assistConfigManager.isWakeWordEnabled() } returns false
 
             viewModel = createViewModel()
             runCurrent()
@@ -111,12 +111,12 @@ class AssistSettingsViewModelTest {
             val state = viewModel.uiState.value
             assertFalse(state.isDefaultAssistant)
             assertFalse(state.isWakeWordEnabled)
-            coVerify(exactly = 0) { assistRepository.setWakeWordEnabled(any()) }
+            coVerify(exactly = 0) { assistConfigManager.setWakeWordEnabled(any()) }
         }
 
         @Test
         fun `Given no selected model when initialized then use first available model`() = runTest {
-            coEvery { assistRepository.getSelectedWakeWordModel() } returns null
+            coEvery { assistConfigManager.getSelectedWakeWordModel() } returns null
 
             viewModel = createViewModel()
             runCurrent()
@@ -127,8 +127,8 @@ class AssistSettingsViewModelTest {
 
         @Test
         fun `Given no selected model and no available models when initialized then selectedModel is null`() = runTest {
-            coEvery { assistRepository.getSelectedWakeWordModel() } returns null
-            coEvery { assistRepository.getAvailableModels() } returns emptyList()
+            coEvery { assistConfigManager.getSelectedWakeWordModel() } returns null
+            coEvery { assistConfigManager.getAvailableModels() } returns emptyList()
 
             viewModel = createViewModel()
             runCurrent()
@@ -157,7 +157,7 @@ class AssistSettingsViewModelTest {
         @Test
         fun `Given no longer default assistant with wake word enabled when refresh then disable wake word`() = runTest {
             every { defaultAssistantManager.isDefaultAssistant() } returns true
-            coEvery { assistRepository.isWakeWordEnabled() } returns true
+            coEvery { assistConfigManager.isWakeWordEnabled() } returns true
             viewModel = createViewModel()
             runCurrent()
 
@@ -167,7 +167,7 @@ class AssistSettingsViewModelTest {
 
             assertFalse(viewModel.uiState.value.isDefaultAssistant)
             assertFalse(viewModel.uiState.value.isWakeWordEnabled)
-            coVerify { assistRepository.setWakeWordEnabled(false) }
+            coVerify { assistConfigManager.setWakeWordEnabled(false) }
         }
     }
 
@@ -200,12 +200,12 @@ class AssistSettingsViewModelTest {
             runCurrent()
 
             assertTrue(viewModel.uiState.value.isWakeWordEnabled)
-            coVerify { assistRepository.setWakeWordEnabled(true) }
+            coVerify { assistConfigManager.setWakeWordEnabled(true) }
         }
 
         @Test
         fun `Given wake word enabled when toggle disabled then disable and save`() = runTest {
-            coEvery { assistRepository.isWakeWordEnabled() } returns true
+            coEvery { assistConfigManager.isWakeWordEnabled() } returns true
             viewModel = createViewModel()
             runCurrent()
 
@@ -213,7 +213,7 @@ class AssistSettingsViewModelTest {
             runCurrent()
 
             assertFalse(viewModel.uiState.value.isWakeWordEnabled)
-            coVerify { assistRepository.setWakeWordEnabled(false) }
+            coVerify { assistConfigManager.setWakeWordEnabled(false) }
         }
     }
 
@@ -229,7 +229,7 @@ class AssistSettingsViewModelTest {
             runCurrent()
 
             assertEquals(microWakeWordModelConfigs[1], viewModel.uiState.value.selectedWakeWordModel)
-            coVerify { assistRepository.setSelectedWakeWordModel(microWakeWordModelConfigs[1]) }
+            coVerify { assistConfigManager.setSelectedWakeWordModel(microWakeWordModelConfigs[1]) }
         }
 
         @Test
@@ -273,8 +273,8 @@ class AssistSettingsViewModelTest {
 
         @Test
         fun `Given no selected model and no available models when startTestWakeWord then do nothing`() = runTest {
-            coEvery { assistRepository.getSelectedWakeWordModel() } returns null
-            coEvery { assistRepository.getAvailableModels() } returns emptyList()
+            coEvery { assistConfigManager.getSelectedWakeWordModel() } returns null
+            coEvery { assistConfigManager.getAvailableModels() } returns emptyList()
             viewModel = createViewModel()
             runCurrent()
 
@@ -287,7 +287,7 @@ class AssistSettingsViewModelTest {
 
         @Test
         fun `Given no selected model but available models when startTestWakeWord then use first model`() = runTest {
-            coEvery { assistRepository.getSelectedWakeWordModel() } returns null
+            coEvery { assistConfigManager.getSelectedWakeWordModel() } returns null
             coEvery { wakeWordListener.start(any(), any(), any()) } just Runs
             viewModel = createViewModel()
             runCurrent()
