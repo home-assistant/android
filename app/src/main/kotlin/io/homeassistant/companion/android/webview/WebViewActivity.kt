@@ -1423,6 +1423,13 @@ class WebViewActivity :
         if (hasFocus && !isFinishing) {
             lifecycleScope.launch {
                 unlockAppIfNeeded()
+
+                if (presenter.isFullScreen() || isVideoFullScreen) {
+                    hideSystemUI()
+                } else {
+                    showSystemUI()
+                }
+
                 var path = intent.getStringExtra(EXTRA_PATH)
                 if (path?.startsWith("entityId:") == true) {
                     // Get the entity ID from a string formatted "entityId:domain.entity"
@@ -1438,14 +1445,8 @@ class WebViewActivity :
                         moreInfoEntity = entity
                     }
                 }
-                presenter.load(lifecycle, path, isInternalOverride)
                 intent.removeExtra(EXTRA_PATH)
-
-                if (presenter.isFullScreen() || isVideoFullScreen) {
-                    hideSystemUI()
-                } else {
-                    showSystemUI()
-                }
+                presenter.load(lifecycle, path, isInternalOverride)
             }
         }
     }
