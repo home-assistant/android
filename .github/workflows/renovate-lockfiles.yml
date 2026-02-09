@@ -1,0 +1,37 @@
+name: Auto-update Renovate lockfiles
+
+on: # yamllint disable-line rule:truthy
+  push:
+    branches:
+      - "renovate/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  update-lockfiles:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # To push to the current branch
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: ./.github/actions/setup-build-env
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+          mock-google-services: "true"
+
+      - name: Update lockfiles
+        run: ./gradlew alldependencies --write-locks
+
+      - name: Commit and push updated lockfiles
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add '*.lockfile'
+          if git diff --staged --quiet; then
+            echo "Lockfiles are already up to date"
+          else
+            git commit -m "Update dependency lockfiles"
+            git push
+          fi
