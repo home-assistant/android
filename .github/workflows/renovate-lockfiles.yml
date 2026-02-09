@@ -26,9 +26,6 @@ jobs:
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         if: steps.check-skip.outputs.skip != 'true'
-        with:
-          # Use TAG_PUSH_TOKEN so the push triggers pr.yml workflow
-          token: ${{ secrets.TAG_PUSH_TOKEN }}
 
       - uses: ./.github/actions/setup-build-env
         if: steps.check-skip.outputs.skip != 'true'
@@ -52,3 +49,15 @@ jobs:
             git commit -m "Update dependency lockfiles"
             git push
           fi
+
+      - name: Trigger Workflow
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        if: steps.check-skip.outputs.skip != 'true'
+        with:
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'pr.yml',
+              ref: context.ref,
+            })
