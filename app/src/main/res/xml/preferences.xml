@@ -138,7 +138,7 @@
         <Preference
             android:key="assist_settings"
             android:icon="@drawable/ic_comment_processing_outline"
-            android:title="@string/assist"
+            android:title="@string/assist_for_android"
             android:summary="@string/assist_summary" />
         <SwitchPreference
             android:key="assist_voice_command_intent"

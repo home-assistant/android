@@ -1180,6 +1180,7 @@
     <string name="no_assist_support_conversation">conversation</string>
     <string name="no_assist_support_assist_pipeline">Assist pipeline</string>
     <string name="assist">Assist</string>
+    <string name="assist_for_android">Assist for Android</string>
     <string name="assist_connnect">Assist couldn\'t reach Home Assistant, check your connection</string>
     <string name="assist_change_pipeline">Change assistant</string>
     <string name="assist_enter_text">Enter text</string>

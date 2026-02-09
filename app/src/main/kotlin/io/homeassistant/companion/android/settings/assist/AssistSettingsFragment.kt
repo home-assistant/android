@@ -33,7 +33,7 @@ class AssistSettingsFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        activity?.title = getString(commonR.string.assist)
+        activity?.title = getString(commonR.string.assist_for_android)
         viewModel.refreshDefaultAssistantStatus()
     }
 }

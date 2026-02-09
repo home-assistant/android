@@ -59,22 +59,6 @@ import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import org.jetbrains.annotations.VisibleForTesting
 
-/* List of settings
-- Set Assist as default assistant
-- Enable/Disable wake word
-    - select wake word
-    - test wake word
-    - select accuracy // TODO: Allow user to set sensibility https://github.com/esphome/home-assistant-voice-pe/blob/a379b8c5c1a35eeebc8f9925c19aab68743517a4/home-assistant-voice.yaml#L1775
-- Select default server
-- Select default pipeline
-- Setup Assist Satellite
-- Show on lock screen?
-- Confirmation sound?
-- Start from BLE device?
-// TODO enable/disable wake word from HA with a command
-- ...
- */
-
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun AssistSettingsScreen(viewModel: AssistSettingsViewModel) {
