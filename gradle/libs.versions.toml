@@ -7,6 +7,7 @@ accompanist = "0.37.3"
 activity-compose = "1.12.3"
 androidBeaconLibrary = "2.21.2"
 androidGradlePlugin = "9.0.0"
+androidNdk = "29.0.14206865"
 androidSdk-compile = "36"
 androidSdk-min = "23"
 androidSdk-target = "36"
@@ -27,6 +28,7 @@ biometric = "1.1.0"
 blurView = "version-2.0.6"
 car-versions = "1.7.0"
 changeLog = "3.8.2"
+cmake = "4.1.2"
 community-material-typeface = "7.0.96.2-kotlin"
 compose-bom = "2026.01.01"
 composeLintChecks = "1.4.2"
@@ -57,6 +59,7 @@ ksp = "2.3.5"
 ktlint = "14.0.1"
 leakcanaryAndroid = "2.14"
 lifecycle = "2.10.0"
+litert = "2.1.0"
 material = "1.13.0"
 media = "1.7.1"
 media3 = "1.9.1"
@@ -65,6 +68,7 @@ navigation-compose = "2.9.7"
 okhttp = "5.3.2"
 paging = "3.4.0"
 coil = "3.3.0"
+play-services-tflite = "16.4.0"
 play-services-threadnetwork = "16.3.0"
 play-services-home = "16.0.0"
 play-services-location = "21.3.0"
@@ -247,6 +251,8 @@ retrofit-converter-kotlinx-serialization = { module = "com.squareup.retrofit2:co
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 screenshot-validation-api = { group = "com.android.tools.screenshot", name = "screenshot-validation-api", version.ref = "screenshot" }
 sentry-android-core = { module = "io.sentry:sentry-android-core", version.ref = "sentry-android" }
+litert = { module = "com.google.ai.edge.litert:litert", version.ref = "litert" }
+play-services-tflite = { module = "com.google.android.gms:play-services-tflite-java", version.ref = "play-services-tflite" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 tools-desugar-jdk = { module = "com.android.tools:desugar_jdk_libs", version.ref = "tools-desugar-jdk-libs" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
