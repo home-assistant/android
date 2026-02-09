@@ -2,19 +2,12 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2026.2.3 - Main" versioncode="3">
-        <change>Redesigned onboarding experience for easier server setup</change>
-        <change>Added connection security level options</change>
-        <change>Support streaming text-to-speech in Assist</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2026.2.3 - Wear" versioncode="2">
-        <change>Support streaming text-to-speech in Assist</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2026.2.3 - Automotive" versioncode="1">
-        <change>Redesigned onboarding experience for easier server setup</change>
-        <change>Added connection security level options</change>
-        <change>Support streaming text-to-speech in Assist</change>
         <change>Bug fixes and dependency updates</change>
     </release>
 </changelog>
