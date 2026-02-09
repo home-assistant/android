@@ -257,11 +257,18 @@ class WebSocketRepositoryImpl internal constructor(
         outputTts: Boolean,
         pipelineId: String?,
         conversationId: String?,
+        wakeWordPhrase: String?,
     ): Flow<AssistPipelineEvent>? {
         val data = buildMap {
             put("start_stage", "stt")
             put("end_stage", if (outputTts) "tts" else "intent")
-            put("input", mapOf("sample_rate" to sampleRate))
+            put(
+                "input",
+                buildMap<String, Any?> {
+                    put("sample_rate", sampleRate)
+                    wakeWordPhrase?.let { put("wake_word_phrase", it) }
+                },
+            )
             put("conversation_id", conversationId)
             pipelineId?.let { put("pipeline", it) }
             webSocketCore.server()?.deviceRegistryId?.let { put("device_id", it) }

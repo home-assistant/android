@@ -63,7 +63,7 @@ class AssistViewModelBaseTest {
         coEvery { serverManager.webSocketRepository(any()) } returns webSocketRepository
         coEvery { webSocketRepository.sendVoiceData(any(), any()) } returns true
         coEvery {
-            webSocketRepository.runAssistPipelineForVoice(any(), any(), any(), any())
+            webSocketRepository.runAssistPipelineForVoice(any(), any(), any(), any(), any())
         } returns pipelineEventsFlow
 
         viewModel = TestAssistViewModel(serverManager, audioRecorder, audioUrlPlayer, application)

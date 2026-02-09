@@ -123,6 +123,7 @@ abstract class AssistViewModelBase(
     protected fun runAssistPipelineInternal(
         text: String?,
         pipeline: AssistPipelineResponse?,
+        wakeWordPhrase: String? = null,
         onEvent: (AssistEvent) -> Unit,
     ) {
         val isVoice = text == null
@@ -135,6 +136,7 @@ abstract class AssistViewModelBase(
                         outputTts = pipeline?.ttsEngine?.isNotBlank() == true,
                         pipelineId = pipeline?.id,
                         conversationId = conversationId,
+                        wakeWordPhrase = wakeWordPhrase,
                     )
                 } else {
                     serverManager.integrationRepository(selectedServerId).getAssistResponse(
