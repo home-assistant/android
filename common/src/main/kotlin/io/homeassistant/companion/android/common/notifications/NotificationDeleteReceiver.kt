@@ -8,12 +8,12 @@ import androidx.core.app.NotificationManagerCompat
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
+import io.homeassistant.companion.android.common.util.launchAsync
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -50,8 +50,7 @@ class NotificationDeleteReceiver : BroadcastReceiver() {
         // This maybe the case if timeoutAfter has deleted the notification
         // Then only the empty group is left and needs to be cancelled
         notificationManagerCompat.cancelGroupIfNeeded(group, groupId)
-
-        ioScope.launch {
+        launchAsync(ioScope) {
             try {
                 val databaseId = intent.getLongExtra(EXTRA_NOTIFICATION_DB, 0)
                 val serverId = notificationDao.get(databaseId.toInt())?.serverId ?: ServerManager.SERVER_ID_ACTIVE

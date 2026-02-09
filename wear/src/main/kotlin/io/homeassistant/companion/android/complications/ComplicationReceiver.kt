@@ -9,6 +9,7 @@ import androidx.wear.watchface.complications.datasource.ComplicationDataSourceSe
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceUpdateRequester
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.launchAsync
 import io.homeassistant.companion.android.conversation.ConversationActivity
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -21,31 +22,23 @@ class ComplicationReceiver : BroadcastReceiver() {
     @Inject
     lateinit var serverManager: ServerManager
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override fun onReceive(context: Context, intent: Intent) {
-        val result = goAsync()
-
-        try {
-            when (intent.action) {
-                UPDATE_COMPLICATION -> updateComplication(context, intent.getIntExtra(EXTRA_ID, -1))
-                Intent.ACTION_SCREEN_ON -> onScreenOn(context)
-            }
-        } finally {
-            result.finish()
+        when (intent.action) {
+            UPDATE_COMPLICATION -> updateComplication(context, intent.getIntExtra(EXTRA_ID, -1))
+            Intent.ACTION_SCREEN_ON -> launchAsync(scope) { onScreenOn(context) }
         }
     }
 
     private fun updateComplication(context: Context, id: Int) {
-        scope.launch {
-            // Request an update for the complication that has just been toggled.
-            ComplicationDataSourceUpdateRequester
-                .create(
-                    context = context,
-                    complicationDataSourceComponent = ComponentName(context, EntityStateDataSourceService::class.java),
-                )
-                .requestUpdate(id)
-        }
+        // Request an update for the complication that has just been toggled.
+        ComplicationDataSourceUpdateRequester
+            .create(
+                context = context,
+                complicationDataSourceComponent = ComponentName(context, EntityStateDataSourceService::class.java),
+            )
+            .requestUpdate(id)
     }
 
     private fun updateAllComplications(context: Context) {
@@ -57,11 +50,9 @@ class ComplicationReceiver : BroadcastReceiver() {
             .requestUpdateAll()
     }
 
-    private fun onScreenOn(context: Context) {
-        scope.launch {
-            if (!serverManager.isRegistered()) return@launch
-            updateAllComplications(context)
-        }
+    private suspend fun onScreenOn(context: Context) {
+        if (!serverManager.isRegistered()) return
+        updateAllComplications(context)
     }
 
     companion object {
