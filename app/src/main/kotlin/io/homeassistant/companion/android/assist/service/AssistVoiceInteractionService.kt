@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Bundle
 import android.service.voice.VoiceInteractionService
 import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
@@ -67,7 +68,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
 
     override fun onLaunchVoiceAssistFromKeyguard() {
         Timber.d("Launching Assist from keyguard")
-        launchAssistActivity()
+        launchAssist()
     }
 
     /**
