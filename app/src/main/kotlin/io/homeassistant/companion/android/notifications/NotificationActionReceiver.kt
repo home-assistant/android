@@ -12,6 +12,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.cancel
+import io.homeassistant.companion.android.common.util.launchAsync
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.notifications.MessagingManager.Companion.KEY_TEXT_REPLY
 import javax.inject.Inject
@@ -99,8 +100,9 @@ class NotificationActionReceiver : BroadcastReceiver() {
 
         when (intent.action) {
             FIRE_EVENT -> {
-                ioScope.launch {
-                    val serverId = notificationDao.get(databaseId.toInt())?.serverId ?: ServerManager.SERVER_ID_ACTIVE
+                launchAsync(ioScope) {
+                    val serverId =
+                        notificationDao.get(databaseId.toInt())?.serverId ?: ServerManager.SERVER_ID_ACTIVE
                     fireEvent(notificationAction, serverId, onComplete, onFailure)
                 }
             }
