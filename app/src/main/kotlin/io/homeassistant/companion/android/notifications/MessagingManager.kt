@@ -80,7 +80,7 @@ import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.NotificationSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.SettingsActivity
-import io.homeassistant.companion.android.settings.assist.AssistRepository
+import io.homeassistant.companion.android.settings.assist.AssistConfigManager
 import io.homeassistant.companion.android.settings.assist.DefaultAssistantManager
 import io.homeassistant.companion.android.util.FlashlightHelper
 import io.homeassistant.companion.android.util.PermissionRequestMediator
@@ -121,7 +121,7 @@ class MessagingManager @Inject constructor(
     private val textToSpeechClient: TextToSpeechClient,
     private val flashlightHelper: FlashlightHelper,
     private val permissionRequestMediator: PermissionRequestMediator,
-    private val assistRepository: AssistRepository,
+    private val assistConfigManager: AssistConfigManager,
     private val defaultAssistantManager: DefaultAssistantManager,
 ) {
     companion object {
@@ -878,7 +878,7 @@ class MessagingManager @Inject constructor(
                 if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) ==
                     PackageManager.PERMISSION_GRANTED
                 ) {
-                    assistRepository.setWakeWordEnabled(enabled)
+                    assistConfigManager.setWakeWordEnabled(enabled)
                 } else {
                     notifyMissingPermission(message, serverId)
                 }
