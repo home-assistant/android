@@ -11,7 +11,7 @@ import io.homeassistant.companion.android.common.util.SuspendLazy
 import javax.inject.Inject
 
 /**
- * Repository for Assist settings and wake word model information.
+ * Manager for Assist settings and wake word model information.
  */
 interface AssistConfigManager {
     /**

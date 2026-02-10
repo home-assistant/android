@@ -42,7 +42,7 @@ class AssistSettingsScreenScreenshotTest {
     @Composable
     fun `Assist settings as default assistant with wake word enabled`() {
         HAThemeForPreview {
-            AssistSettingsScreen(
+            AssistSettingsContent(
                 uiState = AssistSettingsUiState(
                     isLoading = false,
                     isDefaultAssistant = true,
@@ -67,7 +67,7 @@ class AssistSettingsScreenScreenshotTest {
     @Composable
     fun `Assist settings not default assistant`() {
         HAThemeForPreview {
-            AssistSettingsScreen(
+            AssistSettingsContent(
                 uiState = AssistSettingsUiState(
                     isLoading = false,
                     isDefaultAssistant = false,
@@ -90,7 +90,7 @@ class AssistSettingsScreenScreenshotTest {
     @Composable
     fun `Assist settings testing wake word with detection`() {
         HAThemeForPreview {
-            AssistSettingsScreen(
+            AssistSettingsContent(
                 uiState = AssistSettingsUiState(
                     isLoading = false,
                     isDefaultAssistant = true,
@@ -115,7 +115,7 @@ class AssistSettingsScreenScreenshotTest {
     @Composable
     fun `Assist settings testing wake word with no detection`() {
         HAThemeForPreview {
-            AssistSettingsScreen(
+            AssistSettingsContent(
                 uiState = AssistSettingsUiState(
                     isLoading = false,
                     isDefaultAssistant = true,

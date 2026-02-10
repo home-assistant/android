@@ -1213,7 +1213,8 @@
     <string name="assist_wake_word_stop_test">Stop testing</string>
     <string name="assist_wake_word_test_hint">Say \"%s\" to test</string>
     <string name="assist_wake_word_detected">Wake word detected!</string>
-    <string name="assist_wake_word_battery_warning">Wake word detection runs entirely on your device without any server. It continuously listens for audio, which may increase battery usage.</string>
+    <string name="assist_wake_word_battery_warning">Wake word detection runs entirely on your device, no network connection required. It continuously listens for your wake word, which will increase battery usage.</string>
+    <string name="assist_permission_microphone_required">Microphone permission is required</string>
     <string name="not_registered">Please open the Home Assistant app and log in to start using Assist</string>
     <string name="ha_assist">HA: Assist</string>
     <string name="only_favorites">Only show favorites</string>

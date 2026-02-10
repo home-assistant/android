@@ -59,23 +59,23 @@
     <issue
         id="MissingPermission"
         message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
-        errorLine1="            viewModel.startTestWakeWord()"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="        viewModel.startTestWakeWord()"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/assist/AssistSettingsScreen.kt"
-            line="75"
-            column="13"/>
+            line="122"
+            column="9"/>
     </issue>
 
     <issue
         id="MissingPermission"
         message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
-        errorLine1="                viewModel.startTestWakeWord()"
-        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                    viewModel.startTestWakeWord()"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/assist/AssistSettingsScreen.kt"
-            line="101"
-            column="17"/>
+            line="148"
+            column="21"/>
     </issue>
 
     <issue
@@ -3004,7 +3004,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/assist/AssistSettingsScreen.kt"
-            line="287"
+            line="341"
             column="22"/>
     </issue>
 
