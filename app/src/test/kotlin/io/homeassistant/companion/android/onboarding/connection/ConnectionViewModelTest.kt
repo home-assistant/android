@@ -12,7 +12,7 @@ import io.homeassistant.companion.android.common.data.authentication.impl.Authen
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
-import io.homeassistant.companion.android.frontend.error.FrontendError
+import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.util.HAWebViewClient
@@ -146,7 +146,7 @@ class ConnectionViewModelTest {
             advanceUntilIdle()
             assertNull(urlFlow.awaitItem())
 
-            errorFlow.awaitFrontendError<FrontendError.UnreachableError>(
+            errorFlow.awaitFrontendError<FrontendConnectionError.UnreachableError>(
                 commonR.string.connection_screen_malformed_url,
                 "Expected URL scheme 'http' or 'https' but no scheme was found for not_a_...",
                 IllegalArgumentException::class,
@@ -241,7 +241,7 @@ class ConnectionViewModelTest {
         }
     }
 
-    private suspend inline fun <reified T : FrontendError> ReceiveTurbine<FrontendError?>.awaitFrontendError(
+    private suspend inline fun <reified T : FrontendConnectionError> ReceiveTurbine<FrontendConnectionError?>.awaitFrontendError(
         messageId: Int,
         errorDetails: String?,
         errorClass: KClass<*>,
@@ -325,7 +325,7 @@ class ConnectionViewModelTest {
         advanceUntilIdle()
 
         // Then
-        assertTrue(viewModel.errorFlow.value is FrontendError.UnreachableError)
+        assertTrue(viewModel.errorFlow.value is FrontendConnectionError.UnreachableError)
         verify(exactly = 1) { connectivityCheckRepository.runChecks(rawUrl) }
         assertEquals(1, connectivityFlow.subscriptionCount.value)
     }

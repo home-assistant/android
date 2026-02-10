@@ -12,8 +12,8 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
-import io.homeassistant.companion.android.frontend.error.FrontendError
-import io.homeassistant.companion.android.frontend.error.FrontendErrorStateProvider
+import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
+import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
@@ -66,7 +66,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     private val webViewClientFactory: HAWebViewClientFactory,
     private val connectivityCheckRepository: ConnectivityCheckRepository,
 ) : ViewModel(),
-    FrontendErrorStateProvider {
+    FrontendConnectionErrorStateProvider {
 
     @Inject
     constructor(
@@ -86,7 +86,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     private val _isLoadingFlow = MutableStateFlow(true)
     val isLoadingFlow = _isLoadingFlow.asStateFlow()
 
-    private val _errorFlow = MutableStateFlow<FrontendError?>(null)
+    private val _errorFlow = MutableStateFlow<FrontendConnectionError?>(null)
     override val errorFlow = _errorFlow.asStateFlow()
 
     private val _connectivityCheckState = MutableStateFlow(ConnectivityCheckState())
@@ -140,7 +140,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         } catch (e: Exception) {
             Timber.e(e, "Unable to build authentication URL")
             onError(
-                FrontendError.UnreachableError(
+                FrontendConnectionError.UnreachableError(
                     message = commonR.string.connection_screen_malformed_url,
                     errorDetails = e.localizedMessage ?: e.message,
                     rawErrorType = e::class.toString(),
@@ -179,7 +179,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         }
     }
 
-    private fun onError(error: FrontendError) {
+    private fun onError(error: FrontendConnectionError) {
         _errorFlow.update { error }
         // Automatically run connectivity checks when an error occurs
         runConnectivityChecks()

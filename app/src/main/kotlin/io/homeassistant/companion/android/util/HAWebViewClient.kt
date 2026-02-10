@@ -14,7 +14,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.frontend.FrontendJsCallback
-import io.homeassistant.companion.android.frontend.error.FrontendError
+import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import javax.inject.Inject
 import kotlinx.coroutines.flow.StateFlow
 import timber.log.Timber
@@ -23,7 +23,7 @@ import timber.log.Timber
  * Factory for creating [HAWebViewClient] instances dedicated to loading Home Assistant frontend.
  *
  * The created clients handle Home Assistant-specific concerns such as TLS client authentication,
- * error mapping to [FrontendError], and JavaScript injection into the WebView.
+ * error mapping to [FrontendConnectionError], and JavaScript injection into the WebView.
  */
 class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyChainRepository: KeyChainRepository) {
     /**
@@ -31,7 +31,7 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
      *
      * @param currentUrlFlow StateFlow providing the current URL being loaded.
      *        Used to filter errors - only errors for this URL trigger [onFrontendError].
-     * @param onFrontendError Callback when a WebView error is mapped to a [FrontendError].
+     * @param onFrontendError Callback when a WebView error is mapped to a [FrontendConnectionError].
      * @param frontendJsCallback Optional JS interface to attach to the WebView.
      *        If will be re-attached after WebView crash recovery.
      * @param onCrash Optional callback invoked after WebView crash recovery.
@@ -43,7 +43,7 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
      */
     fun create(
         currentUrlFlow: StateFlow<String?>,
-        onFrontendError: (FrontendError) -> Unit,
+        onFrontendError: (FrontendConnectionError) -> Unit,
         frontendJsCallback: FrontendJsCallback? = null,
         onCrash: (() -> Unit)? = null,
         onUrlIntercepted: ((uri: Uri, isTLSClientAuthNeeded: Boolean) -> Boolean)? = null,
@@ -64,13 +64,13 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
 /**
  * WebViewClient dedicated to loading Home Assistant frontend.
  *
- * Handles error mapping to [FrontendError], TLS client authentication, and crash recovery.
+ * Handles error mapping to [FrontendConnectionError], TLS client authentication, and crash recovery.
  * Use [HAWebViewClientFactory] to create instances.
  */
 class HAWebViewClient internal constructor(
     keyChainRepository: KeyChainRepository,
     private val currentUrlFlow: StateFlow<String?>,
-    private val onFrontendError: (FrontendError) -> Unit,
+    private val onFrontendError: (FrontendConnectionError) -> Unit,
     private val frontendJsCallback: FrontendJsCallback?,
     private val onCrash: (() -> Unit)?,
     private val onUrlIntercepted: ((uri: Uri, isTLSClientAuthNeeded: Boolean) -> Boolean)?,
@@ -95,56 +95,56 @@ class HAWebViewClient internal constructor(
         )
         Timber.e("onReceivedError: $errorDetails")
 
-        val frontendError = when (error?.errorCode) {
-            ERROR_FAILED_SSL_HANDSHAKE -> FrontendError.AuthenticationError(
+        val frontendConnectionError = when (error?.errorCode) {
+            ERROR_FAILED_SSL_HANDSHAKE -> FrontendConnectionError.AuthenticationError(
                 message = commonR.string.webview_error_FAILED_SSL_HANDSHAKE,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            ERROR_AUTHENTICATION -> FrontendError.AuthenticationError(
+            ERROR_AUTHENTICATION -> FrontendConnectionError.AuthenticationError(
                 message = commonR.string.webview_error_AUTHENTICATION,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            ERROR_PROXY_AUTHENTICATION -> FrontendError.AuthenticationError(
+            ERROR_PROXY_AUTHENTICATION -> FrontendConnectionError.AuthenticationError(
                 message = commonR.string.webview_error_PROXY_AUTHENTICATION,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            ERROR_UNSUPPORTED_AUTH_SCHEME -> FrontendError.AuthenticationError(
+            ERROR_UNSUPPORTED_AUTH_SCHEME -> FrontendConnectionError.AuthenticationError(
                 message = commonR.string.webview_error_AUTH_SCHEME,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            ERROR_HOST_LOOKUP -> FrontendError.UnreachableError(
+            ERROR_HOST_LOOKUP -> FrontendConnectionError.UnreachableError(
                 message = commonR.string.webview_error_HOST_LOOKUP,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            ERROR_TIMEOUT -> FrontendError.UnreachableError(
+            ERROR_TIMEOUT -> FrontendConnectionError.UnreachableError(
                 message = commonR.string.webview_error_TIMEOUT,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            ERROR_CONNECT -> FrontendError.UnreachableError(
+            ERROR_CONNECT -> FrontendConnectionError.UnreachableError(
                 message = commonR.string.webview_error_CONNECT,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            else -> FrontendError.UnknownError(
+            else -> FrontendConnectionError.UnknownError(
                 message = commonR.string.connection_error_unknown_error,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
         }
-        onFrontendError(frontendError)
+        onFrontendError(frontendConnectionError)
     }
 
     override fun onReceivedHttpError(
@@ -164,26 +164,26 @@ class HAWebViewClient internal constructor(
         )
         Timber.e("onReceivedHttpError: $errorDetails")
 
-        val frontendError = when {
-            isTLSClientAuthNeeded && !isCertificateChainValid -> FrontendError.AuthenticationError(
+        val frontendConnectionError = when {
+            isTLSClientAuthNeeded && !isCertificateChainValid -> FrontendConnectionError.AuthenticationError(
                 message = commonR.string.tls_cert_expired_message,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceResponse::class.toString(),
             )
 
-            isTLSClientAuthNeeded && errorResponse?.statusCode == 400 -> FrontendError.AuthenticationError(
+            isTLSClientAuthNeeded && errorResponse?.statusCode == 400 -> FrontendConnectionError.AuthenticationError(
                 message = commonR.string.tls_cert_not_found_message,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceResponse::class.toString(),
             )
 
-            else -> FrontendError.UnknownError(
+            else -> FrontendConnectionError.UnknownError(
                 message = commonR.string.connection_error_unknown_error,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceResponse::class.toString(),
             )
         }
-        onFrontendError(frontendError)
+        onFrontendError(frontendConnectionError)
     }
 
     override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
@@ -200,7 +200,7 @@ class HAWebViewClient internal constructor(
             else -> commonR.string.error_ssl
         }
         onFrontendError(
-            FrontendError.AuthenticationError(
+            FrontendConnectionError.AuthenticationError(
                 message = messageRes,
                 errorDetails = error.toString(),
                 rawErrorType = SslError::class.toString(),

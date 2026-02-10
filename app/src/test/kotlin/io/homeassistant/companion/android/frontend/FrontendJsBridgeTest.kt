@@ -15,7 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 @OptIn(ExperimentalCoroutinesApi::class)
 class FrontendJsBridgeTest {
 
-    private val handler: FrontendExternalBusHandler = mockk(relaxed = true)
+    private val handler: FrontendJsHandler = mockk(relaxed = true)
     private val serverId = 42
 
     @Test

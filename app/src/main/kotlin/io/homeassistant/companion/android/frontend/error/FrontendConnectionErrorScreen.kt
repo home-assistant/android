@@ -65,8 +65,8 @@ private const val URL_GITHUB_ISSUES = "https://github.com/home-assistant/android
 private const val URL_DISCORD = "https://discord.com/channels/330944238910963714/1284965926336335993"
 
 @Composable
-fun FrontendErrorScreen(
-    stateProvider: FrontendErrorStateProvider,
+fun FrontendConnectionErrorScreen(
+    stateProvider: FrontendConnectionErrorStateProvider,
     onOpenExternalLink: suspend (Uri) -> Unit,
     modifier: Modifier = Modifier,
     actions: @Composable () -> Unit = {},
@@ -75,7 +75,7 @@ fun FrontendErrorScreen(
     val error by stateProvider.errorFlow.collectAsState()
     val connectivityCheckState by stateProvider.connectivityCheckState.collectAsState()
 
-    FrontendErrorScreen(
+    FrontendConnectionErrorScreen(
         url = url,
         error = error,
         onOpenExternalLink = onOpenExternalLink,
@@ -87,38 +87,38 @@ fun FrontendErrorScreen(
 }
 
 /**
- * Connection error screen that displays a [FrontendError].
+ * Connection error screen that displays a [FrontendConnectionError].
  *
  * Maps the error type to an appropriate icon and extracts error details.
  *
  * @param url The URL that failed to connect
  * @param error The connection error to display, or null to show nothing
  * @param onOpenExternalLink Callback when an external link should be opened
+ * @param connectivityCheckState The current connectivity check state
  * @param modifier Modifier for the screen
  * @param errorDetailsExpanded Whether the error details section should be expanded by default
- * @param connectivityCheckState The current connectivity check state
  * @param onRetryConnectivityCheck Callback when retry connectivity check is requested
  * @param actions Composable slot for action buttons at the bottom of the screen
  */
 @Composable
-fun FrontendErrorScreen(
+fun FrontendConnectionErrorScreen(
     url: String?,
-    error: FrontendError?,
+    error: FrontendConnectionError?,
     onOpenExternalLink: suspend (Uri) -> Unit,
+    connectivityCheckState: ConnectivityCheckState,
     modifier: Modifier = Modifier,
     errorDetailsExpanded: Boolean = false,
-    connectivityCheckState: ConnectivityCheckState = ConnectivityCheckState(),
     onRetryConnectivityCheck: () -> Unit = {},
     actions: @Composable () -> Unit = {},
 ) {
     error?.let { connectionError ->
         val icon = when (connectionError) {
-            is FrontendError.AuthenticationError -> R.drawable.ic_casita_crying
-            is FrontendError.UnknownError -> R.drawable.ic_casita_problem
-            is FrontendError.UnreachableError -> R.drawable.ic_casita_no_connection
+            is FrontendConnectionError.AuthenticationError -> R.drawable.ic_casita_crying
+            is FrontendConnectionError.UnknownError -> R.drawable.ic_casita_problem
+            is FrontendConnectionError.UnreachableError -> R.drawable.ic_casita_no_connection
         }
 
-        FrontendErrorScreen(
+        FrontendConnectionErrorScreen(
             onOpenExternalLink = onOpenExternalLink,
             icon = ImageVector.vectorResource(icon),
             title = stringResource(connectionError.title),
@@ -153,7 +153,7 @@ fun FrontendErrorScreen(
  * @param actions Composable slot for action buttons at the bottom of the screen
  */
 @Composable
-fun FrontendErrorScreen(
+fun FrontendConnectionErrorScreen(
     onOpenExternalLink: suspend (Uri) -> Unit,
     icon: ImageVector,
     title: String,
@@ -394,7 +394,7 @@ private fun ColumnScope.GetMoreHelp(onOpenExternalLink: suspend (Uri) -> Unit) {
 @Composable
 private fun FrontendErrorScreenPreview() {
     HAThemeForPreview {
-        FrontendErrorScreen(
+        FrontendConnectionErrorScreen(
             onOpenExternalLink = {},
             title = "Connection failed",
             subtitle = "Unable to reach your Home Assistant server",

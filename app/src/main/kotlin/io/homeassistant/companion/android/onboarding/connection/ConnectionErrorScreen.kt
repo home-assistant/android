@@ -9,17 +9,17 @@ import androidx.compose.ui.res.stringResource
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.theme.HADimens
-import io.homeassistant.companion.android.frontend.error.FrontendErrorScreen
-import io.homeassistant.companion.android.frontend.error.FrontendErrorStateProvider
+import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorScreen
+import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 
 @Composable
 internal fun ConnectionErrorScreen(
-    stateProvider: FrontendErrorStateProvider,
+    stateProvider: FrontendConnectionErrorStateProvider,
     onOpenExternalLink: suspend (Uri) -> Unit,
     onCloseClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    FrontendErrorScreen(
+    FrontendConnectionErrorScreen(
         stateProvider = stateProvider,
         onOpenExternalLink = onOpenExternalLink,
         modifier = modifier,

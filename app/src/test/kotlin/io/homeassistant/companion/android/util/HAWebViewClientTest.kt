@@ -14,7 +14,7 @@ import android.webkit.WebViewClient.ERROR_UNSUPPORTED_AUTH_SCHEME
 import androidx.annotation.StringRes
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
-import io.homeassistant.companion.android.frontend.error.FrontendError
+import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.every
@@ -34,7 +34,7 @@ class HAWebViewClientTest {
 
     private val keyChainRepository: KeyChainRepository = mockk(relaxed = true)
     private val currentUrlFlow = MutableStateFlow<String?>(null)
-    private var capturedError: FrontendError? = null
+    private var capturedError: FrontendConnectionError? = null
 
     private lateinit var webViewClient: HAWebViewClient
 
@@ -87,7 +87,7 @@ class HAWebViewClientTest {
         webViewClient.onReceivedSslError(null, null, null)
 
         assertNotNull(capturedError)
-        assertTrue(capturedError is FrontendError.AuthenticationError)
+        assertTrue(capturedError is FrontendConnectionError.AuthenticationError)
         assertEquals(commonR.string.error_ssl, capturedError?.message)
     }
 
@@ -100,7 +100,7 @@ class HAWebViewClientTest {
 
         webViewClient.onReceivedSslError(null, null, sslError)
 
-        assertFrontendError<FrontendError.AuthenticationError>(expectedMessageRes, details, SslError::class)
+        assertFrontendError<FrontendConnectionError.AuthenticationError>(expectedMessageRes, details, SslError::class)
     }
 
     @Test
@@ -115,7 +115,7 @@ class HAWebViewClientTest {
 
         webViewClient.onReceivedHttpError(webView, request, null)
 
-        assertFrontendError<FrontendError.AuthenticationError>(
+        assertFrontendError<FrontendConnectionError.AuthenticationError>(
             commonR.string.tls_cert_expired_message,
             errorDetails(null, "No description"),
             WebResourceResponse::class,
@@ -138,7 +138,7 @@ class HAWebViewClientTest {
 
         webViewClient.onReceivedHttpError(webView, request, response)
 
-        assertFrontendError<FrontendError.AuthenticationError>(
+        assertFrontendError<FrontendConnectionError.AuthenticationError>(
             commonR.string.tls_cert_not_found_message,
             errorDetails(400, "Bad Request"),
             WebResourceResponse::class,
@@ -160,7 +160,7 @@ class HAWebViewClientTest {
 
         webViewClient.onReceivedHttpError(webView, request, response)
 
-        assertFrontendError<FrontendError.UnknownError>(
+        assertFrontendError<FrontendConnectionError.UnknownError>(
             commonR.string.connection_error_unknown_error,
             errorDetails(418, "I'm a teapot"),
             WebResourceResponse::class,
@@ -182,7 +182,7 @@ class HAWebViewClientTest {
 
         webViewClient.onReceivedHttpError(webView, request, response)
 
-        assertFrontendError<FrontendError.UnknownError>(
+        assertFrontendError<FrontendConnectionError.UnknownError>(
             commonR.string.connection_error_unknown_error,
             errorDetails(500, "No description"),
             WebResourceResponse::class,
@@ -209,7 +209,7 @@ class HAWebViewClientTest {
         testReceivedError(
             errorCode = ERROR_FAILED_SSL_HANDSHAKE,
             expectedMessageRes = commonR.string.webview_error_FAILED_SSL_HANDSHAKE,
-            expectedErrorType = FrontendError.AuthenticationError::class,
+            expectedErrorType = FrontendConnectionError.AuthenticationError::class,
         )
     }
 
@@ -218,7 +218,7 @@ class HAWebViewClientTest {
         testReceivedError(
             errorCode = ERROR_AUTHENTICATION,
             expectedMessageRes = commonR.string.webview_error_AUTHENTICATION,
-            expectedErrorType = FrontendError.AuthenticationError::class,
+            expectedErrorType = FrontendConnectionError.AuthenticationError::class,
         )
     }
 
@@ -227,7 +227,7 @@ class HAWebViewClientTest {
         testReceivedError(
             errorCode = ERROR_PROXY_AUTHENTICATION,
             expectedMessageRes = commonR.string.webview_error_PROXY_AUTHENTICATION,
-            expectedErrorType = FrontendError.AuthenticationError::class,
+            expectedErrorType = FrontendConnectionError.AuthenticationError::class,
         )
     }
 
@@ -236,7 +236,7 @@ class HAWebViewClientTest {
         testReceivedError(
             errorCode = ERROR_UNSUPPORTED_AUTH_SCHEME,
             expectedMessageRes = commonR.string.webview_error_AUTH_SCHEME,
-            expectedErrorType = FrontendError.AuthenticationError::class,
+            expectedErrorType = FrontendConnectionError.AuthenticationError::class,
         )
     }
 
@@ -245,7 +245,7 @@ class HAWebViewClientTest {
         testReceivedError(
             errorCode = ERROR_HOST_LOOKUP,
             expectedMessageRes = commonR.string.webview_error_HOST_LOOKUP,
-            expectedErrorType = FrontendError.UnreachableError::class,
+            expectedErrorType = FrontendConnectionError.UnreachableError::class,
         )
     }
 
@@ -254,7 +254,7 @@ class HAWebViewClientTest {
         testReceivedError(
             errorCode = ERROR_TIMEOUT,
             expectedMessageRes = commonR.string.webview_error_TIMEOUT,
-            expectedErrorType = FrontendError.UnreachableError::class,
+            expectedErrorType = FrontendConnectionError.UnreachableError::class,
         )
     }
 
@@ -263,7 +263,7 @@ class HAWebViewClientTest {
         testReceivedError(
             errorCode = ERROR_CONNECT,
             expectedMessageRes = commonR.string.webview_error_CONNECT,
-            expectedErrorType = FrontendError.UnreachableError::class,
+            expectedErrorType = FrontendConnectionError.UnreachableError::class,
         )
     }
 
@@ -272,7 +272,7 @@ class HAWebViewClientTest {
         testReceivedError(
             errorCode = -999,
             expectedMessageRes = commonR.string.connection_error_unknown_error,
-            expectedErrorType = FrontendError.UnknownError::class,
+            expectedErrorType = FrontendConnectionError.UnknownError::class,
         )
     }
 
@@ -289,7 +289,7 @@ class HAWebViewClientTest {
 
         webViewClient.onReceivedError(webView, request, error)
 
-        assertFrontendError<FrontendError.UnknownError>(
+        assertFrontendError<FrontendConnectionError.UnknownError>(
             commonR.string.connection_error_unknown_error,
             errorDetails(-1, "No description"),
             WebResourceError::class,
@@ -314,7 +314,7 @@ class HAWebViewClientTest {
     private fun testReceivedError(
         errorCode: Int,
         @StringRes expectedMessageRes: Int,
-        expectedErrorType: KClass<out FrontendError>,
+        expectedErrorType: KClass<out FrontendConnectionError>,
     ) {
         val webView = mockWebView()
         val currentUrl = "http://homeassistant.local:8123/auth/authorize"
@@ -335,7 +335,7 @@ class HAWebViewClientTest {
         assertEquals(WebResourceError::class.toString(), capturedError?.rawErrorType)
     }
 
-    private inline fun <reified T : FrontendError> assertFrontendError(
+    private inline fun <reified T : FrontendConnectionError> assertFrontendError(
         @StringRes messageId: Int,
         errorDetails: String?,
         errorClass: KClass<*>,

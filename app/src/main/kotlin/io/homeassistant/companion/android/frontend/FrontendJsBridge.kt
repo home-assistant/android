@@ -18,7 +18,7 @@ import timber.log.Timber
  * @see FrontendJsBridge
  * @see FrontendJsCallback
  */
-interface FrontendExternalBusHandler {
+interface FrontendJsHandler {
     /**
      * Called when the frontend requests an authentication token.
      *
@@ -68,10 +68,10 @@ interface FrontendExternalBusHandler {
  * Methods must be synchronous (non-suspend) because JavaScript bridge calls cannot be suspended.
  *
  * Implemented by [FrontendJsBridge] which launches coroutines to bridge to the
- * suspend [FrontendExternalBusHandler].
+ * suspend [FrontendJsHandler].
  *
  * @see FrontendJsBridge
- * @see FrontendExternalBusHandler
+ * @see FrontendJsHandler
  */
 interface FrontendJsCallback {
     /**
@@ -114,14 +114,14 @@ interface FrontendJsCallback {
  * ```
  *
  * Each method is annotated with [JavascriptInterface] and launches a coroutine to call
- * the corresponding suspend method on [FrontendExternalBusHandler].
+ * the corresponding suspend method on [FrontendJsHandler].
  *
  * @param handler Handler that processes the JavaScript callbacks asynchronously
  * @param serverIdProvider Provides the current server ID for authentication operations
  * @param scope Coroutine scope for launching async operations from synchronous JS calls
  */
 class FrontendJsBridge(
-    private val handler: FrontendExternalBusHandler,
+    private val handler: FrontendJsHandler,
     private val serverIdProvider: () -> Int,
     private val scope: CoroutineScope,
 ) : FrontendJsCallback {
