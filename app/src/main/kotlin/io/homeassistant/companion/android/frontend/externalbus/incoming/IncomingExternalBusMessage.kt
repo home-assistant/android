@@ -91,7 +91,7 @@ data class ConfigGetMessage(override val id: Int? = null) : IncomingExternalBusM
 
 /**
  * Message requesting the app's to open its settings.
- * No response are expected from this message
+ * No response is expected for this message
  */
 @Serializable
 @SerialName("config_screen/show")

@@ -17,7 +17,7 @@ data class WebViewScript(val script: String, val result: CompletableDeferred<Str
 /**
  * Repository for typed communication with the Home Assistant frontend via the external bus.
  *
- * This repository provides type-safe message handling for the new Compose-based FrontendScreen.
+ * This repository provides type-safe message handling for the FrontendScreen.
  * Messages are serialized/deserialized using kotlinx.serialization with polymorphic support,
  * allowing graceful handling of unknown message types from newer Home Assistant versions.
  *

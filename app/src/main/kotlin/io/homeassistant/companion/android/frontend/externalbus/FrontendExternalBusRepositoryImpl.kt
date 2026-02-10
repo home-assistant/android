@@ -13,6 +13,8 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.plus
 import timber.log.Timber
 
+private const val BUFFER_CAPACITY = 10
+
 /**
  * JSON serializer configured for Home Assistant frontend communication.
  *
@@ -35,27 +37,25 @@ val frontendExternalBusJson = Json(kotlinJsonMapper) {
  */
 class FrontendExternalBusRepositoryImpl @Inject constructor() : FrontendExternalBusRepository {
 
-    // TODO do we really need a buffer or can make it a cold flow
     private val scriptsFlow = MutableSharedFlow<WebViewScript>(
         // Don't suspend if the WebView is temporarily unavailable
-        extraBufferCapacity = 10,
+        extraBufferCapacity = BUFFER_CAPACITY,
     )
 
     private val incomingFlow = MutableSharedFlow<IncomingExternalBusMessage>(
-        extraBufferCapacity = 10,
+        extraBufferCapacity = BUFFER_CAPACITY,
     )
 
     override suspend fun send(message: OutgoingExternalBusMessage) {
         val json = frontendExternalBusJson.encodeToString(message)
         val script = "externalBus($json);"
-        Timber.d("Queuing external bus message: $script")
+        Timber.d("Queuing external bus message: ${if (BuildConfig.DEBUG) script else "HIDDEN"}")
         scriptsFlow.emit(WebViewScript(script))
     }
 
     override fun scriptsToEvaluate(): Flow<WebViewScript> = scriptsFlow.asSharedFlow()
 
     override suspend fun evaluateScript(script: String): String? {
-        Timber.d("Queuing script: $script")
         val webViewScript = WebViewScript(script)
         scriptsFlow.emit(webViewScript)
         return webViewScript.result.await()
