@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.common.util.AudioRecorder
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -56,6 +57,13 @@ class AssistViewModel @Inject constructor(
     var userCanManagePipelines by mutableStateOf(false)
         private set
 
+    var shouldFinish by mutableStateOf(false)
+        private set
+
+    /** When true, the UI should not be shown yet (waiting to confirm the pipeline is not a duplicate wake-up). The activity should finish if a duplicate is detected. */
+    var pendingWakeWordConfirmation by mutableStateOf(false)
+        private set
+
     fun onCreate(
         hasPermission: Boolean,
         serverId: Int?,
@@ -66,6 +74,7 @@ class AssistViewModel @Inject constructor(
         viewModelScope.launch {
             this@AssistViewModel.hasPermission = hasPermission
             this@AssistViewModel.wakeWordPhrase = wakeWordPhrase
+            pendingWakeWordConfirmation = wakeWordPhrase != null
             serverId?.let {
                 filteredServerId = serverId
                 selectedServerId = serverId
@@ -375,7 +384,14 @@ class AssistViewModel @Inject constructor(
                             lastMessage.copy(message = lastMessage.message + event.chunk)
                     }
                 }
+                is AssistEvent.PipelineStarted -> { /* handled below */ }
                 is AssistEvent.ContinueConversation -> onMicrophoneInput()
+                is AssistEvent.Dismiss -> shouldFinish = true
+            }
+            if (!shouldFinish && pendingWakeWordConfirmation) {
+                // Any event confirms this is not a duplicate wake-up, so the UI can be shown.
+                // Skipped when finishing to avoid a brief UI flash before dismissal.
+                pendingWakeWordConfirmation = false
             }
         }
     }

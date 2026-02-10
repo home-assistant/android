@@ -6,11 +6,14 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.graphics.Color
 import android.os.Bundle
 import android.view.WindowManager
+import androidx.core.graphics.drawable.toDrawable
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.runtime.LaunchedEffect
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.lifecycle.lifecycleScope
@@ -99,6 +102,15 @@ class AssistActivity : BaseActivity() {
         val fromFrontend = intent.getBooleanExtra(EXTRA_FROM_FRONTEND, false)
 
         setContent {
+            if (viewModel.shouldFinish) {
+                finish()
+                return@setContent
+            }
+
+            if (viewModel.pendingWakeWordConfirmation) {
+                return@setContent
+            }
+
             HomeAssistantAppTheme {
                 AssistSheetView(
                     conversation = viewModel.conversation,

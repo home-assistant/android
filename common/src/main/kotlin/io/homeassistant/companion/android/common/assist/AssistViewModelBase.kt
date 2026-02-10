@@ -44,6 +44,12 @@ sealed interface AssistEvent {
 
     class MessageChunk(val chunk: String) : AssistEvent
     data object ContinueConversation : AssistEvent
+
+    /** Signals that the pipeline has started processing and the UI can be shown */
+    data object PipelineStarted : AssistEvent
+
+    /** Signals that the Assist UI should be dismissed without showing an error */
+    data object Dismiss : AssistEvent
 }
 
 abstract class AssistViewModelBase(
@@ -160,7 +166,10 @@ abstract class AssistViewModelBase(
                         onEvent,
                     )
 
-                    AssistPipelineEventType.STT_START -> handleSttStart()
+                    AssistPipelineEventType.STT_START -> {
+                        handleSttStart()
+                        onEvent(AssistEvent.PipelineStarted)
+                    }
                     AssistPipelineEventType.STT_END -> handleSttEnd(event.data as? AssistPipelineSttEnd, onEvent)
                     AssistPipelineEventType.INTENT_PROGRESS -> handleIntentProgress(
                         event.data as? AssistPipelineIntentProgress,
@@ -267,6 +276,12 @@ abstract class AssistViewModelBase(
      * Return true if we need to cancel the job
      */
     private fun handleError(data: AssistPipelineError?, onEvent: (AssistEvent) -> Unit): Boolean {
+        if (data?.isDuplicatedWakeWord == true) {
+            Timber.d("Duplicate wake-up detected, dismissing Assist")
+            onEvent(AssistEvent.Dismiss)
+            stopRecording()
+            return true
+        }
         val errorMessage = data?.message ?: return false
         onEvent(AssistEvent.Message.Error(errorMessage))
         stopRecording()
