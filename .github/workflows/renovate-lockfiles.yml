@@ -12,6 +12,7 @@ jobs:
   update-lockfiles:
     runs-on: ubuntu-latest
     permissions:
+      actions: write # Start workflows pr.yml
       contents: write # To push to the current branch
     steps:
       # Avoid re-running when this workflow just pushed a lockfile update
