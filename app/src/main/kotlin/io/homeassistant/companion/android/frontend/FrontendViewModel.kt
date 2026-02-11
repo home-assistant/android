@@ -43,7 +43,7 @@ import kotlinx.coroutines.launch
 
 /** Maximum time to wait for the frontend to load before showing a timeout error. */
 @VisibleForTesting
-val CONNECTION_TIMEOUT = 20.seconds
+val CONNECTION_TIMEOUT = 10.seconds
 
 /** Delay before stopping shared flows after the last subscriber disconnects. */
 private val SUBSCRIPTION_STOP_DELAY = 500.milliseconds
@@ -121,9 +121,6 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         scope = viewModelScope,
     )
 
-    /**
-     * WebViewClient that handles TLS client authentication and error callbacks.
-     */
     val webViewClient: HAWebViewClient = webViewClientFactory.create(
         currentUrlFlow = urlFlow,
         onFrontendError = ::onError,
@@ -179,7 +176,6 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         }
     }
 
-    /** Retry loading the current server after an error. */
     fun onRetry() {
         _viewState.update {
             FrontendViewState.LoadServer(serverId = it.serverId)
@@ -187,18 +183,12 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         loadServer()
     }
 
-    /**
-     * Show the security level configuration screen.
-     */
     fun onShowSecurityLevelScreen() {
         _viewState.update {
             FrontendViewState.SecurityLevelRequired(serverId = it.serverId)
         }
     }
 
-    /**
-     * Switch to a different server.
-     */
     fun switchServer(serverId: Int) {
         _viewState.update {
             FrontendViewState.LoadServer(serverId = serverId)
@@ -237,9 +227,6 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         }
     }
 
-    /**
-     * Handles results from the external bus message handler.
-     */
     private fun handleMessageResult(result: FrontendHandlerEvent) {
         when (result) {
             is FrontendHandlerEvent.Connected -> {
@@ -259,24 +246,21 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 // Disconnection handling not yet implemented
             }
 
-            is FrontendHandlerEvent.ConfigSent -> {
-                // Config already sent by handler, no action needed
+            is FrontendHandlerEvent.ThemeUpdated -> {
+                // Theme update handling not yet implemented
             }
 
             is FrontendHandlerEvent.OpenSettings -> {
                 _navigationEvents.tryEmit(FrontendNavigationEvent.NavigateToSettings)
             }
 
-            is FrontendHandlerEvent.ThemeUpdated -> {
-                // Theme update handling not yet implemented
-            }
-
-            is FrontendHandlerEvent.UnknownMessage -> {
-                // Already logged by handler, no action needed
-            }
-
             is FrontendHandlerEvent.AuthError -> {
                 onError(result.error)
+            }
+
+            is FrontendHandlerEvent.ConfigSent,
+            is FrontendHandlerEvent.UnknownMessage -> {
+                // No-op
             }
         }
     }
