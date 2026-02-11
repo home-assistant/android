@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.common.data.websocket.impl
 
 import androidx.annotation.GuardedBy
 import androidx.annotation.VisibleForTesting
-import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.HomeAssistantApis.Companion.USER_AGENT
 import io.homeassistant.companion.android.common.data.HomeAssistantApis.Companion.USER_AGENT_STRING
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
@@ -13,6 +12,7 @@ import io.homeassistant.companion.android.common.data.websocket.HAWebSocketExcep
 import io.homeassistant.companion.android.common.data.websocket.WebSocketCore
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRequest
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
+import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.EVENT_AREA_REGISTRY_UPDATED
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.EVENT_DEVICE_REGISTRY_UPDATED
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.EVENT_ENTITY_REGISTRY_UPDATED
@@ -656,7 +656,7 @@ internal class WebSocketCoreImpl(
 
     @OptIn(DelicateCoroutinesApi::class)
     override fun onMessage(webSocket: WebSocket, text: String) {
-        Timber.d("Websocket: onMessage (${if (BuildConfig.DEBUG) "text: $text" else "text"})")
+        Timber.d("Websocket: onMessage (text: ${sensitive(text)})")
         if (isStaleConnection(webSocket)) {
             Timber.w("Ignoring onMessage from stale connection")
             return

@@ -239,15 +239,13 @@ Timber.e(exception, "Failed to load user dashboard for userId=$userId")
 // Bad - no context
 Timber.e(exception)
 
-// Good - conditional logging for expensive operations
-if (BuildConfig.DEBUG) {
-    Timber.d("Complex debug info: ${expensiveOperation()}")
-}
+// Good - use sensitive() to hide user data in release logs
+Timber.d("User logged in: userId=${sensitive(user.id)}")
 
 // Bad - leaks user data
 Timber.d("User logged in: ${user.email}")
 
-// Good - sanitized
+// Bad - manual BuildConfig.DEBUG check (use sensitive() instead)
 Timber.d("User logged in: userId=${if(BuildConfig.DEBUG) user.id else "redacted"}")
 ```
 
