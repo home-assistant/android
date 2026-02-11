@@ -5,7 +5,7 @@ import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
-import io.homeassistant.companion.android.frontend.error.FrontendError
+import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import kotlinx.coroutines.flow.emptyFlow
 
@@ -151,7 +151,7 @@ class FrontendScreenScreenshotTest {
                 viewState = FrontendViewState.Error(
                     serverId = 1,
                     url = "https://example.com",
-                    error = FrontendError.UnreachableError(
+                    error = FrontendConnectionError.UnreachableError(
                         message = commonR.string.webview_error_HOST_LOOKUP,
                         errorDetails = "Connection timed out",
                         rawErrorType = "HostLookupError",

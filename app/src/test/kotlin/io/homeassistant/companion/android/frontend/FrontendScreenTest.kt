@@ -15,11 +15,15 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.frontend.error.FrontendError
+import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
+import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
+import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.compose.webview.HA_WEBVIEW_TAG
 import junit.framework.TestCase.assertTrue
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Rule
 import org.junit.Test
@@ -101,6 +105,11 @@ class FrontendScreenTest {
     @Test
     fun `Given Error state then error screen with retry button and webview are displayed`() {
         var retryCalled = false
+        val error = FrontendConnectionError.UnreachableError(
+            message = commonR.string.webview_error_HOST_LOOKUP,
+            errorDetails = "Connection failed",
+            rawErrorType = "HostLookupError",
+        )
         composeTestRule.apply {
             setContent {
                 FrontendScreenContent(
@@ -108,11 +117,11 @@ class FrontendScreenTest {
                     viewState = FrontendViewState.Error(
                         serverId = 1,
                         url = "https://example.com",
-                        error = FrontendError.UnreachableError(
-                            message = commonR.string.webview_error_HOST_LOOKUP,
-                            errorDetails = "Connection failed",
-                            rawErrorType = "HostLookupError",
-                        ),
+                        error = error,
+                    ),
+                    errorStateProvider = FakeConnectionErrorStateProvider(
+                        url = "https://example.com",
+                        error = error,
                     ),
                     webViewClient = WebViewClient(),
                     frontendJsCallback = FrontendJsBridge.noOp,
@@ -410,7 +419,7 @@ class FrontendScreenTest {
     }
 
     @Test
-    fun `Given SecurityLevelRequired state when close clicked then onSecurityLevelConfigured is called`() {
+    fun `Given SecurityLevelRequired state when close clicked then onSecurityLevelDone is called`() {
         var configuredCalled = false
         composeTestRule.apply {
             setContent {
@@ -428,14 +437,14 @@ class FrontendScreenTest {
                     onOpenLocationSettings = {},
                     onConfigureHomeNetwork = { _ -> },
                     onSecurityLevelHelpClick = {},
-                    onSecurityLevelConfigured = { configuredCalled = true },
+                    onSecurityLevelDone = { configuredCalled = true },
                     onShowSnackbar = { _, _ -> true },
                 )
             }
 
             onNodeWithContentDescription(stringResource(commonR.string.close)).performClick()
 
-            assertTrue("onSecurityLevelConfigured should be called when close button is clicked", configuredCalled)
+            assertTrue("onSecurityLevelDone should be called when close button is clicked", configuredCalled)
         }
     }
 
@@ -476,4 +485,15 @@ class FrontendScreenTest {
             node.assertDoesNotExist()
         }
     }
+}
+
+private class FakeConnectionErrorStateProvider(
+    url: String?,
+    error: FrontendConnectionError?,
+) : FrontendConnectionErrorStateProvider {
+    override val urlFlow: StateFlow<String?> = MutableStateFlow(url)
+    override val errorFlow: StateFlow<FrontendConnectionError?> = MutableStateFlow(error)
+    override val connectivityCheckState: StateFlow<ConnectivityCheckState> =
+        MutableStateFlow(ConnectivityCheckState())
+    override fun runConnectivityChecks() = Unit
 }

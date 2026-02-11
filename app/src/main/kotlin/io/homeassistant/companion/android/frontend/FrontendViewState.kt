@@ -2,7 +2,7 @@ package io.homeassistant.companion.android.frontend
 
 import androidx.compose.ui.graphics.Color
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
-import io.homeassistant.companion.android.frontend.error.FrontendError
+import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import org.jetbrains.annotations.VisibleForTesting
 
 @VisibleForTesting
@@ -62,7 +62,7 @@ sealed interface FrontendViewState {
     /**
      * Error state when connection to the server fails.
      */
-    data class Error(override val serverId: Int, override val url: String, val error: FrontendError) :
+    data class Error(override val serverId: Int, override val url: String, val error: FrontendConnectionError) :
         FrontendViewState
 
     /**

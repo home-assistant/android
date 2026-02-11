@@ -8,6 +8,7 @@ import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -29,7 +30,7 @@ class FrontendNavigationTest {
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
     @Test
-    fun `Given NavigateToSettings event then onNavigateToSettings is called`() {
+    fun `Given NavigateToSettings event then onNavigateToSettings is called`() = runTest {
         var settingsNavigated = false
         val navigationEvents = MutableSharedFlow<FrontendNavigationEvent>()
 
@@ -41,7 +42,7 @@ class FrontendNavigationTest {
         }
 
         composeTestRule.waitForIdle()
-        navigationEvents.tryEmit(FrontendNavigationEvent.NavigateToSettings)
+        navigationEvents.emit(FrontendNavigationEvent.NavigateToSettings)
         composeTestRule.waitForIdle()
 
         assertEquals(true, settingsNavigated)
