@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,6 +31,7 @@ import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -124,7 +126,16 @@ fun AssistSettingsScreen(viewModel: AssistSettingsViewModel, modifier: Modifier 
         viewModel.refreshDefaultAssistantStatus()
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Scaffold(
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier
+                    .padding(safeBottomPaddingValues(applyHorizontal = false)),
+            )
+        },
+        contentWindowInsets = WindowInsets(),
+    ) {
         AssistSettingsContent(
             uiState = uiState,
             hasAudioPermission = togglePermissionState.status.isGranted,
@@ -147,12 +158,7 @@ fun AssistSettingsScreen(viewModel: AssistSettingsViewModel, modifier: Modifier 
                 }
             },
             onStopTestWakeWord = viewModel::stopTestWakeWord,
-        )
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(safeBottomPaddingValues(applyHorizontal = false)),
+            modifier = Modifier.padding(it),
         )
     }
 }
@@ -180,7 +186,10 @@ internal fun AssistSettingsContent(
             HALoading()
         } else {
             // Default Assistant Section
-            SectionHeader(text = stringResource(commonR.string.assist_default_assistant_title))
+            SectionHeader(
+                text = stringResource(commonR.string.assist_default_assistant_title),
+                modifier = Modifier.padding(bottom = HADimens.SPACE1),
+            )
             DefaultAssistantCard(
                 isDefault = uiState.isDefaultAssistant,
                 onSetDefault = onSetDefaultAssistant,
@@ -192,9 +201,10 @@ internal fun AssistSettingsContent(
             Row(
                 horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
                 verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = HADimens.SPACE1),
             ) {
                 SectionHeader(text = stringResource(commonR.string.assist_wake_word_title))
-                HALabel("Experimental", variant = LabelVariant.WARNING)
+                HALabel(stringResource(commonR.string.experimental), variant = LabelVariant.WARNING)
             }
 
             WakeWordSection(
@@ -216,7 +226,7 @@ private fun SectionHeader(text: String, modifier: Modifier = Modifier) {
         text = text,
         style = HATextStyle.BodyMedium,
         color = colorScheme.colorTextSecondary,
-        modifier = modifier.padding(bottom = HADimens.SPACE1),
+        modifier = modifier,
     )
 }
 
