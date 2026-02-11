@@ -4,7 +4,7 @@ import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.frontend.error.FrontendError
+import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import timber.log.Timber
@@ -22,21 +22,16 @@ class ServerSessionManager @Inject constructor(private val serverManager: Server
      * Check if server has an authenticated session.
      *
      * @param serverId The server ID to check
-     * @return [SessionCheckResult.Connected] if authenticated, [SessionCheckResult.NotConnected] otherwise
+     * @return `true` if authenticated, `false` otherwise
      */
-    suspend fun isSessionConnected(serverId: Int): SessionCheckResult {
+    suspend fun isSessionConnected(serverId: Int): Boolean {
         return try {
-            val sessionState = serverManager.authenticationRepository(serverId).getSessionState()
-            if (sessionState == SessionState.CONNECTED) {
-                SessionCheckResult.Connected
-            } else {
-                SessionCheckResult.NotConnected
-            }
+            serverManager.authenticationRepository(serverId).getSessionState() == SessionState.CONNECTED
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             Timber.w(e, "Unable to get server session state")
-            SessionCheckResult.NotConnected
+            false
         }
     }
 
@@ -71,7 +66,7 @@ class ServerSessionManager @Inject constructor(private val serverManager: Server
             }
 
             val error = if (isAnonymousSession) {
-                FrontendError.AuthenticationError(
+                FrontendConnectionError.AuthenticationError(
                     message = commonR.string.error_connection_failed,
                     errorDetails = e.message ?: "Authentication failed",
                     rawErrorType = "ExternalAuthFailed",

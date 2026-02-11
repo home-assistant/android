@@ -1,6 +1,6 @@
 package io.homeassistant.companion.android.frontend.session
 
-import io.homeassistant.companion.android.frontend.error.FrontendError
+import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 
 /**
  * Result of retrieving external authentication.
@@ -19,5 +19,5 @@ sealed interface ExternalAuthResult {
      * @property callbackScript JavaScript callback to execute with failure status
      * @property error Non-null if anonymous session - otherwise it is an unknown error
      */
-    data class Failed(val callbackScript: String, val error: FrontendError?) : ExternalAuthResult
+    data class Failed(val callbackScript: String, val error: FrontendConnectionError?) : ExternalAuthResult
 }

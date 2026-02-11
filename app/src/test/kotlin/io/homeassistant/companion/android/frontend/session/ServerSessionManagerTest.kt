@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.frontend.session
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.frontend.error.FrontendError
+import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
@@ -11,6 +11,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -32,30 +33,24 @@ class ServerSessionManagerTest {
     }
 
     @Test
-    fun `Given connected session when isSessionConnected then returns Connected`() = runTest {
+    fun `Given connected session when isSessionConnected then returns true`() = runTest {
         coEvery { authRepository.getSessionState() } returns SessionState.CONNECTED
 
-        val result = manager.isSessionConnected(serverId = 1)
-
-        assertTrue(result is SessionCheckResult.Connected)
+        assertTrue(manager.isSessionConnected(serverId = 1))
     }
 
     @Test
-    fun `Given anonymous session when isSessionConnected then returns NotConnected`() = runTest {
+    fun `Given anonymous session when isSessionConnected then returns false`() = runTest {
         coEvery { authRepository.getSessionState() } returns SessionState.ANONYMOUS
 
-        val result = manager.isSessionConnected(serverId = 1)
-
-        assertTrue(result is SessionCheckResult.NotConnected)
+        assertFalse(manager.isSessionConnected(serverId = 1))
     }
 
     @Test
-    fun `Given exception when isSessionConnected then returns NotConnected`() = runTest {
+    fun `Given exception when isSessionConnected then returns false`() = runTest {
         coEvery { authRepository.getSessionState() } throws RuntimeException("Connection failed")
 
-        val result = manager.isSessionConnected(serverId = 1)
-
-        assertTrue(result is SessionCheckResult.NotConnected)
+        assertFalse(manager.isSessionConnected(serverId = 1))
     }
 
     @Test
@@ -93,7 +88,7 @@ class ServerSessionManagerTest {
         assertTrue(result is ExternalAuthResult.Failed)
         val failed = result as ExternalAuthResult.Failed
         assertEquals("externalAuthCallback(false)", failed.callbackScript)
-        val error = failed.error as FrontendError.AuthenticationError
+        val error = failed.error as FrontendConnectionError.AuthenticationError
         assertEquals("Auth failed", error.errorDetails)
         assertEquals("ExternalAuthFailed", error.rawErrorType)
     }
@@ -124,7 +119,7 @@ class ServerSessionManagerTest {
         assertTrue(result is ExternalAuthResult.Failed)
         val failed = result as ExternalAuthResult.Failed
         assertEquals("externalAuthCallback(false)", failed.callbackScript)
-        val error = failed.error as FrontendError.AuthenticationError
+        val error = failed.error as FrontendConnectionError.AuthenticationError
         assertEquals("Auth failed", error.errorDetails)
         assertEquals("ExternalAuthFailed", error.rawErrorType)
     }
