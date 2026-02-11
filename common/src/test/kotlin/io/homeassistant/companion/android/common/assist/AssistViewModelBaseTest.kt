@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.pm.PackageManager
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineError
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEventType
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
@@ -26,6 +27,8 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
@@ -229,6 +232,31 @@ class AssistViewModelBaseTest {
         }
     }
 
+    @Test
+    fun `Given voice pipeline When RUN_START received Then PipelineStarted event is emitted`() = runTest {
+        val handlerId = 42
+        viewModel.setupRecorder()
+        viewModel.runVoicePipeline()
+        advanceUntilIdle()
+
+        pipelineEventsFlow.emit(createRunStartEvent(handlerId))
+        advanceUntilIdle()
+
+        assertEquals(listOf(AssistEvent.PipelineStarted), viewModel.receivedEvents)
+    }
+
+    @Test
+    fun `Given voice pipeline When duplicate wake-up error received Then Dismiss event is emitted`() = runTest {
+        viewModel.setupRecorder()
+        viewModel.runVoicePipeline()
+        advanceUntilIdle()
+
+        pipelineEventsFlow.emit(createErrorEvent(code = "duplicate_wake_up_detected"))
+        advanceUntilIdle()
+
+        assertEquals(listOf(AssistEvent.Dismiss), viewModel.receivedEvents)
+    }
+
     private fun createRunStartEvent(handlerId: Int): AssistPipelineEvent {
         return AssistPipelineEvent(
             type = AssistPipelineEventType.RUN_START,
@@ -244,6 +272,13 @@ class AssistViewModelBaseTest {
         return AssistPipelineEvent(
             type = AssistPipelineEventType.STT_START,
             data = null,
+        )
+    }
+
+    private fun createErrorEvent(code: String, message: String? = null): AssistPipelineEvent {
+        return AssistPipelineEvent(
+            type = AssistPipelineEventType.ERROR,
+            data = AssistPipelineError(code = code, message = message),
         )
     }
 
@@ -265,11 +300,13 @@ class AssistViewModelBaseTest {
             this.inputMode = inputMode
         }
 
+        val receivedEvents = mutableListOf<AssistEvent>()
+
         fun runVoicePipeline(pipeline: AssistPipelineResponse? = null) {
             runAssistPipelineInternal(
                 text = null, // null means voice pipeline
                 pipeline = pipeline,
-                onEvent = { /* ignore events in tests */ },
+                onEvent = { receivedEvents += it },
             )
         }
 

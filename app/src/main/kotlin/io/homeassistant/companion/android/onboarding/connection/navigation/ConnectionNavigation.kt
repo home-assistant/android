@@ -42,9 +42,9 @@ internal fun NavGraphBuilder.connectionScreen(
         )
 
         ConnectionErrorScreen(
+            stateProvider = viewModel,
             onOpenExternalLink = onOpenExternalLink,
             onCloseClick = onBackClick,
-            viewModel = viewModel,
         )
     }
 }
