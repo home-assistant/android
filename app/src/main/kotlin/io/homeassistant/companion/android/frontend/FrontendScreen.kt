@@ -39,12 +39,14 @@ import io.homeassistant.companion.android.common.compose.composable.HAAccentButt
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
-import io.homeassistant.companion.android.frontend.error.FrontendError
-import io.homeassistant.companion.android.frontend.error.FrontendErrorScreen
+import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
+import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorScreen
+import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
 import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModel
+import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModelFactory
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.compose.webview.HAWebView
 import io.homeassistant.companion.android.webview.insecure.BlockInsecureScreen
@@ -87,7 +89,7 @@ internal fun FrontendScreen(
     // Create SecurityLevel ViewModel only when needed
     val securityLevelViewModel: LocationForSecureConnectionViewModel? =
         if (viewState is FrontendViewState.SecurityLevelRequired) {
-            hiltViewModel<LocationForSecureConnectionViewModel, LocationForSecureConnectionViewModel.Factory>(
+            hiltViewModel<LocationForSecureConnectionViewModel, LocationForSecureConnectionViewModelFactory>(
                 creationCallback = { factory -> factory.create(viewState.serverId) },
             )
         } else {
@@ -97,6 +99,7 @@ internal fun FrontendScreen(
     FrontendScreenContent(
         onBackClick = onBackClick,
         viewState = viewState,
+        errorStateProvider = viewModel as FrontendConnectionErrorStateProvider,
         webViewClient = viewModel.webViewClient,
         frontendJsCallback = viewModel.frontendJsCallback,
         scriptsToEvaluate = viewModel.scriptsToEvaluate,
@@ -108,7 +111,7 @@ internal fun FrontendScreen(
         onOpenLocationSettings = onOpenLocationSettings,
         onConfigureHomeNetwork = onConfigureHomeNetwork,
         securityLevelViewModel = securityLevelViewModel,
-        onSecurityLevelConfigured = viewModel::onSecurityLevelConfigured,
+        onSecurityLevelDone = viewModel::onSecurityLevelDone,
         onSecurityLevelHelpClick = onSecurityLevelHelpClick,
         onShowSnackbar = onShowSnackbar,
         modifier = modifier,
@@ -132,8 +135,9 @@ internal fun FrontendScreenContent(
     onSecurityLevelHelpClick: suspend () -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     modifier: Modifier = Modifier,
+    errorStateProvider: FrontendConnectionErrorStateProvider = FrontendConnectionErrorStateProvider.noOp,
     securityLevelViewModel: LocationForSecureConnectionViewModel? = null,
-    onSecurityLevelConfigured: () -> Unit = {},
+    onSecurityLevelDone: () -> Unit = {},
 ) {
     var webView by remember { mutableStateOf<WebView?>(null) }
 
@@ -155,8 +159,9 @@ internal fun FrontendScreenContent(
 
         StateOverlay(
             viewState = viewState,
+            errorStateProvider = errorStateProvider,
             securityLevelViewModel = securityLevelViewModel,
-            onSecurityLevelConfigured = onSecurityLevelConfigured,
+            onSecurityLevelDone = onSecurityLevelDone,
             onSecurityLevelHelpClick = onSecurityLevelHelpClick,
             onRetry = onBlockInsecureRetry,
             onInsecureHelpClick = onBlockInsecureHelpClick,
@@ -176,8 +181,9 @@ internal fun FrontendScreenContent(
 @Composable
 private fun StateOverlay(
     viewState: FrontendViewState,
+    errorStateProvider: FrontendConnectionErrorStateProvider,
     securityLevelViewModel: LocationForSecureConnectionViewModel?,
-    onSecurityLevelConfigured: () -> Unit,
+    onSecurityLevelDone: () -> Unit,
     onSecurityLevelHelpClick: suspend () -> Unit,
     onRetry: () -> Unit,
     onInsecureHelpClick: suspend () -> Unit,
@@ -199,7 +205,7 @@ private fun StateOverlay(
 
         is FrontendViewState.SecurityLevelRequired -> SecurityLevelOverlay(
             viewModel = securityLevelViewModel,
-            onConfigured = onSecurityLevelConfigured,
+            onSecurityLevelDone = onSecurityLevelDone,
             onHelpClick = onSecurityLevelHelpClick,
             onShowSnackbar = onShowSnackbar,
         )
@@ -215,7 +221,7 @@ private fun StateOverlay(
         )
 
         is FrontendViewState.Error -> ErrorOverlay(
-            viewState = viewState,
+            errorStateProvider = errorStateProvider,
             onRetry = onRetry,
             onOpenExternalLink = onOpenExternalLink,
         )
@@ -226,7 +232,7 @@ private fun StateOverlay(
 @Composable
 private fun SecurityLevelOverlay(
     viewModel: LocationForSecureConnectionViewModel?,
-    onConfigured: () -> Unit,
+    onSecurityLevelDone: () -> Unit,
     onHelpClick: suspend () -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
 ) {
@@ -234,10 +240,10 @@ private fun SecurityLevelOverlay(
     if (viewModel != null) {
         LocationForSecureConnectionScreen(
             viewModel = viewModel,
-            onGoToNextScreen = { _ -> onConfigured() },
+            onGoToNextScreen = { _ -> onSecurityLevelDone() },
             onHelpClick = onHelpClick,
             onShowSnackbar = onShowSnackbar,
-            onCloseClick = onConfigured,
+            onCloseClick = onSecurityLevelDone,
             isStandaloneScreen = true,
             modifier = backgroundModifier,
         )
@@ -248,7 +254,7 @@ private fun SecurityLevelOverlay(
             onAllowInsecureConnection = {},
             onHelpClick = onHelpClick,
             onShowSnackbar = onShowSnackbar,
-            onCloseClick = onConfigured,
+            onCloseClick = onSecurityLevelDone,
             isStandaloneScreen = true,
             modifier = backgroundModifier,
         )
@@ -282,13 +288,12 @@ private fun InsecureOverlay(
 /** Overlay shown when a connection error occurs. */
 @Composable
 private fun ErrorOverlay(
-    viewState: FrontendViewState.Error,
+    errorStateProvider: FrontendConnectionErrorStateProvider,
     onRetry: () -> Unit,
     onOpenExternalLink: suspend (Uri) -> Unit,
 ) {
-    FrontendErrorScreen(
-        url = viewState.url.takeIf { it.isNotBlank() },
-        error = viewState.error,
+    FrontendConnectionErrorScreen(
+        stateProvider = errorStateProvider,
         onOpenExternalLink = onOpenExternalLink,
         modifier = Modifier.fillMaxSize(),
         actions = {
@@ -449,7 +454,7 @@ private fun FrontendScreenErrorPreview() {
             viewState = FrontendViewState.Error(
                 serverId = 1,
                 url = "https://example.com",
-                error = FrontendError.UnreachableError(
+                error = FrontendConnectionError.UnreachableError(
                     message = commonR.string.webview_error_HOST_LOOKUP,
                     errorDetails = "Connection timed out",
                     rawErrorType = "HostLookupError",

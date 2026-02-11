@@ -9,8 +9,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
-import io.homeassistant.companion.android.frontend.error.FrontendError
-import io.homeassistant.companion.android.frontend.error.FrontendErrorStateProvider
+import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
+import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
 import io.homeassistant.companion.android.frontend.handler.FrontendMessageHandler
@@ -52,7 +52,7 @@ private val SUBSCRIPTION_STOP_DELAY = 500.milliseconds
  * ViewModel for frontend screen.
  *
  * Handles loading the Home Assistant WebView, authentication, external bus communication,
- * and error handling. Implements [FrontendErrorStateProvider] to enable use of the shared error screen.
+ * and error handling. Implements [FrontendConnectionErrorStateProvider] to enable use of the shared error screen.
  *
  * This ViewModel acts as an orchestrator that delegates to specialized managers.
  */
@@ -65,7 +65,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val urlManager: FrontendUrlManager,
     private val connectivityCheckRepository: ConnectivityCheckRepository,
 ) : ViewModel(),
-    FrontendErrorStateProvider {
+    FrontendConnectionErrorStateProvider {
 
     @Inject
     constructor(
@@ -102,7 +102,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             .distinctUntilChanged()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_STOP_DELAY), null)
 
-    override val errorFlow: StateFlow<FrontendError?> =
+    override val errorFlow: StateFlow<FrontendConnectionError?> =
         _viewState.map { state -> (state as? FrontendViewState.Error)?.error }
             .distinctUntilChanged()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_STOP_DELAY), null)
@@ -145,7 +145,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                     // Only trigger timeout if still in Loading state
                     if (_viewState.value is FrontendViewState.Loading) {
                         onError(
-                            FrontendError.UnreachableError(
+                            FrontendConnectionError.UnreachableError(
                                 message = commonR.string.webview_error_TIMEOUT,
                                 errorDetails = "",
                                 rawErrorType = "ConnectionTimeout",
@@ -207,12 +207,12 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     }
 
     /**
-     * Called from the security level configuration screen after the user makes a choice.
-     * The actual saving of the preference is handled by [LocationForSecureConnectionViewModel].
+     * Called from the security level configuration screen after the user makes a choice or discard.
+     * The actual saving of the preference is handled by [io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModel].
      */
-    fun onSecurityLevelConfigured() {
+    fun onSecurityLevelDone() {
         val serverId = _viewState.value.serverId
-        urlManager.onSecurityLevelConfigured(serverId)
+        urlManager.onSecurityLevelShown(serverId)
         _viewState.update {
             FrontendViewState.LoadServer(serverId = serverId)
         }
@@ -300,7 +300,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
             is UrlLoadResult.ServerNotFound -> {
                 onError(
-                    FrontendError.UnreachableError(
+                    FrontendConnectionError.UnreachableError(
                         message = commonR.string.error_connection_failed,
                         errorDetails = "Server not found",
                         rawErrorType = "ServerNotFound",
@@ -310,7 +310,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
             is UrlLoadResult.SessionNotConnected -> {
                 onError(
-                    FrontendError.AuthenticationError(
+                    FrontendConnectionError.AuthenticationError(
                         message = commonR.string.error_connection_failed,
                         errorDetails = "Session not authenticated",
                         rawErrorType = "SessionNotConnected",
@@ -334,7 +334,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
             is UrlLoadResult.NoUrlAvailable -> {
                 onError(
-                    FrontendError.UnreachableError(
+                    FrontendConnectionError.UnreachableError(
                         message = commonR.string.error_connection_failed,
                         errorDetails = "No URL available",
                         rawErrorType = "NoUrlAvailable",
@@ -344,7 +344,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         }
     }
 
-    private fun onError(error: FrontendError) {
+    private fun onError(error: FrontendConnectionError) {
         val currentState = _viewState.value
         _viewState.update {
             FrontendViewState.Error(

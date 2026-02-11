@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.frontend
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
-import io.homeassistant.companion.android.frontend.error.FrontendError
+import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
 import io.homeassistant.companion.android.frontend.handler.FrontendMessageHandler
 import io.homeassistant.companion.android.frontend.navigation.FrontendNavigationEvent
@@ -100,7 +100,7 @@ class FrontendViewModelTest {
 
         val state = viewModel.viewState.value
         assertTrue(state is FrontendViewState.Error, "Expected Error state but got $state")
-        assertTrue((state as FrontendViewState.Error).error is FrontendError.AuthenticationError)
+        assertTrue((state as FrontendViewState.Error).error is FrontendConnectionError.AuthenticationError)
     }
 
     @Test
@@ -114,7 +114,7 @@ class FrontendViewModelTest {
 
         val state = viewModel.viewState.value
         assertTrue(state is FrontendViewState.Error)
-        assertTrue((state as FrontendViewState.Error).error is FrontendError.UnreachableError)
+        assertTrue((state as FrontendViewState.Error).error is FrontendConnectionError.UnreachableError)
     }
 
     @Test
@@ -195,7 +195,7 @@ class FrontendViewModelTest {
 
         val state = viewModel.viewState.value
         assertTrue(state is FrontendViewState.Error)
-        assertTrue((state as FrontendViewState.Error).error is FrontendError.UnreachableError)
+        assertTrue((state as FrontendViewState.Error).error is FrontendConnectionError.UnreachableError)
     }
 
     @Test
@@ -269,12 +269,12 @@ class FrontendViewModelTest {
         val viewModel = createViewModel()
 
         // Subscribe to errorFlow to activate the stateIn with WhileSubscribed
-        val errors = mutableListOf<FrontendError?>()
+        val errors = mutableListOf<FrontendConnectionError?>()
         val job = backgroundScope.launch { viewModel.errorFlow.collect { errors.add(it) } }
 
         advanceUntilIdle()
 
-        assertTrue(errors.any { it is FrontendError.UnreachableError })
+        assertTrue(errors.any { it is FrontendConnectionError.UnreachableError })
         job.cancel()
     }
 
@@ -286,7 +286,7 @@ class FrontendViewModelTest {
         val viewModel = createViewModel()
 
         // Subscribe to errorFlow to activate the stateIn with WhileSubscribed
-        val errors = mutableListOf<FrontendError?>()
+        val errors = mutableListOf<FrontendConnectionError?>()
         val job = backgroundScope.launch { viewModel.errorFlow.collect { errors.add(it) } }
 
         advanceUntilIdle()
@@ -346,7 +346,7 @@ class FrontendViewModelTest {
     fun `Given security level configured when called then url manager is notified and server reloads`() = runTest {
         val urlResults = MutableStateFlow<UrlLoadResult>(UrlLoadResult.SecurityLevelRequired(serverId))
         every { urlManager.serverUrlFlow(any(), any()) } returns urlResults
-        every { urlManager.onSecurityLevelConfigured(any()) } just runs
+        every { urlManager.onSecurityLevelShown(any()) } just runs
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -356,10 +356,10 @@ class FrontendViewModelTest {
 
         // Configure security level
         urlResults.value = UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId)
-        viewModel.onSecurityLevelConfigured()
+        viewModel.onSecurityLevelDone()
         advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
 
-        verify { urlManager.onSecurityLevelConfigured(serverId) }
+        verify { urlManager.onSecurityLevelShown(serverId) }
         assertTrue(viewModel.viewState.value is FrontendViewState.Loading)
     }
 
@@ -507,7 +507,7 @@ class FrontendViewModelTest {
         assertTrue(viewModel.viewState.value is FrontendViewState.Loading)
 
         // Emit auth error message
-        val authError = FrontendError.AuthenticationError(
+        val authError = FrontendConnectionError.AuthenticationError(
             message = io.homeassistant.companion.android.common.R.string.error_connection_failed,
             errorDetails = "Token expired",
             rawErrorType = "AuthError",
@@ -537,7 +537,7 @@ class FrontendViewModelTest {
 
         val state = viewModel.viewState.value
         assertTrue(state is FrontendViewState.Error, "Expected Error state but got $state")
-        assertTrue((state as FrontendViewState.Error).error is FrontendError.UnreachableError)
+        assertTrue((state as FrontendViewState.Error).error is FrontendConnectionError.UnreachableError)
     }
 
     @Test
