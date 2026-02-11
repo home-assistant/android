@@ -12,15 +12,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.RippleConfiguration
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,7 +31,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import io.homeassistant.companion.android.common.compose.theme.HAButtonColors
+import io.homeassistant.companion.android.common.compose.theme.HAColorScheme
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HARadius
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
@@ -37,6 +40,12 @@ import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.common.compose.theme.defaultRippleAlpha
 
 private val buttonShape = RoundedCornerShape(size = HARadius.Pill)
+
+@Immutable
+private class HAButtonColors(val buttonColors: ButtonColors, val rippleColor: Color)
+
+@Immutable
+private class HAIconButtonColors(val buttonColors: IconButtonColors, val rippleColor: Color)
 
 /**
  * Defines the visual styling variants for Home Assistant buttons.
@@ -59,7 +68,7 @@ enum class ButtonVariant {
     SUCCESS,
 }
 
-enum class ButtonSize(val value: Dp) {
+enum class ButtonSize(internal val value: Dp) {
     SMALL(32.dp),
     MEDIUM(40.dp),
     LARGE(56.dp),
@@ -292,7 +301,7 @@ private fun HABaseButton(
 }
 
 /**
- * Provide a custom ripple configuration based on [colors].
+ * Provide a custom ripple configuration based on [rippleColor].
  */
 @Composable
 private fun RippleConfigurationLocalProvider(rippleColor: Color, content: @Composable () -> Unit) {
@@ -364,4 +373,248 @@ private fun RowScope.ButtonContent(
             .weight(1f, fill = false), // Allow text to take available space but not fill it
     )
     ButtonDecorator(ButtonDecoratorType.SUFFIX, suffix)
+}
+
+
+
+private fun HAColorScheme.accentButtonColorsFromVariant(variant: ButtonVariant): HAButtonColors {
+    return when (variant) {
+        ButtonVariant.PRIMARY -> {
+            HAButtonColors(
+                ButtonColors(
+                    containerColor = colorFillPrimaryLoudResting,
+                    contentColor = colorOnPrimaryLoud,
+                    disabledContainerColor = colorFillDisabledLoudResting,
+                    disabledContentColor = colorOnDisabledLoud,
+                ),
+                colorFillPrimaryLoudHover,
+            )
+        }
+
+        ButtonVariant.NEUTRAL -> {
+            HAButtonColors(
+                ButtonColors(
+                    containerColor = colorFillNeutralLoudResting,
+                    contentColor = colorOnNeutralLoud,
+                    disabledContainerColor = colorFillDisabledLoudResting,
+                    disabledContentColor = colorOnDisabledLoud,
+                ),
+                colorFillNeutralLoudHover,
+            )
+        }
+
+        ButtonVariant.DANGER -> {
+            HAButtonColors(
+                ButtonColors(
+                    containerColor = colorFillDangerLoudResting,
+                    contentColor = colorOnDangerLoud,
+                    disabledContainerColor = colorFillDisabledLoudResting,
+                    disabledContentColor = colorOnDisabledLoud,
+                ),
+                colorFillDangerLoudHover,
+            )
+        }
+
+        ButtonVariant.WARNING -> {
+            HAButtonColors(
+                ButtonColors(
+                    containerColor = colorFillWarningLoudResting,
+                    contentColor = colorOnWarningLoud,
+                    disabledContainerColor = colorFillDisabledLoudResting,
+                    disabledContentColor = colorOnDisabledLoud,
+                ),
+                colorFillWarningLoudHover,
+            )
+        }
+
+        ButtonVariant.SUCCESS -> {
+            HAButtonColors(
+                ButtonColors(
+                    containerColor = colorFillSuccessLoudResting,
+                    contentColor = colorOnSuccessLoud,
+                    disabledContainerColor = colorFillDisabledLoudResting,
+                    disabledContentColor = colorOnDisabledLoud,
+                ),
+                colorFillSuccessLoudHover,
+            )
+        }
+    }
+}
+
+private fun HAColorScheme.filledButtonColorsFromVariant(variant: ButtonVariant): HAButtonColors {
+    return when (variant) {
+        ButtonVariant.PRIMARY -> {
+            HAButtonColors(
+                ButtonColors(
+                    containerColor = colorFillPrimaryNormalResting,
+                    contentColor = colorOnPrimaryNormal,
+                    disabledContainerColor = colorFillDisabledNormalResting,
+                    disabledContentColor = colorOnDisabledNormal,
+                ),
+                colorFillPrimaryNormalHover,
+            )
+        }
+
+        ButtonVariant.NEUTRAL -> {
+            HAButtonColors(
+                ButtonColors(
+                    containerColor = colorFillNeutralNormalResting,
+                    contentColor = colorOnNeutralNormal,
+                    disabledContainerColor = colorFillDisabledNormalResting,
+                    disabledContentColor = colorOnDisabledNormal,
+                ),
+                colorFillNeutralNormalHover,
+            )
+        }
+
+        ButtonVariant.DANGER -> {
+            HAButtonColors(
+                ButtonColors(
+                    containerColor = colorFillDangerNormalResting,
+                    contentColor = colorOnDangerNormal,
+                    disabledContainerColor = colorFillDisabledNormalResting,
+                    disabledContentColor = colorOnDisabledNormal,
+                ),
+                colorFillDangerNormalHover,
+            )
+        }
+
+        ButtonVariant.WARNING -> {
+            HAButtonColors(
+                ButtonColors(
+                    containerColor = colorFillWarningNormalResting,
+                    contentColor = colorOnWarningNormal,
+                    disabledContainerColor = colorFillDisabledNormalResting,
+                    disabledContentColor = colorOnDisabledNormal,
+                ),
+                colorFillWarningNormalHover,
+            )
+        }
+
+        ButtonVariant.SUCCESS -> {
+            HAButtonColors(
+                ButtonColors(
+                    containerColor = colorFillSuccessNormalResting,
+                    contentColor = colorOnSuccessNormal,
+                    disabledContainerColor = colorFillDisabledNormalResting,
+                    disabledContentColor = colorOnDisabledNormal,
+                ),
+                colorFillSuccessNormalHover,
+            )
+        }
+    }
+}
+
+private fun HAColorScheme.plainButtonColorsFromVariant(variant: ButtonVariant): HAButtonColors {
+    return when (variant) {
+        ButtonVariant.PRIMARY -> {
+            HAButtonColors(
+                ButtonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = colorOnPrimaryNormal,
+                    disabledContainerColor = colorFillDisabledQuietResting,
+                    disabledContentColor = colorOnDisabledQuiet,
+                ),
+                colorFillPrimaryQuietHover,
+            )
+        }
+
+        ButtonVariant.NEUTRAL -> {
+            HAButtonColors(
+                ButtonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = colorOnNeutralNormal,
+                    disabledContainerColor = colorFillDisabledQuietResting,
+                    disabledContentColor = colorOnDisabledQuiet,
+                ),
+                colorFillNeutralQuietHover,
+            )
+        }
+
+        ButtonVariant.DANGER -> {
+            HAButtonColors(
+                ButtonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = colorOnDangerNormal,
+                    disabledContainerColor = colorFillDisabledQuietResting,
+                    disabledContentColor = colorOnDisabledQuiet,
+                ),
+                colorFillDangerQuietHover,
+            )
+        }
+
+        ButtonVariant.WARNING -> {
+            HAButtonColors(
+                ButtonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = colorOnWarningNormal,
+                    disabledContainerColor = colorFillDisabledQuietResting,
+                    disabledContentColor = colorOnDisabledQuiet,
+                ),
+                colorFillWarningQuietHover,
+            )
+        }
+
+        ButtonVariant.SUCCESS -> {
+            HAButtonColors(
+                ButtonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = colorOnSuccessNormal,
+                    disabledContainerColor = colorFillDisabledQuietResting,
+                    disabledContentColor = colorOnDisabledQuiet,
+                ),
+                colorFillSuccessQuietHover,
+            )
+        }
+    }
+}
+
+private fun HAColorScheme.iconButtonColorsFromVariant(variant: ButtonVariant): HAIconButtonColors {
+    return when (variant) {
+        ButtonVariant.PRIMARY -> HAIconButtonColors(
+            IconButtonColors(
+                containerColor = Color.Transparent,
+                contentColor = colorOnPrimaryNormal,
+                disabledContainerColor = Color.Transparent,
+                disabledContentColor = colorOnDisabledNormal,
+            ),
+            colorFillPrimaryQuietHover,
+        )
+        ButtonVariant.NEUTRAL -> HAIconButtonColors(
+            IconButtonColors(
+                containerColor = Color.Transparent,
+                contentColor = colorOnNeutralQuiet,
+                disabledContainerColor = Color.Transparent,
+                disabledContentColor = colorOnDisabledNormal,
+            ),
+            colorFillNeutralQuietHover,
+        )
+        ButtonVariant.DANGER -> HAIconButtonColors(
+            IconButtonColors(
+                containerColor = Color.Transparent,
+                contentColor = colorOnDangerQuiet,
+                disabledContainerColor = Color.Transparent,
+                disabledContentColor = colorOnDisabledNormal,
+            ),
+            colorFillDangerNormalHover,
+        )
+        ButtonVariant.WARNING -> HAIconButtonColors(
+            IconButtonColors(
+                containerColor = Color.Transparent,
+                contentColor = colorOnWarningQuiet,
+                disabledContainerColor = Color.Transparent,
+                disabledContentColor = colorOnDisabledNormal,
+            ),
+            colorFillWarningNormalHover,
+        )
+        ButtonVariant.SUCCESS -> HAIconButtonColors(
+            IconButtonColors(
+                containerColor = Color.Transparent,
+                contentColor = colorOnSuccessQuiet,
+                disabledContainerColor = Color.Transparent,
+                disabledContentColor = colorOnDisabledNormal,
+            ),
+            colorFillSuccessNormalHover,
+        )
+    }
 }
