@@ -1,7 +1,6 @@
-package io.homeassistant.companion.android.onboarding.connection
+package io.homeassistant.companion.android.frontend.error
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.stringResource
 import com.android.tools.screenshot.PreviewTest
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
@@ -9,20 +8,19 @@ import io.homeassistant.companion.android.common.data.connectivity.ConnectivityC
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.util.compose.HAPreviews
 
-class ConnectionErrorScreenshotTest {
+class FrontendConnectionErrorScreenshotTest {
 
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `ConnectionErrorScreen no error`() {
+    fun `FrontendConnectionErrorScreen no error`() {
         HAThemeForPreview {
-            ConnectionErrorScreen(
+            FrontendConnectionErrorScreen(
                 url = null,
                 error = null,
                 onOpenExternalLink = {},
-                onCloseClick = {},
                 connectivityCheckState = ConnectivityCheckState(),
-                onRetryConnectivityCheck = {},
+                actions = {},
             )
         }
     }
@@ -30,25 +28,30 @@ class ConnectionErrorScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `ConnectionErrorScreen with error expanded`() {
+    fun `FrontendConnectionErrorScreen with error expanded`() {
         HAThemeForPreview {
-            ConnectionErrorScreen(
+            FrontendConnectionErrorScreen(
                 url = null,
-                error = ConnectionError.AuthenticationError(
+                error = FrontendConnectionError.AuthenticationError(
                     commonR.string.tls_cert_expired_message,
-                    stringResource(commonR.string.connection_error_more_details_description_content, 403, "forbidden"),
+                    "Error code: 403, Description: forbidden",
                     "raw",
                 ),
-                onOpenExternalLink = {},
-                onCloseClick = {},
                 connectivityCheckState = ConnectivityCheckState(
-                    dnsResolution = ConnectivityCheckResult.Success(commonR.string.connection_check_dns, "192.168.0.1"),
-                    portReachability = ConnectivityCheckResult.Success(commonR.string.connection_check_port, "8123"),
+                    dnsResolution = ConnectivityCheckResult.Success(
+                        commonR.string.connection_check_dns,
+                        "192.168.0.1",
+                    ),
+                    portReachability = ConnectivityCheckResult.Success(
+                        commonR.string.connection_check_port,
+                        "8123",
+                    ),
                     tlsCertificate = ConnectivityCheckResult.Failure(commonR.string.connection_check_error_tls),
                     serverConnection = ConnectivityCheckResult.Pending,
                     homeAssistantVerification = ConnectivityCheckResult.Pending,
                 ),
-                onRetryConnectivityCheck = {},
+                onOpenExternalLink = {},
+                actions = {},
                 errorDetailsExpanded = true,
             )
         }
@@ -57,15 +60,18 @@ class ConnectionErrorScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `ConnectionErrorScreen with AuthenticationError`() {
+    fun `FrontendConnectionErrorScreen with AuthenticationError`() {
         HAThemeForPreview {
-            ConnectionErrorScreen(
+            FrontendConnectionErrorScreen(
                 url = null,
-                error = ConnectionError.AuthenticationError(commonR.string.tls_cert_expired_message, "details", "raw"),
+                error = FrontendConnectionError.AuthenticationError(
+                    commonR.string.tls_cert_expired_message,
+                    "details",
+                    "raw",
+                ),
                 onOpenExternalLink = {},
-                onCloseClick = {},
                 connectivityCheckState = ConnectivityCheckState(),
-                onRetryConnectivityCheck = {},
+                actions = {},
             )
         }
     }
@@ -73,15 +79,18 @@ class ConnectionErrorScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `ConnectionErrorScreen with UnreachableError`() {
+    fun `FrontendConnectionErrorScreen with UnreachableError`() {
         HAThemeForPreview {
-            ConnectionErrorScreen(
+            FrontendConnectionErrorScreen(
                 url = "http://ha.org",
-                error = ConnectionError.UnreachableError(commonR.string.tls_cert_expired_message, "details", "raw"),
+                error = FrontendConnectionError.UnreachableError(
+                    commonR.string.tls_cert_expired_message,
+                    "details",
+                    "raw",
+                ),
                 onOpenExternalLink = {},
-                onCloseClick = {},
                 connectivityCheckState = ConnectivityCheckState(),
-                onRetryConnectivityCheck = {},
+                actions = {},
             )
         }
     }
@@ -89,16 +98,19 @@ class ConnectionErrorScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `ConnectionErrorScreen with UnknownError`() {
+    fun `FrontendConnectionErrorScreen with UnknownError`() {
         HAThemeForPreview {
-            ConnectionErrorScreen(
+            FrontendConnectionErrorScreen(
                 url =
                 "http://super-long-url-to-see-how-it-displays-in-the-screenshot.org/path/1/home-assistant/io?external_auth=1",
-                error = ConnectionError.UnknownError(commonR.string.tls_cert_expired_message, "details", "raw"),
+                error = FrontendConnectionError.UnknownError(
+                    commonR.string.tls_cert_expired_message,
+                    "details",
+                    "raw",
+                ),
                 onOpenExternalLink = {},
-                onCloseClick = {},
                 connectivityCheckState = ConnectivityCheckState(),
-                onRetryConnectivityCheck = {},
+                actions = {},
             )
         }
     }
