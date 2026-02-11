@@ -35,7 +35,7 @@ class AndroidComposeConventionPlugin : Plugin<Project> {
 
             // Screenshot test worker memory grows with test count. Increase as needed.
             // Tracking: https://issuetracker.google.com/issues/469819154
-            val maxHeapSizeScreenshotTesting = "4g"
+            val maxHeapSizeScreenshotTesting = "5g"
 
             tasks.withType<PreviewScreenshotValidationTask>().configureEach {
                 maxHeapSize = maxHeapSizeScreenshotTesting
