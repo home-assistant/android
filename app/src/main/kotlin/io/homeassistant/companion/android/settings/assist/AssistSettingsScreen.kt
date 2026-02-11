@@ -135,7 +135,7 @@ fun AssistSettingsScreen(viewModel: AssistSettingsViewModel, modifier: Modifier 
             )
         },
         contentWindowInsets = WindowInsets(),
-    ) {
+    ) { contentPadding ->
         AssistSettingsContent(
             uiState = uiState,
             hasAudioPermission = togglePermissionState.status.isGranted,
@@ -158,7 +158,7 @@ fun AssistSettingsScreen(viewModel: AssistSettingsViewModel, modifier: Modifier 
                 }
             },
             onStopTestWakeWord = viewModel::stopTestWakeWord,
-            modifier = Modifier.padding(it),
+            modifier = Modifier.padding(contentPadding),
         )
     }
 }
