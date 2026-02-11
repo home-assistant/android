@@ -141,6 +141,7 @@ import io.homeassistant.companion.android.util.applyInsets
 import io.homeassistant.companion.android.util.hasNonRootPath
 import io.homeassistant.companion.android.util.hasSameOrigin
 import io.homeassistant.companion.android.util.isStarted
+import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
 import io.homeassistant.companion.android.webview.addto.EntityAddToHandler
@@ -1500,7 +1501,7 @@ class WebViewActivity :
 
     override fun loadUrl(url: Uri, keepHistory: Boolean, openInApp: Boolean, serverHandleInsets: Boolean) {
         Timber.d(
-            "Loading ${if (BuildConfig.DEBUG) url else "HIDDEN"} (keepHistory $keepHistory, openInApp $openInApp, serverHandleInsets $serverHandleInsets)",
+            "Loading ${sensitive(url.toString())} (keepHistory $keepHistory, openInApp $openInApp, serverHandleInsets $serverHandleInsets)",
         )
         this.serverHandleInsets.value = serverHandleInsets
         if (openInApp) {
@@ -1878,7 +1879,7 @@ class WebViewActivity :
         if (supportFragmentManager.backStackEntryCount > 0) {
             Timber.i("Fragments ${supportFragmentManager.fragments} displayed, skipping connection wait")
         } else {
-            Timber.d("Waiting for loadedUrl ${if (BuildConfig.DEBUG) loadedUrl else "HIDDEN"}")
+            Timber.d("Waiting for loadedUrl ${sensitive(loadedUrl.toString())}")
             Handler(Looper.getMainLooper()).postDelayed(
                 {
                     val firstSegment = loadedUrl?.pathSegments?.firstOrNull().orEmpty()
