@@ -74,7 +74,6 @@ class AssistViewModel @Inject constructor(
         viewModelScope.launch {
             this@AssistViewModel.hasPermission = hasPermission
             this@AssistViewModel.wakeWordPhrase = wakeWordPhrase
-            pendingWakeWordConfirmation = wakeWordPhrase != null
             serverId?.let {
                 filteredServerId = serverId
                 selectedServerId = serverId
@@ -99,6 +98,7 @@ class AssistViewModel @Inject constructor(
                 serverManager.integrationRepository(selectedServerId).getLastUsedPipelineSttSupport()
             ) {
                 // Start microphone recording to prevent missing voice input while doing network checks
+                pendingWakeWordConfirmation = wakeWordPhrase != null
                 onMicrophoneInput(proactive = true)
             }
 

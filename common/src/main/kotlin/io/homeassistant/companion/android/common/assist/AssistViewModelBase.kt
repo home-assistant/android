@@ -160,16 +160,15 @@ abstract class AssistViewModelBase(
 
             flow?.collect { event ->
                 when (event.type) {
-                    AssistPipelineEventType.RUN_START -> handleRunStart(
-                        event.data as? AssistPipelineRunStart,
-                        isVoice,
-                        onEvent,
-                    )
-
-                    AssistPipelineEventType.STT_START -> {
-                        handleSttStart()
+                    AssistPipelineEventType.RUN_START -> {
+                        handleRunStart(
+                            event.data as? AssistPipelineRunStart,
+                            isVoice,
+                            onEvent,
+                        )
                         onEvent(AssistEvent.PipelineStarted)
                     }
+                    AssistPipelineEventType.STT_START -> handleSttStart()
                     AssistPipelineEventType.STT_END -> handleSttEnd(event.data as? AssistPipelineSttEnd, onEvent)
                     AssistPipelineEventType.INTENT_PROGRESS -> handleIntentProgress(
                         event.data as? AssistPipelineIntentProgress,
