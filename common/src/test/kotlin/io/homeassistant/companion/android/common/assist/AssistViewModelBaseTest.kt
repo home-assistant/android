@@ -233,12 +233,13 @@ class AssistViewModelBaseTest {
     }
 
     @Test
-    fun `Given voice pipeline When STT_START received Then PipelineStarted event is emitted`() = runTest {
+    fun `Given voice pipeline When RUN_START received Then PipelineStarted event is emitted`() = runTest {
+        val handlerId = 42
         viewModel.setupRecorder()
         viewModel.runVoicePipeline()
         advanceUntilIdle()
 
-        pipelineEventsFlow.emit(createSttStartEvent())
+        pipelineEventsFlow.emit(createRunStartEvent(handlerId))
         advanceUntilIdle()
 
         assertEquals(listOf(AssistEvent.PipelineStarted), viewModel.receivedEvents)
