@@ -50,7 +50,7 @@ sealed interface UrlLoadResult {
      *
      * The UI should show the security level configuration screen where the user
      * can choose to allow or block insecure connections. After configuration,
-     * call [FrontendUrlManager.onSecurityLevelConfigured] to proceed.
+     * call [FrontendUrlManager.onSecurityLevelShown] to proceed.
      *
      * @property serverId The server ID requiring security level configuration
      */

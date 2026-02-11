@@ -4,7 +4,6 @@ import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.frontend.session.ServerSessionManager
-import io.homeassistant.companion.android.frontend.session.SessionCheckResult
 import io.homeassistant.companion.android.util.UrlUtil
 import java.net.URL
 import javax.inject.Inject
@@ -58,7 +57,7 @@ class FrontendUrlManager @Inject constructor(
         }
 
         val actualServerId = server.id
-        if (sessionManager.isSessionConnected(actualServerId) is SessionCheckResult.NotConnected) {
+        if (!sessionManager.isSessionConnected(actualServerId)) {
             Timber.w("Session not connected for server: $actualServerId")
             emit(UrlLoadResult.SessionNotConnected(actualServerId))
             return@flow
@@ -69,13 +68,16 @@ class FrontendUrlManager @Inject constructor(
         var pathConsumed = false
         serverManager.connectionStateProvider(actualServerId).urlFlow().collect { urlState ->
             val currentPath = if (pathConsumed) null else path
-            pathConsumed = true
 
             val result = handleUrlState(
                 serverId = actualServerId,
                 urlState = urlState,
                 path = currentPath,
             )
+            // Only consume the path when a URL was actually loaded with it
+            if (urlState is UrlState.HasUrl) {
+                pathConsumed = true
+            }
             emit(result)
         }
     }
@@ -149,14 +151,14 @@ class FrontendUrlManager @Inject constructor(
     }
 
     /**
-     * Mark security level as configured for server.
+     * Mark security level as shown for a given server.
      *
      * After calling this, [serverUrlFlow] will no longer return [UrlLoadResult.SecurityLevelRequired]
      * for this server during the current session.
      *
-     * @param serverId The server ID that had security level configured
+     * @param serverId The server ID that had security level shown
      */
-    fun onSecurityLevelConfigured(serverId: Int) {
+    fun onSecurityLevelShown(serverId: Int) {
         connectionSecurityLevelShown[serverId] = true
     }
 }
