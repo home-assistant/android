@@ -2,6 +2,7 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2026.2.3 - Main" versioncode="3">
+        <change>Experimental - Add wake word detection for Assist</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2026.2.3 - Wear" versioncode="2">

@@ -17,20 +17,28 @@ import androidx.compose.ui.Modifier
  */
 @Composable
 fun HATheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
+    val colorScheme = if (darkTheme) DarkHAColorScheme else LightHAColorScheme
+    val inverseColorScheme = if (darkTheme) LightHAColorScheme else DarkHAColorScheme
     CompositionLocalProvider(
-        LocalHAColorScheme provides if (darkTheme) DarkHAColorScheme else LightHAColorScheme,
+        LocalHAColorScheme provides colorScheme,
     ) {
         MaterialTheme(
             content = content,
             colorScheme = MaterialTheme.colorScheme.copy(
                 // Override the surface so that Composable like Scaffold use the right background color without
                 // manually injecting the color.
-                surface = LocalHAColorScheme.current.colorSurfaceDefault,
-                background = LocalHAColorScheme.current.colorSurfaceDefault,
+                surface = colorScheme.colorSurfaceDefault,
+                background = colorScheme.colorSurfaceDefault,
                 // Used by ModalBottomSheetDefaults.containerColor
-                surfaceContainerLow = LocalHAColorScheme.current.colorSurfaceDefault,
+                surfaceContainerLow = colorScheme.colorSurfaceDefault,
                 // Used for text selection
-                primary = LocalHAColorScheme.current.colorOnPrimaryNormal,
+                primary = colorScheme.colorOnPrimaryNormal,
+                // Used by Snackbar container (SnackbarTokens.ContainerColor)
+                inverseSurface = inverseColorScheme.colorSurfaceLow,
+                // Used by Snackbar text (SnackbarTokens.SupportingTextColor)
+                inverseOnSurface = inverseColorScheme.colorTextPrimary,
+                // Used by Snackbar action label (SnackbarTokens.ActionLabelTextColor)
+                inversePrimary = colorScheme.colorOnPrimaryNormal,
             ),
         )
     }

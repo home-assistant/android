@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.13.2" type="baseline" client="gradle" dependencies="false" name="AGP (8.13.2)" variant="all" version="8.13.2">
+<issues format="6" by="lint 9.0.0" type="baseline" client="gradle" dependencies="false" name="AGP (9.0.0)" variant="all" version="9.0.0">
 
     <issue
         id="MissingPermission"
@@ -54,6 +54,39 @@
             file="src/full/kotlin/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
             line="273"
             column="25"/>
+    </issue>
+
+    <issue
+        id="MissingPermission"
+        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
+        errorLine1="        viewModel.startTestWakeWord()"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/settings/assist/AssistSettingsScreen.kt"
+            line="122"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="MissingPermission"
+        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
+        errorLine1="                    viewModel.startTestWakeWord()"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/settings/assist/AssistSettingsScreen.kt"
+            line="148"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="MissingPermission"
+        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
+        errorLine1="                assistConfigManager.setWakeWordEnabled(false)"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/settings/assist/AssistSettingsViewModel.kt"
+            line="68"
+            column="17"/>
     </issue>
 
     <issue
@@ -120,6 +153,17 @@
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
             line="97"
             column="25"/>
+    </issue>
+
+    <issue
+        id="InlinedApi"
+        message="Field requires API level 24 (current min is 23): `android.provider.Settings#ACTION_MANAGE_DEFAULT_APPS_SETTINGS`"
+        errorLine1="            Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/settings/assist/DefaultAssistantManager.kt"
+            line="92"
+            column="20"/>
     </issue>
 
     <issue
@@ -393,7 +437,7 @@
         errorLine2="     ~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="87"
+            line="88"
             column="6"/>
     </issue>
 
@@ -635,7 +679,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="550"
+            line="539"
             column="17"/>
     </issue>
 
@@ -646,7 +690,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="550"
+            line="539"
             column="17"/>
     </issue>
 
@@ -1319,8 +1363,19 @@
         errorLine2="                 ~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/vehicle/views/AndroidAutoFavoritesView.kt"
-            line="44"
+            line="47"
             column="18"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;MicroWakeWordModelConfig> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `availableModels: ImmutableList&lt;MicroWakeWordModelConfig>` or create an `@Immutable` wrapper for this class: `@Immutable data class AvailableModelsList(val items: List&lt;MicroWakeWordModelConfig>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    availableModels: List&lt;MicroWakeWordModelConfig>,"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/settings/assist/AssistSettingsScreen.kt"
+            line="341"
+            column="22"/>
     </issue>
 
     <issue
