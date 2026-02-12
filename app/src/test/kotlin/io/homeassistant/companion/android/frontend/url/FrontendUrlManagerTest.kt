@@ -77,7 +77,7 @@ class FrontendUrlManagerTest {
         coEvery { sessionManager.isSessionConnected(1) } returns true
         coEvery { serverManager.activateServer(1) } just runs
         coEvery { serverManager.connectionStateProvider(1) } returns connectionStateProvider
-        every { connectionStateProvider.urlFlow(any()) } returns flowOf(
+        every { connectionStateProvider.urlFlow(null) } returns flowOf(
             UrlState.HasUrl(URL("https://home.example.com")),
         )
 
@@ -98,7 +98,7 @@ class FrontendUrlManagerTest {
         coEvery { sessionManager.isSessionConnected(1) } returns true
         coEvery { serverManager.activateServer(1) } just runs
         coEvery { serverManager.connectionStateProvider(1) } returns connectionStateProvider
-        every { connectionStateProvider.urlFlow(any()) } returns flowOf(
+        every { connectionStateProvider.urlFlow(null) } returns flowOf(
             UrlState.HasUrl(URL("https://home.example.com")),
         )
 
@@ -118,7 +118,7 @@ class FrontendUrlManagerTest {
         coEvery { sessionManager.isSessionConnected(1) } returns true
         coEvery { serverManager.activateServer(1) } just runs
         coEvery { serverManager.connectionStateProvider(1) } returns connectionStateProvider
-        every { connectionStateProvider.urlFlow(any()) } returns flowOf(
+        every { connectionStateProvider.urlFlow(null) } returns flowOf(
             UrlState.HasUrl(URL("https://home.example.com")),
         )
 
@@ -148,7 +148,7 @@ class FrontendUrlManagerTest {
         coEvery { sessionManager.isSessionConnected(1) } returns true
         coEvery { serverManager.activateServer(1) } just runs
         coEvery { serverManager.connectionStateProvider(1) } returns connectionStateProvider
-        every { connectionStateProvider.urlFlow(any()) } returns flowOf(UrlState.InsecureState)
+        every { connectionStateProvider.urlFlow(null) } returns flowOf(UrlState.InsecureState)
         coEvery { connectionStateProvider.getSecurityState() } returns SecurityState(
             isOnHomeNetwork = false,
             hasHomeSetup = hasHomeSetup,
@@ -173,7 +173,7 @@ class FrontendUrlManagerTest {
         coEvery { sessionManager.isSessionConnected(1) } returns true
         coEvery { serverManager.activateServer(1) } just runs
         coEvery { serverManager.connectionStateProvider(1) } returns connectionStateProvider
-        every { connectionStateProvider.urlFlow(any()) } returns flowOf(UrlState.HasUrl(null))
+        every { connectionStateProvider.urlFlow(null) } returns flowOf(UrlState.HasUrl(null))
 
         urlManager.serverUrlFlow(serverId = 1, path = null).test {
             val result = awaitItem()
@@ -191,7 +191,7 @@ class FrontendUrlManagerTest {
         coEvery { sessionManager.isSessionConnected(42) } returns true
         coEvery { serverManager.activateServer(42) } just runs
         coEvery { serverManager.connectionStateProvider(42) } returns connectionStateProvider
-        every { connectionStateProvider.urlFlow(any()) } returns flowOf(
+        every { connectionStateProvider.urlFlow(null) } returns flowOf(
             UrlState.HasUrl(URL("https://home.example.com")),
         )
 
@@ -217,7 +217,7 @@ class FrontendUrlManagerTest {
         coEvery { sessionManager.isSessionConnected(1) } returns true
         coEvery { serverManager.activateServer(1) } just runs
         coEvery { serverManager.connectionStateProvider(1) } returns connectionStateProvider
-        every { connectionStateProvider.urlFlow(any()) } returns flowOf(
+        every { connectionStateProvider.urlFlow(null) } returns flowOf(
             UrlState.HasUrl(URL("http://home.example.com")),
         )
 
@@ -240,7 +240,7 @@ class FrontendUrlManagerTest {
         coEvery { sessionManager.isSessionConnected(1) } returns true
         coEvery { serverManager.activateServer(1) } just runs
         coEvery { serverManager.connectionStateProvider(1) } returns connectionStateProvider
-        every { connectionStateProvider.urlFlow(any()) } returns flowOf(
+        every { connectionStateProvider.urlFlow(null) } returns flowOf(
             UrlState.HasUrl(URL("http://home.example.com")),
         )
 
@@ -264,7 +264,7 @@ class FrontendUrlManagerTest {
         coEvery { sessionManager.isSessionConnected(1) } returns true
         coEvery { serverManager.activateServer(1) } just runs
         coEvery { serverManager.connectionStateProvider(1) } returns connectionStateProvider
-        every { connectionStateProvider.urlFlow(any()) } returns flowOf(
+        every { connectionStateProvider.urlFlow(null) } returns flowOf(
             UrlState.HasUrl(URL("https://home.example.com")),
         )
 
@@ -286,7 +286,7 @@ class FrontendUrlManagerTest {
         coEvery { sessionManager.isSessionConnected(1) } returns true
         coEvery { serverManager.activateServer(1) } just runs
         coEvery { serverManager.connectionStateProvider(1) } returns connectionStateProvider
-        every { connectionStateProvider.urlFlow(any()) } returns flowOf(
+        every { connectionStateProvider.urlFlow(null) } returns flowOf(
             UrlState.HasUrl(URL("http://home.example.com")),
         )
 
@@ -304,7 +304,7 @@ class FrontendUrlManagerTest {
         coEvery { sessionManager.isSessionConnected(1) } returns true
         coEvery { serverManager.activateServer(1) } just runs
         coEvery { serverManager.connectionStateProvider(1) } returns connectionStateProvider
-        every { connectionStateProvider.urlFlow(any()) } returns flowOf(
+        every { connectionStateProvider.urlFlow(null) } returns flowOf(
             UrlState.HasUrl(URL("https://home.example.com")),
             UrlState.InsecureState,
             UrlState.HasUrl(URL("https://home.example.com")),
@@ -335,7 +335,7 @@ class FrontendUrlManagerTest {
         coEvery { sessionManager.isSessionConnected(1) } returns true
         coEvery { serverManager.activateServer(1) } just runs
         coEvery { serverManager.connectionStateProvider(1) } returns connectionStateProvider
-        every { connectionStateProvider.urlFlow(any()) } returns flowOf(
+        every { connectionStateProvider.urlFlow(null) } returns flowOf(
             UrlState.HasUrl(URL("https://home.example.com")),
             UrlState.HasUrl(URL("https://home.example.com")),
         )
@@ -357,7 +357,7 @@ class FrontendUrlManagerTest {
         coEvery { sessionManager.isSessionConnected(1) } returns true
         coEvery { serverManager.activateServer(1) } just runs
         coEvery { serverManager.connectionStateProvider(1) } returns connectionStateProvider
-        every { connectionStateProvider.urlFlow(any()) } returns flowOf(
+        every { connectionStateProvider.urlFlow(null) } returns flowOf(
             UrlState.InsecureState,
             UrlState.HasUrl(URL("https://home.example.com")),
         )
