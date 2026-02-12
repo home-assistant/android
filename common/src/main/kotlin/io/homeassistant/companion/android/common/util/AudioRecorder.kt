@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import android.os.Build
 
 /**
  * Wrapper around [AudioRecord] providing pre-configured audio recording functionality.
@@ -61,20 +62,12 @@ class AudioRecorder(private val audioManager: AudioManager?) {
         }
 
         // Check if Bluetooth SCO is available
-        if (audioManager.isBluetoothScoAvailableOffCall()) {
-            // Additional check: see if a Bluetooth device is actually connected
-            val bluetoothDevices = audioManager.getDevices(AudioManager.GET_DEVICES_INPUT)
-            for (device in bluetoothDevices) {
-                if (device.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
-                    device.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP) {
-                    return AudioSource.BLUETOOTH_SCO
-                }
-            }
+        return if (audioManager.isBluetoothScoAvailableOffCall()) {
+            // Use VOICE_COMMUNICATION which is the standard for Bluetooth audio
+            AudioSource.VOICE_COMMUNICATION
+        } else {
+            AudioSource.MIC
         }
-
-        // Fall back to VOICE_COMMUNICATION if Bluetooth is not available
-        // This is better than MIC as it applies proper audio processing for voice
-        return AudioSource.VOICE_COMMUNICATION
     }
 
     /**
@@ -142,6 +135,14 @@ class AudioRecorder(private val audioManager: AudioManager?) {
 
     private fun requestFocus() {
         if (audioManager == null) return
+        
+        // Enable Bluetooth SCO if available (requires API 11+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            if (audioManager.isBluetoothScoAvailableOffCall()) {
+                audioManager.startBluetoothSco()
+            }
+        }
+        
         if (focusRequest == null) {
             focusRequest = AudioFocusRequestCompat.Builder(AudioManagerCompat.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE).run {
                 setAudioAttributes(
@@ -166,7 +167,15 @@ class AudioRecorder(private val audioManager: AudioManager?) {
     }
 
     private fun abandonFocus() {
-        if (audioManager == null || focusRequest == null) return
-        AudioManagerCompat.abandonAudioFocusRequest(audioManager, focusRequest!!)
+        if (audioManager == null) return
+        
+        // Disable Bluetooth SCO (requires API 11+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            audioManager.stopBluetoothSco()
+        }
+        
+        if (focusRequest != null) {
+            AudioManagerCompat.abandonAudioFocusRequest(audioManager, focusRequest!!)
+        }
     }
 }
