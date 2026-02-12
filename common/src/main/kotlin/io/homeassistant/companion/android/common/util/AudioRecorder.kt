@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.common.util
 
 import android.annotation.SuppressLint
-import android.media.AudioDeviceInfo
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioManager.OnAudioFocusChangeListener
@@ -18,7 +17,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import android.os.Build
 
 /**
  * Wrapper around [AudioRecord] providing pre-configured audio recording functionality.
@@ -50,11 +48,12 @@ class AudioRecorder(private val audioManager: AudioManager?) {
 
     private var focusRequest: AudioFocusRequestCompat? = null
     private val focusListener = OnAudioFocusChangeListener { /* Not used */ }
+    private var scoStarted = false
 
     /**
      * Determine the appropriate audio source based on connected devices.
-     * Prefers Bluetooth SCO if available, falls back to VOICE_COMMUNICATION,
-     * and finally defaults to MIC if neither is available.
+     * Returns VOICE_COMMUNICATION when Bluetooth SCO is available off-call,
+     * otherwise returns MIC.
      */
     private fun getAudioSource(): Int {
         if (audioManager == null) {
@@ -136,11 +135,10 @@ class AudioRecorder(private val audioManager: AudioManager?) {
     private fun requestFocus() {
         if (audioManager == null) return
         
-        // Enable Bluetooth SCO if available (requires API 11+)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            if (audioManager.isBluetoothScoAvailableOffCall()) {
-                audioManager.startBluetoothSco()
-            }
+        // Enable Bluetooth SCO if available
+        if (audioManager.isBluetoothScoAvailableOffCall()) {
+            audioManager.startBluetoothSco()
+            scoStarted = true
         }
         
         if (focusRequest == null) {
@@ -169,9 +167,10 @@ class AudioRecorder(private val audioManager: AudioManager?) {
     private fun abandonFocus() {
         if (audioManager == null) return
         
-        // Disable Bluetooth SCO (requires API 11+)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+        // Disable Bluetooth SCO only if this instance started it
+        if (scoStarted) {
             audioManager.stopBluetoothSco()
+            scoStarted = false
         }
         
         if (focusRequest != null) {
