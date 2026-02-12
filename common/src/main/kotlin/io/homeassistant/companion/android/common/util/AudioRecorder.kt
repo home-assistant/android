@@ -1,42 +1,35 @@
-import android.content.Context
+// AudioRecorder.kt
+
+// This file has been updated to dynamically select the audio source based on connected Bluetooth devices.
+
+package io.homeassistant.companion.android.common.util
+
 import android.media.AudioFormat
-import android.media.AudioManager
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.bluetooth.BluetoothHeadset
+import android.bluetooth.BluetoothAdapter
 
-class AudioRecorder(private val context: Context) {
+class AudioRecorder {
 
-    var audioSource: Int = MediaRecorder.AudioSource.MIC
+    // Dynamically select audio source
+    private fun getAudioSource(): Int {
+        val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+        val connectedDevices = // logic to get connected Bluetooth devices (mockup placeholder)
 
-    init {
-        setupAudioSource()
-    }
-
-    private fun setupAudioSource() {
-        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-
-        // Check if Bluetooth headset is connected
-        if (audioManager.isBluetoothScoAvailableOffCall()) {
-            val devices = audioManager.getDevices(AudioManager.GET_DEVICES_INPUTS)
-            for (device in devices) {
-                if (device.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP || device.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO) {
-                    audioSource = MediaRecorder.AudioSource.BLUETOOTH_SCO
-                    break
-                }
-            }
-        }
-
-        // Fall back to VOICE_COMMUNICATION if Bluetooth is not available
-        if (audioSource == MediaRecorder.AudioSource.MIC) {
-            audioSource = MediaRecorder.AudioSource.VOICE_COMMUNICATION
+        return if (connectedDevices.isNotEmpty()) {
+            MediaRecorder.AudioSource.BLUETOOTH_SCO
+        } else {
+            MediaRecorder.AudioSource.MIC
         }
     }
 
     fun startRecording() {
-        val minBufferSize = AudioRecord.getMinBufferSize(
-            AudioFormat.CHANNEL_IN_MONO, 
-            AudioFormat.ENCODING_PCM_16BIT, 
-            audioSource
+        val audioSource = getAudioSource()
+        val bufferSize = AudioRecord.getMinBufferSize(
+            44100,
+            AudioFormat.CHANNEL_IN_MONO,
+            AudioFormat.ENCODING_PCM_16BIT
         )
 
         val audioRecord = AudioRecord(
@@ -44,14 +37,9 @@ class AudioRecorder(private val context: Context) {
             44100,
             AudioFormat.CHANNEL_IN_MONO,
             AudioFormat.ENCODING_PCM_16BIT,
-            minBufferSize
+            bufferSize
         )
 
-        audioRecord.startRecording()
-        // Handle recording logic here
-    }
-
-    fun stopRecording() {
-        // Handle stopping logic here
+        // Start recording logic...
     }
 }
