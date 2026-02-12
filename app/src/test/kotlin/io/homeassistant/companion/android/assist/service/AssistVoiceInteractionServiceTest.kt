@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.assist.service
 import android.Manifest
 import android.content.Intent
 import androidx.test.core.app.ApplicationProvider
+import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
 import io.homeassistant.companion.android.assist.wakeword.WakeWordListener
 import io.homeassistant.companion.android.assist.wakeword.WakeWordListenerFactory
@@ -31,6 +32,7 @@ import org.junit.Test
 import org.junit.jupiter.api.assertNull
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
+import org.robolectric.annotation.Config
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows
 import org.robolectric.android.controller.ServiceController
@@ -38,6 +40,7 @@ import org.robolectric.shadows.ShadowVoiceInteractionService
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
+@Config(application = HiltTestApplication::class)
 class AssistVoiceInteractionServiceTest {
 
     @get:Rule(order = 0)

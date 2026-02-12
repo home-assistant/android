@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.assist.service
 
+import dagger.hilt.android.testing.HiltTestApplication
 import android.content.Intent
 import android.os.Bundle
 import androidx.test.core.app.ApplicationProvider
@@ -12,10 +13,12 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import org.robolectric.Shadows
 import org.robolectric.shadows.ShadowVoiceInteractionSession
 
 @RunWith(RobolectricTestRunner::class)
+@Config(application = HiltTestApplication::class)
 class AssistVoiceInteractionSessionTest {
 
     @get:Rule
