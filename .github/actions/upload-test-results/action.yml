@@ -1,0 +1,25 @@
+name: "Upload test results"
+description: "Upload test result (always) and test reports (on failure) as artifacts."
+inputs:
+  test-name:
+    description: "Name of the test used as prefix for the artifact names."
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      with:
+        name: ${{ inputs.test-name }} results
+        path: |
+          **/build/test-results/**/TEST-*.xml
+          **/build/outputs/*/connected/*
+
+    - name: Upload test reports
+      if: failure()
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      with:
+        name: ${{ inputs.test-name }} reports
+        path: |
+          **/build/reports/**
