@@ -411,11 +411,11 @@ class WebViewPresenterImplTest {
     }
 
     @Test
-    fun `Given IllegalArgumentException when getting session state then does not collect url flow`() = runTest {
+    fun `Given IllegalStateException when getting session state then does not collect url flow`() = runTest {
         val server = mockk<Server>(relaxed = true)
 
         coEvery { serverManager.getServer(any<Int>()) } returns server
-        coEvery { authenticationRepository.getSessionState() } throws IllegalArgumentException("Server not found")
+        coEvery { authenticationRepository.getSessionState() } throws IllegalStateException("Server not found")
 
         lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
         lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_START)
