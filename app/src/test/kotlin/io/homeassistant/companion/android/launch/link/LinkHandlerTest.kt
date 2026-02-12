@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.launch.link
 
+import dagger.hilt.android.testing.HiltTestApplication
 import androidx.core.net.toUri
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
@@ -13,9 +14,11 @@ import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.fail
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 // We need Robolectric because of the usage of URI from `android.net.URI`
 @RunWith(RobolectricTestRunner::class)
+@Config(application = HiltTestApplication::class)
 class LinkHandlerTest {
 
     private val serverManager: ServerManager = mockk()

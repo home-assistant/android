@@ -305,6 +305,13 @@ Use the `Clock` available from `Hilt`.
 - **Framework**: JUnit Jupiter for unit tests (or 4 when necessary to use Robolectric)
 - **Mocking**: MockK (Use real objects when you can or fakes)
 - **Android APIs**: Robolectric (requires JUnit 4 compatibility)
+- **Robolectric tests**: All Robolectric test classes must use both annotations:
+  ```kotlin
+  @RunWith(RobolectricTestRunner::class)
+  @Config(application = HiltTestApplication::class)
+  class MyTest {
+  ```
+  Without the `@Config` override, Robolectric defaults to the manifest's `HomeAssistantApplication`, which enables StrictMode and FailFast, leaking process-wide state that can crash the test JVM.
 - **Test Location**: Tests should mirror source structure in `src/test/kotlin/` directory
 - **Test Naming**: Use GIVEN-WHEN-THEN structure with descriptive sentences:
   ```kotlin

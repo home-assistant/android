@@ -10,14 +10,17 @@ import androidx.glance.testing.unit.assertHasNoClickAction
 import androidx.glance.testing.unit.hasContentDescriptionEqualTo
 import androidx.glance.testing.unit.hasTestTag
 import androidx.glance.testing.unit.hasTextEqualTo
+import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import org.robolectric.RuntimeEnvironment
 
 @RunWith(RobolectricTestRunner::class)
+@Config(application = HiltTestApplication::class)
 class TodoGlanceAppWidgetTest {
     private val context = RuntimeEnvironment.getApplication()
 
