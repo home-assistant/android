@@ -224,10 +224,10 @@ class LaunchViewModelTest {
     }
 
     @Test
-    fun `Given IllegalArgumentException thrown while getting server, when creating viewModel, then navigate to onboarding`() = runTest {
-        coEvery { serverManager.getServer(ServerManager.SERVER_ID_ACTIVE) } throws IllegalArgumentException("Wrong server")
+    fun `Given IllegalStateException thrown while getting auth repository, when creating viewModel, then navigate to onboarding`() = runTest {
+        coEvery { serverManager.getServer(ServerManager.SERVER_ID_ACTIVE) } returns null
         coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.authenticationRepository().getSessionState() } returns SessionState.ANONYMOUS
+        coEvery { serverManager.authenticationRepository().getSessionState() } throws IllegalStateException("server not found")
 
         createViewModel()
         advanceUntilIdle()
