@@ -120,6 +120,7 @@ Source code is in Kotlin under `src/main/kotlin/io/homeassistant/companion/andro
 
 - **Language**: All code in English, Kotlin only
 - **Formatter**: KTLint enforces style via `.editorconfig`
+- **Imports**: When adding new imports, always add the import and its usage in the same edit. IDE linters and hooks automatically remove unused imports, so adding an import in a separate step before using it will cause the import to be stripped.
 - **Constants**: Use named constants instead of magic numbers/strings. Organize alongside classes (outside companion objects when possible), or in dedicated `*Constants.kt` files with `object` namespacing.
 - **Strong Types**: Use sealed classes/interfaces over enums or strings for logic control. Use Kotlin `Duration`/`Instant` instead of primitive types for time.
 - **TODOs**: Avoid TODOs. If required, link to GitHub issue: `// TODO Missing feature (linked issue #404)`
