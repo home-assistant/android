@@ -11,9 +11,9 @@ import io.homeassistant.companion.android.common.data.integration.PushWebsocketS
 import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.isAutomotive
-import io.homeassistant.companion.android.frontend.permissions.HasFcmPushSupport
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
 import io.homeassistant.companion.android.di.qualifiers.LocationTrackingSupport
+import io.homeassistant.companion.android.frontend.permissions.HasFcmPushSupport
 import javax.inject.Singleton
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime

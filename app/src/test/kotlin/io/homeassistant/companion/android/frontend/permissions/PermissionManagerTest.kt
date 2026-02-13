@@ -52,10 +52,10 @@ class PermissionManagerTest {
         @ParameterizedTest(name = "hasFcm={0}, notifEnabled={1}, storedPref={2} -> shouldAsk={3}")
         @CsvSource(
             "true,true,,false", // FCM + granted → auto-dismiss, no need to prompt
-            "true,false,,true",  // FCM + not granted + fresh install → prompt
+            "true,false,,true", // FCM + not granted + fresh install → prompt
             "true,false,false,false", // FCM + not granted + user already answered → skip
-            "false,true,,true",  // No FCM + granted + fresh install → prompt to configure websocket
-            "false,false,,true",  // No FCM + not granted + fresh install → prompt
+            "false,true,,true", // No FCM + granted + fresh install → prompt to configure websocket
+            "false,false,,true", // No FCM + not granted + fresh install → prompt
             "false,false,false,false", // No FCM + not granted + user already answered → skip
             "false,true,false,false", // No FCM + granted + user already answered → skip
         )

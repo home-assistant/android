@@ -13,9 +13,8 @@ import dagger.hilt.components.SingletonComponent
 internal object PermissionModule {
 
     @Provides
-    fun providesNotificationStatusProvider(
-        @ApplicationContext context: Context,
-    ): NotificationStatusProvider = NotificationStatusProvider {
-        NotificationManagerCompat.from(context).areNotificationsEnabled()
-    }
+    fun providesNotificationStatusProvider(@ApplicationContext context: Context): NotificationStatusProvider =
+        NotificationStatusProvider {
+            NotificationManagerCompat.from(context).areNotificationsEnabled()
+        }
 }
