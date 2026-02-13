@@ -33,7 +33,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.theme.HADimens
@@ -43,6 +42,7 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorScreen
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
+import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModel
@@ -405,7 +405,7 @@ private fun Color.Overlay(modifier: Modifier = Modifier) {
 private fun WebViewEffects(webView: WebView?, url: String, scriptsToEvaluate: Flow<WebViewScript>) {
     if (webView != null) {
         LaunchedEffect(webView, url) {
-            Timber.v("Load url ${if (BuildConfig.DEBUG) url else ""}")
+            Timber.v("Load url ${sensitive(url)}")
             webView.loadUrl(url)
         }
         LaunchedEffect(webView) {
