@@ -23,6 +23,8 @@ class ThreadManagerImpl @Inject constructor() : ThreadManager {
         scope: CoroutineScope,
     ): ThreadManager.SyncResult = ThreadManager.SyncResult.AppUnsupported
 
+    override suspend fun hasSyncedPreferredDataset(serverId: Int): Boolean = false
+
     override suspend fun getPreferredDatasetFromServer(serverId: Int): ThreadDatasetResponse? = null
 
     override suspend fun importDatasetFromServer(
@@ -33,7 +35,11 @@ class ThreadManagerImpl @Inject constructor() : ThreadManager {
     ) { }
 
     override suspend fun getPreferredDatasetFromDevice(context: Context): IntentSender? {
-        throw IllegalStateException("Thread is not supported with the minimal flavor")
+        throw ThreadManager.ThreadNetworkException("Thread is not supported with the minimal flavor")
+    }
+
+    override suspend fun isPreferredDatasetByDevice(context: Context, tlv: String): Boolean {
+        throw ThreadManager.ThreadNetworkException("Thread is not supported with the minimal flavor")
     }
 
     override suspend fun sendThreadDatasetExportResult(result: ActivityResult, serverId: Int): String? = null
