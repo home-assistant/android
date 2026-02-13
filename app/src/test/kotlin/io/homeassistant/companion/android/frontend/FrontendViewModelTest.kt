@@ -7,12 +7,15 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
 import io.homeassistant.companion.android.frontend.handler.FrontendMessageHandler
 import io.homeassistant.companion.android.frontend.navigation.FrontendNavigationEvent
+import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
@@ -30,12 +33,15 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @ExtendWith(ConsoleLogExtension::class)
@@ -50,6 +56,7 @@ class FrontendViewModelTest {
     private val externalBusHandler: FrontendMessageHandler = mockk(relaxed = true)
     private val urlManager: FrontendUrlManager = mockk(relaxed = true)
     private val connectivityCheckRepository: ConnectivityCheckRepository = mockk(relaxed = true)
+    private val permissionManager: PermissionManager = mockk(relaxed = true)
 
     private val serverId = 1
     private val testUrlWithAuth = "https://example.com?external_auth=1"
@@ -72,6 +79,7 @@ class FrontendViewModelTest {
             frontendMessageHandler = externalBusHandler,
             urlManager = urlManager,
             connectivityCheckRepository = connectivityCheckRepository,
+            permissionManager = permissionManager,
         )
     }
 
@@ -542,6 +550,60 @@ class FrontendViewModelTest {
             // Verify connectivity check state has failure
             assertEquals(failedState, viewModel.connectivityCheckState.value)
             assertTrue(viewModel.connectivityCheckState.value.hasFailure)
+        }
+    }
+
+    @Nested
+    inner class NotificationPermission {
+
+        @ParameterizedTest(name = "shouldAsk={0} -> showNotificationPermission={0}")
+        @ValueSource(booleans = [true, false])
+        fun `Given connected when permission manager returns value then Content state matches`(
+            shouldAsk: Boolean,
+        ) = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { externalBusHandler.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery { permissionManager.shouldAskNotificationPermission(serverId) } returns shouldAsk
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+
+            val state = viewModel.viewState.value
+            assertTrue(state is FrontendViewState.Content)
+            assertEquals(shouldAsk, (state as FrontendViewState.Content).showNotificationPermission)
+        }
+
+        @Test
+        fun `Given notification permission result when called then showNotificationPermission becomes false`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { externalBusHandler.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery { permissionManager.shouldAskNotificationPermission(serverId) } returns true
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+
+            // Verify prompt is shown
+            assertTrue((viewModel.viewState.value as FrontendViewState.Content).showNotificationPermission)
+
+            // Handle permission result
+            viewModel.onNotificationPermissionResult(granted = true)
+            advanceUntilIdle()
+
+            // Verify prompt is hidden
+            assertFalse((viewModel.viewState.value as FrontendViewState.Content).showNotificationPermission)
+            coVerify { permissionManager.onNotificationPermissionResult(serverId = serverId, granted = true) }
         }
     }
 

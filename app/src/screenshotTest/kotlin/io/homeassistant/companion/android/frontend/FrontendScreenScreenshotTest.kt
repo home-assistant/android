@@ -144,6 +144,35 @@ class FrontendScreenScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
+    fun `FrontendScreen Content with notification permission prompt`() {
+        HAThemeForPreview {
+            FrontendScreenContent(
+                onBackClick = {},
+                viewState = FrontendViewState.Content(
+                    serverId = 1,
+                    url = "https://example.com",
+                    showNotificationPermission = true,
+                ),
+                webViewClient = WebViewClient(),
+                frontendJsCallback = FrontendJsBridge.noOp,
+                scriptsToEvaluate = emptyFlow(),
+                onBlockInsecureRetry = {},
+                onOpenExternalLink = {},
+                onBlockInsecureHelpClick = {},
+                onOpenSettings = {},
+                onChangeSecurityLevel = {},
+                onOpenLocationSettings = {},
+                onConfigureHomeNetwork = { _ -> },
+                onSecurityLevelHelpClick = {},
+                onShowSnackbar = { _, _ -> true },
+                supportsNotificationPermission = true,
+            )
+        }
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
     fun `FrontendScreen Error`() {
         HAThemeForPreview {
             FrontendScreenContent(
