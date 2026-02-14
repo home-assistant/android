@@ -13,7 +13,6 @@ import com.mikepenz.iconics.compose.Image
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.getIcon
-import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.getSwitchButtonColors
 import io.homeassistant.companion.android.theme.wearColorScheme
@@ -24,24 +23,24 @@ import io.homeassistant.companion.android.views.rememberExpandedStates
 
 @Composable
 fun SetFavoritesView(
-    mainViewModel: MainViewModel,
+    entitiesByDomain: Map<String, List<Entity>>,
+    domainNames: Map<String, String>,
     favoriteEntityIds: List<String>,
     onFavoriteSelected: (entityId: String, isSelected: Boolean) -> Unit,
 ) {
     // Remember expanded state of each header
-    val expandedStates = rememberExpandedStates(mainViewModel.supportedDomains())
+    val expandedStates = rememberExpandedStates(entitiesByDomain.keys)
 
     WearAppTheme {
         ThemeLazyColumn {
             item {
                 ListHeader(id = commonR.string.set_favorite)
             }
-            for (domain in mainViewModel.entitiesByDomainOrder) {
-                val entities = mainViewModel.entitiesByDomain[domain].orEmpty()
+            for ((domain, entities) in entitiesByDomain) {
                 if (entities.isNotEmpty()) {
                     item {
                         ExpandableListHeader(
-                            string = mainViewModel.stringForDomain(domain)!!,
+                            string = domainNames[domain] ?: domain,
                             key = domain,
                             expandedStates = expandedStates,
                         )
