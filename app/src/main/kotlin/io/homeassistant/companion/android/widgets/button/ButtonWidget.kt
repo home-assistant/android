@@ -7,8 +7,6 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.os.Handler
-import android.os.Looper
 import android.view.View
 import android.widget.RemoteViews
 import android.widget.Toast
@@ -30,6 +28,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.MapAnySerializer
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.common.util.launchAsync
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -37,15 +36,18 @@ import io.homeassistant.companion.android.util.getAttribute
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
-import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.widgetScope
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
 import io.homeassistant.companion.android.widgets.common.WidgetAuthenticationActivity
 import java.util.regex.Pattern
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -58,6 +60,7 @@ class ButtonWidget : AppWidgetProvider() {
 
         // Vector icon rendering resolution fallback (if we can't infer via AppWidgetManager for some reason)
         private const val DEFAULT_MAX_ICON_SIZE = 512
+        private var widgetScope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     }
 
     @Inject
@@ -66,50 +69,46 @@ class ButtonWidget : AppWidgetProvider() {
     @Inject
     lateinit var buttonWidgetDao: ButtonWidgetDao
 
-    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
-
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         // There may be multiple widgets active, so update all of them
         for (appWidgetId in appWidgetIds) {
-            mainScope.launch {
+            widgetScope.launch {
                 val views = getWidgetRemoteViews(context, appWidgetId)
                 appWidgetManager.updateAppWidget(appWidgetId, views)
             }
         }
     }
 
-    private fun updateAllWidgets(context: Context) {
-        mainScope.launch {
-            val appWidgetManager = AppWidgetManager.getInstance(context) ?: return@launch
-            val systemWidgetIds = appWidgetManager.getAppWidgetIds(ComponentName(context, ButtonWidget::class.java))
-            val dbWidgetList = buttonWidgetDao.getAll()
+    private suspend fun updateAllWidgets(context: Context) {
+        val appWidgetManager = AppWidgetManager.getInstance(context) ?: return
+        val systemWidgetIds = appWidgetManager.getAppWidgetIds(ComponentName(context, ButtonWidget::class.java))
+        val dbWidgetList = buttonWidgetDao.getAll()
 
-            val invalidWidgetIds = dbWidgetList
-                .filter { !systemWidgetIds.contains(it.id) }
-                .map { it.id }
-            if (invalidWidgetIds.isNotEmpty()) {
-                Timber.i("Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted")
-                onDeleted(context, invalidWidgetIds.toIntArray())
-            }
+        val invalidWidgetIds = dbWidgetList
+            .filter { !systemWidgetIds.contains(it.id) }
+            .map { it.id }
+        if (invalidWidgetIds.isNotEmpty()) {
+            Timber.i("Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted")
+            onDeleted(context, invalidWidgetIds.toIntArray())
+        }
 
-            val buttonWidgetEntityList = dbWidgetList.filter { systemWidgetIds.contains(it.id) }
-            if (buttonWidgetEntityList.isNotEmpty()) {
-                Timber.d("Updating all widgets")
-                for (item in buttonWidgetEntityList) {
-                    val views = getWidgetRemoteViews(context, item.id)
+        val buttonWidgetEntityList = dbWidgetList.filter { systemWidgetIds.contains(it.id) }
+        if (buttonWidgetEntityList.isNotEmpty()) {
+            Timber.d("Updating all widgets")
+            for (item in buttonWidgetEntityList) {
+                val views = getWidgetRemoteViews(context, item.id)
 
-                    setLabelVisibility(views, item)
-                    views.setViewVisibility(R.id.widgetProgressBar, View.INVISIBLE)
-                    views.setViewVisibility(R.id.widgetImageButtonLayout, View.VISIBLE)
-                    appWidgetManager.updateAppWidget(item.id, views)
-                }
+                setLabelVisibility(views, item)
+                views.setViewVisibility(R.id.widgetProgressBar, View.INVISIBLE)
+                views.setViewVisibility(R.id.widgetImageButtonLayout, View.VISIBLE)
+                appWidgetManager.updateAppWidget(item.id, views)
             }
         }
     }
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
         // When the user deletes the widget, delete the preference associated with it.
-        mainScope.launch {
+        widgetScope.launch {
             buttonWidgetDao.deleteAll(appWidgetIds)
         }
     }
@@ -135,14 +134,19 @@ class ButtonWidget : AppWidgetProvider() {
         super.onReceive(context, intent)
         when (action) {
             CALL_SERVICE_AUTH -> authThenCallConfiguredAction(context, appWidgetId)
-            CALL_SERVICE -> callConfiguredAction(context, appWidgetId)
-            BaseWidgetProvider.UPDATE_WIDGETS -> updateAllWidgets(context)
-            Intent.ACTION_SCREEN_ON -> updateAllWidgets(context)
+            CALL_SERVICE -> launchAsync(widgetScope) { callConfiguredAction(context, appWidgetId) }
+            BaseWidgetProvider.UPDATE_WIDGETS, Intent.ACTION_SCREEN_ON -> launchAsync(widgetScope) {
+                updateAllWidgets(
+                    context,
+                )
+            }
+
             ACTION_APPWIDGET_CREATED -> {
-                if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
-                    FailFast.fail { "Missing appWidgetId in intent to add widget in DAO" }
-                } else {
-                    widgetScope?.launch {
+                launchAsync(widgetScope) {
+                    if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+                        FailFast.fail { "Missing appWidgetId in intent to add widget in DAO" }
+                    } else {
+
                         val entity = intent.extras?.let {
                             BundleCompat.getSerializable(
                                 it,
@@ -154,8 +158,8 @@ class ButtonWidget : AppWidgetProvider() {
                             buttonWidgetDao.add(entity.copyWithWidgetId(appWidgetId))
                         } ?: FailFast.fail { "Missing $EXTRA_WIDGET_ENTITY or it's of the wrong type in intent." }
                     }
+                    updateAllWidgets(context)
                 }
-                updateAllWidgets(context)
             }
         }
     }
@@ -277,7 +281,7 @@ class ButtonWidget : AppWidgetProvider() {
         views.setViewVisibility(R.id.widgetLabelLayout, labelVisibility)
     }
 
-    private fun callConfiguredAction(context: Context, appWidgetId: Int) {
+    private suspend fun callConfiguredAction(context: Context, appWidgetId: Int) {
         Timber.d("Calling widget action")
 
         // Set up progress bar as immediate feedback to show the click has been received
@@ -289,84 +293,82 @@ class ButtonWidget : AppWidgetProvider() {
         loadingViews.setViewVisibility(R.id.widgetImageButtonLayout, View.GONE)
         appWidgetManager.partiallyUpdateAppWidget(appWidgetId, loadingViews)
 
-        mainScope.launch {
-            val widget = buttonWidgetDao.get(appWidgetId)
-            // Set default feedback as negative
-            var feedbackColor = R.drawable.widget_button_background_red
-            var feedbackIcon = R.drawable.ic_clear_black
+        val widget = buttonWidgetDao.get(appWidgetId)
+        // Set default feedback as negative
+        var feedbackColor = R.drawable.widget_button_background_red
+        var feedbackIcon = R.drawable.ic_clear_black
 
-            // Load the action call data from Shared Preferences
-            val domain = widget?.domain
-            val action = widget?.service
-            val actionDataJson = widget?.serviceData
+        // Load the action call data from Shared Preferences
+        val domain = widget?.domain
+        val action = widget?.service
+        val actionDataJson = widget?.serviceData
 
-            Timber.d(
-                "Action Call Data loaded:" + System.lineSeparator() +
-                    "domain: " + domain + System.lineSeparator() +
-                    "action: " + action + System.lineSeparator() +
-                    "action_data: " + actionDataJson,
-            )
+        Timber.d(
+            "Action Call Data loaded:" + System.lineSeparator() +
+                "domain: " + domain + System.lineSeparator() +
+                "action: " + action + System.lineSeparator() +
+                "action_data: " + actionDataJson,
+        )
 
-            if (domain == null || action == null || actionDataJson == null) {
-                Timber.w("Action Call Data incomplete.  Aborting action call")
-            } else {
-                // If everything loaded correctly, package the action data and attempt the call
-                try {
-                    // Convert JSON to HashMap
-                    val actionDataMap = kotlinJsonMapper.decodeFromString<Map<String, Any?>>(
-                        MapAnySerializer,
-                        actionDataJson,
-                    ).toMutableMap()
+        if (domain == null || action == null || actionDataJson == null) {
+            Timber.w("Action Call Data incomplete.  Aborting action call")
+        } else {
+            // If everything loaded correctly, package the action data and attempt the call
+            try {
+                // Convert JSON to HashMap
+                val actionDataMap = kotlinJsonMapper.decodeFromString<Map<String, Any?>>(
+                    MapAnySerializer,
+                    actionDataJson,
+                ).toMutableMap()
 
-                    if (actionDataMap["entity_id"] != null) {
-                        val entityIdWithoutBrackets = Pattern.compile("\\[(.*?)\\]")
-                            .matcher(actionDataMap["entity_id"].toString())
-                        if (entityIdWithoutBrackets.find()) {
-                            val value = entityIdWithoutBrackets.group(1)
-                            if (value != null) {
-                                if (value == "all" ||
-                                    value.split(",").contains("all")
-                                ) {
-                                    actionDataMap["entity_id"] = "all"
-                                }
+                if (actionDataMap["entity_id"] != null) {
+                    val entityIdWithoutBrackets = Pattern.compile("\\[(.*?)\\]")
+                        .matcher(actionDataMap["entity_id"].toString())
+                    if (entityIdWithoutBrackets.find()) {
+                        val value = entityIdWithoutBrackets.group(1)
+                        if (value != null) {
+                            if (value == "all" ||
+                                value.split(",").contains("all")
+                            ) {
+                                actionDataMap["entity_id"] = "all"
                             }
                         }
                     }
+                }
 
-                    Timber.d("Sending action call to Home Assistant")
-                    serverManager.integrationRepository(widget.serverId).callAction(domain, action, actionDataMap)
-                    Timber.d("Action call sent successfully")
+                Timber.d("Sending action call to Home Assistant")
+                serverManager.integrationRepository(widget.serverId).callAction(domain, action, actionDataMap)
+                Timber.d("Action call sent successfully")
 
-                    // If action call does not throw an exception, send positive feedback
-                    feedbackColor = R.drawable.widget_button_background_green
-                    feedbackIcon = R.drawable.ic_check_black_24dp
-                } catch (e: Exception) {
-                    Timber.e(e, "Could not send action call.")
+                // If action call does not throw an exception, send positive feedback
+                feedbackColor = R.drawable.widget_button_background_green
+                feedbackIcon = R.drawable.ic_check_black_24dp
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Could not send action call.")
+                withContext(Dispatchers.Main) {
                     Toast.makeText(context, commonR.string.action_failure, Toast.LENGTH_LONG).show()
                 }
             }
-
-            // Update widget and set visibilities for feedback
-            val feedbackViews = RemoteViews(context.packageName, R.layout.widget_button)
-            feedbackViews.setInt(R.id.widgetLayout, "setBackgroundResource", feedbackColor)
-            feedbackViews.setImageViewResource(R.id.widgetImageButton, feedbackIcon)
-            feedbackViews.setViewVisibility(R.id.widgetProgressBar, View.INVISIBLE)
-            feedbackViews.setViewVisibility(R.id.widgetLabelLayout, View.GONE)
-            feedbackViews.setViewVisibility(R.id.widgetImageButtonLayout, View.VISIBLE)
-            appWidgetManager.partiallyUpdateAppWidget(appWidgetId, feedbackViews)
-
-            // Reload default views in the coroutine to pass to the post handler
-            val views = getWidgetRemoteViews(context, appWidgetId)
-
-            // Set a timer to change it back after 1 second
-            Handler(Looper.getMainLooper()).postDelayed(
-                {
-                    setLabelVisibility(views, widget)
-                    setWidgetBackground(views, widget)
-                    appWidgetManager.updateAppWidget(appWidgetId, views)
-                },
-                1000,
-            )
         }
+
+        // Update widget and set visibilities for feedback
+        val feedbackViews = RemoteViews(context.packageName, R.layout.widget_button)
+        feedbackViews.setInt(R.id.widgetLayout, "setBackgroundResource", feedbackColor)
+        feedbackViews.setImageViewResource(R.id.widgetImageButton, feedbackIcon)
+        feedbackViews.setViewVisibility(R.id.widgetProgressBar, View.INVISIBLE)
+        feedbackViews.setViewVisibility(R.id.widgetLabelLayout, View.GONE)
+        feedbackViews.setViewVisibility(R.id.widgetImageButtonLayout, View.VISIBLE)
+        appWidgetManager.partiallyUpdateAppWidget(appWidgetId, feedbackViews)
+
+        // Reload default views in the coroutine to pass to the post handler
+        val views = getWidgetRemoteViews(context, appWidgetId)
+
+        // Set a timer to change it back after 1 second
+        delay(1.seconds)
+        setLabelVisibility(views, widget)
+        setWidgetBackground(views, widget)
+        appWidgetManager.updateAppWidget(appWidgetId, views)
     }
 }
