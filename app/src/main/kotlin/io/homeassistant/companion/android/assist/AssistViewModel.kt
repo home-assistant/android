@@ -172,13 +172,19 @@ class AssistViewModel @Inject constructor(
 
     private suspend fun checkSupport(): Boolean? {
         if (!serverManager.isRegistered()) return false
-        if (!serverManager.integrationRepository(
-                selectedServerId,
-            ).isHomeAssistantVersionAtLeast(2023, 5, 0)
-        ) {
-            return false
+        return try {
+            if (!serverManager.integrationRepository(
+                    selectedServerId,
+                ).isHomeAssistantVersionAtLeast(2023, 5, 0)
+            ) {
+                false
+            } else {
+                serverManager.webSocketRepository(selectedServerId).getConfig()?.components?.contains("assist_pipeline")
+            }
+        } catch (e: IllegalStateException) {
+            Timber.e(e, "Failed to check support")
+            false
         }
-        return serverManager.webSocketRepository(selectedServerId).getConfig()?.components?.contains("assist_pipeline")
     }
 
     private suspend fun loadPipelines() {

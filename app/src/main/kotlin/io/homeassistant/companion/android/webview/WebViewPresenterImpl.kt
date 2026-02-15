@@ -169,7 +169,7 @@ class WebViewPresenterImpl @Inject constructor(
     private suspend fun isSessionConnected(): Boolean {
         return try {
             serverManager.authenticationRepository(serverId).getSessionState() != SessionState.ANONYMOUS
-        } catch (e: IllegalArgumentException) {
+        } catch (e: IllegalStateException) {
             Timber.w(e, "Unable to get server session state, not continuing")
             false
         }
@@ -253,9 +253,13 @@ class WebViewPresenterImpl @Inject constructor(
 
     override suspend fun setActiveServer(id: Int) {
         serverManager.getServer(id)?.let {
-            if (serverManager.authenticationRepository(id).getSessionState() == SessionState.CONNECTED) {
-                serverManager.activateServer(id)
-                serverId = id
+            try {
+                if (serverManager.authenticationRepository(id).getSessionState() == SessionState.CONNECTED) {
+                    serverManager.activateServer(id)
+                    serverId = id
+                }
+            } catch (e: IllegalStateException) {
+                Timber.e(e, "Failed to set active server")
             }
         }
     }
@@ -399,7 +403,7 @@ class WebViewPresenterImpl @Inject constructor(
     override suspend fun isAppLocked(): Boolean = if (serverManager.isRegistered()) {
         try {
             serverManager.integrationRepository(serverId).isAppLocked()
-        } catch (e: IllegalArgumentException) {
+        } catch (e: IllegalStateException) {
             Timber.w(e, "Cannot determine app locked state")
             false
         }
@@ -458,7 +462,12 @@ class WebViewPresenterImpl @Inject constructor(
 
     override suspend fun getAuthorizationHeader(): String {
         return serverManager.getServer(serverId)?.let {
-            serverManager.authenticationRepository(serverId).buildBearerToken()
+            try {
+                serverManager.authenticationRepository(serverId).buildBearerToken()
+            } catch (e: IllegalStateException) {
+                Timber.e(e, "Failed to build bearer token")
+                ""
+            }
         } ?: ""
     }
 
