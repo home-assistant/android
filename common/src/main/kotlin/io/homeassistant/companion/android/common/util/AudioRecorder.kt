@@ -1,11 +1,13 @@
 package io.homeassistant.companion.android.common.util
 
 import android.annotation.SuppressLint
+import android.media.AudioDeviceInfo
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioManager.OnAudioFocusChangeListener
 import android.media.AudioRecord
 import android.media.MediaRecorder.AudioSource
+import android.os.Build
 import androidx.media.AudioAttributesCompat
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
@@ -20,16 +22,29 @@ import kotlinx.coroutines.launch
 
 /**
  * Wrapper around [AudioRecord] providing pre-configured audio recording functionality.
+ *
+ * This recorder handles Bluetooth SCO (Synchronous Connection Oriented) audio routing when a
+ * Bluetooth headset with microphone is available. When Bluetooth SCO is active:
+ * - Audio source is set to [AudioSource.VOICE_COMMUNICATION] for optimal voice quality
+ * - Sample rate is adjusted to 8kHz as required by Android's Bluetooth SCO restrictions
+ * - The VOICE_COMMUNICATION source provides echo cancellation and automatic gain control
+ *
+ * Note: Bluetooth SCO connection is asynchronous. The system may take several seconds to
+ * establish the connection. Applications should register for ACTION_SCO_AUDIO_STATE_UPDATED
+ * to be notified when the connection is ready (SCO_AUDIO_STATE_CONNECTED).
  */
 class AudioRecorder(private val audioManager: AudioManager?) {
 
     companion object {
+        // Standard sample rate for regular audio recording
         // Docs: 'currently the only rate that is guaranteed to work on all devices'
         const val SAMPLE_RATE = 44100
+        
+        // Sample rate for Bluetooth SCO - required by Android for SCO connections
+        const val BLUETOOTH_SAMPLE_RATE = 8000
 
         // Docs: only format '[g]uaranteed to be supported by devices'
         private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
-
         private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
     }
 
@@ -37,6 +52,8 @@ class AudioRecorder(private val audioManager: AudioManager?) {
 
     private var recorder: AudioRecord? = null
     private var recorderJob: Job? = null
+    private var scoStarted = false
+    private var currentSampleRate = SAMPLE_RATE
 
     private val _audioBytes = MutableSharedFlow<ByteArray>(
         extraBufferCapacity = 10,
@@ -48,12 +65,14 @@ class AudioRecorder(private val audioManager: AudioManager?) {
 
     private var focusRequest: AudioFocusRequestCompat? = null
     private val focusListener = OnAudioFocusChangeListener { /* Not used */ }
-    private var scoStarted = false
 
     /**
      * Determine the appropriate audio source based on connected devices.
      * Returns VOICE_COMMUNICATION when Bluetooth SCO is available off-call,
      * otherwise returns MIC.
+     *
+     * VOICE_COMMUNICATION source is tuned for voice communications such as VoIP and provides
+     * benefits like echo cancellation and automatic gain control.
      */
     private fun getAudioSource(): Int {
         if (audioManager == null) {
@@ -61,11 +80,28 @@ class AudioRecorder(private val audioManager: AudioManager?) {
         }
 
         // Check if Bluetooth SCO is available
-        return if (audioManager.isBluetoothScoAvailableOffCall()) {
-            // Use VOICE_COMMUNICATION which is the standard for Bluetooth audio
+        return if (audioManager.isBluetoothScoAvailableOffCall) {
             AudioSource.VOICE_COMMUNICATION
         } else {
             AudioSource.MIC
+        }
+    }
+
+    /**
+     * Get the appropriate sample rate based on audio configuration.
+     * Returns 8kHz for Bluetooth SCO (required by Android restrictions),
+     * otherwise returns standard 44.1kHz.
+     *
+     * Bluetooth SCO restrictions:
+     * - Format must be mono
+     * - Sampling must be 8kHz or 16kHz for input streams
+     * Using 44100Hz with Bluetooth SCO can result in unexpected behavior.
+     */
+    private fun getSampleRate(): Int {
+        return if (audioManager?.isBluetoothScoAvailableOffCall == true) {
+            BLUETOOTH_SAMPLE_RATE
+        } else {
+            SAMPLE_RATE
         }
     }
 
@@ -121,8 +157,9 @@ class AudioRecorder(private val audioManager: AudioManager?) {
         if (recorder != null) stopRecording()
 
         val audioSource = getAudioSource()
+        currentSampleRate = getSampleRate()
         val bufferSize = minBufferSize() * 10
-        recorder = AudioRecord(audioSource, SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT, bufferSize)
+        recorder = AudioRecord(audioSource, currentSampleRate, CHANNEL_CONFIG, AUDIO_FORMAT, bufferSize)
     }
 
     private fun releaseRecorder() {
@@ -130,17 +167,32 @@ class AudioRecorder(private val audioManager: AudioManager?) {
         recorder = null
     }
 
-    private fun minBufferSize() = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT)
+    private fun minBufferSize() = AudioRecord.getMinBufferSize(currentSampleRate, CHANNEL_CONFIG, AUDIO_FORMAT)
 
     private fun requestFocus() {
         if (audioManager == null) return
-        
+
         // Enable Bluetooth SCO if available
-        if (audioManager.isBluetoothScoAvailableOffCall()) {
-            audioManager.startBluetoothSco()
-            scoStarted = true
+        // Note: SCO connection is asynchronous and may take several seconds
+        if (audioManager.isBluetoothScoAvailableOffCall) {
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    // Modern API (Android 12+)
+                    audioManager.setCommunicationDevice(
+                        audioManager.availableCommunicationDevices
+                            .firstOrNull { it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO }
+                    )
+                } else {
+                    // Fallback for older versions
+                    audioManager.startBluetoothSco()
+                }
+                scoStarted = true
+            } catch (e: Exception) {
+                // Log but continue if SCO fails
+                scoStarted = false
+            }
         }
-        
+
         if (focusRequest == null) {
             focusRequest = AudioFocusRequestCompat.Builder(AudioManagerCompat.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE).run {
                 setAudioAttributes(
@@ -166,13 +218,23 @@ class AudioRecorder(private val audioManager: AudioManager?) {
 
     private fun abandonFocus() {
         if (audioManager == null) return
-        
+
         // Disable Bluetooth SCO only if this instance started it
         if (scoStarted) {
-            audioManager.stopBluetoothSco()
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    // Modern API (Android 12+)
+                    audioManager.clearCommunicationDevice()
+                } else {
+                    // Fallback for older versions
+                    audioManager.stopBluetoothSco()
+                }
+            } catch (e: Exception) {
+                // Log but continue if SCO stop fails
+            }
             scoStarted = false
         }
-        
+
         if (focusRequest != null) {
             AudioManagerCompat.abandonAudioFocusRequest(audioManager, focusRequest!!)
         }
