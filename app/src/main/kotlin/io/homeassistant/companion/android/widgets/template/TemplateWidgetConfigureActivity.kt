@@ -1,244 +1,350 @@
 package io.homeassistant.companion.android.widgets.template
 
+import android.annotation.SuppressLint
+import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
+import android.content.ComponentName
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.view.View
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
-import android.widget.Spinner
-import androidx.core.content.ContextCompat
-import androidx.core.graphics.toColorInt
-import androidx.core.text.HtmlCompat
-import androidx.core.view.isVisible
-import androidx.core.widget.doAfterTextChanged
+import android.widget.Toast
+import androidx.activity.compose.setContent
+import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.Button
+import androidx.compose.material.Scaffold
+import androidx.compose.material.Text
+import androidx.compose.material.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
+import io.homeassistant.companion.android.common.compose.composable.HATextField
+import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
-import io.homeassistant.companion.android.databinding.WidgetTemplateConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
-import io.homeassistant.companion.android.util.applySafeDrawingInsets
+import io.homeassistant.companion.android.util.compose.ExposedDropdownMenu
+import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
+import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
+import io.homeassistant.companion.android.util.compose.WidgetBackgroundTypeExposedDropdownMenu
+import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
 import io.homeassistant.companion.android.util.getHexForColor
-import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
-import io.homeassistant.companion.android.widgets.common.WidgetUtils
-import kotlinx.coroutines.Dispatchers
+import io.homeassistant.companion.android.util.previewServer1
+import io.homeassistant.companion.android.util.previewServer2
+import io.homeassistant.companion.android.util.safeBottomWindowInsets
+import io.homeassistant.companion.android.util.safeTopWindowInsets
+import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
+import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.UPDATE_WIDGETS
+import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlinx.serialization.SerializationException
-import timber.log.Timber
 
-// TODO Migrate to compose https://github.com/home-assistant/android/issues/6304
 @AndroidEntryPoint
-class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity<TemplateWidgetEntity, TemplateWidgetDao>() {
-    private lateinit var binding: WidgetTemplateConfigureBinding
+class TemplateWidgetConfigureActivity : BaseActivity() {
 
-    override val serverSelect: View
-        get() = binding.serverSelect
+    private val viewModel: TemplateWidgetConfigureViewModel by viewModels()
 
-    override val serverSelectList: Spinner
-        get() = binding.serverSelectList
+    private val supportedTextColors: List<String>
+        get() = listOf(
+            application.getHexForColor(commonR.color.colorWidgetButtonLabelBlack),
+            application.getHexForColor(android.R.color.white),
+        )
 
-    private var requestLauncherSetup = false
-
-    public override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdgeCompat()
         super.onCreate(savedInstanceState)
 
         // Set the result to CANCELED.  This will cause the widget host to cancel
         // out of the widget placement if the user presses the back button.
         setResult(RESULT_CANCELED)
 
-        binding = WidgetTemplateConfigureBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        binding.root.applySafeDrawingInsets()
-
-        // Find the widget id from the intent.
-        val intent = intent
         val extras = intent.extras
-        if (extras != null) {
-            appWidgetId = extras.getInt(
-                AppWidgetManager.EXTRA_APPWIDGET_ID,
-                AppWidgetManager.INVALID_APPWIDGET_ID,
-            )
-            requestLauncherSetup = extras.getBoolean(
-                ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER,
-                false,
-            )
-        }
+        val widgetId = extras?.getInt(
+            AppWidgetManager.EXTRA_APPWIDGET_ID,
+            AppWidgetManager.INVALID_APPWIDGET_ID,
+        ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
 
-        // If this activity was started with an intent without an app widget ID, finish with an error.
-        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID && !requestLauncherSetup) {
+        val requestLauncherSetup = extras?.getBoolean(
+            ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER,
+            false,
+        ) ?: false
+
+        if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID && !requestLauncherSetup) {
             finish()
             return
         }
 
-        val backgroundTypeValues = WidgetUtils.getBackgroundOptionList(this)
-        binding.backgroundType.adapter =
-            ArrayAdapter(
-                this,
-                android.R.layout.simple_spinner_dropdown_item,
-                backgroundTypeValues,
-            )
+        viewModel.onSetup(widgetId = widgetId, supportedTextColors = supportedTextColors)
 
-        lifecycleScope.launch {
-            val templateWidget = dao.get(appWidgetId)
+        observeActions()
 
-            if (templateWidget?.serverId != null) {
-                // Set server ID early for template rendering
-                selectedServerId = templateWidget.serverId
-            }
-            setupServerSelect(templateWidget?.serverId)
-
-            if (templateWidget != null) {
-                binding.templateText.setText(templateWidget.template)
-                binding.textSize.setText(templateWidget.textSize.toInt().toString())
-                binding.addButton.setText(commonR.string.update_widget)
-                if (templateWidget.template.isNotEmpty()) {
-                    renderTemplateText(templateWidget.template)
-                } else {
-                    binding.renderedTemplate.text = getString(commonR.string.empty_template)
-                    binding.addButton.isEnabled = false
-                }
-                binding.backgroundType.setSelection(
-                    WidgetUtils.getSelectedBackgroundOption(
-                        this@TemplateWidgetConfigureActivity,
-                        templateWidget.backgroundType,
-                        backgroundTypeValues,
-                    ),
+        setContent {
+            HomeAssistantAppTheme {
+                TemplateWidgetConfigureScreen(
+                    viewModel = viewModel,
+                    onActionClick = { onActionClick(requestLauncherSetup) },
                 )
-                binding.textColor.isVisible = templateWidget.backgroundType == WidgetBackgroundType.TRANSPARENT
-                binding.textColorWhite.isChecked =
-                    templateWidget.textColor?.let {
-                        it.toColorInt() == ContextCompat.getColor(
-                            this@TemplateWidgetConfigureActivity,
-                            android.R.color.white,
-                        )
-                    }
-                        ?: true
-                binding.textColorBlack.isChecked =
-                    templateWidget.textColor?.let {
-                        it.toColorInt() ==
-                            ContextCompat.getColor(
-                                this@TemplateWidgetConfigureActivity,
-                                commonR.color.colorWidgetButtonLabelBlack,
-                            )
-                    }
-                        ?: false
-            } else {
-                binding.backgroundType.setSelection(0)
-            }
-        }
-
-        binding.templateText.doAfterTextChanged { renderTemplateText() }
-
-        binding.backgroundType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                binding.textColor.isVisible =
-                    parent?.adapter?.getItem(position) == getString(commonR.string.widget_background_type_transparent)
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-                binding.textColor.visibility = View.GONE
-            }
-        }
-
-        binding.addButton.setOnClickListener {
-            if (requestLauncherSetup) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    lifecycleScope.launch {
-                        requestWidgetCreation()
-                    }
-                } else {
-                    showAddWidgetError() // this shouldn't be possible
-                }
-            } else {
-                lifecycleScope.launch {
-                    updateWidget()
-                }
             }
         }
     }
 
-    override fun onServerSelected(serverId: Int) = renderTemplateText()
+    private fun observeActions() = viewModel.action.onEach(::handleActions).launchIn(lifecycleScope)
 
-    override suspend fun getPendingDaoEntity(): TemplateWidgetEntity {
-        val serverId = checkNotNull(selectedServerId) { "Selected server ID is null" }
-        val template = checkNotNull(binding.templateText.text?.toString()) { "Template text is null" }
+    private fun handleActions(action: Action) {
+        when (action) {
+            is Action.RequestWidgetCreationAction -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    handleRequestWidgetCreationAction(action.pendingEntity)
+                }
+            }
 
-        return TemplateWidgetEntity(
-            id = appWidgetId,
-            serverId = serverId,
-            template = template,
-            textSize = binding.textSize.text.toString().toFloat(),
-            backgroundType = when (binding.backgroundType.selectedItem as String?) {
-                getString(commonR.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR
-                getString(commonR.string.widget_background_type_transparent) -> WidgetBackgroundType.TRANSPARENT
-                else -> WidgetBackgroundType.DAYNIGHT
-            },
-            textColor = if (binding.backgroundType.selectedItem as String? ==
-                getString(commonR.string.widget_background_type_transparent)
-            ) {
-                getHexForColor(
-                    if (binding.textColorWhite.isChecked) {
-                        android.R.color.white
-                    } else {
-                        commonR.color.colorWidgetButtonLabelBlack
-                    },
-                )
-            } else {
-                null
-            },
-            lastUpdate = dao.get(appWidgetId)?.lastUpdate ?: "Loading",
+            Action.UpdateWidgetAction -> handleUpdateWidgetAction()
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun handleRequestWidgetCreationAction(pendingEntity: TemplateWidgetEntity) {
+        val appWidgetManager = getSystemService(AppWidgetManager::class.java)
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT
+        } else {
+            PendingIntent.FLAG_MUTABLE
+        }
+        appWidgetManager?.requestPinAppWidget(
+            ComponentName(this, TemplateWidget::class.java),
+            null,
+            PendingIntent.getBroadcast(
+                this,
+                System.currentTimeMillis().toInt(),
+                Intent(this, TemplateWidget::class.java).apply {
+                    action = ACTION_APPWIDGET_CREATED
+                    putExtra(EXTRA_WIDGET_ENTITY, pendingEntity)
+                },
+                flags,
+            ),
         )
     }
 
-    override val widgetClass: Class<*> = TemplateWidget::class.java
+    private fun handleUpdateWidgetAction() {
+        val intent = Intent(this, TemplateWidget::class.java)
+        intent.action = UPDATE_WIDGETS
+        sendBroadcast(intent)
+    }
 
-    private fun renderTemplateText() {
-        val editableText = binding.templateText.text ?: return
-        if (editableText.isNotEmpty()) {
-            renderTemplateText(editableText.toString())
-        } else {
-            binding.renderedTemplate.text = getString(commonR.string.empty_template)
-            binding.addButton.isEnabled = false
+    @SuppressLint("ObsoleteSdkInt")
+    private fun onActionClick(requestLauncherSetup: Boolean) {
+        lifecycleScope.launch {
+            if (requestLauncherSetup) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    requestPinWidget()
+                } else {
+                    showAddWidgetError()
+                }
+            } else {
+                onUpdateWidget()
+            }
         }
     }
 
-    private fun renderTemplateText(template: String) {
-        val serverId = selectedServerId
-        if (serverId == null) {
-            Timber.w("Not rendering template because server is not set")
-            return
+    @RequiresApi(Build.VERSION_CODES.O)
+    private suspend fun requestPinWidget() {
+        try {
+            viewModel.requestWidgetCreation()
+            finish()
+        } catch (_: IllegalStateException) {
+            showAddWidgetError()
         }
+    }
 
-        lifecycleScope.launch {
-            var templateText: String?
-            var enabled: Boolean
-            withContext(Dispatchers.IO) {
-                try {
-                    templateText =
-                        serverManager.integrationRepository(serverId)
-                            .renderTemplate(template, mapOf())
-                            .toString()
-                    enabled = true
-                } catch (e: Exception) {
-                    Timber.e(e, "Exception while rendering template")
-                    // SerializationException suggests that template is not a String (= error)
-                    templateText = getString(
-                        if (e.cause is SerializationException) {
-                            commonR.string.template_error
-                        } else {
-                            commonR.string.template_render_error
-                        },
-                    )
-                    enabled = false
-                }
-            }
-            binding.renderedTemplate.text =
-                templateText?.let { HtmlCompat.fromHtml(it, HtmlCompat.FROM_HTML_MODE_LEGACY) }
-            binding.addButton.isEnabled = enabled && isValidServerId()
+    private suspend fun onUpdateWidget() {
+        try {
+            viewModel.updateWidgetConfiguration()
+            setResult(RESULT_OK)
+            finish()
+        } catch (_: IllegalStateException) {
+            showAddWidgetError()
         }
+    }
+
+    private fun showAddWidgetError() {
+        Toast.makeText(applicationContext, commonR.string.widget_creation_error, Toast.LENGTH_LONG).show()
+    }
+}
+
+@Composable
+private fun TemplateWidgetConfigureScreen(
+    viewModel: TemplateWidgetConfigureViewModel,
+    onActionClick: () -> Unit,
+) {
+    val servers by viewModel.servers.collectAsStateWithLifecycle(emptyList())
+
+    TemplateWidgetConfigureView(
+        servers = servers,
+        selectedServerId = viewModel.selectedServerId,
+        onServerSelected = viewModel::setServer,
+        templateText = viewModel.templateText,
+        onTemplateTextChanged = { viewModel.templateText = it },
+        renderedTemplate = viewModel.renderedTemplate,
+        isTemplateValid = viewModel.isTemplateValid,
+        textSize = viewModel.textSize,
+        onTextSizeChanged = { viewModel.textSize = it },
+        selectedBackgroundType = viewModel.selectedBackgroundType,
+        onBackgroundTypeSelected = { viewModel.selectedBackgroundType = it },
+        textColorIndex = viewModel.textColorIndex,
+        onTextColorSelected = { viewModel.textColorIndex = it },
+        isUpdateWidget = viewModel.isUpdateWidget,
+        onActionClick = onActionClick,
+    )
+}
+
+@Suppress("ComposeUnstableCollections") // Matches ServerExposedDropdownMenu signature; same as TodoWidgetConfigureActivity
+@Composable
+private fun TemplateWidgetConfigureView(
+    servers: List<Server>,
+    selectedServerId: Int,
+    onServerSelected: (Int) -> Unit,
+    templateText: String,
+    onTemplateTextChanged: (String) -> Unit,
+    renderedTemplate: String?,
+    isTemplateValid: Boolean,
+    textSize: String,
+    onTextSizeChanged: (String) -> Unit,
+    selectedBackgroundType: WidgetBackgroundType,
+    onBackgroundTypeSelected: (WidgetBackgroundType) -> Unit,
+    textColorIndex: Int,
+    onTextColorSelected: (Int) -> Unit,
+    isUpdateWidget: Boolean,
+    onActionClick: () -> Unit,
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(commonR.string.create_template)) },
+                windowInsets = safeTopWindowInsets(),
+                backgroundColor = colorResource(commonR.color.colorBackground),
+                contentColor = colorResource(commonR.color.colorOnBackground),
+            )
+        },
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .windowInsetsPadding(safeBottomWindowInsets())
+                .padding(padding)
+                .padding(all = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            if (servers.size > 1) {
+                ServerExposedDropdownMenu(
+                    servers = servers,
+                    current = selectedServerId,
+                    onSelected = { onServerSelected(it) },
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+            }
+
+            HATextField(
+                value = templateText,
+                onValueChange = onTemplateTextChanged,
+                placeholder = { Text(stringResource(commonR.string.template_widget_default)) },
+                modifier = Modifier.fillMaxWidth(),
+                maxLines = Int.MAX_VALUE,
+                singleLine = false,
+            )
+
+            if (renderedTemplate != null) {
+                Text(
+                    text = renderedTemplate,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                )
+            } else if (templateText.isEmpty()) {
+                Text(
+                    text = stringResource(commonR.string.empty_template),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                )
+            }
+
+            HATextField(
+                value = textSize,
+                onValueChange = onTextSizeChanged,
+                label = { Text(stringResource(commonR.string.widget_text_size_label)) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+            )
+
+            WidgetBackgroundTypeExposedDropdownMenu(
+                current = selectedBackgroundType,
+                onSelected = { onBackgroundTypeSelected(it) },
+            )
+
+            AnimatedVisibility(visible = selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
+                ExposedDropdownMenu(
+                    label = stringResource(commonR.string.widget_text_color_label),
+                    keys = listOf(
+                        stringResource(commonR.string.widget_text_color_black),
+                        stringResource(commonR.string.widget_text_color_white),
+                    ),
+                    currentIndex = textColorIndex,
+                    onSelected = { onTextColorSelected(it) },
+                )
+            }
+
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onActionClick,
+                enabled = isTemplateValid,
+            ) {
+                Text(stringResource(if (isUpdateWidget) commonR.string.update_widget else commonR.string.add_widget))
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun TemplateWidgetConfigureViewPreview() {
+    HomeAssistantAppTheme {
+        TemplateWidgetConfigureView(
+            servers = listOf(previewServer1, previewServer2),
+            selectedServerId = 0,
+            onServerSelected = {},
+            templateText = "Hello world",
+            renderedTemplate = "Hello world",
+            isTemplateValid = true,
+            textSize = "14",
+            onTextSizeChanged = {},
+            selectedBackgroundType = WidgetBackgroundType.DAYNIGHT,
+            onBackgroundTypeSelected = {},
+            textColorIndex = 0,
+            onTextColorSelected = {},
+            isUpdateWidget = false,
+            onActionClick = {},
+            onTemplateTextChanged = {},
+        )
     }
 }
