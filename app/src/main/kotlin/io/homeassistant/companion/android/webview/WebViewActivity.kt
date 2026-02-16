@@ -1424,19 +1424,15 @@ class WebViewActivity :
         if (hasFocus && !isFinishing) {
             lifecycleScope.launch {
                 unlockAppIfNeeded()
-
-                if (presenter.isFullScreen() || isVideoFullScreen) {
-                    hideSystemUI()
-                } else {
-                    showSystemUI()
-                }
-
-                var path = intent.getStringExtra(EXTRA_PATH)
-                if (path?.startsWith("entityId:") == true) {
-                    // Get the entity ID from a string formatted "entityId:domain.entity"
-                    // https://github.com/home-assistant/core/blob/dev/homeassistant/core.py#L159
+                val intentPath = intent.getStringExtra(EXTRA_PATH)
+                // When no explicit navigation path is set (e.g. from a notification),
+                // preserve the current WebView path so the user's dashboard view
+                // survives internal/external URL switches. See #4983.
+                var path = intentPath ?: getCurrentWebViewPath()
+                if (intentPath?.startsWith("entityId:") == true) {
+                    moreInfoEntity = intentPath.substringAfter("entityId:")
                     val pattern = "(?<=^entityId:)((?!.+__)(?!_)[\\da-z_]+(?<!_)\\.(?!_)[\\da-z_]+(?<!_)$)".toRegex()
-                    val entity = pattern.find(path)?.value ?: ""
+                    val entity = pattern.find(intentPath)?.value ?: ""
                     if (
                         entity.isNotBlank() &&
                         serverManager.getServer(presenter.getActiveServer())?.version?.isAtLeast(2025, 6, 0) == true
@@ -1446,9 +1442,25 @@ class WebViewActivity :
                         moreInfoEntity = entity
                     }
                 }
-                intent.removeExtra(EXTRA_PATH)
                 presenter.load(lifecycle, path, isInternalOverride)
+                intent.removeExtra(EXTRA_PATH)
+
+                if (presenter.isFullScreen() || isVideoFullScreen) {
+                    hideSystemUI()
+                } else {
+                    showSystemUI()
+                }
             }
+        }
+    }
+
+    override fun getCurrentWebViewPath(): String? {
+        val currentUrl = webView.url ?: return null
+        return try {
+            val path = currentUrl.toUri().path
+            if (path.isNullOrEmpty() || path == "/") null else path
+        } catch (e: Exception) {
+            null
         }
     }
 
