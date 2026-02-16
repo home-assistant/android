@@ -135,13 +135,18 @@ class WebViewPresenterImpl @Inject constructor(
         }
 
         serverManager.connectionStateProvider(serverId).urlFlow(isInternalOverride).collect { urlState ->
-            val shouldConsumePath = !pathConsumed && path != null
-            if (shouldConsumePath) pathConsumed = true
+            val effectivePath = if (!pathConsumed && path != null) {
+                pathConsumed = true
+                path
+            } else {
+                // On internal/external URL switches, preserve the current WebView path
+                withContext(Dispatchers.Main) { view.getCurrentWebViewPath() }
+            }
 
             handleUrlState(
                 urlState = urlState,
-                path = path,
-                shouldConsumePath = shouldConsumePath,
+                path = effectivePath,
+                shouldConsumePath = effectivePath != null,
                 isNewServer = isNewServer,
             )
         }
