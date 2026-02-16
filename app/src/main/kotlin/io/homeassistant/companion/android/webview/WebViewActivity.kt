@@ -1453,7 +1453,7 @@ class WebViewActivity :
         }
     }
 
-    private fun getCurrentWebViewPath(): String? {
+    override fun getCurrentWebViewPath(): String? {
         val currentUrl = webView.url ?: return null
         return try {
             val path = currentUrl.toUri().path

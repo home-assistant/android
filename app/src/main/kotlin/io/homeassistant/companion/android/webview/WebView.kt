@@ -35,6 +35,9 @@ interface WebView {
      */
     fun loadUrl(url: Uri, keepHistory: Boolean, openInApp: Boolean, serverHandleInsets: Boolean)
 
+    /** Returns the path component of the currently loaded WebView URL, or `null` if unavailable. */
+    fun getCurrentWebViewPath(): String?
+
     fun setStatusBarAndBackgroundColor(statusBarColor: Int, backgroundColor: Int)
 
     fun setExternalAuth(script: String)
