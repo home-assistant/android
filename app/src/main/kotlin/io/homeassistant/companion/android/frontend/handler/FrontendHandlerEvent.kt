@@ -26,7 +26,7 @@ sealed interface FrontendHandlerEvent {
     data object ConfigSent : FrontendHandlerEvent
 
     /**
-     * User tapped the settings button in the frontend sidebar.
+     * User tapped the companion app settings button in the frontend.
      */
     data object OpenSettings : FrontendHandlerEvent
 
