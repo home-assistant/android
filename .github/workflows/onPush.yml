@@ -110,6 +110,10 @@ jobs:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: ./gradlew appDistributionUploadFullRelease
 
+      - name: Install Fastlane dependencies
+        if: github.event.inputs.beta == 'true'
+        run: bundle install
+
       - name: Prepare Amazon Listing
         if: github.event.inputs.beta == 'true'
         run: bundle exec fastlane prep_amazon
@@ -185,6 +189,9 @@ jobs:
         with:
           name: release-aabs
           path: ./**/*.aab
+
+      - name: Install Fastlane dependencies
+        run: bundle install
 
       - name: Deploy to Playstore Internal
         run: bundle exec fastlane deploy_internal

@@ -33,5 +33,8 @@ jobs:
           firebase-creds: ${{ secrets.FIREBASECREDS }}
           playstore-creds: ${{ secrets.PLAYSTORECREDS }}
 
+      - name: Install Fastlane dependencies
+        run: bundle install
+
       - name: Promote Beta to Production Play Store
         run: bundle exec fastlane promote_to_production
