@@ -1500,7 +1500,7 @@ class WebViewActivity :
 
     override fun loadUrl(url: Uri, keepHistory: Boolean, openInApp: Boolean, serverHandleInsets: Boolean) {
         Timber.d(
-            "Loading $url (keepHistory $keepHistory, openInApp $openInApp, serverHandleInsets $serverHandleInsets)",
+            "Loading ${if (BuildConfig.DEBUG) url else "HIDDEN"} (keepHistory $keepHistory, openInApp $openInApp, serverHandleInsets $serverHandleInsets)",
         )
         this.serverHandleInsets.value = serverHandleInsets
         if (openInApp) {
@@ -1878,7 +1878,7 @@ class WebViewActivity :
         if (supportFragmentManager.backStackEntryCount > 0) {
             Timber.i("Fragments ${supportFragmentManager.fragments} displayed, skipping connection wait")
         } else {
-            Timber.d("Waiting for loadedUrl $loadedUrl")
+            Timber.d("Waiting for loadedUrl ${if (BuildConfig.DEBUG) loadedUrl else "HIDDEN"}")
             Handler(Looper.getMainLooper()).postDelayed(
                 {
                     val firstSegment = loadedUrl?.pathSegments?.firstOrNull().orEmpty()
