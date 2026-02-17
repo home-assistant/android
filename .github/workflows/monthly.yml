@@ -23,6 +23,7 @@ jobs:
       - name: Bump Calendar Version
         uses: rickstaa/action-create-tag@a1c7777fcb2fee4f19b0f283ba888afa11678b72 # v1.7.2
         with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ steps.current-time.outputs.year }}.${{ steps.current-time.outputs.month }}.0
 
       - name: Trigger Prepare Next Release
