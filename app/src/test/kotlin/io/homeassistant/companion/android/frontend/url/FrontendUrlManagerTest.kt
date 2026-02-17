@@ -230,7 +230,7 @@ class FrontendUrlManagerTest {
     }
 
     @Test
-    fun `Given security level already shown when serverUrlFlow then returns Success`() = runTest {
+    fun `Given plain text URL with null allowInsecureConnection and security level already shown when serverUrlFlow then returns Success`() = runTest {
         val connection = ServerConnectionInfo(
             externalUrl = "http://home.example.com",
             allowInsecureConnection = null,

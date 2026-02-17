@@ -39,8 +39,8 @@ sealed interface UrlLoadResult {
      * to configure home network detection or proceed anyway.
      *
      * @property serverId The server ID with blocked insecure connection
-     * @property missingHomeSetup True if home network Wi-Fi SSID/BSSID is not configured
-     * @property missingLocation True if location permission is needed for home network detection
+     * @property missingHomeSetup `true` if home network Wi-Fi SSID/BSSID is not configured
+     * @property missingLocation `true` if location permission is needed for home network detection
      */
     data class InsecureBlocked(val serverId: Int, val missingHomeSetup: Boolean, val missingLocation: Boolean) :
         UrlLoadResult
