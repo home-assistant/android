@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.frontend.externalbus
 
-import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.frontend.externalbus.incoming.IncomingExternalBusMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.OutgoingExternalBusMessage
@@ -11,6 +10,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.plus
+import io.homeassistant.companion.android.util.sensitive
 import timber.log.Timber
 
 private const val BUFFER_CAPACITY = 10
@@ -49,7 +49,7 @@ class FrontendExternalBusRepositoryImpl @Inject constructor() : FrontendExternal
     override suspend fun send(message: OutgoingExternalBusMessage) {
         val json = frontendExternalBusJson.encodeToString(message)
         val script = "externalBus($json);"
-        Timber.d("Queuing external bus message: ${if (BuildConfig.DEBUG) script else "HIDDEN"}")
+        Timber.d("Queuing external bus message: ${sensitive(script)}")
         scriptsFlow.emit(WebViewScript(script))
     }
 
@@ -78,7 +78,7 @@ class FrontendExternalBusRepositoryImpl @Inject constructor() : FrontendExternal
         }.onFailure { error ->
             Timber.w(
                 error,
-                "Failed to deserialize external bus message: ${if (BuildConfig.DEBUG) json else "HIDDEN"}",
+                "Failed to deserialize external bus message: ${sensitive(json)}",
             )
         }.getOrNull()
     }
