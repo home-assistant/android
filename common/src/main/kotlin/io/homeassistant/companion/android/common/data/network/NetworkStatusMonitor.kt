@@ -1,18 +1,12 @@
 package io.homeassistant.companion.android.common.data.network
 
-import android.net.ConnectivityManager
-import android.net.Network
-import android.net.NetworkCapabilities
-import android.net.NetworkRequest
 import io.homeassistant.companion.android.common.data.servers.ServerConnectionStateProvider
 import io.homeassistant.companion.android.util.isPubliclyAccessible
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.mapLatest
 import timber.log.Timber
@@ -72,36 +66,13 @@ enum class NetworkState {
  */
 @Singleton
 internal class NetworkStatusMonitorImpl @Inject constructor(
-    private val connectivityManager: ConnectivityManager,
+    private val networkChangeObserver: NetworkChangeObserver,
     private val networkHelper: NetworkHelper,
 ) : NetworkStatusMonitor {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun observeNetworkStatus(connectionStateProvider: ServerConnectionStateProvider): Flow<NetworkState> =
-        callbackFlow {
-            val networkRequest = NetworkRequest.Builder().build()
-
-            val callback = object : ConnectivityManager.NetworkCallback() {
-                override fun onAvailable(network: Network) {
-                    trySend(Unit)
-                }
-
-                override fun onLost(network: Network) {
-                    trySend(Unit)
-                }
-
-                override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
-                    trySend(Unit)
-                }
-            }
-
-            connectivityManager.registerNetworkCallback(networkRequest, callback)
-            trySend(Unit) // Emit status at start
-
-            awaitClose {
-                connectivityManager.unregisterNetworkCallback(callback)
-            }
-        }.mapLatest {
+        networkChangeObserver.observerNetworkChange.mapLatest {
             getCurrentNetworkState(connectionStateProvider)
         }.distinctUntilChanged()
 

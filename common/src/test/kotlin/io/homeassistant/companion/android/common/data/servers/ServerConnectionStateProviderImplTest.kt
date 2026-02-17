@@ -4,8 +4,8 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.LocationManager
-import android.net.ConnectivityManager
 import androidx.core.content.ContextCompat
+import io.homeassistant.companion.android.common.data.network.NetworkChangeObserver
 import io.homeassistant.companion.android.common.data.network.NetworkHelper
 import io.homeassistant.companion.android.common.data.network.WifiHelper
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
@@ -44,7 +44,7 @@ class ServerConnectionStateProviderImplTest {
     private val networkHelper: NetworkHelper = mockk()
     private val serverManager: ServerManager = mockk()
     private val serverDao: ServerDao = mockk()
-    private val connectivityManager: ConnectivityManager = mockk(relaxed = true)
+    private val networkChangeObserver: NetworkChangeObserver = mockk(relaxed = true)
     private val locationManager: LocationManager = mockk()
 
     private val serverId = 1
@@ -107,7 +107,7 @@ class ServerConnectionStateProviderImplTest {
             serverDao = serverDao,
             wifiHelper = wifiHelper,
             networkHelper = networkHelper,
-            connectivityManager = connectivityManager,
+            networkChangeObserver = networkChangeObserver,
             serverId = serverId,
         )
     }
