@@ -8,7 +8,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
+import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.mockk.coEvery
 import io.mockk.coJustRun
 import io.mockk.every
@@ -17,15 +17,22 @@ import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.unmockkAll
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
-@ExtendWith(ConsoleLogExtension::class)
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [28]) // Build.VERSION_CODES.P
 class AudioSensorManagerTest {
+
+    @get:Rule
+    val consoleLogRule = ConsoleLogRule()
 
     private lateinit var sensorManager: AudioSensorManager
     private lateinit var context: Context
@@ -45,7 +52,7 @@ class AudioSensorManagerTest {
             stateType = "int",
         )
 
-    @BeforeEach
+    @Before
     fun setUp() {
         sensorManager = AudioSensorManager()
         context = mockk()
@@ -81,14 +88,14 @@ class AudioSensorManagerTest {
         coEvery { sensorDao.get(AudioSensorManager.volMusic.id) } returns listOf(volumeMusicSensor)
 
         every { audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) } returns 5
-        every { audioManager.getStreamMinVolume(AudioManager.STREAM_MUSIC) } returns 0
+        every { audioManager.getStreamMinVolume(AudioManager.STREAM_MUSIC) } returns 2
         every { audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) } returns 15
 
         coJustRun { sensorDao.update(any()) }
         coJustRun { sensorDao.replaceAllAttributes(any(), any()) }
     }
 
-    @AfterEach
+    @After
     fun tearDown() {
         unmockkAll()
     }
@@ -106,7 +113,7 @@ class AudioSensorManagerTest {
         assertNull(updatedSensor.captured.lastSentState)
         assertNull(updatedSensor.captured.lastSentIcon)
         assertEquals(
-            mapOf("min" to "0", "max" to "15"),
+            mapOf("min" to "2", "max" to "15"),
             updatedAttributes.captured.associate { it.name to it.value },
         )
     }
@@ -116,7 +123,7 @@ class AudioSensorManagerTest {
         val updatedSensor = slot<Sensor>()
         coEvery { sensorDao.getFull(AudioSensorManager.volMusic.id) } returns mapOf(
             volumeMusicSensor to listOf(
-                Attribute(AudioSensorManager.volMusic.id, "min", "0", "int"),
+                Attribute(AudioSensorManager.volMusic.id, "min", "2", "int"),
                 Attribute(AudioSensorManager.volMusic.id, "max", "10", "int"),
             ),
         )
@@ -133,7 +140,7 @@ class AudioSensorManagerTest {
         val updatedSensor = slot<Sensor>()
         coEvery { sensorDao.getFull(AudioSensorManager.volMusic.id) } returns mapOf(
             volumeMusicSensor to listOf(
-                Attribute(AudioSensorManager.volMusic.id, "min", "0", "int"),
+                Attribute(AudioSensorManager.volMusic.id, "min", "2", "int"),
                 Attribute(AudioSensorManager.volMusic.id, "max", "15", "int"),
             ),
         )
@@ -143,5 +150,36 @@ class AudioSensorManagerTest {
 
         assertEquals("5", updatedSensor.captured.lastSentState)
         assertEquals(AudioSensorManager.volMusic.statelessIcon, updatedSensor.captured.lastSentIcon)
+    }
+
+    @Test
+    @Config(sdk = [26]) // Build.VERSION_CODES.O
+    fun `Given SDK below P when requesting update then min defaults to 0`() = runTest {
+        val updatedAttributes = slot<List<Attribute>>()
+        coEvery { sensorDao.getFull(AudioSensorManager.volMusic.id) } returns mapOf(volumeMusicSensor to emptyList())
+        coJustRun { sensorDao.update(any()) }
+        coJustRun { sensorDao.replaceAllAttributes(AudioSensorManager.volMusic.id, capture(updatedAttributes)) }
+
+        sensorManager.requestSensorUpdate(context)
+
+        assertEquals(
+            mapOf("min" to "0", "max" to "15"),
+            updatedAttributes.captured.associate { it.name to it.value },
+        )
+    }
+
+    @Test
+    fun `Given SDK at or above P when requesting update then min comes from AudioManager`() = runTest {
+        val updatedAttributes = slot<List<Attribute>>()
+        coEvery { sensorDao.getFull(AudioSensorManager.volMusic.id) } returns mapOf(volumeMusicSensor to emptyList())
+        coJustRun { sensorDao.update(any()) }
+        coJustRun { sensorDao.replaceAllAttributes(AudioSensorManager.volMusic.id, capture(updatedAttributes)) }
+
+        sensorManager.requestSensorUpdate(context)
+
+        assertEquals(
+            mapOf("min" to "2", "max" to "15"),
+            updatedAttributes.captured.associate { it.name to it.value },
+        )
     }
 }

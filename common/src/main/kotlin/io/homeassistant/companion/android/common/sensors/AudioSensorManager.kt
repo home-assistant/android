@@ -6,12 +6,15 @@ import android.media.AudioManager
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
-import io.homeassistant.companion.android.database.sensor.toSensorWithAttributes
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import io.homeassistant.companion.android.database.sensor.toSensorsWithAttributes
+import java.util.concurrent.ConcurrentHashMap
 
 class AudioSensorManager : SensorManager {
+    private val sensorIdsWhereAttributesAreAlreadyForced: MutableSet<String> = ConcurrentHashMap.newKeySet()
+
     companion object {
         const val VOLUME_CHANGED_ACTION = "android.media.VOLUME_CHANGED_ACTION"
         private const val ATTRIBUTE_MIN = "min"
@@ -50,9 +53,9 @@ class AudioSensorManager : SensorManager {
             "mdi:microphone-off",
             updateType =
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                SensorManager.BasicSensor.UpdateType.INTENT
+                    SensorManager.BasicSensor.UpdateType.INTENT
                 } else {
-                SensorManager.BasicSensor.UpdateType.WORKER
+                    SensorManager.BasicSensor.UpdateType.WORKER
                 },
         )
         private val musicActive = SensorManager.BasicSensor(
@@ -70,9 +73,9 @@ class AudioSensorManager : SensorManager {
             "mdi:volume-high",
             updateType =
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                SensorManager.BasicSensor.UpdateType.INTENT
+                    SensorManager.BasicSensor.UpdateType.INTENT
                 } else {
-                SensorManager.BasicSensor.UpdateType.WORKER
+                    SensorManager.BasicSensor.UpdateType.WORKER
                 },
         )
         val volAlarm = SensorManager.BasicSensor(
@@ -401,7 +404,8 @@ class AudioSensorManager : SensorManager {
             0
         }
         val max = audioManager.getStreamMaxVolume(streamType)
-        val force = shouldForceUpdateVolumeAttributes(context, sensor, min, max)
+
+        val force = !areAttributesOfSensorAlreadyForcedAtRuntimeOrMatching(context, sensor, min, max)
 
         onSensorUpdated(
             context,
@@ -416,29 +420,43 @@ class AudioSensorManager : SensorManager {
         )
     }
 
-    private suspend fun shouldForceUpdateVolumeAttributes(
+    /**
+     * Checks whether the stored min/max attributes for a sensor already match the current
+     * values, or have already been force-updated during this app runtime.
+     *
+     * Usually, min and max do not change while the app is running. The only meaningful
+     * moments when they can be out of date:
+     * 1. An older companion app ran before, without pushing min/max.
+     * 2. The operating system changed.
+     *
+     * Therefore, the actual database check is performed at most once per sensor per app
+     * runtime. On subsequent calls for the same sensor, this returns `true` immediately
+     * without a database query.
+     */
+    private suspend fun areAttributesOfSensorAlreadyForcedAtRuntimeOrMatching(
         context: Context,
         sensor: BasicSensor,
         currentMin: Int,
         currentMax: Int,
     ): Boolean {
-        val attributes = sensorDao(context)
+        if (sensor.id in sensorIdsWhereAttributesAreAlreadyForced) {
+            return true
+        }
+        sensorIdsWhereAttributesAreAlreadyForced += sensor.id
+        return sensorDao(context)
             .getFull(sensor.id)
-            .toSensorWithAttributes()
-            ?.attributes
-            .orEmpty()
-
-        val storedMin = attributes
-            .firstOrNull { it.name == ATTRIBUTE_MIN }
-            ?.value
-            ?.toIntOrNull()
-
-        val storedMax = attributes
-            .firstOrNull { it.name == ATTRIBUTE_MAX }
-            ?.value
-            ?.toIntOrNull()
-
-        return storedMin != currentMin || storedMax != currentMax
+            .toSensorsWithAttributes()
+            .any { sensorWithAttributes ->
+                val attributes = sensorWithAttributes.attributes
+                val storedMin = attributes
+                    .firstOrNull { it.name == ATTRIBUTE_MIN }
+                    ?.value
+                    ?.toIntOrNull()
+                val storedMax = attributes
+                    .firstOrNull { it.name == ATTRIBUTE_MAX }
+                    ?.value
+                    ?.toIntOrNull()
+                storedMin == currentMin && storedMax == currentMax
+            }
     }
-
 }
