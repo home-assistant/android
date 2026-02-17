@@ -5,6 +5,7 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import app.cash.turbine.test
+import app.cash.turbine.turbineScope
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.mockk.CapturingSlot
 import io.mockk.Runs
@@ -77,6 +78,34 @@ class NetworkChangeObserverImplTest {
         }
 
         verify { connectivityManager.unregisterNetworkCallback(callbackSlot.captured) }
+    }
+
+    @Test
+    fun `Given two subscribers then registers and unregister callbacks are invoked only once`() = runTest {
+        createObserver(this)
+
+        turbineScope {
+            val subscriber1 = observer.observerNetworkChange.testIn(backgroundScope)
+            subscriber1.awaitItem()
+
+            val subscriber2 = observer.observerNetworkChange.testIn(backgroundScope)
+            subscriber2.awaitItem()
+
+            verify(exactly = 1) {
+                connectivityManager.registerNetworkCallback(any<NetworkRequest>(), any<ConnectivityManager.NetworkCallback>())
+            }
+
+            subscriber1.cancelAndIgnoreRemainingEvents()
+
+            verify(exactly = 0) {
+                connectivityManager.unregisterNetworkCallback(any<ConnectivityManager.NetworkCallback>())
+            }
+
+            subscriber2.cancelAndIgnoreRemainingEvents()
+            verify(exactly = 1) {
+                connectivityManager.unregisterNetworkCallback(any<ConnectivityManager.NetworkCallback>())
+            }
+        }
     }
 
     @Test
