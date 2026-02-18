@@ -9,7 +9,6 @@ import androidx.annotation.VisibleForTesting
 import androidx.core.text.HtmlCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
@@ -19,6 +18,7 @@ import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.UPDATE_WIDGETS
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -45,26 +45,6 @@ import timber.log.Timber
 
 private const val RENDER_DEBOUNCE_MS = 500L
 private const val DEFAULT_TEXT_SIZE = 12.0f
-
-/**
- * Represents the UI state of the Template Widget configuration screen.
- */
-data class TemplateWidgetConfigureUiState(
-    val selectedServerId: Int = ServerManager.SERVER_ID_ACTIVE,
-    val templateText: String = "",
-    val renderedTemplate: String? = null,
-    val isTemplateValid: Boolean = false,
-    val textSize: String = "14",
-    val selectedBackgroundType: WidgetBackgroundType =
-        if (DynamicColors.isDynamicColorAvailable()) {
-            WidgetBackgroundType.DYNAMICCOLOR
-        } else {
-            WidgetBackgroundType.DAYNIGHT
-        },
-    val textColorIndex: Int = 0,
-    val isUpdateWidget: Boolean = false,
-    val templateRenderError: TemplateRenderError? = null,
-)
 
 @HiltViewModel
 class TemplateWidgetConfigureViewModel @Inject constructor(
@@ -211,6 +191,9 @@ class TemplateWidgetConfigureViewModel @Inject constructor(
                     it.copy(renderedTemplate = rendered, isTemplateValid = true, templateRenderError = null)
                 }
             } catch (e: Exception) {
+                if (e is CancellationException) {
+                    throw e
+                }
                 if (e is SerializationException) {
                     Timber.e(e, "Template syntax error")
                 } else {
@@ -310,15 +293,4 @@ class TemplateWidgetConfigureViewModel @Inject constructor(
     fun showError(messageResId: Int) {
         viewModelScope.launch { _errorMessage.emit(messageResId) }
     }
-}
-
-/**
- * Represents the type of error encountered when rendering a template.
- */
-enum class TemplateRenderError {
-    /** Error in the template syntax itself. */
-    TEMPLATE_ERROR,
-
-    /** Error communicating with the server or rendering the template. */
-    RENDER_ERROR,
 }
