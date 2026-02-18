@@ -11,11 +11,16 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.Scaffold
+import androidx.compose.material.SnackbarHost
+import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -42,6 +47,14 @@ internal fun TemplateWidgetConfigureScreen(
 ) {
     val servers by viewModel.servers.collectAsStateWithLifecycle(emptyList())
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.errorMessage.collect { resId ->
+            snackbarHostState.showSnackbar(context.getString(resId))
+        }
+    }
 
     TemplateWidgetConfigureView(
         servers = servers,
@@ -60,10 +73,10 @@ internal fun TemplateWidgetConfigureScreen(
         onTextColorSelected = viewModel::onTextColorSelected,
         isUpdateWidget = uiState.isUpdateWidget,
         onActionClick = onActionClick,
+        snackbarHostState = snackbarHostState,
     )
 }
 
-@Suppress("ComposeUnstableCollections") // Matches ServerExposedDropdownMenu signature; same as TodoWidgetConfigureActivity
 @Composable
 private fun TemplateWidgetConfigureView(
     servers: List<Server>,
@@ -82,8 +95,10 @@ private fun TemplateWidgetConfigureView(
     onTextColorSelected: (Int) -> Unit,
     isUpdateWidget: Boolean,
     onActionClick: () -> Unit,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(commonR.string.create_template)) },

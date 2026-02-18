@@ -24,8 +24,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
@@ -77,6 +80,11 @@ class TemplateWidgetConfigureViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(TemplateWidgetConfigureUiState())
     val uiState: StateFlow<TemplateWidgetConfigureUiState> = _uiState.asStateFlow()
+
+    private val _errorMessage = MutableSharedFlow<Int>()
+
+    /** One-shot error events carrying a string resource ID to display in a Snackbar. */
+    val errorMessage: SharedFlow<Int> = _errorMessage.asSharedFlow()
 
     val servers = serverManager.serversFlow
 
@@ -292,6 +300,15 @@ class TemplateWidgetConfigureViewModel @Inject constructor(
                 ),
             )
         }.first()
+    }
+
+    /**
+     * Emit a one-shot error event to be displayed as a Snackbar.
+     *
+     * @param messageResId the string resource ID for the error message
+     */
+    fun showError(messageResId: Int) {
+        viewModelScope.launch { _errorMessage.emit(messageResId) }
     }
 }
 

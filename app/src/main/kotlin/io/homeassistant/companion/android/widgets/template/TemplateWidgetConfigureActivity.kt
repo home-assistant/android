@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.widgets.template
 
 import android.appwidget.AppWidgetManager
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -90,6 +89,6 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
     }
 
     private fun showAddWidgetError() {
-        Toast.makeText(applicationContext, commonR.string.widget_creation_error, Toast.LENGTH_LONG).show()
+        viewModel.showError(commonR.string.widget_creation_error)
     }
 }
