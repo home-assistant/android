@@ -85,7 +85,7 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
             viewModel.updateWidgetConfiguration(this@TemplateWidgetConfigureActivity)
             setResult(RESULT_OK)
             finish()
-        } catch (_: IllegalStateException) {
+        } catch (e: IllegalStateException) {
             if (e is CancellationException) throw e
             showAddWidgetError()
         }

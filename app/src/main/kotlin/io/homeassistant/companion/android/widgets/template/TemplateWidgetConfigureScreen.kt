@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Button
 import androidx.compose.material.Scaffold
 import androidx.compose.material.SnackbarHost
 import androidx.compose.material.SnackbarHostState
@@ -27,8 +26,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.compose.theme.HADimens
+import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HATextField
+import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.compose.ExposedDropdownMenu
@@ -116,86 +116,146 @@ private fun TemplateWidgetConfigureView(
                 .padding(all = HADimens.SPACE4),
             verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
         ) {
-            if (servers.size > 1) {
-                ServerExposedDropdownMenu(
-                    servers = servers,
-                    current = selectedServerId,
-                    onSelected = { onServerSelected(it) },
-                    modifier = Modifier.padding(bottom = HADimens.SPACE2),
-                )
-            }
-
-            HATextField(
-                value = templateText,
-                onValueChange = onTemplateTextChanged,
-                placeholder = { Text(stringResource(commonR.string.template_widget_default)) },
-                modifier = Modifier.fillMaxWidth(),
-                maxLines = Int.MAX_VALUE,
-                singleLine = false,
+            ServerSelectionSection(
+                servers = servers,
+                selectedServerId = selectedServerId,
+                onServerSelected = onServerSelected,
             )
 
-            if (renderedTemplate != null) {
-                Text(
-                    text = renderedTemplate,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = HADimens.SPACE1),
-                )
-            } else if (templateRenderError != null) {
-                Text(
-                    text = stringResource(
-                        when (templateRenderError) {
-                            TemplateRenderError.TEMPLATE_ERROR -> commonR.string.template_error
-                            TemplateRenderError.RENDER_ERROR -> commonR.string.template_render_error
-                        },
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = HADimens.SPACE1),
-                )
-            } else if (templateText.isEmpty()) {
-                Text(
-                    text = stringResource(commonR.string.empty_template),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = HADimens.SPACE1),
-                )
-            }
-
-            HATextField(
-                value = textSize,
-                onValueChange = onTextSizeChanged,
-                label = { Text(stringResource(commonR.string.widget_text_size_label)) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
+            TemplateInputSection(
+                templateText = templateText,
+                onTemplateTextChanged = onTemplateTextChanged,
+                renderedTemplate = renderedTemplate,
+                templateRenderError = templateRenderError,
             )
 
-            WidgetBackgroundTypeExposedDropdownMenu(
-                current = selectedBackgroundType,
-                onSelected = { onBackgroundTypeSelected(it) },
+            WidgetAppearanceSection(
+                textSize = textSize,
+                onTextSizeChanged = onTextSizeChanged,
+                selectedBackgroundType = selectedBackgroundType,
+                onBackgroundTypeSelected = onBackgroundTypeSelected,
+                textColorIndex = textColorIndex,
+                onTextColorSelected = onTextColorSelected,
             )
 
-            AnimatedVisibility(visible = selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
-                ExposedDropdownMenu(
-                    label = stringResource(commonR.string.widget_text_color_label),
-                    keys = listOf(
-                        stringResource(commonR.string.widget_text_color_black),
-                        stringResource(commonR.string.widget_text_color_white),
-                    ),
-                    currentIndex = textColorIndex,
-                    onSelected = { onTextColorSelected(it) },
-                )
-            }
-
-            Button(
-                modifier = Modifier.fillMaxWidth(),
+            HAAccentButton(
+                text = stringResource(if (isUpdateWidget) commonR.string.update_widget else commonR.string.add_widget),
                 onClick = onActionClick,
                 enabled = isTemplateValid,
-            ) {
-                Text(stringResource(if (isUpdateWidget) commonR.string.update_widget else commonR.string.add_widget))
-            }
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
+    }
+}
+
+@Suppress("ComposeUnstableCollections") // Matches ServerExposedDropdownMenu signature
+@Composable
+private fun ServerSelectionSection(
+    servers: List<Server>,
+    selectedServerId: Int,
+    onServerSelected: (Int) -> Unit,
+) {
+    if (servers.size > 1) {
+        ServerExposedDropdownMenu(
+            servers = servers,
+            current = selectedServerId,
+            onSelected = { onServerSelected(it) },
+            modifier = Modifier.padding(bottom = HADimens.SPACE2),
+        )
+    }
+}
+
+@Composable
+private fun TemplateInputSection(
+    templateText: String,
+    onTemplateTextChanged: (String) -> Unit,
+    renderedTemplate: String?,
+    templateRenderError: TemplateRenderError?,
+) {
+    HATextField(
+        value = templateText,
+        onValueChange = onTemplateTextChanged,
+        placeholder = { Text(stringResource(commonR.string.template_widget_default)) },
+        modifier = Modifier.fillMaxWidth(),
+        maxLines = Int.MAX_VALUE,
+        singleLine = false,
+    )
+
+    TemplateRenderResult(
+        templateText = templateText,
+        renderedTemplate = renderedTemplate,
+        templateRenderError = templateRenderError,
+    )
+}
+
+@Composable
+private fun TemplateRenderResult(
+    templateText: String,
+    renderedTemplate: String?,
+    templateRenderError: TemplateRenderError?,
+) {
+    if (renderedTemplate != null) {
+        Text(
+            text = renderedTemplate,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = HADimens.SPACE1),
+        )
+    } else if (templateRenderError != null) {
+        Text(
+            text = stringResource(
+                when (templateRenderError) {
+                    TemplateRenderError.TEMPLATE_ERROR -> commonR.string.template_error
+                    TemplateRenderError.RENDER_ERROR -> commonR.string.template_render_error
+                },
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = HADimens.SPACE1),
+        )
+    } else if (templateText.isEmpty()) {
+        Text(
+            text = stringResource(commonR.string.empty_template),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = HADimens.SPACE1),
+        )
+    }
+}
+
+@Composable
+private fun WidgetAppearanceSection(
+    textSize: String,
+    onTextSizeChanged: (String) -> Unit,
+    selectedBackgroundType: WidgetBackgroundType,
+    onBackgroundTypeSelected: (WidgetBackgroundType) -> Unit,
+    textColorIndex: Int,
+    onTextColorSelected: (Int) -> Unit,
+) {
+    HATextField(
+        value = textSize,
+        onValueChange = onTextSizeChanged,
+        label = { Text(stringResource(commonR.string.widget_text_size_label)) },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true,
+    )
+
+    WidgetBackgroundTypeExposedDropdownMenu(
+        current = selectedBackgroundType,
+        onSelected = { onBackgroundTypeSelected(it) },
+    )
+
+    AnimatedVisibility(visible = selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
+        ExposedDropdownMenu(
+            label = stringResource(commonR.string.widget_text_color_label),
+            keys = listOf(
+                stringResource(commonR.string.widget_text_color_black),
+                stringResource(commonR.string.widget_text_color_white),
+            ),
+            currentIndex = textColorIndex,
+            onSelected = { onTextColorSelected(it) },
+        )
     }
 }
 
