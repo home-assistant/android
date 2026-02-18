@@ -11,6 +11,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.getHexForColor
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -73,7 +74,8 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
         try {
             viewModel.requestWidgetCreation(this@TemplateWidgetConfigureActivity)
             finish()
-        } catch (_: IllegalStateException) {
+        } catch (e: IllegalStateException) {
+            if (e is CancellationException) throw e
             showAddWidgetError()
         }
     }
@@ -84,6 +86,7 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
             setResult(RESULT_OK)
             finish()
         } catch (_: IllegalStateException) {
+            if (e is CancellationException) throw e
             showAddWidgetError()
         }
     }

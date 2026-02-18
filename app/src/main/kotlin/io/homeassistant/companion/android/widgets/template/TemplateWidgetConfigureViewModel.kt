@@ -19,6 +19,8 @@ import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.U
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -43,7 +45,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
 import timber.log.Timber
 
-private const val RENDER_DEBOUNCE_MS = 500L
+private const val RENDER_DEBOUNCE_MS = 500
 private const val DEFAULT_TEXT_SIZE = 12.0f
 
 @HiltViewModel
@@ -51,9 +53,6 @@ class TemplateWidgetConfigureViewModel @Inject constructor(
     private val templateWidgetDao: TemplateWidgetDao,
     private val serverManager: ServerManager,
 ) : ViewModel() {
-
-    @VisibleForTesting
-    internal var ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 
     private var supportedTextColors: List<String> = emptyList()
     private var widgetId: Int = AppWidgetManager.INVALID_APPWIDGET_ID
@@ -78,7 +77,6 @@ class TemplateWidgetConfigureViewModel @Inject constructor(
      * configuration changes, since the ViewModel survives those changes.
      */
     fun onSetup(widgetId: Int, supportedTextColors: List<String>) {
-        if (this.widgetId != AppWidgetManager.INVALID_APPWIDGET_ID) return
         this.supportedTextColors = supportedTextColors
         this.widgetId = widgetId
         maybeLoadPreviousState(widgetId)
@@ -152,7 +150,7 @@ class TemplateWidgetConfigureViewModel @Inject constructor(
                 _uiState.mapField { it.templateText },
                 _uiState.mapField { it.selectedServerId },
             ) { template, serverId -> template to serverId }
-                .debounce(RENDER_DEBOUNCE_MS)
+                .debounce(RENDER_DEBOUNCE_MS.milliseconds)
                 .collect { (template, serverId) ->
                     renderTemplate(template, serverId)
                 }
@@ -177,7 +175,7 @@ class TemplateWidgetConfigureViewModel @Inject constructor(
             Timber.w("Not rendering template because server is not set")
             return
         }
-        withContext(ioDispatcher) {
+        withContext(Dispatchers.Default) {
             try {
                 val result = serverManager.integrationRepository(serverId)
                     .renderTemplate(template, mapOf())
