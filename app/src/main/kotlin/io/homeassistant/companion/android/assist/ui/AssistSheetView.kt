@@ -97,6 +97,7 @@ fun AssistSheetView(
     onTextInput: (String) -> Unit,
     onMicrophoneInput: () -> Unit,
     onHide: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val coroutineScope = rememberCoroutineScope()
     val state = rememberModalBottomSheetState(
@@ -116,7 +117,7 @@ fun AssistSheetView(
         sheetState = state,
         sheetShape = RoundedCornerShape(topStart = sheetCornerRadius, topEnd = sheetCornerRadius),
         scrimColor = Color.Transparent,
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         sheetContent = {
             Box(
                 Modifier
@@ -170,7 +171,8 @@ fun AssistSheetHeader(
     fromFrontend: Boolean,
     onSelectPipeline: (Int, String) -> Unit,
     onManagePipelines: (() -> Unit)?,
-) = Column(verticalArrangement = Arrangement.Center) {
+    modifier: Modifier = Modifier,
+) = Column(verticalArrangement = Arrangement.Center, modifier = modifier) {
     Text(
         text = stringResource(if (fromFrontend) commonR.string.assist else commonR.string.app_name),
         fontSize = 20.sp,
@@ -241,14 +243,15 @@ fun AssistSheetControls(
     onChangeInput: () -> Unit,
     onTextInput: (String) -> Unit,
     onMicrophoneInput: () -> Unit,
-) = Row(verticalAlignment = Alignment.CenterVertically) {
+    modifier: Modifier = Modifier,
+) = Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
     if (inputMode == null) { // Pipeline info has not yet loaded, empty space for now
         Spacer(modifier = Modifier.height(64.dp))
-        return
+        return@Row
     }
 
     if (inputMode == AssistViewModelBase.AssistInputMode.BLOCKED) { // No info and not recoverable, no space
-        return
+        return@Row
     }
 
     val focusRequester = remember { FocusRequester() }
@@ -367,10 +370,10 @@ fun AssistSheetControls(
 }
 
 @Composable
-fun SpeechBubble(text: String, isResponse: Boolean) {
+fun SpeechBubble(text: String, isResponse: Boolean, modifier: Modifier = Modifier) {
     Row(
         horizontalArrangement = if (isResponse) Arrangement.Start else Arrangement.End,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(
                 start = if (isResponse) 0.dp else 24.dp,

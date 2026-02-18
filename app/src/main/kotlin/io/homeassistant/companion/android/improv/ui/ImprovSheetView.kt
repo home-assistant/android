@@ -58,6 +58,7 @@ fun ImprovSheetView(
     onConnect: (String, String, String, String) -> Unit,
     onRestart: () -> Unit,
     onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var selectedName by rememberSaveable(screenState.initialDeviceName) {
         mutableStateOf<String?>(screenState.initialDeviceName)
@@ -68,6 +69,7 @@ fun ImprovSheetView(
     var submittedWifi by rememberSaveable { mutableStateOf(false) }
 
     ModalBottomSheet(
+        modifier = modifier,
         title = if (screenState.scanning && screenState.deviceState == null && !screenState.hasError) {
             if (selectedAddress != null) {
                 stringResource(commonR.string.improv_wifi_title)
@@ -90,8 +92,7 @@ fun ImprovSheetView(
         ) {
             if (selectedAddress != null && !submittedWifi) {
                 ImprovWifiInput(
-                    activeSsid = if (
-                        screenState.activeSsid?.isNotBlank() == true &&
+                    activeSsid = if (screenState.activeSsid?.isNotBlank() == true &&
                         (
                             Build.VERSION.SDK_INT < Build.VERSION_CODES.R ||
                                 screenState.activeSsid !== WifiManager.UNKNOWN_SSID
@@ -157,7 +158,9 @@ fun ImprovSheetView(
                             commonR.string.state_unknown
                         },
                     ),
-                    modifier = Modifier.fillMaxWidth(0.8f).padding(top = 16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .padding(top = 16.dp),
                     textAlign = TextAlign.Center,
                 )
             }
@@ -166,11 +169,11 @@ fun ImprovSheetView(
 }
 
 @Composable
-fun ImprovDeviceRow(device: ImprovDevice, onClick: (ImprovDevice) -> Unit) {
+fun ImprovDeviceRow(device: ImprovDevice, onClick: (ImprovDevice) -> Unit, modifier: Modifier = Modifier) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(56.dp)
             .clickable { onClick(device) },
@@ -179,18 +182,20 @@ fun ImprovDeviceRow(device: ImprovDevice, onClick: (ImprovDevice) -> Unit) {
         Icon(
             imageVector = Icons.AutoMirrored.Default.ArrowForwardIos,
             contentDescription = null,
-            modifier = Modifier.size(24.dp).padding(4.dp),
+            modifier = Modifier
+                .size(24.dp)
+                .padding(4.dp),
         )
     }
     Divider()
 }
 
 @Composable
-fun ImprovWifiInput(activeSsid: String?, onSubmit: (String, String) -> Unit) {
+fun ImprovWifiInput(activeSsid: String?, onSubmit: (String, String) -> Unit, modifier: Modifier = Modifier) {
     var ssidInput by rememberSaveable { mutableStateOf(activeSsid ?: "") }
     var passwordInput by rememberSaveable { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    Column(Modifier.fillMaxWidth()) {
+    Column(modifier.fillMaxWidth()) {
         TextField(
             value = ssidInput,
             onValueChange = { ssidInput = it },
@@ -207,11 +212,13 @@ fun ImprovWifiInput(activeSsid: String?, onSubmit: (String, String) -> Unit) {
             singleLine = true,
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = {
-                if (ssidInput.isNotBlank() && passwordInput.isNotBlank()) {
-                    onSubmit(ssidInput, passwordInput)
-                }
-            }),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    if (ssidInput.isNotBlank() && passwordInput.isNotBlank()) {
+                        onSubmit(ssidInput, passwordInput)
+                    }
+                },
+            ),
             trailingIcon = {
                 val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                 val description =
@@ -223,7 +230,9 @@ fun ImprovWifiInput(activeSsid: String?, onSubmit: (String, String) -> Unit) {
             modifier = Modifier.fillMaxWidth(),
         )
         Button(
-            modifier = Modifier.padding(vertical = 8.dp).align(Alignment.CenterHorizontally),
+            modifier = Modifier
+                .padding(vertical = 8.dp)
+                .align(Alignment.CenterHorizontally),
             enabled = ssidInput.isNotBlank(),
             onClick = { onSubmit(ssidInput, passwordInput) },
         ) {
@@ -233,7 +242,7 @@ fun ImprovWifiInput(activeSsid: String?, onSubmit: (String, String) -> Unit) {
 }
 
 @Composable
-fun ImprovTextWithIcon(icon: IIcon, text: String, onButtonClick: () -> Unit) {
+fun ImprovTextWithIcon(icon: IIcon, text: String, onButtonClick: () -> Unit, modifier: Modifier = Modifier) {
     Image(
         asset = icon,
         contentDescription = null,
@@ -242,7 +251,9 @@ fun ImprovTextWithIcon(icon: IIcon, text: String, onButtonClick: () -> Unit) {
     )
     Text(
         text = text,
-        modifier = Modifier.fillMaxWidth(0.8f).padding(vertical = 16.dp),
+        modifier = modifier
+            .fillMaxWidth(0.8f)
+            .padding(vertical = 16.dp),
         textAlign = TextAlign.Center,
     )
     Button(onButtonClick) {
@@ -252,7 +263,7 @@ fun ImprovTextWithIcon(icon: IIcon, text: String, onButtonClick: () -> Unit) {
 
 @Preview
 @Composable
-fun PreviewImprovDevices() {
+private fun PreviewImprovDevices() {
     ImprovSheetView(
         screenState = ImprovSheetState(
             scanning = true,
@@ -268,7 +279,7 @@ fun PreviewImprovDevices() {
 
 @Preview
 @Composable
-fun PreviewImprovSubmitting() {
+private fun PreviewImprovSubmitting() {
     ImprovSheetView(
         screenState = ImprovSheetState(
             scanning = false,
@@ -284,7 +295,7 @@ fun PreviewImprovSubmitting() {
 
 @Preview
 @Composable
-fun PreviewImprovInvalid() {
+private fun PreviewImprovInvalid() {
     ImprovSheetView(
         screenState = ImprovSheetState(
             scanning = false,

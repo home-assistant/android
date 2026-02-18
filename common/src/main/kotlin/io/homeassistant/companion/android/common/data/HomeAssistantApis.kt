@@ -15,7 +15,16 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import javax.inject.Singleton
 
+/**
+ * Provides shared HTTP infrastructure for communicating with Home Assistant servers.
+ *
+ * This class is a singleton to ensure a single [OkHttpClient] and [Retrofit] instance
+ * are shared across the app. This enables proper connection pooling, reduces memory usage,
+ * and ensures consistent configuration (timeouts, interceptors, TLS) for all API calls.
+ */
+@Singleton
 class HomeAssistantApis @Inject constructor(
     private val tlsHelper: TLSHelper,
     @ApplicationContext private val appContext: Context,
@@ -73,16 +82,18 @@ class HomeAssistantApis @Inject constructor(
         return builder
     }
 
-    val retrofit: Retrofit = Retrofit
-        .Builder()
-        .addConverterFactory(
-            kotlinJsonMapper.asConverterFactory(
-                "application/json; charset=UTF-8".toMediaType(),
-            ),
-        )
-        .client(configureOkHttpClient(OkHttpClient.Builder()).build())
-        .baseUrl(LOCAL_HOST)
-        .build()
+    val okHttpClient by lazy { configureOkHttpClient(OkHttpClient.Builder()).build() }
 
-    val okHttpClient = configureOkHttpClient(OkHttpClient.Builder()).build()
+    val retrofit: Retrofit by lazy {
+        Retrofit
+            .Builder()
+            .addConverterFactory(
+                kotlinJsonMapper.asConverterFactory(
+                    "application/json; charset=UTF-8".toMediaType(),
+                ),
+            )
+            .client(okHttpClient)
+            .baseUrl(LOCAL_HOST)
+            .build()
+    }
 }

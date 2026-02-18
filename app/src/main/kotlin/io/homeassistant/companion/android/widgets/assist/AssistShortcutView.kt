@@ -43,6 +43,7 @@ fun AssistShortcutView(
     pipelines: AssistPipelineListResponse?,
     onSetServer: (Int) -> Unit,
     onSubmit: (String, Int, String?, Boolean) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Scaffold(
         topBar = {
@@ -53,6 +54,7 @@ fun AssistShortcutView(
                 windowInsets = safeTopWindowInsets(),
             )
         },
+        modifier = modifier,
     ) { padding ->
         Box(
             modifier = Modifier

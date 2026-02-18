@@ -1,9 +1,6 @@
 package io.homeassistant.companion.android.settings
 
-import android.annotation.SuppressLint
 import android.app.UiModeManager
-import android.content.ActivityNotFoundException
-import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -36,10 +33,13 @@ import io.homeassistant.companion.android.common.util.maybeAskForIgnoringBattery
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.launch.intentLaunchOnboarding
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
+import io.homeassistant.companion.android.settings.assist.AssistSettingsFragment
+import io.homeassistant.companion.android.settings.assist.DefaultAssistantManager
 import io.homeassistant.companion.android.settings.controls.ManageControlsSettingsFragment
 import io.homeassistant.companion.android.settings.developer.DeveloperSettingsFragment
 import io.homeassistant.companion.android.settings.gestures.GesturesFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
+import io.homeassistant.companion.android.settings.license.LicensesFragment
 import io.homeassistant.companion.android.settings.notification.NotificationChannelFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
@@ -65,14 +65,12 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 
-class SettingsFragment(private val presenter: SettingsPresenter, private val langProvider: LanguagesProvider) :
-    PreferenceFragmentCompat(),
+class SettingsFragment(
+    private val presenter: SettingsPresenter,
+    private val langProvider: LanguagesProvider,
+    private val defaultAssistantManager: DefaultAssistantManager,
+) : PreferenceFragmentCompat(),
     SettingsView {
-
-    private val requestBackgroundAccessResult =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            updateBackgroundAccessPref()
-        }
 
     private val requestNotificationPermissionResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -166,6 +164,14 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
                 }
                 return@setOnPreferenceClickListener true
             }
+        }
+
+        findPreference<Preference>("assist_settings")?.setOnPreferenceClickListener {
+            parentFragmentManager.commit {
+                replace(R.id.content, AssistSettingsFragment::class.java, null)
+                addToBackStack(getString(commonR.string.assist))
+            }
+            return@setOnPreferenceClickListener true
         }
 
         findPreference<Preference>("gestures")?.setOnPreferenceClickListener {
@@ -368,6 +374,14 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
             it.summary = BuildConfig.VERSION_NAME
         }
 
+        findPreference<Preference>("licenses")?.setOnPreferenceClickListener {
+            parentFragmentManager.commit {
+                replace(R.id.content, LicensesFragment::class.java, null)
+                addToBackStack(getString(commonR.string.licenses))
+            }
+            return@setOnPreferenceClickListener true
+        }
+
         findPreference<ListPreference>("languages")?.let {
             lifecycleScope.launch {
                 val languages = langProvider.getSupportedLanguages(requireContext())
@@ -442,24 +456,8 @@ class SettingsFragment(private val presenter: SettingsPresenter, private val lan
         }
     }
 
-    @SuppressLint("InlinedApi")
     private fun updateAssistantApp() {
-        // On Android Q+, this is a workaround as Android doesn't allow requesting the assistant role
-        try {
-            val openIntent = Intent("android.settings.VOICE_INPUT_SETTINGS")
-            openIntent.component =
-                ComponentName("com.android.settings", "com.android.settings.Settings\$ManageAssistActivity")
-            openIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            startActivity(openIntent)
-        } catch (e: ActivityNotFoundException) {
-            // The exact activity/package doesn't exist on this device, use the official intent
-            // which sends the user to the 'Default apps' screen (one more tap required to change)
-            startActivity(
-                Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS).apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                },
-            )
-        }
+        startActivity(defaultAssistantManager.getSetDefaultAssistantIntent())
     }
 
     private fun updateBackgroundAccessPref() {

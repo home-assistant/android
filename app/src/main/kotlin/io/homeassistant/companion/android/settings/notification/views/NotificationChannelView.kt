@@ -37,11 +37,12 @@ import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun NotificationChannelView(notificationViewModel: NotificationViewModel) {
+fun NotificationChannelView(notificationViewModel: NotificationViewModel, modifier: Modifier = Modifier) {
     val scaffoldState = rememberScaffoldState()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     Scaffold(
+        modifier = modifier,
         scaffoldState = scaffoldState,
         snackbarHost = {
             SnackbarHost(

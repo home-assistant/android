@@ -1056,7 +1056,15 @@ class WebViewActivity :
                 }
 
                 GestureAction.QUICKBAR_DEFAULT -> {
-                    webView.dispatchKeyDownEventToDocument("e", "KeyE", 69)
+                    if (serverManager.getServer(presenter.getActiveServer())?.version?.isAtLeast(2026, 2) == true) {
+                        webView.dispatchKeyDownEventToDocument("k", "KeyK", keyCode = 75, ctrlKey = true)
+                    } else {
+                        webView.dispatchKeyDownEventToDocument("e", "KeyE", keyCode = 69)
+                    }
+                }
+
+                GestureAction.QUICKBAR_ENTITIES -> {
+                    webView.dispatchKeyDownEventToDocument("e", "KeyE", keyCode = 69)
                 }
 
                 GestureAction.QUICKBAR_DEVICES -> {
@@ -1415,6 +1423,13 @@ class WebViewActivity :
         if (hasFocus && !isFinishing) {
             lifecycleScope.launch {
                 unlockAppIfNeeded()
+
+                if (presenter.isFullScreen() || isVideoFullScreen) {
+                    hideSystemUI()
+                } else {
+                    showSystemUI()
+                }
+
                 var path = intent.getStringExtra(EXTRA_PATH)
                 if (path?.startsWith("entityId:") == true) {
                     // Get the entity ID from a string formatted "entityId:domain.entity"
@@ -1430,14 +1445,8 @@ class WebViewActivity :
                         moreInfoEntity = entity
                     }
                 }
-                presenter.load(lifecycle, path, isInternalOverride)
                 intent.removeExtra(EXTRA_PATH)
-
-                if (presenter.isFullScreen() || isVideoFullScreen) {
-                    hideSystemUI()
-                } else {
-                    showSystemUI()
-                }
+                presenter.load(lifecycle, path, isInternalOverride)
             }
         }
     }
@@ -1491,7 +1500,7 @@ class WebViewActivity :
 
     override fun loadUrl(url: Uri, keepHistory: Boolean, openInApp: Boolean, serverHandleInsets: Boolean) {
         Timber.d(
-            "Loading $url (keepHistory $keepHistory, openInApp $openInApp, serverHandleInsets $serverHandleInsets)",
+            "Loading ${if (BuildConfig.DEBUG) url else "HIDDEN"} (keepHistory $keepHistory, openInApp $openInApp, serverHandleInsets $serverHandleInsets)",
         )
         this.serverHandleInsets.value = serverHandleInsets
         if (openInApp) {
@@ -1501,12 +1510,12 @@ class WebViewActivity :
             }
             supportFragmentManager.clearFragmentResultListener(BlockInsecureFragment.RESULT_KEY)
 
-            clearHistory = !keepHistory
             val oldUrl = loadedUrl
             // It means that if we loaded an URL with a path previously and we try to load the same URL without
             // a path we don't do anything.
             val shouldLoadUrl = !url.hasSameOrigin(oldUrl) || url.hasNonRootPath()
             if (shouldLoadUrl) {
+                clearHistory = !keepHistory
                 loadedUrl = url
                 webView.loadUrl(url.toString())
                 waitForConnection()
@@ -1869,7 +1878,7 @@ class WebViewActivity :
         if (supportFragmentManager.backStackEntryCount > 0) {
             Timber.i("Fragments ${supportFragmentManager.fragments} displayed, skipping connection wait")
         } else {
-            Timber.d("Waiting for loadedUrl $loadedUrl")
+            Timber.d("Waiting for loadedUrl ${if (BuildConfig.DEBUG) loadedUrl else "HIDDEN"}")
             Handler(Looper.getMainLooper()).postDelayed(
                 {
                     val firstSegment = loadedUrl?.pathSegments?.firstOrNull().orEmpty()
@@ -1990,13 +1999,19 @@ class WebViewActivity :
      * [WebView.dispatchKeyEvent] function, this does not used the focused element (to avoid text inputs).
      * The parameters should provide a JavaScript KeyboardEvent's properties.
      */
-    private fun WebView.dispatchKeyDownEventToDocument(key: String, code: String, keyCode: Int) {
+    private fun WebView.dispatchKeyDownEventToDocument(
+        key: String,
+        code: String,
+        keyCode: Int,
+        ctrlKey: Boolean = false,
+    ) {
         val eventCode = """
         var event = new KeyboardEvent('keydown', {
             key: '$key',
             code: '$code',
             keyCode: $keyCode,
             which: $keyCode,
+            ctrlKey: $ctrlKey,
             bubbles: true,
             cancelable: true
         });

@@ -1,6 +1,7 @@
 name: Pull Request
 
 on: # yamllint disable-line rule:truthy
+  workflow_dispatch:
   pull_request:
 
 # This workflow should cancel previous builds since it means that a new commit has been made to the PR
@@ -15,7 +16,9 @@ jobs:
   yamllint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Register yamllint problem matcher
         run: |
@@ -27,7 +30,9 @@ jobs:
   lockfiles:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - uses: ./.github/actions/setup-build-env
         with:
@@ -58,7 +63,9 @@ jobs:
     permissions:
       security-events: write
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - uses: ./.github/actions/setup-build-env
         with:
@@ -80,7 +87,9 @@ jobs:
     permissions:
       security-events: write
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - uses: ./.github/actions/setup-build-env
         with:
@@ -107,7 +116,9 @@ jobs:
     needs: [lint, lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - uses: ./.github/actions/setup-build-env
         with:
@@ -117,29 +128,19 @@ jobs:
       - name: Validate Screenshot Previews
         run: ./gradlew validateDebugScreenshotTest validateFullDebugScreenshotTest
 
-      - name: Upload test results
+      - uses: ./.github/actions/upload-test-results
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: Screenshot test results
-          path: |
-            **/build/test-results/**/TEST-*.xml
-
-      - name: Upload test results
-        if: failure()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: Screenshot test failure HTML report
-          path: |
-            **/build/reports/screenshotTest/**
+          test-name: Screenshot test
 
   pr_build:
     needs: [lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Check for modified DB schemas on branch
         run: |
@@ -182,9 +183,10 @@ jobs:
     needs: [lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: ./.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
@@ -215,7 +217,9 @@ jobs:
     needs: [lint, lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - uses: ./.github/actions/setup-build-env
         with:
@@ -226,13 +230,10 @@ jobs:
         # Run testFullDebugUnitTest at the app level since :automotive shares the same sourceSet than app. Minimal and Full are the same in unit tests for now
         run: ./gradlew testDebugUnitTest :app:testFullDebugUnitTest :lint:test
 
-      - name: Upload test results
+      - uses: ./.github/actions/upload-test-results
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: Unit test results
-          path: |
-            **/build/test-results/**/TEST-*.xml
+          test-name: Unit test
 
   instrumentation_test:
     name: "Instrumentation Tests"
@@ -247,23 +248,23 @@ jobs:
             arch: x86_64
             profile: "Nexus 5"
             target: "google_apis"
-            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest :microfrontend:connectedDebugAndroidTest"
           - api-level: 36
             arch: x86_64
             profile: "pixel_7"
             target: "google_apis"
-            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest :microfrontend:connectedDebugAndroidTest"
           - api-level: 33
             arch: x86_64
             profile: "automotive_1024p_landscape"
             target: "android-automotive"
-            gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+            gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest :microfrontend:connectedDebugAndroidTest"
           - api-level: "34"
             system-image-api-level: "34-ext9"
             arch: x86_64
             profile: "automotive_1024p_landscape"
             target: "android-automotive"
-            gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+            gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest :microfrontend:connectedDebugAndroidTest"
           - api-level: 26
             arch: x86
             profile: "wearos_square"
@@ -273,7 +274,7 @@ jobs:
             arch: x86_64
             profile: "wearos_small_round"
             target: "android-wear"
-            gradle_target: ":wear:connectedDebugAndroidTest :common:connectedDebugAndroidTest"
+            gradle_target: ":wear:connectedDebugAndroidTest :common:connectedDebugAndroidTest :microfrontend:connectedDebugAndroidTest"
     steps:
       - name: Delete unnecessary tools 🔧
         uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
@@ -283,7 +284,9 @@ jobs:
           docker-images: false # Takes 16s, enable if needed in the future
           large-packages: false # includes google-cloud-sdk and it's slow
 
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - uses: ./.github/actions/setup-build-env
         with:
@@ -312,14 +315,10 @@ jobs:
           system-image-api-level: ${{ matrix.configuration.system-image-api-level }}
           script: ./gradlew ${{ matrix.configuration.gradle_target }}
 
-      - name: Upload test results
+      - uses: ./.github/actions/upload-test-results
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: Instrumentation test results (API${{ matrix.configuration.api-level }}) ${{ matrix.configuration.target }}
-          path: |
-            **/build/reports/*
-            **/build/outputs/*/connected/*
+          test-name: Instrumentation test (API${{ matrix.configuration.api-level }}) ${{ matrix.configuration.target }}
 
   publish_test_results:
     name: "Publish Tests Results"

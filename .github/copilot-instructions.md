@@ -120,6 +120,7 @@ Source code is in Kotlin under `src/main/kotlin/io/homeassistant/companion/andro
 
 - **Language**: All code in English, Kotlin only
 - **Formatter**: KTLint enforces style via `.editorconfig`
+- **Imports**: When adding new imports, always add the import and its usage in the same edit. IDE linters and hooks automatically remove unused imports, so adding an import in a separate step before using it will cause the import to be stripped.
 - **Constants**: Use named constants instead of magic numbers/strings. Organize alongside classes (outside companion objects when possible), or in dedicated `*Constants.kt` files with `object` namespacing.
 - **Strong Types**: Use sealed classes/interfaces over enums or strings for logic control. Use Kotlin `Duration`/`Instant` instead of primitive types for time.
 - **TODOs**: Avoid TODOs. If required, link to GitHub issue: `// TODO Missing feature (linked issue #404)`
@@ -305,6 +306,13 @@ Use the `Clock` available from `Hilt`.
 - **Framework**: JUnit Jupiter for unit tests (or 4 when necessary to use Robolectric)
 - **Mocking**: MockK (Use real objects when you can or fakes)
 - **Android APIs**: Robolectric (requires JUnit 4 compatibility)
+- **Robolectric tests**: All Robolectric test classes must use both annotations:
+  ```kotlin
+  @RunWith(RobolectricTestRunner::class)
+  @Config(application = HiltTestApplication::class)
+  class MyTest {
+  ```
+  Without the `@Config` override, Robolectric defaults to the manifest's `HomeAssistantApplication`, which enables StrictMode and FailFast, leaking process-wide state that can crash the test JVM.
 - **Test Location**: Tests should mirror source structure in `src/test/kotlin/` directory
 - **Test Naming**: Use GIVEN-WHEN-THEN structure with descriptive sentences:
   ```kotlin

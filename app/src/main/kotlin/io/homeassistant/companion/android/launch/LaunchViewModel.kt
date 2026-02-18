@@ -145,7 +145,7 @@ internal class LaunchViewModel @VisibleForTesting constructor(
                         !handleNetworkState(state, path, serverId)
                     }.collect()
             } ?: navigateToOnboarding()
-        } catch (e: IllegalArgumentException) {
+        } catch (e: IllegalStateException) {
             Timber.e(
                 e,
                 "Something went wrong while checking if any server are registered with a connected session",
@@ -156,8 +156,13 @@ internal class LaunchViewModel @VisibleForTesting constructor(
 
     private suspend fun getServerConnectedAndRegistered(serverId: Int): Server? {
         return serverManager.getServer(serverId)?.takeIf {
-            serverManager.isRegistered() &&
-                serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED
+            try {
+                serverManager.isRegistered() &&
+                    serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED
+            } catch (e: IllegalStateException) {
+                Timber.e(e, "Failed to get server state")
+                false
+            }
         }
     }
 
@@ -191,8 +196,13 @@ internal class LaunchViewModel @VisibleForTesting constructor(
         // Remove any invalid servers (incomplete, partly migrated from another device)
         serverManager.servers()
             .filter {
-                serverManager.authenticationRepository(it.id)
-                    .getSessionState() == SessionState.ANONYMOUS
+                try {
+                    serverManager.authenticationRepository(it.id)
+                        .getSessionState() == SessionState.ANONYMOUS
+                } catch (e: IllegalStateException) {
+                    Timber.w(e, "Failed to get server ${it.id} state")
+                    false
+                }
             }
             .forEach { serverManager.removeServer(it.id) }
     }
@@ -200,7 +210,7 @@ internal class LaunchViewModel @VisibleForTesting constructor(
     private fun handleNetworkState(state: NetworkState, path: String?, serverId: Int): Boolean {
         Timber.i("Current network state $state")
         return when (state) {
-            NetworkState.READY_LOCAL, NetworkState.READY_REMOTE -> {
+            NetworkState.READY_INTERNAL, NetworkState.READY_NET_VALIDATED, NetworkState.READY_NET_LOCAL -> {
                 workManager.enqueueResyncRegistration()
                 _uiState.value = LaunchUiState.Ready(
                     if (shouldNavigateToAutomotive) {

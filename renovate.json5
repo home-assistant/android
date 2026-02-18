@@ -2,14 +2,15 @@
     $schema: 'https://docs.renovatebot.com/renovate-schema.json',
     configMigration: true,
     extends: [
-        'config:recommended',
+        'config:best-practices',
         'group:linters',
         'group:monorepos',
         'group:recommended',
     ],
-    lockFileMaintenance: {
-        enabled: true,
-    },
+    skipArtifactsUpdate: true,
+    gitIgnoredAuthors: [
+        'github-actions[bot]@users.noreply.github.com',
+    ],
     minimumReleaseAge: '3 days',
     hostRules: [
         {

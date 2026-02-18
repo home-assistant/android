@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.common.compose.theme
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -18,20 +17,28 @@ import androidx.compose.ui.Modifier
  */
 @Composable
 fun HATheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
+    val colorScheme = if (darkTheme) DarkHAColorScheme else LightHAColorScheme
+    val inverseColorScheme = if (darkTheme) LightHAColorScheme else DarkHAColorScheme
     CompositionLocalProvider(
-        LocalHAColorScheme provides if (darkTheme) DarkHAColorScheme else LightHAColorScheme,
+        LocalHAColorScheme provides colorScheme,
     ) {
         MaterialTheme(
             content = content,
             colorScheme = MaterialTheme.colorScheme.copy(
                 // Override the surface so that Composable like Scaffold use the right background color without
                 // manually injecting the color.
-                surface = LocalHAColorScheme.current.colorSurfaceDefault,
-                background = LocalHAColorScheme.current.colorSurfaceDefault,
+                surface = colorScheme.colorSurfaceDefault,
+                background = colorScheme.colorSurfaceDefault,
                 // Used by ModalBottomSheetDefaults.containerColor
-                surfaceContainerLow = LocalHAColorScheme.current.colorSurfaceDefault,
+                surfaceContainerLow = colorScheme.colorSurfaceDefault,
                 // Used for text selection
-                primary = LocalHAColorScheme.current.colorOnPrimaryNormal,
+                primary = colorScheme.colorOnPrimaryNormal,
+                // Used by Snackbar container (SnackbarTokens.ContainerColor)
+                inverseSurface = inverseColorScheme.colorSurfaceLow,
+                // Used by Snackbar text (SnackbarTokens.SupportingTextColor)
+                inverseOnSurface = inverseColorScheme.colorTextPrimary,
+                // Used by Snackbar action label (SnackbarTokens.ActionLabelTextColor)
+                inversePrimary = colorScheme.colorOnPrimaryNormal,
             ),
         )
     }
@@ -42,10 +49,12 @@ fun HATheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () 
  * - applies the theme
  * - adds a container with a background color around the content
  */
-@SuppressLint("ComposeModifierMissing")
 @Composable
-fun HAThemeForPreview(content: @Composable BoxScope.() -> Unit) {
+fun HAThemeForPreview(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
     HATheme {
-        Box(modifier = Modifier.background(LocalHAColorScheme.current.colorSurfaceDefault), content = content)
+        Box(
+            modifier = modifier.background(LocalHAColorScheme.current.colorSurfaceDefault),
+            content = content,
+        )
     }
 }

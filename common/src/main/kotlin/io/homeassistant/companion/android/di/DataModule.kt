@@ -27,8 +27,6 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepositoryImpl
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepositoryImpl
-import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.data.servers.ServerManagerImpl
 import io.homeassistant.companion.android.common.util.DeferredCreationDataSource
 import io.homeassistant.companion.android.common.util.createDataSourceFactory
 import io.homeassistant.companion.android.common.util.di.SuspendProvider
@@ -168,10 +166,6 @@ internal abstract class DataModule {
     @Singleton
     @NamedKeyStore
     internal abstract fun bindKeyStore(keyStore: KeyStoreRepositoryImpl): KeyChainRepository
-
-    @Binds
-    @Singleton
-    internal abstract fun bindServerManager(serverManager: ServerManagerImpl): ServerManager
 
     @Multibinds
     abstract fun bindOkHttpClientConfigurator(): Set<@JvmSuppressWildcards OkHttpConfigurator>

@@ -324,6 +324,7 @@ class ConversationViewModel @Inject constructor(
                             lastMessage.copy(message = lastMessage.message + event.chunk)
                     }
                 }
+                is AssistEvent.PipelineStarted, is AssistEvent.Dismiss -> { /* No op on Wear */ }
                 is AssistEvent.ContinueConversation -> onMicrophoneInput()
             }
         }

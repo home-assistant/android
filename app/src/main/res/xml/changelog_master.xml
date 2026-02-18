@@ -1,20 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2026.1.6 - Main" versioncode="3">
-        <change>Redesigned onboarding experience for easier server setup</change>
-        <change>Added connection security level options</change>
-        <change>Support streaming text-to-speech in Assist</change>
+    <release version="2026.2.4 - Main" versioncode="3">
+        <change>Experimental - Add wake word detection for Assist</change>
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2026.1.6 - Wear" versioncode="2">
-        <change>Support streaming text-to-speech in Assist</change>
+    <release version="2026.2.4 - Wear" versioncode="2">
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2026.1.6 - Automotive" versioncode="1">
-        <change>Redesigned onboarding experience for easier server setup</change>
-        <change>Added connection security level options</change>
-        <change>Support streaming text-to-speech in Assist</change>
+    <release version="2026.2.4 - Automotive" versioncode="1">
         <change>Bug fixes and dependency updates</change>
     </release>
 </changelog>

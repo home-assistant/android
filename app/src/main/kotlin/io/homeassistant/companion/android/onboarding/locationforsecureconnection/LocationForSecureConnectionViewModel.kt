@@ -1,30 +1,23 @@
 package io.homeassistant.companion.android.onboarding.locationforsecureconnection
 
-import androidx.annotation.VisibleForTesting
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import androidx.navigation.toRoute
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.LocationForSecureConnectionRoute
-import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.launch
 import timber.log.Timber
 
-@HiltViewModel
-class LocationForSecureConnectionViewModel @VisibleForTesting constructor(
-    private val serverId: Int,
+/**
+ * ViewModel for the security level configuration screen.
+ */
+@HiltViewModel(assistedFactory = LocationForSecureConnectionViewModelFactory::class)
+class LocationForSecureConnectionViewModel @AssistedInject constructor(
+    @Assisted private val serverId: Int,
     private val serverManager: ServerManager,
 ) : ViewModel() {
-    @Inject
-    constructor(
-        savedStateHandle: SavedStateHandle,
-        serverManager: ServerManager,
-    ) : this(savedStateHandle.toRoute<LocationForSecureConnectionRoute>().serverId, serverManager)
-
     val allowInsecureConnection: Flow<Boolean?> = flow {
         try {
             val value = serverManager.getServer(serverId)?.connection?.allowInsecureConnection
@@ -35,24 +28,27 @@ class LocationForSecureConnectionViewModel @VisibleForTesting constructor(
         }
     }
 
-    fun allowInsecureConnection(allowInsecureConnection: Boolean) {
-        viewModelScope.launch {
-            try {
-                serverManager.getServer(serverId)?.let { server ->
-                    serverManager.updateServer(
-                        server.copy(
-                            connection = server.connection.copy(
-                                allowInsecureConnection = allowInsecureConnection,
-                            ),
+    suspend fun allowInsecureConnection(allowInsecureConnection: Boolean) {
+        try {
+            serverManager.getServer(serverId)?.let { server ->
+                serverManager.updateServer(
+                    server.copy(
+                        connection = server.connection.copy(
+                            allowInsecureConnection = allowInsecureConnection,
                         ),
-                    )
-                }
-            } catch (e: Exception) {
-                Timber.e(
-                    e,
-                    "Something went wrong while setting AllowInsecureConnection to $allowInsecureConnection for server $serverId",
+                    ),
                 )
             }
+        } catch (e: Exception) {
+            Timber.e(
+                e,
+                "Something went wrong while setting AllowInsecureConnection to $allowInsecureConnection for server $serverId",
+            )
         }
     }
+}
+
+@AssistedFactory
+interface LocationForSecureConnectionViewModelFactory {
+    fun create(serverId: Int): LocationForSecureConnectionViewModel
 }

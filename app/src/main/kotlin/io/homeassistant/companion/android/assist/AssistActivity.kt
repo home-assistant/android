@@ -6,11 +6,14 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.graphics.Color
 import android.os.Bundle
 import android.view.WindowManager
+import androidx.core.graphics.drawable.toDrawable
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.runtime.LaunchedEffect
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.lifecycle.lifecycleScope
@@ -36,6 +39,7 @@ class AssistActivity : BaseActivity() {
         private const val EXTRA_PIPELINE = "pipeline"
         private const val EXTRA_START_LISTENING = "start_listening"
         private const val EXTRA_FROM_FRONTEND = "from_frontend"
+        private const val EXTRA_FROM_WAKE_WORD_PHRASE = "from_wake_word_phrase"
 
         fun newInstance(
             context: Context,
@@ -43,12 +47,14 @@ class AssistActivity : BaseActivity() {
             pipelineId: String? = null,
             startListening: Boolean = true,
             fromFrontend: Boolean = true,
+            wakeWordPhrase: String? = null,
         ): Intent {
             return Intent(context, AssistActivity::class.java).apply {
                 putExtra(EXTRA_SERVER, serverId)
                 putExtra(EXTRA_PIPELINE, pipelineId)
                 putExtra(EXTRA_START_LISTENING, startListening)
                 putExtra(EXTRA_FROM_FRONTEND, fromFrontend)
+                putExtra(EXTRA_FROM_WAKE_WORD_PHRASE, wakeWordPhrase)
             }
         }
     }
@@ -89,12 +95,22 @@ class AssistActivity : BaseActivity() {
                 } else {
                     null
                 },
+                wakeWordPhrase = intent.getStringExtra(EXTRA_FROM_WAKE_WORD_PHRASE),
             )
         }
 
         val fromFrontend = intent.getBooleanExtra(EXTRA_FROM_FRONTEND, false)
 
         setContent {
+            if (viewModel.shouldFinish) {
+                finish()
+                return@setContent
+            }
+
+            if (viewModel.pendingWakeWordConfirmation) {
+                return@setContent
+            }
+
             HomeAssistantAppTheme {
                 AssistSheetView(
                     conversation = viewModel.conversation,

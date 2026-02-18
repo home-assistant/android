@@ -44,6 +44,12 @@ sealed interface AssistEvent {
 
     class MessageChunk(val chunk: String) : AssistEvent
     data object ContinueConversation : AssistEvent
+
+    /** Signals that the pipeline has started processing and the UI can be shown */
+    data object PipelineStarted : AssistEvent
+
+    /** Signals that the Assist UI should be dismissed without showing an error */
+    data object Dismiss : AssistEvent
 }
 
 abstract class AssistViewModelBase(
@@ -123,6 +129,7 @@ abstract class AssistViewModelBase(
     protected fun runAssistPipelineInternal(
         text: String?,
         pipeline: AssistPipelineResponse?,
+        wakeWordPhrase: String? = null,
         onEvent: (AssistEvent) -> Unit,
     ) {
         val isVoice = text == null
@@ -135,6 +142,7 @@ abstract class AssistViewModelBase(
                         outputTts = pipeline?.ttsEngine?.isNotBlank() == true,
                         pipelineId = pipeline?.id,
                         conversationId = conversationId,
+                        wakeWordPhrase = wakeWordPhrase,
                     )
                 } else {
                     serverManager.integrationRepository(selectedServerId).getAssistResponse(
@@ -152,12 +160,14 @@ abstract class AssistViewModelBase(
 
             flow?.collect { event ->
                 when (event.type) {
-                    AssistPipelineEventType.RUN_START -> handleRunStart(
-                        event.data as? AssistPipelineRunStart,
-                        isVoice,
-                        onEvent,
-                    )
-
+                    AssistPipelineEventType.RUN_START -> {
+                        handleRunStart(
+                            event.data as? AssistPipelineRunStart,
+                            isVoice,
+                            onEvent,
+                        )
+                        onEvent(AssistEvent.PipelineStarted)
+                    }
                     AssistPipelineEventType.STT_START -> handleSttStart()
                     AssistPipelineEventType.STT_END -> handleSttEnd(event.data as? AssistPipelineSttEnd, onEvent)
                     AssistPipelineEventType.INTENT_PROGRESS -> handleIntentProgress(
@@ -265,6 +275,12 @@ abstract class AssistViewModelBase(
      * Return true if we need to cancel the job
      */
     private fun handleError(data: AssistPipelineError?, onEvent: (AssistEvent) -> Unit): Boolean {
+        if (data?.isDuplicatedWakeWord == true) {
+            Timber.d("Duplicate wake-up detected, dismissing Assist")
+            onEvent(AssistEvent.Dismiss)
+            stopRecording()
+            return true
+        }
         val errorMessage = data?.message ?: return false
         onEvent(AssistEvent.Message.Error(errorMessage))
         stopRecording()

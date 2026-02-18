@@ -62,7 +62,7 @@ class LaunchViewModelTest {
     }
 
     @ParameterizedTest
-    @EnumSource(NetworkState::class, names = ["READY_LOCAL", "READY_REMOTE"])
+    @EnumSource(NetworkState::class, names = ["READY_INTERNAL", "READY_NET_VALIDATED", "READY_NET_LOCAL"])
     fun `Given active server connected and registered, when network is READY, then navigate to frontend and resync registration`(
         state: NetworkState,
     ) = runTest {
@@ -143,7 +143,7 @@ class LaunchViewModelTest {
         assertEquals(LaunchUiState.Loading, viewModel.uiState.value)
         assertEquals(1, networkStateFlow.subscriptionCount.value)
 
-        networkStateFlow.emit(NetworkState.READY_REMOTE)
+        networkStateFlow.emit(NetworkState.READY_NET_VALIDATED)
         advanceUntilIdle()
 
         assertEquals(
@@ -224,10 +224,10 @@ class LaunchViewModelTest {
     }
 
     @Test
-    fun `Given IllegalArgumentException thrown while getting server, when creating viewModel, then navigate to onboarding`() = runTest {
-        coEvery { serverManager.getServer(ServerManager.SERVER_ID_ACTIVE) } throws IllegalArgumentException("Wrong server")
+    fun `Given IllegalStateException thrown while getting auth repository, when creating viewModel, then navigate to onboarding`() = runTest {
+        coEvery { serverManager.getServer(ServerManager.SERVER_ID_ACTIVE) } returns null
         coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.authenticationRepository().getSessionState() } returns SessionState.ANONYMOUS
+        coEvery { serverManager.authenticationRepository().getSessionState() } throws IllegalStateException("server not found")
 
         createViewModel()
         advanceUntilIdle()
@@ -347,7 +347,7 @@ class LaunchViewModelTest {
         coEvery { serverManager.getServer(serverId) } returns server
         coEvery { serverManager.isRegistered() } returns true
         coEvery { serverManager.authenticationRepository().getSessionState() } returns SessionState.CONNECTED
-        val networkStateFlow = MutableStateFlow(NetworkState.READY_REMOTE)
+        val networkStateFlow = MutableStateFlow(NetworkState.READY_NET_VALIDATED)
         coEvery { networkStatusMonitor.observeNetworkStatus(any()) } returns networkStateFlow
 
         createViewModel(LaunchActivity.DeepLink.NavigateTo("/path", serverId))
@@ -393,7 +393,7 @@ class LaunchViewModelTest {
         coEvery { serverManager.getServer(ServerManager.SERVER_ID_ACTIVE) } returns server
         coEvery { serverManager.isRegistered() } returns true
         coEvery { serverManager.authenticationRepository().getSessionState() } returns SessionState.CONNECTED
-        val networkStateFlow = MutableStateFlow(NetworkState.READY_REMOTE)
+        val networkStateFlow = MutableStateFlow(NetworkState.READY_NET_VALIDATED)
         coEvery { networkStatusMonitor.observeNetworkStatus(any()) } returns networkStateFlow
 
         createViewModel(isAutomotive = true)
@@ -414,7 +414,7 @@ class LaunchViewModelTest {
         coEvery { serverManager.getServer(ServerManager.SERVER_ID_ACTIVE) } returns server
         coEvery { serverManager.isRegistered() } returns true
         coEvery { serverManager.authenticationRepository().getSessionState() } returns SessionState.CONNECTED
-        val networkStateFlow = MutableStateFlow(NetworkState.READY_REMOTE)
+        val networkStateFlow = MutableStateFlow(NetworkState.READY_NET_VALIDATED)
         coEvery { networkStatusMonitor.observeNetworkStatus(any()) } returns networkStateFlow
 
         createViewModel(isAutomotive = true, isFullFlavor = false)
@@ -444,7 +444,7 @@ class LaunchViewModelTest {
         assertEquals(LaunchUiState.NetworkUnavailable, viewModel.uiState.value)
         assertEquals(1, networkStateFlow.subscriptionCount.value)
 
-        networkStateFlow.emit(NetworkState.READY_LOCAL)
+        networkStateFlow.emit(NetworkState.READY_INTERNAL)
         advanceUntilIdle()
 
         assertEquals(
@@ -519,7 +519,7 @@ class LaunchViewModelTest {
         coEvery { serverManager.getServer(serverId) } returns server
         coEvery { serverManager.isRegistered() } returns true
         coEvery { serverManager.authenticationRepository().getSessionState() } returns SessionState.CONNECTED
-        val networkStateFlow = MutableStateFlow(NetworkState.READY_REMOTE)
+        val networkStateFlow = MutableStateFlow(NetworkState.READY_NET_VALIDATED)
         coEvery { networkStatusMonitor.observeNetworkStatus(any()) } returns networkStateFlow
 
         createViewModel(LaunchActivity.DeepLink.NavigateTo(path = null, serverId = serverId))

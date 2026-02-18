@@ -20,6 +20,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Devices.TABLET
 import androidx.compose.ui.tooling.preview.Preview
 import io.homeassistant.companion.android.common.compose.composable.HABanner
+import io.homeassistant.companion.android.common.compose.composable.HALabel
+import io.homeassistant.companion.android.common.compose.composable.LabelSize
+import io.homeassistant.companion.android.common.compose.composable.LabelVariant
 import io.homeassistant.companion.android.common.compose.composable.HADetails
 import io.homeassistant.companion.android.common.compose.composable.HAHint
 import io.homeassistant.companion.android.common.compose.composable.HAHorizontalDivider
@@ -32,6 +35,7 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 
 fun LazyListScope.catalogTextAndBannersSection() {
     textStyles()
+    labels()
     banners()
     details()
     divider()
@@ -73,6 +77,23 @@ private fun LazyListScope.textStyles() {
                 style = HATextStyle.Button,
                 modifier = Modifier.fillMaxWidth(),
             )
+        }
+    }
+}
+
+private fun LazyListScope.labels() {
+    catalogSection(title = "Labels") {
+        CatalogRow {
+            LabelVariant.entries.forEach { variant ->
+                HALabel(text = variant.name.lowercase().replaceFirstChar { it.uppercase() }, variant = variant)
+            }
+            LabelVariant.entries.forEach { variant ->
+                HALabel(
+                    text = variant.name.lowercase().replaceFirstChar { it.uppercase() },
+                    variant = variant,
+                    size = LabelSize.SMALL,
+                )
+            }
         }
     }
 }

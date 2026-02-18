@@ -135,6 +135,11 @@
     <PreferenceCategory
         android:title="@string/assist"
         android:key="assist">
+        <Preference
+            android:key="assist_settings"
+            android:icon="@drawable/ic_comment_processing_outline"
+            android:title="@string/assist_for_android"
+            android:summary="@string/assist_summary" />
         <SwitchPreference
             android:key="assist_voice_command_intent"
             android:icon="@drawable/ic_headphones_settings"
@@ -250,6 +255,11 @@
             android:icon="@drawable/ic_stat_ic_notification_blue"
             android:title="@string/application_version"
             android:summary="1.0.0 (1)"/>
+        <Preference
+            android:key="licenses"
+            android:icon="@drawable/ic_license"
+            android:title="@string/licenses"
+            android:summary="@string/licenses_summary"/>
         <Preference
             android:key="privacy"
             android:icon="@drawable/ic_incognito"

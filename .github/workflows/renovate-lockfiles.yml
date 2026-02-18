@@ -1,0 +1,66 @@
+name: Auto-update Renovate lockfiles
+
+on: # yamllint disable-line rule:truthy
+  push:
+    branches:
+      - "renovate/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  update-lockfiles:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write # Start workflows pr.yml
+      contents: write # To push to the current branch
+    steps:
+      # Avoid re-running when this workflow just pushed a lockfile update
+      - name: Check if lockfiles were just updated
+        id: check-skip
+        env:
+          COMMIT_AUTHOR: ${{ github.event.head_commit.author.email }}
+        run: |
+          if [[ "$COMMIT_AUTHOR" == "github-actions[bot]@users.noreply.github.com" ]]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        if: steps.check-skip.outputs.skip != 'true'
+        with:
+          persist-credentials: true # Needed to be able to push the new lockfiles
+
+      - uses: ./.github/actions/setup-build-env
+        if: steps.check-skip.outputs.skip != 'true'
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+          mock-google-services: "true"
+
+      - name: Update lockfiles
+        if: steps.check-skip.outputs.skip != 'true'
+        run: ./gradlew alldependencies --write-locks
+
+      - name: Commit and push updated lockfiles
+        if: steps.check-skip.outputs.skip != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add '*.lockfile'
+          if git diff --staged --quiet; then
+            echo "Lockfiles are already up to date"
+          else
+            git commit -m "Update dependency lockfiles"
+            git push
+          fi
+
+      - name: Trigger Workflow
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        if: steps.check-skip.outputs.skip != 'true'
+        with:
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'pr.yml',
+              ref: context.ref,
+            })

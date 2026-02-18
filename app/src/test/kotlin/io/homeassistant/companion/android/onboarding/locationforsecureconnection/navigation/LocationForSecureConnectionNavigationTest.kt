@@ -6,14 +6,20 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
+import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
+import dagger.hilt.android.testing.UninstallModules
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.di.ServerManagerModule
 import io.homeassistant.companion.android.onboarding.BaseOnboardingNavigationTest
 import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.SetHomeNetworkRoute
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.compose.navigateToUri
+import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.mockk
 import junit.framework.TestCase.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -25,8 +31,19 @@ import org.robolectric.annotation.Config
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
+@UninstallModules(ServerManagerModule::class)
 @HiltAndroidTest
 internal class LocationForSecureConnectionNavigationTest : BaseOnboardingNavigationTest() {
+
+    // Mock the ServerManager to prevent real server operations from executing.
+    // Without this, suspend functions switch to Dispatchers.IO and coroutines resume
+    // on a non-main thread, causing navigation to fail with "Method setCurrentState must be
+    // called on the main thread" because LifecycleRegistry requires main thread access.
+    @BindValue
+    @JvmField
+    val serverManager: ServerManager = mockk(relaxed = true) {
+        coEvery { getServer(any<Int>()) } returns null
+    }
 
     @Test
     fun `Given LocationForSecureConnection when agreeing to share then show SetHomeNetwork`() {

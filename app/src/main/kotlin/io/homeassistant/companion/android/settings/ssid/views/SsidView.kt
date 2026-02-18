@@ -81,8 +81,10 @@ fun SsidView(
     onSetEthernet: (Boolean) -> Unit,
     onSetVpn: (Boolean) -> Unit,
     onSetPrioritize: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     LazyColumn(
+        modifier = modifier,
         contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
     ) {
         item("intro") {
@@ -253,7 +255,7 @@ fun SsidSubheader(
     onClicked: ((Boolean) -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
-    val modifier = if (onClicked != null) {
+    val subheaderModifier = if (onClicked != null) {
         modifier.then(
             Modifier
                 .clickable { checked?.let { onClicked(!it) } ?: onClicked(true) }
@@ -268,7 +270,7 @@ fun SsidSubheader(
         )
     }
     Row(
-        modifier = modifier,
+        modifier = subheaderModifier,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
@@ -293,9 +295,9 @@ fun SsidSubheader(
 }
 
 @Composable
-fun SsidInput(onSubmit: (String) -> Boolean) {
+fun SsidInput(onSubmit: (String) -> Boolean, modifier: Modifier = Modifier) {
     val keyboardController = LocalSoftwareKeyboardController.current
-    Row(modifier = Modifier.padding(horizontal = 16.dp)) {
+    Row(modifier = modifier.padding(horizontal = 16.dp)) {
         var ssidInput by remember { mutableStateOf("") }
         var ssidError by remember { mutableStateOf(false) }
 
@@ -344,9 +346,9 @@ fun SsidInput(onSubmit: (String) -> Boolean) {
 }
 
 @Composable
-fun SsidPrioritizeInternal(prioritize: Boolean, onChanged: (Boolean) -> Unit) {
+fun SsidPrioritizeInternal(prioritize: Boolean, onChanged: (Boolean) -> Unit, modifier: Modifier = Modifier) {
     var prioritizeDropdown by remember { mutableStateOf(false) }
-    Box {
+    Box(modifier = modifier) {
         Column(
             modifier = Modifier
                 .clickable { prioritizeDropdown = true }

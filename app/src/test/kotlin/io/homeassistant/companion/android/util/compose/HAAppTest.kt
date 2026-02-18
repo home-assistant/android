@@ -21,12 +21,16 @@ import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.testing.TestNavHostController
 import androidx.navigation.toRoute
 import androidx.savedstate.SavedState
+import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
+import dagger.hilt.android.testing.UninstallModules
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.automotive.navigation.AutomotiveRoute
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.di.ServerManagerModule
 import io.homeassistant.companion.android.frontend.navigation.FrontendActivityRoute
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.launch.HAStartDestinationRoute
@@ -41,7 +45,9 @@ import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeR
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.compose.webview.HA_WEBVIEW_TAG
+import io.mockk.coEvery
 import io.mockk.every
+import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.spyk
 import io.mockk.verify
@@ -57,6 +63,7 @@ import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
+@UninstallModules(ServerManagerModule::class)
 @HiltAndroidTest
 class HAAppTest {
 
@@ -68,6 +75,18 @@ class HAAppTest {
 
     @get:Rule(order = 2)
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
+
+    // Mock the ServerManager to prevent the real allowInsecureConnection() from executing.
+    // Without this, the suspend function switches to Dispatchers.IO and the coroutine resumes
+    // on a non-main thread, causing navigation to fail with "Method setCurrentState must be
+    // called on the main thread" because LifecycleRegistry requires main thread access.
+    // This occurs due to the interaction between Robolectric, Compose testing, and coroutines,
+    // where dispatcher context is not properly preserved across suspend function boundaries.
+    @BindValue
+    @JvmField
+    val serverManager: ServerManager = mockk(relaxed = true) {
+        coEvery { getServer(any<Int>()) } returns null
+    }
 
     private lateinit var navController: TestNavHostController
 

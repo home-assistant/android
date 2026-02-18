@@ -21,18 +21,19 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - uses: ./.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
-      - uses: ruby/setup-ruby@708024e6c902387ab41de36e1669e43b5ee7085e # v1.283.0
+      - uses: ruby/setup-ruby@09a7688d3b55cf0e976497ff046b70949eeaccfd # v1.288.0
         with:
           ruby-version: "4.0.1"
-          bundler-cache: true
+          bundler-cache: false
 
       - uses: ./.github/actions/create-release-number
         name: Create Release Number
@@ -109,6 +110,10 @@ jobs:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: ./gradlew appDistributionUploadFullRelease
 
+      - name: Install Fastlane dependencies
+        if: github.event.inputs.beta == 'true'
+        run: bundle install
+
       - name: Prepare Amazon Listing
         if: github.event.inputs.beta == 'true'
         run: bundle exec fastlane prep_amazon
@@ -118,7 +123,7 @@ jobs:
           AMAZON_APPSTORE_APP_ID: ${{ secrets.AMAZON_APPSTORE_APP_ID }}
 
       - name: Upload Github Dependencies
-        uses: gradle/actions/dependency-submission@4d9f0ba0025fe599b4ebab900eb7f3a1d93ef4c2 # v5.0.0
+        uses: gradle/actions/dependency-submission@f29f5a9d7b09a7c6b29859002d29d24e1674c884 # v5.0.1
 
       - name: Print `git status`
         run: git status
@@ -131,18 +136,19 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - uses: ./.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
-      - uses: ruby/setup-ruby@708024e6c902387ab41de36e1669e43b5ee7085e # v1.283.0
+      - uses: ruby/setup-ruby@09a7688d3b55cf0e976497ff046b70949eeaccfd # v1.288.0
         with:
           ruby-version: "4.0.1"
-          bundler-cache: true
+          bundler-cache: false
 
       - uses: ./.github/actions/create-release-number
         name: Create Release Number
@@ -183,6 +189,9 @@ jobs:
         with:
           name: release-aabs
           path: ./**/*.aab
+
+      - name: Install Fastlane dependencies
+        run: bundle install
 
       - name: Deploy to Playstore Internal
         run: bundle exec fastlane deploy_internal

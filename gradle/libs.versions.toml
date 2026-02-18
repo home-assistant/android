@@ -2,20 +2,23 @@
 # You need to update the lock if you update or add a dependency
 # you can do that with `./gradlew alldependencies --write-locks`
 [versions]
+aboutlibraries = "14.0.0-b02"
 accompanist = "0.37.3"
-activity-compose = "1.12.2"
+activity-compose = "1.12.3"
 androidBeaconLibrary = "2.21.2"
-androidGradlePlugin = "8.13.2"
+androidGradlePlugin = "9.0.0"
+androidNdk = "29.0.14206865"
 androidSdk-compile = "36"
 androidSdk-min = "23"
 androidSdk-target = "36"
 androidSdk-automotive-min = "29"
 androidSdk-wear-min = "26"
 androidSdk-wear-target = "34"
-androidTools = "31.13.2"
+androidTools = "32.0.0"
 androidxConcurrent = "1.3.0"
 androidxHiltNavigationCompose = "1.3.0"
 androidxTestCore = "1.7.0"
+androidxTestEspresso = "3.7.0"
 androidxTestExt = "1.3.0"
 androidxTestRules = "1.7.0"
 androidxTestRunner = "1.7.0"
@@ -24,9 +27,10 @@ appcompat = "1.7.1"
 biometric = "1.1.0"
 blurView = "version-2.0.6"
 car-versions = "1.7.0"
-changeLog = "3.8.1"
+changeLog = "3.8.2"
+cmake = "4.1.2"
 community-material-typeface = "7.0.96.2-kotlin"
-compose-bom = "2026.01.00"
+compose-bom = "2026.01.01"
 composeLintChecks = "1.4.2"
 connectClient = "1.1.0"
 constraintlayout = "2.2.1"
@@ -35,49 +39,52 @@ core-splashscreen = "1.2.0"
 core-remoteviews = "1.1.0"
 cronet = "143.7445.0"
 emojiJava = "5.1.1"
-firebase-bom = "34.8.0"
-firebaseAppdistributionGradle = "5.2.0"
+firebase-bom = "34.9.0"
+firebaseAppdistributionGradle = "5.2.1"
 fragment-ktx = "1.8.9"
 glance = "1.1.1"
 googleServices = "4.4.4"
 guava = "33.4.6-android"
 healthServicesClient = "1.1.0-alpha05"
 haze = "1.7.1"
-hilt = "2.58"
+hilt = "2.59.1"
 iconics = "5.5.0-compose01"
 improv = "0.1.1"
 javaVersion = "11" # https://developer.android.com/studio/write/java11-minimal-support-table
 junit = "6.0.2"
-kotlin = "2.3.0"
+kotlin = "2.3.10"
 kotlinx-coroutines = "1.10.2"
 kotlinx-collections-immutable = "0.3.7"
-kotlinx-serialization = "1.9.0"
+kotlinx-serialization = "1.10.0"
 ksp = "2.3.4"
 ktlint = "14.0.1"
 leakcanaryAndroid = "2.14"
 lifecycle = "2.10.0"
+litert = "2.1.1"
 material = "1.13.0"
 media = "1.7.1"
-media3 = "1.9.0"
-mockk = "1.14.7"
-navigation-compose = "2.9.6"
+media3 = "1.9.2"
+mockk = "1.14.9"
+navigation-compose = "2.9.7"
 okhttp = "5.3.2"
-paging = "3.3.6"
+paging = "3.4.0"
 coil = "3.3.0"
+play-services-tflite = "16.4.0"
 play-services-threadnetwork = "16.3.0"
 play-services-home = "16.0.0"
 play-services-location = "21.3.0"
 play-services-wearable = "19.0.0"
 preference-ktx = "1.2.1"
+protobuf-javalite = "3.25.8"
 recyclerview = "1.4.0"
 reorderable = "3.0.0"
 retrofit-bom = "3.0.0"
-robolectric = "4.16" # Check if robolectric supports a more recent version of the SDK on each update
+robolectric = "4.16.1" # Check if robolectric supports a more recent version of the SDK on each update
 robolectric-target-sdk = "36"
 room = "2.8.4"
-runtimeLint = "1.10.1"
+runtimeLint = "1.10.2"
 screenshot = "0.0.1-alpha13" # On the next update, replace the hack in AndroidComposeConvertionPlugin with the real fix
-sentry-android = "8.30.0"
+sentry-android = "8.32.0"
 timber = "5.0.1"
 tools-desugar-jdk-libs = "2.1.5"
 turbine = "1.2.1"
@@ -91,17 +98,17 @@ wearPhoneInteractions = "1.1.0"
 wearInput = "1.2.0"
 webkit = "1.15.0"
 wear-remote-interactions = "1.1.0"
-workRuntime = "2.11.0"
+workRuntime = "2.11.1"
 zxing = "4.3.0"
 
 [plugins]
+aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin.android", version.ref = "aboutlibraries" }
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
 android-library = { id = "com.android.library", version.ref = "androidGradlePlugin" }
 android-lint = { id = "com.android.lint", version.ref = "androidGradlePlugin" }
 firebase-appdistribution = { id = "com.google.firebase.appdistribution", version.ref = "firebaseAppdistributionGradle" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
@@ -117,6 +124,7 @@ homeassistant-android-dependencies = { id = "homeassistant.android.dependencies"
 homeassistant-android-flavor = { id = "homeassistant.android.flavor" }
 
 [libraries]
+aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutlibraries" }
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanist" }
 activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activity-compose" }
 activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activity-compose" }
@@ -147,6 +155,7 @@ androidx-runtime-lint = { module = "androidx.compose.runtime:runtime-lint", vers
 androidx-watchface-complications-data-source-ktx = { module = "androidx.wear.watchface:watchface-complications-data-source-ktx", version.ref = "watchfaceComplicationsDataSourceKtx" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntime" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
+androidx-test-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "androidxTestEspresso" }
 androidx-test-ext = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "androidxTestExt" }
 androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "androidxTestRules" }
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidxTestRunner" }
@@ -231,6 +240,7 @@ mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 paging-runtime = { module = "androidx.paging:paging-runtime", version.ref = "paging" }
 paging-compose = { module = "androidx.paging:paging-compose", version.ref = "paging" }
 play-services-threadnetwork = { module = "com.google.android.gms:play-services-threadnetwork", version.ref = "play-services-threadnetwork" }
+protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobuf-javalite" }
 play-services-home = { module = "com.google.android.gms:play-services-home", version.ref = "play-services-home" }
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "play-services-location" }
 play-services-wearable = { module = "com.google.android.gms:play-services-wearable", version.ref = "play-services-wearable" }
@@ -243,6 +253,8 @@ retrofit-converter-kotlinx-serialization = { module = "com.squareup.retrofit2:co
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 screenshot-validation-api = { group = "com.android.tools.screenshot", name = "screenshot-validation-api", version.ref = "screenshot" }
 sentry-android-core = { module = "io.sentry:sentry-android-core", version.ref = "sentry-android" }
+litert = { module = "com.google.ai.edge.litert:litert", version.ref = "litert" }
+play-services-tflite = { module = "com.google.android.gms:play-services-tflite-java", version.ref = "play-services-tflite" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 tools-desugar-jdk = { module = "com.android.tools:desugar_jdk_libs", version.ref = "tools-desugar-jdk-libs" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
@@ -262,7 +274,7 @@ webkit = { module = "androidx.webkit:webkit", version.ref = "webkit" }
 zxing = { module = "com.journeyapps:zxing-android-embedded", version.ref = "zxing" }
 
 [bundles]
-androidx-test =["androidx-test-core", "androidx-test-ext", "androidx-test-rules", "androidx-test-runner"]
+androidx-test =["androidx-test-core", "androidx-test-espresso-core", "androidx-test-ext", "androidx-test-rules", "androidx-test-runner"]
 androidx-compose-ui-test = ["compose-ui-test", "compose-ui-testManifest"]
 androidx-glance = ["androidx-glance-appwidget", "androidx-glance-appwidget-preview", "androidx-glance-material", "androidx-glance-preview"]
 androidx-glance-testing = ["androidx-glance-testing", "androidx-glance-appwidget-testing"]

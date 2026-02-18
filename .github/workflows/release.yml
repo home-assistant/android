@@ -16,12 +16,14 @@ jobs:
     name: Play Publish Production
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
-      - uses: ruby/setup-ruby@708024e6c902387ab41de36e1669e43b5ee7085e # v1.283.0
+      - uses: ruby/setup-ruby@09a7688d3b55cf0e976497ff046b70949eeaccfd # v1.288.0
         with:
           ruby-version: "4.0.1"
-          bundler-cache: true
+          bundler-cache: false
 
       - uses: ./.github/actions/inflate-secrets
         name: Inflate Secrets
@@ -30,6 +32,9 @@ jobs:
           google-services: ${{ secrets.GOOGLESERVICES }}
           firebase-creds: ${{ secrets.FIREBASECREDS }}
           playstore-creds: ${{ secrets.PLAYSTORECREDS }}
+
+      - name: Install Fastlane dependencies
+        run: bundle install
 
       - name: Promote Beta to Production Play Store
         run: bundle exec fastlane promote_to_production

@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.common.util.AudioRecorder
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -33,6 +34,7 @@ class AssistViewModel @Inject constructor(
     private var filteredServerId: Int? = null
     private val allPipelines = mutableMapOf<Int, List<AssistPipelineResponse>>()
     private var selectedPipeline: AssistPipelineResponse? = null
+    private var wakeWordPhrase: String? = null
 
     private var recorderAutoStart = true
     private var requestPermission: (() -> Unit)? = null
@@ -55,9 +57,23 @@ class AssistViewModel @Inject constructor(
     var userCanManagePipelines by mutableStateOf(false)
         private set
 
-    fun onCreate(hasPermission: Boolean, serverId: Int?, pipelineId: String?, startListening: Boolean?) {
+    var shouldFinish by mutableStateOf(false)
+        private set
+
+    /** When true, the UI should not be shown yet (waiting to confirm the pipeline is not a duplicate wake-up). The activity should finish if a duplicate is detected. */
+    var pendingWakeWordConfirmation by mutableStateOf(false)
+        private set
+
+    fun onCreate(
+        hasPermission: Boolean,
+        serverId: Int?,
+        pipelineId: String?,
+        startListening: Boolean?,
+        wakeWordPhrase: String?,
+    ) {
         viewModelScope.launch {
             this@AssistViewModel.hasPermission = hasPermission
+            this@AssistViewModel.wakeWordPhrase = wakeWordPhrase
             serverId?.let {
                 filteredServerId = serverId
                 selectedServerId = serverId
@@ -82,6 +98,7 @@ class AssistViewModel @Inject constructor(
                 serverManager.integrationRepository(selectedServerId).getLastUsedPipelineSttSupport()
             ) {
                 // Start microphone recording to prevent missing voice input while doing network checks
+                pendingWakeWordConfirmation = wakeWordPhrase != null
                 onMicrophoneInput(proactive = true)
             }
 
@@ -155,13 +172,19 @@ class AssistViewModel @Inject constructor(
 
     private suspend fun checkSupport(): Boolean? {
         if (!serverManager.isRegistered()) return false
-        if (!serverManager.integrationRepository(
-                selectedServerId,
-            ).isHomeAssistantVersionAtLeast(2023, 5, 0)
-        ) {
-            return false
+        return try {
+            if (!serverManager.integrationRepository(
+                    selectedServerId,
+                ).isHomeAssistantVersionAtLeast(2023, 5, 0)
+            ) {
+                false
+            } else {
+                serverManager.webSocketRepository(selectedServerId).getConfig()?.components?.contains("assist_pipeline")
+            }
+        } catch (e: IllegalStateException) {
+            Timber.e(e, "Failed to check support")
+            false
         }
-        return serverManager.webSocketRepository(selectedServerId).getConfig()?.components?.contains("assist_pipeline")
     }
 
     private suspend fun loadPipelines() {
@@ -328,9 +351,13 @@ class AssistViewModel @Inject constructor(
         if (!isVoice) _conversation.add(haMessage)
         var message = if (isVoice) userMessage else haMessage
 
+        // Capture and clear wake word phrase - it should only be sent once for the initial command
+        val wakeWord = wakeWordPhrase.also { wakeWordPhrase = null }
+
         runAssistPipelineInternal(
-            text,
-            selectedPipeline,
+            text = text,
+            pipeline = selectedPipeline,
+            wakeWordPhrase = wakeWord,
         ) { event ->
             when (event) {
                 is AssistEvent.Message -> {
@@ -363,7 +390,14 @@ class AssistViewModel @Inject constructor(
                             lastMessage.copy(message = lastMessage.message + event.chunk)
                     }
                 }
+                is AssistEvent.PipelineStarted -> { /* handled below */ }
                 is AssistEvent.ContinueConversation -> onMicrophoneInput()
+                is AssistEvent.Dismiss -> shouldFinish = true
+            }
+            if (!shouldFinish && pendingWakeWordConfirmation) {
+                // Any event confirms this is not a duplicate wake-up, so the UI can be shown.
+                // Skipped when finishing to avoid a brief UI flash before dismissal.
+                pendingWakeWordConfirmation = false
             }
         }
     }

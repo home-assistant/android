@@ -68,20 +68,23 @@ enum class WidgetType(val widgetIcon: IIcon) {
 }
 
 @Composable
-fun ManageWidgetsView(viewModel: ManageWidgetsViewModel) {
+fun ManageWidgetsView(viewModel: ManageWidgetsViewModel, modifier: Modifier = Modifier) {
     var expandedAddWidget by remember { mutableStateOf(false) }
-    Scaffold(floatingActionButton = {
-        if (viewModel.supportsAddingWidgets) {
-            ExtendedFloatingActionButton(
-                modifier = Modifier.padding(safeBottomPaddingValues(applyHorizontal = false)),
-                backgroundColor = MaterialTheme.colors.primary,
-                contentColor = MaterialTheme.colors.onPrimary,
-                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                text = { Text(stringResource(R.string.add_widget)) },
-                onClick = { expandedAddWidget = true },
-            )
-        }
-    }) { contentPadding ->
+    Scaffold(
+        modifier = modifier,
+        floatingActionButton = {
+            if (viewModel.supportsAddingWidgets) {
+                ExtendedFloatingActionButton(
+                    modifier = Modifier.padding(safeBottomPaddingValues(applyHorizontal = false)),
+                    backgroundColor = MaterialTheme.colors.primary,
+                    contentColor = MaterialTheme.colors.onPrimary,
+                    icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                    text = { Text(stringResource(R.string.add_widget)) },
+                    onClick = { expandedAddWidget = true },
+                )
+            }
+        },
+    ) { contentPadding ->
         if (expandedAddWidget) {
             val availableWidgets = listOf(
                 stringResource(R.string.widget_button_image_description) to WidgetType.BUTTON,
@@ -199,10 +202,15 @@ private fun <T : WidgetEntity<T>> LazyListScope.widgetItems(
 }
 
 @Composable
-private fun PopupWidgetRow(widgetLabel: String, widgetType: WidgetType, onClickCallback: () -> Unit) {
+private fun PopupWidgetRow(
+    widgetLabel: String,
+    widgetType: WidgetType,
+    modifier: Modifier = Modifier,
+    onClickCallback: () -> Unit,
+) {
     val context = LocalContext.current
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clickable {
                 val intent = Intent(context, widgetType.configureActivity()).apply {
@@ -228,9 +236,9 @@ private fun PopupWidgetRow(widgetLabel: String, widgetType: WidgetType, onClickC
 }
 
 @Composable
-private fun WidgetRow(widgetLabel: String, widgetId: Int, widgetType: WidgetType) {
+private fun WidgetRow(widgetLabel: String, widgetId: Int, widgetType: WidgetType, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    Row {
+    Row(modifier = modifier) {
         Button(onClick = {
             val intent = Intent(context, widgetType.configureActivity()).apply {
                 putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId)

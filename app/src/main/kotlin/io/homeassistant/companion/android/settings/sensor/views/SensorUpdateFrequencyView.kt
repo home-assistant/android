@@ -23,9 +23,10 @@ import io.homeassistant.companion.android.util.safeBottomPaddingValues
 fun SensorUpdateFrequencyView(
     sensorUpdateFrequency: SensorUpdateFrequencySetting,
     onSettingChanged: (SensorUpdateFrequencySetting) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val scrollState = rememberScrollState()
-    Box(modifier = Modifier.verticalScroll(scrollState)) {
+    Box(modifier = modifier.verticalScroll(scrollState)) {
         Column(
             modifier = Modifier
                 .padding(safeBottomPaddingValues(applyHorizontal = false))

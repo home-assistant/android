@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.13.2" type="baseline" client="gradle" dependencies="false" name="AGP (8.13.2)" variant="all" version="8.13.2">
+<issues format="6" by="lint 9.0.0" type="baseline" client="gradle" dependencies="false" name="AGP (9.0.0)" variant="all" version="9.0.0">
 
     <issue
         id="MissingPermission"
@@ -8,7 +8,7 @@
         errorLine2="                ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/util/DisabledLocationHandler.kt"
-            line="139"
+            line="143"
             column="17"/>
     </issue>
 
@@ -19,7 +19,7 @@
         errorLine2="                ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/util/DisabledLocationHandler.kt"
-            line="139"
+            line="143"
             column="17"/>
     </issue>
 
@@ -124,23 +124,23 @@
 
     <issue
         id="PrivateResource"
-        message="Overriding `@string/state_off` which is marked as private in androidx.compose.ui:ui-android:1.10.1. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name."
+        message="Overriding `@string/state_off` which is marked as private in androidx.compose.ui:ui-android:1.10.2. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name."
         errorLine1="    &lt;string name=&quot;state_off&quot;>Off&lt;/string>"
         errorLine2="                  ~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="837"
+            line="840"
             column="19"/>
     </issue>
 
     <issue
         id="PrivateResource"
-        message="Overriding `@string/state_on` which is marked as private in androidx.compose.ui:ui-android:1.10.1. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name."
+        message="Overriding `@string/state_on` which is marked as private in androidx.compose.ui:ui-android:1.10.2. If deliberate, use tools:override=&quot;true&quot;, otherwise pick a different name."
         errorLine1="    &lt;string name=&quot;state_on&quot;>On&lt;/string>"
         errorLine2="                  ~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="838"
+            line="841"
             column="19"/>
     </issue>
 
@@ -151,7 +151,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="379"
+            line="380"
             column="5"/>
     </issue>
 
