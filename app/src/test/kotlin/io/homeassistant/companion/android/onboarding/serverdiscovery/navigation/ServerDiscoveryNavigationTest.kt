@@ -167,10 +167,8 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
             onNodeWithContentDescription(stringResource(commonR.string.get_help)).performClick()
             coVerify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, any()) }
 
-            waitUntilAtLeastOneExists(
-                hasText(instanceUrl),
-                timeoutMillis = DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds,
-            )
+            mainClock.advanceTimeBy(DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds, ignoreFrameDuration = true)
+            waitUntilAtLeastOneExists(hasText(instanceUrl))
 
             onNodeWithTag(ONE_SERVER_FOUND_MODAL_TAG).performTouchInput {
                 swipeUp(startY = bottom * 0.9f, endY = centerY, durationMillis = 200)
@@ -211,10 +209,8 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
                 HomeAssistantInstance("Test", URL(instanceUrl), HomeAssistantVersion(2025, 9, 1)),
             )
 
-            waitUntilAtLeastOneExists(
-                hasText(instanceUrl),
-                timeoutMillis = DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds,
-            )
+            mainClock.advanceTimeBy(DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds, ignoreFrameDuration = true)
+            waitUntilAtLeastOneExists(hasText(instanceUrl))
 
             onNodeWithText(instanceUrl).assertIsDisplayed()
 
