@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.widgets.template
 
-import androidx.compose.runtime.snapshots.Snapshot
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
@@ -59,7 +58,7 @@ class TemplateWidgetConfigureViewModelTest {
             viewModel.onSetup(widgetId = 42, supportedTextColors = supportedTextColors)
             advanceUntilIdle()
 
-            assertFalse(viewModel.isUpdateWidget)
+            assertFalse(viewModel.uiState.value.isUpdateWidget)
         }
 
         @Test
@@ -78,12 +77,13 @@ class TemplateWidgetConfigureViewModelTest {
             viewModel.onSetup(widgetId = 42, supportedTextColors = supportedTextColors)
             advanceUntilIdle()
 
-            assertTrue(viewModel.isUpdateWidget)
-            assertEquals(1, viewModel.selectedServerId)
-            assertEquals("{{ states('sensor.temp') }}", viewModel.templateText)
-            assertEquals("16", viewModel.textSize)
-            assertEquals(WidgetBackgroundType.TRANSPARENT, viewModel.selectedBackgroundType)
-            assertEquals(1, viewModel.textColorIndex)
+            val state = viewModel.uiState.value
+            assertTrue(state.isUpdateWidget)
+            assertEquals(1, state.selectedServerId)
+            assertEquals("{{ states('sensor.temp') }}", state.templateText)
+            assertEquals("16", state.textSize)
+            assertEquals(WidgetBackgroundType.TRANSPARENT, state.selectedBackgroundType)
+            assertEquals(1, state.textColorIndex)
         }
 
         @Test
@@ -102,7 +102,7 @@ class TemplateWidgetConfigureViewModelTest {
             viewModel.onSetup(widgetId = 42, supportedTextColors = supportedTextColors)
             advanceUntilIdle()
 
-            assertEquals(0, viewModel.textColorIndex)
+            assertEquals(0, viewModel.uiState.value.textColorIndex)
         }
 
         @Test
@@ -112,11 +112,11 @@ class TemplateWidgetConfigureViewModelTest {
             viewModel.onSetup(widgetId = 42, supportedTextColors = supportedTextColors)
             advanceUntilIdle()
 
-            viewModel.templateText = "modified"
+            viewModel.onTemplateTextChanged("modified")
             viewModel.onSetup(widgetId = 99, supportedTextColors = supportedTextColors)
             advanceUntilIdle()
 
-            assertEquals("modified", viewModel.templateText)
+            assertEquals("modified", viewModel.uiState.value.templateText)
         }
     }
 
@@ -126,7 +126,7 @@ class TemplateWidgetConfigureViewModelTest {
         fun `Given different server when setServer then selectedServerId is updated`() {
             viewModel.setServer(serverId = 5)
 
-            assertEquals(5, viewModel.selectedServerId)
+            assertEquals(5, viewModel.uiState.value.selectedServerId)
         }
 
         @Test
@@ -134,7 +134,7 @@ class TemplateWidgetConfigureViewModelTest {
             viewModel.setServer(serverId = 5)
             viewModel.setServer(serverId = 5)
 
-            assertEquals(5, viewModel.selectedServerId)
+            assertEquals(5, viewModel.uiState.value.selectedServerId)
         }
     }
 
@@ -148,24 +148,24 @@ class TemplateWidgetConfigureViewModelTest {
 
             viewModel.onSetup(widgetId = 42, supportedTextColors = supportedTextColors)
             advanceUntilIdle()
-            viewModel.templateText = "{{ states('sensor.temp') }}"
-            Snapshot.sendApplyNotifications()
+            viewModel.onTemplateTextChanged("{{ states('sensor.temp') }}")
             advanceUntilIdle()
 
-            assertEquals("25.0", viewModel.renderedTemplate)
-            assertTrue(viewModel.isTemplateValid)
+            val state = viewModel.uiState.value
+            assertEquals("25.0", state.renderedTemplate)
+            assertTrue(state.isTemplateValid)
         }
 
         @Test
         fun `Given empty template when text changes then template is not valid`() = runTest {
             viewModel.onSetup(widgetId = 42, supportedTextColors = supportedTextColors)
             advanceUntilIdle()
-            viewModel.templateText = ""
-            Snapshot.sendApplyNotifications()
+            viewModel.onTemplateTextChanged("")
             advanceUntilIdle()
 
-            assertNull(viewModel.renderedTemplate)
-            assertFalse(viewModel.isTemplateValid)
+            val state = viewModel.uiState.value
+            assertNull(state.renderedTemplate)
+            assertFalse(state.isTemplateValid)
         }
 
         @Test
@@ -176,12 +176,13 @@ class TemplateWidgetConfigureViewModelTest {
 
             viewModel.onSetup(widgetId = 42, supportedTextColors = supportedTextColors)
             advanceUntilIdle()
-            viewModel.templateText = "{{ invalid }}"
-            Snapshot.sendApplyNotifications()
+            viewModel.onTemplateTextChanged("{{ invalid }}")
             advanceUntilIdle()
 
-            assertNull(viewModel.renderedTemplate)
-            assertFalse(viewModel.isTemplateValid)
+            val state = viewModel.uiState.value
+            assertNull(state.renderedTemplate)
+            assertFalse(state.isTemplateValid)
+            assertEquals(TemplateRenderError.RENDER_ERROR, state.templateRenderError)
         }
 
         @Test
@@ -190,12 +191,12 @@ class TemplateWidgetConfigureViewModelTest {
 
             viewModel.onSetup(widgetId = 42, supportedTextColors = supportedTextColors)
             advanceUntilIdle()
-            viewModel.templateText = "{{ states('sensor.temp') }}"
-            Snapshot.sendApplyNotifications()
+            viewModel.onTemplateTextChanged("{{ states('sensor.temp') }}")
             advanceUntilIdle()
 
-            assertNull(viewModel.renderedTemplate)
-            assertFalse(viewModel.isTemplateValid)
+            val state = viewModel.uiState.value
+            assertNull(state.renderedTemplate)
+            assertFalse(state.isTemplateValid)
         }
     }
 
@@ -204,14 +205,15 @@ class TemplateWidgetConfigureViewModelTest {
         @Test
         fun `Given valid widget ID when updateWidgetConfiguration then entity is saved to DAO`() = runTest {
             coEvery { templateWidgetDao.get(any()) } returns null
+            val context: android.content.Context = mockk(relaxed = true)
 
             viewModel.onSetup(widgetId = 42, supportedTextColors = supportedTextColors)
             advanceUntilIdle()
-            viewModel.templateText = "test template"
-            viewModel.textSize = "16"
-            viewModel.selectedBackgroundType = WidgetBackgroundType.DAYNIGHT
+            viewModel.onTemplateTextChanged("test template")
+            viewModel.onTextSizeChanged("16")
+            viewModel.onBackgroundTypeSelected(WidgetBackgroundType.DAYNIGHT)
 
-            viewModel.updateWidgetConfiguration()
+            viewModel.updateWidgetConfiguration(context)
 
             coVerify {
                 templateWidgetDao.add(
@@ -229,14 +231,15 @@ class TemplateWidgetConfigureViewModelTest {
         @Test
         fun `Given transparent background when updateWidgetConfiguration then text color is set`() = runTest {
             coEvery { templateWidgetDao.get(any()) } returns null
+            val context: android.content.Context = mockk(relaxed = true)
 
             viewModel.onSetup(widgetId = 42, supportedTextColors = supportedTextColors)
             advanceUntilIdle()
-            viewModel.templateText = "test"
-            viewModel.selectedBackgroundType = WidgetBackgroundType.TRANSPARENT
-            viewModel.textColorIndex = 1
+            viewModel.onTemplateTextChanged("test")
+            viewModel.onBackgroundTypeSelected(WidgetBackgroundType.TRANSPARENT)
+            viewModel.onTextColorSelected(1)
 
-            viewModel.updateWidgetConfiguration()
+            viewModel.updateWidgetConfiguration(context)
 
             coVerify {
                 templateWidgetDao.add(
@@ -250,9 +253,10 @@ class TemplateWidgetConfigureViewModelTest {
 
         @Test
         fun `Given invalid widget ID when updateWidgetConfiguration then throws IllegalStateException`() = runTest {
+            val context: android.content.Context = mockk(relaxed = true)
             var thrown = false
             try {
-                viewModel.updateWidgetConfiguration()
+                viewModel.updateWidgetConfiguration(context)
             } catch (_: IllegalStateException) {
                 thrown = true
             }
@@ -262,13 +266,14 @@ class TemplateWidgetConfigureViewModelTest {
         @Test
         fun `Given invalid text size when updateWidgetConfiguration then uses default text size`() = runTest {
             coEvery { templateWidgetDao.get(any()) } returns null
+            val context: android.content.Context = mockk(relaxed = true)
 
             viewModel.onSetup(widgetId = 42, supportedTextColors = supportedTextColors)
             advanceUntilIdle()
-            viewModel.templateText = "test"
-            viewModel.textSize = "invalid"
+            viewModel.onTemplateTextChanged("test")
+            viewModel.onTextSizeChanged("invalid")
 
-            viewModel.updateWidgetConfiguration()
+            viewModel.updateWidgetConfiguration(context)
 
             coVerify {
                 templateWidgetDao.add(match { it.textSize == 12.0f })
