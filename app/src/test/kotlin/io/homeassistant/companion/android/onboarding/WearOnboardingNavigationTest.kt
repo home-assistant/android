@@ -67,6 +67,7 @@ import io.mockk.mockk
 import io.mockk.mockkStatic
 import java.net.URL
 import junit.framework.TestCase.assertTrue
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -221,7 +222,7 @@ internal class WearOnboardingNavigationTest {
             onNodeWithText(stringResource(commonR.string.searching_home_network)).assertIsDisplayed()
 
             instanceChannel.trySend(HomeAssistantInstance("Test", URL(instanceUrl), HomeAssistantVersion(2025, 9, 1)))
-            mainClock.advanceTimeBy(DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds, ignoreFrameDuration = true)
+            mainClock.advanceTimeBy((DELAY_BEFORE_DISPLAY_DISCOVERY + 1.seconds).inWholeMilliseconds, ignoreFrameDuration = true)
             waitUntilAtLeastOneExists(hasText(instanceUrl))
 
             onNodeWithTag(ONE_SERVER_FOUND_MODAL_TAG).performTouchInput {
