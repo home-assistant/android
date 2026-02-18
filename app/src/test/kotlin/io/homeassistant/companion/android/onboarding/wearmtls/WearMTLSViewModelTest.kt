@@ -279,7 +279,7 @@ class WearMTLSViewModelTest {
 
             advanceTimeBy(passwordValidationDebounce - 100.milliseconds)
             expectNoEvents()
-            advanceTimeBy(100.milliseconds)// Allow final validation to occur
+            advanceTimeBy(100.milliseconds) // Allow final validation to occur
 
             val finalState = awaitItem()
             assertEquals("finalPassword", finalState.currentPassword)
