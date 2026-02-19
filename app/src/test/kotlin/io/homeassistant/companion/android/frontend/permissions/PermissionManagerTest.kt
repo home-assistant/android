@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend.permissions
 
+import android.webkit.PermissionRequest
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
@@ -11,8 +12,11 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -28,6 +32,7 @@ class PermissionManagerTest {
     private val settingsDao: SettingsDao = mockk(relaxed = true)
     private val integrationRepository: IntegrationRepository = mockk(relaxed = true)
     private val notificationStatusProvider: NotificationStatusProvider = mockk()
+    private val permissionChecker: PermissionChecker = mockk()
 
     private val serverId = 1
 
@@ -36,14 +41,23 @@ class PermissionManagerTest {
         coEvery { serverManager.integrationRepository(serverId) } returns integrationRepository
     }
 
-    private fun createManager(hasFcmPushSupport: Boolean): PermissionManager {
+    private fun createManager(hasFcmPushSupport: Boolean = false): PermissionManager {
         return PermissionManager(
             serverManager = serverManager,
             settingsDao = settingsDao,
             hasFcmPushSupport = hasFcmPushSupport,
             notificationStatusProvider = notificationStatusProvider,
+            permissionChecker = permissionChecker,
         )
     }
+
+    private fun mockPermissionRequest(vararg resources: String): PermissionRequest {
+        return mockk(relaxed = true) {
+            every { getResources() } returns resources.toList().toTypedArray()
+        }
+    }
+
+    // region Notification permission
 
     @Nested
     inner class ShouldAskNotificationPermission {
@@ -131,4 +145,170 @@ class PermissionManagerTest {
             coVerify { integrationRepository.setAskNotificationPermission(false) }
         }
     }
+
+    // endregion
+
+    // region WebView permissions (camera/microphone)
+
+    @Nested
+    inner class OnWebViewPermissionRequest {
+
+        @Test
+        fun `Given camera already granted when video capture requested then auto-grants without pending request`() {
+            every { permissionChecker.hasPermission(android.Manifest.permission.CAMERA) } returns true
+            val request = mockPermissionRequest(PermissionRequest.RESOURCE_VIDEO_CAPTURE)
+
+            val manager = createManager()
+            manager.onWebViewPermissionRequest(request)
+
+            verify { request.grant(arrayOf(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) }
+            assertNull(manager.pendingWebViewPermission.value)
+        }
+
+        @Test
+        fun `Given camera not granted when video capture requested then creates pending request`() {
+            every { permissionChecker.hasPermission(android.Manifest.permission.CAMERA) } returns false
+            val request = mockPermissionRequest(PermissionRequest.RESOURCE_VIDEO_CAPTURE)
+
+            val manager = createManager()
+            manager.onWebViewPermissionRequest(request)
+
+            verify(exactly = 0) { request.grant(any()) }
+            val pending = manager.pendingWebViewPermission.value
+            assertNotNull(pending)
+            assertEquals(listOf(android.Manifest.permission.CAMERA), pending?.androidPermissions)
+        }
+
+        @Test
+        fun `Given mic not granted when audio capture requested then creates pending request for RECORD_AUDIO`() {
+            every { permissionChecker.hasPermission(android.Manifest.permission.RECORD_AUDIO) } returns false
+            val request = mockPermissionRequest(PermissionRequest.RESOURCE_AUDIO_CAPTURE)
+
+            val manager = createManager()
+            manager.onWebViewPermissionRequest(request)
+
+            val pending = manager.pendingWebViewPermission.value
+            assertNotNull(pending)
+            assertEquals(listOf(android.Manifest.permission.RECORD_AUDIO), pending?.androidPermissions)
+        }
+
+        @Test
+        fun `Given camera granted but mic not when both requested then auto-grants camera and creates pending for mic`() {
+            every { permissionChecker.hasPermission(android.Manifest.permission.CAMERA) } returns true
+            every { permissionChecker.hasPermission(android.Manifest.permission.RECORD_AUDIO) } returns false
+            val request = mockPermissionRequest(
+                PermissionRequest.RESOURCE_VIDEO_CAPTURE,
+                PermissionRequest.RESOURCE_AUDIO_CAPTURE,
+            )
+
+            val manager = createManager()
+            manager.onWebViewPermissionRequest(request)
+
+            verify { request.grant(arrayOf(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) }
+            val pending = manager.pendingWebViewPermission.value
+            assertNotNull(pending)
+            assertEquals(listOf(android.Manifest.permission.RECORD_AUDIO), pending?.androidPermissions)
+        }
+
+        @Test
+        fun `Given both already granted when both requested then auto-grants both without pending request`() {
+            every { permissionChecker.hasPermission(android.Manifest.permission.CAMERA) } returns true
+            every { permissionChecker.hasPermission(android.Manifest.permission.RECORD_AUDIO) } returns true
+            val request = mockPermissionRequest(
+                PermissionRequest.RESOURCE_VIDEO_CAPTURE,
+                PermissionRequest.RESOURCE_AUDIO_CAPTURE,
+            )
+
+            val manager = createManager()
+            manager.onWebViewPermissionRequest(request)
+
+            verify {
+                request.grant(
+                    arrayOf(PermissionRequest.RESOURCE_VIDEO_CAPTURE, PermissionRequest.RESOURCE_AUDIO_CAPTURE),
+                )
+            }
+            assertNull(manager.pendingWebViewPermission.value)
+        }
+
+        @Test
+        fun `Given null request then does nothing`() {
+            val manager = createManager()
+            manager.onWebViewPermissionRequest(null)
+
+            assertNull(manager.pendingWebViewPermission.value)
+        }
+
+        @Test
+        fun `Given unknown resource then ignores it`() {
+            val request = mockPermissionRequest("android.webkit.resource.UNKNOWN")
+
+            val manager = createManager()
+            manager.onWebViewPermissionRequest(request)
+
+            verify(exactly = 0) { request.grant(any()) }
+            assertNull(manager.pendingWebViewPermission.value)
+        }
+    }
+
+    @Nested
+    inner class OnWebViewPermissionResult {
+
+        @Test
+        fun `Given pending request when camera granted then grants WebView resource`() {
+            every { permissionChecker.hasPermission(android.Manifest.permission.CAMERA) } returns false
+            val request = mockPermissionRequest(PermissionRequest.RESOURCE_VIDEO_CAPTURE)
+
+            val manager = createManager()
+            manager.onWebViewPermissionRequest(request)
+            manager.onWebViewPermissionResult(mapOf(android.Manifest.permission.CAMERA to true))
+
+            verify { request.grant(arrayOf(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) }
+            assertNull(manager.pendingWebViewPermission.value)
+        }
+
+        @Test
+        fun `Given pending request when permission denied then denies WebView request`() {
+            every { permissionChecker.hasPermission(android.Manifest.permission.CAMERA) } returns false
+            val request = mockPermissionRequest(PermissionRequest.RESOURCE_VIDEO_CAPTURE)
+
+            val manager = createManager()
+            manager.onWebViewPermissionRequest(request)
+            manager.onWebViewPermissionResult(mapOf(android.Manifest.permission.CAMERA to false))
+
+            verify { request.deny() }
+            assertNull(manager.pendingWebViewPermission.value)
+        }
+
+        @Test
+        fun `Given no pending request when result received then does nothing`() {
+            val manager = createManager()
+            manager.onWebViewPermissionResult(mapOf(android.Manifest.permission.CAMERA to true))
+
+            assertNull(manager.pendingWebViewPermission.value)
+        }
+
+        @Test
+        fun `Given pending with both permissions when only mic granted then grants only audio resource`() {
+            every { permissionChecker.hasPermission(android.Manifest.permission.CAMERA) } returns false
+            every { permissionChecker.hasPermission(android.Manifest.permission.RECORD_AUDIO) } returns false
+            val request = mockPermissionRequest(
+                PermissionRequest.RESOURCE_VIDEO_CAPTURE,
+                PermissionRequest.RESOURCE_AUDIO_CAPTURE,
+            )
+
+            val manager = createManager()
+            manager.onWebViewPermissionRequest(request)
+            manager.onWebViewPermissionResult(
+                mapOf(
+                    android.Manifest.permission.CAMERA to false,
+                    android.Manifest.permission.RECORD_AUDIO to true,
+                ),
+            )
+
+            verify { request.grant(arrayOf(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) }
+            assertNull(manager.pendingWebViewPermission.value)
+        }
+    }
+
+    // endregion
 }

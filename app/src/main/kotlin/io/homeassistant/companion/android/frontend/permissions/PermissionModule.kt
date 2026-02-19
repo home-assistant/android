@@ -1,7 +1,9 @@
 package io.homeassistant.companion.android.frontend.permissions
 
 import android.content.Context
+import android.content.pm.PackageManager
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -17,5 +19,12 @@ internal object PermissionModule {
         @ApplicationContext context: Context,
     ): NotificationStatusProvider = NotificationStatusProvider {
         NotificationManagerCompat.from(context).areNotificationsEnabled()
+    }
+
+    @Provides
+    fun providesPermissionChecker(
+        @ApplicationContext context: Context,
+    ): PermissionChecker = PermissionChecker { permission ->
+        ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
     }
 }
