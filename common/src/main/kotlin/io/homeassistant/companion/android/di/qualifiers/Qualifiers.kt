@@ -78,3 +78,11 @@ annotation class LocationTrackingSupport
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class IsAutomotive
+
+/**
+ * Qualifier for [LocalStorage] dependencies used to persist the location sensor state across
+ * process restarts.
+ */
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class NamedLocationSensorStorage
