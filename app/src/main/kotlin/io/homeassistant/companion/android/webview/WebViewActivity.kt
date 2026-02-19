@@ -1425,12 +1425,11 @@ class WebViewActivity :
             lifecycleScope.launch {
                 unlockAppIfNeeded()
                 val intentPath = intent.getStringExtra(EXTRA_PATH)
-                // When no explicit navigation path is set (e.g. from a notification),
-                // preserve the current WebView path so the user's dashboard view
-                // survives internal/external URL switches. See #4983.
-                var path = intentPath ?: getCurrentWebViewPath()
+                intent.removeExtra(EXTRA_PATH)
+                // Let the presenter handle falling back to the current WebView path
+                // when no explicit navigation path is set. See https://github.com/home-assistant/android/issues/4983
+                var path: String? = intentPath
                 if (intentPath?.startsWith("entityId:") == true) {
-                    moreInfoEntity = intentPath.substringAfter("entityId:")
                     val pattern = "(?<=^entityId:)((?!.+__)(?!_)[\\da-z_]+(?<!_)\\.(?!_)[\\da-z_]+(?<!_)$)".toRegex()
                     val entity = pattern.find(intentPath)?.value ?: ""
                     if (
@@ -1438,12 +1437,12 @@ class WebViewActivity :
                         serverManager.getServer(presenter.getActiveServer())?.version?.isAtLeast(2025, 6, 0) == true
                     ) {
                         path = "/?more-info-entity-id=$entity"
+                        moreInfoEntity = ""
                     } else {
                         moreInfoEntity = entity
                     }
                 }
                 presenter.load(lifecycle, path, isInternalOverride)
-                intent.removeExtra(EXTRA_PATH)
 
                 if (presenter.isFullScreen() || isVideoFullScreen) {
                     hideSystemUI()
@@ -1455,13 +1454,7 @@ class WebViewActivity :
     }
 
     override fun getCurrentWebViewPath(): String? {
-        val currentUrl = webView.url ?: return null
-        return try {
-            val path = currentUrl.toUri().path
-            if (path.isNullOrEmpty() || path == "/") null else path
-        } catch (e: Exception) {
-            null
-        }
+        return webView.url?.toUri()?.path?.takeIf { it.length > 1 }
     }
 
     override suspend fun unlockAppIfNeeded() {
