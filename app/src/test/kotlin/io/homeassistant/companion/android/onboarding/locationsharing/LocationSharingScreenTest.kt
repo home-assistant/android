@@ -24,7 +24,7 @@ import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
-import io.homeassistant.companion.android.util.LocationPermissionActivityResultRegistry
+import io.homeassistant.companion.android.util.FakePermissionResultRegistry
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -122,7 +122,7 @@ class LocationSharingScreenTest {
         var goToNextScreenClicked = false
         var locationSharingResponse: Boolean? = null
 
-        val registry = LocationPermissionActivityResultRegistry(locationPermissionGranted)
+        val registry = FakePermissionResultRegistry(locationPermissionGranted)
     }
 
     @OptIn(ExperimentalPermissionsApi::class)
