@@ -7,11 +7,18 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import io.homeassistant.companion.android.database.sensor.toSensorsWithAttributes
+import java.util.concurrent.ConcurrentHashMap
 
 class AudioSensorManager : SensorManager {
+    private val sensorIdsWithMatchingAttributes: MutableSet<String> = ConcurrentHashMap.newKeySet()
+
     companion object {
         const val VOLUME_CHANGED_ACTION = "android.media.VOLUME_CHANGED_ACTION"
+        private const val ATTRIBUTE_MIN = "min"
+        private const val ATTRIBUTE_MAX = "max"
 
         val audioSensor = SensorManager.BasicSensor(
             "audio_sensor",
@@ -45,11 +52,11 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_description_mic_muted,
             "mdi:microphone-off",
             updateType =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                SensorManager.BasicSensor.UpdateType.INTENT
-            } else {
-                SensorManager.BasicSensor.UpdateType.WORKER
-            },
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    SensorManager.BasicSensor.UpdateType.INTENT
+                } else {
+                    SensorManager.BasicSensor.UpdateType.WORKER
+                },
         )
         private val musicActive = SensorManager.BasicSensor(
             "music_active",
@@ -65,11 +72,11 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_description_speakerphone,
             "mdi:volume-high",
             updateType =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                SensorManager.BasicSensor.UpdateType.INTENT
-            } else {
-                SensorManager.BasicSensor.UpdateType.WORKER
-            },
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    SensorManager.BasicSensor.UpdateType.INTENT
+                } else {
+                    SensorManager.BasicSensor.UpdateType.WORKER
+                },
         )
         val volAlarm = SensorManager.BasicSensor(
             "volume_alarm",
@@ -348,130 +355,116 @@ class AudioSensorManager : SensorManager {
     }
 
     private suspend fun updateVolumeAlarm(context: Context, audioManager: AudioManager) {
-        if (!isEnabled(context, volAlarm)) {
-            return
-        }
-        val volumeLevelAlarm = audioManager.getStreamVolume(AudioManager.STREAM_ALARM)
-
-        onSensorUpdated(
-            context,
-            volAlarm,
-            volumeLevelAlarm,
-            volAlarm.statelessIcon,
-            mapOf(),
-        )
+        updateVolumeSensor(context, audioManager, volAlarm, AudioManager.STREAM_ALARM)
     }
 
     private suspend fun updateVolumeCall(context: Context, audioManager: AudioManager) {
-        if (!isEnabled(context, volCall)) {
-            return
-        }
-
-        val volumeLevelCall = audioManager.getStreamVolume(AudioManager.STREAM_VOICE_CALL)
-
-        onSensorUpdated(
-            context,
-            volCall,
-            volumeLevelCall,
-            volCall.statelessIcon,
-            mapOf(),
-        )
+        updateVolumeSensor(context, audioManager, volCall, AudioManager.STREAM_VOICE_CALL)
     }
 
     private suspend fun updateVolumeMusic(context: Context, audioManager: AudioManager) {
-        if (!isEnabled(context, volMusic)) {
-            return
-        }
-
-        val volumeLevelMusic = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-
-        onSensorUpdated(
-            context,
-            volMusic,
-            volumeLevelMusic,
-            volMusic.statelessIcon,
-            mapOf(),
-        )
+        updateVolumeSensor(context, audioManager, volMusic, AudioManager.STREAM_MUSIC)
     }
 
     private suspend fun updateVolumeRing(context: Context, audioManager: AudioManager) {
-        if (!isEnabled(context, volRing)) {
-            return
-        }
-
-        val volumeLevelRing = audioManager.getStreamVolume(AudioManager.STREAM_RING)
-
-        onSensorUpdated(
-            context,
-            volRing,
-            volumeLevelRing,
-            volRing.statelessIcon,
-            mapOf(),
-        )
+        updateVolumeSensor(context, audioManager, volRing, AudioManager.STREAM_RING)
     }
 
     private suspend fun updateVolumeNotification(context: Context, audioManager: AudioManager) {
-        if (!isEnabled(context, volNotification)) {
-            return
-        }
-
-        val volumeLevelNotification = audioManager.getStreamVolume(AudioManager.STREAM_NOTIFICATION)
-
-        onSensorUpdated(
-            context,
-            volNotification,
-            volumeLevelNotification,
-            volNotification.statelessIcon,
-            mapOf(),
-        )
+        updateVolumeSensor(context, audioManager, volNotification, AudioManager.STREAM_NOTIFICATION)
     }
 
     private suspend fun updateVolumeSystem(context: Context, audioManager: AudioManager) {
-        if (!isEnabled(context, volSystem)) {
-            return
-        }
-
-        val volumeLevelSystem = audioManager.getStreamVolume(AudioManager.STREAM_SYSTEM)
-
-        onSensorUpdated(
-            context,
-            volSystem,
-            volumeLevelSystem,
-            volSystem.statelessIcon,
-            mapOf(),
-        )
+        updateVolumeSensor(context, audioManager, volSystem, AudioManager.STREAM_SYSTEM)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
     private suspend fun updateVolumeAccessibility(context: Context, audioManager: AudioManager) {
-        if (!isEnabled(context, volAccessibility)) {
-            return
-        }
-
-        val volumeLevelAccessibility = audioManager.getStreamVolume(AudioManager.STREAM_ACCESSIBILITY)
-
-        onSensorUpdated(
-            context,
-            volAccessibility,
-            volumeLevelAccessibility,
-            volAccessibility.statelessIcon,
-            mapOf(),
-        )
+        updateVolumeSensor(context, audioManager, volAccessibility, AudioManager.STREAM_ACCESSIBILITY)
     }
 
     private suspend fun updateVolumeDTMF(context: Context, audioManager: AudioManager) {
-        if (!isEnabled(context, volDTMF)) {
+        updateVolumeSensor(context, audioManager, volDTMF, AudioManager.STREAM_DTMF)
+    }
+
+    private suspend fun updateVolumeSensor(
+        context: Context,
+        audioManager: AudioManager,
+        sensor: BasicSensor,
+        streamType: Int,
+    ) {
+        if (!isEnabled(context, sensor)) {
             return
         }
 
-        val volumeLevelDTMF = audioManager.getStreamVolume(AudioManager.STREAM_DTMF)
+        val current = audioManager.getStreamVolume(streamType)
+        val min = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            audioManager.getStreamMinVolume(streamType)
+        } else {
+            0
+        }
+        val max = audioManager.getStreamMaxVolume(streamType)
+
+        val force = !areAttributesOfSensorAlreadyForcedAtRuntimeOrMatching(context, sensor, min, max)
 
         onSensorUpdated(
             context,
-            volDTMF,
-            volumeLevelDTMF,
-            volDTMF.statelessIcon,
-            mapOf(),
+            sensor,
+            current,
+            sensor.statelessIcon,
+            mapOf(
+                ATTRIBUTE_MIN to min,
+                ATTRIBUTE_MAX to max,
+            ),
+            force,
         )
+    }
+
+    /**
+     * Checks whether the stored min/max attributes for a sensor already match the current
+     * values, using a runtime cache to avoid repeated database queries.
+     *
+     * Usually, min and max do not change while the app is running. The only meaningful
+     * moments when they can be out of date:
+     * 1. An older companion app ran before, without pushing min/max.
+     * 2. The operating system changed.
+     *
+     * Once the stored attributes are found to match for a given sensor, the result is
+     * cached and subsequent calls return `true` immediately without a database query.
+     * If the attributes do not match, the database is queried again on each call until
+     * they do.
+     */
+    private suspend fun areAttributesOfSensorAlreadyForcedAtRuntimeOrMatching(
+        context: Context,
+        sensor: BasicSensor,
+        currentMin: Int,
+        currentMax: Int,
+    ): Boolean {
+        if (sensor.id in sensorIdsWithMatchingAttributes) {
+            return true
+        }
+
+        val sensorsWithAttributes = sensorDao(context)
+            .getFull(sensor.id)
+            .toSensorsWithAttributes()
+
+        if (sensorsWithAttributes.isNotEmpty() && sensorsWithAttributes.all { sensorWithAttributes ->
+                val attributes = sensorWithAttributes.attributes
+                val storedMin = attributes
+                    .firstOrNull { it.name == ATTRIBUTE_MIN }
+                    ?.value
+                    ?.toIntOrNull()
+                val storedMax = attributes
+                    .firstOrNull { it.name == ATTRIBUTE_MAX }
+                    ?.value
+                    ?.toIntOrNull()
+                storedMin == currentMin && storedMax == currentMax
+            }
+        ) {
+            sensorIdsWithMatchingAttributes += sensor.id
+            return true
+        }
+
+        return false
     }
 }
