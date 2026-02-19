@@ -567,7 +567,7 @@ class WebViewPresenterImpl @Inject constructor(
 
                         is ThreadManager.SyncResult.NoneHaveCredentials,
                         is ThreadManager.SyncResult.OnlyOnServer,
-                        -> {
+                            -> {
                             mutableMatterThreadStep.tryEmit(MatterThreadStep.THREAD_NONE)
                         }
 
