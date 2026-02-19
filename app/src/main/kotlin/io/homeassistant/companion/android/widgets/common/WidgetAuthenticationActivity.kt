@@ -7,7 +7,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.widgets.button.ButtonWidget
+import io.homeassistant.companion.android.widgets.button.ButtonWidgetBase
 import timber.log.Timber
 
 class WidgetAuthenticationActivity : AppCompatActivity() {
@@ -34,8 +34,8 @@ class WidgetAuthenticationActivity : AppCompatActivity() {
                 Timber.d("Authentication successful, calling requested service")
                 val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
                 if (appWidgetId > -1) {
-                    val intent = Intent(applicationContext, ButtonWidget::class.java).apply {
-                        action = ButtonWidget.CALL_SERVICE
+                    val intent = Intent(applicationContext, ButtonWidgetBase::class.java).apply {
+                        action = ButtonWidgetBase.CALL_SERVICE
                         putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
                     }
                     sendBroadcast(intent)
