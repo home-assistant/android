@@ -1,0 +1,342 @@
+package io.homeassistant.companion.android.settings.shortcuts.v2
+
+import app.cash.turbine.turbineScope
+import io.homeassistant.companion.android.common.data.shortcuts.ShortcutsRepository
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.DynamicEditorData
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.PinResult
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.PinnedEditorData
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ServerData
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutEditorData
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutError
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutResult
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutTargetValue
+import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.database.server.ServerConnectionInfo
+import io.homeassistant.companion.android.database.server.ServerSessionInfo
+import io.homeassistant.companion.android.database.server.ServerUserInfo
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.screens.ShortcutEditAction
+import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
+import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.mockk
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+
+@OptIn(ExperimentalCoroutinesApi::class)
+@ExtendWith(MainDispatcherJUnit5Extension::class, ConsoleLogExtension::class)
+class ShortcutEditViewModelTest {
+
+    private val shortcutsRepository: ShortcutsRepository = mockk()
+
+    private val server = Server(
+        id = 1,
+        _name = "Home",
+        connection = ServerConnectionInfo(externalUrl = "https://example.com"),
+        session = ServerSessionInfo(),
+        user = ServerUserInfo(),
+    )
+
+    private val pinnedDraft = ShortcutDraft(
+        id = "pinned_1",
+        serverId = server.id,
+        selectedIconName = null,
+        label = "Pinned",
+        description = "Pinned shortcut",
+        target = ShortcutTargetValue.Lovelace("/lovelace/pinned"),
+    )
+
+    @BeforeEach
+    fun setup() {
+        coEvery { shortcutsRepository.loadEditorData() } returns ShortcutResult.Success(
+            ShortcutEditorData(
+                servers = listOf(server),
+                serverDataById = mapOf(server.id to ServerData()),
+            ),
+        )
+        coEvery { shortcutsRepository.loadDynamicEditor(0) } returns ShortcutResult.Success(
+            DynamicEditorData.Edit(
+                index = 0,
+                draftSeed = buildDraft(id = dynamicShortcutId(0), serverId = server.id),
+            ),
+        )
+        coEvery { shortcutsRepository.loadPinnedEditor(pinnedDraft.id) } returns ShortcutResult.Success(
+            PinnedEditorData.Edit(draftSeed = pinnedDraft),
+        )
+        coEvery { shortcutsRepository.loadPinnedEditorForCreate() } returns ShortcutResult.Success(
+            PinnedEditorData.Create(draftSeed = pinnedDraft.copy(id = "")),
+        )
+        coEvery { shortcutsRepository.upsertPinnedShortcut(any()) } returns ShortcutResult.Success(
+            PinResult.Requested,
+        )
+        coEvery {
+            shortcutsRepository.upsertDynamicShortcut(any(), any(), any())
+        } returns ShortcutResult.Success(
+            DynamicEditorData.Edit(
+                index = 0,
+                draftSeed = buildDraft(id = dynamicShortcutId(0), serverId = server.id),
+            ),
+        )
+        coEvery { shortcutsRepository.deleteDynamicShortcut(any()) } returns ShortcutResult.Success(Unit)
+        coEvery { shortcutsRepository.deletePinnedShortcut(any()) } returns ShortcutResult.Success(Unit)
+    }
+
+    @Test
+    fun `Given no servers when init then screen error is set`() = runTest {
+        coEvery { shortcutsRepository.loadEditorData() } returns ShortcutResult.Error(
+            ShortcutError.NoServers,
+        )
+
+        val viewModel = ShortcutEditViewModel(shortcutsRepository)
+        turbineScope {
+            val uiState = viewModel.uiState.testIn(backgroundScope)
+            advanceUntilIdle()
+
+            val state = uiState.expectMostRecentItem()
+            assertFalse(state.screen.isLoading)
+            assertEquals(ShortcutError.NoServers, state.screen.error)
+        }
+    }
+
+    @Test
+    fun `Given dynamic editor when openDynamic then editor is DynamicEdit`() = runTest {
+        val viewModel = ShortcutEditViewModel(shortcutsRepository)
+        turbineScope {
+            val uiState = viewModel.uiState.testIn(backgroundScope)
+            advanceUntilIdle()
+
+            viewModel.openDynamic(0)
+            advanceUntilIdle()
+
+            val state = uiState.expectMostRecentItem()
+            val editor = state.editor as ShortcutEditorUiState.EditorState.DynamicEdit
+            assertFalse(state.screen.isLoading)
+            assertEquals(0, editor.index)
+        }
+    }
+
+    @Test
+    fun `Given dynamic edit when submit then upsert uses draft`() = runTest {
+        val viewModel = ShortcutEditViewModel(shortcutsRepository)
+        advanceUntilIdle()
+        viewModel.openDynamic(0)
+        advanceUntilIdle()
+
+        val draft = buildDraft(
+            id = dynamicShortcutId(0),
+            serverId = server.id,
+        ).copy(
+            label = "Updated",
+            description = "Updated description",
+            target = ShortcutTargetValue.Entity("light.kitchen"),
+        )
+
+        viewModel.dispatch(ShortcutEditAction.Submit(draft))
+        advanceUntilIdle()
+
+        coVerify {
+            shortcutsRepository.upsertDynamicShortcut(
+                0,
+                match {
+                    it.label == "Updated" &&
+                        it.description == "Updated description" &&
+                        it.target == ShortcutTargetValue.Entity("light.kitchen")
+                },
+                true,
+            )
+        }
+    }
+
+    @Test
+    fun `Given dynamic create when submit then uses isEditing false`() = runTest {
+        val createIndex = 1
+        val createDraft = buildDraft(
+            id = dynamicShortcutId(createIndex),
+            serverId = server.id,
+        )
+        coEvery { shortcutsRepository.loadDynamicEditorFirstAvailable() } returns ShortcutResult.Success(
+            DynamicEditorData.Create(
+                index = createIndex,
+                draftSeed = createDraft,
+            ),
+        )
+
+        val viewModel = ShortcutEditViewModel(shortcutsRepository)
+        turbineScope {
+            val uiState = viewModel.uiState.testIn(backgroundScope)
+            advanceUntilIdle()
+
+            viewModel.createDynamicFirstAvailable()
+            advanceUntilIdle()
+
+            val state = uiState.expectMostRecentItem()
+            val editor = state.editor as ShortcutEditorUiState.EditorState.DynamicCreate
+            assertEquals(createIndex, editor.index)
+
+            viewModel.dispatch(ShortcutEditAction.Submit(createDraft))
+            advanceUntilIdle()
+
+            uiState.expectMostRecentItem()
+            uiState.cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify {
+            shortcutsRepository.upsertDynamicShortcut(
+                createIndex,
+                match { it.id == dynamicShortcutId(createIndex) },
+                false,
+            )
+        }
+    }
+
+    @Test
+    fun `Given dynamic edit when delete then close event emitted`() = runTest {
+        val viewModel = ShortcutEditViewModel(shortcutsRepository)
+        turbineScope {
+            val closeEvents = viewModel.closeEvents.testIn(backgroundScope)
+            advanceUntilIdle()
+
+            viewModel.openDynamic(0)
+            advanceUntilIdle()
+
+            viewModel.dispatch(ShortcutEditAction.Delete(dynamicShortcutId(0)))
+            advanceUntilIdle()
+
+            closeEvents.awaitItem()
+        }
+
+        coVerify { shortcutsRepository.deleteDynamicShortcut(0) }
+    }
+
+    @Test
+    fun `Given pinned shortcut when editPinned then editor is PinnedEdit`() = runTest {
+        val viewModel = ShortcutEditViewModel(shortcutsRepository)
+        turbineScope {
+            val uiState = viewModel.uiState.testIn(backgroundScope)
+            advanceUntilIdle()
+
+            viewModel.editPinned(pinnedDraft.id)
+            advanceUntilIdle()
+
+            val state = uiState.expectMostRecentItem()
+            val editor = state.editor as ShortcutEditorUiState.EditorState.PinnedEdit
+            assertEquals(pinnedDraft.id, editor.draftSeed.id)
+        }
+    }
+
+    @Test
+    fun `Given pinned edit when submit then pin result without close`() = runTest {
+        val viewModel = ShortcutEditViewModel(shortcutsRepository)
+        turbineScope {
+            val pinEvents = viewModel.pinResultEvents.testIn(backgroundScope)
+            val closeEvents = viewModel.closeEvents.testIn(backgroundScope)
+            advanceUntilIdle()
+
+            viewModel.editPinned(pinnedDraft.id)
+            advanceUntilIdle()
+
+            viewModel.dispatch(ShortcutEditAction.Submit(pinnedDraft))
+            advanceUntilIdle()
+
+            assertEquals(PinResult.Requested, pinEvents.awaitItem())
+            closeEvents.expectNoEvents()
+        }
+
+        coVerify { shortcutsRepository.upsertPinnedShortcut(match { it.id == pinnedDraft.id }) }
+    }
+
+    @Test
+    fun `Given pinned create when submit then pin result and close emitted`() = runTest {
+        val viewModel = ShortcutEditViewModel(shortcutsRepository)
+        turbineScope {
+            val pinEvents = viewModel.pinResultEvents.testIn(backgroundScope)
+            val closeEvents = viewModel.closeEvents.testIn(backgroundScope)
+            advanceUntilIdle()
+
+            viewModel.openCreatePinned()
+            advanceUntilIdle()
+
+            viewModel.dispatch(ShortcutEditAction.Submit(pinnedDraft.copy(id = "")))
+            advanceUntilIdle()
+
+            assertEquals(PinResult.Requested, pinEvents.awaitItem())
+            closeEvents.awaitItem()
+        }
+
+        coVerify { shortcutsRepository.upsertPinnedShortcut(match { it.id.isBlank() }) }
+    }
+
+    @Test
+    fun `Given slots full when openDynamic then screen error set`() = runTest {
+        coEvery { shortcutsRepository.loadDynamicEditor(0) } returns ShortcutResult.Error(
+            ShortcutError.SlotsFull,
+        )
+
+        val viewModel = ShortcutEditViewModel(shortcutsRepository)
+        turbineScope {
+            val uiState = viewModel.uiState.testIn(backgroundScope)
+            advanceUntilIdle()
+
+            viewModel.openDynamic(0)
+            advanceUntilIdle()
+
+            val state = uiState.expectMostRecentItem()
+            assertEquals(ShortcutError.SlotsFull, state.screen.error)
+            assertTrue(state.editor is ShortcutEditorUiState.EditorState.DynamicCreate)
+        }
+    }
+
+    @Test
+    fun `Given submit error when submit then screen error set`() = runTest {
+        coEvery {
+            shortcutsRepository.upsertDynamicShortcut(any(), any(), any())
+        } returns ShortcutResult.Error(
+            ShortcutError.SlotsFull,
+        )
+
+        val viewModel = ShortcutEditViewModel(shortcutsRepository)
+        turbineScope {
+            val uiState = viewModel.uiState.testIn(backgroundScope)
+            advanceUntilIdle()
+
+            viewModel.openDynamic(0)
+            advanceUntilIdle()
+
+            viewModel.dispatch(
+                ShortcutEditAction.Submit(
+                    buildDraft(
+                        id = dynamicShortcutId(0),
+                        serverId = server.id,
+                    ),
+                ),
+            )
+            advanceUntilIdle()
+
+            val state = uiState.expectMostRecentItem()
+            assertEquals(ShortcutError.SlotsFull, state.screen.error)
+        }
+    }
+
+    private fun dynamicShortcutId(index: Int): String {
+        return "shortcut_${index + 1}"
+    }
+
+    private fun buildDraft(id: String, serverId: Int): ShortcutDraft {
+        return ShortcutDraft(
+            id = id,
+            serverId = serverId,
+            selectedIconName = null,
+            label = id,
+            description = "Description for $id",
+            target = ShortcutTargetValue.Lovelace("/lovelace/$id"),
+        )
+    }
+}

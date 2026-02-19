@@ -1,0 +1,414 @@
+package io.homeassistant.companion.android.settings.shortcuts.v2.views.screens
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import com.mikepenz.iconics.compose.IconicsPainter
+import com.mikepenz.iconics.compose.Image
+import com.mikepenz.iconics.typeface.IIcon
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.compose.composable.HALoading
+import io.homeassistant.companion.android.common.compose.theme.HADimens
+import io.homeassistant.companion.android.common.compose.theme.HATextStyle
+import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutError
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutType
+import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListAction
+import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListState
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.EmptyStateContent
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.EmptyStateNoServers
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.ErrorStateContent
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.NotSupportedStateContent
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.preview.ShortcutPreviewData
+import io.homeassistant.companion.android.util.compose.MdcAlertDialog
+import io.homeassistant.companion.android.util.compose.screenWidth
+import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
+import io.homeassistant.companion.android.util.plus
+import io.homeassistant.companion.android.util.safeBottomPaddingValues
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
+
+private val COMPACT_WIDTH_BREAKPOINT = 600.dp
+
+/**
+ * Pure UI composable for the Manage Shortcuts screen.
+ * This composable has no ViewModel dependencies and can be previewed.
+ */
+@Composable
+internal fun ShortcutsListScreen(
+    state: ShortcutsListState,
+    dispatch: (ShortcutsListAction) -> Unit,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var showCreateDialog by remember { mutableStateOf(false) }
+    val dismissCreateDialog: () -> Unit = { showCreateDialog = false }
+    Scaffold(
+        floatingActionButton = {
+            if (state.error != ShortcutError.ApiNotSupported) {
+                ExtendedFloatingActionButton(
+                    modifier = Modifier.padding(safeBottomPaddingValues(applyHorizontal = false)),
+                    containerColor = LocalHAColorScheme.current.colorFillPrimaryLoudResting,
+                    contentColor = LocalHAColorScheme.current.colorOnPrimaryLoud,
+                    icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                    text = { Text(stringResource(R.string.add_shortcut)) },
+                    onClick = { showCreateDialog = true },
+                )
+            }
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0), // TODO: Check how to avoid this
+        modifier = modifier,
+    ) { contentPadding ->
+        Box(modifier = Modifier.padding(contentPadding)) {
+            when {
+                state.isLoading -> LoadingState()
+                state.error == ShortcutError.ApiNotSupported -> NotSupportedStateContent()
+                state.error == ShortcutError.NoServers -> EmptyStateNoServers()
+                state.hasError -> {
+                    ErrorStateContent(onRetry = onRetry)
+                }
+                state.isEmpty -> {
+                    EmptyStateContent()
+                }
+                else -> ShortcutsList(
+                    state = state,
+                    onEditDynamic = { dispatch(ShortcutsListAction.EditDynamic(it)) },
+                    onEditPinned = { dispatch(ShortcutsListAction.EditPinned(it)) },
+                )
+            }
+        }
+    }
+
+    if (showCreateDialog) {
+        CreateShortcutDialog(
+            onCreateDynamic = {
+                dismissCreateDialog()
+                dispatch(ShortcutsListAction.CreateDynamic)
+            },
+            onCreatePinned = {
+                dismissCreateDialog()
+                dispatch(ShortcutsListAction.CreatePinned)
+            },
+            onDismissRequest = dismissCreateDialog,
+        )
+    }
+}
+
+@Composable
+private fun LoadingState() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
+        HALoading()
+    }
+}
+
+@Composable
+private fun ShortcutsList(state: ShortcutsListState, onEditDynamic: (Int) -> Unit, onEditPinned: (String) -> Unit) {
+    val pinnedItems = state.pinnedItems
+    val dynamicItems = state.dynamicItems
+    val isCompactScreen = screenWidth() < COMPACT_WIDTH_BREAKPOINT
+    val columnsCount = if (isCompactScreen) 2 else 3
+
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(columnsCount),
+        contentPadding = PaddingValues(all = HADimens.SPACE4) +
+            safeBottomPaddingValues(applyHorizontal = false) +
+            PaddingValues(bottom = HADimens.SPACE18),
+        verticalArrangement = Arrangement.spacedBy(HADimens.SPACE3),
+        horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE3),
+    ) {
+        if (dynamicItems.isNotEmpty()) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                SectionHeader(text = stringResource(R.string.shortcut_dynamic_header))
+            }
+            items(items = dynamicItems) { item ->
+                val label = item.summary.label.ifBlank {
+                    stringResource(R.string.shortcut_n, item.index + 1)
+                }
+                ShortcutGridItem(
+                    label = label,
+                    iconName = item.summary.selectedIconName,
+                    onClick = { onEditDynamic(item.index) },
+                )
+            }
+        }
+
+        if (pinnedItems.isNotEmpty()) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                SectionHeader(text = stringResource(R.string.shortcut_pinned))
+            }
+            items(items = pinnedItems) { summary ->
+                val label = summary.label.ifBlank { summary.id }
+                ShortcutGridItem(
+                    label = label,
+                    iconName = summary.selectedIconName,
+                    onClick = { onEditPinned(summary.id) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SectionHeader(text: String) {
+    Text(
+        text = text,
+        style = HATextStyle.HeadlineMedium,
+        color = LocalHAColorScheme.current.colorFillPrimaryLoudResting,
+        textAlign = TextAlign.Start,
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
+private fun ShortcutGridItem(label: String, iconName: String?, onClick: () -> Unit) {
+    val colors = LocalHAColorScheme.current
+    val isCompactScreen = screenWidth() < COMPACT_WIDTH_BREAKPOINT
+    val badgeSize = if (isCompactScreen) HADimens.SPACE12 else HADimens.SPACE14
+    val iconSize = if (isCompactScreen) HADimens.SPACE7 else HADimens.SPACE9
+    val labelGap = HADimens.SPACE3
+    Surface(
+        onClick = onClick,
+        shape = MaterialTheme.shapes.large,
+        color = colors.colorSurfaceLow,
+        contentColor = colors.colorTextPrimary,
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(1.1f),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = HADimens.SPACE3, vertical = HADimens.SPACE4),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(badgeSize)
+                    .background(
+                        color = colors.colorFillPrimaryQuietResting,
+                        shape = MaterialTheme.shapes.large,
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                ShortcutListIcon(
+                    iconName = iconName,
+                    modifier = Modifier.size(iconSize),
+                    tint = colors.colorFillPrimaryLoudResting,
+                )
+            }
+            Spacer(modifier = Modifier.size(labelGap))
+            Text(
+                text = label,
+                style = HATextStyle.BodyMedium,
+                color = colors.colorTextPrimary,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ShortcutListIcon(iconName: String?, tint: Color, modifier: Modifier = Modifier) {
+    val icon = remember(iconName) { iconName?.let(CommunityMaterial::getIconByMdiName) }
+    val painter = if (icon != null) {
+        remember(icon) { IconicsPainter(icon) }
+    } else {
+        painterResource(R.drawable.ic_stat_ic_notification_blue)
+    }
+    Icon(
+        painter = painter,
+        contentDescription = null, // TODO: Add content description
+        modifier = modifier,
+        tint = tint,
+    )
+}
+
+@Composable
+private fun CreateShortcutDialog(
+    onCreateDynamic: () -> Unit,
+    onCreatePinned: () -> Unit,
+    onDismissRequest: () -> Unit,
+) {
+    MdcAlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = { Text(stringResource(R.string.add_shortcut)) },
+        content = {
+            LazyColumn {
+                item {
+                    ShortcutTypeOptionRow(
+                        icon = CommunityMaterial.Icon2.cmd_flash,
+                        label = stringResource(R.string.shortcut_type_dynamic),
+                        onClick = onCreateDynamic,
+                    )
+                }
+                item {
+                    ShortcutTypeOptionRow(
+                        icon = CommunityMaterial.Icon3.cmd_view_dashboard,
+                        label = stringResource(R.string.shortcut_type_pinned),
+                        onClick = onCreatePinned,
+                    )
+                }
+            }
+        },
+        onCancel = onDismissRequest,
+    )
+}
+
+@Composable
+private fun ShortcutTypeOptionRow(icon: IIcon, label: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = HADimens.SPACE4, vertical = HADimens.SPACE3),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE3),
+    ) {
+        Image(
+            asset = icon,
+            colorFilter = ColorFilter.tint(LocalHAColorScheme.current.colorTextPrimary),
+            contentDescription = label,
+            modifier = Modifier.size(HADimens.SPACE5),
+        )
+        Column(
+            verticalArrangement = Arrangement.spacedBy(HADimens.SPACE1),
+            modifier = Modifier.weight(1f),
+        ) {
+            Text(
+                text = label,
+                style = HATextStyle.BodyMedium,
+                color = LocalHAColorScheme.current.colorTextPrimary,
+            )
+        }
+    }
+}
+
+@Preview(name = "Shortcuts List")
+@Composable
+private fun ShortcutsListScreenPreview() {
+    val dynamicSummaries = ShortcutPreviewData.buildDynamicSummaries(
+        count = 4,
+        type = ShortcutType.LOVELACE,
+    ).toImmutableList()
+    val basePinned = ShortcutPreviewData.buildPinnedSummaries().first()
+    val pinnedSummaries = listOf(
+        basePinned,
+        basePinned.copy(
+            id = "pinned_2",
+            label = "Pinned 2",
+        ),
+        basePinned.copy(
+            id = "pinned_3",
+            label = "Pinned 3",
+        ),
+    ).toImmutableList()
+    HAThemeForPreview {
+        ShortcutsListScreen(
+            state = ShortcutPreviewData.buildListState(
+                dynamicSummaries = dynamicSummaries,
+                pinnedSummaries = pinnedSummaries,
+            ),
+            dispatch = {},
+            onRetry = {},
+        )
+    }
+}
+
+@Preview(name = "Shortcuts List Loading")
+@Composable
+private fun ShortcutsListScreenLoadingPreview() {
+    HAThemeForPreview {
+        ShortcutsListScreen(
+            state = ShortcutPreviewData.buildListState(isLoading = true),
+            dispatch = {},
+            onRetry = {},
+        )
+    }
+}
+
+@Preview(name = "Shortcuts List Empty")
+@Composable
+private fun ShortcutsListScreenEmptyPreview() {
+    HAThemeForPreview {
+        ShortcutsListScreen(
+            state = ShortcutPreviewData.buildListState(
+                dynamicSummaries = persistentListOf(),
+                pinnedSummaries = persistentListOf(),
+            ),
+            dispatch = {},
+            onRetry = {},
+        )
+    }
+}
+
+@Preview(name = "Shortcuts List Error")
+@Composable
+private fun ShortcutsListScreenErrorPreview() {
+    HAThemeForPreview {
+        ShortcutsListScreen(
+            state = ShortcutPreviewData.buildListState(error = ShortcutError.Unknown),
+            dispatch = {},
+            onRetry = {},
+        )
+    }
+}
+
+@Preview(name = "Shortcuts List Not Supported")
+@Composable
+private fun ShortcutsListScreenNotSupportedPreview() {
+    HAThemeForPreview {
+        ShortcutsListScreen(
+            state = ShortcutsListState(isLoading = false, error = ShortcutError.ApiNotSupported),
+            dispatch = {},
+            onRetry = {},
+        )
+    }
+}

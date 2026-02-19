@@ -184,6 +184,11 @@
             android:icon="@drawable/ic_shortcut"
             android:title="@string/manage_shortcuts"
             android:summary="@string/manage_shortcuts_summary" />
+        <Preference
+            android:key="manage_shortcuts_v2"
+            android:icon="@drawable/ic_shortcut"
+            android:title="@string/manage_shortcuts_v2"
+            android:summary="@string/manage_shortcuts_summary" />
     </PreferenceCategory>
     <PreferenceCategory
         android:key="widgets"
