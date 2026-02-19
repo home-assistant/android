@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.onboarding.serverdiscovery.navigation
 
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -42,7 +41,6 @@ import io.mockk.every
 import io.mockk.mockk
 import java.net.URL
 import junit.framework.TestCase.assertTrue
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -53,6 +51,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowLooper.runUiThreadTasksIncludingDelayedTasks
 
 /**
  * Navigation tests for the Server Discovery screen in the onboarding flow.
@@ -151,7 +150,6 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
         }
     }
 
-    @OptIn(ExperimentalTestApi::class)
     @Test
     fun `Given a server discovered when clicking on it then show ConnectScreen then back goes to ServerDiscovery`() {
         val instanceUrl = "http://ha.local"
@@ -162,7 +160,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
                 .performScrollTo()
                 .assertIsDisplayed()
 
-            instanceChannel.trySend(
+            instanceChannel.send(
                 HomeAssistantInstance("Test", URL(instanceUrl), HomeAssistantVersion(2025, 9, 1)),
             )
 
@@ -170,6 +168,8 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
             coVerify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, any()) }
 
             mainClock.advanceTimeBy(DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds, ignoreFrameDuration = true)
+            runUiThreadTasksIncludingDelayedTasks()
+            waitForIdle()
 
             onNodeWithTag(ONE_SERVER_FOUND_MODAL_TAG).assertIsDisplayed().performTouchInput {
                 swipeUp(startY = bottom * 0.9f, endY = centerY, durationMillis = 200)
@@ -206,11 +206,13 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
                 .performScrollTo()
                 .assertIsDisplayed()
 
-            instanceChannel.trySend(
+            instanceChannel.send(
                 HomeAssistantInstance("Test", URL(instanceUrl), HomeAssistantVersion(2025, 9, 1)),
             )
 
             mainClock.advanceTimeBy(DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds, ignoreFrameDuration = true)
+            runUiThreadTasksIncludingDelayedTasks()
+            waitForIdle()
 
             onNodeWithText(instanceUrl).assertIsDisplayed()
 
