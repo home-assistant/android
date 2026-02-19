@@ -22,7 +22,7 @@ import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
-import io.homeassistant.companion.android.util.LocationPermissionActivityResultRegistry
+import io.homeassistant.companion.android.util.FakePermissionResultRegistry
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -126,7 +126,7 @@ class LocationForSecureConnectionScreenTest {
         var helpClicked = false
         var allowInsecureConnection: Boolean? = null
         var snackbarMessage: String? = null
-        val registry = LocationPermissionActivityResultRegistry(locationPermissionGranted)
+        val registry = FakePermissionResultRegistry(locationPermissionGranted)
     }
 
     @OptIn(ExperimentalPermissionsApi::class)
