@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import dagger.hilt.EntryPoint
@@ -59,6 +60,8 @@ internal class NotificationDeleteWorker(context: Context, params: WorkerParamete
 
             val request = OneTimeWorkRequestBuilder<NotificationDeleteWorker>()
                 .setInputData(data)
+                // We want the event to be sent right away if it is possible
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .build()
 
             WorkManager.getInstance(context).enqueue(request)
