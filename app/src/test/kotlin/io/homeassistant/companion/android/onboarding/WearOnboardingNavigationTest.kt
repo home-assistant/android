@@ -81,6 +81,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowLooper.runUiThreadTasksIncludingDelayedTasks
 
 private const val WEAR_NAME = "super_ha_wear"
 private const val VALID_PASSWORD = "1234"
@@ -212,7 +213,6 @@ internal class WearOnboardingNavigationTest {
 
     // This test is similar to the classic onboarding but it is just to test the behavior of the shared screen.
     // We are skipping the test of the manual setup since it is the same as the classic onboarding.
-    @OptIn(ExperimentalTestApi::class)
     @Test
     fun `Given a server discovered when clicking on it then show ConnectScreen then back goes to ServerDiscovery`() {
         val instanceUrl = "http://ha.local"
@@ -220,10 +220,12 @@ internal class WearOnboardingNavigationTest {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
             onNodeWithText(stringResource(commonR.string.searching_home_network)).assertIsDisplayed()
 
-            instanceChannel.trySend(HomeAssistantInstance("Test", URL(instanceUrl), HomeAssistantVersion(2025, 9, 1)))
-            waitUntilAtLeastOneExists(hasText(instanceUrl), timeoutMillis = DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds)
+            instanceChannel.send(HomeAssistantInstance("Test", URL(instanceUrl), HomeAssistantVersion(2025, 9, 1)))
+            mainClock.advanceTimeBy(DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds, ignoreFrameDuration = true)
+            runUiThreadTasksIncludingDelayedTasks()
+            waitForIdle()
 
-            onNodeWithTag(ONE_SERVER_FOUND_MODAL_TAG).performTouchInput {
+            onNodeWithTag(ONE_SERVER_FOUND_MODAL_TAG).assertIsDisplayed().performTouchInput {
                 swipeUp(startY = bottom * 0.9f, endY = centerY, durationMillis = 200)
             }
 
