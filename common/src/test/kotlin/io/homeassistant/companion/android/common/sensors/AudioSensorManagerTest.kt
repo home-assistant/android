@@ -11,6 +11,7 @@ import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.mockk.coEvery
 import io.mockk.coJustRun
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -160,6 +161,7 @@ class AudioSensorManagerTest {
     fun `Given multi-server with one server having mismatched attributes then force update`() = runTest {
         val updatedSensors = mutableListOf<Sensor>()
         val volumeMusicSensorServer2 = volumeMusicSensor.copy(serverId = 2)
+        coEvery { sensorDao.get(AudioSensorManager.volMusic.id) } returns listOf(volumeMusicSensor, volumeMusicSensorServer2)
         coEvery { sensorDao.getFull(AudioSensorManager.volMusic.id) } returns mapOf(
             volumeMusicSensor to listOf(
                 Attribute(AudioSensorManager.volMusic.id, "min", "2", "int"),
@@ -174,15 +176,18 @@ class AudioSensorManagerTest {
 
         sensorManager.requestSensorUpdate(context)
 
-        assertEquals(1, updatedSensors.size)
-        assertNull(updatedSensors[0].lastSentState)
-        assertNull(updatedSensors[0].lastSentIcon)
+        assertEquals(2, updatedSensors.size)
+        updatedSensors.forEach { sensor ->
+            assertNull(sensor.lastSentState)
+            assertNull(sensor.lastSentIcon)
+        }
     }
 
     @Test
     fun `Given multi-server with all servers having matching attributes then does not force update`() = runTest {
         val updatedSensor = slot<Sensor>()
         val volumeMusicSensorServer2 = volumeMusicSensor.copy(serverId = 2)
+        coEvery { sensorDao.get(AudioSensorManager.volMusic.id) } returns listOf(volumeMusicSensor, volumeMusicSensorServer2)
         coEvery { sensorDao.getFull(AudioSensorManager.volMusic.id) } returns mapOf(
             volumeMusicSensor to listOf(
                 Attribute(AudioSensorManager.volMusic.id, "min", "2", "int"),
@@ -216,6 +221,21 @@ class AudioSensorManagerTest {
 
         assertEquals("5", updatedSensor.captured.lastSentState)
         assertEquals(AudioSensorManager.volMusic.statelessIcon, updatedSensor.captured.lastSentIcon)
+    }
+
+    @Test
+    fun `Given unchanged attributes when requesting update twice then getFull is only called once`() = runTest {
+        coEvery { sensorDao.getFull(AudioSensorManager.volMusic.id) } returns mapOf(
+            volumeMusicSensor to listOf(
+                Attribute(AudioSensorManager.volMusic.id, "min", "2", "int"),
+                Attribute(AudioSensorManager.volMusic.id, "max", "15", "int"),
+            ),
+        )
+
+        sensorManager.requestSensorUpdate(context)
+        sensorManager.requestSensorUpdate(context)
+
+        coVerify(exactly = 1) { sensorDao.getFull(AudioSensorManager.volMusic.id) }
     }
 
     @Test
