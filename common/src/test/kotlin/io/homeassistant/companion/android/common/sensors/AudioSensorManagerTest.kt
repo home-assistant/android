@@ -136,6 +136,72 @@ class AudioSensorManagerTest {
     }
 
     @Test
+    fun `Given mismatched max attribute when requesting update twice then force update each time`() = runTest {
+        val updatedSensors = mutableListOf<Sensor>()
+        coEvery { sensorDao.getFull(AudioSensorManager.volMusic.id) } returns mapOf(
+            volumeMusicSensor to listOf(
+                Attribute(AudioSensorManager.volMusic.id, "min", "2", "int"),
+                Attribute(AudioSensorManager.volMusic.id, "max", "10", "int"),
+            ),
+        )
+        coJustRun { sensorDao.update(capture(updatedSensors)) }
+
+        sensorManager.requestSensorUpdate(context)
+        sensorManager.requestSensorUpdate(context)
+
+        assertEquals(2, updatedSensors.size)
+        updatedSensors.forEach { sensor ->
+            assertNull(sensor.lastSentState)
+            assertNull(sensor.lastSentIcon)
+        }
+    }
+
+    @Test
+    fun `Given multi-server with one server having mismatched attributes then force update`() = runTest {
+        val updatedSensors = mutableListOf<Sensor>()
+        val volumeMusicSensorServer2 = volumeMusicSensor.copy(serverId = 2)
+        coEvery { sensorDao.getFull(AudioSensorManager.volMusic.id) } returns mapOf(
+            volumeMusicSensor to listOf(
+                Attribute(AudioSensorManager.volMusic.id, "min", "2", "int"),
+                Attribute(AudioSensorManager.volMusic.id, "max", "15", "int"),
+            ),
+            volumeMusicSensorServer2 to listOf(
+                Attribute(AudioSensorManager.volMusic.id, "min", "2", "int"),
+                Attribute(AudioSensorManager.volMusic.id, "max", "10", "int"),
+            ),
+        )
+        coJustRun { sensorDao.update(capture(updatedSensors)) }
+
+        sensorManager.requestSensorUpdate(context)
+
+        assertEquals(1, updatedSensors.size)
+        assertNull(updatedSensors[0].lastSentState)
+        assertNull(updatedSensors[0].lastSentIcon)
+    }
+
+    @Test
+    fun `Given multi-server with all servers having matching attributes then does not force update`() = runTest {
+        val updatedSensor = slot<Sensor>()
+        val volumeMusicSensorServer2 = volumeMusicSensor.copy(serverId = 2)
+        coEvery { sensorDao.getFull(AudioSensorManager.volMusic.id) } returns mapOf(
+            volumeMusicSensor to listOf(
+                Attribute(AudioSensorManager.volMusic.id, "min", "2", "int"),
+                Attribute(AudioSensorManager.volMusic.id, "max", "15", "int"),
+            ),
+            volumeMusicSensorServer2 to listOf(
+                Attribute(AudioSensorManager.volMusic.id, "min", "2", "int"),
+                Attribute(AudioSensorManager.volMusic.id, "max", "15", "int"),
+            ),
+        )
+        coJustRun { sensorDao.update(capture(updatedSensor)) }
+
+        sensorManager.requestSensorUpdate(context)
+
+        assertEquals("5", updatedSensor.captured.lastSentState)
+        assertEquals(AudioSensorManager.volMusic.statelessIcon, updatedSensor.captured.lastSentIcon)
+    }
+
+    @Test
     fun `Given unchanged min and max attributes when requesting update then does not force update`() = runTest {
         val updatedSensor = slot<Sensor>()
         coEvery { sensorDao.getFull(AudioSensorManager.volMusic.id) } returns mapOf(

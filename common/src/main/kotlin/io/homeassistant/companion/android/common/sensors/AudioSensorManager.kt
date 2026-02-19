@@ -442,11 +442,12 @@ class AudioSensorManager : SensorManager {
         if (sensor.id in sensorIdsWhereAttributesAreAlreadyForced) {
             return true
         }
-        sensorIdsWhereAttributesAreAlreadyForced += sensor.id
-        return sensorDao(context)
+
+        val sensorsWithAttributes = sensorDao(context)
             .getFull(sensor.id)
             .toSensorsWithAttributes()
-            .any { sensorWithAttributes ->
+
+        if (!sensorsWithAttributes.isEmpty() && sensorsWithAttributes.all { sensorWithAttributes ->
                 val attributes = sensorWithAttributes.attributes
                 val storedMin = attributes
                     .firstOrNull { it.name == ATTRIBUTE_MIN }
@@ -458,5 +459,11 @@ class AudioSensorManager : SensorManager {
                     ?.toIntOrNull()
                 storedMin == currentMin && storedMax == currentMax
             }
+        ) {
+            sensorIdsWhereAttributesAreAlreadyForced += sensor.id
+            return true
+        }
+
+        return false
     }
 }
