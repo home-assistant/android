@@ -13,7 +13,7 @@ import io.homeassistant.companion.android.database.sensor.toSensorsWithAttribute
 import java.util.concurrent.ConcurrentHashMap
 
 class AudioSensorManager : SensorManager {
-    private val sensorIdsWhereAttributesAreAlreadyForced: MutableSet<String> = ConcurrentHashMap.newKeySet()
+    private val sensorIdsWithMatchingAttributes: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
     companion object {
         const val VOLUME_CHANGED_ACTION = "android.media.VOLUME_CHANGED_ACTION"
@@ -422,16 +422,17 @@ class AudioSensorManager : SensorManager {
 
     /**
      * Checks whether the stored min/max attributes for a sensor already match the current
-     * values, or have already been force-updated during this app runtime.
+     * values, using a runtime cache to avoid repeated database queries.
      *
      * Usually, min and max do not change while the app is running. The only meaningful
      * moments when they can be out of date:
      * 1. An older companion app ran before, without pushing min/max.
      * 2. The operating system changed.
      *
-     * Therefore, the actual database check is performed at most once per sensor per app
-     * runtime. On subsequent calls for the same sensor, this returns `true` immediately
-     * without a database query.
+     * Once the stored attributes are found to match for a given sensor, the result is
+     * cached and subsequent calls return `true` immediately without a database query.
+     * If the attributes do not match, the database is queried again on each call until
+     * they do.
      */
     private suspend fun areAttributesOfSensorAlreadyForcedAtRuntimeOrMatching(
         context: Context,
@@ -439,7 +440,7 @@ class AudioSensorManager : SensorManager {
         currentMin: Int,
         currentMax: Int,
     ): Boolean {
-        if (sensor.id in sensorIdsWhereAttributesAreAlreadyForced) {
+        if (sensor.id in sensorIdsWithMatchingAttributes) {
             return true
         }
 
@@ -460,7 +461,7 @@ class AudioSensorManager : SensorManager {
                 storedMin == currentMin && storedMax == currentMax
             }
         ) {
-            sensorIdsWhereAttributesAreAlreadyForced += sensor.id
+            sensorIdsWithMatchingAttributes += sensor.id
             return true
         }
 
