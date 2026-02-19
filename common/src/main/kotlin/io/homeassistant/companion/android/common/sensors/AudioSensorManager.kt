@@ -447,7 +447,7 @@ class AudioSensorManager : SensorManager {
             .getFull(sensor.id)
             .toSensorsWithAttributes()
 
-        if (!sensorsWithAttributes.isEmpty() && sensorsWithAttributes.all { sensorWithAttributes ->
+        if (sensorsWithAttributes.isNotEmpty() && sensorsWithAttributes.all { sensorWithAttributes ->
                 val attributes = sensorWithAttributes.attributes
                 val storedMin = attributes
                     .firstOrNull { it.name == ATTRIBUTE_MIN }
