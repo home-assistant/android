@@ -43,7 +43,7 @@ internal fun actionRefreshTodo(): Action {
  */
 @Composable
 internal fun actionOpenTodolist(listEntityId: String, serverId: Int): Action {
-    return actionStartWebView("todo?entity_id=$listEntityId", serverId)
+    return actionStartWebView("todo?entity_id=$listEntityId&add_item=true", serverId)
 }
 
 /**
