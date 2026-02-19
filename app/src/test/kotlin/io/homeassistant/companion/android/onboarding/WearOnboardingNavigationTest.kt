@@ -222,10 +222,9 @@ internal class WearOnboardingNavigationTest {
             onNodeWithText(stringResource(commonR.string.searching_home_network)).assertIsDisplayed()
 
             instanceChannel.trySend(HomeAssistantInstance("Test", URL(instanceUrl), HomeAssistantVersion(2025, 9, 1)))
-            mainClock.advanceTimeBy((DELAY_BEFORE_DISPLAY_DISCOVERY + 1.seconds).inWholeMilliseconds, ignoreFrameDuration = true)
-            waitUntilAtLeastOneExists(hasText(instanceUrl))
+            mainClock.advanceTimeBy(DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds, ignoreFrameDuration = true)
 
-            onNodeWithTag(ONE_SERVER_FOUND_MODAL_TAG).performTouchInput {
+            onNodeWithTag(ONE_SERVER_FOUND_MODAL_TAG).assertIsDisplayed().performTouchInput {
                 swipeUp(startY = bottom * 0.9f, endY = centerY, durationMillis = 200)
             }
 
