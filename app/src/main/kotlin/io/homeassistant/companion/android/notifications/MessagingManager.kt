@@ -146,6 +146,8 @@ class MessagingManager @Inject constructor(
         const val PROGRESS = "progress"
         const val PROGRESS_MAX = "progress_max"
         const val PROGRESS_INDETERMINATE = "progress_indeterminate"
+        const val LIVE_UPDATE = "live_update"
+        const val CRITICAL_TEXT = "critical_text"
         const val CAR_UI = "car_ui"
         const val KEY_TEXT_REPLY = "key_text_reply"
         const val INTENT_CLASS_NAME = "intent_class_name"
@@ -1073,6 +1075,8 @@ class MessagingManager @Inject constructor(
 
         handleProgress(notificationBuilder, data)
 
+        handleLive(notificationBuilder, data)
+
         val useCarNotification = handleCarUiVisible(context, notificationBuilder, data)
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
@@ -1144,6 +1148,22 @@ class MessagingManager @Inject constructor(
             }
         } catch (e: Exception) {
             Timber.e(e, "Error while handling progress notification")
+        }
+    }
+
+    private fun handleLive(builder: NotificationCompat.Builder, data: Map<String, String>) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+            val liveUpdate = data[LIVE_UPDATE]?.toBoolean() ?: false
+            val criticalText = data[CRITICAL_TEXT]
+
+            if (liveUpdate) {
+                builder.setOngoing(true)
+                builder.setRequestPromotedOngoing(true)
+
+                if (criticalText != null) {
+                    builder.setShortCriticalText(criticalText)
+                }
+            }
         }
     }
 
