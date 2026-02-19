@@ -168,7 +168,6 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
             coVerify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, any()) }
 
             mainClock.advanceTimeBy(DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds, ignoreFrameDuration = true)
-            runUiThreadTasksIncludingDelayedTasks()
             waitForIdle()
 
             onNodeWithTag(ONE_SERVER_FOUND_MODAL_TAG).assertIsDisplayed().performTouchInput {
@@ -211,7 +210,6 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
             )
 
             mainClock.advanceTimeBy(DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds, ignoreFrameDuration = true)
-            runUiThreadTasksIncludingDelayedTasks()
             waitForIdle()
 
             onNodeWithText(instanceUrl).assertIsDisplayed()

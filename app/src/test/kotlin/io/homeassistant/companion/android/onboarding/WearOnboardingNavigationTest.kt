@@ -82,6 +82,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowLooper.runUiThreadTasksIncludingDelayedTasks
+import timber.log.Timber
 
 private const val WEAR_NAME = "super_ha_wear"
 private const val VALID_PASSWORD = "1234"
@@ -220,9 +221,10 @@ internal class WearOnboardingNavigationTest {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
             onNodeWithText(stringResource(commonR.string.searching_home_network)).assertIsDisplayed()
 
+            Timber.e("Before sending")
             instanceChannel.send(HomeAssistantInstance("Test", URL(instanceUrl), HomeAssistantVersion(2025, 9, 1)))
             mainClock.advanceTimeBy(DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds, ignoreFrameDuration = true)
-            runUiThreadTasksIncludingDelayedTasks()
+            Timber.e("After sending and wait")
             waitForIdle()
 
             onNodeWithTag(ONE_SERVER_FOUND_MODAL_TAG).assertIsDisplayed().performTouchInput {
