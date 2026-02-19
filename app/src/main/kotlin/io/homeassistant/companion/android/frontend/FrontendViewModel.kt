@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
+import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import javax.inject.Inject
@@ -132,6 +133,13 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         onCrash = ::onRetry,
     )
 
+    val webChromeClient: HAWebChromeClient = HAWebChromeClient(
+        onPermissionRequest = permissionManager::onWebViewPermissionRequest,
+    )
+
+    /** Pending WebView permission request that needs the system permission dialog. */
+    val pendingWebViewPermission = permissionManager.pendingWebViewPermission
+
     private var connectivityCheckJob: Job? = null
 
     /** Job tracking the urlFlow collection - cancelled when switching servers. */
@@ -178,6 +186,10 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 _connectivityCheckState.value = state
             }
         }
+    }
+
+    fun onWebViewPermissionResult(results: Map<String, Boolean>) {
+        permissionManager.onWebViewPermissionResult(results)
     }
 
     fun onRetry() {
