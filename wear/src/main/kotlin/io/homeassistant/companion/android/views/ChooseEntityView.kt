@@ -3,16 +3,10 @@ package io.homeassistant.companion.android.views
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -42,9 +36,9 @@ import java.util.Locale
 
 @Composable
 fun ChooseEntityView(
-    entitiesByDomainOrder: SnapshotStateList<String>,
-    entitiesByDomain: SnapshotStateMap<String, SnapshotStateList<Entity>>,
-    favoriteEntityIds: State<List<String>>,
+    entitiesByDomainOrder: List<String>,
+    entitiesByDomain: Map<String, List<Entity>>,
+    favoriteEntityIds: List<String>,
     onNoneClicked: () -> Unit,
     onEntitySelected: (entity: SimplifiedEntity) -> Unit,
     allowNone: Boolean = true,
@@ -74,7 +68,7 @@ fun ChooseEntityView(
                 }
             }
 
-            if (favoriteEntityIds.value.isNotEmpty()) {
+            if (favoriteEntityIds.isNotEmpty()) {
                 item {
                     ExpandableListHeader(
                         string = stringResource(commonR.string.favorites),
@@ -83,9 +77,10 @@ fun ChooseEntityView(
                     )
                 }
                 if (expandedFavorites) {
-                    items(favoriteEntityIds.value.size) { index ->
-                        val favoriteEntityID = favoriteEntityIds.value[index].split(",")[0]
-                        entitiesByDomain.flatMap { (_, values) -> values }
+                    val allEntities = entitiesByDomain.flatMap { (_, values) -> values }
+                    items(favoriteEntityIds.size) { index ->
+                        val favoriteEntityID = favoriteEntityIds[index].split(",")[0]
+                        allEntities
                             .firstOrNull { it.entityId == favoriteEntityID }
                             ?.let {
                                 ChooseEntityChip(
@@ -159,13 +154,9 @@ private fun ChooseEntityChip(entity: Entity, onEntitySelected: (entity: Simplifi
 @Composable
 fun ChooseEntityViewEmptyPreview() {
     ChooseEntityView(
-        entitiesByDomainOrder = remember {
-            mutableStateListOf()
-        },
-        entitiesByDomain = remember {
-            mutableStateMapOf()
-        },
-        favoriteEntityIds = remember { mutableStateOf(listOf()) },
+        entitiesByDomainOrder = emptyList(),
+        entitiesByDomain = emptyMap(),
+        favoriteEntityIds = emptyList(),
         onNoneClicked = {},
         onEntitySelected = {},
         allowNone = true,
@@ -176,22 +167,15 @@ fun ChooseEntityViewEmptyPreview() {
 @Composable
 fun ChooseEntityViewWithDataPreview() {
     ChooseEntityView(
-        entitiesByDomainOrder = remember {
-            mutableStateListOf(playPreviewEntityScene1.entityId, playPreviewEntityScene2.entityId)
-        },
-        entitiesByDomain = remember {
-            mutableStateMapOf(
-                Pair(
-                    playPreviewEntityScene1.entityId,
-                    mutableStateListOf(playPreviewEntityScene1),
-                ),
-                Pair(
-                    playPreviewEntityScene2.entityId,
-                    mutableStateListOf(playPreviewEntityScene2),
-                ),
-            )
-        },
-        favoriteEntityIds = remember { mutableStateOf(listOf(playPreviewEntityScene1.entityId)) },
+        entitiesByDomainOrder = listOf(
+            playPreviewEntityScene1.entityId,
+            playPreviewEntityScene2.entityId,
+        ),
+        entitiesByDomain = mapOf(
+            playPreviewEntityScene1.entityId to listOf(playPreviewEntityScene1),
+            playPreviewEntityScene2.entityId to listOf(playPreviewEntityScene2),
+        ),
+        favoriteEntityIds = listOf(playPreviewEntityScene1.entityId),
         onNoneClicked = {},
         onEntitySelected = {},
         allowNone = false,

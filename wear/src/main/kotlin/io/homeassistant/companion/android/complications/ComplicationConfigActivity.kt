@@ -46,10 +46,10 @@ class ComplicationConfigActivity : ComponentActivity() {
                 complicationConfigViewModel,
             ) {
                 setResult(Activity.RESULT_OK)
-                complicationConfigViewModel.selectedEntity?.let {
+                complicationConfigViewModel.viewState.value.selectedEntity?.let {
                     complicationConfigViewModel.addEntityStateComplication(
-                        id,
-                        it,
+                        id = id,
+                        entity = it,
                     )
                 }
                 finish()

@@ -155,7 +155,7 @@ class HomeActivity :
                     }
                 }
                 launch { mainViewModel.entityRegistryUpdates() }
-                if (!mainViewModel.isFavoritesOnly) {
+                if (!mainViewModel.mainViewUiState.value.isFavoritesOnly) {
                     launch { mainViewModel.areaUpdates() }
                     launch { mainViewModel.deviceUpdates() }
                 }
@@ -170,7 +170,7 @@ class HomeActivity :
         mainViewModel.initAllSensors()
 
         lifecycleScope.launch {
-            if (mainViewModel.loadingState == MainViewModel.LoadingState.READY) {
+            if (mainViewModel.mainViewUiState.value.loadingState == MainViewModel.LoadingState.READY) {
                 try {
                     mainViewModel.updateUI()
                 } catch (e: CancellationException) {
