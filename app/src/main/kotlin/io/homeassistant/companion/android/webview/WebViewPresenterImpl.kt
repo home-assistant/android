@@ -129,12 +129,17 @@ class WebViewPresenterImpl @Inject constructor(
         isNewServer: Boolean,
     ) {
         var pathConsumed = false
+        var lastBaseUrl: URL? = null
 
         if (isInternalOverride != null) {
             Timber.d("Using isInternalOverride to get URL")
         }
 
         serverManager.connectionStateProvider(serverId).urlFlow(isInternalOverride).collect { urlState ->
+            val currentBaseUrl = (urlState as? UrlState.HasUrl)?.url
+            val baseUrlChanged = lastBaseUrl != null && currentBaseUrl != null && lastBaseUrl != currentBaseUrl
+            if (currentBaseUrl != null) lastBaseUrl = currentBaseUrl
+
             val effectiveRelativeUrl = if (!pathConsumed && path != null) {
                 pathConsumed = true
                 path
@@ -149,7 +154,9 @@ class WebViewPresenterImpl @Inject constructor(
                 urlState = urlState,
                 path = effectiveRelativeUrl,
                 shouldConsumePath = effectiveRelativeUrl != null,
-                isNewServer = isNewServer,
+                // Clear history when the base URL changes (e.g. internal <-> external)
+                // because old URLs in the back stack would be unreachable on the new network.
+                isNewServer = isNewServer || baseUrlChanged,
             )
         }
     }
