@@ -1453,8 +1453,20 @@ class WebViewActivity :
         }
     }
 
-    override fun getCurrentWebViewPath(): String? {
-        return webView.url?.toUri()?.path?.takeIf { it.length > 1 }
+    override fun getCurrentWebViewRelativeUrl(): String? {
+        val uri = webView.url?.toUri() ?: return null
+        val path = uri.encodedPath?.takeIf { it.length > 1 } ?: return null
+        // Strip 'external_auth' since the presenter re-adds it on every load
+        val query = uri.encodedQuery
+            ?.split("&")
+            ?.filter { !it.startsWith("external_auth=") }
+            ?.joinToString("&")
+            ?.takeIf { it.isNotEmpty() }
+        return buildString {
+            append(path)
+            query?.let { append("?$it") }
+            uri.encodedFragment?.let { append("#$it") }
+        }
     }
 
     override suspend fun unlockAppIfNeeded() {
