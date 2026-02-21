@@ -440,9 +440,46 @@ class WebViewActivity :
 
         decor = window.decorView as FrameLayout
 
-        val onBackPressed = object : OnBackPressedCallback(webView.canGoBack()) {
+        val onBackPressed = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (webView.canGoBack()) webView.goBack()
+                if (webView.canGoBack()) {
+                    // Check if the previous history entry has the same origin as
+                    // the current URL. After an internal/external URL switch,
+                    // stale entries from the old connection may remain in history.
+                    val backForwardList = webView.copyBackForwardList()
+                    val currentIndex = backForwardList.currentIndex
+                    if (currentIndex > 0) {
+                        val previousUrl = backForwardList.getItemAtIndex(currentIndex - 1).url.toUri()
+                        val currentBase = loadedUrl
+                        if (currentBase != null && previousUrl.hasSameOrigin(currentBase)) {
+                            webView.goBack()
+                            return
+                        }
+                    } else {
+                        webView.goBack()
+                        return
+                    }
+                }
+                // History is empty or previous entry has a different origin
+                // (stale entry from old connection). Navigate to base URL
+                // instead of going back to an unreachable page.
+                val currentUrl = loadedUrl
+                if (currentUrl != null && currentUrl.hasNonRootPath()) {
+                    val baseUrl = currentUrl.buildUpon()
+                        .path("/")
+                        .clearQuery()
+                        .appendQueryParameter("external_auth", "1")
+                        .fragment(null)
+                        .build()
+                    clearHistory = true
+                    loadedUrl = baseUrl
+                    webView.loadUrl(baseUrl.toString())
+                } else {
+                    // Already on root — let the system handle back (exit app)
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                    isEnabled = true
+                }
             }
         }
 
@@ -631,7 +668,10 @@ class WebViewActivity :
 
                 override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
                     super.doUpdateVisitedHistory(view, url, isReload)
-                    onBackPressed.isEnabled = canGoBack()
+                    // Keep the callback enabled when there's history OR when the current
+                    // URL has a non-root path (so pressing back navigates to root first).
+                    onBackPressed.isEnabled = canGoBack() ||
+                        url?.toUri()?.hasNonRootPath() == true
                     presenter.stopScanningForImprov(false)
                 }
             }
@@ -1423,31 +1463,48 @@ class WebViewActivity :
         if (hasFocus && !isFinishing) {
             lifecycleScope.launch {
                 unlockAppIfNeeded()
+                val intentPath = intent.getStringExtra(EXTRA_PATH)
+                intent.removeExtra(EXTRA_PATH)
+                // Let the presenter handle falling back to the current WebView path
+                // when no explicit navigation path is set. See https://github.com/home-assistant/android/issues/4983
+                var path: String? = intentPath
+                if (intentPath?.startsWith("entityId:") == true) {
+                    val pattern = "(?<=^entityId:)((?!.+__)(?!_)[\\da-z_]+(?<!_)\\.(?!_)[\\da-z_]+(?<!_)$)".toRegex()
+                    val entity = pattern.find(intentPath)?.value ?: ""
+                    if (
+                        entity.isNotBlank() &&
+                        serverManager.getServer(presenter.getActiveServer())?.version?.isAtLeast(2025, 6, 0) == true
+                    ) {
+                        path = "/?more-info-entity-id=$entity"
+                        moreInfoEntity = ""
+                    } else {
+                        moreInfoEntity = entity
+                    }
+                }
+                presenter.load(lifecycle, path, isInternalOverride)
 
                 if (presenter.isFullScreen() || isVideoFullScreen) {
                     hideSystemUI()
                 } else {
                     showSystemUI()
                 }
-
-                var path = intent.getStringExtra(EXTRA_PATH)
-                if (path?.startsWith("entityId:") == true) {
-                    // Get the entity ID from a string formatted "entityId:domain.entity"
-                    // https://github.com/home-assistant/core/blob/dev/homeassistant/core.py#L159
-                    val pattern = "(?<=^entityId:)((?!.+__)(?!_)[\\da-z_]+(?<!_)\\.(?!_)[\\da-z_]+(?<!_)$)".toRegex()
-                    val entity = pattern.find(path)?.value ?: ""
-                    if (
-                        entity.isNotBlank() &&
-                        serverManager.getServer(presenter.getActiveServer())?.version?.isAtLeast(2025, 6, 0) == true
-                    ) {
-                        path = "/?more-info-entity-id=$entity"
-                    } else {
-                        moreInfoEntity = entity
-                    }
-                }
-                intent.removeExtra(EXTRA_PATH)
-                presenter.load(lifecycle, path, isInternalOverride)
             }
+        }
+    }
+
+    override fun getCurrentWebViewRelativeUrl(): String? {
+        val uri = webView.url?.toUri() ?: return null
+        val path = uri.encodedPath?.takeIf { it.length > 1 } ?: return null
+        // Strip 'external_auth' since the presenter re-adds it on every load
+        val query = uri.encodedQuery
+            ?.split("&")
+            ?.filter { !it.startsWith("external_auth=") }
+            ?.joinToString("&")
+            ?.takeIf { it.isNotEmpty() }
+        return buildString {
+            append(path)
+            query?.let { append("?$it") }
+            uri.encodedFragment?.let { append("#$it") }
         }
     }
 
