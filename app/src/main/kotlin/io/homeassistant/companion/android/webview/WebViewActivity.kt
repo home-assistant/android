@@ -441,9 +441,46 @@ class WebViewActivity :
 
         decor = window.decorView as FrameLayout
 
-        val onBackPressed = object : OnBackPressedCallback(webView.canGoBack()) {
+        val onBackPressed = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (webView.canGoBack()) webView.goBack()
+                if (webView.canGoBack()) {
+                    // Check if the previous history entry has the same origin as
+                    // the current URL. After an internal/external URL switch,
+                    // stale entries from the old connection may remain in history.
+                    val backForwardList = webView.copyBackForwardList()
+                    val currentIndex = backForwardList.currentIndex
+                    if (currentIndex > 0) {
+                        val previousUrl = backForwardList.getItemAtIndex(currentIndex - 1).url.toUri()
+                        val currentBase = loadedUrl
+                        if (currentBase != null && previousUrl.hasSameOrigin(currentBase)) {
+                            webView.goBack()
+                            return
+                        }
+                    } else {
+                        webView.goBack()
+                        return
+                    }
+                }
+                // History is empty or previous entry has a different origin
+                // (stale entry from old connection). Navigate to base URL
+                // instead of going back to an unreachable page.
+                val currentUrl = loadedUrl
+                if (currentUrl != null && currentUrl.hasNonRootPath()) {
+                    val baseUrl = currentUrl.buildUpon()
+                        .path("/")
+                        .clearQuery()
+                        .appendQueryParameter("external_auth", "1")
+                        .fragment(null)
+                        .build()
+                    clearHistory = true
+                    loadedUrl = baseUrl
+                    webView.loadUrl(baseUrl.toString())
+                } else {
+                    // Already on root — let the system handle back (exit app)
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                    isEnabled = true
+                }
             }
         }
 
@@ -632,7 +669,10 @@ class WebViewActivity :
 
                 override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
                     super.doUpdateVisitedHistory(view, url, isReload)
-                    onBackPressed.isEnabled = canGoBack()
+                    // Keep the callback enabled when there's history OR when the current
+                    // URL has a non-root path (so pressing back navigates to root first).
+                    onBackPressed.isEnabled = canGoBack() ||
+                        url?.toUri()?.hasNonRootPath() == true
                     presenter.stopScanningForImprov(false)
                 }
             }
