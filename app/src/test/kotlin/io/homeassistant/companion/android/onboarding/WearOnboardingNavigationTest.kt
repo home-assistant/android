@@ -54,6 +54,7 @@ import io.homeassistant.companion.android.onboarding.wearmtls.navigation.URL_MTL
 import io.homeassistant.companion.android.onboarding.wearmtls.navigation.WearMTLSRoute
 import io.homeassistant.companion.android.onboarding.wearmtls.navigation.navigateToWearMTLS
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
+import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.LocationPermissionActivityResultRegistry
 import io.homeassistant.companion.android.util.compose.navigateToUri
@@ -71,6 +72,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -98,6 +100,9 @@ internal class WearOnboardingNavigationTest {
 
     @get:Rule(order = 2)
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
+
+    @get:Rule(order = 3)
+    val mainDispatcherRule = MainDispatcherJUnit4Rule()
 
     @BindValue
     @JvmField
@@ -186,9 +191,10 @@ internal class WearOnboardingNavigationTest {
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun testNavigation(urlToOnboard: String? = null, testContent: suspend AndroidComposeTestRule<*, *>.() -> Unit) {
         setContent(urlToOnboard)
-        runTest {
+        runTest(mainDispatcherRule.testDispatcher) {
             composeTestRule.testContent()
         }
     }
@@ -212,7 +218,7 @@ internal class WearOnboardingNavigationTest {
 
     // This test is similar to the classic onboarding but it is just to test the behavior of the shared screen.
     // We are skipping the test of the manual setup since it is the same as the classic onboarding.
-    @OptIn(ExperimentalTestApi::class)
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `Given a server discovered when clicking on it then show ConnectScreen then back goes to ServerDiscovery`() {
         val instanceUrl = "http://ha.local"
@@ -220,10 +226,13 @@ internal class WearOnboardingNavigationTest {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
             onNodeWithText(stringResource(commonR.string.searching_home_network)).assertIsDisplayed()
 
-            instanceChannel.trySend(HomeAssistantInstance("Test", URL(instanceUrl), HomeAssistantVersion(2025, 9, 1)))
-            waitUntilAtLeastOneExists(hasText(instanceUrl), timeoutMillis = DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds)
+            instanceChannel.send(HomeAssistantInstance("Test", URL(instanceUrl), HomeAssistantVersion(2025, 9, 1)))
+            mainDispatcherRule.testDispatcher.scheduler.advanceTimeBy(DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds)
+            mainDispatcherRule.testDispatcher.scheduler.runCurrent()
+            mainClock.advanceTimeBy(DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds, ignoreFrameDuration = true)
+            waitForIdle()
 
-            onNodeWithTag(ONE_SERVER_FOUND_MODAL_TAG).performTouchInput {
+            onNodeWithTag(ONE_SERVER_FOUND_MODAL_TAG).assertIsDisplayed().performTouchInput {
                 swipeUp(startY = bottom * 0.9f, endY = centerY, durationMillis = 200)
             }
 

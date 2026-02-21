@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.onboarding.serverdiscovery.navigation
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -34,6 +35,7 @@ import io.homeassistant.companion.android.onboarding.serverdiscovery.HomeAssista
 import io.homeassistant.companion.android.onboarding.serverdiscovery.ONE_SERVER_FOUND_MODAL_TAG
 import io.homeassistant.companion.android.onboarding.serverdiscovery.ServerDiscoveryModule
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
+import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.compose.navigateToUri
 import io.mockk.coVerify
@@ -41,11 +43,14 @@ import io.mockk.every
 import io.mockk.mockk
 import java.net.URL
 import junit.framework.TestCase.assertTrue
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.consumeAsFlow
+import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.runner.RunWith
@@ -60,6 +65,28 @@ import org.robolectric.annotation.Config
 @UninstallModules(ServerDiscoveryModule::class)
 @HiltAndroidTest
 internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
+
+    @get:Rule(order = 3)
+    val mainDispatcherRule = MainDispatcherJUnit4Rule()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun testNavigation(
+        urlToOnboard: String?,
+        hideExistingServers: Boolean,
+        skipWelcome: Boolean,
+        hasLocationTracking: Boolean,
+        testContent: suspend AndroidComposeTestRule<*, *>.() -> Unit,
+    ) {
+        setContent(
+            urlToOnboard = urlToOnboard,
+            hideExistingServers = hideExistingServers,
+            skipWelcome = skipWelcome,
+            hasLocationTracking = hasLocationTracking,
+        )
+        runTest(mainDispatcherRule.testDispatcher) {
+            composeTestRule.testContent()
+        }
+    }
 
     @BindValue
     @JvmField
@@ -149,7 +176,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
         }
     }
 
-    @OptIn(ExperimentalTestApi::class)
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `Given a server discovered when clicking on it then show ConnectScreen then back goes to ServerDiscovery`() {
         val instanceUrl = "http://ha.local"
@@ -160,19 +187,19 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
                 .performScrollTo()
                 .assertIsDisplayed()
 
-            instanceChannel.trySend(
+            instanceChannel.send(
                 HomeAssistantInstance("Test", URL(instanceUrl), HomeAssistantVersion(2025, 9, 1)),
             )
 
             onNodeWithContentDescription(stringResource(commonR.string.get_help)).performClick()
             coVerify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, any()) }
 
-            waitUntilAtLeastOneExists(
-                hasText(instanceUrl),
-                timeoutMillis = DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds,
-            )
+            mainDispatcherRule.testDispatcher.scheduler.advanceTimeBy(DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds)
+            mainDispatcherRule.testDispatcher.scheduler.runCurrent()
+            mainClock.advanceTimeBy(DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds, ignoreFrameDuration = true)
+            waitForIdle()
 
-            onNodeWithTag(ONE_SERVER_FOUND_MODAL_TAG).performTouchInput {
+            onNodeWithTag(ONE_SERVER_FOUND_MODAL_TAG).assertIsDisplayed().performTouchInput {
                 swipeUp(startY = bottom * 0.9f, endY = centerY, durationMillis = 200)
             }
 
@@ -196,7 +223,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
         }
     }
 
-    @OptIn(ExperimentalTestApi::class)
+    @OptIn(ExperimentalTestApi::class, ExperimentalCoroutinesApi::class)
     @Test
     fun `Given a server discovered and connecting when authenticated then show NameYourDevice then back goes to ServerDiscovery not ConnectionScreen`() {
         val instanceUrl = "http://ha.local"
@@ -207,14 +234,14 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
                 .performScrollTo()
                 .assertIsDisplayed()
 
-            instanceChannel.trySend(
+            instanceChannel.send(
                 HomeAssistantInstance("Test", URL(instanceUrl), HomeAssistantVersion(2025, 9, 1)),
             )
 
-            waitUntilAtLeastOneExists(
-                hasText(instanceUrl),
-                timeoutMillis = DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds,
-            )
+            mainDispatcherRule.testDispatcher.scheduler.advanceTimeBy(DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds)
+            mainDispatcherRule.testDispatcher.scheduler.runCurrent()
+            mainClock.advanceTimeBy(DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds, ignoreFrameDuration = true)
+            waitForIdle()
 
             onNodeWithText(instanceUrl).assertIsDisplayed()
 

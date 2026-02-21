@@ -7,14 +7,11 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.location.LocationManager
-import android.net.ConnectivityManager
-import android.net.Network
-import android.net.NetworkCapabilities
-import android.net.NetworkRequest
 import androidx.core.content.ContextCompat
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.homeassistant.companion.android.common.data.network.NetworkChangeObserver
 import io.homeassistant.companion.android.common.data.network.NetworkHelper
 import io.homeassistant.companion.android.common.data.network.WifiHelper
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
@@ -38,7 +35,7 @@ class ServerConnectionStateProviderImpl @AssistedInject constructor(
     private val serverDao: ServerDao,
     private val wifiHelper: WifiHelper,
     private val networkHelper: NetworkHelper,
-    private val connectivityManager: ConnectivityManager,
+    private val networkChangeObserver: NetworkChangeObserver,
     @Assisted private val serverId: Int,
 ) : ServerConnectionStateProvider {
 
@@ -155,7 +152,7 @@ class ServerConnectionStateProviderImpl @AssistedInject constructor(
         return merge(
             flowOf(Unit), // Used to trigger a getUrl
             observeLocationState(),
-            observeHomeNetworkState(),
+            networkChangeObserver.observerNetworkChange,
             observeConnectionInfoChanges(),
         ).map {
             val connection = connection()
@@ -212,32 +209,6 @@ class ServerConnectionStateProviderImpl @AssistedInject constructor(
         }
     }
 
-    private fun observeHomeNetworkState(): Flow<Unit> = callbackFlow {
-        val networkRequest = NetworkRequest.Builder().build()
-
-        val callback = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) {
-                trySend(Unit)
-            }
-
-            override fun onLost(network: Network) {
-                trySend(Unit)
-            }
-
-            override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
-                trySend(Unit)
-            }
-        }
-
-        connectivityManager.registerNetworkCallback(networkRequest, callback)
-
-        // Emit initial state
-        trySend(Unit)
-
-        awaitClose {
-            connectivityManager.unregisterNetworkCallback(callback)
-        }
-    }
 }
 
 private fun HttpUrl.buildWebhookUrl(webhookId: String): HttpUrl {

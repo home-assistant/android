@@ -90,7 +90,7 @@ internal abstract class BaseOnboardingNavigationTest {
         }
     }
 
-    protected fun testNavigation(
+    protected open fun testNavigation(
         urlToOnboard: String? = null,
         hideExistingServers: Boolean = false,
         skipWelcome: Boolean = false,

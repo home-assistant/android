@@ -63,19 +63,19 @@ data class ServerConnectionInfo(
 ) {
     // Keep the parsing of the URLs from String to HttpUrl to avoid doing it multiple times
     @get:Ignore
-    internal val externalHttpUrl: HttpUrl? by lazy { externalUrl.toHttpUrlOrNull() }
+    internal val externalHttpUrl: HttpUrl? by lazy(LazyThreadSafetyMode.PUBLICATION) { externalUrl.toHttpUrlOrNull() }
 
     @get:Ignore
-    internal val internalHttpUrl: HttpUrl? by lazy { internalUrl?.toHttpUrlOrNull() }
+    internal val internalHttpUrl: HttpUrl? by lazy(LazyThreadSafetyMode.PUBLICATION) { internalUrl?.toHttpUrlOrNull() }
 
     @get:Ignore
-    internal val cloudHttpUrl: HttpUrl? by lazy { cloudUrl?.toHttpUrlOrNull() }
+    internal val cloudHttpUrl: HttpUrl? by lazy(LazyThreadSafetyMode.PUBLICATION) { cloudUrl?.toHttpUrlOrNull() }
 
     @get:Ignore
-    internal val cloudhookHttpUrl: HttpUrl? by lazy { cloudhookUrl?.toHttpUrlOrNull() }
+    internal val cloudhookHttpUrl: HttpUrl? by lazy(LazyThreadSafetyMode.PUBLICATION) { cloudhookUrl?.toHttpUrlOrNull() }
 
     @get:Ignore
-    internal val httpUrls: List<HttpUrl> by lazy {
+    internal val httpUrls: List<HttpUrl> by lazy(LazyThreadSafetyMode.PUBLICATION) {
         listOfNotNull(
             externalHttpUrl,
             internalHttpUrl,
@@ -88,7 +88,7 @@ data class ServerConnectionInfo(
      * Indicates whether at least one URL is configured and parsable.
      */
     @get:Ignore
-    val hasAtLeastOneUrl: Boolean by lazy {
+    val hasAtLeastOneUrl: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION) {
         httpUrls.isNotEmpty()
     }
 
@@ -114,7 +114,7 @@ data class ServerConnectionInfo(
      * @return `true` if the server is registered with valid URLs
      */
     @get:Ignore
-    val isRegistered: Boolean by lazy {
+    val isRegistered: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION) {
         !webhookId.isNullOrBlank() && httpUrls.isNotEmpty()
     }
 

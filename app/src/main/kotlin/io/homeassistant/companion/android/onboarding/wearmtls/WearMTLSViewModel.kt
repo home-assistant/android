@@ -13,6 +13,7 @@ import java.io.InputStream
 import java.security.KeyStore
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -43,7 +44,14 @@ private enum class PasswordState {
 }
 
 @HiltViewModel
-internal class WearMTLSViewModel @Inject constructor(@ApplicationContext context: Context) : ViewModel() {
+internal class WearMTLSViewModel @VisibleForTesting constructor(
+    context: Context,
+    private val backgroundDispatcher: CoroutineDispatcher,
+) : ViewModel() {
+
+    @Inject
+    constructor(@ApplicationContext context: Context) : this(context, Dispatchers.IO)
+
     private val contentResolver: ContentResolver = context.contentResolver
 
     private val _uiState = MutableStateFlow(WearMTLSUiState())
@@ -93,7 +101,7 @@ internal class WearMTLSViewModel @Inject constructor(@ApplicationContext context
     }
 
     private suspend fun getFilename(uri: Uri): String? {
-        return withContext(Dispatchers.IO) {
+        return withContext(backgroundDispatcher) {
             contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
                 cursor.takeIf { it.moveToFirst() }?.runCatching {
                     val displayNameIndex = cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)
@@ -105,7 +113,7 @@ internal class WearMTLSViewModel @Inject constructor(@ApplicationContext context
 
     private suspend fun validatePassword(selectedUri: Uri, currentPasswordVal: String): Boolean {
         if (currentPasswordVal.isEmpty()) return false
-        return withContext(Dispatchers.IO) {
+        return withContext(backgroundDispatcher) {
             try {
                 contentResolver.openInputStream(selectedUri)?.buffered()?.use { inputStream ->
                     loadAndVerifyKeystore(inputStream, currentPasswordVal.toCharArray())

@@ -10,6 +10,7 @@ import kotlin.math.round
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNames
 
 /**
@@ -46,7 +47,7 @@ data class CompressedStateDiff(
 @Serializable
 data class CompressedEntityState(
     @JsonNames("s")
-    val state: String? = null,
+    val state: JsonElement? = null,
     @Serializable(with = MapAnySerializer::class)
     @JsonNames("a")
     val attributes: Map<String, @Polymorphic Any?> = emptyMap(),
