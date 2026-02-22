@@ -127,6 +127,7 @@ class WebViewPresenterImplTest {
     fun setUp() {
         mockkStatic(Uri::class)
         mockUriParse()
+        every { webView.getCurrentWebViewRelativeUrl() } returns null
         fakeContext = FakeWebViewContext(mockk<Context>(), webView)
 
         lifecycleOwner = object : LifecycleOwner {
