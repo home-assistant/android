@@ -90,6 +90,10 @@ private class FakeWebViewContext(
     override fun showConnectionSecurityLevel(serverId: Int) {
         webViewDelegate.showConnectionSecurityLevel(serverId)
     }
+
+    override fun getCurrentWebViewRelativeUrl(): String? {
+        return webViewDelegate.getCurrentWebViewRelativeUrl()
+    }
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
