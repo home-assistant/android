@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Context.AUDIO_SERVICE
 import android.media.AudioManager
 import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Sensor
@@ -29,7 +30,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [28]) // Build.VERSION_CODES.P
+@Config(application = HiltTestApplication::class, sdk = [28]) // Build.VERSION_CODES.P
 class AudioSensorManagerTest {
 
     @get:Rule
