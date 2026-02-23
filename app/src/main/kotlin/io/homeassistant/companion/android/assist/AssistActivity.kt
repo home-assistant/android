@@ -19,6 +19,7 @@ import androidx.core.content.getSystemService
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
+import io.homeassistant.companion.android.assist.service.AssistVoiceInteractionService
 import io.homeassistant.companion.android.assist.ui.AssistSheetView
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -159,6 +160,10 @@ class AssistActivity : BaseActivity() {
     override fun onDestroy() {
         super.onDestroy()
         viewModel.onDestroy()
+
+        if (intent.hasExtra(EXTRA_FROM_WAKE_WORD_PHRASE)) {
+            AssistVoiceInteractionService.resumeListening(this)
+        }
     }
 
     override fun onNewIntent(intent: Intent) {

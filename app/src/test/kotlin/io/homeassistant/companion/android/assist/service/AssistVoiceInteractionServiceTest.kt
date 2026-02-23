@@ -194,7 +194,34 @@ class AssistVoiceInteractionServiceTest {
     }
 
     @Test
-    fun `Given wake word detected when callback invoked then callback executes`() = runTest {
+    fun `Given RESUME_LISTENING action and wake word enabled when onStartCommand then start listening`() = runTest {
+        coEvery { assistConfigManager.isWakeWordEnabled() } returns true
+        coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
+        val intent = Intent().apply {
+            action = "io.homeassistant.companion.android.RESUME_LISTENING"
+        }
+
+        service.onStartCommand(intent, 0, 1)
+        advanceUntilIdle()
+
+        coVerify { wakeWordListener.start(any(), microWakeWordModelConfigs[0]) }
+    }
+
+    @Test
+    fun `Given RESUME_LISTENING action and wake word disabled when onStartCommand then do not start listening`() = runTest {
+        coEvery { assistConfigManager.isWakeWordEnabled() } returns false
+        val intent = Intent().apply {
+            action = "io.homeassistant.companion.android.RESUME_LISTENING"
+        }
+
+        service.onStartCommand(intent, 0, 1)
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { wakeWordListener.start(any(), any()) }
+    }
+
+    @Test
+    fun `Given wake word detected when callback invoked then stop listener and show session`() = runTest {
         val shadow = Shadows.shadowOf(service) as ShadowVoiceInteractionService
         coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
 
@@ -212,6 +239,9 @@ class AssistVoiceInteractionServiceTest {
 
         // Simulate wake word detection - callback should execute without exception
         onWakeWordDetectedSlot.captured.invoke(microWakeWordModelConfigs[0])
+        advanceUntilIdle()
+
+        coVerify { wakeWordListener.stop() }
         val firstBundle = shadow.lastSessionBundle
         assertNotNull(firstBundle)
     }
@@ -234,17 +264,20 @@ class AssistVoiceInteractionServiceTest {
 
         // First detection - should trigger showSession
         onWakeWordDetectedSlot.captured.invoke(microWakeWordModelConfigs[0])
+        advanceUntilIdle()
         val firstBundle = shadow.lastSessionBundle
         assertNotNull(firstBundle)
 
         // Second detection 2 seconds later (within 3 second debounce) - should be ignored
         clock.currentInstant = Instant.fromEpochMilliseconds(2000)
         onWakeWordDetectedSlot.captured.invoke(microWakeWordModelConfigs[0])
+        advanceUntilIdle()
         assertSame(firstBundle, shadow.lastSessionBundle)
 
         // Third detection 4 seconds after first (after debounce) - should trigger showSession
         clock.currentInstant = Instant.fromEpochMilliseconds(4000)
         onWakeWordDetectedSlot.captured.invoke(microWakeWordModelConfigs[0])
+        advanceUntilIdle()
         assertNotSame(firstBundle, shadow.lastSessionBundle)
     }
 }

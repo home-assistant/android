@@ -95,6 +95,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         when (intent?.action) {
             ACTION_START_LISTENING -> startListening()
             ACTION_STOP_LISTENING -> stopListening()
+            ACTION_RESUME_LISTENING -> resumeListening()
         }
         return super.onStartCommand(intent, flags, startId)
     }
@@ -160,6 +161,17 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         }
     }
 
+    /**
+     * Resume wake word listening if it is still enabled in settings.
+     */
+    private fun resumeListening() {
+        serviceScope.launch {
+            if (assistConfigManager.isWakeWordEnabled()) {
+                startListening()
+            }
+        }
+    }
+
     private fun onWakeWordDetected(model: MicroWakeWordModelConfig) {
         val now = clock.now()
         val lastTrigger = lastTriggerTime
@@ -172,7 +184,13 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
 
         lastTriggerTime = now
         Timber.i("Wake word '${model.wakeWord}' detected, launching Assist")
-        launchAssist(wakeWord = model.wakeWord)
+
+        // Stop the listener before launching Assist to release the microphone.
+        // On Android 8.1 and below, only one component can hold an AudioRecord at a time.
+        serviceScope.launch {
+            wakeWordListener.stop()
+            launchAssist(wakeWord = model.wakeWord)
+        }
     }
 
     private fun hasRecordAudioPermission(): Boolean =
@@ -255,6 +273,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
 
         private const val ACTION_START_LISTENING = "io.homeassistant.companion.android.START_LISTENING"
         private const val ACTION_STOP_LISTENING = "io.homeassistant.companion.android.STOP_LISTENING"
+        private const val ACTION_RESUME_LISTENING = "io.homeassistant.companion.android.RESUME_LISTENING"
 
         /** Bundle key for passing the detected wake word phrase to the session. */
         const val EXTRA_WAKE_WORD = "wake_word"
@@ -297,6 +316,16 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         fun stopListening(context: Context) {
             val intent = Intent(context, AssistVoiceInteractionService::class.java).apply {
                 action = ACTION_STOP_LISTENING
+            }
+            context.startService(intent)
+        }
+
+        /**
+         * Resume wake word listening if it is still enabled in settings.
+         */
+        fun resumeListening(context: Context) {
+            val intent = Intent(context, AssistVoiceInteractionService::class.java).apply {
+                action = ACTION_RESUME_LISTENING
             }
             context.startService(intent)
         }
