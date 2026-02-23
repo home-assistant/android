@@ -1,15 +1,25 @@
 package io.homeassistant.companion.android.frontend.navigation
 
+import android.net.Uri
+import androidx.annotation.VisibleForTesting
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.activity
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import io.homeassistant.companion.android.WIPFeature
 import io.homeassistant.companion.android.common.data.servers.ServerManager.Companion.SERVER_ID_ACTIVE
+import io.homeassistant.companion.android.frontend.FrontendScreen
+import io.homeassistant.companion.android.frontend.FrontendViewModel
+import io.homeassistant.companion.android.frontend.FrontendViewState
 import io.homeassistant.companion.android.launch.HAStartDestinationRoute
 import io.homeassistant.companion.android.util.getActivity
 import io.homeassistant.companion.android.webview.WebViewActivity
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -35,26 +45,76 @@ internal fun NavController.navigateToFrontend(
 /**
  * Registers the frontend/webview destination for the Home Assistant app.
  *
- * The actual navigation to the frontend is done by navigating to [FrontendActivityRoute] with the
- * `path` and `serverId` parameters. This will launch the `WebViewActivity` (which is in `:app`).
+ * When [WIPFeature.USE_FRONTEND_V2] is enabled, uses the new Compose-based [FrontendScreen].
+ * Otherwise, falls back to the legacy [WebViewActivity].
  *
- * To ensure that the activity that starts the `WebViewActivity` is finished, users should navigate
- * to [FrontendRoute]. This route will then navigate to [FrontendActivityRoute] and finish the
- * current activity. This behavior is necessary until `WebViewActivity` is replaced with a
- * composable NavGraph entry, allowing for more direct navigation.
- *
- * Note: Security level verification is handled by [WebViewActivity] before loading any URL.
- * If the security level is not set, [WebViewActivity] will show the
- * [io.homeassistant.companion.android.settings.ConnectionSecurityLevelFragment].
+ * @param navController The navigation controller
+ * @param onOpenExternalLink Callback to open external links (required for V2)
+ * @param onNavigateToSettings Callback to navigate to settings
+ * @param onOpenLocationSettings Callback to open location settings
+ * @param onConfigureHomeNetwork Callback to configure home network (receives serverId)
+ * @param onSecurityLevelHelpClick Callback when user taps help on security level screen
+ * @param onShowSnackbar Callback to show snackbar messages
  */
-internal fun NavGraphBuilder.frontendScreen(navController: NavController) {
-    composable<FrontendRoute> {
-        val route = it.toRoute<FrontendRoute>()
-        navController.navigate(FrontendActivityRoute(route.serverId, route.path))
-        navController.context.getActivity()?.finish()
-    }
+internal fun NavGraphBuilder.frontendScreen(
+    navController: NavController,
+    onOpenExternalLink: suspend (Uri) -> Unit = {},
+    onNavigateToSettings: () -> Unit,
+    onSecurityLevelHelpClick: suspend () -> Unit,
+    onOpenLocationSettings: () -> Unit,
+    onConfigureHomeNetwork: (serverId: Int) -> Unit,
+    onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
+) {
+    if (WIPFeature.USE_FRONTEND_V2) {
+        composable<FrontendRoute> {
+            val viewModel: FrontendViewModel = hiltViewModel()
 
-    activity<FrontendActivityRoute> {
-        activityClass = WebViewActivity::class
+            FrontendNavigationHandler(
+                navigationEvents = viewModel.navigationEvents,
+                onNavigateToSettings = onNavigateToSettings,
+            )
+
+            FrontendScreen(
+                onBackClick = navController::popBackStack,
+                viewModel = viewModel,
+                onOpenExternalLink = onOpenExternalLink,
+                onBlockInsecureHelpClick = onSecurityLevelHelpClick,
+                onOpenSettings = onNavigateToSettings,
+                onOpenLocationSettings = onOpenLocationSettings,
+                onConfigureHomeNetwork = onConfigureHomeNetwork,
+                onSecurityLevelHelpClick = onSecurityLevelHelpClick,
+                onShowSnackbar = onShowSnackbar,
+            )
+        }
+    } else {
+        composable<FrontendRoute> {
+            val route = it.toRoute<FrontendRoute>()
+            navController.navigate(FrontendActivityRoute(route.serverId, route.path))
+            navController.context.getActivity()?.finish()
+        }
+
+        activity<FrontendActivityRoute> {
+            activityClass = WebViewActivity::class
+        }
+    }
+}
+
+/**
+ * Handles navigation side effects for [FrontendViewState].
+ */
+@Composable
+@VisibleForTesting
+internal fun FrontendNavigationHandler(
+    navigationEvents: SharedFlow<FrontendNavigationEvent>,
+    onNavigateToSettings: () -> Unit,
+) {
+    LaunchedEffect(Unit) {
+        navigationEvents.collect { event ->
+            when (event) {
+                is FrontendNavigationEvent.NavigateToSettings -> {
+                    onNavigateToSettings()
+                }
+            }
+        }
     }
 }

@@ -31,7 +31,6 @@ import io.homeassistant.companion.android.automotive.navigation.AutomotiveRoute
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.di.ServerManagerModule
-import io.homeassistant.companion.android.frontend.navigation.FrontendActivityRoute
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.launch.HAStartDestinationRoute
 import io.homeassistant.companion.android.onboarding.OnboardingRoute
@@ -41,7 +40,11 @@ import io.homeassistant.companion.android.onboarding.connection.navigation.Conne
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.navigateToLocationForSecureConnection
 import io.homeassistant.companion.android.onboarding.nameyourweardevice.navigation.navigateToNameYourWearDevice
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryRoute
+import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.SetHomeNetworkRoute
+import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.navigateToSetHomeNetworkRoute
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
+import io.homeassistant.companion.android.settings.navigation.SettingsRoute
+import io.homeassistant.companion.android.settings.navigation.navigateToSettings
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.compose.webview.HA_WEBVIEW_TAG
@@ -156,21 +159,12 @@ class HAAppTest {
     }
 
     @Test
-    fun `Given FrontendRoute as start when starts then navigate to Frontend and finish current activity`() {
+    fun `Given FrontendRoute as start when starts then show FrontendScreen`() {
         testApp(FrontendRoute()) {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<FrontendRoute>() == true)
-            verify(exactly = 1) {
-                activityNavigator.navigate(
-                    match {
-                        it.route == FrontendActivityRoute.serializer().descriptor.serialName + "?server={server}&path={path}"
-                    },
-                    any<SavedState>(),
-                    any(),
-                    any(),
-                )
-            }
-            // TODO remove this once we are using WebViewActivity anymore
-            assertTrue(activity.isFinishing)
+            // With USE_FRONTEND_V2 enabled, FrontendScreen composable is shown
+            // instead of navigating to WebViewActivity. The WebView is always rendered.
+            onNodeWithTag(HA_WEBVIEW_TAG).assertIsDisplayed()
         }
     }
 
@@ -250,6 +244,38 @@ class HAAppTest {
             assertNull(output.tlsClientCertificatePassword)
 
             verify { spyActivity.finish() }
+        }
+    }
+
+    @Test
+    fun `Given FrontendRoute when navigateToSettings then navigate to SettingsActivity`() {
+        testApp(FrontendRoute()) {
+            navController.navigateToSettings()
+
+            verify(exactly = 1) {
+                activityNavigator.navigate(
+                    match {
+                        it.route == SettingsRoute.serializer().descriptor.serialName
+                    },
+                    any<SavedState>(),
+                    any(),
+                    any(),
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `Given FrontendRoute when navigateToSetHomeNetworkRoute then navigate to SetHomeNetworkRoute`() {
+        val serverId = 42
+        testApp(FrontendRoute()) {
+            navController.navigateToSetHomeNetworkRoute(serverId)
+
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<SetHomeNetworkRoute>() == true)
+            assertEquals(
+                serverId,
+                navController.currentBackStackEntry?.toRoute<SetHomeNetworkRoute>()?.serverId,
+            )
         }
     }
 }

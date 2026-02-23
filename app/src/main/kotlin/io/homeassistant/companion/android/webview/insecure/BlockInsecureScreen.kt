@@ -60,7 +60,7 @@ internal fun BlockInsecureScreen(
     missingHomeSetup: Boolean,
     missingLocation: Boolean,
     onRetry: () -> Unit,
-    onHelpClick: () -> Unit,
+    onHelpClick: suspend () -> Unit,
     onOpenSettings: () -> Unit,
     onChangeSecurityLevel: () -> Unit,
     onOpenLocationSettings: () -> Unit,
@@ -113,7 +113,7 @@ internal fun BlockInsecureScreen(
 }
 
 @Composable
-private fun TopBar(onRetry: () -> Unit, onHelpClick: () -> Unit) {
+private fun TopBar(onRetry: () -> Unit, onHelpClick: suspend () -> Unit) {
     val rotation = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
 
@@ -138,7 +138,11 @@ private fun TopBar(onRetry: () -> Unit, onHelpClick: () -> Unit) {
             }
         },
         actions = {
-            IconButton(onClick = onHelpClick) {
+            IconButton(
+                onClick = {
+                    scope.launch { onHelpClick() }
+                },
+            ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
                     contentDescription = stringResource(commonR.string.get_help),
