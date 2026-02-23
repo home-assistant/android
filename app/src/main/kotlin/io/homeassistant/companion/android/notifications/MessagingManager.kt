@@ -1608,12 +1608,13 @@ class MessagingManager @Inject constructor(
                             eventIntent,
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
                         )
-                        val action: NotificationCompat.Action = NotificationCompat.Action.Builder(
+                        val action = NotificationCompat.Action.Builder(
                             R.drawable.ic_baseline_reply_24,
                             notificationAction.title,
                             replyPendingIntent,
                         )
                             .addRemoteInput(remoteInput)
+                            .setShowsUserInterface(false)
                             .build()
                         builder.addAction(action)
                     }
@@ -1625,11 +1626,14 @@ class MessagingManager @Inject constructor(
                             eventIntent,
                             PendingIntent.FLAG_IMMUTABLE,
                         )
-                        builder.addAction(
+                        val action = NotificationCompat.Action.Builder(
                             commonR.drawable.ic_stat_ic_notification,
                             notificationAction.title,
                             actionPendingIntent,
                         )
+                            .setShowsUserInterface(false)
+                            .build()
+                        builder.addAction(action)
                     }
                 }
             }
