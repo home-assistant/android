@@ -106,3 +106,22 @@ data class OpenSettingsMessage(override val id: Int? = null) : IncomingExternalB
 @Serializable
 @SerialName("theme-update")
 data class ThemeUpdateMessage(override val id: Int? = null) : IncomingExternalBusMessage
+
+/**
+ * Message requesting the app to open the voice assistant (Assist).
+ *
+ * Sent when the user triggers the voice assistant from the frontend UI.
+ * No response is expected for this message.
+ */
+@Serializable
+@SerialName("assist/show")
+data class OpenAssistMessage(
+    override val id: Int? = null,
+    val payload: OpenAssistPayload = OpenAssistPayload(),
+) : IncomingExternalBusMessage
+
+@Serializable
+data class OpenAssistPayload(
+    @SerialName("pipeline_id") val pipelineId: String? = null,
+    @SerialName("start_listening") val startListening: Boolean = true,
+)
