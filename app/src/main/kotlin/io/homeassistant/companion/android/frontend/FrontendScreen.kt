@@ -33,7 +33,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.theme.HADimens
@@ -49,6 +48,7 @@ import io.homeassistant.companion.android.onboarding.locationforsecureconnection
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModelFactory
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.compose.webview.HAWebView
+import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.webview.insecure.BlockInsecureScreen
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -405,12 +405,12 @@ private fun Color.Overlay(modifier: Modifier = Modifier) {
 private fun WebViewEffects(webView: WebView?, url: String, scriptsToEvaluate: Flow<WebViewScript>) {
     if (webView != null) {
         LaunchedEffect(webView, url) {
-            Timber.v("Load url ${if (BuildConfig.DEBUG) url else ""}")
+            Timber.v("Load url ${sensitive(url)}")
             webView.loadUrl(url)
         }
         LaunchedEffect(webView) {
             scriptsToEvaluate.collect { webViewScript ->
-                Timber.d("Evaluating script: ${webViewScript.script}")
+                Timber.d("Evaluating script: ${sensitive(webViewScript.script)}")
                 webView.evaluateJavascript(webViewScript.script) { result ->
                     webViewScript.result.complete(result)
                 }
