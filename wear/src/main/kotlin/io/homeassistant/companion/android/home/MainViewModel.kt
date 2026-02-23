@@ -73,9 +73,6 @@ class MainViewModel @Inject constructor(
     )
 
     /**
-     * Immutable UI state for MainView that contains thread-safe snapshots of all data.
-     */
-    /**
      * Holds the navigation state for the entity list screen, set before navigating.
      */
     @Immutable
@@ -86,6 +83,9 @@ class MainViewModel @Inject constructor(
         val entityLists: Map<String, List<Entity>> = emptyMap(),
     )
 
+    /**
+     * Immutable UI state for MainView that contains thread-safe snapshots of all data.
+     */
     @Immutable
     data class MainViewUiState(
         val entities: Map<String, Entity> = emptyMap(),
