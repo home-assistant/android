@@ -608,6 +608,37 @@ class FrontendViewModelTest {
     }
 
     @Nested
+    inner class WebViewPermission {
+
+        @Test
+        fun `Given webView permission result when called then delegates to permission manager`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            val results = mapOf(android.Manifest.permission.CAMERA to true)
+            viewModel.onWebViewPermissionResult(results)
+
+            verify { permissionManager.onWebViewPermissionResult(results) }
+        }
+
+        @Test
+        fun `Given pending webView permission then viewModel exposes it from permission manager`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            assertEquals(permissionManager.pendingWebViewPermission, viewModel.pendingWebViewPermission)
+        }
+    }
+
+    @Nested
     inner class ConnectionTimeout {
 
         @Test
