@@ -183,7 +183,7 @@ internal fun AssistSettingsContent(
         verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
     ) {
         if (uiState.isLoading) {
-            HALoading()
+            HALoading(modifier = Modifier.align(Alignment.CenterHorizontally))
         } else {
             // Default Assistant Section
             SectionHeader(
