@@ -111,8 +111,7 @@ class AudioSensorManagerTest {
 
         sensorManager.requestSensorUpdate(context)
 
-        assertNull(updatedSensor.captured.lastSentState)
-        assertNull(updatedSensor.captured.lastSentIcon)
+        updatedSensor.captured.assertForceUpdate()
         assertEquals(
             mapOf("min" to "2", "max" to "15"),
             updatedAttributes.captured.associate { it.name to it.value },
@@ -132,8 +131,7 @@ class AudioSensorManagerTest {
 
         sensorManager.requestSensorUpdate(context)
 
-        assertNull(updatedSensor.captured.lastSentState)
-        assertNull(updatedSensor.captured.lastSentIcon)
+        updatedSensor.captured.assertForceUpdate()
     }
 
     @Test
@@ -151,10 +149,7 @@ class AudioSensorManagerTest {
         sensorManager.requestSensorUpdate(context)
 
         assertEquals(2, updatedSensors.size)
-        updatedSensors.forEach { sensor ->
-            assertNull(sensor.lastSentState)
-            assertNull(sensor.lastSentIcon)
-        }
+        updatedSensors.forEach { it.assertForceUpdate() }
     }
 
     @Test
@@ -177,10 +172,7 @@ class AudioSensorManagerTest {
         sensorManager.requestSensorUpdate(context)
 
         assertEquals(2, updatedSensors.size)
-        updatedSensors.forEach { sensor ->
-            assertNull(sensor.lastSentState)
-            assertNull(sensor.lastSentIcon)
-        }
+        updatedSensors.forEach { it.assertForceUpdate() }
     }
 
     @Test
@@ -202,8 +194,7 @@ class AudioSensorManagerTest {
 
         sensorManager.requestSensorUpdate(context)
 
-        assertEquals("5", updatedSensor.captured.lastSentState)
-        assertEquals(AudioSensorManager.volMusic.statelessIcon, updatedSensor.captured.lastSentIcon)
+        updatedSensor.captured.assertNoForceUpdate()
     }
 
     @Test
@@ -219,8 +210,7 @@ class AudioSensorManagerTest {
 
         sensorManager.requestSensorUpdate(context)
 
-        assertEquals("5", updatedSensor.captured.lastSentState)
-        assertEquals(AudioSensorManager.volMusic.statelessIcon, updatedSensor.captured.lastSentIcon)
+        updatedSensor.captured.assertNoForceUpdate()
     }
 
     @Test
@@ -267,5 +257,61 @@ class AudioSensorManagerTest {
             mapOf("min" to "2", "max" to "15"),
             updatedAttributes.captured.associate { it.name to it.value },
         )
+    }
+
+    @Test
+    fun `Given mismatched attributes when requesting update three times then cache kicks in after force update succeeds`() = runTest {
+        val updatedSensors = mutableListOf<Sensor>()
+
+        // First two calls: DB still returns old (mismatched) attributes → force each time.
+        coEvery { sensorDao.getFull(AudioSensorManager.volMusic.id) } returns mapOf(
+            volumeMusicSensor to listOf(
+                Attribute(AudioSensorManager.volMusic.id, "min", "2", "int"),
+                Attribute(AudioSensorManager.volMusic.id, "max", "10", "int"),
+            ),
+        )
+        coJustRun { sensorDao.update(capture(updatedSensors)) }
+
+        sensorManager.requestSensorUpdate(context)
+        sensorManager.requestSensorUpdate(context)
+
+        assertEquals(2, updatedSensors.size)
+        updatedSensors.forEach { it.assertForceUpdate() }
+
+        // Simulate that the force update has now persisted the correct attributes.
+        updatedSensors.clear()
+        coEvery { sensorDao.getFull(AudioSensorManager.volMusic.id) } returns mapOf(
+            volumeMusicSensor to listOf(
+                Attribute(AudioSensorManager.volMusic.id, "min", "2", "int"),
+                Attribute(AudioSensorManager.volMusic.id, "max", "15", "int"),
+            ),
+        )
+
+        sensorManager.requestSensorUpdate(context)
+
+        // Third call: attributes now match → cached, no more force update.
+        assertEquals(1, updatedSensors.size)
+        updatedSensors.single().assertNoForceUpdate()
+
+        // Verify that getFull was called 3 times total (twice mismatched + once to confirm match).
+        coVerify(exactly = 3) { sensorDao.getFull(AudioSensorManager.volMusic.id) }
+
+        // Fourth call: should use cache, no additional getFull call.
+        updatedSensors.clear()
+        sensorManager.requestSensorUpdate(context)
+
+        assertEquals(1, updatedSensors.size)
+        updatedSensors.single().assertNoForceUpdate()
+        coVerify(exactly = 3) { sensorDao.getFull(AudioSensorManager.volMusic.id) }
+    }
+
+    private fun Sensor.assertForceUpdate() {
+        assertNull("Expected lastSentState to be null (force update), but was '$lastSentState'", lastSentState)
+        assertNull("Expected lastSentIcon to be null (force update), but was '$lastSentIcon'", lastSentIcon)
+    }
+
+    private fun Sensor.assertNoForceUpdate() {
+        assertEquals("Expected lastSentState to be preserved (no force update)", "5", lastSentState)
+        assertEquals("Expected lastSentIcon to be preserved (no force update)", AudioSensorManager.volMusic.statelessIcon, lastSentIcon)
     }
 }
