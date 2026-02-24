@@ -196,7 +196,8 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         Timber.i("Wake word '${model.wakeWord}' detected, launching Assist")
 
         // Stop the listener before launching Assist to release the microphone.
-        // On Android 8.1 and below, only one component can hold an AudioRecord at a time.
+        // Before Android 10 (API 29), only one component can hold an AudioRecord at a time.
+        // See https://developer.android.com/media/platform/sharing-audio-input
         serviceScope.launch {
             wakeWordListener.stop()
             launchAssist(wakeWord = model.wakeWord)
