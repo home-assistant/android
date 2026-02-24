@@ -3,6 +3,7 @@
     tools:ignore="MissingDefaultResource">
     <release version="2026.2.5 - Main" versioncode="3">
         <change>Experimental - Add wake word detection for Assist</change>
+        <change>Android 16+ - Support for live update notifications</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2026.2.5 - Wear" versioncode="2">
