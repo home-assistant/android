@@ -113,9 +113,18 @@ class MainViewModel @Inject constructor(
     private val app = application
 
     private lateinit var homePresenter: HomePresenter
-    private var areaRegistry: List<AreaRegistryResponse> = emptyList()
-    private var deviceRegistry: List<DeviceRegistryResponse> = emptyList()
-    private var entityRegistry: List<EntityRegistryResponse> = emptyList()
+
+    /**
+     * Internal thread-safe holder for registry data used for entity classification.
+     * Wrapped in a [MutableStateFlow] to guarantee visibility and consistency across dispatchers.
+     */
+    private data class Registries(
+        val area: List<AreaRegistryResponse> = emptyList(),
+        val device: List<DeviceRegistryResponse> = emptyList(),
+        val entity: List<EntityRegistryResponse> = emptyList(),
+    )
+
+    private val registries = MutableStateFlow(Registries())
 
     // TODO: This is bad, do this instead: https://stackoverflow.com/questions/46283981/android-viewmodel-additional-arguments
     fun init(homePresenter: HomePresenter) {
@@ -261,11 +270,14 @@ class MainViewModel @Inject constructor(
         val getEntityRegistry = async { homePresenter.getEntityRegistry() }
         val getEntities = async { homePresenter.getEntities() }
 
-        entityRegistry = getEntityRegistry.await().orEmpty()
-        val isFavoritesOnly = _mainViewUiState.value.isFavoritesOnly
+        val newEntityRegistry = getEntityRegistry.await().orEmpty()
+        val isFavoritesOnly = mainViewUiState.value.isFavoritesOnly
         if (!isFavoritesOnly) {
-            areaRegistry = getAreaRegistry.await().orEmpty()
-            deviceRegistry = getDeviceRegistry.await().orEmpty()
+            val newAreaRegistry = getAreaRegistry.await().orEmpty()
+            val newDeviceRegistry = getDeviceRegistry.await().orEmpty()
+            registries.update { Registries(area = newAreaRegistry, device = newDeviceRegistry, entity = newEntityRegistry) }
+        } else {
+            registries.update { it.copy(entity = newEntityRegistry) }
         }
 
         _supportedEntities.value = getSupportedEntities()
@@ -282,7 +294,7 @@ class MainViewModel @Inject constructor(
         }
         homePresenter.getEntityUpdates(supportedEntities.value)?.collect { entity ->
             updateEntityStates(listOf(entity))
-            if (!_mainViewUiState.value.isFavoritesOnly) {
+            if (!mainViewUiState.value.isFavoritesOnly) {
                 updateEntityDomains()
             }
         }
@@ -307,28 +319,28 @@ class MainViewModel @Inject constructor(
                 ),
             )
         }
-        val favoriteIds = _mainViewUiState.value.favoriteEntityIds
+        val favoriteIds = mainViewUiState.value.favoriteEntityIds
         supported.keys
             .filter { it in favoriteIds }
             .forEach { addCachedFavorite(it) }
     }
 
     suspend fun areaUpdates() {
-        if (!homePresenter.isConnected() || _mainViewUiState.value.isFavoritesOnly) {
+        if (!homePresenter.isConnected() || mainViewUiState.value.isFavoritesOnly) {
             return
         }
         homePresenter.getAreaRegistryUpdates()?.throttleLatest(1000)?.collect {
-            areaRegistry = homePresenter.getAreaRegistry().orEmpty()
+            registries.update { it.copy(area = homePresenter.getAreaRegistry().orEmpty()) }
             updateEntityDomains()
         }
     }
 
     suspend fun deviceUpdates() {
-        if (!homePresenter.isConnected() || _mainViewUiState.value.isFavoritesOnly) {
+        if (!homePresenter.isConnected() || mainViewUiState.value.isFavoritesOnly) {
             return
         }
         homePresenter.getDeviceRegistryUpdates()?.throttleLatest(1000)?.collect {
-            deviceRegistry = homePresenter.getDeviceRegistry().orEmpty()
+            registries.update { it.copy(device = homePresenter.getDeviceRegistry().orEmpty()) }
             updateEntityDomains()
         }
     }
@@ -338,13 +350,13 @@ class MainViewModel @Inject constructor(
             return
         }
         homePresenter.getEntityRegistryUpdates()?.throttleLatest(1000)?.collect {
-            entityRegistry = homePresenter.getEntityRegistry().orEmpty()
+            registries.update { it.copy(entity = homePresenter.getEntityRegistry().orEmpty()) }
             _supportedEntities.value = getSupportedEntities()
             updateEntityDomains()
         }
     }
 
-    private fun getSupportedEntities(): List<String> = entityRegistry
+    private fun getSupportedEntities(): List<String> = registries.value.entity
         .map { it.entityId }
         .filter { it.split(".")[0] in supportedDomains() }
 
@@ -354,9 +366,9 @@ class MainViewModel @Inject constructor(
      * to make sure it doesn't happen in the Main thread.
      */
     private suspend fun updateEntityDomains() = withContext(Dispatchers.Default) {
-        val entities = _mainViewUiState.value.entities
+        val entities = mainViewUiState.value.entities
         val entitiesList = entities.values.sortedBy { it.entityId }
-        val areasList = areaRegistry.sortedBy { it.name }
+        val areasList = registries.value.area.sortedBy { it.name }
         val domainsList = entitiesList.map { it.domain }.distinct()
 
         // Single pass: compute entity metadata and cache area lookups to avoid redundant calls
@@ -525,14 +537,16 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun getAreaForEntity(entityId: String): AreaRegistryResponse? =
-        RegistriesDataHandler.getAreaForEntity(entityId, areaRegistry, deviceRegistry, entityRegistry)
+    fun getAreaForEntity(entityId: String): AreaRegistryResponse? {
+        val regs = registries.value
+        return RegistriesDataHandler.getAreaForEntity(entityId, regs.area, regs.device, regs.entity)
+    }
 
     fun getCategoryForEntity(entityId: String): String? =
-        RegistriesDataHandler.getCategoryForEntity(entityId, entityRegistry)
+        RegistriesDataHandler.getCategoryForEntity(entityId, registries.value.entity)
 
     fun getHiddenByForEntity(entityId: String): String? =
-        RegistriesDataHandler.getHiddenByForEntity(entityId, entityRegistry)
+        RegistriesDataHandler.getHiddenByForEntity(entityId, registries.value.entity)
 
     /**
      * Clears all favorites in the database.
@@ -577,7 +591,7 @@ class MainViewModel @Inject constructor(
 
     fun setTileShortcut(tileId: Int?, index: Int, entity: SimplifiedEntity) {
         viewModelScope.launch {
-            val current = _mainViewUiState.value.shortcutEntitiesMap[tileId].orEmpty()
+            val current = mainViewUiState.value.shortcutEntitiesMap[tileId].orEmpty()
             val updated = current.toMutableList().apply {
                 if (index < size) set(index, entity) else add(entity)
             }
@@ -590,7 +604,7 @@ class MainViewModel @Inject constructor(
 
     fun clearTileShortcut(tileId: Int?, index: Int) {
         viewModelScope.launch {
-            val current = _mainViewUiState.value.shortcutEntitiesMap[tileId] ?: return@launch
+            val current = mainViewUiState.value.shortcutEntitiesMap[tileId] ?: return@launch
             if (index < current.size) {
                 val updated = current.toMutableList().apply { removeAt(index) }
                 homePresenter.setTileShortcuts(tileId, entities = updated)
@@ -654,7 +668,7 @@ class MainViewModel @Inject constructor(
             favoritesDao.delete(entityId)
             favoriteCachesDao.delete(entityId)
 
-            if (favoritesDao.getAll().isEmpty() && _mainViewUiState.value.isFavoritesOnly) {
+            if (favoritesDao.getAll().isEmpty() && mainViewUiState.value.isFavoritesOnly) {
                 setWearFavoritesOnly(false)
             }
         }
@@ -662,7 +676,7 @@ class MainViewModel @Inject constructor(
 
     private fun addCachedFavorite(entityId: String) {
         viewModelScope.launch {
-            val entity = _mainViewUiState.value.entities[entityId]
+            val entity = mainViewUiState.value.entities[entityId]
             val attributes = entity?.attributes as Map<*, *>
             val icon = attributes["icon"] as String?
             val name = attributes["friendly_name"]?.toString() ?: entityId
