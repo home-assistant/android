@@ -368,7 +368,8 @@ class MainViewModel @Inject constructor(
     private suspend fun updateEntityDomains() = withContext(Dispatchers.Default) {
         val entities = mainViewUiState.value.entities
         val entitiesList = entities.values.sortedBy { it.entityId }
-        val areasList = registries.value.area.sortedBy { it.name }
+        val regs = registries.value
+        val areasList = regs.area.sortedBy { it.name }
         val domainsList = entitiesList.map { it.domain }.distinct()
 
         // Single pass: compute entity metadata and cache area lookups to avoid redundant calls
@@ -378,16 +379,16 @@ class MainViewModel @Inject constructor(
         val hidden = mutableSetOf<String>()
 
         entities.keys.forEach { entityId ->
-            val area = getAreaForEntity(entityId)
+            val area = RegistriesDataHandler.getAreaForEntity(entityId, regs.area, regs.device, regs.entity)
             entityAreaMap[entityId] = area
 
             if (area == null) {
                 withoutArea.add(entityId)
             }
-            if (getCategoryForEntity(entityId) != null) {
+            if (RegistriesDataHandler.getCategoryForEntity(entityId, regs.entity) != null) {
                 withCategory.add(entityId)
             }
-            if (getHiddenByForEntity(entityId) != null) {
+            if (RegistriesDataHandler.getHiddenByForEntity(entityId, regs.entity) != null) {
                 hidden.add(entityId)
             }
         }
@@ -536,17 +537,6 @@ class MainViewModel @Inject constructor(
             }
         }
     }
-
-    fun getAreaForEntity(entityId: String): AreaRegistryResponse? {
-        val regs = registries.value
-        return RegistriesDataHandler.getAreaForEntity(entityId, regs.area, regs.device, regs.entity)
-    }
-
-    fun getCategoryForEntity(entityId: String): String? =
-        RegistriesDataHandler.getCategoryForEntity(entityId, registries.value.entity)
-
-    fun getHiddenByForEntity(entityId: String): String? =
-        RegistriesDataHandler.getHiddenByForEntity(entityId, registries.value.entity)
 
     /**
      * Clears all favorites in the database.
