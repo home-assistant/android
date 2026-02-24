@@ -116,10 +116,6 @@ fun AssistSettingsScreen(viewModel: AssistSettingsViewModel, modifier: Modifier 
         viewModel.onToggleWakeWord(true)
     }
 
-    val testPermissionState = rememberRecordAudioPermissionState(snackbarHostState) {
-        viewModel.startTestWakeWord()
-    }
-
     val roleRequestLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult(),
     ) {
@@ -150,14 +146,8 @@ fun AssistSettingsScreen(viewModel: AssistSettingsViewModel, modifier: Modifier 
                 }
             },
             onSelectWakeWord = viewModel::onSelectWakeWordModel,
-            onStartTestWakeWord = {
-                if (testPermissionState.status.isGranted) {
-                    viewModel.startTestWakeWord()
-                } else {
-                    testPermissionState.launchPermissionRequest()
-                }
-            },
-            onStopTestWakeWord = viewModel::stopTestWakeWord,
+            onStartTestWakeWord = { viewModel.setTestingWakeWord(true) },
+            onStopTestWakeWord = { viewModel.setTestingWakeWord(false) },
             modifier = Modifier.padding(contentPadding),
         )
     }

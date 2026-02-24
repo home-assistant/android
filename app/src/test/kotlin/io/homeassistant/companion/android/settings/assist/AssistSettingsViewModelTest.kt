@@ -1,19 +1,13 @@
 package io.homeassistant.companion.android.settings.assist
 
 import android.content.Intent
-import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
-import io.homeassistant.companion.android.assist.wakeword.WakeWordListener
-import io.homeassistant.companion.android.assist.wakeword.WakeWordListenerFactory
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.util.microWakeWordModelConfigs
-import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
-import io.mockk.just
 import io.mockk.mockk
-import io.mockk.slot
 import io.mockk.verify
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -35,18 +29,6 @@ class AssistSettingsViewModelTest {
 
     private val defaultAssistantManager: DefaultAssistantManager = mockk(relaxed = true)
     private val assistConfigManager: AssistConfigManager = mockk(relaxed = true)
-    private val wakeWordListener: WakeWordListener = mockk(relaxed = true)
-    private val onWakeWordDetectedSlot = slot<(MicroWakeWordModelConfig) -> Unit>()
-    private val onListenerStoppedSlot = slot<() -> Unit>()
-    private val wakeWordListenerFactory: WakeWordListenerFactory = mockk {
-        every {
-            create(
-                capture(onWakeWordDetectedSlot),
-                any(),
-                capture(onListenerStoppedSlot),
-            )
-        } returns wakeWordListener
-    }
 
     private lateinit var viewModel: AssistSettingsViewModel
 
@@ -62,7 +44,6 @@ class AssistSettingsViewModelTest {
         return AssistSettingsViewModel(
             defaultAssistantManager = defaultAssistantManager,
             assistConfigManager = assistConfigManager,
-            wakeWordListenerFactory = wakeWordListenerFactory,
         )
     }
 
@@ -231,108 +212,44 @@ class AssistSettingsViewModelTest {
             assertEquals(microWakeWordModelConfigs[1], viewModel.uiState.value.selectedWakeWordModel)
             coVerify { assistConfigManager.setSelectedWakeWordModel(microWakeWordModelConfigs[1]) }
         }
-
-        @Test
-        fun `Given currently testing when onSelectWakeWordModel then restart listener with new model`() = runTest {
-            coEvery { wakeWordListener.stop() } just Runs
-            coEvery { wakeWordListener.start(any(), any(), any()) } just Runs
-            viewModel = createViewModel()
-            runCurrent()
-
-            // Start testing first
-            viewModel.startTestWakeWord()
-            runCurrent()
-            assertTrue(viewModel.uiState.value.isTestingWakeWord)
-
-            // Change wake word while testing
-            viewModel.onSelectWakeWordModel(microWakeWordModelConfigs[1])
-            runCurrent()
-
-            // Should stop and restart
-            coVerify { wakeWordListener.stop() }
-            coVerify(exactly = 2) { wakeWordListener.start(any(), any(), any()) }
-        }
     }
 
     @Nested
     inner class TestWakeWordTest {
 
         @Test
-        fun `Given valid model when startTestWakeWord then start listener`() = runTest {
-            coEvery { wakeWordListener.start(any(), any(), any()) } just Runs
+        fun `Given not testing when setTestingWakeWord true then update state`() = runTest {
             viewModel = createViewModel()
             runCurrent()
 
-            viewModel.startTestWakeWord()
-            runCurrent()
+            viewModel.setTestingWakeWord(true)
 
             assertTrue(viewModel.uiState.value.isTestingWakeWord)
             assertFalse(viewModel.uiState.value.wakeWordDetected)
-            coVerify { wakeWordListener.start(any(), microWakeWordModelConfigs[0], any()) }
         }
 
         @Test
-        fun `Given no selected model and no available models when startTestWakeWord then do nothing`() = runTest {
-            coEvery { assistConfigManager.getSelectedWakeWordModel() } returns null
-            coEvery { assistConfigManager.getAvailableModels() } returns emptyList()
+        fun `Given testing when setTestingWakeWord false then update state`() = runTest {
             viewModel = createViewModel()
             runCurrent()
 
-            viewModel.startTestWakeWord()
-            runCurrent()
+            viewModel.setTestingWakeWord(true)
+            viewModel.setTestingWakeWord(false)
 
             assertFalse(viewModel.uiState.value.isTestingWakeWord)
-            coVerify(exactly = 0) { wakeWordListener.start(any(), any(), any()) }
         }
 
         @Test
-        fun `Given no selected model but available models when startTestWakeWord then use first model`() = runTest {
-            coEvery { assistConfigManager.getSelectedWakeWordModel() } returns null
-            coEvery { wakeWordListener.start(any(), any(), any()) } just Runs
+        fun `Given testing when onWakeWordDetected then show detected and reset after debounce`() = runTest {
             viewModel = createViewModel()
             runCurrent()
 
-            viewModel.startTestWakeWord()
-            runCurrent()
-
-            assertTrue(viewModel.uiState.value.isTestingWakeWord)
-            coVerify { wakeWordListener.start(any(), microWakeWordModelConfigs[0], any()) }
-        }
-
-        @Test
-        fun `Given testing when stopTestWakeWord then stop listener`() = runTest {
-            coEvery { wakeWordListener.stop() } just Runs
-            coEvery { wakeWordListener.start(any(), any(), any()) } just Runs
-            viewModel = createViewModel()
-            runCurrent()
-
-            viewModel.startTestWakeWord()
-            runCurrent()
-            assertTrue(viewModel.uiState.value.isTestingWakeWord)
-
-            viewModel.stopTestWakeWord()
-            runCurrent()
-
-            assertFalse(viewModel.uiState.value.isTestingWakeWord)
-            coVerify { wakeWordListener.stop() }
-        }
-
-        @Test
-        fun `Given wake word detected when callback invoked then show detected and reset after debounce`() = runTest {
-            coEvery { wakeWordListener.start(any(), any(), any()) } just Runs
-            viewModel = createViewModel()
-            runCurrent()
-
-            viewModel.startTestWakeWord()
-            runCurrent()
-
-            // Trigger wake word detected callback
-            onWakeWordDetectedSlot.captured.invoke(microWakeWordModelConfigs[0])
+            viewModel.setTestingWakeWord(true)
+            viewModel.onWakeWordDetected()
             runCurrent()
 
             assertTrue(viewModel.uiState.value.wakeWordDetected)
 
-            // Advance time past debounce
             advanceTimeBy(WAKE_WORD_TEST_DEBOUNCE + 1.seconds)
             runCurrent()
 
@@ -340,19 +257,14 @@ class AssistSettingsViewModelTest {
         }
 
         @Test
-        fun `Given listener stopped externally when callback invoked then update state`() = runTest {
-            coEvery { wakeWordListener.start(any(), any(), any()) } just Runs
+        fun `Given not testing when onWakeWordDetected then ignore detection`() = runTest {
             viewModel = createViewModel()
             runCurrent()
 
-            viewModel.startTestWakeWord()
+            viewModel.onWakeWordDetected()
             runCurrent()
-            assertTrue(viewModel.uiState.value.isTestingWakeWord)
 
-            // Trigger listener stopped callback
-            onListenerStoppedSlot.captured.invoke()
-
-            assertFalse(viewModel.uiState.value.isTestingWakeWord)
+            assertFalse(viewModel.uiState.value.wakeWordDetected)
         }
     }
 }

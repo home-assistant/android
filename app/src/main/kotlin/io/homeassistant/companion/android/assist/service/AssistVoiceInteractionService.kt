@@ -6,8 +6,10 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -20,8 +22,8 @@ import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConf
 import io.homeassistant.companion.android.assist.wakeword.WakeWordListener
 import io.homeassistant.companion.android.assist.wakeword.WakeWordListenerFactory
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.settings.assist.AssistConfigManager
 import io.homeassistant.companion.android.common.util.CHANNEL_ASSIST_LISTENING
+import io.homeassistant.companion.android.settings.assist.AssistConfigManager
 import javax.inject.Inject
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
@@ -30,6 +32,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -173,6 +178,11 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     }
 
     private fun onWakeWordDetected(model: MicroWakeWordModelConfig) {
+        // Always broadcast for observers (e.g. settings test mode) regardless of debounce
+        sendBroadcast(
+            Intent(ACTION_WAKE_WORD_DETECTED).setPackage(packageName)
+        )
+
         val now = clock.now()
         val lastTrigger = lastTriggerTime
 
@@ -278,6 +288,8 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         /** Bundle key for passing the detected wake word phrase to the session. */
         const val EXTRA_WAKE_WORD = "wake_word"
 
+        private const val ACTION_WAKE_WORD_DETECTED = "io.homeassistant.companion.android.WAKE_WORD_DETECTED"
+
         private val DEBOUNCE_DURATION = 3.seconds
 
         /**
@@ -328,6 +340,32 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
                 action = ACTION_RESUME_LISTENING
             }
             context.startService(intent)
+        }
+
+        /**
+         * Returns a [Flow] that emits each time a wake word is detected by the service.
+         *
+         * Internally registers a package-scoped [BroadcastReceiver] for the detection
+         * broadcast and unregisters it when the flow collection is cancelled.
+         */
+        @SuppressLint("WrongConstant")
+        fun wakeWordDetections(context: Context): Flow<Unit> = callbackFlow {
+            val receiver = object : BroadcastReceiver() {
+                override fun onReceive(ctx: Context, intent: Intent) {
+                    trySend(Unit)
+                }
+            }
+
+            ContextCompat.registerReceiver(
+                context,
+                receiver,
+                IntentFilter(ACTION_WAKE_WORD_DETECTED),
+                ContextCompat.RECEIVER_NOT_EXPORTED,
+            )
+
+            awaitClose {
+                context.unregisterReceiver(receiver)
+            }
         }
     }
 }
