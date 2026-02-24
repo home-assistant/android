@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.settings.assist
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
@@ -46,6 +47,7 @@ class AssistSettingsViewModel @Inject constructor(
         loadState()
     }
 
+    @SuppressLint("MissingPermission")
     private fun loadState() {
         viewModelScope.launch {
             val models = assistConfigManager.getAvailableModels()
@@ -91,6 +93,7 @@ class AssistSettingsViewModel @Inject constructor(
     /**
      * Toggle wake word detection on or off.
      */
+    @SuppressLint("MissingPermission")
     fun onToggleWakeWord(enabled: Boolean) {
         viewModelScope.launch {
             assistConfigManager.setWakeWordEnabled(enabled)
@@ -101,6 +104,7 @@ class AssistSettingsViewModel @Inject constructor(
     /**
      * Select a wake word model.
      */
+    @SuppressLint("MissingPermission")
     fun onSelectWakeWordModel(model: MicroWakeWordModelConfig) {
         viewModelScope.launch {
             assistConfigManager.setSelectedWakeWordModel(model)
