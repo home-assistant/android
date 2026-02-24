@@ -6,14 +6,11 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
-import android.graphics.Color
 import android.os.Bundle
 import android.view.WindowManager
-import androidx.core.graphics.drawable.toDrawable
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.runtime.LaunchedEffect
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.lifecycle.lifecycleScope
@@ -160,10 +157,7 @@ class AssistActivity : BaseActivity() {
     override fun onDestroy() {
         super.onDestroy()
         viewModel.onDestroy()
-
-        if (intent.hasExtra(EXTRA_FROM_WAKE_WORD_PHRASE)) {
-            AssistVoiceInteractionService.resumeListening(this)
-        }
+        AssistVoiceInteractionService.resumeListening(this)
     }
 
     override fun onNewIntent(intent: Intent) {
