@@ -3,6 +3,8 @@ package io.homeassistant.companion.android.assist.service
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.service.voice.VoiceInteractionSession
 import io.homeassistant.companion.android.assist.AssistActivity
 import timber.log.Timber
@@ -36,7 +38,11 @@ class AssistVoiceInteractionSession(context: Context) : VoiceInteractionSession(
         context.startActivity(intent)
 
         // Finish this session since the activity will handle everything
-        finish()
+
+        // Post finish() so it runs after the framework's doShow() completes.
+        // Calling finish() synchronously inside onShow() invalidates the window token
+        // before doShow() can display the session window, causing BadTokenException.
+        Handler(Looper.getMainLooper()).post { finish() }
     }
 
     override fun onHandleAssist(state: AssistState) {
