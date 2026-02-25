@@ -452,7 +452,12 @@ class WebViewActivity :
                     if (currentIndex > 0) {
                         val previousUrl = backForwardList.getItemAtIndex(currentIndex - 1).url.toUri()
                         val currentBase = loadedUrl
-                        if (currentBase != null && previousUrl.hasSameOrigin(currentBase)) {
+                        // Skip about:blank and other non-HTTP entries that may appear
+                        // before the first real page has loaded.
+                        if (currentBase != null &&
+                            previousUrl.scheme?.startsWith("http") == true &&
+                            previousUrl.hasSameOrigin(currentBase)
+                        ) {
                             webView.goBack()
                             return
                         }
@@ -1496,17 +1501,19 @@ class WebViewActivity :
     override fun getCurrentWebViewRelativeUrl(): String? {
         val uri = webView.url?.toUri() ?: return null
         val path = uri.encodedPath?.takeIf { it.length > 1 } ?: return null
-        // Strip 'external_auth' since the presenter re-adds it on every load
-        val query = uri.encodedQuery
+        // Strip 'external_auth' since the presenter re-adds it on every load.
+        // Use Uri.Builder to safely construct the relative URL from components.
+        val filteredQuery = uri.encodedQuery
             ?.split("&")
             ?.filter { !it.startsWith("external_auth=") }
             ?.joinToString("&")
             ?.takeIf { it.isNotEmpty() }
-        return buildString {
-            append(path)
-            query?.let { append("?$it") }
-            uri.encodedFragment?.let { append("#$it") }
-        }
+        return Uri.Builder()
+            .encodedPath(path)
+            .encodedQuery(filteredQuery)
+            .encodedFragment(uri.encodedFragment)
+            .build()
+            .toString()
     }
 
     override suspend fun unlockAppIfNeeded() {
