@@ -12,9 +12,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.authentication.SessionState
-import io.homeassistant.companion.android.util.vehicle.startNativeActivity
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.isAutomotive
+import io.homeassistant.companion.android.util.vehicle.startNativeActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
