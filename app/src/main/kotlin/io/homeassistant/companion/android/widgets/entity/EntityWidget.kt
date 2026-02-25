@@ -182,20 +182,26 @@ class EntityWidget : BaseWidgetProvider<StaticWidgetEntity, StaticWidgetDao>() {
         } else {
             null
         }
-        if (attributeIds == null) {
-            dao.updateWidgetLastUpdate(
-                appWidgetId,
-                entity?.friendlyState(context, entityOptions) ?: dao.get(appWidgetId)?.lastUpdate ?: "",
-            )
+
+        if (entity == null) {
             return ResolvedText(dao.get(appWidgetId)?.lastUpdate, entityCaughtException)
         }
 
+        if (attributeIds == null) {
+            val lastUpdate = entity.friendlyState(context, entityOptions)
+            dao.updateWidgetLastUpdate(
+                appWidgetId,
+                lastUpdate,
+            )
+            return ResolvedText(lastUpdate)
+        }
+
         try {
-            val fetchedAttributes = entity?.attributes as? Map<*, *> ?: mapOf<String, String>()
+            val fetchedAttributes = entity.attributes as? Map<*, *> ?: mapOf<String, String>()
             val attributeValues =
-                attributeIds.split(",").map { id -> fetchedAttributes[id]?.toString() }
+                attributeIds.split(",").mapNotNull { id -> fetchedAttributes[id]?.toString() }
             val lastUpdate =
-                entity?.friendlyState(
+                entity.friendlyState(
                     context,
                     entityOptions,
                 ).plus(if (attributeValues.isNotEmpty()) stateSeparator else "")
