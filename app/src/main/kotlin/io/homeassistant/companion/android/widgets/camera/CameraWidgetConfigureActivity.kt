@@ -178,10 +178,10 @@ private fun CameraWidgetConfigureView(
     onEntitySelected: (String?) -> Unit,
     isUpdateWidget: Boolean,
     onTapSelected: (Int) -> Unit,
+    onActionClick: () -> Unit,
     entityRegistry: List<EntityRegistryResponse>? = null,
     deviceRegistry: List<DeviceRegistryResponse>? = null,
     areaRegistry: List<AreaRegistryResponse>? = null,
-    onActionClick: () -> Unit,
     selectedTapAction: WidgetTapAction? = null,
 ) {
     Scaffold(
