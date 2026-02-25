@@ -19,8 +19,14 @@ fun nativeModeAction(carContext: CarContext): Action {
         }.build()
 }
 
+/**
+ * Start the main native (non-vehicle UI) Home Assistant activity on the connected phone (Auto) or default vehicle
+ * display (Automotive). This will allow onboarding or using dashboards, depending on the logged in state.
+ *
+ * Sets any values that may be required for compatibility.
+ */
 fun startNativeActivity(carContext: CarContext) {
-    Timber.i("Starting login activity")
+    Timber.d("Starting native activity")
     with(carContext) {
         // The app must indicate the default display to be used to avoid a SecurityException on newer
         // Android versions. See: https://developer.android.com/training/cars/platforms/releases#android-14
@@ -40,7 +46,7 @@ fun startNativeActivity(carContext: CarContext) {
             },
             options
         )
-        if (carContext.isAutomotive()) {
+        if (isAutomotive()) {
             finishCarApp()
         }
     }
