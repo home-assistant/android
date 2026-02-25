@@ -84,7 +84,7 @@ fun ServerExposedDropdownMenu(
     val keys = servers.map { it.friendlyName }
     val ids = servers.map { it.id }
     val currentIndex = servers.indexOfFirst { it.id == current }.takeUnless { it == -1 }
-    ExposedDropdownMenu(
+    HAExposedDropdownMenu(
         label = stringResource(title),
         keys = keys,
         currentIndex = currentIndex,
@@ -104,7 +104,7 @@ fun WidgetBackgroundTypeExposedDropdownMenu(
     val keys = remember { WidgetUtils.getBackgroundOptionList(context) }
     val currentIndex =
         remember(current) { current?.let { WidgetUtils.getSelectedBackgroundOption(context, current, keys) } }
-    ExposedDropdownMenu(
+    HAExposedDropdownMenu(
         label = stringResource(title),
         keys = keys.toList(),
         currentIndex = currentIndex,

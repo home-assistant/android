@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import io.homeassistant.companion.android.common.R as commonR
@@ -33,6 +32,7 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
 import io.homeassistant.companion.android.BaseActivity
+import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HATopBar
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -43,7 +43,6 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.util.compose.HAExposedDropdownMenu
-import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
@@ -202,14 +201,12 @@ private fun CameraWidgetConfigureView(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if(servers.size > 1) {
-                HomeAssistantAppTheme {
-                    ServerExposedDropdownMenu(
-                        servers = servers,
-                        current = selectedServerId,
-                        onSelected = onServerSelected,
-                        modifier = Modifier.padding(bottom = 16.dp),
-                    )
-                }
+                ServerExposedDropdownMenu(
+                    servers = servers,
+                    current = selectedServerId,
+                    onSelected = onServerSelected,
+                    modifier = Modifier.padding(bottom = 16.dp),
+                )
             }
 
             EntityPicker(
@@ -234,14 +231,11 @@ private fun CameraWidgetConfigureView(
                 modifier = Modifier.padding(bottom = 16.dp),
             )
 
-            Button(
-                modifier = Modifier.fillMaxWidth(),
+            HAAccentButton(
                 onClick = { onActionClick() },
-            ) {
-                Text(stringResource(
-                if(isUpdateWidget) commonR.string.update_widget else commonR.string.add_widget
-                ))
-            }
+                text = stringResource(if(isUpdateWidget) commonR.string.update_widget else commonR.string.add_widget),
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
