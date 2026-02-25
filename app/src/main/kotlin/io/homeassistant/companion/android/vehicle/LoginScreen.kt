@@ -1,6 +1,9 @@
 package io.homeassistant.companion.android.vehicle
 
+import android.app.ActivityOptions
 import android.content.Intent
+import android.os.Build
+import android.view.Display
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.model.Action
@@ -61,6 +64,15 @@ class LoginScreen(context: CarContext, val serverManager: ServerManager) : Scree
 
     private fun startNativeActivity() {
         with(carContext) {
+            // The app must indicate the default display to be used to avoid a SecurityException on newer
+            // Android versions. See: https://developer.android.com/training/cars/platforms/releases#android-14
+            val options = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                ActivityOptions.makeBasic()
+                    .setLaunchDisplayId(Display.DEFAULT_DISPLAY)
+                    .toBundle()
+            } else {
+                null
+            }
             startActivity(
                 Intent(
                     carContext,
@@ -68,6 +80,7 @@ class LoginScreen(context: CarContext, val serverManager: ServerManager) : Scree
                 ).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 },
+                options
             )
             if (isAutomotive) {
                 finishCarApp()

@@ -1,6 +1,9 @@
 package io.homeassistant.companion.android.util.vehicle
 
+import android.app.ActivityOptions
 import android.content.Intent
+import android.os.Build
+import android.view.Display
 import androidx.car.app.CarContext
 import androidx.car.app.model.Action
 import io.homeassistant.companion.android.common.R
@@ -19,6 +22,15 @@ fun nativeModeAction(carContext: CarContext): Action {
 fun startNativeActivity(carContext: CarContext) {
     Timber.i("Starting login activity")
     with(carContext) {
+        // The app must indicate the default display to be used to avoid a SecurityException on newer
+        // Android versions. See: https://developer.android.com/training/cars/platforms/releases#android-14
+        val options = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            ActivityOptions.makeBasic()
+                .setLaunchDisplayId(Display.DEFAULT_DISPLAY)
+                .toBundle()
+        } else {
+            null
+        }
         startActivity(
             Intent(
                 carContext,
@@ -26,6 +38,7 @@ fun startNativeActivity(carContext: CarContext) {
             ).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             },
+            options
         )
         if (carContext.isAutomotive()) {
             finishCarApp()
