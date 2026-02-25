@@ -159,12 +159,7 @@ private fun CameraWidgetConfigureScreen(viewModel: CameraWidgetConfigureViewMode
         selectedEntityId = viewModel.selectedEntityId,
         onEntitySelected = { viewModel.selectedEntityId = it },
         isUpdateWidget = viewModel.isUpdateWidget,
-        onTapSelected = { index ->
-            if(index == 0)
-                viewModel.selectedTapAction = WidgetTapAction.REFRESH
-            else
-                viewModel.selectedTapAction = WidgetTapAction.OPEN
-        },
+        onTapSelected = { viewModel.selectedTapAction = WidgetTapAction.entries[it] },
         entityRegistry = entityRegistry,
         deviceRegistry = deviceRegistry,
         areaRegistry = areaRegistry,
@@ -234,7 +229,7 @@ private fun CameraWidgetConfigureView(
                     stringResource(commonR.string.refresh),
                     stringResource(commonR.string.widget_tap_action_open)
                 ),
-                currentIndex = if(selectedTapAction == WidgetTapAction.REFRESH) 0 else 1,
+                currentIndex = selectedTapAction?.ordinal ?: 0,
                 onSelected =  { onTapSelected(it) },
                 modifier = Modifier.padding(bottom = 16.dp),
             )

@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.util.compose
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ExposedDropdownMenuBox
@@ -26,8 +27,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox as ExposedDropdownMenuBoxM3
 import androidx.compose.material3.ExposedDropdownMenuDefaults as ExposedDropdownMenuDefaultsM3
 import androidx.compose.material3.MenuAnchorType as MenuAnchorTypeM3
+import androidx.compose.material3.MenuItemColors
 import androidx.compose.material3.TextField as TextFieldM3
 import androidx.compose.material3.Text as TextM3
+import androidx.compose.ui.graphics.Color
+import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -134,8 +138,8 @@ fun HAExposedDropdownMenu(
             label = { TextM3(label) },
             trailingIcon = { ExposedDropdownMenuDefaultsM3.TrailingIcon(expanded = expanded) },
             colors = ExposedDropdownMenuDefaultsM3.textFieldColors(
-                unfocusedContainerColor = colorScheme.colorSurfaceLow,
-                focusedContainerColor = colorScheme.colorSurfaceLow,
+                unfocusedContainerColor = colorScheme.colorSurfaceDefault,
+                focusedContainerColor = colorScheme.colorSurfaceDefault,
                 unfocusedLabelColor = colorScheme.colorTextSecondary,
                 focusedLabelColor = colorScheme.colorOnPrimaryNormal,
                 unfocusedTrailingIconColor = colorScheme.colorTextSecondary,
@@ -147,7 +151,11 @@ fun HAExposedDropdownMenu(
             ),
             modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorTypeM3.PrimaryNotEditable),
         )
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            containerColor = colorScheme.colorSurfaceDefault
+            ) {
             keys.forEachIndexed { index, key ->
                 DropdownMenuItemM3(
                     text = { TextM3(key) },
@@ -156,6 +164,14 @@ fun HAExposedDropdownMenu(
                         expanded = false
                         focusManager.clearFocus()
                     },
+                    colors = MenuItemColors(
+                        textColor = colorScheme.colorTextPrimary,
+                        leadingIconColor = colorScheme.colorOnPrimaryNormal,
+                        trailingIconColor = colorScheme.colorOnPrimaryNormal,
+                        disabledTextColor = colorScheme.colorTextSecondary,
+                        disabledLeadingIconColor = colorScheme.colorTextDisabled,
+                        disabledTrailingIconColor = colorScheme.colorTextDisabled,
+                    )
                 )
             }
         }
