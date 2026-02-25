@@ -108,7 +108,13 @@ class AssistSettingsViewModel @Inject constructor(
     fun onSelectWakeWordModel(model: MicroWakeWordModelConfig) {
         viewModelScope.launch {
             assistConfigManager.setSelectedWakeWordModel(model)
-            _uiState.update { it.copy(selectedWakeWordModel = model) }
+            _uiState.update {
+                it.copy(
+                    selectedWakeWordModel = model,
+                    isTestingWakeWord = false,
+                    wakeWordDetected = false,
+                )
+            }
         }
     }
 
