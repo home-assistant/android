@@ -311,6 +311,7 @@ Use the `Clock` available from `Hilt`.
   class MyTest {
   ```
   Without the `@Config` override, Robolectric defaults to the manifest's `HomeAssistantApplication`, which enables StrictMode and FailFast, leaking process-wide state that can crash the test JVM.
+- **Turbine**: Turbine is available in all Gradle modules and must be used for testing flows. Use `turbineScope` with `testIn` for multi-collector tests, and `awaitItem`/`awaitComplete`/`expectNoEvents` for assertions. Never use `CountDownLatch`, `Thread.sleep`, `verify(timeout = ...)`, or raw `launch`/`async` to synchronize on flow emissions. Note: flows wrapped with `shareIn` never complete — use `expectNoEvents()` + `cancelAndConsumeRemainingEvents()` instead of `awaitComplete()`.
 - **Test Location**: Tests should mirror source structure in `src/test/kotlin/` directory
 - **Test Naming**: Use GIVEN-WHEN-THEN structure with descriptive sentences:
   ```kotlin
