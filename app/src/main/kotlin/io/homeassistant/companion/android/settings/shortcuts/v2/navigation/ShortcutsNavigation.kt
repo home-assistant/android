@@ -89,8 +89,10 @@ fun ShortcutsNavHost(onToolbarTitleChanged: (String) -> Unit, onShowSnackbar: su
         }
     }
     val shortcutsTitle = stringResource(R.string.shortcuts)
-    val addShortcutsTitle = stringResource(R.string.add_shortcut)
-    val updateShortcutsTitle = stringResource(R.string.update_shortcut)
+    val addAppShortcutTitle = stringResource(R.string.shortcut_v2_add_app_shortcut_title)
+    val addHomeShortcutTitle = stringResource(R.string.shortcut_v2_add_home_shortcut_title)
+    val editAppShortcutTitle = stringResource(R.string.shortcut_v2_edit_app_shortcut_title)
+    val editHomeShortcutTitle = stringResource(R.string.shortcut_v2_edit_home_shortcut_title)
     LaunchedEffect(navController) {
         navController.currentBackStackEntryFlow.collect { backStackEntry ->
             when {
@@ -98,14 +100,20 @@ fun ShortcutsNavHost(onToolbarTitleChanged: (String) -> Unit, onShowSnackbar: su
                     onToolbarTitleChanged(shortcutsTitle)
                 }
 
-                backStackEntry.destination.hasRoute(route = CreateDynamicRoute::class) ||
-                    backStackEntry.destination.hasRoute(route = CreatePinnedRoute::class) -> {
-                    onToolbarTitleChanged(addShortcutsTitle)
+                backStackEntry.destination.hasRoute(route = CreateDynamicRoute::class) -> {
+                    onToolbarTitleChanged(addAppShortcutTitle)
                 }
 
-                backStackEntry.destination.hasRoute(route = EditDynamicRoute::class) ||
-                    backStackEntry.destination.hasRoute(route = EditPinnedRoute::class) -> {
-                    onToolbarTitleChanged(updateShortcutsTitle)
+                backStackEntry.destination.hasRoute(route = CreatePinnedRoute::class) -> {
+                    onToolbarTitleChanged(addHomeShortcutTitle)
+                }
+
+                backStackEntry.destination.hasRoute(route = EditDynamicRoute::class) -> {
+                    onToolbarTitleChanged(editAppShortcutTitle)
+                }
+
+                backStackEntry.destination.hasRoute(route = EditPinnedRoute::class) -> {
+                    onToolbarTitleChanged(editHomeShortcutTitle)
                 }
             }
         }
@@ -123,7 +131,7 @@ private fun ShortcutsListRouteScreen(
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.refresh(showLoading = false)
+                viewModel.refreshSilently()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -133,7 +141,7 @@ private fun ShortcutsListRouteScreen(
     ShortcutsListScreen(
         state = uiState,
         dispatch = onNavigate,
-        onRetry = { viewModel.refresh(showLoading = true) },
+        onRetry = viewModel::refresh,
     )
 }
 
@@ -148,6 +156,7 @@ private fun CreateDynamicRouteScreen(viewModel: ShortcutEditViewModel = hiltView
     ShortcutEditorScreen(
         state = uiState,
         dispatch = viewModel::dispatch,
+        onRetry = viewModel::createDynamicFirstAvailable,
     )
 }
 
@@ -184,6 +193,7 @@ private fun CreatePinnedRouteScreen(
     ShortcutEditorScreen(
         state = uiState,
         dispatch = viewModel::dispatch,
+        onRetry = viewModel::openCreatePinned,
     )
 }
 
@@ -208,6 +218,7 @@ private fun EditDynamicRouteScreen(
     ShortcutEditorScreen(
         state = uiState,
         dispatch = viewModel::dispatch,
+        onRetry = { viewModel.openDynamic(route.index) },
     )
 }
 
@@ -245,5 +256,6 @@ private fun EditPinnedRouteScreen(
     ShortcutEditorScreen(
         state = uiState,
         dispatch = viewModel::dispatch,
+        onRetry = { viewModel.editPinned(route.id) },
     )
 }

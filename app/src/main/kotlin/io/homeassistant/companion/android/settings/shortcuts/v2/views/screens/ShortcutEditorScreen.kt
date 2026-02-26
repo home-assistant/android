@@ -26,6 +26,7 @@ import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutEditorUi
 import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.DynamicShortcutEditor
 import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.EmptyStateContentSlots
 import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.EmptyStateNoServers
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.ErrorStateContent
 import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.NotSupportedStateContent
 import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.PinnedShortcutEditor
 import io.homeassistant.companion.android.settings.shortcuts.v2.views.preview.ShortcutPreviewData
@@ -38,16 +39,19 @@ import io.homeassistant.companion.android.util.safeBottomPaddingValues
 internal fun ShortcutEditorScreen(
     state: ShortcutEditorUiState,
     dispatch: (ShortcutEditAction) -> Unit,
+    onRetry: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val noServers = state.screen.servers.isEmpty()
-    val notSupported = state.screen.error == ShortcutError.ApiNotSupported
+    val notSupported = state.screen.error == ShortcutError.ApiNotSupported ||
+        state.screen.error == ShortcutError.PinnedNotSupported
     when (val editor = state.editor) {
         is ShortcutEditorUiState.EditorState.Dynamic -> {
             when {
                 notSupported -> NotSupportedStateContent()
                 noServers -> EmptyStateNoServers()
                 state.screen.error == ShortcutError.SlotsFull -> EmptyStateContentSlots()
+                state.screen.error != null -> ErrorStateContent(onRetry = onRetry)
                 else -> ShortcutEditorContent(
                     screenState = state.screen,
                     draftSeed = editor.draftSeed,
@@ -71,6 +75,7 @@ internal fun ShortcutEditorScreen(
             when {
                 notSupported -> NotSupportedStateContent()
                 noServers -> EmptyStateNoServers()
+                state.screen.error != null -> ErrorStateContent(onRetry = onRetry)
                 else -> {
                     ShortcutEditorContent(
                         screenState = state.screen,
@@ -151,7 +156,7 @@ private fun ShortcutEditorContent(
             updateDraft,
             { showIconDialog = true },
             { dispatch(ShortcutEditAction.Submit(draft)) },
-            { dispatch(ShortcutEditAction.Delete(draft.id)) },
+            { dispatch(ShortcutEditAction.Delete) },
         )
     }
 }

@@ -41,7 +41,7 @@ internal fun DynamicShortcutEditor(
             canSubmit(draft = draft, screen = screen, requireId = false)
         }
     }
-    Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4)) {
+    Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE3),

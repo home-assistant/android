@@ -4,5 +4,5 @@ import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.Sh
 
 sealed interface ShortcutEditAction {
     data class Submit(val draft: ShortcutDraft) : ShortcutEditAction
-    data class Delete(val draftId: String) : ShortcutEditAction
+    data object Delete : ShortcutEditAction
 }

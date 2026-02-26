@@ -17,8 +17,6 @@ import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutEditorUiState
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import java.time.LocalDateTime
-import kotlinx.collections.immutable.persistentMapOf
-import kotlinx.collections.immutable.toImmutableList
 
 private const val DEFAULT_SERVER_ID = 1
 private val fixedTimestamp: LocalDateTime = LocalDateTime.of(2024, 1, 1, 12, 0)
@@ -30,7 +28,7 @@ private val mockServers = listOf(
         session = ServerSessionInfo(),
         user = ServerUserInfo(),
     ),
-).toImmutableList()
+).toList()
 private val mockLovelaceDraft = ShortcutDraft(
     id = "dynamic_draft_1",
     serverId = DEFAULT_SERVER_ID,
@@ -55,7 +53,7 @@ private val mockPinnedDraft = ShortcutDraft(
     description = "Pinned shortcut",
     target = ShortcutTargetValue.Lovelace("/lovelace/pinned"),
 )
-private val mockEntitiesByServer = persistentMapOf(
+private val mockEntitiesByServer = mapOf(
     DEFAULT_SERVER_ID to listOf(
         Entity(
             entityId = "light.living_room",
@@ -64,32 +62,32 @@ private val mockEntitiesByServer = persistentMapOf(
             lastChanged = fixedTimestamp,
             lastUpdated = fixedTimestamp,
         ),
-    ).toImmutableList(),
+    ).toList(),
 )
-private val mockEntityRegistryByServer = persistentMapOf(
+private val mockEntityRegistryByServer = mapOf(
     DEFAULT_SERVER_ID to listOf(
         EntityRegistryResponse(
             entityId = "light.living_room",
             areaId = "living_room",
             deviceId = "device_1",
         ),
-    ).toImmutableList(),
+    ).toList(),
 )
-private val mockDeviceRegistryByServer = persistentMapOf(
+private val mockDeviceRegistryByServer = mapOf(
     DEFAULT_SERVER_ID to listOf(
         DeviceRegistryResponse(
             id = "device_1",
             name = "Ceiling Lights",
         ),
-    ).toImmutableList(),
+    ).toList(),
 )
-private val mockAreaRegistryByServer = persistentMapOf(
+private val mockAreaRegistryByServer = mapOf(
     DEFAULT_SERVER_ID to listOf(
         AreaRegistryResponse(
             areaId = "living_room",
             name = "Living Room",
         ),
-    ).toImmutableList(),
+    ).toList(),
 )
 
 class ShortcutEditorScreenScreenshotTest {
@@ -127,7 +125,7 @@ class ShortcutEditorScreenScreenshotTest {
                 state = ShortcutEditorUiState(
                     screen = ShortcutEditorScreenState(
                         isLoading = false,
-                        servers = emptyList<Server>().toImmutableList(),
+                        servers = emptyList(),
                     ),
                     editor = ShortcutEditorUiState.EditorState.DynamicCreate(
                         index = 0,

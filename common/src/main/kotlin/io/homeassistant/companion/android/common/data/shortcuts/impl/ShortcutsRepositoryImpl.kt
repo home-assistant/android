@@ -33,8 +33,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import timber.log.Timber
 
-// Android allows at most 5 dynamic shortcuts per app.
-internal const val MAX_DYNAMIC_SHORTCUTS = 5
+private const val DEFAULT_MAX_DYNAMIC_SHORTCUTS = 5
 internal const val EXTRA_SERVER = "server"
 internal const val ASSIST_SHORTCUT_PREFIX = ".ha_assist_"
 private const val DYNAMIC_SHORTCUT_PREFIX = "shortcut"
@@ -61,7 +60,13 @@ class ShortcutsRepositoryImpl @Inject constructor(
     private val shortcutIntentCodec: ShortcutIntentCodec,
 ) : ShortcutsRepository {
 
-    private val maxDynamicShortcuts: Int = MAX_DYNAMIC_SHORTCUTS
+    private val maxDynamicShortcuts: Int by lazy {
+        runCatching { ShortcutManagerCompat.getMaxShortcutCountPerActivity(app) }
+            .onFailure { Timber.w(it, "Failed to query max shortcut count, using fallback value") }
+            .getOrNull()
+            ?.takeIf { it > 0 }
+            ?: DEFAULT_MAX_DYNAMIC_SHORTCUTS
+    }
 
     private val isShortcutsSupported: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1
 

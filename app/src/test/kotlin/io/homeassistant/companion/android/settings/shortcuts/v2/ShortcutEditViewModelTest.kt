@@ -207,7 +207,7 @@ class ShortcutEditViewModelTest {
             viewModel.openDynamic(0)
             advanceUntilIdle()
 
-            viewModel.dispatch(ShortcutEditAction.Delete(dynamicShortcutId(0)))
+            viewModel.dispatch(ShortcutEditAction.Delete)
             advanceUntilIdle()
 
             closeEvents.awaitItem()

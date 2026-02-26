@@ -34,7 +34,6 @@ dependencies {
     implementation(libs.kotlin.stdlib)
     implementation(libs.kotlin.reflect)
     implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.kotlinx.collections.immutable)
 
     implementation(libs.appcompat)
     implementation(libs.androidx.lifecycle.runtime.ktx)

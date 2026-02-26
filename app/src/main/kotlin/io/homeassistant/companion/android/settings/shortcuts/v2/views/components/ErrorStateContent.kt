@@ -17,16 +17,18 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.settings.views.EmptyState
 
 @Composable
-internal fun ErrorStateContent(onRetry: () -> Unit) {
+internal fun ErrorStateContent(onRetry: (() -> Unit)? = null) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         EmptyState(
             icon = CommunityMaterial.Icon.cmd_alert,
             title = stringResource(R.string.shortcuts_error_title),
             subtitle = stringResource(R.string.shortcuts_error_subtitle),
         )
-        Spacer(modifier = Modifier.height(12.dp))
-        Button(onClick = onRetry) {
-            Text(text = stringResource(R.string.retry))
+        if (onRetry != null) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Button(onClick = onRetry) {
+                Text(text = stringResource(R.string.retry))
+            }
         }
     }
 }

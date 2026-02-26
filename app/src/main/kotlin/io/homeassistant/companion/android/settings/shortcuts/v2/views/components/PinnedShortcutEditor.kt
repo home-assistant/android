@@ -40,14 +40,14 @@ internal fun PinnedShortcutEditor(
             canSubmit(draft = draft, screen = screen, requireId = false)
         }
     }
-    Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4)) {
+    Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE3),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = stringResource(R.string.shortcut_pinned),
+                text = stringResource(R.string.shortcut_v2_home_shortcut_title),
                 style = HATextStyle.HeadlineMedium,
                 color = LocalHAColorScheme.current.colorFillPrimaryLoudResting,
                 textAlign = TextAlign.Start,
@@ -62,8 +62,8 @@ internal fun PinnedShortcutEditor(
 
         ShortcutEditorForm(
             draft = draft,
-            labelText = stringResource(R.string.shortcut_pinned_label),
-            descriptionText = stringResource(R.string.shortcut_pinned_desc),
+            labelText = stringResource(R.string.shortcut_v2_shortcut_label),
+            descriptionText = stringResource(R.string.shortcut_v2_shortcut_description),
             screen = screen,
             onDraftChange = onDraftChange,
             isEditing = state is ShortcutEditorUiState.EditorState.PinnedEdit,

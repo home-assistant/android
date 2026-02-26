@@ -7,18 +7,14 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ar
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.database.server.Server
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.ImmutableMap
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentMapOf
 
 @Immutable
 data class ShortcutEditorScreenState(
     val isLoading: Boolean,
     val error: ShortcutError? = null,
-    val servers: ImmutableList<Server> = persistentListOf(),
-    val entities: ImmutableMap<Int, ImmutableList<Entity>> = persistentMapOf(),
-    val entityRegistry: ImmutableMap<Int, ImmutableList<EntityRegistryResponse>> = persistentMapOf(),
-    val deviceRegistry: ImmutableMap<Int, ImmutableList<DeviceRegistryResponse>> = persistentMapOf(),
-    val areaRegistry: ImmutableMap<Int, ImmutableList<AreaRegistryResponse>> = persistentMapOf(),
+    val servers: List<Server> = emptyList(),
+    val entities: Map<Int, List<Entity>> = emptyMap(),
+    val entityRegistry: Map<Int, List<EntityRegistryResponse>> = emptyMap(),
+    val deviceRegistry: Map<Int, List<DeviceRegistryResponse>> = emptyMap(),
+    val areaRegistry: Map<Int, List<AreaRegistryResponse>> = emptyMap(),
 )

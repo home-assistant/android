@@ -67,6 +67,7 @@ class ManageShortcutsViewModelTest {
             Assertions.assertNull(state.error)
             Assertions.assertFalse(state.isEmpty)
             Assertions.assertTrue(state.isPinSupported)
+            Assertions.assertEquals(5, state.maxDynamicShortcuts)
             Assertions.assertEquals(listOf(0, 2), state.dynamicItems.map { it.index })
             Assertions.assertEquals(1, state.pinnedItems.size)
         }

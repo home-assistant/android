@@ -16,14 +16,11 @@ import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.em
 import io.homeassistant.companion.android.settings.shortcuts.v2.views.screens.ShortcutEditAction
 import io.homeassistant.companion.android.settings.shortcuts.v2.views.screens.ShortcutEditorScreenState
 import javax.inject.Inject
-import kotlinx.collections.immutable.toImmutableList
-import kotlinx.collections.immutable.toPersistentMap
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -79,11 +76,7 @@ class ShortcutEditViewModel @Inject constructor(private val shortcutsRepository:
     private val _pinResultEvents = MutableSharedFlow<PinResult>(extraBufferCapacity = 1)
     private val _closeEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
-    val uiState: StateFlow<ShortcutEditorUiState> = _uiState.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = _uiState.value,
-    )
+    val uiState: StateFlow<ShortcutEditorUiState> = _uiState.asStateFlow()
     val pinResultEvents = _pinResultEvents.asSharedFlow()
     val closeEvents = _closeEvents.asSharedFlow()
 
@@ -108,7 +101,7 @@ class ShortcutEditViewModel @Inject constructor(private val shortcutsRepository:
             -> {
                 when (action) {
                     is ShortcutEditAction.Submit -> upsertPinned(action.draft)
-                    is ShortcutEditAction.Delete -> deletePinned(action.draftId)
+                    is ShortcutEditAction.Delete -> deletePinned()
                 }
             }
 
@@ -200,9 +193,10 @@ class ShortcutEditViewModel @Inject constructor(private val shortcutsRepository:
         }
     }
 
-    private fun deletePinned(shortcutId: String) {
+    private fun deletePinned() {
+        val editor = _uiState.value.editor as? ShortcutEditorUiState.EditorState.PinnedEdit ?: return
         viewModelScope.launch {
-            when (val result = shortcutsRepository.deletePinnedShortcut(shortcutId)) {
+            when (val result = shortcutsRepository.deletePinnedShortcut(editor.draftSeed.id)) {
                 is ShortcutResult.Success -> _closeEvents.emit(Unit)
                 is ShortcutResult.Error -> setScreenError(result.error)
             }
@@ -251,14 +245,11 @@ class ShortcutEditViewModel @Inject constructor(private val shortcutsRepository:
         updateScreen { state ->
             state.copy(
                 error = null,
-                servers = data.servers.toImmutableList(),
-                entities = data.serverDataById.mapValues { it.value.entities.toImmutableList() }.toPersistentMap(),
-                entityRegistry = data.serverDataById.mapValues { it.value.entityRegistry.toImmutableList() }
-                    .toPersistentMap(),
-                deviceRegistry = data.serverDataById.mapValues { it.value.deviceRegistry.toImmutableList() }
-                    .toPersistentMap(),
-                areaRegistry = data.serverDataById.mapValues { it.value.areaRegistry.toImmutableList() }
-                    .toPersistentMap(),
+                servers = data.servers.toList(),
+                entities = data.serverDataById.mapValues { it.value.entities.toList() },
+                entityRegistry = data.serverDataById.mapValues { it.value.entityRegistry.toList() },
+                deviceRegistry = data.serverDataById.mapValues { it.value.deviceRegistry.toList() },
+                areaRegistry = data.serverDataById.mapValues { it.value.areaRegistry.toList() },
             )
         }
     }

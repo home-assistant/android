@@ -9,8 +9,6 @@ import io.homeassistant.companion.android.settings.shortcuts.v2.DynamicShortcutI
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListAction
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListState
 import io.homeassistant.companion.android.util.compose.HAPreviews
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toImmutableList
 
 class ShortcutsListScreenScreenshotTest {
 
@@ -35,8 +33,8 @@ class ShortcutsListScreenScreenshotTest {
             ShortcutsListScreen(
                 state = ShortcutsListState(
                     isLoading = false,
-                    dynamicItems = persistentListOf(),
-                    pinnedItems = persistentListOf(),
+                    dynamicItems = emptyList(),
+                    pinnedItems = emptyList(),
                 ),
                 dispatch = { _: ShortcutsListAction -> },
                 onRetry = {},
@@ -86,7 +84,7 @@ class ShortcutsListScreenScreenshotTest {
                 state = ShortcutsListState(
                     isLoading = false,
                     dynamicItems = dynamicItems,
-                    pinnedItems = persistentListOf(),
+                    pinnedItems = emptyList(),
                 ),
                 dispatch = { _: ShortcutsListAction -> },
                 onRetry = {},
@@ -102,7 +100,7 @@ class ShortcutsListScreenScreenshotTest {
             ShortcutsListScreen(
                 state = ShortcutsListState(
                     isLoading = false,
-                    dynamicItems = persistentListOf(),
+                    dynamicItems = emptyList(),
                     pinnedItems = mockPinnedItems(count = 1),
                 ),
                 dispatch = { _: ShortcutsListAction -> },
@@ -122,7 +120,7 @@ private fun mockDynamicItems(count: Int) = List(count) { index ->
             label = "Shortcut $number",
         ),
     )
-}.toImmutableList()
+}.toList()
 
 private fun mockPinnedItems(count: Int) = List(count) { index ->
     val number = index + 1
@@ -131,4 +129,4 @@ private fun mockPinnedItems(count: Int) = List(count) { index ->
         selectedIconName = if (index == 0) "mdi:pin" else null,
         label = if (count == 1) "Pinned" else "Pinned $number",
     )
-}.toImmutableList()
+}.toList()

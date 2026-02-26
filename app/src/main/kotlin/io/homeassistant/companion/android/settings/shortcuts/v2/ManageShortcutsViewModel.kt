@@ -10,11 +10,10 @@ import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.Sh
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutSummary
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.toSummary
 import javax.inject.Inject
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -25,11 +24,13 @@ internal data class DynamicShortcutItem(val index: Int, val summary: ShortcutSum
 internal data class ShortcutsListState(
     val isLoading: Boolean = true,
     val error: ShortcutError? = null,
-    val isPinSupported: Boolean = false, // Not used for now
-    val dynamicItems: ImmutableList<DynamicShortcutItem> = persistentListOf(),
-    val pinnedItems: ImmutableList<ShortcutSummary> = persistentListOf(),
+    val pinnedError: ShortcutError? = null,
+    val maxDynamicShortcuts: Int? = null,
+    val dynamicItems: List<DynamicShortcutItem> = emptyList(),
+    val pinnedItems: List<ShortcutSummary> = emptyList(),
 ) {
     val hasError: Boolean get() = error != null
+    val isPinSupported: Boolean get() = pinnedError != ShortcutError.PinnedNotSupported
     val isEmpty: Boolean get() = dynamicItems.isEmpty() && pinnedItems.isEmpty()
 }
 
@@ -37,22 +38,34 @@ internal data class ShortcutsListState(
 internal class ManageShortcutsViewModel @Inject constructor(private val shortcutsRepository: ShortcutsRepository) :
     ViewModel() {
     private val _uiState = MutableStateFlow(ShortcutsListState())
-    val uiState: StateFlow<ShortcutsListState> = _uiState
+    val uiState: StateFlow<ShortcutsListState> = _uiState.asStateFlow()
+    private var refreshJob: Job? = null
 
     init {
-        refresh(showLoading = true)
+        refresh()
     }
 
-    fun refresh(showLoading: Boolean = !_uiState.value.isLoading) {
-        viewModelScope.launch {
-            val previous = _uiState.value
+    fun refresh() {
+        refreshInternal(showLoading = true)
+    }
+
+    fun refreshSilently() {
+        refreshInternal(showLoading = false)
+    }
+
+    private fun refreshInternal(showLoading: Boolean) {
+        refreshJob?.cancel()
+        refreshJob = viewModelScope.launch {
             if (showLoading) {
-                _uiState.value = previous.copy(isLoading = true, error = null)
+                _uiState.update {
+                    it.copy(isLoading = true, error = null)
+                }
             }
 
             val listData = when (val result = shortcutsRepository.loadShortcutsList()) {
                 is ShortcutResult.Success -> result.data
                 is ShortcutResult.Error -> {
+                    // Keep previously loaded items visible; only stop loading and surface the error.
                     _uiState.update {
                         it.copy(isLoading = false, error = result.error)
                     }
@@ -60,21 +73,21 @@ internal class ManageShortcutsViewModel @Inject constructor(private val shortcut
                 }
             }
 
-            val dynamicItems = listData.dynamic.shortcuts
-                .entries
-                .sortedBy { it.key }
+            val dynamicItems = listData.dynamic.orderedShortcuts
                 .map { (index, draft) -> DynamicShortcutItem(index, draft.toSummary()) }
-                .toImmutableList()
+                .toList()
 
-            val pinnedItems = listData.pinned.toImmutableList()
-            val pinNotSupported = listData.pinnedError == ShortcutError.PinnedNotSupported
-            _uiState.value = ShortcutsListState(
-                isLoading = false,
-                error = null,
-                isPinSupported = !pinNotSupported,
-                dynamicItems = dynamicItems,
-                pinnedItems = pinnedItems,
-            )
+            val pinnedItems = listData.pinned.toList()
+            _uiState.update {
+                ShortcutsListState(
+                    isLoading = false,
+                    error = null,
+                    pinnedError = listData.pinnedError,
+                    maxDynamicShortcuts = listData.dynamic.maxDynamicShortcuts,
+                    dynamicItems = dynamicItems,
+                    pinnedItems = pinnedItems,
+                )
+            }
         }
     }
 }

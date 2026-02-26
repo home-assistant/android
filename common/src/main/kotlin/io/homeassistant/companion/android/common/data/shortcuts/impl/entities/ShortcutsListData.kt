@@ -8,7 +8,13 @@ data class ShortcutsListData(
     val pinnedError: ShortcutError? = null,
 )
 
-data class DynamicShortcutsData(val maxDynamicShortcuts: Int, val shortcuts: Map<Int, ShortcutDraft>)
+data class DynamicShortcutsData(
+    val maxDynamicShortcuts: Int,
+    val shortcuts: Map<Int, ShortcutDraft>,
+) {
+    val orderedShortcuts: List<Map.Entry<Int, ShortcutDraft>>
+        get() = shortcuts.entries.sortedBy { it.key }
+}
 
 /**
  * Snapshot of a shortcut stored on the system.
