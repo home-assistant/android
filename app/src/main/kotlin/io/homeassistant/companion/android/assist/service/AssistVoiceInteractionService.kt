@@ -25,9 +25,6 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.CHANNEL_ASSIST_LISTENING
 import io.homeassistant.companion.android.settings.assist.AssistConfigManager
 import javax.inject.Inject
-import kotlin.time.Clock
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -53,9 +50,6 @@ import timber.log.Timber
 @AndroidEntryPoint
 class AssistVoiceInteractionService : VoiceInteractionService() {
     @Inject
-    lateinit var clock: Clock
-
-    @Inject
     lateinit var assistConfigManager: AssistConfigManager
 
     @Inject
@@ -69,7 +63,6 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
             onListenerStopped = ::onListenerStopped,
         )
     }
-    private var lastTriggerTime: Instant? = null
 
     override fun onReady() {
         super.onReady()
@@ -178,21 +171,10 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     }
 
     private fun onWakeWordDetected(model: MicroWakeWordModelConfig) {
-        // Always broadcast for observers (e.g. settings test mode) regardless of debounce
         sendBroadcast(
             Intent(ACTION_WAKE_WORD_DETECTED).setPackage(packageName)
         )
 
-        val now = clock.now()
-        val lastTrigger = lastTriggerTime
-
-        // Debounce: only trigger if enough time has passed since last detection
-        if (lastTrigger != null && (now - lastTrigger) <= DEBOUNCE_DURATION) {
-            Timber.d("Wake word detected but within debounce period, ignoring")
-            return
-        }
-
-        lastTriggerTime = now
         Timber.i("Wake word '${model.wakeWord}' detected, launching Assist")
 
         // Stop the listener before launching Assist to release the microphone.
@@ -291,8 +273,6 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
 
         private const val ACTION_WAKE_WORD_DETECTED = "io.homeassistant.companion.android.WAKE_WORD_DETECTED"
 
-        private val DEBOUNCE_DURATION = 3.seconds
-
         /**
          * Check if this VoiceInteractionService is currently the active system assistant.
          */
@@ -316,7 +296,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
          */
         @RequiresPermission(Manifest.permission.RECORD_AUDIO)
         fun startListening(context: Context) {
-            Timber.e("Send start listening is service started ${isActiveService(context)}")
+            Timber.d("Send start listening is service started ${isActiveService(context)}")
             val intent = Intent(context, AssistVoiceInteractionService::class.java).apply {
                 action = ACTION_START_LISTENING
             }

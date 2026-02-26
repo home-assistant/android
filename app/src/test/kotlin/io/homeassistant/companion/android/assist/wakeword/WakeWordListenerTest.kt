@@ -1,16 +1,16 @@
 package io.homeassistant.companion.android.assist.wakeword
 
 import android.content.Context
-import android.media.AudioRecord
+import io.homeassistant.companion.android.common.util.VoiceAudioRecorder
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
+import io.homeassistant.companion.android.util.microWakeWordModelConfigs
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import io.mockk.verifyOrder
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -29,32 +29,20 @@ class WakeWordListenerTest {
     private lateinit var context: Context
     private lateinit var tfLiteInitializer: TfLiteInitializer
     private lateinit var microWakeWord: MicroWakeWord
-    private lateinit var audioRecord: AudioRecord
+    private lateinit var voiceAudioRecorder: VoiceAudioRecorder
+    private lateinit var audioFlow: MutableSharedFlow<ShortArray>
 
-    private val testModelConfig = MicroWakeWordModelConfig(
-        wakeWord = "test_wake_word",
-        author = "test",
-        website = "https://test.com",
-        model = "test.tflite",
-        trainedLanguages = listOf("en"),
-        version = 1,
-        micro = MicroWakeWordModelConfig.MicroFrontendConfig(
-            probabilityCutoff = 0.5f,
-            slidingWindowSize = 3,
-            featureStepSize = 10,
-        ),
-    )
+    private val testModelConfig = microWakeWordModelConfigs[0]
 
     @BeforeEach
     fun setup() {
         context = mockk(relaxed = true)
         tfLiteInitializer = mockk(relaxed = true)
         microWakeWord = mockk(relaxed = true)
-        audioRecord = mockk(relaxed = true)
-
-        // Default: AudioRecord is initialized and returns error to exit loop
-        every { audioRecord.state } returns AudioRecord.STATE_INITIALIZED
-        every { audioRecord.read(any<ShortArray>(), any(), any()) } returns -1
+        audioFlow = MutableSharedFlow()
+        voiceAudioRecorder = mockk {
+            coEvery { audioData() } returns audioFlow
+        }
     }
 
     private fun createListener(
@@ -64,12 +52,12 @@ class WakeWordListenerTest {
     ): WakeWordListener {
         return WakeWordListener(
             context = context,
+            voiceAudioRecorder = voiceAudioRecorder,
             onListenerReady = onListenerReady,
             onWakeWordDetected = onWakeWordDetected,
             onListenerStopped = onListenerStopped,
             tfLiteInitializer = tfLiteInitializer,
             microWakeWordFactory = { microWakeWord },
-            audioRecordFactory = { audioRecord },
         )
     }
 
@@ -91,10 +79,10 @@ class WakeWordListenerTest {
                 onListenerReady = { wasListeningWhenReady = listener.isListening },
             )
 
-            listener.start(this, testModelConfig, testScheduler)
+            listener.start(backgroundScope, testModelConfig, testScheduler)
             runCurrent()
 
-            // Check isListening was true during the ready callback (before loop exits)
+            // Check isListening was true during the ready callback
             assertTrue(wasListeningWhenReady)
         }
 
@@ -102,7 +90,7 @@ class WakeWordListenerTest {
         fun `Given listener stopped then isListening returns false`() = runTest {
             val listener = createListener()
 
-            listener.start(this, testModelConfig)
+            listener.start(backgroundScope, testModelConfig)
             listener.stop()
             runCurrent()
 
@@ -117,7 +105,7 @@ class WakeWordListenerTest {
         fun `Given start called then initializes TFLite`() = runTest {
             val listener = createListener()
 
-            listener.start(this, testModelConfig)
+            listener.start(backgroundScope, testModelConfig, testScheduler)
             runCurrent()
 
             coVerify { tfLiteInitializer.initialize(context) }
@@ -128,16 +116,16 @@ class WakeWordListenerTest {
             var factoryCalledWithModel: MicroWakeWordModelConfig? = null
             val listener = WakeWordListener(
                 context = context,
+                voiceAudioRecorder = voiceAudioRecorder,
                 onWakeWordDetected = {},
                 tfLiteInitializer = tfLiteInitializer,
                 microWakeWordFactory = { model ->
                     factoryCalledWithModel = model
                     microWakeWord
                 },
-                audioRecordFactory = { audioRecord },
             )
 
-            listener.start(this, testModelConfig, testScheduler)
+            listener.start(backgroundScope, testModelConfig, testScheduler)
             runCurrent()
 
             assertEquals(testModelConfig, factoryCalledWithModel)
@@ -161,13 +149,13 @@ class WakeWordListenerTest {
             var factoryCallCount = 0
             val listener = WakeWordListener(
                 context = context,
+                voiceAudioRecorder = voiceAudioRecorder,
                 onWakeWordDetected = {},
                 tfLiteInitializer = tfLiteInitializer,
                 microWakeWordFactory = {
                     factoryCallCount++
                     microWakeWord
                 },
-                audioRecordFactory = { audioRecord },
             )
 
             // First start
@@ -188,23 +176,28 @@ class WakeWordListenerTest {
     inner class StopTests {
 
         @Test
-        fun `Given stop called then invokes onListenerStopped callback`() = runTest(UnconfinedTestDispatcher()) {
+        fun `Given stop called then invokes onListenerStopped callback`() = runTest {
             var stoppedCalled = false
             val listener = createListener(
                 onListenerStopped = { stoppedCalled = true },
             )
 
             listener.start(backgroundScope, testModelConfig, UnconfinedTestDispatcher(testScheduler))
+            runCurrent()
+            listener.stop()
+            runCurrent()
 
-            // Loop exits due to -1 return, which completes the job and calls onListenerStopped
             assertTrue(stoppedCalled)
         }
 
         @Test
-        fun `Given stop called then closes detector`() = runTest(UnconfinedTestDispatcher()) {
+        fun `Given stop called then closes detector`() = runTest {
             val listener = createListener()
 
             listener.start(backgroundScope, testModelConfig, UnconfinedTestDispatcher(testScheduler))
+            runCurrent()
+            listener.stop()
+            runCurrent()
 
             verify { microWakeWord.close() }
         }
@@ -226,57 +219,151 @@ class WakeWordListenerTest {
     inner class DetectionTests {
 
         @Test
-        fun `Given wake word detected then invokes onWakeWordDetected callback`() = runTest(UnconfinedTestDispatcher()) {
+        fun `Given wake word detected then invokes onWakeWordDetected callback`() = runTest {
             var detectedModel: MicroWakeWordModelConfig? = null
             val listener = createListener(
                 onWakeWordDetected = { detectedModel = it },
             )
 
-            var callCount = 0
-            every { audioRecord.read(any<ShortArray>(), any(), any()) } answers {
-                callCount++
-                if (callCount == 1) 160 else -1
-            }
             every { microWakeWord.processAudio(any()) } returns true
 
             listener.start(backgroundScope, testModelConfig, UnconfinedTestDispatcher(testScheduler))
+            runCurrent()
+
+            audioFlow.emit(shortArrayOf(1, 2, 3))
+            runCurrent()
 
             assertTrue(detectedModel === testModelConfig)
         }
 
         @Test
-        fun `Given wake word detected then resets detector`() = runTest(UnconfinedTestDispatcher()) {
+        fun `Given wake word detected then resets detector`() = runTest {
             val listener = createListener()
 
-            var callCount = 0
-            every { audioRecord.read(any<ShortArray>(), any(), any()) } answers {
-                callCount++
-                if (callCount == 1) 160 else -1
-            }
             every { microWakeWord.processAudio(any()) } returns true
 
             listener.start(backgroundScope, testModelConfig, UnconfinedTestDispatcher(testScheduler))
+            runCurrent()
+
+            audioFlow.emit(shortArrayOf(1, 2, 3))
+            runCurrent()
 
             verify { microWakeWord.reset() }
         }
 
         @Test
-        fun `Given no wake word detected then does not invoke callback`() = runTest(UnconfinedTestDispatcher()) {
+        fun `Given no wake word detected then does not invoke callback`() = runTest {
             var detectedCalled = false
             val listener = createListener(
                 onWakeWordDetected = { detectedCalled = true },
             )
 
-            var callCount = 0
-            every { audioRecord.read(any<ShortArray>(), any(), any()) } answers {
-                callCount++
-                if (callCount == 1) 160 else -1
-            }
             every { microWakeWord.processAudio(any()) } returns false
 
             listener.start(backgroundScope, testModelConfig, UnconfinedTestDispatcher(testScheduler))
+            runCurrent()
+
+            audioFlow.emit(shortArrayOf(1, 2, 3))
+            runCurrent()
 
             assertFalse(detectedCalled)
+        }
+    }
+
+    @Nested
+    inner class CooldownTests {
+
+        @Test
+        fun `Given wake word detected then skips processing during cooldown period`() = runTest {
+            var detectionCount = 0
+            val listener = createListener(
+                onWakeWordDetected = { detectionCount++ },
+            )
+
+            every { microWakeWord.processAudio(any()) } returns true
+
+            listener.start(backgroundScope, testModelConfig, UnconfinedTestDispatcher(testScheduler))
+            runCurrent()
+
+            // First chunk triggers detection
+            audioFlow.emit(shortArrayOf(1))
+            runCurrent()
+            assertEquals(1, detectionCount, "First chunk should trigger detection")
+
+            // All chunks during cooldown should be skipped (processAudio not called again)
+            repeat(POST_DETECTION_COOLDOWN_CHUNKS) {
+                audioFlow.emit(shortArrayOf(1))
+                runCurrent()
+            }
+            assertEquals(
+                1,
+                detectionCount,
+                "No additional detections should occur during cooldown",
+            )
+            // processAudio called once for the initial detection, not during cooldown
+            verify(exactly = 1) { microWakeWord.processAudio(any()) }
+        }
+
+        @Test
+        fun `Given cooldown expired then resumes processing audio`() = runTest {
+            var detectionCount = 0
+            val listener = createListener(
+                onWakeWordDetected = { detectionCount++ },
+            )
+
+            every { microWakeWord.processAudio(any()) } returns true
+
+            listener.start(backgroundScope, testModelConfig, UnconfinedTestDispatcher(testScheduler))
+            runCurrent()
+
+            // First detection
+            audioFlow.emit(shortArrayOf(1))
+            runCurrent()
+            assertEquals(1, detectionCount)
+
+            // Exhaust cooldown
+            repeat(POST_DETECTION_COOLDOWN_CHUNKS) {
+                audioFlow.emit(shortArrayOf(1))
+                runCurrent()
+            }
+
+            // Next chunk after cooldown should trigger detection again
+            audioFlow.emit(shortArrayOf(1))
+            runCurrent()
+            assertEquals(2, detectionCount, "Detection should resume after cooldown expires")
+        }
+
+        @Test
+        fun `Given cooldown active when no detection in audio then still skips processing`() = runTest {
+            var detectionCount = 0
+            var processAudioCallCount = 0
+            val listener = createListener(
+                onWakeWordDetected = { detectionCount++ },
+            )
+
+            every { microWakeWord.processAudio(any()) } answers {
+                processAudioCallCount++
+                true
+            }
+
+            listener.start(backgroundScope, testModelConfig, UnconfinedTestDispatcher(testScheduler))
+            runCurrent()
+
+            // Trigger first detection
+            audioFlow.emit(shortArrayOf(1))
+            runCurrent()
+            assertEquals(1, processAudioCallCount, "processAudio called for first chunk")
+
+            // Emit a few chunks during cooldown — processAudio should not be called
+            for (i in 1..5) {
+                audioFlow.emit(shortArrayOf(1))
+                runCurrent()
+            }
+            assertEquals(
+                1,
+                processAudioCallCount,
+                "processAudio should not be called during cooldown",
+            )
         }
     }
 
@@ -303,10 +390,10 @@ class WakeWordListenerTest {
 
             val listener = WakeWordListener(
                 context = context,
+                voiceAudioRecorder = voiceAudioRecorder,
                 onWakeWordDetected = {},
                 tfLiteInitializer = tfLiteInitializer,
                 microWakeWordFactory = { throw expectedException },
-                audioRecordFactory = { audioRecord },
             )
 
             try {
@@ -317,19 +404,15 @@ class WakeWordListenerTest {
         }
 
         @Test
-        fun `Given scope cancelled then cleans up resources`() = runTest {
+        fun `Given listener stopped then closes detector`() = runTest {
             val listener = createListener()
 
-            listener.start(this, testModelConfig, this.testScheduler)
+            listener.start(backgroundScope, testModelConfig, UnconfinedTestDispatcher(testScheduler))
+            runCurrent()
+            listener.stop()
             runCurrent()
 
-            backgroundScope.cancel()
-
             verify { microWakeWord.close() }
-            verifyOrder {
-                audioRecord.stop()
-                audioRecord.release()
-            }
         }
     }
 }
