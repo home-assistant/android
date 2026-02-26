@@ -4,19 +4,19 @@ import timber.log.Timber
 
 const val ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY = 2
 
-fun Entity.isAlarmControlPanelEntity(): Boolean {
+private fun Entity.isAlarmControlPanelEntity(): Boolean {
     return domain == "alarm_control_panel"
 }
 
-fun Entity.alarmHasNoCode(): Boolean {
+private fun Entity.alarmHasNoCode(): Boolean {
     return isAlarmControlPanelEntity() && (attributes["code_format"] as? String)?.isNotEmpty() != true
 }
 
-fun Entity.alarmCanBeArmedWithoutCode(): Boolean {
+private fun Entity.alarmCanBeArmedWithoutCode(): Boolean {
     return isAlarmControlPanelEntity() && attributes["code_arm_required"] as? Boolean == false
 }
 
-fun Entity.supportsAlarmControlPanelArmAway(): Boolean {
+private fun Entity.supportsAlarmControlPanelArmAway(): Boolean {
     return try {
         if (!isAlarmControlPanelEntity()) {
             return false
@@ -30,11 +30,15 @@ fun Entity.supportsAlarmControlPanelArmAway(): Boolean {
     }
 }
 
-fun Entity.alarmIsDisarmed(): Boolean {
-    return state == "disarmed"
+private fun Entity.alarmIsDisarmed(): Boolean {
+    return isAlarmControlPanelEntity() && state == "disarmed"
 }
 
-fun Entity.alarmCanBeArmedAway(): Boolean {
+private fun Entity.alarmCanBeArmedAway(): Boolean {
+    if(!isAlarmControlPanelEntity()) {
+        return false
+    }
+
     if (!alarmIsDisarmed() || !supportsAlarmControlPanelArmAway()) {
         return false
     }
@@ -42,15 +46,19 @@ fun Entity.alarmCanBeArmedAway(): Boolean {
     return alarmHasNoCode() || alarmCanBeArmedWithoutCode()
 }
 
-fun Entity.alarmCanBeDisarmed(): Boolean {
-    return !alarmIsDisarmed() && alarmHasNoCode()
+private fun Entity.alarmCanBeDisarmed(): Boolean {
+    return isAlarmControlPanelEntity() && !alarmIsDisarmed() && alarmHasNoCode()
 }
 
 fun Entity.isAlarmActionable(): Boolean {
-    return alarmCanBeDisarmed() || alarmCanBeArmedAway()
+    return isAlarmControlPanelEntity() && alarmCanBeDisarmed() || alarmCanBeArmedAway()
 }
 
 fun Entity.getAlarmOnPressedAction(): String? {
+    if(!isAlarmControlPanelEntity()) {
+        return null
+    }
+
     if (alarmCanBeDisarmed()) {
         return "alarm_disarm"
     }

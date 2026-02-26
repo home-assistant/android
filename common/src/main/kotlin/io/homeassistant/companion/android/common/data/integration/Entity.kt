@@ -791,7 +791,7 @@ private fun sensorIcon(state: String?, entity: Entity): IIcon {
 }
 
 suspend fun Entity.onPressed(integrationRepository: IntegrationRepository) {
-    val action: String? = when (domain) {
+    val action = when (domain) {
         "lock" -> {
             if (state == "unlocked") "lock" else "unlock"
         }
