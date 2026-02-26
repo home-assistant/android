@@ -7,29 +7,46 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.assist.ui.AssistMessage
 import io.homeassistant.companion.android.assist.ui.AssistUiPipeline
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.assist.AssistAudioStrategy
 import io.homeassistant.companion.android.common.assist.AssistEvent
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
-import io.homeassistant.companion.android.common.util.AudioRecorder
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
-import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-@HiltViewModel
-class AssistViewModel @Inject constructor(
-    val serverManager: ServerManager,
-    private val audioRecorder: AudioRecorder,
+@HiltViewModel(assistedFactory = AssistViewModel.Factory::class)
+class AssistViewModel @AssistedInject constructor(
+    serverManager: ServerManager,
+    @Assisted initialAudioStrategy: AssistAudioStrategy,
     audioUrlPlayer: AudioUrlPlayer,
     application: Application,
-) : AssistViewModelBase(serverManager, audioRecorder, audioUrlPlayer, application) {
+) : AssistViewModelBase(serverManager, initialAudioStrategy, audioUrlPlayer, application) {
+
+    @AssistedFactory
+    interface Factory {
+        fun create(audioStrategy: AssistAudioStrategy): AssistViewModel
+    }
+
+    init {
+        viewModelScope.launch {
+            audioStrategy.wakeWordDetected.collect { detectedPhrase ->
+                if (inputMode != AssistInputMode.VOICE_ACTIVE) {
+                    wakeWordPhrase = detectedPhrase
+                    onMicrophoneInput()
+                }
+            }
+        }
+    }
 
     private var filteredServerId: Int? = null
     private val allPipelines = mutableMapOf<Int, List<AssistPipelineResponse>>()
@@ -258,7 +275,9 @@ class AssistViewModel @Inject constructor(
             if (hasMicrophone && it.sttEngine != null) {
                 if (recorderAutoStart && (hasPermission || requestSilently)) {
                     inputMode = AssistInputMode.VOICE_INACTIVE
-                    onMicrophoneInput(proactive = null)
+                    if (recorderProactive) {
+                        onMicrophoneInput(proactive = null)
+                    }
                 } else { // already requested permission once and was denied
                     inputMode = AssistInputMode.TEXT
                 }
@@ -321,24 +340,14 @@ class AssistViewModel @Inject constructor(
 
         stopPlayback()
 
-        val recording = try {
-            recorderProactive || audioRecorder.startRecording()
-        } catch (e: Exception) {
-            Timber.e(e, "Exception while starting recording")
-            false
+        if (!recorderProactive) {
+            audioStrategy.requestFocus()
+            setupRecorder()
         }
-
-        if (recording) {
-            if (!recorderProactive) setupRecorder()
-            inputMode = AssistInputMode.VOICE_ACTIVE
-            if (proactive == true) _conversation.add(AssistMessage.placeholder(isInput = true))
-            if (proactive != true) runAssistPipeline(null)
-        } else {
-            _conversation.add(
-                AssistMessage(app.getString(commonR.string.assist_error), isInput = false, isError = true),
-            )
-        }
-        recorderProactive = recording && proactive == true
+        inputMode = AssistInputMode.VOICE_ACTIVE
+        if (proactive == true) _conversation.add(AssistMessage.placeholder(isInput = true))
+        if (proactive != true) runAssistPipeline(null)
+        recorderProactive = proactive == true
     }
 
     private fun runAssistPipeline(text: String?) {
@@ -391,7 +400,9 @@ class AssistViewModel @Inject constructor(
                     }
                 }
                 is AssistEvent.PipelineStarted -> { /* handled below */ }
-                is AssistEvent.ContinueConversation -> onMicrophoneInput()
+                is AssistEvent.ContinueConversation -> {
+                    onMicrophoneInput()
+                }
                 is AssistEvent.Dismiss -> shouldFinish = true
             }
             if (!shouldFinish && pendingWakeWordConfirmation) {

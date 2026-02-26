@@ -7,29 +7,36 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.assist.AssistAudioStrategy
 import io.homeassistant.companion.android.common.assist.AssistEvent
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
-import io.homeassistant.companion.android.common.util.AudioRecorder
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
 import io.homeassistant.companion.android.conversation.views.AssistMessage
-import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-@HiltViewModel
-class ConversationViewModel @Inject constructor(
-    private val serverManager: ServerManager,
-    private val audioRecorder: AudioRecorder,
+@HiltViewModel(assistedFactory = ConversationViewModel.Factory::class)
+class ConversationViewModel @AssistedInject constructor(
+    serverManager: ServerManager,
+    @Assisted audioStrategy: AssistAudioStrategy,
     audioUrlPlayer: AudioUrlPlayer,
     private val wearPrefsRepository: WearPrefsRepository,
     application: Application,
-) : AssistViewModelBase(serverManager, audioRecorder, audioUrlPlayer, application) {
+) : AssistViewModelBase(serverManager, audioStrategy, audioUrlPlayer, application) {
+
+    @AssistedFactory
+    interface Factory {
+        fun create(audioStrategy: AssistAudioStrategy): ConversationViewModel
+    }
 
     private var useAssistPipeline = false
     private var useAssistPipelineStt = false
@@ -259,24 +266,14 @@ class ConversationViewModel @Inject constructor(
 
         stopPlayback()
 
-        val recording = try {
-            recorderProactive || audioRecorder.startRecording()
-        } catch (e: Exception) {
-            Timber.e(e, "Exception while starting recording")
-            false
+        if (!recorderProactive) {
+            this@ConversationViewModel.audioStrategy.requestFocus()
+            setupRecorder()
         }
-
-        if (recording) {
-            if (!recorderProactive) setupRecorder()
-            inputMode = AssistInputMode.VOICE_ACTIVE
-            if (proactive == true) _conversation.add(AssistMessage.placeholder(isInput = true))
-            if (proactive != true) runAssistPipeline(null)
-        } else {
-            _conversation.add(
-                AssistMessage(app.getString(commonR.string.assist_error), isInput = false, isError = true),
-            )
-        }
-        recorderProactive = recording && proactive == true
+        inputMode = AssistInputMode.VOICE_ACTIVE
+        if (proactive == true) _conversation.add(AssistMessage.placeholder(isInput = true))
+        if (proactive != true) runAssistPipeline(null)
+        recorderProactive = proactive == true
     }
 
     private fun runAssistPipeline(text: String?) {
