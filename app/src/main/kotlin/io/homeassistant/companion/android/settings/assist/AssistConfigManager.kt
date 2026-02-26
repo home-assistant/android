@@ -27,7 +27,9 @@ interface AssistConfigManager {
     /**
      * Sets whether wake word detection is enabled.
      *
-     * This also starts or stops the wake word detection service accordingly.
+     * When enabling, if no wake word model is currently selected, the first available
+     * model is automatically set as the default. This also starts or stops the wake
+     * word detection service accordingly.
      */
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     suspend fun setWakeWordEnabled(enabled: Boolean)
@@ -65,6 +67,11 @@ class AssistConfigManagerImpl @Inject constructor(
     override suspend fun setWakeWordEnabled(enabled: Boolean) {
         prefsRepository.setWakeWordEnabled(enabled)
         if (enabled) {
+            if (getSelectedWakeWordModel() == null) {
+                models.get().firstOrNull()?.let {
+                    prefsRepository.setSelectedWakeWord(it.wakeWord)
+                }
+            }
             AssistVoiceInteractionService.startListening(context)
         } else {
             AssistVoiceInteractionService.stopListening(context)

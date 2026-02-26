@@ -95,12 +95,40 @@ class AssistConfigManagerTest {
         @Test
         fun `Given enabled true when setWakeWordEnabled then save preference and start listening`() = runTest {
             coEvery { prefsRepository.setWakeWordEnabled(any()) } just Runs
+            coEvery { prefsRepository.getSelectedWakeWord() } returns "Okay Nabu"
 
             manager.setWakeWordEnabled(true)
 
             coVerify { prefsRepository.setWakeWordEnabled(true) }
             coVerify { AssistVoiceInteractionService.startListening(context) }
             coVerify(exactly = 0) { AssistVoiceInteractionService.stopListening(any()) }
+            coVerify(exactly = 0) { prefsRepository.setSelectedWakeWord(any()) }
+        }
+
+        @Test
+        fun `Given no model selected when enabling then auto-select first available model`() = runTest {
+            coEvery { prefsRepository.setWakeWordEnabled(any()) } just Runs
+            coEvery { prefsRepository.getSelectedWakeWord() } returns null
+            coEvery { prefsRepository.setSelectedWakeWord(any()) } just Runs
+
+            manager.setWakeWordEnabled(true)
+
+            coVerify { prefsRepository.setSelectedWakeWord("Okay Nabu") }
+            coVerify { AssistVoiceInteractionService.startListening(context) }
+        }
+
+        @Test
+        fun `Given no model selected and no models available when enabling then skip auto-select`() = runTest {
+            coEvery { MicroWakeWordModelConfig.loadAvailableModels(any()) } returns emptyList()
+            manager = AssistConfigManagerImpl(context, prefsRepository)
+
+            coEvery { prefsRepository.setWakeWordEnabled(any()) } just Runs
+            coEvery { prefsRepository.getSelectedWakeWord() } returns null
+
+            manager.setWakeWordEnabled(true)
+
+            coVerify(exactly = 0) { prefsRepository.setSelectedWakeWord(any()) }
+            coVerify { AssistVoiceInteractionService.startListening(context) }
         }
 
         @Test
