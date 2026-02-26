@@ -125,7 +125,7 @@ class LocationForSecureConnectionScreenTest {
     @Test
     fun `Given HTTP url when screen displayed then show HTTP specific content`() {
         composeTestRule.apply {
-            testScreen(hasHttpUrl = true) {
+            testScreen(hasPlainTextUrl = true) {
                 onNodeWithText(stringResource(commonR.string.location_secure_connection_content_http)).assertIsDisplayed()
             }
         }
@@ -141,7 +141,7 @@ class LocationForSecureConnectionScreenTest {
     @OptIn(ExperimentalPermissionsApi::class)
     private fun AndroidComposeTestRule<*, *>.testScreen(
         initialAllowInsecureConnection: Boolean? = null,
-        hasHttpUrl: Boolean = false,
+        hasPlainTextUrl: Boolean = false,
         locationPermissionGranted: Boolean = true,
         block: TestHelper.() -> Unit,
     ) {
@@ -155,7 +155,7 @@ class LocationForSecureConnectionScreenTest {
                     LocationForSecureConnectionScreen(
                         onHelpClick = { helpClicked = true },
                         initialAllowInsecureConnection = initialAllowInsecureConnection,
-                        hasPlainTextUrl = hasHttpUrl,
+                        hasPlainTextUrl = hasPlainTextUrl,
                         onAllowInsecureConnection = { allowInsecureConnection = it },
                         onShowSnackbar = { message, _ ->
                             snackbarMessage = message
@@ -169,7 +169,7 @@ class LocationForSecureConnectionScreenTest {
             assertTrue(helpClicked)
 
             onNodeWithText(stringResource(commonR.string.location_secure_connection_title)).assertIsDisplayed()
-            val expectedContent = if (hasHttpUrl) {
+            val expectedContent = if (hasPlainTextUrl) {
                 stringResource(commonR.string.location_secure_connection_content_http)
             } else {
                 stringResource(commonR.string.location_secure_connection_content)

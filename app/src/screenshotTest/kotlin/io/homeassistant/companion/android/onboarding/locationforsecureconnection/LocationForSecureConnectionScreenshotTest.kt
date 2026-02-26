@@ -16,6 +16,7 @@ class LocationForSecureConnectionScreenshotTest {
                 onHelpClick = {},
                 onShowSnackbar = { _, _ -> true },
                 initialAllowInsecureConnection = null,
+                hasPlainTextUrl = true,
             )
         }
     }
