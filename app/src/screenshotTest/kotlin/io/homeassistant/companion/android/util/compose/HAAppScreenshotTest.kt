@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.util.compose
 
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.rememberNavController
 import com.android.tools.screenshot.PreviewTest
@@ -12,7 +13,11 @@ class HAAppScreenshotTest {
     @Composable
     fun `HAApp no start destination shows loading screen`() {
         HAThemeForPreview {
-            HAApp(navController = rememberNavController(), startDestination = null)
+            HAApp(
+                navController = rememberNavController(),
+                startDestination = null,
+                snackbarHostState = SnackbarHostState(),
+            )
         }
     }
 }
