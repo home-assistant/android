@@ -4,7 +4,7 @@ import android.annotation.SuppressLint
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder.AudioSource
-import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -65,8 +65,8 @@ fun ShortArray.toAudioBytes(): ByteArray {
  */
 class VoiceAudioRecorder(
     private val audioRecordFactory: () -> AudioRecord = ::createVoiceAudioRecord,
-    private val recorderContext: CoroutineContext = Dispatchers.IO,
-    private val sharingScope: CoroutineScope = CoroutineScope(Job() + recorderContext),
+    private val recorderDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val sharingScope: CoroutineScope = CoroutineScope(Job() + recorderDispatcher),
 ) {
     private val mutex = Mutex()
     private var sharedFlow: Flow<ShortArray>? = null
@@ -74,7 +74,7 @@ class VoiceAudioRecorder(
     /**
      * Returns a shared flow of audio samples as [ShortArray] chunks.
      *
-     * The underlying [AudioRecord] read loop runs on [recorderContext] (defaults to
+     * The underlying [AudioRecord] read loop runs on [recorderDispatcher] (defaults to
      * [Dispatchers.IO]) because [AudioRecord.read] is a blocking call. Each emission
      * contains one chunk of PCM 16-bit mono samples.
      *
@@ -104,7 +104,6 @@ class VoiceAudioRecorder(
             try {
                 while (isActive) {
                     val readResult = recorder.read(buffer, 0, READ_CHUNK_SIZE)
-                    Timber.e("Hello")
                     when {
                         readResult > 0 -> send(buffer.copyOf(readResult))
                         readResult < 0 -> {
@@ -121,7 +120,7 @@ class VoiceAudioRecorder(
                 }
                 recorder.release()
             }
-        }.flowOn(recorderContext)
+        }.flowOn(recorderDispatcher)
 
         return upstream.shareIn(
             scope = sharingScope,

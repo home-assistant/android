@@ -45,7 +45,7 @@ interface AssistAudioStrategy {
 }
 
 /**
- * Default strategy. Audio is recorded when [audioData] as a collector,
+ * Default strategy. Audio is recorded when [audioData] has a collector,
  * otherwise it doesn't record anything.
  *
  * Audio focus is requested when [requestFocus] is called and abandoned when

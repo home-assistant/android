@@ -172,9 +172,8 @@ class AssistActivity : BaseActivity() {
     override fun onDestroy() {
         super.onDestroy()
         viewModel.onDestroy()
-        // This might fail since the listener might still be listening, but it is a safety net
-        // if the listener did not properly starts we still want to resume the listening if
-        // it was enabled.
+        // This is a safety net: if the listener did not properly start, we still want to
+        // resume.
         AssistVoiceInteractionService.resumeListening(this)
     }
 

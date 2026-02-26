@@ -7,7 +7,6 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
@@ -40,10 +39,9 @@ class VoiceAudioRecorderTest {
                     1
                 }
             }
-            val sharingScope = TestScope(UnconfinedTestDispatcher())
             val voiceAudioRecorder = VoiceAudioRecorder(
                 audioRecordFactory = { recorder },
-                sharingScope = sharingScope,
+                sharingScope = backgroundScope,
             )
 
             val flow = voiceAudioRecorder.audioData()
@@ -64,8 +62,8 @@ class VoiceAudioRecorderTest {
                 turbine2.cancelAndConsumeRemainingEvents()
             }
             // Process WhileSubscribed cancellation in the sharing scope
-            sharingScope.advanceUntilIdle()
-            sharingScope.runCurrent()
+            advanceUntilIdle()
+            runCurrent()
 
             verify { recorder.stop() }
             verify { recorder.release() }
@@ -76,12 +74,12 @@ class VoiceAudioRecorderTest {
             val recorder = mockk<AudioRecord>(relaxed = true) {
                 every { state } returns AudioRecord.STATE_UNINITIALIZED
             }
-            val testDispatcher = UnconfinedTestDispatcher()
-            val sharingScope = TestScope(testDispatcher)
+
+            val testDispatcher = UnconfinedTestDispatcher(testScheduler)
             val voiceAudioRecorder = VoiceAudioRecorder(
                 audioRecordFactory = { recorder },
-                recorderContext = testDispatcher,
-                sharingScope = sharingScope,
+                recorderDispatcher = testDispatcher,
+                sharingScope = backgroundScope,
             )
 
             val flow = voiceAudioRecorder.audioData()
@@ -89,10 +87,8 @@ class VoiceAudioRecorderTest {
             turbineScope {
                 val turbine = flow.testIn(this)
 
-                // SharedFlow never completes, but the upstream channelFlow does.
-                // Let the sharing scope process the upstream completion.
-                sharingScope.advanceUntilIdle()
-                sharingScope.runCurrent()
+                advanceUntilIdle()
+                runCurrent()
 
                 turbine.expectNoEvents()
                 turbine.cancelAndConsumeRemainingEvents()
@@ -108,12 +104,12 @@ class VoiceAudioRecorderTest {
                 every { state } returns AudioRecord.STATE_INITIALIZED
                 every { read(any<ShortArray>(), any(), any()) } returns AudioRecord.ERROR
             }
-            val testDispatcher = UnconfinedTestDispatcher()
-            val sharingScope = TestScope(testDispatcher)
+
+            val testDispatcher = UnconfinedTestDispatcher(testScheduler)
             val voiceAudioRecorder = VoiceAudioRecorder(
                 audioRecordFactory = { recorder },
-                recorderContext = testDispatcher,
-                sharingScope = sharingScope,
+                recorderDispatcher = testDispatcher,
+                sharingScope = backgroundScope,
             )
 
             val flow = voiceAudioRecorder.audioData()
@@ -121,14 +117,15 @@ class VoiceAudioRecorderTest {
             turbineScope {
                 val turbine = flow.testIn(this)
 
-                // SharedFlow never completes, but the upstream channelFlow breaks
-                // out of the read loop on error. Let the sharing scope process it.
-                sharingScope.advanceUntilIdle()
-                sharingScope.runCurrent()
+                advanceUntilIdle()
+                runCurrent()
 
                 turbine.expectNoEvents()
                 turbine.cancelAndConsumeRemainingEvents()
             }
+
+            advanceUntilIdle()
+            runCurrent()
 
             verify { recorder.stop() }
             verify { recorder.release() }
