@@ -100,8 +100,10 @@ internal fun createDataSourceFactory(context: Context, okHttpClientProvider: Laz
             Timber.i("Using CronetDataSource for media")
             // assumed to be singleton scoped, so app lifetime for executor
             val singleThreadExecutor = Executors.newSingleThreadExecutor()
+            val timeout = DATA_SOURCE_TIMEOUT.inWholeMilliseconds.toInt()
             CronetDataSource.Factory(cronetEngine, singleThreadExecutor)
-                .setConnectionTimeoutMs(DATA_SOURCE_TIMEOUT.inWholeMilliseconds.toInt())
+                .setConnectionTimeoutMs(timeout)
+                .setReadTimeoutMs(timeout)
         } else {
             // Reuse OkHttpClient instance for Http/2 support
             Timber.w("Failed to build cronet engine fallback to OkHttpDataSource")
@@ -140,8 +142,10 @@ private fun buildHttpEngineFactory(context: Context): DataSource.Factory? {
         Timber.i("Using HttpEngineDataSource for media")
         // assumed to be singleton scoped, so app lifetime for executor
         val singleThreadExecutor = Executors.newSingleThreadExecutor()
+        val timeout = DATA_SOURCE_TIMEOUT.inWholeMilliseconds.toInt()
         HttpEngineDataSource.Factory(httpEngine, singleThreadExecutor)
-            .setConnectionTimeoutMs(DATA_SOURCE_TIMEOUT.inWholeMilliseconds.toInt())
+            .setConnectionTimeoutMs(timeout)
+            .setReadTimeoutMs(timeout)
     } else {
         null
     }
