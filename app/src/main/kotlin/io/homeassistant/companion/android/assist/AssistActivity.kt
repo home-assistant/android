@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.assist
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
@@ -11,19 +12,26 @@ import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.assist.service.AssistVoiceInteractionService
+import io.homeassistant.companion.android.assist.ui.AssistMessage
 import io.homeassistant.companion.android.assist.ui.AssistSheetView
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.webview.WebViewActivity
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
+private val CLOSE_INACTIVE = 30.seconds
 
 @AndroidEntryPoint
 class AssistActivity : BaseActivity() {
@@ -118,27 +126,28 @@ class AssistActivity : BaseActivity() {
                     currentPipeline = viewModel.currentPipeline,
                     onSelectPipeline = viewModel::changePipeline,
                     onManagePipelines =
-                    if (fromFrontend && viewModel.userCanManagePipelines) {
-                        {
-                            startActivity(
-                                WebViewActivity.newInstance(
-                                    this,
-                                    "config/voice-assistants/assistants",
-                                ).apply {
-                                    flags += Intent.FLAG_ACTIVITY_NEW_TASK // Delivers data in onNewIntent
-                                },
-                            )
-                            finish()
-                        }
-                    } else {
-                        null
-                    },
+                        if (fromFrontend && viewModel.userCanManagePipelines) {
+                            {
+                                startActivity(
+                                    WebViewActivity.newInstance(
+                                        this,
+                                        "config/voice-assistants/assistants",
+                                    ).apply {
+                                        flags += Intent.FLAG_ACTIVITY_NEW_TASK // Delivers data in onNewIntent
+                                    },
+                                )
+                                finish()
+                            }
+                        } else {
+                            null
+                        },
                     onChangeInput = viewModel::onChangeInput,
                     onTextInput = viewModel::onTextInput,
                     onMicrophoneInput = viewModel::onMicrophoneInput,
                     onHide = { finish() },
                 )
             }
+            CloseOnInactive(viewModel.conversation) { finish() }
         }
     }
 
@@ -194,4 +203,29 @@ class AssistActivity : BaseActivity() {
 
     private fun hasRecordingPermission() =
         ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+}
+
+
+/**
+ * Automatically triggers [onInactive] after [CLOSE_INACTIVE] when the conversation is idle.
+ *
+ * The conversation is considered idle when the last message is no longer a placeholder,
+ * meaning the assistant has finished processing. The timer resets whenever a new message
+ * is added to the conversation.
+ *
+ * @param conversation The current list of conversation messages to observe.
+ * @param onInactive Callback invoked when the inactivity timeout expires.
+ */
+@Composable
+private fun CloseOnInactive(
+    @SuppressLint("ComposeUnstableCollections") conversation: List<AssistMessage>,
+    onInactive: () -> Unit,
+) {
+    val lastMessage = conversation.lastOrNull()
+    LaunchedEffect(lastMessage) {
+        if (lastMessage != null && !lastMessage.isPlaceholder) {
+            delay(CLOSE_INACTIVE)
+            onInactive()
+        }
+    }
 }
