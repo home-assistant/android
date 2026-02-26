@@ -1464,4 +1464,5 @@
     <string name="entity_picker_no_entity_found_for">No entity found for %s</string>
     <string name="fail_to_navigate_to_uri">No app available to open %s</string>
     <string name="experimental">Experimental</string>
+    <string name="learn_more">Learn more</string>
 </resources>
