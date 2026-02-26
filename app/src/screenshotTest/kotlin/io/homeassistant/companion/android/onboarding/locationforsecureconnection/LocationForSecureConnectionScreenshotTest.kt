@@ -63,4 +63,19 @@ class LocationForSecureConnectionScreenshotTest {
             )
         }
     }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `LocationForSecureConnection with HTTP url`() {
+        HAThemeForPreview {
+            LocationForSecureConnectionScreen(
+                onAllowInsecureConnection = { _ -> },
+                onHelpClick = {},
+                onShowSnackbar = { _, _ -> true },
+                initialAllowInsecureConnection = null,
+                hasPlainTextUrl = true,
+            )
+        }
+    }
 }

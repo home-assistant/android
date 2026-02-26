@@ -6,6 +6,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import timber.log.Timber
@@ -22,9 +23,23 @@ class LocationForSecureConnectionViewModel @AssistedInject constructor(
         try {
             val value = serverManager.getServer(serverId)?.connection?.allowInsecureConnection
             emit(value)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.e(e, "Failed to get initial AllowInsecureConnection for server $serverId")
             emit(null)
+        }
+    }
+
+    val hasPlainTextUrl: Flow<Boolean> = flow {
+        try {
+            val value = serverManager.getServer(serverId)?.connection?.hasPlainTextUrl ?: false
+            emit(value)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to get hasPlainTextUrl for server $serverId")
+            emit(false)
         }
     }
 
