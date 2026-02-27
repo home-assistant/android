@@ -53,8 +53,9 @@ class AssistVoiceInteractionServiceTest {
     private val assistConfigManager: AssistConfigManager = mockk(relaxed = true)
     private val wakeWordListener: WakeWordListener = mockk(relaxed = true)
     private val onWakeWordDetectedSlot = slot<(MicroWakeWordModelConfig) -> Unit>()
+    private val onListenerFailureSlot = slot<() -> Unit>()
     private val wakeWordListenerFactory: WakeWordListenerFactory = mockk {
-        every { create(capture(onWakeWordDetectedSlot), any(), any(), any()) } returns wakeWordListener
+        every { create(capture(onWakeWordDetectedSlot), any(), any(), capture(onListenerFailureSlot)) } returns wakeWordListener
     }
     private val clock = FakeClock()
 
@@ -192,6 +193,23 @@ class AssistVoiceInteractionServiceTest {
         advanceUntilIdle()
 
         coVerify(exactly = 0) { wakeWordListener.start(any(), any()) }
+    }
+
+    @Test
+    fun `Given wake word listening initialization failure when start listening then failure callback disables wake word`() = runTest {
+        coEvery { wakeWordListener.start(any(), any()) } coAnswers {
+            // Simulate a failure during initialization calling the failure callback
+            onListenerFailureSlot.captured.invoke()
+        }
+
+        val intent = Intent().apply {
+            action = "io.homeassistant.companion.android.START_LISTENING"
+        }
+
+        service.onStartCommand(intent, 0, 1)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { assistConfigManager.setWakeWordEnabled(false) }
     }
 
     @Test
