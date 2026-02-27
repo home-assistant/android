@@ -47,9 +47,13 @@ sealed interface AssistEvent {
 
     /** Signals that the pipeline has started processing and the UI can be shown */
     data object PipelineStarted : AssistEvent
+    data object PipelineEnded : AssistEvent
 
     /** Signals that the Assist UI should be dismissed without showing an error */
     data object Dismiss : AssistEvent
+
+    /** Signals that TTS audio playback has finished */
+    data object PlaybackFinished : AssistEvent
 }
 
 abstract class AssistViewModelBase(
@@ -120,6 +124,9 @@ abstract class AssistViewModelBase(
 
     private var currentPathBeingPlayed: String? = null
 
+    /** Whether TTS audio is currently being played back. Updated by playback handlers. */
+    protected var isPlayingAudio = false
+
     /**
      * @param text input to run an intent pipeline with, or `null` to run a STT pipeline (check if
      * STT is supported _before_ calling this function)
@@ -189,6 +196,7 @@ abstract class AssistViewModelBase(
                     AssistPipelineEventType.RUN_END -> {
                         stopRecording()
                         job?.cancel()
+                        onEvent(AssistEvent.PipelineEnded)
                     }
 
                     AssistPipelineEventType.ERROR -> if (handleError(event.data as? AssistPipelineError, onEvent)) {
@@ -215,8 +223,14 @@ abstract class AssistViewModelBase(
                 stopPlayback()
                 currentPlayAudioJob = viewModelScope.launch {
                     playAudio(audioPath).collect { state ->
-                        if (state == PlaybackState.STOP_PLAYING) {
-                            notifyContinueConversationIfNeeded(onEvent)
+                        when (state) {
+                            PlaybackState.PLAYING -> isPlayingAudio = true
+                            PlaybackState.STOP_PLAYING -> {
+                                isPlayingAudio = false
+                                onEvent(AssistEvent.PlaybackFinished)
+                                notifyContinueConversationIfNeeded(onEvent)
+                            }
+                            PlaybackState.READY -> { /* No op */ }
                         }
                     }
                 }
@@ -265,7 +279,10 @@ abstract class AssistViewModelBase(
         currentPlayAudioJob = viewModelScope.launch {
             val audioPath = data?.ttsOutput?.url
             if (!audioPath.isNullOrBlank()) {
+                isPlayingAudio = true
                 playAudio(audioPath).first { state -> state == PlaybackState.STOP_PLAYING }
+                isPlayingAudio = false
+                onEvent(AssistEvent.PlaybackFinished)
             }
             notifyContinueConversationIfNeeded(onEvent)
         }
@@ -393,7 +410,10 @@ abstract class AssistViewModelBase(
         recorderProactive = false
     }
 
-    protected fun stopPlayback() = currentPlayAudioJob?.cancel()
+    protected fun stopPlayback() {
+        currentPlayAudioJob?.cancel()
+        isPlayingAudio = false
+    }
 
     /**
      * Checks if the conversation should continue and notifies the UI if so.
