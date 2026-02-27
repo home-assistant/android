@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.assist.wakeword
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
-import io.homeassistant.companion.android.util.PlayServicesAvailability
 import javax.inject.Inject
 
 /**
@@ -11,8 +10,6 @@ import javax.inject.Inject
  * This allows components to create listeners without holding a Context reference directly.
  */
 class WakeWordListenerFactory @Inject constructor(@ApplicationContext private val context: Context) {
-    @Inject
-    internal lateinit var playServicesAvailability: PlayServicesAvailability
 
     /**
      * Creates a new [WakeWordListener] with the given callbacks.
