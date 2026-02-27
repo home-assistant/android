@@ -812,7 +812,7 @@ suspend fun Entity.onPressed(integrationRepository: IntegrationRepository) {
     }
 
     if (action == null) {
-        Timber.tag(EntityExt.TAG).w("No action returned when entity '%s' was pressed", entityId)
+        Timber.tag(EntityExt.TAG).w("No action called when entity '%s' was pressed", entityId)
         return
     }
 

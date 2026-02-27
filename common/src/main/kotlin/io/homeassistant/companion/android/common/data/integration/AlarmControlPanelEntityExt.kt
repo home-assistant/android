@@ -1,11 +1,14 @@
 package io.homeassistant.companion.android.common.data.integration
 
+import androidx.annotation.VisibleForTesting
 import timber.log.Timber
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.ALARM_CONTROL_PANEL_DOMAIN
 
-const val ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY = 2
+@VisibleForTesting
+internal const val ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY = 2
 
 private fun Entity.isAlarmControlPanelEntity(): Boolean {
-    return domain == "alarm_control_panel"
+    return domain == ALARM_CONTROL_PANEL_DOMAIN
 }
 
 private fun Entity.alarmHasNoCode(): Boolean {
