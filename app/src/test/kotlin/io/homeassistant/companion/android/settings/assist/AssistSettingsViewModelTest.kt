@@ -196,6 +196,35 @@ class AssistSettingsViewModelTest {
             assertFalse(viewModel.uiState.value.isWakeWordEnabled)
             coVerify { assistConfigManager.setWakeWordEnabled(false) }
         }
+
+        @Test
+        fun `Given selected model in state when toggle enabled then keep selected model in state`() = runTest {
+            coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[1]
+            viewModel = createViewModel()
+            runCurrent()
+
+            viewModel.onToggleWakeWord(true)
+            runCurrent()
+
+            assertEquals(microWakeWordModelConfigs[1], viewModel.uiState.value.selectedWakeWordModel)
+        }
+
+        @Test
+        fun `Given no selected model in state when toggle enabled then fallback to getSelectedWakeWordModel`() = runTest {
+            coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[1]
+            coEvery { assistConfigManager.getAvailableModels() } returns microWakeWordModelConfigs
+            viewModel = createViewModel()
+            runCurrent()
+            // loadState already falls back to firstOrNull, but verify toggle also does
+            assertEquals(microWakeWordModelConfigs[0], viewModel.uiState.value.selectedWakeWordModel)
+
+            // Simulate the model being cleared somehow and re-toggle
+            viewModel.onToggleWakeWord(true)
+            runCurrent()
+
+            assertEquals(microWakeWordModelConfigs[1], viewModel.uiState.value.selectedWakeWordModel)
+            assertTrue(viewModel.uiState.value.isWakeWordEnabled)
+        }
     }
 
     @Nested

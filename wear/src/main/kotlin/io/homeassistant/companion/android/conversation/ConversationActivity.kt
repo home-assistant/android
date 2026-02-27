@@ -16,14 +16,27 @@ import androidx.core.content.getSystemService
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.lifecycle.withCreationCallback
+import io.homeassistant.companion.android.common.assist.DefaultAssistAudioStrategy
+import io.homeassistant.companion.android.common.util.VoiceAudioRecorder
 import io.homeassistant.companion.android.conversation.views.LoadAssistView
 import io.homeassistant.companion.android.home.HomeActivity
+import javax.inject.Inject
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class ConversationActivity : ComponentActivity() {
 
-    private val conversationViewModel by viewModels<ConversationViewModel>()
+    @Inject
+    lateinit var voiceAudioRecorder: VoiceAudioRecorder
+
+    private val conversationViewModel: ConversationViewModel by viewModels(
+        extrasProducer = {
+            defaultViewModelCreationExtras.withCreationCallback<ConversationViewModel.Factory> { factory ->
+                factory.create(DefaultAssistAudioStrategy(voiceAudioRecorder, getSystemService()))
+            }
+        },
+    )
     companion object {
         fun newInstance(context: Context): Intent {
             return Intent(context, ConversationActivity::class.java)

@@ -17,10 +17,11 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineRunStart
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineSttEnd
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineTtsEnd
-import io.homeassistant.companion.android.common.util.AudioRecorder
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.PlaybackState
+import io.homeassistant.companion.android.common.util.VOICE_SAMPLE_RATE
+import io.homeassistant.companion.android.common.util.toAudioBytes
 import io.homeassistant.companion.android.util.UrlUtil
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CancellationException
@@ -53,8 +54,8 @@ sealed interface AssistEvent {
 }
 
 abstract class AssistViewModelBase(
-    private val serverManager: ServerManager,
-    private val audioRecorder: AudioRecorder,
+    protected val serverManager: ServerManager,
+    protected val audioStrategy: AssistAudioStrategy,
     private val audioUrlPlayer: AudioUrlPlayer,
     application: Application,
 ) : AndroidViewModel(application) {
@@ -80,14 +81,14 @@ abstract class AssistViewModelBase(
 
     /**
      * Parent job managing the audio recording pipeline. Contains both the producer
-     * (collecting from [AudioRecorder.audioBytes]) and consumer (forwarding to server).
+     * (collecting from [AssistAudioStrategy.audioData]) and consumer (forwarding to server).
      * Joining this job ensures all buffered audio has been sent before cleanup.
      */
     private var recorderJob: Job? = null
 
     /**
-     * Child job that collects audio bytes from [AudioRecorder.audioBytes] SharedFlow
-     * and buffers them in a channel. Cancelled separately from [recorderJob] to stop
+     * Child job that collects audio data from [AssistAudioStrategy.audioData] and
+     * buffers them in a channel. Cancelled separately from [recorderJob] to stop
      * collecting while still allowing the consumer to drain buffered data.
      */
     private var producerJob: Job? = null
@@ -138,7 +139,7 @@ abstract class AssistViewModelBase(
             val flow = try {
                 if (isVoice) {
                     serverManager.webSocketRepository(selectedServerId).runAssistPipelineForVoice(
-                        sampleRate = AudioRecorder.SAMPLE_RATE,
+                        sampleRate = VOICE_SAMPLE_RATE,
                         outputTts = pipeline?.ttsEngine?.isNotBlank() == true,
                         pipelineId = pipeline?.id,
                         conversationId = conversationId,
@@ -294,8 +295,8 @@ abstract class AssistViewModelBase(
      * Audio data is buffered until the server is ready to receive, then all
      * buffered and subsequent audio is forwarded.
      *
-     * Note: [AudioRecorder.audioBytes] is a SharedFlow which never completes, so we use
-     * explicit channel management to allow graceful shutdown with buffer draining.
+     * Collects from [audioStrategy]'s [AssistAudioStrategy.audioData] flow, converts
+     * each [ShortArray] chunk to bytes via [toAudioBytes], and sends them to the server.
      */
     @VisibleForTesting(otherwise = PROTECTED)
     fun setupRecorder() {
@@ -305,10 +306,9 @@ abstract class AssistViewModelBase(
         recorderJob = viewModelScope.launch {
             val audioChannel = Channel<ByteArray>(Channel.UNLIMITED)
 
-            // Producer: collect from SharedFlow and buffer in channel
             producerJob = launch {
-                audioRecorder.audioBytes.collect { data ->
-                    audioChannel.send(data)
+                audioStrategy.audioData().collect { samples ->
+                    audioChannel.send(samples.toAudioBytes())
                 }
             }.apply {
                 invokeOnCompletion {
@@ -355,7 +355,7 @@ abstract class AssistViewModelBase(
     }
 
     private fun stopAudioCapture() {
-        audioRecorder.stopRecording()
+        audioStrategy.abandonFocus()
         producerJob?.cancel()
         producerJob = null
     }

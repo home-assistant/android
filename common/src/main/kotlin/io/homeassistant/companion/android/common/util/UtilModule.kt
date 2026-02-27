@@ -17,8 +17,7 @@ object UtilModule {
 
     @Provides
     @Singleton
-    fun provideAudioRecorder(@ApplicationContext appContext: Context): AudioRecorder =
-        AudioRecorder(appContext.getSystemService<AudioManager>())
+    fun provideVoiceAudioRecorder(): VoiceAudioRecorder = VoiceAudioRecorder()
 
     @Provides
     @Singleton
