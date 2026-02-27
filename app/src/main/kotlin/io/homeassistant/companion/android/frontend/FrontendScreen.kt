@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.frontend
 
+import android.annotation.SuppressLint
 import android.net.Uri
+import android.os.Build
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.background
@@ -42,6 +44,7 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorScreen
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
+import io.homeassistant.companion.android.frontend.permissions.NotificationPermissionPrompt
 import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModel
@@ -114,6 +117,7 @@ internal fun FrontendScreen(
         onSecurityLevelDone = viewModel::onSecurityLevelDone,
         onSecurityLevelHelpClick = onSecurityLevelHelpClick,
         onShowSnackbar = onShowSnackbar,
+        onNotificationPermissionResult = viewModel::onNotificationPermissionResult,
         modifier = modifier,
     )
 }
@@ -138,6 +142,8 @@ internal fun FrontendScreenContent(
     errorStateProvider: FrontendConnectionErrorStateProvider = FrontendConnectionErrorStateProvider.noOp,
     securityLevelViewModel: LocationForSecureConnectionViewModel? = null,
     onSecurityLevelDone: () -> Unit = {},
+    onNotificationPermissionResult: (Boolean) -> Unit = {},
+    supportsNotificationPermission: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU,
 ) {
     var webView by remember { mutableStateOf<WebView?>(null) }
 
@@ -171,6 +177,8 @@ internal fun FrontendScreenContent(
             onConfigureHomeNetwork = onConfigureHomeNetwork,
             onOpenExternalLink = onOpenExternalLink,
             onShowSnackbar = onShowSnackbar,
+            onNotificationPermissionResult = onNotificationPermissionResult,
+            supportsNotificationPermission = supportsNotificationPermission,
         )
     }
 }
@@ -193,6 +201,8 @@ private fun StateOverlay(
     onConfigureHomeNetwork: (serverId: Int) -> Unit,
     onOpenExternalLink: suspend (Uri) -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
+    onNotificationPermissionResult: (Boolean) -> Unit,
+    supportsNotificationPermission: Boolean,
 ) {
     when (viewState) {
         is FrontendViewState.LoadServer,
@@ -200,7 +210,10 @@ private fun StateOverlay(
         -> LoadingScreen(modifier = Modifier.background(LocalHAColorScheme.current.colorSurfaceDefault))
 
         is FrontendViewState.Content -> {
-            // WebView is visible, no overlay needed
+            if (viewState.showNotificationPermission && supportsNotificationPermission) {
+                @SuppressLint("InlinedApi")
+                NotificationPermissionPrompt(onPermissionResult = onNotificationPermissionResult)
+            }
         }
 
         is FrontendViewState.SecurityLevelRequired -> SecurityLevelOverlay(
