@@ -73,7 +73,7 @@ interface WebViewPresenter {
     suspend fun parseWebViewColor(webViewColor: String): Int
 
     fun appCanCommissionMatterDevice(): Boolean
-    fun startCommissioningMatterDevice(context: Context)
+    fun startCommissioningMatterDevice(context: Context, tlv: String?, borderAgentId: String?)
 
     /** @return `true` if the app can send this device's preferred Thread credential to the server */
     fun appCanExportThreadCredentials(): Boolean
