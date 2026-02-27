@@ -160,7 +160,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
 
     private fun onListenerFailed() {
         serviceScope.launch {
-            Timber.w("Wake word listener failed, disabling wake word to prevent issues")
+            Timber.w("Wake word listener failed, disabling wake word to prevent issue")
             @SuppressLint("MissingPermission")
             assistConfigManager.setWakeWordEnabled(false)
         }

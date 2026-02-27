@@ -13,10 +13,10 @@ import timber.log.Timber
  */
 class TfLiteInitializerImpl : TfLiteInitializer {
 
-    override suspend fun initialize(context: Context, playServicesAvailability: Boolean) {
+    override suspend fun initialize(context: Context, playServicesAvailable: Boolean) {
         Timber.d("Initializing TFLite via Play Services")
         try {
-            if (!playServicesAvailability) {
+            if (!playServicesAvailable) {
                 throw TfLiteInitializeException("Play Services is unavailable")
             }
 

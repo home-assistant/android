@@ -58,7 +58,7 @@ class WakeWordListenerTest {
     }
 
     private fun createListener(
-        playServicesAvailability: Boolean = false,
+        playServicesAvailable: Boolean = false,
         onListenerReady: (MicroWakeWordModelConfig) -> Unit = {},
         onWakeWordDetected: (MicroWakeWordModelConfig) -> Unit = {},
         onListenerStopped: () -> Unit = {},
@@ -70,7 +70,7 @@ class WakeWordListenerTest {
             onWakeWordDetected = onWakeWordDetected,
             onListenerStopped = onListenerStopped,
             onListenerFailed = onListenerFailed,
-            playServicesAvailability = playServicesAvailability,
+            playServicesAvailable = playServicesAvailable,
             tfLiteInitializer = tfLiteInitializer,
             microWakeWordFactory = { microWakeWord },
             audioRecordFactory = { audioRecord },
@@ -291,7 +291,7 @@ class WakeWordListenerTest {
         fun `Given TFLite initialization fails when Play Services is unavailable then failed callback is invoked`() = runTest {
             var detectedCalled = false
             val listener = createListener(
-                playServicesAvailability = false,
+                playServicesAvailable = false,
                 onListenerFailed = { detectedCalled = true }
             )
             val expectedException = TfLiteInitializeException("Play Services is unavailable")

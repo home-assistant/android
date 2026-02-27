@@ -32,7 +32,7 @@ import timber.log.Timber
  * **Thread Safety:** This class is thread-safe. [start] and [stop] can be called from any thread.
  *
  * @param context Android context for loading assets and accessing audio
- * @param playServicesAvailability Boolean indicating whether Google Play Services is available
+ * @param playServicesAvailable Boolean indicating whether Google Play Services is available
  * @param onListenerReady Callback invoked when initialization completes and listening begins
  * @param onWakeWordDetected Callback invoked when a wake word is detected
  * @param onListenerStopped Callback invoked when the listener stops (normally or due to error)
@@ -46,7 +46,7 @@ class WakeWordListener(
     private val onListenerReady: (MicroWakeWordModelConfig) -> Unit = {},
     private val onListenerStopped: () -> Unit = {},
     private val onListenerFailed: () -> Unit = {},
-    private val playServicesAvailability: Boolean = false,
+    private val playServicesAvailable: Boolean = false,
     private val tfLiteInitializer: TfLiteInitializer = TfLiteInitializerImpl(),
     private val microWakeWordFactory: suspend (
         MicroWakeWordModelConfig,
@@ -126,7 +126,7 @@ class WakeWordListener(
     }
 
     private suspend fun initializeMicroWakeWord(modelConfig: MicroWakeWordModelConfig): MicroWakeWord {
-        tfLiteInitializer.initialize(context, playServicesAvailability)
+        tfLiteInitializer.initialize(context, playServicesAvailable)
 
         val microWakeWord = microWakeWordFactory(modelConfig)
         Timber.d("MicroWakeWord initialized with '$modelConfig'")

@@ -13,11 +13,11 @@ interface TfLiteInitializer {
      * Initialize the TFLite runtime.
      *
      * @param context Application context
-     * @param playServicesAvailability Boolean indicating whether Google Play Services is available
+     * @param playServicesAvailable Boolean indicating whether Google Play Services is available
      *
      * @throws Exception if any exception occurred during initialization
      */
-    suspend fun initialize(context: Context, playServicesAvailability: Boolean)
+    suspend fun initialize(context: Context, playServicesAvailable: Boolean)
 }
 
 
