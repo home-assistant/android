@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<samsung-appwidget-provider
+    display="sub_screen"
+    parentComponent="io.homeassistant.companion.android/io.homeassistant.companion.android.widgets.button.ButtonWidget"
+    privacyWidget="false" />

@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Color
 import android.os.Handler
 import android.os.Looper
@@ -48,8 +49,23 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+/** Default button widget registered in the manifest */
 @AndroidEntryPoint
-class ButtonWidget : AppWidgetProvider() {
+class ButtonWidget : ButtonWidgetBase()
+
+/**
+ * 2x2 variant of the Button widget for the Samsung Z Flip cover screen.
+ */
+@AndroidEntryPoint
+class ButtonWidget2x2 : ButtonWidgetBase()
+
+
+/**
+ * Base sealed class for all button widget variants.
+ * Use to be able to list of ButtonWidget variant using `sealedSubclasses`
+ */
+@AndroidEntryPoint
+abstract class ButtonWidgetBase : AppWidgetProvider() {
     companion object {
         const val CALL_SERVICE =
             "io.homeassistant.companion.android.widgets.button.ButtonWidget.CALL_SERVICE"
@@ -81,7 +97,8 @@ class ButtonWidget : AppWidgetProvider() {
     private fun updateAllWidgets(context: Context) {
         mainScope.launch {
             val appWidgetManager = AppWidgetManager.getInstance(context) ?: return@launch
-            val systemWidgetIds = appWidgetManager.getAppWidgetIds(ComponentName(context, ButtonWidget::class.java))
+            val systemWidgetIds = listOf(ButtonWidget::class.java, ButtonWidget2x2::class.java)
+                .flatMap { appWidgetManager.getAppWidgetIds(ComponentName(context, it)).toList() }
             val dbWidgetList = buttonWidgetDao.getAll()
 
             val invalidWidgetIds = dbWidgetList
@@ -175,10 +192,15 @@ class ButtonWidget : AppWidgetProvider() {
         // (e.g home screen rotation) the widget will fall back on its default layout
         // without any click listener being applied
 
+        val appWidgetManager = AppWidgetManager.getInstance(context)
+        val widgetInfo = appWidgetManager.getAppWidgetInfo(appWidgetId)
+        val component = widgetInfo?.provider ?: ComponentName(context, ButtonWidget::class.java)
+
         val widget = buttonWidgetDao.get(appWidgetId)
         val auth = widget?.requireAuthentication == true
 
-        val intent = Intent(context, ButtonWidget::class.java).apply {
+        val intent = Intent().apply {
+            this.component = component
             action = if (auth) CALL_SERVICE_AUTH else CALL_SERVICE
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
@@ -222,7 +244,7 @@ class ButtonWidget : AppWidgetProvider() {
 
             // Determine reasonable dimensions for drawing vector icon as a bitmap
             val aspectRatio = iconDrawable.intrinsicWidth / iconDrawable.intrinsicHeight.toDouble()
-            val awo = if (widget != null) AppWidgetManager.getInstance(context).getAppWidgetOptions(widget.id) else null
+            val awo = if (widget != null) appWidgetManager.getAppWidgetOptions(widget.id) else null
             val maxWidth = (
                 awo?.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, DEFAULT_MAX_ICON_SIZE)
                     ?: DEFAULT_MAX_ICON_SIZE
