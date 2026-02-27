@@ -118,21 +118,21 @@ class AssistActivity : BaseActivity() {
                     currentPipeline = viewModel.currentPipeline,
                     onSelectPipeline = viewModel::changePipeline,
                     onManagePipelines =
-                    if (fromFrontend && viewModel.userCanManagePipelines) {
-                        {
-                            startActivity(
-                                WebViewActivity.newInstance(
-                                    this,
-                                    "config/voice-assistants/assistants",
-                                ).apply {
-                                    flags += Intent.FLAG_ACTIVITY_NEW_TASK // Delivers data in onNewIntent
-                                },
-                            )
-                            finish()
-                        }
-                    } else {
-                        null
-                    },
+                        if (fromFrontend && viewModel.userCanManagePipelines) {
+                            {
+                                startActivity(
+                                    WebViewActivity.newInstance(
+                                        this,
+                                        "config/voice-assistants/assistants",
+                                    ).apply {
+                                        flags += Intent.FLAG_ACTIVITY_NEW_TASK // Delivers data in onNewIntent
+                                    },
+                                )
+                                finish()
+                            }
+                        } else {
+                            null
+                        },
                     onChangeInput = viewModel::onChangeInput,
                     onTextInput = viewModel::onTextInput,
                     onMicrophoneInput = viewModel::onMicrophoneInput,
