@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 9.0.0" type="baseline" client="gradle" dependencies="false" name="AGP (9.0.0)" variant="all" version="9.0.0">
+<issues format="6" by="lint 9.0.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.0.1)" variant="all" version="9.0.1">
 
     <issue
         id="MissingPermission"
@@ -707,13 +707,13 @@
 
     <issue
         id="ObsoleteSdkInt"
-        message="Unnecessary; `SDK_INT` is always >= 29"
-        errorLine1="                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &amp;&amp; isValidServerId() &amp;&amp; selectedEntity != null) {"
-        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        message="Unnecessary; `SDK_INT` is always >= 26"
+        errorLine1="    @RequiresApi(Build.VERSION_CODES.O)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/camera/CameraWidgetConfigureActivity.kt"
-            line="75"
-            column="25"/>
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/camera/CameraWidgetConfigureViewModel.kt"
+            line="211"
+            column="5"/>
     </issue>
 
     <issue
@@ -3021,6 +3021,61 @@
 
     <issue
         id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Server> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `servers: ImmutableList&lt;Server>` or create an `@Immutable` wrapper for this class: `@Immutable data class ServersList(val items: List&lt;Server>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    servers: List&lt;Server>,"
+        errorLine2="             ~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/camera/CameraWidgetConfigureActivity.kt"
+            line="173"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Entity> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entities: ImmutableList&lt;Entity>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesList(val items: List&lt;Entity>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    entities: List&lt;Entity>,"
+        errorLine2="              ~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/camera/CameraWidgetConfigureActivity.kt"
+            line="176"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;EntityRegistryResponse>? is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entityRegistry: ImmutableList&lt;EntityRegistryResponse>?` or create an `@Immutable` wrapper for this class: `@Immutable data class EntityRegistryList(val items: List&lt;EntityRegistryResponse>?)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    entityRegistry: List&lt;EntityRegistryResponse>? = null,"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/camera/CameraWidgetConfigureActivity.kt"
+            line="182"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;DeviceRegistryResponse>? is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `deviceRegistry: ImmutableList&lt;DeviceRegistryResponse>?` or create an `@Immutable` wrapper for this class: `@Immutable data class DeviceRegistryList(val items: List&lt;DeviceRegistryResponse>?)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    deviceRegistry: List&lt;DeviceRegistryResponse>? = null,"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/camera/CameraWidgetConfigureActivity.kt"
+            line="183"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;AreaRegistryResponse>? is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `areaRegistry: ImmutableList&lt;AreaRegistryResponse>?` or create an `@Immutable` wrapper for this class: `@Immutable data class AreaRegistryList(val items: List&lt;AreaRegistryResponse>?)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    areaRegistry: List&lt;AreaRegistryResponse>? = null,"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/camera/CameraWidgetConfigureActivity.kt"
+            line="184"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
         message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Entity> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entities: ImmutableList&lt;Entity>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesList(val items: List&lt;Entity>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
         errorLine1="    entities: List&lt;Entity>,"
         errorLine2="              ~~~~~~~~~~~~">
@@ -3125,7 +3180,7 @@
         errorLine2="          ~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/compose/ExposedDropdownMenu.kt"
-            line="29"
+            line="41"
             column="11"/>
     </issue>
 
@@ -3136,8 +3191,19 @@
         errorLine2="             ~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/compose/ExposedDropdownMenu.kt"
-            line="66"
+            line="78"
             column="14"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;String> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `keys: ImmutableList&lt;String>` or create an `@Immutable` wrapper for this class: `@Immutable data class KeysList(val items: List&lt;String>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    keys: List&lt;String>,"
+        errorLine2="          ~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/compose/ExposedDropdownMenu.kt"
+            line="121"
+            column="11"/>
     </issue>
 
     <issue

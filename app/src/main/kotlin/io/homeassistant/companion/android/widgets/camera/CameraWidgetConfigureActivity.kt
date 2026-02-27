@@ -1,39 +1,61 @@
 package io.homeassistant.companion.android.widgets.camera
 
-import android.R.layout
+import android.annotation.SuppressLint
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.view.View
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
-import android.widget.AutoCompleteTextView
-import android.widget.Spinner
 import android.widget.Toast
+import androidx.activity.compose.setContent
+import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import io.homeassistant.companion.android.common.R as commonR
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.common.R as commonR
+import dagger.hilt.android.lifecycle.withCreationCallback
+import io.homeassistant.companion.android.BaseActivity
+import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
+import io.homeassistant.companion.android.common.compose.composable.HATopBar
+import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
-import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.IMAGE_DOMAIN
-import io.homeassistant.companion.android.database.widget.CameraWidgetDao
-import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
+import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
-import io.homeassistant.companion.android.databinding.WidgetCameraConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
-import io.homeassistant.companion.android.util.applySafeDrawingInsets
-import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
-import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
+import io.homeassistant.companion.android.util.compose.HAExposedDropdownMenu
+import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
+import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
+import io.homeassistant.companion.android.util.compose.entity.EntityPicker
+import io.homeassistant.companion.android.util.safeBottomWindowInsets
+import kotlin.collections.emptyList
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
-// TODO Migrate to compose https://github.com/home-assistant/android/issues/6306
 @AndroidEntryPoint
-class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity<CameraWidgetEntity, CameraWidgetDao>() {
+class CameraWidgetConfigureActivity : BaseActivity() {
 
     companion object {
+        private const val FOR_ENTITY = "for_entity"
+
         fun newInstance(context: Context, entityId: String): Intent {
             return Intent(context, CameraWidgetConfigureActivity::class.java).apply {
                 putExtra(FOR_ENTITY, entityId)
@@ -43,171 +65,177 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity<CameraWidgetEn
         }
     }
 
-    private lateinit var binding: WidgetCameraConfigureBinding
-
-    override val serverSelect: View
-        get() = binding.serverSelect
-
-    override val serverSelectList: Spinner
-        get() = binding.serverSelectList
-
-    private var requestLauncherSetup = false
-
-    private var entities = mutableMapOf<Int, List<Entity>>()
-    private var selectedEntity: Entity? = null
-
-    private var entityAdapter: SingleItemArrayAdapter<Entity>? = null
+    private val viewModel: CameraWidgetConfigureViewModel by viewModels(
+        extrasProducer = {
+            defaultViewModelCreationExtras.withCreationCallback<CameraWidgetConfigureViewModel.Factory> {  factory ->
+                factory.create(intent.extras?.getString(FOR_ENTITY, null))
+            }
+        },
+    )
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdgeCompat()
 
         // Set the result to CANCELED.  This will cause the widget host to cancel
         // out of the widget placement if the user presses the back button.
         setResult(RESULT_CANCELED)
+        val widgetId = intent?.extras?.getInt(
+            AppWidgetManager.EXTRA_APPWIDGET_ID,
+            AppWidgetManager.INVALID_APPWIDGET_ID,
+        ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
 
-        binding = WidgetCameraConfigureBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        binding.root.applySafeDrawingInsets()
+        viewModel.onSetup(widgetId)
 
-        binding.addButton.setOnClickListener {
-            lifecycleScope.launch {
-                if (requestLauncherSetup) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && isValidServerId() && selectedEntity != null) {
-                        requestWidgetCreation()
-                    } else {
-                        showAddWidgetError()
-                    }
+        setContent {
+            HATheme {
+                CameraWidgetConfigureScreen(
+                    viewModel = viewModel,
+                    onActionClick = { onActionClick() }
+                )
+            }
+        }
+    }
+
+    @SuppressLint("ObsoleteSdkInt")
+    private fun onActionClick() {
+        lifecycleScope.launch {
+            if(intent.extras?.getBoolean(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, false) ?: false) {
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && viewModel.isValidSelection()) {
+                    requestPinWidget()
                 } else {
-                    updateWidget()
+                    showAddWidgetError()
                 }
-            }
-        }
-
-        // Find the widget id from the intent.
-        val intent = intent
-        val extras = intent.extras
-        if (extras != null) {
-            if (extras.containsKey(FOR_ENTITY)) {
-                binding.widgetTextConfigEntityId.setText(extras.getString(FOR_ENTITY))
-            }
-
-            appWidgetId = extras.getInt(
-                AppWidgetManager.EXTRA_APPWIDGET_ID,
-                AppWidgetManager.INVALID_APPWIDGET_ID,
-            )
-            requestLauncherSetup = extras.getBoolean(
-                ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER,
-                false,
-            )
-        }
-
-        // If this activity was started with an intent without an app widget ID, finish with an error.
-        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID && !requestLauncherSetup) {
-            finish()
-            return
-        }
-        initTapActionsSpinner()
-
-        lifecycleScope.launch {
-            val cameraWidget = dao.get(appWidgetId)
-            if (cameraWidget != null) {
-                setCurrentTapAction(tapAction = cameraWidget.tapAction)
-                binding.widgetTextConfigEntityId.setText(cameraWidget.entityId)
-                binding.addButton.setText(commonR.string.update_widget)
-                val entity = try {
-                    serverManager.integrationRepository(cameraWidget.serverId).getEntity(cameraWidget.entityId)
-                } catch (e: Exception) {
-                    Timber.e(e, "Unable to get entity information")
-                    Toast.makeText(applicationContext, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
-                        .show()
-                    null
-                }
-
-                if (entity != null) {
-                    selectedEntity = entity as Entity?
-                }
-            }
-
-            setupServerSelect(cameraWidget?.serverId)
-        }
-
-        entityAdapter = SingleItemArrayAdapter(this) { it?.entityId ?: "" }
-
-        binding.widgetTextConfigEntityId.setAdapter(entityAdapter)
-        binding.widgetTextConfigEntityId.onFocusChangeListener = dropDownOnFocus
-        binding.widgetTextConfigEntityId.onItemClickListener = entityDropDownOnItemClick
-
-        lifecycleScope.launch {
-            serverManager.servers().forEach { server ->
-                launch {
-                    try {
-                        val fetchedEntities = serverManager.integrationRepository(server.id).getEntities().orEmpty()
-                            .filter { it.domain == CAMERA_DOMAIN || it.domain == IMAGE_DOMAIN }
-                        entities[server.id] = fetchedEntities
-                        if (server.id == selectedServerId) setAdapterEntities(server.id)
-                    } catch (e: Exception) {
-                        // If entities fail to load, it's okay to pass
-                        // an empty map to the dynamicFieldAdapter
-                        Timber.e(e, "Failed to query entities")
-                    }
-                }
-            }
-        }
-    }
-
-    override fun onServerSelected(serverId: Int) {
-        selectedEntity = null
-        binding.widgetTextConfigEntityId.setText("")
-        setAdapterEntities(serverId)
-    }
-
-    override suspend fun getPendingDaoEntity(): CameraWidgetEntity {
-        val serverId = checkNotNull(selectedServerId) { "Selected server ID is null" }
-        val entityId = checkNotNull(selectedEntity?.entityId) { "Selected entity is null" }
-
-        return CameraWidgetEntity(
-            id = appWidgetId,
-            serverId = serverId,
-            entityId = entityId,
-            tapAction = if (binding.tapActionList.selectedItemPosition == 0) {
-                WidgetTapAction.REFRESH
             } else {
-                WidgetTapAction.OPEN
-            },
-        )
-    }
-
-    override val widgetClass: Class<*> = CameraWidget::class.java
-
-    private fun setAdapterEntities(serverId: Int) {
-        entityAdapter?.let { adapter ->
-            adapter.clearAll()
-            if (entities[serverId] != null) {
-                adapter.addAll(entities[serverId].orEmpty().toMutableList())
-                adapter.sort()
+                onUpdateWidget()
             }
-            runOnUiThread { adapter.notifyDataSetChanged() }
         }
     }
 
-    private val dropDownOnFocus = View.OnFocusChangeListener { view, hasFocus ->
-        if (hasFocus && view is AutoCompleteTextView) {
-            view.showDropDown()
+    @SuppressLint("ObsoleteSdkInt")
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun requestPinWidget() {
+        val context = this@CameraWidgetConfigureActivity
+        lifecycleScope.launch {
+            viewModel.requestWidgetCreation(context)
+            finish()
         }
     }
 
-    private val entityDropDownOnItemClick =
-        AdapterView.OnItemClickListener { parent, _, position, _ ->
-            selectedEntity = parent.getItemAtPosition(position) as Entity?
+    private suspend fun onUpdateWidget() {
+        try {
+            viewModel.updateWidgetConfiguration()
+            setResult(RESULT_OK)
+            viewModel.updateWidget(this@CameraWidgetConfigureActivity)
+            finish()
+        } catch (_: Exception) {
+            showUpdateWidgetError()
         }
-
-    private fun initTapActionsSpinner() {
-        val tapActionValues =
-            listOf(getString(commonR.string.refresh), getString(commonR.string.widget_tap_action_open))
-        binding.tapActionList.adapter = ArrayAdapter(this, layout.simple_spinner_dropdown_item, tapActionValues)
     }
 
-    private fun setCurrentTapAction(tapAction: WidgetTapAction) {
-        binding.tapActionList.setSelection(if (tapAction == WidgetTapAction.REFRESH) 0 else 1)
+    private fun showAddWidgetError() {
+        Toast.makeText(applicationContext, commonR.string.widget_creation_error, Toast.LENGTH_LONG).show()
+    }
+
+    private fun showUpdateWidgetError() {
+        Toast.makeText(applicationContext, commonR.string.widget_update_error, Toast.LENGTH_LONG).show()
+    }
+}
+
+@Composable
+private fun CameraWidgetConfigureScreen(viewModel: CameraWidgetConfigureViewModel, onActionClick: () -> Unit) {
+    val servers by viewModel.servers.collectAsStateWithLifecycle(emptyList())
+    val entities by viewModel.entities.collectAsStateWithLifecycle()
+    val entityRegistry by viewModel.entityRegistry.collectAsStateWithLifecycle()
+    val deviceRegistry by viewModel.deviceRegistry.collectAsStateWithLifecycle()
+    val areaRegistry by viewModel.areaRegistry.collectAsStateWithLifecycle()
+
+    CameraWidgetConfigureView(
+        servers = servers,
+        selectedServerId = viewModel.selectedServerId,
+        onServerSelected = viewModel::setServer,
+        entities = entities,
+        selectedEntityId = viewModel.selectedEntityId,
+        onEntitySelected = { viewModel.selectedEntityId = it },
+        isUpdateWidget = viewModel.isUpdateWidget,
+        onTapSelected = { viewModel.selectedTapAction = WidgetTapAction.entries[it] },
+        entityRegistry = entityRegistry,
+        deviceRegistry = deviceRegistry,
+        areaRegistry = areaRegistry,
+        onActionClick = onActionClick,
+        selectedTapAction = viewModel.selectedTapAction
+    )
+
+}
+
+@Composable
+private fun CameraWidgetConfigureView(
+    servers: List<Server>,
+    selectedServerId: Int,
+    onServerSelected: (Int) -> Unit,
+    entities: List<Entity>,
+    selectedEntityId: String?,
+    onEntitySelected: (String?) -> Unit,
+    isUpdateWidget: Boolean,
+    onTapSelected: (Int) -> Unit,
+    onActionClick: () -> Unit,
+    entityRegistry: List<EntityRegistryResponse>? = null,
+    deviceRegistry: List<DeviceRegistryResponse>? = null,
+    areaRegistry: List<AreaRegistryResponse>? = null,
+    selectedTapAction: WidgetTapAction? = null,
+) {
+    Scaffold(
+        topBar = {
+            HATopBar(
+                title = { Text(stringResource(commonR.string.widget_camera_description)) },
+            )
+        },
+        contentWindowInsets = WindowInsets.safeDrawing
+    )  {padding ->
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .windowInsetsPadding(safeBottomWindowInsets())
+                .padding(padding)
+                .padding(all = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            if(servers.size > 1) {
+                ServerExposedDropdownMenu(
+                    servers = servers,
+                    current = selectedServerId,
+                    onSelected = onServerSelected,
+                    modifier = Modifier.padding(bottom = 16.dp),
+                )
+            }
+
+            EntityPicker(
+                entities = entities,
+                selectedEntityId = selectedEntityId,
+                onEntitySelectedId = { onEntitySelected(it) },
+                onEntityCleared = { onEntitySelected(null) },
+                entityRegistry = entityRegistry,
+                deviceRegistry = deviceRegistry,
+                areaRegistry = areaRegistry,
+                addButtonText = stringResource(commonR.string.add_to_camera_widget),
+            )
+
+            HAExposedDropdownMenu(
+                label = stringResource(commonR.string.widget_tap_action_label),
+                keys = listOf(
+                    stringResource(commonR.string.refresh),
+                    stringResource(commonR.string.widget_tap_action_open)
+                ),
+                currentIndex = selectedTapAction?.ordinal ?: 0,
+                onSelected =  { onTapSelected(it) },
+                modifier = Modifier.padding(bottom = 16.dp),
+            )
+
+            HAAccentButton(
+                onClick = { onActionClick() },
+                text = stringResource(if(isUpdateWidget) commonR.string.update_widget else commonR.string.add_widget),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }
