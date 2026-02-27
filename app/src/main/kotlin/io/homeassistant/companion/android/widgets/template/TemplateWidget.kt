@@ -21,17 +21,20 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.common.util.launchAsync
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.getAttribute
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
+import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.UPDATE_WIDGETS
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -42,7 +45,7 @@ class TemplateWidget : AppWidgetProvider() {
     companion object {
         const val UPDATE_VIEW =
             "io.homeassistant.companion.android.widgets.template.TemplateWidget.UPDATE_VIEW"
-        private var widgetScope: CoroutineScope? = null
+        private var widgetScope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
         private val widgetTemplates = mutableMapOf<Int, String>()
         private val widgetJobs = mutableMapOf<Int, Job>()
     }
@@ -53,7 +56,6 @@ class TemplateWidget : AppWidgetProvider() {
     @Inject
     lateinit var templateWidgetDao: TemplateWidgetDao
 
-    private var thisSetScope = false
     private var lastIntent = ""
 
     init {
@@ -61,16 +63,15 @@ class TemplateWidget : AppWidgetProvider() {
     }
 
     private fun setupWidgetScope() {
-        if (widgetScope == null || !widgetScope!!.isActive) {
+        if (!widgetScope.isActive) {
             widgetScope = CoroutineScope(Dispatchers.Main + Job())
-            thisSetScope = true
         }
     }
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         // There may be multiple widgets active, so update all of them
         for (appWidgetId in appWidgetIds) {
-            widgetScope?.launch {
+            widgetScope.launch {
                 val views = getWidgetRemoteViews(context, appWidgetId)
                 appWidgetManager.updateAppWidget(appWidgetId, views)
             }
@@ -79,7 +80,7 @@ class TemplateWidget : AppWidgetProvider() {
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
         // When the user deletes the widget, delete the preference associated with it.
-        widgetScope?.launch {
+        widgetScope.launch {
             templateWidgetDao.deleteAll(appWidgetIds)
             appWidgetIds.forEach {
                 widgetTemplates.remove(it)
@@ -94,16 +95,18 @@ class TemplateWidget : AppWidgetProvider() {
         val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
 
         super.onReceive(context, intent)
+
+        setupWidgetScope()
+
         when (lastIntent) {
-            UPDATE_VIEW -> updateView(context, appWidgetId)
-            UPDATE_WIDGETS -> onScreenOn(context)
-            Intent.ACTION_SCREEN_ON -> onScreenOn(context)
+            UPDATE_VIEW -> launchAsync(widgetScope) { updateView(context, appWidgetId) }
+            UPDATE_WIDGETS, Intent.ACTION_SCREEN_ON -> launchAsync(widgetScope) { onScreenOn(context) }
             Intent.ACTION_SCREEN_OFF -> onScreenOff()
             ACTION_APPWIDGET_CREATED -> {
-                if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
-                    FailFast.fail { "Missing appWidgetId in intent to add widget in DAO" }
-                } else {
-                    widgetScope?.launch {
+                launchAsync(widgetScope) {
+                    if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+                        FailFast.fail { "Missing appWidgetId in intent to add widget in DAO" }
+                    } else {
                         val entity = intent.extras?.let {
                             BundleCompat.getSerializable(
                                 it,
@@ -115,62 +118,58 @@ class TemplateWidget : AppWidgetProvider() {
                             templateWidgetDao.add(entity.copyWithWidgetId(appWidgetId))
                         } ?: FailFast.fail { "Missing $EXTRA_WIDGET_ENTITY or it's of the wrong type in intent." }
                     }
+                    onScreenOn(context)
                 }
-                onScreenOn(context)
             }
         }
     }
 
-    private fun onScreenOn(context: Context) {
-        setupWidgetScope()
-        widgetScope!!.launch {
-            if (!serverManager.isRegistered()) return@launch
-            updateAllWidgets(context)
+    private suspend fun onScreenOn(context: Context) {
+        if (!serverManager.isRegistered()) return
+        updateAllWidgets(context)
 
-            val allWidgets = templateWidgetDao.getAll()
-            val widgetsWithDifferentTemplate = allWidgets.filter { it.template != widgetTemplates[it.id] }
-            if (widgetsWithDifferentTemplate.isNotEmpty()) {
-                if (thisSetScope) {
-                    ContextCompat.registerReceiver(
-                        context.applicationContext,
-                        this@TemplateWidget,
-                        IntentFilter(Intent.ACTION_SCREEN_OFF),
-                        ContextCompat.RECEIVER_NOT_EXPORTED,
-                    )
-                }
+        val allWidgets = templateWidgetDao.getAll()
+        val widgetsWithDifferentTemplate = allWidgets.filter { it.template != widgetTemplates[it.id] }
+        if (widgetsWithDifferentTemplate.isNotEmpty()) {
+            ContextCompat.registerReceiver(
+                context.applicationContext,
+                this@TemplateWidget,
+                IntentFilter(Intent.ACTION_SCREEN_OFF),
+                ContextCompat.RECEIVER_NOT_EXPORTED,
+            )
 
-                widgetsWithDifferentTemplate.forEach { widget ->
-                    widgetJobs[widget.id]?.cancel()
+            widgetsWithDifferentTemplate.forEach { widget ->
+                widgetJobs[widget.id]?.cancel()
 
-                    val templateUpdates =
-                        if (serverManager.getServer(widget.serverId) != null) {
-                            serverManager.integrationRepository(widget.serverId).getTemplateUpdates(widget.template)
-                        } else {
-                            null
-                        }
-                    if (templateUpdates != null) {
-                        widgetTemplates[widget.id] = widget.template
-                        widgetJobs[widget.id] = widgetScope!!.launch {
-                            templateUpdates.collect {
-                                onTemplateChanged(context, widget.id, it)
-                            }
-                        }
-                    } else { // Remove data to make it retry on the next update
-                        widgetTemplates.remove(widget.id)
-                        widgetJobs.remove(widget.id)
+                val templateUpdates =
+                    if (serverManager.getServer(widget.serverId) != null) {
+                        serverManager.integrationRepository(widget.serverId).getTemplateUpdates(widget.template)
+                    } else {
+                        null
                     }
+                if (templateUpdates != null) {
+                    widgetTemplates[widget.id] = widget.template
+                    widgetJobs[widget.id] = widgetScope.launch {
+                        templateUpdates.collect {
+                            onTemplateChanged(context, widget.id, it)
+                        }
+                    }
+                } else { // Remove data to make it retry on the next update
+                    widgetTemplates.remove(widget.id)
+                    widgetJobs.remove(widget.id)
                 }
             }
         }
     }
 
     private fun onScreenOff() {
-        if (thisSetScope) {
-            widgetScope?.cancel()
-            thisSetScope = false
-            widgetTemplates.clear()
-            widgetJobs.clear()
+        try {
+            widgetScope.cancel()
+        } catch (e: IllegalStateException) {
+            Timber.w(e, "Calling onScreenOff without any job started")
         }
+        widgetTemplates.clear()
+        widgetJobs.clear()
     }
 
     private suspend fun updateAllWidgets(context: Context) {
@@ -191,15 +190,13 @@ class TemplateWidget : AppWidgetProvider() {
         }
     }
 
-    private fun updateView(
+    private suspend fun updateView(
         context: Context,
         appWidgetId: Int,
         appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context),
     ) {
-        widgetScope?.launch {
-            val views = getWidgetRemoteViews(context, appWidgetId)
-            appWidgetManager.updateAppWidget(appWidgetId, views)
-        }
+        val views = getWidgetRemoteViews(context, appWidgetId)
+        appWidgetManager.updateAppWidget(appWidgetId, views)
     }
 
     private suspend fun getWidgetRemoteViews(
@@ -286,10 +283,8 @@ class TemplateWidget : AppWidgetProvider() {
         }
     }
 
-    private fun onTemplateChanged(context: Context, appWidgetId: Int, template: String?) {
-        widgetScope?.launch {
-            val views = getWidgetRemoteViews(context, appWidgetId, template)
-            AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, views)
-        }
+    private suspend fun onTemplateChanged(context: Context, appWidgetId: Int, template: String?) {
+        val views = getWidgetRemoteViews(context, appWidgetId, template)
+        AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, views)
     }
 }

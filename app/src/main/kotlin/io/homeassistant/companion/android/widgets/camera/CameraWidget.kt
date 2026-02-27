@@ -7,9 +7,6 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
-import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.View
 import android.widget.RemoteViews
 import androidx.core.os.BundleCompat
@@ -24,21 +21,22 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.common.util.launchAsync
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.util.hasActiveConnection
 import io.homeassistant.companion.android.webview.WebViewActivity
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
+import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.UPDATE_WIDGETS
-import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.widgetScope
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
 import io.homeassistant.companion.android.widgets.common.RemoteViewsTarget
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
@@ -50,11 +48,8 @@ class CameraWidget : AppWidgetProvider() {
     companion object {
         internal const val UPDATE_IMAGE =
             "io.homeassistant.companion.android.widgets.camera.CameraWidget.UPDATE_IMAGE"
-
-        internal const val EXTRA_SERVER_ID = "EXTRA_SERVER_ID"
-        internal const val EXTRA_ENTITY_ID = "EXTRA_ENTITY_ID"
-        internal const val EXTRA_TAP_ACTION = "EXTRA_TAP_ACTION"
         private var lastIntent = ""
+        private var widgetScope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     }
 
     @Inject
@@ -66,20 +61,20 @@ class CameraWidget : AppWidgetProvider() {
     @Inject
     lateinit var okHttpClient: OkHttpClient
 
-    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
-
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         // There may be multiple widgets active, so update all of them
         appWidgetIds.forEach { appWidgetId ->
-            updateAppWidget(
-                context,
-                appWidgetId,
-                appWidgetManager,
-            )
+            widgetScope.launch {
+                updateAppWidget(
+                    context,
+                    appWidgetId,
+                    appWidgetManager,
+                )
+            }
         }
     }
 
-    private fun updateAppWidget(
+    private suspend fun updateAppWidget(
         context: Context,
         appWidgetId: Int,
         appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context),
@@ -88,32 +83,28 @@ class CameraWidget : AppWidgetProvider() {
             Timber.d("Skipping widget update since network connection is not active")
             return
         }
-        mainScope.launch {
-            val views = getWidgetRemoteViews(context, appWidgetId)
-            views?.let { appWidgetManager.updateAppWidget(appWidgetId, it) }
-        }
+        val views = getWidgetRemoteViews(context, appWidgetId)
+        views?.let { appWidgetManager.updateAppWidget(appWidgetId, it) }
     }
 
-    private fun updateAllWidgets(context: Context) {
-        mainScope.launch {
-            val appWidgetManager = AppWidgetManager.getInstance(context) ?: return@launch
-            val systemWidgetIds = appWidgetManager.getAppWidgetIds(ComponentName(context, CameraWidget::class.java))
-            val dbWidgetList = cameraWidgetDao.getAll()
+    private suspend fun updateAllWidgets(context: Context) {
+        val appWidgetManager = AppWidgetManager.getInstance(context) ?: return
+        val systemWidgetIds = appWidgetManager.getAppWidgetIds(ComponentName(context, CameraWidget::class.java))
+        val dbWidgetList = cameraWidgetDao.getAll()
 
-            val invalidWidgetIds = dbWidgetList
-                .filter { !systemWidgetIds.contains(it.id) }
-                .map { it.id }
-            if (invalidWidgetIds.isNotEmpty()) {
-                Timber.i("Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted")
-                onDeleted(context, invalidWidgetIds.toIntArray())
-            }
+        val invalidWidgetIds = dbWidgetList
+            .filter { !systemWidgetIds.contains(it.id) }
+            .map { it.id }
+        if (invalidWidgetIds.isNotEmpty()) {
+            Timber.i("Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted")
+            onDeleted(context, invalidWidgetIds.toIntArray())
+        }
 
-            val cameraWidgetList = dbWidgetList.filter { systemWidgetIds.contains(it.id) }
-            if (cameraWidgetList.isNotEmpty()) {
-                Timber.d("Updating all widgets")
-                for (item in cameraWidgetList) {
-                    updateAppWidget(context, item.id, appWidgetManager)
-                }
+        val cameraWidgetList = dbWidgetList.filter { systemWidgetIds.contains(it.id) }
+        if (cameraWidgetList.isNotEmpty()) {
+            Timber.d("Updating all widgets")
+            for (item in cameraWidgetList) {
+                updateAppWidget(context, item.id, appWidgetManager)
             }
         }
     }
@@ -175,21 +166,19 @@ class CameraWidget : AppWidgetProvider() {
                         View.GONE,
                     )
                     Timber.d("Fetching camera image")
-                    Handler(Looper.getMainLooper()).post {
-                        try {
-                            val request = ImageRequest.Builder(context)
-                                .data(url)
-                                .target(RemoteViewsTarget(context, appWidgetId, this, R.id.widgetCameraImage))
-                                .diskCachePolicy(CachePolicy.DISABLED)
-                                .memoryCachePolicy(CachePolicy.DISABLED)
-                                .networkCachePolicy(CachePolicy.READ_ONLY)
-                                .size(Size(getScreenWidth(), Dimension.Undefined))
-                                .precision(Precision.INEXACT)
-                                .build()
-                            context.imageLoader.enqueue(request)
-                        } catch (e: Exception) {
-                            Timber.e(e, "Unable to fetch image")
-                        }
+                    try {
+                        val request = ImageRequest.Builder(context)
+                            .data(url)
+                            .target(RemoteViewsTarget(context, appWidgetId, this, R.id.widgetCameraImage))
+                            .diskCachePolicy(CachePolicy.DISABLED)
+                            .memoryCachePolicy(CachePolicy.DISABLED)
+                            .networkCachePolicy(CachePolicy.READ_ONLY)
+                            .size(Size(getScreenWidth(), Dimension.Undefined))
+                            .precision(Precision.INEXACT)
+                            .build()
+                        context.imageLoader.enqueue(request)
+                    } catch (e: Exception) {
+                        Timber.e(e, "Unable to fetch image")
                     }
                 }
 
@@ -233,14 +222,18 @@ class CameraWidget : AppWidgetProvider() {
 
         super.onReceive(context, intent)
         when (lastIntent) {
-            UPDATE_WIDGETS -> updateAllWidgets(context)
-            UPDATE_IMAGE -> updateAppWidget(context, appWidgetId)
-            Intent.ACTION_SCREEN_ON -> updateAllWidgets(context)
+            UPDATE_IMAGE -> launchAsync(widgetScope) { updateAppWidget(context, appWidgetId) }
+            UPDATE_WIDGETS, Intent.ACTION_SCREEN_ON -> launchAsync(widgetScope) {
+                updateAllWidgets(
+                    context,
+                )
+            }
+
             ACTION_APPWIDGET_CREATED -> {
-                if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
-                    FailFast.fail { "Missing appWidgetId in intent to add widget in DAO" }
-                } else {
-                    widgetScope?.launch {
+                launchAsync(widgetScope) {
+                    if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+                        FailFast.fail { "Missing appWidgetId in intent to add widget in DAO" }
+                    } else {
                         val entity = intent.extras?.let {
                             BundleCompat.getSerializable(
                                 it,
@@ -252,46 +245,15 @@ class CameraWidget : AppWidgetProvider() {
                             cameraWidgetDao.add(entity.copyWithWidgetId(appWidgetId))
                         } ?: FailFast.fail { "Missing $EXTRA_WIDGET_ENTITY or it's of the wrong type in intent." }
                     }
+                    updateAllWidgets(context)
                 }
-                updateAllWidgets(context)
             }
-        }
-    }
-
-    private fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
-        if (extras == null) return
-
-        val serverSelection = if (extras.containsKey(EXTRA_SERVER_ID)) extras.getInt(EXTRA_SERVER_ID) else null
-        val entitySelection: String? = extras.getString(EXTRA_ENTITY_ID)
-        val tapActionSelection = BundleCompat.getSerializable(extras, EXTRA_TAP_ACTION, WidgetTapAction::class.java)
-            ?: WidgetTapAction.REFRESH
-
-        if (serverSelection == null || entitySelection == null) {
-            Timber.e("Did not receive complete configuration data")
-            return
-        }
-
-        mainScope.launch {
-            Timber.d(
-                "Saving camera config data:" + System.lineSeparator() +
-                    "entity id: " + entitySelection + System.lineSeparator(),
-            )
-            cameraWidgetDao.add(
-                CameraWidgetEntity(
-                    appWidgetId,
-                    serverSelection,
-                    entitySelection,
-                    tapActionSelection,
-                ),
-            )
-
-            onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
         }
     }
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
         // When the user deletes the widget, delete the preference associated with it.
-        mainScope.launch {
+        widgetScope.launch {
             cameraWidgetDao.deleteAll(appWidgetIds)
         }
     }
