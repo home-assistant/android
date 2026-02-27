@@ -11,6 +11,8 @@ import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConfigGetMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConnectionStatusMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConnectionStatusPayload
+import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistPayload
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenSettingsMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ThemeUpdateMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.UnknownIncomingMessage
@@ -197,6 +199,24 @@ class FrontendMessageHandlerTest {
         assertEquals(false, configResult["canCommissionMatter"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(false, configResult["canImportThreadCredentials"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(0, configResult["hasBarCodeScanner"]?.jsonPrimitive?.int)
+    }
+
+    @Test
+    fun `Given open assist message when messageResults then emits ShowAssist with payload`() = runTest {
+        val message = OpenAssistMessage(
+            id = 7,
+            payload = OpenAssistPayload(pipelineId = "abc", startListening = false),
+        )
+        every { externalBusRepository.incomingMessages() } returns flowOf(message)
+
+        handler.messageResults().test {
+            val result = awaitItem()
+            assertTrue(result is FrontendHandlerEvent.ShowAssist)
+            val showAssist = result as FrontendHandlerEvent.ShowAssist
+            assertEquals("abc", showAssist.pipelineId)
+            assertEquals(false, showAssist.startListening)
+            expectNoEvents()
+        }
     }
 
     @Test

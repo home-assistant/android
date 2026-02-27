@@ -1,9 +1,10 @@
 package io.homeassistant.companion.android.frontend.externalbus.incoming
 
 import io.homeassistant.companion.android.frontend.externalbus.frontendExternalBusJson
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -17,7 +18,7 @@ class IncomingExternalBusMessageTest {
 
         assertInstanceOf(ConnectionStatusMessage::class.java, message)
         val statusMessage = message as ConnectionStatusMessage
-        Assertions.assertEquals(1, statusMessage.id)
+        assertEquals(1, statusMessage.id)
         assertEquals("connected", statusMessage.payload.event)
         assertTrue(statusMessage.payload.isConnected)
     }
@@ -29,7 +30,7 @@ class IncomingExternalBusMessageTest {
         val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
 
         assertInstanceOf(ConfigGetMessage::class.java, message)
-        Assertions.assertEquals(42, (message as ConfigGetMessage).id)
+        assertEquals(42, (message as ConfigGetMessage).id)
     }
 
     @Test
@@ -39,7 +40,7 @@ class IncomingExternalBusMessageTest {
         val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
 
         assertInstanceOf(ThemeUpdateMessage::class.java, message)
-        Assertions.assertEquals(5, (message as ThemeUpdateMessage).id)
+        assertEquals(5, (message as ThemeUpdateMessage).id)
     }
 
     @Test
@@ -49,7 +50,33 @@ class IncomingExternalBusMessageTest {
         val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
 
         assertInstanceOf(OpenSettingsMessage::class.java, message)
-        Assertions.assertEquals(5, (message as OpenSettingsMessage).id)
+        assertEquals(5, (message as OpenSettingsMessage).id)
+    }
+
+    @Test
+    fun `Given assist-show JSON then parses to OpenAssistMessage with payload`() {
+        val json = """{"type":"assist/show","id":7,"payload":{"pipeline_id":"abc","start_listening":false}}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(OpenAssistMessage::class.java, message)
+        val assistMessage = message as OpenAssistMessage
+        assertEquals(7, assistMessage.id)
+        assertEquals("abc", assistMessage.payload.pipelineId)
+        assertFalse(assistMessage.payload.startListening)
+    }
+
+    @Test
+    fun `Given assist-show JSON without payload then parses to OpenAssistMessage with defaults`() {
+        val json = """{"type":"assist/show","id":8}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(OpenAssistMessage::class.java, message)
+        val assistMessage = message as OpenAssistMessage
+        assertEquals(8, assistMessage.id)
+        assertNull(assistMessage.payload.pipelineId)
+        assertTrue(assistMessage.payload.startListening)
     }
 
     @Test

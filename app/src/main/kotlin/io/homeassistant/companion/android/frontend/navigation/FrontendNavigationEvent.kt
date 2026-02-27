@@ -13,4 +13,11 @@ package io.homeassistant.companion.android.frontend.navigation
 sealed interface FrontendNavigationEvent {
     /** Navigate to the app settings screen */
     data object NavigateToSettings : FrontendNavigationEvent
+
+    /** Navigate to the voice assistant (Assist) screen */
+    data class NavigateToAssist(
+        val serverId: Int,
+        val pipelineId: String?,
+        val startListening: Boolean,
+    ) : FrontendNavigationEvent
 }
