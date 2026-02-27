@@ -139,7 +139,6 @@ object EntityExt {
     val LIGHT_MODE_NO_BRIGHTNESS_SUPPORT = listOf("unknown", "onoff")
     const val LIGHT_SUPPORT_BRIGHTNESS_DEPR = 1
     const val LIGHT_SUPPORT_COLOR_TEMP_DEPR = 2
-    const val ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY = 2
     const val MEDIA_PLAYER_SUPPORT_VOLUME_SET = 4
 
     val DOMAINS_PRESS = listOf("button", "input_button")
@@ -263,17 +262,6 @@ fun Entity.getCoverPosition(): EntityPosition? {
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get getCoverPosition")
         null
-    }
-}
-
-fun Entity.supportsAlarmControlPanelArmAway(): Boolean {
-    return try {
-        if (domain != "alarm_control_panel") return false
-        (attributes["supported_features"] as Number).toInt() and
-            EntityExt.ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY == EntityExt.ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY
-    } catch (e: Exception) {
-        Timber.tag(EntityExt.TAG).e(e, "Unable to get supportsArmedAway")
-        false
     }
 }
 
@@ -910,9 +898,7 @@ suspend fun Entity.onPressed(integrationRepository: IntegrationRepository) {
             if (state == "unlocked") "lock" else "unlock"
         }
 
-        "alarm_control_panel" -> {
-            if (state != "disarmed") "alarm_disarm" else "alarm_arm_away"
-        }
+        "alarm_control_panel" -> getAlarmOnPressedAction()
 
         in EntityExt.DOMAINS_PRESS -> "press"
         "fan",
@@ -925,6 +911,11 @@ suspend fun Entity.onPressed(integrationRepository: IntegrationRepository) {
 
         "scene" -> "turn_on"
         else -> "toggle"
+    }
+
+    if (action == null) {
+        Timber.tag(EntityExt.TAG).w("No action called when entity '%s' was pressed", entityId)
+        return
     }
 
     integrationRepository.callAction(
