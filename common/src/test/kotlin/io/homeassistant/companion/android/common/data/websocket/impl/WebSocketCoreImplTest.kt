@@ -865,6 +865,58 @@ subscribeTo
             assertEquals("light.bathroom", awaitItem().entityId)
         }
     }
+    @Test
+    fun `Given an Active subscription When disconnection occurs and resubscribe fails Then it keeps the old subscription in activeMessages`() = runTest {
+        val subscriptionScope = TestScope(UnconfinedTestDispatcher(testScheduler))
+        setupServer(backgroundScope = subscriptionScope)
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+    
+        // Initial subscribe ok (id=2 in current behavior)
+        mockResultSuccessForId(2)
+    
+        // Capture the id used for the resubscribe attempt (don't hardcode 4)
+        var resubscribeId: Long? = null
+        every { mockConnection.send(match<String> { it.contains(""""type":"subscribe_events"""") }) } answers {
+            val msg = firstArg<String>()
+            val id = Regex(""""id":(\d+)""").find(msg)?.groupValues?.get(1)?.toLong()
+                ?: fail { "Missing id in subscribe_events message: $msg" }
+    
+            // First subscribe succeeds (already handled by mockResultSuccessForId(2)); fail the *next* subscribe.
+            if (id != 2L) {
+                resubscribeId = id
+                webSocketListener.onMessage(
+                    mockConnection,
+                    """{"id":$id,"type":"result","success":false,"result":{}}""",
+                )
+            }
+            true
+        }
+    
+        checkNotNull(
+            webSocketCore.subscribeTo<StateChangedEvent>(
+                SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS,
+                mapOf("event_type" to "state_changed"),
+            ),
+        ).test {
+            assertTrue(webSocketCore.activeMessages.containsKey(2L))
+    
+            // Trigger reconnect + resubscribe
+            closeConnection()
+    
+            // Drive the background scope + main scope
+            subscriptionScope.advanceUntilIdle()
+            advanceUntilIdle()
+    
+            // Old subscription still present so it can retry later
+            assertTrue(webSocketCore.activeMessages.containsKey(2L))
+    
+            // The resubscribe attempt should NOT replace it
+            resubscribeId?.let { newId ->
+                assertFalse(webSocketCore.activeMessages.containsKey(newId))
+            } ?: fail { "Expected a resubscribe attempt id to be captured" }
+        }
+    }
 
     /*
 shutdown()
