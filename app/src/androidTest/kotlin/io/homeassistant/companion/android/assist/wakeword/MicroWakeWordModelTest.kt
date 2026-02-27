@@ -24,7 +24,7 @@ class MicroWakeWordModelTest {
      */
     private suspend fun tryInitializeTfLite(): Boolean {
         return try {
-            TfLiteInitializerImpl().initialize(appContext, true)
+            TfLiteInitializerImpl().initialize(appContext)
             true
         } catch (e: Exception) {
             Timber.w(e, "TfLite initialization failed, skipping test")

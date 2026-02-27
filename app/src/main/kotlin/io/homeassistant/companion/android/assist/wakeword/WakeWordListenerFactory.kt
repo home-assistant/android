@@ -34,8 +34,7 @@ class WakeWordListenerFactory @Inject constructor(@ApplicationContext private va
             onWakeWordDetected = onWakeWordDetected,
             onListenerReady = onListenerReady,
             onListenerStopped = onListenerStopped,
-            onListenerFailed = onListenerFailed,
-            playServicesAvailable = playServicesAvailability.isAvailable(),
+            onListenerFailed = onListenerFailed
         )
     }
 }

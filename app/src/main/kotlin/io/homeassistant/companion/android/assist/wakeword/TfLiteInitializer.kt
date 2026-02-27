@@ -13,11 +13,10 @@ interface TfLiteInitializer {
      * Initialize the TFLite runtime.
      *
      * @param context Application context
-     * @param playServicesAvailable Boolean indicating whether Google Play Services is available
      *
      * @throws Exception if any exception occurred during initialization
      */
-    suspend fun initialize(context: Context, playServicesAvailable: Boolean)
+    suspend fun initialize(context: Context)
 }
 
 
@@ -25,4 +24,4 @@ interface TfLiteInitializer {
  * Exception thrown when TFLite initialization fails with a well known unrecoverable reason,
  * such as unavailability of Google Play Services.
  */
-class TfLiteInitializeException(override val message: String?) : Exception()
+class TfLiteInitializeException(throwable: Throwable?, message: String?) : Exception(message, throwable)

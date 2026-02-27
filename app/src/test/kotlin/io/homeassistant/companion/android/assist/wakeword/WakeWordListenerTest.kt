@@ -58,7 +58,6 @@ class WakeWordListenerTest {
     }
 
     private fun createListener(
-        playServicesAvailable: Boolean = false,
         onListenerReady: (MicroWakeWordModelConfig) -> Unit = {},
         onWakeWordDetected: (MicroWakeWordModelConfig) -> Unit = {},
         onListenerStopped: () -> Unit = {},
@@ -70,7 +69,6 @@ class WakeWordListenerTest {
             onWakeWordDetected = onWakeWordDetected,
             onListenerStopped = onListenerStopped,
             onListenerFailed = onListenerFailed,
-            playServicesAvailable = playServicesAvailable,
             tfLiteInitializer = tfLiteInitializer,
             microWakeWordFactory = { microWakeWord },
             audioRecordFactory = { audioRecord },
@@ -124,7 +122,7 @@ class WakeWordListenerTest {
             listener.start(this, testModelConfig)
             runCurrent()
 
-            coVerify { tfLiteInitializer.initialize(context, any()) }
+            coVerify { tfLiteInitializer.initialize(context) }
         }
 
         @Test
@@ -291,12 +289,11 @@ class WakeWordListenerTest {
         fun `Given TFLite initialization fails when Play Services is unavailable then failed callback is invoked`() = runTest {
             var detectedCalled = false
             val listener = createListener(
-                playServicesAvailable = false,
                 onListenerFailed = { detectedCalled = true }
             )
-            val expectedException = TfLiteInitializeException("Play Services is unavailable")
+            val expectedException = TfLiteInitializeException(null, "Play Services is unavailable")
 
-            coEvery { tfLiteInitializer.initialize(any(), false) } throws expectedException
+            coEvery { tfLiteInitializer.initialize(any()) } throws expectedException
 
             listener.start(backgroundScope, testModelConfig, this.testScheduler)
             runCurrent()
@@ -309,7 +306,7 @@ class WakeWordListenerTest {
             val listener = createListener()
             val expectedException = RuntimeException("Init failed")
 
-            coEvery { tfLiteInitializer.initialize(any(), any()) } throws expectedException
+            coEvery { tfLiteInitializer.initialize(any()) } throws expectedException
 
             try {
                 listener.start(backgroundScope, testModelConfig)
