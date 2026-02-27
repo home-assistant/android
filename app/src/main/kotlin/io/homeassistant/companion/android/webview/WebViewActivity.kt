@@ -142,6 +142,7 @@ import io.homeassistant.companion.android.util.hasNonRootPath
 import io.homeassistant.companion.android.util.hasSameOrigin
 import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.util.sensitive
+import io.homeassistant.companion.android.util.toRelativeUrl
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
 import io.homeassistant.companion.android.webview.addto.EntityAddToHandler
@@ -441,9 +442,61 @@ class WebViewActivity :
 
         decor = window.decorView as FrameLayout
 
-        val onBackPressed = object : OnBackPressedCallback(webView.canGoBack()) {
+        val onBackPressed = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (webView.canGoBack()) webView.goBack()
+                if (webView.canGoBack()) {
+                    // Check if the previous history entry has the same origin as
+                    // the current URL. After an internal/external URL switch,
+                    // stale entries from the old connection may remain in history.
+                    val backForwardList = webView.copyBackForwardList()
+                    val currentIndex = backForwardList.currentIndex
+                    if (currentIndex > 0) {
+                        val previousUrl = backForwardList.getItemAtIndex(currentIndex - 1).url.toUri()
+                        val currentBase = loadedUrl
+                        // Skip about:blank and other non-HTTP entries that may appear
+                        // before the first real page has loaded.
+                        if (currentBase != null &&
+                            previousUrl.scheme?.startsWith("http") == true &&
+                            previousUrl.hasSameOrigin(currentBase)
+                        ) {
+                            webView.goBack()
+                            return
+                        }
+                    } else {
+                        webView.goBack()
+                        return
+                    }
+                }
+                // History is empty or previous entry has a different origin
+                // (stale entry from old connection). Navigate to base URL
+                // instead of going back to an unreachable page.
+                //
+                // Note: loadedUrl is always the HTTP(S) URL set by the presenter
+                // — never about:blank or another non-HTTP scheme. If the WebView
+                // shows about:blank (before the first page loads), loadedUrl is
+                // null and we fall through to the system back handler below.
+                val currentUrl = loadedUrl
+                if (currentUrl != null && currentUrl.hasNonRootPath()) {
+                    val baseUrl = currentUrl.buildUpon()
+                        .path("/")
+                        .clearQuery()
+                        .appendQueryParameter("external_auth", "1")
+                        .fragment(null)
+                        .build()
+                    clearHistory = true
+                    loadedUrl = baseUrl
+                    webView.loadUrl(baseUrl.toString())
+                } else {
+                    // Already on root — let the system handle back (exit app).
+                    // We must temporarily disable this callback so that the
+                    // dispatcher invokes the next handler in the chain (the
+                    // default Activity handler which finishes the activity).
+                    // Re-enabling afterwards keeps the callback functional in
+                    // case the activity is not destroyed (e.g. multi-window).
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                    isEnabled = true
+                }
             }
         }
 
@@ -632,7 +685,10 @@ class WebViewActivity :
 
                 override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
                     super.doUpdateVisitedHistory(view, url, isReload)
-                    onBackPressed.isEnabled = canGoBack()
+                    // Keep the callback enabled when there's history OR when the current
+                    // URL has a non-root path (so pressing back navigates to root first).
+                    onBackPressed.isEnabled = canGoBack() ||
+                        url?.toUri()?.hasNonRootPath() == true
                     presenter.stopScanningForImprov(false)
                 }
             }
@@ -1424,32 +1480,37 @@ class WebViewActivity :
         if (hasFocus && !isFinishing) {
             lifecycleScope.launch {
                 unlockAppIfNeeded()
-
-                if (presenter.isFullScreen() || isVideoFullScreen) {
-                    hideSystemUI()
-                } else {
-                    showSystemUI()
-                }
-
-                var path = intent.getStringExtra(EXTRA_PATH)
-                if (path?.startsWith("entityId:") == true) {
-                    // Get the entity ID from a string formatted "entityId:domain.entity"
-                    // https://github.com/home-assistant/core/blob/dev/homeassistant/core.py#L159
+                val intentPath = intent.getStringExtra(EXTRA_PATH)
+                // Let the presenter handle falling back to the current WebView path
+                // when no explicit navigation path is set. See https://github.com/home-assistant/android/issues/4983
+                var path: String? = intentPath
+                if (intentPath?.startsWith("entityId:") == true) {
                     val pattern = "(?<=^entityId:)((?!.+__)(?!_)[\\da-z_]+(?<!_)\\.(?!_)[\\da-z_]+(?<!_)$)".toRegex()
-                    val entity = pattern.find(path)?.value ?: ""
+                    val entity = pattern.find(intentPath)?.value ?: ""
                     if (
                         entity.isNotBlank() &&
                         serverManager.getServer(presenter.getActiveServer())?.version?.isAtLeast(2025, 6, 0) == true
                     ) {
                         path = "/?more-info-entity-id=$entity"
+                        moreInfoEntity = ""
                     } else {
                         moreInfoEntity = entity
                     }
                 }
                 intent.removeExtra(EXTRA_PATH)
                 presenter.load(lifecycle, path, isInternalOverride)
+
+                if (presenter.isFullScreen() || isVideoFullScreen) {
+                    hideSystemUI()
+                } else {
+                    showSystemUI()
+                }
             }
         }
+    }
+
+    override fun getCurrentWebViewRelativeUrl(): String? {
+        return webView.url?.toUri()?.toRelativeUrl(excludeParams = setOf("external_auth"))
     }
 
     override suspend fun unlockAppIfNeeded() {
