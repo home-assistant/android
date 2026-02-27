@@ -32,9 +32,12 @@ import timber.log.Timber
  * **Thread Safety:** This class is thread-safe. [start] and [stop] can be called from any thread.
  *
  * @param context Android context for loading assets and accessing audio
+ * @param playServicesAvailability Boolean indicating whether Google Play Services is available
  * @param onListenerReady Callback invoked when initialization completes and listening begins
  * @param onWakeWordDetected Callback invoked when a wake word is detected
  * @param onListenerStopped Callback invoked when the listener stops (normally or due to error)
+ * @param onListenerFailed Callback invoked when the listener encounters a failure where wake
+ *        word detection should be disabled
  */
 @SuppressLint("MissingPermission")
 class WakeWordListener(
@@ -42,6 +45,8 @@ class WakeWordListener(
     private val onWakeWordDetected: (MicroWakeWordModelConfig) -> Unit,
     private val onListenerReady: (MicroWakeWordModelConfig) -> Unit = {},
     private val onListenerStopped: () -> Unit = {},
+    private val onListenerFailed: () -> Unit = {},
+    private val playServicesAvailability: Boolean = false,
     private val tfLiteInitializer: TfLiteInitializer = TfLiteInitializerImpl(),
     private val microWakeWordFactory: suspend (
         MicroWakeWordModelConfig,
@@ -88,6 +93,9 @@ class WakeWordListener(
                         onListenerReady(modelConfig)
 
                         runDetectionLoop(modelConfig, microWakeWord, recorder)
+                    } catch (e: TfLiteInitializeException) {
+                        Timber.e(e, "DetectionJob failed to initialize TFLite")
+                        onListenerFailed()
                     } finally {
                         cleanupResources(microWakeWord, recorder)
                     }
@@ -118,7 +126,7 @@ class WakeWordListener(
     }
 
     private suspend fun initializeMicroWakeWord(modelConfig: MicroWakeWordModelConfig): MicroWakeWord {
-        tfLiteInitializer.initialize(context)
+        tfLiteInitializer.initialize(context, playServicesAvailability)
 
         val microWakeWord = microWakeWordFactory(modelConfig)
         Timber.d("MicroWakeWord initialized with '$modelConfig'")

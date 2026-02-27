@@ -9,7 +9,7 @@ import android.content.Context
  */
 class TfLiteInitializerImpl : TfLiteInitializer {
 
-    override suspend fun initialize(context: Context) {
+    override suspend fun initialize(context: Context playServicesAvailability: Boolean) {
         // LiteRT is bundled and doesn't require initialization
     }
 }
