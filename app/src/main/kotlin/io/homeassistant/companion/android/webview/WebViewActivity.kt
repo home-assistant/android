@@ -142,6 +142,7 @@ import io.homeassistant.companion.android.util.hasNonRootPath
 import io.homeassistant.companion.android.util.hasSameOrigin
 import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.util.sensitive
+import io.homeassistant.companion.android.util.toRelativeUrl
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
 import io.homeassistant.companion.android.webview.addto.EntityAddToHandler
@@ -469,6 +470,11 @@ class WebViewActivity :
                 // History is empty or previous entry has a different origin
                 // (stale entry from old connection). Navigate to base URL
                 // instead of going back to an unreachable page.
+                //
+                // Note: loadedUrl is always the HTTP(S) URL set by the presenter
+                // — never about:blank or another non-HTTP scheme. If the WebView
+                // shows about:blank (before the first page loads), loadedUrl is
+                // null and we fall through to the system back handler below.
                 val currentUrl = loadedUrl
                 if (currentUrl != null && currentUrl.hasNonRootPath()) {
                     val baseUrl = currentUrl.buildUpon()
@@ -481,7 +487,12 @@ class WebViewActivity :
                     loadedUrl = baseUrl
                     webView.loadUrl(baseUrl.toString())
                 } else {
-                    // Already on root — let the system handle back (exit app)
+                    // Already on root — let the system handle back (exit app).
+                    // We must temporarily disable this callback so that the
+                    // dispatcher invokes the next handler in the chain (the
+                    // default Activity handler which finishes the activity).
+                    // Re-enabling afterwards keeps the callback functional in
+                    // case the activity is not destroyed (e.g. multi-window).
                     isEnabled = false
                     onBackPressedDispatcher.onBackPressed()
                     isEnabled = true
@@ -1499,21 +1510,7 @@ class WebViewActivity :
     }
 
     override fun getCurrentWebViewRelativeUrl(): String? {
-        val uri = webView.url?.toUri() ?: return null
-        val path = uri.encodedPath?.takeIf { it.length > 1 } ?: return null
-        // Strip 'external_auth' since the presenter re-adds it on every load.
-        // Use Uri.Builder to safely construct the relative URL from components.
-        val filteredQuery = uri.encodedQuery
-            ?.split("&")
-            ?.filter { !it.startsWith("external_auth=") }
-            ?.joinToString("&")
-            ?.takeIf { it.isNotEmpty() }
-        return Uri.Builder()
-            .encodedPath(path)
-            .encodedQuery(filteredQuery)
-            .encodedFragment(uri.encodedFragment)
-            .build()
-            .toString()
+        return webView.url?.toUri()?.toRelativeUrl(excludeParams = setOf("external_auth"))
     }
 
     override suspend fun unlockAppIfNeeded() {
