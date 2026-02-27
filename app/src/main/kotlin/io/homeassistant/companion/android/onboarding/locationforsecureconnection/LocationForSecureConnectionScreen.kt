@@ -42,7 +42,6 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.compose.rememberLocationPermission
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 private val MaxContentWidth = MaxButtonWidth
@@ -73,10 +72,12 @@ fun LocationForSecureConnectionScreen(
     isStandaloneScreen: Boolean = false,
 ) {
     val initialAllowInsecureConnection by viewModel.allowInsecureConnection.collectAsState(null)
+    val hasPlainTextUrl by viewModel.hasPlainTextUrl.collectAsState(false)
     val coroutineScope = rememberCoroutineScope()
 
     LocationForSecureConnectionScreen(
         initialAllowInsecureConnection = initialAllowInsecureConnection,
+        hasPlainTextUrl = hasPlainTextUrl,
         onBackClick = onBackClick,
         onCloseClick = onCloseClick,
         isStandaloneScreen = isStandaloneScreen,
@@ -99,6 +100,7 @@ internal fun LocationForSecureConnectionScreen(
     onHelpClick: suspend () -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     modifier: Modifier = Modifier,
+    hasPlainTextUrl: Boolean = false,
     onBackClick: (() -> Unit)? = null,
     onCloseClick: (() -> Unit)? = null,
     isStandaloneScreen: Boolean = false,
@@ -110,6 +112,7 @@ internal fun LocationForSecureConnectionScreen(
     ) { contentPadding ->
         LocationForSecureConnectionContent(
             isStandaloneScreen = isStandaloneScreen,
+            hasPlainTextUrl = hasPlainTextUrl,
             initialAllowInsecureConnection = initialAllowInsecureConnection,
             onAllowInsecureConnection = onAllowInsecureConnection,
             onShowSnackbar = onShowSnackbar,
@@ -122,6 +125,7 @@ internal fun LocationForSecureConnectionScreen(
 @Composable
 private fun LocationForSecureConnectionContent(
     isStandaloneScreen: Boolean,
+    hasPlainTextUrl: Boolean,
     initialAllowInsecureConnection: Boolean?,
     onAllowInsecureConnection: (allowInsecureConnection: Boolean) -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
@@ -169,7 +173,7 @@ private fun LocationForSecureConnectionContent(
             },
         )
 
-        Header()
+        Header(hasPlainTextUrl = hasPlainTextUrl)
         Spacer(modifier = Modifier.weight(1f))
         HARadioGroup(
             options = listOf(
@@ -211,7 +215,7 @@ private fun LocationForSecureConnectionContent(
 }
 
 @Composable
-private fun ColumnScope.Header() {
+private fun ColumnScope.Header(hasPlainTextUrl: Boolean) {
     Image(
         modifier = Modifier.padding(top = HADimens.SPACE6),
         // Use painterResource instead of vector resource for API < 24 since it has gradients
@@ -226,7 +230,13 @@ private fun ColumnScope.Header() {
     )
 
     Text(
-        text = stringResource(commonR.string.location_secure_connection_content),
+        text = stringResource(
+            if (hasPlainTextUrl) {
+                commonR.string.location_secure_connection_content_http
+            } else {
+                commonR.string.location_secure_connection_content
+            },
+        ),
         style = HATextStyle.Body,
         modifier = Modifier.widthIn(max = MaxContentWidth),
     )

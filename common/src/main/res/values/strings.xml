@@ -1404,7 +1404,8 @@
     <string name="location_sharing_share">Share my location</string>
     <string name="location_sharing_no_share">Do not share my location</string>
     <string name="location_secure_connection_title">Let us help secure your remote connection</string>
-    <string name="location_secure_connection_content">It appears that your connection is not encrypted (using HTTP). If the app knows when you\'re away from home, it can choose a more secure way to connect to your Home Assistant system if available. This requires location services to be enabled.</string>
+    <string name="location_secure_connection_content_http">It appears that your connection is not encrypted (currently using HTTP). If the app knows when you\'re away from home, it can choose a more secure way to connect to your Home Assistant system if available. This requires location services to be enabled.</string>
+    <string name="location_secure_connection_content">If the app knows when you\'re away from home, it can choose a more secure way to connect to your Home Assistant system if available. This requires location services to be enabled.</string>
     <string name="location_secure_connection_hint">This data will never be shared with the Home Assistant project or third parties.</string>
     <string name="location_secure_connection_next">Next</string>
     <string name="location_secure_connection_save">Save</string>

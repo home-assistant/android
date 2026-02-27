@@ -122,6 +122,15 @@ class LocationForSecureConnectionScreenTest {
         }
     }
 
+    @Test
+    fun `Given HTTP url when screen displayed then show HTTP specific content`() {
+        composeTestRule.apply {
+            testScreen(hasPlainTextUrl = true) {
+                onNodeWithText(stringResource(commonR.string.location_secure_connection_content_http)).assertIsDisplayed()
+            }
+        }
+    }
+
     private class TestHelper(locationPermissionGranted: Boolean) {
         var helpClicked = false
         var allowInsecureConnection: Boolean? = null
@@ -132,6 +141,7 @@ class LocationForSecureConnectionScreenTest {
     @OptIn(ExperimentalPermissionsApi::class)
     private fun AndroidComposeTestRule<*, *>.testScreen(
         initialAllowInsecureConnection: Boolean? = null,
+        hasPlainTextUrl: Boolean = false,
         locationPermissionGranted: Boolean = true,
         block: TestHelper.() -> Unit,
     ) {
@@ -145,6 +155,7 @@ class LocationForSecureConnectionScreenTest {
                     LocationForSecureConnectionScreen(
                         onHelpClick = { helpClicked = true },
                         initialAllowInsecureConnection = initialAllowInsecureConnection,
+                        hasPlainTextUrl = hasPlainTextUrl,
                         onAllowInsecureConnection = { allowInsecureConnection = it },
                         onShowSnackbar = { message, _ ->
                             snackbarMessage = message
@@ -158,7 +169,12 @@ class LocationForSecureConnectionScreenTest {
             assertTrue(helpClicked)
 
             onNodeWithText(stringResource(commonR.string.location_secure_connection_title)).assertIsDisplayed()
-            onNodeWithText(stringResource(commonR.string.location_secure_connection_content)).assertIsDisplayed()
+            val expectedContent = if (hasPlainTextUrl) {
+                stringResource(commonR.string.location_secure_connection_content_http)
+            } else {
+                stringResource(commonR.string.location_secure_connection_content)
+            }
+            onNodeWithText(expectedContent).assertIsDisplayed()
             onNodeWithText(stringResource(commonR.string.connection_security_most_secure)).performScrollTo().assertIsDisplayed()
             onNodeWithText(stringResource(commonR.string.connection_security_less_secure)).performScrollTo().assertIsDisplayed()
             onNodeWithText(stringResource(commonR.string.location_secure_connection_hint)).performScrollTo().assertIsDisplayed()
