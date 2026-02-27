@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.util
 import android.net.Uri
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -56,5 +57,76 @@ class UriExtensionsTest {
     private fun assertHasNonRootPath(url: String, expected: Boolean) {
         val uri = Uri.parse(url)
         assertEquals("hasNonRootPath($url)", expected, uri.hasNonRootPath())
+    }
+
+    // ---- toRelativeUrl tests ----
+
+    @Test
+    fun `toRelativeUrl returns path for URL with path only`() {
+        val uri = Uri.parse("https://example.com/lovelace/default")
+        assertEquals("/lovelace/default", uri.toRelativeUrl())
+    }
+
+    @Test
+    fun `toRelativeUrl returns path and query params`() {
+        val uri = Uri.parse("https://example.com/history?start_date=2026-01-01&end_date=2026-01-31")
+        assertEquals("/history?start_date=2026-01-01&end_date=2026-01-31", uri.toRelativeUrl())
+    }
+
+    @Test
+    fun `toRelativeUrl returns path query and fragment`() {
+        val uri = Uri.parse("https://example.com/history?start_date=2026-01-01#tab")
+        assertEquals("/history?start_date=2026-01-01#tab", uri.toRelativeUrl())
+    }
+
+    @Test
+    fun `toRelativeUrl excludes specified query params`() {
+        val uri = Uri.parse("https://example.com/dashboard?external_auth=1&lang=en")
+        assertEquals("/dashboard?lang=en", uri.toRelativeUrl(excludeParams = setOf("external_auth")))
+    }
+
+    @Test
+    fun `toRelativeUrl returns null when only excluded params remain`() {
+        val uri = Uri.parse("https://example.com/dashboard?external_auth=1")
+        assertEquals("/dashboard", uri.toRelativeUrl(excludeParams = setOf("external_auth")))
+    }
+
+    @Test
+    fun `toRelativeUrl returns null for root path`() {
+        val uri = Uri.parse("https://example.com/")
+        assertNull(uri.toRelativeUrl())
+    }
+
+    @Test
+    fun `toRelativeUrl returns null for URL without path`() {
+        val uri = Uri.parse("https://example.com")
+        assertNull(uri.toRelativeUrl())
+    }
+
+    @Test
+    fun `toRelativeUrl preserves fragment when no query params`() {
+        val uri = Uri.parse("https://example.com/settings#advanced")
+        assertEquals("/settings#advanced", uri.toRelativeUrl())
+    }
+
+    @Test
+    fun `toRelativeUrl excludes multiple params`() {
+        val uri = Uri.parse("https://example.com/view?external_auth=1&token=abc&lang=en")
+        assertEquals(
+            "/view?lang=en",
+            uri.toRelativeUrl(excludeParams = setOf("external_auth", "token")),
+        )
+    }
+
+    @Test
+    fun `toRelativeUrl preserves all params when no exclusions`() {
+        val uri = Uri.parse("https://example.com/view?external_auth=1&lang=en")
+        assertEquals("/view?external_auth=1&lang=en", uri.toRelativeUrl())
+    }
+
+    @Test
+    fun `toRelativeUrl handles deeply nested paths`() {
+        val uri = Uri.parse("https://example.com/config/devices/device/abc123")
+        assertEquals("/config/devices/device/abc123", uri.toRelativeUrl())
     }
 }
