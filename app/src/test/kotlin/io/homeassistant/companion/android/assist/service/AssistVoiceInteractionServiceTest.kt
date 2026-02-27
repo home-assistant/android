@@ -54,7 +54,7 @@ class AssistVoiceInteractionServiceTest {
     private val wakeWordListener: WakeWordListener = mockk(relaxed = true)
     private val onWakeWordDetectedSlot = slot<(MicroWakeWordModelConfig) -> Unit>()
     private val wakeWordListenerFactory: WakeWordListenerFactory = mockk {
-        every { create(capture(onWakeWordDetectedSlot), any(), any()) } returns wakeWordListener
+        every { create(capture(onWakeWordDetectedSlot), any(), any(), any()) } returns wakeWordListener
     }
     private val clock = FakeClock()
 
