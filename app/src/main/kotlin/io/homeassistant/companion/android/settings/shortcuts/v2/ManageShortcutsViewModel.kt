@@ -46,11 +46,11 @@ internal class ManageShortcutsViewModel @Inject constructor(private val shortcut
     }
 
     fun refresh() {
-        refreshInternal(showLoading = true)
+        refreshInternal(true)
     }
 
     fun refreshSilently() {
-        refreshInternal(showLoading = false)
+        refreshInternal(false)
     }
 
     private fun refreshInternal(showLoading: Boolean) {
