@@ -65,9 +65,11 @@ internal class ManageShortcutsViewModel @Inject constructor(private val shortcut
             val listData = when (val result = shortcutsRepository.loadShortcutsList()) {
                 is ShortcutResult.Success -> result.data
                 is ShortcutResult.Error -> {
-                    // Keep previously loaded items visible; only stop loading and surface the error.
                     _uiState.update {
-                        it.copy(isLoading = false, error = result.error)
+                        ShortcutsListState(
+                            isLoading = false,
+                            error = result.error,
+                        )
                     }
                     return@launch
                 }
