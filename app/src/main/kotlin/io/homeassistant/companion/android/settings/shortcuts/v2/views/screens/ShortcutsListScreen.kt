@@ -326,6 +326,7 @@ private fun SectionHeader(text: String, subtitle: String? = null, showAppIcon: B
                     Icon(
                         painter = painterResource(R.drawable.ic_stat_ic_notification_blue),
                         contentDescription = null,
+                        tint = colors.colorOnPrimaryLoud,
                     )
                 }
             }
