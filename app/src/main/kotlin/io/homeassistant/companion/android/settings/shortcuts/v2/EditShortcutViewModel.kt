@@ -176,17 +176,16 @@ class EditShortcutViewModel @Inject constructor(private val shortcutsRepository:
 
     private fun upsertPinned(draft: ShortcutDraft) {
         viewModelScope.launch {
-            val isEditing = _uiState.value.editor is ShortcutEditorUiState.EditorState.PinnedEdit
+            setSaving(true)
             when (val result = shortcutsRepository.upsertPinnedShortcut(draft)) {
                 is ShortcutResult.Success -> {
                     setScreenError(null)
                     _pinResultEvents.emit(result.data)
-                    if (!isEditing) {
-                        _closeEvents.emit(Unit)
-                    }
+                    _closeEvents.emit(Unit)
                 }
 
                 is ShortcutResult.Error -> {
+                    setSaving(false)
                     setScreenError(result.error)
                 }
             }
@@ -196,9 +195,14 @@ class EditShortcutViewModel @Inject constructor(private val shortcutsRepository:
     private fun deletePinned() {
         val editor = _uiState.value.editor as? ShortcutEditorUiState.EditorState.PinnedEdit ?: return
         viewModelScope.launch {
+            setSaving(true)
             when (val result = shortcutsRepository.deletePinnedShortcut(editor.draftSeed.id)) {
                 is ShortcutResult.Success -> _closeEvents.emit(Unit)
-                is ShortcutResult.Error -> setScreenError(result.error)
+
+                is ShortcutResult.Error -> {
+                    setSaving(false)
+                    setScreenError(result.error)
+                }
             }
         }
     }
@@ -206,6 +210,7 @@ class EditShortcutViewModel @Inject constructor(private val shortcutsRepository:
     private fun upsertDynamic(draft: ShortcutDraft) {
         val editor = _uiState.value.editor as? ShortcutEditorUiState.EditorState.Dynamic ?: return
         viewModelScope.launch {
+            setSaving(true)
             when (
                 val result = shortcutsRepository.upsertDynamicShortcut(
                     editor.index,
@@ -215,10 +220,11 @@ class EditShortcutViewModel @Inject constructor(private val shortcutsRepository:
             ) {
                 is ShortcutResult.Success -> {
                     setScreenError(null)
-                    setDynamicEditor(result.data)
+                    _closeEvents.emit(Unit)
                 }
 
                 is ShortcutResult.Error -> {
+                    setSaving(false)
                     handleDynamicError(result.error)
                 }
             }
@@ -228,11 +234,20 @@ class EditShortcutViewModel @Inject constructor(private val shortcutsRepository:
     private fun deleteDynamic() {
         val editor = _uiState.value.editor as? ShortcutEditorUiState.EditorState.DynamicEdit ?: return
         viewModelScope.launch {
+            setSaving(true)
             when (val result = shortcutsRepository.deleteDynamicShortcut(editor.index)) {
                 is ShortcutResult.Success -> _closeEvents.emit(Unit)
-                is ShortcutResult.Error -> setScreenError(result.error)
+
+                is ShortcutResult.Error -> {
+                    setSaving(false)
+                    setScreenError(result.error)
+                }
             }
         }
+    }
+
+    private fun setSaving(isSaving: Boolean) {
+        updateScreen { it.copy(isSaving = isSaving) }
     }
 
     private fun updateScreen(updater: (ShortcutEditorScreenState) -> ShortcutEditorScreenState) {

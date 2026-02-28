@@ -68,6 +68,7 @@ internal fun PinnedShortcutEditor(
             onDraftChange = onDraftChange,
             isEditing = state is ShortcutEditorUiState.EditorState.PinnedEdit,
             canSubmit = canSubmit,
+            isSaving = screen.isSaving,
             onSubmit = onSubmit,
             onDelete = onDelete,
         )

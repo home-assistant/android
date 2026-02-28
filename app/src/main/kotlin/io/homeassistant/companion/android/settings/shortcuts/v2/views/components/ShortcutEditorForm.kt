@@ -44,6 +44,7 @@ internal fun ShortcutEditorForm(
     onDraftChange: (ShortcutDraft) -> Unit,
     isEditing: Boolean,
     canSubmit: Boolean,
+    isSaving: Boolean,
     onSubmit: () -> Unit,
     onDelete: (() -> Unit)? = null,
 ) {
@@ -73,6 +74,7 @@ internal fun ShortcutEditorForm(
         PrimaryActionButtons(
             isEditing = isEditing,
             canSubmit = canSubmit,
+            isSaving = isSaving,
             onSubmit = onSubmit,
             onDelete = onDelete,
         )
@@ -212,12 +214,16 @@ private fun ShortcutTargetInput(
 private fun PrimaryActionButtons(
     isEditing: Boolean,
     canSubmit: Boolean,
+    isSaving: Boolean,
     onSubmit: () -> Unit,
     onDelete: (() -> Unit)?,
 ) {
     val submitLabelRes = if (isEditing) R.string.update else R.string.add_shortcut
 
-    Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2)) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
@@ -226,6 +232,7 @@ private fun PrimaryActionButtons(
                 HAFilledButton(
                     text = stringResource(R.string.delete),
                     onClick = onDelete,
+                    enabled = !isSaving,
                     modifier = Modifier.weight(1f),
                     variant = ButtonVariant.DANGER,
                 )
@@ -234,7 +241,7 @@ private fun PrimaryActionButtons(
             HAFilledButton(
                 text = stringResource(submitLabelRes),
                 onClick = onSubmit,
-                enabled = canSubmit,
+                enabled = canSubmit && !isSaving,
                 modifier = Modifier.weight(1f),
             )
         }
@@ -253,6 +260,7 @@ private fun ShortcutEditorFormPreview() {
             onDraftChange = {},
             isEditing = true,
             canSubmit = true,
+            isSaving = false,
             onSubmit = {},
             onDelete = {},
         )

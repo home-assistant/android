@@ -11,6 +11,7 @@ import io.homeassistant.companion.android.database.server.Server
 @Immutable
 data class ShortcutEditorScreenState(
     val isLoading: Boolean,
+    val isSaving: Boolean = false,
     val error: ShortcutError? = null,
     val servers: List<Server> = emptyList(),
     val entities: Map<Int, List<Entity>> = emptyMap(),

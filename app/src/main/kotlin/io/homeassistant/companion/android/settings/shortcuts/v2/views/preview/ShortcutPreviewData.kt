@@ -66,6 +66,7 @@ internal object ShortcutPreviewData {
 
     fun buildScreenState(
         isLoading: Boolean = false,
+        isSaving: Boolean = false,
         servers: List<Server> = previewServers,
         entities: Map<Int, List<Entity>> = emptyMap(),
         entityRegistry: Map<Int, List<EntityRegistryResponse>> = emptyMap(),
@@ -74,6 +75,7 @@ internal object ShortcutPreviewData {
     ): ShortcutEditorScreenState {
         return ShortcutEditorScreenState(
             isLoading = isLoading,
+            isSaving = isSaving,
             servers = servers,
             entities = entities,
             entityRegistry = entityRegistry,

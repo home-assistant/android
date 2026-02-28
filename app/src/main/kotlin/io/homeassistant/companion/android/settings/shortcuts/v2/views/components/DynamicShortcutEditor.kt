@@ -69,6 +69,7 @@ internal fun DynamicShortcutEditor(
             onDraftChange = onDraftChange,
             isEditing = state is ShortcutEditorUiState.EditorState.DynamicEdit,
             canSubmit = canSubmit,
+            isSaving = screen.isSaving,
             onSubmit = onSubmit,
             onDelete = onDelete,
         )
