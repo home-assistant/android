@@ -27,6 +27,8 @@ fun initCrashReporting(context: Context, enabled: Boolean) {
 
     SentryAndroid.init(context) { options ->
         options.isEnableAutoSessionTracking = true
+        options.isAttachAnrThreadDump = true
+        options.isAttachViewHierarchy = true
 
         // We are using Sentry Android core library that doesn't come with the support for NDK.
         options.isEnableNdk = false
@@ -69,9 +71,9 @@ fun initCrashReporting(context: Context, enabled: Boolean) {
  * anrEnabled: true
  * anrReportInDebug: false
  * anrTimeoutIntervalMillis: 5000
- * attachAnrThreadDump: false
+ * attachAnrThreadDump: true
  * attachScreenshot: false
- * attachViewHierarchy: false
+ * attachViewHierarchy: true
  * beforeScreenshotCaptureCallback: null
  * beforeViewHierarchyCaptureCallback: null
  * collectAdditionalContext: true
