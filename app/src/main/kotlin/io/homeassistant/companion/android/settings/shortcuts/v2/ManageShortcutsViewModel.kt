@@ -76,7 +76,7 @@ internal class ManageShortcutsViewModel @Inject constructor(private val shortcut
             }
 
             val dynamicItems = listData.dynamic.orderedShortcuts
-                .map { (index, draft) -> DynamicShortcutItem(index, draft.toSummary()) }
+                .map { (index, draft) -> DynamicShortcutItem(index = index, summary = draft.toSummary()) }
                 .toList()
 
             val pinnedItems = listData.pinned.toList()
