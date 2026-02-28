@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 9.0.0" type="baseline" client="gradle" dependencies="false" name="AGP (9.0.0)" variant="all" version="9.0.0">
+<issues format="6" by="lint 9.0.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.0.1)" variant="all" version="9.0.1">
 
     <issue
         id="MissingPermission"
@@ -129,7 +129,7 @@
         errorLine2="                  ~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="840"
+            line="884"
             column="19"/>
     </issue>
 
@@ -140,7 +140,7 @@
         errorLine2="                  ~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="841"
+            line="885"
             column="19"/>
     </issue>
 
@@ -151,7 +151,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="380"
+            line="381"
             column="5"/>
     </issue>
 

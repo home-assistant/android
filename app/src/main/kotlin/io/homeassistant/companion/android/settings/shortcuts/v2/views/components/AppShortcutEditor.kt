@@ -63,8 +63,8 @@ internal fun AppShortcutEditor(
 
         ShortcutEditorForm(
             draft = draft,
-            labelText = stringResource(R.string.shortcut_label_n, state.index + 1),
-            descriptionText = stringResource(R.string.shortcut_description_n, state.index + 1),
+            labelText = stringResource(R.string.shortcut_v2_shortcut_label),
+            descriptionText = stringResource(R.string.shortcut_v2_shortcut_description),
             screen = screen,
             onDraftChange = onDraftChange,
             isEditing = state is ShortcutEditorUiState.EditorState.AppEdit,

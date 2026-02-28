@@ -799,8 +799,6 @@
     <string name="shortcuts_error_subtitle">Please try again.</string>
     <string name="shortcuts_not_supported_subtitle">Shortcuts require Android 7.1 or later.</string>
     <string name="shortcut_n">Shortcut %d</string>
-    <string name="shortcut_label_n">Shortcut %1$d label</string>
-    <string name="shortcut_description_n">Shortcut %1$d description</string>
     <string name="shortcut_pinned_desc">Pinned shortcut description</string>
     <string name="shortcut_pinned_id">Pinned shortcut ID</string>
     <string name="shortcut_pinned_label">Pinned shortcut label</string>

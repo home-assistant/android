@@ -39,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -216,9 +217,10 @@ private fun AppShortcutsLongPressPreview(
         verticalArrangement = Arrangement.spacedBy(HADimens.SPACE3),
     ) {
         Text(
-            text = stringResource(R.plurals.shortcut_v2_dynamic_slots_capacity, maxAppShortcuts, maxAppShortcuts),
-            style = HATextStyle.Body,
+            text = pluralStringResource(R.plurals.shortcut_v2_dynamic_slots_capacity, maxAppShortcuts, maxAppShortcuts),
+            style = HATextStyle.BodyMedium,
             color = colors.colorTextSecondary,
+            textAlign = TextAlign.Start,
             modifier = Modifier.fillMaxWidth(),
         )
 

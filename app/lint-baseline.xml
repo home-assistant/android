@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 9.0.0" type="baseline" client="gradle" dependencies="false" name="AGP (9.0.0)" variant="all" version="9.0.0">
+<issues format="6" by="lint 9.0.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.0.1)" variant="all" version="9.0.1">
 
     <issue
         id="MissingPermission"
@@ -393,7 +393,7 @@
         errorLine2="      ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/launch/LaunchActivity.kt"
-            line="29"
+            line="44"
             column="7"/>
     </issue>
 
@@ -646,7 +646,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="539"
+            line="547"
             column="17"/>
     </issue>
 
@@ -657,7 +657,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="539"
+            line="547"
             column="17"/>
     </issue>
 
@@ -1651,6 +1651,17 @@
             file="src/full/kotlin/io/homeassistant/companion/android/settings/wear/views/SettingsWearTemplateTileList.kt"
             line="27"
             column="20"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;AppShortcutItem> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `items: ImmutableList&lt;AppShortcutItem>` or create an `@Immutable` wrapper for this class: `@Immutable data class ItemsList(val items: List&lt;AppShortcutItem>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    items: List&lt;AppShortcutItem>,"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/v2/views/screens/ShortcutsListScreen.kt"
+            line="208"
+            column="12"/>
     </issue>
 
     <issue
