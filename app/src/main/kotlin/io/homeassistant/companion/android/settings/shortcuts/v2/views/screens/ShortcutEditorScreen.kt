@@ -39,8 +39,8 @@ import io.homeassistant.companion.android.util.safeBottomPaddingValues
 internal fun ShortcutEditorScreen(
     state: ShortcutEditorUiState,
     dispatch: (ShortcutEditAction) -> Unit,
-    onRetry: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
+    onRetry: (() -> Unit),
 ) {
     val noServers = state.screen.servers.isEmpty()
     val notSupported = state.screen.error == ShortcutError.ApiNotSupported ||
@@ -173,6 +173,7 @@ private fun ShortcutEditorScreenAppPreview() {
                 editor = ShortcutPreviewData.buildAppEditorState(),
             ),
             dispatch = {},
+            onRetry = {}
         )
     }
 }
@@ -189,6 +190,7 @@ private fun ShortcutEditorScreenHomePreview() {
                 editor = ShortcutPreviewData.buildHomeEditorState(),
             ),
             dispatch = {},
+            onRetry = {}
         )
     }
 }
