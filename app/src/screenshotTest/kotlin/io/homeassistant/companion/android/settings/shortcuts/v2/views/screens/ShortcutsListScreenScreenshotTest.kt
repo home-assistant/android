@@ -65,6 +65,7 @@ class ShortcutsListScreenScreenshotTest {
             ShortcutsListScreen(
                 state = ShortcutsListState(
                     isLoading = false,
+                    maxDynamicShortcuts = 5,
                     dynamicItems = dynamicItems,
                     pinnedItems = pinnedItems,
                 ),
@@ -83,6 +84,7 @@ class ShortcutsListScreenScreenshotTest {
             ShortcutsListScreen(
                 state = ShortcutsListState(
                     isLoading = false,
+                    maxDynamicShortcuts = 5,
                     dynamicItems = dynamicItems,
                     pinnedItems = emptyList(),
                 ),
