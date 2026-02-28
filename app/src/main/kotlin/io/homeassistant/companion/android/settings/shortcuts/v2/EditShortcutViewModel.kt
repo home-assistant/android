@@ -69,7 +69,7 @@ data class ShortcutEditorUiState(
 }
 
 @HiltViewModel
-class ShortcutEditViewModel @Inject constructor(private val shortcutsRepository: ShortcutsRepository) :
+class EditShortcutViewModel @Inject constructor(private val shortcutsRepository: ShortcutsRepository) :
     ViewModel() {
 
     private val _uiState = MutableStateFlow(ShortcutEditorUiState())

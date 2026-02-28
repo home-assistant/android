@@ -33,7 +33,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @ExtendWith(MainDispatcherJUnit5Extension::class, ConsoleLogExtension::class)
-class ShortcutEditViewModelTest {
+class EditShortcutViewModelTest {
 
     private val shortcutsRepository: ShortcutsRepository = mockk()
 
@@ -95,7 +95,7 @@ class ShortcutEditViewModelTest {
             ShortcutError.NoServers,
         )
 
-        val viewModel = ShortcutEditViewModel(shortcutsRepository)
+        val viewModel = EditShortcutViewModel(shortcutsRepository)
         turbineScope {
             val uiState = viewModel.uiState.testIn(backgroundScope)
             advanceUntilIdle()
@@ -108,7 +108,7 @@ class ShortcutEditViewModelTest {
 
     @Test
     fun `Given dynamic editor when openDynamic then editor is DynamicEdit`() = runTest {
-        val viewModel = ShortcutEditViewModel(shortcutsRepository)
+        val viewModel = EditShortcutViewModel(shortcutsRepository)
         turbineScope {
             val uiState = viewModel.uiState.testIn(backgroundScope)
             advanceUntilIdle()
@@ -125,7 +125,7 @@ class ShortcutEditViewModelTest {
 
     @Test
     fun `Given dynamic edit when submit then upsert uses draft`() = runTest {
-        val viewModel = ShortcutEditViewModel(shortcutsRepository)
+        val viewModel = EditShortcutViewModel(shortcutsRepository)
         advanceUntilIdle()
         viewModel.openDynamic(0)
         advanceUntilIdle()
@@ -169,7 +169,7 @@ class ShortcutEditViewModelTest {
             ),
         )
 
-        val viewModel = ShortcutEditViewModel(shortcutsRepository)
+        val viewModel = EditShortcutViewModel(shortcutsRepository)
         turbineScope {
             val uiState = viewModel.uiState.testIn(backgroundScope)
             advanceUntilIdle()
@@ -199,7 +199,7 @@ class ShortcutEditViewModelTest {
 
     @Test
     fun `Given dynamic edit when delete then close event emitted`() = runTest {
-        val viewModel = ShortcutEditViewModel(shortcutsRepository)
+        val viewModel = EditShortcutViewModel(shortcutsRepository)
         turbineScope {
             val closeEvents = viewModel.closeEvents.testIn(backgroundScope)
             advanceUntilIdle()
@@ -218,7 +218,7 @@ class ShortcutEditViewModelTest {
 
     @Test
     fun `Given pinned shortcut when editPinned then editor is PinnedEdit`() = runTest {
-        val viewModel = ShortcutEditViewModel(shortcutsRepository)
+        val viewModel = EditShortcutViewModel(shortcutsRepository)
         turbineScope {
             val uiState = viewModel.uiState.testIn(backgroundScope)
             advanceUntilIdle()
@@ -234,7 +234,7 @@ class ShortcutEditViewModelTest {
 
     @Test
     fun `Given pinned edit when submit then pin result without close`() = runTest {
-        val viewModel = ShortcutEditViewModel(shortcutsRepository)
+        val viewModel = EditShortcutViewModel(shortcutsRepository)
         turbineScope {
             val pinEvents = viewModel.pinResultEvents.testIn(backgroundScope)
             val closeEvents = viewModel.closeEvents.testIn(backgroundScope)
@@ -255,7 +255,7 @@ class ShortcutEditViewModelTest {
 
     @Test
     fun `Given pinned create when submit then pin result and close emitted`() = runTest {
-        val viewModel = ShortcutEditViewModel(shortcutsRepository)
+        val viewModel = EditShortcutViewModel(shortcutsRepository)
         turbineScope {
             val pinEvents = viewModel.pinResultEvents.testIn(backgroundScope)
             val closeEvents = viewModel.closeEvents.testIn(backgroundScope)
@@ -280,7 +280,7 @@ class ShortcutEditViewModelTest {
             ShortcutError.SlotsFull,
         )
 
-        val viewModel = ShortcutEditViewModel(shortcutsRepository)
+        val viewModel = EditShortcutViewModel(shortcutsRepository)
         turbineScope {
             val uiState = viewModel.uiState.testIn(backgroundScope)
             advanceUntilIdle()
@@ -302,7 +302,7 @@ class ShortcutEditViewModelTest {
             ShortcutError.SlotsFull,
         )
 
-        val viewModel = ShortcutEditViewModel(shortcutsRepository)
+        val viewModel = EditShortcutViewModel(shortcutsRepository)
         turbineScope {
             val uiState = viewModel.uiState.testIn(backgroundScope)
             advanceUntilIdle()

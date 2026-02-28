@@ -18,7 +18,7 @@ import androidx.navigation.toRoute
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.PinResult
 import io.homeassistant.companion.android.settings.shortcuts.v2.ManageShortcutsViewModel
-import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutEditViewModel
+import io.homeassistant.companion.android.settings.shortcuts.v2.EditShortcutViewModel
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListAction
 import io.homeassistant.companion.android.settings.shortcuts.v2.views.screens.ShortcutEditorScreen
 import io.homeassistant.companion.android.settings.shortcuts.v2.views.screens.ShortcutsListScreen
@@ -146,7 +146,7 @@ private fun ShortcutsListRouteScreen(
 }
 
 @Composable
-private fun CreateDynamicRouteScreen(viewModel: ShortcutEditViewModel = hiltViewModel()) {
+private fun CreateDynamicRouteScreen(viewModel: EditShortcutViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
@@ -163,7 +163,7 @@ private fun CreateDynamicRouteScreen(viewModel: ShortcutEditViewModel = hiltView
 @Composable
 private fun CreatePinnedRouteScreen(
     onShowSnackbar: suspend (message: String) -> Unit,
-    viewModel: ShortcutEditViewModel = hiltViewModel(),
+    viewModel: EditShortcutViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -200,7 +200,7 @@ private fun CreatePinnedRouteScreen(
 @Composable
 private fun EditDynamicRouteScreen(
     route: EditDynamicRoute,
-    viewModel: ShortcutEditViewModel = hiltViewModel(),
+    viewModel: EditShortcutViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -226,7 +226,7 @@ private fun EditDynamicRouteScreen(
 private fun EditPinnedRouteScreen(
     route: EditPinnedRoute,
     onNavigateBack: () -> Unit,
-    viewModel: ShortcutEditViewModel = hiltViewModel(),
+    viewModel: EditShortcutViewModel = hiltViewModel(),
     onShowSnackbar: suspend (message: String) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
