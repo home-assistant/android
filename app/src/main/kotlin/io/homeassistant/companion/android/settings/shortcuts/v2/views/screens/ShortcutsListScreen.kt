@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
+import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -103,7 +103,7 @@ internal fun ShortcutsListScreen(
                 }
             }
         },
-        contentWindowInsets = WindowInsets(0, 0, 0, 0), // TODO: Check how to avoid this
+        contentWindowInsets = safeBottomWindowInsets(),
         modifier = modifier,
     ) { contentPadding ->
         Box(modifier = Modifier.padding(contentPadding)) {
@@ -292,7 +292,7 @@ private fun AppShortcutsLongPressPreview(
                                 .fillMaxWidth()
                                 .height(1.dp)
                                 .background(colors.colorBorderNeutralQuiet),
-                            )
+                        )
                     }
                 }
             }

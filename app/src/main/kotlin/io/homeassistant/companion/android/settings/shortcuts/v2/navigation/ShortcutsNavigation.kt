@@ -16,9 +16,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.PinResult
-import io.homeassistant.companion.android.settings.shortcuts.v2.ManageShortcutsViewModel
 import io.homeassistant.companion.android.settings.shortcuts.v2.EditShortcutViewModel
+import io.homeassistant.companion.android.settings.shortcuts.v2.ManageShortcutsViewModel
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListAction
 import io.homeassistant.companion.android.settings.shortcuts.v2.views.screens.ShortcutEditorScreen
 import io.homeassistant.companion.android.settings.shortcuts.v2.views.screens.ShortcutsListScreen
@@ -40,7 +39,7 @@ private data class EditDynamicRoute(val index: Int)
 private data class EditPinnedRoute(val id: String)
 
 @Composable
-fun ShortcutsNavHost(onToolbarTitleChanged: (String) -> Unit, onShowSnackbar: suspend (message: String) -> Unit) {
+fun ShortcutsNavHost(onToolbarTitleChanged: (String) -> Unit) {
     val navController = rememberNavController()
 
     NavHost(
@@ -66,7 +65,6 @@ fun ShortcutsNavHost(onToolbarTitleChanged: (String) -> Unit, onShowSnackbar: su
 
         composable<CreatePinnedRoute> {
             CreatePinnedRouteScreen(
-                onShowSnackbar = onShowSnackbar,
                 onNavigateBack = { navController.popBackStack() },
             )
         }
@@ -84,7 +82,6 @@ fun ShortcutsNavHost(onToolbarTitleChanged: (String) -> Unit, onShowSnackbar: su
             EditPinnedRouteScreen(
                 route = route,
                 onNavigateBack = { navController.popBackStack() },
-                onShowSnackbar = onShowSnackbar,
             )
         }
     }
@@ -161,27 +158,11 @@ private fun CreateDynamicRouteScreen(viewModel: EditShortcutViewModel = hiltView
 }
 
 @Composable
-private fun CreatePinnedRouteScreen(
-    onShowSnackbar: suspend (message: String) -> Unit,
-    viewModel: EditShortcutViewModel = hiltViewModel(),
-    onNavigateBack: () -> Unit,
-) {
+private fun CreatePinnedRouteScreen(viewModel: EditShortcutViewModel = hiltViewModel(), onNavigateBack: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val shortcutPinRequestedMessage = stringResource(R.string.shortcut_pin_requested)
-    val shortcutUpdatedMessage = stringResource(R.string.shortcut_updated)
 
     LaunchedEffect(Unit) {
         viewModel.openCreatePinned()
-    }
-
-    LaunchedEffect(viewModel) {
-        viewModel.pinResultEvents.collect { result ->
-            val message = when (result) {
-                PinResult.Requested -> shortcutPinRequestedMessage
-                PinResult.Updated -> shortcutUpdatedMessage
-            }
-            onShowSnackbar(message)
-        }
     }
 
     LaunchedEffect(viewModel) {
@@ -227,24 +208,11 @@ private fun EditPinnedRouteScreen(
     route: EditPinnedRoute,
     onNavigateBack: () -> Unit,
     viewModel: EditShortcutViewModel = hiltViewModel(),
-    onShowSnackbar: suspend (message: String) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val shortcutUpdatedMessage = stringResource(R.string.shortcut_updated)
-    val shortcutPinRequestedMessage = stringResource(R.string.shortcut_pin_requested)
 
     LaunchedEffect(route.id) {
         viewModel.editPinned(route.id)
-    }
-
-    LaunchedEffect(viewModel) {
-        viewModel.pinResultEvents.collect { result ->
-            val message = when (result) {
-                PinResult.Requested -> shortcutPinRequestedMessage
-                PinResult.Updated -> shortcutUpdatedMessage
-            }
-            onShowSnackbar(message)
-        }
     }
 
     LaunchedEffect(viewModel) {
