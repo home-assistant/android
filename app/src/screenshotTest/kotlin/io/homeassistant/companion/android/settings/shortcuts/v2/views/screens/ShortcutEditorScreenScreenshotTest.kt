@@ -111,6 +111,7 @@ class ShortcutEditorScreenScreenshotTest {
                     ),
                 ),
                 dispatch = { _: ShortcutEditAction -> },
+                onRetry = {},
             )
         }
     }
@@ -133,6 +134,7 @@ class ShortcutEditorScreenScreenshotTest {
                     ),
                 ),
                 dispatch = { _: ShortcutEditAction -> },
+                onRetry = {},
             )
         }
     }
@@ -157,6 +159,7 @@ class ShortcutEditorScreenScreenshotTest {
                     ),
                 ),
                 dispatch = { _: ShortcutEditAction -> },
+                onRetry = {},
             )
         }
     }
@@ -180,6 +183,7 @@ class ShortcutEditorScreenScreenshotTest {
                     ),
                 ),
                 dispatch = { _: ShortcutEditAction -> },
+                onRetry = {},
             )
         }
     }
@@ -211,6 +215,7 @@ class ShortcutEditorScreenScreenshotTest {
                     ),
                 ),
                 dispatch = { _: ShortcutEditAction -> },
+                onRetry = {},
             )
         }
     }
@@ -233,6 +238,7 @@ class ShortcutEditorScreenScreenshotTest {
                     ),
                 ),
                 dispatch = { _: ShortcutEditAction -> },
+                onRetry = {},
             )
         }
     }
@@ -255,6 +261,7 @@ class ShortcutEditorScreenScreenshotTest {
                     ),
                 ),
                 dispatch = { _: ShortcutEditAction -> },
+                onRetry = {},
             )
         }
     }

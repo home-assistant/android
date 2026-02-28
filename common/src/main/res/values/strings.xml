@@ -813,7 +813,10 @@
     <string name="shortcut_v2_add_to_home_screen">Add to Home Screen</string>
     <string name="shortcut_v2_add_to_home_screen_subtitle">Creates a launcher icon on your home screen</string>
     <string name="shortcut_v2_dynamic_section_subtitle">Shown when you long-press the app icon</string>
-    <string name="shortcut_v2_dynamic_slots_capacity">Up to %1$d slots can be allocated for App shortcuts.</string>
+    <plurals name="shortcut_v2_dynamic_slots_capacity">
+        <item quantity="one">Up to %1$d slot can be allocated for App shortcuts.</item>
+        <item quantity="other">Up to %1$d slots can be allocated for App shortcuts.</item>
+    </plurals>
     <string name="shortcut_v2_pinned_section_subtitle">Added to your home screen launcher</string>
     <string name="shortcut_v2_app_shortcuts_header">App shortcuts</string>
     <string name="shortcut_v2_home_screen_shortcuts_header">Home shortcuts</string>

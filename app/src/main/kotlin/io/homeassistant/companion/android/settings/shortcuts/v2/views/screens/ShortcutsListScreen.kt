@@ -216,7 +216,7 @@ private fun AppShortcutsLongPressPreview(
         verticalArrangement = Arrangement.spacedBy(HADimens.SPACE3),
     ) {
         Text(
-            text = stringResource(R.string.shortcut_v2_dynamic_slots_capacity, maxAppShortcuts),
+            text = stringResource(R.plurals.shortcut_v2_dynamic_slots_capacity, maxAppShortcuts, maxAppShortcuts),
             style = HATextStyle.Body,
             color = colors.colorTextSecondary,
             modifier = Modifier.fillMaxWidth(),
