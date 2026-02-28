@@ -126,7 +126,7 @@ internal fun ShortcutsListScreen(
         CreateShortcutDialog(
             state = state,
             onCreateAppShortcut = {
-                if (state.maxAppShortcuts?.let { state.appItems.size < it } == true) {
+                if (state.maxAppShortcuts?.let { state.appShortcutItems.size < it } == true) {
                     dismissCreateDialog()
                     dispatch(ShortcutsListAction.CreateAppShortcut)
                 }
@@ -154,7 +154,7 @@ private fun LoadingState() {
 
 @Composable
 private fun ShortcutsList(state: ShortcutsListState, dispatch: (ShortcutsListAction) -> Unit) {
-    val homeItems = state.homeItems
+    val homeItems = state.homeShortcutItems
     val isCompactScreen = screenWidth() < COMPACT_WIDTH_BREAKPOINT
     val columnsCount = if (isCompactScreen) 3 else 4
 
@@ -166,7 +166,7 @@ private fun ShortcutsList(state: ShortcutsListState, dispatch: (ShortcutsListAct
         verticalArrangement = Arrangement.spacedBy(HADimens.SPACE3),
         horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE3),
     ) {
-        if (state.appItems.isNotEmpty() && state.maxAppShortcuts != null) {
+        if (state.appShortcutItems.isNotEmpty() && state.maxAppShortcuts != null) {
             item(span = { GridItemSpan(maxLineSpan) }) {
                 SectionHeader(
                     text = stringResource(R.string.shortcut_v2_app_shortcuts_header),
@@ -176,7 +176,7 @@ private fun ShortcutsList(state: ShortcutsListState, dispatch: (ShortcutsListAct
             }
             item(span = { GridItemSpan(maxLineSpan) }) {
                 AppShortcutsLongPressPreview(
-                    items = state.appItems,
+                    items = state.appShortcutItems,
                     maxAppShortcuts = state.maxAppShortcuts,
                     onEditAppShortcut = { index -> dispatch(ShortcutsListAction.EditAppShortcut(index)) },
                 )
@@ -414,7 +414,7 @@ private fun CreateShortcutDialog(
     onCreateHomeShortcut: () -> Unit,
     onDismissRequest: () -> Unit,
 ) {
-    val canCreateAppShortcut = state.maxAppShortcuts?.let { state.appItems.size < it } == true
+    val canCreateAppShortcut = state.maxAppShortcuts?.let { state.appShortcutItems.size < it } == true
     val canCreateHomeShortcut = state.isHomeSupported
     MdcAlertDialog(
         onDismissRequest = onDismissRequest,

@@ -76,8 +76,8 @@ class ManageShortcutsViewModelTest {
         assertFalse(state.isEmpty)
         assertTrue(state.isHomeSupported)
         assertEquals(5, state.maxAppShortcuts)
-        assertEquals(listOf(0, 2), state.appItems.map { it.index })
-        assertEquals(1, state.homeItems.size)
+        assertEquals(listOf(0, 2), state.appShortcutItems.map { it.index })
+        assertEquals(1, state.homeShortcutItems.size)
     }
 
     @Test
@@ -160,8 +160,8 @@ class ManageShortcutsViewModelTest {
         )
 
         val viewModel = createVm()
-        assertEquals(2, viewModel.uiState.value.appItems.size)
-        assertEquals(listOf(0, 3), viewModel.uiState.value.appItems.map { it.index })
+        assertEquals(2, viewModel.uiState.value.appShortcutItems.size)
+        assertEquals(listOf(0, 3), viewModel.uiState.value.appShortcutItems.map { it.index })
     }
 
     private fun buildDraft(id: String, serverId: Int): ShortcutDraft {

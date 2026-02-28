@@ -174,10 +174,10 @@ internal object ShortcutPreviewData {
         return ShortcutsListState(
             isLoading = isLoading,
             error = error,
-            homeError = if (isHomeSupported) null else ShortcutError.HomeShortcutNotSupported,
+            homeShortcutError = if (isHomeSupported) null else ShortcutError.HomeShortcutNotSupported,
             maxAppShortcuts = maxAppShortcuts,
-            appItems = appItems,
-            homeItems = homeItems,
+            appShortcutItems = appItems,
+            homeShortcutItems = homeItems,
         )
     }
 

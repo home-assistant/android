@@ -24,14 +24,14 @@ internal data class AppShortcutItem(val index: Int, val summary: ShortcutSummary
 internal data class ShortcutsListState(
     val isLoading: Boolean = true,
     val error: ShortcutError? = null,
-    val homeError: ShortcutError? = null,
+    val homeShortcutError: ShortcutError? = null,
     val maxAppShortcuts: Int? = null,
-    val appItems: List<AppShortcutItem> = emptyList(),
-    val homeItems: List<ShortcutSummary> = emptyList(),
+    val appShortcutItems: List<AppShortcutItem> = emptyList(),
+    val homeShortcutItems: List<ShortcutSummary> = emptyList(),
 ) {
     val hasError: Boolean get() = error != null
-    val isHomeSupported: Boolean get() = homeError != ShortcutError.HomeShortcutNotSupported
-    val isEmpty: Boolean get() = appItems.isEmpty() && homeItems.isEmpty()
+    val isHomeSupported: Boolean get() = homeShortcutError != ShortcutError.HomeShortcutNotSupported
+    val isEmpty: Boolean get() = appShortcutItems.isEmpty() && homeShortcutItems.isEmpty()
 }
 
 @HiltViewModel
@@ -84,10 +84,10 @@ internal class ManageShortcutsViewModel @Inject constructor(private val shortcut
                 ShortcutsListState(
                     isLoading = false,
                     error = null,
-                    homeError = listData.homeShortcutsError,
+                    homeShortcutError = listData.homeShortcutsError,
                     maxAppShortcuts = listData.appShortcuts.maxAppShortcuts,
-                    appItems = appItems,
-                    homeItems = homeItems,
+                    appShortcutItems = appItems,
+                    homeShortcutItems = homeItems,
                 )
             }
         }

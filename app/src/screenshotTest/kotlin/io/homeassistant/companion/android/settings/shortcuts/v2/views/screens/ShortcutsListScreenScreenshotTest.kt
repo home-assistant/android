@@ -33,8 +33,8 @@ class ShortcutsListScreenScreenshotTest {
             ShortcutsListScreen(
                 state = ShortcutsListState(
                     isLoading = false,
-                    appItems = emptyList(),
-                    homeItems = emptyList(),
+                    appShortcutItems = emptyList(),
+                    homeShortcutItems = emptyList(),
                 ),
                 dispatch = { _: ShortcutsListAction -> },
                 onRetry = {},
@@ -66,8 +66,8 @@ class ShortcutsListScreenScreenshotTest {
                 state = ShortcutsListState(
                     isLoading = false,
                     maxAppShortcuts = 5,
-                    appItems = appItems,
-                    homeItems = homeItems,
+                    appShortcutItems = appItems,
+                    homeShortcutItems = homeItems,
                 ),
                 dispatch = { _: ShortcutsListAction -> },
                 onRetry = {},
@@ -78,15 +78,15 @@ class ShortcutsListScreenScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `ShortcutsListScreen content app only`() {
+    fun `ShortcutsListScreen content app shortcuts only`() {
         val appItems = mockAppItems(count = 3)
         HAThemeForPreview {
             ShortcutsListScreen(
                 state = ShortcutsListState(
                     isLoading = false,
                     maxAppShortcuts = 5,
-                    appItems = appItems,
-                    homeItems = emptyList(),
+                    appShortcutItems = appItems,
+                    homeShortcutItems = emptyList(),
                 ),
                 dispatch = { _: ShortcutsListAction -> },
                 onRetry = {},
@@ -97,13 +97,13 @@ class ShortcutsListScreenScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `ShortcutsListScreen content home only`() {
+    fun `ShortcutsListScreen content home shortcuts only`() {
         HAThemeForPreview {
             ShortcutsListScreen(
                 state = ShortcutsListState(
                     isLoading = false,
-                    appItems = emptyList(),
-                    homeItems = mockHomeItems(count = 1),
+                    appShortcutItems = emptyList(),
+                    homeShortcutItems = mockHomeItems(count = 10),
                 ),
                 dispatch = { _: ShortcutsListAction -> },
                 onRetry = {},
