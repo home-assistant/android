@@ -204,7 +204,7 @@ fun getDomainList(
                                     domains,
                                     entityList,
                                     allEntities,
-                                ) { },
+                                ),
                             )
                         }
                     }

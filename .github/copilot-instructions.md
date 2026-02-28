@@ -239,15 +239,13 @@ Timber.e(exception, "Failed to load user dashboard for userId=$userId")
 // Bad - no context
 Timber.e(exception)
 
-// Good - conditional logging for expensive operations
-if (BuildConfig.DEBUG) {
-    Timber.d("Complex debug info: ${expensiveOperation()}")
-}
+// Good - use sensitive() to hide user data in release logs
+Timber.d("User logged in: userId=${sensitive(user.id)}")
 
 // Bad - leaks user data
 Timber.d("User logged in: ${user.email}")
 
-// Good - sanitized
+// Bad - manual BuildConfig.DEBUG check (use sensitive() instead)
 Timber.d("User logged in: userId=${if(BuildConfig.DEBUG) user.id else "redacted"}")
 ```
 
@@ -313,6 +311,7 @@ Use the `Clock` available from `Hilt`.
   class MyTest {
   ```
   Without the `@Config` override, Robolectric defaults to the manifest's `HomeAssistantApplication`, which enables StrictMode and FailFast, leaking process-wide state that can crash the test JVM.
+- **Turbine**: Turbine is available in all Gradle modules and must be used for testing flows. Use `turbineScope` with `testIn` for multi-collector tests, and `awaitItem`/`awaitComplete`/`expectNoEvents` for assertions. Never use `CountDownLatch`, `Thread.sleep`, `verify(timeout = ...)`, or raw `launch`/`async` to synchronize on flow emissions. Note: flows wrapped with `shareIn` never complete — use `expectNoEvents()` + `cancelAndConsumeRemainingEvents()` instead of `awaitComplete()`.
 - **Test Location**: Tests should mirror source structure in `src/test/kotlin/` directory
 - **Test Naming**: Use GIVEN-WHEN-THEN structure with descriptive sentences:
   ```kotlin

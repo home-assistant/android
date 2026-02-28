@@ -3,4 +3,10 @@
     <issue id="ComposeCompositionLocalUsage">
         <option name="allowed-composition-locals" value="LocalHAColorScheme" />
     </issue>
+    <issue id="ComposePreviewPublic">
+        <ignore path="src/screenshotTest" />
+    </issue>
+    <issue id="ComposeUnstableReceiver">
+        <ignore path="src/screenshotTest" />
+    </issue>
 </lint>

@@ -6,19 +6,17 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
-import android.graphics.Color
 import android.os.Bundle
 import android.view.WindowManager
-import androidx.core.graphics.drawable.toDrawable
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.runtime.LaunchedEffect
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
+import io.homeassistant.companion.android.assist.service.AssistVoiceInteractionService
 import io.homeassistant.companion.android.assist.ui.AssistSheetView
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -159,6 +157,7 @@ class AssistActivity : BaseActivity() {
     override fun onDestroy() {
         super.onDestroy()
         viewModel.onDestroy()
+        AssistVoiceInteractionService.resumeListening(this)
     }
 
     override fun onNewIntent(intent: Intent) {

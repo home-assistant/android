@@ -5,6 +5,7 @@ import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
 import app.cash.turbine.test
+import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.Runs
 import io.mockk.every
@@ -16,8 +17,10 @@ import io.mockk.verify
 import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.security.KeyStore
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -27,10 +30,15 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.extension.RegisterExtension
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(MainDispatcherJUnit5Extension::class)
+@ExtendWith(ConsoleLogExtension::class)
 class WearMTLSViewModelTest {
+
+    @JvmField
+    @RegisterExtension
+    val mainDispatcherExtension = MainDispatcherJUnit5Extension()
     private val mockContentResolver: ContentResolver = mockk()
     private val mockUri: Uri = mockk<Uri>()
     private lateinit var viewModel: WearMTLSViewModel
@@ -46,7 +54,7 @@ class WearMTLSViewModelTest {
         val context = mockk<Context> {
             every { contentResolver } returns this@WearMTLSViewModelTest.mockContentResolver
         }
-        viewModel = WearMTLSViewModel(context)
+        viewModel = WearMTLSViewModel(context, mainDispatcherExtension.testDispatcher)
     }
 
     @AfterEach
@@ -249,8 +257,10 @@ class WearMTLSViewModelTest {
 
         viewModel.uiState.test {
             viewModel.onUriSelected(mockUri)
-            awaitItem()
-            awaitItem() // URI selected, then filename fetched
+            awaitItem() // Initial state
+            awaitItem() // URI selected
+            this@runTest.runCurrent() // Drain getFilename + triggerPasswordValidation from onUriSelected
+            awaitItem() // Filename fetched
 
             viewModel.onPasswordChanged("p1")
             var state = awaitItem()
@@ -258,7 +268,7 @@ class WearMTLSViewModelTest {
             assertFalse(state.showError)
 
             viewModel.onPasswordChanged("p2")
-            state = expectMostRecentItem()
+            state = awaitItem()
             assertFalse(state.showError)
             assertEquals("p2", state.currentPassword)
 
@@ -267,10 +277,9 @@ class WearMTLSViewModelTest {
             assertEquals("finalPassword", lastPassChangeState.currentPassword)
             assertFalse(lastPassChangeState.isCertValidated)
 
-            advanceTimeBy(passwordValidationDebounce) // Allow final validation to occur
-
-            val test = awaitItem()
-            assertEquals("finalPassword", test.currentPassword)
+            advanceTimeBy(passwordValidationDebounce - 100.milliseconds)
+            expectNoEvents()
+            advanceTimeBy(100.milliseconds) // Allow final validation to occur
 
             val finalState = awaitItem()
             assertEquals("finalPassword", finalState.currentPassword)

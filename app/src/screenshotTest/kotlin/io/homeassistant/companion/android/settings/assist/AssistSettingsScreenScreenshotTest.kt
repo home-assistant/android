@@ -40,6 +40,31 @@ class AssistSettingsScreenScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
+    fun `Assist settings is loading`() {
+        HAThemeForPreview {
+            AssistSettingsContent(
+                uiState = AssistSettingsUiState(
+                    isLoading = true,
+                    isDefaultAssistant = true,
+                    isWakeWordEnabled = true,
+                    selectedWakeWordModel = testModels[0],
+                    availableModels = testModels,
+                    isTestingWakeWord = false,
+                    wakeWordDetected = false,
+                ),
+                hasAudioPermission = true,
+                onSetDefaultAssistant = {},
+                onToggleWakeWord = {},
+                onSelectWakeWord = {},
+                onStartTestWakeWord = {},
+                onStopTestWakeWord = {},
+            )
+        }
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
     fun `Assist settings as default assistant with wake word enabled`() {
         HAThemeForPreview {
             AssistSettingsContent(

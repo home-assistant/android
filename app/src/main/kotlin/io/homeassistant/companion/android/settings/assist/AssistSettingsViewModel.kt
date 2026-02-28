@@ -2,16 +2,14 @@ package io.homeassistant.companion.android.settings.assist
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import androidx.annotation.RequiresPermission
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
-import io.homeassistant.companion.android.assist.wakeword.WakeWordListener
-import io.homeassistant.companion.android.assist.wakeword.WakeWordListenerFactory
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,23 +37,17 @@ val WAKE_WORD_TEST_DEBOUNCE = 3.seconds
 class AssistSettingsViewModel @Inject constructor(
     private val defaultAssistantManager: DefaultAssistantManager,
     private val assistConfigManager: AssistConfigManager,
-    private val wakeWordListenerFactory: WakeWordListenerFactory,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AssistSettingsUiState())
     val uiState: StateFlow<AssistSettingsUiState> = _uiState.asStateFlow()
-
-    private val wakeWordListener: WakeWordListener by lazy {
-        wakeWordListenerFactory.create(
-            onWakeWordDetected = { _ -> onWakeWordDetected() },
-            onListenerStopped = ::onListenerStopped,
-        )
-    }
+    private var wakeWordResetJob: Job? = null
 
     init {
         loadState()
     }
 
+    @SuppressLint("MissingPermission")
     private fun loadState() {
         viewModelScope.launch {
             val models = assistConfigManager.getAvailableModels()
@@ -116,62 +108,41 @@ class AssistSettingsViewModel @Inject constructor(
     fun onSelectWakeWordModel(model: MicroWakeWordModelConfig) {
         viewModelScope.launch {
             assistConfigManager.setSelectedWakeWordModel(model)
-            _uiState.update { it.copy(selectedWakeWordModel = model) }
-
-            // If currently testing, restart with new model
-            if (_uiState.value.isTestingWakeWord) {
-                stopTestWakeWord()
-                startTestWakeWord()
+            _uiState.update {
+                it.copy(
+                    selectedWakeWordModel = model,
+                    isTestingWakeWord = false,
+                    wakeWordDetected = false,
+                )
             }
         }
     }
 
     /**
-     * Start testing wake word detection.
+     * Notify the ViewModel that a wake word was detected by the service.
      *
-     * The listener will stop automatically when the ViewModel is cleared.
+     * Called by the Fragment when it receives the broadcast from the service.
+     * Only updates the UI when test mode is active.
+     * Detection feedback resets after a debounce period.
      */
-    @RequiresPermission(android.Manifest.permission.RECORD_AUDIO)
-    fun startTestWakeWord() {
-        val state = _uiState.value
-        val modelConfig = state.selectedWakeWordModel ?: state.availableModels.firstOrNull() ?: return
-
-        _uiState.update { it.copy(isTestingWakeWord = true, wakeWordDetected = false) }
-
-        viewModelScope.launch {
-            wakeWordListener.start(
-                coroutineScope = this,
-                modelConfig = modelConfig,
-            )
-        }
-    }
-
-    /**
-     * Stop testing wake word detection.
-     */
-    fun stopTestWakeWord() {
-        viewModelScope.launch {
-            wakeWordListener.stop()
-            _uiState.update { it.copy(isTestingWakeWord = false) }
-        }
-    }
-
-    private fun onWakeWordDetected() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(wakeWordDetected = true) }
+    fun onWakeWordDetected() {
+        if (!_uiState.value.isTestingWakeWord) return
+        wakeWordResetJob?.cancel()
+        _uiState.update { it.copy(wakeWordDetected = true) }
+        wakeWordResetJob = viewModelScope.launch {
             delay(WAKE_WORD_TEST_DEBOUNCE)
             _uiState.update { it.copy(wakeWordDetected = false) }
         }
     }
 
-    private fun onListenerStopped() {
-        _uiState.update { it.copy(isTestingWakeWord = false) }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        viewModelScope.launch {
-            wakeWordListener.stop()
-        }
+    /**
+     * Toggle the test mode UI state.
+     *
+     * Called by the Fragment when the user starts or stops testing.
+     * The Fragment handles BroadcastReceiver registration.
+     */
+    fun setTestingWakeWord(testing: Boolean) {
+        wakeWordResetJob?.cancel()
+        _uiState.update { it.copy(isTestingWakeWord = testing, wakeWordDetected = false) }
     }
 }

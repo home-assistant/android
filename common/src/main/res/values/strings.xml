@@ -36,6 +36,7 @@
     <string name="always_show_first_view_on_app_start">Always show first view when opening app</string>
     <string name="always_show_first_view_on_app_start_summary">The first view of the default dashboard is shown as soon as the app is opened</string>
     <string name="app_name">Home Assistant</string>
+    <string name="play_services_unavailable_full_flavor">Google Play services are unavailable. This version of the app may crash. Use the minimal version instead.</string>
     <string name="app_version_info">App version info</string>
     <string name="application_version">Application version</string>
     <string name="attempting_authentication">Authenticating…</string>
@@ -1497,4 +1498,5 @@
     <string name="entity_picker_no_entity_found_for">No entity found for %s</string>
     <string name="fail_to_navigate_to_uri">No app available to open %s</string>
     <string name="experimental">Experimental</string>
+    <string name="learn_more">Learn more</string>
 </resources>

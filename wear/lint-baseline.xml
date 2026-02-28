@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.13.2" type="baseline" client="gradle" dependencies="false" name="AGP (8.13.2)" variant="all" version="8.13.2">
+<issues format="6" by="lint 9.0.0" type="baseline" client="gradle" dependencies="false" name="AGP (9.0.0)" variant="all" version="9.0.0">
 
     <issue
         id="CustomSplashScreen"
@@ -19,7 +19,7 @@
         errorLine2="                ^">
         <location
             file="src/main/AndroidManifest.xml"
-            line="290"
+            line="291"
             column="17"/>
     </issue>
 
@@ -30,7 +30,7 @@
         errorLine2="                ^">
         <location
             file="src/main/AndroidManifest.xml"
-            line="292"
+            line="293"
             column="17"/>
     </issue>
 
@@ -41,7 +41,7 @@
         errorLine2="                ^">
         <location
             file="src/main/AndroidManifest.xml"
-            line="294"
+            line="295"
             column="17"/>
     </issue>
 
@@ -52,7 +52,7 @@
         errorLine2="                ^">
         <location
             file="src/main/AndroidManifest.xml"
-            line="296"
+            line="297"
             column="17"/>
     </issue>
 
@@ -360,7 +360,7 @@
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="154"
+            line="155"
             column="35"/>
     </issue>
 
@@ -371,7 +371,7 @@
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="175"
+            line="176"
             column="35"/>
     </issue>
 
@@ -382,7 +382,7 @@
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="195"
+            line="196"
             column="35"/>
     </issue>
 
@@ -393,7 +393,7 @@
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="229"
+            line="230"
             column="35"/>
     </issue>
 
@@ -528,17 +528,6 @@
         <location
             file="src/main/AndroidManifest.xml"
             line="116"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="WearRecents"
-        message="Set `taskAffinity` for Wear activities to make them appear correctly in recents"
-        errorLine1="        &lt;activity"
-        errorLine2="        ^">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="118"
             column="9"/>
     </issue>
 

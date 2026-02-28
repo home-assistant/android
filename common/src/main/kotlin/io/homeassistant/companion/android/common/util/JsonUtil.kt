@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.common.util
 
-import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -15,6 +14,7 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.mapSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import io.homeassistant.companion.android.util.sensitive
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonDecoder
@@ -348,7 +348,7 @@ fun String.toJsonObjectOrNull(): JsonObject? {
     return runCatching {
         Json.parseToJsonElement(this) as? JsonObject
     }.onFailure {
-        Timber.w("Failed to convert to a json object: ${if (BuildConfig.DEBUG) this else "HIDDEN"}")
+        Timber.w("Failed to convert to a json object: ${sensitive(this)}")
     }.getOrNull()
 }
 
@@ -381,7 +381,7 @@ fun JsonObject.getStringOrNull(key: String): String? {
         val value = this[key]
         if (value is JsonNull) null else value?.jsonPrimitive?.content
     }.onFailure {
-        Timber.w("Failed to get string value for $key in jsonObject: ${if (BuildConfig.DEBUG) this else "HIDDEN"}")
+        Timber.w("Failed to get string value for $key in jsonObject: ${sensitive(this.toString())}")
     }.getOrNull()
 }
 
@@ -436,7 +436,7 @@ fun JsonObject.getBooleanOrNull(key: String): Boolean? {
         val value = this[key]
         if (value is JsonNull) null else value?.jsonPrimitive?.booleanOrNull
     }.onFailure {
-        Timber.w("Failed to get boolean value for $key in jsonObject: ${if (BuildConfig.DEBUG) this else "HIDDEN"}")
+        Timber.w("Failed to get boolean value for $key in jsonObject: ${sensitive(this.toString())}")
     }.getOrNull()
 }
 
@@ -493,7 +493,7 @@ fun JsonObject.getIntOrNull(key: String): Int? {
         val value = this[key]
         if (value is JsonNull) null else value?.jsonPrimitive?.intOrNull
     }.onFailure {
-        Timber.w("Failed to get integer value for $key in jsonObject: ${if (BuildConfig.DEBUG) this else "HIDDEN"}")
+        Timber.w("Failed to get integer value for $key in jsonObject: ${sensitive(this.toString())}")
     }.getOrNull()
 }
 
