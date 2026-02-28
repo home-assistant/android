@@ -52,6 +52,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.compose.composable.HALoading
 import io.homeassistant.companion.android.common.compose.theme.HADimens
+import io.homeassistant.companion.android.common.compose.theme.HARadius
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
@@ -72,17 +73,6 @@ import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
 private val COMPACT_WIDTH_BREAKPOINT = 600.dp
-private val SHORTCUT_ICON_BADGE_SIZE_COMPACT = 56.dp
-private val SHORTCUT_ICON_BADGE_SIZE_REGULAR = 64.dp
-private val SHORTCUT_ICON_SIZE_COMPACT = 30.dp
-private val SHORTCUT_ICON_SIZE_REGULAR = 34.dp
-private val SHORTCUT_ICON_BADGE_CORNER_RADIUS = 18.dp
-private val APP_SHORTCUT_PREVIEW_APP_ICON_SIZE = 56.dp
-private val APP_SHORTCUT_PREVIEW_APP_ICON_CORNER_RADIUS = 18.dp
-private val APP_SHORTCUT_PREVIEW_MENU_CORNER_RADIUS = 8.dp
-private val APP_SHORTCUT_PREVIEW_MENU_ICON_SIZE = 20.dp
-private val APP_SHORTCUT_PREVIEW_SLOT_NUMBER_WIDTH = 24.dp
-private val APP_SHORTCUT_PREVIEW_ROW_MIN_HEIGHT = 48.dp
 
 /**
  * Pure UI composable for the Manage Shortcuts screen.
@@ -237,13 +227,13 @@ private fun AppShortcutsLongPressPreview(
             horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
             verticalAlignment = Alignment.Top,
         ) {
-            Column(modifier = Modifier.width(APP_SHORTCUT_PREVIEW_SLOT_NUMBER_WIDTH)) {
+            Column(modifier = Modifier.width(HADimens.SPACE6)) {
                 items.forEachIndexed { position, item ->
                     val slotNumber = item.index + 1
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(min = APP_SHORTCUT_PREVIEW_ROW_MIN_HEIGHT),
+                            .heightIn(min = HADimens.SPACE12),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
@@ -263,7 +253,7 @@ private fun AppShortcutsLongPressPreview(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .clip(RoundedCornerShape(APP_SHORTCUT_PREVIEW_MENU_CORNER_RADIUS))
+                    .clip(RoundedCornerShape(HARadius.M))
                     .background(
                         color = colors.colorFillPrimaryQuietResting,
                     ),
@@ -276,7 +266,7 @@ private fun AppShortcutsLongPressPreview(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(min = APP_SHORTCUT_PREVIEW_ROW_MIN_HEIGHT)
+                            .heightIn(min = HADimens.SPACE12)
                             .clickable(onClick = { onEditDynamic(item.index) })
                             .padding(horizontal = HADimens.SPACE3, vertical = HADimens.SPACE2),
                         horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
@@ -284,7 +274,7 @@ private fun AppShortcutsLongPressPreview(
                     ) {
                         ShortcutListIcon(
                             iconName = item.summary.selectedIconName,
-                            modifier = Modifier.size(APP_SHORTCUT_PREVIEW_MENU_ICON_SIZE),
+                            modifier = Modifier.size(HADimens.SPACE5),
                             tint = colors.colorFillPrimaryLoudResting,
                         )
                         Text(
@@ -330,10 +320,10 @@ private fun SectionHeader(
             if (showAppIcon) {
                 Box(
                     modifier = Modifier
-                        .size(APP_SHORTCUT_PREVIEW_APP_ICON_SIZE)
+                        .size(HADimens.SPACE14)
                         .background(
                             color = colors.colorFillPrimaryLoudResting,
-                            shape = RoundedCornerShape(APP_SHORTCUT_PREVIEW_APP_ICON_CORNER_RADIUS),
+                            shape = RoundedCornerShape(HARadius.XL),
                         ),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -366,8 +356,8 @@ private fun SectionHeader(
 private fun ShortcutGridItem(label: String, iconName: String?, onClick: () -> Unit) {
     val colors = LocalHAColorScheme.current
     val isCompactScreen = screenWidth() < COMPACT_WIDTH_BREAKPOINT
-    val badgeSize = if (isCompactScreen) SHORTCUT_ICON_BADGE_SIZE_COMPACT else SHORTCUT_ICON_BADGE_SIZE_REGULAR
-    val iconSize = if (isCompactScreen) SHORTCUT_ICON_SIZE_COMPACT else SHORTCUT_ICON_SIZE_REGULAR
+    val badgeSize = if (isCompactScreen) HADimens.SPACE14 else HADimens.SPACE16
+    val iconSize = if (isCompactScreen) HADimens.SPACE7 else HADimens.SPACE8
     val labelGap = HADimens.SPACE2
     Column(
         modifier = Modifier
@@ -383,7 +373,7 @@ private fun ShortcutGridItem(label: String, iconName: String?, onClick: () -> Un
                 .size(badgeSize)
                 .background(
                     color = colors.colorFillPrimaryQuietResting,
-                    shape = RoundedCornerShape(SHORTCUT_ICON_BADGE_CORNER_RADIUS),
+                    shape = RoundedCornerShape(HARadius.XL),
                 ),
             contentAlignment = Alignment.Center,
         ) {
