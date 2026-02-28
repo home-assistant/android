@@ -18,20 +18,20 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @Immutable
-internal data class DynamicShortcutItem(val index: Int, val summary: ShortcutSummary)
+internal data class AppShortcutItem(val index: Int, val summary: ShortcutSummary)
 
 @Immutable
 internal data class ShortcutsListState(
     val isLoading: Boolean = true,
     val error: ShortcutError? = null,
-    val pinnedError: ShortcutError? = null,
-    val maxDynamicShortcuts: Int? = null,
-    val dynamicItems: List<DynamicShortcutItem> = emptyList(),
-    val pinnedItems: List<ShortcutSummary> = emptyList(),
+    val homeError: ShortcutError? = null,
+    val maxAppShortcuts: Int? = null,
+    val appItems: List<AppShortcutItem> = emptyList(),
+    val homeItems: List<ShortcutSummary> = emptyList(),
 ) {
     val hasError: Boolean get() = error != null
-    val isPinSupported: Boolean get() = pinnedError != ShortcutError.PinnedNotSupported
-    val isEmpty: Boolean get() = dynamicItems.isEmpty() && pinnedItems.isEmpty()
+    val isHomeSupported: Boolean get() = homeError != ShortcutError.HomeShortcutNotSupported
+    val isEmpty: Boolean get() = appItems.isEmpty() && homeItems.isEmpty()
 }
 
 @HiltViewModel
@@ -75,19 +75,19 @@ internal class ManageShortcutsViewModel @Inject constructor(private val shortcut
                 }
             }
 
-            val dynamicItems = listData.dynamic.orderedShortcuts
-                .map { (index, draft) -> DynamicShortcutItem(index = index, summary = draft.toSummary()) }
+            val appItems = listData.appShortcuts.orderedShortcuts
+                .map { (index, draft) -> AppShortcutItem(index = index, summary = draft.toSummary()) }
                 .toList()
 
-            val pinnedItems = listData.pinned.toList()
+            val homeItems = listData.homeShortcuts.toList()
             _uiState.update {
                 ShortcutsListState(
                     isLoading = false,
                     error = null,
-                    pinnedError = listData.pinnedError,
-                    maxDynamicShortcuts = listData.dynamic.maxDynamicShortcuts,
-                    dynamicItems = dynamicItems,
-                    pinnedItems = pinnedItems,
+                    homeError = listData.homeShortcutsError,
+                    maxAppShortcuts = listData.appShortcuts.maxAppShortcuts,
+                    appItems = appItems,
+                    homeItems = homeItems,
                 )
             }
         }
@@ -95,8 +95,8 @@ internal class ManageShortcutsViewModel @Inject constructor(private val shortcut
 }
 
 internal sealed interface ShortcutsListAction {
-    data class EditDynamic(val index: Int) : ShortcutsListAction
-    data class EditPinned(val id: String) : ShortcutsListAction
-    data object CreateDynamic : ShortcutsListAction
-    data object CreatePinned : ShortcutsListAction
+    data class EditAppShortcut(val index: Int) : ShortcutsListAction
+    data class EditHomeShortcut(val id: String) : ShortcutsListAction
+    data object CreateAppShortcut : ShortcutsListAction
+    data object CreateHomeShortcut : ShortcutsListAction
 }

@@ -5,9 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.shortcuts.ShortcutsRepository
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.DynamicEditorData
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.AppEditorData
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.HomeEditorData
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.PinResult
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.PinnedEditorData
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutEditorData
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutError
@@ -27,36 +27,36 @@ import kotlinx.coroutines.launch
 @Immutable
 data class ShortcutEditorUiState(
     val screen: ShortcutEditorScreenState = ShortcutEditorScreenState(isLoading = true),
-    val editor: EditorState = EditorState.DynamicCreate.initial(0),
+    val editor: EditorState = EditorState.AppCreate.initial(0),
 ) {
     @Immutable
     sealed interface EditorState {
         val draftSeed: ShortcutDraft
 
         @Immutable
-        sealed interface Pinned : EditorState
+        sealed interface Home : EditorState
 
         @Immutable
-        data class PinnedCreate(override val draftSeed: ShortcutDraft) : Pinned {
+        data class HomeCreate(override val draftSeed: ShortcutDraft) : Home {
             companion object {
-                fun initial(id: String) = PinnedCreate(
+                fun initial(id: String) = HomeCreate(
                     draftSeed = ShortcutDraft.empty(id),
                 )
             }
         }
 
         @Immutable
-        data class PinnedEdit(override val draftSeed: ShortcutDraft) : Pinned
+        data class HomeEdit(override val draftSeed: ShortcutDraft) : Home
 
         @Immutable
-        sealed interface Dynamic : EditorState {
+        sealed interface App : EditorState {
             val index: Int
         }
 
         @Immutable
-        data class DynamicCreate(override val index: Int, override val draftSeed: ShortcutDraft) : Dynamic {
+        data class AppCreate(override val index: Int, override val draftSeed: ShortcutDraft) : App {
             companion object {
-                fun initial(index: Int) = DynamicCreate(
+                fun initial(index: Int) = AppCreate(
                     index = index,
                     draftSeed = ShortcutDraft.empty(index),
                 )
@@ -64,7 +64,7 @@ data class ShortcutEditorUiState(
         }
 
         @Immutable
-        data class DynamicEdit(override val index: Int, override val draftSeed: ShortcutDraft) : Dynamic
+        data class AppEdit(override val index: Int, override val draftSeed: ShortcutDraft) : App
     }
 }
 
@@ -87,99 +87,77 @@ class EditShortcutViewModel @Inject constructor(private val shortcutsRepository:
     }
 
     private suspend fun loadData() {
-        when (val result = shortcutsRepository.loadEditorData()) {
-            is ShortcutResult.Success -> applyEditorData(result.data)
-            is ShortcutResult.Error -> setScreenError(result.error)
+        val screenState = when (val result = shortcutsRepository.loadEditorData()) {
+            is ShortcutResult.Success -> buildEditorScreenState(result.data)
+            is ShortcutResult.Error -> ShortcutEditorScreenState(isLoading = false, error = result.error)
         }
-        updateScreen { it.copy(isLoading = false) }
+        updateScreen { screenState }
     }
 
     fun dispatch(action: ShortcutEditAction) {
-        when (_uiState.value.editor) {
-            is ShortcutEditorUiState.EditorState.PinnedCreate,
-            is ShortcutEditorUiState.EditorState.PinnedEdit,
-            -> {
-                when (action) {
-                    is ShortcutEditAction.Submit -> upsertPinned(action.draft)
-                    is ShortcutEditAction.Delete -> deletePinned()
-                }
-            }
-
-            is ShortcutEditorUiState.EditorState.Dynamic -> {
-                when (action) {
-                    is ShortcutEditAction.Submit -> upsertDynamic(action.draft)
-                    is ShortcutEditAction.Delete -> deleteDynamic()
-                }
-            }
+        val editor = _uiState.value.editor
+        when (editor) {
+            is ShortcutEditorUiState.EditorState.Home -> handleHomeAction(action)
+            is ShortcutEditorUiState.EditorState.App -> handleAppAction(action)
         }
     }
 
-    fun openCreatePinned() {
+    private fun handleHomeAction(action: ShortcutEditAction) {
+        when (action) {
+            is ShortcutEditAction.Submit -> upsertHomeShortcut(action.draft)
+            is ShortcutEditAction.Delete -> deleteHomeShortcut()
+        }
+    }
+
+    private fun handleAppAction(action: ShortcutEditAction) {
+        when (action) {
+            is ShortcutEditAction.Submit -> upsertAppShortcut(action.draft)
+            is ShortcutEditAction.Delete -> deleteAppShortcut()
+        }
+    }
+
+    fun openCreateHomeShortcut() {
         viewModelScope.launch {
-            when (val result = shortcutsRepository.loadPinnedEditorForCreate()) {
-                is ShortcutResult.Success -> {
-                    setScreenError(null)
-                    setPinnedEditor(result.data)
-                }
-
-                is ShortcutResult.Error -> {
-                    setScreenError(result.error)
-                }
+            when (val result = shortcutsRepository.loadHomeEditorForCreate()) {
+                is ShortcutResult.Success -> setHomeEditor(result.data)
+                is ShortcutResult.Error -> setScreenError(result.error)
             }
         }
     }
 
-    fun editPinned(shortcutId: String) {
+    fun openEditHomeShortcut(shortcutId: String) {
         viewModelScope.launch {
-            when (val result = shortcutsRepository.loadPinnedEditor(shortcutId)) {
-                is ShortcutResult.Success -> {
-                    setScreenError(null)
-                    setPinnedEditor(result.data)
-                }
-
-                is ShortcutResult.Error -> {
-                    setScreenError(result.error)
-                }
+            when (val result = shortcutsRepository.loadHomeEditor(shortcutId)) {
+                is ShortcutResult.Success -> setHomeEditor(result.data)
+                is ShortcutResult.Error -> setScreenError(result.error)
             }
         }
     }
 
-    fun openDynamic(index: Int) {
+    fun openEditAppShortcut(index: Int) {
         viewModelScope.launch {
-            when (val result = shortcutsRepository.loadDynamicEditor(index)) {
-                is ShortcutResult.Success -> {
-                    setScreenError(null)
-                    setDynamicEditor(result.data)
-                }
-
-                is ShortcutResult.Error -> {
-                    handleDynamicError(result.error)
-                }
+            when (val result = shortcutsRepository.loadAppEditor(index)) {
+                is ShortcutResult.Success -> setAppEditor(result.data)
+                is ShortcutResult.Error -> handleAppError(result.error)
             }
         }
     }
 
-    fun createDynamicFirstAvailable() {
+    fun createAppShortcutFirstAvailable() {
         viewModelScope.launch {
-            when (val result = shortcutsRepository.loadDynamicEditorFirstAvailable()) {
-                is ShortcutResult.Success -> {
-                    setScreenError(null)
-                    setDynamicEditor(result.data)
-                }
-
-                is ShortcutResult.Error -> {
-                    handleDynamicError(result.error)
-                }
+            when (val result = shortcutsRepository.loadAppEditorFirstAvailable()) {
+                is ShortcutResult.Success -> setAppEditor(result.data)
+                is ShortcutResult.Error -> handleAppError(result.error)
             }
         }
     }
 
-    private fun upsertPinned(draft: ShortcutDraft) {
+    private fun upsertHomeShortcut(draft: ShortcutDraft) {
         viewModelScope.launch {
             setSaving(true)
-            when (val result = shortcutsRepository.upsertPinnedShortcut(draft)) {
+            when (val result = shortcutsRepository.upsertHomeShortcut(draft)) {
                 is ShortcutResult.Success -> {
-                    setScreenError(null)
+                    setSaving(false)
                     _pinResultEvents.emit(result.data)
                     _closeEvents.emit(Unit)
                 }
@@ -192,12 +170,15 @@ class EditShortcutViewModel @Inject constructor(private val shortcutsRepository:
         }
     }
 
-    private fun deletePinned() {
-        val editor = _uiState.value.editor as? ShortcutEditorUiState.EditorState.PinnedEdit ?: return
+    private fun deleteHomeShortcut() {
+        val editor = _uiState.value.editor as? ShortcutEditorUiState.EditorState.HomeEdit ?: return
         viewModelScope.launch {
             setSaving(true)
-            when (val result = shortcutsRepository.deletePinnedShortcut(editor.draftSeed.id)) {
-                is ShortcutResult.Success -> _closeEvents.emit(Unit)
+            when (val result = shortcutsRepository.deleteHomeShortcut(editor.draftSeed.id)) {
+                is ShortcutResult.Success -> {
+                    setSaving(false)
+                    _closeEvents.emit(Unit)
+                }
 
                 is ShortcutResult.Error -> {
                     setSaving(false)
@@ -207,36 +188,39 @@ class EditShortcutViewModel @Inject constructor(private val shortcutsRepository:
         }
     }
 
-    private fun upsertDynamic(draft: ShortcutDraft) {
-        val editor = _uiState.value.editor as? ShortcutEditorUiState.EditorState.Dynamic ?: return
+    private fun upsertAppShortcut(draft: ShortcutDraft) {
+        val editor = _uiState.value.editor as? ShortcutEditorUiState.EditorState.App ?: return
         viewModelScope.launch {
             setSaving(true)
             when (
-                val result = shortcutsRepository.upsertDynamicShortcut(
-                    editor.index,
-                    draft,
-                    editor is ShortcutEditorUiState.EditorState.DynamicEdit,
+                val result = shortcutsRepository.upsertAppShortcut(
+                    index = editor.index,
+                    shortcut = draft,
+                    isEditing = editor is ShortcutEditorUiState.EditorState.AppEdit,
                 )
             ) {
                 is ShortcutResult.Success -> {
-                    setScreenError(null)
+                    setSaving(false)
                     _closeEvents.emit(Unit)
                 }
 
                 is ShortcutResult.Error -> {
                     setSaving(false)
-                    handleDynamicError(result.error)
+                    handleAppError(result.error)
                 }
             }
         }
     }
 
-    private fun deleteDynamic() {
-        val editor = _uiState.value.editor as? ShortcutEditorUiState.EditorState.DynamicEdit ?: return
+    private fun deleteAppShortcut() {
+        val editor = _uiState.value.editor as? ShortcutEditorUiState.EditorState.AppEdit ?: return
         viewModelScope.launch {
             setSaving(true)
-            when (val result = shortcutsRepository.deleteDynamicShortcut(editor.index)) {
-                is ShortcutResult.Success -> _closeEvents.emit(Unit)
+            when (val result = shortcutsRepository.deleteAppShortcut(editor.index)) {
+                is ShortcutResult.Success -> {
+                    setSaving(false)
+                    _closeEvents.emit(Unit)
+                }
 
                 is ShortcutResult.Error -> {
                     setSaving(false)
@@ -256,17 +240,16 @@ class EditShortcutViewModel @Inject constructor(private val shortcutsRepository:
         }
     }
 
-    private fun applyEditorData(data: ShortcutEditorData) {
-        updateScreen { state ->
-            state.copy(
-                error = null,
-                servers = data.servers.toList(),
-                entities = data.serverDataById.mapValues { it.value.entities.toList() },
-                entityRegistry = data.serverDataById.mapValues { it.value.entityRegistry.toList() },
-                deviceRegistry = data.serverDataById.mapValues { it.value.deviceRegistry.toList() },
-                areaRegistry = data.serverDataById.mapValues { it.value.areaRegistry.toList() },
-            )
-        }
+    private fun buildEditorScreenState(data: ShortcutEditorData): ShortcutEditorScreenState {
+        return ShortcutEditorScreenState(
+            isLoading = false,
+            error = null,
+            servers = data.servers.toList(),
+            entities = data.serverDataById.mapValues { it.value.entities.toList() },
+            entityRegistry = data.serverDataById.mapValues { it.value.entityRegistry.toList() },
+            deviceRegistry = data.serverDataById.mapValues { it.value.deviceRegistry.toList() },
+            areaRegistry = data.serverDataById.mapValues { it.value.areaRegistry.toList() },
+        )
     }
 
     private fun setScreenError(error: ShortcutError?) {
@@ -275,25 +258,25 @@ class EditShortcutViewModel @Inject constructor(private val shortcutsRepository:
         }
     }
 
-    private fun handleDynamicError(error: ShortcutError) {
+    private fun handleAppError(error: ShortcutError) {
         setScreenError(error)
     }
 
     private fun updateEditor(updater: (ShortcutEditorUiState.EditorState) -> ShortcutEditorUiState.EditorState) {
         _uiState.update { state ->
-            state.copy(editor = updater(state.editor))
+            state.copy(editor = updater(state.editor), screen = state.screen.copy(error = null))
         }
     }
 
-    private fun setDynamicEditor(data: DynamicEditorData) {
+    private fun setAppEditor(data: AppEditorData) {
         updateEditor {
             when (data) {
-                is DynamicEditorData.Create -> ShortcutEditorUiState.EditorState.DynamicCreate(
+                is AppEditorData.Create -> ShortcutEditorUiState.EditorState.AppCreate(
                     index = data.index,
                     draftSeed = data.draftSeed,
                 )
 
-                is DynamicEditorData.Edit -> ShortcutEditorUiState.EditorState.DynamicEdit(
+                is AppEditorData.Edit -> ShortcutEditorUiState.EditorState.AppEdit(
                     index = data.index,
                     draftSeed = data.draftSeed,
                 )
@@ -301,14 +284,14 @@ class EditShortcutViewModel @Inject constructor(private val shortcutsRepository:
         }
     }
 
-    private fun setPinnedEditor(data: PinnedEditorData) {
+    private fun setHomeEditor(data: HomeEditorData) {
         updateEditor {
             when (data) {
-                is PinnedEditorData.Create -> ShortcutEditorUiState.EditorState.PinnedCreate(
+                is HomeEditorData.Create -> ShortcutEditorUiState.EditorState.HomeCreate(
                     draftSeed = data.draftSeed,
                 )
 
-                is PinnedEditorData.Edit -> ShortcutEditorUiState.EditorState.PinnedEdit(
+                is HomeEditorData.Edit -> ShortcutEditorUiState.EditorState.HomeEdit(
                     draftSeed = data.draftSeed,
                 )
             }

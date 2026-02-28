@@ -3,15 +3,12 @@ package io.homeassistant.companion.android.common.data.shortcuts.impl.entities
 import androidx.compose.runtime.Immutable
 
 data class ShortcutsListData(
-    val dynamic: DynamicShortcutsData,
-    val pinned: List<ShortcutSummary>,
-    val pinnedError: ShortcutError? = null,
+    val appShortcuts: AppShortcutsData,
+    val homeShortcuts: List<ShortcutSummary>,
+    val homeShortcutsError: ShortcutError? = null,
 )
 
-data class DynamicShortcutsData(
-    val maxDynamicShortcuts: Int,
-    val shortcuts: Map<Int, ShortcutDraft>,
-) {
+data class AppShortcutsData(val maxAppShortcuts: Int, val shortcuts: Map<Int, ShortcutDraft>) {
     val orderedShortcuts: List<Map.Entry<Int, ShortcutDraft>>
         get() = shortcuts.entries.sortedBy { it.key }
 }

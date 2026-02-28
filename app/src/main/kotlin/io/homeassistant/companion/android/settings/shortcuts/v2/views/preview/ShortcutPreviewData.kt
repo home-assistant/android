@@ -13,53 +13,53 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
-import io.homeassistant.companion.android.settings.shortcuts.v2.DynamicShortcutItem
+import io.homeassistant.companion.android.settings.shortcuts.v2.AppShortcutItem
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutEditorUiState
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListState
 import io.homeassistant.companion.android.settings.shortcuts.v2.views.screens.ShortcutEditorScreenState
 import java.time.LocalDateTime
 
-private const val PREVIEW_DYNAMIC_SHORTCUT_PREFIX = "shortcut"
-private const val PREVIEW_DYNAMIC_DRAFT_PREFIX = "dynamic_draft"
+private const val PREVIEW_APP_SHORTCUT_PREFIX = "shortcut"
+private const val PREVIEW_APP_DRAFT_PREFIX = "app_draft"
 
 internal object ShortcutPreviewData {
-    internal fun dynamicShortcutId(index: Int): String {
-        return "${PREVIEW_DYNAMIC_SHORTCUT_PREFIX}_${index + 1}"
+    internal fun appShortcutId(index: Int): String {
+        return "${PREVIEW_APP_SHORTCUT_PREFIX}_${index + 1}"
     }
 
-    internal fun dynamicDraftSeedId(index: Int): String {
-        return "${PREVIEW_DYNAMIC_DRAFT_PREFIX}_${index + 1}"
+    internal fun appDraftSeedId(index: Int): String {
+        return "${PREVIEW_APP_DRAFT_PREFIX}_${index + 1}"
     }
 
-    fun buildDynamicEditorState(
+    fun buildAppEditorState(
         selectedIndex: Int = 0,
-        draftSeed: ShortcutDraft = buildDraft(id = dynamicDraftSeedId(selectedIndex)),
+        draftSeed: ShortcutDraft = buildDraft(id = appDraftSeedId(selectedIndex)),
         isEditing: Boolean = true,
-    ): ShortcutEditorUiState.EditorState.Dynamic {
+    ): ShortcutEditorUiState.EditorState.App {
         return if (isEditing) {
-            ShortcutEditorUiState.EditorState.DynamicEdit(
+            ShortcutEditorUiState.EditorState.AppEdit(
                 index = selectedIndex,
                 draftSeed = draftSeed,
             )
         } else {
-            ShortcutEditorUiState.EditorState.DynamicCreate(
+            ShortcutEditorUiState.EditorState.AppCreate(
                 index = selectedIndex,
                 draftSeed = draftSeed,
             )
         }
     }
 
-    fun buildPinnedEditorState(
-        pinnedDraft: ShortcutDraft = buildPinnedDraft(),
+    fun buildHomeEditorState(
+        homeDraft: ShortcutDraft = buildHomeDraft(),
         isEditing: Boolean = true,
-    ): ShortcutEditorUiState.EditorState.Pinned {
+    ): ShortcutEditorUiState.EditorState.Home {
         return if (isEditing) {
-            ShortcutEditorUiState.EditorState.PinnedEdit(
-                draftSeed = pinnedDraft,
+            ShortcutEditorUiState.EditorState.HomeEdit(
+                draftSeed = homeDraft,
             )
         } else {
-            ShortcutEditorUiState.EditorState.PinnedCreate(
-                draftSeed = pinnedDraft,
+            ShortcutEditorUiState.EditorState.HomeCreate(
+                draftSeed = homeDraft,
             )
         }
     }
@@ -86,7 +86,7 @@ internal object ShortcutPreviewData {
 
     fun buildDraft(
         type: ShortcutType = ShortcutType.LOVELACE,
-        id: String = dynamicDraftSeedId(0),
+        id: String = appDraftSeedId(0),
         serverId: Int = 1,
     ): ShortcutDraft {
         return ShortcutDraft(
@@ -103,11 +103,11 @@ internal object ShortcutPreviewData {
         )
     }
 
-    fun buildDynamicDrafts(count: Int, type: ShortcutType): List<ShortcutDraft> {
+    fun buildAppDrafts(count: Int, type: ShortcutType): List<ShortcutDraft> {
         return List(count) { index ->
             val number = index + 1
             ShortcutDraft(
-                id = dynamicShortcutId(index),
+                id = appShortcutId(index),
                 serverId = 1,
                 selectedIconName = null,
                 label = if (type == ShortcutType.ENTITY_ID) "Lights" else "Shortcut $number",
@@ -125,8 +125,8 @@ internal object ShortcutPreviewData {
         }
     }
 
-    fun buildDynamicSummaries(count: Int, type: ShortcutType): List<ShortcutSummary> {
-        return buildDynamicDrafts(count = count, type = type).map { draft ->
+    fun buildAppSummaries(count: Int, type: ShortcutType): List<ShortcutSummary> {
+        return buildAppDrafts(count = count, type = type).map { draft ->
             ShortcutSummary(
                 id = draft.id,
                 selectedIconName = draft.selectedIconName,
@@ -135,23 +135,23 @@ internal object ShortcutPreviewData {
         }
     }
 
-    fun buildPinnedDraft(): ShortcutDraft {
+    fun buildHomeDraft(): ShortcutDraft {
         return ShortcutDraft(
             id = "pinned_1",
             serverId = 1,
             selectedIconName = null,
-            label = "Pinned",
-            description = "Pinned shortcut",
-            target = ShortcutTargetValue.Lovelace("/lovelace/pinned"),
+            label = "Home",
+            description = "Home shortcut",
+            target = ShortcutTargetValue.Lovelace("/lovelace/home"),
         )
     }
 
-    fun buildPinnedSummaries(): List<ShortcutSummary> {
+    fun buildHomeSummaries(): List<ShortcutSummary> {
         return listOf(
             ShortcutSummary(
                 id = "pinned_1",
                 selectedIconName = null,
-                label = "Pinned",
+                label = "Home",
             ),
         )
     }
@@ -159,25 +159,25 @@ internal object ShortcutPreviewData {
     fun buildListState(
         isLoading: Boolean = false,
         error: ShortcutError? = null,
-        maxDynamicShortcuts: Int = 5,
-        dynamicSummaries: List<ShortcutSummary> = buildDynamicSummaries(
+        maxAppShortcuts: Int = 5,
+        appSummaries: List<ShortcutSummary> = buildAppSummaries(
             count = 2,
             type = ShortcutType.LOVELACE,
         ),
-        pinnedSummaries: List<ShortcutSummary> = buildPinnedSummaries(),
-        canPinShortcuts: Boolean = true,
+        homeSummaries: List<ShortcutSummary> = buildHomeSummaries(),
+        isHomeSupported: Boolean = true,
     ): ShortcutsListState {
-        val dynamicItems = dynamicSummaries.mapIndexed { index, summary ->
-            DynamicShortcutItem(index, summary)
+        val appItems = appSummaries.mapIndexed { index, summary ->
+            AppShortcutItem(index, summary)
         }
-        val pinnedItems = if (canPinShortcuts) pinnedSummaries else emptyList()
+        val homeItems = if (isHomeSupported) homeSummaries else emptyList()
         return ShortcutsListState(
             isLoading = isLoading,
             error = error,
-            pinnedError = if (canPinShortcuts) null else ShortcutError.PinnedNotSupported,
-            maxDynamicShortcuts = maxDynamicShortcuts,
-            dynamicItems = dynamicItems,
-            pinnedItems = pinnedItems,
+            homeError = if (isHomeSupported) null else ShortcutError.HomeShortcutNotSupported,
+            maxAppShortcuts = maxAppShortcuts,
+            appItems = appItems,
+            homeItems = homeItems,
         )
     }
 

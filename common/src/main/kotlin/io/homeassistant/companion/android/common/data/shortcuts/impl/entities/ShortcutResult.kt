@@ -16,6 +16,6 @@ enum class ShortcutError {
     SlotsFull,
     InvalidIndex,
     InvalidInput,
-    PinnedNotSupported,
+    HomeShortcutNotSupported,
     Unknown,
 }

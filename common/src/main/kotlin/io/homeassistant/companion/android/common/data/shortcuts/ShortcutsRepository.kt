@@ -1,41 +1,41 @@
 package io.homeassistant.companion.android.common.data.shortcuts
 
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.DynamicEditorData
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.AppEditorData
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.HomeEditorData
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.PinResult
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.PinnedEditorData
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutEditorData
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutResult
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutsListData
 
 interface ShortcutsRepository {
-    // Shortcuts list (dynamic + pinned)
+    // Shortcuts list (app + home)
     suspend fun loadShortcutsList(): ShortcutResult<ShortcutsListData>
 
     // Editor screen reference data (servers + registries)
     suspend fun loadEditorData(): ShortcutResult<ShortcutEditorData>
 
-    // Dynamic editor entry points
-    suspend fun loadDynamicEditor(index: Int): ShortcutResult<DynamicEditorData>
+    // App editor entry points
+    suspend fun loadAppEditor(index: Int): ShortcutResult<AppEditorData>
 
-    suspend fun loadDynamicEditorFirstAvailable(): ShortcutResult<DynamicEditorData>
+    suspend fun loadAppEditorFirstAvailable(): ShortcutResult<AppEditorData>
 
-    // Pinned editor entry points
-    suspend fun loadPinnedEditor(shortcutId: String): ShortcutResult<PinnedEditorData>
+    // Home editor entry points
+    suspend fun loadHomeEditor(shortcutId: String): ShortcutResult<HomeEditorData>
 
-    suspend fun loadPinnedEditorForCreate(): ShortcutResult<PinnedEditorData>
+    suspend fun loadHomeEditorForCreate(): ShortcutResult<HomeEditorData>
 
-    // Dynamic mutations
-    suspend fun upsertDynamicShortcut(
+    // App mutations
+    suspend fun upsertAppShortcut(
         index: Int,
         shortcut: ShortcutDraft,
         isEditing: Boolean,
-    ): ShortcutResult<DynamicEditorData>
+    ): ShortcutResult<AppEditorData>
 
-    suspend fun deleteDynamicShortcut(index: Int): ShortcutResult<Unit>
+    suspend fun deleteAppShortcut(index: Int): ShortcutResult<Unit>
 
-    // Pinned mutations
-    suspend fun upsertPinnedShortcut(shortcut: ShortcutDraft): ShortcutResult<PinResult>
+    // Home mutations
+    suspend fun upsertHomeShortcut(shortcut: ShortcutDraft): ShortcutResult<PinResult>
 
-    suspend fun deletePinnedShortcut(shortcutId: String): ShortcutResult<Unit>
+    suspend fun deleteHomeShortcut(shortcutId: String): ShortcutResult<Unit>
 }

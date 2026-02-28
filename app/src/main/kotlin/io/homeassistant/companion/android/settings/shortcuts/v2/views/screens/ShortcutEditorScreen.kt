@@ -23,12 +23,12 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutError
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutEditorUiState
-import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.DynamicShortcutEditor
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.AppShortcutEditor
 import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.EmptyStateContentSlots
 import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.EmptyStateNoServers
 import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.ErrorStateContent
+import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.HomeShortcutEditor
 import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.NotSupportedStateContent
-import io.homeassistant.companion.android.settings.shortcuts.v2.views.components.PinnedShortcutEditor
 import io.homeassistant.companion.android.settings.shortcuts.v2.views.preview.ShortcutPreviewData
 import io.homeassistant.companion.android.util.icondialog.IconDialog
 import io.homeassistant.companion.android.util.icondialog.mdiName
@@ -44,9 +44,9 @@ internal fun ShortcutEditorScreen(
 ) {
     val noServers = state.screen.servers.isEmpty()
     val notSupported = state.screen.error == ShortcutError.ApiNotSupported ||
-        state.screen.error == ShortcutError.PinnedNotSupported
+        state.screen.error == ShortcutError.HomeShortcutNotSupported
     when (val editor = state.editor) {
-        is ShortcutEditorUiState.EditorState.Dynamic -> {
+        is ShortcutEditorUiState.EditorState.App -> {
             when {
                 notSupported -> NotSupportedStateContent()
                 noServers -> EmptyStateNoServers()
@@ -58,7 +58,7 @@ internal fun ShortcutEditorScreen(
                     dispatch = dispatch,
                     modifier = modifier,
                 ) { draft, onDraftChange, onIconClick, onSubmit, onDelete ->
-                    DynamicShortcutEditor(
+                    AppShortcutEditor(
                         draft = draft,
                         state = editor,
                         screen = state.screen,
@@ -71,7 +71,7 @@ internal fun ShortcutEditorScreen(
             }
         }
 
-        is ShortcutEditorUiState.EditorState.Pinned -> {
+        is ShortcutEditorUiState.EditorState.Home -> {
             when {
                 notSupported -> NotSupportedStateContent()
                 noServers -> EmptyStateNoServers()
@@ -83,7 +83,7 @@ internal fun ShortcutEditorScreen(
                         dispatch = dispatch,
                         modifier = modifier,
                     ) { draft, onDraftChange, onIconClick, onSubmit, onDelete ->
-                        PinnedShortcutEditor(
+                        HomeShortcutEditor(
                             draft = draft,
                             state = editor,
                             screen = state.screen,
@@ -161,32 +161,32 @@ private fun ShortcutEditorContent(
     }
 }
 
-@Preview(name = "Shortcut Editor Dynamic")
+@Preview(name = "Shortcut Editor App")
 @Composable
-private fun ShortcutEditorScreenDynamicPreview() {
+private fun ShortcutEditorScreenAppPreview() {
     HAThemeForPreview {
         ShortcutEditorScreen(
             state = ShortcutEditorUiState(
                 screen = ShortcutPreviewData.buildScreenState(
                     servers = ShortcutPreviewData.previewServers,
                 ),
-                editor = ShortcutPreviewData.buildDynamicEditorState(),
+                editor = ShortcutPreviewData.buildAppEditorState(),
             ),
             dispatch = {},
         )
     }
 }
 
-@Preview(name = "Shortcut Editor Pinned")
+@Preview(name = "Shortcut Editor Home")
 @Composable
-private fun ShortcutEditorScreenPinnedPreview() {
+private fun ShortcutEditorScreenHomePreview() {
     HAThemeForPreview {
         ShortcutEditorScreen(
             state = ShortcutEditorUiState(
                 screen = ShortcutPreviewData.buildScreenState(
                     servers = ShortcutPreviewData.previewServers,
                 ),
-                editor = ShortcutPreviewData.buildPinnedEditorState(),
+                editor = ShortcutPreviewData.buildHomeEditorState(),
             ),
             dispatch = {},
         )

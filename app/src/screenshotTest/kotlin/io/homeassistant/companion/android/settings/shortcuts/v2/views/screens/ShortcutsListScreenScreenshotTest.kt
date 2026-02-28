@@ -5,7 +5,7 @@ import com.android.tools.screenshot.PreviewTest
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutError
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutSummary
-import io.homeassistant.companion.android.settings.shortcuts.v2.DynamicShortcutItem
+import io.homeassistant.companion.android.settings.shortcuts.v2.AppShortcutItem
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListAction
 import io.homeassistant.companion.android.settings.shortcuts.v2.ShortcutsListState
 import io.homeassistant.companion.android.util.compose.HAPreviews
@@ -33,8 +33,8 @@ class ShortcutsListScreenScreenshotTest {
             ShortcutsListScreen(
                 state = ShortcutsListState(
                     isLoading = false,
-                    dynamicItems = emptyList(),
-                    pinnedItems = emptyList(),
+                    appItems = emptyList(),
+                    homeItems = emptyList(),
                 ),
                 dispatch = { _: ShortcutsListAction -> },
                 onRetry = {},
@@ -59,15 +59,15 @@ class ShortcutsListScreenScreenshotTest {
     @HAPreviews
     @Composable
     fun `ShortcutsListScreen content max`() {
-        val dynamicItems = mockDynamicItems(count = 5)
-        val pinnedItems = mockPinnedItems(count = 20)
+        val appItems = mockAppItems(count = 5)
+        val homeItems = mockHomeItems(count = 20)
         HAThemeForPreview {
             ShortcutsListScreen(
                 state = ShortcutsListState(
                     isLoading = false,
-                    maxDynamicShortcuts = 5,
-                    dynamicItems = dynamicItems,
-                    pinnedItems = pinnedItems,
+                    maxAppShortcuts = 5,
+                    appItems = appItems,
+                    homeItems = homeItems,
                 ),
                 dispatch = { _: ShortcutsListAction -> },
                 onRetry = {},
@@ -78,15 +78,15 @@ class ShortcutsListScreenScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `ShortcutsListScreen content dynamic only`() {
-        val dynamicItems = mockDynamicItems(count = 3)
+    fun `ShortcutsListScreen content app only`() {
+        val appItems = mockAppItems(count = 3)
         HAThemeForPreview {
             ShortcutsListScreen(
                 state = ShortcutsListState(
                     isLoading = false,
-                    maxDynamicShortcuts = 5,
-                    dynamicItems = dynamicItems,
-                    pinnedItems = emptyList(),
+                    maxAppShortcuts = 5,
+                    appItems = appItems,
+                    homeItems = emptyList(),
                 ),
                 dispatch = { _: ShortcutsListAction -> },
                 onRetry = {},
@@ -97,13 +97,13 @@ class ShortcutsListScreenScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `ShortcutsListScreen content pinned only`() {
+    fun `ShortcutsListScreen content home only`() {
         HAThemeForPreview {
             ShortcutsListScreen(
                 state = ShortcutsListState(
                     isLoading = false,
-                    dynamicItems = emptyList(),
-                    pinnedItems = mockPinnedItems(count = 1),
+                    appItems = emptyList(),
+                    homeItems = mockHomeItems(count = 1),
                 ),
                 dispatch = { _: ShortcutsListAction -> },
                 onRetry = {},
@@ -112,23 +112,23 @@ class ShortcutsListScreenScreenshotTest {
     }
 }
 
-private fun mockDynamicItems(count: Int) = List(count) { index ->
+private fun mockAppItems(count: Int) = List(count) { index ->
     val number = index + 1
-    DynamicShortcutItem(
+    AppShortcutItem(
         index = index,
         summary = ShortcutSummary(
-            id = "dynamic_$number",
+            id = "app_$number",
             selectedIconName = if (index == 0) "mdi:flash" else null,
             label = "Shortcut $number",
         ),
     )
 }.toList()
 
-private fun mockPinnedItems(count: Int) = List(count) { index ->
+private fun mockHomeItems(count: Int) = List(count) { index ->
     val number = index + 1
     ShortcutSummary(
-        id = "pinned_$number",
+        id = "home_$number",
         selectedIconName = if (index == 0) "mdi:pin" else null,
-        label = if (count == 1) "Pinned" else "Pinned $number",
+        label = if (count == 1) "Home" else "Home $number",
     )
 }.toList()

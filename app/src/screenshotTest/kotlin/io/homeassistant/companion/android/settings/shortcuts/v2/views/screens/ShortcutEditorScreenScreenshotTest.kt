@@ -30,7 +30,7 @@ private val mockServers = listOf(
     ),
 ).toList()
 private val mockLovelaceDraft = ShortcutDraft(
-    id = "dynamic_draft_1",
+    id = "app_draft_1",
     serverId = DEFAULT_SERVER_ID,
     selectedIconName = null,
     label = "Shortcut",
@@ -38,20 +38,20 @@ private val mockLovelaceDraft = ShortcutDraft(
     target = ShortcutTargetValue.Lovelace("/lovelace/shortcut"),
 )
 private val mockEntityDraft = ShortcutDraft(
-    id = "dynamic_draft_1",
+    id = "app_draft_1",
     serverId = DEFAULT_SERVER_ID,
     selectedIconName = null,
     label = "Lights",
     description = "Toggle living room lights",
     target = ShortcutTargetValue.Entity("light.living_room"),
 )
-private val mockPinnedDraft = ShortcutDraft(
-    id = "pinned_1",
+private val mockHomeDraft = ShortcutDraft(
+    id = "home_1",
     serverId = DEFAULT_SERVER_ID,
     selectedIconName = null,
-    label = "Pinned",
-    description = "Pinned shortcut",
-    target = ShortcutTargetValue.Lovelace("/lovelace/pinned"),
+    label = "Home",
+    description = "Home shortcut",
+    target = ShortcutTargetValue.Lovelace("/lovelace/home"),
 )
 private val mockEntitiesByServer = mapOf(
     DEFAULT_SERVER_ID to listOf(
@@ -105,7 +105,7 @@ class ShortcutEditorScreenScreenshotTest {
                         isLoading = true,
                         servers = servers,
                     ),
-                    editor = ShortcutEditorUiState.EditorState.DynamicCreate(
+                    editor = ShortcutEditorUiState.EditorState.AppCreate(
                         index = 0,
                         draftSeed = draft,
                     ),
@@ -127,7 +127,7 @@ class ShortcutEditorScreenScreenshotTest {
                         isLoading = false,
                         servers = emptyList(),
                     ),
-                    editor = ShortcutEditorUiState.EditorState.DynamicCreate(
+                    editor = ShortcutEditorUiState.EditorState.AppCreate(
                         index = 0,
                         draftSeed = draft,
                     ),
@@ -151,7 +151,7 @@ class ShortcutEditorScreenScreenshotTest {
                         servers = servers,
                         error = ShortcutError.SlotsFull,
                     ),
-                    editor = ShortcutEditorUiState.EditorState.DynamicCreate(
+                    editor = ShortcutEditorUiState.EditorState.AppCreate(
                         index = 0,
                         draftSeed = draft,
                     ),
@@ -164,7 +164,7 @@ class ShortcutEditorScreenScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `ShortcutEditorScreen dynamic lovelace create`() {
+    fun `ShortcutEditorScreen app lovelace create`() {
         val servers = mockServers
         val draft = mockLovelaceDraft
         HAThemeForPreview {
@@ -174,7 +174,7 @@ class ShortcutEditorScreenScreenshotTest {
                         isLoading = false,
                         servers = servers,
                     ),
-                    editor = ShortcutEditorUiState.EditorState.DynamicCreate(
+                    editor = ShortcutEditorUiState.EditorState.AppCreate(
                         index = 0,
                         draftSeed = draft,
                     ),
@@ -187,7 +187,7 @@ class ShortcutEditorScreenScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `ShortcutEditorScreen dynamic entity target`() {
+    fun `ShortcutEditorScreen app entity target`() {
         val servers = mockServers
         val entities = mockEntitiesByServer
         val entityRegistry = mockEntityRegistryByServer
@@ -205,7 +205,7 @@ class ShortcutEditorScreenScreenshotTest {
                         deviceRegistry = deviceRegistry,
                         areaRegistry = areaRegistry,
                     ),
-                    editor = ShortcutEditorUiState.EditorState.DynamicEdit(
+                    editor = ShortcutEditorUiState.EditorState.AppEdit(
                         index = 0,
                         draftSeed = draft,
                     ),
@@ -218,9 +218,9 @@ class ShortcutEditorScreenScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `ShortcutEditorScreen pinned create`() {
+    fun `ShortcutEditorScreen home create`() {
         val servers = mockServers
-        val draft = mockPinnedDraft
+        val draft = mockHomeDraft
         HAThemeForPreview {
             ShortcutEditorScreen(
                 state = ShortcutEditorUiState(
@@ -228,7 +228,7 @@ class ShortcutEditorScreenScreenshotTest {
                         isLoading = false,
                         servers = servers,
                     ),
-                    editor = ShortcutEditorUiState.EditorState.PinnedCreate(
+                    editor = ShortcutEditorUiState.EditorState.HomeCreate(
                         draftSeed = draft,
                     ),
                 ),
@@ -240,9 +240,9 @@ class ShortcutEditorScreenScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `ShortcutEditorScreen pinned default`() {
+    fun `ShortcutEditorScreen home edit`() {
         val servers = mockServers
-        val draft = mockPinnedDraft
+        val draft = mockHomeDraft
         HAThemeForPreview {
             ShortcutEditorScreen(
                 state = ShortcutEditorUiState(
@@ -250,7 +250,7 @@ class ShortcutEditorScreenScreenshotTest {
                         isLoading = false,
                         servers = servers,
                     ),
-                    editor = ShortcutEditorUiState.EditorState.PinnedEdit(
+                    editor = ShortcutEditorUiState.EditorState.HomeEdit(
                         draftSeed = draft,
                     ),
                 ),

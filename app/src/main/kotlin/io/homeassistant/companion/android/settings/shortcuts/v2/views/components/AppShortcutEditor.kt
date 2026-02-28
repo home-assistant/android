@@ -27,9 +27,9 @@ import io.homeassistant.companion.android.settings.shortcuts.v2.views.screens.Sh
 import io.homeassistant.companion.android.settings.shortcuts.v2.views.selector.ShortcutIconPicker
 
 @Composable
-internal fun DynamicShortcutEditor(
+internal fun AppShortcutEditor(
     draft: ShortcutDraft,
-    state: ShortcutEditorUiState.EditorState.Dynamic,
+    state: ShortcutEditorUiState.EditorState.App,
     screen: ShortcutEditorScreenState,
     onDraftChange: (ShortcutDraft) -> Unit,
     onIconClick: () -> Unit,
@@ -67,7 +67,7 @@ internal fun DynamicShortcutEditor(
             descriptionText = stringResource(R.string.shortcut_description_n, state.index + 1),
             screen = screen,
             onDraftChange = onDraftChange,
-            isEditing = state is ShortcutEditorUiState.EditorState.DynamicEdit,
+            isEditing = state is ShortcutEditorUiState.EditorState.AppEdit,
             canSubmit = canSubmit,
             isSaving = screen.isSaving,
             onSubmit = onSubmit,
@@ -88,13 +88,13 @@ internal fun canSubmit(draft: ShortcutDraft, screen: ShortcutEditorScreenState, 
         screen.servers.any { it.id == draft.serverId }
 }
 
-@Preview(name = "Dynamic Shortcut Editor")
+@Preview(name = "App Shortcut Editor")
 @Composable
-private fun DynamicShortcutEditorPreview() {
+private fun AppShortcutEditorPreview() {
     HAThemeForPreview {
-        DynamicShortcutEditor(
+        AppShortcutEditor(
             draft = ShortcutPreviewData.buildDraft(),
-            state = ShortcutPreviewData.buildDynamicEditorState(),
+            state = ShortcutPreviewData.buildAppEditorState(),
             screen = ShortcutPreviewData.buildScreenState(),
             onDraftChange = {},
             onIconClick = {},

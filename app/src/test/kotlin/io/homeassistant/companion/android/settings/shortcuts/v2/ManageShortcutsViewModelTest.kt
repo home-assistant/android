@@ -1,8 +1,7 @@
 package io.homeassistant.companion.android.settings.shortcuts.v2
 
-import app.cash.turbine.turbineScope
 import io.homeassistant.companion.android.common.data.shortcuts.ShortcutsRepository
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.DynamicShortcutsData
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.AppShortcutsData
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutError
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutResult
@@ -18,9 +17,12 @@ import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Exten
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -41,83 +43,93 @@ class ManageShortcutsViewModelTest {
 
     @BeforeEach
     fun setup() {
-        coEvery { shortcutsRepository.loadShortcutsList() } returns ShortcutResult.Success(
+        stubList(
             ShortcutsListData(
-                dynamic = DynamicShortcutsData(
-                    maxDynamicShortcuts = 5,
+                appShortcuts = AppShortcutsData(
+                    maxAppShortcuts = 5,
                     shortcuts = mapOf(
                         0 to buildDraft(id = "shortcut_1", serverId = server.id),
                         2 to buildDraft(id = "shortcut_3", serverId = server.id),
                     ),
                 ),
-                pinned = listOf(buildDraft(id = "pinned_1", serverId = server.id).toSummary()),
+                homeShortcuts = listOf(buildDraft(id = "home_1", serverId = server.id).toSummary()),
             ),
         )
+    }
+
+    private fun stubList(data: ShortcutsListData) {
+        coEvery { shortcutsRepository.loadShortcutsList() } returns ShortcutResult.Success(data)
+    }
+
+    private fun TestScope.createVm(): ManageShortcutsViewModel {
+        val vm = ManageShortcutsViewModel(shortcutsRepository)
+        advanceUntilIdle()
+        return vm
     }
 
     @Test
     fun `Given shortcuts when init then state has items`() = runTest {
-        val viewModel = ManageShortcutsViewModel(shortcutsRepository)
-        turbineScope {
-            val uiState = viewModel.uiState.testIn(backgroundScope)
-            advanceUntilIdle()
+        val viewModel = createVm()
 
-            val state = uiState.expectMostRecentItem()
-            Assertions.assertFalse(state.isLoading)
-            Assertions.assertNull(state.error)
-            Assertions.assertFalse(state.isEmpty)
-            Assertions.assertTrue(state.isPinSupported)
-            Assertions.assertEquals(5, state.maxDynamicShortcuts)
-            Assertions.assertEquals(listOf(0, 2), state.dynamicItems.map { it.index })
-            Assertions.assertEquals(1, state.pinnedItems.size)
-        }
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertFalse(state.isEmpty)
+        assertTrue(state.isHomeSupported)
+        assertEquals(5, state.maxAppShortcuts)
+        assertEquals(listOf(0, 2), state.appItems.map { it.index })
+        assertEquals(1, state.homeItems.size)
     }
 
     @Test
     fun `Given empty shortcuts when init then empty state shown`() = runTest {
-        coEvery { shortcutsRepository.loadShortcutsList() } returns ShortcutResult.Success(
+        stubList(
             ShortcutsListData(
-                dynamic = DynamicShortcutsData(
-                    maxDynamicShortcuts = 5,
+                appShortcuts = AppShortcutsData(
+                    maxAppShortcuts = 5,
                     shortcuts = emptyMap(),
                 ),
-                pinned = emptyList(),
+                homeShortcuts = emptyList(),
             ),
         )
 
-        val viewModel = ManageShortcutsViewModel(shortcutsRepository)
-        turbineScope {
-            val uiState = viewModel.uiState.testIn(backgroundScope)
-            advanceUntilIdle()
-
-            val state = uiState.expectMostRecentItem()
-            Assertions.assertTrue(state.isEmpty)
-        }
+        val viewModel = createVm()
+        assertTrue(viewModel.uiState.value.isEmpty)
     }
 
     @Test
-    fun `Given pinned not supported when init then pin support is false`() = runTest {
-        coEvery { shortcutsRepository.loadShortcutsList() } returns ShortcutResult.Success(
+    fun `Given home not supported when init then home support is false`() = runTest {
+        stubList(
             ShortcutsListData(
-                dynamic = DynamicShortcutsData(
-                    maxDynamicShortcuts = 5,
+                appShortcuts = AppShortcutsData(
+                    maxAppShortcuts = 5,
                     shortcuts = emptyMap(),
                 ),
-                pinned = emptyList(),
-                pinnedError = ShortcutError.PinnedNotSupported,
+                homeShortcuts = emptyList(),
+                homeShortcutsError = ShortcutError.HomeShortcutNotSupported,
             ),
         )
 
-        val viewModel = ManageShortcutsViewModel(shortcutsRepository)
-        turbineScope {
-            val uiState = viewModel.uiState.testIn(backgroundScope)
-            advanceUntilIdle()
+        val viewModel = createVm()
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertFalse(state.isHomeSupported)
+    }
 
-            val state = uiState.expectMostRecentItem()
-            Assertions.assertFalse(state.isLoading)
-            Assertions.assertNull(state.error)
-            Assertions.assertFalse(state.isPinSupported)
-        }
+    @Test
+    fun `Given home not supported but app has shortcuts when init then isEmpty is false`() = runTest {
+        stubList(
+            ShortcutsListData(
+                appShortcuts = AppShortcutsData(
+                    maxAppShortcuts = 5,
+                    shortcuts = mapOf(0 to buildDraft(id = "s1", serverId = server.id)),
+                ),
+                homeShortcuts = emptyList(),
+                homeShortcutsError = ShortcutError.HomeShortcutNotSupported,
+            ),
+        )
+
+        val viewModel = createVm()
+        assertFalse(viewModel.uiState.value.isEmpty)
     }
 
     @Test
@@ -126,15 +138,30 @@ class ManageShortcutsViewModelTest {
             ShortcutError.NoServers,
         )
 
-        val viewModel = ManageShortcutsViewModel(shortcutsRepository)
-        turbineScope {
-            val uiState = viewModel.uiState.testIn(backgroundScope)
-            advanceUntilIdle()
+        val viewModel = createVm()
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertEquals(ShortcutError.NoServers, state.error)
+    }
 
-            val state = uiState.expectMostRecentItem()
-            Assertions.assertFalse(state.isLoading)
-            Assertions.assertEquals(ShortcutError.NoServers, state.error)
-        }
+    @Test
+    fun `Given app shortcuts with gaps when init then items have correct indexes`() = runTest {
+        stubList(
+            ShortcutsListData(
+                appShortcuts = AppShortcutsData(
+                    maxAppShortcuts = 5,
+                    shortcuts = mapOf(
+                        0 to buildDraft(id = "s0", serverId = server.id),
+                        3 to buildDraft(id = "s3", serverId = server.id),
+                    ),
+                ),
+                homeShortcuts = emptyList(),
+            ),
+        )
+
+        val viewModel = createVm()
+        assertEquals(2, viewModel.uiState.value.appItems.size)
+        assertEquals(listOf(0, 3), viewModel.uiState.value.appItems.map { it.index })
     }
 
     private fun buildDraft(id: String, serverId: Int): ShortcutDraft {

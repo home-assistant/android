@@ -26,9 +26,9 @@ import io.homeassistant.companion.android.settings.shortcuts.v2.views.screens.Sh
 import io.homeassistant.companion.android.settings.shortcuts.v2.views.selector.ShortcutIconPicker
 
 @Composable
-internal fun PinnedShortcutEditor(
+internal fun HomeShortcutEditor(
     draft: ShortcutDraft,
-    state: ShortcutEditorUiState.EditorState.Pinned,
+    state: ShortcutEditorUiState.EditorState.Home,
     screen: ShortcutEditorScreenState,
     onDraftChange: (ShortcutDraft) -> Unit,
     onIconClick: () -> Unit,
@@ -66,7 +66,7 @@ internal fun PinnedShortcutEditor(
             descriptionText = stringResource(R.string.shortcut_v2_shortcut_description),
             screen = screen,
             onDraftChange = onDraftChange,
-            isEditing = state is ShortcutEditorUiState.EditorState.PinnedEdit,
+            isEditing = state is ShortcutEditorUiState.EditorState.HomeEdit,
             canSubmit = canSubmit,
             isSaving = screen.isSaving,
             onSubmit = onSubmit,
@@ -75,13 +75,13 @@ internal fun PinnedShortcutEditor(
     }
 }
 
-@Preview(name = "Pinned Shortcut Editor")
+@Preview(name = "Home Shortcut Editor")
 @Composable
-private fun PinnedShortcutEditorPreview() {
+private fun HomeShortcutEditorPreview() {
     HAThemeForPreview {
-        PinnedShortcutEditor(
-            draft = ShortcutPreviewData.buildPinnedDraft(),
-            state = ShortcutPreviewData.buildPinnedEditorState(),
+        HomeShortcutEditor(
+            draft = ShortcutPreviewData.buildHomeDraft(),
+            state = ShortcutPreviewData.buildHomeEditorState(),
             screen = ShortcutPreviewData.buildScreenState(),
             onDraftChange = {},
             onIconClick = {},

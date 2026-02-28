@@ -2,10 +2,10 @@ package io.homeassistant.companion.android.common.data.shortcuts.impl
 
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.shortcuts.ShortcutsRepository
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.DynamicEditorData
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.DynamicShortcutsData
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.AppEditorData
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.AppShortcutsData
+import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.HomeEditorData
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.PinResult
-import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.PinnedEditorData
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ServerData
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutDraft
 import io.homeassistant.companion.android.common.data.shortcuts.impl.entities.ShortcutEditorData
@@ -26,9 +26,9 @@ import java.time.LocalDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private const val MOCK_MAX_DYNAMIC_SHORTCUTS = 5
-private const val MOCK_DYNAMIC_SHORTCUT_PREFIX = "shortcut"
-private const val MOCK_PINNED_SHORTCUT_PREFIX = "pinned"
+private const val MOCK_MAX_APP_SHORTCUTS = 5
+private const val MOCK_APP_SHORTCUT_PREFIX = "shortcut"
+private const val MOCK_HOME_SHORTCUT_PREFIX = "pinned"
 
 @Singleton
 class MockShortcutsRepositoryImpl @Inject constructor() : ShortcutsRepository {
@@ -106,9 +106,9 @@ class MockShortcutsRepositoryImpl @Inject constructor() : ShortcutsRepository {
         2 to ServerData(),
     )
 
-    private val dynamicShortcuts = linkedMapOf(
+    private val appShortcuts = linkedMapOf(
         0 to ShortcutDraft(
-            id = buildDynamicId(0),
+            id = buildAppId(0),
             serverId = defaultServerId,
             selectedIconName = "mdi:home",
             label = "Home Dashboard",
@@ -116,7 +116,7 @@ class MockShortcutsRepositoryImpl @Inject constructor() : ShortcutsRepository {
             target = ShortcutTargetValue.Lovelace("/lovelace/home"),
         ),
         1 to ShortcutDraft(
-            id = buildDynamicId(1),
+            id = buildAppId(1),
             serverId = defaultServerId,
             selectedIconName = "mdi:flash",
             label = "Energy",
@@ -124,7 +124,7 @@ class MockShortcutsRepositoryImpl @Inject constructor() : ShortcutsRepository {
             target = ShortcutTargetValue.Lovelace("/lovelace/energy"),
         ),
         2 to ShortcutDraft(
-            id = buildDynamicId(2),
+            id = buildAppId(2),
             serverId = defaultServerId,
             selectedIconName = "mdi:shield",
             label = "Security",
@@ -132,7 +132,7 @@ class MockShortcutsRepositoryImpl @Inject constructor() : ShortcutsRepository {
             target = ShortcutTargetValue.Lovelace("/lovelace/security"),
         ),
         3 to ShortcutDraft(
-            id = buildDynamicId(3),
+            id = buildAppId(3),
             serverId = defaultServerId,
             selectedIconName = "mdi:stove",
             label = "Kitchen",
@@ -141,7 +141,7 @@ class MockShortcutsRepositoryImpl @Inject constructor() : ShortcutsRepository {
         ),
     )
 
-    private val pinnedShortcuts = linkedMapOf(
+    private val homeShortcuts = linkedMapOf(
         "pinned_living_room" to ShortcutDraft(
             id = "pinned_living_room",
             serverId = defaultServerId,
@@ -315,11 +315,11 @@ class MockShortcutsRepositoryImpl @Inject constructor() : ShortcutsRepository {
     override suspend fun loadShortcutsList(): ShortcutResult<ShortcutsListData> {
         return ShortcutResult.Success(
             ShortcutsListData(
-                dynamic = DynamicShortcutsData(
-                    maxDynamicShortcuts = MOCK_MAX_DYNAMIC_SHORTCUTS,
-                    shortcuts = dynamicShortcuts.toMap(),
+                appShortcuts = AppShortcutsData(
+                    maxAppShortcuts = MOCK_MAX_APP_SHORTCUTS,
+                    shortcuts = appShortcuts.toMap(),
                 ),
-                pinned = pinnedShortcuts.values.map { it.toSummary() },
+                homeShortcuts = homeShortcuts.values.map { it.toSummary() },
             ),
         )
     }
@@ -333,92 +333,92 @@ class MockShortcutsRepositoryImpl @Inject constructor() : ShortcutsRepository {
         )
     }
 
-    override suspend fun loadDynamicEditor(index: Int): ShortcutResult<DynamicEditorData> {
-        if (index !in 0 until MOCK_MAX_DYNAMIC_SHORTCUTS) {
+    override suspend fun loadAppEditor(index: Int): ShortcutResult<AppEditorData> {
+        if (index !in 0 until MOCK_MAX_APP_SHORTCUTS) {
             return ShortcutResult.Error(ShortcutError.InvalidIndex)
         }
 
-        val existingDraft = dynamicShortcuts[index]
+        val existingDraft = appShortcuts[index]
         val draft = existingDraft ?: ShortcutDraft.empty(index).copy(serverId = defaultServerId)
         return ShortcutResult.Success(
             if (existingDraft == null) {
-                DynamicEditorData.Create(index = index, draftSeed = draft)
+                AppEditorData.Create(index = index, draftSeed = draft)
             } else {
-                DynamicEditorData.Edit(index = index, draftSeed = draft)
+                AppEditorData.Edit(index = index, draftSeed = draft)
             },
         )
     }
 
-    override suspend fun loadDynamicEditorFirstAvailable(): ShortcutResult<DynamicEditorData> {
-        val index = (0 until MOCK_MAX_DYNAMIC_SHORTCUTS).firstOrNull { !dynamicShortcuts.containsKey(it) }
+    override suspend fun loadAppEditorFirstAvailable(): ShortcutResult<AppEditorData> {
+        val index = (0 until MOCK_MAX_APP_SHORTCUTS).firstOrNull { !appShortcuts.containsKey(it) }
             ?: return ShortcutResult.Error(ShortcutError.SlotsFull)
 
         return ShortcutResult.Success(
-            DynamicEditorData.Create(
+            AppEditorData.Create(
                 index = index,
                 draftSeed = ShortcutDraft.empty(index).copy(serverId = defaultServerId),
             ),
         )
     }
 
-    override suspend fun loadPinnedEditor(shortcutId: String): ShortcutResult<PinnedEditorData> {
+    override suspend fun loadHomeEditor(shortcutId: String): ShortcutResult<HomeEditorData> {
         if (shortcutId.isBlank()) return ShortcutResult.Error(ShortcutError.InvalidInput)
 
-        val existingDraft = pinnedShortcuts[shortcutId]
+        val existingDraft = homeShortcuts[shortcutId]
         val draft = existingDraft ?: ShortcutDraft.empty(shortcutId).copy(serverId = defaultServerId)
         return ShortcutResult.Success(
             if (existingDraft == null) {
-                PinnedEditorData.Create(draftSeed = draft)
+                HomeEditorData.Create(draftSeed = draft)
             } else {
-                PinnedEditorData.Edit(draftSeed = draft)
+                HomeEditorData.Edit(draftSeed = draft)
             },
         )
     }
 
-    override suspend fun loadPinnedEditorForCreate(): ShortcutResult<PinnedEditorData> {
+    override suspend fun loadHomeEditorForCreate(): ShortcutResult<HomeEditorData> {
         return ShortcutResult.Success(
-            PinnedEditorData.Create(
+            HomeEditorData.Create(
                 draftSeed = ShortcutDraft.empty("").copy(serverId = defaultServerId),
             ),
         )
     }
 
-    override suspend fun upsertDynamicShortcut(
+    override suspend fun upsertAppShortcut(
         index: Int,
         shortcut: ShortcutDraft,
         isEditing: Boolean,
-    ): ShortcutResult<DynamicEditorData> {
-        if (index !in 0 until MOCK_MAX_DYNAMIC_SHORTCUTS) {
+    ): ShortcutResult<AppEditorData> {
+        if (index !in 0 until MOCK_MAX_APP_SHORTCUTS) {
             return ShortcutResult.Error(ShortcutError.InvalidIndex)
         }
-        if (!isEditing && dynamicShortcuts.containsKey(index)) {
+        if (!isEditing && appShortcuts.containsKey(index)) {
             return ShortcutResult.Error(ShortcutError.SlotsFull)
         }
 
         val normalized = shortcut.copy(
-            id = buildDynamicId(index),
+            id = buildAppId(index),
             serverId = normalizeServerId(shortcut.serverId),
         )
-        dynamicShortcuts[index] = normalized
+        appShortcuts[index] = normalized
         return ShortcutResult.Success(
-            DynamicEditorData.Edit(index = index, draftSeed = normalized),
+            AppEditorData.Edit(index = index, draftSeed = normalized),
         )
     }
 
-    override suspend fun deleteDynamicShortcut(index: Int): ShortcutResult<Unit> {
-        if (index !in 0 until MOCK_MAX_DYNAMIC_SHORTCUTS) {
+    override suspend fun deleteAppShortcut(index: Int): ShortcutResult<Unit> {
+        if (index !in 0 until MOCK_MAX_APP_SHORTCUTS) {
             return ShortcutResult.Error(ShortcutError.InvalidIndex)
         }
-        dynamicShortcuts.remove(index)
+        appShortcuts.remove(index)
         return ShortcutResult.Success(Unit)
     }
 
-    override suspend fun upsertPinnedShortcut(shortcut: ShortcutDraft): ShortcutResult<PinResult> {
+    override suspend fun upsertHomeShortcut(shortcut: ShortcutDraft): ShortcutResult<PinResult> {
         val inputId = shortcut.id.trim()
-        val id = if (inputId.isNotBlank()) inputId else buildPinnedId(shortcut.label)
-        val exists = pinnedShortcuts.containsKey(id)
+        val id = if (inputId.isNotBlank()) inputId else buildHomeId(shortcut.label)
+        val exists = homeShortcuts.containsKey(id)
 
-        pinnedShortcuts[id] = shortcut.copy(
+        homeShortcuts[id] = shortcut.copy(
             id = id,
             serverId = normalizeServerId(shortcut.serverId),
         )
@@ -426,9 +426,9 @@ class MockShortcutsRepositoryImpl @Inject constructor() : ShortcutsRepository {
         return ShortcutResult.Success(if (exists) PinResult.Updated else PinResult.Requested)
     }
 
-    override suspend fun deletePinnedShortcut(shortcutId: String): ShortcutResult<Unit> {
+    override suspend fun deleteHomeShortcut(shortcutId: String): ShortcutResult<Unit> {
         if (shortcutId.isBlank()) return ShortcutResult.Error(ShortcutError.InvalidInput)
-        pinnedShortcuts.remove(shortcutId)
+        homeShortcuts.remove(shortcutId)
         return ShortcutResult.Success(Unit)
     }
 
@@ -436,24 +436,24 @@ class MockShortcutsRepositoryImpl @Inject constructor() : ShortcutsRepository {
         return servers.firstOrNull { it.id == serverId }?.id ?: defaultServerId
     }
 
-    private fun buildPinnedId(label: String): String {
+    private fun buildHomeId(label: String): String {
         val baseSlug = label.lowercase()
             .replace(Regex("[^a-z0-9]+"), "_")
             .trim('_')
             .ifBlank { "shortcut" }
-        val base = "${MOCK_PINNED_SHORTCUT_PREFIX}_${baseSlug}"
-        if (!pinnedShortcuts.containsKey(base)) return base
+        val base = "${MOCK_HOME_SHORTCUT_PREFIX}_$baseSlug"
+        if (!homeShortcuts.containsKey(base)) return base
 
         var index = 2
-        var candidate = "${base}_${index}"
-        while (pinnedShortcuts.containsKey(candidate)) {
+        var candidate = "${base}_$index"
+        while (homeShortcuts.containsKey(candidate)) {
             index += 1
-            candidate = "${base}_${index}"
+            candidate = "${base}_$index"
         }
         return candidate
     }
 
-    private fun buildDynamicId(index: Int): String {
-        return "${MOCK_DYNAMIC_SHORTCUT_PREFIX}_${index + 1}"
+    private fun buildAppId(index: Int): String {
+        return "${MOCK_APP_SHORTCUT_PREFIX}_${index + 1}"
     }
 }

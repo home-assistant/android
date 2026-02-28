@@ -27,16 +27,16 @@ import kotlinx.serialization.Serializable
 private data object ShortcutsListRoute
 
 @Serializable
-private data object CreateDynamicRoute
+private data object CreateAppShortcutRoute
 
 @Serializable
-private data object CreatePinnedRoute
+private data object CreateHomeShortcutRoute
 
 @Serializable
-private data class EditDynamicRoute(val index: Int)
+private data class EditAppShortcutRoute(val index: Int)
 
 @Serializable
-private data class EditPinnedRoute(val id: String)
+private data class EditHomeShortcutRoute(val id: String)
 
 @Composable
 fun ShortcutsNavHost(onToolbarTitleChanged: (String) -> Unit) {
@@ -50,36 +50,45 @@ fun ShortcutsNavHost(onToolbarTitleChanged: (String) -> Unit) {
             ShortcutsListRouteScreen(
                 onNavigate = { action ->
                     when (action) {
-                        is ShortcutsListAction.EditDynamic -> navController.navigate(EditDynamicRoute(action.index))
-                        is ShortcutsListAction.EditPinned -> navController.navigate(EditPinnedRoute(action.id))
-                        ShortcutsListAction.CreateDynamic -> navController.navigate(CreateDynamicRoute)
-                        ShortcutsListAction.CreatePinned -> navController.navigate(CreatePinnedRoute)
+                        is ShortcutsListAction.EditAppShortcut -> navController.navigate(
+                            EditAppShortcutRoute(action.index),
+                        )
+
+                        is ShortcutsListAction.EditHomeShortcut -> navController.navigate(
+                            EditHomeShortcutRoute(action.id),
+                        )
+
+                        is ShortcutsListAction.CreateAppShortcut -> navController.navigate(CreateAppShortcutRoute)
+
+                        is ShortcutsListAction.CreateHomeShortcut -> navController.navigate(CreateHomeShortcutRoute)
                     }
                 },
             )
         }
 
-        composable<CreateDynamicRoute> {
-            CreateDynamicRouteScreen()
-        }
-
-        composable<CreatePinnedRoute> {
-            CreatePinnedRouteScreen(
+        composable<CreateAppShortcutRoute> {
+            CreateAppShortcutRouteScreen(
                 onNavigateBack = { navController.popBackStack() },
             )
         }
 
-        composable<EditDynamicRoute> { backStackEntry ->
-            val route: EditDynamicRoute = backStackEntry.toRoute()
-            EditDynamicRouteScreen(
+        composable<CreateHomeShortcutRoute> {
+            CreateHomeShortcutRouteScreen(
+                onNavigateBack = { navController.popBackStack() },
+            )
+        }
+
+        composable<EditAppShortcutRoute> { backStackEntry ->
+            val route: EditAppShortcutRoute = backStackEntry.toRoute()
+            EditAppShortcutRouteScreen(
                 route = route,
                 onNavigateBack = { navController.popBackStack() },
             )
         }
 
-        composable<EditPinnedRoute> { backStackEntry ->
-            val route: EditPinnedRoute = backStackEntry.toRoute()
-            EditPinnedRouteScreen(
+        composable<EditHomeShortcutRoute> { backStackEntry ->
+            val route: EditHomeShortcutRoute = backStackEntry.toRoute()
+            EditHomeShortcutRouteScreen(
                 route = route,
                 onNavigateBack = { navController.popBackStack() },
             )
@@ -97,19 +106,19 @@ fun ShortcutsNavHost(onToolbarTitleChanged: (String) -> Unit) {
                     onToolbarTitleChanged(shortcutsTitle)
                 }
 
-                backStackEntry.destination.hasRoute(route = CreateDynamicRoute::class) -> {
+                backStackEntry.destination.hasRoute(route = CreateAppShortcutRoute::class) -> {
                     onToolbarTitleChanged(addAppShortcutTitle)
                 }
 
-                backStackEntry.destination.hasRoute(route = CreatePinnedRoute::class) -> {
+                backStackEntry.destination.hasRoute(route = CreateHomeShortcutRoute::class) -> {
                     onToolbarTitleChanged(addHomeShortcutTitle)
                 }
 
-                backStackEntry.destination.hasRoute(route = EditDynamicRoute::class) -> {
+                backStackEntry.destination.hasRoute(route = EditAppShortcutRoute::class) -> {
                     onToolbarTitleChanged(editAppShortcutTitle)
                 }
 
-                backStackEntry.destination.hasRoute(route = EditPinnedRoute::class) -> {
+                backStackEntry.destination.hasRoute(route = EditHomeShortcutRoute::class) -> {
                     onToolbarTitleChanged(editHomeShortcutTitle)
                 }
             }
@@ -143,26 +152,14 @@ private fun ShortcutsListRouteScreen(
 }
 
 @Composable
-private fun CreateDynamicRouteScreen(viewModel: EditShortcutViewModel = hiltViewModel()) {
+private fun CreateAppShortcutRouteScreen(
+    viewModel: EditShortcutViewModel = hiltViewModel(),
+    onNavigateBack: () -> Unit,
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        viewModel.createDynamicFirstAvailable()
-    }
-
-    ShortcutEditorScreen(
-        state = uiState,
-        dispatch = viewModel::dispatch,
-        onRetry = viewModel::createDynamicFirstAvailable,
-    )
-}
-
-@Composable
-private fun CreatePinnedRouteScreen(viewModel: EditShortcutViewModel = hiltViewModel(), onNavigateBack: () -> Unit) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-    LaunchedEffect(Unit) {
-        viewModel.openCreatePinned()
+        viewModel.createAppShortcutFirstAvailable()
     }
 
     LaunchedEffect(viewModel) {
@@ -174,20 +171,44 @@ private fun CreatePinnedRouteScreen(viewModel: EditShortcutViewModel = hiltViewM
     ShortcutEditorScreen(
         state = uiState,
         dispatch = viewModel::dispatch,
-        onRetry = viewModel::openCreatePinned,
+        onRetry = viewModel::createAppShortcutFirstAvailable,
     )
 }
 
 @Composable
-private fun EditDynamicRouteScreen(
-    route: EditDynamicRoute,
+private fun CreateHomeShortcutRouteScreen(
+    viewModel: EditShortcutViewModel = hiltViewModel(),
+    onNavigateBack: () -> Unit,
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.openCreateHomeShortcut()
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.closeEvents.collect {
+            onNavigateBack()
+        }
+    }
+
+    ShortcutEditorScreen(
+        state = uiState,
+        dispatch = viewModel::dispatch,
+        onRetry = viewModel::openCreateHomeShortcut,
+    )
+}
+
+@Composable
+private fun EditAppShortcutRouteScreen(
+    route: EditAppShortcutRoute,
     viewModel: EditShortcutViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(route.index) {
-        viewModel.openDynamic(route.index)
+        viewModel.openEditAppShortcut(route.index)
     }
 
     LaunchedEffect(viewModel) {
@@ -199,20 +220,20 @@ private fun EditDynamicRouteScreen(
     ShortcutEditorScreen(
         state = uiState,
         dispatch = viewModel::dispatch,
-        onRetry = { viewModel.openDynamic(route.index) },
+        onRetry = { viewModel.openEditAppShortcut(route.index) },
     )
 }
 
 @Composable
-private fun EditPinnedRouteScreen(
-    route: EditPinnedRoute,
+private fun EditHomeShortcutRouteScreen(
+    route: EditHomeShortcutRoute,
     onNavigateBack: () -> Unit,
     viewModel: EditShortcutViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(route.id) {
-        viewModel.editPinned(route.id)
+        viewModel.openEditHomeShortcut(route.id)
     }
 
     LaunchedEffect(viewModel) {
@@ -224,6 +245,6 @@ private fun EditPinnedRouteScreen(
     ShortcutEditorScreen(
         state = uiState,
         dispatch = viewModel::dispatch,
-        onRetry = { viewModel.editPinned(route.id) },
+        onRetry = { viewModel.openEditHomeShortcut(route.id) },
     )
 }
