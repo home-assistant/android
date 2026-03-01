@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.activity.compose.LocalActivity
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
@@ -113,6 +114,7 @@ class HAAppTest {
                 HAApp(
                     navController = navController,
                     startDestination = startDestination,
+                    snackbarHostState = SnackbarHostState(),
                 )
             }
         }
