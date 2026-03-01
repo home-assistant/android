@@ -150,7 +150,7 @@ class EntityWidgetTest {
     }
 
     @Test
-    fun `Given entity returns null without exception and attribute configured and cached value when resolving then shows cached value without error icon`() = runTest {
+    fun `Given entity returns null without exception and attribute configured and cached value when resolving then shows cached value with error icon`() = runTest {
         coEvery { dao.get(appWidgetId) } returns createWidgetEntity(attributeIds = "unit_of_measurement", lastUpdate = "5 W")
         coEvery { serverManager.integrationRepository(serverId) } returns integrationRepository
         coEvery { integrationRepository.getEntity(entityId) } returns null
@@ -158,7 +158,7 @@ class EntityWidgetTest {
         val (text, errorIcon) = resolveWidgetViews(widget.getWidgetRemoteViews(context, appWidgetId))
 
         assertEquals("5 W", text.text.toString())
-        assertEquals(View.GONE, errorIcon.visibility)
+        assertEquals(View.VISIBLE, errorIcon.visibility)
         coVerify(exactly = 0) { dao.updateWidgetLastUpdate(any(), any()) }
     }
 }
