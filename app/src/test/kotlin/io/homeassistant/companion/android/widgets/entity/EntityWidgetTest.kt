@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.widgets.entity
 
 import android.view.View
 import android.widget.FrameLayout
+import android.widget.RemoteViews
 import android.widget.TextView
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.R
@@ -84,7 +85,7 @@ class EntityWidgetTest {
         lastUpdated = LocalDateTime.now(),
     )
 
-    private fun resolveWidgetViews(views: android.widget.RemoteViews): Pair<TextView, View> {
+    private fun resolveWidgetViews(views: RemoteViews): Pair<TextView, View> {
         val parent = FrameLayout(context)
         val inflated = views.apply(context, parent)
         val text = inflated.findViewById<TextView>(R.id.widgetText)
