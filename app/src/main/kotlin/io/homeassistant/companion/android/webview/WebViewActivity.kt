@@ -1480,6 +1480,13 @@ class WebViewActivity :
         if (hasFocus && !isFinishing) {
             lifecycleScope.launch {
                 unlockAppIfNeeded()
+
+                if (presenter.isFullScreen() || isVideoFullScreen) {
+                    hideSystemUI()
+                } else {
+                    showSystemUI()
+                }
+
                 val intentPath = intent.getStringExtra(EXTRA_PATH)
                 // Let the presenter handle falling back to the current WebView path
                 // when no explicit navigation path is set. See https://github.com/home-assistant/android/issues/4983
@@ -1499,12 +1506,6 @@ class WebViewActivity :
                 }
                 intent.removeExtra(EXTRA_PATH)
                 presenter.load(lifecycle, path, isInternalOverride)
-
-                if (presenter.isFullScreen() || isVideoFullScreen) {
-                    hideSystemUI()
-                } else {
-                    showSystemUI()
-                }
             }
         }
     }

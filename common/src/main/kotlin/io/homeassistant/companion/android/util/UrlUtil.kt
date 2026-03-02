@@ -233,12 +233,10 @@ fun Uri.toRelativeUrl(excludeParams: Set<String> = emptySet()): String? {
     val relativeUrl = Uri.Builder()
         .encodedPath(path)
         .apply {
-            for (name in queryParameterNames) {
-                if (name in excludeParams) continue
-                for (value in getQueryParameters(name)) {
-                    appendQueryParameter(name, value)
-                }
-            }
+            queryParameterNames
+                .filterNot { it in excludeParams }
+                .flatMap { name -> getQueryParameters(name).map { name to it } }
+                .forEach { (name, value) -> appendQueryParameter(name, value) }
         }
         .encodedFragment(encodedFragment)
         .build()
