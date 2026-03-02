@@ -213,7 +213,7 @@ internal fun AssistSettingsContent(
             if (uiState.showMissingPlayServicesHint) {
                 HABanner(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = stringResource(commonR.string.play_services_unavailable_full_flavor),
+                        text = stringResource(commonR.string.assist_wake_word_missing_play_services),
                         style = HATextStyle.Body.copy(textAlign = TextAlign.Start),
                         modifier = Modifier.weight(1f),
                     )
