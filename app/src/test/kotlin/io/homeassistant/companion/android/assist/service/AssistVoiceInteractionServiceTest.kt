@@ -356,4 +356,53 @@ class AssistVoiceInteractionServiceTest {
         // Both detections should have sent a broadcast, even though the second was debounced
         assertEquals(2, wakeWordBroadcasts.size)
     }
+
+    @Test
+    fun `Given service not ready when wake word detected then do not show session`() = runTest {
+        val shadow = Shadows.shadowOf(service) as ShadowVoiceInteractionService
+        coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
+
+        // Do NOT call onReady() - service is not ready
+
+        val intent = Intent().apply {
+            action = "io.homeassistant.companion.android.START_LISTENING"
+        }
+        service.onStartCommand(intent, 0, 1)
+        advanceUntilIdle()
+
+        // Simulate wake word detection while service is not ready
+        onWakeWordDetectedSlot.captured.invoke(microWakeWordModelConfigs[0])
+        advanceUntilIdle()
+
+        // showSession should NOT have been called
+        assertNull(shadow.lastSessionBundle)
+        // But the listener should still have been stopped to release the microphone
+        coVerify { wakeWordListener.stop() }
+    }
+
+    @Test
+    fun `Given service shut down after ready when wake word detected then do not show session`() = runTest {
+        val shadow = Shadows.shadowOf(service) as ShadowVoiceInteractionService
+        coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
+
+        // Make service ready and start listening so the wake word callback is captured
+        service.onReady()
+        advanceUntilIdle()
+
+        val intent = Intent().apply {
+            action = "io.homeassistant.companion.android.START_LISTENING"
+        }
+        service.onStartCommand(intent, 0, 1)
+        advanceUntilIdle()
+
+        // Now shut down the service (sets isServiceReady = false)
+        service.onShutdown()
+
+        // Simulate wake word detection after shutdown
+        onWakeWordDetectedSlot.captured.invoke(microWakeWordModelConfigs[0])
+        advanceUntilIdle()
+
+        // showSession should NOT have been called because the service is no longer ready
+        assertNull(shadow.lastSessionBundle)
+    }
 }
