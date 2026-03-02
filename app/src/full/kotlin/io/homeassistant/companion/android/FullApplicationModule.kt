@@ -42,7 +42,7 @@ object FullApplicationModule {
     ): PlayServicesAvailability {
         return PlayServicesAvailability {
             GoogleApiAvailability.getInstance()
-                .isGooglePlayServicesAvailable(context) == ConnectionResult.SUCCESS
+                .isGooglePlayServicesAvailable(context) != ConnectionResult.SUCCESS
         }
     }
 }

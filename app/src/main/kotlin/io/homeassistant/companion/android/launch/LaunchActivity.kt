@@ -9,7 +9,6 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SnackbarResult.ActionPerformed
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,9 +22,9 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
-import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.util.PLAY_SERVICES_FLAVOR_DOC_URL
 import io.homeassistant.companion.android.util.PlayServicesAvailability
 import io.homeassistant.companion.android.util.compose.HAApp
 import io.homeassistant.companion.android.util.compose.navigateToUri
@@ -34,7 +33,6 @@ import javax.inject.Inject
 import kotlinx.parcelize.Parcelize
 
 private const val DEEP_LINK_KEY = "deep_link_key"
-private const val PLAY_SERVICES_FLAVOR_DOC_URL = "https://companion.home-assistant.io/docs/core/android-flavors/"
 
 /**
  * Main entry point of the application, it is mostly responsible to hold the whole navigation of the application.
@@ -113,7 +111,7 @@ class LaunchActivity : AppCompatActivity() {
                 val snackbarHostState = remember { SnackbarHostState() }
 
                 MissingPlayServicesNotice(
-                    isPlayServicesAvailable = playServicesAvailability.isAvailable(),
+                    isPlayServicesUnavailable = playServicesAvailability.isUnavailable(),
                     snackbarHostState = snackbarHostState,
                     navController = navController,
                 )
@@ -136,14 +134,11 @@ class LaunchActivity : AppCompatActivity() {
 
 @Composable
 private fun MissingPlayServicesNotice(
-    isPlayServicesAvailable: Boolean,
+    isPlayServicesUnavailable: Boolean,
     snackbarHostState: SnackbarHostState,
     navController: NavController,
 ) {
-    val shouldShowPlayServicesSnackbar =
-        BuildConfig.FLAVOR == "full" && !isPlayServicesAvailable
-
-    if (shouldShowPlayServicesSnackbar) {
+    if (isPlayServicesUnavailable) {
         val message = stringResource(commonR.string.play_services_unavailable_full_flavor)
         val learnMore = stringResource(commonR.string.learn_more)
         LaunchedEffect(message) {
