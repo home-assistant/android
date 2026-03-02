@@ -13,6 +13,15 @@ interface TfLiteInitializer {
      * Initialize the TFLite runtime.
      *
      * @param context Application context
+     *
+     * @throws Exception if any exception occurred during initialization
      */
     suspend fun initialize(context: Context)
 }
+
+
+/**
+ * Exception thrown when TFLite initialization fails with a well known unrecoverable reason,
+ * such as unavailability of Google Play Services.
+ */
+class TfLiteInitializeException(throwable: Throwable?, message: String?) : Exception(message, throwable)

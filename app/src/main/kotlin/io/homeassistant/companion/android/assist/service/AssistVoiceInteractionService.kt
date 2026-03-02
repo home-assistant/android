@@ -67,6 +67,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
             onWakeWordDetected = ::onWakeWordDetected,
             onListenerReady = ::onListenerReady,
             onListenerStopped = ::onListenerStopped,
+            onListenerFailed = ::onListenerFailed,
         )
     }
     private var lastTriggerTime: Instant? = null
@@ -155,6 +156,14 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
 
     private fun onListenerStopped() {
         stopForegroundCompat()
+    }
+
+    private fun onListenerFailed() {
+        serviceScope.launch {
+            Timber.w("Wake word listener failed, disabling wake word to prevent issue")
+            @SuppressLint("MissingPermission")
+            assistConfigManager.setWakeWordEnabled(false)
+        }
     }
 
     /**
