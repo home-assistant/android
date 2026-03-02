@@ -33,10 +33,10 @@ import org.junit.Test
 import org.junit.jupiter.api.assertNull
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
-import org.robolectric.annotation.Config
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows
 import org.robolectric.android.controller.ServiceController
+import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowVoiceInteractionService
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -395,14 +395,21 @@ class AssistVoiceInteractionServiceTest {
         service.onStartCommand(intent, 0, 1)
         advanceUntilIdle()
 
-        // Now shut down the service (sets isServiceReady = false)
-        service.onShutdown()
+        // Simulate a shutdown that races with the wake-word coroutine: when
+        // stop() is called inside the launched coroutine, the service shuts down
+        // concurrently (setting isServiceReady = false). Because launchAssist()
+        // runs synchronously after stop() returns, only the isServiceReady guard
+        // prevents showSession() from being called.
+        coEvery { wakeWordListener.stop() } coAnswers {
+            service.onShutdown()
+        }
 
-        // Simulate wake word detection after shutdown
+        // Invoke the wake word callback to queue the coroutine, then advance
         onWakeWordDetectedSlot.captured.invoke(microWakeWordModelConfigs[0])
         advanceUntilIdle()
 
         // showSession should NOT have been called because the service is no longer ready
         assertNull(shadow.lastSessionBundle)
+        coVerify { wakeWordListener.stop() }
     }
 }
