@@ -6,10 +6,14 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.os.PowerManager
 import android.provider.Settings
+import androidx.compose.ui.platform.AndroidUriHandler
 import androidx.core.content.getSystemService
 import androidx.core.net.toUri
+import io.homeassistant.companion.android.common.BuildConfig
+import io.homeassistant.companion.android.common.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 /**
  * Wrapper around [Context.getSharedPreferences] that uses [Dispatchers.IO] to ensure
@@ -86,4 +90,17 @@ fun Context.isIgnoringBatteryOptimizations(): Boolean {
     return getSystemService<PowerManager>()
         ?.isIgnoringBatteryOptimizations(packageName ?: "")
         ?: false
+}
+
+suspend fun Context.openUri(
+    uri: String,
+    onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
+) {
+    try {
+        AndroidUriHandler(this).openUri(uri)
+    } catch (e: IllegalArgumentException) {
+        // Don't log e in release to not leak the URL in the log
+        Timber.e(e.takeIf { BuildConfig.DEBUG }, "Failed to navigate open uri")
+        onShowSnackbar(getString(R.string.fail_to_navigate_to_uri, uri), null)
+    }
 }

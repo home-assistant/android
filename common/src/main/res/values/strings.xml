@@ -1218,6 +1218,8 @@
     <string name="assist_wake_word_test_hint">Say \"%s\" to test</string>
     <string name="assist_wake_word_detected">Wake word detected!</string>
     <string name="assist_wake_word_battery_warning">Wake word detection runs entirely on your device, no network connection required. It continuously listens for your wake word, which will increase battery usage.</string>
+    <string name="assist_wake_word_unsupported_device">Wake word detection is not available on this device due to hardware limitations.</string>
+    <string name="assist_wake_word_missing_play_services">Google Play Services is required to enable wake word detection.</string>
     <string name="assist_permission_microphone_required">Requires \'Microphone\' permission</string>
     <string name="not_registered">Please open the Home Assistant app and log in to start using Assist</string>
     <string name="ha_assist">HA: Assist</string>

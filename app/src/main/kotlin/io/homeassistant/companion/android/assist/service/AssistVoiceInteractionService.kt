@@ -121,6 +121,10 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
      */
     @SuppressLint("MissingPermission")
     private fun startListening() {
+        if (!assistConfigManager.isWakeWordSupported()) {
+            Timber.d("Wake word detection is not supported on this device")
+            return
+        }
         if (!hasRecordAudioPermission()) {
             Timber.w("RECORD_AUDIO permission not granted, cannot start listening")
             return
