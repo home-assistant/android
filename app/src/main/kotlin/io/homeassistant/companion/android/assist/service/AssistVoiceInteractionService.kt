@@ -71,9 +71,11 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         )
     }
     private var lastTriggerTime: Instant? = null
+    private var isServiceReady = false
 
     override fun onReady() {
         super.onReady()
+        isServiceReady = true
         Timber.d("VoiceInteractionService is ready")
         serviceScope.launch {
             if (assistConfigManager.isWakeWordEnabled()) {
@@ -87,6 +89,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
 
     override fun onShutdown() {
         super.onShutdown()
+        isServiceReady = false
         Timber.d("VoiceInteractionService is shutting down")
         // Don't use stopListening() as it launches a coroutine that may not complete before cancel
         serviceScope.cancel()
@@ -239,6 +242,10 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     }
 
     private fun launchAssist(wakeWord: String? = null) {
+        if (!isServiceReady) {
+            Timber.w("Cannot launch Assist: VoiceInteractionService is not ready yet")
+            return
+        }
         val args = Bundle().apply {
             wakeWord?.let { putString(EXTRA_WAKE_WORD, it) }
         }
