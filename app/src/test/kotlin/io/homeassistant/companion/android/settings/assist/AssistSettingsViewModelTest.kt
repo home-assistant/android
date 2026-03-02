@@ -164,7 +164,7 @@ class AssistSettingsViewModelTest {
     inner class MissingPlayServicesHintTest {
 
         @Test
-        fun `Given play services available when initialized then hint is hidden`() = runTest {
+        fun `Given Play Services available when initialized then hint is hidden`() = runTest {
             every { playServicesAvailability.isMissingRequiredPlayServices() } returns false
 
             viewModel = createViewModel()
@@ -177,7 +177,7 @@ class AssistSettingsViewModelTest {
         }
 
         @Test
-        fun `Given play services unavailable when initialized then hint is shown and wake word not supported`() = runTest {
+        fun `Given Play Services unavailable when initialized then hint is shown and wake word not supported`() = runTest {
             every { playServicesAvailability.isMissingRequiredPlayServices() } returns true
 
             viewModel = createViewModel()
@@ -190,7 +190,7 @@ class AssistSettingsViewModelTest {
         }
 
         @Test
-        fun `Given play services unavailable and wake word enabled when initialized then disable wake word`() = runTest {
+        fun `Given Play Services unavailable and wake word enabled when initialized then disable wake word`() = runTest {
             every { playServicesAvailability.isMissingRequiredPlayServices() } returns true
             coEvery { assistConfigManager.isWakeWordEnabled() } returns true
 
