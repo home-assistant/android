@@ -8,6 +8,7 @@ import io.homeassistant.companion.android.assist.service.AssistVoiceInteractionS
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.util.SuspendLazy
+import io.homeassistant.companion.android.microfrontend.isMicroFrontendSupported
 import javax.inject.Inject
 
 /**
@@ -15,7 +16,17 @@ import javax.inject.Inject
  */
 interface AssistConfigManager {
     /**
+     * Returns whether the device supports wake word detection.
+     *
+     * Wake word detection requires the MicroFrontend native library, which is only
+     * available on 64-bit architectures (arm64-v8a, x86_64).
+     */
+    fun isWakeWordSupported(): Boolean
+
+    /**
      * Returns a list of all available wake word models.
+     *
+     * Returns an empty list on unsupported devices.
      */
     suspend fun getAvailableModels(): List<MicroWakeWordModelConfig>
 
@@ -57,7 +68,12 @@ class AssistConfigManagerImpl @Inject constructor(
 
     private val models = SuspendLazy { MicroWakeWordModelConfig.loadAvailableModels(context) }
 
-    override suspend fun getAvailableModels(): List<MicroWakeWordModelConfig> = models.get()
+    override fun isWakeWordSupported(): Boolean = isMicroFrontendSupported
+
+    override suspend fun getAvailableModels(): List<MicroWakeWordModelConfig> {
+        if (!isWakeWordSupported()) return emptyList()
+        return models.get()
+    }
 
     override suspend fun isWakeWordEnabled(): Boolean = prefsRepository.isWakeWordEnabled()
 
