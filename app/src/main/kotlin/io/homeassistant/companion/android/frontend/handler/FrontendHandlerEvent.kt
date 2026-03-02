@@ -31,6 +31,11 @@ sealed interface FrontendHandlerEvent {
     data object OpenSettings : FrontendHandlerEvent
 
     /**
+     * User triggered the voice assistant from the frontend.
+     */
+    data class ShowAssist(val pipelineId: String?, val startListening: Boolean) : FrontendHandlerEvent
+
+    /**
      * Frontend theme changed (colors, dark mode, etc.).
      */
     data object ThemeUpdated : FrontendHandlerEvent
