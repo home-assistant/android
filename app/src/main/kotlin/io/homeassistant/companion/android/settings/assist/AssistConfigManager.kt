@@ -43,7 +43,7 @@ interface AssistConfigManager {
 
     /**
      * Returns the currently selected wake word model or null if no model is selected
-     * or is no longer available.
+     * or the previously selected model is no longer available.
      */
     suspend fun getSelectedWakeWordModel(): MicroWakeWordModelConfig?
 
