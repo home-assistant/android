@@ -111,7 +111,7 @@ class LaunchActivity : AppCompatActivity() {
                 val snackbarHostState = remember { SnackbarHostState() }
 
                 MissingPlayServicesNotice(
-                    isPlayServicesUnavailable = playServicesAvailability.isUnavailable(),
+                    isMissingRequiredPlayServices = playServicesAvailability.isMissingRequiredPlayServices(),
                     snackbarHostState = snackbarHostState,
                     navController = navController,
                 )
@@ -134,11 +134,11 @@ class LaunchActivity : AppCompatActivity() {
 
 @Composable
 private fun MissingPlayServicesNotice(
-    isPlayServicesUnavailable: Boolean,
+    isMissingRequiredPlayServices: Boolean,
     snackbarHostState: SnackbarHostState,
     navController: NavController,
 ) {
-    if (isPlayServicesUnavailable) {
+    if (isMissingRequiredPlayServices) {
         val message = stringResource(commonR.string.play_services_unavailable_full_flavor)
         val learnMore = stringResource(commonR.string.learn_more)
         LaunchedEffect(message) {

@@ -14,5 +14,5 @@ internal fun interface PlayServicesAvailability {
      * Returns `true` when Google Play Services are required by the current
      * build flavor but are not available on the device.
      */
-    fun isUnavailable(): Boolean
+    fun isMissingRequiredPlayServices(): Boolean
 }

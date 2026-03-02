@@ -41,7 +41,7 @@ class AssistSettingsViewModelTest {
         coEvery { assistConfigManager.isWakeWordEnabled() } returns false
         coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
         every { defaultAssistantManager.isDefaultAssistant() } returns true
-        every { playServicesAvailability.isUnavailable() } returns false
+        every { playServicesAvailability.isMissingRequiredPlayServices() } returns false
     }
 
     private fun createViewModel(): AssistSettingsViewModel {
@@ -165,7 +165,7 @@ class AssistSettingsViewModelTest {
 
         @Test
         fun `Given play services available when initialized then hint is hidden`() = runTest {
-            every { playServicesAvailability.isUnavailable() } returns false
+            every { playServicesAvailability.isMissingRequiredPlayServices() } returns false
 
             viewModel = createViewModel()
             runCurrent()
@@ -178,7 +178,7 @@ class AssistSettingsViewModelTest {
 
         @Test
         fun `Given play services unavailable when initialized then hint is shown and wake word not supported`() = runTest {
-            every { playServicesAvailability.isUnavailable() } returns true
+            every { playServicesAvailability.isMissingRequiredPlayServices() } returns true
 
             viewModel = createViewModel()
             runCurrent()
@@ -191,7 +191,7 @@ class AssistSettingsViewModelTest {
 
         @Test
         fun `Given play services unavailable and wake word enabled when initialized then disable wake word`() = runTest {
-            every { playServicesAvailability.isUnavailable() } returns true
+            every { playServicesAvailability.isMissingRequiredPlayServices() } returns true
             coEvery { assistConfigManager.isWakeWordEnabled() } returns true
 
             viewModel = createViewModel()

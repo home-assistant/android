@@ -44,10 +44,7 @@ interface AssistConfigManager {
     suspend fun setWakeWordEnabled(enabled: Boolean)
 
     /**
-     * Returns the currently selected wake word model.
-     *
-     * Returns null if no model is selected or if the previously selected model
-     * is no longer available.
+     * Returns a list of all available wake word models. On unsupported devices, an empty list is returned.
      */
     suspend fun getSelectedWakeWordModel(): MicroWakeWordModelConfig?
 
