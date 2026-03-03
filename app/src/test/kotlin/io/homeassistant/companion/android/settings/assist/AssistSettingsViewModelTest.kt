@@ -295,7 +295,7 @@ class AssistSettingsViewModelTest {
 
         @Test
         fun `Given no selected model in state when toggle enabled then fallback to getSelectedWakeWordModel`() = runTest {
-            coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[1]
+            coEvery { assistConfigManager.getSelectedWakeWordModel() } returnsMany listOf(null, microWakeWordModelConfigs[1])
             coEvery { assistConfigManager.getAvailableModels() } returns microWakeWordModelConfigs
             viewModel = createViewModel()
             runCurrent()
