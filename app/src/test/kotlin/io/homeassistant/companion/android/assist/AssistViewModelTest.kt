@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.assist
 
 import android.app.Application
 import android.content.pm.PackageManager
-import io.homeassistant.companion.android.common.assist.AssistViewModelBase.AssistInputMode
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
@@ -100,14 +99,6 @@ class AssistViewModelTest {
         )
     }
 
-    /**
-     * Initializes the ViewModel through [AssistViewModel.onCreate] and advances the coroutines
-     * so the conversation contains the start message (non-placeholder). Sets input mode to
-     * [AssistInputMode.VOICE_INACTIVE] via pipeline setup with STT support.
-     *
-     * Uses `startListening = null` to avoid overwriting the default `recorderAutoStart = true`,
-     * which is required for the voice-capable pipeline to set [AssistInputMode.VOICE_INACTIVE].
-     */
     private fun createAndInitialize(hasPermission: Boolean = false): AssistViewModel {
         val vm = createViewModel()
         vm.onCreate(
@@ -129,30 +120,29 @@ class AssistViewModelTest {
     inner class InactivityTimerTest {
 
         @Test
-        fun `Given voice inactive mode and non-placeholder message when 30s elapses then shouldFinish is true`() = runTest {
+        fun `Given voice inactive mode and non-placeholder message when CLOSE_INACTIVE elapses then shouldFinish is true`() = runTest {
             viewModel = createAndInitialize()
             runCurrent()
 
-            advanceTimeBy(30.seconds)
+            advanceTimeBy(CLOSE_INACTIVE)
             runCurrent()
 
             assertTrue(viewModel.shouldFinish)
         }
 
         @Test
-        fun `Given voice inactive mode and non-placeholder message when less than 30s elapses then shouldFinish is false`() = runTest {
+        fun `Given voice inactive mode and non-placeholder message when less than CLOSE_INACTIVE elapses then shouldFinish is false`() = runTest {
             viewModel = createAndInitialize()
             runCurrent()
 
-            advanceTimeBy(29.seconds)
+            advanceTimeBy(CLOSE_INACTIVE - 1.seconds)
             runCurrent()
 
             assertFalse(viewModel.shouldFinish)
         }
 
         @Test
-        fun `Given text input mode when 30s elapses then shouldFinish is false`() = runTest {
-            // Pipeline with no STT engine -> TEXT_ONLY mode
+        fun `Given text input mode when CLOSE_INACTIVE elapses then shouldFinish is false`() = runTest {
             coEvery { webSocketRepository.getAssistPipeline(anyNullable()) } returns AssistPipelineResponse(
                 id = "test-pipeline",
                 name = "Test Pipeline",
@@ -168,19 +158,19 @@ class AssistViewModelTest {
             viewModel = createAndInitialize()
             runCurrent()
 
-            advanceTimeBy(60.seconds)
+            advanceTimeBy(CLOSE_INACTIVE + 1.seconds)
             runCurrent()
 
             assertFalse(viewModel.shouldFinish)
         }
 
         @Test
-        fun `Given blocked input mode when 30s elapses then shouldFinish is false`() = runTest {
+        fun `Given blocked input mode when CLOSE_INACTIVE elapses then shouldFinish is false`() = runTest {
             coEvery { serverManager.isRegistered() } returns false
             viewModel = createAndInitialize()
             runCurrent()
 
-            advanceTimeBy(60.seconds)
+            advanceTimeBy(CLOSE_INACTIVE + 1.seconds)
             runCurrent()
 
             assertFalse(viewModel.shouldFinish)
@@ -191,13 +181,13 @@ class AssistViewModelTest {
             viewModel = createAndInitialize()
             runCurrent()
 
-            advanceTimeBy(15.seconds)
+            advanceTimeBy(1.seconds)
             runCurrent()
 
             viewModel.onPause()
             runCurrent()
 
-            advanceTimeBy(30.seconds)
+            advanceTimeBy(CLOSE_INACTIVE - 1.seconds)
             runCurrent()
 
             assertFalse(viewModel.shouldFinish)
@@ -208,13 +198,13 @@ class AssistViewModelTest {
             viewModel = createAndInitialize()
             runCurrent()
 
-            advanceTimeBy(15.seconds)
+            advanceTimeBy(1.seconds)
             runCurrent()
 
             viewModel.onDestroy()
             runCurrent()
 
-            advanceTimeBy(30.seconds)
+            advanceTimeBy(CLOSE_INACTIVE - 1.seconds)
             runCurrent()
 
             assertFalse(viewModel.shouldFinish)
@@ -225,13 +215,13 @@ class AssistViewModelTest {
             viewModel = createAndInitialize()
             runCurrent()
 
-            advanceTimeBy(15.seconds)
+            advanceTimeBy(1.seconds)
             runCurrent()
 
             viewModel.onChangeInput() // VOICE_INACTIVE -> TEXT
             runCurrent()
 
-            advanceTimeBy(30.seconds)
+            advanceTimeBy(CLOSE_INACTIVE - 1.seconds)
             runCurrent()
 
             assertFalse(viewModel.shouldFinish)
@@ -245,14 +235,18 @@ class AssistViewModelTest {
             viewModel.onChangeInput() // VOICE_INACTIVE -> TEXT
             runCurrent()
 
-            advanceTimeBy(30.seconds)
+            advanceTimeBy(CLOSE_INACTIVE)
             runCurrent()
             assertFalse(viewModel.shouldFinish)
 
             viewModel.onChangeInput() // TEXT -> VOICE_INACTIVE
             runCurrent()
 
-            advanceTimeBy(30.seconds)
+            advanceTimeBy(CLOSE_INACTIVE - 1.seconds)
+            runCurrent()
+            assertFalse(viewModel.shouldFinish)
+
+            advanceTimeBy(1.seconds)
             runCurrent()
             assertTrue(viewModel.shouldFinish)
         }

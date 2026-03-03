@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.assist
 
 import android.app.Application
 import android.content.Intent
+import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -25,7 +26,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-private val CLOSE_INACTIVE = 30.seconds
+@VisibleForTesting
+internal val CLOSE_INACTIVE = 30.seconds
 
 @HiltViewModel
 class AssistViewModel @Inject constructor(
@@ -187,24 +189,31 @@ class AssistViewModel @Inject constructor(
      */
     private fun restartInactivityTimer() {
         inactivityTimerJob?.cancel()
+        fun isInactive(): Boolean {
+            val shouldRun = when (inputMode) {
+                AssistInputMode.VOICE_INACTIVE -> true
+                AssistInputMode.TEXT,
+                AssistInputMode.TEXT_ONLY,
+                AssistInputMode.VOICE_ACTIVE,
+                AssistInputMode.BLOCKED,
+                null,
+                    -> false
+            }
+            if (!shouldRun || isPlayingAudio) return false
 
-        val shouldRun = when (inputMode) {
-            AssistInputMode.VOICE_INACTIVE -> true
-            AssistInputMode.TEXT,
-            AssistInputMode.TEXT_ONLY,
-            AssistInputMode.VOICE_ACTIVE,
-            AssistInputMode.BLOCKED,
-            null,
-                -> false
+            val lastMessage = _conversation.lastOrNull()
+            return !(lastMessage == null || lastMessage.isPlaceholder)
         }
-        if (!shouldRun || isPlayingAudio) return
 
-        val lastMessage = _conversation.lastOrNull()
-        if (lastMessage == null || lastMessage.isPlaceholder) return
+        if (!isInactive()) return
 
         inactivityTimerJob = viewModelScope.launch {
             delay(CLOSE_INACTIVE)
-            shouldFinish = true
+            if (isInactive()) {
+                shouldFinish = true
+            } else {
+                Timber.d("Inactivity timer expired but Assist is no longer inactive, not finishing")
+            }
         }
     }
 

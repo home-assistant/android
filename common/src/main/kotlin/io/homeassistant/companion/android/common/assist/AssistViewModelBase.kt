@@ -224,16 +224,20 @@ abstract class AssistViewModelBase(
                 currentPathBeingPlayed = audioPath
                 stopPlayback()
                 currentPlayAudioJob = viewModelScope.launch {
-                    playAudio(audioPath).collect { state ->
-                        when (state) {
-                            PlaybackState.PLAYING -> isPlayingAudio = true
-                            PlaybackState.STOP_PLAYING -> {
-                                isPlayingAudio = false
-                                onEvent(AssistEvent.PlaybackFinished)
-                                notifyContinueConversationIfNeeded(onEvent)
+                    try {
+                        playAudio(audioPath).collect { state ->
+                            when (state) {
+                                PlaybackState.PLAYING -> isPlayingAudio = true
+                                PlaybackState.STOP_PLAYING -> {
+                                    isPlayingAudio = false
+                                    onEvent(AssistEvent.PlaybackFinished)
+                                    notifyContinueConversationIfNeeded(onEvent)
+                                }
+                                PlaybackState.READY -> { /* No op */ }
                             }
-                            PlaybackState.READY -> { /* No op */ }
                         }
+                    } finally {
+                        isPlayingAudio = false
                     }
                 }
             }
@@ -282,8 +286,11 @@ abstract class AssistViewModelBase(
             val audioPath = data?.ttsOutput?.url
             if (!audioPath.isNullOrBlank()) {
                 isPlayingAudio = true
-                playAudio(audioPath).first { state -> state == PlaybackState.STOP_PLAYING }
-                isPlayingAudio = false
+                try {
+                    playAudio(audioPath).first { state -> state == PlaybackState.STOP_PLAYING }
+                } finally {
+                    isPlayingAudio = false
+                }
                 onEvent(AssistEvent.PlaybackFinished)
             }
             notifyContinueConversationIfNeeded(onEvent)
@@ -414,7 +421,6 @@ abstract class AssistViewModelBase(
 
     protected fun stopPlayback() {
         currentPlayAudioJob?.cancel()
-        isPlayingAudio = false
     }
 
     /**
