@@ -13,6 +13,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
 import android.graphics.drawable.Icon
 import android.media.AudioManager
 import android.media.MediaMetadataRetriever
@@ -40,9 +42,17 @@ import androidx.core.app.RemoteInput
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.content.getSystemService
+import androidx.core.content.withStyledAttributes
 import androidx.core.graphics.scale
 import androidx.core.net.toUri
 import androidx.core.text.isDigitsOnly
+import com.google.android.material.color.DynamicColors
+import com.mikepenz.iconics.IconicsDrawable
+import com.mikepenz.iconics.utils.backgroundColorRes
+import com.mikepenz.iconics.utils.paddingDp
+import com.mikepenz.iconics.utils.roundedCornersDp
+import com.mikepenz.iconics.utils.sizeDp
+import com.mikepenz.iconics.utils.toAndroidIconCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
@@ -63,6 +73,7 @@ import io.homeassistant.companion.android.common.notifications.handleDeleteInten
 import io.homeassistant.companion.android.common.notifications.handleSmallIcon
 import io.homeassistant.companion.android.common.notifications.handleText
 import io.homeassistant.companion.android.common.notifications.parseColor
+import io.homeassistant.companion.android.common.notifications.parseFlattenedList
 import io.homeassistant.companion.android.common.notifications.parseVibrationPattern
 import io.homeassistant.companion.android.common.notifications.prepareText
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
@@ -146,6 +157,18 @@ class MessagingManager @Inject constructor(
         const val PROGRESS = "progress"
         const val PROGRESS_MAX = "progress_max"
         const val PROGRESS_INDETERMINATE = "progress_indeterminate"
+        const val PROGRESS_SEGMENTS = "progress_segments"
+        const val PROGRESS_SEGMENTS_LENGTH = "length"
+        const val PROGRESS_SEGMENTS_COLOR = "color"
+        const val PROGRESS_POINTS = "progress_points"
+        const val PROGRESS_POINTS_POSITION = "position"
+        const val PROGRESS_POINTS_COLOR = "color"
+        const val PROGRESS_TRACKER_ICON = "progress_tracker_icon"
+        const val PROGRESS_TRACKER_COLOR = "progress_tracker_color"
+        const val PROGRESS_START_ICON = "progress_start_icon"
+        const val PROGRESS_START_COLOR = "progress_start_color"
+        const val PROGRESS_END_ICON = "progress_end_icon"
+        const val PROGRESS_END_COLOR = "progress_end_color"
         const val LIVE_UPDATE = "live_update"
         const val CRITICAL_TEXT = "critical_text"
         const val CAR_UI = "car_ui"
@@ -1075,6 +1098,8 @@ class MessagingManager @Inject constructor(
 
         handleProgress(notificationBuilder, data)
 
+        handleProgressStyle(notificationBuilder, data)
+
         handleLive(notificationBuilder, data)
 
         val useCarNotification = handleCarUiVisible(context, notificationBuilder, data)
@@ -1149,6 +1174,110 @@ class MessagingManager @Inject constructor(
         } catch (e: Exception) {
             Timber.e(e, "Error while handling progress notification")
         }
+    }
+
+    private fun handleProgressStyle(builder: NotificationCompat.Builder, data: Map<String, String>) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+            var useProgressStyle = false
+
+            val progressStyle = NotificationCompat.ProgressStyle().setStyledByProgress(true).setProgress(data[PROGRESS]?.toIntOrNull() ?: -1)
+
+            val dynamicColorContext = DynamicColors.wrapContextIfAvailable(context)
+            var accentColor = commonR.color.colorAccent
+            dynamicColorContext.withStyledAttributes(null, intArrayOf(android.R.attr.colorAccent)) {
+                accentColor = getResourceId(0, 0)
+            }
+
+            val segmentsData = data[PROGRESS_SEGMENTS] ?: ""
+            if (segmentsData.isNotBlank()) {
+                val segments = parseFlattenedList(segmentsData)
+                for (segment in segments) {
+                    val length = segment[PROGRESS_SEGMENTS_LENGTH]?.toInt() ?: 0
+                    val color = segment[PROGRESS_SEGMENTS_COLOR]
+                    val progressSegment = NotificationCompat.ProgressStyle.Segment(length)
+                    if (color != null) {
+                        progressSegment.setColor(parseColor(context, color, accentColor))
+                    }
+                    progressStyle.addProgressSegment(progressSegment)
+                }
+                if (segments.isNotEmpty()) {
+                    useProgressStyle = true
+                }
+            }
+
+            val pointsData = data[PROGRESS_POINTS] ?: ""
+            if (pointsData.isNotBlank()) {
+                val points = parseFlattenedList(pointsData)
+                for (point in points) {
+                    val position = point[PROGRESS_POINTS_POSITION]?.toInt() ?: 0
+                    val color = point[PROGRESS_POINTS_COLOR]
+                    val progressPoint = NotificationCompat.ProgressStyle.Point(position)
+                    if (color != null) {
+                        progressPoint.setColor(parseColor(context, color, accentColor))
+                    }
+                    progressStyle.addProgressPoint(progressPoint)
+                }
+                if (points.isNotEmpty()) {
+                    useProgressStyle = true
+                }
+            }
+
+            val progressTrackerIcon = data[PROGRESS_TRACKER_ICON] ?: ""
+            val progressTrackerColor = parseColor(context, data[PROGRESS_TRACKER_COLOR] ?: "", commonR.color.colorPrimary)
+            if (progressTrackerIcon.startsWith("mdi:") && progressTrackerIcon.substringAfter("mdi:").isNotBlank()) {
+                val iconName = progressTrackerIcon.split(":")[1]
+                val iconDrawable = IconicsDrawable(context, "cmd-$iconName").apply {
+                    sizeDp = 20
+                    colorFilter = PorterDuffColorFilter(progressTrackerColor, PorterDuff.Mode.SRC_IN)
+                    backgroundColorRes = accentColor
+                    roundedCornersDp = 10
+                    paddingDp = 4
+                }
+                if (iconDrawable.icon != null) {
+                    progressStyle.setProgressTrackerIcon(
+                        iconDrawable.toAndroidIconCompat(),
+                    )
+                    useProgressStyle = true
+                }
+            }
+
+            val progressStartIcon = data[PROGRESS_START_ICON] ?: ""
+            val progressStartColor = parseColor(context, data[PROGRESS_START_COLOR] ?: "", accentColor)
+            if (progressStartIcon.startsWith("mdi:") && progressStartIcon.substringAfter("mdi:").isNotBlank()) {
+                val iconName = progressStartIcon.split(":")[1]
+                val iconDrawable = IconicsDrawable(context, "cmd-$iconName").apply {
+                    sizeDp = 20
+                    colorFilter = PorterDuffColorFilter(progressStartColor, PorterDuff.Mode.SRC_IN)
+                }
+                if (iconDrawable.icon != null) {
+                    progressStyle.setProgressStartIcon(
+                        iconDrawable.toAndroidIconCompat(),
+                    )
+                    useProgressStyle = true
+                }
+            }
+
+            val progressEndIcon = data[PROGRESS_END_ICON] ?: ""
+            val progressEndColor = parseColor(context, data[PROGRESS_END_COLOR] ?: "", accentColor)
+            if (progressEndIcon.startsWith("mdi:") && progressTrackerIcon.substringAfter("mdi:").isNotBlank()) {
+                val iconName = progressEndIcon.split(":")[1]
+                val iconDrawable = IconicsDrawable(context, "cmd-$iconName").apply {
+                    sizeDp = 20
+                    colorFilter = PorterDuffColorFilter(progressEndColor, PorterDuff.Mode.SRC_IN)
+                }
+                if (iconDrawable.icon != null) {
+                    progressStyle.setProgressEndIcon(
+                        iconDrawable.toAndroidIconCompat(),
+                    )
+                    useProgressStyle = true
+                }
+            }
+
+            if (useProgressStyle) {
+                builder.setStyle(progressStyle)
+            }
+        }
+
     }
 
     private fun handleLive(builder: NotificationCompat.Builder, data: Map<String, String>) {
