@@ -838,8 +838,8 @@
     <string name="state_jammed">Jammed</string>
     <string name="state_locked">Locked</string>
     <string name="state_locking">Locking</string>
-    <string name="state_off" tools:ignore="PrivateResource">Off</string>
-    <string name="state_on" tools:ignore="PrivateResource">On</string>
+    <string name="state_off" tools:override="true">Off</string>
+    <string name="state_on" tools:override="true">On</string>
     <string name="state_open">Open</string>
     <string name="state_opening">Opening</string>
     <string name="state_paused">Paused</string>
