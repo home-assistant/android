@@ -7,16 +7,29 @@ import android.os.Parcelable
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult.ActionPerformed
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.res.stringResource
 import androidx.core.content.IntentCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.util.PLAY_SERVICES_FLAVOR_DOC_URL
+import io.homeassistant.companion.android.util.PlayServicesAvailability
 import io.homeassistant.companion.android.util.compose.HAApp
+import io.homeassistant.companion.android.util.compose.navigateToUri
 import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
+import javax.inject.Inject
 import kotlinx.parcelize.Parcelize
 
 private const val DEEP_LINK_KEY = "deep_link_key"
@@ -27,6 +40,9 @@ private const val DEEP_LINK_KEY = "deep_link_key"
  */
 @AndroidEntryPoint
 class LaunchActivity : AppCompatActivity() {
+    @Inject
+    internal lateinit var playServicesAvailability: PlayServicesAvailability
+
     /**
      * Represents deep link actions that can be passed to [LaunchActivity] to navigate to specific destinations.
      */
@@ -92,15 +108,52 @@ class LaunchActivity : AppCompatActivity() {
             HATheme {
                 val navController = rememberNavController()
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+                val snackbarHostState = remember { SnackbarHostState() }
 
-                when (val state = uiState) {
-                    is LaunchUiState.Ready -> HAApp(navController, state.startDestination)
+                MissingPlayServicesNotice(
+                    isMissingRequiredPlayServices = playServicesAvailability.isMissingRequiredPlayServices(),
+                    snackbarHostState = snackbarHostState,
+                    navController = navController,
+                )
+
+                HAApp(
+                    navController = navController,
+                    startDestination = (uiState as? LaunchUiState.Ready)?.startDestination,
+                    snackbarHostState = snackbarHostState,
+                )
+
+                when (uiState) {
                     LaunchUiState.NetworkUnavailable -> NetworkUnavailableDialog(onBackClick = ::finish)
                     LaunchUiState.WearUnsupported -> WearUnsupportedDialog(onBackClick = ::finish)
-                    LaunchUiState.Loading -> {
-                        // Splash screen is still showing
-                    }
+                    LaunchUiState.Loading, is LaunchUiState.Ready -> Unit
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MissingPlayServicesNotice(
+    isMissingRequiredPlayServices: Boolean,
+    snackbarHostState: SnackbarHostState,
+    navController: NavController,
+) {
+    if (isMissingRequiredPlayServices) {
+        val message = stringResource(commonR.string.play_services_unavailable_full_flavor)
+        val learnMore = stringResource(commonR.string.learn_more)
+        LaunchedEffect(message) {
+            if (snackbarHostState.showSnackbar(
+                    message = message,
+                    duration = SnackbarDuration.Long,
+                    actionLabel = learnMore,
+                ) == ActionPerformed
+            ) {
+                navController.navigateToUri(
+                    uri = PLAY_SERVICES_FLAVOR_DOC_URL,
+                    onShowSnackbar = { snackbarMessage, action ->
+                        snackbarHostState.showSnackbar(snackbarMessage, action) == ActionPerformed
+                    },
+                )
             }
         }
     }

@@ -12,6 +12,7 @@ import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
 import io.homeassistant.companion.android.util.microWakeWordModelConfigs
+import io.mockk.Ordering
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -33,10 +34,10 @@ import org.junit.Test
 import org.junit.jupiter.api.assertNull
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
-import org.robolectric.annotation.Config
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows
 import org.robolectric.android.controller.ServiceController
+import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowVoiceInteractionService
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -53,8 +54,9 @@ class AssistVoiceInteractionServiceTest {
     private val assistConfigManager: AssistConfigManager = mockk(relaxed = true)
     private val wakeWordListener: WakeWordListener = mockk(relaxed = true)
     private val onWakeWordDetectedSlot = slot<(MicroWakeWordModelConfig) -> Unit>()
+    private val onListenerFailureSlot = slot<() -> Unit>()
     private val wakeWordListenerFactory: WakeWordListenerFactory = mockk {
-        every { create(capture(onWakeWordDetectedSlot), any(), any()) } returns wakeWordListener
+        every { create(capture(onWakeWordDetectedSlot), any(), any(), capture(onListenerFailureSlot)) } returns wakeWordListener
     }
     private val clock = FakeClock()
 
@@ -63,6 +65,7 @@ class AssistVoiceInteractionServiceTest {
 
     @Before
     fun setUp() {
+        every { assistConfigManager.isWakeWordSupported() } returns true
         coEvery { assistConfigManager.getAvailableModels() } returns microWakeWordModelConfigs
 
         serviceController = Robolectric.buildService(AssistVoiceInteractionService::class.java)
@@ -102,6 +105,21 @@ class AssistVoiceInteractionServiceTest {
         advanceUntilIdle()
 
         coVerify(exactly = 0) { wakeWordListener.start(any(), any()) }
+    }
+
+    @Test
+    fun `Given unsupported device when onReady then do not start listening`() = runTest {
+        every { assistConfigManager.isWakeWordSupported() } returns false
+        coEvery { assistConfigManager.isWakeWordEnabled() } returns true
+
+        service.onReady()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { wakeWordListener.start(any(), any()) }
+        coVerify(ordering = Ordering.ORDERED) {
+            assistConfigManager.isWakeWordEnabled()
+            assistConfigManager.isWakeWordSupported()
+        }
     }
 
     @Test
@@ -192,6 +210,23 @@ class AssistVoiceInteractionServiceTest {
         advanceUntilIdle()
 
         coVerify(exactly = 0) { wakeWordListener.start(any(), any()) }
+    }
+
+    @Test
+    fun `Given wake word listening initialization failure when start listening then failure callback disables wake word`() = runTest {
+        coEvery { wakeWordListener.start(any(), any()) } coAnswers {
+            // Simulate a failure during initialization calling the failure callback
+            onListenerFailureSlot.captured.invoke()
+        }
+
+        val intent = Intent().apply {
+            action = "io.homeassistant.companion.android.START_LISTENING"
+        }
+
+        service.onStartCommand(intent, 0, 1)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { assistConfigManager.setWakeWordEnabled(false) }
     }
 
     @Test
@@ -337,5 +372,61 @@ class AssistVoiceInteractionServiceTest {
         }
         // Both detections should have sent a broadcast, even though the second was debounced
         assertEquals(2, wakeWordBroadcasts.size)
+    }
+
+    @Test
+    fun `Given service not ready when wake word detected then do not show session`() = runTest {
+        val shadow = Shadows.shadowOf(service) as ShadowVoiceInteractionService
+        coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
+
+        // Do NOT call onReady() - service is not ready
+
+        val intent = Intent().apply {
+            action = "io.homeassistant.companion.android.START_LISTENING"
+        }
+        service.onStartCommand(intent, 0, 1)
+        advanceUntilIdle()
+
+        // Simulate wake word detection while service is not ready
+        onWakeWordDetectedSlot.captured.invoke(microWakeWordModelConfigs[0])
+        advanceUntilIdle()
+
+        // showSession should NOT have been called
+        assertNull(shadow.lastSessionBundle)
+        // But the listener should still have been stopped to release the microphone
+        coVerify { wakeWordListener.stop() }
+    }
+
+    @Test
+    fun `Given service shut down after ready when wake word detected then do not show session`() = runTest {
+        val shadow = Shadows.shadowOf(service) as ShadowVoiceInteractionService
+        coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
+
+        // Make service ready and start listening so the wake word callback is captured
+        service.onReady()
+        advanceUntilIdle()
+
+        val intent = Intent().apply {
+            action = "io.homeassistant.companion.android.START_LISTENING"
+        }
+        service.onStartCommand(intent, 0, 1)
+        advanceUntilIdle()
+
+        // Simulate a shutdown that races with the wake-word coroutine: when
+        // stop() is called inside the launched coroutine, the service shuts down
+        // concurrently (setting isServiceReady = false). Because launchAssist()
+        // runs synchronously after stop() returns, only the isServiceReady guard
+        // prevents showSession() from being called.
+        coEvery { wakeWordListener.stop() } coAnswers {
+            service.onShutdown()
+        }
+
+        // Invoke the wake word callback to queue the coroutine, then advance
+        onWakeWordDetectedSlot.captured.invoke(microWakeWordModelConfigs[0])
+        advanceUntilIdle()
+
+        // showSession should NOT have been called because the service is no longer ready
+        assertNull(shadow.lastSessionBundle)
+        coVerify { wakeWordListener.stop() }
     }
 }
