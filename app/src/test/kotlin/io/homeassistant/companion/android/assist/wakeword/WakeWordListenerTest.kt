@@ -49,6 +49,7 @@ class WakeWordListenerTest {
         onListenerReady: (MicroWakeWordModelConfig) -> Unit = {},
         onWakeWordDetected: (MicroWakeWordModelConfig) -> Unit = {},
         onListenerStopped: () -> Unit = {},
+        onListenerFailed: () -> Unit = {},
     ): WakeWordListener {
         return WakeWordListener(
             context = context,
@@ -56,6 +57,7 @@ class WakeWordListenerTest {
             onListenerReady = onListenerReady,
             onWakeWordDetected = onWakeWordDetected,
             onListenerStopped = onListenerStopped,
+            onListenerFailed = onListenerFailed,
             tfLiteInitializer = tfLiteInitializer,
             microWakeWordFactory = { microWakeWord },
         )
@@ -371,7 +373,23 @@ class WakeWordListenerTest {
     inner class ErrorHandlingTests {
 
         @Test
-        fun `Given TFLite initialization fails then throws`() = runTest {
+        fun `Given TFLite initialization fails when Play Services is unavailable then failed callback is invoked`() = runTest {
+            var detectedCalled = false
+            val listener = createListener(
+                onListenerFailed = { detectedCalled = true }
+            )
+            val expectedException = TfLiteInitializeException(null, "Play Services is unavailable")
+
+            coEvery { tfLiteInitializer.initialize(any()) } throws expectedException
+
+            listener.start(backgroundScope, testModelConfig, this.testScheduler)
+            runCurrent()
+
+            assertTrue(detectedCalled)
+        }
+
+        @Test
+        fun `Given TFLite initialization fails unexpectedly then throws`() = runTest {
             val listener = createListener()
             val expectedException = RuntimeException("Init failed")
 

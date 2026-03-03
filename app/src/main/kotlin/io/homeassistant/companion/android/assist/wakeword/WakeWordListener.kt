@@ -42,6 +42,8 @@ internal const val POST_DETECTION_COOLDOWN_CHUNKS = 200
  * @param onListenerReady Callback invoked when initialization completes and listening begins
  * @param onWakeWordDetected Callback invoked when a wake word is detected
  * @param onListenerStopped Callback invoked when the listener stops (normally or due to error)
+ * @param onListenerFailed Callback invoked when the listener encounters a failure where wake
+ *        word detection should be disabled
  */
 @SuppressLint("MissingPermission")
 class WakeWordListener(
@@ -50,6 +52,7 @@ class WakeWordListener(
     private val onWakeWordDetected: (MicroWakeWordModelConfig) -> Unit,
     private val onListenerReady: (MicroWakeWordModelConfig) -> Unit = {},
     private val onListenerStopped: () -> Unit = {},
+    private val onListenerFailed: () -> Unit = {},
     private val tfLiteInitializer: TfLiteInitializer = TfLiteInitializerImpl(),
     private val microWakeWordFactory: suspend (
         MicroWakeWordModelConfig,
@@ -92,6 +95,9 @@ class WakeWordListener(
                         onListenerReady(modelConfig)
 
                         runDetectionLoop(modelConfig, microWakeWord)
+                    } catch (e: TfLiteInitializeException) {
+                        Timber.e(e, "DetectionJob failed to initialize TFLite")
+                        onListenerFailed()
                     } finally {
                         microWakeWord?.close()
                     }

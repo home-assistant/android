@@ -22,11 +22,14 @@ class WakeWordListenerFactory @Inject constructor(
      * @param onWakeWordDetected Called when a wake word is detected, with the detected model config
      * @param onListenerReady Called when initialization completes and listening begins
      * @param onListenerStopped Called when the listener stops (normally or due to error)
+     * @param onListenerFailed Called when the listener encounters a failure where wake word detection
+     *        should be disabled
      */
     fun create(
         onWakeWordDetected: (MicroWakeWordModelConfig) -> Unit,
         onListenerReady: (MicroWakeWordModelConfig) -> Unit = {},
         onListenerStopped: () -> Unit = {},
+        onListenerFailed: () -> Unit = {},
     ): WakeWordListener {
         return WakeWordListener(
             context = context,
@@ -34,6 +37,7 @@ class WakeWordListenerFactory @Inject constructor(
             onWakeWordDetected = onWakeWordDetected,
             onListenerReady = onListenerReady,
             onListenerStopped = onListenerStopped,
+            onListenerFailed = onListenerFailed
         )
     }
 }

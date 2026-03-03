@@ -61,11 +61,14 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
             onWakeWordDetected = ::onWakeWordDetected,
             onListenerReady = ::onListenerReady,
             onListenerStopped = ::onListenerStopped,
+            onListenerFailed = ::onListenerFailed,
         )
     }
+    private var isServiceReady = false
 
     override fun onReady() {
         super.onReady()
+        isServiceReady = true
         Timber.d("VoiceInteractionService is ready")
         serviceScope.launch {
             if (assistConfigManager.isWakeWordEnabled()) {
@@ -79,6 +82,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
 
     override fun onShutdown() {
         super.onShutdown()
+        isServiceReady = false
         Timber.d("VoiceInteractionService is shutting down")
         // Don't use stopListening() as it launches a coroutine that may not complete before cancel
         serviceScope.cancel()
@@ -110,6 +114,10 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
      */
     @SuppressLint("MissingPermission")
     private fun startListening() {
+        if (!assistConfigManager.isWakeWordSupported()) {
+            Timber.d("Wake word detection is not supported on this device")
+            return
+        }
         if (!hasRecordAudioPermission()) {
             Timber.w("RECORD_AUDIO permission not granted, cannot start listening")
             return
@@ -148,6 +156,14 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
 
     private fun onListenerStopped() {
         stopForegroundCompat()
+    }
+
+    private fun onListenerFailed() {
+        serviceScope.launch {
+            Timber.w("Wake word listener failed, disabling wake word to prevent issue")
+            @SuppressLint("MissingPermission")
+            assistConfigManager.setWakeWordEnabled(false)
+        }
     }
 
     /**
@@ -212,6 +228,10 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     }
 
     private fun launchAssist(wakeWord: String? = null) {
+        if (!isServiceReady) {
+            Timber.w("Cannot launch Assist: VoiceInteractionService is not ready yet")
+            return
+        }
         val args = Bundle().apply {
             wakeWord?.let { putString(EXTRA_WAKE_WORD, it) }
         }
