@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.widgets.button
 
 import android.annotation.SuppressLint
 import android.appwidget.AppWidgetManager
+import android.content.res.Configuration
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
 import android.os.Build
@@ -15,7 +16,34 @@ import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.EditText
 import android.widget.Spinner
+import androidx.activity.compose.setContent
 import androidx.appcompat.app.AlertDialog
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.Checkbox
+import androidx.compose.material.Scaffold
+import androidx.compose.material.Text
+import androidx.compose.material.TextField
+import androidx.compose.material.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
 import androidx.core.view.isVisible
@@ -27,20 +55,33 @@ import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
+import io.homeassistant.companion.android.common.compose.composable.HAIconButton
+import io.homeassistant.companion.android.common.compose.composable.rememberSelectedOption
+import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.integration.Action
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.util.MapAnySerializer
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetButtonConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.util.applySafeDrawingInsets
+import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
+import io.homeassistant.companion.android.util.compose.WidgetBackgroundTypeExposedDropdownMenu
 import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.util.icondialog.IconDialogFragment
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import io.homeassistant.companion.android.util.icondialog.mdiName
+import io.homeassistant.companion.android.util.previewEntity1
+import io.homeassistant.companion.android.util.previewEntity2
+import io.homeassistant.companion.android.util.previewServer1
+import io.homeassistant.companion.android.util.previewServer2
+import io.homeassistant.companion.android.util.safeBottomWindowInsets
+import io.homeassistant.companion.android.util.safeTopWindowInsets
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.common.ActionFieldBinder
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
@@ -215,8 +256,13 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEn
         setResult(RESULT_CANCELED)
 
         binding = WidgetButtonConfigureBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        binding.root.applySafeDrawingInsets()
+//        setContentView(binding.root)
+        setContent {
+            HATheme {
+                ButtonWidgetConfigureScreen()
+            }
+        }
+//        binding.root.applySafeDrawingInsets()
 
         // Find the widget id from the intent.
         val intent = intent
@@ -469,5 +515,189 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEn
             PorterDuffColorFilter(ContextCompat.getColor(this, commonR.color.colorIcon), PorterDuff.Mode.SRC_IN)
 
         binding.widgetConfigIconSelector.setImageBitmap(iconDrawable.toBitmap())
+    }
+}
+
+@Composable
+private fun ButtonWidgetConfigureScreen() {
+    val servers = emptyList<Server>()
+
+    ButtonWidgetConfigureView(
+        servers = servers,
+        selectedServerId = 0,
+        onServerSelected = {},
+        entities = emptyList(),
+        selectedEntityId = null,
+        onEntitySelected = {},
+        dynamicFields = emptyList(),
+        onActionTextUpdated = {},
+        selectedBackgroundType = WidgetBackgroundType.DAYNIGHT,
+        onBackgroundTypeSelected = {},
+    )
+}
+
+@Composable
+private fun ButtonWidgetConfigureView(
+    servers: List<Server>,
+    selectedServerId: Int,
+    onServerSelected: (Int) -> Unit,
+    entities: List<Entity>,
+    selectedEntityId: String?,
+    onEntitySelected: (String?) -> Unit,
+    dynamicFields: List<ActionFieldBinder>,
+    onActionTextUpdated: (String) -> Unit,
+    selectedBackgroundType: WidgetBackgroundType,
+    onBackgroundTypeSelected: (WidgetBackgroundType) -> Unit,
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(commonR.string.configure_action)) },
+                windowInsets = safeTopWindowInsets(),
+                backgroundColor = colorResource(commonR.color.colorBackground),
+                contentColor = colorResource(commonR.color.colorOnBackground),
+            )
+        },
+    ) { contentPadding ->
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .windowInsetsPadding(safeBottomWindowInsets())
+                .padding(contentPadding)
+                .padding(all = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            if (servers.size > 1) {
+                ServerExposedDropdownMenu(
+                    servers = servers,
+                    current = selectedServerId,
+                    onSelected = { onServerSelected(it) },
+                    modifier = Modifier.padding(bottom = 16.dp),
+                )
+            }
+
+            var actionInputText by remember { mutableStateOf("") }
+            TextField(
+                label = { Text(text = stringResource(commonR.string.label_action)) },
+                value = actionInputText,
+                onValueChange = {
+                    actionInputText = it
+                    onActionTextUpdated(it)
+                },
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth(),
+            )
+
+            if (dynamicFields.isNotEmpty()) {
+                dynamicFields.forEach { field ->
+                    var fieldInputText by remember { mutableStateOf("") }
+                    TextField(
+                        label = { Text(text = field.field) },
+                        value = fieldInputText,
+                        onValueChange = {
+                            fieldInputText = it
+                        },
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                    )
+                }
+            }
+
+            HAFilledButton("Add Field", onClick = {}, modifier = Modifier.align(Alignment.End))
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(text = stringResource(commonR.string.label_icon))
+                HAIconButton(
+                    icon = ImageVector.vectorResource(commonR.drawable.ic_nfc),
+                    onClick = {
+                    },
+                    contentDescription = null,
+                )
+            }
+
+            var labelInputText by remember { mutableStateOf("") }
+            TextField(
+                label = { Text(text = stringResource(commonR.string.label)) },
+                value = labelInputText,
+                onValueChange = {
+                    labelInputText = it
+                },
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth(),
+                placeholder = { Text(text = stringResource(commonR.string.widget_text_hint_label)) },
+            )
+
+            var selectedOption by rememberSelectedOption<String>()
+
+            WidgetBackgroundTypeExposedDropdownMenu(
+                current = selectedBackgroundType,
+                onSelected = {
+                    onBackgroundTypeSelected(it)
+                },
+                modifier = Modifier.padding(bottom = 16.dp),
+            )
+
+            // Radio Group for Widget text/icon color
+//            HARadioGroup(
+//                options = listOf(
+//                    RadioOption(
+//                        "key1",
+//                        "White",
+//                    ),
+//                    RadioOption(
+//                        "key2",
+//                        "Black",
+//                    ),
+//                ),
+//                onSelect = { selectedOption = it },
+//                selectionKey = selectedOption?.selectionKey,
+//            )
+
+            var isRequireAuthenticationChecked by remember { mutableStateOf(false) }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(
+                    checked = isRequireAuthenticationChecked,
+                    onCheckedChange = { isRequireAuthenticationChecked = it },
+                )
+                Text(text = stringResource(commonR.string.widget_checkbox_require_authentication))
+            }
+            HAFilledButton(
+                text = stringResource(commonR.string.add_widget),
+                onClick = {},
+                modifier = Modifier.align(Alignment.End),
+            )
+        }
+    }
+}
+
+@Composable
+@Preview(name = "Light Mode")
+@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES)
+private fun ButtonWidgetConfigureScreenPreview() {
+    HATheme {
+        ButtonWidgetConfigureView(
+            servers = listOf(
+                previewServer1,
+                previewServer2,
+            ),
+            selectedServerId = 0,
+            onServerSelected = {},
+            entities = listOf(
+                previewEntity1,
+                previewEntity2,
+            ),
+            selectedEntityId = previewEntity1.entityId,
+            onEntitySelected = {},
+            dynamicFields = listOf(ActionFieldBinder("Test Action", "Testies", 1)),
+            onActionTextUpdated = {},
+            selectedBackgroundType = WidgetBackgroundType.DAYNIGHT,
+            onBackgroundTypeSelected = {},
+        )
     }
 }
