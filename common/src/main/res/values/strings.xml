@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="aa_launch_native">Native mode</string>
     <string name="aa_driving_optimized_change">Use Home Assistant in drive mode?</string>
     <string name="aa_navigation">Navigation</string>
@@ -838,8 +838,8 @@
     <string name="state_jammed">Jammed</string>
     <string name="state_locked">Locked</string>
     <string name="state_locking">Locking</string>
-    <string name="state_off">Off</string>
-    <string name="state_on">On</string>
+    <string name="state_off" tools:ignore="PrivateResource">Off</string>
+    <string name="state_on" tools:ignore="PrivateResource">On</string>
     <string name="state_open">Open</string>
     <string name="state_opening">Opening</string>
     <string name="state_paused">Paused</string>
