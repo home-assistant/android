@@ -126,7 +126,7 @@ class LocationForSecureConnectionScreenTest {
     fun `Given HTTP url when screen displayed then show HTTP specific content`() {
         composeTestRule.apply {
             testScreen(hasPlainTextUrl = true) {
-                onNodeWithText(stringResource(commonR.string.location_secure_connection_content_http)).assertIsDisplayed()
+                assertContent(hasPlainTextUrl = true)
             }
         }
     }
@@ -169,17 +169,23 @@ class LocationForSecureConnectionScreenTest {
             assertTrue(helpClicked)
 
             onNodeWithText(stringResource(commonR.string.location_secure_connection_title)).assertIsDisplayed()
-            val expectedContent = if (hasPlainTextUrl) {
-                stringResource(commonR.string.location_secure_connection_content_http)
-            } else {
-                stringResource(commonR.string.location_secure_connection_content)
-            }
-            onNodeWithText(expectedContent).assertIsDisplayed()
+            assertContent(hasPlainTextUrl)
             onNodeWithText(stringResource(commonR.string.connection_security_most_secure)).performScrollTo().assertIsDisplayed()
             onNodeWithText(stringResource(commonR.string.connection_security_less_secure)).performScrollTo().assertIsDisplayed()
             onNodeWithText(stringResource(commonR.string.location_secure_connection_hint)).performScrollTo().assertIsDisplayed()
 
             block()
         }
+    }
+
+    private fun AndroidComposeTestRule<*, *>.assertContent(hasPlainTextUrl: Boolean) {
+        val expectedContent = buildString {
+            if (hasPlainTextUrl) {
+                append(stringResource(commonR.string.location_secure_connection_content_http))
+                append(" ")
+            }
+            append(stringResource(commonR.string.location_secure_connection_content_location))
+        }
+        onNodeWithText(expectedContent).assertIsDisplayed()
     }
 }
