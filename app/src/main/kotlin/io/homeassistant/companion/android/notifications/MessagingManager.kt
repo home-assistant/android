@@ -1259,7 +1259,7 @@ class MessagingManager @Inject constructor(
 
             val progressEndIcon = data[PROGRESS_END_ICON] ?: ""
             val progressEndColor = parseColor(context, data[PROGRESS_END_COLOR] ?: "", accentColor)
-            if (progressEndIcon.startsWith("mdi:") && progressTrackerIcon.substringAfter("mdi:").isNotBlank()) {
+            if (progressEndIcon.startsWith("mdi:") && progressEndIcon.substringAfter("mdi:").isNotBlank()) {
                 val iconName = progressEndIcon.split(":")[1]
                 val iconDrawable = IconicsDrawable(context, "cmd-$iconName").apply {
                     sizeDp = 20
