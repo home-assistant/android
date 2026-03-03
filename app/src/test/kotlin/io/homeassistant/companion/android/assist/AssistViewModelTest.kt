@@ -28,15 +28,10 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.junit.jupiter.api.extension.RegisterExtension
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(ConsoleLogExtension::class)
+@ExtendWith(ConsoleLogExtension::class, MainDispatcherJUnit5Extension::class)
 class AssistViewModelTest {
-
-    @JvmField
-    @RegisterExtension
-    val mainDispatcherExtension = MainDispatcherJUnit5Extension()
 
     private val serverManager: ServerManager = mockk(relaxed = true)
     private val audioRecorder: AudioRecorder = mockk(relaxed = true)
