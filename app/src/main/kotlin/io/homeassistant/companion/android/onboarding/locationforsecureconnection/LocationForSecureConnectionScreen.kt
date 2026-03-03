@@ -209,7 +209,9 @@ private fun LocationForSecureConnectionContent(
                     onAllowInsecureConnection(true)
                 }
             },
-            modifier = Modifier.fillMaxWidth().padding(bottom = HADimens.SPACE6),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = HADimens.SPACE6),
         )
     }
 }
@@ -230,13 +232,13 @@ private fun ColumnScope.Header(hasPlainTextUrl: Boolean) {
     )
 
     Text(
-        text = stringResource(
+        text = buildString {
             if (hasPlainTextUrl) {
-                commonR.string.location_secure_connection_content_http
-            } else {
-                commonR.string.location_secure_connection_content
-            },
-        ),
+                append(stringResource(commonR.string.location_secure_connection_content_http))
+                append(" ")
+            }
+            append(stringResource(commonR.string.location_secure_connection_content_location))
+        },
         style = HATextStyle.Body,
         modifier = Modifier.widthIn(max = MaxContentWidth),
     )
