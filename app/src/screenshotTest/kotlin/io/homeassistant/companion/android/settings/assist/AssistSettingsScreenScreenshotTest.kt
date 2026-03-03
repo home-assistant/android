@@ -159,4 +159,55 @@ class AssistSettingsScreenScreenshotTest {
             )
         }
     }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `Assist settings unsupported device hides wake word`() {
+        HAThemeForPreview {
+            AssistSettingsContent(
+                uiState = AssistSettingsUiState(
+                    isLoading = false,
+                    isDefaultAssistant = true,
+                    isWakeWordEnabled = false,
+                    selectedWakeWordModel = null,
+                    availableModels = emptyList(),
+                    showHardwareNotSupportedHint = true,
+                ),
+                hasAudioPermission = true,
+                onSetDefaultAssistant = {},
+                onToggleWakeWord = {},
+                onSelectWakeWord = {},
+                onStartTestWakeWord = {},
+                onStopTestWakeWord = {},
+            )
+        }
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `Assist settings missing play services hides wake word`() {
+        HAThemeForPreview {
+            AssistSettingsContent(
+                uiState = AssistSettingsUiState(
+                    isLoading = false,
+                    showMissingPlayServicesHint = true,
+                    isDefaultAssistant = true,
+                    isWakeWordEnabled = false,
+                    selectedWakeWordModel = testModels[0],
+                    availableModels = testModels,
+                    isTestingWakeWord = false,
+                    wakeWordDetected = false,
+                ),
+                hasAudioPermission = true,
+                onSetDefaultAssistant = {},
+                onToggleWakeWord = {},
+                onSelectWakeWord = {},
+                onStartTestWakeWord = {},
+                onStopTestWakeWord = {},
+                onLearnMorePlayServices = {},
+            )
+        }
+    }
 }

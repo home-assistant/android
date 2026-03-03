@@ -175,6 +175,7 @@ abstract class AssistViewModelBase(
                         )
                         onEvent(AssistEvent.PipelineStarted)
                     }
+
                     AssistPipelineEventType.STT_START -> handleSttStart()
                     AssistPipelineEventType.STT_END -> handleSttEnd(event.data as? AssistPipelineSttEnd, onEvent)
                     AssistPipelineEventType.INTENT_PROGRESS -> handleIntentProgress(
@@ -218,7 +219,8 @@ abstract class AssistViewModelBase(
 
         data?.ttsOutput?.let { ttsOutput ->
             val audioPath = ttsOutput.url
-            if (audioPath.isNotBlank() && currentPathBeingPlayed != audioPath) {
+            val shouldPlay = currentPathBeingPlayed != audioPath || currentPlayAudioJob?.isActive != true
+            if (audioPath.isNotBlank() && shouldPlay) {
                 currentPathBeingPlayed = audioPath
                 stopPlayback()
                 currentPlayAudioJob = viewModelScope.launch {

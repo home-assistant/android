@@ -38,6 +38,7 @@ class FrontendNavigationTest {
             FrontendNavigationHandler(
                 navigationEvents = navigationEvents,
                 onNavigateToSettings = { settingsNavigated = true },
+                onNavigateToAssist = { _, _, _ -> },
             )
         }
 
@@ -46,5 +47,39 @@ class FrontendNavigationTest {
         composeTestRule.waitForIdle()
 
         assertEquals(true, settingsNavigated)
+    }
+
+    @Test
+    fun `Given NavigateToAssist event then onNavigateToAssist is called with correct params`() = runTest {
+        var capturedServerId: Int? = null
+        var capturedPipelineId: String? = null
+        var capturedStartListening: Boolean? = null
+        val navigationEvents = MutableSharedFlow<FrontendNavigationEvent>()
+
+        composeTestRule.setContent {
+            FrontendNavigationHandler(
+                navigationEvents = navigationEvents,
+                onNavigateToSettings = { },
+                onNavigateToAssist = { serverId, pipelineId, startListening ->
+                    capturedServerId = serverId
+                    capturedPipelineId = pipelineId
+                    capturedStartListening = startListening
+                },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        navigationEvents.emit(
+            FrontendNavigationEvent.NavigateToAssist(
+                serverId = 1,
+                pipelineId = "abc",
+                startListening = false,
+            ),
+        )
+        composeTestRule.waitForIdle()
+
+        assertEquals(1, capturedServerId)
+        assertEquals("abc", capturedPipelineId)
+        assertEquals(false, capturedStartListening)
     }
 }

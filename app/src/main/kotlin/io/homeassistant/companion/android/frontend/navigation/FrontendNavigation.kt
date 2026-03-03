@@ -12,6 +12,7 @@ import androidx.navigation.activity
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import io.homeassistant.companion.android.WIPFeature
+import io.homeassistant.companion.android.assist.AssistActivity
 import io.homeassistant.companion.android.common.data.servers.ServerManager.Companion.SERVER_ID_ACTIVE
 import io.homeassistant.companion.android.frontend.FrontendScreen
 import io.homeassistant.companion.android.frontend.FrontendViewModel
@@ -72,6 +73,16 @@ internal fun NavGraphBuilder.frontendScreen(
             FrontendNavigationHandler(
                 navigationEvents = viewModel.navigationEvents,
                 onNavigateToSettings = onNavigateToSettings,
+                onNavigateToAssist = { serverId, pipelineId, startListening ->
+                    navController.context.startActivity(
+                        AssistActivity.newInstance(
+                            context = navController.context,
+                            serverId = serverId,
+                            pipelineId = pipelineId,
+                            startListening = startListening,
+                        ),
+                    )
+                },
             )
 
             FrontendScreen(
@@ -107,12 +118,17 @@ internal fun NavGraphBuilder.frontendScreen(
 internal fun FrontendNavigationHandler(
     navigationEvents: SharedFlow<FrontendNavigationEvent>,
     onNavigateToSettings: () -> Unit,
+    onNavigateToAssist: (serverId: Int, pipelineId: String?, startListening: Boolean) -> Unit,
 ) {
     LaunchedEffect(Unit) {
         navigationEvents.collect { event ->
             when (event) {
                 is FrontendNavigationEvent.NavigateToSettings -> {
                     onNavigateToSettings()
+                }
+
+                is FrontendNavigationEvent.NavigateToAssist -> {
+                    onNavigateToAssist(event.serverId, event.pipelineId, event.startListening)
                 }
             }
         }
