@@ -6,6 +6,7 @@ import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -27,6 +28,7 @@ class VoiceAudioRecorderTest {
 
         @Test
         fun `Given all collectors cancelled When WhileSubscribed stops Then recorder is stopped and released`() = runTest {
+            val cleanupComplete = CompletableDeferred<Unit>()
             val recorder = mockk<AudioRecord>(relaxed = true) {
                 every { state } returns AudioRecord.STATE_INITIALIZED
                 every { read(any<ShortArray>(), eq(0), any()) } answers {
@@ -37,6 +39,9 @@ class VoiceAudioRecorderTest {
                     val buffer = firstArg<ShortArray>()
                     shortArrayOf(42).copyInto(buffer)
                     1
+                }
+                every { release() } answers {
+                    cleanupComplete.complete(Unit)
                 }
             }
             val voiceAudioRecorder = VoiceAudioRecorder(
@@ -61,9 +66,8 @@ class VoiceAudioRecorderTest {
                 // Cancel second (last) collector — triggers WhileSubscribed cleanup
                 turbine2.cancelAndConsumeRemainingEvents()
             }
-            // Process WhileSubscribed cancellation in the sharing scope
-            advanceUntilIdle()
-            runCurrent()
+
+            cleanupComplete.await()
 
             verify { recorder.stop() }
             verify { recorder.release() }
