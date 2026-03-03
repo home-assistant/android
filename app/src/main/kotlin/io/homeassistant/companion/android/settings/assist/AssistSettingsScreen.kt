@@ -28,8 +28,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -39,10 +37,8 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -73,6 +69,8 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.util.openUri
 import io.homeassistant.companion.android.util.PLAY_SERVICES_FLAVOR_DOC_URL
+import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
+import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
 import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import kotlinx.coroutines.launch
@@ -276,10 +274,12 @@ private fun ColumnScope.WakeWordSection(
 
     AnimatedVisibility(visible = isWakeWordEnabled) {
         Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4)) {
+            val selectedModel = uiState.selectedWakeWordModel
             WakeWordModelSelector(
-                selectedModel = uiState.selectedWakeWordModel,
+                selectedModel = selectedModel,
                 availableModels = uiState.availableModels,
                 onSelectModel = onSelectWakeWord,
+                modifier = Modifier.fillMaxWidth()
             )
 
             HAHint(
@@ -374,46 +374,25 @@ private fun WakeWordModelSelector(
     selectedModel: MicroWakeWordModelConfig?,
     availableModels: List<MicroWakeWordModelConfig>,
     onSelectModel: (MicroWakeWordModelConfig) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val colorScheme = LocalHAColorScheme.current
-    var expanded by remember { mutableStateOf(false) }
-
-    HASettingsCard(modifier = Modifier.clickable { expanded = true }) {
-        Column {
-            Text(
-                text = stringResource(commonR.string.assist_wake_word_model),
-                style = HATextStyle.Body,
-                color = colorScheme.colorTextPrimary,
-            )
-            Text(
-                text = selectedModel?.wakeWord ?: "",
-                style = HATextStyle.BodyMedium,
-                color = colorScheme.colorTextSecondary,
-                modifier = Modifier.padding(top = HADimens.SPACE1),
-            )
-
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-                containerColor = colorScheme.colorSurfaceDefault,
-            ) {
-                availableModels.forEach { model ->
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                text = model.wakeWord,
-                                style = HATextStyle.BodyMedium,
-                            )
-                        },
-                        onClick = {
-                            onSelectModel(model)
-                            expanded = false
-                        },
-                    )
-                }
-            }
+    val modelsByKey = remember(availableModels) {
+        availableModels.associateBy { it.model }
+    }
+    val items = remember(modelsByKey) {
+        modelsByKey.map { (key, config) ->
+            HADropdownItem(key = key, label = config.wakeWord)
         }
     }
+
+    HADropdownMenu(
+        items = items,
+        selectedKey = selectedModel?.model,
+        onItemSelected = { key -> modelsByKey[key]?.let(onSelectModel) },
+        modifier = modifier,
+        label = stringResource(commonR.string.assist_wake_word_model),
+        placeholder = null,
+    )
 }
 
 @Composable

@@ -31,11 +31,15 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
+import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
+import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
+import io.homeassistant.companion.android.common.compose.composable.rememberSelectedDropdownKey
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import java.time.LocalDateTime
 
 fun LazyListScope.catalogUserInputSection() {
     input()
+    dropdownMenu()
     entityPicker()
     switches()
     radioGroupSection()
@@ -227,6 +231,33 @@ private fun LazyListScope.switches() {
     }
 }
 
+private fun LazyListScope.dropdownMenu() {
+    catalogSection(title = "Dropdown Menu") {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            var selectedKey1 by rememberSelectedDropdownKey<Int>()
+            var selectedKey2 by rememberSelectedDropdownKey(3)
+
+            CatalogRow {
+                HADropdownMenu(
+                    items = sampleDropdownItems,
+                    selectedKey = selectedKey2,
+                    onItemSelected = {},
+                    label = "Server",
+                    enabled = false,
+                )
+                HADropdownMenu(
+                    items = sampleDropdownItems,
+                    selectedKey = selectedKey1,
+                    onItemSelected = { selectedKey1 = it },
+                    label = "Server",
+                )
+            }
+        }
+    }
+}
+
 private fun LazyListScope.entityPicker() {
     catalogSection(title = "Entity Pickers") {
         var selectedEntityId by remember { mutableStateOf<String?>(null) }
@@ -244,6 +275,10 @@ private fun LazyListScope.entityPicker() {
 }
 
 private val now = LocalDateTime.now()
+
+private val sampleDropdownItems = (1..30).map { index ->
+    HADropdownItem(key = index, label = "Server $index")
+}
 
 private val sampleAreaRegistry = listOf(
     AreaRegistryResponse(areaId = "living_room", name = "Living Room"),
