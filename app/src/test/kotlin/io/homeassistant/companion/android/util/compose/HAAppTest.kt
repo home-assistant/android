@@ -16,6 +16,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.core.content.IntentCompat
 import androidx.navigation.ActivityNavigator
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.ComposeNavigator
@@ -44,7 +45,7 @@ import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.
 import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.SetHomeNetworkRoute
 import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.navigateToSetHomeNetworkRoute
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
-import io.homeassistant.companion.android.settings.navigation.SettingsRoute
+import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.navigation.navigateToSettings
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
@@ -63,6 +64,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.assertNull
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
@@ -250,20 +252,30 @@ class HAAppTest {
     }
 
     @Test
-    fun `Given FrontendRoute when navigateToSettings then navigate to SettingsActivity`() {
+    fun `Given FrontendRoute when navigateToSettings then start SettingsActivity`() {
         testApp(FrontendRoute()) {
             navController.navigateToSettings()
 
-            verify(exactly = 1) {
-                activityNavigator.navigate(
-                    match {
-                        it.route == SettingsRoute.serializer().descriptor.serialName
-                    },
-                    any<SavedState>(),
-                    any(),
-                    any(),
-                )
-            }
+            val startedIntent = Shadows.shadowOf(composeTestRule.activity).nextStartedActivity
+            assertEquals(
+                SettingsActivity::class.java.name,
+                startedIntent.component?.className,
+            )
+        }
+    }
+
+    @Test
+    fun `Given FrontendRoute when navigateToSettings with deeplink then start SettingsActivity with deeplink extra`() {
+        testApp(FrontendRoute()) {
+            navController.navigateToSettings(SettingsActivity.Deeplink.AssistSettings)
+
+            val startedIntent = Shadows.shadowOf(composeTestRule.activity).nextStartedActivity
+            assertEquals(
+                SettingsActivity::class.java.name,
+                startedIntent.component?.className,
+            )
+            val deeplink = IntentCompat.getParcelableExtra(startedIntent, "fragment", SettingsActivity.Deeplink::class.java)
+            assertEquals(SettingsActivity.Deeplink.AssistSettings, deeplink)
         }
     }
 

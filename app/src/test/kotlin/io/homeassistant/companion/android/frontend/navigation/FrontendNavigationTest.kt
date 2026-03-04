@@ -5,12 +5,14 @@ import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
+import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
+import org.junit.jupiter.api.assertNull
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -32,12 +34,16 @@ class FrontendNavigationTest {
     @Test
     fun `Given NavigateToSettings event then onNavigateToSettings is called`() = runTest {
         var settingsNavigated = false
+        var deepLink: SettingsActivity.Deeplink? = null
         val navigationEvents = MutableSharedFlow<FrontendNavigationEvent>()
 
         composeTestRule.setContent {
             FrontendNavigationHandler(
                 navigationEvents = navigationEvents,
-                onNavigateToSettings = { settingsNavigated = true },
+                onNavigateToSettings = {
+                    settingsNavigated = true
+                    deepLink = it
+                },
                 onNavigateToAssist = { _, _, _ -> },
             )
         }
@@ -47,6 +53,32 @@ class FrontendNavigationTest {
         composeTestRule.waitForIdle()
 
         assertEquals(true, settingsNavigated)
+        assertNull(deepLink)
+    }
+
+    @Test
+    fun `Given NavigateToVoiceDeviceSettings event then onNavigateToSettings is called`() = runTest {
+        var settingsNavigated = false
+        var deepLink: SettingsActivity.Deeplink? = null
+        val navigationEvents = MutableSharedFlow<FrontendNavigationEvent>()
+
+        composeTestRule.setContent {
+            FrontendNavigationHandler(
+                navigationEvents = navigationEvents,
+                onNavigateToSettings = {
+                    settingsNavigated = true
+                    deepLink = it
+                },
+                onNavigateToAssist = { _, _, _ -> },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        navigationEvents.emit(FrontendNavigationEvent.NavigateToVoiceDeviceSettings)
+        composeTestRule.waitForIdle()
+
+        assertEquals(true, settingsNavigated)
+        assertEquals(SettingsActivity.Deeplink.AssistSettings, deepLink)
     }
 
     @Test

@@ -98,6 +98,14 @@ data class ConfigGetMessage(override val id: Int? = null) : IncomingExternalBusM
 data class OpenSettingsMessage(override val id: Int? = null) : IncomingExternalBusMessage
 
 /**
+ * Message requesting the app's to open its voice device settings.
+ * No response is expected for this message
+ */
+@Serializable
+@SerialName("voice_device_settings/show")
+data class OpenVoiceDeviceSettingsMessage(override val id: Int? = null) : IncomingExternalBusMessage
+
+/**
  * Message indicating that the frontend theme has changed.
  *
  * Sent when the user changes the theme in the frontend, allowing the app
