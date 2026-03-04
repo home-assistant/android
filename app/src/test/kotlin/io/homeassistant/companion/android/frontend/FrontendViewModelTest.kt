@@ -316,6 +316,72 @@ class FrontendViewModelTest {
             assertTrue(errors.last() == null)
             job.cancel()
         }
+
+        @Test
+        fun `Given loading state when onWebViewCreationFailed called then state transitions to Error with WebViewCreationError`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            // Verify initial loading state
+            assertTrue(viewModel.viewState.value is FrontendViewState.Loading)
+
+            // When
+            val exception = RuntimeException("dlopen failed: libwebviewchromium.so is 32-bit")
+            viewModel.onWebViewCreationFailed(exception)
+            advanceUntilIdle()
+
+            // Then
+            val state = viewModel.viewState.value
+            assertTrue(state is FrontendViewState.Error, "Expected Error state but got $state")
+            val error = (state as FrontendViewState.Error).error
+            assertTrue(error is FrontendConnectionError.UnrecoverableError.WebViewCreationError)
+            assertEquals(io.homeassistant.companion.android.common.R.string.webview_creation_failed, error.message)
+            assertEquals("dlopen failed: libwebviewchromium.so is 32-bit", error.errorDetails)
+            assertEquals("WebViewCreationError", error.rawErrorType)
+        }
+
+        @Test
+        fun `Given WebViewCreationError state when url flow emits new url then error state is preserved`() = runTest {
+            val urlFlow = MutableSharedFlow<UrlLoadResult>(replay = 1)
+            every { urlManager.serverUrlFlow(any(), any()) } returns urlFlow
+
+            // Emit initial URL
+            urlFlow.emit(UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId))
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            // Verify initial loading state
+            assertTrue(
+                viewModel.viewState.value is FrontendViewState.Loading,
+                "Expected Loading but got ${viewModel.viewState.value}",
+            )
+
+            // Simulate WebView creation failure
+            viewModel.onWebViewCreationFailed(RuntimeException("WebView broken"))
+            advanceUntilIdle()
+
+            // Verify error state
+            val errorState = viewModel.viewState.value
+            assertTrue(errorState is FrontendViewState.Error)
+            assertTrue((errorState as FrontendViewState.Error).error is FrontendConnectionError.UnrecoverableError.WebViewCreationError)
+
+            // Now emit a new URL (e.g., switching from external to internal network)
+            urlFlow.emit(UrlLoadResult.Success(url = "https://internal.example.com?external_auth=1", serverId = serverId))
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            // The error state should be preserved — new URL cannot fix a broken WebView
+            val finalState = viewModel.viewState.value
+            assertTrue(
+                finalState is FrontendViewState.Error,
+                "Expected Error to be preserved but got $finalState",
+            )
+            assertTrue((finalState as FrontendViewState.Error).error is FrontendConnectionError.UnrecoverableError.WebViewCreationError)
+        }
     }
 
     @Nested

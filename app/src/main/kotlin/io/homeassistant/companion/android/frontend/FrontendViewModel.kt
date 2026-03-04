@@ -23,6 +23,7 @@ import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -40,6 +41,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 /** Maximum time to wait for the frontend to load before showing a timeout error. */
 @VisibleForTesting
@@ -83,13 +85,44 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         connectivityCheckRepository = connectivityCheckRepository,
     )
 
-    private val _viewState: MutableStateFlow<FrontendViewState> = MutableStateFlow(
+    /**
+     * Manages the frontend view state with protection against transitions out of unrecoverable states.
+     *
+     * Once a [FrontendConnectionError.UnrecoverableError] is set, the current state is
+     * fundamentally broken and no state transition can recover from it. All subsequent
+     * [update] calls are ignored to prevent URL emissions, message results, or timeouts
+     * from hiding the error screen.
+     */
+    @OptIn(ExperimentalForInheritanceCoroutinesApi::class)
+    private class ViewStateManager(
+        initialState: FrontendViewState,
+        private val _state: MutableStateFlow<FrontendViewState> = MutableStateFlow(initialState)
+    ) : StateFlow<FrontendViewState> by _state.asStateFlow() {
+
+        /**
+         * Updates the view state using the given [transform] function.
+         *
+         * If the current state is an [FrontendConnectionError] with an [FrontendConnectionError.UnrecoverableError],
+         * the update is silently ignored because the state cannot be recovered.
+         */
+        fun update(transform: (FrontendViewState) -> FrontendViewState) {
+            _state.update { currentState ->
+                if (currentState is FrontendViewState.Error && currentState.error is FrontendConnectionError.UnrecoverableError) {
+                    Timber.w("Ignoring state transition: unrecoverable error present")
+                    return
+                }
+                transform(currentState)
+            }
+        }
+    }
+
+    private val _viewState = ViewStateManager(
         FrontendViewState.LoadServer(
             serverId = initialServerId,
             path = initialPath,
         ),
     )
-    val viewState: StateFlow<FrontendViewState> = _viewState.asStateFlow()
+    val viewState: StateFlow<FrontendViewState> = _viewState
 
     private val _connectivityCheckState = MutableStateFlow(ConnectivityCheckState())
     override val connectivityCheckState: StateFlow<ConnectivityCheckState> = _connectivityCheckState.asStateFlow()
@@ -181,6 +214,22 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             FrontendViewState.LoadServer(serverId = it.serverId)
         }
         loadServer()
+    }
+
+    /**
+     * Called when the system WebView fails to initialize.
+     *
+     * Transitions to [FrontendViewState.Error] with a [FrontendConnectionError.UnrecoverableError.WebViewCreationError]
+     * so the error screen is displayed with guidance to update the system WebView.
+     */
+    fun onWebViewCreationFailed(exception: Exception) {
+        onError(
+            FrontendConnectionError.UnrecoverableError.WebViewCreationError(
+                message = commonR.string.webview_creation_failed,
+                errorDetails = exception.message ?: exception.toString(),
+                rawErrorType = "WebViewCreationError",
+            ),
+        )
     }
 
     fun onShowSecurityLevelScreen() {
@@ -339,8 +388,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     }
 
     private fun onError(error: FrontendConnectionError) {
-        val currentState = _viewState.value
-        _viewState.update {
+        _viewState.update { currentState ->
             FrontendViewState.Error(
                 serverId = currentState.serverId,
                 url = currentState.url,

@@ -179,6 +179,22 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         }
     }
 
+    /**
+     * Called when the system WebView fails to initialize.
+     *
+     * Transitions to an error state with a [FrontendConnectionError.UnrecoverableError.WebViewCreationError]
+     * so the error screen is displayed with guidance to update the system WebView.
+     */
+    fun onWebViewCreationFailed(exception: Exception) {
+        onError(
+            FrontendConnectionError.UnrecoverableError.WebViewCreationError(
+                message = commonR.string.webview_creation_failed,
+                errorDetails = exception.message ?: exception.toString(),
+                rawErrorType = "WebViewCreationError",
+            ),
+        )
+    }
+
     private fun onError(error: FrontendConnectionError) {
         _errorFlow.update { error }
         // Automatically run connectivity checks when an error occurs
