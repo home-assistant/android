@@ -274,11 +274,12 @@ class HAAppTest {
                 SettingsActivity::class.java.name,
                 startedIntent.component?.className,
             )
-            val expectedIntent = SettingsActivity.newInstance(
-                composeTestRule.activity,
-                SettingsActivity.Deeplink.AssistSettings,
+            val deeplink = IntentCompat.getParcelableExtra(
+                startedIntent,
+                "fragment",
+                SettingsActivity.Deeplink::class.java,
             )
-            assertEquals(expectedIntent.extras, startedIntent.extras)
+            assertEquals(SettingsActivity.Deeplink.AssistSettings, deeplink)
         }
     }
 
