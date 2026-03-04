@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.util
 
+import io.homeassistant.companion.android.common.data.MalformedHttpUrlException
 import java.net.URL
 import kotlinx.coroutines.test.runTest
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.ValueSource
@@ -27,6 +29,41 @@ class UrlUtilTest {
     @BeforeEach
     fun setUp() {
         baseUrl = URL("https://example.com:8123/")
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        value = [
+            "https://example.com:8123/path/to/page?query=1#fragment, https://example.com:8123/",
+            "http://homeassistant.local:8123, http://homeassistant.local:8123/",
+            "https://my.domain.com, https://my.domain.com/",
+            "http://192.168.1.1:8123/lovelace, http://192.168.1.1:8123/",
+            "https://ha.example.com:443, https://ha.example.com/",
+        ],
+    )
+    fun `Given valid URL when calling extractBaseUrl then returns scheme host and port only`(input: String, expected: String) {
+        assertEquals(expected, UrlUtil.extractBaseUrl(input))
+    }
+
+    @Test
+    fun `Given empty string when calling extractBaseUrl then throws MalformedHttpUrlException`() {
+        assertThrows(MalformedHttpUrlException::class.java) {
+            UrlUtil.extractBaseUrl("")
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            "not a url",
+            "ftp://example.com",
+            "://missing-scheme",
+        ],
+    )
+    fun `Given invalid URL when calling extractBaseUrl then throws MalformedHttpUrlException`(input: String) {
+        assertThrows(MalformedHttpUrlException::class.java) {
+            UrlUtil.extractBaseUrl(input)
+        }
     }
 
     @ParameterizedTest
