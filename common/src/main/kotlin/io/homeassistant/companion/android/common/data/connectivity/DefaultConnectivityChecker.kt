@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.common.data.connectivity
 import androidx.annotation.StringRes
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.util.UrlUtil
 import java.io.BufferedReader
 import java.net.HttpURLConnection
 import java.net.InetAddress
@@ -95,7 +96,7 @@ internal class DefaultConnectivityChecker @Inject constructor() : ConnectivityCh
 
     override suspend fun homeAssistant(url: String): ConnectivityCheckResult = withContext(Dispatchers.IO) {
         try {
-            val manifestUrl = URL("$url/manifest.json")
+            val manifestUrl = URL("${UrlUtil.extractBaseUrl(url)}manifest.json")
             val connection = manifestUrl.openConnection()
             connection.connectTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
             connection.readTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
