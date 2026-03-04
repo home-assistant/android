@@ -1,4 +1,7 @@
 import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
+import org.gradle.api.attributes.Bundling
+import org.gradle.api.tasks.JavaExec
+import java.io.File
 
 plugins {
     alias(libs.plugins.ktlint)
@@ -26,6 +29,58 @@ allprojects {
             reporter(ReporterType.SARIF)
             reporter(ReporterType.PLAIN)
         }
+    }
+
+    // AGP 9 built-in Kotlin no longer applies `org.jetbrains.kotlin.android`,
+    // so we run ktlint CLI on `src/**/*.kt` explicitly and hook it into ktlint tasks.
+    val kotlinSourcePaths = fileTree("src") {
+        include("**/*.kt")
+    }.files.map { it.absolutePath.replace(File.separatorChar, '/') }.sorted()
+
+    val ktlintCliVersion = rootProject.libs.versions.ktlint.cli.get()
+    val ktlintCliClasspath = configurations.detachedConfiguration(
+        dependencies.create("com.pinterest.ktlint:ktlint-cli:$ktlintCliVersion"),
+    ).apply {
+        attributes.attribute(
+            Bundling.BUNDLING_ATTRIBUTE,
+            objects.named(Bundling.SHADOWED),
+        )
+    }
+
+    fun registerKtlintCliTask(taskName: String, format: Boolean, withSarifReport: Boolean) =
+        tasks.register<JavaExec>(taskName) {
+            group = if (format) "formatting" else "verification"
+            classpath = ktlintCliClasspath
+            mainClass.set("com.pinterest.ktlint.Main")
+
+            if (format) {
+                args("-F")
+            }
+            args("--relative")
+            if (withSarifReport) {
+                val reportPath = layout.buildDirectory.file("reports/ktlint/$taskName/$taskName.sarif").get().asFile.absolutePath
+                args("--reporter=sarif,output=$reportPath")
+            }
+            args(kotlinSourcePaths)
+            onlyIf { kotlinSourcePaths.isNotEmpty() }
+        }
+
+    val ktlintBuiltInKotlinSourceCheck = registerKtlintCliTask(
+        taskName = "ktlintBuiltInKotlinSourceCheck",
+        format = false,
+        withSarifReport = true,
+    )
+    val ktlintBuiltInKotlinSourceFormat = registerKtlintCliTask(
+        taskName = "ktlintBuiltInKotlinSourceFormat",
+        format = true,
+        withSarifReport = false,
+    )
+
+    tasks.named("ktlintCheck") {
+        dependsOn(ktlintBuiltInKotlinSourceCheck)
+    }
+    tasks.named("ktlintFormat") {
+        dependsOn(ktlintBuiltInKotlinSourceFormat)
     }
 
     dependencyLocking {
