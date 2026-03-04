@@ -64,7 +64,7 @@ internal fun ConnectionScreen(
     isError: Boolean,
     webViewClient: WebViewClient,
     onBackClick: () -> Unit,
-    onWebViewCreationFailed: (Exception) -> Unit,
+    onWebViewCreationFailed: (Throwable) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.testTag(CONNECTION_SCREEN_TAG)) {

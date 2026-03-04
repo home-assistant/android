@@ -330,7 +330,7 @@ class FrontendViewModelTest {
             assertTrue(viewModel.viewState.value is FrontendViewState.Loading)
 
             // When
-            val exception = RuntimeException("dlopen failed: libwebviewchromium.so is 32-bit")
+            val exception = UnsatisfiedLinkError("dlopen failed: libwebviewchromium.so is 32-bit")
             viewModel.onWebViewCreationFailed(exception)
             advanceUntilIdle()
 

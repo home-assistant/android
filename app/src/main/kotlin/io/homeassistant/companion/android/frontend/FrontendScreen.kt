@@ -138,7 +138,7 @@ internal fun FrontendScreenContent(
     onConfigureHomeNetwork: (serverId: Int) -> Unit,
     onSecurityLevelHelpClick: suspend () -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
-    onWebViewCreationFailed: (Exception) -> Unit,
+    onWebViewCreationFailed: (Throwable) -> Unit,
     modifier: Modifier = Modifier,
     errorStateProvider: FrontendConnectionErrorStateProvider = FrontendConnectionErrorStateProvider.noOp,
     securityLevelViewModel: LocationForSecureConnectionViewModel? = null,
@@ -341,7 +341,7 @@ private fun SafeHAWebView(
     webViewClient: WebViewClient,
     frontendJsCallback: FrontendJsCallback,
     contentState: FrontendViewState.Content?,
-    onWebViewCreationFailed: (Exception) -> Unit,
+    onWebViewCreationFailed: (Throwable) -> Unit,
 ) {
     val serverHandleInsets = contentState?.serverHandleInsets ?: false
     val backgroundColor = contentState?.backgroundColor

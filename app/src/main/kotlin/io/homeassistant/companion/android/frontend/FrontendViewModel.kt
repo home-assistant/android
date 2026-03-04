@@ -222,11 +222,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      * Transitions to [FrontendViewState.Error] with a [FrontendConnectionError.UnrecoverableError.WebViewCreationError]
      * so the error screen is displayed with guidance to update the system WebView.
      */
-    fun onWebViewCreationFailed(exception: Exception) {
+    fun onWebViewCreationFailed(throwable: Throwable) {
         onError(
             FrontendConnectionError.UnrecoverableError.WebViewCreationError(
                 message = commonR.string.webview_creation_failed,
-                errorDetails = exception.message ?: exception.toString(),
+                errorDetails = throwable.message ?: throwable.toString(),
                 rawErrorType = "WebViewCreationError",
             ),
         )

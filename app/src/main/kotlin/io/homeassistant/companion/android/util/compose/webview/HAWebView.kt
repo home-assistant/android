@@ -61,7 +61,7 @@ import timber.log.Timber
  */
 @Composable
 fun HAWebView(
-    onWebViewCreationFailed: (Exception) -> Unit,
+    onWebViewCreationFailed: (Throwable) -> Unit,
     modifier: Modifier = Modifier,
     configure: WebView.() -> Unit = {},
     factory: () -> WebView? = { null },
@@ -85,9 +85,9 @@ fun HAWebView(
                     defaultSettings()
                     configure(this)
                 }
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to create WebView, the system WebView may be misconfigured")
-                onWebViewCreationFailed(e)
+            } catch (t: Throwable) {
+                Timber.e(t, "Failed to create WebView, the system WebView may be misconfigured")
+                onWebViewCreationFailed(t)
                 // AndroidView requires a non-null View; return an empty placeholder
                 FrameLayout(context)
             }

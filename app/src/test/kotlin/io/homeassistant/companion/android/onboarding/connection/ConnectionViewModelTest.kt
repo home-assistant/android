@@ -375,7 +375,7 @@ class ConnectionViewModelTest {
         assertNull(viewModel.errorFlow.value)
 
         // When
-        val exception = RuntimeException("dlopen failed: libwebviewchromium.so is 32-bit")
+        val exception = UnsatisfiedLinkError("dlopen failed: libwebviewchromium.so is 32-bit")
         viewModel.onWebViewCreationFailed(exception)
         advanceUntilIdle()
 
