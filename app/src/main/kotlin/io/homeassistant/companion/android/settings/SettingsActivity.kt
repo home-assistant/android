@@ -109,7 +109,7 @@ class SettingsActivity : BaseActivity() {
                             Deeplink.NotificationHistory -> NotificationHistoryFragment::class.java
                             is Deeplink.Sensor -> SensorDetailFragment::class.java
                             is Deeplink.QSTile -> ManageTilesFragment::class.java
-                            is Deeplink.AssistSettings -> AssistSettingsFragment::class.java
+                            Deeplink.AssistSettings -> AssistSettingsFragment::class.java
                             else -> SettingsFragment::class.java
                         },
                         when (settingsNavigation) {

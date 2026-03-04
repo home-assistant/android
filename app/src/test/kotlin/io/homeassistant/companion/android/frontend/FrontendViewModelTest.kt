@@ -440,7 +440,7 @@ class FrontendViewModelTest {
 
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
 
-            // Emit open settings message
+            // Emit open voice device settings message
             messageFlow.emit(FrontendHandlerEvent.OpenVoiceDeviceSettings)
             advanceUntilIdle()
 
