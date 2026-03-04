@@ -36,13 +36,11 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HABorderWidth
 import io.homeassistant.companion.android.common.compose.theme.HAColorScheme
 import io.homeassistant.companion.android.common.compose.theme.HADimens
@@ -260,9 +258,9 @@ private fun <T> DropdownPopupMenu(
     val colorScheme = LocalHAColorScheme.current
     val density = LocalDensity.current
     val containerHeight = with(density) { LocalWindowInfo.current.containerSize.height.toDp() }
-    // We don't want the dropdown to exceed 1/3 of the screen height, but also want to ensure a minimum height
-    // to show at least 2 items on small screens. This prevents the dropdown from being too tall or too short
-    // regardless of screen size.
+    // Prefer to keep the dropdown height around 1/3 of the screen on larger displays, while also enforcing a
+    // minimum height so at least 2 items are visible on small screens. On very small screens this minimum may
+    // cause the dropdown to exceed 1/3 of the screen height, but it avoids the menu being unusably short.
     val maxHeight = maxOf(containerHeight / 3, MIN_DROPDOWN_HEIGHT)
 
     DropdownMenu(
