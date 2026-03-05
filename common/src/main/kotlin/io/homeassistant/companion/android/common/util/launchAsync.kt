@@ -1,11 +1,15 @@
 package io.homeassistant.companion.android.common.util
 
 import android.content.BroadcastReceiver
+import androidx.annotation.VisibleForTesting
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
+
+internal val BROADCAST_RECEIVER_TIMEOUT: Duration = 30.seconds
 
 /**
  * Launches a coroutine while keeping the [BroadcastReceiver] alive until completion.
@@ -34,11 +38,18 @@ import kotlinx.coroutines.withTimeout
  * @param block The suspend function to execute within the 30-second timeout.
  */
 fun BroadcastReceiver.launchAsync(coroutineScope: CoroutineScope, block: suspend CoroutineScope.() -> Unit) {
-    val pendingResult = goAsync()
+    launchAsync(coroutineScope, pendingResult = goAsync(), block = block)
+}
 
+@VisibleForTesting
+internal fun BroadcastReceiver.launchAsync(
+    coroutineScope: CoroutineScope,
+    pendingResult: BroadcastReceiver.PendingResult?,
+    block: suspend CoroutineScope.() -> Unit,
+) {
     coroutineScope.launch {
         try {
-            withTimeout(30.seconds) { block() }
+            withTimeout(BROADCAST_RECEIVER_TIMEOUT) { block() }
         } catch (e: TimeoutCancellationException) {
             FailFast.fail { "BroadcastReceiver (${this@launchAsync.javaClass}) exceeded the 30-second timeout" }
             throw e
