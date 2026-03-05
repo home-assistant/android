@@ -385,6 +385,13 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
          * Unlike [Context.startService], broadcasts are not subject to background
          * execution restrictions on Android 8+, making them safe to use from any
          * context including background services (FCM, WebSocket) and [android.app.Activity.onDestroy].
+         *
+         * Note: The command is only delivered while [AssistVoiceInteractionService] is running
+         * and its internal broadcast receiver is registered (after the service is ready).
+         * If the service process is not running or not yet ready when this is called, the
+         * broadcast will be dropped and the command will not be delivered to the service.
+         * Callers that require guaranteed delivery should ensure the service is active
+         * before invoking this method.
          */
         private fun broadcastCommand(context: Context, action: String) {
             context.sendBroadcast(
