@@ -5,9 +5,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.widget.RemoteViews
-import androidx.core.content.ContextCompat
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
@@ -109,13 +107,6 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
         val allWidgets = getAllWidgetIdsWithEntities(context)
         val widgetsWithDifferentEntities = allWidgets.filter { it.value.second != widgetEntities[it.key] }
         if (widgetsWithDifferentEntities.isNotEmpty()) {
-            ContextCompat.registerReceiver(
-                context.applicationContext,
-                this@BaseWidgetProvider,
-                IntentFilter(Intent.ACTION_SCREEN_OFF),
-                ContextCompat.RECEIVER_NOT_EXPORTED,
-            )
-
             widgetsWithDifferentEntities.forEach { (id, pair) ->
                 widgetJobs[id]?.cancel()
 
