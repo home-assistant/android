@@ -6,7 +6,6 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.graphics.Color
 import android.util.TypedValue
 import android.view.View
@@ -131,13 +130,6 @@ class TemplateWidget : AppWidgetProvider() {
         val allWidgets = templateWidgetDao.getAll()
         val widgetsWithDifferentTemplate = allWidgets.filter { it.template != widgetTemplates[it.id] }
         if (widgetsWithDifferentTemplate.isNotEmpty()) {
-            ContextCompat.registerReceiver(
-                context.applicationContext,
-                this@TemplateWidget,
-                IntentFilter(Intent.ACTION_SCREEN_OFF),
-                ContextCompat.RECEIVER_NOT_EXPORTED,
-            )
-
             widgetsWithDifferentTemplate.forEach { widget ->
                 widgetJobs[widget.id]?.cancel()
 
