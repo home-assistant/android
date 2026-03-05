@@ -43,9 +43,11 @@ class TemplateWidget : AppWidgetProvider() {
     companion object {
         const val UPDATE_VIEW =
             "io.homeassistant.companion.android.widgets.template.TemplateWidget.UPDATE_VIEW"
-        private var widgetScope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+        private var widgetScope: CoroutineScope = newCoroutineScopeProvider()
         private val widgetTemplates = mutableMapOf<Int, String>()
         private val widgetJobs = mutableMapOf<Int, Job>()
+
+        private fun newCoroutineScopeProvider(): CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     }
 
     @Inject
@@ -62,7 +64,7 @@ class TemplateWidget : AppWidgetProvider() {
 
     private fun setupWidgetScope() {
         if (!widgetScope.isActive) {
-            widgetScope = CoroutineScope(Dispatchers.Main + Job())
+            widgetScope = newCoroutineScopeProvider()
         }
     }
 

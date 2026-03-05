@@ -421,7 +421,6 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
 
     override suspend fun onReceiveIntentNotHandled(context: Context, intent: Intent, appWidgetId: Int) {
         val action = intent.action.toString()
-        val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
 
         Timber.d(
             "Broadcast received: " + System.lineSeparator() +
@@ -430,8 +429,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
         )
 
         when (action) {
-            UPDATE_WIDGETS -> super.onScreenOn(context)
-            UPDATE_VIEW, UPDATE_MEDIA_IMAGE -> updateView(context, appWidgetId)
+            UPDATE_MEDIA_IMAGE -> updateView(context, appWidgetId)
             CALL_PREV_TRACK -> callPreviousTrackAction(context, appWidgetId)
             CALL_REWIND -> callRewindAction(context, appWidgetId)
             CALL_PLAYPAUSE -> callPlayPauseAction(context, appWidgetId)
