@@ -24,6 +24,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.util.Locale
 import kotlin.math.round
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
@@ -947,7 +948,10 @@ suspend fun onEntityPressedWithoutState(entityId: String, integrationRepository:
         "lock" -> {
             val lockEntity = try {
                 integrationRepository.getEntity(entityId)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
+                Timber.w(e, "Failed to get lock entity $entityId")
                 null
             }
             if (lockEntity?.state == "locked") "unlock" else "lock"
