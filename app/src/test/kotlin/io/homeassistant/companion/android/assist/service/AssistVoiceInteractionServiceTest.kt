@@ -1,9 +1,14 @@
 package io.homeassistant.companion.android.assist.service
 
 import android.Manifest
+import android.app.Application
+import android.content.Context
 import android.content.Intent
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltTestApplication
+import io.homeassistant.companion.android.assist.service.AssistVoiceInteractionService.Companion.ACTION_RESUME_LISTENING
+import io.homeassistant.companion.android.assist.service.AssistVoiceInteractionService.Companion.ACTION_START_LISTENING
+import io.homeassistant.companion.android.assist.service.AssistVoiceInteractionService.Companion.ACTION_STOP_LISTENING
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
 import io.homeassistant.companion.android.assist.wakeword.WakeWordListener
 import io.homeassistant.companion.android.assist.wakeword.WakeWordListenerFactory
@@ -19,6 +24,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.unmockkAll
+import io.mockk.verify
 import kotlin.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -28,6 +34,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -86,6 +93,42 @@ class AssistVoiceInteractionServiceTest {
         unmockkAll()
     }
 
+    /**
+     * Sends a command intent via [onStartCommand], exercising the same internal
+     * methods that the broadcast-based companion methods trigger in production.
+     */
+    private fun sendCommand(action: String) {
+        service.onStartCommand(
+            Intent().apply { this.action = action },
+            0,
+            1,
+        )
+    }
+
+    @Test
+    fun `Given service when onReady then register command receiver for all actions`() = runTest {
+        service.onReady()
+        advanceUntilIdle()
+
+        val registeredActions = getRegisteredReceiverActions()
+        assertTrue(ACTION_START_LISTENING in registeredActions)
+        assertTrue(ACTION_STOP_LISTENING in registeredActions)
+        assertTrue(ACTION_RESUME_LISTENING in registeredActions)
+    }
+
+    @Test
+    fun `Given service ready when onShutdown then unregister command receiver`() = runTest {
+        service.onReady()
+        advanceUntilIdle()
+
+        service.onShutdown()
+
+        val registeredActions = getRegisteredReceiverActions()
+        assertTrue(ACTION_START_LISTENING !in registeredActions)
+        assertTrue(ACTION_STOP_LISTENING !in registeredActions)
+        assertTrue(ACTION_RESUME_LISTENING !in registeredActions)
+    }
+
     @Test
     fun `Given wake word enabled when onReady then start listening`() = runTest {
         coEvery { assistConfigManager.isWakeWordEnabled() } returns true
@@ -123,25 +166,18 @@ class AssistVoiceInteractionServiceTest {
     }
 
     @Test
-    fun `Given START_LISTENING action when onStartCommand then start listening`() = runTest {
+    fun `Given START_LISTENING command then start listening`() = runTest {
         coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
-        val intent = Intent().apply {
-            action = "io.homeassistant.companion.android.START_LISTENING"
-        }
 
-        service.onStartCommand(intent, 0, 1)
+        sendCommand(ACTION_START_LISTENING)
         advanceUntilIdle()
 
         coVerify { wakeWordListener.start(any(), microWakeWordModelConfigs[0]) }
     }
 
     @Test
-    fun `Given STOP_LISTENING action when onStartCommand then stop listening`() = runTest {
-        val intent = Intent().apply {
-            action = "io.homeassistant.companion.android.STOP_LISTENING"
-        }
-
-        service.onStartCommand(intent, 0, 1)
+    fun `Given STOP_LISTENING command then stop listening`() = runTest {
+        sendCommand(ACTION_STOP_LISTENING)
         advanceUntilIdle()
 
         coVerify { wakeWordListener.stop() }
@@ -159,11 +195,8 @@ class AssistVoiceInteractionServiceTest {
     @Test
     fun `Given selected wake word exists when starting then use selected model`() = runTest {
         coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[1]
-        val intent = Intent().apply {
-            action = "io.homeassistant.companion.android.START_LISTENING"
-        }
 
-        service.onStartCommand(intent, 0, 1)
+        sendCommand(ACTION_START_LISTENING)
         advanceUntilIdle()
 
         coVerify { wakeWordListener.start(any(), microWakeWordModelConfigs[1]) }
@@ -172,11 +205,8 @@ class AssistVoiceInteractionServiceTest {
     @Test
     fun `Given no wake word selected when starting then use first model`() = runTest {
         coEvery { assistConfigManager.getSelectedWakeWordModel() } returns null
-        val intent = Intent().apply {
-            action = "io.homeassistant.companion.android.START_LISTENING"
-        }
 
-        service.onStartCommand(intent, 0, 1)
+        sendCommand(ACTION_START_LISTENING)
         advanceUntilIdle()
 
         coVerify { wakeWordListener.start(any(), microWakeWordModelConfigs[0]) }
@@ -186,11 +216,8 @@ class AssistVoiceInteractionServiceTest {
     fun `Given unknown wake word selected when starting then use first model`() = runTest {
         // When an unknown wake word is stored, getSelectedWakeWordModel returns null
         coEvery { assistConfigManager.getSelectedWakeWordModel() } returns null
-        val intent = Intent().apply {
-            action = "io.homeassistant.companion.android.START_LISTENING"
-        }
 
-        service.onStartCommand(intent, 0, 1)
+        sendCommand(ACTION_START_LISTENING)
         advanceUntilIdle()
 
         coVerify { wakeWordListener.start(any(), microWakeWordModelConfigs[0]) }
@@ -202,11 +229,7 @@ class AssistVoiceInteractionServiceTest {
         Shadows.shadowOf(ApplicationProvider.getApplicationContext<android.app.Application>())
             .denyPermissions(Manifest.permission.RECORD_AUDIO)
 
-        val intent = Intent().apply {
-            action = "io.homeassistant.companion.android.START_LISTENING"
-        }
-
-        service.onStartCommand(intent, 0, 1)
+        sendCommand(ACTION_START_LISTENING)
         advanceUntilIdle()
 
         coVerify(exactly = 0) { wakeWordListener.start(any(), any()) }
@@ -219,38 +242,28 @@ class AssistVoiceInteractionServiceTest {
             onListenerFailureSlot.captured.invoke()
         }
 
-        val intent = Intent().apply {
-            action = "io.homeassistant.companion.android.START_LISTENING"
-        }
-
-        service.onStartCommand(intent, 0, 1)
+        sendCommand(ACTION_START_LISTENING)
         advanceUntilIdle()
 
         coVerify(exactly = 1) { assistConfigManager.setWakeWordEnabled(false) }
     }
 
     @Test
-    fun `Given RESUME_LISTENING action and wake word enabled when onStartCommand then start listening`() = runTest {
+    fun `Given RESUME_LISTENING command and wake word enabled then start listening`() = runTest {
         coEvery { assistConfigManager.isWakeWordEnabled() } returns true
         coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
-        val intent = Intent().apply {
-            action = "io.homeassistant.companion.android.RESUME_LISTENING"
-        }
 
-        service.onStartCommand(intent, 0, 1)
+        sendCommand(ACTION_RESUME_LISTENING)
         advanceUntilIdle()
 
         coVerify { wakeWordListener.start(any(), microWakeWordModelConfigs[0]) }
     }
 
     @Test
-    fun `Given RESUME_LISTENING action and wake word disabled when onStartCommand then do not start listening`() = runTest {
+    fun `Given RESUME_LISTENING command and wake word disabled then do not start listening`() = runTest {
         coEvery { assistConfigManager.isWakeWordEnabled() } returns false
-        val intent = Intent().apply {
-            action = "io.homeassistant.companion.android.RESUME_LISTENING"
-        }
 
-        service.onStartCommand(intent, 0, 1)
+        sendCommand(ACTION_RESUME_LISTENING)
         advanceUntilIdle()
 
         coVerify(exactly = 0) { wakeWordListener.start(any(), any()) }
@@ -265,10 +278,7 @@ class AssistVoiceInteractionServiceTest {
         service.onReady()
         advanceUntilIdle()
 
-        val intent = Intent().apply {
-            action = "io.homeassistant.companion.android.START_LISTENING"
-        }
-        service.onStartCommand(intent, 0, 1)
+        sendCommand(ACTION_START_LISTENING)
         advanceUntilIdle()
 
         assertNull(shadow.lastSessionBundle)
@@ -292,10 +302,7 @@ class AssistVoiceInteractionServiceTest {
         service.onReady()
         advanceUntilIdle()
 
-        val intent = Intent().apply {
-            action = "io.homeassistant.companion.android.START_LISTENING"
-        }
-        service.onStartCommand(intent, 0, 1)
+        sendCommand(ACTION_START_LISTENING)
         advanceUntilIdle()
 
         // First detection - should trigger showSession
@@ -324,10 +331,7 @@ class AssistVoiceInteractionServiceTest {
         service.onReady()
         advanceUntilIdle()
 
-        val intent = Intent().apply {
-            action = "io.homeassistant.companion.android.START_LISTENING"
-        }
-        service.onStartCommand(intent, 0, 1)
+        sendCommand(ACTION_START_LISTENING)
         advanceUntilIdle()
 
         onWakeWordDetectedSlot.captured.invoke(microWakeWordModelConfigs[0])
@@ -350,10 +354,7 @@ class AssistVoiceInteractionServiceTest {
         service.onReady()
         advanceUntilIdle()
 
-        val intent = Intent().apply {
-            action = "io.homeassistant.companion.android.START_LISTENING"
-        }
-        service.onStartCommand(intent, 0, 1)
+        sendCommand(ACTION_START_LISTENING)
         advanceUntilIdle()
 
         // First detection
@@ -380,11 +381,7 @@ class AssistVoiceInteractionServiceTest {
         coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
 
         // Do NOT call onReady() - service is not ready
-
-        val intent = Intent().apply {
-            action = "io.homeassistant.companion.android.START_LISTENING"
-        }
-        service.onStartCommand(intent, 0, 1)
+        sendCommand(ACTION_START_LISTENING)
         advanceUntilIdle()
 
         // Simulate wake word detection while service is not ready
@@ -406,10 +403,7 @@ class AssistVoiceInteractionServiceTest {
         service.onReady()
         advanceUntilIdle()
 
-        val intent = Intent().apply {
-            action = "io.homeassistant.companion.android.START_LISTENING"
-        }
-        service.onStartCommand(intent, 0, 1)
+        sendCommand(ACTION_START_LISTENING)
         advanceUntilIdle()
 
         // Simulate a shutdown that races with the wake-word coroutine: when
@@ -428,5 +422,40 @@ class AssistVoiceInteractionServiceTest {
         // showSession should NOT have been called because the service is no longer ready
         assertNull(shadow.lastSessionBundle)
         coVerify { wakeWordListener.stop() }
+    }
+
+    @Test
+    fun `Given context when startListening then send START_LISTENING broadcast with package`() {
+        assertCommand(ACTION_START_LISTENING, AssistVoiceInteractionService::startListening)
+    }
+
+    @Test
+    fun `Given context when stopListening then send STOP_LISTENING broadcast with package`() {
+        assertCommand(ACTION_STOP_LISTENING, AssistVoiceInteractionService::stopListening)
+    }
+
+    @Test
+    fun `Given context when resumeListening then send RESUME_LISTENING broadcast with package`() {
+        assertCommand(ACTION_RESUME_LISTENING, AssistVoiceInteractionService::resumeListening)
+    }
+
+    private fun getRegisteredReceiverActions(): Set<String> =
+        Shadows.shadowOf(ApplicationProvider.getApplicationContext<Application>())
+            .registeredReceivers
+            .flatMap { wrapper ->
+                (0 until wrapper.intentFilter.countActions()).map { wrapper.intentFilter.getAction(it) }
+            }
+            .toSet()
+
+    private fun assertCommand(action: String, command: (Context) -> Unit) {
+        val context = mockk<Context>(relaxed = true)
+        every { context.packageName } returns "io.homeassistant.companion.android"
+        val intentSlot = slot<Intent>()
+
+        command(context)
+
+        verify { context.sendBroadcast(capture(intentSlot)) }
+        assertEquals(action, intentSlot.captured.action)
+        assertEquals("io.homeassistant.companion.android", intentSlot.captured.`package`)
     }
 }
