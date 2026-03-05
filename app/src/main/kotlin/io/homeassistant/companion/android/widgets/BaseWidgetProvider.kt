@@ -34,9 +34,11 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
         const val UPDATE_WIDGETS =
             "io.homeassistant.companion.android.widgets.UPDATE_WIDGETS"
 
-        private var widgetScope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+        private var widgetScope: CoroutineScope = newCoroutineScopeProvider()
         private val widgetEntities = mutableMapOf<Int, List<String>>()
         private val widgetJobs = mutableMapOf<Int, Job>()
+
+        fun newCoroutineScopeProvider() = CoroutineScope(Dispatchers.Default + SupervisorJob())
     }
 
     @Inject
@@ -53,7 +55,7 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
 
     private fun setupWidgetScope() {
         if (!widgetScope.isActive) {
-            Companion.widgetScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+            Companion.widgetScope = newCoroutineScopeProvider()
         }
     }
 
@@ -67,6 +69,7 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
     }
 
     override fun onReceive(context: Context, intent: Intent) {
+        lastIntent = intent.action.toString()
         val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
 
         super.onReceive(context, intent)
