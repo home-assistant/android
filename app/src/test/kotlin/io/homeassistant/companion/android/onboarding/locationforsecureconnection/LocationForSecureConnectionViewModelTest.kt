@@ -28,8 +28,6 @@ class LocationForSecureConnectionViewModelTest {
 
     private val serverId = 42
     private val serverManager: ServerManager = mockk(relaxUnitFun = true)
-    private lateinit var viewModel: LocationForSecureConnectionViewModel
-
     private fun createServer(allowInsecureConnection: Boolean? = null) = Server(
         id = serverId,
         _name = "Test Server",
@@ -41,9 +39,8 @@ class LocationForSecureConnectionViewModelTest {
         user = ServerUserInfo(),
     )
 
-    @BeforeEach
-    fun setup() {
-        viewModel = LocationForSecureConnectionViewModel(
+    fun createViewModel(): LocationForSecureConnectionViewModel {
+        return LocationForSecureConnectionViewModel(
             serverId = serverId,
             serverManager = serverManager,
         )
@@ -56,6 +53,8 @@ class LocationForSecureConnectionViewModelTest {
     ) = runTest {
         val server = createServer()
         coEvery { serverManager.getServer(serverId) } returns server
+
+        val viewModel = createViewModel()
 
         viewModel.allowInsecureConnection(allow)
 
@@ -72,6 +71,8 @@ class LocationForSecureConnectionViewModelTest {
         val allow = true
         val exception = RuntimeException("Test repository exception")
         coEvery { serverManager.getServer(serverId) } throws exception
+
+        val viewModel = createViewModel()
 
         viewModel.allowInsecureConnection(allow)
 
@@ -91,6 +92,8 @@ class LocationForSecureConnectionViewModelTest {
         val server = createServer(allowInsecureConnection = allowInsecure)
         coEvery { serverManager.getServer(serverId) } returns server
 
+        val viewModel = createViewModel()
+
         viewModel.allowInsecureConnection.test {
             assertEquals(allowInsecure, awaitItem())
             awaitComplete()
@@ -105,6 +108,8 @@ class LocationForSecureConnectionViewModelTest {
     fun `Given server throws exception When allowInsecureConnection is collected Then emits null`() = runTest {
         val exception = RuntimeException("Failed to get allow insecure connection")
         coEvery { serverManager.getServer(serverId) } throws exception
+
+        val viewModel = createViewModel()
 
         viewModel.allowInsecureConnection.test {
             assertNull(awaitItem())
