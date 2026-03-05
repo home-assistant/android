@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.Connecti
 import io.homeassistant.companion.android.frontend.externalbus.incoming.IncomingExternalBusMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenSettingsMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenVoiceDeviceSettingsMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ThemeUpdateMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.UnknownIncomingMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResult
@@ -162,6 +163,11 @@ class FrontendMessageHandler @Inject constructor(
             is OpenSettingsMessage -> {
                 Timber.d("Open settings request received with id: ${message.id}")
                 FrontendHandlerEvent.OpenSettings
+            }
+
+            is OpenVoiceDeviceSettingsMessage -> {
+                Timber.d("Open voice device settings request received with id: ${message.id}")
+                FrontendHandlerEvent.OpenVoiceDeviceSettings
             }
 
             is OpenAssistMessage -> {
