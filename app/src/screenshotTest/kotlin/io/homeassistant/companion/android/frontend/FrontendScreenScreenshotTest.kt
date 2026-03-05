@@ -31,6 +31,7 @@ class FrontendScreenScreenshotTest {
                 onConfigureHomeNetwork = { _ -> },
                 onSecurityLevelHelpClick = {},
                 onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
             )
         }
     }
@@ -58,6 +59,7 @@ class FrontendScreenScreenshotTest {
                 onConfigureHomeNetwork = { _ -> },
                 onSecurityLevelHelpClick = {},
                 onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
             )
         }
     }
@@ -82,6 +84,7 @@ class FrontendScreenScreenshotTest {
                 onConfigureHomeNetwork = { _ -> },
                 onSecurityLevelHelpClick = {},
                 onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
             )
         }
     }
@@ -110,6 +113,7 @@ class FrontendScreenScreenshotTest {
                 onConfigureHomeNetwork = { _ -> },
                 onSecurityLevelHelpClick = {},
                 onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
             )
         }
     }
@@ -137,6 +141,7 @@ class FrontendScreenScreenshotTest {
                 onConfigureHomeNetwork = { _ -> },
                 onSecurityLevelHelpClick = {},
                 onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
             )
         }
     }
@@ -169,6 +174,7 @@ class FrontendScreenScreenshotTest {
                 onConfigureHomeNetwork = { _ -> },
                 onSecurityLevelHelpClick = {},
                 onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
             )
         }
     }

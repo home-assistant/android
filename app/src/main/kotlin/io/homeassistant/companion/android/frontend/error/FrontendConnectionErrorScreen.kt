@@ -116,6 +116,7 @@ fun FrontendConnectionErrorScreen(
             is FrontendConnectionError.AuthenticationError -> R.drawable.ic_casita_crying
             is FrontendConnectionError.UnknownError -> R.drawable.ic_casita_problem
             is FrontendConnectionError.UnreachableError -> R.drawable.ic_casita_no_connection
+            is FrontendConnectionError.UnrecoverableError -> R.drawable.ic_casita_problem
         }
 
         FrontendConnectionErrorScreen(
