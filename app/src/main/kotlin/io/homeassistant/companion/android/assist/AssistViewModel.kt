@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.assist
 
 import android.app.Application
 import android.content.Intent
+import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -18,10 +19,15 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.util.AudioRecorder
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
+
+@VisibleForTesting
+internal val CLOSE_INACTIVE = 30.seconds
 
 @HiltViewModel
 class AssistViewModel @Inject constructor(
@@ -63,6 +69,8 @@ class AssistViewModel @Inject constructor(
     /** When true, the UI should not be shown yet (waiting to confirm the pipeline is not a duplicate wake-up). The activity should finish if a duplicate is detected. */
     var pendingWakeWordConfirmation by mutableStateOf(false)
         private set
+
+    private var inactivityTimerJob: Job? = null
 
     fun onCreate(
         hasPermission: Boolean,
@@ -129,6 +137,7 @@ class AssistViewModel @Inject constructor(
                         pipelineId == PIPELINE_LAST_USED -> serverManager.integrationRepository(
                             selectedServerId,
                         ).getLastUsedPipelineId()
+
                         pipelineId == PIPELINE_PREFERRED -> null
                         pipelineId?.isNotBlank() == true -> pipelineId
                         else -> null
@@ -168,6 +177,44 @@ class AssistViewModel @Inject constructor(
 
     override fun setInput(inputMode: AssistInputMode) {
         this.inputMode = inputMode
+        restartInactivityTimer()
+    }
+
+    /**
+     * Restarts the inactivity timer that closes the Assist dialog after [CLOSE_INACTIVE].
+     *
+     * The timer only runs when the input mode is [AssistInputMode.VOICE_INACTIVE],
+     * TTS audio is not currently playing, and the last conversation message is not a
+     * placeholder (assistant finished processing).
+     */
+    private fun restartInactivityTimer() {
+        inactivityTimerJob?.cancel()
+        fun isInactive(): Boolean {
+            val shouldRun = when (inputMode) {
+                AssistInputMode.VOICE_INACTIVE -> true
+                AssistInputMode.TEXT,
+                AssistInputMode.TEXT_ONLY,
+                AssistInputMode.VOICE_ACTIVE,
+                AssistInputMode.BLOCKED,
+                null,
+                    -> false
+            }
+            if (!shouldRun || isPlayingAudio) return false
+
+            val lastMessage = _conversation.lastOrNull()
+            return !(lastMessage == null || lastMessage.isPlaceholder)
+        }
+
+        if (!isInactive()) return
+
+        inactivityTimerJob = viewModelScope.launch {
+            delay(CLOSE_INACTIVE)
+            if (isInactive()) {
+                shouldFinish = true
+            } else {
+                Timber.d("Inactivity timer expired but Assist is no longer inactive, not finishing")
+            }
+        }
     }
 
     private suspend fun checkSupport(): Boolean? {
@@ -265,6 +312,7 @@ class AssistViewModel @Inject constructor(
             } else {
                 inputMode = AssistInputMode.TEXT_ONLY
             }
+            restartInactivityTimer()
         } ?: run {
             if (!id.isNullOrBlank()) {
                 setPipeline(null) // Try falling back to default pipeline
@@ -282,15 +330,18 @@ class AssistViewModel @Inject constructor(
     fun onChangeInput() {
         when (inputMode) {
             null, AssistInputMode.BLOCKED, AssistInputMode.TEXT_ONLY -> { /* Do nothing */ }
+
             AssistInputMode.TEXT -> {
                 inputMode = AssistInputMode.VOICE_INACTIVE
                 if (hasPermission || requestSilently) {
                     onMicrophoneInput()
                 }
             }
+
             AssistInputMode.VOICE_INACTIVE -> {
                 inputMode = AssistInputMode.TEXT
             }
+
             AssistInputMode.VOICE_ACTIVE -> {
                 stopRecording(sendRecorded = false)
                 // Remove placeholder message if present from proactive recording
@@ -300,6 +351,7 @@ class AssistViewModel @Inject constructor(
                 inputMode = AssistInputMode.TEXT
             }
         }
+        restartInactivityTimer()
     }
 
     fun onTextInput(input: String) = runAssistPipeline(input)
@@ -338,6 +390,9 @@ class AssistViewModel @Inject constructor(
                 AssistMessage(app.getString(commonR.string.assist_error), isInput = false, isError = true),
             )
         }
+
+        restartInactivityTimer()
+
         recorderProactive = recording && proactive == true
     }
 
@@ -377,7 +432,9 @@ class AssistViewModel @Inject constructor(
                             stopRecording()
                         }
                     }
+                    restartInactivityTimer()
                 }
+
                 is AssistEvent.MessageChunk -> {
                     val lastMessage = _conversation.last()
                     if (lastMessage == haMessage) {
@@ -390,7 +447,13 @@ class AssistViewModel @Inject constructor(
                             lastMessage.copy(message = lastMessage.message + event.chunk)
                     }
                 }
+
                 is AssistEvent.PipelineStarted -> { /* handled below */ }
+
+                is AssistEvent.PipelineEnded,
+                is AssistEvent.PlaybackFinished,
+                    -> restartInactivityTimer()
+
                 is AssistEvent.ContinueConversation -> onMicrophoneInput()
                 is AssistEvent.Dismiss -> shouldFinish = true
             }
@@ -418,16 +481,19 @@ class AssistViewModel @Inject constructor(
         } else if (!requestSilently) {
             _conversation.add(AssistMessage(app.getString(commonR.string.assist_permission), isInput = false))
         }
+        restartInactivityTimer()
         if (!proactive) requestSilently = false
     }
 
     fun onPause() {
         requestPermission = null
+        inactivityTimerJob?.cancel()
         stopRecording()
     }
 
     fun onDestroy() {
         requestPermission = null
+        inactivityTimerJob?.cancel()
         stopRecording()
         stopPlayback()
     }
