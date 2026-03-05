@@ -1206,7 +1206,7 @@ class MessagingManager @Inject constructor(
         {
             val segments = parseFlattenedList(segmentsData)
             for (segment in segments) {
-                val length = segment[PROGRESS_SEGMENTS_LENGTH]?.toInt() ?: 0
+                val length = segment[PROGRESS_SEGMENTS_LENGTH]?.toIntOrNull() ?: 0
                 val color = segment[PROGRESS_SEGMENTS_COLOR]
                 val progressSegment = NotificationCompat.ProgressStyle.Segment(length)
                 if (color != null) {
@@ -1226,7 +1226,7 @@ class MessagingManager @Inject constructor(
         if (pointsData.isNotBlank()) {
             val points = parseFlattenedList(pointsData)
             for (point in points) {
-                val position = point[PROGRESS_POINTS_POSITION]?.toInt() ?: 0
+                val position = point[PROGRESS_POINTS_POSITION]?.toIntOrNull() ?: 0
                 val color = point[PROGRESS_POINTS_COLOR]
                 val progressPoint = NotificationCompat.ProgressStyle.Point(position)
                 if (color != null) {
