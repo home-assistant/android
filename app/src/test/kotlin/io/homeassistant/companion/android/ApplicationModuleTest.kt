@@ -5,6 +5,7 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.integration.PushWebsocketSupport
 import io.homeassistant.companion.android.common.util.AppVersionProvider
+import io.homeassistant.companion.android.frontend.permissions.HasFcmPushSupport
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import javax.inject.Inject
 import org.junit.Before
@@ -36,6 +37,11 @@ class ApplicationModuleTest {
     @JvmField
     var websocketSupport: Boolean? = null
 
+    @Inject
+    @HasFcmPushSupport
+    @JvmField
+    var hasFcmPushSupport: Boolean? = null
+
     @Before
     fun setUp() {
         hiltRule.inject()
@@ -54,5 +60,12 @@ class ApplicationModuleTest {
         val currentValue = websocketSupport
         assertNotNull(currentValue)
         assertTrue(currentValue)
+    }
+
+    @Test
+    fun `Given injected HasFcmPushSupport when checking the value it matches the flavor`() {
+        val currentValue = hasFcmPushSupport
+        assertNotNull(currentValue)
+        assertEquals(BuildConfig.FLAVOR == "full", currentValue)
     }
 }
