@@ -9,26 +9,27 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEventType
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineRunStart
-import io.homeassistant.companion.android.common.util.AudioRecorder
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
+import io.homeassistant.companion.android.common.util.VoiceAudioRecorder
+import io.homeassistant.companion.android.common.util.toAudioBytes
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
-import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.every
-import io.mockk.just
 import io.mockk.mockk
 import io.mockk.unmockkAll
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
@@ -37,11 +38,11 @@ import org.junit.jupiter.api.extension.ExtendWith
 class AssistViewModelBaseTest {
 
     private lateinit var serverManager: ServerManager
-    private lateinit var audioRecorder: AudioRecorder
+    private lateinit var voiceAudioRecorder: VoiceAudioRecorder
     private lateinit var audioUrlPlayer: AudioUrlPlayer
     private lateinit var application: Application
     private lateinit var webSocketRepository: WebSocketRepository
-    private lateinit var audioBytesFlow: MutableSharedFlow<ByteArray>
+    private lateinit var audioDataFlow: MutableSharedFlow<ShortArray>
     private lateinit var pipelineEventsFlow: MutableSharedFlow<AssistPipelineEvent>
 
     private lateinit var viewModel: TestAssistViewModel
@@ -49,27 +50,31 @@ class AssistViewModelBaseTest {
     @BeforeEach
     fun setUp() {
         serverManager = mockk(relaxed = true)
-        audioRecorder = mockk(relaxed = true)
+        voiceAudioRecorder = mockk(relaxed = true)
         audioUrlPlayer = mockk(relaxed = true)
         application = mockk(relaxed = true)
         webSocketRepository = mockk(relaxed = true)
 
-        audioBytesFlow = MutableSharedFlow(extraBufferCapacity = 10)
+        audioDataFlow = MutableSharedFlow(extraBufferCapacity = 10)
         pipelineEventsFlow = MutableSharedFlow(extraBufferCapacity = 10)
 
         val packageManager = mockk<PackageManager>()
         every { application.packageManager } returns packageManager
         every { packageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE) } returns true
 
-        every { audioRecorder.audioBytes } returns audioBytesFlow
-        every { audioRecorder.stopRecording() } just Runs
+        coEvery { voiceAudioRecorder.audioData() } returns audioDataFlow
         coEvery { serverManager.webSocketRepository(any()) } returns webSocketRepository
         coEvery { webSocketRepository.sendVoiceData(any(), any()) } returns true
         coEvery {
             webSocketRepository.runAssistPipelineForVoice(any(), any(), any(), any(), any())
         } returns pipelineEventsFlow
 
-        viewModel = TestAssistViewModel(serverManager, audioRecorder, audioUrlPlayer, application)
+        viewModel = TestAssistViewModel(
+            serverManager = serverManager,
+            audioStrategy = DefaultAssistAudioStrategy(voiceAudioRecorder),
+            audioUrlPlayer = audioUrlPlayer,
+            application = application,
+        )
     }
 
     @AfterEach
@@ -79,8 +84,8 @@ class AssistViewModelBaseTest {
 
     @Test
     fun `Given recorder setup When pipeline sends RUN_START and STT_START Then buffered audio is forwarded`() = runTest {
-        val audioData1 = byteArrayOf(1, 2, 3)
-        val audioData2 = byteArrayOf(4, 5, 6)
+        val samples1 = shortArrayOf(1, 2, 3)
+        val samples2 = shortArrayOf(4, 5, 6)
         val handlerId = 42
 
         // Setup recorder and start pipeline
@@ -89,8 +94,8 @@ class AssistViewModelBaseTest {
         advanceUntilIdle()
 
         // Emit audio data (should be buffered)
-        audioBytesFlow.emit(audioData1)
-        audioBytesFlow.emit(audioData2)
+        audioDataFlow.emit(samples1)
+        audioDataFlow.emit(samples2)
         advanceUntilIdle()
 
         // No data should be sent yet
@@ -107,17 +112,17 @@ class AssistViewModelBaseTest {
         pipelineEventsFlow.emit(createSttStartEvent())
         advanceUntilIdle()
 
-        // Now buffered data should be forwarded
+        // Now buffered data should be forwarded (converted to bytes via toAudioBytes)
         coVerifyOrder {
-            webSocketRepository.sendVoiceData(handlerId, audioData1)
-            webSocketRepository.sendVoiceData(handlerId, audioData2)
+            webSocketRepository.sendVoiceData(handlerId, samples1.toAudioBytes())
+            webSocketRepository.sendVoiceData(handlerId, samples2.toAudioBytes())
         }
     }
 
     @Test
     fun `Given pipeline started When new audio arrives after STT_START Then it is forwarded immediately`() = runTest {
         val handlerId = 42
-        val audioData = byteArrayOf(1, 2, 3)
+        val samples = shortArrayOf(1, 2, 3)
 
         viewModel.setupRecorder()
         viewModel.runVoicePipeline()
@@ -129,24 +134,24 @@ class AssistViewModelBaseTest {
         advanceUntilIdle()
 
         // Emit new audio
-        audioBytesFlow.emit(audioData)
+        audioDataFlow.emit(samples)
         advanceUntilIdle()
 
-        // Should be forwarded immediately
-        coVerify { webSocketRepository.sendVoiceData(handlerId, audioData) }
+        // Should be forwarded immediately (converted to bytes)
+        coVerify { webSocketRepository.sendVoiceData(handlerId, samples.toAudioBytes()) }
     }
 
     @Test
     fun `Given active recording When stopRecording with sendRecorded true Then buffer is drained and empty byte array is sent`() = runTest {
         val handlerId = 42
-        val audioData = byteArrayOf(1, 2, 3)
+        val samples = shortArrayOf(1, 2, 3)
 
         viewModel.setupRecorder()
         viewModel.runVoicePipeline()
         advanceUntilIdle()
 
         // Buffer some data
-        audioBytesFlow.emit(audioData)
+        audioDataFlow.emit(samples)
         advanceUntilIdle()
 
         // Start STT via pipeline events
@@ -158,9 +163,9 @@ class AssistViewModelBaseTest {
         viewModel.callStopRecording(sendRecorded = true)
         advanceUntilIdle()
 
-        // Verify order: buffered data, then empty byte array
+        // Verify order: buffered data (as bytes), then empty byte array
         coVerifyOrder {
-            webSocketRepository.sendVoiceData(handlerId, audioData)
+            webSocketRepository.sendVoiceData(handlerId, samples.toAudioBytes())
             webSocketRepository.sendVoiceData(handlerId, byteArrayOf())
         }
     }
@@ -168,14 +173,14 @@ class AssistViewModelBaseTest {
     @Test
     fun `Given active recording When stopRecording with sendRecorded false Then no data is sent`() = runTest {
         val handlerId = 42
-        val audioData = byteArrayOf(1, 2, 3)
+        val samples = shortArrayOf(1, 2, 3)
 
         viewModel.setupRecorder()
         viewModel.runVoicePipeline()
         advanceUntilIdle()
 
         // Buffer some data before STT starts
-        audioBytesFlow.emit(audioData)
+        audioDataFlow.emit(samples)
         advanceUntilIdle()
 
         // Send RUN_START to set handler ID but not STT_START (simulating early cancellation)
@@ -195,7 +200,7 @@ class AssistViewModelBaseTest {
         viewModel.setupRecorder()
         advanceUntilIdle()
 
-        audioBytesFlow.emit(byteArrayOf(1, 2, 3))
+        audioDataFlow.emit(shortArrayOf(1, 2, 3))
         advanceUntilIdle()
 
         // Stop without ever receiving RUN_START (no handler ID)
@@ -209,14 +214,14 @@ class AssistViewModelBaseTest {
     @Test
     fun `Given multiple audio chunks When STT starts Then all chunks are forwarded in order`() = runTest {
         val handlerId = 42
-        val chunks = (1..10).map { byteArrayOf(it.toByte()) }
+        val chunks = (1..10).map { shortArrayOf(it.toShort()) }
 
         viewModel.setupRecorder()
         viewModel.runVoicePipeline()
         advanceUntilIdle()
 
         // Buffer multiple chunks
-        chunks.forEach { audioBytesFlow.emit(it) }
+        chunks.forEach { audioDataFlow.emit(it) }
         advanceUntilIdle()
 
         // Start STT via pipeline events
@@ -224,10 +229,10 @@ class AssistViewModelBaseTest {
         pipelineEventsFlow.emit(createSttStartEvent())
         advanceUntilIdle()
 
-        // Verify all chunks were sent in order
+        // Verify all chunks were sent in order (converted to bytes)
         coVerifyOrder {
             chunks.forEach { chunk ->
-                webSocketRepository.sendVoiceData(handlerId, chunk)
+                webSocketRepository.sendVoiceData(handlerId, chunk.toAudioBytes())
             }
         }
     }
@@ -255,6 +260,104 @@ class AssistViewModelBaseTest {
         advanceUntilIdle()
 
         assertEquals(listOf(AssistEvent.Dismiss), viewModel.receivedEvents)
+    }
+
+    @Test
+    fun `Given wake word phrase When voice pipeline started Then phrase is passed to WebSocket`() = runTest {
+        val wakePhrase = "Hey Jarvis"
+
+        viewModel.setupRecorder()
+        viewModel.runVoicePipeline(wakeWordPhrase = wakePhrase)
+        advanceUntilIdle()
+
+        coVerify {
+            webSocketRepository.runAssistPipelineForVoice(
+                sampleRate = any(),
+                outputTts = any(),
+                pipelineId = any(),
+                conversationId = any(),
+                wakeWordPhrase = wakePhrase,
+            )
+        }
+    }
+
+    @Test
+    fun `Given no wake word phrase When voice pipeline started Then phrase is null in WebSocket call`() = runTest {
+        viewModel.setupRecorder()
+        viewModel.runVoicePipeline()
+        advanceUntilIdle()
+
+        coVerify {
+            webSocketRepository.runAssistPipelineForVoice(
+                sampleRate = any(),
+                outputTts = any(),
+                pipelineId = any(),
+                conversationId = any(),
+                wakeWordPhrase = null,
+            )
+        }
+    }
+
+    @Test
+    fun `Given external audio strategy When pipeline runs Then external audio is forwarded`() = runTest {
+        val externalAudioFlow = MutableSharedFlow<ShortArray>(extraBufferCapacity = 10)
+        val externalStrategy = object : AssistAudioStrategy {
+            override suspend fun audioData() = externalAudioFlow
+            override val wakeWordDetected: Flow<String> = emptyFlow()
+            override fun requestFocus() {}
+            override fun abandonFocus() {}
+        }
+        val externalVm = TestAssistViewModel(
+            serverManager = serverManager,
+            audioStrategy = externalStrategy,
+            audioUrlPlayer = audioUrlPlayer,
+            application = application,
+        )
+
+        val handlerId = 42
+        val samples = shortArrayOf(10, 20, 30)
+
+        externalVm.setupRecorder()
+        externalVm.runVoicePipeline()
+        advanceUntilIdle()
+
+        // Emit via external audio source
+        externalAudioFlow.emit(samples)
+        advanceUntilIdle()
+
+        // Start STT
+        pipelineEventsFlow.emit(createRunStartEvent(handlerId))
+        pipelineEventsFlow.emit(createSttStartEvent())
+        advanceUntilIdle()
+
+        // External audio should be forwarded to pipeline (converted to bytes)
+        coVerify { webSocketRepository.sendVoiceData(handlerId, samples.toAudioBytes()) }
+    }
+
+    @Test
+    fun `Given external audio strategy When stopRecording called Then strategy abandonFocus is called`() = runTest {
+        var focusAbandoned = false
+        val externalStrategy = object : AssistAudioStrategy {
+            override suspend fun audioData() = MutableSharedFlow<ShortArray>()
+            override val wakeWordDetected: Flow<String> = emptyFlow()
+            override fun requestFocus() {}
+            override fun abandonFocus() { focusAbandoned = true }
+        }
+        val externalVm = TestAssistViewModel(
+            serverManager = serverManager,
+            audioStrategy = externalStrategy,
+            audioUrlPlayer = audioUrlPlayer,
+            application = application,
+        )
+
+        externalVm.setupRecorder()
+        advanceUntilIdle()
+
+        externalVm.callStopRecording(sendRecorded = false)
+        advanceUntilIdle()
+
+        // The external strategy's abandonFocus should be called
+        assertTrue(focusAbandoned, "External strategy abandonFocus should be called")
     }
 
     private fun createRunStartEvent(handlerId: Int): AssistPipelineEvent {
@@ -287,10 +390,10 @@ class AssistViewModelBaseTest {
      */
     private class TestAssistViewModel(
         serverManager: ServerManager,
-        audioRecorder: AudioRecorder,
+        audioStrategy: AssistAudioStrategy,
         audioUrlPlayer: AudioUrlPlayer,
         application: Application,
-    ) : AssistViewModelBase(serverManager, audioRecorder, audioUrlPlayer, application) {
+    ) : AssistViewModelBase(serverManager, audioStrategy, audioUrlPlayer, application) {
 
         private var inputMode: AssistInputMode? = null
 
@@ -302,10 +405,14 @@ class AssistViewModelBaseTest {
 
         val receivedEvents = mutableListOf<AssistEvent>()
 
-        fun runVoicePipeline(pipeline: AssistPipelineResponse? = null) {
+        fun runVoicePipeline(
+            pipeline: AssistPipelineResponse? = null,
+            wakeWordPhrase: String? = null,
+        ) {
             runAssistPipelineInternal(
                 text = null, // null means voice pipeline
                 pipeline = pipeline,
+                wakeWordPhrase = wakeWordPhrase,
                 onEvent = { receivedEvents += it },
             )
         }
