@@ -17,20 +17,24 @@ import android.widget.AutoCompleteTextView
 import android.widget.EditText
 import android.widget.Spinner
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Checkbox
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
-import androidx.compose.material.TextField
 import androidx.compose.material.TopAppBar
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,6 +52,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
 import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.mikepenz.iconics.IconicsDrawable
@@ -69,7 +74,6 @@ import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetButtonConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
-import io.homeassistant.companion.android.util.applySafeDrawingInsets
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.WidgetBackgroundTypeExposedDropdownMenu
 import io.homeassistant.companion.android.util.getHexForColor
@@ -100,6 +104,8 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEn
     private lateinit var dynamicFieldAdapter: WidgetDynamicFieldAdapter
 
     private lateinit var binding: WidgetButtonConfigureBinding
+
+    private val viewModel: ButtonWidgetViewModel by viewModels()
 
     override val serverSelect: View
         get() = binding.serverSelect
@@ -259,7 +265,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEn
 //        setContentView(binding.root)
         setContent {
             HATheme {
-                ButtonWidgetConfigureScreen()
+                ButtonWidgetConfigureScreen(viewModel)
             }
         }
 //        binding.root.applySafeDrawingInsets()
@@ -519,20 +525,19 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEn
 }
 
 @Composable
-private fun ButtonWidgetConfigureScreen() {
-    val servers = emptyList<Server>()
-
+private fun ButtonWidgetConfigureScreen(viewModel: ButtonWidgetViewModel) {
+    val servers by viewModel.servers.collectAsStateWithLifecycle(emptyList())
     ButtonWidgetConfigureView(
         servers = servers,
-        selectedServerId = 0,
-        onServerSelected = {},
+        selectedServerId = viewModel.selectedServerId,
+        onServerSelected = viewModel::setServer,
         entities = emptyList(),
         selectedEntityId = null,
         onEntitySelected = {},
-        dynamicFields = emptyList(),
-        onActionTextUpdated = {},
-        selectedBackgroundType = WidgetBackgroundType.DAYNIGHT,
-        onBackgroundTypeSelected = {},
+        dynamicFields = viewModel.dynamicFields,
+        onActionTextUpdated = viewModel::updateActionFields,
+        selectedBackgroundType = viewModel.selectedBackgroundType,
+        onBackgroundTypeSelected = { viewModel.selectedBackgroundType = it },
     )
 }
 
@@ -633,7 +638,15 @@ private fun ButtonWidgetConfigureView(
                 placeholder = { Text(text = stringResource(commonR.string.widget_text_hint_label)) },
             )
 
-            var selectedOption by rememberSelectedOption<String>()
+            WidgetBackgroundTypeExposedDropdownMenu(
+                current = selectedBackgroundType,
+                onSelected = {
+                    onBackgroundTypeSelected(it)
+                },
+                modifier = Modifier.padding(bottom = 16.dp),
+            )
+
+//            var selectedOption by rememberSelectedOption<String>()
 
             WidgetBackgroundTypeExposedDropdownMenu(
                 current = selectedBackgroundType,
