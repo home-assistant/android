@@ -26,19 +26,19 @@ class TileActionReceiver : BroadcastReceiver() {
 
     private val receiverScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
-    override fun onReceive(context: Context?, intent: Intent?) {
+    override fun onReceive(context: Context, intent: Intent?) {
         val entityId: String? = intent?.getStringExtra("entity_id")
 
         if (entityId != null) {
             launchAsync(receiverScope) {
-                if (wearPrefsRepository.getWearHapticFeedback() && context != null) hapticClick(context)
-
+                val hasHapticFeedback = wearPrefsRepository.getWearHapticFeedback()
                 try {
                     onEntityPressedWithoutState(
                         entityId = entityId,
                         integrationRepository = serverManager.integrationRepository(),
                     )
-                }  catch (e: CancellationException) {
+                    if (hasHapticFeedback) hapticClick(context)
+                } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Cannot call tile service")
