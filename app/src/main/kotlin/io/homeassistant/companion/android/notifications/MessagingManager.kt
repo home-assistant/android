@@ -1184,7 +1184,7 @@ class MessagingManager @Inject constructor(
             val dynamicColorContext = DynamicColors.wrapContextIfAvailable(context)
             var accentColor = commonR.color.colorAccent
             dynamicColorContext.withStyledAttributes(null, intArrayOf(android.R.attr.colorAccent)) {
-                accentColor = getResourceId(0, 0)
+                accentColor = getResourceId(0, accentColor)
             }
 
             var useProgressStyle = false
