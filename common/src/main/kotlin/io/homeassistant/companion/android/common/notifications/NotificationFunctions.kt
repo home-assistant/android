@@ -290,3 +290,24 @@ fun handleDeleteIntent(
     )
     builder.setDeleteIntent(deletePendingIntent)
 }
+
+fun parseFlattenedList(flattenedList: String): List<Map<String, String>> {
+    try {
+        val list: List<Map<String, String>> = flattenedList
+            .trim()
+            .removeSurrounding("[", "]")
+            .split("}, {")
+            .map { segment ->
+                segment.trim().removePrefix("{").removeSuffix("}")
+                    .split(",")
+                    .associate { pair ->
+                        val (key, value) = pair.split("=")
+                        key.trim() to value.trim()
+                    }
+            }
+        return list
+    } catch (e: Exception) {
+        Timber.tag(NotificationData.TAG).e(e, "Unable to parse flattened list")
+        return emptyList()
+    }
+}
