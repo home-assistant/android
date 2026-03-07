@@ -4,6 +4,7 @@
     <release version="2026.3.3 - Main" versioncode="3">
         <change>Experimental - Add wake word detection for Assist</change>
         <change>Android 16+ - Support for live update notifications</change>
+        <change>Skip insecure connection prompt when Home Assistant Cloud is active</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2026.3.3 - Wear" versioncode="2">

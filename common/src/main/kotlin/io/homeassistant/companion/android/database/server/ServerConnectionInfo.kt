@@ -121,11 +121,15 @@ data class ServerConnectionInfo(
     /**
      * Checks if any of the configured URLs use plain HTTP (non-HTTPS).
      *
-     * @return `true` if external, internal, or cloud URL uses HTTP
+     * When Home Assistant Cloud is enabled ([useCloud] is `true` and [cloudUrl] is available),
+     * the [externalUrl] is excluded from this check because the app will use the cloud URL
+     * for external connections instead.
+     *
+     * @return `true` if any checked URL uses HTTP
      */
     @Ignore
     val hasPlainTextUrl: Boolean = listOfNotNull(
-        externalUrl,
+        externalUrl.takeUnless { useCloud && !cloudUrl.isNullOrBlank() },
         internalUrl,
         cloudUrl,
     ).any { it.startsWith("http://") }

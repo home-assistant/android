@@ -201,40 +201,47 @@ class ServerConnectionInfoTest {
     @Nested
     inner class HasPlainTextUrl {
 
-        @ParameterizedTest(name = "hasPlainTextUrl is true: external={0}, internal={1}, cloud={2}")
+        @ParameterizedTest(name = "hasPlainTextUrl is true: external={0}, internal={1}, cloud={2}, useCloud={3}")
         @CsvSource(
-            "http://example.com, null, null",
-            "https://example.com, http://192.168.1.1:8123, null",
-            "https://example.com, null, http://cloud.example.com",
+            "http://example.com, null, null, false",
+            "https://example.com, http://192.168.1.1:8123, null, false",
+            "https://example.com, null, http://cloud.example.com, false",
+            "http://example.com, null, https://abcdef.ui.nabu.casa, false",
+            "http://example.com, http://192.168.1.1:8123, https://abcdef.ui.nabu.casa, true",
         )
         fun `Given HTTP URL then hasPlainTextUrl is true`(
             externalUrl: String,
             internalUrl: String?,
             cloudUrl: String?,
+            useCloud: Boolean,
         ) {
             val connection = ServerConnectionInfo(
                 externalUrl = externalUrl,
                 internalUrl = internalUrl?.takeIf { it != "null" },
                 cloudUrl = cloudUrl?.takeIf { it != "null" },
+                useCloud = useCloud,
             )
 
             assertTrue(connection.hasPlainTextUrl)
         }
 
-        @ParameterizedTest(name = "hasPlainTextUrl is false: external={0}, internal={1}, cloud={2}")
+        @ParameterizedTest(name = "hasPlainTextUrl is false: external={0}, internal={1}, cloud={2}, useCloud={3}")
         @CsvSource(
-            "https://example.com, https://192.168.1.1:8123, https://cloud.example.com",
-            "https://example.com, null, null",
+            "https://example.com, https://192.168.1.1:8123, https://cloud.example.com, false",
+            "https://example.com, null, null, false",
+            "http://example.com, null, https://abcdef.ui.nabu.casa, true",
         )
-        fun `Given all HTTPS URLs then hasPlainTextUrl is false`(
+        fun `Given safe URLs then hasPlainTextUrl is false`(
             externalUrl: String,
             internalUrl: String?,
             cloudUrl: String?,
+            useCloud: Boolean,
         ) {
             val connection = ServerConnectionInfo(
                 externalUrl = externalUrl,
                 internalUrl = internalUrl?.takeIf { it != "null" },
                 cloudUrl = cloudUrl?.takeIf { it != "null" },
+                useCloud = useCloud,
             )
 
             assertFalse(connection.hasPlainTextUrl)
