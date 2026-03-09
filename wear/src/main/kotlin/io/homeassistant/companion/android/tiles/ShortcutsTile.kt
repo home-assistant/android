@@ -38,11 +38,13 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.data.SimplifiedEntity
+import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.util.getIcon
 import java.nio.ByteBuffer
 import javax.inject.Inject
 import kotlin.math.min
 import kotlin.math.roundToInt
+import kotlinx.coroutines.async
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -107,16 +109,32 @@ class ShortcutsTile : TileService() {
             val iconSizePx = (iconSize * density).roundToInt()
             val entities = getEntities(requestParams.tileId)
 
+            val fullEntities = entities.map { entity ->
+                async {
+                    try {
+                        serverManager.integrationRepository().getEntity(entity.entityId)
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+            }.map { it.await() }
+            val entityMap = fullEntities.filterNotNull().associateBy { it.entityId }
+
             Resources.Builder()
                 .setVersion(entities.toString())
                 .apply {
                     entities.map { entity ->
-                        // Find icon and create Bitmap
-                        val iconIIcon = getIcon(
-                            entity.icon,
-                            entity.domain,
-                            this@ShortcutsTile,
-                        )
+                        // Find icon: try state-aware icon from full entity, fall back to domain icon
+                        val fullEntity = entityMap[entity.entityId]
+                        val iconIIcon = if (fullEntity != null) {
+                            fullEntity.getIcon(this@ShortcutsTile)
+                        } else {
+                            getIcon(
+                                entity.icon,
+                                entity.domain,
+                                this@ShortcutsTile,
+                            )
+                        }
                         val iconBitmap = IconicsDrawable(this@ShortcutsTile, iconIIcon).apply {
                             colorInt = Color.WHITE
                             sizeDp = iconSize.roundToInt()
