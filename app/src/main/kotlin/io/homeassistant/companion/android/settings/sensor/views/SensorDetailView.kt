@@ -26,6 +26,8 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.Card
 import androidx.compose.material.Checkbox
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Divider
 import androidx.compose.material.LocalContentAlpha
@@ -40,6 +42,9 @@ import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.contentColorFor
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -601,8 +606,35 @@ fun SensorDetailSettingDialog(
                     CircularProgressIndicator()
                 }
             } else if (listSettingDialog) {
-                LazyColumn {
-                    items(state.entries, key = { (id) -> id }) { (id, entry) ->
+                var searchQuery by remember { mutableStateOf("") }
+                val filteredEntries = remember(state.entries, searchQuery) {
+                    filterSettingEntries(state.entries, searchQuery)
+                }
+                Column {
+                    TextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        singleLine = true,
+                        label = { Text(stringResource(commonR.string.search)) },
+                        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                        trailingIcon = if (searchQuery.isNotBlank()) {
+                            {
+                                IconButton(onClick = { searchQuery = "" }) {
+                                    Icon(
+                                        Icons.Filled.Clear,
+                                        contentDescription = stringResource(commonR.string.clear_search),
+                                    )
+                                }
+                            }
+                        } else {
+                            null
+                        },
+                    )
+                    LazyColumn(modifier = Modifier.weight(1f)) {
+                        items(filteredEntries, key = { (id) -> id }) { (id, entry) ->
                         SensorDetailSettingRow(
                             label = entry,
                             checked = if (state.setting.valueType ==
@@ -626,6 +658,7 @@ fun SensorDetailSettingDialog(
                                 }
                             },
                         )
+                    }
                     }
                 }
             } else {
@@ -726,6 +759,17 @@ fun SensorDetailUpdateInfoDialog(
         onOK = onDismiss,
     )
 }
+
+/**
+ * Filters setting entries by matching the query against entry labels (case-insensitive).
+ * Returns all entries when the query is blank.
+ */
+internal fun filterSettingEntries(
+    entries: List<Pair<String, String>>,
+    query: String,
+): List<Pair<String, String>> =
+    if (query.isBlank()) entries
+    else entries.filter { (_, label) -> label.contains(query.trim(), ignoreCase = true) }
 
 @Composable
 fun SensorDetailSettingRow(
