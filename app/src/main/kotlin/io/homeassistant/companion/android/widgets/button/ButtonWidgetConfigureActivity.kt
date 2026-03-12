@@ -20,14 +20,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Checkbox
@@ -62,7 +59,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.composable.HAIconButton
-import io.homeassistant.companion.android.common.compose.composable.rememberSelectedOption
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.integration.Action
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -74,6 +70,7 @@ import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetButtonConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
+import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.WidgetBackgroundTypeExposedDropdownMenu
 import io.homeassistant.companion.android.util.getHexForColor
@@ -527,6 +524,8 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEn
 @Composable
 private fun ButtonWidgetConfigureScreen(viewModel: ButtonWidgetViewModel) {
     val servers by viewModel.servers.collectAsStateWithLifecycle(emptyList())
+    val dynamicFields by viewModel.dynamicFields.collectAsStateWithLifecycle()
+
     ButtonWidgetConfigureView(
         servers = servers,
         selectedServerId = viewModel.selectedServerId,
@@ -534,7 +533,8 @@ private fun ButtonWidgetConfigureScreen(viewModel: ButtonWidgetViewModel) {
         entities = emptyList(),
         selectedEntityId = null,
         onEntitySelected = {},
-        dynamicFields = viewModel.dynamicFields,
+        dynamicFields = dynamicFields,
+        onAddFieldDialogOkClicked = viewModel::updateDynamicFields,
         onActionTextUpdated = viewModel::updateActionFields,
         selectedBackgroundType = viewModel.selectedBackgroundType,
         onBackgroundTypeSelected = { viewModel.selectedBackgroundType = it },
@@ -550,10 +550,15 @@ private fun ButtonWidgetConfigureView(
     selectedEntityId: String?,
     onEntitySelected: (String?) -> Unit,
     dynamicFields: List<ActionFieldBinder>,
+    onAddFieldDialogOkClicked: (Int, ActionFieldBinder) -> Unit,
     onActionTextUpdated: (String) -> Unit,
     selectedBackgroundType: WidgetBackgroundType,
     onBackgroundTypeSelected: (WidgetBackgroundType) -> Unit,
 ) {
+    var actionInputText by remember { mutableStateOf("") }
+    var addFieldDialog by remember { mutableStateOf(false) }
+    var labelInputText by remember { mutableStateOf("") }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -572,6 +577,28 @@ private fun ButtonWidgetConfigureView(
                 .padding(all = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            if (addFieldDialog) {
+                AddFieldDialog(
+                    action = actionInputText,
+                    onCancel = {
+                        addFieldDialog = false
+                    },
+                    onOk = { actionField ->
+                        if (dynamicFields.any {
+                                it.field == actionInputText
+                            }
+                        ) {
+                            addFieldDialog = false
+                            return@AddFieldDialog
+                        }
+
+                        onAddFieldDialogOkClicked(dynamicFields.size, actionField)
+                        addFieldDialog = false
+                    },
+                    modifier = Modifier,
+                )
+            }
+
             if (servers.size > 1) {
                 ServerExposedDropdownMenu(
                     servers = servers,
@@ -581,7 +608,6 @@ private fun ButtonWidgetConfigureView(
                 )
             }
 
-            var actionInputText by remember { mutableStateOf("") }
             TextField(
                 label = { Text(text = stringResource(commonR.string.label_action)) },
                 value = actionInputText,
@@ -610,7 +636,11 @@ private fun ButtonWidgetConfigureView(
                 }
             }
 
-            HAFilledButton("Add Field", onClick = {}, modifier = Modifier.align(Alignment.End))
+            HAFilledButton(
+                text = stringResource(commonR.string.add_action_data_field),
+                onClick = { addFieldDialog = true },
+                modifier = Modifier.align(Alignment.End),
+            )
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
@@ -625,7 +655,6 @@ private fun ButtonWidgetConfigureView(
                 )
             }
 
-            var labelInputText by remember { mutableStateOf("") }
             TextField(
                 label = { Text(text = stringResource(commonR.string.label)) },
                 value = labelInputText,
@@ -647,14 +676,6 @@ private fun ButtonWidgetConfigureView(
             )
 
 //            var selectedOption by rememberSelectedOption<String>()
-
-            WidgetBackgroundTypeExposedDropdownMenu(
-                current = selectedBackgroundType,
-                onSelected = {
-                    onBackgroundTypeSelected(it)
-                },
-                modifier = Modifier.padding(bottom = 16.dp),
-            )
 
             // Radio Group for Widget text/icon color
 //            HARadioGroup(
@@ -690,6 +711,34 @@ private fun ButtonWidgetConfigureView(
 }
 
 @Composable
+fun AddFieldDialog(action: String, onCancel: (() -> Unit)?, onOk: ((ActionFieldBinder) -> Unit)?, modifier: Modifier) {
+    val inputValue = remember { mutableStateOf("") }
+
+    MdcAlertDialog(
+        modifier = modifier,
+        onDismissRequest = { },
+        title = { Text(text = "Field") },
+        content = {
+            TextField(
+                value = inputValue.value,
+                onValueChange = { input: String ->
+                    inputValue.value = input
+                },
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth(),
+            )
+        },
+        onCancel = onCancel,
+        onSave = null,
+        onOK = {
+            val field = ActionFieldBinder(action, inputValue.value)
+            onOk?.invoke(field)
+        },
+    )
+}
+
+@Composable
 @Preview(name = "Light Mode")
 @Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES)
 private fun ButtonWidgetConfigureScreenPreview() {
@@ -708,9 +757,19 @@ private fun ButtonWidgetConfigureScreenPreview() {
             selectedEntityId = previewEntity1.entityId,
             onEntitySelected = {},
             dynamicFields = listOf(ActionFieldBinder("Test Action", "Testies", 1)),
+            onAddFieldDialogOkClicked = { i: Int, binder: ActionFieldBinder -> },
             onActionTextUpdated = {},
             selectedBackgroundType = WidgetBackgroundType.DAYNIGHT,
             onBackgroundTypeSelected = {},
         )
+    }
+}
+
+@Composable
+@Preview(name = "Light Mode")
+@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES)
+fun AddFieldDialogPreview() {
+    HATheme {
+        AddFieldDialog("", {}, {}, modifier = Modifier)
     }
 }

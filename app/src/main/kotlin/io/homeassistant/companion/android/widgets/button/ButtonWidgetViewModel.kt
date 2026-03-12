@@ -15,6 +15,9 @@ import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.widgets.common.ActionFieldBinder
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.any
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -27,7 +30,10 @@ class ButtonWidgetViewModel @Inject constructor(
 
     private var actions = mutableMapOf<Int, HashMap<String, Action>>()
     private var entities = mutableMapOf<Int, HashMap<String, Entity>>()
-    var dynamicFields = ArrayList<ActionFieldBinder>()
+
+    val dynamicFields: MutableStateFlow<ArrayList<ActionFieldBinder>> =
+        MutableStateFlow(arrayListOf())
+
     var selectedBackgroundType by mutableStateOf(
         if (DynamicColors.isDynamicColorAvailable()) {
             WidgetBackgroundType.DYNAMICCOLOR
@@ -44,9 +50,21 @@ class ButtonWidgetViewModel @Inject constructor(
     fun setServer(serverId: Int) {
         if (selectedServerId == serverId) return
         selectedServerId = serverId
-        viewModelScope.launch { selectedServerMutex.withLock {  } }
+        viewModelScope.launch { selectedServerMutex.withLock { } }
     }
 
-    fun updateActionFields(text: String) {
+    fun updateDynamicFields(position: Int, field: ActionFieldBinder) {
+        val dynamicFields = dynamicFields.value
+
+        dynamicFields.add(position, field)
+
+        this.dynamicFields.update { dynamicFields }
+    }
+
+    fun clearDynamicFields() {
+        dynamicFields.value = arrayListOf()
+    }
+
+    fun updateActionFields(action: String) {
     }
 }
