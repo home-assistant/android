@@ -617,55 +617,40 @@ fun SensorDetailSettingDialog(
                 val filteredEntries = remember(state.entries, searchQuery) {
                     filterSettingEntries(state.entries, searchQuery)
                 }
+                val showSearch = state.entries.size > 10
                 Column {
-                    TextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        singleLine = true,
-                        label = { Text(stringResource(commonR.string.search)) },
-                        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                        trailingIcon = if (searchQuery.isNotBlank()) {
-                            {
-                                IconButton(onClick = { searchQuery = "" }) {
-                                    Icon(
-                                        Icons.Filled.Clear,
-                                        contentDescription = stringResource(commonR.string.clear_search),
-                                    )
-                                }
-                            }
-                        } else {
-                            null
-                        },
-                    )
-                    LazyColumn(modifier = Modifier.weight(1f)) {
-                        items(filteredEntries, key = { (id) -> id }) { (id, entry) ->
-                        SensorDetailSettingRow(
-                            label = entry,
-                            checked = if (state.setting.valueType ==
-                                SensorSettingType.LIST
-                            ) {
-                                inputValue.value == id
-                            } else {
-                                checkedValue.contains(id)
-                            },
-                            multiple = state.setting.valueType != SensorSettingType.LIST,
-                            onClick = { isChecked ->
-                                if (state.setting.valueType == SensorSettingType.LIST) {
-                                    inputValue.value = id
-                                    onSubmit(state.copy().apply { setting.value = inputValue.value })
-                                } else {
-                                    if (checkedValue.contains(id) && !isChecked) {
-                                        checkedValue.remove(id)
-                                    } else if (!checkedValue.contains(id) && isChecked) {
-                                        checkedValue.add(id)
-                                    }
-                                }
-                            },
+                    if (showSearch) {
+                        SettingSearchField(
+                            query = searchQuery,
+                            onQueryChange = { searchQuery = it },
                         )
                     }
+                    LazyColumn(modifier = Modifier.weight(1f)) {
+                        items(filteredEntries, key = { (id) -> id }) { (id, entry) ->
+                            SensorDetailSettingRow(
+                                label = entry,
+                                checked = if (state.setting.valueType ==
+                                    SensorSettingType.LIST
+                                ) {
+                                    inputValue.value == id
+                                } else {
+                                    checkedValue.contains(id)
+                                },
+                                multiple = state.setting.valueType != SensorSettingType.LIST,
+                                onClick = { isChecked ->
+                                    if (state.setting.valueType == SensorSettingType.LIST) {
+                                        inputValue.value = id
+                                        onSubmit(state.copy().apply { setting.value = inputValue.value })
+                                    } else {
+                                        if (checkedValue.contains(id) && !isChecked) {
+                                            checkedValue.remove(id)
+                                        } else if (!checkedValue.contains(id) && isChecked) {
+                                            checkedValue.add(id)
+                                        }
+                                    }
+                                },
+                            )
+                        }
                     }
                 }
             } else {
@@ -764,6 +749,36 @@ fun SensorDetailUpdateInfoDialog(
             Text(infoString)
         },
         onOK = onDismiss,
+    )
+}
+
+@Composable
+private fun SettingSearchField(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    TextField(
+        value = query,
+        onValueChange = onQueryChange,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        singleLine = true,
+        label = { Text(stringResource(commonR.string.search)) },
+        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+        trailingIcon = if (query.isNotBlank()) {
+            {
+                IconButton(onClick = { onQueryChange("") }) {
+                    Icon(
+                        Icons.Filled.Clear,
+                        contentDescription = stringResource(commonR.string.clear_search),
+                    )
+                }
+            }
+        } else {
+            null
+        },
     )
 }
 
