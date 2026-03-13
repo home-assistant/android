@@ -375,8 +375,6 @@ private fun RowScope.ButtonContent(
     ButtonDecorator(ButtonDecoratorType.SUFFIX, suffix)
 }
 
-
-
 private fun HAColorScheme.accentButtonColorsFromVariant(variant: ButtonVariant): HAButtonColors {
     return when (variant) {
         ButtonVariant.PRIMARY -> {

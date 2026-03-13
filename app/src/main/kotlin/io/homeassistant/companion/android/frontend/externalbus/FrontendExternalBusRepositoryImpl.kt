@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.frontend.externalbus
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.frontend.externalbus.incoming.IncomingExternalBusMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.OutgoingExternalBusMessage
+import io.homeassistant.companion.android.util.sensitive
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -10,7 +11,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.plus
-import io.homeassistant.companion.android.util.sensitive
 import timber.log.Timber
 
 private const val BUFFER_CAPACITY = 10

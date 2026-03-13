@@ -115,10 +115,8 @@ data class ThemeUpdateMessage(override val id: Int? = null) : IncomingExternalBu
  */
 @Serializable
 @SerialName("assist/show")
-data class OpenAssistMessage(
-    override val id: Int? = null,
-    val payload: OpenAssistPayload = OpenAssistPayload(),
-) : IncomingExternalBusMessage
+data class OpenAssistMessage(override val id: Int? = null, val payload: OpenAssistPayload = OpenAssistPayload()) :
+    IncomingExternalBusMessage
 
 @Serializable
 data class OpenAssistPayload(
