@@ -82,7 +82,9 @@ class ConnectionSecurityLevelFragment : Fragment() {
         extrasProducer = {
             val serverId =
                 arguments?.getInt(EXTRA_SERVER, ServerManager.SERVER_ID_ACTIVE) ?: ServerManager.SERVER_ID_ACTIVE
-            defaultViewModelCreationExtras.withCreationCallback<LocationForSecureConnectionViewModelFactory> { factory ->
+            defaultViewModelCreationExtras.withCreationCallback<
+                LocationForSecureConnectionViewModelFactory,
+                > { factory ->
                 factory.create(serverId)
             }
         },

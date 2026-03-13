@@ -62,7 +62,7 @@ class AssistSettingsViewModel @Inject internal constructor(
             val isDefaultAssistant = defaultAssistantManager.isDefaultAssistant()
             val missingPlayServices = playServicesAvailability.isMissingRequiredPlayServices()
             val isHWWakeWordSupported = assistConfigManager.isWakeWordSupported()
-            val isSupported =  isHWWakeWordSupported && !missingPlayServices
+            val isSupported = isHWWakeWordSupported && !missingPlayServices
 
             if ((!isDefaultAssistant || !isSupported) && isEnabled) {
                 assistConfigManager.setWakeWordEnabled(false)
