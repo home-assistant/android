@@ -187,6 +187,18 @@
                 android:resource="@xml/button_widget_info" />
         </receiver>
 
+        <!-- 2x2 variant for Samsung Z Flip cover screen -->
+        <receiver android:name=".widgets.button.ButtonWidget2x2" android:label="@string/widget_button_image_description"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/button_widget_info_2x2" />
+            <meta-data android:name="com.samsung.android.appwidget.provider" android:resource="@xml/samsung_button_widget_info_2x2" />
+            <meta-data android:name="com.samsung.android.appwidget.PRIVACY_WIDGET" android:value="false" />
+            <meta-data android:name="com.samsung.android.sdk.subscreen.widget.support_visibility_callback" android:value="true" />
+        </receiver>
+
         <receiver android:name=".widgets.camera.CameraWidget" android:label="@string/widget_camera_description"
             android:exported="false">
             <intent-filter>
