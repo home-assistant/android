@@ -7,12 +7,16 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import io.homeassistant.companion.android.common.LocalStorageImpl
+import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.integration.PushWebsocketSupport
 import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.AppVersionProvider
+import io.homeassistant.companion.android.common.util.getSharedPreferencesSuspend
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
 import io.homeassistant.companion.android.di.qualifiers.LocationTrackingSupport
+import io.homeassistant.companion.android.di.qualifiers.NamedLocationSensorStorage
 import javax.inject.Singleton
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -44,6 +48,13 @@ object ApplicationModule {
     @Provides
     @Singleton
     fun providesClock(): Clock = Clock.System
+
+    @Provides
+    @Singleton
+    @NamedLocationSensorStorage
+    fun providesLocationSensorLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl {
+        appContext.getSharedPreferencesSuspend("location_sensor_0")
+    }
 
     @Provides
     @Singleton
