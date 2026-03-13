@@ -46,6 +46,12 @@ import timber.log.Timber
  *
  * The WebView will be sized to match the [modifier].
  *
+ * If the system WebView fails to initialize (e.g. due to a misconfigured or incompatible
+ * WebView provider), the [onWebViewCreationFailed] callback is invoked with the exception
+ * and a placeholder view is shown instead.
+ *
+ * @param onWebViewCreationFailed Called when the WebView fails to initialize due to a system-level
+ *                                issue such as a broken or incompatible WebView provider.
  * @param modifier The modifier to be applied to this WebView.
  * @param nightModeTheme current [NightModeTheme]
  * @param configure A lambda that allows for customization of the WebView instance.
@@ -55,6 +61,7 @@ import timber.log.Timber
  */
 @Composable
 fun HAWebView(
+    onWebViewCreationFailed: (Throwable) -> Unit,
     modifier: Modifier = Modifier,
     configure: WebView.() -> Unit = {},
     factory: () -> WebView? = { null },
@@ -67,26 +74,35 @@ fun HAWebView(
 
     AndroidView(
         factory = { context ->
-            (factory() ?: WebView(context)).apply {
-                webview = this
-                // We want the modifier to determine the size so the WebView should match the parent
-                this.layoutParams = FrameLayout.LayoutParams(
-                    FrameLayout.LayoutParams.MATCH_PARENT,
-                    FrameLayout.LayoutParams.MATCH_PARENT,
-                )
-                defaultSettings()
-                configure(this)
+            try {
+                (factory() ?: WebView(context)).apply {
+                    webview = this
+                    // We want the modifier to determine the size so the WebView should match the parent
+                    this.layoutParams = FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                    )
+                    defaultSettings()
+                    configure(this)
+                }
+            } catch (t: Throwable) {
+                Timber.e(t, "Failed to create WebView, the system WebView may be misconfigured")
+                onWebViewCreationFailed(t)
+                // AndroidView requires a non-null View; return an empty placeholder
+                FrameLayout(context)
             }
         },
-        update = { webView ->
+        update = { view ->
             nightModeTheme?.let {
-                webView.settings.setNightModeTheme(it, uiMode)
+                if (view is WebView) {
+                    view.settings.setNightModeTheme(it, uiMode)
+                }
             }
         },
         modifier = modifier.testTag(HA_WEBVIEW_TAG),
         onRelease = {
             Timber.d("onRelease WebView, stopping loading")
-            it.stopLoading()
+            (it as? WebView)?.stopLoading()
             webview = null
         },
     )

@@ -361,4 +361,31 @@ class ConnectionViewModelTest {
         // Then: repository method was called for each click
         verify(exactly = 2) { connectivityCheckRepository.runChecks(rawUrl) }
     }
+
+    @Test
+    fun `Given a working state when onWebViewCreationFailed is called then errorFlow emits WebViewCreationError and connectivity checks run`() = runTest {
+        // Given
+        val rawUrl = "http://homeassistant.local:8123"
+        val connectivityFlow = MutableSharedFlow<ConnectivityCheckState>()
+        every { connectivityCheckRepository.runChecks(rawUrl) } returns connectivityFlow
+
+        val viewModel = ConnectionViewModel(rawUrl, webViewClientFactory, connectivityCheckRepository)
+        advanceUntilIdle()
+
+        assertNull(viewModel.errorFlow.value)
+
+        // When
+        val exception = UnsatisfiedLinkError("dlopen failed: libwebviewchromium.so is 32-bit")
+        viewModel.onWebViewCreationFailed(exception)
+        advanceUntilIdle()
+
+        // Then
+        val error = viewModel.errorFlow.value
+        assertNotNull(error)
+        assertTrue(error is FrontendConnectionError.UnrecoverableError.WebViewCreationError)
+        assertEquals(commonR.string.webview_creation_failed, error.message)
+        assertEquals("dlopen failed: libwebviewchromium.so is 32-bit", error.errorDetails)
+        assertEquals("WebViewCreationError", error.rawErrorType)
+        verify(exactly = 1) { connectivityCheckRepository.runChecks(rawUrl) }
+    }
 }

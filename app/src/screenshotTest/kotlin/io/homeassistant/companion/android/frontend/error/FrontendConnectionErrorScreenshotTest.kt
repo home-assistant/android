@@ -114,4 +114,24 @@ class FrontendConnectionErrorScreenshotTest {
             )
         }
     }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `FrontendConnectionErrorScreen with WebViewCreationError`() {
+        HAThemeForPreview {
+            FrontendConnectionErrorScreen(
+                url =
+                "http://super-long-url-to-see-how-it-displays-in-the-screenshot.org/path/1/home-assistant/io?external_auth=1",
+                error = FrontendConnectionError.UnrecoverableError.WebViewCreationError(
+                    message = commonR.string.webview_creation_failed,
+                    errorDetails = "dlopen failed: libwebviewchromium.so is 32-bit instead of 64-bit",
+                    rawErrorType = "UnsatisfiedLinkError",
+                ),
+                onOpenExternalLink = {},
+                connectivityCheckState = ConnectivityCheckState(),
+                actions = {},
+            )
+        }
+    }
 }
