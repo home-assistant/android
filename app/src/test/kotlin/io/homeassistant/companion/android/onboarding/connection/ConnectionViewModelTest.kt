@@ -212,6 +212,34 @@ class ConnectionViewModelTest {
     }
 
     @Test
+    fun `Given opaque auth callback uri when shouldRedirect then no event and returns false`() = runTest {
+        val stringUri = mockAuthCodeUri(
+            scheme = "homeassistant",
+            host = "auth-callback",
+            authCode = "test_auth_code",
+            isOpaque = true,
+        )
+
+        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository)
+
+        turbineScope {
+            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
+            val errorFlow = viewModel.errorFlow.testIn(backgroundScope)
+
+            assertNull(errorFlow.awaitItem())
+
+            val result = viewModel.webViewClient.shouldOverrideUrlLoading(
+                null,
+                stringUri,
+            )
+
+            assertFalse(result)
+            navigationEventsFlow.expectNoEvents()
+            errorFlow.expectNoEvents()
+        }
+    }
+
+    @Test
     fun `Given unmatching uri and webview not null when shouldRedirect is invoked then open in external browser and return true`() = runTest {
         val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository)
 
@@ -254,7 +282,7 @@ class ConnectionViewModelTest {
         assertEquals(errorClass.toString(), error.rawErrorType)
     }
 
-    private fun mockAuthCodeUri(scheme: String, host: String, authCode: String?): String {
+    private fun mockAuthCodeUri(scheme: String, host: String, authCode: String?, isOpaque: Boolean = false): String {
         val stringUri = "$scheme://$host${authCode?.let { "?code=$authCode" } ?: ""}"
         every { Uri.parse(stringUri) } answers {
             val uriString = firstArg<String>()
@@ -262,6 +290,7 @@ class ConnectionViewModelTest {
                 every { this@mockk.toString() } returns uriString
                 every { this@mockk.scheme } returns scheme
                 every { this@mockk.host } returns host
+                every { this@mockk.isOpaque } returns isOpaque
                 every { getQueryParameter("code") } returns authCode
             }
         }
