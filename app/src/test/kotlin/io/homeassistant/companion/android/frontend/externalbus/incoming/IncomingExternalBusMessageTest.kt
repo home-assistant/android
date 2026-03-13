@@ -54,6 +54,16 @@ class IncomingExternalBusMessageTest {
     }
 
     @Test
+    fun `Given voice_device_settings-show JSON then parses to OpenVoiceDeviceSettingsMessage`() {
+        val json = """{"type":"voice_device_settings/show","id":5}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(OpenVoiceDeviceSettingsMessage::class.java, message)
+        assertEquals(5, (message as OpenVoiceDeviceSettingsMessage).id)
+    }
+
+    @Test
     fun `Given assist-show JSON then parses to OpenAssistMessage with payload`() {
         val json = """{"type":"assist/show","id":7,"payload":{"pipeline_id":"abc","start_listening":false}}"""
 

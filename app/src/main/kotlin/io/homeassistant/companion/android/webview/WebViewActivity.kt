@@ -767,7 +767,7 @@ class WebViewActivity :
                         MatterThreadStep.THREAD_EXPORT_TO_SERVER_MATTER,
                         MatterThreadStep.THREAD_EXPORT_TO_SERVER_ONLY,
                         MatterThreadStep.MATTER_IN_PROGRESS,
-                        -> {
+                            -> {
                             presenter.getMatterThreadIntent()?.let { intentSender ->
                                 commissionMatterDevice.launch(IntentSenderRequest.Builder(intentSender).build())
                             }
@@ -985,6 +985,13 @@ class WebViewActivity :
                                 "theme-update" -> getAndSetStatusBarNavigationBarColors()
                                 "entity/add_to/get_actions" -> getActions(json)
                                 "entity/add_to" -> addEntityTo(json)
+                                "voice_device_settings/show" -> startActivity(
+                                    SettingsActivity.newInstance(
+                                        this@WebViewActivity,
+                                        SettingsActivity.Deeplink.AssistSettings,
+                                    ),
+                                )
+
                                 else -> presenter.onExternalBusMessage(json)
                             }
                         }
@@ -1189,12 +1196,12 @@ class WebViewActivity :
                 getString(
                     R.string.screen_orientation_option_array_value_portrait,
                 ),
-                -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                    -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
                 getString(
                     R.string.screen_orientation_option_array_value_landscape,
                 ),
-                -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                    -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
                 else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
             }

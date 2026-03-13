@@ -76,6 +76,7 @@ class ExternalConfigResponse(
         "downloadFileSupported" to true,
         "appVersion" to appVersion.value,
         "hasEntityAddTo" to true,
+        "hasVoiceDeviceSettings" to true,
     ).toJsonObject(),
     callback = {
         Timber.d("Callback from external config (id=$id): $it")
