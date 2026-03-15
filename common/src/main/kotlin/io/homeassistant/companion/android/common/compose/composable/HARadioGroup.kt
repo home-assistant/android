@@ -28,6 +28,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import io.homeassistant.companion.android.common.compose.theme.HABorderWidth
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HARadius
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
@@ -154,7 +155,7 @@ private fun HARadioButton(
         modifier
             .fillMaxWidth()
             .border(
-                width = 1.dp,
+                width = HABorderWidth.S,
                 color = LocalHAColorScheme.current.colorBorderNeutralQuiet,
                 shape = shape,
             )
