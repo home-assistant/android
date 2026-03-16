@@ -1,9 +1,9 @@
-package io.homeassistant.companion.android.frontend.permissions
+package io.homeassistant.companion.android.common.util
 
 /**
  * Provides the current state of notification permissions.
  */
-internal fun interface NotificationStatusProvider {
+fun interface NotificationStatusProvider {
 
     /**
      * Checks whether notifications are enabled for the app.
