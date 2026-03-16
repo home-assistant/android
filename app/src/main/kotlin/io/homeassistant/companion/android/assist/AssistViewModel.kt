@@ -197,7 +197,7 @@ class AssistViewModel @Inject constructor(
                 AssistInputMode.VOICE_ACTIVE,
                 AssistInputMode.BLOCKED,
                 null,
-                    -> false
+                -> false
             }
             if (!shouldRun || isPlayingAudio) return false
 
@@ -452,7 +452,7 @@ class AssistViewModel @Inject constructor(
 
                 is AssistEvent.PipelineEnded,
                 is AssistEvent.PlaybackFinished,
-                    -> restartInactivityTimer()
+                -> restartInactivityTimer()
 
                 is AssistEvent.ContinueConversation -> onMicrophoneInput()
                 is AssistEvent.Dismiss -> shouldFinish = true
