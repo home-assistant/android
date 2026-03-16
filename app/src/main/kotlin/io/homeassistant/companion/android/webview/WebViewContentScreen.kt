@@ -31,7 +31,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -61,6 +60,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
+import io.homeassistant.companion.android.common.compose.composable.rememberHAModalBottomSheetState
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HATheme
@@ -222,7 +222,7 @@ private fun SafeHAWebView(
 @Composable
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 private fun NotificationPermission(onPermissionResult: (Boolean) -> Unit) {
-    val bottomSheetState = rememberStandardBottomSheetState(skipHiddenState = false)
+    val bottomSheetState = rememberHAModalBottomSheetState()
     val coroutineScope = rememberCoroutineScope()
 
     // Track whether the bottom sheet has been dismissed to completely remove it from composition.
