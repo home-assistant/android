@@ -139,20 +139,23 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
 
     private suspend fun shouldRunForServer(serverId: Int): Boolean {
         val setting = settingsDao.get(serverId)?.websocketSetting ?: DEFAULT_WEBSOCKET_SETTING
-        val isHome = serverManager.connectionStateProvider(serverId).isInternal(requiresUrl = false)
+        if (setting == WebsocketSetting.NEVER) return false
 
-        // Check for connectivity but not internet access, based on WorkManager's NetworkConnectedController API <26
-        val powerManager = applicationContext.getSystemService<PowerManager>()!!
-        val displayOff = !powerManager.isInteractive
-
-        return when {
-            (setting == WebsocketSetting.NEVER) -> false
-            (!applicationContext.hasActiveConnection()) -> false
-            !serverManager.isRegistered() -> false
-            (displayOff && setting == WebsocketSetting.SCREEN_ON) -> false
-            (!isHome && setting == WebsocketSetting.HOME_WIFI) -> false
-            else -> true
+        if (!applicationContext.hasActiveConnection() || !serverManager.isRegistered()) {
+            return false
         }
+
+        if (setting == WebsocketSetting.SCREEN_ON) {
+            val displayOff = applicationContext.getSystemService<PowerManager>()?.isInteractive == false
+            if (displayOff) return false
+        }
+
+        if (setting == WebsocketSetting.HOME_WIFI) {
+            val isHome = serverManager.connectionStateProvider(serverId).isInternal(requiresUrl = false)
+            if (!isHome) return false
+        }
+
+        return true
     }
 
     private suspend fun manageServerJobs(jobs: MutableMap<Int, Job>, coroutineScope: CoroutineScope): Boolean {
