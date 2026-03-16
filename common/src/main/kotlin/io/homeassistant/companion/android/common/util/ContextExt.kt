@@ -92,10 +92,7 @@ fun Context.isIgnoringBatteryOptimizations(): Boolean {
         ?: false
 }
 
-suspend fun Context.openUri(
-    uri: String,
-    onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
-) {
+suspend fun Context.openUri(uri: String, onShowSnackbar: suspend (message: String, action: String?) -> Boolean) {
     try {
         AndroidUriHandler(this).openUri(uri)
     } catch (e: IllegalArgumentException) {

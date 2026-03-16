@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.launch.link
 
-import dagger.hilt.android.testing.HiltTestApplication
 import androidx.core.net.toUri
+import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.mockk.coEvery

@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 private object HAColors {
     val Black = Color(0xFF000000)
     val White = Color(0xFFFFFFFF)
+
     // Primary
     val Primary05 = Color(0xFF001721)
     val Primary10 = Color(0xFF002E3E)

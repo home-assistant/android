@@ -208,7 +208,6 @@ class ServerConnectionStateProviderImpl @AssistedInject constructor(
             context.unregisterReceiver(receiver)
         }
     }
-
 }
 
 private fun HttpUrl.buildWebhookUrl(webhookId: String): HttpUrl {
