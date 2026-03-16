@@ -64,7 +64,6 @@ class WakeWordAssistAudioStrategyTest {
         )
     }
 
-
     @Test
     fun `Given recorder emitting audio When audioData collected Then emits ShortArray directly`() = runTest {
         val expected = shortArrayOf(1, 2, 3)
@@ -137,7 +136,6 @@ class WakeWordAssistAudioStrategyTest {
     @Test
     fun `Given listener running When wake word detected Then flow emits wake word phrase`() = runTest {
         coEvery { assistConfigManager.getAvailableModels() } returns availableModels
-
 
         strategy.wakeWordDetected.test {
             // Simulate the listener detecting a wake word

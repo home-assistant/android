@@ -282,13 +282,12 @@ class VoiceAudioRecorderTest {
      * Creates a mock [AudioRecord] that continuously returns [data] on every read.
      * Suitable for shared flow tests where the upstream must keep emitting.
      */
-    private fun createMockAudioRecordContinuous(data: ShortArray): AudioRecord =
-        mockk(relaxed = true) {
-            every { state } returns AudioRecord.STATE_INITIALIZED
-            every { read(any<ShortArray>(), eq(0), any()) } answers {
-                val buffer = firstArg<ShortArray>()
-                data.copyInto(buffer)
-                data.size
-            }
+    private fun createMockAudioRecordContinuous(data: ShortArray): AudioRecord = mockk(relaxed = true) {
+        every { state } returns AudioRecord.STATE_INITIALIZED
+        every { read(any<ShortArray>(), eq(0), any()) } answers {
+            val buffer = firstArg<ShortArray>()
+            data.copyInto(buffer)
+            data.size
         }
+    }
 }

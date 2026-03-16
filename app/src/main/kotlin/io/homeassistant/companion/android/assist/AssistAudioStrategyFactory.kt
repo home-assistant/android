@@ -39,21 +39,20 @@ class AssistAudioStrategyFactory @Inject constructor(
      *   the matching wake word model from available models
      * @return The configured [AssistAudioStrategy]
      */
-    fun create(context: Context, wakeWordPhrase: String?): AssistAudioStrategy =
-        if (wakeWordPhrase != null) {
-            WakeWordAssistAudioStrategy(
-                voiceAudioRecorder = voiceAudioRecorder,
-                wakeWordListenerFactory = wakeWordListenerFactory,
-                assistConfigManager = assistConfigManager,
-                wakeWordPhrase = wakeWordPhrase,
-                onListenerStopped = {
-                    AssistVoiceInteractionService.resumeListening(context)
-                },
-            )
-        } else {
-            DefaultAssistAudioStrategy(
-                voiceAudioRecorder = voiceAudioRecorder,
-                audioManager = context.getSystemService(),
-            )
-        }
+    fun create(context: Context, wakeWordPhrase: String?): AssistAudioStrategy = if (wakeWordPhrase != null) {
+        WakeWordAssistAudioStrategy(
+            voiceAudioRecorder = voiceAudioRecorder,
+            wakeWordListenerFactory = wakeWordListenerFactory,
+            assistConfigManager = assistConfigManager,
+            wakeWordPhrase = wakeWordPhrase,
+            onListenerStopped = {
+                AssistVoiceInteractionService.resumeListening(context)
+            },
+        )
+    } else {
+        DefaultAssistAudioStrategy(
+            voiceAudioRecorder = voiceAudioRecorder,
+            audioManager = context.getSystemService(),
+        )
+    }
 }

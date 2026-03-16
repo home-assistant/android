@@ -341,7 +341,9 @@ class AssistViewModelBaseTest {
             override suspend fun audioData() = MutableSharedFlow<ShortArray>()
             override val wakeWordDetected: Flow<String> = emptyFlow()
             override fun requestFocus() {}
-            override fun abandonFocus() { focusAbandoned = true }
+            override fun abandonFocus() {
+                focusAbandoned = true
+            }
         }
         val externalVm = TestAssistViewModel(
             serverManager = serverManager,

@@ -139,10 +139,7 @@ class WakeWordListener(
         return microWakeWord
     }
 
-    private suspend fun runDetectionLoop(
-        modelConfig: MicroWakeWordModelConfig,
-        microWakeWord: MicroWakeWord,
-    ) {
+    private suspend fun runDetectionLoop(modelConfig: MicroWakeWordModelConfig, microWakeWord: MicroWakeWord) {
         var cooldownChunksRemaining = 0
 
         voiceAudioRecorder.audioData().collect { buffer ->
