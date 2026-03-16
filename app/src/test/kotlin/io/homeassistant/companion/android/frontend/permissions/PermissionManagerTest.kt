@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.frontend.permissions
 
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.NotificationStatusProvider
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
@@ -40,7 +41,7 @@ class PermissionManagerTest {
         return PermissionManager(
             serverManager = serverManager,
             settingsDao = settingsDao,
-            hasFcmPushSupport = hasFcmPushSupport,
+            fcmSupport = hasFcmPushSupport,
             notificationStatusProvider = notificationStatusProvider,
         )
     }

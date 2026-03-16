@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.frontend.permissions
 
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.NotificationStatusProvider
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
@@ -16,7 +17,7 @@ import javax.inject.Inject
 internal class PermissionManager @Inject constructor(
     private val serverManager: ServerManager,
     private val settingsDao: SettingsDao,
-    @HasFcmPushSupport private val hasFcmPushSupport: Boolean,
+    @FcmSupport private val fcmSupport: Boolean,
     private val notificationStatusProvider: NotificationStatusProvider,
 ) {
 
@@ -38,7 +39,7 @@ internal class PermissionManager @Inject constructor(
         val shouldAskNotificationPermission = serverManager.integrationRepository(serverId)
             .shouldAskNotificationPermission()
 
-        if (isPermissionAlreadyGranted && hasFcmPushSupport) {
+        if (isPermissionAlreadyGranted && fcmSupport) {
             serverManager.integrationRepository(serverId).setAskNotificationPermission(false)
             return false
         }
@@ -57,7 +58,7 @@ internal class PermissionManager @Inject constructor(
      * @param granted Whether the user granted the notification permission
      */
     suspend fun onNotificationPermissionResult(serverId: Int, granted: Boolean) {
-        if (granted && !hasFcmPushSupport) {
+        if (granted && !fcmSupport) {
             settingsDao.insert(
                 Setting(
                     id = serverId,

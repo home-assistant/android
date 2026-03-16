@@ -11,4 +11,4 @@ import javax.inject.Qualifier
  */
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
-internal annotation class HasFcmPushSupport
+internal annotation class FcmSupport
