@@ -18,11 +18,21 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import dagger.Lazy
 import java.io.File
 import java.util.concurrent.Executors
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import org.chromium.net.CronetEngine
 import timber.log.Timber
+
+/**
+ * Connection and read timeout for Cronet and HttpEngine data sources.
+ *
+ * Increased from the default 8 seconds to accommodate streams that may remain idle
+ * before sending data, such as Assist TTS where the stream stays open until the user speaks.
+ * With the default timeout, the connection would be closed even though the stream is still alive.
+ */
+private val DATA_SOURCE_TIMEOUT = 30.seconds
 
 /**
  * Initializes and returns an ExoPlayer instance optimized for live streaming,
@@ -90,7 +100,10 @@ internal fun createDataSourceFactory(context: Context, okHttpClientProvider: Laz
             Timber.i("Using CronetDataSource for media")
             // assumed to be singleton scoped, so app lifetime for executor
             val singleThreadExecutor = Executors.newSingleThreadExecutor()
+            val timeout = DATA_SOURCE_TIMEOUT.inWholeMilliseconds.toInt()
             CronetDataSource.Factory(cronetEngine, singleThreadExecutor)
+                .setConnectionTimeoutMs(timeout)
+                .setReadTimeoutMs(timeout)
         } else {
             // Reuse OkHttpClient instance for Http/2 support
             Timber.w("Failed to build cronet engine fallback to OkHttpDataSource")
@@ -129,7 +142,10 @@ private fun buildHttpEngineFactory(context: Context): DataSource.Factory? {
         Timber.i("Using HttpEngineDataSource for media")
         // assumed to be singleton scoped, so app lifetime for executor
         val singleThreadExecutor = Executors.newSingleThreadExecutor()
+        val timeout = DATA_SOURCE_TIMEOUT.inWholeMilliseconds.toInt()
         HttpEngineDataSource.Factory(httpEngine, singleThreadExecutor)
+            .setConnectionTimeoutMs(timeout)
+            .setReadTimeoutMs(timeout)
     } else {
         null
     }

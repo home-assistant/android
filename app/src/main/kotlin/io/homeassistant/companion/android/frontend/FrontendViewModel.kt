@@ -254,12 +254,23 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 _navigationEvents.tryEmit(FrontendNavigationEvent.NavigateToSettings)
             }
 
+            is FrontendHandlerEvent.ShowAssist -> {
+                _navigationEvents.tryEmit(
+                    FrontendNavigationEvent.NavigateToAssist(
+                        serverId = _viewState.value.serverId,
+                        pipelineId = result.pipelineId,
+                        startListening = result.startListening,
+                    ),
+                )
+            }
+
             is FrontendHandlerEvent.AuthError -> {
                 onError(result.error)
             }
 
             is FrontendHandlerEvent.ConfigSent,
-            is FrontendHandlerEvent.UnknownMessage -> {
+            is FrontendHandlerEvent.UnknownMessage,
+            -> {
                 // No-op
             }
         }

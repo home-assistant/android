@@ -8,6 +8,7 @@ import io.homeassistant.companion.android.assist.service.AssistVoiceInteractionS
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.util.SuspendLazy
+import io.homeassistant.companion.android.microfrontend.isMicroFrontendSupported
 import javax.inject.Inject
 
 /**
@@ -15,7 +16,15 @@ import javax.inject.Inject
  */
 interface AssistConfigManager {
     /**
-     * Returns a list of all available wake word models.
+     * Returns whether the device supports wake word detection.
+     *
+     * Wake word detection requires the MicroFrontend native library, which is only
+     * available on 64-bit architectures (arm64-v8a, x86_64).
+     */
+    fun isWakeWordSupported(): Boolean
+
+    /**
+     * Returns a list of all available wake word models. On unsupported devices, an empty list is returned.
      */
     suspend fun getAvailableModels(): List<MicroWakeWordModelConfig>
 
@@ -33,10 +42,8 @@ interface AssistConfigManager {
     suspend fun setWakeWordEnabled(enabled: Boolean)
 
     /**
-     * Returns the currently selected wake word model.
-     *
-     * Returns null if no model is selected or if the previously selected model
-     * is no longer available.
+     * Returns the currently selected wake word model or null if no model is selected
+     * or the previously selected model is no longer available.
      */
     suspend fun getSelectedWakeWordModel(): MicroWakeWordModelConfig?
 
@@ -57,7 +64,12 @@ class AssistConfigManagerImpl @Inject constructor(
 
     private val models = SuspendLazy { MicroWakeWordModelConfig.loadAvailableModels(context) }
 
-    override suspend fun getAvailableModels(): List<MicroWakeWordModelConfig> = models.get()
+    override fun isWakeWordSupported(): Boolean = isMicroFrontendSupported
+
+    override suspend fun getAvailableModels(): List<MicroWakeWordModelConfig> {
+        if (!isWakeWordSupported()) return emptyList()
+        return models.get()
+    }
 
     override suspend fun isWakeWordEnabled(): Boolean = prefsRepository.isWakeWordEnabled()
 

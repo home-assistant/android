@@ -1,6 +1,21 @@
 package io.homeassistant.companion.android.microfrontend
 
+import android.os.Build
 import timber.log.Timber
+
+/** ABIs for which the native `libmicrofrontend.so` is bundled. */
+private val SUPPORTED_ABIS = setOf("arm64-v8a", "x86_64")
+
+/**
+ * Checks whether the current device supports the MicroFrontend native library.
+ *
+ * The native library is only built for 64-bit architectures (arm64-v8a and x86_64).
+ * Devices running 32-bit ABIs (armeabi-v7a, x86) cannot use MicroFrontend.
+ * This limitation is due to the use of LibRT that is only built for 64-bit.
+ *
+ * @return true if at least one of the device's supported ABIs has a bundled native library
+ */
+val isMicroFrontendSupported: Boolean by lazy { Build.SUPPORTED_ABIS.any { it in SUPPORTED_ABIS } }
 
 /**
  * JNI wrapper for TFLite Micro Frontend audio feature extraction.
@@ -20,11 +35,16 @@ import timber.log.Timber
  * internal state for noise reduction and PCAN, so each thread should
  * use its own instance.
  *
+ * Callers should check [isMicroFrontendSupported] before constructing an instance.
+ * On unsupported architectures, the native library is not bundled and class loading
+ * will fail with [UnsatisfiedLinkError].
+ *
  * Thanks to [brownard](https://github.com/brownard/Ava) for the inspiration on the native implementation.
  *
  * @param stepSizeMs Step size between frames in milliseconds
  * @param sampleRate Audio sample rate in Hz
  * @see FeatureExtractor
+ * @see isMicroFrontendSupported
  */
 class MicroFrontend(private val stepSizeMs: Int, private val sampleRate: Int = DEFAULT_SAMPLE_RATE) : FeatureExtractor {
 
@@ -80,6 +100,11 @@ class MicroFrontend(private val stepSizeMs: Int, private val sampleRate: Int = D
         const val DEFAULT_SAMPLE_RATE = 16000
 
         init {
+            check(isMicroFrontendSupported) {
+                "MicroFrontend native library is not available for this device's ABIs: " +
+                    "${Build.SUPPORTED_ABIS.toList()}. " +
+                    "Callers must check isMicroFrontendSupported before using MicroFrontend"
+            }
             System.loadLibrary("microfrontend")
             Timber.d("Loaded microfrontend native library")
         }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="aa_launch_native">Native mode</string>
     <string name="aa_driving_optimized_change">Use Home Assistant in drive mode?</string>
     <string name="aa_navigation">Navigation</string>
@@ -36,6 +36,7 @@
     <string name="always_show_first_view_on_app_start">Always show first view when opening app</string>
     <string name="always_show_first_view_on_app_start_summary">The first view of the default dashboard is shown as soon as the app is opened</string>
     <string name="app_name">Home Assistant</string>
+    <string name="play_services_unavailable_full_flavor">Google Play services are unavailable. This version of the app may crash. Use the minimal version instead.</string>
     <string name="app_version_info">App version info</string>
     <string name="application_version">Application version</string>
     <string name="attempting_authentication">Authenticating…</string>
@@ -837,8 +838,8 @@
     <string name="state_jammed">Jammed</string>
     <string name="state_locked">Locked</string>
     <string name="state_locking">Locking</string>
-    <string name="state_off">Off</string>
-    <string name="state_on">On</string>
+    <string name="state_off" tools:override="true">Off</string>
+    <string name="state_on" tools:override="true">On</string>
     <string name="state_open">Open</string>
     <string name="state_opening">Opening</string>
     <string name="state_paused">Paused</string>
@@ -1217,6 +1218,8 @@
     <string name="assist_wake_word_test_hint">Say \"%s\" to test</string>
     <string name="assist_wake_word_detected">Wake word detected!</string>
     <string name="assist_wake_word_battery_warning">Wake word detection runs entirely on your device, no network connection required. It continuously listens for your wake word, which will increase battery usage.</string>
+    <string name="assist_wake_word_unsupported_device">Wake word detection is not available on this device due to hardware limitations.</string>
+    <string name="assist_wake_word_missing_play_services">Google Play Services is required to enable wake word detection.</string>
     <string name="assist_permission_microphone_required">Requires \'Microphone\' permission</string>
     <string name="not_registered">Please open the Home Assistant app and log in to start using Assist</string>
     <string name="ha_assist">HA: Assist</string>
@@ -1464,4 +1467,5 @@
     <string name="entity_picker_no_entity_found_for">No entity found for %s</string>
     <string name="fail_to_navigate_to_uri">No app available to open %s</string>
     <string name="experimental">Experimental</string>
+    <string name="learn_more">Learn more</string>
 </resources>

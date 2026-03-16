@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
+import io.homeassistant.companion.android.util.PlayServicesAvailability
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Job
@@ -22,21 +23,26 @@ import kotlinx.coroutines.launch
  */
 data class AssistSettingsUiState(
     val isLoading: Boolean = true,
+    val showHardwareNotSupportedHint: Boolean = false,
+    val showMissingPlayServicesHint: Boolean = false,
     val isDefaultAssistant: Boolean = false,
     val isWakeWordEnabled: Boolean = false,
     val selectedWakeWordModel: MicroWakeWordModelConfig? = null,
     val availableModels: List<MicroWakeWordModelConfig> = emptyList(),
     val isTestingWakeWord: Boolean = false,
     val wakeWordDetected: Boolean = false,
-)
+) {
+    val isWakeWordSupported = !showHardwareNotSupportedHint && !showMissingPlayServicesHint
+}
 
 @VisibleForTesting
 val WAKE_WORD_TEST_DEBOUNCE = 3.seconds
 
 @HiltViewModel
-class AssistSettingsViewModel @Inject constructor(
+class AssistSettingsViewModel @Inject internal constructor(
     private val defaultAssistantManager: DefaultAssistantManager,
     private val assistConfigManager: AssistConfigManager,
+    private val playServicesAvailability: PlayServicesAvailability,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AssistSettingsUiState())
@@ -54,9 +60,11 @@ class AssistSettingsViewModel @Inject constructor(
             var isEnabled = assistConfigManager.isWakeWordEnabled()
             val selectedModel = assistConfigManager.getSelectedWakeWordModel() ?: models.firstOrNull()
             val isDefaultAssistant = defaultAssistantManager.isDefaultAssistant()
+            val missingPlayServices = playServicesAvailability.isMissingRequiredPlayServices()
+            val isHWWakeWordSupported = assistConfigManager.isWakeWordSupported()
+            val isSupported = isHWWakeWordSupported && !missingPlayServices
 
-            if (!isDefaultAssistant && isEnabled) {
-                // The assistant has changed and wake word cannot be enabled
+            if ((!isDefaultAssistant || !isSupported) && isEnabled) {
                 assistConfigManager.setWakeWordEnabled(false)
                 isEnabled = false
             }
@@ -64,6 +72,8 @@ class AssistSettingsViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     isLoading = false,
+                    showHardwareNotSupportedHint = !isHWWakeWordSupported,
+                    showMissingPlayServicesHint = missingPlayServices,
                     isDefaultAssistant = defaultAssistantManager.isDefaultAssistant(),
                     isWakeWordEnabled = isEnabled,
                     selectedWakeWordModel = selectedModel,

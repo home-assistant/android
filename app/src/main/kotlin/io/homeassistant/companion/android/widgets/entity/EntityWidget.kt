@@ -37,7 +37,7 @@ class EntityWidget : BaseWidgetProvider<StaticWidgetEntity, StaticWidgetDao>() {
         internal const val TOGGLE_ENTITY =
             "io.homeassistant.companion.android.widgets.entity.EntityWidget.TOGGLE_ENTITY"
 
-        private data class ResolvedText(val text: CharSequence?, val exception: Boolean = false)
+        private data class ResolvedText(val text: CharSequence?, val error: Boolean = false)
     }
 
     override fun getWidgetProvider(context: Context): ComponentName = ComponentName(context, EntityWidget::class.java)
@@ -120,7 +120,7 @@ class EntityWidget : BaseWidgetProvider<StaticWidgetEntity, StaticWidgetDao>() {
                 )
                 setViewVisibility(
                     R.id.widgetStaticError,
-                    if (resolvedText.exception) View.VISIBLE else View.GONE,
+                    if (resolvedText.error) View.VISIBLE else View.GONE,
                 )
                 setOnClickPendingIntent(
                     R.id.widgetTextLayout,
@@ -154,7 +154,6 @@ class EntityWidget : BaseWidgetProvider<StaticWidgetEntity, StaticWidgetDao>() {
         appWidgetId: Int,
     ): ResolvedText {
         var entity: Entity? = null
-        var entityCaughtException = false
         try {
             entity = if (suggestedEntity != null && suggestedEntity.entityId == entityId) {
                 suggestedEntity
@@ -165,7 +164,6 @@ class EntityWidget : BaseWidgetProvider<StaticWidgetEntity, StaticWidgetDao>() {
             throw e
         } catch (e: Exception) {
             Timber.e(e, "Unable to fetch entity")
-            entityCaughtException = true
         }
         val entityOptions = if (
             entity?.canSupportPrecision() == true &&
@@ -182,20 +180,26 @@ class EntityWidget : BaseWidgetProvider<StaticWidgetEntity, StaticWidgetDao>() {
         } else {
             null
         }
+
+        if (entity == null) {
+            return ResolvedText(dao.get(appWidgetId)?.lastUpdate, true)
+        }
+
         if (attributeIds == null) {
+            val lastUpdate = entity.friendlyState(context, entityOptions)
             dao.updateWidgetLastUpdate(
                 appWidgetId,
-                entity?.friendlyState(context, entityOptions) ?: dao.get(appWidgetId)?.lastUpdate ?: "",
+                lastUpdate,
             )
-            return ResolvedText(dao.get(appWidgetId)?.lastUpdate, entityCaughtException)
+            return ResolvedText(lastUpdate)
         }
 
         try {
-            val fetchedAttributes = entity?.attributes as? Map<*, *> ?: mapOf<String, String>()
+            val fetchedAttributes = entity.attributes as? Map<*, *> ?: mapOf<String, String>()
             val attributeValues =
-                attributeIds.split(",").map { id -> fetchedAttributes[id]?.toString() }
+                attributeIds.split(",").mapNotNull { id -> fetchedAttributes[id]?.toString() }
             val lastUpdate =
-                entity?.friendlyState(
+                entity.friendlyState(
                     context,
                     entityOptions,
                 ).plus(if (attributeValues.isNotEmpty()) stateSeparator else "")
