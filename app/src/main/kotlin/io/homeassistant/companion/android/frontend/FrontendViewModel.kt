@@ -269,7 +269,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             }
 
             is FrontendHandlerEvent.ConfigSent,
-            is FrontendHandlerEvent.UnknownMessage -> {
+            is FrontendHandlerEvent.UnknownMessage,
+            -> {
                 // No-op
             }
         }

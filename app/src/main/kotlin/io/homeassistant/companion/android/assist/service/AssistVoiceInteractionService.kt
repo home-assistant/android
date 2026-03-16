@@ -188,7 +188,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
 
     private fun onWakeWordDetected(model: MicroWakeWordModelConfig) {
         sendBroadcast(
-            Intent(ACTION_WAKE_WORD_DETECTED).setPackage(packageName)
+            Intent(ACTION_WAKE_WORD_DETECTED).setPackage(packageName),
         )
 
         Timber.i("Wake word '${model.wakeWord}' detected, launching Assist")

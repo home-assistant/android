@@ -376,7 +376,7 @@ class WakeWordListenerTest {
         fun `Given TFLite initialization fails when Play Services is unavailable then failed callback is invoked`() = runTest {
             var detectedCalled = false
             val listener = createListener(
-                onListenerFailed = { detectedCalled = true }
+                onListenerFailed = { detectedCalled = true },
             )
             val expectedException = TfLiteInitializeException(null, "Play Services is unavailable")
 
