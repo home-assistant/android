@@ -1501,7 +1501,9 @@ class WebViewActivity :
 
     override fun loadUrl(url: Uri, keepHistory: Boolean, openInApp: Boolean, serverHandleInsets: Boolean) {
         Timber.d(
-            "Loading ${sensitive(url.toString())} (keepHistory $keepHistory, openInApp $openInApp, serverHandleInsets $serverHandleInsets)",
+            "Loading ${sensitive(
+                url.toString(),
+            )} (keepHistory $keepHistory, openInApp $openInApp, serverHandleInsets $serverHandleInsets)",
         )
         this.serverHandleInsets.value = serverHandleInsets
         if (openInApp) {

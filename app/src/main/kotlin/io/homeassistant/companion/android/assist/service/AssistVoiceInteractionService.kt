@@ -196,7 +196,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     private fun onWakeWordDetected(model: MicroWakeWordModelConfig) {
         // Always broadcast for observers (e.g. settings test mode) regardless of debounce
         sendBroadcast(
-            Intent(ACTION_WAKE_WORD_DETECTED).setPackage(packageName)
+            Intent(ACTION_WAKE_WORD_DETECTED).setPackage(packageName),
         )
 
         val now = clock.now()
