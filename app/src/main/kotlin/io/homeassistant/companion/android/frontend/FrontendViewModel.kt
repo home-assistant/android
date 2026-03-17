@@ -96,7 +96,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     @OptIn(ExperimentalForInheritanceCoroutinesApi::class)
     private class ViewStateManager(
         initialState: FrontendViewState,
-        private val _state: MutableStateFlow<FrontendViewState> = MutableStateFlow(initialState)
+        private val _state: MutableStateFlow<FrontendViewState> = MutableStateFlow(initialState),
     ) : StateFlow<FrontendViewState> by _state.asStateFlow() {
 
         /**
@@ -107,7 +107,9 @@ internal class FrontendViewModel @VisibleForTesting constructor(
          */
         fun update(transform: (FrontendViewState) -> FrontendViewState) {
             _state.update { currentState ->
-                if (currentState is FrontendViewState.Error && currentState.error is FrontendConnectionError.UnrecoverableError) {
+                if (currentState is FrontendViewState.Error &&
+                    currentState.error is FrontendConnectionError.UnrecoverableError
+                ) {
                     Timber.w("Ignoring state transition: unrecoverable error present")
                     return
                 }

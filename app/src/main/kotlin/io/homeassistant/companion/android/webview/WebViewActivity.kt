@@ -119,7 +119,6 @@ import io.homeassistant.companion.android.common.util.runFragmentTransactionIfSt
 import io.homeassistant.companion.android.common.util.toJsonObject
 import io.homeassistant.companion.android.common.util.toJsonObjectOrNull
 import io.homeassistant.companion.android.database.authentication.Authentication
-import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
@@ -139,6 +138,7 @@ import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.homeassistant.companion.android.util.applyInsets
+import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
 import io.homeassistant.companion.android.util.hasNonRootPath
 import io.homeassistant.companion.android.util.hasSameOrigin
 import io.homeassistant.companion.android.util.isStarted

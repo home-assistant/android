@@ -58,10 +58,8 @@ sealed interface FrontendConnectionError {
          * problem. The recommended user action is to check and update the system WebView
          * via device settings.
          */
-        data class WebViewCreationError(
-            @StringRes override val message: Int,
-            val throwable: Throwable,
-        ) : UnrecoverableError {
+        data class WebViewCreationError(@StringRes override val message: Int, val throwable: Throwable) :
+            UnrecoverableError {
             override val title: Int = commonR.string.webview_creation_error_title
             override val errorDetails: String = throwable.message ?: throwable.toString()
             override val rawErrorType: String = throwable::class.toString()

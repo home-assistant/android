@@ -16,11 +16,11 @@ import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
-import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
 import io.homeassistant.companion.android.onboarding.connection.ConnectionErrorScreen
 import io.homeassistant.companion.android.onboarding.connection.ConnectionViewModel
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
+import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just

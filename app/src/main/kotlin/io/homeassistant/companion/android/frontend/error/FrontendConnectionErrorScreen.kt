@@ -50,9 +50,9 @@ import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
-import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
 import io.homeassistant.companion.android.onboarding.connection.ConnectivityChecksSection
 import io.homeassistant.companion.android.util.compose.HAPreviews
+import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
 import kotlinx.coroutines.launch
 
 private val MaxContentWidth = MaxButtonWidth

@@ -145,7 +145,9 @@ class FrontendConnectionErrorScreenshotTest {
                 url = BLANK_URL,
                 error = FrontendConnectionError.UnrecoverableError.WebViewCreationError(
                     message = commonR.string.webview_creation_failed,
-                    throwable = UnsatisfiedLinkError("dlopen failed: libwebviewchromium.so is 32-bit instead of 64-bit"),
+                    throwable = UnsatisfiedLinkError(
+                        "dlopen failed: libwebviewchromium.so is 32-bit instead of 64-bit",
+                    ),
                 ),
                 onOpenExternalLink = {},
                 connectivityCheckState = ConnectivityCheckState(),

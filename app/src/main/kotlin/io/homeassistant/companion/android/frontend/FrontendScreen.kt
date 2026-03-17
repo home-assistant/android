@@ -201,7 +201,7 @@ private fun StateOverlay(
     when (viewState) {
         is FrontendViewState.LoadServer,
         is FrontendViewState.Loading,
-            -> LoadingScreen(modifier = Modifier.background(LocalHAColorScheme.current.colorSurfaceDefault))
+        -> LoadingScreen(modifier = Modifier.background(LocalHAColorScheme.current.colorSurfaceDefault))
 
         is FrontendViewState.Content -> {
             // WebView is visible, no overlay needed
