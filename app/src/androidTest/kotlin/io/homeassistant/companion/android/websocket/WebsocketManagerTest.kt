@@ -111,7 +111,7 @@ class WebsocketManagerTest {
         every { context.hasActiveConnection() } returns true
         coEvery { entryPoint.serverManager.isRegistered() } returns false
 
-        val worker = spyk(TestListenableWorkerBuilder<WebsocketManager>(context).build())
+        val worker = TestListenableWorkerBuilder<WebsocketManager>(context).build()
         val result = worker.doWork()
 
         assertEquals(ListenableWorker.Result.success(), result)
