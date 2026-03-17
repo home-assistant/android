@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -30,7 +29,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -371,32 +369,21 @@ private fun SafeHAWebView(
                 )
             }
 
-            // In preview/screenshot mode, show a placeholder instead of WebView
-            // to avoid having issue with the javascript auto attach.
-            if (LocalInspectionMode.current) {
-                Text(
-                    text = "WebviewPlaceholder",
-                    modifier = Modifier
-                        .weight(1f)
-                        .background(Color.Transparent),
-                )
-            } else {
-                HAWebView(
-                    nightModeTheme = contentState?.nightModeTheme,
-                    modifier = Modifier
-                        .weight(1f)
-                        .background(Color.Transparent),
-                    configure = {
-                        onWebViewCreated(this)
-                        // Injecting the javascript interface should happen as early as possible in the process
-                        // even before loading the server URL to not miss any events from the frontend.
-                        frontendJsCallback.attachToWebView(this)
-                        this.webViewClient = webViewClient
-                    },
-                    onBackPressed = onBackClick,
-                    onWebViewCreationFailed = onWebViewCreationFailed,
-                )
-            }
+            HAWebView(
+                nightModeTheme = contentState?.nightModeTheme,
+                modifier = Modifier
+                    .weight(1f)
+                    .background(Color.Transparent),
+                configure = {
+                    onWebViewCreated(this)
+                    // Injecting the javascript interface should happen as early as possible in the process
+                    // even before loading the server URL to not miss any events from the frontend.
+                    frontendJsCallback.attachToWebView(this)
+                    this.webViewClient = webViewClient
+                },
+                onBackPressed = onBackClick,
+                onWebViewCreationFailed = onWebViewCreationFailed,
+            )
 
             // Right safe area
             if (!serverHandleInsets) {
