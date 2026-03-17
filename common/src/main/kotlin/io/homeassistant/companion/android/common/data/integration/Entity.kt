@@ -37,17 +37,16 @@ import timber.log.Timber
  * Validates a JSON element representing an entity state. Returns the string content if valid,
  * empty string if null, or empty string with a warning if the type is not a string.
  */
-private fun validateStateElement(element: JsonElement, entityId: String): String =
-    when (element) {
-        is JsonPrimitive if element.isString -> element.content
-        is JsonNull -> ""
-        else -> {
-            Timber.w(
-                "Entity $entityId state is not a String: $element. Please open an issue on the relevant integration.",
-            )
-            ""
-        }
+private fun validateStateElement(element: JsonElement, entityId: String): String = when (element) {
+    is JsonPrimitive if element.isString -> element.content
+    is JsonNull -> ""
+    else -> {
+        Timber.w(
+            "Entity $entityId state is not a String: $element. Please open an issue on the relevant integration.",
+        )
+        ""
     }
+}
 
 /**
  * Class-level serializer for [Entity] used to partially parse the JSON using a surrogate.
@@ -479,7 +478,9 @@ fun Entity.getIcon(context: Context): IIcon {
             state.ifBlank {
                 val attributeState = attributes["state"]
                 if (attributeState != null && attributeState !is String) {
-                    Timber.w("Entity $entityId has non-String state attribute: ${attributeState::class.simpleName}. Please open an issue on the relevant integration.")
+                    Timber.w(
+                        "Entity $entityId has non-String state attribute: ${attributeState::class.simpleName}. Please open an issue on the relevant integration.",
+                    )
                 }
                 attributeState as? String?
             }
@@ -627,7 +628,7 @@ fun Entity.getIcon(context: Context): IIcon {
                 "nitrogen_dioxide", "nitrogen_monoxide", "nitrogen_oxide", "ozone",
                 "pm1", "pm10", "pm25", "sulfur_dioxide", "volatile_organic_compounds",
                 "volatile_organic_compounds_parts",
-                    -> Icon3.cmd_molecule
+                -> Icon3.cmd_molecule
 
                 "ph" -> Icon3.cmd_ph
                 "power_factor" -> Icon.cmd_angle_acute
@@ -875,7 +876,7 @@ private fun sensorIcon(state: String?, entity: Entity): IIcon {
             "pm25",
             "sulphur_dioxide",
             "volatile_organic_compounds",
-                -> Icon3.cmd_molecule
+            -> Icon3.cmd_molecule
 
             "power_factor" -> Icon.cmd_angle_acute
             "precipitation" -> Icon3.cmd_weather_rainy
@@ -919,7 +920,7 @@ suspend fun Entity.onPressed(integrationRepository: IntegrationRepository) {
         "input_boolean",
         "script",
         "switch",
-            -> {
+        -> {
             if (state == "on") "turn_off" else "turn_on"
         }
 

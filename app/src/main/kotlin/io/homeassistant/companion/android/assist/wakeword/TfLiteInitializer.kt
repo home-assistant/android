@@ -19,7 +19,6 @@ interface TfLiteInitializer {
     suspend fun initialize(context: Context)
 }
 
-
 /**
  * Exception thrown when TFLite initialization fails with a well known unrecoverable reason,
  * such as unavailability of Google Play Services.

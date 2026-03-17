@@ -7,7 +7,6 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.database.sensor.toSensorsWithAttributes
 import java.util.concurrent.ConcurrentHashMap
@@ -52,11 +51,11 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_description_mic_muted,
             "mdi:microphone-off",
             updateType =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    SensorManager.BasicSensor.UpdateType.INTENT
-                } else {
-                    SensorManager.BasicSensor.UpdateType.WORKER
-                },
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                SensorManager.BasicSensor.UpdateType.INTENT
+            } else {
+                SensorManager.BasicSensor.UpdateType.WORKER
+            },
         )
         private val musicActive = SensorManager.BasicSensor(
             "music_active",
@@ -72,11 +71,11 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_description_speakerphone,
             "mdi:volume-high",
             updateType =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    SensorManager.BasicSensor.UpdateType.INTENT
-                } else {
-                    SensorManager.BasicSensor.UpdateType.WORKER
-                },
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                SensorManager.BasicSensor.UpdateType.INTENT
+            } else {
+                SensorManager.BasicSensor.UpdateType.WORKER
+            },
         )
         val volAlarm = SensorManager.BasicSensor(
             "volume_alarm",
@@ -390,7 +389,7 @@ class AudioSensorManager : SensorManager {
     private suspend fun updateVolumeSensor(
         context: Context,
         audioManager: AudioManager,
-        sensor: BasicSensor,
+        sensor: SensorManager.BasicSensor,
         streamType: Int,
     ) {
         if (!isEnabled(context, sensor)) {
@@ -436,7 +435,7 @@ class AudioSensorManager : SensorManager {
      */
     private suspend fun areAttributesOfSensorAlreadyForcedAtRuntimeOrMatching(
         context: Context,
-        sensor: BasicSensor,
+        sensor: SensorManager.BasicSensor,
         currentMin: Int,
         currentMax: Int,
     ): Boolean {
@@ -448,7 +447,8 @@ class AudioSensorManager : SensorManager {
             .getFull(sensor.id)
             .toSensorsWithAttributes()
 
-        if (sensorsWithAttributes.isNotEmpty() && sensorsWithAttributes.all { sensorWithAttributes ->
+        if (sensorsWithAttributes.isNotEmpty() &&
+            sensorsWithAttributes.all { sensorWithAttributes ->
                 val attributes = sensorWithAttributes.attributes
                 val storedMin = attributes
                     .firstOrNull { it.name == ATTRIBUTE_MIN }

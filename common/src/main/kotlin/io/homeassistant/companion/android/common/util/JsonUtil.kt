@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.util
 
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
+import io.homeassistant.companion.android.util.sensitive
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlinx.serialization.DeserializationStrategy
@@ -14,7 +15,6 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.mapSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import io.homeassistant.companion.android.util.sensitive
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonDecoder

@@ -19,7 +19,6 @@ import io.homeassistant.companion.android.common.util.AudioRecorder
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 

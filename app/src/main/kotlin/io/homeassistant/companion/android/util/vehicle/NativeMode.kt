@@ -44,7 +44,7 @@ fun startNativeActivity(carContext: CarContext) {
             ).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             },
-            options
+            options,
         )
         if (isAutomotive()) {
             finishCarApp()
