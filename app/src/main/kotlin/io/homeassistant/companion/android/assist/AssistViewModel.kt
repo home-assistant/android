@@ -70,6 +70,7 @@ class AssistViewModel @Inject constructor(
     var pendingWakeWordConfirmation by mutableStateOf(false)
         private set
 
+    private var startedFromWakeWord = false
     private var inactivityTimerJob: Job? = null
 
     fun onCreate(
@@ -82,6 +83,7 @@ class AssistViewModel @Inject constructor(
         viewModelScope.launch {
             this@AssistViewModel.hasPermission = hasPermission
             this@AssistViewModel.wakeWordPhrase = wakeWordPhrase
+            this@AssistViewModel.startedFromWakeWord = wakeWordPhrase != null
             serverId?.let {
                 filteredServerId = serverId
                 selectedServerId = serverId
@@ -186,9 +188,13 @@ class AssistViewModel @Inject constructor(
      * The timer only runs when the input mode is [AssistInputMode.VOICE_INACTIVE],
      * TTS audio is not currently playing, and the last conversation message is not a
      * placeholder (assistant finished processing).
+     *
+     * Disabled for non wake word sessions to avoid auto-closing the dialog while the user
+     * is interacting with hands.
      */
     private fun restartInactivityTimer() {
         inactivityTimerJob?.cancel()
+        if (!startedFromWakeWord) return
         fun isInactive(): Boolean {
             val shouldRun = when (inputMode) {
                 AssistInputMode.VOICE_INACTIVE -> true

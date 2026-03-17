@@ -110,14 +110,14 @@ class AssistViewModelTest {
         )
     }
 
-    private fun createAndInitialize(hasPermission: Boolean = false): AssistViewModel {
+    private fun createAndInitialize(hasPermission: Boolean = false, startedWithWakeWord: Boolean = false): AssistViewModel {
         val vm = createViewModel()
         vm.onCreate(
             hasPermission = hasPermission,
             serverId = null,
             pipelineId = null,
             startListening = null,
-            wakeWordPhrase = null,
+            wakeWordPhrase = if (startedWithWakeWord) "Okay Nabu" else null,
         )
         return vm
     }
@@ -197,8 +197,8 @@ class AssistViewModelTest {
         }
 
         @Test
-        fun `Given voice inactive mode and non-placeholder message when CLOSE_INACTIVE elapses then shouldFinish is true`() = runTest {
-            viewModel = createAndInitialize()
+        fun `Given started with wake word and voice inactive mode and non-placeholder message when CLOSE_INACTIVE elapses then shouldFinish is true`() = runTest {
+            viewModel = createAndInitialize(startedWithWakeWord = true)
             runCurrent()
 
             advanceTimeBy(CLOSE_INACTIVE)
@@ -305,8 +305,8 @@ class AssistViewModelTest {
         }
 
         @Test
-        fun `Given TEXT mode when switching back to VOICE_INACTIVE then timer restarts`() = runTest {
-            viewModel = createAndInitialize(hasPermission = true)
+        fun `Given started with wake word and TEXT mode when switching back to VOICE_INACTIVE then timer restarts`() = runTest {
+            viewModel = createAndInitialize(hasPermission = true, startedWithWakeWord = true)
             runCurrent()
 
             viewModel.onChangeInput() // VOICE_INACTIVE -> TEXT
@@ -345,10 +345,10 @@ class AssistViewModelTest {
         }
 
         @Test
-        fun `Given voice active mode when recording stops and response arrives then timer fires and shouldFinish is true`() = runTest {
+        fun `Given started with wake word and voice active mode when recording stops and response arrives then timer fires and shouldFinish is true`() = runTest {
             setupVoicePipeline()
 
-            viewModel = createAndInitialize(hasPermission = true)
+            viewModel = createAndInitialize(hasPermission = true, startedWithWakeWord = true)
             runCurrent()
 
             // VM is now VOICE_ACTIVE. Stop recording to transition to VOICE_INACTIVE.
@@ -426,11 +426,11 @@ class AssistViewModelTest {
         }
 
         @Test
-        fun `Given voice inactive mode and audio playing when playback stops then timer starts`() = runTest {
+        fun `Given started with wake word and voice inactive mode and audio playing when playback stops then timer starts`() = runTest {
             val playbackStates = MutableSharedFlow<PlaybackState>()
             setupVoicePipelineWithTts(playbackStates)
 
-            viewModel = createAndInitialize(hasPermission = true)
+            viewModel = createAndInitialize(hasPermission = true, startedWithWakeWord = true)
             runCurrent()
 
             // Stop recording to transition to VOICE_INACTIVE
@@ -466,13 +466,13 @@ class AssistViewModelTest {
         }
 
         @Test
-        fun `Given voice inactive mode when text input triggers a response then timer restarts`() = runTest {
+        fun `Given started with wake word and voice inactive mode when text input triggers a response then timer restarts`() = runTest {
             val textPipelineEvents = MutableSharedFlow<AssistPipelineEvent>()
             coEvery {
                 integrationRepository.getAssistResponse(any(), anyNullable(), anyNullable())
             } returns textPipelineEvents
 
-            viewModel = createAndInitialize()
+            viewModel = createAndInitialize(startedWithWakeWord = true)
             runCurrent()
 
             // Timer is running. Advance partway through.
@@ -516,6 +516,24 @@ class AssistViewModelTest {
             advanceTimeBy(1.seconds)
             runCurrent()
             assertTrue(viewModel.shouldFinish)
+        }
+
+        @Test
+        fun `Given not a wake word session when CLOSE_INACTIVE elapses then shouldFinish is false`() = runTest {
+            viewModel = createViewModel()
+            viewModel.onCreate(
+                hasPermission = false,
+                serverId = null,
+                pipelineId = null,
+                startListening = null,
+                wakeWordPhrase = null,
+            )
+            runCurrent()
+
+            advanceTimeBy(CLOSE_INACTIVE + 1.seconds)
+            runCurrent()
+
+            assertFalse(viewModel.shouldFinish)
         }
     }
 }
