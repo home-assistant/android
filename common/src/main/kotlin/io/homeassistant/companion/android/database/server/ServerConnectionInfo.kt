@@ -72,7 +72,9 @@ data class ServerConnectionInfo(
     internal val cloudHttpUrl: HttpUrl? by lazy(LazyThreadSafetyMode.PUBLICATION) { cloudUrl?.toHttpUrlOrNull() }
 
     @get:Ignore
-    internal val cloudhookHttpUrl: HttpUrl? by lazy(LazyThreadSafetyMode.PUBLICATION) { cloudhookUrl?.toHttpUrlOrNull() }
+    internal val cloudhookHttpUrl: HttpUrl? by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        cloudhookUrl?.toHttpUrlOrNull()
+    }
 
     @get:Ignore
     internal val httpUrls: List<HttpUrl> by lazy(LazyThreadSafetyMode.PUBLICATION) {

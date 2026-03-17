@@ -10,12 +10,12 @@ import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.di.OkHttpConfigurator
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import javax.inject.Singleton
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
-import javax.inject.Singleton
 
 /**
  * Provides shared HTTP infrastructure for communicating with Home Assistant servers.

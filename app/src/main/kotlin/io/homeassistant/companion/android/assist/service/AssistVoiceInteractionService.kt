@@ -220,7 +220,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     private fun onWakeWordDetected(model: MicroWakeWordModelConfig) {
         // Always broadcast for observers (e.g. settings test mode) regardless of debounce
         sendBroadcast(
-            Intent(ACTION_WAKE_WORD_DETECTED).setPackage(packageName)
+            Intent(ACTION_WAKE_WORD_DETECTED).setPackage(packageName),
         )
 
         val now = clock.now()
@@ -328,8 +328,10 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
 
         @VisibleForTesting
         const val ACTION_START_LISTENING = "io.homeassistant.companion.android.START_LISTENING"
+
         @VisibleForTesting
         const val ACTION_STOP_LISTENING = "io.homeassistant.companion.android.STOP_LISTENING"
+
         @VisibleForTesting
         const val ACTION_RESUME_LISTENING = "io.homeassistant.companion.android.RESUME_LISTENING"
 

@@ -67,6 +67,7 @@ class FrontendScreenTest {
                     onConfigureHomeNetwork = { _ -> },
                     onSecurityLevelHelpClick = {},
                     onShowSnackbar = { _, _ -> true },
+                    onWebViewCreationFailed = {},
                 )
             }
 
@@ -94,6 +95,7 @@ class FrontendScreenTest {
                     onConfigureHomeNetwork = { _ -> },
                     onSecurityLevelHelpClick = {},
                     onShowSnackbar = { _, _ -> true },
+                    onWebViewCreationFailed = {},
                 )
             }
 
@@ -135,6 +137,7 @@ class FrontendScreenTest {
                     onConfigureHomeNetwork = { _ -> },
                     onSecurityLevelHelpClick = {},
                     onShowSnackbar = { _, _ -> true },
+                    onWebViewCreationFailed = {},
                 )
             }
 
@@ -173,6 +176,7 @@ class FrontendScreenTest {
                     onConfigureHomeNetwork = { _ -> },
                     onSecurityLevelHelpClick = {},
                     onShowSnackbar = { _, _ -> true },
+                    onWebViewCreationFailed = {},
                 )
             }
 
@@ -212,6 +216,7 @@ class FrontendScreenTest {
                     onConfigureHomeNetwork = { _ -> },
                     onSecurityLevelHelpClick = {},
                     onShowSnackbar = { _, _ -> true },
+                    onWebViewCreationFailed = {},
                 )
             }
 
@@ -242,6 +247,7 @@ class FrontendScreenTest {
                     onConfigureHomeNetwork = { _ -> },
                     onSecurityLevelHelpClick = {},
                     onShowSnackbar = { _, _ -> true },
+                    onWebViewCreationFailed = {},
                 )
             }
 
@@ -277,6 +283,7 @@ class FrontendScreenTest {
                     onConfigureHomeNetwork = { _ -> },
                     onSecurityLevelHelpClick = {},
                     onShowSnackbar = { _, _ -> true },
+                    onWebViewCreationFailed = {},
                 )
             }
 
@@ -310,6 +317,7 @@ class FrontendScreenTest {
                     onConfigureHomeNetwork = { _ -> },
                     onSecurityLevelHelpClick = {},
                     onShowSnackbar = { _, _ -> true },
+                    onWebViewCreationFailed = {},
                 )
             }
 
@@ -343,6 +351,7 @@ class FrontendScreenTest {
                     onConfigureHomeNetwork = { _ -> },
                     onSecurityLevelHelpClick = {},
                     onShowSnackbar = { _, _ -> true },
+                    onWebViewCreationFailed = {},
                 )
             }
 
@@ -376,6 +385,7 @@ class FrontendScreenTest {
                     onConfigureHomeNetwork = { serverId -> configureHomeNetworkServerId = serverId },
                     onSecurityLevelHelpClick = {},
                     onShowSnackbar = { _, _ -> true },
+                    onWebViewCreationFailed = {},
                 )
             }
 
@@ -409,6 +419,7 @@ class FrontendScreenTest {
                     onConfigureHomeNetwork = { _ -> },
                     onSecurityLevelHelpClick = {},
                     onShowSnackbar = { _, _ -> true },
+                    onWebViewCreationFailed = {},
                 )
             }
 
@@ -439,6 +450,7 @@ class FrontendScreenTest {
                     onSecurityLevelHelpClick = {},
                     onSecurityLevelDone = { configuredCalled = true },
                     onShowSnackbar = { _, _ -> true },
+                    onWebViewCreationFailed = {},
                 )
             }
 
@@ -468,12 +480,64 @@ class FrontendScreenTest {
                     onConfigureHomeNetwork = { _ -> },
                     onSecurityLevelHelpClick = { helpClickCalled = true },
                     onShowSnackbar = { _, _ -> true },
+                    onWebViewCreationFailed = {},
                 )
             }
 
             onNodeWithContentDescription(stringResource(commonR.string.get_help)).performClick()
 
             assertTrue("onSecurityLevelHelpClick should be called when help button is clicked", helpClickCalled)
+        }
+    }
+
+    @Test
+    fun `Given WebViewCreationError state then error screen with open settings button is displayed`() {
+        var openSettingsCalled = false
+        val error = FrontendConnectionError.UnrecoverableError.WebViewCreationError(
+            message = commonR.string.webview_creation_failed,
+            throwable = UnsatisfiedLinkError("dlopen failed: libwebviewchromium.so is 32-bit instead of 64-bit"),
+        )
+        composeTestRule.apply {
+            setContent {
+                FrontendScreenContent(
+                    onBackClick = {},
+                    viewState = FrontendViewState.Error(
+                        serverId = 1,
+                        url = "https://example.com",
+                        error = error,
+                    ),
+                    errorStateProvider = FakeConnectionErrorStateProvider(
+                        url = "https://example.com",
+                        error = error,
+                    ),
+                    webViewClient = WebViewClient(),
+                    frontendJsCallback = FrontendJsBridge.noOp,
+                    scriptsToEvaluate = emptyFlow(),
+                    onBlockInsecureRetry = {},
+                    onOpenExternalLink = {},
+                    onBlockInsecureHelpClick = {},
+                    onOpenSettings = { openSettingsCalled = true },
+                    onChangeSecurityLevel = {},
+                    onOpenLocationSettings = {},
+                    onConfigureHomeNetwork = { _ -> },
+                    onSecurityLevelHelpClick = {},
+                    onShowSnackbar = { _, _ -> true },
+                    onWebViewCreationFailed = {},
+                )
+            }
+
+            assertIsLoading(false)
+            onNodeWithTag(HA_WEBVIEW_TAG).assertIsDisplayed()
+
+            // Error title should be displayed
+            onNodeWithText(stringResource(commonR.string.webview_creation_error_title)).assertIsDisplayed()
+            // Error message should be displayed
+            onNodeWithText(stringResource(commonR.string.webview_creation_failed)).assertIsDisplayed()
+            // Retry button should NOT be displayed
+            onNodeWithText(stringResource(commonR.string.retry)).assertDoesNotExist()
+            // Open Settings button should be displayed
+            onNodeWithText(stringResource(commonR.string.open_settings)).performScrollTo().performClick()
+            assertTrue("onOpenSettings should be called when open settings button is clicked", openSettingsCalled)
         }
     }
 

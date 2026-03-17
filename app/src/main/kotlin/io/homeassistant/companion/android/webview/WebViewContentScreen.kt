@@ -68,6 +68,7 @@ import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.util.compose.media.player.HAMediaPlayer
 import io.homeassistant.companion.android.util.compose.webview.HAWebView
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -109,6 +110,7 @@ internal fun WebViewContentScreen(
                 SafeHAWebView(
                     webView,
                     nightModeTheme,
+                    snackbarHostState = snackbarHostState,
                     currentAppLocked = currentAppLocked,
                     statusBarColor = statusBarColor,
                     backgroundColor = backgroundColor,
@@ -163,6 +165,7 @@ internal fun WebViewContentScreen(
 private fun SafeHAWebView(
     webView: WebView?,
     nightModeTheme: NightModeTheme?,
+    snackbarHostState: SnackbarHostState,
     currentAppLocked: Boolean,
     statusBarColor: Color?,
     backgroundColor: Color?,
@@ -171,6 +174,8 @@ private fun SafeHAWebView(
     val hazeModifier = if (currentAppLocked) Modifier.hazeEffect(style = HazeMaterials.thin()) else Modifier
     val insets = WindowInsets.safeDrawing
     val insetsPaddingValues = insets.asPaddingValues()
+    val coroutineScope = rememberCoroutineScope()
+    val webViewCreationFailedMessage = stringResource(commonR.string.webview_creation_failed)
 
     Column(modifier = hazeModifier) {
         if (!serverHandleInsets) {
@@ -195,6 +200,12 @@ private fun SafeHAWebView(
             HAWebView(
                 nightModeTheme = nightModeTheme,
                 factory = { webView },
+                onWebViewCreationFailed = { exception ->
+                    Timber.e(exception, "Failed to instantiate WebView")
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar(webViewCreationFailedMessage)
+                    }
+                },
                 modifier = Modifier
                     .weight(1f)
                     .background(Color.Transparent),

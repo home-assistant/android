@@ -439,13 +439,12 @@ class AssistVoiceInteractionServiceTest {
         assertCommand(ACTION_RESUME_LISTENING, AssistVoiceInteractionService::resumeListening)
     }
 
-    private fun getRegisteredReceiverActions(): Set<String> =
-        Shadows.shadowOf(ApplicationProvider.getApplicationContext<Application>())
-            .registeredReceivers
-            .flatMap { wrapper ->
-                (0 until wrapper.intentFilter.countActions()).map { wrapper.intentFilter.getAction(it) }
-            }
-            .toSet()
+    private fun getRegisteredReceiverActions(): Set<String> = Shadows.shadowOf(ApplicationProvider.getApplicationContext<Application>())
+        .registeredReceivers
+        .flatMap { wrapper ->
+            (0 until wrapper.intentFilter.countActions()).map { wrapper.intentFilter.getAction(it) }
+        }
+        .toSet()
 
     private fun assertCommand(action: String, command: (Context) -> Unit) {
         val context = mockk<Context>(relaxed = true)
