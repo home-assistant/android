@@ -978,6 +978,8 @@
     <string name="webview_error_SSL_NOTYETVALID">The Home Assistant certificate is not yet valid, please review the Home Assistant certificate or the connection settings and try again.</string>
     <string name="webview_error_SSL_UNTRUSTED">The Home Assistant certificate authority is not trusted, please review the Home Assistant certificate or the connection settings and try again.</string>
     <string name="webview_error">There was an error loading Home Assistant, please review the connection settings and try again. We will attempt to try another provided URL when you select Refresh.</string>
+    <string name="webview_creation_error_title">WebView unavailable</string>
+    <string name="webview_creation_failed">WebView failed to initialize, please check and update your system WebView.</string>
     <string name="welcome_hass">Welcome to Home Assistant Companion!</string>
     <string name="widget_attribute_separator_label">Separator between attributes:</string>
     <string name="widget_background_type_title">Select widget theme</string>
