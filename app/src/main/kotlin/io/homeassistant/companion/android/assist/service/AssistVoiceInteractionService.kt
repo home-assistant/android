@@ -19,6 +19,7 @@ import androidx.annotation.VisibleForTesting
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.assist.service.AssistVoiceInteractionService.Companion.isActiveService
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
 import io.homeassistant.companion.android.assist.wakeword.WakeWordListener
 import io.homeassistant.companion.android.assist.wakeword.WakeWordListenerFactory
@@ -362,38 +363,37 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
          */
         @RequiresPermission(Manifest.permission.RECORD_AUDIO)
         fun startListening(context: Context) {
-            broadcastCommand(context, ACTION_START_LISTENING)
+            broadcastAction(context, ACTION_START_LISTENING)
         }
 
         /**
          * Stop listening for wake word.
          */
         fun stopListening(context: Context) {
-            broadcastCommand(context, ACTION_STOP_LISTENING)
+            broadcastAction(context, ACTION_STOP_LISTENING)
         }
 
         /**
          * Resume wake word listening if it is still enabled in settings.
          */
         fun resumeListening(context: Context) {
-            broadcastCommand(context, ACTION_RESUME_LISTENING)
+            broadcastAction(context, ACTION_RESUME_LISTENING)
         }
 
         /**
          * Sends a package-scoped broadcast to communicate with the service.
          *
          * Unlike [Context.startService], broadcasts are not subject to background
-         * execution restrictions on Android 8+, making them safe to use from any
-         * context including background services (FCM, WebSocket) and [android.app.Activity.onDestroy].
+         * execution restrictions on Android 8+, making them safe to send from anywhere
+         * including FCM/WebSocket callbacks and [android.app.Activity.onDestroy].
          *
-         * Note: The command is only delivered while [AssistVoiceInteractionService] is running
-         * and its internal broadcast receiver is registered (after the service is ready).
-         * If the service process is not running or not yet ready when this is called, the
-         * broadcast will be dropped and the command will not be delivered to the service.
-         * Callers that require guaranteed delivery should ensure the service is active
-         * before invoking this method.
+         * Note: The broadcast is only delivered to [AssistVoiceInteractionService] while it is
+         * running and its internal broadcast receiver is registered (after the service is ready).
+         * If the service is not running or not yet ready when this is called, the broadcast will
+         * be silently dropped. Callers that require guaranteed delivery should ensure the service
+         * is active before invoking this method using [isActiveService].
          */
-        private fun broadcastCommand(context: Context, action: String) {
+        private fun broadcastAction(context: Context, action: String) {
             context.sendBroadcast(
                 Intent(action).setPackage(context.packageName),
             )
