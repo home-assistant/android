@@ -97,7 +97,7 @@ wearPhoneInteractions = "1.1.0"
 wearInput = "1.2.0"
 webkit = "1.15.0"
 wear-remote-interactions = "1.2.0"
-workRuntime = "2.11.1"
+work = "2.11.1"
 zxing = "4.3.0"
 
 [plugins]
@@ -152,7 +152,8 @@ androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-ru
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
 androidx-runtime-lint = { module = "androidx.compose.runtime:runtime-lint", version.ref = "runtimeLint" }
 androidx-watchface-complications-data-source-ktx = { module = "androidx.wear.watchface:watchface-complications-data-source-ktx", version.ref = "watchfaceComplicationsDataSourceKtx" }
-androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntime" }
+androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
+androidx-work-testing = { module = "androidx.work:work-testing", version.ref = "work" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
 androidx-test-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "androidxTestEspresso" }
 androidx-test-ext = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "androidxTestExt" }
@@ -235,6 +236,7 @@ media3-exoplayer-hls = { module = "androidx.media3:media3-exoplayer-hls", versio
 media3-session = { module = "androidx.media3:media3-session", version.ref = "media3" }
 media3-ui-compose = { module = "androidx.media3:media3-ui-compose", version.ref = "media3" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+mockk-instrumented = { module = "io.mockk:mockk-android", version.ref = "mockk" }
 paging-runtime = { module = "androidx.paging:paging-runtime", version.ref = "paging" }
 paging-compose = { module = "androidx.paging:paging-compose", version.ref = "paging" }
 play-services-threadnetwork = { module = "com.google.android.gms:play-services-threadnetwork", version.ref = "play-services-threadnetwork" }
