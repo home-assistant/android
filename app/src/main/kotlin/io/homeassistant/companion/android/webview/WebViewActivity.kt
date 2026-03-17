@@ -138,6 +138,7 @@ import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.homeassistant.companion.android.util.applyInsets
+import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
 import io.homeassistant.companion.android.util.hasNonRootPath
 import io.homeassistant.companion.android.util.hasSameOrigin
 import io.homeassistant.companion.android.util.isStarted
@@ -1594,7 +1595,7 @@ class WebViewActivity :
                 }
             }
             // Make sure the WebView won't load anything in background to avoid leaking
-            webView.loadUrl("about:blank")
+            webView.loadUrl(BLANK_URL)
             loadedUrl = null
             supportFragmentManager.beginTransaction()
                 .replace(

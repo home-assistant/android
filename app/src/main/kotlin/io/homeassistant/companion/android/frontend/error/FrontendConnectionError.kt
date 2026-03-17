@@ -45,6 +45,28 @@ sealed interface FrontendConnectionError {
     }
 
     /**
+     * Errors that are not recoverable by retrying the connection, such as
+     * WebView creation failures due to system-level issues.
+     * No retry attempts should be made for these errors.
+     */
+    sealed interface UnrecoverableError : FrontendConnectionError {
+        /**
+         * WebView creation failure due to a system-level issue such as a broken,
+         * missing, or ABI-incompatible WebView provider.
+         *
+         * Unlike other errors, this is not a connection issue but a device configuration
+         * problem. The recommended user action is to check and update the system WebView
+         * via device settings.
+         */
+        data class WebViewCreationError(@StringRes override val message: Int, val throwable: Throwable) :
+            UnrecoverableError {
+            override val title: Int = commonR.string.webview_creation_error_title
+            override val errorDetails: String = throwable.message ?: throwable.toString()
+            override val rawErrorType: String = throwable::class.toString()
+        }
+    }
+
+    /**
      * Unknown or unexpected errors that don't fit other categories.
      */
     data class UnknownError(
