@@ -341,7 +341,7 @@ class FrontendViewModelTest {
             assertTrue(error is FrontendConnectionError.UnrecoverableError.WebViewCreationError)
             assertEquals(io.homeassistant.companion.android.common.R.string.webview_creation_failed, error.message)
             assertEquals("dlopen failed: libwebviewchromium.so is 32-bit", error.errorDetails)
-            assertEquals("WebViewCreationError", error.rawErrorType)
+            assertEquals("class java.lang.UnsatisfiedLinkError", error.rawErrorType)
         }
 
         @Test

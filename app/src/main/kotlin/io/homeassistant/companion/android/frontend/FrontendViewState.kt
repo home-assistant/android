@@ -3,10 +3,7 @@ package io.homeassistant.companion.android.frontend
 import androidx.compose.ui.graphics.Color
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
-import org.jetbrains.annotations.VisibleForTesting
-
-@VisibleForTesting
-const val BLANK_URL = "about:blank"
+import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
 
 /**
  * Represents the persistent UI state of the frontend screen.

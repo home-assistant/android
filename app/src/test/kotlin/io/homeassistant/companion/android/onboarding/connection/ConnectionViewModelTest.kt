@@ -385,7 +385,7 @@ class ConnectionViewModelTest {
         assertTrue(error is FrontendConnectionError.UnrecoverableError.WebViewCreationError)
         assertEquals(commonR.string.webview_creation_failed, error.message)
         assertEquals("dlopen failed: libwebviewchromium.so is 32-bit", error.errorDetails)
-        assertEquals("WebViewCreationError", error.rawErrorType)
+        assertEquals("class java.lang.UnsatisfiedLinkError", error.rawErrorType)
         verify(exactly = 1) { connectivityCheckRepository.runChecks(rawUrl) }
     }
 }

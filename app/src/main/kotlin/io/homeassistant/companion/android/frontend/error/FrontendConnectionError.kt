@@ -60,10 +60,11 @@ sealed interface FrontendConnectionError {
          */
         data class WebViewCreationError(
             @StringRes override val message: Int,
-            override val errorDetails: String,
-            override val rawErrorType: String,
+            val throwable: Throwable,
         ) : UnrecoverableError {
             override val title: Int = commonR.string.webview_creation_error_title
+            override val errorDetails: String = throwable.message ?: throwable.toString()
+            override val rawErrorType: String = throwable::class.toString()
         }
     }
 

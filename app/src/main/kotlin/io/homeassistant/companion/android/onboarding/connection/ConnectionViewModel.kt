@@ -189,8 +189,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         onError(
             FrontendConnectionError.UnrecoverableError.WebViewCreationError(
                 message = commonR.string.webview_creation_failed,
-                errorDetails = throwable.message ?: throwable.toString(),
-                rawErrorType = "WebViewCreationError",
+                throwable = throwable,
             ),
         )
     }

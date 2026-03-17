@@ -50,6 +50,7 @@ import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
+import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
 import io.homeassistant.companion.android.onboarding.connection.ConnectivityChecksSection
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import kotlinx.coroutines.launch
@@ -218,12 +219,15 @@ private fun FrontendErrorContent(
 
         Header(icon, title = title, subtitle = subtitle)
 
-        UrlInfo(url, onOpenExternalLink = onOpenExternalLink)
+        val displayUrl = url?.takeUnless { it == BLANK_URL }
+
+        UrlInfo(displayUrl, onOpenExternalLink = onOpenExternalLink)
 
         ErrorDetails(
             errorDescription = errorDescription,
             errorType = errorType,
             expanded = errorDetailsExpanded,
+            showConnectivityChecks = displayUrl != null,
             connectivityCheckState = connectivityCheckState,
             onRetryConnectivityCheck = onRetryConnectivityCheck,
         )
@@ -304,6 +308,7 @@ private fun ErrorDetails(
     errorDescription: String,
     errorType: String,
     expanded: Boolean,
+    showConnectivityChecks: Boolean,
     connectivityCheckState: ConnectivityCheckState,
     onRetryConnectivityCheck: () -> Unit,
 ) {
@@ -338,10 +343,12 @@ private fun ErrorDetails(
                 }
             }
 
-            ConnectivityChecksSection(
-                connectivityCheckState = connectivityCheckState,
-                onRetryConnectivityCheck = onRetryConnectivityCheck,
-            )
+            if (showConnectivityChecks) {
+                ConnectivityChecksSection(
+                    connectivityCheckState = connectivityCheckState,
+                    onRetryConnectivityCheck = onRetryConnectivityCheck,
+                )
+            }
         }
     }
 }

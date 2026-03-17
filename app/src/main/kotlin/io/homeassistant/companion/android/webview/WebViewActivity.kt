@@ -119,6 +119,7 @@ import io.homeassistant.companion.android.common.util.runFragmentTransactionIfSt
 import io.homeassistant.companion.android.common.util.toJsonObject
 import io.homeassistant.companion.android.common.util.toJsonObjectOrNull
 import io.homeassistant.companion.android.database.authentication.Authentication
+import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
@@ -1592,7 +1593,7 @@ class WebViewActivity :
                 }
             }
             // Make sure the WebView won't load anything in background to avoid leaking
-            webView.loadUrl("about:blank")
+            webView.loadUrl(BLANK_URL)
             loadedUrl = null
             supportFragmentManager.beginTransaction()
                 .replace(

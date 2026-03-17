@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
+import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
 import io.homeassistant.companion.android.onboarding.connection.ConnectionErrorScreen
 import io.homeassistant.companion.android.onboarding.connection.ConnectionViewModel
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
@@ -115,6 +116,27 @@ class FrontendConnectionErrorScreenTest {
                 "https://discord.com/channels/330944238910963714/1284965926336335993",
                 urlClicked,
             )
+        }
+    }
+
+    @Test
+    fun `Given FrontendConnectionErrorScreen when url is about blank then url info and connectivity checks are not displayed`() {
+        composeTestRule.apply {
+            setContent {
+                FrontendConnectionErrorScreen(
+                    error = FrontendConnectionError.UnknownError(R.string.tls_cert_expired_message, "details", "errorType"),
+                    url = BLANK_URL,
+                    onOpenExternalLink = {},
+                    connectivityCheckState = ConnectivityCheckState(),
+                )
+            }
+
+            onNodeWithText(stringResource(R.string.error_connection_failed)).assertIsDisplayed()
+            onNodeWithTag(URL_INFO_TAG).assertIsNotDisplayed()
+
+            onNodeWithText(stringResource(R.string.connection_error_more_details)).assertIsDisplayed().performClick()
+            onNodeWithText(stringResource(R.string.connection_error_more_details_description)).assertIsDisplayed()
+            onNodeWithText(stringResource(R.string.connection_check_title)).assertDoesNotExist()
         }
     }
 

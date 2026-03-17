@@ -495,9 +495,8 @@ class FrontendScreenTest {
         var openSettingsCalled = false
         val error = FrontendConnectionError.UnrecoverableError.WebViewCreationError(
             message = commonR.string.webview_creation_failed,
-            errorDetails = "dlopen failed: libwebviewchromium.so is 32-bit instead of 64-bit",
-            rawErrorType = "UnsatisfiedLinkError",
-        )
+            throwable = UnsatisfiedLinkError("dlopen failed: libwebviewchromium.so is 32-bit instead of 64-bit"),
+            )
         composeTestRule.apply {
             setContent {
                 FrontendScreenContent(

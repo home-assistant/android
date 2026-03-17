@@ -6,6 +6,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
+import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
 import io.homeassistant.companion.android.util.compose.HAPreviews
 
 class FrontendConnectionErrorScreenshotTest {
@@ -118,6 +119,26 @@ class FrontendConnectionErrorScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
+    fun `FrontendConnectionErrorScreen with about blank url expanded`() {
+        HAThemeForPreview {
+            FrontendConnectionErrorScreen(
+                url = BLANK_URL,
+                error = FrontendConnectionError.UnknownError(
+                    commonR.string.tls_cert_expired_message,
+                    "details",
+                    "raw",
+                ),
+                onOpenExternalLink = {},
+                connectivityCheckState = ConnectivityCheckState(),
+                actions = {},
+                errorDetailsExpanded = true,
+            )
+        }
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
     fun `FrontendConnectionErrorScreen with WebViewCreationError`() {
         HAThemeForPreview {
             FrontendConnectionErrorScreen(
@@ -125,8 +146,7 @@ class FrontendConnectionErrorScreenshotTest {
                 "http://super-long-url-to-see-how-it-displays-in-the-screenshot.org/path/1/home-assistant/io?external_auth=1",
                 error = FrontendConnectionError.UnrecoverableError.WebViewCreationError(
                     message = commonR.string.webview_creation_failed,
-                    errorDetails = "dlopen failed: libwebviewchromium.so is 32-bit instead of 64-bit",
-                    rawErrorType = "UnsatisfiedLinkError",
+                    throwable = UnsatisfiedLinkError("dlopen failed: libwebviewchromium.so is 32-bit instead of 64-bit"),
                 ),
                 onOpenExternalLink = {},
                 connectivityCheckState = ConnectivityCheckState(),
