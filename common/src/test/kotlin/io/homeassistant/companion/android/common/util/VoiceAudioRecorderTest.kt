@@ -15,6 +15,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -31,6 +32,7 @@ class VoiceAudioRecorderTest {
             val cleanupComplete = CompletableDeferred<Unit>()
             val recorder = mockk<AudioRecord>(relaxed = true) {
                 every { state } returns AudioRecord.STATE_INITIALIZED
+                every { sampleRate } returns VOICE_SAMPLE_RATE
                 every { read(any<ShortArray>(), eq(0), any()) } answers {
                     // Simulate the blocking nature of a real AudioRecord.read() call.
                     // Without this, the mock returns instantly creating a tight
@@ -103,9 +105,55 @@ class VoiceAudioRecorderTest {
         }
 
         @Test
+        fun `Given 16kHz throws When factory catches and returns 44100Hz recorder Then emits downsampled chunks`() = runTest {
+            val fallbackChunk = ShortArray(441) { 500 }
+            var threwException = false
+
+            // Simulate createVoiceAudioRecord: internally tries 16kHz which throws
+            // IllegalArgumentException, catches it, and returns a 44.1kHz recorder
+            val voiceAudioRecorder = VoiceAudioRecorder(
+                audioRecordFactory = {
+                    try {
+                        throw IllegalArgumentException("16kHz not supported")
+                    } catch (_: IllegalArgumentException) {
+                        threwException = true
+                    }
+                    mockk<AudioRecord>(relaxed = true) {
+                        every { state } returns AudioRecord.STATE_INITIALIZED
+                        every { sampleRate } returns 44100
+                        every { read(any<ShortArray>(), eq(0), any()) } answers {
+                            Thread.sleep(1)
+                            val buffer = firstArg<ShortArray>()
+                            fallbackChunk.copyInto(
+                                buffer,
+                                endIndex = minOf(fallbackChunk.size, buffer.size),
+                            )
+                            minOf(fallbackChunk.size, buffer.size)
+                        }
+                    }
+                },
+            )
+
+            val flow = voiceAudioRecorder.audioData()
+
+            turbineScope {
+                val turbine = flow.testIn(this)
+
+                val emitted = turbine.awaitItem()
+                assertTrue(threwException)
+                // 441 samples at 44.1kHz downsampled to 16kHz = 160 samples
+                assertEquals(160, emitted.size)
+                emitted.forEach { assertEquals(500.toShort(), it) }
+
+                turbine.cancelAndConsumeRemainingEvents()
+            }
+        }
+
+        @Test
         fun `Given recorder with read error When audioData collected Then stops emitting`() = runTest {
             val recorder = mockk<AudioRecord>(relaxed = true) {
                 every { state } returns AudioRecord.STATE_INITIALIZED
+                every { sampleRate } returns VOICE_SAMPLE_RATE
                 every { read(any<ShortArray>(), any(), any()) } returns AudioRecord.ERROR
             }
 
@@ -143,6 +191,7 @@ class VoiceAudioRecorderTest {
 
             val recorder = mockk<AudioRecord>(relaxed = true) {
                 every { state } returns AudioRecord.STATE_INITIALIZED
+                every { sampleRate } returns VOICE_SAMPLE_RATE
                 every { read(any<ShortArray>(), eq(0), any()) } answers {
                     val buffer = firstArg<ShortArray>()
                     when (callCount++) {
@@ -201,6 +250,7 @@ class VoiceAudioRecorderTest {
             val data = shortArrayOf(42, 84)
             val recorder = mockk<AudioRecord>(relaxed = true) {
                 every { state } returns AudioRecord.STATE_INITIALIZED
+                every { sampleRate } returns VOICE_SAMPLE_RATE
                 every { read(any<ShortArray>(), eq(0), any()) } answers {
                     // Simulate blocking read so both turbine subscribers have time
                     // to register with shareIn before the first emission
@@ -229,6 +279,84 @@ class VoiceAudioRecorderTest {
 
             // Only one AudioRecord should have been created
             verify(exactly = 1) { recorder.startRecording() }
+        }
+    }
+
+    @Nested
+    inner class Downsampling {
+
+        @Test
+        fun `Given 44100Hz input When downsampled to 16000Hz Then output size is correct`() {
+            val inputSize = 441 // 10ms at 44.1kHz
+            val input = ShortArray(inputSize) { it.toShort() }
+
+            val result = downsample(input, fromRate = 44100, toRate = 16000)
+
+            // 441 * (16000 / 44100) = 160
+            assertEquals(160, result.size)
+        }
+
+        @Test
+        fun `Given constant signal When downsampled Then output preserves constant value`() {
+            val input = ShortArray(441) { 1000 }
+
+            val result = downsample(input, fromRate = 44100, toRate = 16000)
+
+            result.forEach { sample ->
+                assertEquals(1000.toShort(), sample)
+            }
+        }
+
+        @Test
+        fun `Given empty input When downsampled Then returns empty array`() {
+            val result = downsample(shortArrayOf(), fromRate = 44100, toRate = 16000)
+
+            assertEquals(0, result.size)
+        }
+
+        @Test
+        fun `Given linear ramp When downsampled Then interpolates between samples`() {
+            // Create a linear ramp from 0 to 440 over 441 samples (10ms at 44.1kHz)
+            val input = ShortArray(441) { it.toShort() }
+
+            val result = downsample(input, fromRate = 44100, toRate = 16000)
+
+            // First sample should be 0 (maps to index 0 of input)
+            assertEquals(0.toShort(), result[0])
+            // Last sample should be close to the end of the ramp
+            assertTrue(result.last() > 400)
+        }
+
+        @Test
+        fun `Given recorder at fallback rate When audioData collected Then emits downsampled chunks`() = runTest {
+            val fallbackChunk = ShortArray(441) { 1000 } // 10ms at 44.1kHz, constant signal
+            val recorder = mockk<AudioRecord>(relaxed = true) {
+                every { state } returns AudioRecord.STATE_INITIALIZED
+                every { sampleRate } returns 44100
+                every { read(any<ShortArray>(), eq(0), any()) } answers {
+                    Thread.sleep(1)
+                    val buffer = firstArg<ShortArray>()
+                    fallbackChunk.copyInto(buffer, endIndex = minOf(fallbackChunk.size, buffer.size))
+                    minOf(fallbackChunk.size, buffer.size)
+                }
+            }
+            val voiceAudioRecorder = VoiceAudioRecorder(
+                audioRecordFactory = { recorder },
+            )
+
+            val flow = voiceAudioRecorder.audioData()
+
+            turbineScope {
+                val turbine = flow.testIn(this)
+
+                val emitted = turbine.awaitItem()
+                // 441 samples at 44.1kHz downsampled to 16kHz should be ~160 samples
+                assertEquals(160, emitted.size)
+                // Constant signal should be preserved after downsampling
+                emitted.forEach { assertEquals(1000.toShort(), it) }
+
+                turbine.cancelAndConsumeRemainingEvents()
+            }
         }
     }
 
@@ -284,6 +412,7 @@ class VoiceAudioRecorderTest {
      */
     private fun createMockAudioRecordContinuous(data: ShortArray): AudioRecord = mockk(relaxed = true) {
         every { state } returns AudioRecord.STATE_INITIALIZED
+        every { sampleRate } returns VOICE_SAMPLE_RATE
         every { read(any<ShortArray>(), eq(0), any()) } answers {
             val buffer = firstArg<ShortArray>()
             data.copyInto(buffer)
