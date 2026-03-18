@@ -30,6 +30,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -325,7 +326,7 @@ abstract class AssistViewModelBase(
      * each [ShortArray] chunk to bytes via [toAudioBytes], and sends them to the server.
      */
     @VisibleForTesting(otherwise = PROTECTED)
-    fun setupRecorder() {
+    fun setupRecorder(onError: (Throwable) -> Unit) {
         Timber.d("Setting up recorder")
         sttReady = CompletableDeferred()
 
@@ -333,7 +334,10 @@ abstract class AssistViewModelBase(
             val audioChannel = Channel<ByteArray>(Channel.UNLIMITED)
 
             producerJob = launch {
-                audioStrategy.audioData().collect { samples ->
+                audioStrategy.audioData().catch {
+                    Timber.e(it, "Error collecting audio data")
+                    onError(it)
+                }.collect { samples ->
                     audioChannel.send(samples.toAudioBytes())
                 }
             }.apply {
@@ -350,8 +354,15 @@ abstract class AssistViewModelBase(
                 return@launch
             }
 
-            for (data in audioChannel) {
-                serverManager.webSocketRepository(selectedServerId).sendVoiceData(handlerId, data)
+            try {
+                for (data in audioChannel) {
+                    serverManager.webSocketRepository(selectedServerId).sendVoiceData(handlerId, data)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Error sending audio data to server")
+                onError(e)
             }
         }
     }

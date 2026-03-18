@@ -329,9 +329,7 @@ class AssistViewModel @AssistedInject constructor(
             if (hasMicrophone && it.sttEngine != null) {
                 if (recorderAutoStart && (hasPermission || requestSilently)) {
                     inputMode = AssistInputMode.VOICE_INACTIVE
-                    if (recorderProactive) {
-                        onMicrophoneInput(proactive = null)
-                    }
+                    onMicrophoneInput(proactive = null)
                 } else { // already requested permission once and was denied
                     inputMode = AssistInputMode.TEXT
                 }
@@ -401,7 +399,14 @@ class AssistViewModel @AssistedInject constructor(
 
         if (!recorderProactive) {
             audioStrategy.requestFocus()
-            setupRecorder()
+            setupRecorder(
+                onError = {
+                    stopRecording()
+                    _conversation.add(
+                        AssistMessage(app.getString(commonR.string.assist_error), isInput = false, isError = true),
+                    )
+                },
+            )
         }
         inputMode = AssistInputMode.VOICE_ACTIVE
         if (proactive == true) _conversation.add(AssistMessage.placeholder(isInput = true))
@@ -409,7 +414,7 @@ class AssistViewModel @AssistedInject constructor(
 
         restartInactivityTimer()
 
-        recorderProactive = recording && proactive == true
+        recorderProactive = proactive == true
     }
 
     private fun runAssistPipeline(text: String?) {

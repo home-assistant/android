@@ -268,7 +268,14 @@ class ConversationViewModel @AssistedInject constructor(
 
         if (!recorderProactive) {
             this@ConversationViewModel.audioStrategy.requestFocus()
-            setupRecorder()
+            setupRecorder(
+                onError = {
+                    stopRecording()
+                    _conversation.add(
+                        AssistMessage(app.getString(commonR.string.assist_error), isInput = false, isError = true),
+                    )
+                },
+            )
         }
         inputMode = AssistInputMode.VOICE_ACTIVE
         if (proactive == true) _conversation.add(AssistMessage.placeholder(isInput = true))
