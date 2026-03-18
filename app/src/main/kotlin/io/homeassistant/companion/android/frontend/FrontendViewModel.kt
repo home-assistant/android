@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
 import io.homeassistant.companion.android.frontend.handler.FrontendMessageHandler
 import io.homeassistant.companion.android.frontend.navigation.FrontendNavigationEvent
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
+import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
 import io.homeassistant.companion.android.util.HAWebViewClient
@@ -66,6 +67,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val frontendMessageHandler: FrontendMessageHandler,
     private val urlManager: FrontendUrlManager,
     private val connectivityCheckRepository: ConnectivityCheckRepository,
+    private val permissionManager: PermissionManager,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -76,6 +78,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         frontendMessageHandler: FrontendMessageHandler,
         urlManager: FrontendUrlManager,
         connectivityCheckRepository: ConnectivityCheckRepository,
+        permissionManager: PermissionManager,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
         initialPath = savedStateHandle.toRoute<FrontendRoute>().path,
@@ -83,6 +86,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         frontendMessageHandler = frontendMessageHandler,
         urlManager = urlManager,
         connectivityCheckRepository = connectivityCheckRepository,
+        permissionManager = permissionManager,
     )
 
     /**
@@ -290,6 +294,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                         currentState
                     }
                 }
+                checkNotificationPermission()
             }
 
             is FrontendHandlerEvent.Disconnected -> {
@@ -385,6 +390,39 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                         rawErrorType = "NoUrlAvailable",
                     ),
                 )
+            }
+        }
+    }
+
+    /**
+     * Handles the result of the notification permission request.
+     *
+     * Delegates to [PermissionManager] and hides the prompt by updating the view state.
+     */
+    fun onNotificationPermissionResult(granted: Boolean) {
+        val serverId = _viewState.value.serverId
+        _viewState.update { currentState ->
+            if (currentState is FrontendViewState.Content && currentState.serverId == serverId) {
+                currentState.copy(showNotificationPermission = false)
+            } else {
+                currentState
+            }
+        }
+        viewModelScope.launch {
+            permissionManager.onNotificationPermissionResult(serverId = serverId, granted = granted)
+        }
+    }
+
+    private fun checkNotificationPermission() {
+        val serverId = _viewState.value.serverId
+        viewModelScope.launch {
+            val shouldAsk = permissionManager.shouldAskNotificationPermission(serverId)
+            _viewState.update { currentState ->
+                if (currentState is FrontendViewState.Content && currentState.serverId == serverId) {
+                    currentState.copy(showNotificationPermission = shouldAsk)
+                } else {
+                    currentState
+                }
             }
         }
     }
