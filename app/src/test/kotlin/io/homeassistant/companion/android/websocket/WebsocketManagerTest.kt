@@ -87,11 +87,11 @@ class WebsocketManagerTest {
         coVerify(exactly = 1) { entryPoint.dao.get(any()) }
 
         // Has not run other settings' checks
-        verifyAll(inverse = true) {
+        verify(exactly = 0) {
             context.hasActiveConnection()
             context.getSystemService(PowerManager::class.java)
         }
-        coVerifyAll(inverse = true) {
+        coVerify(exactly = 0) {
             entryPoint.serverManager.isRegistered()
             entryPoint.serverManager.connectionStateProvider(any())
         }
