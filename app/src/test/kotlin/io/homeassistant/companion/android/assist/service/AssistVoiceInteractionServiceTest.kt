@@ -94,10 +94,10 @@ class AssistVoiceInteractionServiceTest {
     }
 
     /**
-     * Sends a command intent via [onStartCommand], exercising the same internal
+     * Sends an action via [onStartCommand], exercising the same internal
      * methods that the broadcast-based companion methods trigger in production.
      */
-    private fun sendCommand(action: String) {
+    private fun sendAction(action: String) {
         service.onStartCommand(
             Intent().apply { this.action = action },
             0,
@@ -166,18 +166,18 @@ class AssistVoiceInteractionServiceTest {
     }
 
     @Test
-    fun `Given START_LISTENING command then start listening`() = runTest {
+    fun `Given START_LISTENING action then start listening`() = runTest {
         coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
 
-        sendCommand(ACTION_START_LISTENING)
+        sendAction(ACTION_START_LISTENING)
         advanceUntilIdle()
 
         coVerify { wakeWordListener.start(any(), microWakeWordModelConfigs[0]) }
     }
 
     @Test
-    fun `Given STOP_LISTENING command then stop listening`() = runTest {
-        sendCommand(ACTION_STOP_LISTENING)
+    fun `Given STOP_LISTENING action then stop listening`() = runTest {
+        sendAction(ACTION_STOP_LISTENING)
         advanceUntilIdle()
 
         coVerify { wakeWordListener.stop() }
@@ -196,7 +196,7 @@ class AssistVoiceInteractionServiceTest {
     fun `Given selected wake word exists when starting then use selected model`() = runTest {
         coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[1]
 
-        sendCommand(ACTION_START_LISTENING)
+        sendAction(ACTION_START_LISTENING)
         advanceUntilIdle()
 
         coVerify { wakeWordListener.start(any(), microWakeWordModelConfigs[1]) }
@@ -206,7 +206,7 @@ class AssistVoiceInteractionServiceTest {
     fun `Given no wake word selected when starting then use first model`() = runTest {
         coEvery { assistConfigManager.getSelectedWakeWordModel() } returns null
 
-        sendCommand(ACTION_START_LISTENING)
+        sendAction(ACTION_START_LISTENING)
         advanceUntilIdle()
 
         coVerify { wakeWordListener.start(any(), microWakeWordModelConfigs[0]) }
@@ -217,7 +217,7 @@ class AssistVoiceInteractionServiceTest {
         // When an unknown wake word is stored, getSelectedWakeWordModel returns null
         coEvery { assistConfigManager.getSelectedWakeWordModel() } returns null
 
-        sendCommand(ACTION_START_LISTENING)
+        sendAction(ACTION_START_LISTENING)
         advanceUntilIdle()
 
         coVerify { wakeWordListener.start(any(), microWakeWordModelConfigs[0]) }
@@ -229,7 +229,7 @@ class AssistVoiceInteractionServiceTest {
         Shadows.shadowOf(ApplicationProvider.getApplicationContext<android.app.Application>())
             .denyPermissions(Manifest.permission.RECORD_AUDIO)
 
-        sendCommand(ACTION_START_LISTENING)
+        sendAction(ACTION_START_LISTENING)
         advanceUntilIdle()
 
         coVerify(exactly = 0) { wakeWordListener.start(any(), any()) }
@@ -242,28 +242,28 @@ class AssistVoiceInteractionServiceTest {
             onListenerFailureSlot.captured.invoke()
         }
 
-        sendCommand(ACTION_START_LISTENING)
+        sendAction(ACTION_START_LISTENING)
         advanceUntilIdle()
 
         coVerify(exactly = 1) { assistConfigManager.setWakeWordEnabled(false) }
     }
 
     @Test
-    fun `Given RESUME_LISTENING command and wake word enabled then start listening`() = runTest {
+    fun `Given RESUME_LISTENING action and wake word enabled then start listening`() = runTest {
         coEvery { assistConfigManager.isWakeWordEnabled() } returns true
         coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
 
-        sendCommand(ACTION_RESUME_LISTENING)
+        sendAction(ACTION_RESUME_LISTENING)
         advanceUntilIdle()
 
         coVerify { wakeWordListener.start(any(), microWakeWordModelConfigs[0]) }
     }
 
     @Test
-    fun `Given RESUME_LISTENING command and wake word disabled then do not start listening`() = runTest {
+    fun `Given RESUME_LISTENING action and wake word disabled then do not start listening`() = runTest {
         coEvery { assistConfigManager.isWakeWordEnabled() } returns false
 
-        sendCommand(ACTION_RESUME_LISTENING)
+        sendAction(ACTION_RESUME_LISTENING)
         advanceUntilIdle()
 
         coVerify(exactly = 0) { wakeWordListener.start(any(), any()) }
@@ -278,7 +278,7 @@ class AssistVoiceInteractionServiceTest {
         service.onReady()
         advanceUntilIdle()
 
-        sendCommand(ACTION_START_LISTENING)
+        sendAction(ACTION_START_LISTENING)
         advanceUntilIdle()
 
         assertNull(shadow.lastSessionBundle)
@@ -302,7 +302,7 @@ class AssistVoiceInteractionServiceTest {
         service.onReady()
         advanceUntilIdle()
 
-        sendCommand(ACTION_START_LISTENING)
+        sendAction(ACTION_START_LISTENING)
         advanceUntilIdle()
 
         // First detection - should trigger showSession
@@ -331,7 +331,7 @@ class AssistVoiceInteractionServiceTest {
         service.onReady()
         advanceUntilIdle()
 
-        sendCommand(ACTION_START_LISTENING)
+        sendAction(ACTION_START_LISTENING)
         advanceUntilIdle()
 
         onWakeWordDetectedSlot.captured.invoke(microWakeWordModelConfigs[0])
@@ -354,7 +354,7 @@ class AssistVoiceInteractionServiceTest {
         service.onReady()
         advanceUntilIdle()
 
-        sendCommand(ACTION_START_LISTENING)
+        sendAction(ACTION_START_LISTENING)
         advanceUntilIdle()
 
         // First detection
@@ -381,7 +381,7 @@ class AssistVoiceInteractionServiceTest {
         coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
 
         // Do NOT call onReady() - service is not ready
-        sendCommand(ACTION_START_LISTENING)
+        sendAction(ACTION_START_LISTENING)
         advanceUntilIdle()
 
         // Simulate wake word detection while service is not ready
@@ -403,7 +403,7 @@ class AssistVoiceInteractionServiceTest {
         service.onReady()
         advanceUntilIdle()
 
-        sendCommand(ACTION_START_LISTENING)
+        sendAction(ACTION_START_LISTENING)
         advanceUntilIdle()
 
         // Simulate a shutdown that races with the wake-word coroutine: when
@@ -426,17 +426,17 @@ class AssistVoiceInteractionServiceTest {
 
     @Test
     fun `Given context when startListening then send START_LISTENING broadcast with package`() {
-        assertCommand(ACTION_START_LISTENING, AssistVoiceInteractionService::startListening)
+        assertAction(ACTION_START_LISTENING, AssistVoiceInteractionService::startListening)
     }
 
     @Test
     fun `Given context when stopListening then send STOP_LISTENING broadcast with package`() {
-        assertCommand(ACTION_STOP_LISTENING, AssistVoiceInteractionService::stopListening)
+        assertAction(ACTION_STOP_LISTENING, AssistVoiceInteractionService::stopListening)
     }
 
     @Test
     fun `Given context when resumeListening then send RESUME_LISTENING broadcast with package`() {
-        assertCommand(ACTION_RESUME_LISTENING, AssistVoiceInteractionService::resumeListening)
+        assertAction(ACTION_RESUME_LISTENING, AssistVoiceInteractionService::resumeListening)
     }
 
     private fun getRegisteredReceiverActions(): Set<String> = Shadows.shadowOf(ApplicationProvider.getApplicationContext<Application>())
@@ -446,7 +446,7 @@ class AssistVoiceInteractionServiceTest {
         }
         .toSet()
 
-    private fun assertCommand(action: String, command: (Context) -> Unit) {
+    private fun assertAction(action: String, command: (Context) -> Unit) {
         val context = mockk<Context>(relaxed = true)
         every { context.packageName } returns "io.homeassistant.companion.android"
         val intentSlot = slot<Intent>()
