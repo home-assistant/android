@@ -26,7 +26,7 @@ class AssistAudioStrategyFactoryTest {
         wakeWordListenerFactory = mockk(relaxed = true)
         assistConfigManager = mockk(relaxed = true)
         context = mockk(relaxed = true) {
-            every { getSystemService(Context.AUDIO_SERVICE) } returns mockk<AudioManager>()
+            every { getSystemService(AudioManager::class.java) } returns mockk<AudioManager>()
         }
         factory = AssistAudioStrategyFactory(
             voiceAudioRecorder = voiceAudioRecorder,
