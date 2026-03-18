@@ -8,6 +8,7 @@ import androidx.core.app.NotificationCompat
 import androidx.work.ListenableWorker
 import androidx.work.testing.TestListenableWorkerBuilder
 import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
@@ -31,8 +32,10 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
+@Config(application = HiltTestApplication::class)
 class WebsocketManagerTest {
 
     private val powerManager = mockk<PowerManager>()
@@ -74,7 +77,7 @@ class WebsocketManagerTest {
     }
 
     @Test
-    fun givenSettingNever_whenJobRuns_thenFinishesWithoutChecks() = runTest {
+    fun `Given setting NEVER when job runs then finishes without checks`() = runTest {
         mockSetting(WebsocketSetting.NEVER)
         val worker = TestListenableWorkerBuilder<WebsocketManager>(context).build()
         val result = worker.doWork()
@@ -96,7 +99,7 @@ class WebsocketManagerTest {
     }
 
     @Test
-    fun givenSettingAlways_whenJobRunsWithoutConnection_thenFinishesWithoutScreenNetworkChecks() = runTest {
+    fun `Given setting ALWAYS when job runs without connection then finishes without screen and network checks`() = runTest {
         mockSetting(WebsocketSetting.ALWAYS)
         every { context.hasActiveConnection() } returns false
 
@@ -115,7 +118,7 @@ class WebsocketManagerTest {
     }
 
     @Test
-    fun givenSettingAlways_whenJobRunsWithoutRegistration_thenFinishesWithoutScreenNetworkChecks() = runTest {
+    fun `Given setting ALWAYS when job runs without registration then finishes without screen and network checks`() = runTest {
         mockSetting(WebsocketSetting.ALWAYS)
         every { context.hasActiveConnection() } returns true
         coEvery { entryPoint.serverManager.isRegistered() } returns false
@@ -126,8 +129,10 @@ class WebsocketManagerTest {
         assertEquals(ListenableWorker.Result.success(), result)
 
         // Has checked setting
-        coVerify(exactly = 1) { entryPoint.dao.get(any()) }
-        coVerify(exactly = 1) { entryPoint.serverManager.isRegistered() }
+        coVerify(exactly = 1) {
+            entryPoint.dao.get(any())
+            entryPoint.serverManager.isRegistered()
+        }
 
         // Has not run other settings' checks
         verify(exactly = 0) { context.getSystemService(PowerManager::class.java) }
@@ -135,7 +140,7 @@ class WebsocketManagerTest {
     }
 
     @Test
-    fun givenSettingScreenOn_whenJobRunsWithScreenOff_thenFinishesWithoutOtherChecks() = runTest {
+    fun `Given setting SCREEN_ON when job runs with screen off then finishes without other checks`() = runTest {
         mockSetting(WebsocketSetting.SCREEN_ON)
         every { context.hasActiveConnection() } returns true
         coEvery { entryPoint.serverManager.isRegistered() } returns true
@@ -156,7 +161,7 @@ class WebsocketManagerTest {
     }
 
     @Test
-    fun givenSettingHomeWifi_whenJobRunsWithoutHomeWifi_thenFinishesWithoutOtherChecks() = runTest {
+    fun `Given setting HOME_WIFI when job runs without home Wi-Fi then finishes without other checks`() = runTest {
         mockSetting(WebsocketSetting.HOME_WIFI)
         every { context.hasActiveConnection() } returns true
         coEvery { entryPoint.serverManager.isRegistered() } returns true
@@ -168,8 +173,10 @@ class WebsocketManagerTest {
         assertEquals(ListenableWorker.Result.success(), result)
 
         // Has checked setting
-        coVerify(exactly = 1) { entryPoint.dao.get(any()) }
-        coVerify(exactly = 1) { entryPoint.serverManager.connectionStateProvider(any()).isInternal(any()) }
+        coVerify(exactly = 1) {
+            entryPoint.dao.get(any())
+            entryPoint.serverManager.connectionStateProvider(any()).isInternal(any())
+        }
 
         // Has not run other settings' checks or tried to run worker
         verify(exactly = 0) { context.getSystemService(PowerManager::class.java) }
@@ -177,7 +184,7 @@ class WebsocketManagerTest {
     }
 
     @Test
-    fun givenSettingAlways_whenJobRuns_thenDoesNotRunOtherSettingChecks() = runTest {
+    fun `Given setting ALWAYS when job runs then does not run other setting checks`() = runTest {
         mockSetting(WebsocketSetting.ALWAYS)
         every { context.hasActiveConnection() } returns true
         coEvery { entryPoint.serverManager.isRegistered() } returns true
@@ -191,14 +198,14 @@ class WebsocketManagerTest {
 
         assertEquals(ListenableWorker.Result.success(), result)
 
-        // Has checked setting
-        coVerify(exactly = 1) { entryPoint.dao.get(any()) }
+        // Has checked setting and tried to run worker
+        coVerify(exactly = 1) {
+            entryPoint.dao.get(any())
+            worker.setForeground(any())
+        }
 
         // Has not run other settings' checks
         verify(exactly = 0) { context.getSystemService(PowerManager::class.java) }
         coVerify(exactly = 0) { entryPoint.serverManager.connectionStateProvider(any()) }
-
-        // Has tried to run worker
-        coVerify(exactly = 1) { worker.setForeground(any()) }
     }
 }
