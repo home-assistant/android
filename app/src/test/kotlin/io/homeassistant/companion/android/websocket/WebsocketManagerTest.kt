@@ -89,7 +89,7 @@ class WebsocketManagerTest {
         // Has not run other settings' checks
         verifyAll(inverse = true) {
             context.hasActiveConnection()
-            context.getSystemService(Context.POWER_SERVICE)
+            context.getSystemService(PowerManager::class.java)
         }
         coVerifyAll(inverse = true) {
             entryPoint.serverManager.isRegistered()
@@ -112,7 +112,7 @@ class WebsocketManagerTest {
         verify(exactly = 1) { context.hasActiveConnection() }
 
         // Has not run other settings' checks
-        verify(exactly = 0) { context.getSystemService(Context.POWER_SERVICE) }
+        verify(exactly = 0) { context.getSystemService(PowerManager::class.java) }
         coVerify(exactly = 0) { entryPoint.serverManager.connectionStateProvider(any()) }
     }
 
@@ -132,7 +132,7 @@ class WebsocketManagerTest {
         coVerify(exactly = 1) { entryPoint.serverManager.isRegistered() }
 
         // Has not run other settings' checks
-        verify(exactly = 0) { context.getSystemService(Context.POWER_SERVICE) }
+        verify(exactly = 0) { context.getSystemService(PowerManager::class.java) }
         coVerify(exactly = 0) { entryPoint.serverManager.connectionStateProvider(any()) }
     }
 
@@ -174,7 +174,7 @@ class WebsocketManagerTest {
         coVerify(exactly = 1) { entryPoint.serverManager.connectionStateProvider(any()).isInternal(any()) }
 
         // Has not run other settings' checks or tried to run worker
-        verify(exactly = 0) { context.getSystemService(Context.POWER_SERVICE) }
+        verify(exactly = 0) { context.getSystemService(PowerManager::class.java) }
         coVerify(exactly = 0) { worker.setForeground(any()) }
     }
 
@@ -197,7 +197,7 @@ class WebsocketManagerTest {
         coVerify(exactly = 1) { entryPoint.dao.get(any()) }
 
         // Has not run other settings' checks
-        verify(exactly = 0) { context.getSystemService(Context.POWER_SERVICE) }
+        verify(exactly = 0) { context.getSystemService(PowerManager::class.java) }
         coVerify(exactly = 0) { entryPoint.serverManager.connectionStateProvider(any()) }
 
         // Has tried to run worker
