@@ -145,7 +145,6 @@ class ButtonWidget : AppWidgetProvider() {
                     if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
                         FailFast.fail { "Missing appWidgetId in intent to add widget in DAO" }
                     } else {
-
                         val entity = intent.extras?.let {
                             BundleCompat.getSerializable(
                                 it,
