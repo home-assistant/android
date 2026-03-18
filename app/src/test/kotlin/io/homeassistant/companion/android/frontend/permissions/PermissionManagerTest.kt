@@ -195,7 +195,7 @@ class PermissionManagerTest {
         }
 
         @Test
-        fun `Given camera granted but mic not when both requested then auto-grants camera and creates pending for mic`() {
+        fun `Given camera granted but mic not when both requested then defers grant and creates pending for mic`() {
             every { permissionChecker.hasPermission(android.Manifest.permission.CAMERA) } returns true
             every { permissionChecker.hasPermission(android.Manifest.permission.RECORD_AUDIO) } returns false
             val request = mockPermissionRequest(
@@ -206,10 +206,11 @@ class PermissionManagerTest {
             val manager = createManager()
             manager.onWebViewPermissionRequest(request)
 
-            verify { request.grant(arrayOf(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) }
+            verify(exactly = 0) { request.grant(any()) }
             val pending = manager.pendingWebViewPermission.value
             assertNotNull(pending)
             assertEquals(listOf(android.Manifest.permission.RECORD_AUDIO), pending?.androidPermissions)
+            assertEquals(listOf(PermissionRequest.RESOURCE_VIDEO_CAPTURE), pending?.alreadyGrantedResources)
         }
 
         @Test
@@ -286,6 +287,48 @@ class PermissionManagerTest {
             val manager = createManager()
             manager.onWebViewPermissionResult(mapOf(android.Manifest.permission.CAMERA to true))
 
+            assertNull(manager.pendingWebViewPermission.value)
+        }
+
+        @Test
+        fun `Given camera already granted and mic pending when mic granted then grants both in single call`() {
+            every { permissionChecker.hasPermission(android.Manifest.permission.CAMERA) } returns true
+            every { permissionChecker.hasPermission(android.Manifest.permission.RECORD_AUDIO) } returns false
+            val request = mockPermissionRequest(
+                PermissionRequest.RESOURCE_VIDEO_CAPTURE,
+                PermissionRequest.RESOURCE_AUDIO_CAPTURE,
+            )
+
+            val manager = createManager()
+            manager.onWebViewPermissionRequest(request)
+            manager.onWebViewPermissionResult(
+                mapOf(android.Manifest.permission.RECORD_AUDIO to true),
+            )
+
+            verify {
+                request.grant(
+                    arrayOf(PermissionRequest.RESOURCE_VIDEO_CAPTURE, PermissionRequest.RESOURCE_AUDIO_CAPTURE),
+                )
+            }
+            assertNull(manager.pendingWebViewPermission.value)
+        }
+
+        @Test
+        fun `Given camera already granted and mic pending when mic denied then grants only camera`() {
+            every { permissionChecker.hasPermission(android.Manifest.permission.CAMERA) } returns true
+            every { permissionChecker.hasPermission(android.Manifest.permission.RECORD_AUDIO) } returns false
+            val request = mockPermissionRequest(
+                PermissionRequest.RESOURCE_VIDEO_CAPTURE,
+                PermissionRequest.RESOURCE_AUDIO_CAPTURE,
+            )
+
+            val manager = createManager()
+            manager.onWebViewPermissionRequest(request)
+            manager.onWebViewPermissionResult(
+                mapOf(android.Manifest.permission.RECORD_AUDIO to false),
+            )
+
+            verify { request.grant(arrayOf(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) }
             assertNull(manager.pendingWebViewPermission.value)
         }
 

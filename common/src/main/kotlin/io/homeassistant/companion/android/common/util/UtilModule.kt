@@ -30,7 +30,7 @@ object UtilModule {
         }
 
     @Provides
-    fun providesPermissionChecker(@ApplicationContext context: Context): PermissionChecker =
+    fun providePermissionChecker(@ApplicationContext context: Context): PermissionChecker =
         PermissionChecker { permission ->
             ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
         }

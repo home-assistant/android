@@ -21,11 +21,14 @@ import timber.log.Timber
  * @param androidPermissions The Android runtime permissions that need to be requested
  * @param webViewResourcesByPermission Maps each Android permission to its corresponding WebView resource string,
  *        so that after granting we know which WebView resources to approve
+ * @param alreadyGrantedResources WebView resources for which Android permissions were already granted at request
+ *        time. These are deferred so that all resources can be granted in a single [PermissionRequest.grant] call.
  */
 internal data class PendingWebViewPermissionRequest(
     val webViewRequest: PermissionRequest,
     val androidPermissions: List<String>,
     val webViewResourcesByPermission: Map<String, String>,
+    val alreadyGrantedResources: List<String> = emptyList(),
 )
 
 /**
@@ -122,18 +125,17 @@ internal class PermissionManager @Inject constructor(
             }
         }
 
-        if (alreadyGranted.isNotEmpty()) {
-            Timber.d("Auto-granting WebView resources: $alreadyGranted")
-            request.grant(alreadyGranted.toTypedArray())
-        }
-
         if (toBeGranted.isNotEmpty()) {
-            Timber.d("Requesting Android permissions for WebView: $toBeGranted")
+            Timber.d("Requesting Android permissions for WebView: $toBeGranted (already granted: $alreadyGranted)")
             _pendingWebViewPermission.value = PendingWebViewPermissionRequest(
                 webViewRequest = request,
                 androidPermissions = toBeGranted,
                 webViewResourcesByPermission = resourcesByPermission,
+                alreadyGrantedResources = alreadyGranted,
             )
+        } else if (alreadyGranted.isNotEmpty()) {
+            Timber.d("Auto-granting WebView resources: $alreadyGranted")
+            request.grant(alreadyGranted.toTypedArray())
         }
     }
 
@@ -150,13 +152,15 @@ internal class PermissionManager @Inject constructor(
         val pending = _pendingWebViewPermission.value ?: return
         _pendingWebViewPermission.value = null
 
-        val grantedResources = results
+        val newlyGrantedResources = results
             .filter { (_, granted) -> granted }
             .mapNotNull { (permission, _) -> pending.webViewResourcesByPermission[permission] }
 
-        if (grantedResources.isNotEmpty()) {
-            Timber.d("Granting WebView resources after user approval: $grantedResources")
-            pending.webViewRequest.grant(grantedResources.toTypedArray())
+        val allGrantedResources = pending.alreadyGrantedResources + newlyGrantedResources
+
+        if (allGrantedResources.isNotEmpty()) {
+            Timber.d("Granting WebView resources: $allGrantedResources")
+            pending.webViewRequest.grant(allGrantedResources.toTypedArray())
         } else {
             Timber.d("User denied all requested permissions, denying WebView request")
             pending.webViewRequest.deny()
