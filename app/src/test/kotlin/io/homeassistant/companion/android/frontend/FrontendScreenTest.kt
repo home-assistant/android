@@ -361,7 +361,7 @@ class FrontendScreenTest {
     private fun createPermissionManager(): PermissionManager = PermissionManager(
         serverManager = mockk<ServerManager>(relaxed = true),
         settingsDao = mockk<SettingsDao>(relaxed = true),
-        hasFcmPushSupport = false,
+        fcmSupport = false,
         notificationStatusProvider = mockk(relaxed = true),
         permissionChecker = { false },
     )
@@ -446,6 +446,7 @@ class FrontendScreenTest {
                         error = error,
                     ),
                     webViewClient = WebViewClient(),
+                    webChromeClient = WebChromeClient(),
                     frontendJsCallback = FrontendJsBridge.noOp,
                     scriptsToEvaluate = emptyFlow(),
                     onBlockInsecureRetry = {},
