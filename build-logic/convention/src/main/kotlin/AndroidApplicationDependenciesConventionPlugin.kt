@@ -110,13 +110,12 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
 
                     "androidTestImplementation"(libs.bundles.androidx.test)
                     "androidTestImplementation"(libs.leakcanary.android.instrumentation)
-                    "androidTestImplementation"(libs.mockk.instrumented)
                     "androidTestImplementation"(libs.hilt.android.testing)
-                    "androidTestImplementation"(libs.androidx.work.testing)
 
                     "testImplementation"(libs.bundles.androidx.glance.testing)
                     "testImplementation"(libs.navigation.test)
                     "testImplementation"(libs.hilt.android.testing)
+                    "testImplementation"(libs.androidx.work.testing)
 
                     "lintChecks"(libs.compose.lint.checks)
                 }

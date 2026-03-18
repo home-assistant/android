@@ -1,9 +1,10 @@
 package io.homeassistant.companion.android.websocket
 
+import android.app.Notification
+import android.app.NotificationManager
 import android.content.Context
 import android.os.PowerManager
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.core.app.NotificationCompat
 import androidx.work.ListenableWorker
 import androidx.work.testing.TestListenableWorkerBuilder
 import dagger.hilt.android.EntryPointAccessors
@@ -17,23 +18,31 @@ import io.homeassistant.companion.android.notifications.MessagingManager
 import io.homeassistant.companion.android.util.hasActiveConnection
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyAll
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkConstructor
 import io.mockk.mockkStatic
 import io.mockk.spyk
 import io.mockk.verify
+import io.mockk.verifyAll
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
-@RunWith(AndroidJUnit4::class)
+@RunWith(RobolectricTestRunner::class)
 class WebsocketManagerTest {
 
-    private lateinit var realContext: Context
-    private lateinit var context: Context
+    private val powerManager = mockk<PowerManager>()
+    private val context = mockk<Context>(relaxed = true) {
+        every { applicationContext } returns this
+        every { getSystemService(NotificationManager::class.java) } returns mockk<NotificationManager>(relaxed = true)
+        every { getSystemService(PowerManager::class.java) } returns powerManager
+    }
 
     private val entryPoint = object : WebsocketManager.WebsocketManagerEntryPoint {
         val dao = mockk<SettingsDao>()
@@ -59,8 +68,6 @@ class WebsocketManagerTest {
 
     @Before
     fun setup() {
-        realContext = ApplicationProvider.getApplicationContext()
-        context = spyk(realContext)
         mockkStatic(EntryPointAccessors::class)
         every {
             EntryPointAccessors.fromApplication(any(), WebsocketManager.WebsocketManagerEntryPoint::class.java)
@@ -80,14 +87,18 @@ class WebsocketManagerTest {
         coVerify(exactly = 1) { entryPoint.dao.get(any()) }
 
         // Has not run other settings' checks
-        verify(exactly = 0) { context.hasActiveConnection() }
-        coVerify(exactly = 0) { entryPoint.serverManager.isRegistered() }
-        verify(exactly = 0) { context.getSystemService(Context.POWER_SERVICE) }
-        coVerify(exactly = 0) { entryPoint.serverManager.connectionStateProvider(any()) }
+        verifyAll(inverse = true) {
+            context.hasActiveConnection()
+            context.getSystemService(Context.POWER_SERVICE)
+        }
+        coVerifyAll(inverse = true) {
+            entryPoint.serverManager.isRegistered()
+            entryPoint.serverManager.connectionStateProvider(any())
+        }
     }
 
     @Test
-    fun givenSettingNotNever_whenJobRunsWithoutConnection_thenFinishesWithoutScreenNetworkChecks() = runTest {
+    fun givenSettingAlways_whenJobRunsWithoutConnection_thenFinishesWithoutScreenNetworkChecks() = runTest {
         mockSetting(WebsocketSetting.ALWAYS)
         every { context.hasActiveConnection() } returns false
 
@@ -106,7 +117,7 @@ class WebsocketManagerTest {
     }
 
     @Test
-    fun givenSettingNotNever_whenJobRunsWithoutRegistration_thenFinishesWithoutScreenNetworkChecks() = runTest {
+    fun givenSettingAlways_whenJobRunsWithoutRegistration_thenFinishesWithoutScreenNetworkChecks() = runTest {
         mockSetting(WebsocketSetting.ALWAYS)
         every { context.hasActiveConnection() } returns true
         coEvery { entryPoint.serverManager.isRegistered() } returns false
@@ -130,10 +141,7 @@ class WebsocketManagerTest {
         mockSetting(WebsocketSetting.SCREEN_ON)
         every { context.hasActiveConnection() } returns true
         coEvery { entryPoint.serverManager.isRegistered() } returns true
-        val powerManager = mockk<PowerManager>().apply {
-            every { isInteractive } returns false
-        }
-        every { context.getSystemService(Context.POWER_SERVICE) } returns powerManager
+        every { powerManager.isInteractive } returns false
 
         val worker = spyk(TestListenableWorkerBuilder<WebsocketManager>(context).build())
         val result = worker.doWork()
@@ -175,6 +183,9 @@ class WebsocketManagerTest {
         mockSetting(WebsocketSetting.ALWAYS)
         every { context.hasActiveConnection() } returns true
         coEvery { entryPoint.serverManager.isRegistered() } returns true
+
+        mockkConstructor(NotificationCompat.Builder::class)
+        every { anyConstructed<NotificationCompat.Builder>().build() } returns mockk<Notification>()
 
         val worker = spyk(TestListenableWorkerBuilder<WebsocketManager>(context).build())
         coEvery { worker.setForeground(any()) } throws CancellationException() // Prevent worker from running

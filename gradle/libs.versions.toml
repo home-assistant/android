@@ -236,7 +236,6 @@ media3-exoplayer-hls = { module = "androidx.media3:media3-exoplayer-hls", versio
 media3-session = { module = "androidx.media3:media3-session", version.ref = "media3" }
 media3-ui-compose = { module = "androidx.media3:media3-ui-compose", version.ref = "media3" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
-mockk-instrumented = { module = "io.mockk:mockk-android", version.ref = "mockk" }
 paging-runtime = { module = "androidx.paging:paging-runtime", version.ref = "paging" }
 paging-compose = { module = "androidx.paging:paging-compose", version.ref = "paging" }
 play-services-threadnetwork = { module = "com.google.android.gms:play-services-threadnetwork", version.ref = "play-services-threadnetwork" }
