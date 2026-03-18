@@ -18,14 +18,12 @@ import io.homeassistant.companion.android.notifications.MessagingManager
 import io.homeassistant.companion.android.util.hasActiveConnection
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.coVerifyAll
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkConstructor
 import io.mockk.mockkStatic
 import io.mockk.spyk
 import io.mockk.verify
-import io.mockk.verifyAll
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
