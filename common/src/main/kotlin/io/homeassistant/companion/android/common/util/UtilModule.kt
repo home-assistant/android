@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.common.util
 
 import android.content.Context
 import android.media.AudioManager
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
 import androidx.media3.datasource.DataSource
 import dagger.Module
@@ -18,6 +19,12 @@ object UtilModule {
     @Provides
     @Singleton
     fun provideVoiceAudioRecorder(): VoiceAudioRecorder = VoiceAudioRecorder()
+
+    @Provides
+    fun provideNotificationStatusProvider(@ApplicationContext context: Context): NotificationStatusProvider =
+        NotificationStatusProvider {
+            NotificationManagerCompat.from(context).areNotificationsEnabled()
+        }
 
     @Provides
     @Singleton
