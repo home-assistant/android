@@ -171,6 +171,7 @@ class FrontendScreenScreenshotTest {
                 onSecurityLevelHelpClick = {},
                 onShowSnackbar = { _, _ -> true },
                 supportsNotificationPermission = true,
+                onWebViewCreationFailed = {},
             )
         }
     }
