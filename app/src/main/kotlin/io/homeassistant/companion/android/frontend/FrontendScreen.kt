@@ -6,6 +6,7 @@ import android.os.Build
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,22 +22,22 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
+import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
@@ -117,6 +118,7 @@ internal fun FrontendScreen(
         onSecurityLevelDone = viewModel::onSecurityLevelDone,
         onSecurityLevelHelpClick = onSecurityLevelHelpClick,
         onShowSnackbar = onShowSnackbar,
+        onWebViewCreationFailed = viewModel::onWebViewCreationFailed,
         onNotificationPermissionResult = viewModel::onNotificationPermissionResult,
         modifier = modifier,
     )
@@ -138,6 +140,7 @@ internal fun FrontendScreenContent(
     onConfigureHomeNetwork: (serverId: Int) -> Unit,
     onSecurityLevelHelpClick: suspend () -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
+    onWebViewCreationFailed: (Throwable) -> Unit,
     modifier: Modifier = Modifier,
     errorStateProvider: FrontendConnectionErrorStateProvider = FrontendConnectionErrorStateProvider.noOp,
     securityLevelViewModel: LocationForSecureConnectionViewModel? = null,
@@ -161,6 +164,7 @@ internal fun FrontendScreenContent(
             webViewClient = webViewClient,
             frontendJsCallback = frontendJsCallback,
             contentState = viewState as? FrontendViewState.Content,
+            onWebViewCreationFailed = onWebViewCreationFailed,
         )
 
         StateOverlay(
@@ -235,7 +239,9 @@ private fun StateOverlay(
 
         is FrontendViewState.Error -> ErrorOverlay(
             errorStateProvider = errorStateProvider,
+            error = viewState.error,
             onRetry = onRetry,
+            onOpenSettings = onOpenSettings,
             onOpenExternalLink = onOpenExternalLink,
         )
     }
@@ -302,7 +308,9 @@ private fun InsecureOverlay(
 @Composable
 private fun ErrorOverlay(
     errorStateProvider: FrontendConnectionErrorStateProvider,
+    error: FrontendConnectionError?,
     onRetry: () -> Unit,
+    onOpenSettings: () -> Unit,
     onOpenExternalLink: suspend (Uri) -> Unit,
 ) {
     FrontendConnectionErrorScreen(
@@ -310,11 +318,26 @@ private fun ErrorOverlay(
         onOpenExternalLink = onOpenExternalLink,
         modifier = Modifier.fillMaxSize(),
         actions = {
-            HAAccentButton(
-                text = stringResource(commonR.string.retry),
-                onClick = onRetry,
-                modifier = Modifier.padding(bottom = HADimens.SPACE6),
-            )
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
+            ) {
+                if (error !is FrontendConnectionError.UnrecoverableError) {
+                    HAAccentButton(
+                        text = stringResource(commonR.string.retry),
+                        onClick = onRetry,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                HAPlainButton(
+                    text = stringResource(commonR.string.open_settings),
+                    onClick = onOpenSettings,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = HADimens.SPACE6),
+                )
+            }
         },
     )
 }
@@ -329,6 +352,7 @@ private fun SafeHAWebView(
     webViewClient: WebViewClient,
     frontendJsCallback: FrontendJsCallback,
     contentState: FrontendViewState.Content?,
+    onWebViewCreationFailed: (Throwable) -> Unit,
 ) {
     val serverHandleInsets = contentState?.serverHandleInsets ?: false
     val backgroundColor = contentState?.backgroundColor
@@ -358,31 +382,21 @@ private fun SafeHAWebView(
                 )
             }
 
-            // In preview/screenshot mode, show a placeholder instead of WebView
-            // to avoid having issue with the javascript auto attach.
-            if (LocalInspectionMode.current) {
-                Text(
-                    text = "WebviewPlaceholder",
-                    modifier = Modifier
-                        .weight(1f)
-                        .background(Color.Transparent),
-                )
-            } else {
-                HAWebView(
-                    nightModeTheme = contentState?.nightModeTheme,
-                    modifier = Modifier
-                        .weight(1f)
-                        .background(Color.Transparent),
-                    configure = {
-                        onWebViewCreated(this)
-                        // Injecting the javascript interface should happen as early as possible in the process
-                        // even before loading the server URL to not miss any events from the frontend.
-                        frontendJsCallback.attachToWebView(this)
-                        this.webViewClient = webViewClient
-                    },
-                    onBackPressed = onBackClick,
-                )
-            }
+            HAWebView(
+                nightModeTheme = contentState?.nightModeTheme,
+                modifier = Modifier
+                    .weight(1f)
+                    .background(Color.Transparent),
+                configure = {
+                    onWebViewCreated(this)
+                    // Injecting the javascript interface should happen as early as possible in the process
+                    // even before loading the server URL to not miss any events from the frontend.
+                    frontendJsCallback.attachToWebView(this)
+                    this.webViewClient = webViewClient
+                },
+                onBackPressed = onBackClick,
+                onWebViewCreationFailed = onWebViewCreationFailed,
+            )
 
             // Right safe area
             if (!serverHandleInsets) {
@@ -454,6 +468,7 @@ private fun FrontendScreenLoadingPreview() {
             onConfigureHomeNetwork = { _ -> },
             onSecurityLevelHelpClick = {},
             onShowSnackbar = { _, _ -> true },
+            onWebViewCreationFailed = {},
         )
     }
 }
@@ -485,6 +500,7 @@ private fun FrontendScreenErrorPreview() {
             onConfigureHomeNetwork = { _ -> },
             onSecurityLevelHelpClick = {},
             onShowSnackbar = { _, _ -> true },
+            onWebViewCreationFailed = {},
         )
     }
 }
@@ -512,6 +528,7 @@ private fun FrontendScreenInsecurePreview() {
             onConfigureHomeNetwork = { _ -> },
             onSecurityLevelHelpClick = {},
             onShowSnackbar = { _, _ -> true },
+            onWebViewCreationFailed = {},
         )
     }
 }
@@ -537,6 +554,7 @@ private fun FrontendScreenSecurityLevelRequiredPreview() {
             onConfigureHomeNetwork = { _ -> },
             onSecurityLevelHelpClick = {},
             onShowSnackbar = { _, _ -> true },
+            onWebViewCreationFailed = {},
         )
     }
 }
