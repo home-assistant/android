@@ -1,8 +1,11 @@
 package io.homeassistant.companion.android.assist
 
 import android.annotation.SuppressLint
+import android.media.AudioManager
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
 import io.homeassistant.companion.android.assist.wakeword.WakeWordListenerFactory
+import io.homeassistant.companion.android.common.assist.AssistAudioFocus
+import io.homeassistant.companion.android.common.assist.AssistAudioFocusImpl
 import io.homeassistant.companion.android.common.assist.AssistAudioStrategy
 import io.homeassistant.companion.android.common.util.VoiceAudioRecorder
 import io.homeassistant.companion.android.settings.assist.AssistConfigManager
@@ -30,6 +33,8 @@ import timber.log.Timber
  * @param wakeWordPhrase Wake word phrase from an external source.
  *   When provided, the model whose [MicroWakeWordModelConfig.wakeWord] matches this phrase is
  *   used for detection.
+ * @param audioManager System audio manager for focus management. When `null`, focus
+ *   requests are no-ops.
  * @param onListenerStopped Called when the listener is fully stopped. Callers can use
  *   this to resume other audio operations (e.g. a background wake word service).
  */
@@ -38,8 +43,10 @@ class WakeWordAssistAudioStrategy(
     wakeWordListenerFactory: WakeWordListenerFactory,
     private val assistConfigManager: AssistConfigManager,
     private val wakeWordPhrase: String,
+    audioManager: AudioManager? = null,
     onListenerStopped: () -> Unit = {},
-) : AssistAudioStrategy {
+) : AssistAudioStrategy,
+    AssistAudioFocus by AssistAudioFocusImpl(audioManager) {
 
     private val wakeWordChannel = Channel<String>(Channel.CONFLATED)
 
@@ -70,12 +77,6 @@ class WakeWordAssistAudioStrategy(
             trySend(it)
         }
     }
-
-    /** No-op */
-    override fun requestFocus() {}
-
-    /** No-op */
-    override fun abandonFocus() {}
 
     /**
      * Resolves the [MicroWakeWordModelConfig] to use for wake word detection.

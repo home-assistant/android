@@ -62,36 +62,16 @@ class DefaultAssistAudioStrategyTest {
     }
 
     @Test
-    fun `Given strategy When requestFocus called Then requests audio focus`() {
+    fun `Given strategy When requestFocus called Then delegates to AudioFocusHelper`() {
         strategy.requestFocus()
         verify { AudioManagerCompat.requestAudioFocus(audioManager, any()) }
     }
 
     @Test
-    fun `Given strategy When abandonFocus called Then abandons audio focus`() {
-        // Must call requestFocus first to create the focus request
+    fun `Given strategy When abandonFocus called Then delegates to AudioFocusHelper`() {
         strategy.requestFocus()
-
         strategy.abandonFocus()
-
         verify { AudioManagerCompat.abandonAudioFocusRequest(audioManager, any()) }
-    }
-
-    @Test
-    fun `Given no audio manager When requestFocus called Then does not request focus`() {
-        val strategyNoAudio = DefaultAssistAudioStrategy(voiceAudioRecorder, audioManager = null)
-
-        strategyNoAudio.requestFocus()
-        verify(exactly = 0) { AudioManagerCompat.requestAudioFocus(any(), any()) }
-    }
-
-    @Test
-    fun `Given no audio manager When abandonFocus called Then does nothing`() {
-        val strategyNoAudio = DefaultAssistAudioStrategy(voiceAudioRecorder, audioManager = null)
-
-        // Should not throw
-        strategyNoAudio.abandonFocus()
-        verify(exactly = 0) { AudioManagerCompat.abandonAudioFocusRequest(any(), any()) }
     }
 
     @Test

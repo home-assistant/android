@@ -1,18 +1,14 @@
 package io.homeassistant.companion.android.common.assist
 
 import android.media.AudioManager
-import androidx.media.AudioAttributesCompat
-import androidx.media.AudioFocusRequestCompat
-import androidx.media.AudioManagerCompat
 import io.homeassistant.companion.android.common.util.VoiceAudioRecorder
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
-import timber.log.Timber
 
 /**
  * Abstracts the audio source for the Assist pipeline.
  */
-interface AssistAudioStrategy {
+interface AssistAudioStrategy : AssistAudioFocus {
 
     /**
      * Returns the shared flow emitting raw audio samples for the pipeline.
@@ -32,16 +28,6 @@ interface AssistAudioStrategy {
      * the collection stops detection and releases resources.
      */
     val wakeWordDetected: Flow<String>
-
-    /**
-     * Request audio focus for the pipeline.
-     */
-    fun requestFocus()
-
-    /**
-     * Abandon audio focus previously requested via [requestFocus].
-     */
-    fun abandonFocus()
 }
 
 /**
@@ -53,43 +39,11 @@ interface AssistAudioStrategy {
  */
 class DefaultAssistAudioStrategy(
     private val voiceAudioRecorder: VoiceAudioRecorder,
-    private val audioManager: AudioManager? = null,
-) : AssistAudioStrategy {
+    audioManager: AudioManager? = null,
+) : AssistAudioStrategy,
+    AssistAudioFocus by AssistAudioFocusImpl(audioManager) {
 
     override suspend fun audioData(): Flow<ShortArray> = voiceAudioRecorder.audioData()
 
     override val wakeWordDetected: Flow<String> = emptyFlow()
-
-    private var focusRequest: AudioFocusRequestCompat? = null
-    private val focusListener = AudioManager.OnAudioFocusChangeListener { /* Not used */ }
-
-    override fun requestFocus() {
-        if (audioManager == null) return
-        if (focusRequest == null) {
-            focusRequest = AudioFocusRequestCompat.Builder(AudioManagerCompat.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE).run {
-                setAudioAttributes(
-                    AudioAttributesCompat.Builder().run {
-                        setUsage(AudioAttributesCompat.USAGE_ASSISTANT)
-                        setContentType(AudioAttributesCompat.CONTENT_TYPE_SPEECH)
-                        build()
-                    },
-                )
-                setOnAudioFocusChangeListener(focusListener)
-                build()
-            }
-        }
-
-        focusRequest?.let {
-            try {
-                AudioManagerCompat.requestAudioFocus(audioManager, it)
-            } catch (e: Exception) {
-                Timber.w(e, "Failed to request audio focus")
-            }
-        }
-    }
-
-    override fun abandonFocus() {
-        if (audioManager == null || focusRequest == null) return
-        AudioManagerCompat.abandonAudioFocusRequest(audioManager, focusRequest!!)
-    }
 }

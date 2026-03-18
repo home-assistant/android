@@ -10,7 +10,6 @@ import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 class AssistAudioStrategyFactoryTest {
@@ -36,25 +35,17 @@ class AssistAudioStrategyFactoryTest {
         )
     }
 
-    @Nested
-    inner class `Given no wake word phrase` {
+    @Test
+    fun `Given no wake word phrase When create called Then returns DefaultAssistAudioStrategy`() {
+        val strategy = factory.create(context = context, wakeWordPhrase = null)
 
-        @Test
-        fun `When create called Then returns DefaultAssistAudioStrategy`() {
-            val strategy = factory.create(context = context, wakeWordPhrase = null)
-
-            assertInstanceOf(DefaultAssistAudioStrategy::class.java, strategy)
-        }
+        assertInstanceOf(DefaultAssistAudioStrategy::class.java, strategy)
     }
 
-    @Nested
-    inner class `Given wake word phrase provided` {
+    @Test
+    fun `Given wake word phrase provided When create called Then returns WakeWordAssistAudioStrategy`() {
+        val strategy = factory.create(context = context, wakeWordPhrase = "hey_jarvis")
 
-        @Test
-        fun `When create called Then returns WakeWordAssistAudioStrategy`() {
-            val strategy = factory.create(context = context, wakeWordPhrase = "hey_jarvis")
-
-            assertInstanceOf(WakeWordAssistAudioStrategy::class.java, strategy)
-        }
+        assertInstanceOf(WakeWordAssistAudioStrategy::class.java, strategy)
     }
 }
