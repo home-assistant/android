@@ -150,9 +150,10 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     }
 
     private fun interceptRedirectIfRequired(url: Uri, isTLSClientAuthNeeded: Boolean): Boolean {
-        val code = url.getQueryParameter("code")
-
-        return if (url.scheme == AUTH_CALLBACK_SCHEME && url.host == AUTH_CALLBACK_HOST) {
+        return if (url.isOpaque) {
+            false // Not intercepted: opaque is not handled by app
+        } else if (url.scheme == AUTH_CALLBACK_SCHEME && url.host == AUTH_CALLBACK_HOST) {
+            val code = url.getQueryParameter("code")
             if (!code.isNullOrBlank()) {
                 viewModelScope.launch {
                     _navigationEventsFlow.emit(
