@@ -4,6 +4,8 @@ import android.content.Context
 import io.homeassistant.companion.android.assist.service.AssistVoiceInteractionService
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.util.DefaultFailFastHandler
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.microfrontend.isMicroFrontendSupported
 import io.homeassistant.companion.android.util.microWakeWordModelConfigs
 import io.mockk.Runs
@@ -48,6 +50,7 @@ class AssistConfigManagerTest {
     @AfterEach
     fun tearDown() {
         unmockkAll()
+        FailFast.setHandler(DefaultFailFastHandler)
     }
 
     @Nested
@@ -142,7 +145,7 @@ class AssistConfigManagerTest {
         }
 
         @Test
-        fun `Given no model selected when enabling then auto-select first available model`() = runTest {
+        fun `Given no model selected when enabling then auto-select Okay Nabu`() = runTest {
             coEvery { prefsRepository.setWakeWordEnabled(any()) } just Runs
             coEvery { prefsRepository.getSelectedWakeWord() } returns null
             coEvery { prefsRepository.setSelectedWakeWord(any()) } just Runs
@@ -154,17 +157,37 @@ class AssistConfigManagerTest {
         }
 
         @Test
-        fun `Given no model selected and no models available when enabling then skip auto-select`() = runTest {
+        fun `Given no model selected and Okay Nabu unavailable when enabling then auto-select first available model`() = runTest {
+            val modelsWithoutOkayNabu = microWakeWordModelConfigs.filter { it.wakeWord != "Okay Nabu" }
+            coEvery { MicroWakeWordModelConfig.loadAvailableModels(any()) } returns modelsWithoutOkayNabu
+            manager = AssistConfigManagerImpl(context, prefsRepository)
+
+            coEvery { prefsRepository.setWakeWordEnabled(any()) } just Runs
+            coEvery { prefsRepository.getSelectedWakeWord() } returns null
+            coEvery { prefsRepository.setSelectedWakeWord(any()) } just Runs
+
+            manager.setWakeWordEnabled(true)
+
+            coVerify { prefsRepository.setSelectedWakeWord("Hey Jarvis") }
+            coVerify { AssistVoiceInteractionService.startListening(context) }
+        }
+
+        @Test
+        fun `Given no model selected and no models available when enabling then does not start listening`() = runTest {
             coEvery { MicroWakeWordModelConfig.loadAvailableModels(any()) } returns emptyList()
             manager = AssistConfigManagerImpl(context, prefsRepository)
 
             coEvery { prefsRepository.setWakeWordEnabled(any()) } just Runs
             coEvery { prefsRepository.getSelectedWakeWord() } returns null
 
+            var failFastTriggered = false
+            FailFast.setHandler { _, _ -> failFastTriggered = true }
+
             manager.setWakeWordEnabled(true)
 
+            assertTrue(failFastTriggered)
             coVerify(exactly = 0) { prefsRepository.setSelectedWakeWord(any()) }
-            coVerify { AssistVoiceInteractionService.startListening(context) }
+            coVerify(exactly = 0) { AssistVoiceInteractionService.startListening(any()) }
         }
 
         @Test

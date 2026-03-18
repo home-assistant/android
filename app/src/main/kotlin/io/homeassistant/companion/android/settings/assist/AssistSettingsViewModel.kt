@@ -110,11 +110,7 @@ class AssistSettingsViewModel @Inject internal constructor(
             // setWakeWordEnabled could set a model so we need to get the selected model and update the UI with it
             val model = assistConfigManager.getSelectedWakeWordModel()
             _uiState.update {
-                if (enabled) {
-                    it.copy(isWakeWordEnabled = true, selectedWakeWordModel = model)
-                } else {
-                    it.copy(isWakeWordEnabled = false)
-                }
+                it.copy(isWakeWordEnabled = enabled, selectedWakeWordModel = model)
             }
         }
     }
