@@ -402,7 +402,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     fun onNotificationPermissionResult(granted: Boolean) {
         val serverId = _viewState.value.serverId
         _viewState.update { currentState ->
-            if (currentState is FrontendViewState.Content) {
+            if (currentState is FrontendViewState.Content && currentState.serverId == serverId) {
                 currentState.copy(showNotificationPermission = false)
             } else {
                 currentState
@@ -414,11 +414,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     }
 
     private fun checkNotificationPermission() {
+        val serverId = _viewState.value.serverId
         viewModelScope.launch {
-            val serverId = _viewState.value.serverId
             val shouldAsk = permissionManager.shouldAskNotificationPermission(serverId)
             _viewState.update { currentState ->
-                if (currentState is FrontendViewState.Content) {
+                if (currentState is FrontendViewState.Content && currentState.serverId == serverId) {
                     currentState.copy(showNotificationPermission = shouldAsk)
                 } else {
                     currentState
