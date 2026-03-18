@@ -6,6 +6,10 @@ import android.content.Context
 import androidx.annotation.RequiresPermission
 import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.util.VoiceAudioRecorder
+import io.homeassistant.companion.android.microwakeword.MicroWakeWord
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.nio.channels.FileChannel
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -25,10 +29,9 @@ internal const val POST_DETECTION_COOLDOWN_CHUNKS = 200
  * Listens for wake words using microWakeWord TFLite models.
  *
  * This class handles the complete lifecycle of wake word detection:
- * - TFLite runtime initialization
  * - Model loading
  * - Audio recording (delegated to [VoiceAudioRecorder])
- * - Wake word detection
+ * - Wake word detection (via [MicroWakeWord] native engine)
  * - Resource cleanup
  *
  * Audio is obtained by collecting [VoiceAudioRecorder.audioData]. The recorder manages
@@ -53,10 +56,9 @@ class WakeWordListener(
     private val onListenerReady: (MicroWakeWordModelConfig) -> Unit = {},
     private val onListenerStopped: () -> Unit = {},
     private val onListenerFailed: () -> Unit = {},
-    private val tfLiteInitializer: TfLiteInitializer = TfLiteInitializerImpl(),
     private val microWakeWordFactory: suspend (
         MicroWakeWordModelConfig,
-    ) -> MicroWakeWord = { modelConfig -> MicroWakeWord.create(context, modelConfig) },
+    ) -> MicroWakeWord = { modelConfig -> createMicroWakeWord(context, modelConfig) },
 ) {
     private val detectionMutex = Mutex()
     private var detectionJob: Job? = null
@@ -70,9 +72,9 @@ class WakeWordListener(
     /**
      * Start listening for wake words.
      *
-     * This method initializes the TFLite runtime, loads the first available wake word model,
-     * and starts processing audio from [voiceAudioRecorder]. If already listening, the existing
-     * detection is cancelled before starting the new one (to support model changes).
+     * This method loads the wake word model, and starts processing audio from
+     * [voiceAudioRecorder]. If already listening, the existing detection is cancelled
+     * before starting the new one (to support model changes).
      *
      * Requires RECORD_AUDIO permission to be granted.
      */
@@ -95,9 +97,6 @@ class WakeWordListener(
                         onListenerReady(modelConfig)
 
                         runDetectionLoop(modelConfig, microWakeWord)
-                    } catch (e: TfLiteInitializeException) {
-                        Timber.e(e, "DetectionJob failed to initialize TFLite")
-                        onListenerFailed()
                     } finally {
                         microWakeWord?.close()
                     }
@@ -120,8 +119,8 @@ class WakeWordListener(
      *
      * This cancels the detection job and cleans up all resources (both [MicroWakeWord]
      * and [android.media.AudioRecord] via [VoiceAudioRecorder] flow cancellation).
-     * If [start] is currently initializing (loading TFLite), this suspends on
-     * [detectionMutex] until initialization completes, then cancels the job.
+     * If [start] is currently initializing, this suspends on [detectionMutex] until
+     * initialization completes, then cancels the job.
      */
     suspend fun stop() {
         detectionMutex.withLock {
@@ -131,8 +130,6 @@ class WakeWordListener(
     }
 
     private suspend fun initializeMicroWakeWord(modelConfig: MicroWakeWordModelConfig): MicroWakeWord {
-        tfLiteInitializer.initialize(context)
-
         val microWakeWord = microWakeWordFactory(modelConfig)
         Timber.d("MicroWakeWord initialized with '$modelConfig'")
 
@@ -170,4 +167,34 @@ class WakeWordListener(
         onWakeWordDetected(modelConfig)
         return true
     }
+}
+
+/**
+ * Create a [MicroWakeWord] instance from a model config by loading the model from assets.
+ */
+private suspend fun createMicroWakeWord(context: Context, modelConfig: MicroWakeWordModelConfig): MicroWakeWord =
+    withContext(Dispatchers.IO) {
+        Timber.d("Loading wake word model: ${modelConfig.wakeWord} (${modelConfig.modelAssetPath})")
+        val modelBuffer = loadModelFile(context, modelConfig.modelAssetPath)
+        MicroWakeWord(
+            modelBuffer = modelBuffer,
+            featureStepSizeMs = modelConfig.micro.featureStepSize,
+            probabilityCutoff = modelConfig.micro.probabilityCutoff,
+            slidingWindowSize = modelConfig.micro.slidingWindowSize,
+        )
+    }
+
+/**
+ * Load a model file from assets into a direct ByteBuffer suitable for JNI.
+ */
+private fun loadModelFile(context: Context, assetPath: String): ByteBuffer {
+    val assetFileDescriptor = context.assets.openFd(assetPath)
+    val inputStream = assetFileDescriptor.createInputStream()
+    val fileChannel = inputStream.channel
+    val startOffset = assetFileDescriptor.startOffset
+    val declaredLength = assetFileDescriptor.declaredLength
+    val mappedBuffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
+    // Ensure native byte order for direct buffer passed to JNI
+    mappedBuffer.order(ByteOrder.nativeOrder())
+    return mappedBuffer
 }

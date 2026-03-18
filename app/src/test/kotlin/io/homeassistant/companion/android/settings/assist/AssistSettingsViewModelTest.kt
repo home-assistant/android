@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.settings.assist
 import android.content.Intent
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
-import io.homeassistant.companion.android.util.PlayServicesAvailability
 import io.homeassistant.companion.android.util.microWakeWordModelConfigs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -30,7 +29,6 @@ class AssistSettingsViewModelTest {
 
     private val defaultAssistantManager: DefaultAssistantManager = mockk(relaxed = true)
     private val assistConfigManager: AssistConfigManager = mockk(relaxed = true)
-    private val playServicesAvailability: PlayServicesAvailability = mockk(relaxed = true)
 
     private lateinit var viewModel: AssistSettingsViewModel
 
@@ -41,14 +39,12 @@ class AssistSettingsViewModelTest {
         coEvery { assistConfigManager.isWakeWordEnabled() } returns false
         coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
         every { defaultAssistantManager.isDefaultAssistant() } returns true
-        every { playServicesAvailability.isMissingRequiredPlayServices() } returns false
     }
 
     private fun createViewModel(): AssistSettingsViewModel {
         return AssistSettingsViewModel(
             defaultAssistantManager = defaultAssistantManager,
             assistConfigManager = assistConfigManager,
-            playServicesAvailability = playServicesAvailability,
         )
     }
 
@@ -68,7 +64,6 @@ class AssistSettingsViewModelTest {
             assertFalse(state.isLoading)
             assertTrue(state.isWakeWordSupported)
             assertFalse(state.showHardwareNotSupportedHint)
-            assertFalse(state.showMissingPlayServicesHint)
             assertTrue(state.isDefaultAssistant)
             assertTrue(state.isWakeWordEnabled)
             assertEquals(microWakeWordModelConfigs[0], state.selectedWakeWordModel)
@@ -157,49 +152,6 @@ class AssistSettingsViewModelTest {
             assertFalse(state.isWakeWordSupported)
             assertTrue(state.showHardwareNotSupportedHint)
             assertTrue(state.availableModels.isEmpty())
-        }
-    }
-
-    @Nested
-    inner class MissingPlayServicesHintTest {
-
-        @Test
-        fun `Given Play Services available when initialized then hint is hidden`() = runTest {
-            every { playServicesAvailability.isMissingRequiredPlayServices() } returns false
-
-            viewModel = createViewModel()
-            runCurrent()
-
-            val state = viewModel.uiState.value
-            assertFalse(state.showMissingPlayServicesHint)
-            assertTrue(state.isWakeWordSupported)
-            assertFalse(state.showHardwareNotSupportedHint)
-        }
-
-        @Test
-        fun `Given Play Services unavailable when initialized then hint is shown and wake word not supported`() = runTest {
-            every { playServicesAvailability.isMissingRequiredPlayServices() } returns true
-
-            viewModel = createViewModel()
-            runCurrent()
-
-            val state = viewModel.uiState.value
-            assertTrue(state.showMissingPlayServicesHint)
-            assertFalse(state.isWakeWordSupported)
-            assertFalse(state.showHardwareNotSupportedHint)
-        }
-
-        @Test
-        fun `Given Play Services unavailable and wake word enabled when initialized then disable wake word`() = runTest {
-            every { playServicesAvailability.isMissingRequiredPlayServices() } returns true
-            coEvery { assistConfigManager.isWakeWordEnabled() } returns true
-
-            viewModel = createViewModel()
-            runCurrent()
-
-            val state = viewModel.uiState.value
-            assertFalse(state.isWakeWordEnabled)
-            coVerify { assistConfigManager.setWakeWordEnabled(false) }
         }
     }
 

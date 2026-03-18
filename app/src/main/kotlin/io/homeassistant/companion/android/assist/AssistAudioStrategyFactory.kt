@@ -45,6 +45,7 @@ class AssistAudioStrategyFactory @Inject constructor(
             wakeWordListenerFactory = wakeWordListenerFactory,
             assistConfigManager = assistConfigManager,
             wakeWordPhrase = wakeWordPhrase,
+            audioManager = context.getSystemService(),
             onListenerStopped = {
                 AssistVoiceInteractionService.resumeListening(context)
             },

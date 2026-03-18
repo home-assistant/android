@@ -6,7 +6,7 @@ import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConf
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.util.DefaultFailFastHandler
 import io.homeassistant.companion.android.common.util.FailFast
-import io.homeassistant.companion.android.microfrontend.isMicroFrontendSupported
+import io.homeassistant.companion.android.microwakeword.isMicroWakeWordSupported
 import io.homeassistant.companion.android.util.microWakeWordModelConfigs
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -37,9 +37,9 @@ class AssistConfigManagerTest {
     fun setUp() {
         mockkObject(MicroWakeWordModelConfig.Companion)
         mockkObject(AssistVoiceInteractionService.Companion)
-        mockkStatic(::isMicroFrontendSupported)
+        mockkStatic(::isMicroWakeWordSupported)
 
-        every { isMicroFrontendSupported } returns true
+        every { isMicroWakeWordSupported } returns true
         coEvery { MicroWakeWordModelConfig.loadAvailableModels(any()) } returns microWakeWordModelConfigs
         every { AssistVoiceInteractionService.startListening(any()) } just Runs
         every { AssistVoiceInteractionService.stopListening(any()) } just Runs
@@ -58,7 +58,7 @@ class AssistConfigManagerTest {
 
         @Test
         fun `Given supported device when isWakeWordSupported then return true`() {
-            every { isMicroFrontendSupported } returns true
+            every { isMicroWakeWordSupported } returns true
 
             val result = manager.isWakeWordSupported()
 
@@ -67,7 +67,7 @@ class AssistConfigManagerTest {
 
         @Test
         fun `Given unsupported device when isWakeWordSupported then return false`() {
-            every { isMicroFrontendSupported } returns false
+            every { isMicroWakeWordSupported } returns false
 
             val result = manager.isWakeWordSupported()
 
@@ -97,7 +97,7 @@ class AssistConfigManagerTest {
 
         @Test
         fun `Given unsupported device when getAvailableModels then return empty list`() = runTest {
-            every { isMicroFrontendSupported } returns false
+            every { isMicroWakeWordSupported } returns false
 
             val result = manager.getAvailableModels()
 

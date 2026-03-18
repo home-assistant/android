@@ -1,12 +1,10 @@
-import org.gradle.api.tasks.testing.Test
-
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.homeassistant.android.common)
 }
 
 android {
-    namespace = "io.homeassistant.companion.android.microfrontend"
+    namespace = "io.homeassistant.companion.android.microwakeword"
     ndkVersion = libs.versions.androidNdk.get()
 
     defaultConfig {
@@ -20,7 +18,7 @@ android {
         }
 
         ndk {
-            abiFilters += listOf("arm64-v8a", "x86_64") // Limit to LiteRt arch supported for Android
+            // abiFilters += listOf("arm64-v8a", "x86_64", "") // Limit to LiteRt arch supported for Android
         }
     }
 

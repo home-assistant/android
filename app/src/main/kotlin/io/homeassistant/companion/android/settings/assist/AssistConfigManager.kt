@@ -9,7 +9,7 @@ import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConf
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.SuspendLazy
-import io.homeassistant.companion.android.microfrontend.isMicroFrontendSupported
+import io.homeassistant.companion.android.microwakeword.isMicroWakeWordSupported
 import javax.inject.Inject
 
 private const val DEFAULT_WAKE_WORD = "Okay Nabu"
@@ -21,7 +21,7 @@ interface AssistConfigManager {
     /**
      * Returns whether the device supports wake word detection.
      *
-     * Wake word detection requires the MicroFrontend native library, which is only
+     * Wake word detection requires the MicroWakeWord native library, which is only
      * available on 64-bit architectures (arm64-v8a, x86_64).
      */
     fun isWakeWordSupported(): Boolean
@@ -69,7 +69,7 @@ class AssistConfigManagerImpl @Inject constructor(
 
     private val models = SuspendLazy { MicroWakeWordModelConfig.loadAvailableModels(context) }
 
-    override fun isWakeWordSupported(): Boolean = isMicroFrontendSupported
+    override fun isWakeWordSupported(): Boolean = isMicroWakeWordSupported
 
     override suspend fun getAvailableModels(): List<MicroWakeWordModelConfig> {
         if (!isWakeWordSupported()) return emptyList()
