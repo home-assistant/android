@@ -75,7 +75,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     private var lastTriggerTime: Instant? = null
     private var isServiceReady = false
 
-    private val commandReceiver = object : BroadcastReceiver() {
+    private val actionReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             handleAction(intent.action)
         }
@@ -87,7 +87,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         Timber.d("VoiceInteractionService is ready")
         ContextCompat.registerReceiver(
             this,
-            commandReceiver,
+            actionReceiver,
             IntentFilter().apply {
                 addAction(ACTION_START_LISTENING)
                 addAction(ACTION_STOP_LISTENING)
@@ -109,7 +109,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         super.onShutdown()
         isServiceReady = false
         Timber.d("VoiceInteractionService is shutting down")
-        unregisterReceiver(commandReceiver)
+        unregisterReceiver(actionReceiver)
         // Don't use stopListening() as it launches a coroutine that may not complete before cancel
         serviceScope.cancel()
     }

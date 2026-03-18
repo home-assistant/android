@@ -106,7 +106,7 @@ class AssistVoiceInteractionServiceTest {
     }
 
     @Test
-    fun `Given service when onReady then register command receiver for all actions`() = runTest {
+    fun `Given service when onReady then register action receiver for all actions`() = runTest {
         service.onReady()
         advanceUntilIdle()
 
@@ -117,7 +117,7 @@ class AssistVoiceInteractionServiceTest {
     }
 
     @Test
-    fun `Given service ready when onShutdown then unregister command receiver`() = runTest {
+    fun `Given service ready when onShutdown then unregister action receiver`() = runTest {
         service.onReady()
         advanceUntilIdle()
 
@@ -446,12 +446,12 @@ class AssistVoiceInteractionServiceTest {
         }
         .toSet()
 
-    private fun assertAction(action: String, command: (Context) -> Unit) {
+    private fun assertAction(action: String, actionFunction: (Context) -> Unit) {
         val context = mockk<Context>(relaxed = true)
         every { context.packageName } returns "io.homeassistant.companion.android"
         val intentSlot = slot<Intent>()
 
-        command(context)
+        actionFunction(context)
 
         verify { context.sendBroadcast(capture(intentSlot)) }
         assertEquals(action, intentSlot.captured.action)
