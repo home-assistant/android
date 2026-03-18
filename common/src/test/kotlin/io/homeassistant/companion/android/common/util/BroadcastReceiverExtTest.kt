@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class LaunchAsyncTest {
+class BroadcastReceiverExtTest {
 
     private lateinit var receiver: BroadcastReceiver
     private lateinit var pendingResult: BroadcastReceiver.PendingResult
