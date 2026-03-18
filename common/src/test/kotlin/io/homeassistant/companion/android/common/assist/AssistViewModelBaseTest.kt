@@ -362,6 +362,50 @@ class AssistViewModelBaseTest {
         assertTrue(focusAbandoned, "External strategy abandonFocus should be called")
     }
 
+    @Test
+    fun `Given audio collection fails When recorder is running Then onError is called`() = runTest {
+        val audioError = RuntimeException("Microphone access lost")
+        val errorStrategy = object : AssistAudioStrategy {
+            override suspend fun audioData() = kotlinx.coroutines.flow.flow<ShortArray> { throw audioError }
+            override val wakeWordDetected: Flow<String> = emptyFlow()
+            override fun requestFocus() {}
+            override fun abandonFocus() {}
+        }
+        val viewModel = TestAssistViewModel(
+            serverManager = serverManager,
+            audioStrategy = errorStrategy,
+            audioUrlPlayer = audioUrlPlayer,
+            application = application,
+        )
+
+        viewModel.setupRecorder()
+        advanceUntilIdle()
+
+        assertEquals(1, viewModel.receivedErrors.size)
+        assertEquals("Microphone access lost", viewModel.receivedErrors.first().message)
+    }
+
+    @Test
+    fun `Given sending voice data fails When consumer forwards audio Then onError is called`() = runTest {
+        val handlerId = 42
+        val sendError = RuntimeException("WebSocket disconnected")
+        coEvery { webSocketRepository.sendVoiceData(any(), any()) } throws sendError
+
+        viewModel.setupRecorder()
+        viewModel.runVoicePipeline()
+        advanceUntilIdle()
+
+        audioDataFlow.emit(shortArrayOf(1, 2, 3))
+        advanceUntilIdle()
+
+        pipelineEventsFlow.emit(createRunStartEvent(handlerId))
+        pipelineEventsFlow.emit(createSttStartEvent())
+        advanceUntilIdle()
+
+        assertEquals(1, viewModel.receivedErrors.size)
+        assertEquals("WebSocket disconnected", viewModel.receivedErrors.first().message)
+    }
+
     private fun createRunStartEvent(handlerId: Int): AssistPipelineEvent {
         return AssistPipelineEvent(
             type = AssistPipelineEventType.RUN_START,
@@ -406,6 +450,11 @@ class AssistViewModelBaseTest {
         }
 
         val receivedEvents = mutableListOf<AssistEvent>()
+        val receivedErrors = mutableListOf<Throwable>()
+
+        fun setupRecorder() {
+            setupRecorder(onError = { receivedErrors += it })
+        }
 
         fun runVoicePipeline(
             pipeline: AssistPipelineResponse? = null,
