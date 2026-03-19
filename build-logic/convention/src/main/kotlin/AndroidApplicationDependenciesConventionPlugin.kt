@@ -115,6 +115,7 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     "testImplementation"(libs.bundles.androidx.glance.testing)
                     "testImplementation"(libs.navigation.test)
                     "testImplementation"(libs.hilt.android.testing)
+                    "testImplementation"(libs.androidx.work.testing)
 
                     "lintChecks"(libs.compose.lint.checks)
                 }

@@ -30,9 +30,9 @@ jobs:
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
-      - uses: ruby/setup-ruby@dffb23f65a78bba8db45d387d5ea1bbd6be3ef18 # v1.293.0
+      - uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1.295.0
         with:
-          ruby-version: "4.0.1"
+          ruby-version: "4.0.2"
           bundler-cache: false
 
       - uses: ./.github/actions/create-release-number
@@ -85,7 +85,7 @@ jobs:
 
       - name: Create Github Pre-Release
         if: github.event.inputs.beta == 'true'
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2.6.1
         with:
           tag_name: ${{ steps.rel_number.outputs.version }}
           body_path: ./app/build/outputs/changelogGithub
@@ -145,9 +145,9 @@ jobs:
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
-      - uses: ruby/setup-ruby@dffb23f65a78bba8db45d387d5ea1bbd6be3ef18 # v1.293.0
+      - uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1.295.0
         with:
-          ruby-version: "4.0.1"
+          ruby-version: "4.0.2"
           bundler-cache: false
 
       - uses: ./.github/actions/create-release-number

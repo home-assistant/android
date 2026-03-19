@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.frontend
 import android.annotation.SuppressLint
 import android.net.Uri
 import android.os.Build
+import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.background
@@ -46,6 +47,8 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
 import io.homeassistant.companion.android.frontend.permissions.NotificationPermissionPrompt
+import io.homeassistant.companion.android.frontend.permissions.PendingWebViewPermissionRequest
+import io.homeassistant.companion.android.frontend.permissions.WebViewPermissionEffect
 import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModel
@@ -89,6 +92,7 @@ internal fun FrontendScreen(
     modifier: Modifier = Modifier,
 ) {
     val viewState by viewModel.viewState.collectAsStateWithLifecycle()
+    val pendingWebViewPermission by viewModel.pendingWebViewPermission.collectAsStateWithLifecycle()
 
     // Create SecurityLevel ViewModel only when needed
     val securityLevelViewModel: LocationForSecureConnectionViewModel? =
@@ -105,8 +109,11 @@ internal fun FrontendScreen(
         viewState = viewState,
         errorStateProvider = viewModel as FrontendConnectionErrorStateProvider,
         webViewClient = viewModel.webViewClient,
+        webChromeClient = viewModel.webChromeClient,
         frontendJsCallback = viewModel.frontendJsCallback,
         scriptsToEvaluate = viewModel.scriptsToEvaluate,
+        pendingWebViewPermission = pendingWebViewPermission,
+        onWebViewPermissionResult = viewModel::onWebViewPermissionResult,
         onBlockInsecureRetry = viewModel::onRetry,
         onOpenExternalLink = onOpenExternalLink,
         onBlockInsecureHelpClick = onBlockInsecureHelpClick,
@@ -129,6 +136,7 @@ internal fun FrontendScreenContent(
     onBackClick: () -> Unit,
     viewState: FrontendViewState,
     webViewClient: WebViewClient,
+    webChromeClient: WebChromeClient,
     frontendJsCallback: FrontendJsCallback,
     scriptsToEvaluate: Flow<WebViewScript>,
     onBlockInsecureRetry: () -> Unit,
@@ -142,6 +150,8 @@ internal fun FrontendScreenContent(
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onWebViewCreationFailed: (Throwable) -> Unit,
     modifier: Modifier = Modifier,
+    pendingWebViewPermission: PendingWebViewPermissionRequest? = null,
+    onWebViewPermissionResult: (Map<String, Boolean>) -> Unit = {},
     errorStateProvider: FrontendConnectionErrorStateProvider = FrontendConnectionErrorStateProvider.noOp,
     securityLevelViewModel: LocationForSecureConnectionViewModel? = null,
     onSecurityLevelDone: () -> Unit = {},
@@ -156,12 +166,18 @@ internal fun FrontendScreenContent(
         scriptsToEvaluate = scriptsToEvaluate,
     )
 
+    WebViewPermissionEffect(
+        pendingPermission = pendingWebViewPermission,
+        onPermissionResult = onWebViewPermissionResult,
+    )
+
     Box(modifier = modifier.fillMaxSize()) {
         // Always render WebView at base layer
         SafeHAWebView(
             onBackClick = onBackClick,
             onWebViewCreated = { webView = it },
             webViewClient = webViewClient,
+            webChromeClient = webChromeClient,
             frontendJsCallback = frontendJsCallback,
             contentState = viewState as? FrontendViewState.Content,
             onWebViewCreationFailed = onWebViewCreationFailed,
@@ -353,6 +369,7 @@ private fun SafeHAWebView(
     frontendJsCallback: FrontendJsCallback,
     contentState: FrontendViewState.Content?,
     onWebViewCreationFailed: (Throwable) -> Unit,
+    webChromeClient: WebChromeClient? = null,
 ) {
     val serverHandleInsets = contentState?.serverHandleInsets ?: false
     val backgroundColor = contentState?.backgroundColor
@@ -393,6 +410,7 @@ private fun SafeHAWebView(
                     // even before loading the server URL to not miss any events from the frontend.
                     frontendJsCallback.attachToWebView(this)
                     this.webViewClient = webViewClient
+                    webChromeClient?.let { this.webChromeClient = it }
                 },
                 onBackPressed = onBackClick,
                 onWebViewCreationFailed = onWebViewCreationFailed,
@@ -457,6 +475,7 @@ private fun FrontendScreenLoadingPreview() {
                 url = "https://example.com",
             ),
             webViewClient = WebViewClient(),
+            webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
             scriptsToEvaluate = emptyFlow(),
             onBlockInsecureRetry = {},
@@ -489,6 +508,7 @@ private fun FrontendScreenErrorPreview() {
                 ),
             ),
             webViewClient = WebViewClient(),
+            webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
             scriptsToEvaluate = emptyFlow(),
             onBlockInsecureRetry = {},
@@ -517,6 +537,7 @@ private fun FrontendScreenInsecurePreview() {
                 missingLocation = true,
             ),
             webViewClient = WebViewClient(),
+            webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
             scriptsToEvaluate = emptyFlow(),
             onBlockInsecureRetry = {},
@@ -543,6 +564,7 @@ private fun FrontendScreenSecurityLevelRequiredPreview() {
                 serverId = 1,
             ),
             webViewClient = WebViewClient(),
+            webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
             scriptsToEvaluate = emptyFlow(),
             onBlockInsecureRetry = {},
