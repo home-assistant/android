@@ -64,10 +64,7 @@ private val MIN_DROPDOWN_HEIGHT = 112.dp
  * @param label Display text shown in the dropdown list and in the collapsed field when selected
  */
 @Immutable
-data class HADropdownItem<T>(
-    val key: T,
-    val label: String,
-)
+data class HADropdownItem<T>(val key: T, val label: String)
 
 /**
  * Remembers the currently selected dropdown key as a [MutableState].

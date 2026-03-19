@@ -55,6 +55,8 @@ import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConf
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.ButtonSize
 import io.homeassistant.companion.android.common.compose.composable.HABanner
+import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
+import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.composable.HAHint
 import io.homeassistant.companion.android.common.compose.composable.HALabel
@@ -69,8 +71,6 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.util.openUri
 import io.homeassistant.companion.android.util.PLAY_SERVICES_FLAVOR_DOC_URL
-import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
-import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
 import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import kotlinx.coroutines.launch
@@ -279,7 +279,7 @@ private fun ColumnScope.WakeWordSection(
                 selectedModel = selectedModel,
                 availableModels = uiState.availableModels,
                 onSelectModel = onSelectWakeWord,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
 
             HAHint(

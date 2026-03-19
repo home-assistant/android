@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.util
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -17,7 +18,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
-import android.annotation.SuppressLint
 import io.homeassistant.companion.android.common.R as commonR
 
 object DisabledLocationHandler {

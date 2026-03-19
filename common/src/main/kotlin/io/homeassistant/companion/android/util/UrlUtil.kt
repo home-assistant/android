@@ -15,7 +15,15 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import timber.log.Timber
 
 object UrlUtil {
-    fun formattedUrlString(url: String): String {
+    /**
+     * Extracts the base URL (scheme, host, and port) from the given URL string,
+     * stripping any path, query parameters, and fragments.
+     *
+     * @param url the full URL string to extract the base from
+     * @return the base URL containing only the scheme, host, and port, with a trailing `/`
+     * @throws MalformedHttpUrlException if [url] is empty or not a valid HTTP(S) URL
+     */
+    fun extractBaseUrl(url: String): String {
         return if (url == "") {
             throw MalformedHttpUrlException()
         } else {

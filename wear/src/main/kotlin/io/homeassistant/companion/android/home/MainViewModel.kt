@@ -275,7 +275,9 @@ class MainViewModel @Inject constructor(
         if (!isFavoritesOnly) {
             val newAreaRegistry = getAreaRegistry.await().orEmpty()
             val newDeviceRegistry = getDeviceRegistry.await().orEmpty()
-            registries.update { Registries(area = newAreaRegistry, device = newDeviceRegistry, entity = newEntityRegistry) }
+            registries.update {
+                Registries(area = newAreaRegistry, device = newDeviceRegistry, entity = newEntityRegistry)
+            }
         } else {
             registries.update { it.copy(entity = newEntityRegistry) }
         }

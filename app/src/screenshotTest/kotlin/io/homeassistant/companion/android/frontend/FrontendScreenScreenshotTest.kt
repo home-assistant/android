@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend
 
+import android.webkit.WebChromeClient
 import android.webkit.WebViewClient
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
@@ -20,6 +21,7 @@ class FrontendScreenScreenshotTest {
                 onBackClick = {},
                 viewState = FrontendViewState.LoadServer(serverId = 1),
                 webViewClient = WebViewClient(),
+                webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
                 scriptsToEvaluate = emptyFlow(),
                 onBlockInsecureRetry = {},
@@ -31,6 +33,7 @@ class FrontendScreenScreenshotTest {
                 onConfigureHomeNetwork = { _ -> },
                 onSecurityLevelHelpClick = {},
                 onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
             )
         }
     }
@@ -47,6 +50,7 @@ class FrontendScreenScreenshotTest {
                     url = "https://example.com",
                 ),
                 webViewClient = WebViewClient(),
+                webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
                 scriptsToEvaluate = emptyFlow(),
                 onBlockInsecureRetry = {},
@@ -58,6 +62,7 @@ class FrontendScreenScreenshotTest {
                 onConfigureHomeNetwork = { _ -> },
                 onSecurityLevelHelpClick = {},
                 onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
             )
         }
     }
@@ -71,6 +76,7 @@ class FrontendScreenScreenshotTest {
                 onBackClick = {},
                 viewState = FrontendViewState.SecurityLevelRequired(serverId = 1),
                 webViewClient = WebViewClient(),
+                webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
                 scriptsToEvaluate = emptyFlow(),
                 onBlockInsecureRetry = {},
@@ -82,6 +88,7 @@ class FrontendScreenScreenshotTest {
                 onConfigureHomeNetwork = { _ -> },
                 onSecurityLevelHelpClick = {},
                 onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
             )
         }
     }
@@ -99,6 +106,7 @@ class FrontendScreenScreenshotTest {
                     missingLocation = false,
                 ),
                 webViewClient = WebViewClient(),
+                webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
                 scriptsToEvaluate = emptyFlow(),
                 onBlockInsecureRetry = {},
@@ -110,6 +118,7 @@ class FrontendScreenScreenshotTest {
                 onConfigureHomeNetwork = { _ -> },
                 onSecurityLevelHelpClick = {},
                 onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
             )
         }
     }
@@ -126,6 +135,7 @@ class FrontendScreenScreenshotTest {
                     url = "https://example.com",
                 ),
                 webViewClient = WebViewClient(),
+                webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
                 scriptsToEvaluate = emptyFlow(),
                 onBlockInsecureRetry = {},
@@ -137,6 +147,38 @@ class FrontendScreenScreenshotTest {
                 onConfigureHomeNetwork = { _ -> },
                 onSecurityLevelHelpClick = {},
                 onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
+            )
+        }
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `FrontendScreen Content with notification permission prompt`() {
+        HAThemeForPreview {
+            FrontendScreenContent(
+                onBackClick = {},
+                viewState = FrontendViewState.Content(
+                    serverId = 1,
+                    url = "https://example.com",
+                    showNotificationPermission = true,
+                ),
+                webViewClient = WebViewClient(),
+                webChromeClient = WebChromeClient(),
+                frontendJsCallback = FrontendJsBridge.noOp,
+                scriptsToEvaluate = emptyFlow(),
+                onBlockInsecureRetry = {},
+                onOpenExternalLink = {},
+                onBlockInsecureHelpClick = {},
+                onOpenSettings = {},
+                onChangeSecurityLevel = {},
+                onOpenLocationSettings = {},
+                onConfigureHomeNetwork = { _ -> },
+                onSecurityLevelHelpClick = {},
+                onShowSnackbar = { _, _ -> true },
+                supportsNotificationPermission = true,
+                onWebViewCreationFailed = {},
             )
         }
     }
@@ -158,6 +200,7 @@ class FrontendScreenScreenshotTest {
                     ),
                 ),
                 webViewClient = WebViewClient(),
+                webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
                 scriptsToEvaluate = emptyFlow(),
                 onBlockInsecureRetry = {},
@@ -169,6 +212,7 @@ class FrontendScreenScreenshotTest {
                 onConfigureHomeNetwork = { _ -> },
                 onSecurityLevelHelpClick = {},
                 onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
             )
         }
     }
