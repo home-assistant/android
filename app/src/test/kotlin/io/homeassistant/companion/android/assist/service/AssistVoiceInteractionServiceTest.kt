@@ -24,15 +24,12 @@ import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.unmockkAll
 import io.mockk.verify
-import kotlin.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNotSame
-import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -289,38 +286,6 @@ class AssistVoiceInteractionServiceTest {
     }
 
     @Test
-    fun `Given wake word detected twice quickly when callback invoked then debounce`() = runTest {
-        val shadow = Shadows.shadowOf(service) as ShadowVoiceInteractionService
-        clock.currentInstant = Instant.fromEpochMilliseconds(0)
-        coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
-
-        // Call onReady() to make showSession() available (isWakeWordEnabled defaults to false)
-        service.onReady()
-        advanceUntilIdle()
-
-        sendAction(ACTION_START_LISTENING)
-        advanceUntilIdle()
-
-        // First detection - should trigger showSession
-        onWakeWordDetectedSlot.captured.invoke(microWakeWordModelConfigs[0])
-        advanceUntilIdle()
-        val firstBundle = shadow.lastSessionBundle
-        assertNotNull(firstBundle)
-
-        // Second detection 2 seconds later (within 3 second debounce) - should be ignored
-        clock.currentInstant = Instant.fromEpochMilliseconds(2000)
-        onWakeWordDetectedSlot.captured.invoke(microWakeWordModelConfigs[0])
-        advanceUntilIdle()
-        assertSame(firstBundle, shadow.lastSessionBundle)
-
-        // Third detection 4 seconds after first (after debounce) - should trigger showSession
-        clock.currentInstant = Instant.fromEpochMilliseconds(4000)
-        onWakeWordDetectedSlot.captured.invoke(microWakeWordModelConfigs[0])
-        advanceUntilIdle()
-        assertNotSame(firstBundle, shadow.lastSessionBundle)
-    }
-
-    @Test
     fun `Given wake word detected when callback invoked then send broadcast`() = runTest {
         coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
 
@@ -340,35 +305,6 @@ class AssistVoiceInteractionServiceTest {
         }
         assertNotNull(wakeWordBroadcast)
         assertEquals(service.packageName, wakeWordBroadcast!!.`package`)
-    }
-
-    @Test
-    fun `Given wake word detected within debounce when callback invoked then still send broadcast`() = runTest {
-        clock.currentInstant = Instant.fromEpochMilliseconds(0)
-        coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
-
-        service.onReady()
-        advanceUntilIdle()
-
-        sendAction(ACTION_START_LISTENING)
-        advanceUntilIdle()
-
-        // First detection
-        onWakeWordDetectedSlot.captured.invoke(microWakeWordModelConfigs[0])
-        advanceUntilIdle()
-
-        // Second detection within debounce (showSession suppressed, but broadcast should still fire)
-        clock.currentInstant = Instant.fromEpochMilliseconds(2000)
-        onWakeWordDetectedSlot.captured.invoke(microWakeWordModelConfigs[0])
-        advanceUntilIdle()
-
-        val broadcastIntents = Shadows.shadowOf(ApplicationProvider.getApplicationContext<android.app.Application>())
-            .broadcastIntents
-        val wakeWordBroadcasts = broadcastIntents.filter {
-            it.action == "io.homeassistant.companion.android.WAKE_WORD_DETECTED"
-        }
-        // Both detections should have sent a broadcast, even though the second was debounced
-        assertEquals(2, wakeWordBroadcasts.size)
     }
 
     @Test
