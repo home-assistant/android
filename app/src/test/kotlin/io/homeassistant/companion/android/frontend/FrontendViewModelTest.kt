@@ -12,7 +12,6 @@ import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
-import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -49,10 +48,7 @@ class FrontendViewModelTest {
     @RegisterExtension
     val mainDispatcherExtension = MainDispatcherJUnit5Extension(UnconfinedTestDispatcher())
 
-    private val webViewClient: HAWebViewClient = mockk(relaxed = true)
-    private val webViewClientFactory: HAWebViewClientFactory = mockk(relaxed = true) {
-        every { create(any(), any(), any(), any(), any(), any()) } returns webViewClient
-    }
+    private val webViewClientFactory: HAWebViewClientFactory = mockk(relaxed = true)
     private val externalBusHandler: FrontendMessageHandler = mockk(relaxed = true)
     private val urlManager: FrontendUrlManager = mockk(relaxed = true)
     private val connectivityCheckRepository: ConnectivityCheckRepository = mockk(relaxed = true)
