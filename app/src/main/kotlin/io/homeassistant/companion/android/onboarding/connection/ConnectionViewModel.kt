@@ -150,9 +150,10 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     }
 
     private fun interceptRedirectIfRequired(url: Uri, isTLSClientAuthNeeded: Boolean): Boolean {
-        val code = url.getQueryParameter("code")
-
-        return if (url.scheme == AUTH_CALLBACK_SCHEME && url.host == AUTH_CALLBACK_HOST) {
+        return if (url.isOpaque) {
+            false // Not intercepted: opaque is not handled by app
+        } else if (url.scheme == AUTH_CALLBACK_SCHEME && url.host == AUTH_CALLBACK_HOST) {
+            val code = url.getQueryParameter("code")
             if (!code.isNullOrBlank()) {
                 viewModelScope.launch {
                     _navigationEventsFlow.emit(
@@ -177,6 +178,21 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         } else {
             false // Default: Not intercepted
         }
+    }
+
+    /**
+     * Called when the system WebView fails to initialize.
+     *
+     * Transitions to an error state with a [FrontendConnectionError.UnrecoverableError.WebViewCreationError]
+     * so the error screen is displayed with guidance to update the system WebView.
+     */
+    fun onWebViewCreationFailed(throwable: Throwable) {
+        onError(
+            FrontendConnectionError.UnrecoverableError.WebViewCreationError(
+                message = commonR.string.webview_creation_failed,
+                throwable = throwable,
+            ),
+        )
     }
 
     private fun onError(error: FrontendConnectionError) {

@@ -26,10 +26,7 @@ import io.homeassistant.companion.android.common.compose.theme.LocalHAColorSchem
  * @param content The composable content displayed inside the card.
  */
 @Composable
-fun HASettingsCard(
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
+fun HASettingsCard(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Box(
         modifier = modifier
             .fillMaxWidth()

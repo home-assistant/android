@@ -15,9 +15,11 @@ import android.os.Build
 import android.os.Bundle
 import android.service.voice.VoiceInteractionService
 import androidx.annotation.RequiresPermission
+import androidx.annotation.VisibleForTesting
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.assist.service.AssistVoiceInteractionService.Companion.isActiveService
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
 import io.homeassistant.companion.android.assist.wakeword.WakeWordListener
 import io.homeassistant.companion.android.assist.wakeword.WakeWordListenerFactory
@@ -73,10 +75,26 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     private var lastTriggerTime: Instant? = null
     private var isServiceReady = false
 
+    private val actionReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            handleAction(intent.action)
+        }
+    }
+
     override fun onReady() {
         super.onReady()
         isServiceReady = true
         Timber.d("VoiceInteractionService is ready")
+        ContextCompat.registerReceiver(
+            this,
+            actionReceiver,
+            IntentFilter().apply {
+                addAction(ACTION_START_LISTENING)
+                addAction(ACTION_STOP_LISTENING)
+                addAction(ACTION_RESUME_LISTENING)
+            },
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
         serviceScope.launch {
             if (assistConfigManager.isWakeWordEnabled()) {
                 Timber.d("Wake word detection is enabled, starting listener")
@@ -91,8 +109,15 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         super.onShutdown()
         isServiceReady = false
         Timber.d("VoiceInteractionService is shutting down")
+        unregisterReceiver(actionReceiver)
         // Don't use stopListening() as it launches a coroutine that may not complete before cancel
         serviceScope.cancel()
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Fallback for commands delivered via startService() when the service is already running
+        handleAction(intent?.action)
+        return super.onStartCommand(intent, flags, startId)
     }
 
     override fun onLaunchVoiceAssistFromKeyguard() {
@@ -100,13 +125,12 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         launchAssist()
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        when (intent?.action) {
+    private fun handleAction(action: String?) {
+        when (action) {
             ACTION_START_LISTENING -> startListening()
             ACTION_STOP_LISTENING -> stopListening()
             ACTION_RESUME_LISTENING -> resumeListening()
         }
-        return super.onStartCommand(intent, flags, startId)
     }
 
     /**
@@ -196,7 +220,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     private fun onWakeWordDetected(model: MicroWakeWordModelConfig) {
         // Always broadcast for observers (e.g. settings test mode) regardless of debounce
         sendBroadcast(
-            Intent(ACTION_WAKE_WORD_DETECTED).setPackage(packageName)
+            Intent(ACTION_WAKE_WORD_DETECTED).setPackage(packageName),
         )
 
         val now = clock.now()
@@ -302,9 +326,14 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     companion object {
         private const val NOTIFICATION_ID = 9001
 
-        private const val ACTION_START_LISTENING = "io.homeassistant.companion.android.START_LISTENING"
-        private const val ACTION_STOP_LISTENING = "io.homeassistant.companion.android.STOP_LISTENING"
-        private const val ACTION_RESUME_LISTENING = "io.homeassistant.companion.android.RESUME_LISTENING"
+        @VisibleForTesting
+        const val ACTION_START_LISTENING = "io.homeassistant.companion.android.START_LISTENING"
+
+        @VisibleForTesting
+        const val ACTION_STOP_LISTENING = "io.homeassistant.companion.android.STOP_LISTENING"
+
+        @VisibleForTesting
+        const val ACTION_RESUME_LISTENING = "io.homeassistant.companion.android.RESUME_LISTENING"
 
         /** Bundle key for passing the detected wake word phrase to the session. */
         const val EXTRA_WAKE_WORD = "wake_word"
@@ -327,7 +356,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         /**
          * Start listening for wake words.
          *
-         * Sends an intent to start the service and begin wake word detection.
+         * Sends a package-scoped broadcast to the service to begin wake word detection.
          * If already listening, the current listener is stopped and restarted with the
          * currently selected wake word model. Call this method after changing the wake word
          * selection to apply the new model.
@@ -336,31 +365,40 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
          */
         @RequiresPermission(Manifest.permission.RECORD_AUDIO)
         fun startListening(context: Context) {
-            Timber.e("Send start listening is service started ${isActiveService(context)}")
-            val intent = Intent(context, AssistVoiceInteractionService::class.java).apply {
-                action = ACTION_START_LISTENING
-            }
-            context.startService(intent)
+            broadcastAction(context, ACTION_START_LISTENING)
         }
 
         /**
          * Stop listening for wake word.
          */
         fun stopListening(context: Context) {
-            val intent = Intent(context, AssistVoiceInteractionService::class.java).apply {
-                action = ACTION_STOP_LISTENING
-            }
-            context.startService(intent)
+            broadcastAction(context, ACTION_STOP_LISTENING)
         }
 
         /**
          * Resume wake word listening if it is still enabled in settings.
          */
         fun resumeListening(context: Context) {
-            val intent = Intent(context, AssistVoiceInteractionService::class.java).apply {
-                action = ACTION_RESUME_LISTENING
-            }
-            context.startService(intent)
+            broadcastAction(context, ACTION_RESUME_LISTENING)
+        }
+
+        /**
+         * Sends a package-scoped broadcast to communicate with the service.
+         *
+         * Unlike [Context.startService], broadcasts are not subject to background
+         * execution restrictions on Android 8+, making them safe to send from anywhere
+         * including FCM/WebSocket callbacks and [android.app.Activity.onDestroy].
+         *
+         * Note: The broadcast is only delivered to [AssistVoiceInteractionService] while it is
+         * running and its internal broadcast receiver is registered (after the service is ready).
+         * If the service is not running or not yet ready when this is called, the broadcast will
+         * be silently dropped. Callers that require guaranteed delivery should ensure the service
+         * is active before invoking this method using [isActiveService].
+         */
+        private fun broadcastAction(context: Context, action: String) {
+            context.sendBroadcast(
+                Intent(action).setPackage(context.packageName),
+            )
         }
 
         /**

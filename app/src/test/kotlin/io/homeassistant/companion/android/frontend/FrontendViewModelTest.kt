@@ -7,12 +7,14 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
 import io.homeassistant.companion.android.frontend.handler.FrontendMessageHandler
 import io.homeassistant.companion.android.frontend.navigation.FrontendNavigationEvent
+import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
-import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
@@ -30,12 +32,15 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @ExtendWith(ConsoleLogExtension::class)
@@ -43,13 +48,11 @@ class FrontendViewModelTest {
     @RegisterExtension
     val mainDispatcherExtension = MainDispatcherJUnit5Extension(UnconfinedTestDispatcher())
 
-    private val webViewClient: HAWebViewClient = mockk(relaxed = true)
-    private val webViewClientFactory: HAWebViewClientFactory = mockk(relaxed = true) {
-        every { create(any(), any(), any(), any(), any(), any()) } returns webViewClient
-    }
+    private val webViewClientFactory: HAWebViewClientFactory = mockk(relaxed = true)
     private val externalBusHandler: FrontendMessageHandler = mockk(relaxed = true)
     private val urlManager: FrontendUrlManager = mockk(relaxed = true)
     private val connectivityCheckRepository: ConnectivityCheckRepository = mockk(relaxed = true)
+    private val permissionManager: PermissionManager = mockk(relaxed = true)
 
     private val serverId = 1
     private val testUrlWithAuth = "https://example.com?external_auth=1"
@@ -72,6 +75,7 @@ class FrontendViewModelTest {
             frontendMessageHandler = externalBusHandler,
             urlManager = urlManager,
             connectivityCheckRepository = connectivityCheckRepository,
+            permissionManager = permissionManager,
         )
     }
 
@@ -315,6 +319,72 @@ class FrontendViewModelTest {
             // Error should be cleared - the last emitted error should be null
             assertTrue(errors.last() == null)
             job.cancel()
+        }
+
+        @Test
+        fun `Given loading state when onWebViewCreationFailed called then state transitions to Error with WebViewCreationError`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            // Verify initial loading state
+            assertTrue(viewModel.viewState.value is FrontendViewState.Loading)
+
+            // When
+            val exception = UnsatisfiedLinkError("dlopen failed: libwebviewchromium.so is 32-bit")
+            viewModel.onWebViewCreationFailed(exception)
+            advanceUntilIdle()
+
+            // Then
+            val state = viewModel.viewState.value
+            assertTrue(state is FrontendViewState.Error, "Expected Error state but got $state")
+            val error = (state as FrontendViewState.Error).error
+            assertTrue(error is FrontendConnectionError.UnrecoverableError.WebViewCreationError)
+            assertEquals(io.homeassistant.companion.android.common.R.string.webview_creation_failed, error.message)
+            assertEquals("dlopen failed: libwebviewchromium.so is 32-bit", error.errorDetails)
+            assertEquals("class java.lang.UnsatisfiedLinkError", error.rawErrorType)
+        }
+
+        @Test
+        fun `Given WebViewCreationError state when url flow emits new url then error state is preserved`() = runTest {
+            val urlFlow = MutableSharedFlow<UrlLoadResult>(replay = 1)
+            every { urlManager.serverUrlFlow(any(), any()) } returns urlFlow
+
+            // Emit initial URL
+            urlFlow.emit(UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId))
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            // Verify initial loading state
+            assertTrue(
+                viewModel.viewState.value is FrontendViewState.Loading,
+                "Expected Loading but got ${viewModel.viewState.value}",
+            )
+
+            // Simulate WebView creation failure
+            viewModel.onWebViewCreationFailed(RuntimeException("WebView broken"))
+            advanceUntilIdle()
+
+            // Verify error state
+            val errorState = viewModel.viewState.value
+            assertTrue(errorState is FrontendViewState.Error)
+            assertTrue((errorState as FrontendViewState.Error).error is FrontendConnectionError.UnrecoverableError.WebViewCreationError)
+
+            // Now emit a new URL (e.g., switching from external to internal network)
+            urlFlow.emit(UrlLoadResult.Success(url = "https://internal.example.com?external_auth=1", serverId = serverId))
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            // The error state should be preserved — new URL cannot fix a broken WebView
+            val finalState = viewModel.viewState.value
+            assertTrue(
+                finalState is FrontendViewState.Error,
+                "Expected Error to be preserved but got $finalState",
+            )
+            assertTrue((finalState as FrontendViewState.Error).error is FrontendConnectionError.UnrecoverableError.WebViewCreationError)
         }
     }
 
@@ -594,6 +664,91 @@ class FrontendViewModelTest {
             // Verify connectivity check state has failure
             assertEquals(failedState, viewModel.connectivityCheckState.value)
             assertTrue(viewModel.connectivityCheckState.value.hasFailure)
+        }
+    }
+
+    @Nested
+    inner class NotificationPermission {
+
+        @ParameterizedTest(name = "shouldAsk={0} -> showNotificationPermission={0}")
+        @ValueSource(booleans = [true, false])
+        fun `Given connected when permission manager returns value then Content state matches`(
+            shouldAsk: Boolean,
+        ) = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { externalBusHandler.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery { permissionManager.shouldAskNotificationPermission(serverId) } returns shouldAsk
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+
+            val state = viewModel.viewState.value
+            assertTrue(state is FrontendViewState.Content)
+            assertEquals(shouldAsk, (state as FrontendViewState.Content).showNotificationPermission)
+        }
+
+        @Test
+        fun `Given notification permission result when called then showNotificationPermission becomes false`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { externalBusHandler.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery { permissionManager.shouldAskNotificationPermission(serverId) } returns true
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+
+            // Verify prompt is shown
+            assertTrue((viewModel.viewState.value as FrontendViewState.Content).showNotificationPermission)
+
+            // Handle permission result
+            viewModel.onNotificationPermissionResult(granted = true)
+            advanceUntilIdle()
+
+            // Verify prompt is hidden
+            assertFalse((viewModel.viewState.value as FrontendViewState.Content).showNotificationPermission)
+            coVerify { permissionManager.onNotificationPermissionResult(serverId = serverId, granted = true) }
+        }
+    }
+
+    @Nested
+    inner class WebViewPermission {
+
+        @Test
+        fun `Given webView permission result when called then delegates to permission manager`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            val results = mapOf(android.Manifest.permission.CAMERA to true)
+            viewModel.onWebViewPermissionResult(results)
+
+            verify { permissionManager.onWebViewPermissionResult(results) }
+        }
+
+        @Test
+        fun `Given pending webView permission then viewModel exposes it from permission manager`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            assertEquals(permissionManager.pendingWebViewPermission, viewModel.pendingWebViewPermission)
         }
     }
 

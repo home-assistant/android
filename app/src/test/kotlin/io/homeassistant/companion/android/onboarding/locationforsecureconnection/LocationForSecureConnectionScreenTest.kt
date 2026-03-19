@@ -22,7 +22,7 @@ import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
-import io.homeassistant.companion.android.util.LocationPermissionActivityResultRegistry
+import io.homeassistant.companion.android.util.FakePermissionResultRegistry
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -122,16 +122,26 @@ class LocationForSecureConnectionScreenTest {
         }
     }
 
+    @Test
+    fun `Given HTTP url when screen displayed then show HTTP specific content`() {
+        composeTestRule.apply {
+            testScreen(hasPlainTextUrl = true) {
+                assertContent(hasPlainTextUrl = true)
+            }
+        }
+    }
+
     private class TestHelper(locationPermissionGranted: Boolean) {
         var helpClicked = false
         var allowInsecureConnection: Boolean? = null
         var snackbarMessage: String? = null
-        val registry = LocationPermissionActivityResultRegistry(locationPermissionGranted)
+        val registry = FakePermissionResultRegistry(locationPermissionGranted)
     }
 
     @OptIn(ExperimentalPermissionsApi::class)
     private fun AndroidComposeTestRule<*, *>.testScreen(
         initialAllowInsecureConnection: Boolean? = null,
+        hasPlainTextUrl: Boolean = false,
         locationPermissionGranted: Boolean = true,
         block: TestHelper.() -> Unit,
     ) {
@@ -145,6 +155,7 @@ class LocationForSecureConnectionScreenTest {
                     LocationForSecureConnectionScreen(
                         onHelpClick = { helpClicked = true },
                         initialAllowInsecureConnection = initialAllowInsecureConnection,
+                        hasPlainTextUrl = hasPlainTextUrl,
                         onAllowInsecureConnection = { allowInsecureConnection = it },
                         onShowSnackbar = { message, _ ->
                             snackbarMessage = message
@@ -158,12 +169,23 @@ class LocationForSecureConnectionScreenTest {
             assertTrue(helpClicked)
 
             onNodeWithText(stringResource(commonR.string.location_secure_connection_title)).assertIsDisplayed()
-            onNodeWithText(stringResource(commonR.string.location_secure_connection_content)).assertIsDisplayed()
+            assertContent(hasPlainTextUrl)
             onNodeWithText(stringResource(commonR.string.connection_security_most_secure)).performScrollTo().assertIsDisplayed()
             onNodeWithText(stringResource(commonR.string.connection_security_less_secure)).performScrollTo().assertIsDisplayed()
             onNodeWithText(stringResource(commonR.string.location_secure_connection_hint)).performScrollTo().assertIsDisplayed()
 
             block()
         }
+    }
+
+    private fun AndroidComposeTestRule<*, *>.assertContent(hasPlainTextUrl: Boolean) {
+        val expectedContent = buildString {
+            if (hasPlainTextUrl) {
+                append(stringResource(commonR.string.location_secure_connection_content_http))
+                append(" ")
+            }
+            append(stringResource(commonR.string.location_secure_connection_content_location))
+        }
+        onNodeWithText(expectedContent).assertIsDisplayed()
     }
 }

@@ -13,6 +13,7 @@ import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
 import io.homeassistant.companion.android.di.qualifiers.LocationTrackingSupport
+import io.homeassistant.companion.android.frontend.permissions.FcmSupport
 import javax.inject.Singleton
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -49,6 +50,13 @@ object ApplicationModule {
     @Singleton
     @LocationTrackingSupport
     fun providesLocationTrackingSupport(): Boolean {
+        return BuildConfig.FLAVOR == "full"
+    }
+
+    @Provides
+    @Singleton
+    @FcmSupport
+    fun providesFcmSupport(): Boolean {
         return BuildConfig.FLAVOR == "full"
     }
 
