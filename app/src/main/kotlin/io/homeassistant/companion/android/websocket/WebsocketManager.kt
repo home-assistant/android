@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.PowerManager
+import androidx.annotation.VisibleForTesting
 import androidx.concurrent.futures.await
 import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
@@ -93,7 +94,8 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
 
     private val notificationManager = applicationContext.getSystemService<NotificationManager>()!!
 
-    private val entryPoint = EntryPointAccessors
+    @VisibleForTesting
+    val entryPoint = EntryPointAccessors
         .fromApplication(applicationContext, WebsocketManagerEntryPoint::class.java)
 
     private val serverManager: ServerManager = entryPoint.serverManager()
@@ -138,21 +140,27 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
     private suspend fun shouldWeRun(): Boolean = serverManager.servers().any { shouldRunForServer(it.id) }
 
     private suspend fun shouldRunForServer(serverId: Int): Boolean {
+        // This function is frequently called, so should return false early if possible and avoid doing checks for
+        // specific settings that might trigger privacy indicators if the setting isn't used.
+
         val setting = settingsDao.get(serverId)?.websocketSetting ?: DEFAULT_WEBSOCKET_SETTING
-        val isHome = serverManager.connectionStateProvider(serverId).isInternal(requiresUrl = false)
+        if (setting == WebsocketSetting.NEVER) return false
 
-        // Check for connectivity but not internet access, based on WorkManager's NetworkConnectedController API <26
-        val powerManager = applicationContext.getSystemService<PowerManager>()!!
-        val displayOff = !powerManager.isInteractive
-
-        return when {
-            (setting == WebsocketSetting.NEVER) -> false
-            (!applicationContext.hasActiveConnection()) -> false
-            !serverManager.isRegistered() -> false
-            (displayOff && setting == WebsocketSetting.SCREEN_ON) -> false
-            (!isHome && setting == WebsocketSetting.HOME_WIFI) -> false
-            else -> true
+        if (!applicationContext.hasActiveConnection() || !serverManager.isRegistered()) {
+            return false
         }
+
+        if (setting == WebsocketSetting.SCREEN_ON) {
+            val displayOff = applicationContext.getSystemService<PowerManager>()?.isInteractive == false
+            if (displayOff) return false
+        }
+
+        if (setting == WebsocketSetting.HOME_WIFI) {
+            val isHome = serverManager.connectionStateProvider(serverId).isInternal(requiresUrl = false)
+            if (!isHome) return false
+        }
+
+        return true
     }
 
     private suspend fun manageServerJobs(jobs: MutableMap<Int, Job>, coroutineScope: CoroutineScope): Boolean {
