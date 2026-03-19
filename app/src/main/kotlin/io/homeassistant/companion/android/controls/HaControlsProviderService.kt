@@ -9,6 +9,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.applyCompressedStateDiff
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
@@ -44,7 +45,7 @@ class HaControlsProviderService : ControlsProviderService() {
             "automation" to DefaultSwitchControl,
             "button" to DefaultButtonControl,
             CAMERA_DOMAIN to CameraControl,
-            "climate" to ClimateControl,
+            CLIMATE_DOMAIN to ClimateControl,
             "cover" to CoverControl,
             "fan" to FanControl,
             "ha_failed" to HaFailedControl,
