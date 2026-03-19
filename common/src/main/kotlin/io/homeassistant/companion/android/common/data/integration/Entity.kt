@@ -11,6 +11,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon3
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateDiff
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryOptions
@@ -159,7 +160,7 @@ object EntityExt {
         "binary_sensor",
         "calendar",
         CAMERA_DOMAIN,
-        "climate",
+        CLIMATE_DOMAIN,
         "cover",
         "device_tracker",
         "fan",
@@ -519,7 +520,7 @@ fun Entity.getIcon(context: Context): IIcon {
                 Icon3.cmd_video
             }
 
-            "climate" -> Icon3.cmd_thermostat
+            CLIMATE_DOMAIN -> Icon3.cmd_thermostat
             "configurator" -> Icon.cmd_cog
             "conversation" -> Icon3.cmd_microphone_message
             "cover" -> coverIcon(compareState, this)
