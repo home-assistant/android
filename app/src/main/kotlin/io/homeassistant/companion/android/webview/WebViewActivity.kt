@@ -768,7 +768,7 @@ class WebViewActivity :
                         MatterThreadStep.THREAD_EXPORT_TO_SERVER_MATTER,
                         MatterThreadStep.THREAD_EXPORT_TO_SERVER_ONLY,
                         MatterThreadStep.MATTER_IN_PROGRESS,
-                            -> {
+                        -> {
                             presenter.getMatterThreadIntent()?.let { intentSender ->
                                 commissionMatterDevice.launch(IntentSenderRequest.Builder(intentSender).build())
                             }
@@ -925,6 +925,7 @@ class WebViewActivity :
                                         ),
                                     )
                                 }
+
                                 "assist/settings" -> startActivity(
                                     SettingsActivity.newInstance(
                                         this@WebViewActivity,
@@ -1197,12 +1198,12 @@ class WebViewActivity :
                 getString(
                     R.string.screen_orientation_option_array_value_portrait,
                 ),
-                    -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
                 getString(
                     R.string.screen_orientation_option_array_value_landscape,
                 ),
-                    -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
                 else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
             }
@@ -1509,9 +1510,11 @@ class WebViewActivity :
 
     override fun loadUrl(url: Uri, keepHistory: Boolean, openInApp: Boolean, serverHandleInsets: Boolean) {
         Timber.d(
-            "Loading ${sensitive(
-                url.toString(),
-            )} (keepHistory $keepHistory, openInApp $openInApp, serverHandleInsets $serverHandleInsets)",
+            "Loading ${
+                sensitive(
+                    url.toString(),
+                )
+            } (keepHistory $keepHistory, openInApp $openInApp, serverHandleInsets $serverHandleInsets)",
         )
         this.serverHandleInsets.value = serverHandleInsets
         if (openInApp) {
