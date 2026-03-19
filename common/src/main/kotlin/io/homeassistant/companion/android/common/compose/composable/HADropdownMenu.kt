@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,14 +23,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
@@ -41,8 +38,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import io.homeassistant.companion.android.common.compose.theme.HABorderWidth
-import io.homeassistant.companion.android.common.compose.theme.HAColorScheme
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HARadius
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
@@ -189,9 +184,9 @@ private fun DropdownField(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .enclosureBorder(colorScheme = colorScheme, enabled = enabled)
             .clickable(enabled = enabled, role = Role.DropdownList, onClick = onClick)
-            .padding(horizontal = HADimens.SPACE3, vertical = HADimens.SPACE3),
+            .background(colorScheme.colorSurfaceLow, shape = RoundedCornerShape(HARadius.XL))
+            .padding(horizontal = HADimens.SPACE4, vertical = HADimens.SPACE4),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
@@ -225,18 +220,6 @@ private fun DropdownField(
                 .rotate(arrowRotation),
         )
     }
-}
-
-@Stable
-private fun Modifier.enclosureBorder(colorScheme: HAColorScheme, enabled: Boolean = true): Modifier {
-    return this
-        .clip(RoundedCornerShape(HARadius.XL))
-        .border(
-            width = HABorderWidth.S,
-            color = if (enabled) colorScheme.colorBorderNeutralQuiet else colorScheme.colorFillDisabledLoudResting,
-            shape = RoundedCornerShape(HARadius.XL),
-        )
-        .background(if (enabled) colorScheme.colorSurfaceDefault else colorScheme.colorFillDisabledNormalResting)
 }
 
 /**
