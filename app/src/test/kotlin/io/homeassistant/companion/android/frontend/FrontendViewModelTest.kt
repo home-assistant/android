@@ -495,7 +495,7 @@ class FrontendViewModelTest {
         }
 
         @Test
-        fun `Given open voice device settings message result when collected then navigation event is emitted`() = runTest {
+        fun `Given open assist settings message result when collected then navigation event is emitted`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { externalBusHandler.messageResults() } returns messageFlow
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
@@ -510,11 +510,10 @@ class FrontendViewModelTest {
 
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
 
-            // Emit open voice device settings message
-            messageFlow.emit(FrontendHandlerEvent.OpenVoiceDeviceSettings)
+            messageFlow.emit(FrontendHandlerEvent.OpenAssistSettings)
             advanceUntilIdle()
 
-            assertTrue(navigationEvents.any { it is FrontendNavigationEvent.NavigateToVoiceDeviceSettings })
+            assertTrue(navigationEvents.any { it is FrontendNavigationEvent.NavigateToAssistSettings })
             job.cancel()
         }
     }

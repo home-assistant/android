@@ -14,8 +14,8 @@ sealed interface FrontendNavigationEvent {
     /** Navigate to the app settings screen */
     data object NavigateToSettings : FrontendNavigationEvent
 
-    /** Navigate to the voice device settings screen */
-    data object NavigateToVoiceDeviceSettings : FrontendNavigationEvent
+    /** Navigate to the assist settings screen */
+    data object NavigateToAssistSettings : FrontendNavigationEvent
 
     /** Navigate to the voice assistant (Assist) screen */
     data class NavigateToAssist(val serverId: Int, val pipelineId: String?, val startListening: Boolean) :

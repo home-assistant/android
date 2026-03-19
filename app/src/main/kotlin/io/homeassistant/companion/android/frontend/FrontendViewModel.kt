@@ -321,8 +321,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 _navigationEvents.tryEmit(FrontendNavigationEvent.NavigateToSettings)
             }
 
-            is FrontendHandlerEvent.OpenVoiceDeviceSettings -> {
-                _navigationEvents.tryEmit(FrontendNavigationEvent.NavigateToVoiceDeviceSettings)
+            is FrontendHandlerEvent.OpenAssistSettings -> {
+                _navigationEvents.tryEmit(FrontendNavigationEvent.NavigateToAssistSettings)
             }
 
             is FrontendHandlerEvent.ShowAssist -> {

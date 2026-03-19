@@ -128,7 +128,7 @@ internal fun FrontendNavigationHandler(
                     onNavigateToSettings(null)
                 }
 
-                is FrontendNavigationEvent.NavigateToVoiceDeviceSettings -> {
+                is FrontendNavigationEvent.NavigateToAssistSettings -> {
                     onNavigateToSettings(SettingsActivity.Deeplink.AssistSettings)
                 }
 

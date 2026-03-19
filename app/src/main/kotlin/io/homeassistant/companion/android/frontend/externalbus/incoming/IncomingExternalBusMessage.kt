@@ -90,7 +90,7 @@ data class ConnectionStatusPayload(val event: String) {
 data class ConfigGetMessage(override val id: Int? = null) : IncomingExternalBusMessage
 
 /**
- * Message requesting the app's to open its settings.
+ * Message requesting the app to open its settings.
  * No response is expected for this message
  */
 @Serializable
@@ -98,12 +98,12 @@ data class ConfigGetMessage(override val id: Int? = null) : IncomingExternalBusM
 data class OpenSettingsMessage(override val id: Int? = null) : IncomingExternalBusMessage
 
 /**
- * Message requesting the app's to open its voice device settings.
+ * Message requesting the app to open its assist settings
  * No response is expected for this message
  */
 @Serializable
-@SerialName("voice_device_settings/show")
-data class OpenVoiceDeviceSettingsMessage(override val id: Int? = null) : IncomingExternalBusMessage
+@SerialName("assist/settings")
+data class OpenAssistSettingsMessage(override val id: Int? = null) : IncomingExternalBusMessage
 
 /**
  * Message indicating that the frontend theme has changed.

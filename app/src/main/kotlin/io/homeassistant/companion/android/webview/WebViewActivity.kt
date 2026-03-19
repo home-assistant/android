@@ -925,6 +925,12 @@ class WebViewActivity :
                                         ),
                                     )
                                 }
+                                "assist/settings" -> startActivity(
+                                    SettingsActivity.newInstance(
+                                        this@WebViewActivity,
+                                        SettingsActivity.Deeplink.AssistSettings,
+                                    ),
+                                )
 
                                 "config_screen/show" ->
                                     startActivity(
@@ -986,12 +992,6 @@ class WebViewActivity :
                                 "theme-update" -> getAndSetStatusBarNavigationBarColors()
                                 "entity/add_to/get_actions" -> getActions(json)
                                 "entity/add_to" -> addEntityTo(json)
-                                "voice_device_settings/show" -> startActivity(
-                                    SettingsActivity.newInstance(
-                                        this@WebViewActivity,
-                                        SettingsActivity.Deeplink.AssistSettings,
-                                    ),
-                                )
 
                                 else -> presenter.onExternalBusMessage(json)
                             }

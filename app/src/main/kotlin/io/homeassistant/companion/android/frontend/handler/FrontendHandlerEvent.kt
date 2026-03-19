@@ -31,9 +31,9 @@ sealed interface FrontendHandlerEvent {
     data object OpenSettings : FrontendHandlerEvent
 
     /**
-     * User tapped the companion app voice device settings button in the frontend.
+     * User tapped the companion app assist settings button in the frontend.
      */
-    data object OpenVoiceDeviceSettings : FrontendHandlerEvent
+    data object OpenAssistSettings : FrontendHandlerEvent
 
     /**
      * User triggered the voice assistant from the frontend.

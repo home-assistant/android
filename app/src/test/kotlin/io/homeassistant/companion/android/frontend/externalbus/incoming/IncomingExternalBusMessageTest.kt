@@ -54,13 +54,13 @@ class IncomingExternalBusMessageTest {
     }
 
     @Test
-    fun `Given voice_device_settings-show JSON then parses to OpenVoiceDeviceSettingsMessage`() {
-        val json = """{"type":"voice_device_settings/show","id":5}"""
+    fun `Given assist-settings JSON then parses to OpenAssistSettingsMessage`() {
+        val json = """{"type":"assist/settings","id":5}"""
 
         val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
 
-        assertInstanceOf(OpenVoiceDeviceSettingsMessage::class.java, message)
-        assertEquals(5, (message as OpenVoiceDeviceSettingsMessage).id)
+        assertInstanceOf(OpenAssistSettingsMessage::class.java, message)
+        assertEquals(5, (message as OpenAssistSettingsMessage).id)
     }
 
     @Test

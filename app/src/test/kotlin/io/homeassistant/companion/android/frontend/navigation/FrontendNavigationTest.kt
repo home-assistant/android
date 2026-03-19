@@ -74,7 +74,7 @@ class FrontendNavigationTest {
         }
 
         composeTestRule.waitForIdle()
-        navigationEvents.emit(FrontendNavigationEvent.NavigateToVoiceDeviceSettings)
+        navigationEvents.emit(FrontendNavigationEvent.NavigateToAssistSettings)
         composeTestRule.waitForIdle()
 
         assertEquals(true, settingsNavigated)
