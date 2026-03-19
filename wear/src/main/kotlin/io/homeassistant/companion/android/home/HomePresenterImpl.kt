@@ -45,8 +45,6 @@ class HomePresenterImpl @Inject constructor(
             "switch" to commonR.string.switches,
             "script" to commonR.string.scripts,
             "scene" to commonR.string.scenes,
-            "camera" to commonR.string.domain_camera,
-            "climate" to commonR.string.domain_climate,
         )
         val supportedDomains = domainsWithNames.keys.toList()
     }

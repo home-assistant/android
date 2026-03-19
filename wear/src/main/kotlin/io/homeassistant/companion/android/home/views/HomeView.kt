@@ -16,6 +16,7 @@ import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import androidx.wear.tiles.TileService
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
 import io.homeassistant.companion.android.common.sensors.id
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
@@ -231,7 +232,7 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                 val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_CAMERA_TILE_ID)
                 SetCameraTileView(
                     tile = mainViewModel.cameraTiles.value.firstOrNull { it.id == tileId },
-                    entities = uiState.allEntitiesByDomain[CAMERA_DOMAIN].orEmpty(),
+                    entities = uiState.cameraEntities,
                     onSelectEntity = {
                         swipeDismissableNavController.navigate(
                             "$ROUTE_CAMERA_TILE/$tileId/$SCREEN_SET_CAMERA_TILE_ENTITY",
@@ -255,7 +256,7 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                 val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_CAMERA_TILE_ID)
                 ChooseEntityView(
                     entitiesByDomainOrder = listOf(CAMERA_DOMAIN),
-                    entitiesByDomain = mapOf(CAMERA_DOMAIN to uiState.allEntitiesByDomain[CAMERA_DOMAIN].orEmpty()),
+                    entitiesByDomain = mapOf(CAMERA_DOMAIN to uiState.cameraEntities),
                     favoriteEntityIds = emptyList(),
                     onNoneClicked = {},
                     onEntitySelected = { entity ->
@@ -316,7 +317,7 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                 val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_THERMOSTAT_TILE_ID)
                 SetThermostatTileView(
                     tile = mainViewModel.thermostatTiles.value.firstOrNull { it.id == tileId },
-                    entities = uiState.allEntitiesByDomain["climate"].orEmpty(),
+                    entities = uiState.climateEntities,
                     onSelectEntity = {
                         swipeDismissableNavController.navigate(
                             "$ROUTE_THERMOSTAT_TILE/$tileId/$SCREEN_SET_THERMOSTAT_TILE_ENTITY",
@@ -342,8 +343,8 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_THERMOSTAT_TILE_ID)
                 ChooseEntityView(
-                    entitiesByDomainOrder = listOf("climate"),
-                    entitiesByDomain = mapOf("climate" to uiState.allEntitiesByDomain["climate"].orEmpty()),
+                    entitiesByDomainOrder = listOf(CLIMATE_DOMAIN),
+                    entitiesByDomain = mapOf(CLIMATE_DOMAIN to uiState.climateEntities),
                     favoriteEntityIds = emptyList(),
                     onNoneClicked = {},
                     onEntitySelected = { entity ->
