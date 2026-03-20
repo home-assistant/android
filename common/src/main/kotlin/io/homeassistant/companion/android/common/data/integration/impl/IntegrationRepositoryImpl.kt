@@ -683,8 +683,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         if (!pushToken.isNullOrBlank()) {
             appData["push_url"] = pushUrl?.ifBlank { PUSH_URL } ?: PUSH_URL
             appData["push_token"] = pushToken.value
-            // UnifiedPush notifications should be encrypted when possible.
-            appData["push_encrypt"] = deviceRegistration.pushEncrypt && (pushUrl.isNullOrBlank() || pushUrl == PUSH_URL)
+            // Encryption is controlled by the push provider: UnifiedPush sets this to true
+            // when public keys are available, FCM/WebSocket leave it false.
+            appData["push_encrypt"] = deviceRegistration.pushEncrypt
         } else if (!pushUrl.isNullOrBlank()) {
             appData["push_url"] = pushUrl
             appData["push_token"] = ""

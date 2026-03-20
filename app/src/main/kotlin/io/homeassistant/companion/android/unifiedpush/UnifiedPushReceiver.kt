@@ -27,8 +27,12 @@ class UnifiedPushReceiver : MessagingReceiver() {
     override fun onMessage(context: Context, message: PushMessage, instance: String) {
         Timber.d("From: $instance")
 
-        val data: Map<String, Any> = jacksonObjectMapper().readValue(message.content)
-        messagingManager.handleMessage(data, SOURCE)
+        try {
+            val data: Map<String, Any> = jacksonObjectMapper().readValue(message.content)
+            messagingManager.handleMessage(data, SOURCE)
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to parse UnifiedPush message")
+        }
     }
 
     override fun onNewEndpoint(context: Context, endpoint: PushEndpoint, instance: String) {

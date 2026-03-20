@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.push
 
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.push.PushProvider
 import io.homeassistant.companion.android.common.push.PushRegistrationResult
 import io.homeassistant.companion.android.onboarding.getMessagingToken
@@ -14,7 +15,9 @@ import timber.log.Timber
  * so that users with a UnifiedPush distributor will use that instead.
  */
 @Singleton
-class FcmPushProvider @Inject constructor() : PushProvider {
+class FcmPushProvider @Inject constructor(
+    private val prefsRepository: PrefsRepository
+) : PushProvider {
 
     override val name: String = NAME
 
@@ -31,8 +34,8 @@ class FcmPushProvider @Inject constructor() : PushProvider {
     }
 
     override suspend fun isActive(): Boolean {
-        // FCM is active when it's the selected provider (no UnifiedPush distributor active).
-        // This is a simplified check - in practice, FCM is the default when UnifiedPush is not enabled.
+        // FCM is active only when UnifiedPush is not enabled and a valid token exists.
+        if (prefsRepository.isUnifiedPushEnabled()) return false
         return try {
             val token = getMessagingToken()
             token.isNotBlank()
