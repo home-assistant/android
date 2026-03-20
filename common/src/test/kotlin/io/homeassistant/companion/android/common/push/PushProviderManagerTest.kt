@@ -25,7 +25,7 @@ class PushProviderManagerTest {
     fun setUp() {
         serverManager = mockk(relaxed = true)
         integrationRepository = mockk(relaxed = true)
-        every { serverManager.isRegistered() } returns true
+        coEvery { serverManager.isRegistered() } returns true
         coEvery { serverManager.integrationRepository(any()) } returns integrationRepository
         coEvery { integrationRepository.updateRegistration(any(), any()) } just Runs
     }
@@ -167,7 +167,7 @@ class PushProviderManagerTest {
     fun `updateServerRegistration updates all default servers`() = runTest {
         val server1 = mockk<Server>(relaxed = true) { every { id } returns 1 }
         val server2 = mockk<Server>(relaxed = true) { every { id } returns 2 }
-        every { serverManager.defaultServers } returns listOf(server1, server2)
+        coEvery { serverManager.servers() } returns listOf(server1, server2)
 
         val manager = PushProviderManager(emptySet(), serverManager)
         val result = PushRegistrationResult("token", "https://push.example.com", true)
@@ -182,7 +182,7 @@ class PushProviderManagerTest {
     @Test
     fun `updateServerRegistration updates single server when serverId specified`() = runTest {
         val server = mockk<Server>(relaxed = true) { every { id } returns 42 }
-        every { serverManager.getServer(42) } returns server
+        coEvery { serverManager.getServer(42) } returns server
 
         val manager = PushProviderManager(emptySet(), serverManager)
         val result = PushRegistrationResult("token", "", false)
@@ -195,7 +195,7 @@ class PushProviderManagerTest {
 
     @Test
     fun `updateServerRegistration skips when not authenticated`() = runTest {
-        every { serverManager.isRegistered() } returns false
+        coEvery { serverManager.isRegistered() } returns false
 
         val manager = PushProviderManager(emptySet(), serverManager)
         val result = PushRegistrationResult("token", "", false)

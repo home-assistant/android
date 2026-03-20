@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.common.push
 
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.MessagingToken
 import javax.inject.Inject
 import javax.inject.Singleton
 import timber.log.Timber
@@ -100,7 +101,7 @@ class PushProviderManager @Inject constructor(
         }
 
         val deviceRegistration = DeviceRegistration(
-            pushToken = result.pushToken,
+            pushToken = MessagingToken(result.pushToken),
             pushUrl = result.pushUrl ?: "",
             pushEncrypt = result.encrypt
         )
@@ -108,7 +109,7 @@ class PushProviderManager @Inject constructor(
         val servers = if (serverId != null) {
             listOfNotNull(serverManager.getServer(serverId))
         } else {
-            serverManager.defaultServers
+            serverManager.servers()
         }
 
         servers.forEach { server ->

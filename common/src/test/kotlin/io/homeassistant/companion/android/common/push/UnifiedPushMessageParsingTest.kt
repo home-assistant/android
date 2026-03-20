@@ -1,7 +1,14 @@
 package io.homeassistant.companion.android.common.push
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -16,25 +23,26 @@ import org.junit.Test
  */
 class UnifiedPushMessageParsingTest {
 
-    private val objectMapper = jacksonObjectMapper()
+    private fun parseJson(json: String): JsonObject = Json.parseToJsonElement(json).jsonObject
 
     @Test
     fun `parse simple notification message`() {
-        val json = """
+        val data = parseJson(
+            """
             {
                 "message": "Test notification",
                 "title": "Test Title"
             }
-        """.trimIndent()
-
-        val data: Map<String, Any> = objectMapper.readValue(json)
-        assertEquals("Test notification", data["message"])
-        assertEquals("Test Title", data["title"])
+            """.trimIndent()
+        )
+        assertEquals("Test notification", data["message"]?.jsonPrimitive?.contentOrNull)
+        assertEquals("Test Title", data["title"]?.jsonPrimitive?.contentOrNull)
     }
 
     @Test
     fun `parse notification with nested data`() {
-        val json = """
+        val data = parseJson(
+            """
             {
                 "message": "Hello",
                 "title": "Greetings",
@@ -44,20 +52,20 @@ class UnifiedPushMessageParsingTest {
                     "ttl": 0
                 }
             }
-        """.trimIndent()
+            """.trimIndent()
+        )
+        assertEquals("Hello", data["message"]?.jsonPrimitive?.contentOrNull)
 
-        val data: Map<String, Any> = objectMapper.readValue(json)
-        assertEquals("Hello", data["message"])
-
-        @Suppress("UNCHECKED_CAST")
-        val nestedData = data["data"] as Map<String, Any>
-        assertEquals("alerts", nestedData["channel"])
-        assertEquals("high", nestedData["importance"])
+        val nestedData = data["data"]?.jsonObject
+        assertNotNull(nestedData)
+        assertEquals("alerts", nestedData!!["channel"]?.jsonPrimitive?.contentOrNull)
+        assertEquals("high", nestedData["importance"]?.jsonPrimitive?.contentOrNull)
     }
 
     @Test
     fun `parse notification with actions`() {
-        val json = """
+        val data = parseJson(
+            """
             {
                 "message": "Motion detected",
                 "title": "Security",
@@ -74,41 +82,41 @@ class UnifiedPushMessageParsingTest {
                     ]
                 }
             }
-        """.trimIndent()
+            """.trimIndent()
+        )
 
-        val data: Map<String, Any> = objectMapper.readValue(json)
-
-        @Suppress("UNCHECKED_CAST")
-        val nestedData = data["data"] as Map<String, Any>
-        @Suppress("UNCHECKED_CAST")
-        val actions = nestedData["actions"] as List<Map<String, Any>>
-        assertEquals(2, actions.size)
-        assertEquals("OPEN", actions[0]["action"])
-        assertEquals("Open Camera", actions[0]["title"])
-        assertEquals("DISMISS", actions[1]["action"])
+        val nestedData = data["data"]?.jsonObject
+        assertNotNull(nestedData)
+        val actions = nestedData!!["actions"]?.jsonArray
+        assertNotNull(actions)
+        assertEquals(2, actions!!.size)
+        assertEquals("OPEN", actions[0].jsonObject["action"]?.jsonPrimitive?.contentOrNull)
+        assertEquals("Open Camera", actions[0].jsonObject["title"]?.jsonPrimitive?.contentOrNull)
+        assertEquals("DISMISS", actions[1].jsonObject["action"]?.jsonPrimitive?.contentOrNull)
     }
 
     @Test
     fun `parse notification with registration_info`() {
-        val json = """
+        val data = parseJson(
+            """
             {
                 "message": "Test",
                 "registration_info": {
                     "webhook_id": "abc123def456"
                 }
             }
-        """.trimIndent()
+            """.trimIndent()
+        )
 
-        val data: Map<String, Any> = objectMapper.readValue(json)
-
-        @Suppress("UNCHECKED_CAST")
-        val regInfo = data["registration_info"] as Map<String, Any>
-        assertEquals("abc123def456", regInfo["webhook_id"])
+        val regInfo = data["registration_info"]?.jsonObject
+        assertNotNull(regInfo)
+        assertEquals("abc123def456", regInfo!!["webhook_id"]?.jsonPrimitive?.contentOrNull)
     }
 
     @Test
     fun `parse notification with image and url`() {
-        val json = """
+        val data = parseJson(
+            """
             {
                 "message": "Doorbell pressed",
                 "title": "Front Door",
@@ -117,26 +125,25 @@ class UnifiedPushMessageParsingTest {
                     "clickAction": "https://example.com/dashboard"
                 }
             }
-        """.trimIndent()
+            """.trimIndent()
+        )
+        assertEquals("Doorbell pressed", data["message"]?.jsonPrimitive?.contentOrNull)
 
-        val data: Map<String, Any> = objectMapper.readValue(json)
-        assertEquals("Doorbell pressed", data["message"])
-
-        @Suppress("UNCHECKED_CAST")
-        val nestedData = data["data"] as Map<String, Any>
-        assertEquals("https://example.com/camera/snapshot.jpg", nestedData["image"])
+        val nestedData = data["data"]?.jsonObject
+        assertNotNull(nestedData)
+        assertEquals("https://example.com/camera/snapshot.jpg", nestedData!!["image"]?.jsonPrimitive?.contentOrNull)
     }
 
     @Test
     fun `parse empty data map`() {
-        val json = """{}"""
-        val data: Map<String, Any> = objectMapper.readValue(json)
+        val data = parseJson("""{}""")
         assertTrue(data.isEmpty())
     }
 
     @Test
     fun `parse notification with numeric values`() {
-        val json = """
+        val data = parseJson(
+            """
             {
                 "message": "Temperature alert",
                 "data": {
@@ -145,38 +152,37 @@ class UnifiedPushMessageParsingTest {
                     "vibrationPattern": "100, 200, 100"
                 }
             }
-        """.trimIndent()
-
-        val data: Map<String, Any> = objectMapper.readValue(json)
+            """.trimIndent()
+        )
         assertNotNull(data["data"])
     }
 
     @Test
     fun `parse notification with confirm id for websocket ack`() {
-        val json = """
+        val data = parseJson(
+            """
             {
                 "message": "Test",
                 "hass_confirm_id": "confirm_12345"
             }
-        """.trimIndent()
-
-        val data: Map<String, Any> = objectMapper.readValue(json)
-        assertEquals("confirm_12345", data["hass_confirm_id"])
+            """.trimIndent()
+        )
+        assertEquals("confirm_12345", data["hass_confirm_id"]?.jsonPrimitive?.contentOrNull)
     }
 
     @Test
     fun `parse notification preserves unknown fields`() {
-        val json = """
+        val data = parseJson(
+            """
             {
                 "message": "Test",
                 "custom_field": "custom_value",
                 "another_field": true
             }
-        """.trimIndent()
-
-        val data: Map<String, Any> = objectMapper.readValue(json)
+            """.trimIndent()
+        )
         assertEquals(3, data.size)
-        assertEquals("custom_value", data["custom_field"])
-        assertEquals(true, data["another_field"])
+        assertEquals("custom_value", data["custom_field"]?.jsonPrimitive?.contentOrNull)
+        assertEquals(true, data["another_field"]?.jsonPrimitive?.boolean)
     }
 }
