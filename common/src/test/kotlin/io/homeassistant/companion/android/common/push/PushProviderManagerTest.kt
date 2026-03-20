@@ -35,7 +35,7 @@ class PushProviderManagerTest {
         priority: Int,
         available: Boolean = true,
         active: Boolean = false,
-        registrationResult: PushRegistrationResult? = null
+        registrationResult: PushRegistrationResult? = null,
     ): PushProvider = object : PushProvider {
         override val name = name
         override val priority = priority
@@ -214,7 +214,9 @@ class PushProviderManagerTest {
             override suspend fun isAvailable() = true
             override suspend fun isActive() = true
             override suspend fun register() = PushRegistrationResult("fcm", "")
-            override suspend fun unregister() { unregistered = true }
+            override suspend fun unregister() {
+                unregistered = true
+            }
         }
         val newResult = PushRegistrationResult("up-token", "https://up.example.com", true)
         val newProvider = object : PushProvider {

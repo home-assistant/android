@@ -101,7 +101,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -286,13 +285,15 @@ class MessagingManager @Inject constructor(
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
-    suspend fun isUnifiedPushEnabled(): Boolean =
-        prefsRepository.isUnifiedPushEnabled()
+    suspend fun isUnifiedPushEnabled(): Boolean = prefsRepository.isUnifiedPushEnabled()
 
-    suspend fun setUnifiedPushEnabled(enabled: Boolean) =
-        prefsRepository.setUnifiedPushEnabled(enabled)
+    suspend fun setUnifiedPushEnabled(enabled: Boolean) = prefsRepository.setUnifiedPushEnabled(enabled)
 
-    fun handleMessage(notificationData: Map<String, Any>, source: String, serverId: Int = ServerManager.SERVER_ID_ACTIVE) {
+    fun handleMessage(
+        notificationData: Map<String, Any>,
+        source: String,
+        serverId: Int = ServerManager.SERVER_ID_ACTIVE,
+    ) {
         val flattened = mutableMapOf<String, String>()
         if (notificationData.containsKey("data")) {
             for ((key, value) in notificationData["data"] as Map<*, *>) {
@@ -302,7 +303,10 @@ class MessagingManager @Inject constructor(
                             flattened["action_${i + 1}_key"] = action["action"].toString()
                             flattened["action_${i + 1}_title"] = action["title"].toString()
                             action["uri"]?.let { uri -> flattened["action_${i + 1}_uri"] = uri.toString() }
-                            action["behavior"]?.let { behavior -> flattened["action_${i + 1}_behavior"] = behavior.toString() }
+                            action["behavior"]?.let { behavior ->
+                                flattened["action_${i + 1}_behavior"] =
+                                    behavior.toString()
+                            }
                         }
                     }
                 } else {

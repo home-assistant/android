@@ -347,8 +347,7 @@ internal class PrefsRepositoryImpl @Inject constructor(
         localStorage().putBoolean(PREF_CHANGE_LOG_POPUP_ENABLED, enabled)
     }
 
-    override suspend fun getUnifiedPushDistributor(): String? =
-        localStorage().getString(PREF_UNIFIEDPUSH_DISTRIBUTOR)
+    override suspend fun getUnifiedPushDistributor(): String? = localStorage().getString(PREF_UNIFIEDPUSH_DISTRIBUTOR)
 
     override suspend fun setUnifiedPushDistributor(distributor: String?) {
         if (distributor == null) {
@@ -358,8 +357,7 @@ internal class PrefsRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun isUnifiedPushEnabled(): Boolean =
-        localStorage().getBoolean(PREF_UNIFIEDPUSH_ENABLED)
+    override suspend fun isUnifiedPushEnabled(): Boolean = localStorage().getBoolean(PREF_UNIFIEDPUSH_ENABLED)
 
     override suspend fun setUnifiedPushEnabled(enabled: Boolean) =
         localStorage().putBoolean(PREF_UNIFIEDPUSH_ENABLED, enabled)

@@ -164,8 +164,7 @@ class SettingsPresenterImpl @Inject constructor(
         }
     }
 
-    override fun getUnifiedPushDistributors(): List<String> =
-        unifiedPushManager.getDistributors()
+    override fun getUnifiedPushDistributors(): List<String> = unifiedPushManager.getDistributors()
 
     override suspend fun showChangeLog(context: Context) {
         changeLog.showChangeLog(context, true)

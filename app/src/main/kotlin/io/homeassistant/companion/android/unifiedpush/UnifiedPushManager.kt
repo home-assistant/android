@@ -30,12 +30,10 @@ class UnifiedPushManager @Inject constructor(
 
         // Synchronize registration for when it is called from UnifiedPushWorker.
         @Synchronized
-        fun register(context: Context) =
-            UnifiedPush.register(context)
+        fun register(context: Context) = UnifiedPush.register(context)
 
         @Synchronized
-        fun unregister(context: Context) =
-            UnifiedPush.unregister(context)
+        fun unregister(context: Context) = UnifiedPush.unregister(context)
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -62,8 +60,7 @@ class UnifiedPushManager @Inject constructor(
         return distributors
     }
 
-    fun getDistributor(): String? =
-        UnifiedPush.getAckDistributor(context)
+    fun getDistributor(): String? = UnifiedPush.getAckDistributor(context)
 
     fun updateEndpoint(endpoint: PushEndpoint?) {
         Timber.d("updateEndpoint(): ${endpoint?.url}")
@@ -91,9 +88,9 @@ class UnifiedPushManager @Inject constructor(
                             deviceRegistration = DeviceRegistration(
                                 pushUrl = url,
                                 pushToken = token,
-                                pushEncrypt = encrypt
+                                pushEncrypt = encrypt,
                             ),
-                            allowReregistration = false
+                            allowReregistration = false,
                         )
                     } catch (e: Exception) {
                         Timber.e(e, "Issue updating push url")

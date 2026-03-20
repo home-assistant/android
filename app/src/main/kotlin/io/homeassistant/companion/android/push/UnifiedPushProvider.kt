@@ -24,7 +24,7 @@ import timber.log.Timber
 class UnifiedPushProvider @Inject constructor(
     @ApplicationContext private val context: Context,
     private val prefsRepository: PrefsRepository,
-    private val unifiedPushManager: UnifiedPushManager
+    private val unifiedPushManager: UnifiedPushManager,
 ) : PushProvider {
 
     override val name: String = NAME
@@ -36,8 +36,7 @@ class UnifiedPushProvider @Inject constructor(
         return distributors.isNotEmpty()
     }
 
-    override suspend fun isActive(): Boolean =
-        prefsRepository.isUnifiedPushEnabled()
+    override suspend fun isActive(): Boolean = prefsRepository.isUnifiedPushEnabled()
 
     override suspend fun register(): PushRegistrationResult? {
         val distributor = UnifiedPush.getAckDistributor(context)

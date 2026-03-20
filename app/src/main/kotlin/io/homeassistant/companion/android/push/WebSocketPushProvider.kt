@@ -22,7 +22,7 @@ import timber.log.Timber
 class WebSocketPushProvider @Inject constructor(
     @ApplicationContext private val context: Context,
     private val serverManager: ServerManager,
-    private val settingsDao: SettingsDao
+    private val settingsDao: SettingsDao,
 ) : PushProvider {
 
     override val name: String = NAME
@@ -46,7 +46,7 @@ class WebSocketPushProvider @Inject constructor(
         return PushRegistrationResult(
             pushToken = "",
             pushUrl = null,
-            encrypt = false
+            encrypt = false,
         )
     }
 

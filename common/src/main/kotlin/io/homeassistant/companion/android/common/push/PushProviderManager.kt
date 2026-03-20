@@ -17,7 +17,7 @@ import timber.log.Timber
 @Singleton
 class PushProviderManager @Inject constructor(
     private val providers: Set<@JvmSuppressWildcards PushProvider>,
-    private val serverManager: ServerManager
+    private val serverManager: ServerManager,
 ) {
     private val sortedProviders: List<PushProvider> by lazy {
         providers.sortedBy { it.priority }
@@ -26,15 +26,13 @@ class PushProviderManager @Inject constructor(
     /**
      * Get the currently active push provider, if any.
      */
-    suspend fun getActiveProvider(): PushProvider? =
-        sortedProviders.firstOrNull { it.isActive() }
+    suspend fun getActiveProvider(): PushProvider? = sortedProviders.firstOrNull { it.isActive() }
 
     /**
      * Get the best available provider based on priority.
      * Returns the highest-priority provider that reports itself as available.
      */
-    suspend fun getBestAvailableProvider(): PushProvider? =
-        sortedProviders.firstOrNull { it.isAvailable() }
+    suspend fun getBestAvailableProvider(): PushProvider? = sortedProviders.firstOrNull { it.isAvailable() }
 
     /**
      * Get all registered providers.
@@ -44,8 +42,7 @@ class PushProviderManager @Inject constructor(
     /**
      * Get a provider by name.
      */
-    fun getProvider(name: String): PushProvider? =
-        sortedProviders.firstOrNull { it.name == name }
+    fun getProvider(name: String): PushProvider? = sortedProviders.firstOrNull { it.name == name }
 
     /**
      * Select and register the best available push provider.
@@ -91,10 +88,7 @@ class PushProviderManager @Inject constructor(
      * @param result The registration result from a push provider.
      * @param serverId The specific server ID to update, or null to update all default servers.
      */
-    suspend fun updateServerRegistration(
-        result: PushRegistrationResult,
-        serverId: Int? = null
-    ) {
+    suspend fun updateServerRegistration(result: PushRegistrationResult, serverId: Int? = null) {
         if (!serverManager.isRegistered()) {
             Timber.d("Not updating registration: not authenticated")
             return
@@ -103,7 +97,7 @@ class PushProviderManager @Inject constructor(
         val deviceRegistration = DeviceRegistration(
             pushToken = MessagingToken(result.pushToken),
             pushUrl = result.pushUrl ?: "",
-            pushEncrypt = result.encrypt
+            pushEncrypt = result.encrypt,
         )
 
         val servers = if (serverId != null) {
@@ -116,7 +110,7 @@ class PushProviderManager @Inject constructor(
             try {
                 serverManager.integrationRepository(server.id).updateRegistration(
                     deviceRegistration = deviceRegistration,
-                    allowReregistration = false
+                    allowReregistration = false,
                 )
             } catch (e: Exception) {
                 Timber.e(e, "Failed to update push registration for server ${server.id}")

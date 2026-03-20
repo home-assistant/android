@@ -66,8 +66,4 @@ interface PushProvider {
  *                     Empty or null for FCM (uses built-in URL); non-empty for UnifiedPush.
  * @property encrypt   Whether the server should encrypt notifications before sending.
  */
-data class PushRegistrationResult(
-    val pushToken: String,
-    val pushUrl: String? = null,
-    val encrypt: Boolean = false
-)
+data class PushRegistrationResult(val pushToken: String, val pushUrl: String? = null, val encrypt: Boolean = false)

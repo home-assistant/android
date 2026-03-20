@@ -15,9 +15,7 @@ import timber.log.Timber
  * so that users with a UnifiedPush distributor will use that instead.
  */
 @Singleton
-class FcmPushProvider @Inject constructor(
-    private val prefsRepository: PrefsRepository
-) : PushProvider {
+class FcmPushProvider @Inject constructor(private val prefsRepository: PrefsRepository) : PushProvider {
 
     override val name: String = NAME
 
@@ -54,7 +52,7 @@ class FcmPushProvider @Inject constructor(
                 PushRegistrationResult(
                     pushToken = token,
                     pushUrl = "", // Empty URL means use built-in push URL
-                    encrypt = false
+                    encrypt = false,
                 )
             }
         } catch (e: Exception) {

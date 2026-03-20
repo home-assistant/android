@@ -1,9 +1,7 @@
 package io.homeassistant.companion.android.common.push
 
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
@@ -33,7 +31,7 @@ class UnifiedPushMessageParsingTest {
                 "message": "Test notification",
                 "title": "Test Title"
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         assertEquals("Test notification", data["message"]?.jsonPrimitive?.contentOrNull)
         assertEquals("Test Title", data["title"]?.jsonPrimitive?.contentOrNull)
@@ -52,7 +50,7 @@ class UnifiedPushMessageParsingTest {
                     "ttl": 0
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         assertEquals("Hello", data["message"]?.jsonPrimitive?.contentOrNull)
 
@@ -82,7 +80,7 @@ class UnifiedPushMessageParsingTest {
                     ]
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val nestedData = data["data"]?.jsonObject
@@ -105,7 +103,7 @@ class UnifiedPushMessageParsingTest {
                     "webhook_id": "abc123def456"
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
 
         val regInfo = data["registration_info"]?.jsonObject
@@ -125,7 +123,7 @@ class UnifiedPushMessageParsingTest {
                     "clickAction": "https://example.com/dashboard"
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         assertEquals("Doorbell pressed", data["message"]?.jsonPrimitive?.contentOrNull)
 
@@ -152,7 +150,7 @@ class UnifiedPushMessageParsingTest {
                     "vibrationPattern": "100, 200, 100"
                 }
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         assertNotNull(data["data"])
     }
@@ -165,7 +163,7 @@ class UnifiedPushMessageParsingTest {
                 "message": "Test",
                 "hass_confirm_id": "confirm_12345"
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         assertEquals("confirm_12345", data["hass_confirm_id"]?.jsonPrimitive?.contentOrNull)
     }
@@ -179,7 +177,7 @@ class UnifiedPushMessageParsingTest {
                 "custom_field": "custom_value",
                 "another_field": true
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         assertEquals(3, data.size)
         assertEquals("custom_value", data["custom_field"]?.jsonPrimitive?.contentOrNull)

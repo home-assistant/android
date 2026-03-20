@@ -40,7 +40,7 @@ class PushProviderTest {
         val result = PushRegistrationResult(
             pushToken = "auth:pubkey",
             pushUrl = "https://ntfy.example.com/up123",
-            encrypt = true
+            encrypt = true,
         )
         assertEquals("auth:pubkey", result.pushToken)
         assertEquals("https://ntfy.example.com/up123", result.pushUrl)
