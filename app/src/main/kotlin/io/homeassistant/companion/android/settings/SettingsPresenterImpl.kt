@@ -13,6 +13,7 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.push.PushProviderManager
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.settings.assist.DefaultAssistantManager
@@ -39,6 +40,7 @@ class SettingsPresenterImpl @Inject constructor(
     private val nightModeManager: NightModeManager,
     private val langsManager: LanguagesManager,
     private val unifiedPushManager: UnifiedPushManager,
+    private val pushProviderManager: PushProviderManager,
     private val changeLog: ChangeLog,
     private val settingsDao: SettingsDao,
     private val defaultAssistantManager: DefaultAssistantManager,
