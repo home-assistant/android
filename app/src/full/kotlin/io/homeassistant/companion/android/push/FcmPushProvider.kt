@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.push
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.push.PushProvider
 import io.homeassistant.companion.android.common.push.PushRegistrationResult
-import io.homeassistant.companion.android.onboarding.getMessagingToken
+import io.homeassistant.companion.android.common.util.MessagingTokenProvider
 import javax.inject.Inject
 import javax.inject.Singleton
 import timber.log.Timber
@@ -15,7 +15,10 @@ import timber.log.Timber
  * so that users with a UnifiedPush distributor will use that instead.
  */
 @Singleton
-class FcmPushProvider @Inject constructor(private val prefsRepository: PrefsRepository) : PushProvider {
+class FcmPushProvider @Inject constructor(
+    private val prefsRepository: PrefsRepository,
+    private val messagingTokenProvider: MessagingTokenProvider,
+) : PushProvider {
 
     override val name: String = NAME
 
@@ -23,8 +26,8 @@ class FcmPushProvider @Inject constructor(private val prefsRepository: PrefsRepo
 
     override suspend fun isAvailable(): Boolean {
         return try {
-            val token = getMessagingToken()
-            token.isNotBlank()
+            val token = messagingTokenProvider()
+            !token.isBlank()
         } catch (e: Exception) {
             Timber.e(e, "FCM is not available")
             false
@@ -35,8 +38,8 @@ class FcmPushProvider @Inject constructor(private val prefsRepository: PrefsRepo
         // FCM is active only when UnifiedPush is not enabled and a valid token exists.
         if (prefsRepository.isUnifiedPushEnabled()) return false
         return try {
-            val token = getMessagingToken()
-            token.isNotBlank()
+            val token = messagingTokenProvider()
+            !token.isBlank()
         } catch (e: Exception) {
             false
         }
@@ -44,13 +47,13 @@ class FcmPushProvider @Inject constructor(private val prefsRepository: PrefsRepo
 
     override suspend fun register(): PushRegistrationResult? {
         return try {
-            val token = getMessagingToken()
+            val token = messagingTokenProvider()
             if (token.isBlank()) {
                 Timber.w("FCM token is blank")
                 null
             } else {
                 PushRegistrationResult(
-                    pushToken = token,
+                    pushToken = token.value,
                     pushUrl = "", // Empty URL means use built-in push URL
                     encrypt = false,
                 )

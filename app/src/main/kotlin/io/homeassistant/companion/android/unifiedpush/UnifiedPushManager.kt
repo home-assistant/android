@@ -8,8 +8,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.MessagingToken
+import io.homeassistant.companion.android.common.util.MessagingTokenProvider
 import io.homeassistant.companion.android.notifications.MessagingManager
-import io.homeassistant.companion.android.onboarding.getMessagingToken
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +25,7 @@ class UnifiedPushManager @Inject constructor(
     @ApplicationContext val context: Context,
     private val serverManager: ServerManager,
     private val messagingManager: MessagingManager,
+    private val messagingTokenProvider: MessagingTokenProvider,
 ) {
     companion object {
         const val DISTRIBUTOR_DISABLED = "disabled"
@@ -68,10 +70,10 @@ class UnifiedPushManager @Inject constructor(
             val url = endpoint?.url.orEmpty()
             val token = if (endpoint != null) {
                 // Use public key as push token to allow for encryption.
-                endpoint.pubKeySet?.let { it.auth + ":" + it.pubKey } ?: ""
+                MessagingToken(endpoint.pubKeySet?.let { it.auth + ":" + it.pubKey } ?: "")
             } else {
                 // Revert to FCM token when disabling UnifiedPush.
-                getMessagingToken()
+                messagingTokenProvider()
             }
             val registered = messagingManager.isUnifiedPushEnabled()
             messagingManager.setUnifiedPushEnabled(endpoint != null)
@@ -80,8 +82,8 @@ class UnifiedPushManager @Inject constructor(
                 Timber.d("Not trying to update registration since we aren't authenticated.")
                 return@launch
             }
-            val encrypt = endpoint != null && token.isNotBlank()
-            serverManager.defaultServers.forEach {
+            val encrypt = endpoint != null && !token.isBlank()
+            serverManager.servers().forEach {
                 launch {
                     try {
                         serverManager.integrationRepository(it.id).updateRegistration(

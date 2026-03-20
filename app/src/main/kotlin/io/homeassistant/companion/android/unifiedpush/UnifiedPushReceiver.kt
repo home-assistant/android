@@ -1,8 +1,10 @@
 package io.homeassistant.companion.android.unifiedpush
 
 import android.content.Context
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonPrimitive
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.notifications.MessagingManager
 import javax.inject.Inject
@@ -28,7 +30,10 @@ class UnifiedPushReceiver : MessagingReceiver() {
         Timber.d("From: $instance")
 
         try {
-            val data: Map<String, Any> = jacksonObjectMapper().readValue(message.content)
+            val jsonObject = Json.decodeFromString<JsonObject>(message.content.decodeToString())
+            val data: Map<String, Any> = jsonObject.mapValues { (_, value) ->
+                value.jsonPrimitive.contentOrNull ?: value.toString()
+            }
             messagingManager.handleMessage(data, SOURCE)
         } catch (e: Exception) {
             Timber.e(e, "Failed to parse UnifiedPush message")

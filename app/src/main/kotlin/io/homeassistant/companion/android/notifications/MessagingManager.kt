@@ -327,7 +327,9 @@ class MessagingManager @Inject constructor(
             }
         }
         if (!flattened.containsKey("webhook_id")) {
-            serverManager.getServer(serverId)?.let { server ->
+            runBlocking {
+                serverManager.getServer(serverId)
+            }?.let { server ->
                 flattened["webhook_id"] = server.connection.webhookId.toString()
             }
         }

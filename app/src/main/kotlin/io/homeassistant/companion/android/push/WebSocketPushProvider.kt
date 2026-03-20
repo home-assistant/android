@@ -35,7 +35,7 @@ class WebSocketPushProvider @Inject constructor(
 
     override suspend fun isActive(): Boolean {
         if (!serverManager.isRegistered()) return false
-        return serverManager.defaultServers.any { server ->
+        return serverManager.servers().any { server ->
             val setting = settingsDao.get(server.id)?.websocketSetting
             setting != null && setting != WebsocketSetting.NEVER
         }

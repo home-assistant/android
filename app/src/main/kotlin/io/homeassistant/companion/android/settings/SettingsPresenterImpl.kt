@@ -166,6 +166,10 @@ class SettingsPresenterImpl @Inject constructor(
 
     override fun getUnifiedPushDistributors(): List<String> = unifiedPushManager.getDistributors()
 
+    override fun registerUnifiedPushDistributor(context: Context, distributor: String) {
+        unifiedPushManager.saveDistributor(distributor)
+    }
+
     override suspend fun showChangeLog(context: Context) {
         changeLog.showChangeLog(context, true)
     }
