@@ -102,6 +102,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -283,6 +284,57 @@ class MessagingManager @Inject constructor(
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+
+    suspend fun isUnifiedPushEnabled(): Boolean = prefsRepository.isUnifiedPushEnabled()
+
+    suspend fun setUnifiedPushEnabled(enabled: Boolean) = prefsRepository.setUnifiedPushEnabled(enabled)
+
+    fun handleMessage(
+        notificationData: Map<String, Any>,
+        source: String,
+        serverId: Int = ServerManager.SERVER_ID_ACTIVE,
+    ) {
+        val flattened = mutableMapOf<String, String>()
+        if (notificationData.containsKey("data")) {
+            for ((key, value) in notificationData["data"] as Map<*, *>) {
+                if (key == "actions" && value is List<*>) {
+                    value.forEachIndexed { i, action ->
+                        if (action is Map<*, *>) {
+                            flattened["action_${i + 1}_key"] = action["action"].toString()
+                            flattened["action_${i + 1}_title"] = action["title"].toString()
+                            action["uri"]?.let { uri -> flattened["action_${i + 1}_uri"] = uri.toString() }
+                            action["behavior"]?.let { behavior ->
+                                flattened["action_${i + 1}_behavior"] =
+                                    behavior.toString()
+                            }
+                        }
+                    }
+                } else {
+                    flattened[key.toString()] = value.toString()
+                }
+            }
+        }
+        // Message and title are in the root unlike all the others.
+        listOf("message", "title").forEach { key ->
+            if (notificationData.containsKey(key)) {
+                flattened[key] = notificationData[key].toString()
+            }
+        }
+        if (notificationData.containsKey("registration_info")) {
+            val registrationInfo = notificationData["registration_info"]
+            if (registrationInfo is Map<*, *> && registrationInfo.containsKey("webhook_id")) {
+                flattened["webhook_id"] = registrationInfo["webhook_id"].toString()
+            }
+        }
+        if (!flattened.containsKey("webhook_id")) {
+            runBlocking {
+                serverManager.getServer(serverId)
+            }?.let { server ->
+                flattened["webhook_id"] = server.connection.webhookId.toString()
+            }
+        }
+        handleMessage(flattened, source)
+    }
 
     fun handleMessage(notificationData: Map<String, String>, source: String) {
         mainScope.launch {

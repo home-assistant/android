@@ -34,6 +34,7 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
             appVersionProvider(),
             deviceName,
             messagingTokenProvider(),
+            null,
             false,
         )
     }

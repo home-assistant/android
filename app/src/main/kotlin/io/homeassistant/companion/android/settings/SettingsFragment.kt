@@ -51,6 +51,7 @@ import io.homeassistant.companion.android.settings.vehicle.ManageAndroidAutoSett
 import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
 import io.homeassistant.companion.android.settings.wear.SettingsWearDetection
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
+import io.homeassistant.companion.android.unifiedpush.UnifiedPushManager
 import io.homeassistant.companion.android.util.QuestUtil
 import io.homeassistant.companion.android.util.applyBottomSafeDrawingInsets
 import io.homeassistant.companion.android.webview.WebViewActivity
@@ -250,6 +251,7 @@ class SettingsFragment(
         }
 
         updateNotificationChannelPrefs()
+        updateNotificationUnifiedPushPrefs()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             findPreference<Preference>("notification_permission")?.let {
@@ -541,6 +543,30 @@ class SettingsFragment(
         }
     }
 
+    private fun updateNotificationUnifiedPushPrefs() {
+        val notificationsEnabled =
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
+                NotificationManagerCompat.from(requireContext()).areNotificationsEnabled()
+
+        findPreference<ListPreference>("notification_unifiedpush")?.let {
+            val distributors = presenter.getUnifiedPushDistributors()
+            it.isVisible = notificationsEnabled && distributors.isNotEmpty()
+            val pm = requireContext().packageManager
+            it.entries = distributors.map { distributor ->
+                // Map package name to app display name.
+                try {
+                    pm.getApplicationLabel(pm.getApplicationInfo(distributor, PackageManager.GET_META_DATA)).toString()
+                } catch (_: PackageManager.NameNotFoundException) {
+                    distributor
+                }
+            }.toTypedArray() + getString(commonR.string.disabled)
+            it.entryValues = distributors.toTypedArray() + UnifiedPushManager.DISTRIBUTOR_DISABLED
+            if (it.value == null) {
+                it.value = UnifiedPushManager.DISTRIBUTOR_DISABLED
+            }
+        }
+    }
+
     private fun onServerLockResult(result: Int): Boolean {
         if (result == Authenticator.SUCCESS && serverAuth != null) {
             (activity as? SettingsActivity)?.setAppActive(serverAuth, true)
@@ -555,6 +581,12 @@ class SettingsFragment(
             }
         }
         return true
+    }
+
+    private fun registerUnifiedPushDistributor(distributor: String) {
+        lifecycleScope.launch {
+            presenter.registerUnifiedPushDistributor(requireContext(), distributor)
+        }
     }
 
     private fun openNotificationSettings() {

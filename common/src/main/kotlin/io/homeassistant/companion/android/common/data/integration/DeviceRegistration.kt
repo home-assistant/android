@@ -8,7 +8,9 @@ data class DeviceRegistration(
     val appVersion: AppVersion? = null,
     val deviceName: String? = null,
     var pushToken: MessagingToken? = null,
+    var pushUrl: String? = null,
     var pushWebsocket: Boolean = true,
+    var pushEncrypt: Boolean = false,
 )
 
 @Qualifier

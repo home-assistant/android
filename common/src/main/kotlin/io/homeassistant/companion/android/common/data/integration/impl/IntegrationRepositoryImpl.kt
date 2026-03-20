@@ -90,6 +90,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         private const val PREF_PUSH_TOKEN = "push_token"
 
         // Note: _not_ server-specific
+        private const val PREF_PUSH_URL = "push_url"
+
+        // Note: _not_ server-specific
         private const val PREF_ORPHANED_THREAD_BORDER_AGENT_IDS = "orphaned_thread_border_agent_ids"
 
         private const val PREF_CHECK_SENSOR_REGISTRATION_NEXT = "sensor_reg_last"
@@ -188,6 +191,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             localStorage.getString(PREF_APP_VERSION)?.let { AppVersion.from(rawVersion = it) },
             server().deviceName,
             localStorage.getString(PREF_PUSH_TOKEN)?.let { MessagingToken(it) },
+            localStorage.getString(PREF_PUSH_URL),
         )
     }
 
@@ -200,6 +204,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         }
         deviceRegistration.pushToken?.let {
             localStorage.putString(PREF_PUSH_TOKEN, it.value)
+        }
+        if (deviceRegistration.pushUrl != null) {
+            localStorage.putString(PREF_PUSH_URL, deviceRegistration.pushUrl)
         }
     }
 
@@ -670,11 +677,19 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     private suspend fun createUpdateRegistrationRequest(deviceRegistration: DeviceRegistration): RegisterDeviceRequest {
         val oldDeviceRegistration = getRegistration()
         val pushToken = deviceRegistration.pushToken ?: oldDeviceRegistration.pushToken
+        val pushUrl = deviceRegistration.pushUrl ?: oldDeviceRegistration.pushUrl
 
         val appData = mutableMapOf<String, Any>("push_websocket_channel" to deviceRegistration.pushWebsocket)
         if (!pushToken.isNullOrBlank()) {
-            appData["push_url"] = PUSH_URL
-            appData["push_token"] = pushToken
+            appData["push_url"] = pushUrl?.ifBlank { PUSH_URL } ?: PUSH_URL
+            appData["push_token"] = pushToken.value
+            // Encryption is controlled by the push provider: UnifiedPush sets this to true
+            // when public keys are available, FCM/WebSocket leave it false.
+            appData["push_encrypt"] = deviceRegistration.pushEncrypt
+        } else if (!pushUrl.isNullOrBlank()) {
+            appData["push_url"] = pushUrl
+            appData["push_token"] = ""
+            appData["push_encrypt"] = false
         }
 
         return RegisterDeviceRequest(
