@@ -7,9 +7,12 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.assist.service.AssistVoiceInteractionService
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.SuspendLazy
 import io.homeassistant.companion.android.microfrontend.isMicroFrontendSupported
 import javax.inject.Inject
+
+private const val DEFAULT_WAKE_WORD = "Okay Nabu"
 
 /**
  * Manager for Assist settings and wake word model information.
@@ -36,7 +39,9 @@ interface AssistConfigManager {
     /**
      * Sets whether wake word detection is enabled.
      *
-     * This also starts or stops the wake word detection service accordingly.
+     * When enabling, if no wake word model is currently selected, the first available
+     * model is automatically set as the default. This also starts or stops the wake
+     * word detection service accordingly.
      */
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     suspend fun setWakeWordEnabled(enabled: Boolean)
@@ -76,11 +81,22 @@ class AssistConfigManagerImpl @Inject constructor(
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     override suspend fun setWakeWordEnabled(enabled: Boolean) {
         prefsRepository.setWakeWordEnabled(enabled)
-        if (enabled) {
-            AssistVoiceInteractionService.startListening(context)
-        } else {
+        if (!enabled) {
             AssistVoiceInteractionService.stopListening(context)
+            return
         }
+
+        if (getSelectedWakeWordModel() == null) {
+            val available = models.get()
+            val defaultModel = available.find { it.wakeWord == DEFAULT_WAKE_WORD }
+                ?: available.firstOrNull()
+            if (defaultModel == null) {
+                FailFast.fail { "No wake word models available, not starting listener" }
+                return
+            }
+            prefsRepository.setSelectedWakeWord(defaultModel.wakeWord)
+        }
+        AssistVoiceInteractionService.startListening(context)
     }
 
     override suspend fun getSelectedWakeWordModel(): MicroWakeWordModelConfig? {
