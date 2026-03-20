@@ -1,13 +1,13 @@
 package io.homeassistant.companion.android.unifiedpush
 
 import android.content.Context
+import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.notifications.MessagingManager
+import javax.inject.Inject
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
-import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.notifications.MessagingManager
-import javax.inject.Inject
 import org.unifiedpush.android.connector.FailedReason
 import org.unifiedpush.android.connector.MessagingReceiver
 import org.unifiedpush.android.connector.data.PushEndpoint
