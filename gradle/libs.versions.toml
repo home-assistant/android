@@ -2,7 +2,7 @@
 # You need to update the lock if you update or add a dependency
 # you can do that with `./gradlew alldependencies --write-locks`
 [versions]
-aboutlibraries = "14.0.0-b02"
+aboutlibraries = "14.0.0-b03"
 accompanist = "0.37.3"
 activity-compose = "1.13.0"
 androidBeaconLibrary = "2.21.2"
