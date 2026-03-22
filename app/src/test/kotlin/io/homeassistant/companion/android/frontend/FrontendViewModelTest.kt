@@ -493,6 +493,29 @@ class FrontendViewModelTest {
             assertTrue(navigationEvents.any { it is FrontendNavigationEvent.NavigateToSettings })
             job.cancel()
         }
+
+        @Test
+        fun `Given open assist settings message result when collected then navigation event is emitted`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { externalBusHandler.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+
+            // Collect navigation events
+            val navigationEvents = mutableListOf<FrontendNavigationEvent>()
+            val job = backgroundScope.launch { viewModel.navigationEvents.collect { navigationEvents.add(it) } }
+
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            messageFlow.emit(FrontendHandlerEvent.OpenAssistSettings)
+            advanceUntilIdle()
+
+            assertTrue(navigationEvents.any { it is FrontendNavigationEvent.NavigateToAssistSettings })
+            job.cancel()
+        }
     }
 
     @Nested
