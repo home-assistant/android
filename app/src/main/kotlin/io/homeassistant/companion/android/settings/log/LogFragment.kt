@@ -28,9 +28,9 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.tabs.TabLayout
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.util.LogcatReader
 import io.homeassistant.companion.android.util.applyBottomSafeDrawingInsets
 import io.homeassistant.companion.android.util.getLatestFatalCrash
