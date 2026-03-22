@@ -3,6 +3,7 @@
     tools:ignore="MissingDefaultResource">
     <release version="2026.3.5 - Main" versioncode="3">
         <change>Bug fixes and dependency updates</change>
+        <change>Fix help icon in logs view not opening the troubleshooting page</change>
     </release>
     <release version="2026.3.5 - Wear" versioncode="2">
         <change>Bug fixes and dependency updates</change>
