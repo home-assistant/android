@@ -13,6 +13,7 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
 import androidx.core.net.toUri
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -70,6 +71,8 @@ class SettingsFragment(
     private val defaultAssistantManager: DefaultAssistantManager,
 ) : PreferenceFragmentCompat(),
     SettingsView {
+
+    private val activityViewModel: SettingsActivityViewModel by activityViewModels()
 
     private val requestNotificationPermissionResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -505,7 +508,7 @@ class SettingsFragment(
                 serverAuth = server.id
                 val settingsActivity = requireActivity() as SettingsActivity
                 lifecycleScope.launch {
-                    val needsAuth = settingsActivity.isAppLocked(server.id)
+                    val needsAuth = activityViewModel.isAppLocked(server.id)
                     if (!needsAuth) {
                         onServerLockResult(Authenticator.SUCCESS)
                     } else {
@@ -543,7 +546,7 @@ class SettingsFragment(
 
     private fun onServerLockResult(result: Int): Boolean {
         if (result == Authenticator.SUCCESS && serverAuth != null) {
-            (activity as? SettingsActivity)?.setAppActive(serverAuth, true)
+            activityViewModel.setAppActive(serverAuth, true)
             parentFragmentManager.commit {
                 replace(
                     R.id.content,
