@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -17,23 +18,25 @@ class SettingsActivityViewModel @Inject constructor(private val serverManager: S
      * which is critical for the app lock feature.
      */
     fun setAppActive(serverId: Int?, active: Boolean) {
-        viewModelScope.launch {
-            serverManager.getServer(serverId ?: ServerManager.SERVER_ID_ACTIVE)?.let {
+        viewModelScope.launch(Dispatchers.IO) {
+            val resolvedId = serverId ?: ServerManager.SERVER_ID_ACTIVE
+            serverManager.getServer(resolvedId)?.let {
                 try {
                     serverManager.integrationRepository(it.id).setAppActive(active)
                 } catch (e: IllegalArgumentException) {
-                    Timber.w(e, "Cannot set app active $active for server $serverId")
+                    Timber.w(e, "Cannot set app active $active for server $resolvedId")
                 }
             }
         }
     }
 
     suspend fun isAppLocked(serverId: Int?): Boolean {
-        return serverManager.getServer(serverId ?: ServerManager.SERVER_ID_ACTIVE)?.let {
+        val resolvedId = serverId ?: ServerManager.SERVER_ID_ACTIVE
+        return serverManager.getServer(resolvedId)?.let {
             try {
                 serverManager.integrationRepository(it.id).isAppLocked()
             } catch (e: IllegalArgumentException) {
-                Timber.w(e, "Cannot determine app locked state")
+                Timber.w(e, "Cannot determine app locked state for server $resolvedId")
                 false
             }
         } ?: false
