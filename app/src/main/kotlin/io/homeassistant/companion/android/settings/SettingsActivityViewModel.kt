@@ -9,9 +9,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @HiltViewModel
-class SettingsActivityViewModel @Inject constructor(
-    private val serverManager: ServerManager,
-) : ViewModel() {
+class SettingsActivityViewModel @Inject constructor(private val serverManager: ServerManager) : ViewModel() {
 
     /**
      * Set the app active state for a specific server. Uses [viewModelScope] to ensure the

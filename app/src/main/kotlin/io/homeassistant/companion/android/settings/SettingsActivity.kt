@@ -209,7 +209,9 @@ class SettingsActivity : BaseActivity() {
      */
     private suspend fun isAppLocked(): Boolean {
         val serverFragment = supportFragmentManager.findFragmentByTag(ServerSettingsFragment.TAG)
-        val serverLocked = serverFragment?.let { viewModel.isAppLocked((it as ServerSettingsFragment).getServerId()) } ?: false
+        val serverLocked = serverFragment?.let {
+            viewModel.isAppLocked((it as ServerSettingsFragment).getServerId())
+        } ?: false
         return serverLocked || viewModel.isAppLocked(ServerManager.SERVER_ID_ACTIVE)
     }
 
