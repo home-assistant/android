@@ -257,7 +257,7 @@
         </receiver>
 
         <receiver
-            android:name=".sensors.ActivitySensorManager"
+            android:name=".sensors.ActivitySensorBroadcastReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter>
