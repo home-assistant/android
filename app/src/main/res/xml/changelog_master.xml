@@ -2,6 +2,8 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2026.3.6 - Main" versioncode="3">
+        <change>Continue Assist conversations hands-free by using wake word for follow-up requests</change>
+        <change>Assist conversations started with a wake word now auto-close after 30 seconds of inactivity</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2026.3.6 - Wear" versioncode="2">
