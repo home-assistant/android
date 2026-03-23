@@ -12,7 +12,6 @@ import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
-import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -49,10 +48,7 @@ class FrontendViewModelTest {
     @RegisterExtension
     val mainDispatcherExtension = MainDispatcherJUnit5Extension(UnconfinedTestDispatcher())
 
-    private val webViewClient: HAWebViewClient = mockk(relaxed = true)
-    private val webViewClientFactory: HAWebViewClientFactory = mockk(relaxed = true) {
-        every { create(any(), any(), any(), any(), any(), any()) } returns webViewClient
-    }
+    private val webViewClientFactory: HAWebViewClientFactory = mockk(relaxed = true)
     private val externalBusHandler: FrontendMessageHandler = mockk(relaxed = true)
     private val urlManager: FrontendUrlManager = mockk(relaxed = true)
     private val connectivityCheckRepository: ConnectivityCheckRepository = mockk(relaxed = true)
@@ -497,6 +493,29 @@ class FrontendViewModelTest {
             assertTrue(navigationEvents.any { it is FrontendNavigationEvent.NavigateToSettings })
             job.cancel()
         }
+
+        @Test
+        fun `Given open assist settings message result when collected then navigation event is emitted`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { externalBusHandler.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+
+            // Collect navigation events
+            val navigationEvents = mutableListOf<FrontendNavigationEvent>()
+            val job = backgroundScope.launch { viewModel.navigationEvents.collect { navigationEvents.add(it) } }
+
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            messageFlow.emit(FrontendHandlerEvent.OpenAssistSettings)
+            advanceUntilIdle()
+
+            assertTrue(navigationEvents.any { it is FrontendNavigationEvent.NavigateToAssistSettings })
+            job.cancel()
+        }
     }
 
     @Nested
@@ -698,6 +717,37 @@ class FrontendViewModelTest {
             // Verify prompt is hidden
             assertFalse((viewModel.viewState.value as FrontendViewState.Content).showNotificationPermission)
             coVerify { permissionManager.onNotificationPermissionResult(serverId = serverId, granted = true) }
+        }
+    }
+
+    @Nested
+    inner class WebViewPermission {
+
+        @Test
+        fun `Given webView permission result when called then delegates to permission manager`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            val results = mapOf(android.Manifest.permission.CAMERA to true)
+            viewModel.onWebViewPermissionResult(results)
+
+            verify { permissionManager.onWebViewPermissionResult(results) }
+        }
+
+        @Test
+        fun `Given pending webView permission then viewModel exposes it from permission manager`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            assertEquals(permissionManager.pendingWebViewPermission, viewModel.pendingWebViewPermission)
         }
     }
 

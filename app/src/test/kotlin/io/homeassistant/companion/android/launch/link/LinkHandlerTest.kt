@@ -4,10 +4,12 @@ import androidx.core.net.toUri
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.util.FailFastRule
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.assertNotNull
@@ -20,6 +22,9 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
 class LinkHandlerTest {
+
+    @get:Rule
+    val failFastRule = FailFastRule()
 
     private val serverManager: ServerManager = mockk()
     private val handler = LinkHandlerImpl(serverManager)

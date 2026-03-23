@@ -5,17 +5,15 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNull
+import org.junit.jupiter.api.extension.ExtendWith
 
+@ExtendWith(FailFastExtension::class)
 class FailFastTest {
     private var exceptionCaught: Throwable? = null
 
     @BeforeEach
     fun setUp() {
-        FailFast.setHandler(object : FailFastHandler {
-            override fun handleException(throwable: Throwable, additionalMessage: String?) {
-                exceptionCaught = throwable
-            }
-        })
+        FailFast.setHandler { throwable, additionalMessage -> exceptionCaught = throwable }
     }
 
     @AfterEach

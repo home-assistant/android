@@ -13,6 +13,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
@@ -89,6 +91,8 @@ class MainViewModel @Inject constructor(
     @Immutable
     data class MainViewUiState(
         val entities: Map<String, Entity> = emptyMap(),
+        val cameraEntities: List<Entity> = emptyList(),
+        val climateEntities: List<Entity> = emptyList(),
         val favoriteCaches: List<FavoriteCaches> = emptyList(),
         val isFavoritesOnly: Boolean = false,
         val isHapticEnabled: Boolean = false,
@@ -308,13 +312,42 @@ class MainViewModel @Inject constructor(
      */
     private fun updateEntityStates(entities: List<Entity>, replaceAll: Boolean = false) {
         val supportedDomains = supportedDomains()
-        val supported = entities
-            .filter { it.domain in supportedDomains }
-            .associateBy { it.entityId }
+        val supportedIds = mutableSetOf<String>()
         updateUiState { uiState ->
+            val supported = mutableMapOf<String, Entity>()
+            val cameraEntities = if (replaceAll) {
+                mutableMapOf()
+            } else {
+                uiState.cameraEntities.associateByTo(
+                    mutableMapOf(),
+                ) {
+                    it.entityId
+                }
+            }
+            val climateEntities = if (replaceAll) {
+                mutableMapOf()
+            } else {
+                uiState.climateEntities.associateByTo(
+                    mutableMapOf(),
+                ) {
+                    it.entityId
+                }
+            }
+            for (entity in entities) {
+                when (entity.domain) {
+                    CAMERA_DOMAIN -> cameraEntities[entity.entityId] = entity
+                    CLIMATE_DOMAIN -> climateEntities[entity.entityId] = entity
+                }
+                if (entity.domain in supportedDomains) {
+                    supported[entity.entityId] = entity
+                }
+            }
+            supportedIds.addAll(supported.keys)
             val updatedEntities = if (replaceAll) supported else uiState.entities + supported
             uiState.copy(
                 entities = updatedEntities,
+                cameraEntities = cameraEntities.values.toList(),
+                climateEntities = climateEntities.values.toList(),
                 allEntitiesByDomain = updatedEntities.values.groupBy { it.domain },
                 entityListNavigation = uiState.entityListNavigation.copy(
                     entityLists = uiState.entityListNavigation.entityListIds.resolveEntities(updatedEntities),
@@ -322,7 +355,7 @@ class MainViewModel @Inject constructor(
             )
         }
         val favoriteIds = mainViewUiState.value.favoriteEntityIds
-        supported.keys
+        supportedIds
             .filter { it in favoriteIds }
             .forEach { addCachedFavorite(it) }
     }

@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.assist
 
 import android.app.Application
 import android.content.pm.PackageManager
+import io.homeassistant.companion.android.common.assist.AssistAudioStrategy
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerConnectionStateProvider
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -18,7 +19,6 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Co
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ConversationSpeechResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TtsOutputResponse
-import io.homeassistant.companion.android.common.util.AudioRecorder
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
 import io.homeassistant.companion.android.common.util.PlaybackState
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
@@ -31,7 +31,9 @@ import java.net.URL
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceTimeBy
@@ -50,7 +52,6 @@ import org.junit.jupiter.api.extension.ExtendWith
 class AssistViewModelTest {
 
     private val serverManager: ServerManager = mockk(relaxed = true)
-    private val audioRecorder: AudioRecorder = mockk(relaxed = true)
     private val audioUrlPlayer: AudioUrlPlayer = mockk(relaxed = true)
     private val application: Application = mockk(relaxed = true)
     private val webSocketRepository: WebSocketRepository = mockk(relaxed = true)
@@ -104,9 +105,21 @@ class AssistViewModelTest {
     private fun createViewModel(): AssistViewModel {
         return AssistViewModel(
             serverManager = serverManager,
-            audioRecorder = audioRecorder,
             audioUrlPlayer = audioUrlPlayer,
             application = application,
+            initialAudioStrategy = object : AssistAudioStrategy {
+                override suspend fun audioData(): Flow<ShortArray> = emptyFlow()
+
+                override val wakeWordDetected: Flow<String> = emptyFlow()
+
+                override fun requestFocus() {
+                    // No-op for testing
+                }
+
+                override fun abandonFocus() {
+                    // No-op for testing
+                }
+            },
         )
     }
 
@@ -139,8 +152,6 @@ class AssistViewModelTest {
          * [pipelineEvents] as the pipeline event source for voice input.
          */
         private fun setupVoicePipeline() {
-            every { audioRecorder.startRecording() } returns true
-            every { audioRecorder.audioBytes } returns MutableSharedFlow()
             coEvery {
                 webSocketRepository.runAssistPipelineForVoice(any(), any(), anyNullable(), anyNullable(), anyNullable())
             } returns pipelineEvents
@@ -306,7 +317,7 @@ class AssistViewModelTest {
 
         @Test
         fun `Given started with wake word and TEXT mode when switching back to VOICE_INACTIVE then timer restarts`() = runTest {
-            viewModel = createAndInitialize(hasPermission = true, startedWithWakeWord = true)
+            viewModel = createAndInitialize(startedWithWakeWord = true)
             runCurrent()
 
             viewModel.onChangeInput() // VOICE_INACTIVE -> TEXT

@@ -13,6 +13,7 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.Connecti
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConnectionStatusPayload
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistPayload
+import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistSettingsMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenSettingsMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ThemeUpdateMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.UnknownIncomingMessage
@@ -227,6 +228,18 @@ class FrontendMessageHandlerTest {
         handler.messageResults().test {
             val result = awaitItem()
             assertTrue(result is FrontendHandlerEvent.OpenSettings)
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given open assist settings message when messageResults then emits OpenAssistSettings`() = runTest {
+        val message = OpenAssistSettingsMessage(id = 1)
+        every { externalBusRepository.incomingMessages() } returns flowOf(message)
+
+        handler.messageResults().test {
+            val result = awaitItem()
+            assertTrue(result is FrontendHandlerEvent.OpenAssistSettings)
             expectNoEvents()
         }
     }

@@ -22,6 +22,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.settings.assist.AssistSettingsFragment
 import io.homeassistant.companion.android.settings.developer.DeveloperSettingsFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
@@ -68,6 +69,7 @@ class SettingsActivity : BaseActivity() {
         data class QSTile(val tileId: String) : Deeplink
         data class Sensor(val sensorId: String) : Deeplink
         data object Websocket : Deeplink
+        data object AssistSettings : Deeplink
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -107,6 +109,7 @@ class SettingsActivity : BaseActivity() {
                             Deeplink.NotificationHistory -> NotificationHistoryFragment::class.java
                             is Deeplink.Sensor -> SensorDetailFragment::class.java
                             is Deeplink.QSTile -> ManageTilesFragment::class.java
+                            Deeplink.AssistSettings -> AssistSettingsFragment::class.java
                             else -> SettingsFragment::class.java
                         },
                         when (settingsNavigation) {

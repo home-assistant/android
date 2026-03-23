@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
 
 @Composable
 fun getEntityDomainString(domain: String): String {
@@ -11,7 +12,7 @@ fun getEntityDomainString(domain: String): String {
         "automation" -> stringResource(commonR.string.domain_automation)
         "button" -> stringResource(commonR.string.domain_button)
         CAMERA_DOMAIN -> stringResource(commonR.string.domain_camera)
-        "climate" -> stringResource(commonR.string.domain_climate)
+        CLIMATE_DOMAIN -> stringResource(commonR.string.domain_climate)
         "cover" -> stringResource(commonR.string.domain_cover)
         "fan" -> stringResource(commonR.string.domain_fan)
         "input_boolean" -> stringResource(commonR.string.domain_input_boolean)

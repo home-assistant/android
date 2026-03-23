@@ -18,6 +18,7 @@ import io.homeassistant.companion.android.frontend.FrontendScreen
 import io.homeassistant.companion.android.frontend.FrontendViewModel
 import io.homeassistant.companion.android.frontend.FrontendViewState
 import io.homeassistant.companion.android.launch.HAStartDestinationRoute
+import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.getActivity
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.flow.SharedFlow
@@ -60,7 +61,7 @@ internal fun NavController.navigateToFrontend(
 internal fun NavGraphBuilder.frontendScreen(
     navController: NavController,
     onOpenExternalLink: suspend (Uri) -> Unit = {},
-    onNavigateToSettings: () -> Unit,
+    onNavigateToSettings: (SettingsActivity.Deeplink?) -> Unit,
     onSecurityLevelHelpClick: suspend () -> Unit,
     onOpenLocationSettings: () -> Unit,
     onConfigureHomeNetwork: (serverId: Int) -> Unit,
@@ -90,7 +91,7 @@ internal fun NavGraphBuilder.frontendScreen(
                 viewModel = viewModel,
                 onOpenExternalLink = onOpenExternalLink,
                 onBlockInsecureHelpClick = onSecurityLevelHelpClick,
-                onOpenSettings = onNavigateToSettings,
+                onOpenSettings = { onNavigateToSettings(null) },
                 onOpenLocationSettings = onOpenLocationSettings,
                 onConfigureHomeNetwork = onConfigureHomeNetwork,
                 onSecurityLevelHelpClick = onSecurityLevelHelpClick,
@@ -117,14 +118,18 @@ internal fun NavGraphBuilder.frontendScreen(
 @VisibleForTesting
 internal fun FrontendNavigationHandler(
     navigationEvents: SharedFlow<FrontendNavigationEvent>,
-    onNavigateToSettings: () -> Unit,
+    onNavigateToSettings: (SettingsActivity.Deeplink?) -> Unit,
     onNavigateToAssist: (serverId: Int, pipelineId: String?, startListening: Boolean) -> Unit,
 ) {
     LaunchedEffect(Unit) {
         navigationEvents.collect { event ->
             when (event) {
                 is FrontendNavigationEvent.NavigateToSettings -> {
-                    onNavigateToSettings()
+                    onNavigateToSettings(null)
+                }
+
+                is FrontendNavigationEvent.NavigateToAssistSettings -> {
+                    onNavigateToSettings(SettingsActivity.Deeplink.AssistSettings)
                 }
 
                 is FrontendNavigationEvent.NavigateToAssist -> {
