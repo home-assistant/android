@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2026.3.6 - Main" versioncode="3">
+    <release version="2026.3.7 - Main" versioncode="3">
         <change>Expanded wake word support to continue conversations after using your wake word to open Assist</change>
         <change>Assist conversations started with a wake word now auto-close after 30 seconds of inactivity</change>
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2026.3.6 - Wear" versioncode="2">
+    <release version="2026.3.7 - Wear" versioncode="2">
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2026.3.6 - Automotive" versioncode="1">
+    <release version="2026.3.7 - Automotive" versioncode="1">
         <change>Bug fixes and dependency updates</change>
     </release>
 </changelog>
