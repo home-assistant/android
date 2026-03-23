@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings.developer.location
 
 import android.app.Application
 import androidx.annotation.IdRes
+import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,11 +10,13 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
+import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.location.LocationHistoryDao
+import io.homeassistant.companion.android.database.location.LocationHistoryItem
 import io.homeassistant.companion.android.database.location.LocationHistoryItemResult
 import io.homeassistant.companion.android.database.server.Server
 import javax.inject.Inject
@@ -33,6 +36,28 @@ class LocationTrackingViewModel @Inject constructor(
 
     companion object {
         private const val PAGE_SIZE = 25
+
+        @VisibleForTesting
+        internal fun createHistoryPager(
+            dao: LocationHistoryDao,
+            filter: HistoryFilter,
+        ): Pager<Int, LocationHistoryItem> = Pager(PagingConfig(pageSize = PAGE_SIZE, maxSize = PAGE_SIZE * 6)) {
+            Timber.d("Returning PagingSource for history filter: $filter")
+            when (filter) {
+                HistoryFilter.ALL -> dao.getAll()
+                HistoryFilter.SENT ->
+                    dao.getAll(listOf(LocationHistoryItemResult.SENT.name))
+                HistoryFilter.SKIPPED -> dao.getAll(
+                    (
+                        LocationHistoryItemResult.entries.toMutableList() - LocationHistoryItemResult.SENT -
+                            LocationHistoryItemResult.FAILED_SEND
+                        )
+                        .map { it.name },
+                )
+                HistoryFilter.FAILED ->
+                    dao.getAll(listOf(LocationHistoryItemResult.FAILED_SEND.name))
+            }
+        }
     }
 
     enum class HistoryFilter(@IdRes val menuItemId: Int) {
@@ -57,24 +82,8 @@ class LocationTrackingViewModel @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val historyPagerFlow = historyResultFilter.flatMapLatest { filter ->
-        Pager(PagingConfig(pageSize = PAGE_SIZE, maxSize = PAGE_SIZE * 6)) {
-            Timber.d("Returning PagingSource for history filter: $filter")
-            when (filter) {
-                HistoryFilter.SENT ->
-                    locationHistoryDao.getAll(listOf(LocationHistoryItemResult.SENT.name))
-                HistoryFilter.SKIPPED -> locationHistoryDao.getAll(
-                    (
-                        LocationHistoryItemResult.entries.toMutableList() - LocationHistoryItemResult.SENT -
-                            LocationHistoryItemResult.FAILED_SEND
-                        )
-                        .map { it.name },
-                )
-                HistoryFilter.FAILED ->
-                    locationHistoryDao.getAll(listOf(LocationHistoryItemResult.FAILED_SEND.name))
-                else -> locationHistoryDao.getAll()
-            }
-        }.flow
-    }
+        createHistoryPager(locationHistoryDao, filter).flow
+    }.cachedIn(viewModelScope)
 
     init {
         viewModelScope.launch {
