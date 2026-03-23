@@ -125,8 +125,14 @@ jobs:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
-      - name: Validate Screenshot Previews
-        run: ./gradlew validateDebugScreenshotTest validateFullDebugScreenshotTest
+      - name: Validate Screenshot Previews - app
+        run: ./gradlew :app:validateFullDebugScreenshotTest
+
+      - name: Validate Screenshot Previews - wear
+        run: ./gradlew :wear:validateDebugScreenshotTest
+
+      - name: Validate Screenshot Previews - common
+        run: ./gradlew :common:validateDebugScreenshotTest
 
       - uses: ./.github/actions/upload-test-results
         if: always()
