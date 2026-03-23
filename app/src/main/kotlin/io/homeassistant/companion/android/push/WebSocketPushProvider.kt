@@ -1,7 +1,5 @@
 package io.homeassistant.companion.android.push
 
-import android.content.Context
-import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.push.PushProvider
 import io.homeassistant.companion.android.common.push.PushRegistrationResult
@@ -19,7 +17,6 @@ import timber.log.Timber
  */
 @Singleton
 class WebSocketPushProvider @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val serverManager: ServerManager,
     private val settingsDao: SettingsDao,
 ) : PushProvider {

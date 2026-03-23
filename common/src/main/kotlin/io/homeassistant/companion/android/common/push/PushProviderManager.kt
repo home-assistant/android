@@ -5,6 +5,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.MessagingToken
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 import timber.log.Timber
 
 /**
@@ -27,7 +28,7 @@ class PushProviderManager @Inject constructor(
     /**
      * Get all registered providers.
      */
-    fun getAllProviders(): List<PushProvider> = providers.toList()
+    fun getAllProviders(): List<PushProvider> = providers.sortedBy { it.name }
 
     /**
      * Get a provider by name.
@@ -95,6 +96,7 @@ class PushProviderManager @Inject constructor(
                     allowReregistration = false,
                 )
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Timber.e(e, "Failed to update push registration for server ${server.id}")
             }
         }

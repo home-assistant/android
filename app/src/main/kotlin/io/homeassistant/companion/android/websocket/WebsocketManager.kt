@@ -62,7 +62,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
             WebsocketSetting.ALWAYS
         }
 
-        suspend fun restart(context: Context) {
+        fun restart(context: Context) {
             val websocketNotifications =
                 PeriodicWorkRequestBuilder<WebsocketManager>(15, TimeUnit.MINUTES)
                     .build()

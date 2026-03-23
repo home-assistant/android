@@ -9,7 +9,8 @@ package io.homeassistant.companion.android.common.push
  * - Indicating whether it requires a persistent connection (e.g. WebSocket)
  *
  * Implementations should be registered via Dagger multibinding so that
- * [PushProviderManager] can select the best available provider at runtime.
+ * [PushProviderManager] can discover all available providers and expose them
+ * for user selection.
  */
 interface PushProvider {
 

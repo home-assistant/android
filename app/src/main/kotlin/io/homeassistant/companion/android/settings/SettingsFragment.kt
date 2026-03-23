@@ -558,22 +558,21 @@ class SettingsFragment(
                 }
                 if (value == "WebSocket") {
                     Toast.makeText(requireContext(), commonR.string.push_provider_websocket_enabled, Toast.LENGTH_SHORT).show()
-                    lifecycleScope.launch {
-                        WebsocketManager.restart(requireContext())
-                    }
+                    WebsocketManager.restart(requireContext())
                 }
                 true
             }
 
             lifecycleScope.launch(Dispatchers.IO) {
-                val entries = mutableListOf<String>()
-                val values = mutableListOf<String>()
-
-                val providers = presenter.getAvailablePushProviders()
-                for (provider in providers) {
-                    entries.add(provider.second)
-                    values.add(provider.first)
-                }
+                val providerNames = presenter.getAvailablePushProviders()
+                val values = providerNames.toMutableList()
+                val entries = providerNames.map { name ->
+                    when (name) {
+                        "FCM" -> getString(commonR.string.push_provider_fcm)
+                        "WebSocket" -> getString(commonR.string.push_provider_websocket)
+                        else -> name
+                    }
+                }.toMutableList()
 
                 val activeValue = presenter.getActivePushProviderValue()
 

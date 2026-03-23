@@ -116,7 +116,6 @@ class SettingsPresenterImpl @Inject constructor(
             "languages" -> langsManager.getCurrentLang()
             "page_zoom" -> prefsRepository.getPageZoomLevel().toString()
             "screen_orientation" -> prefsRepository.getScreenOrientation()
-            "notification_push_provider" -> selectedPushProvider
             else -> throw IllegalArgumentException("No string found by this key: $key")
         }
     }
@@ -128,7 +127,6 @@ class SettingsPresenterImpl @Inject constructor(
                 "languages" -> langsManager.saveLang(value)
                 "page_zoom" -> prefsRepository.setPageZoomLevel(value?.toIntOrNull())
                 "screen_orientation" -> prefsRepository.saveScreenOrientation(value)
-                "notification_push_provider" -> handlePushProviderChange(value)
                 else -> throw IllegalArgumentException("No string found by this key: $key")
             }
         }
@@ -223,25 +221,21 @@ class SettingsPresenterImpl @Inject constructor(
         }
     }
 
-    override fun getAvailablePushProviders(): List<Pair<String, String>> {
-        return pushProviderManager.getAllProviders().map { provider ->
-            val label = when (provider.name) {
-                "FCM" -> "Firebase Cloud Messaging"
-                "WebSocket" -> "WebSocket"
-                else -> provider.name
-            }
-            provider.name to label
-        }
+    override fun getAvailablePushProviders(): List<String> {
+        return pushProviderManager.getAllProviders().map { it.name }
     }
 
     override fun getActivePushProviderValue(): String {
         selectedPushProvider?.let { return it }
-        return "WebSocket"
+        return pushProviderManager.getAllProviders().firstOrNull()?.name ?: "WebSocket"
     }
 
     override fun handlePushProviderChange(value: String?) {
         if (value == null) return
         selectedPushProvider = value
+        mainScope.launch {
+            pushProviderManager.selectAndRegister(value)
+        }
     }
 
     private fun enableLauncherMode(enable: Boolean) {

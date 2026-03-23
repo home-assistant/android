@@ -690,6 +690,11 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             appData["push_url"] = pushUrl
             appData["push_token"] = ""
             appData["push_encrypt"] = false
+        } else {
+            // No token and no URL: explicitly clear server-side push config (e.g. when switching to WebSocket)
+            appData["push_url"] = ""
+            appData["push_token"] = ""
+            appData["push_encrypt"] = false
         }
 
         return RegisterDeviceRequest(

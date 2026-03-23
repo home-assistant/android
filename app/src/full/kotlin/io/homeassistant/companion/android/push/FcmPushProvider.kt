@@ -5,6 +5,7 @@ import io.homeassistant.companion.android.common.push.PushRegistrationResult
 import io.homeassistant.companion.android.common.util.MessagingTokenProvider
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 import timber.log.Timber
 
 /**
@@ -24,6 +25,7 @@ class FcmPushProvider @Inject constructor(
             val token = messagingTokenProvider()
             !token.isBlank()
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Timber.e(e, "FCM is not available")
             false
         }
@@ -34,6 +36,7 @@ class FcmPushProvider @Inject constructor(
             val token = messagingTokenProvider()
             !token.isBlank()
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             false
         }
     }
@@ -52,6 +55,7 @@ class FcmPushProvider @Inject constructor(
                 )
             }
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Timber.e(e, "Failed to register FCM")
             null
         }
