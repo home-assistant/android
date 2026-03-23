@@ -24,4 +24,7 @@ interface SettingsPresenter {
     suspend fun showChangeLog(context: Context)
     suspend fun isChangeLogPopupEnabled(): Boolean
     suspend fun setChangeLogPopupEnabled(enabled: Boolean)
+    fun getAvailablePushProviders(): List<Pair<String, String>>
+    fun getActivePushProviderValue(): String
+    fun handlePushProviderChange(value: String?)
 }

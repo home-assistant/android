@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings
 
 import android.app.UiModeManager
 import android.content.Intent
+import android.widget.Toast
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Build
@@ -53,6 +54,7 @@ import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
 import io.homeassistant.companion.android.settings.wear.SettingsWearDetection
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
 import io.homeassistant.companion.android.util.QuestUtil
+import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.util.applyBottomSafeDrawingInsets
 import io.homeassistant.companion.android.webview.WebViewActivity
 import java.time.Instant
@@ -62,6 +64,7 @@ import java.time.format.FormatStyle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 
@@ -253,6 +256,7 @@ class SettingsFragment(
         }
 
         updateNotificationChannelPrefs()
+        updatePushProviderPrefs()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             findPreference<Preference>("notification_permission")?.let {
@@ -541,6 +545,46 @@ class SettingsFragment(
                 notificationsEnabled &&
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
                 uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
+        }
+    }
+
+    private fun updatePushProviderPrefs() {
+        findPreference<ListPreference>("notification_push_provider")?.let { pref ->
+            pref.preferenceDataStore = null
+            pref.setOnPreferenceChangeListener { _, newValue ->
+                val value = newValue as? String
+                lifecycleScope.launch(Dispatchers.IO) {
+                    presenter.handlePushProviderChange(value)
+                }
+                if (value == "WebSocket") {
+                    Toast.makeText(requireContext(), commonR.string.push_provider_websocket_enabled, Toast.LENGTH_SHORT).show()
+                    lifecycleScope.launch {
+                        WebsocketManager.restart(requireContext())
+                    }
+                }
+                true
+            }
+
+            lifecycleScope.launch(Dispatchers.IO) {
+                val entries = mutableListOf<String>()
+                val values = mutableListOf<String>()
+
+                val providers = presenter.getAvailablePushProviders()
+                for (provider in providers) {
+                    entries.add(provider.second)
+                    values.add(provider.first)
+                }
+
+                val activeValue = presenter.getActivePushProviderValue()
+
+                withContext(Dispatchers.Main) {
+                    pref.entries = entries.toTypedArray()
+                    pref.entryValues = values.toTypedArray()
+                    if (pref.value == null || pref.value !in values) {
+                        pref.value = activeValue
+                    }
+                }
+            }
         }
     }
 

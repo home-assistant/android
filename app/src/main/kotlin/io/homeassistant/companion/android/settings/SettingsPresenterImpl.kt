@@ -13,6 +13,7 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.push.PushProviderManager
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.settings.assist.DefaultAssistantManager
@@ -40,6 +41,7 @@ class SettingsPresenterImpl @Inject constructor(
     private val changeLog: ChangeLog,
     private val settingsDao: SettingsDao,
     private val defaultAssistantManager: DefaultAssistantManager,
+    private val pushProviderManager: PushProviderManager,
 ) : PreferenceDataStore(),
     SettingsPresenter {
 
@@ -58,6 +60,7 @@ class SettingsPresenterImpl @Inject constructor(
     )
 
     private var suggestionFlow = MutableStateFlow<SettingsHomeSuggestion?>(null)
+    private var selectedPushProvider: String? = null
 
     override fun getBoolean(key: String, defValue: Boolean): Boolean = runBlocking {
         return@runBlocking when (key) {
@@ -113,6 +116,7 @@ class SettingsPresenterImpl @Inject constructor(
             "languages" -> langsManager.getCurrentLang()
             "page_zoom" -> prefsRepository.getPageZoomLevel().toString()
             "screen_orientation" -> prefsRepository.getScreenOrientation()
+            "notification_push_provider" -> selectedPushProvider
             else -> throw IllegalArgumentException("No string found by this key: $key")
         }
     }
@@ -124,6 +128,7 @@ class SettingsPresenterImpl @Inject constructor(
                 "languages" -> langsManager.saveLang(value)
                 "page_zoom" -> prefsRepository.setPageZoomLevel(value?.toIntOrNull())
                 "screen_orientation" -> prefsRepository.saveScreenOrientation(value)
+                "notification_push_provider" -> handlePushProviderChange(value)
                 else -> throw IllegalArgumentException("No string found by this key: $key")
             }
         }
@@ -216,6 +221,27 @@ class SettingsPresenterImpl @Inject constructor(
         } else if (filteredSuggestions.none { it.id == suggestionFlow.value?.id }) {
             suggestionFlow.emit(null)
         }
+    }
+
+    override fun getAvailablePushProviders(): List<Pair<String, String>> {
+        return pushProviderManager.getAllProviders().map { provider ->
+            val label = when (provider.name) {
+                "FCM" -> "Firebase Cloud Messaging"
+                "WebSocket" -> "WebSocket"
+                else -> provider.name
+            }
+            provider.name to label
+        }
+    }
+
+    override fun getActivePushProviderValue(): String {
+        selectedPushProvider?.let { return it }
+        return "WebSocket"
+    }
+
+    override fun handlePushProviderChange(value: String?) {
+        if (value == null) return
+        selectedPushProvider = value
     }
 
     private fun enableLauncherMode(enable: Boolean) {
