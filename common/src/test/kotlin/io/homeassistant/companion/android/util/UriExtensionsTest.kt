@@ -86,7 +86,7 @@ class UriExtensionsTest {
     }
 
     @Test
-    fun `toRelativeUrl returns null when only excluded params remain`() {
+    fun `toRelativeUrl strips excluded params leaving path only`() {
         val uri = Uri.parse("https://example.com/dashboard?external_auth=1")
         assertEquals("/dashboard", uri.toRelativeUrl(excludeParams = setOf("external_auth")))
     }

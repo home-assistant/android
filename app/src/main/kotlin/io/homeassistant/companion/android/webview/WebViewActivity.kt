@@ -442,7 +442,7 @@ class WebViewActivity :
 
         decor = window.decorView as FrameLayout
 
-        val onBackPressed = object : OnBackPressedCallback(true) {
+        val onBackPressed = object : OnBackPressedCallback(webView.canGoBack()) {
             override fun handleOnBackPressed() {
                 if (webView.canGoBack()) {
                     // Check if the previous history entry has the same origin as
@@ -685,8 +685,10 @@ class WebViewActivity :
 
                 override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
                     super.doUpdateVisitedHistory(view, url, isReload)
-                    // Keep the callback enabled when there's history OR when the current
-                    // URL has a non-root path (so pressing back navigates to root first).
+                    // Enable the callback when there's browser history OR when the
+                    // current URL has a non-root path, so pressing back navigates to
+                    // root before exiting. This keeps predictive back animations working
+                    // correctly on Android 14+.
                     onBackPressed.isEnabled = canGoBack() ||
                         url?.toUri()?.hasNonRootPath() == true
                     presenter.stopScanningForImprov(false)
@@ -1492,6 +1494,8 @@ class WebViewActivity :
                 // when no explicit navigation path is set. See https://github.com/home-assistant/android/issues/4983
                 var path: String? = intentPath
                 if (intentPath?.startsWith("entityId:") == true) {
+                    // Get the entity ID from a string formatted "entityId:domain.entity"
+                    // https://github.com/home-assistant/core/blob/dev/homeassistant/core.py#L159
                     val pattern = "(?<=^entityId:)((?!.+__)(?!_)[\\da-z_]+(?<!_)\\.(?!_)[\\da-z_]+(?<!_)$)".toRegex()
                     val entity = pattern.find(intentPath)?.value ?: ""
                     if (

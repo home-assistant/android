@@ -216,10 +216,6 @@ fun Uri.hasNonRootPath(): Boolean {
 /**
  * Extracts the relative URL (path, filtered query parameters, and fragment) from this [Uri].
  *
- * Used to preserve the user's current page when the base URL changes, for example when
- * switching between internal and external connections. Certain query parameters (like
- * `external_auth`) can be excluded because the presenter re-adds them on every load.
- *
  * The root path (`/`) is treated as empty since it represents the home page with no
  * meaningful relative navigation.
  *
