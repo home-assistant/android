@@ -220,3 +220,31 @@ fun Uri.hasNonRootPath(): Boolean {
     val path = this.path ?: return false
     return path.isNotBlank() && path != "/"
 }
+
+/**
+ * Extracts the relative URL (path, filtered query parameters, and fragment) from this [Uri].
+ *
+ * The root path (`/`) is treated as empty since it represents the home page with no
+ * meaningful relative navigation.
+ *
+ * @param excludeParams query parameter names to omit from the result
+ * @return the relative URL string (e.g. `/history?start_date=2026-01-01#tab`),
+ *         or `null` if the path is root-only or the result would be empty.
+ */
+fun Uri.toRelativeUrl(excludeParams: Set<String> = emptySet()): String? {
+    val path = encodedPath?.takeIf { it.length > 1 } ?: return null
+
+    val relativeUrl = Uri.Builder()
+        .encodedPath(path)
+        .apply {
+            queryParameterNames
+                .filterNot { it in excludeParams }
+                .flatMap { name -> getQueryParameters(name).map { name to it } }
+                .forEach { (name, value) -> appendQueryParameter(name, value) }
+        }
+        .encodedFragment(encodedFragment)
+        .build()
+        .toString()
+
+    return relativeUrl.takeIf { it.isNotEmpty() }
+}

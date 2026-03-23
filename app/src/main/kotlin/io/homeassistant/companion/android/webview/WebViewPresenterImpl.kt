@@ -129,20 +129,39 @@ class WebViewPresenterImpl @Inject constructor(
         isNewServer: Boolean,
     ) {
         var pathConsumed = false
+        var lastBaseUrl: URL? = null
 
         if (isInternalOverride != null) {
             Timber.d("Using isInternalOverride to get URL")
         }
 
         serverManager.connectionStateProvider(serverId).urlFlow(isInternalOverride).collect { urlState ->
-            val shouldConsumePath = !pathConsumed && path != null
-            if (shouldConsumePath) pathConsumed = true
+            val currentBaseUrl = (urlState as? UrlState.HasUrl)?.url
+            val baseUrlChanged = lastBaseUrl != null && currentBaseUrl != null && lastBaseUrl != currentBaseUrl
+            if (currentBaseUrl != null) lastBaseUrl = currentBaseUrl
+
+            val effectiveRelativeUrl = if (!pathConsumed && path != null) {
+                pathConsumed = true
+                path
+            } else if (baseUrlChanged) {
+                // On internal/external URL switches, preserve the full relative URL
+                // (path + query params + fragment) so the user stays on the exact same
+                // page, including filtered views like history with date ranges.
+                // Only do this for connection type changes on the same server, not
+                // for server switches where the path may not exist and would leak
+                // information about the previous server.
+                withContext(Dispatchers.Main) { view.getCurrentWebViewRelativeUrl() }
+            } else {
+                null
+            }
 
             handleUrlState(
                 urlState = urlState,
-                path = path,
-                shouldConsumePath = shouldConsumePath,
-                isNewServer = isNewServer,
+                path = effectiveRelativeUrl,
+                shouldConsumePath = effectiveRelativeUrl != null,
+                // Clear history when the base URL changes (e.g. internal <-> external)
+                // because old URLs in the back stack would be unreachable on the new network.
+                isNewServer = isNewServer || baseUrlChanged,
             )
         }
     }
@@ -562,7 +581,7 @@ class WebViewPresenterImpl @Inject constructor(
 
                         is ThreadManager.SyncResult.NoneHaveCredentials,
                         is ThreadManager.SyncResult.OnlyOnServer,
-                        -> {
+                            -> {
                             mutableMatterThreadStep.tryEmit(MatterThreadStep.THREAD_NONE)
                         }
 

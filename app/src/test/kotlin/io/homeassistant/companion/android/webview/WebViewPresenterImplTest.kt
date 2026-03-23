@@ -90,6 +90,10 @@ private class FakeWebViewContext(
     override fun showConnectionSecurityLevel(serverId: Int) {
         webViewDelegate.showConnectionSecurityLevel(serverId)
     }
+
+    override fun getCurrentWebViewRelativeUrl(): String? {
+        return webViewDelegate.getCurrentWebViewRelativeUrl()
+    }
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -123,6 +127,7 @@ class WebViewPresenterImplTest {
     fun setUp() {
         mockkStatic(Uri::class)
         mockUriParse()
+        every { webView.getCurrentWebViewRelativeUrl() } returns null
         fakeContext = FakeWebViewContext(mockk<Context>(), webView)
 
         lifecycleOwner = object : LifecycleOwner {
