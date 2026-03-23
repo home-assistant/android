@@ -3,6 +3,7 @@
 #ifndef MICRO_WAKE_WORD_ENGINE_H
 #define MICRO_WAKE_WORD_ENGINE_H
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -41,13 +42,13 @@ public:
         int slidingWindowSize
     );
 
-    ~MicroWakeWordEngine();
-
-    // Non-copyable
+    // Non-copyable, non-movable
     MicroWakeWordEngine(const MicroWakeWordEngine&) = delete;
     MicroWakeWordEngine& operator=(const MicroWakeWordEngine&) = delete;
+    MicroWakeWordEngine(MicroWakeWordEngine&&) = delete;
+    MicroWakeWordEngine& operator=(MicroWakeWordEngine&&) = delete;
 
-    bool isInitialized() const { return initialized_; }
+    [[nodiscard]] bool isInitialized() const { return initialized_; }
 
     /**
      * Process audio samples and check for wake word detection.
@@ -56,7 +57,7 @@ public:
      * @param numSamples Number of samples
      * @return true if wake word was detected
      */
-    bool processAudio(const int16_t* samples, size_t numSamples);
+    [[nodiscard]] bool processAudio(const int16_t* samples, size_t numSamples);
 
     /**
      * Reset all internal state (frontend, feature buffer, detection state).
@@ -78,10 +79,10 @@ private:
     // (matches ESPHome MIN_SLICES_BEFORE_DETECTION)
     static constexpr int MIN_SLICES_BEFORE_DETECTION = 100;
 
-    bool loadModel();
-    bool registerOps();
-    bool processFeatureFrame(const int8_t* features);
-    bool checkDetection() const;
+    [[nodiscard]] bool loadModel();
+    [[nodiscard]] bool registerOps();
+    [[nodiscard]] bool processFeatureFrame(const int8_t* features);
+    [[nodiscard]] bool checkDetection() const;
     void resetDetectionState();
 
     // Feature extraction
@@ -93,12 +94,11 @@ private:
 
     // TFLite Micro interpreter
     std::unique_ptr<uint8_t[]> modelCopy_;
-    uint8_t* tensorArena_ = nullptr;
-    uint8_t* varArena_ = nullptr;
+    std::array<uint8_t, TENSOR_ARENA_SIZE> tensorArena_{};
+    std::array<uint8_t, VARIABLE_ARENA_SIZE> varArena_{};
+    // 20 is the max number of registered ops, matching ESPHome's hardcoded value
     tflite::MicroMutableOpResolver<20> opResolver_;
     std::unique_ptr<tflite::MicroInterpreter> interpreter_;
-    tflite::MicroAllocator* microAllocator_ = nullptr;
-    tflite::MicroResourceVariables* resourceVariables_ = nullptr;
 
     // Stride management (read from model input tensor dims)
     int stride_ = 1;

@@ -22,11 +22,13 @@ public:
     MicroFrontendWrapper(int sampleRate, size_t stepSizeMs);
     ~MicroFrontendWrapper();
 
-    // Non-copyable
+    // Non-copyable, non-movable
     MicroFrontendWrapper(const MicroFrontendWrapper&) = delete;
     MicroFrontendWrapper& operator=(const MicroFrontendWrapper&) = delete;
+    MicroFrontendWrapper(MicroFrontendWrapper&&) = delete;
+    MicroFrontendWrapper& operator=(MicroFrontendWrapper&&) = delete;
 
-    bool isInitialized() const { return initialized_; }
+    [[nodiscard]] bool isInitialized() const { return initialized_; }
 
     /**
      * Process audio samples and extract spectrogram features.
@@ -43,7 +45,7 @@ public:
     void reset();
 
 private:
-    struct FrontendState state_;
+    struct FrontendState state_{};
     int sampleRate_;
     size_t stepSizeMs_;
     bool initialized_ = false;

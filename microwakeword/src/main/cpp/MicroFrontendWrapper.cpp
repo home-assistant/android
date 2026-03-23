@@ -2,15 +2,13 @@
 
 #include "MicroFrontendWrapper.h"
 
-#include <android/log.h>
-
 extern "C" {
 #include "tensorflow/lite/experimental/microfrontend/lib/frontend_util.h"
 }
 
-#define LOG_TAG "MicroFrontend"
-#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+#include "Logging.h"
+
+static constexpr char LOG_TAG[] = "MicroFrontendWrapper";
 
 // Configuration matching ESPHome microWakeWord component.
 // Source: https://github.com/esphome/esphome/blob/8d1379a2752291d2f4e33d5831d51c2afd59f7ce/esphome/components/micro_wake_word/preprocessor_settings.h
@@ -42,7 +40,7 @@ namespace {
 MicroFrontendWrapper::MicroFrontendWrapper(int sampleRate, size_t stepSizeMs)
     : sampleRate_(sampleRate), stepSizeMs_(stepSizeMs) {
 
-    struct FrontendConfig config;
+    struct FrontendConfig config{};
     FrontendFillConfigWithDefaults(&config);
 
     // Window config
@@ -71,13 +69,13 @@ MicroFrontendWrapper::MicroFrontendWrapper(int sampleRate, size_t stepSizeMs)
     config.log_scale.scale_shift = LOG_SCALE_SCALE_SHIFT;
 
     if (!FrontendPopulateState(&config, &state_, sampleRate_)) {
-        LOGE("Failed to initialize MicroFrontend state");
+        LOGE(LOG_TAG, "Failed to initialize MicroFrontend state");
         initialized_ = false;
         return;
     }
 
     initialized_ = true;
-    LOGD("MicroFrontend initialized: %d Hz sample rate, %d mel bins, %.0f-%.0f Hz, %zum window, %zum step",
+    LOGD(LOG_TAG, "MicroFrontend initialized: %d Hz sample rate, %d mel bins, %.0f-%.0f Hz, %zum window, %zum step",
          sampleRate_, PREPROCESSOR_FEATURE_SIZE, FILTERBANK_LOWER_BAND_LIMIT, FILTERBANK_UPPER_BAND_LIMIT,
          FEATURE_DURATION_MS, stepSizeMs_);
 }
@@ -92,7 +90,7 @@ std::vector<std::vector<float>> MicroFrontendWrapper::processSamples(const int16
     std::vector<std::vector<float>> results;
 
     if (!initialized_) {
-        LOGE("MicroFrontend not initialized");
+        LOGE(LOG_TAG, "MicroFrontend not initialized");
         return results;
     }
 
@@ -117,8 +115,8 @@ std::vector<std::vector<float>> MicroFrontendWrapper::processSamples(const int16
         if (output.values != nullptr && output.size > 0) {
             std::vector<float> frame(PREPROCESSOR_FEATURE_SIZE);
 
-            for (int i = 0; i < PREPROCESSOR_FEATURE_SIZE && i < static_cast<int>(output.size); i++) {
-                frame[i] = static_cast<float>(output.values[i]) * FLOAT32_SCALE;
+            for (size_t index = 0; index < PREPROCESSOR_FEATURE_SIZE && index < output.size; index++) {
+                frame[index] = static_cast<float>(output.values[index]) * FLOAT32_SCALE;
             }
 
             results.push_back(std::move(frame));

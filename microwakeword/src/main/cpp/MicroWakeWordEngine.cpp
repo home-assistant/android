@@ -2,20 +2,17 @@
 
 #include "MicroWakeWordEngine.h"
 
-#include <android/log.h>
 #include <algorithm>
 #include <cmath>
 #include <cstring>
 
+#include "Logging.h"
 #include "tensorflow/lite/micro/micro_interpreter.h"
 #include "tensorflow/lite/micro/micro_mutable_op_resolver.h"
 #include "tensorflow/lite/micro/micro_resource_variable.h"
 #include "tensorflow/lite/schema/schema_generated.h"
 
-#define LOG_TAG "MicroWakeWord"
-#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
-#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+static constexpr char LOG_TAG[] = "MicroWakeWordEngine";
 
 MicroWakeWordEngine::MicroWakeWordEngine(
     const uint8_t* modelData,
@@ -26,13 +23,13 @@ MicroWakeWordEngine::MicroWakeWordEngine(
     int slidingWindowSize
 )
     : frontend_(sampleRate, static_cast<size_t>(featureStepSizeMs))
-    , probabilityCutoff_(static_cast<uint8_t>(probabilityCutoff * 255.0f))
+    , probabilityCutoff_(static_cast<uint8_t>(std::max(0.0f, std::min(1.0f, probabilityCutoff)) * 255.0f))
     , slidingWindowSize_(slidingWindowSize)
     , recentProbabilities_(slidingWindowSize, 0)
     , ignoreWindows_(-MIN_SLICES_BEFORE_DETECTION)
 {
     if (!frontend_.isInitialized()) {
-        LOGE("Frontend initialization failed");
+        LOGE(LOG_TAG, "Frontend initialization failed");
         return;
     }
 
@@ -45,13 +42,6 @@ MicroWakeWordEngine::MicroWakeWordEngine(
     }
 
     initialized_ = true;
-}
-
-MicroWakeWordEngine::~MicroWakeWordEngine() {
-    interpreter_.reset();
-    // Free arenas (allocated with new[])
-    delete[] tensorArena_;
-    delete[] varArena_;
 }
 
 bool MicroWakeWordEngine::registerOps() {
@@ -81,61 +71,57 @@ bool MicroWakeWordEngine::registerOps() {
 
 bool MicroWakeWordEngine::loadModel() {
     if (!registerOps()) {
-        LOGE("Failed to register TFLite operators");
+        LOGE(LOG_TAG, "Failed to register TFLite operators");
         return false;
     }
 
-    // Dynamically allocate tensor arena (aligned)
-    tensorArena_ = new (std::nothrow) uint8_t[TENSOR_ARENA_SIZE];
-    if (tensorArena_ == nullptr) {
-        LOGE("Could not allocate tensor arena (%zu bytes)", TENSOR_ARENA_SIZE);
+    // Both MicroAllocator and MicroResourceVariables are placement-allocated into varArena_,
+    // so they do not require explicit deallocation
+    auto* microAllocator = tflite::MicroAllocator::Create(varArena_.data(), VARIABLE_ARENA_SIZE);
+    if (microAllocator == nullptr) {
+        LOGE(LOG_TAG, "Could not create MicroAllocator for variable arena");
         return false;
     }
-
-    // Allocate variable arena for streaming state ops
-    varArena_ = new (std::nothrow) uint8_t[VARIABLE_ARENA_SIZE];
-    if (varArena_ == nullptr) {
-        LOGE("Could not allocate variable arena (%zu bytes)", VARIABLE_ARENA_SIZE);
-        return false;
-    }
-    microAllocator_ = tflite::MicroAllocator::Create(varArena_, VARIABLE_ARENA_SIZE);
-    if (microAllocator_ == nullptr) {
-        LOGE("Could not create MicroAllocator for variable arena");
-        return false;
-    }
-    resourceVariables_ = tflite::MicroResourceVariables::Create(microAllocator_, 20);
-    if (resourceVariables_ == nullptr) {
-        LOGE("Could not create MicroResourceVariables");
+    // 20 is the max number of resource variable slots, matching ESPHome's hardcoded value
+    auto* resourceVariables = tflite::MicroResourceVariables::Create(microAllocator, 20);
+    if (resourceVariables == nullptr) {
+        LOGE(LOG_TAG, "Could not create MicroResourceVariables");
         return false;
     }
 
     const tflite::Model* model = tflite::GetModel(modelCopy_.get());
     if (model == nullptr) {
-        LOGE("Failed to parse TFLite model");
+        LOGE(LOG_TAG, "Failed to parse TFLite model");
         return false;
     }
 
-    interpreter_ = std::make_unique<tflite::MicroInterpreter>(
-        model, opResolver_, tensorArena_, TENSOR_ARENA_SIZE, resourceVariables_
+    auto interpreter = std::make_unique<tflite::MicroInterpreter>(
+        model, opResolver_, tensorArena_.data(), TENSOR_ARENA_SIZE, resourceVariables
     );
 
-    if (interpreter_->AllocateTensors() != kTfLiteOk) {
-        LOGE("Failed to allocate tensors");
-        interpreter_.reset();
+    if (interpreter->AllocateTensors() != kTfLiteOk) {
+        LOGE(LOG_TAG, "Failed to allocate tensors");
         return false;
     }
 
     // Validate and read input tensor properties
-    TfLiteTensor* input = interpreter_->input(0);
-    if (input == nullptr || input->dims->size != 3 || input->dims->data[0] != 1 ||
-        input->dims->data[2] != PREPROCESSOR_FEATURE_SIZE) {
-        LOGE("Model input tensor has unexpected dimensions (expected [1, stride, %d])", PREPROCESSOR_FEATURE_SIZE);
-        interpreter_.reset();
+    TfLiteTensor* input = interpreter->input(0);
+    if (input == nullptr) {
+        LOGE(LOG_TAG, "Model input tensor is null");
+        return false;
+    }
+    if (input->dims->size != 3) {
+        LOGE(LOG_TAG, "Model input tensor has wrong rank (expected 3, got %d)", input->dims->size);
+        return false;
+    }
+    if (input->dims->data[0] != 1 || input->dims->data[2] != PREPROCESSOR_FEATURE_SIZE) {
+        LOGE(LOG_TAG, "Model input tensor has unexpected dimensions (expected [1, stride, %d], got [%d, %d, %d])",
+             PREPROCESSOR_FEATURE_SIZE,
+             input->dims->data[0], input->dims->data[1], input->dims->data[2]);
         return false;
     }
     if (input->type != kTfLiteInt8) {
-        LOGE("Model input tensor is not int8");
-        interpreter_.reset();
+        LOGE(LOG_TAG, "Model input tensor is not int8");
         return false;
     }
 
@@ -152,20 +138,28 @@ bool MicroWakeWordEngine::loadModel() {
     }
 
     // Validate output tensor
-    TfLiteTensor* output = interpreter_->output(0);
-    if (output == nullptr || output->dims->size != 2 || output->dims->data[0] != 1 ||
-        output->dims->data[1] != 1) {
-        LOGE("Model output tensor has unexpected dimensions (expected [1, 1])");
-        interpreter_.reset();
+    TfLiteTensor* output = interpreter->output(0);
+    if (output == nullptr) {
+        LOGE(LOG_TAG, "Model output tensor is null");
+        return false;
+    }
+    if (output->dims->size != 2) {
+        LOGE(LOG_TAG, "Model output tensor has wrong rank (expected 2, got %d)", output->dims->size);
+        return false;
+    }
+    if (output->dims->data[0] != 1 || output->dims->data[1] != 1) {
+        LOGE(LOG_TAG, "Model output tensor has unexpected dimensions (expected [1, 1], got [%d, %d])",
+             output->dims->data[0], output->dims->data[1]);
         return false;
     }
     if (output->type != kTfLiteUInt8) {
-        LOGE("Model output tensor is not uint8");
-        interpreter_.reset();
+        LOGE(LOG_TAG, "Model output tensor is not uint8");
         return false;
     }
 
-    LOGD("Engine initialized: stride=%d, inputScale=%.6f, inputZeroPoint=%d, arena=%zu bytes",
+    interpreter_ = std::move(interpreter);
+
+    LOGD(LOG_TAG, "Engine initialized: stride=%d, inputScale=%.6f, inputZeroPoint=%d, arena=%zu bytes",
          stride_, inputScale_, inputZeroPoint_, TENSOR_ARENA_SIZE);
 
     return true;
@@ -178,11 +172,11 @@ bool MicroWakeWordEngine::processAudio(const int16_t* samples, size_t numSamples
 
     for (auto& frame : features) {
         // Convert float features to int8 using input quantization parameters
-        int8_t quantizedFeatures[PREPROCESSOR_FEATURE_SIZE];
-        for (int i = 0; i < PREPROCESSOR_FEATURE_SIZE && i < static_cast<int>(frame.size()); i++) {
-            float quantized = (frame[i] / inputScale_) + static_cast<float>(inputZeroPoint_);
+        int8_t quantizedFeatures[PREPROCESSOR_FEATURE_SIZE]{};
+        for (size_t index = 0; index < PREPROCESSOR_FEATURE_SIZE && index < frame.size(); index++) {
+            float quantized = (frame[index] / inputScale_) + static_cast<float>(inputZeroPoint_);
             int rounded = static_cast<int>(std::round(quantized));
-            quantizedFeatures[i] = static_cast<int8_t>(std::max(-128, std::min(127, rounded)));
+            quantizedFeatures[index] = static_cast<int8_t>(std::max(-128, std::min(127, rounded)));
         }
 
         if (processFeatureFrame(quantizedFeatures)) {
@@ -200,7 +194,7 @@ bool MicroWakeWordEngine::processFeatureFrame(const int8_t* features) {
     // Place features at the current stride position in the input tensor
     // (matches ESPHome's stride-based accumulation)
     currentStrideStep_ = currentStrideStep_ % stride_;
-    std::memmove(
+    std::memcpy(
         tflite::GetTensorData<int8_t>(input) + PREPROCESSOR_FEATURE_SIZE * currentStrideStep_,
         features, PREPROCESSOR_FEATURE_SIZE
     );
@@ -212,7 +206,7 @@ bool MicroWakeWordEngine::processFeatureFrame(const int8_t* features) {
 
     // Run inference
     if (interpreter_->Invoke() != kTfLiteOk) {
-        LOGE("TFLite inference failed");
+        LOGE(LOG_TAG, "TFLite inference failed");
         return false;
     }
 
@@ -234,7 +228,7 @@ bool MicroWakeWordEngine::processFeatureFrame(const int8_t* features) {
 
     // Check for detection
     if (checkDetection()) {
-        LOGI("Wake word detected");
+        LOGI(LOG_TAG, "Wake word detected");
         resetDetectionState();
         return true;
     }

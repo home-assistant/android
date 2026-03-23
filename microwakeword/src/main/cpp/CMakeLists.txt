@@ -19,7 +19,7 @@ set(KISSFFT_TOOLS OFF CACHE BOOL "" FORCE)
 # Fetch tflite-micro from GitHub (archive download, faster than git clone)
 FetchContent_Declare(
     tflite_micro
-    URL https://github.com/tensorflow/tflite-micro/archive/2747abd5c82a95fb1624106a946fc671c31f16e8.tar.gz
+    URL https://github.com/tensorflow/tflite-micro/archive/2747abd5c82a95fb1624106a946fc671c31f16e8.tar.gz # January 22nd 2026
 )
 
 # Header-only: flatbuffers for model parsing
@@ -36,7 +36,7 @@ set(FLATBUFFERS_BUILD_FLATHASH OFF CACHE BOOL "" FORCE)
 # Header-only: gemmlowp for fixed-point math (archive download avoids slow git clone)
 FetchContent_Declare(
     gemmlowp
-    URL https://github.com/google/gemmlowp/archive/16e8662c34917be0065110bfcd9cc27d30f52fdf.tar.gz
+    URL https://github.com/google/gemmlowp/archive/fda83bdc38b118cc6b56753bd540caa49e570745.tar.gz
 )
 
 # Header-only: ruy profiler instrumentation (needed by TFLite reference kernels)

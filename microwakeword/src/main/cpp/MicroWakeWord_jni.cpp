@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <jni.h>
-#include <android/log.h>
+#include <memory>
 
+#include "Logging.h"
 #include "MicroWakeWordEngine.h"
 
-#define LOG_TAG "MicroWakeWord"
-#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+static constexpr char LOG_TAG[] = "MicroWakeWord_jni";
 
 extern "C" {
 
@@ -18,12 +17,16 @@ Java_io_homeassistant_companion_android_microwakeword_MicroWakeWord_nativeCreate
 
     auto* modelData = static_cast<uint8_t*>(env->GetDirectBufferAddress(modelBuffer));
     if (modelData == nullptr) {
-        LOGE("Failed to get direct buffer address from model ByteBuffer");
+        LOGE(LOG_TAG, "Failed to get direct buffer address from model ByteBuffer");
         return 0;
     }
     jlong modelSize = env->GetDirectBufferCapacity(modelBuffer);
+    if (modelSize <= 0) {
+        LOGE(LOG_TAG, "Invalid model buffer capacity: %lld", static_cast<long long>(modelSize));
+        return 0;
+    }
 
-    auto* engine = new MicroWakeWordEngine(
+    auto engine = std::make_unique<MicroWakeWordEngine>(
         modelData,
         static_cast<size_t>(modelSize),
         static_cast<int>(sampleRate),
@@ -33,12 +36,10 @@ Java_io_homeassistant_companion_android_microwakeword_MicroWakeWord_nativeCreate
     );
 
     if (!engine->isInitialized()) {
-        delete engine;
         return 0;
-
     }
 
-    return reinterpret_cast<jlong>(engine);
+    return reinterpret_cast<jlong>(engine.release());
 }
 
 JNIEXPORT jboolean JNICALL
