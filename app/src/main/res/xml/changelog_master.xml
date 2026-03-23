@@ -2,7 +2,7 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2026.3.6 - Main" versioncode="3">
-        <change>Expanded wake word support to continue working after using your wake word to open Assist</change>
+        <change>Expanded wake word support to continue conversations after using your wake word to open Assist</change>
         <change>Assist conversations started with a wake word now auto-close after 30 seconds of inactivity</change>
         <change>Bug fixes and dependency updates</change>
     </release>
