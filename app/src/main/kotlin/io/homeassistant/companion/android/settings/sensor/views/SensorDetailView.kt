@@ -28,6 +28,8 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.Card
 import androidx.compose.material.Checkbox
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Divider
 import androidx.compose.material.LocalContentAlpha
@@ -42,6 +44,9 @@ import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.contentColorFor
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -608,31 +613,44 @@ fun SensorDetailSettingDialog(
                     CircularProgressIndicator()
                 }
             } else if (listSettingDialog) {
-                LazyColumn {
-                    items(state.entries, key = { (id) -> id }) { (id, entry) ->
-                        SensorDetailSettingRow(
-                            label = entry,
-                            checked = if (state.setting.valueType ==
-                                SensorSettingType.LIST
-                            ) {
-                                inputValue.value == id
-                            } else {
-                                checkedValue.contains(id)
-                            },
-                            multiple = state.setting.valueType != SensorSettingType.LIST,
-                            onClick = { isChecked ->
-                                if (state.setting.valueType == SensorSettingType.LIST) {
-                                    inputValue.value = id
-                                    onSubmit(state.copy().apply { setting.value = inputValue.value })
-                                } else {
-                                    if (checkedValue.contains(id) && !isChecked) {
-                                        checkedValue.remove(id)
-                                    } else if (!checkedValue.contains(id) && isChecked) {
-                                        checkedValue.add(id)
-                                    }
-                                }
-                            },
+                var searchQuery by remember { mutableStateOf("") }
+                val filteredEntries = remember(state.entries, searchQuery) {
+                    filterSettingEntries(state.entries, searchQuery)
+                }
+                val showSearch = state.entries.size > 10
+                Column {
+                    if (showSearch) {
+                        SettingSearchField(
+                            query = searchQuery,
+                            onQueryChange = { searchQuery = it },
                         )
+                    }
+                    LazyColumn(modifier = Modifier.weight(1f)) {
+                        items(filteredEntries, key = { (id) -> id }) { (id, entry) ->
+                            SensorDetailSettingRow(
+                                label = entry,
+                                checked = if (state.setting.valueType ==
+                                    SensorSettingType.LIST
+                                ) {
+                                    inputValue.value == id
+                                } else {
+                                    checkedValue.contains(id)
+                                },
+                                multiple = state.setting.valueType != SensorSettingType.LIST,
+                                onClick = { isChecked ->
+                                    if (state.setting.valueType == SensorSettingType.LIST) {
+                                        inputValue.value = id
+                                        onSubmit(state.copy().apply { setting.value = inputValue.value })
+                                    } else {
+                                        if (checkedValue.contains(id) && !isChecked) {
+                                            checkedValue.remove(id)
+                                        } else if (!checkedValue.contains(id) && isChecked) {
+                                            checkedValue.add(id)
+                                        }
+                                    }
+                                },
+                            )
+                        }
                     }
                 }
             } else {
@@ -733,6 +751,47 @@ fun SensorDetailUpdateInfoDialog(
         onOK = onDismiss,
     )
 }
+
+@Composable
+private fun SettingSearchField(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    TextField(
+        value = query,
+        onValueChange = onQueryChange,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        singleLine = true,
+        label = { Text(stringResource(commonR.string.search)) },
+        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+        trailingIcon = if (query.isNotBlank()) {
+            {
+                IconButton(onClick = { onQueryChange("") }) {
+                    Icon(
+                        Icons.Filled.Clear,
+                        contentDescription = stringResource(commonR.string.clear_search),
+                    )
+                }
+            }
+        } else {
+            null
+        },
+    )
+}
+
+/**
+ * Filters setting entries by matching the query against entry labels (case-insensitive).
+ * Returns all entries when the query is blank.
+ */
+internal fun filterSettingEntries(
+    entries: List<Pair<String, String>>,
+    query: String,
+): List<Pair<String, String>> =
+    if (query.isBlank()) entries
+    else entries.filter { (_, label) -> label.contains(query.trim(), ignoreCase = true) }
 
 @Composable
 fun SensorDetailSettingRow(
