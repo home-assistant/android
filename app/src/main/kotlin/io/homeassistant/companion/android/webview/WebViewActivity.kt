@@ -784,21 +784,45 @@ class WebViewActivity :
                         }
 
                         MatterThreadStep.THREAD_SENT -> {
-                            Toast.makeText(
-                                this@WebViewActivity,
-                                commonR.string.thread_export_success,
-                                Toast.LENGTH_SHORT,
-                            ).show()
+                            launch {
+                                snackbarHostState.showSnackbar(getString(commonR.string.thread_export_success))
+                            }
                             alertDialog?.cancel()
                             presenter.finishMatterThreadFlow()
                         }
 
-                        MatterThreadStep.ERROR_MATTER -> {
-                            Toast.makeText(
-                                this@WebViewActivity,
-                                commonR.string.matter_commissioning_unavailable,
-                                Toast.LENGTH_SHORT,
-                            ).show()
+                        MatterThreadStep.ERROR_MATTER_CANCELLED,
+                        MatterThreadStep.ERROR_MATTER_OTHER,
+                        MatterThreadStep.ERROR_THREAD_OTHER,
+                        -> {
+                            val message = when (it) {
+                                MatterThreadStep.ERROR_MATTER_CANCELLED ->
+                                    commonR.string.matter_commissioning_cancelled
+                                MatterThreadStep.ERROR_MATTER_OTHER ->
+                                    commonR.string.matter_commissioning_unavailable
+                                MatterThreadStep.ERROR_THREAD_OTHER ->
+                                    commonR.string.thread_export_unavailable
+                            }
+                            val uri = when (it) {
+                                MatterThreadStep.ERROR_MATTER_CANCELLED ->
+                                    "https://www.home-assistant.io/integrations/matter#troubleshooting"
+                                MatterThreadStep.ERROR_MATTER_OTHER,
+                                MatterThreadStep.ERROR_THREAD_OTHER,
+                                ->
+                                    "https://www.home-assistant.io/integrations/matter#troubleshooting-the-installation"
+                            }
+                            launch {
+                                if (snackbarHostState.showSnackbar(
+                                        message = getString(message),
+                                        actionLabel = getString(commonR.string.get_help),
+                                        duration = SnackbarDuration.Long,
+                                    ) == SnackbarResult.ActionPerformed
+                                ) {
+                                    val intent = Intent(Intent.ACTION_VIEW, uri.toUri())
+                                    startActivity(intent)
+                                }
+                            }
+                            alertDialog?.cancel()
                             presenter.finishMatterThreadFlow()
                         }
 
@@ -808,16 +832,6 @@ class WebViewActivity :
                                 .setMessage(commonR.string.thread_export_not_connected)
                                 .setPositiveButton(commonR.string.ok, null)
                                 .show()
-                            presenter.finishMatterThreadFlow()
-                        }
-
-                        MatterThreadStep.ERROR_THREAD_OTHER -> {
-                            Toast.makeText(
-                                this@WebViewActivity,
-                                commonR.string.thread_export_unavailable,
-                                Toast.LENGTH_SHORT,
-                            ).show()
-                            alertDialog?.cancel()
                             presenter.finishMatterThreadFlow()
                         }
 
