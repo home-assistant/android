@@ -32,13 +32,11 @@ class PushProviderManagerTest {
 
     private fun createProvider(
         name: String,
-        priority: Int,
         available: Boolean = true,
         active: Boolean = false,
         registrationResult: PushRegistrationResult? = null,
     ): PushProvider = object : PushProvider {
         override val name = name
-        override val priority = priority
         override suspend fun isAvailable() = available
         override suspend fun isActive() = active
         override suspend fun register() = registrationResult
@@ -47,8 +45,8 @@ class PushProviderManagerTest {
 
     @Test
     fun `getActiveProvider returns the active provider`() = runTest {
-        val provider1 = createProvider("FCM", 20, active = false)
-        val provider2 = createProvider("UnifiedPush", 10, active = true)
+        val provider1 = createProvider("FCM", active = false)
+        val provider2 = createProvider("UnifiedPush", active = true)
         val manager = PushProviderManager(setOf(provider1, provider2), serverManager)
 
         val active = manager.getActiveProvider()
@@ -58,50 +56,18 @@ class PushProviderManagerTest {
 
     @Test
     fun `getActiveProvider returns null when no provider is active`() = runTest {
-        val provider1 = createProvider("FCM", 20, active = false)
-        val provider2 = createProvider("UnifiedPush", 10, active = false)
+        val provider1 = createProvider("FCM", active = false)
+        val provider2 = createProvider("UnifiedPush", active = false)
         val manager = PushProviderManager(setOf(provider1, provider2), serverManager)
 
         assertNull(manager.getActiveProvider())
     }
 
     @Test
-    fun `getBestAvailableProvider returns highest priority available provider`() = runTest {
-        val provider1 = createProvider("FCM", 20, available = true)
-        val provider2 = createProvider("UnifiedPush", 10, available = true)
-        val provider3 = createProvider("WebSocket", 30, available = true)
-        val manager = PushProviderManager(setOf(provider1, provider2, provider3), serverManager)
-
-        val best = manager.getBestAvailableProvider()
-        assertNotNull(best)
-        assertEquals("UnifiedPush", best!!.name)
-    }
-
-    @Test
-    fun `getBestAvailableProvider skips unavailable providers`() = runTest {
-        val provider1 = createProvider("FCM", 20, available = true)
-        val provider2 = createProvider("UnifiedPush", 10, available = false)
-        val manager = PushProviderManager(setOf(provider1, provider2), serverManager)
-
-        val best = manager.getBestAvailableProvider()
-        assertNotNull(best)
-        assertEquals("FCM", best!!.name)
-    }
-
-    @Test
-    fun `getBestAvailableProvider returns null when no provider is available`() = runTest {
-        val provider1 = createProvider("FCM", 20, available = false)
-        val provider2 = createProvider("UnifiedPush", 10, available = false)
-        val manager = PushProviderManager(setOf(provider1, provider2), serverManager)
-
-        assertNull(manager.getBestAvailableProvider())
-    }
-
-    @Test
-    fun `selectAndRegister uses preferred provider when available`() = runTest {
+    fun `selectAndRegister registers the requested provider`() = runTest {
         val result = PushRegistrationResult("token123", "https://push.example.com", true)
-        val provider1 = createProvider("FCM", 20, available = true, registrationResult = PushRegistrationResult("fcm-token", ""))
-        val provider2 = createProvider("UnifiedPush", 10, available = true, registrationResult = result)
+        val provider1 = createProvider("FCM", available = true, registrationResult = PushRegistrationResult("fcm-token", ""))
+        val provider2 = createProvider("UnifiedPush", available = true, registrationResult = result)
         val manager = PushProviderManager(setOf(provider1, provider2), serverManager)
 
         val reg = manager.selectAndRegister("UnifiedPush")
@@ -111,43 +77,38 @@ class PushProviderManagerTest {
     }
 
     @Test
-    fun `selectAndRegister falls back when preferred provider unavailable`() = runTest {
-        val fcmResult = PushRegistrationResult("fcm-token", "")
-        val provider1 = createProvider("FCM", 20, available = true, registrationResult = fcmResult)
-        val provider2 = createProvider("UnifiedPush", 10, available = false, registrationResult = null)
+    fun `selectAndRegister returns null when requested provider unavailable`() = runTest {
+        val provider1 = createProvider("FCM", available = true, registrationResult = PushRegistrationResult("fcm-token", ""))
+        val provider2 = createProvider("UnifiedPush", available = false)
         val manager = PushProviderManager(setOf(provider1, provider2), serverManager)
 
         val reg = manager.selectAndRegister("UnifiedPush")
-        assertNotNull(reg)
-        assertEquals("fcm-token", reg!!.pushToken)
+        assertNull(reg)
     }
 
     @Test
-    fun `selectAndRegister returns null when no provider available`() = runTest {
-        val provider1 = createProvider("FCM", 20, available = false)
+    fun `selectAndRegister returns null when provider not found`() = runTest {
+        val provider1 = createProvider("FCM", available = true)
         val manager = PushProviderManager(setOf(provider1), serverManager)
 
-        assertNull(manager.selectAndRegister())
+        assertNull(manager.selectAndRegister("UnifiedPush"))
     }
 
     @Test
-    fun `getAllProviders returns sorted by priority`() {
-        val provider1 = createProvider("WebSocket", 30)
-        val provider2 = createProvider("FCM", 20)
-        val provider3 = createProvider("UnifiedPush", 10)
+    fun `getAllProviders returns all providers`() {
+        val provider1 = createProvider("WebSocket")
+        val provider2 = createProvider("FCM")
+        val provider3 = createProvider("UnifiedPush")
         val manager = PushProviderManager(setOf(provider1, provider2, provider3), serverManager)
 
         val all = manager.getAllProviders()
         assertEquals(3, all.size)
-        assertEquals("UnifiedPush", all[0].name)
-        assertEquals("FCM", all[1].name)
-        assertEquals("WebSocket", all[2].name)
     }
 
     @Test
     fun `getProvider returns provider by name`() {
-        val provider1 = createProvider("FCM", 20)
-        val provider2 = createProvider("UnifiedPush", 10)
+        val provider1 = createProvider("FCM")
+        val provider2 = createProvider("UnifiedPush")
         val manager = PushProviderManager(setOf(provider1, provider2), serverManager)
 
         val found = manager.getProvider("FCM")
@@ -157,7 +118,7 @@ class PushProviderManagerTest {
 
     @Test
     fun `getProvider returns null for unknown name`() {
-        val provider1 = createProvider("FCM", 20)
+        val provider1 = createProvider("FCM")
         val manager = PushProviderManager(setOf(provider1), serverManager)
 
         assertNull(manager.getProvider("UnifiedPush"))
@@ -210,7 +171,6 @@ class PushProviderManagerTest {
         var unregistered = false
         val currentProvider = object : PushProvider {
             override val name = "FCM"
-            override val priority = 20
             override suspend fun isAvailable() = true
             override suspend fun isActive() = true
             override suspend fun register() = PushRegistrationResult("fcm", "")
@@ -221,7 +181,6 @@ class PushProviderManagerTest {
         val newResult = PushRegistrationResult("up-token", "https://up.example.com", true)
         val newProvider = object : PushProvider {
             override val name = "UnifiedPush"
-            override val priority = 10
             override suspend fun isAvailable() = true
             override suspend fun isActive() = false
             override suspend fun register() = newResult

@@ -10,67 +10,49 @@ import timber.log.Timber
 /**
  * Manages the selection and lifecycle of push notification providers.
  *
- * Providers are injected via Dagger multibinding and sorted by [PushProvider.priority].
- * The manager selects the first available provider and handles registration with the
- * Home Assistant server.
+ * Providers are injected via Dagger multibinding. The user chooses which provider
+ * to use via the app settings — there is no automatic priority-based selection.
  */
 @Singleton
 class PushProviderManager @Inject constructor(
     private val providers: Set<@JvmSuppressWildcards PushProvider>,
     private val serverManager: ServerManager,
 ) {
-    private val sortedProviders: List<PushProvider> by lazy {
-        providers.sortedBy { it.priority }
-    }
 
     /**
      * Get the currently active push provider, if any.
      */
-    suspend fun getActiveProvider(): PushProvider? = sortedProviders.firstOrNull { it.isActive() }
-
-    /**
-     * Get the best available provider based on priority.
-     * Returns the highest-priority provider that reports itself as available.
-     */
-    suspend fun getBestAvailableProvider(): PushProvider? = sortedProviders.firstOrNull { it.isAvailable() }
+    suspend fun getActiveProvider(): PushProvider? = providers.firstOrNull { it.isActive() }
 
     /**
      * Get all registered providers.
      */
-    fun getAllProviders(): List<PushProvider> = sortedProviders
+    fun getAllProviders(): List<PushProvider> = providers.toList()
 
     /**
      * Get a provider by name.
      */
-    fun getProvider(name: String): PushProvider? = sortedProviders.firstOrNull { it.name == name }
+    fun getProvider(name: String): PushProvider? = providers.firstOrNull { it.name == name }
 
     /**
-     * Select and register the best available push provider.
+     * Register the user-selected push provider by name.
      * If a different provider was previously active, it will be unregistered first.
      *
-     * @param preferredName Optional name of a preferred provider. If specified and available,
-     *                      this provider will be used instead of the highest-priority one.
-     * @return the [PushRegistrationResult] from the newly active provider, or null if none succeeded.
+     * @param providerName The name of the provider the user selected.
+     * @return the [PushRegistrationResult] from the newly active provider, or null if registration failed.
      */
-    suspend fun selectAndRegister(preferredName: String? = null): PushRegistrationResult? {
-        val currentActive = getActiveProvider()
-
-        val target = if (preferredName != null) {
-            val preferred = getProvider(preferredName)
-            if (preferred != null && preferred.isAvailable()) {
-                preferred
-            } else {
-                Timber.w("Preferred provider '$preferredName' is not available, falling back to best available")
-                getBestAvailableProvider()
-            }
-        } else {
-            getBestAvailableProvider()
-        }
-
+    suspend fun selectAndRegister(providerName: String): PushRegistrationResult? {
+        val target = getProvider(providerName)
         if (target == null) {
-            Timber.w("No push provider available")
+            Timber.w("Provider '$providerName' not found")
             return null
         }
+        if (!target.isAvailable()) {
+            Timber.w("Provider '$providerName' is not available")
+            return null
+        }
+
+        val currentActive = getActiveProvider()
 
         // Unregister current if switching providers
         if (currentActive != null && currentActive.name != target.name) {

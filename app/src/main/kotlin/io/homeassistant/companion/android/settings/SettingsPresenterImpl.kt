@@ -117,7 +117,7 @@ class SettingsPresenterImpl @Inject constructor(
             "languages" -> langsManager.getCurrentLang()
             "page_zoom" -> prefsRepository.getPageZoomLevel().toString()
             "screen_orientation" -> prefsRepository.getScreenOrientation()
-            "notification_unifiedpush" -> unifiedPushManager.getDistributor()
+            "notification_push_provider" -> selectedPushProvider
             else -> throw IllegalArgumentException("No string found by this key: $key")
         }
     }
@@ -129,7 +129,7 @@ class SettingsPresenterImpl @Inject constructor(
                 "languages" -> langsManager.saveLang(value)
                 "page_zoom" -> prefsRepository.setPageZoomLevel(value?.toIntOrNull())
                 "screen_orientation" -> prefsRepository.saveScreenOrientation(value)
-                "notification_unifiedpush" -> unifiedPushManager.saveDistributor(value)
+                "notification_push_provider" -> handlePushProviderChange(value)
                 else -> throw IllegalArgumentException("No string found by this key: $key")
             }
         }
@@ -166,8 +166,44 @@ class SettingsPresenterImpl @Inject constructor(
 
     override fun getUnifiedPushDistributors(): List<String> = unifiedPushManager.getDistributors()
 
-    override fun registerUnifiedPushDistributor(context: Context, distributor: String) {
-        unifiedPushManager.saveDistributor(distributor)
+    override fun getAvailablePushProviders(): List<Pair<String, String>> {
+        val result = mutableListOf<Pair<String, String>>()
+        for (provider in pushProviderManager.getAllProviders()) {
+            val label = when (provider.name) {
+                "FCM" -> "Firebase Cloud Messaging"
+                "WebSocket" -> "WebSocket"
+                "UnifiedPush" -> "UnifiedPush"
+                else -> provider.name
+            }
+            result.add(provider.name to label)
+        }
+        return result
+    }
+
+    private var selectedPushProvider: String? = null
+
+    override fun getActivePushProviderValue(): String {
+        selectedPushProvider?.let { return it }
+        val distributor = unifiedPushManager.getDistributor()
+        val value = if (distributor != null && distributor != UnifiedPushManager.DISTRIBUTOR_DISABLED) {
+            "${SettingsPresenter.PUSH_PROVIDER_UP_PREFIX}$distributor"
+        } else {
+            "WebSocket"
+        }
+        selectedPushProvider = value
+        return value
+    }
+
+    override fun handlePushProviderChange(value: String?) {
+        if (value == null) return
+        selectedPushProvider = value
+        if (value.startsWith(SettingsPresenter.PUSH_PROVIDER_UP_PREFIX)) {
+            val distributor = value.removePrefix(SettingsPresenter.PUSH_PROVIDER_UP_PREFIX)
+            unifiedPushManager.saveDistributor(distributor)
+        } else {
+            // Switching away from UnifiedPush — clear endpoint and re-register with server
+            unifiedPushManager.saveDistributor(null)
+        }
     }
 
     override suspend fun showChangeLog(context: Context) {

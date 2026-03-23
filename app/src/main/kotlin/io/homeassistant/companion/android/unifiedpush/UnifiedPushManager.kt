@@ -73,7 +73,12 @@ class UnifiedPushManager @Inject constructor(
                 MessagingToken(endpoint.pubKeySet?.let { it.auth + ":" + it.pubKey } ?: "")
             } else {
                 // Revert to FCM token when disabling UnifiedPush.
-                messagingTokenProvider()
+                try {
+                    messagingTokenProvider()
+                } catch (e: Exception) {
+                    Timber.w(e, "Failed to get messaging token, using empty token")
+                    MessagingToken("")
+                }
             }
             val registered = messagingManager.isUnifiedPushEnabled()
             messagingManager.setUnifiedPushEnabled(endpoint != null)
@@ -99,7 +104,7 @@ class UnifiedPushManager @Inject constructor(
                     }
                 }
             }
-            if (!registered) {
+            if (!registered && endpoint != null) {
                 Toast.makeText(context, commonR.string.unifiedpush_enabled, Toast.LENGTH_SHORT).show()
             }
         }

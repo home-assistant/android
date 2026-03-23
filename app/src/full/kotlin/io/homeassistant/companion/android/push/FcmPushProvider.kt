@@ -11,8 +11,7 @@ import timber.log.Timber
 /**
  * Push provider implementation backed by Firebase Cloud Messaging.
  *
- * Only available in the "full" build flavor. Lower priority than UnifiedPush
- * so that users with a UnifiedPush distributor will use that instead.
+ * Only available in the "full" build flavor.
  */
 @Singleton
 class FcmPushProvider @Inject constructor(
@@ -21,8 +20,6 @@ class FcmPushProvider @Inject constructor(
 ) : PushProvider {
 
     override val name: String = NAME
-
-    override val priority: Int = 20
 
     override suspend fun isAvailable(): Boolean {
         return try {

@@ -945,6 +945,10 @@
     <string name="tts_error_init">Failed to initialize a text to speech engine.</string>
     <string name="tts_no_text">Please set the text for text to speech to process</string>
     <string name="unable_to_register">Unable to register application</string>
+    <string name="push_provider">Push provider</string>
+    <string name="push_provider_fcm">Firebase Cloud Messaging</string>
+    <string name="push_provider_websocket">WebSocket</string>
+    <string name="push_provider_websocket_enabled">WebSocket push enabled</string>
     <string name="unifiedpush">UnifiedPush</string>
     <string name="unifiedpush_enabled">UnifiedPush enabled</string>
     <string name="unknown_address">Unknown address</string>

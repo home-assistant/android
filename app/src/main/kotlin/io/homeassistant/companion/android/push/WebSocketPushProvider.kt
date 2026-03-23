@@ -14,9 +14,8 @@ import timber.log.Timber
 /**
  * Push provider implementation backed by a persistent WebSocket connection.
  *
- * This is always available as a fallback, but has the lowest priority because
- * it requires a persistent connection and consumes more battery.
- * Used by the minimal flavor when no UnifiedPush distributor is available.
+ * This is always available and uses a persistent connection.
+ * Used by the minimal flavor when no other provider is selected.
  */
 @Singleton
 class WebSocketPushProvider @Inject constructor(
@@ -26,8 +25,6 @@ class WebSocketPushProvider @Inject constructor(
 ) : PushProvider {
 
     override val name: String = NAME
-
-    override val priority: Int = 30
 
     override val requiresPersistentConnection: Boolean = true
 

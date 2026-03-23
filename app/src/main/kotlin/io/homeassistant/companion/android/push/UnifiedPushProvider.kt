@@ -17,8 +17,6 @@ import timber.log.Timber
  * UnifiedPush allows receiving push notifications via a user-chosen distributor app
  * (e.g. ntfy, NextPush) without relying on Google's FCM infrastructure.
  *
- * Priority 10 (preferred over FCM) because users who install a UnifiedPush distributor
- * explicitly want to avoid FCM.
  */
 @Singleton
 class UnifiedPushProvider @Inject constructor(
@@ -28,8 +26,6 @@ class UnifiedPushProvider @Inject constructor(
 ) : PushProvider {
 
     override val name: String = NAME
-
-    override val priority: Int = 10
 
     override suspend fun isAvailable(): Boolean {
         val distributors = UnifiedPush.getDistributors(context)

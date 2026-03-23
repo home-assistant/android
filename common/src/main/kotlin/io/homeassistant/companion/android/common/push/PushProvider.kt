@@ -16,17 +16,6 @@ interface PushProvider {
     /** Human-readable name used for logging and notification source attribution. */
     val name: String
 
-    /**
-     * Priority for provider selection. Lower values indicate higher priority.
-     * When multiple providers are available the one with the lowest priority value is preferred.
-     *
-     * Suggested values:
-     * - UnifiedPush: 10
-     * - FCM: 20
-     * - WebSocket: 30
-     */
-    val priority: Int
-
     /** Whether this provider is currently available on this device/build. */
     suspend fun isAvailable(): Boolean
 

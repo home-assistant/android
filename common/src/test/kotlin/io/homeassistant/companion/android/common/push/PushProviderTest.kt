@@ -12,7 +12,7 @@ class PushProviderTest {
     fun `PushProvider default requiresPersistentConnection is false`() {
         val provider = object : PushProvider {
             override val name = "Test"
-            override val priority = 0
+
             override suspend fun isAvailable() = true
             override suspend fun isActive() = false
             override suspend fun register() = null
@@ -25,7 +25,6 @@ class PushProviderTest {
     fun `PushProvider can override requiresPersistentConnection`() {
         val provider = object : PushProvider {
             override val name = "WebSocket"
-            override val priority = 30
             override val requiresPersistentConnection = true
             override suspend fun isAvailable() = true
             override suspend fun isActive() = false

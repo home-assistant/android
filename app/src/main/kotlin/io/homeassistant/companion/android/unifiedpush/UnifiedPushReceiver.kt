@@ -6,8 +6,8 @@ import io.homeassistant.companion.android.notifications.MessagingManager
 import javax.inject.Inject
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.jsonPrimitive
 import org.unifiedpush.android.connector.FailedReason
 import org.unifiedpush.android.connector.MessagingReceiver
 import org.unifiedpush.android.connector.data.PushEndpoint
@@ -32,7 +32,11 @@ class UnifiedPushReceiver : MessagingReceiver() {
         try {
             val jsonObject = Json.decodeFromString<JsonObject>(message.content.decodeToString())
             val data: Map<String, Any> = jsonObject.mapValues { (_, value) ->
-                value.jsonPrimitive.contentOrNull ?: value.toString()
+                if (value is JsonPrimitive) {
+                    value.contentOrNull ?: value.toString()
+                } else {
+                    value.toString()
+                }
             }
             messagingManager.handleMessage(data, SOURCE)
         } catch (e: Exception) {

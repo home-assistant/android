@@ -11,6 +11,7 @@ interface SettingsPresenter {
     companion object {
         const val SUGGESTION_ASSISTANT_APP = "assistant_app"
         const val SUGGESTION_NOTIFICATION_PERMISSION = "notification_permission"
+        const val PUSH_PROVIDER_UP_PREFIX = "UnifiedPush:"
     }
 
     fun init(view: SettingsView)
@@ -22,7 +23,9 @@ interface SettingsPresenter {
     suspend fun getServersFlow(): Flow<List<Server>>
     suspend fun getNotificationRateLimits(): RateLimitResponse?
     fun getUnifiedPushDistributors(): List<String>
-    fun registerUnifiedPushDistributor(context: Context, distributor: String)
+    fun getAvailablePushProviders(): List<Pair<String, String>>
+    fun getActivePushProviderValue(): String
+    fun handlePushProviderChange(value: String?)
     suspend fun showChangeLog(context: Context)
     suspend fun isChangeLogPopupEnabled(): Boolean
     suspend fun setChangeLogPopupEnabled(enabled: Boolean)
