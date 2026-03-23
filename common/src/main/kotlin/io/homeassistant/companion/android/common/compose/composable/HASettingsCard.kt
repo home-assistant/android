@@ -8,7 +8,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HARadius
@@ -30,8 +29,7 @@ fun HASettingsCard(modifier: Modifier = Modifier, content: @Composable () -> Uni
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(HARadius.XL))
-            .background(LocalHAColorScheme.current.colorSurfaceLow)
+            .background(LocalHAColorScheme.current.colorSurfaceLow, shape = RoundedCornerShape(HARadius.XL))
             .padding(HADimens.SPACE4),
     ) {
         content()
