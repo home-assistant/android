@@ -36,7 +36,7 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
         private val widgetEntities = mutableMapOf<Int, List<String>>()
         private val widgetJobs = mutableMapOf<Int, Job>()
 
-        fun newCoroutineScopeProvider() = CoroutineScope(Dispatchers.Default + SupervisorJob())
+        private fun newCoroutineScopeProvider() = CoroutineScope(Dispatchers.Default + SupervisorJob())
     }
 
     @Inject
@@ -46,6 +46,9 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
     lateinit var dao: DAO
 
     protected var lastIntent = ""
+
+    protected val widgetScope
+        get() = Companion.widgetScope
 
     init {
         setupWidgetScope()
@@ -141,9 +144,6 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
         widgetEntities.clear()
         widgetJobs.clear()
     }
-
-    protected val widgetScope
-        get() = Companion.widgetScope
 
     private suspend fun updateAllWidgets(context: Context) {
         val widgetProvider = getWidgetProvider(context)
