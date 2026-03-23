@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
@@ -163,7 +164,7 @@ internal fun <T> HADropdownMenuInternal(
 
 /**
  * The collapsed field that displays the selected value or placeholder.
- * Renders as an outlined container that opens the selection list on tap.
+ * Renders as a settings card container that opens the selection list on tap.
  */
 @Composable
 private fun DropdownField(
@@ -180,12 +181,13 @@ private fun DropdownField(
         targetValue = if (expanded) 180f else 0f,
         label = "dropdownArrowRotation",
     )
-
+    val cornerShape = RoundedCornerShape(HARadius.XL)
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .background(colorScheme.colorSurfaceLow, shape = cornerShape)
+            .clip(cornerShape)
             .clickable(enabled = enabled, role = Role.DropdownList, onClick = onClick)
-            .background(colorScheme.colorSurfaceLow, shape = RoundedCornerShape(HARadius.XL))
             .padding(horizontal = HADimens.SPACE4, vertical = HADimens.SPACE4),
         verticalAlignment = Alignment.CenterVertically,
     ) {
