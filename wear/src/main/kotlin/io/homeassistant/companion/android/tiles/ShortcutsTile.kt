@@ -35,22 +35,24 @@ import com.mikepenz.iconics.utils.sizeDp
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.data.SimplifiedEntity
-import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.util.getIcon
 import java.nio.ByteBuffer
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.min
 import kotlin.math.roundToInt
-import kotlinx.coroutines.async
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 // Dimensions (dp)
 private const val CIRCLE_SIZE = 56f
@@ -109,16 +111,23 @@ class ShortcutsTile : TileService() {
             val iconSizePx = (iconSize * density).roundToInt()
             val entities = getEntities(requestParams.tileId)
 
-            val fullEntities = entities.map { entity ->
-                async {
-                    try {
-                        serverManager.integrationRepository().getEntity(entity.entityId)
-                    } catch (e: Exception) {
-                        null
+            val entityMap = if (serverManager.isRegistered()) {
+                val fullEntities = entities.map { entity ->
+                    async {
+                        try {
+                            serverManager.integrationRepository().getEntity(entity.entityId)
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            Timber.w(e, "Failed to fetch entity ${entity.entityId} for tile")
+                            null
+                        }
                     }
-                }
-            }.map { it.await() }
-            val entityMap = fullEntities.filterNotNull().associateBy { it.entityId }
+                }.map { it.await() }
+                fullEntities.filterNotNull().associateBy { it.entityId }
+            } else {
+                emptyMap()
+            }
 
             Resources.Builder()
                 .setVersion(entities.toString())
