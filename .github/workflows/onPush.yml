@@ -104,6 +104,8 @@ jobs:
       - name: Publish Pre-Release
         if: github.event.inputs.beta == 'true'
         run: gh release edit ${{ steps.rel_number.outputs.version }} --draft=false
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy to Firebase
         env:
