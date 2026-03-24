@@ -47,7 +47,6 @@ class WakeWordListenerTest {
         onListenerReady: (MicroWakeWordModelConfig) -> Unit = {},
         onWakeWordDetected: (MicroWakeWordModelConfig) -> Unit = {},
         onListenerStopped: () -> Unit = {},
-        onListenerFailed: () -> Unit = {},
     ): WakeWordListener {
         return WakeWordListener(
             context = context,
@@ -55,46 +54,8 @@ class WakeWordListenerTest {
             onListenerReady = onListenerReady,
             onWakeWordDetected = onWakeWordDetected,
             onListenerStopped = onListenerStopped,
-            onListenerFailed = onListenerFailed,
             microWakeWordFactory = { microWakeWord },
         )
-    }
-
-    @Nested
-    inner class IsListeningTests {
-
-        @Test
-        fun `Given listener not started then isListening returns false`() {
-            val listener = createListener()
-
-            assertFalse(listener.isListening)
-        }
-
-        @Test
-        fun `Given listener started then isListening returns true`() = runTest {
-            var wasListeningWhenReady = false
-            lateinit var listener: WakeWordListener
-            listener = createListener(
-                onListenerReady = { wasListeningWhenReady = listener.isListening },
-            )
-
-            listener.start(backgroundScope, testModelConfig, testScheduler)
-            runCurrent()
-
-            // Check isListening was true during the ready callback
-            assertTrue(wasListeningWhenReady)
-        }
-
-        @Test
-        fun `Given listener stopped then isListening returns false`() = runTest {
-            val listener = createListener()
-
-            listener.start(backgroundScope, testModelConfig)
-            listener.stop()
-            runCurrent()
-
-            assertFalse(listener.isListening)
-        }
     }
 
     @Nested
@@ -373,18 +334,6 @@ class WakeWordListenerTest {
             } catch (e: RuntimeException) {
                 assertEquals(expectedException, e)
             }
-        }
-
-        @Test
-        fun `Given listener stopped then closes detector`() = runTest {
-            val listener = createListener()
-
-            listener.start(backgroundScope, testModelConfig, UnconfinedTestDispatcher(testScheduler))
-            runCurrent()
-            listener.stop()
-            runCurrent()
-
-            verify { microWakeWord.close() }
         }
     }
 }

@@ -42,32 +42,26 @@ internal const val POST_DETECTION_COOLDOWN_CHUNKS = 200
  *
  * @param context Android context for loading assets
  * @param voiceAudioRecorder Provides the audio stream for wake word detection
- * @param onListenerReady Callback invoked when initialization completes and listening begins
- * @param onWakeWordDetected Callback invoked when a wake word is detected
- * @param onListenerStopped Callback invoked when the listener stops (normally or due to error)
- * @param onListenerFailed Callback invoked when the listener encounters a failure where wake
- *        word detection should be disabled
+ * @param onListenerReady Callback invoked when initialization completes and listening begins.
+ *        Called on the background dispatcher passed to [start] (defaults to [Dispatchers.Default]).
+ * @param onWakeWordDetected Callback invoked when a wake word is detected.
+ *        Called on the background dispatcher passed to [start] (defaults to [Dispatchers.Default]).
+ * @param onListenerStopped Callback invoked when the listener stops (normally or due to error).
+ *        Called on the dispatcher of the coroutine scope passed to [start].
  */
 @SuppressLint("MissingPermission")
 class WakeWordListener(
-    private val context: Context,
+    context: Context,
     private val voiceAudioRecorder: VoiceAudioRecorder,
     private val onWakeWordDetected: (MicroWakeWordModelConfig) -> Unit,
     private val onListenerReady: (MicroWakeWordModelConfig) -> Unit = {},
     private val onListenerStopped: () -> Unit = {},
-    private val onListenerFailed: () -> Unit = {},
     private val microWakeWordFactory: suspend (
         MicroWakeWordModelConfig,
     ) -> MicroWakeWord = { modelConfig -> createMicroWakeWord(context, modelConfig) },
 ) {
     private val detectionMutex = Mutex()
     private var detectionJob: Job? = null
-
-    /**
-     * Whether the listener is currently active.
-     */
-    val isListening: Boolean
-        get() = detectionJob?.isActive == true
 
     /**
      * Start listening for wake words.
@@ -89,16 +83,9 @@ class WakeWordListener(
             detectionJob = coroutineScope.launch {
                 // Run detection on background thread to avoid blocking Main
                 withContext(coroutineContext) {
-                    var microWakeWord: MicroWakeWord? = null
-
-                    try {
-                        microWakeWord = initializeMicroWakeWord(modelConfig)
-
+                    microWakeWordFactory(modelConfig).use { microWakeWord ->
                         onListenerReady(modelConfig)
-
                         runDetectionLoop(modelConfig, microWakeWord)
-                    } finally {
-                        microWakeWord?.close()
                     }
                 }
             }.apply {
@@ -127,13 +114,6 @@ class WakeWordListener(
             Timber.d("Stopping WakeWordListener")
             detectionJob?.cancel()
         }
-    }
-
-    private suspend fun initializeMicroWakeWord(modelConfig: MicroWakeWordModelConfig): MicroWakeWord {
-        val microWakeWord = microWakeWordFactory(modelConfig)
-        Timber.d("MicroWakeWord initialized with '$modelConfig'")
-
-        return microWakeWord
     }
 
     private suspend fun runDetectionLoop(modelConfig: MicroWakeWordModelConfig, microWakeWord: MicroWakeWord) {
@@ -189,11 +169,12 @@ private suspend fun createMicroWakeWord(context: Context, modelConfig: MicroWake
  */
 private fun loadModelFile(context: Context, assetPath: String): ByteBuffer {
     val assetFileDescriptor = context.assets.openFd(assetPath)
-    val inputStream = assetFileDescriptor.createInputStream()
-    val fileChannel = inputStream.channel
-    val startOffset = assetFileDescriptor.startOffset
-    val declaredLength = assetFileDescriptor.declaredLength
-    val mappedBuffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
+    val mappedBuffer = assetFileDescriptor.use { fd ->
+        fd.createInputStream().use { inputStream ->
+            val fileChannel = inputStream.channel
+            fileChannel.map(FileChannel.MapMode.READ_ONLY, fd.startOffset, fd.declaredLength)
+        }
+    }
     // Ensure native byte order for direct buffer passed to JNI
     mappedBuffer.order(ByteOrder.nativeOrder())
     return mappedBuffer

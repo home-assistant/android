@@ -56,9 +56,8 @@ class AssistVoiceInteractionServiceTest {
     private val assistConfigManager: AssistConfigManager = mockk(relaxed = true)
     private val wakeWordListener: WakeWordListener = mockk(relaxed = true)
     private val onWakeWordDetectedSlot = slot<(MicroWakeWordModelConfig) -> Unit>()
-    private val onListenerFailureSlot = slot<() -> Unit>()
     private val wakeWordListenerFactory: WakeWordListenerFactory = mockk {
-        every { create(capture(onWakeWordDetectedSlot), any(), any(), capture(onListenerFailureSlot)) } returns wakeWordListener
+        every { create(capture(onWakeWordDetectedSlot), any(), any()) } returns wakeWordListener
     }
     private lateinit var serviceController: ServiceController<AssistVoiceInteractionService>
     private lateinit var service: AssistVoiceInteractionService
@@ -209,19 +208,6 @@ class AssistVoiceInteractionServiceTest {
         advanceUntilIdle()
 
         coVerify(exactly = 0) { wakeWordListener.start(any(), any()) }
-    }
-
-    @Test
-    fun `Given wake word listening initialization failure when start listening then failure callback disables wake word`() = runTest {
-        coEvery { wakeWordListener.start(any(), any()) } coAnswers {
-            // Simulate a failure during initialization calling the failure callback
-            onListenerFailureSlot.captured.invoke()
-        }
-
-        sendAction(ACTION_START_LISTENING)
-        advanceUntilIdle()
-
-        coVerify(exactly = 1) { assistConfigManager.setWakeWordEnabled(false) }
     }
 
     @Test
