@@ -18,6 +18,13 @@ android {
         }
     }
 
+    packaging {
+        jniLibs {
+            // Required for HWASan wrap.sh to be included uncompressed in the test APK
+            useLegacyPackaging = true
+        }
+    }
+
     externalNativeBuild {
         cmake {
             path = file("src/main/cpp/CMakeLists.txt")

@@ -5,6 +5,7 @@
 #include <cstring>
 
 #include "Logging.h"
+#include "flatbuffers/flatbuffers.h"
 #include "tensorflow/lite/micro/micro_interpreter.h"
 #include "tensorflow/lite/micro/micro_mutable_op_resolver.h"
 #include "tensorflow/lite/micro/micro_resource_variable.h"
@@ -32,6 +33,7 @@ MicroWakeWordEngine::MicroWakeWordEngine(
     }
 
     // Copy model data so caller can free the original
+    modelSize_ = modelSize;
     modelCopy_ = std::make_unique<uint8_t[]>(modelSize);
     std::memcpy(modelCopy_.get(), modelData, modelSize);
 
@@ -84,6 +86,13 @@ bool MicroWakeWordEngine::loadModel() {
     auto* resourceVariables = tflite::MicroResourceVariables::Create(microAllocator, 20);
     if (resourceVariables == nullptr) {
         LOGE(LOG_TAG, "Could not create MicroResourceVariables");
+        return false;
+    }
+
+    // Verify the flatbuffer is a valid TFLite model before parsing
+    flatbuffers::Verifier verifier(modelCopy_.get(), modelSize_);
+    if (!tflite::VerifyModelBuffer(verifier)) {
+        LOGE(LOG_TAG, "Invalid TFLite model flatbuffer");
         return false;
     }
 

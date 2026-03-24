@@ -89,6 +89,7 @@ private:
 
     // TFLite Micro interpreter
     std::unique_ptr<uint8_t[]> modelCopy_;
+    size_t modelSize_ = 0;
     std::array<uint8_t, TENSOR_ARENA_SIZE> tensorArena_{};
     std::array<uint8_t, VARIABLE_ARENA_SIZE> varArena_{};
     // 20 is the max number of registered ops, matching ESPHome's hardcoded value

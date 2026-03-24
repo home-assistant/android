@@ -52,7 +52,7 @@ class MicroWakeWordModelTest {
                 slidingWindowSize = model.micro.slidingWindowSize,
             )
 
-            try {
+            detector.use { detector ->
                 // Process silent audio (160 samples = 10ms at 16kHz)
                 val silentAudio = ShortArray(160)
                 val detected = detector.processAudio(silentAudio)
@@ -62,8 +62,6 @@ class MicroWakeWordModelTest {
                     "Silent audio should not trigger '${model.wakeWord}' detection",
                     detected,
                 )
-            } finally {
-                detector.close()
             }
         }
     }
@@ -80,7 +78,7 @@ class MicroWakeWordModelTest {
             probabilityCutoff = model.micro.probabilityCutoff,
             slidingWindowSize = model.micro.slidingWindowSize,
         )
-        try {
+        detector.use { detector ->
             // Process some audio
             detector.processAudio(ShortArray(160))
             detector.processAudio(ShortArray(160))
@@ -91,8 +89,6 @@ class MicroWakeWordModelTest {
             // Should be able to process more audio after reset
             val detected = detector.processAudio(ShortArray(160))
             assertFalse(detected)
-        } finally {
-            detector.close()
         }
     }
 

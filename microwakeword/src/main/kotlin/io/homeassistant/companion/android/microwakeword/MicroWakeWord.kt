@@ -8,33 +8,49 @@ import timber.log.Timber
  * Wake word detector combining audio feature extraction, TFLite Micro inference,
  * and sliding window detection — all in a single C++ engine.
  *
- * This replaces the previous split architecture where feature extraction was in C++
- * and model inference + detection state were in Kotlin with a Gradle TFLite dependency.
- * By running everything natively via TFLite Micro, no Play Services or bundled LiteRT
- * runtime is needed.
+ * Audio must be 16-bit PCM mono at 16 kHz. Other sample rates will produce
+ * incorrect feature extraction and unreliable detection.
  *
  * **Thread Safety**: This class is NOT thread-safe. Each instance maintains
  * internal state, so each thread should use its own instance.
+ *
+ * Usage:
+ * ```kotlin
+ * val modelBuffer = loadModelAsDirectByteBuffer()
+ * MicroWakeWord(
+ *     modelBuffer = modelBuffer,
+ *     featureStepSizeMs = 20,
+ *     probabilityCutoff = 0.5f,
+ *     slidingWindowSize = 10,
+ * ).use { detector ->
+ *     while (recording) {
+ *         val samples = readAudioChunk() // 16-bit PCM at 16kHz
+ *         if (detector.processAudio(samples)) {
+ *             // Wake word detected
+ *             detector.reset()
+ *         }
+ *     }
+ * }
+ * ```
  *
  * @param modelBuffer   Direct ByteBuffer containing the TFLite flatbuffer model
  * @param featureStepSizeMs  Step size for feature extraction in milliseconds
  * @param probabilityCutoff  Detection threshold (0.0–1.0)
  * @param slidingWindowSize  Number of inference frames to average for detection
- * @param sampleRate    Audio sample rate in Hz (default 16000)
  */
 class MicroWakeWord(
     modelBuffer: ByteBuffer,
     featureStepSizeMs: Int,
     probabilityCutoff: Float,
     slidingWindowSize: Int,
-    sampleRate: Int = DEFAULT_SAMPLE_RATE,
 ) : Closeable {
 
     private var nativeHandle: Long = 0
 
     init {
         ensureLibraryLoaded()
-        nativeHandle = nativeCreate(modelBuffer, sampleRate, featureStepSizeMs, probabilityCutoff, slidingWindowSize)
+        nativeHandle =
+            nativeCreate(modelBuffer, DEFAULT_SAMPLE_RATE, featureStepSizeMs, probabilityCutoff, slidingWindowSize)
         if (nativeHandle == 0L) {
             throw IllegalStateException("Failed to create native MicroWakeWord engine")
         }
@@ -42,10 +58,13 @@ class MicroWakeWord(
     }
 
     /**
-     * Process audio samples and check for wake word detection.
+     * Feed audio samples and check for wake word detection.
      *
-     * @param samples 16-bit PCM audio samples at the configured sample rate
-     * @return true if wake word was detected
+     * Each call accumulates internal state (feature frames, sliding window probabilities),
+     * so audio chunks should be fed sequentially from a continuous stream.
+     *
+     * @param samples 16-bit PCM mono audio samples at 16 kHz
+     * @return true if wake word was detected in this or recent frames
      */
     fun processAudio(samples: ShortArray): Boolean {
         check(nativeHandle != 0L) { "MicroWakeWord has been closed" }
@@ -54,14 +73,20 @@ class MicroWakeWord(
 
     /**
      * Reset all internal state (frontend, feature buffer, detection state).
-     * Call this after a detection or when starting a new audio stream.
+     *
+     * Call this after a detection to prevent immediate re-triggering,
+     * or when switching to a new audio stream.
      */
     fun reset() {
         check(nativeHandle != 0L) { "MicroWakeWord has been closed" }
         nativeReset(nativeHandle)
-        Timber.d("MicroWakeWord engine reset")
+        Timber.d("MicroWakeWord reset")
     }
 
+    /**
+     * Release native resources. After this call, the instance cannot be used.
+     * Safe to call multiple times.
+     */
     override fun close() {
         if (nativeHandle != 0L) {
             Timber.d("Closing MicroWakeWord engine with handle: $nativeHandle")
@@ -72,7 +97,7 @@ class MicroWakeWord(
 
     /**
      * Safety net to release native resources if [close] was not called.
-     * Prefer calling [close] explicitly when done with this instance.
+     * Prefer calling [close] explicitly or using a `use` block.
      */
     protected fun finalize() {
         close()
