@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.22.1)
 project("microwakeword")
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # Global optimization flags (applied to all targets including fetched dependencies)
 add_compile_options(-O3 -ffunction-sections -fdata-sections)
 add_link_options(-Wl,--gc-sections)
@@ -16,13 +19,16 @@ set(KISSFFT_STATIC ON CACHE BOOL "" FORCE)
 set(KISSFFT_TEST OFF CACHE BOOL "" FORCE)
 set(KISSFFT_TOOLS OFF CACHE BOOL "" FORCE)
 
-# Fetch tflite-micro from GitHub (archive download, faster than git clone)
+# Fetch tflite-micro from GitHub (archive download, faster than git clone).
+# When bumping tflite-micro, the dependencies below (flatbuffers, gemmlowp, ruy) must also
+# be updated to match the versions pinned in tflite-micro's own third_party/ configuration.
 FetchContent_Declare(
     tflite_micro
     URL https://github.com/tensorflow/tflite-micro/archive/2747abd5c82a95fb1624106a946fc671c31f16e8.tar.gz # January 22nd 2026
+    URL_HASH SHA256=6ac0c8ef35f267cf3baf05dc094d4fd158864d4cc830d490b752994e58add8c8
 )
 
-# Header-only: flatbuffers for model parsing
+# Header-only: flatbuffers for model parsing (version matching tflite-micro)
 FetchContent_Declare(
     flatbuffers
     GIT_REPOSITORY https://github.com/google/flatbuffers.git
@@ -33,16 +39,18 @@ set(FLATBUFFERS_INSTALL OFF CACHE BOOL "" FORCE)
 set(FLATBUFFERS_BUILD_FLATC OFF CACHE BOOL "" FORCE)
 set(FLATBUFFERS_BUILD_FLATHASH OFF CACHE BOOL "" FORCE)
 
-# Header-only: gemmlowp for fixed-point math (archive download avoids slow git clone)
+# Header-only: gemmlowp for fixed-point math (commit matching tflite-micro)
 FetchContent_Declare(
     gemmlowp
     URL https://github.com/google/gemmlowp/archive/fda83bdc38b118cc6b56753bd540caa49e570745.tar.gz
+    URL_HASH SHA256=0f990732a0d541be514dfc5c1c45969626e9f349faa851baec01b9a9dcb4ae4b
 )
 
-# Header-only: ruy profiler instrumentation (needed by TFLite reference kernels)
+# Header-only: ruy profiler instrumentation (commit matching tflite-micro)
 FetchContent_Declare(
     ruy
     URL https://github.com/google/ruy/archive/54774a7a2cf85963777289193629d4bd42de4a59.tar.gz
+    URL_HASH SHA256=91993e7eb2aa56e62e9f4abc1158b2b46333574aa81f1a7431b06df80a42b7fa
 )
 
 FetchContent_MakeAvailable(kissfft tflite_micro flatbuffers gemmlowp ruy)
@@ -269,3 +277,11 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     android
     log
 )
+
+# HWAddressSanitizer for debug builds on ARM64 only.
+# Requires c++_shared STL (NDK default since r25, c++_static is incompatible).
+# See https://developer.android.com/ndk/guides/hwasan
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND CMAKE_ANDROID_ARCH_ABI STREQUAL "arm64-v8a")
+    target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC -fsanitize=hwaddress -fno-omit-frame-pointer)
+    target_link_options(${CMAKE_PROJECT_NAME} PUBLIC -fsanitize=hwaddress)
+endif()

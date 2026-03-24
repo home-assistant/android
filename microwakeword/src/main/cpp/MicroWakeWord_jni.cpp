@@ -1,18 +1,14 @@
-// SPDX-License-Identifier: Apache-2.0
-
 #include <jni.h>
 #include <memory>
+#include <vector>
 
 #include "Logging.h"
 #include "MicroWakeWordEngine.h"
 
 static constexpr char LOG_TAG[] = "MicroWakeWord_jni";
 
-extern "C" {
-
-JNIEXPORT jlong JNICALL
-Java_io_homeassistant_companion_android_microwakeword_MicroWakeWord_nativeCreate(
-    JNIEnv* env, jclass clazz, jobject modelBuffer, jint sampleRate,
+static jlong nativeCreate(
+    JNIEnv* env, jclass /*clazz*/, jobject modelBuffer, jint sampleRate,
     jint featureStepSizeMs, jfloat probabilityCutoff, jint slidingWindowSize) {
 
     auto* modelData = static_cast<uint8_t*>(env->GetDirectBufferAddress(modelBuffer));
@@ -42,42 +38,57 @@ Java_io_homeassistant_companion_android_microwakeword_MicroWakeWord_nativeCreate
     return reinterpret_cast<jlong>(engine.release());
 }
 
-JNIEXPORT jboolean JNICALL
-Java_io_homeassistant_companion_android_microwakeword_MicroWakeWord_nativeProcessAudio(
-    JNIEnv* env, jclass clazz, jlong handle, jshortArray samplesArray) {
+static jboolean nativeProcessAudio(
+    JNIEnv* env, jclass /*clazz*/, jlong handle, jshortArray samplesArray) {
 
     if (handle == 0) return JNI_FALSE;
 
     auto* engine = reinterpret_cast<MicroWakeWordEngine*>(handle);
 
     jsize numSamples = env->GetArrayLength(samplesArray);
-    jshort* samples = env->GetShortArrayElements(samplesArray, nullptr);
-    if (samples == nullptr) return JNI_FALSE;
+    std::vector<jshort> samples(numSamples);
+    env->GetShortArrayRegion(samplesArray, 0, numSamples, samples.data());
 
-    bool detected = engine->processAudio(samples, static_cast<size_t>(numSamples));
-
-    // JNI_ABORT: release without copying back (we didn't modify the array)
-    env->ReleaseShortArrayElements(samplesArray, samples, JNI_ABORT);
+    bool detected = engine->processAudio(samples.data(), static_cast<size_t>(numSamples));
 
     return detected ? JNI_TRUE : JNI_FALSE;
 }
 
-JNIEXPORT void JNICALL
-Java_io_homeassistant_companion_android_microwakeword_MicroWakeWord_nativeReset(
-    JNIEnv* env, jclass clazz, jlong handle) {
-
+static void nativeReset(JNIEnv* /*env*/, jclass /*clazz*/, jlong handle) {
     if (handle == 0) return;
     auto* engine = reinterpret_cast<MicroWakeWordEngine*>(handle);
     engine->reset();
 }
 
-JNIEXPORT void JNICALL
-Java_io_homeassistant_companion_android_microwakeword_MicroWakeWord_nativeDestroy(
-    JNIEnv* env, jclass clazz, jlong handle) {
-
+static void nativeDestroy(JNIEnv* /*env*/, jclass /*clazz*/, jlong handle) {
     if (handle == 0) return;
     auto* engine = reinterpret_cast<MicroWakeWordEngine*>(handle);
     delete engine;
 }
 
-}  // extern "C"
+static const JNINativeMethod methods[] = {
+    {"nativeCreate", "(Ljava/nio/ByteBuffer;IIFI)J", reinterpret_cast<void*>(nativeCreate)},
+    {"nativeProcessAudio", "(J[S)Z", reinterpret_cast<void*>(nativeProcessAudio)},
+    {"nativeReset", "(J)V", reinterpret_cast<void*>(nativeReset)},
+    {"nativeDestroy", "(J)V", reinterpret_cast<void*>(nativeDestroy)},
+};
+
+JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* /*reserved*/) {
+    JNIEnv* env;
+    if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
+        return JNI_ERR;
+    }
+
+    jclass clazz = env->FindClass("io/homeassistant/companion/android/microwakeword/MicroWakeWord");
+    if (clazz == nullptr) {
+        LOGE(LOG_TAG, "Failed to find MicroWakeWord class for JNI registration");
+        return JNI_ERR;
+    }
+
+    if (env->RegisterNatives(clazz, methods, sizeof(methods) / sizeof(methods[0])) != JNI_OK) {
+        LOGE(LOG_TAG, "Failed to register native methods");
+        return JNI_ERR;
+    }
+
+    return JNI_VERSION_1_6;
+}

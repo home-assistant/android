@@ -23,6 +23,18 @@ android {
         }
     }
 
+    buildTypes {
+        debug {
+            // Required for HWASan wrap.sh to be included uncompressed in the APK
+            // See https://developer.android.com/ndk/guides/hwasan
+            packaging {
+                jniLibs {
+                    useLegacyPackaging = true
+                }
+            }
+        }
+    }
+
     lint {
         // Until we fully migrate to Material3 this lint issue is too verbose https://github.com/home-assistant/android/issues/5420
         disable += listOf("UsingMaterialAndMaterial3Libraries")

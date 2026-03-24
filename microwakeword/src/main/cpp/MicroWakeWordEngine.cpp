@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-
 #include "MicroWakeWordEngine.h"
 
 #include <algorithm>
@@ -115,7 +113,7 @@ bool MicroWakeWordEngine::loadModel() {
         return false;
     }
     if (input->dims->data[0] != 1 || input->dims->data[2] != PREPROCESSOR_FEATURE_SIZE) {
-        LOGE(LOG_TAG, "Model input tensor has unexpected dimensions (expected [1, stride, %d], got [%d, %d, %d])",
+        LOGE(LOG_TAG, "Model input tensor has unexpected dimensions (expected [1, stride, %zu], got [%d, %d, %d])",
              PREPROCESSOR_FEATURE_SIZE,
              input->dims->data[0], input->dims->data[1], input->dims->data[2]);
         return false;
@@ -212,6 +210,10 @@ bool MicroWakeWordEngine::processFeatureFrame(const int8_t* features) {
 
     // Read output probability (uint8)
     TfLiteTensor* output = interpreter_->output(0);
+    if (output == nullptr) {
+        LOGE(LOG_TAG, "Model output tensor is null after inference, skipping");
+        return false;
+    }
     uint8_t probability = output->data.uint8[0];
 
     // Update sliding window

@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-
 #include "MicroFrontendWrapper.h"
 
 extern "C" {
@@ -14,7 +12,6 @@ static constexpr char LOG_TAG[] = "MicroFrontendWrapper";
 // Source: https://github.com/esphome/esphome/blob/8d1379a2752291d2f4e33d5831d51c2afd59f7ce/esphome/components/micro_wake_word/preprocessor_settings.h
 namespace {
     constexpr size_t FEATURE_DURATION_MS = 30;
-    constexpr int PREPROCESSOR_FEATURE_SIZE = 40;
     constexpr float FILTERBANK_LOWER_BAND_LIMIT = 125.0f;
     constexpr float FILTERBANK_UPPER_BAND_LIMIT = 7500.0f;
 
@@ -75,7 +72,7 @@ MicroFrontendWrapper::MicroFrontendWrapper(int sampleRate, size_t stepSizeMs)
     }
 
     initialized_ = true;
-    LOGD(LOG_TAG, "MicroFrontend initialized: %d Hz sample rate, %d mel bins, %.0f-%.0f Hz, %zum window, %zum step",
+    LOGD(LOG_TAG, "MicroFrontend initialized: %d Hz sample rate, %zu mel bins, %.0f-%.0f Hz, %zum window, %zum step",
          sampleRate_, PREPROCESSOR_FEATURE_SIZE, FILTERBANK_LOWER_BAND_LIMIT, FILTERBANK_UPPER_BAND_LIMIT,
          FEATURE_DURATION_MS, stepSizeMs_);
 }

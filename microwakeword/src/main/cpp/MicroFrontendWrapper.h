@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-
 #ifndef MICRO_FRONTEND_WRAPPER_H
 #define MICRO_FRONTEND_WRAPPER_H
 
@@ -10,6 +8,9 @@
 extern "C" {
 #include "tensorflow/lite/experimental/microfrontend/lib/frontend.h"
 }
+
+// Number of mel filterbank features per frame (matches ESPHome PREPROCESSOR_FEATURE_SIZE)
+constexpr size_t PREPROCESSOR_FEATURE_SIZE = 40;
 
 /**
  * C++ wrapper for TFLite Micro Frontend audio feature extraction.

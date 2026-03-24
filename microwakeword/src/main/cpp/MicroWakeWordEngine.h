@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-
 #ifndef MICRO_WAKE_WORD_ENGINE_H
 #define MICRO_WAKE_WORD_ENGINE_H
 
@@ -26,7 +24,7 @@
 class MicroWakeWordEngine {
 public:
     /**
-     * @param modelData   Pointer to the TFLite flatbuffer model (must remain valid)
+     * @param modelData   Pointer to the TFLite flatbuffer model (copied internally, caller can free after construction)
      * @param modelSize   Size of the model data in bytes
      * @param sampleRate  Audio sample rate (typically 16000)
      * @param featureStepSizeMs  Step size for feature extraction in milliseconds
@@ -65,9 +63,6 @@ public:
     void reset();
 
 private:
-    // Number of mel filterbank features per frame (matches ESPHome PREPROCESSOR_FEATURE_SIZE)
-    static constexpr int PREPROCESSOR_FEATURE_SIZE = 40;
-
     // Tensor arena size for the model interpreter
     static constexpr size_t TENSOR_ARENA_SIZE = 64 * 1024;
 

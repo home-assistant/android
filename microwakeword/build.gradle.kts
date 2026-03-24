@@ -16,10 +16,6 @@ android {
                 arguments += "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
             }
         }
-
-        ndk {
-            // abiFilters += listOf("arm64-v8a", "x86_64", "") // Limit to LiteRt arch supported for Android
-        }
     }
 
     externalNativeBuild {

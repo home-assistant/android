@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-
 #ifndef LOGGING_H
 #define LOGGING_H
 
