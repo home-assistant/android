@@ -15,6 +15,7 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.push.PushProviderManager
 import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.push.WebSocketPushProvider
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.settings.assist.DefaultAssistantManager
 import io.homeassistant.companion.android.settings.language.LanguagesManager
@@ -60,7 +61,6 @@ class SettingsPresenterImpl @Inject constructor(
     )
 
     private var suggestionFlow = MutableStateFlow<SettingsHomeSuggestion?>(null)
-    private var selectedPushProvider: String? = null
 
     override fun getBoolean(key: String, defValue: Boolean): Boolean = runBlocking {
         return@runBlocking when (key) {
@@ -225,16 +225,19 @@ class SettingsPresenterImpl @Inject constructor(
         return pushProviderManager.getAllProviders().map { it.name }
     }
 
-    override fun getActivePushProviderValue(): String {
-        selectedPushProvider?.let { return it }
-        return pushProviderManager.getAllProviders().firstOrNull()?.name ?: "WebSocket"
+    override suspend fun getActivePushProviderValue(): String {
+        val persisted = prefsRepository.getSelectedPushProvider()
+        if (persisted != null) return persisted
+        return pushProviderManager.getAllProviders().firstOrNull()?.name
+            ?: WebSocketPushProvider.NAME
     }
 
-    override fun handlePushProviderChange(value: String?) {
+    override suspend fun handlePushProviderChange(value: String?) {
         if (value == null) return
-        selectedPushProvider = value
-        mainScope.launch {
-            pushProviderManager.selectAndRegister(value)
+        prefsRepository.setSelectedPushProvider(value)
+        val result = pushProviderManager.selectAndRegister(value)
+        if (result != null) {
+            pushProviderManager.updateServerRegistration(result)
         }
     }
 

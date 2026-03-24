@@ -550,6 +550,9 @@ class SettingsFragment(
 
     private fun updatePushProviderPrefs() {
         findPreference<ListPreference>("notification_push_provider")?.let { pref ->
+            // Detach from the presenter data store because the push provider preference is
+            // persisted via PrefsRepository (not the generic PreferenceDataStore) and change
+            // handling requires a coroutine for server-side registration.
             pref.preferenceDataStore = null
             pref.setOnPreferenceChangeListener { _, newValue ->
                 val value = newValue as? String

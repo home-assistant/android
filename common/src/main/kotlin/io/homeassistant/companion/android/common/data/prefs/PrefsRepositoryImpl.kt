@@ -46,6 +46,7 @@ private const val PREF_CHANGE_LOG_POPUP_ENABLED = "change_log_popup_enabled"
 private const val PREF_SHOW_PRIVACY_HINT = "show_privacy_hint"
 private const val PREF_WAKE_WORD_ENABLED = "wake_word_enabled"
 private const val PREF_SELECTED_WAKE_WORD = "selected_wake_word"
+private const val PREF_SELECTED_PUSH_PROVIDER = "selected_push_provider"
 
 /**
  * This class ensure that when we use the local storage in [PrefsRepositoryImpl] the migrations has been made
@@ -380,5 +381,13 @@ internal class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setSelectedWakeWord(wakeWord: String) {
         localStorage().putString(PREF_SELECTED_WAKE_WORD, wakeWord)
+    }
+
+    override suspend fun getSelectedPushProvider(): String? {
+        return localStorage().getString(PREF_SELECTED_PUSH_PROVIDER)
+    }
+
+    override suspend fun setSelectedPushProvider(provider: String) {
+        localStorage().putString(PREF_SELECTED_PUSH_PROVIDER, provider)
     }
 }
