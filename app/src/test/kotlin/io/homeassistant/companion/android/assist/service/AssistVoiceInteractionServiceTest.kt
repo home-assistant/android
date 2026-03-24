@@ -16,7 +16,6 @@ import io.homeassistant.companion.android.settings.assist.AssistConfigManager
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
 import io.homeassistant.companion.android.util.microWakeWordModelConfigs
-import io.mockk.Ordering
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -66,7 +65,6 @@ class AssistVoiceInteractionServiceTest {
 
     @Before
     fun setUp() {
-        every { assistConfigManager.isWakeWordSupported() } returns true
         coEvery { assistConfigManager.getAvailableModels() } returns microWakeWordModelConfigs
 
         serviceController = Robolectric.buildService(AssistVoiceInteractionService::class.java)
@@ -141,21 +139,6 @@ class AssistVoiceInteractionServiceTest {
         advanceUntilIdle()
 
         coVerify(exactly = 0) { wakeWordListener.start(any(), any()) }
-    }
-
-    @Test
-    fun `Given unsupported device when onReady then do not start listening`() = runTest {
-        every { assistConfigManager.isWakeWordSupported() } returns false
-        coEvery { assistConfigManager.isWakeWordEnabled() } returns true
-
-        service.onReady()
-        advanceUntilIdle()
-
-        coVerify(exactly = 0) { wakeWordListener.start(any(), any()) }
-        coVerify(ordering = Ordering.ORDERED) {
-            assistConfigManager.isWakeWordEnabled()
-            assistConfigManager.isWakeWordSupported()
-        }
     }
 
     @Test

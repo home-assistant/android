@@ -1,22 +1,8 @@
 package io.homeassistant.companion.android.microwakeword
 
-import android.os.Build
 import java.io.Closeable
 import java.nio.ByteBuffer
 import timber.log.Timber
-
-/** ABIs for which the native `libmicrowakeword.so` is bundled. */
-private val SUPPORTED_ABIS = setOf("arm64-v8a", "x86_64")
-
-/**
- * Checks whether the current device supports the MicroWakeWord native library.
- *
- * The native library is only built for 64-bit architectures (arm64-v8a and x86_64).
- * Devices running 32-bit ABIs (armeabi-v7a, x86) cannot use MicroWakeWord.
- *
- * @return true if at least one of the device's supported ABIs has a bundled native library
- */
-val isMicroWakeWordSupported: Boolean by lazy { Build.SUPPORTED_ABIS.any { it in SUPPORTED_ABIS } }
 
 /**
  * Wake word detector combining audio feature extraction, TFLite Micro inference,
@@ -29,8 +15,6 @@ val isMicroWakeWordSupported: Boolean by lazy { Build.SUPPORTED_ABIS.any { it in
  *
  * **Thread Safety**: This class is NOT thread-safe. Each instance maintains
  * internal state, so each thread should use its own instance.
- *
- * Callers should check [isMicroWakeWordSupported] before constructing an instance.
  *
  * @param modelBuffer   Direct ByteBuffer containing the TFLite flatbuffer model
  * @param featureStepSizeMs  Step size for feature extraction in milliseconds
@@ -105,11 +89,6 @@ class MicroWakeWord(
          * loading.
          */
         private val libraryLoaded: Unit by lazy {
-            check(isMicroWakeWordSupported) {
-                "MicroWakeWord native library is not available for this device's ABIs: " +
-                    "${Build.SUPPORTED_ABIS.toList()}. " +
-                    "Callers must check isMicroWakeWordSupported before using MicroWakeWord"
-            }
             System.loadLibrary("microwakeword")
             Timber.d("Loaded microwakeword native library")
         }

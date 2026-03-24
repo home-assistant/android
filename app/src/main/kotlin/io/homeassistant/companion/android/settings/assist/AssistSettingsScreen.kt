@@ -55,7 +55,6 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.compose.composable.HABanner
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
@@ -199,24 +198,14 @@ internal fun AssistSettingsContent(
                 HALabel(stringResource(commonR.string.experimental), variant = LabelVariant.WARNING)
             }
 
-            if (uiState.isWakeWordSupported) {
-                WakeWordSection(
-                    uiState = uiState,
-                    hasAudioPermission = hasAudioPermission,
-                    onToggleWakeWord = onToggleWakeWord,
-                    onSelectWakeWord = onSelectWakeWord,
-                    onStartTestWakeWord = onStartTestWakeWord,
-                    onStopTestWakeWord = onStopTestWakeWord,
-                )
-            } else if (uiState.showHardwareNotSupportedHint) {
-                HABanner(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = stringResource(commonR.string.assist_wake_word_unsupported_device),
-                        style = HATextStyle.Body.copy(textAlign = TextAlign.Start),
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-            }
+            WakeWordSection(
+                uiState = uiState,
+                hasAudioPermission = hasAudioPermission,
+                onToggleWakeWord = onToggleWakeWord,
+                onSelectWakeWord = onSelectWakeWord,
+                onStartTestWakeWord = onStartTestWakeWord,
+                onStopTestWakeWord = onStopTestWakeWord,
+            )
         }
     }
 }
@@ -491,7 +480,6 @@ private fun AssistSettingsContentUnsupportedDevicePreview() {
             uiState = AssistSettingsUiState(
                 isLoading = false,
                 isDefaultAssistant = true,
-                showHardwareNotSupportedHint = true,
                 isWakeWordEnabled = false,
                 selectedWakeWordModel = null,
                 availableModels = emptyList(),

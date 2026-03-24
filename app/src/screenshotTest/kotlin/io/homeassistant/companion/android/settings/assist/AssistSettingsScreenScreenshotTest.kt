@@ -159,28 +159,4 @@ class AssistSettingsScreenScreenshotTest {
             )
         }
     }
-
-    @PreviewTest
-    @HAPreviews
-    @Composable
-    fun `Assist settings unsupported device hides wake word`() {
-        HAThemeForPreview {
-            AssistSettingsContent(
-                uiState = AssistSettingsUiState(
-                    isLoading = false,
-                    isDefaultAssistant = true,
-                    isWakeWordEnabled = false,
-                    selectedWakeWordModel = null,
-                    availableModels = emptyList(),
-                    showHardwareNotSupportedHint = true,
-                ),
-                hasAudioPermission = true,
-                onSetDefaultAssistant = {},
-                onToggleWakeWord = {},
-                onSelectWakeWord = {},
-                onStartTestWakeWord = {},
-                onStopTestWakeWord = {},
-            )
-        }
-    }
 }

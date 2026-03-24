@@ -34,7 +34,6 @@ class AssistSettingsViewModelTest {
 
     @BeforeEach
     fun setUp() {
-        every { assistConfigManager.isWakeWordSupported() } returns true
         coEvery { assistConfigManager.getAvailableModels() } returns microWakeWordModelConfigs
         coEvery { assistConfigManager.isWakeWordEnabled() } returns false
         coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
@@ -62,8 +61,6 @@ class AssistSettingsViewModelTest {
 
             val state = viewModel.uiState.value
             assertFalse(state.isLoading)
-            assertTrue(state.isWakeWordSupported)
-            assertFalse(state.showHardwareNotSupportedHint)
             assertTrue(state.isDefaultAssistant)
             assertTrue(state.isWakeWordEnabled)
             assertEquals(microWakeWordModelConfigs[0], state.selectedWakeWordModel)
@@ -119,39 +116,6 @@ class AssistSettingsViewModelTest {
 
             val state = viewModel.uiState.value
             assertNull(state.selectedWakeWordModel)
-        }
-    }
-
-    @Nested
-    inner class UnsupportedDeviceTest {
-
-        @Test
-        fun `Given unsupported device with wake word enabled when initialized then disable wake word`() = runTest {
-            every { assistConfigManager.isWakeWordSupported() } returns false
-            coEvery { assistConfigManager.isWakeWordEnabled() } returns true
-
-            viewModel = createViewModel()
-            runCurrent()
-
-            val state = viewModel.uiState.value
-            assertFalse(state.isWakeWordSupported)
-            assertTrue(state.showHardwareNotSupportedHint)
-            assertFalse(state.isWakeWordEnabled)
-            coVerify { assistConfigManager.setWakeWordEnabled(false) }
-        }
-
-        @Test
-        fun `Given unsupported device when initialized then available models is empty`() = runTest {
-            every { assistConfigManager.isWakeWordSupported() } returns false
-            coEvery { assistConfigManager.getAvailableModels() } returns emptyList()
-
-            viewModel = createViewModel()
-            runCurrent()
-
-            val state = viewModel.uiState.value
-            assertFalse(state.isWakeWordSupported)
-            assertTrue(state.showHardwareNotSupportedHint)
-            assertTrue(state.availableModels.isEmpty())
         }
     }
 

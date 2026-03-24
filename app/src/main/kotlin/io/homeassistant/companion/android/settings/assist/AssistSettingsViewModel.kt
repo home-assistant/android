@@ -22,16 +22,13 @@ import kotlinx.coroutines.launch
  */
 data class AssistSettingsUiState(
     val isLoading: Boolean = true,
-    val showHardwareNotSupportedHint: Boolean = false,
     val isDefaultAssistant: Boolean = false,
     val isWakeWordEnabled: Boolean = false,
     val selectedWakeWordModel: MicroWakeWordModelConfig? = null,
     val availableModels: List<MicroWakeWordModelConfig> = emptyList(),
     val isTestingWakeWord: Boolean = false,
     val wakeWordDetected: Boolean = false,
-) {
-    val isWakeWordSupported = !showHardwareNotSupportedHint
-}
+)
 
 @VisibleForTesting
 val WAKE_WORD_TEST_DEBOUNCE = 3.seconds
@@ -57,9 +54,8 @@ class AssistSettingsViewModel @Inject internal constructor(
             var isEnabled = assistConfigManager.isWakeWordEnabled()
             val selectedModel = assistConfigManager.getSelectedWakeWordModel() ?: models.firstOrNull()
             val isDefaultAssistant = defaultAssistantManager.isDefaultAssistant()
-            val isHWWakeWordSupported = assistConfigManager.isWakeWordSupported()
 
-            if ((!isDefaultAssistant || !isHWWakeWordSupported) && isEnabled) {
+            if (!isDefaultAssistant && isEnabled) {
                 assistConfigManager.setWakeWordEnabled(false)
                 isEnabled = false
             }
@@ -67,7 +63,6 @@ class AssistSettingsViewModel @Inject internal constructor(
             _uiState.update {
                 it.copy(
                     isLoading = false,
-                    showHardwareNotSupportedHint = !isHWWakeWordSupported,
                     isDefaultAssistant = defaultAssistantManager.isDefaultAssistant(),
                     isWakeWordEnabled = isEnabled,
                     selectedWakeWordModel = selectedModel,
