@@ -6,6 +6,7 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -48,6 +50,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.rememberScaffoldState
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -61,7 +65,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.colorResource
@@ -71,13 +80,18 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.composable.HAHint
+import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
+import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
+import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.sensor.SensorSetting
@@ -89,6 +103,7 @@ import io.homeassistant.companion.android.settings.sensor.SensorDetailViewModel
 import io.homeassistant.companion.android.settings.views.SettingsSubheader
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 import io.homeassistant.companion.android.util.compose.TransparentChip
+import io.homeassistant.companion.android.util.compose.safeScreenHeight
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import kotlinx.coroutines.flow.launchIn
@@ -165,13 +180,28 @@ fun SensorDetailView(
                 onDismiss = { sensorUpdateTypeInfo = false },
             )
         } else {
-            viewModel.sensorSettingsDialog?.let {
-                SensorDetailSettingDialog(
-                    viewModel = viewModel,
-                    state = it,
-                    onDismiss = { viewModel.cancelSettingWithDialog() },
-                    onSubmit = { state -> onDialogSettingSubmitted(state) },
+            viewModel.sensorSettingsDialog?.let { dialogState ->
+                val isMultiSelectList = dialogState.setting.valueType in listOf(
+                    SensorSettingType.LIST_APPS,
+                    SensorSettingType.LIST_BLUETOOTH,
+                    SensorSettingType.LIST_ZONES,
+                    SensorSettingType.LIST_BEACONS,
                 )
+                if (isMultiSelectList && !dialogState.loading) {
+                    SensorDetailSettingSheet(
+                        title = viewModel.getSettingTranslatedTitle(dialogState.setting.name),
+                        state = dialogState,
+                        onDismiss = { viewModel.cancelSettingWithDialog() },
+                        onSave = { updatedState -> onDialogSettingSubmitted(updatedState) },
+                    )
+                } else {
+                    SensorDetailSettingDialog(
+                        viewModel = viewModel,
+                        state = dialogState,
+                        onDismiss = { viewModel.cancelSettingWithDialog() },
+                        onSubmit = { state -> onDialogSettingSubmitted(state) },
+                    )
+                }
             }
         }
         LazyColumn(
@@ -613,44 +643,31 @@ fun SensorDetailSettingDialog(
                     CircularProgressIndicator()
                 }
             } else if (listSettingDialog) {
-                var searchQuery by remember { mutableStateOf("") }
-                val filteredEntries = remember(state.entries, searchQuery) {
-                    filterSettingEntries(state.entries, searchQuery)
-                }
-                val showSearch = state.entries.size > 10
-                Column {
-                    if (showSearch) {
-                        SettingSearchField(
-                            query = searchQuery,
-                            onQueryChange = { searchQuery = it },
-                        )
-                    }
-                    LazyColumn(modifier = Modifier.weight(1f)) {
-                        items(filteredEntries, key = { (id) -> id }) { (id, entry) ->
-                            SensorDetailSettingRow(
-                                label = entry,
-                                checked = if (state.setting.valueType ==
-                                    SensorSettingType.LIST
-                                ) {
-                                    inputValue.value == id
+                LazyColumn {
+                    items(state.entries, key = { (id) -> id }) { (id, entry) ->
+                        SensorDetailSettingRow(
+                            label = entry,
+                            checked = if (state.setting.valueType ==
+                                SensorSettingType.LIST
+                            ) {
+                                inputValue.value == id
+                            } else {
+                                checkedValue.contains(id)
+                            },
+                            multiple = state.setting.valueType != SensorSettingType.LIST,
+                            onClick = { isChecked ->
+                                if (state.setting.valueType == SensorSettingType.LIST) {
+                                    inputValue.value = id
+                                    onSubmit(state.copy().apply { setting.value = inputValue.value })
                                 } else {
-                                    checkedValue.contains(id)
-                                },
-                                multiple = state.setting.valueType != SensorSettingType.LIST,
-                                onClick = { isChecked ->
-                                    if (state.setting.valueType == SensorSettingType.LIST) {
-                                        inputValue.value = id
-                                        onSubmit(state.copy().apply { setting.value = inputValue.value })
-                                    } else {
-                                        if (checkedValue.contains(id) && !isChecked) {
-                                            checkedValue.remove(id)
-                                        } else if (!checkedValue.contains(id) && isChecked) {
-                                            checkedValue.add(id)
-                                        }
+                                    if (checkedValue.contains(id) && !isChecked) {
+                                        checkedValue.remove(id)
+                                    } else if (!checkedValue.contains(id) && isChecked) {
+                                        checkedValue.add(id)
                                     }
-                                },
-                            )
-                        }
+                                }
+                            },
+                        )
                     }
                 }
             } else {
@@ -752,6 +769,107 @@ fun SensorDetailUpdateInfoDialog(
     )
 }
 
+/**
+ * Bottom sheet for multi-select allow list sensor settings (apps, bluetooth, zones, beacons).
+ * Uses [HAModalBottomSheet] following the Entity picker pattern with search, checkboxes,
+ * and cancel/save actions.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SensorDetailSettingSheet(
+    title: String,
+    state: SensorDetailViewModel.Companion.SettingDialogState,
+    onDismiss: () -> Unit,
+    onSave: (SensorDetailViewModel.Companion.SettingDialogState) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val checkedValue = remember {
+        mutableStateListOf<String>().also { it.addAll(state.entriesSelected) }
+    }
+    var searchQuery by remember { mutableStateOf("") }
+    val filteredEntries = remember(state.entries, searchQuery) {
+        filterSettingEntries(state.entries, searchQuery)
+    }
+    val showSearch = state.entries.size > 10
+
+    val bottomSheetState = rememberStandardBottomSheetState(skipHiddenState = false)
+    val screenHeight = safeScreenHeight() - HADimens.SPACE16
+
+    val consumeFlingNestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset =
+                available
+
+            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity = available
+        }
+    }
+
+    HAModalBottomSheet(
+        bottomSheetState = bottomSheetState,
+        modifier = modifier,
+        onDismissRequest = onDismiss,
+    ) {
+        Column(
+            modifier = Modifier
+                .height(screenHeight)
+                .nestedScroll(consumeFlingNestedScrollConnection)
+                .pointerInput(Unit) {
+                    detectVerticalDragGestures { _, _ -> }
+                },
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.h6,
+                modifier = Modifier.padding(
+                    horizontal = HADimens.SPACE4,
+                    vertical = HADimens.SPACE3,
+                ),
+            )
+            if (showSearch) {
+                SettingSearchField(
+                    query = searchQuery,
+                    onQueryChange = { searchQuery = it },
+                )
+            }
+            LazyColumn(modifier = Modifier.weight(1f)) {
+                items(filteredEntries, key = { (id) -> id }) { (id, entry) ->
+                    SensorDetailSettingRow(
+                        label = entry,
+                        checked = checkedValue.contains(id),
+                        multiple = true,
+                        onClick = { isChecked ->
+                            if (checkedValue.contains(id) && !isChecked) {
+                                checkedValue.remove(id)
+                            } else if (!checkedValue.contains(id) && isChecked) {
+                                checkedValue.add(id)
+                            }
+                        },
+                    )
+                }
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = HADimens.SPACE4, vertical = HADimens.SPACE3),
+                horizontalArrangement = Arrangement.End,
+            ) {
+                HAPlainButton(
+                    text = stringResource(android.R.string.cancel),
+                    onClick = onDismiss,
+                )
+                Spacer(modifier = Modifier.width(HADimens.SPACE2))
+                HAFilledButton(
+                    text = stringResource(commonR.string.save),
+                    onClick = {
+                        val joinedValue = checkedValue.joinToString().replace("[", "").replace("]", "")
+                        onSave(state.copy().apply { setting.value = joinedValue })
+                    },
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun SettingSearchField(
     query: String,
@@ -789,9 +907,11 @@ private fun SettingSearchField(
 internal fun filterSettingEntries(
     entries: List<Pair<String, String>>,
     query: String,
-): List<Pair<String, String>> =
-    if (query.isBlank()) entries
-    else entries.filter { (_, label) -> label.contains(query.trim(), ignoreCase = true) }
+): List<Pair<String, String>> {
+    val trimmed = query.trim()
+    return if (trimmed.isBlank()) entries
+    else entries.filter { (_, label) -> label.contains(trimmed, ignoreCase = true) }
+}
 
 @Composable
 fun SensorDetailSettingRow(
