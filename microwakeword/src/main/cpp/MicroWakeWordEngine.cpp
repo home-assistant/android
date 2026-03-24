@@ -21,12 +21,20 @@ MicroWakeWordEngine::MicroWakeWordEngine(
     float probabilityCutoff,
     int slidingWindowSize
 )
-    : frontend_(sampleRate, static_cast<size_t>(featureStepSizeMs))
+    : frontend_(sampleRate, static_cast<size_t>(std::max(1, featureStepSizeMs)))
     , probabilityCutoff_(static_cast<uint8_t>(std::max(0.0f, std::min(1.0f, probabilityCutoff)) * 255.0f))
-    , slidingWindowSize_(slidingWindowSize)
-    , recentProbabilities_(slidingWindowSize, 0)
+    , slidingWindowSize_(std::max(1, slidingWindowSize))
+    , recentProbabilities_(slidingWindowSize_, 0)
     , ignoreWindows_(-MIN_SLICES_BEFORE_DETECTION)
 {
+    if (slidingWindowSize <= 0) {
+        LOGE(LOG_TAG, "Invalid slidingWindowSize: %d (must be > 0)", slidingWindowSize);
+        return;
+    }
+    if (featureStepSizeMs <= 0) {
+        LOGE(LOG_TAG, "Invalid featureStepSizeMs: %d (must be > 0)", featureStepSizeMs);
+        return;
+    }
     if (!frontend_.isInitialized()) {
         LOGE(LOG_TAG, "Frontend initialization failed");
         return;

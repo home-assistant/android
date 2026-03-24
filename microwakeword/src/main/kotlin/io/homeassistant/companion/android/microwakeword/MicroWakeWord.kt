@@ -48,6 +48,9 @@ class MicroWakeWord(
     private var nativeHandle: Long = 0
 
     init {
+        require(featureStepSizeMs > 0) { "featureStepSizeMs must be positive, was $featureStepSizeMs" }
+        require(slidingWindowSize > 0) { "slidingWindowSize must be positive, was $slidingWindowSize" }
+        require(probabilityCutoff in 0f..1f) { "probabilityCutoff must be in [0.0, 1.0], was $probabilityCutoff" }
         ensureLibraryLoaded()
         nativeHandle =
             nativeCreate(modelBuffer, DEFAULT_SAMPLE_RATE, featureStepSizeMs, probabilityCutoff, slidingWindowSize)

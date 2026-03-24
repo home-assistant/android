@@ -1,6 +1,5 @@
 #include <jni.h>
 #include <memory>
-#include <vector>
 
 #include "Logging.h"
 #include "MicroWakeWordEngine.h"
@@ -46,10 +45,15 @@ static jboolean nativeProcessAudio(
     auto* engine = reinterpret_cast<MicroWakeWordEngine*>(handle);
 
     jsize numSamples = env->GetArrayLength(samplesArray);
-    std::vector<jshort> samples(numSamples);
-    env->GetShortArrayRegion(samplesArray, 0, numSamples, samples.data());
+    // GetShortArrayElements may return a direct pointer (zero-copy) or a pinned copy.
+    // Either way it avoids a per-call heap allocation on this hot path (called every ~10ms).
+    jshort* samples = env->GetShortArrayElements(samplesArray, nullptr);
+    if (samples == nullptr) return JNI_FALSE;
 
-    bool detected = engine->processAudio(samples.data(), static_cast<size_t>(numSamples));
+    bool detected = engine->processAudio(samples, static_cast<size_t>(numSamples));
+
+    // JNI_ABORT: release without copying back (read-only access)
+    env->ReleaseShortArrayElements(samplesArray, samples, JNI_ABORT);
 
     return detected ? JNI_TRUE : JNI_FALSE;
 }

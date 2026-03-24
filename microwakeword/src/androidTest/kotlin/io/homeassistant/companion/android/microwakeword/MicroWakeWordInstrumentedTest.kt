@@ -34,4 +34,40 @@ class MicroWakeWordInstrumentedTest {
             )
         }
     }
+
+    @Test
+    fun createWithZeroSlidingWindowSizeThrows() {
+        assertThrows(IllegalArgumentException::class.java) {
+            MicroWakeWord(
+                modelBuffer = ByteBuffer.allocateDirect(64),
+                featureStepSizeMs = 10,
+                probabilityCutoff = 0.5f,
+                slidingWindowSize = 0,
+            )
+        }
+    }
+
+    @Test
+    fun createWithNegativeFeatureStepSizeThrows() {
+        assertThrows(IllegalArgumentException::class.java) {
+            MicroWakeWord(
+                modelBuffer = ByteBuffer.allocateDirect(64),
+                featureStepSizeMs = -1,
+                probabilityCutoff = 0.5f,
+                slidingWindowSize = 20,
+            )
+        }
+    }
+
+    @Test
+    fun createWithProbabilityCutoffOutOfRangeThrows() {
+        assertThrows(IllegalArgumentException::class.java) {
+            MicroWakeWord(
+                modelBuffer = ByteBuffer.allocateDirect(64),
+                featureStepSizeMs = 10,
+                probabilityCutoff = 1.5f,
+                slidingWindowSize = 20,
+            )
+        }
+    }
 }
