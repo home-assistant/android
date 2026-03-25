@@ -140,7 +140,12 @@ object EntityExt {
     const val LIGHT_SUPPORT_BRIGHTNESS_DEPR = 1
     const val LIGHT_SUPPORT_COLOR_TEMP_DEPR = 2
     const val ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY = 2
+    const val MEDIA_PLAYER_SUPPORT_PAUSE = 1
+    const val MEDIA_PLAYER_SUPPORT_SEEK = 2
     const val MEDIA_PLAYER_SUPPORT_VOLUME_SET = 4
+    const val MEDIA_PLAYER_SUPPORT_PREVIOUS_TRACK = 16
+    const val MEDIA_PLAYER_SUPPORT_NEXT_TRACK = 32
+    const val MEDIA_PLAYER_SUPPORT_PLAY = 16384
 
     val DOMAINS_PRESS = listOf("button", "input_button")
     val DOMAINS_TOGGLE = listOf(
@@ -1276,3 +1281,55 @@ fun Entity.isActive() = when {
     (domain == CAMERA_DOMAIN) -> state == "streaming"
     else -> true
 }
+
+/** Returns the bitmask of supported features for this entity, or 0 if unavailable. */
+private fun Entity.supportedFeatures(): Int = (attributes["supported_features"] as? Number)?.toInt() ?: 0
+
+/** Whether this media_player entity supports pause. */
+internal fun Entity.supportsPause(): Boolean = domain == MEDIA_PLAYER_DOMAIN &&
+    (supportedFeatures() and EntityExt.MEDIA_PLAYER_SUPPORT_PAUSE != 0)
+
+/** Whether this media_player entity supports seek. */
+internal fun Entity.supportsSeek(): Boolean = domain == MEDIA_PLAYER_DOMAIN &&
+    (supportedFeatures() and EntityExt.MEDIA_PLAYER_SUPPORT_SEEK != 0)
+
+/** Whether this media_player entity supports previous track. */
+internal fun Entity.supportsPreviousTrack(): Boolean = domain == MEDIA_PLAYER_DOMAIN &&
+    (supportedFeatures() and EntityExt.MEDIA_PLAYER_SUPPORT_PREVIOUS_TRACK != 0)
+
+/** Whether this media_player entity supports next track. */
+internal fun Entity.supportsNextTrack(): Boolean = domain == MEDIA_PLAYER_DOMAIN &&
+    (supportedFeatures() and EntityExt.MEDIA_PLAYER_SUPPORT_NEXT_TRACK != 0)
+
+/** Whether this media_player entity supports play. */
+internal fun Entity.supportsPlay(): Boolean = domain == MEDIA_PLAYER_DOMAIN &&
+    (supportedFeatures() and EntityExt.MEDIA_PLAYER_SUPPORT_PLAY != 0)
+
+/** Returns the media title, if available. */
+internal fun Entity.getMediaTitle(): String? =
+    if (domain == MEDIA_PLAYER_DOMAIN) attributes["media_title"]?.toString() else null
+
+/** Returns the media artist, falling back to album artist if available. */
+internal fun Entity.getMediaArtist(): String? = if (domain ==
+    MEDIA_PLAYER_DOMAIN
+) {
+    (attributes["media_artist"] ?: attributes["media_album_artist"])?.toString()
+} else {
+    null
+}
+
+/** Returns the media album name, if available. */
+internal fun Entity.getMediaAlbumName(): String? =
+    if (domain == MEDIA_PLAYER_DOMAIN) attributes["media_album_name"]?.toString() else null
+
+/** Returns the current media position in seconds, if available. */
+internal fun Entity.getMediaPosition(): Double? =
+    if (domain == MEDIA_PLAYER_DOMAIN) attributes["media_position"]?.toString()?.toDoubleOrNull() else null
+
+/** Returns the media duration in seconds, if available. */
+internal fun Entity.getMediaDuration(): Double? =
+    if (domain == MEDIA_PLAYER_DOMAIN) attributes["media_duration"]?.toString()?.toDoubleOrNull() else null
+
+/** Returns the entity_picture attribute URL, if available. */
+internal fun Entity.getEntityPictureUrl(): String? =
+    if (domain == MEDIA_PLAYER_DOMAIN) attributes["entity_picture"]?.toString() else null

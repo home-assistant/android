@@ -97,6 +97,7 @@ import io.homeassistant.companion.android.assist.AssistActivity
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.barcode.BarcodeScannerActivity
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlRepository
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
@@ -125,6 +126,7 @@ import io.homeassistant.companion.android.databinding.DialogAuthenticationBindin
 import io.homeassistant.companion.android.improv.ui.ImprovPermissionDialog
 import io.homeassistant.companion.android.improv.ui.ImprovSetupDialog
 import io.homeassistant.companion.android.launch.LaunchActivity
+import io.homeassistant.companion.android.mediacontrol.HaMediaSessionService
 import io.homeassistant.companion.android.nfc.WriteNfcTag
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
@@ -254,6 +256,9 @@ class WebViewActivity :
 
     @Inject
     lateinit var entityAddToHandler: EntityAddToHandler
+
+    @Inject
+    lateinit var mediaControlRepository: MediaControlRepository
 
     @Inject
     lateinit var dataSourceFactory: DataSource.Factory
@@ -1205,6 +1210,7 @@ class WebViewActivity :
         lifecycleScope.launch {
             SensorWorker.start(this@WebViewActivity)
             WebsocketManager.start(this@WebViewActivity)
+            HaMediaSessionService.startIfConfigured(this@WebViewActivity, mediaControlRepository)
 
             WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG || presenter.isWebViewDebugEnabled())
 

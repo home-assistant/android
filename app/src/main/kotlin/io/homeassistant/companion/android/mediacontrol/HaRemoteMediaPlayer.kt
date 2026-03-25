@@ -1,0 +1,157 @@
+package io.homeassistant.companion.android.mediacontrol
+
+import android.os.Looper
+import androidx.annotation.OptIn
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.PlaybackParameters
+import androidx.media3.common.Player
+import androidx.media3.common.SimpleBasePlayer
+import androidx.media3.common.util.UnstableApi
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
+import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlState
+import io.homeassistant.companion.android.common.data.mediacontrol.MediaPlaybackState
+
+/**
+ * A [SimpleBasePlayer] that acts as a remote control proxy for a Home Assistant media_player entity.
+ * It does not play audio itself — it reports state and translates playback commands into callbacks.
+ */
+@OptIn(UnstableApi::class)
+class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCallback) : SimpleBasePlayer(looper) {
+
+    /** Callback interface for translating player commands into HA service calls. */
+    interface CommandCallback {
+        fun onPlayRequested()
+        fun onPauseRequested()
+        fun onSeekRequested(positionMs: Long)
+        fun onNextRequested()
+        fun onPreviousRequested()
+    }
+
+    private var mediaState: MediaControlState? = null
+    private var artworkBytes: ByteArray? = null
+
+    /**
+     * Updates the internal state from a new [MediaControlState] and triggers a state refresh.
+     * @param artworkPngBytes Pre-compressed PNG bytes for album art (compress off main thread).
+     */
+    fun updateState(state: MediaControlState?, artworkPngBytes: ByteArray?) {
+        mediaState = state
+        artworkBytes = artworkPngBytes
+        invalidateState()
+    }
+
+    override fun getState(): State {
+        val state = mediaState ?: return buildIdleState()
+
+        val availableCommands = buildAvailableCommands(state)
+
+        val playbackState = when (state.playbackState) {
+            is MediaPlaybackState.Playing -> STATE_READY
+            is MediaPlaybackState.Paused -> STATE_READY
+            is MediaPlaybackState.Buffering -> STATE_BUFFERING
+            is MediaPlaybackState.Idle -> STATE_ENDED
+            is MediaPlaybackState.Off -> STATE_IDLE
+        }
+
+        val isPlaying = state.playbackState is MediaPlaybackState.Playing
+
+        val metadataBuilder = MediaMetadata.Builder()
+            .setTitle(state.title)
+            .setArtist(state.artist)
+            .setAlbumTitle(state.albumName)
+        artworkBytes?.let {
+            metadataBuilder.setArtworkData(it, MediaMetadata.PICTURE_TYPE_FRONT_COVER)
+        }
+
+        val durationUs = state.mediaDurationSeconds
+            ?.let { (it * 1_000_000).toLong() }
+            ?: DURATION_UNSET_US
+        val positionMs = state.mediaPositionSeconds
+            ?.let { (it * 1000).toLong() }
+            ?: 0L
+
+        val currentItem = MediaItemData.Builder(state.entityId)
+            .setMediaMetadata(metadataBuilder.build())
+            .setDurationUs(durationUs)
+            .build()
+
+        // 3-item playlist with current at index 1 so SimpleBasePlayer's seekToNext/seekToPrevious
+        // find valid adjacent items instead of ignoring the seek on a single-item playlist.
+        val playlist = listOf(
+            MediaItemData.Builder(PLACEHOLDER_PREVIOUS_ID).build(),
+            currentItem,
+            MediaItemData.Builder(PLACEHOLDER_NEXT_ID).build(),
+        )
+
+        return State.Builder()
+            .setAvailableCommands(availableCommands)
+            .setPlaybackState(playbackState)
+            .setPlayWhenReady(isPlaying, PLAY_WHEN_READY_CHANGE_REASON_REMOTE)
+            .setPlaybackParameters(PlaybackParameters(PLAYBACK_SPEED))
+            .setCurrentMediaItemIndex(CURRENT_ITEM_INDEX)
+            .setContentPositionMs(positionMs)
+            .setPlaylist(playlist)
+            .build()
+    }
+
+    override fun handleSetPlayWhenReady(playWhenReady: Boolean): ListenableFuture<*> {
+        if (playWhenReady) {
+            commandCallback.onPlayRequested()
+        } else {
+            commandCallback.onPauseRequested()
+        }
+        return Futures.immediateVoidFuture()
+    }
+
+    override fun handleSeek(mediaItemIndex: Int, positionMs: Long, seekCommand: Int): ListenableFuture<*> {
+        when (seekCommand) {
+            Player.COMMAND_SEEK_TO_NEXT,
+            Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM,
+            -> commandCallback.onNextRequested()
+
+            Player.COMMAND_SEEK_TO_PREVIOUS,
+            Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM,
+            -> commandCallback.onPreviousRequested()
+
+            else -> {
+                if (mediaState?.supportsSeek == true) {
+                    commandCallback.onSeekRequested(positionMs)
+                }
+            }
+        }
+        return Futures.immediateVoidFuture()
+    }
+
+    private fun buildIdleState(): State = State.Builder()
+        .setAvailableCommands(Player.Commands.EMPTY)
+        .setPlaybackState(STATE_IDLE)
+        .setPlayWhenReady(false, PLAY_WHEN_READY_CHANGE_REASON_REMOTE)
+        .build()
+
+    private fun buildAvailableCommands(state: MediaControlState): Player.Commands {
+        val builder = Player.Commands.Builder()
+        if (state.supportsPlay || state.supportsPause) builder.add(Player.COMMAND_PLAY_PAUSE)
+        if (state.supportsSeek) builder.add(Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM)
+        builder.add(Player.COMMAND_GET_CURRENT_MEDIA_ITEM)
+        if (state.supportsPreviousTrack) {
+            builder.add(Player.COMMAND_SEEK_TO_PREVIOUS)
+            builder.add(Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
+        }
+        if (state.supportsNextTrack) {
+            builder.add(Player.COMMAND_SEEK_TO_NEXT)
+            builder.add(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
+        }
+        builder.add(Player.COMMAND_GET_METADATA)
+        builder.add(Player.COMMAND_GET_TIMELINE)
+        return builder.build()
+    }
+
+    private companion object {
+        const val DURATION_UNSET_US = androidx.media3.common.C.TIME_UNSET
+        const val CURRENT_ITEM_INDEX = 1
+        const val PLAYBACK_SPEED = 1.0f
+        const val PLACEHOLDER_PREVIOUS_ID = "__ha_previous__"
+        const val PLACEHOLDER_NEXT_ID = "__ha_next__"
+    }
+}
