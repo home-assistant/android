@@ -140,4 +140,16 @@ interface PrefsRepository {
     suspend fun getSelectedWakeWord(): String?
 
     suspend fun setSelectedWakeWord(wakeWord: String)
+
+    /** Returns the server ID of the configured media control entity, or null if not configured. */
+    suspend fun getMediaControlServerId(): Int?
+
+    /** Sets the server ID for the media control entity. Pass null to clear. */
+    suspend fun setMediaControlServerId(serverId: Int?)
+
+    /** Returns the entity ID of the configured media control entity, or null if not configured. */
+    suspend fun getMediaControlEntityId(): String?
+
+    /** Sets the entity ID for the media control entity. Pass null to clear. */
+    suspend fun setMediaControlEntityId(entityId: String?)
 }

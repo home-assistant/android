@@ -36,6 +36,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_REMOTE_MESSAGING"/>
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
@@ -239,6 +240,18 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.service.controls.ControlsProviderService"/>
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".mediacontrol.HaMediaSessionService"
+            android:exported="true"
+            android:foregroundServiceType="mediaPlayback"
+            tools:ignore="ExportedService">
+            <!-- Exported so system media controllers can bind to the session.
+                 Connections are filtered in MediaSession.Callback#onConnect. -->
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaSessionService"/>
             </intent-filter>
         </service>
 

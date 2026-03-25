@@ -96,7 +96,7 @@
         errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="319"
+            line="330"
             column="27"/>
     </issue>
 
@@ -107,7 +107,7 @@
         errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="917"
+            line="928"
             column="27"/>
     </issue>
 
@@ -349,7 +349,7 @@
         errorLine2="     ~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="70"
+            line="71"
             column="6"/>
     </issue>
 
@@ -360,7 +360,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="434"
+            line="445"
             column="13"/>
     </issue>
 
@@ -1460,7 +1460,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="254"
+            line="269"
             column="13"/>
     </issue>
 
@@ -1471,7 +1471,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="292"
+            line="307"
             column="29"/>
     </issue>
 
@@ -1482,7 +1482,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="400"
+            line="415"
             column="17"/>
     </issue>
 
@@ -1493,7 +1493,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="400"
+            line="415"
             column="17"/>
     </issue>
 
@@ -1504,7 +1504,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="433"
+            line="448"
             column="13"/>
     </issue>
 
@@ -1515,7 +1515,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="529"
+            line="544"
             column="13"/>
     </issue>
 
@@ -1526,7 +1526,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="539"
+            line="554"
             column="17"/>
     </issue>
 
@@ -1537,7 +1537,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="539"
+            line="554"
             column="17"/>
     </issue>
 
@@ -1548,7 +1548,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="561"
+            line="576"
             column="13"/>
     </issue>
 
@@ -3237,6 +3237,61 @@
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/matter/views/MatterCommissioningView.kt"
             line="53"
             column="14"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Server> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `servers: ImmutableList&lt;Server>` or create an `@Immutable` wrapper for this class: `@Immutable data class ServersList(val items: List&lt;Server>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    servers: List&lt;Server>,"
+        errorLine2="             ~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/mediacontrol/views/MediaControlSettingsView.kt"
+            line="62"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Entity> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `sortedEntities: ImmutableList&lt;Entity>` or create an `@Immutable` wrapper for this class: `@Immutable data class SortedEntitiesList(val items: List&lt;Entity>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    sortedEntities: List&lt;Entity>,"
+        errorLine2="                    ~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/mediacontrol/views/MediaControlSettingsView.kt"
+            line="63"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;EntityRegistryResponse> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entityRegistry: ImmutableList&lt;EntityRegistryResponse>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntityRegistryList(val items: List&lt;EntityRegistryResponse>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    entityRegistry: List&lt;EntityRegistryResponse>,"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/mediacontrol/views/MediaControlSettingsView.kt"
+            line="64"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;DeviceRegistryResponse> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `deviceRegistry: ImmutableList&lt;DeviceRegistryResponse>` or create an `@Immutable` wrapper for this class: `@Immutable data class DeviceRegistryList(val items: List&lt;DeviceRegistryResponse>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    deviceRegistry: List&lt;DeviceRegistryResponse>,"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/mediacontrol/views/MediaControlSettingsView.kt"
+            line="65"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;AreaRegistryResponse> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `areaRegistry: ImmutableList&lt;AreaRegistryResponse>` or create an `@Immutable` wrapper for this class: `@Immutable data class AreaRegistryList(val items: List&lt;AreaRegistryResponse>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    areaRegistry: List&lt;AreaRegistryResponse>,"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/mediacontrol/views/MediaControlSettingsView.kt"
+            line="66"
+            column="19"/>
     </issue>
 
     <issue
