@@ -180,6 +180,8 @@ class CameraWidget : AppWidgetProvider() {
                         // Wait for the image to be loaded before returning the RemoteViews
                         // to avoid concurrent modifications between Coil and updateAppWidget.
                         context.imageLoader.enqueue(request).job.join()
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         Timber.e(e, "Unable to fetch image")
                     }
