@@ -13,6 +13,7 @@ import androidx.core.os.BundleCompat
 import coil3.imageLoader
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
+import coil3.request.allowHardware
 import coil3.size.Dimension
 import coil3.size.Precision
 import coil3.size.Size
@@ -167,14 +168,18 @@ class CameraWidget : AppWidgetProvider() {
                     try {
                         val request = ImageRequest.Builder(context)
                             .data(url)
-                            .target(RemoteViewsTarget(context, appWidgetId, this, R.id.widgetCameraImage))
+                            .target(RemoteViewsTarget(this, R.id.widgetCameraImage))
+                            // RemoteViews requires software bitmaps for serialization
+                            .allowHardware(false)
                             .diskCachePolicy(CachePolicy.DISABLED)
                             .memoryCachePolicy(CachePolicy.DISABLED)
                             .networkCachePolicy(CachePolicy.READ_ONLY)
                             .size(Size(getScreenWidth(), Dimension.Undefined))
                             .precision(Precision.INEXACT)
                             .build()
-                        context.imageLoader.enqueue(request)
+                        // Wait for the image to be loaded before returning the RemoteViews
+                        // to avoid concurrent modifications between Coil and updateAppWidget.
+                        context.imageLoader.enqueue(request).job.join()
                     } catch (e: Exception) {
                         Timber.e(e, "Unable to fetch image")
                     }
@@ -199,8 +204,7 @@ class CameraWidget : AppWidgetProvider() {
                 setOnClickPendingIntent(R.id.widgetCameraPlaceholder, tapWidgetPendingIntent)
             }
         }
-        // If there is an url, Coil will call appWidgetManager.updateAppWidget
-        return if (url == null) views else null
+        return views
     }
 
     private suspend fun retrieveCameraImageUrl(serverId: Int, entityId: String): String? {

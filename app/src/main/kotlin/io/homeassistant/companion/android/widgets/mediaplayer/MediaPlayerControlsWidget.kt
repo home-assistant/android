@@ -11,6 +11,7 @@ import android.widget.RemoteViews
 import android.widget.Toast
 import coil3.imageLoader
 import coil3.request.ImageRequest
+import coil3.request.allowHardware
 import com.google.android.material.color.DynamicColors
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -255,10 +256,14 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                     try {
                         val request = ImageRequest.Builder(context)
                             .data(url)
-                            .target(RemoteViewsTarget(context, appWidgetId, this, R.id.widgetMediaImage))
+                            .target(RemoteViewsTarget(this, R.id.widgetMediaImage))
+                            // RemoteViews requires software bitmaps for serialization
+                            .allowHardware(false)
                             .size(1024)
                             .build()
-                        context.imageLoader.enqueue(request)
+                        // Wait for the image to be loaded before returning the RemoteViews
+                        // to avoid concurrent modifications between Coil and updateAppWidget.
+                        context.imageLoader.enqueue(request).job.join()
                     } catch (e: Exception) {
                         Timber.e(e, "Unable to load image")
                     }
