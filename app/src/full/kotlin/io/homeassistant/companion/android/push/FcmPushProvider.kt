@@ -14,9 +14,7 @@ import timber.log.Timber
  * Only available in the "full" build flavor.
  */
 @Singleton
-class FcmPushProvider @Inject constructor(
-    private val messagingTokenProvider: MessagingTokenProvider,
-) : PushProvider {
+class FcmPushProvider @Inject constructor(private val messagingTokenProvider: MessagingTokenProvider) : PushProvider {
 
     override val name: String = NAME
 

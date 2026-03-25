@@ -15,8 +15,8 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.push.PushProviderManager
 import io.homeassistant.companion.android.database.server.Server
-import io.homeassistant.companion.android.push.WebSocketPushProvider
 import io.homeassistant.companion.android.database.settings.SettingsDao
+import io.homeassistant.companion.android.push.WebSocketPushProvider
 import io.homeassistant.companion.android.settings.assist.DefaultAssistantManager
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.NightModeManager

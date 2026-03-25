@@ -10,7 +10,8 @@ package io.homeassistant.companion.android.common.push
  *
  * Implementations should be registered via Dagger multibinding so that
  * [PushProviderManager] can discover all available providers and expose them
- * for user selection.
+ * for user selection. Provider choice is currently user-configurable; there is
+ * no automatic "best provider" selection.
  */
 interface PushProvider {
 

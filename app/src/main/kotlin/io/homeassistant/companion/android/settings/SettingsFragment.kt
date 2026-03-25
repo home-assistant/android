@@ -2,13 +2,13 @@ package io.homeassistant.companion.android.settings
 
 import android.app.UiModeManager
 import android.content.Intent
-import android.widget.Toast
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.NotificationManagerCompat
@@ -54,8 +54,8 @@ import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
 import io.homeassistant.companion.android.settings.wear.SettingsWearDetection
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
 import io.homeassistant.companion.android.util.QuestUtil
-import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.util.applyBottomSafeDrawingInsets
+import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebViewActivity
 import java.time.Instant
 import java.time.ZoneId
@@ -64,8 +64,8 @@ import java.time.format.FormatStyle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 class SettingsFragment(
@@ -560,7 +560,11 @@ class SettingsFragment(
                     presenter.handlePushProviderChange(value)
                 }
                 if (value == "WebSocket") {
-                    Toast.makeText(requireContext(), commonR.string.push_provider_websocket_enabled, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        requireContext(),
+                        commonR.string.push_provider_websocket_enabled,
+                        Toast.LENGTH_SHORT,
+                    ).show()
                     WebsocketManager.restart(requireContext())
                 }
                 true
