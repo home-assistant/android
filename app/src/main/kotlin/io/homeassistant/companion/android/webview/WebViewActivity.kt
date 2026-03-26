@@ -497,6 +497,7 @@ class WebViewActivity :
                 }
 
                 override fun onPageFinished(view: WebView?, url: String?) {
+                    injectBlobInterceptor(view)
                     webViewInitialized.value = true
                     if (clearHistory) {
                         webView.clearHistory()
@@ -1998,28 +1999,88 @@ class WebViewActivity :
         }
     }
 
+    /**
+     * Injects a script that intercepts [URL.createObjectURL] to keep a reference to [Blob]
+     * objects, so they survive [URL.revokeObjectURL] and can still be read when the WebView
+     * download listener fires asynchronously.
+     *
+     * Without this, blob downloads (e.g. "Download trace") fail with ERR_FILE_NOT_FOUND
+     * because the frontend revokes the blob URL synchronously after clicking the anchor,
+     * but the WebView download listener and subsequent XHR happen asynchronously.
+     */
+    private fun injectBlobInterceptor(view: WebView?) {
+        view?.evaluateJavascript(
+            """
+            (function() {
+                if (window.__blobRegistry) return;
+                var registry = new Map();
+                window.__blobRegistry = registry;
+                var origCreate = URL.createObjectURL.bind(URL);
+                URL.createObjectURL = function(obj) {
+                    var url = origCreate(obj);
+                    if (obj instanceof Blob) {
+                        registry.set(url, { blob: obj, filename: null });
+                    }
+                    return url;
+                };
+                var origDispatch = HTMLAnchorElement.prototype.dispatchEvent;
+                HTMLAnchorElement.prototype.dispatchEvent = function(event) {
+                    if (event.type === 'click' && this.href && this.href.startsWith('blob:') && this.download) {
+                        var entry = registry.get(this.href);
+                        if (entry) {
+                            entry.filename = this.download;
+                        }
+                    }
+                    return origDispatch.call(this, event);
+                };
+            })();
+            """.trimIndent(),
+            null,
+        )
+    }
+
+    /**
+     * Triggers a blob download by reading the blob data and passing it to the native
+     * [handleBlob] interface. First tries to retrieve the blob from the intercepted registry
+     * (see [injectBlobInterceptor]), then falls back to XHR for non-intercepted blob URLs.
+     */
     private fun triggerBlobDownload(url: String, contentDisposition: String, mimetype: String) {
-        val filename = URLUtil.guessFileName(url, contentDisposition, mimetype)
-        val jsCode = """
-        (function() {
-            var url = '$url';
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', url, true);
-            xhr.responseType = 'blob';
-            xhr.onload = function(e) {
-                if (xhr.status == 200) {
-                    var blob = xhr.response;
-                    var reader = new FileReader();
-                    reader.onloadend = function() {
-                        $javascriptInterface.handleBlob(reader.result, '$filename');
-                    };
-                    reader.readAsDataURL(blob);
-                }
-            };
-            xhr.send();
-        })();
-        """.trimIndent()
-        webView.evaluateJavascript(jsCode, null)
+        lifecycleScope.launch {
+            Timber.d("Triggering blob download for $url")
+            val fallbackFilename = withContext(Dispatchers.IO) {
+                URLUtil.guessFileName(url, contentDisposition, mimetype)
+            }
+            val jsCode = """
+                (function() {
+                    var url = '$url';
+                    var fallbackFilename = '$fallbackFilename';
+                    function readAndSend(blob, filename) {
+                        var reader = new FileReader();
+                        reader.onloadend = function() {
+                            $javascriptInterface.handleBlob(reader.result, filename || fallbackFilename);
+                        };
+                        reader.readAsDataURL(blob);
+                    }
+                    var registry = window.__blobRegistry;
+                    var entry = registry && registry.get(url);
+                    if (entry) {
+                        registry.delete(url);
+                        readAndSend(entry.blob, entry.filename);
+                    } else {
+                        var xhr = new XMLHttpRequest();
+                        xhr.open('GET', url, true);
+                        xhr.responseType = 'blob';
+                        xhr.onload = function() {
+                            if (xhr.status == 200) {
+                                readAndSend(xhr.response, null);
+                            }
+                        };
+                        xhr.send();
+                    }
+                })();
+            """.trimIndent()
+            webView.evaluateJavascript(jsCode, null)
+        }
     }
 
     /**
