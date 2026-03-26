@@ -17,6 +17,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.util.sensitive
 import java.io.ByteArrayOutputStream
+import java.net.URL
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -191,8 +192,6 @@ class HaMediaSession(
             serverManager.connectionStateProvider(state.serverId)
                 .urlFlow()
                 .firstUrlOrNull()
-                ?.toString()
-                ?.removeSuffix("/")
         } catch (e: CancellationException) {
             throw e
         } catch (e: IllegalStateException) {
@@ -200,7 +199,7 @@ class HaMediaSession(
             null
         } ?: return null
 
-        return "$baseUrl$entityPictureUrl"
+        return URL(baseUrl, entityPictureUrl).toString()
     }
 
     /** Loads album art and compresses to PNG bytes on the IO dispatcher. */
