@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.mediacontrol
 
 import android.os.Looper
 import androidx.annotation.OptIn
+import androidx.media3.common.DeviceInfo
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
@@ -27,6 +28,14 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
         fun onSeekRequested(positionMs: Long)
         fun onNextRequested()
         fun onPreviousRequested()
+
+        /**
+         * Called when the OS requests an exact volume level.
+         * @param volume the requested volume in the range [0.0, 1.0]
+         */
+        fun onSetVolumeRequested(volume: Float)
+        fun onIncreaseVolumeRequested()
+        fun onDecreaseVolumeRequested()
     }
 
     private var mediaState: MediaControlState? = null
@@ -87,6 +96,8 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
             MediaItemData.Builder(PLACEHOLDER_NEXT_ID).build(),
         )
 
+        val deviceVolume = state.volumeLevel?.let { (it * VOLUME_SCALE).toInt() } ?: 0
+
         return State.Builder()
             .setAvailableCommands(availableCommands)
             .setPlaybackState(playbackState)
@@ -95,6 +106,9 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
             .setCurrentMediaItemIndex(CURRENT_ITEM_INDEX)
             .setContentPositionMs(positionMs)
             .setPlaylist(playlist)
+            .setDeviceInfo(REMOTE_DEVICE_INFO)
+            .setDeviceVolume(deviceVolume)
+            .setIsDeviceMuted(state.isVolumeMuted)
             .build()
     }
 
@@ -126,6 +140,21 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
         return Futures.immediateVoidFuture()
     }
 
+    override fun handleSetDeviceVolume(deviceVolume: Int, flags: Int): ListenableFuture<*> {
+        commandCallback.onSetVolumeRequested(volume = deviceVolume / VOLUME_SCALE.toFloat())
+        return Futures.immediateVoidFuture()
+    }
+
+    override fun handleIncreaseDeviceVolume(flags: Int): ListenableFuture<*> {
+        commandCallback.onIncreaseVolumeRequested()
+        return Futures.immediateVoidFuture()
+    }
+
+    override fun handleDecreaseDeviceVolume(flags: Int): ListenableFuture<*> {
+        commandCallback.onDecreaseVolumeRequested()
+        return Futures.immediateVoidFuture()
+    }
+
     private fun buildIdleState(): State = State.Builder()
         .setAvailableCommands(Player.Commands.EMPTY)
         .setPlaybackState(STATE_IDLE)
@@ -145,6 +174,11 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
             builder.add(Player.COMMAND_SEEK_TO_NEXT)
             builder.add(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
         }
+        if (state.supportsVolumeSet) {
+            builder.add(Player.COMMAND_GET_DEVICE_VOLUME)
+            builder.add(Player.COMMAND_SET_DEVICE_VOLUME_WITH_FLAGS)
+            builder.add(Player.COMMAND_ADJUST_DEVICE_VOLUME_WITH_FLAGS)
+        }
         builder.add(Player.COMMAND_GET_METADATA)
         builder.add(Player.COMMAND_GET_TIMELINE)
         return builder.build()
@@ -156,5 +190,13 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
         const val PLAYBACK_SPEED = 1.0f
         const val PLACEHOLDER_PREVIOUS_ID = "__ha_previous__"
         const val PLACEHOLDER_NEXT_ID = "__ha_next__"
+
+        /** HA uses 0.0–1.0, Media3 uses integer 0–100. */
+        const val VOLUME_SCALE = 100
+
+        val REMOTE_DEVICE_INFO: DeviceInfo = DeviceInfo.Builder(DeviceInfo.PLAYBACK_TYPE_REMOTE)
+            .setMinVolume(0)
+            .setMaxVolume(VOLUME_SCALE)
+            .build()
     }
 }

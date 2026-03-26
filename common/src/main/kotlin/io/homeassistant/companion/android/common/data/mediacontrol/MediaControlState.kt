@@ -30,4 +30,8 @@ data class MediaControlState(
     val supportsSeek: Boolean,
     val supportsPreviousTrack: Boolean,
     val supportsNextTrack: Boolean,
+    val supportsVolumeSet: Boolean,
+    val volumeLevel: Float?,
+    val isVolumeMuted: Boolean,
+    val entityFriendlyName: String?,
 )

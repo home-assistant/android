@@ -84,6 +84,21 @@ class HaMediaSessionService : MediaSessionService() {
             override fun onPreviousRequested() {
                 callMediaAction("media_previous_track")
             }
+
+            override fun onSetVolumeRequested(volume: Float) {
+                callMediaAction(
+                    action = "volume_set",
+                    extraData = mapOf("volume_level" to volume),
+                )
+            }
+
+            override fun onIncreaseVolumeRequested() {
+                callMediaAction("volume_up")
+            }
+
+            override fun onDecreaseVolumeRequested() {
+                callMediaAction("volume_down")
+            }
         }
 
         val newPlayer = HaRemoteMediaPlayer(Looper.getMainLooper(), commandCallback)

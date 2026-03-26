@@ -8,11 +8,13 @@ import io.homeassistant.companion.android.common.data.integration.getMediaArtist
 import io.homeassistant.companion.android.common.data.integration.getMediaDuration
 import io.homeassistant.companion.android.common.data.integration.getMediaPosition
 import io.homeassistant.companion.android.common.data.integration.getMediaTitle
+import io.homeassistant.companion.android.common.data.integration.getVolumeMuted
 import io.homeassistant.companion.android.common.data.integration.supportsNextTrack
 import io.homeassistant.companion.android.common.data.integration.supportsPause
 import io.homeassistant.companion.android.common.data.integration.supportsPlay
 import io.homeassistant.companion.android.common.data.integration.supportsPreviousTrack
 import io.homeassistant.companion.android.common.data.integration.supportsSeek
+import io.homeassistant.companion.android.common.data.integration.supportsVolumeSet
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import javax.inject.Inject
@@ -107,5 +109,9 @@ private fun Entity.toMediaControlState(serverId: Int): MediaControlState {
         supportsSeek = supportsSeek(),
         supportsPreviousTrack = supportsPreviousTrack(),
         supportsNextTrack = supportsNextTrack(),
+        supportsVolumeSet = supportsVolumeSet(),
+        volumeLevel = if (supportsVolumeSet()) (attributes["volume_level"] as? Number)?.toFloat() else null,
+        isVolumeMuted = getVolumeMuted(),
+        entityFriendlyName = attributes["friendly_name"] as? String,
     )
 }

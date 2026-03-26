@@ -41,6 +41,10 @@ class HaRemoteMediaPlayerTest {
         supportsSeek: Boolean = true,
         supportsPreviousTrack: Boolean = true,
         supportsNextTrack: Boolean = true,
+        supportsVolumeSet: Boolean = false,
+        volumeLevel: Float? = null,
+        isVolumeMuted: Boolean = false,
+        entityFriendlyName: String? = null,
     ) = MediaControlState(
         entityId = "media_player.test",
         serverId = 1,
@@ -56,6 +60,10 @@ class HaRemoteMediaPlayerTest {
         supportsSeek = supportsSeek,
         supportsPreviousTrack = supportsPreviousTrack,
         supportsNextTrack = supportsNextTrack,
+        supportsVolumeSet = supportsVolumeSet,
+        volumeLevel = volumeLevel,
+        isVolumeMuted = isVolumeMuted,
+        entityFriendlyName = entityFriendlyName,
     )
 
     // -- getState tests --
@@ -250,5 +258,79 @@ class HaRemoteMediaPlayerTest {
         shadowOf(Looper.getMainLooper()).idle()
 
         assertEquals(1.0f, player.playbackParameters.speed)
+    }
+
+    // -- Volume command tests --
+
+    @Test
+    fun `Given volume supported when getState then volume commands available`() {
+        player.updateState(state = createState(supportsVolumeSet = true, volumeLevel = 0.5f), artworkPngBytes = null)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertTrue(player.availableCommands.contains(Player.COMMAND_GET_DEVICE_VOLUME))
+        assertTrue(player.availableCommands.contains(Player.COMMAND_SET_DEVICE_VOLUME_WITH_FLAGS))
+        assertTrue(player.availableCommands.contains(Player.COMMAND_ADJUST_DEVICE_VOLUME_WITH_FLAGS))
+    }
+
+    @Test
+    fun `Given volume not supported when getState then volume commands not available`() {
+        player.updateState(state = createState(supportsVolumeSet = false), artworkPngBytes = null)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertFalse(player.availableCommands.contains(Player.COMMAND_GET_DEVICE_VOLUME))
+        assertFalse(player.availableCommands.contains(Player.COMMAND_SET_DEVICE_VOLUME_WITH_FLAGS))
+        assertFalse(player.availableCommands.contains(Player.COMMAND_ADJUST_DEVICE_VOLUME_WITH_FLAGS))
+    }
+
+    @Test
+    fun `Given volumeLevel 0_5 when getState then deviceVolume is 50`() {
+        player.updateState(state = createState(supportsVolumeSet = true, volumeLevel = 0.5f), artworkPngBytes = null)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(50, player.deviceVolume)
+    }
+
+    @Test
+    fun `Given isVolumeMuted true when getState then deviceMuted is true`() {
+        player.updateState(
+            state = createState(supportsVolumeSet = true, volumeLevel = 0.5f, isVolumeMuted = true),
+            artworkPngBytes = null,
+        )
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertTrue(player.isDeviceMuted)
+    }
+
+    @Test
+    fun `Given player when setDeviceVolume 50 then onSetVolumeRequested called with 0_5`() {
+        player.updateState(state = createState(supportsVolumeSet = true, volumeLevel = 0.5f), artworkPngBytes = null)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        player.setDeviceVolume(50, 0)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        verify { commandCallback.onSetVolumeRequested(volume = 0.5f) }
+    }
+
+    @Test
+    fun `Given player when increaseDeviceVolume then onIncreaseVolumeRequested called`() {
+        player.updateState(state = createState(supportsVolumeSet = true, volumeLevel = 0.5f), artworkPngBytes = null)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        player.increaseDeviceVolume(0)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        verify { commandCallback.onIncreaseVolumeRequested() }
+    }
+
+    @Test
+    fun `Given player when decreaseDeviceVolume then onDecreaseVolumeRequested called`() {
+        player.updateState(state = createState(supportsVolumeSet = true, volumeLevel = 0.5f), artworkPngBytes = null)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        player.decreaseDeviceVolume(0)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        verify { commandCallback.onDecreaseVolumeRequested() }
     }
 }

@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonPrimitive
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -274,6 +275,99 @@ class MediaControlRepositoryImplTest {
                 assertTrue(state.supportsSeek)
                 assertTrue(state.supportsPreviousTrack)
                 assertTrue(state.supportsNextTrack)
+                awaitComplete()
+            }
+        }
+    }
+
+    @Nested
+    inner class VolumeMappingTest {
+
+        private fun configureEntity() {
+            coEvery { prefsRepository.getMediaControlServerId() } returns 1
+            coEvery { prefsRepository.getMediaControlEntityId() } returns "media_player.test"
+        }
+
+        private fun entityWithVolumeAttributes(attributes: Map<String, Any?>) = CompressedEntityState(
+            state = JsonPrimitive("playing"),
+            attributes = attributes,
+            lastChanged = 1000.0,
+            lastUpdated = 1000.0,
+        )
+
+        @Test
+        fun `Given entity with volume support and volume_level then volumeLevel and supportsVolumeSet are set`() = runTest {
+            configureEntity()
+            val entityState = entityWithVolumeAttributes(
+                mapOf(
+                    "supported_features" to EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_SET,
+                    "volume_level" to 0.7,
+                ),
+            )
+            coEvery {
+                webSocketRepository.getCompressedStateAndChanges(any())
+            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityState)))
+
+            repository.observeMediaControlState().test {
+                val state = awaitItem()!!
+                assertTrue(state.supportsVolumeSet)
+                assertEquals(0.7f, state.volumeLevel)
+                awaitComplete()
+            }
+        }
+
+        @Test
+        fun `Given entity without volume support then volumeLevel is null and supportsVolumeSet is false`() = runTest {
+            configureEntity()
+            val entityState = entityWithVolumeAttributes(
+                mapOf("supported_features" to EntityExt.MEDIA_PLAYER_SUPPORT_PLAY),
+            )
+            coEvery {
+                webSocketRepository.getCompressedStateAndChanges(any())
+            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityState)))
+
+            repository.observeMediaControlState().test {
+                val state = awaitItem()!!
+                assertFalse(state.supportsVolumeSet)
+                assertNull(state.volumeLevel)
+                awaitComplete()
+            }
+        }
+
+        @Test
+        fun `Given entity with is_volume_muted true then isVolumeMuted is true`() = runTest {
+            configureEntity()
+            val entityState = entityWithVolumeAttributes(
+                mapOf(
+                    "supported_features" to EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_SET,
+                    "volume_level" to 0.5,
+                    "is_volume_muted" to true,
+                ),
+            )
+            coEvery {
+                webSocketRepository.getCompressedStateAndChanges(any())
+            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityState)))
+
+            repository.observeMediaControlState().test {
+                val state = awaitItem()!!
+                assertTrue(state.isVolumeMuted)
+                awaitComplete()
+            }
+        }
+
+        @Test
+        fun `Given entity with friendly_name then entityFriendlyName is set`() = runTest {
+            configureEntity()
+            val entityState = entityWithVolumeAttributes(
+                mapOf("friendly_name" to "Living Room TV"),
+            )
+            coEvery {
+                webSocketRepository.getCompressedStateAndChanges(any())
+            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityState)))
+
+            repository.observeMediaControlState().test {
+                val state = awaitItem()!!
+                assertEquals("Living Room TV", state.entityFriendlyName)
                 awaitComplete()
             }
         }

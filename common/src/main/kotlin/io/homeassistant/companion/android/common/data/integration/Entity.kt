@@ -456,6 +456,15 @@ fun Entity.getVolumeLevel(): EntityPosition? {
     }
 }
 
+fun Entity.getVolumeMuted(): Boolean {
+    return try {
+        (attributes["is_volume_muted"] as? Boolean) ?: false
+    } catch (e: Exception) {
+        Timber.tag(EntityExt.TAG).e(e, "Unable to get getVolumeMuted")
+        false
+    }
+}
+
 fun Entity.getVolumeStep(): Float {
     return try {
         if (!supportsVolumeSet()) return 0.1f
