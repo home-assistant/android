@@ -15,7 +15,6 @@ import io.homeassistant.companion.android.common.data.integration.supportsPrevio
 import io.homeassistant.companion.android.common.data.integration.supportsSeek
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.util.sensitive
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
@@ -40,7 +39,7 @@ internal class MediaControlRepositoryImpl @Inject constructor(
             val stateFlow = serverManager.webSocketRepository(serverId)
                 .getCompressedStateAndChanges(listOf(entityId))
             if (stateFlow == null) {
-                Timber.w("WebSocket subscription returned null for entity ${sensitive(entityId)}")
+                Timber.w("WebSocket subscription returned null for entity $entityId")
                 emit(null)
                 return@flow
             }
@@ -69,7 +68,7 @@ internal class MediaControlRepositoryImpl @Inject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.e(e, "Failed to subscribe to media control entity ${sensitive(entityId)}")
+            Timber.e(e, "Failed to subscribe to media control entity $entityId")
             emit(null)
         }
     }.distinctUntilChanged()

@@ -11,6 +11,7 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlState
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaPlaybackState
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * A [SimpleBasePlayer] that acts as a remote control proxy for a Home Assistant media_player entity.
@@ -65,10 +66,12 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
         }
 
         val durationUs = state.mediaDurationSeconds
-            ?.let { (it * 1_000_000).toLong() }
+            ?.seconds
+            ?.inWholeMicroseconds
             ?: DURATION_UNSET_US
         val positionMs = state.mediaPositionSeconds
-            ?.let { (it * 1000).toLong() }
+            ?.seconds
+            ?.inWholeMilliseconds
             ?: 0L
 
         val currentItem = MediaItemData.Builder(state.entityId)

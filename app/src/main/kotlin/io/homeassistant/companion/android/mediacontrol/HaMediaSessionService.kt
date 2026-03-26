@@ -51,7 +51,7 @@ class HaMediaSessionService : MediaSessionService() {
 
     private var mediaSession: MediaSession? = null
     private var player: HaRemoteMediaPlayer? = null
-    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private var observationJob: Job? = null
     private var currentArtworkUrl: String? = null
@@ -175,7 +175,7 @@ class HaMediaSessionService : MediaSessionService() {
             if (!controller.isTrusted) {
                 Timber.w(
                     "Rejecting connection from untrusted media controller package=%s",
-                    sensitive(controller.packageName),
+                    controller.packageName,
                 )
                 return MediaSession.ConnectionResult.reject()
             }
