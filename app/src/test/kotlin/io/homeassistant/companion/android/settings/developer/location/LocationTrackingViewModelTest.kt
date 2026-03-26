@@ -109,42 +109,51 @@ class LocationTrackingViewModelTest {
     }
 
     @Test
-    fun `Given sent filter when creating pager then dao queries sent results`() = runTest {
-        val pager = LocationTrackingViewModel.createHistoryPager(locationHistoryDao, LocationTrackingViewModel.HistoryFilter.SENT)
-        backgroundScope.launch { pager.flow.collect {} }
+    fun `Given sent filter when collecting history then dao queries sent results`() = runTest {
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.historyPagerFlow.collect {} }
+        runCurrent()
+
+        viewModel.setHistoryFilter(LocationTrackingViewModel.HistoryFilter.SENT.menuItemId)
         runCurrent()
 
         verify { locationHistoryDao.getAll(listOf(LocationHistoryItemResult.SENT.name)) }
     }
 
     @Test
-    fun `Given failed filter when creating pager then dao queries failed results`() = runTest {
-        val pager = LocationTrackingViewModel.createHistoryPager(locationHistoryDao, LocationTrackingViewModel.HistoryFilter.FAILED)
-        backgroundScope.launch { pager.flow.collect {} }
+    fun `Given failed filter when collecting history then dao queries failed results`() = runTest {
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.historyPagerFlow.collect {} }
+        runCurrent()
+
+        viewModel.setHistoryFilter(LocationTrackingViewModel.HistoryFilter.FAILED.menuItemId)
         runCurrent()
 
         verify { locationHistoryDao.getAll(listOf(LocationHistoryItemResult.FAILED_SEND.name)) }
     }
 
     @Test
-    fun `Given skipped filter when creating pager then dao queries skipped results`() = runTest {
+    fun `Given skipped filter when collecting history then dao queries skipped results`() = runTest {
         val expectedResults = (
             LocationHistoryItemResult.entries.toMutableList() -
                 LocationHistoryItemResult.SENT -
                 LocationHistoryItemResult.FAILED_SEND
             ).map { it.name }
 
-        val pager = LocationTrackingViewModel.createHistoryPager(locationHistoryDao, LocationTrackingViewModel.HistoryFilter.SKIPPED)
-        backgroundScope.launch { pager.flow.collect {} }
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.historyPagerFlow.collect {} }
+        runCurrent()
+
+        viewModel.setHistoryFilter(LocationTrackingViewModel.HistoryFilter.SKIPPED.menuItemId)
         runCurrent()
 
         verify { locationHistoryDao.getAll(expectedResults) }
     }
 
     @Test
-    fun `Given all filter when creating pager then dao queries all results`() = runTest {
-        val pager = LocationTrackingViewModel.createHistoryPager(locationHistoryDao, LocationTrackingViewModel.HistoryFilter.ALL)
-        backgroundScope.launch { pager.flow.collect {} }
+    fun `Given default filter when collecting history then dao queries all results`() = runTest {
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.historyPagerFlow.collect {} }
         runCurrent()
 
         verify { locationHistoryDao.getAll() }
