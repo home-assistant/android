@@ -208,6 +208,7 @@ class PhoneSettingsListener :
                     appVersionProvider(),
                     deviceName,
                     messagingTokenProvider(),
+                    null,
                     false,
                 ),
             )
