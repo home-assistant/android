@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.settings.mediacontrol
 
 import android.app.Application
+import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -43,10 +44,8 @@ data class MediaControlSettingsUiState(
     val areaRegistryPerServer: Map<Int, List<AreaRegistryResponse>> = emptyMap(),
     // The in-memory list of entities being configured
     val configuredEntities: List<MediaControlEntityConfig> = emptyList(),
-    // Whether the "add entity" inline form is currently shown
-    val showAddSlot: Boolean = false,
-    // Server selection within the pending add form
-    val pendingServerId: Int = ServerManager.SERVER_ID_ACTIVE,
+    // Server selection for the entity picker
+    val selectedServerId: Int = ServerManager.SERVER_ID_ACTIVE,
 )
 
 @HiltViewModel
@@ -79,7 +78,7 @@ class MediaControlSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val loadedServers = serverManager.servers()
             val defaultServerId = serverManager.getServer()?.id ?: ServerManager.SERVER_ID_ACTIVE
-            _uiState.update { it.copy(servers = loadedServers, pendingServerId = defaultServerId) }
+            _uiState.update { it.copy(servers = loadedServers, selectedServerId = defaultServerId) }
 
             val results = loadedServers.map { server ->
                 async {
@@ -118,41 +117,25 @@ class MediaControlSettingsViewModel @Inject constructor(
         }
     }
 
-    /** Opens the inline form to add a new entity slot. */
-    fun showAddEntity() {
-        val defaultServerId = _uiState.value.let { state ->
-            if (state.servers.isNotEmpty()) state.servers.first().id else ServerManager.SERVER_ID_ACTIVE
-        }
-        _uiState.update { it.copy(showAddSlot = true, pendingServerId = defaultServerId) }
-    }
-
-    /** Cancels the pending add-entity form without making changes. */
-    fun cancelAddEntity() {
-        _uiState.update { it.copy(showAddSlot = false) }
-    }
-
-    /** Updates the selected server in the pending add form, resetting entity selection. */
-    fun selectPendingServerId(serverId: Int) {
-        _uiState.update { it.copy(pendingServerId = serverId) }
+    /** Updates the selected server in the entity picker. */
+    fun selectServerId(serverId: Int) {
+        _uiState.update { it.copy(selectedServerId = serverId) }
     }
 
     /**
-     * Adds the entity identified by [entityId] from the pending server to the configured list,
-     * then hides the add form. Has no effect if the entity is already in the list.
+     * Adds the entity identified by [entityId] from the currently selected server to the configured
+     * list. Has no effect if the entity is already in the list.
      */
-    fun addPendingEntity(entityId: String) {
+    fun addEntity(entityId: String) {
         val config = MediaControlEntityConfig(
-            serverId = _uiState.value.pendingServerId,
+            serverId = _uiState.value.selectedServerId,
             entityId = entityId,
         )
         _uiState.update { state ->
             if (state.configuredEntities.contains(config)) {
-                state.copy(showAddSlot = false)
+                state
             } else {
-                state.copy(
-                    configuredEntities = state.configuredEntities + config,
-                    showAddSlot = false,
-                )
+                state.copy(configuredEntities = state.configuredEntities + config)
             }
         }
     }
@@ -161,6 +144,22 @@ class MediaControlSettingsViewModel @Inject constructor(
     fun removeEntity(index: Int) {
         _uiState.update { state ->
             state.copy(configuredEntities = state.configuredEntities.toMutableList().also { it.removeAt(index) })
+        }
+    }
+
+    /**
+     * Moves a configured entity from one position to another in response to a drag gesture.
+     * Does not persist the change — call [saveConfiguration] to save.
+     */
+    fun onMove(from: LazyListItemInfo, to: LazyListItemInfo) {
+        _uiState.update { state ->
+            val list = state.configuredEntities.toMutableList()
+            val fromIndex = list.indexOfFirst { it == from.key }
+            val toIndex = list.indexOfFirst { it == to.key }
+            if (fromIndex >= 0 && toIndex >= 0) {
+                list.add(toIndex, list.removeAt(fromIndex))
+            }
+            state.copy(configuredEntities = list)
         }
     }
 
@@ -179,7 +178,7 @@ class MediaControlSettingsViewModel @Inject constructor(
     fun clearAllConfiguration() {
         viewModelScope.launch {
             mediaControlRepository.setConfiguredEntities(emptyList())
-            _uiState.update { it.copy(configuredEntities = emptyList(), showAddSlot = false) }
+            _uiState.update { it.copy(configuredEntities = emptyList()) }
             _serviceEvents.emit(MediaControlServiceEvent.Stop)
         }
     }
