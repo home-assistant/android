@@ -77,7 +77,7 @@ class AssistVoiceInteractionServiceTest {
         service.wakeWordListenerFactory = wakeWordListenerFactory
 
         // Grant audio permission
-        Shadows.shadowOf(ApplicationProvider.getApplicationContext<android.app.Application>())
+        Shadows.shadowOf(ApplicationProvider.getApplicationContext<Application>())
             .grantPermissions(Manifest.permission.RECORD_AUDIO)
     }
 
@@ -87,7 +87,7 @@ class AssistVoiceInteractionServiceTest {
     }
 
     /**
-     * Sends an action via [onStartCommand], exercising the same internal
+     * Sends an action via [android.app.Service.onStartCommand], exercising the same internal
      * methods that the broadcast-based companion methods trigger in production.
      */
     private fun sendAction(action: String) {
@@ -354,6 +354,13 @@ class AssistVoiceInteractionServiceTest {
         // showSession should NOT have been called because the service is no longer ready
         assertNull(shadow.lastSessionBundle)
         coVerify { wakeWordListener.stop() }
+    }
+
+    @Test
+    fun `Given service not ready when onShutdown then do not crash`() = runTest {
+        // Reproduces Sentry:ANDROID-27RA: onShutdown called before onReady should not throw
+        // IllegalArgumentException for unregistering a receiver that was never registered
+        service.onShutdown()
     }
 
     @Test
