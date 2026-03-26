@@ -565,11 +565,27 @@ class SettingsFragment(
             lifecycleScope.launch(Dispatchers.IO) {
                 val entries = mutableListOf<String>()
                 val values = mutableListOf<String>()
+                val pm = requireContext().packageManager
 
                 val providers = presenter.getAvailablePushProviders()
                 for (provider in providers) {
-                    entries.add(provider.second)
-                    values.add(provider.first)
+                    if (provider.first == "UnifiedPush") {
+                        val distributors = presenter.getUnifiedPushDistributors()
+                        for (distributor in distributors) {
+                            val label = try {
+                                pm.getApplicationLabel(
+                                    pm.getApplicationInfo(distributor, PackageManager.GET_META_DATA),
+                                ).toString()
+                            } catch (_: PackageManager.NameNotFoundException) {
+                                distributor
+                            }
+                            entries.add("UnifiedPush ($label)")
+                            values.add("${SettingsPresenter.PUSH_PROVIDER_UP_PREFIX}$distributor")
+                        }
+                    } else {
+                        entries.add(provider.second)
+                        values.add(provider.first)
+                    }
                 }
 
                 val activeValue = presenter.getActivePushProviderValue()
