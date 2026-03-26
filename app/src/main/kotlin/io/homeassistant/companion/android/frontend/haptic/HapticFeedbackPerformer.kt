@@ -22,7 +22,6 @@ private val SELECTION_FALLBACK_DURATION = 50.milliseconds
  *
  * Uses `View.performHapticFeedback()` with semantic constants where available,
  * falling back to `Vibrator` patterns for API levels that lack the specific constant.
- * This matches the legacy WebViewActivity haptic behavior.
  */
 object HapticFeedbackPerformer {
 
