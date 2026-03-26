@@ -132,7 +132,9 @@ class HaMediaSession(
                     }
                     loadArtworkAndUpdatePlayer(state)
                 }
-                // Flow completed (WebSocket not ready, connection lost, etc) — retry
+                // Flow completed (WebSocket not ready, connection lost, etc) — show buffering
+                // state so the notification stays visible but controls are disabled, then retry
+                withContext(Dispatchers.Main) { player.setConnecting() }
                 Timber.d(
                     "Media control observation completed for %s, retrying in %s",
                     config.entityId,

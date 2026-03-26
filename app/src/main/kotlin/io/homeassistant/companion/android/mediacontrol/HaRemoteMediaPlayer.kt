@@ -40,18 +40,32 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
 
     private var mediaState: MediaControlState? = null
     private var artworkBytes: ByteArray? = null
+    private var isConnecting: Boolean = false
 
     /**
      * Updates the internal state from a new [MediaControlState] and triggers a state refresh.
      * @param artworkPngBytes Pre-compressed PNG bytes for album art (compress off main thread).
      */
     fun updateState(state: MediaControlState?, artworkPngBytes: ByteArray?) {
+        isConnecting = false
         mediaState = state
         artworkBytes = artworkPngBytes
         invalidateState()
     }
 
+    /**
+     * Signals that the connection to HA has been lost and is being retried.
+     * Transitions to [STATE_BUFFERING] with the last known metadata visible but all
+     * interactive commands disabled, so the notification stays visible without showing
+     * stale controls.
+     */
+    fun setConnecting() {
+        isConnecting = true
+        invalidateState()
+    }
+
     override fun getState(): State {
+        if (isConnecting) return buildConnectingState()
         val state = mediaState ?: return buildIdleState()
 
         val availableCommands = buildAvailableCommands(state)
@@ -160,6 +174,36 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
         .setPlaybackState(STATE_IDLE)
         .setPlayWhenReady(false, PLAY_WHEN_READY_CHANGE_REASON_REMOTE)
         .build()
+
+    /**
+     * Builds a buffering state that keeps the last known metadata visible while the
+     * connection is being re-established. All interactive commands are disabled so the
+     * user cannot act on stale state.
+     */
+    private fun buildConnectingState(): State {
+        val state = mediaState ?: return buildIdleState()
+        val metadataBuilder = MediaMetadata.Builder()
+            .setTitle(state.title)
+            .setArtist(state.artist)
+            .setAlbumTitle(state.albumName)
+        artworkBytes?.let { metadataBuilder.setArtworkData(it, MediaMetadata.PICTURE_TYPE_FRONT_COVER) }
+        val currentItem = MediaItemData.Builder(state.entityId)
+            .setMediaMetadata(metadataBuilder.build())
+            .build()
+        val playlist = listOf(
+            MediaItemData.Builder(PLACEHOLDER_PREVIOUS_ID).build(),
+            currentItem,
+            MediaItemData.Builder(PLACEHOLDER_NEXT_ID).build(),
+        )
+        return State.Builder()
+            .setAvailableCommands(Player.Commands.EMPTY)
+            .setPlaybackState(STATE_BUFFERING)
+            .setPlayWhenReady(false, PLAY_WHEN_READY_CHANGE_REASON_REMOTE)
+            .setCurrentMediaItemIndex(CURRENT_ITEM_INDEX)
+            .setPlaylist(playlist)
+            .setDeviceInfo(REMOTE_DEVICE_INFO)
+            .build()
+    }
 
     private fun buildAvailableCommands(state: MediaControlState): Player.Commands {
         val builder = Player.Commands.Builder()
