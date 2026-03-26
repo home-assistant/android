@@ -2046,7 +2046,7 @@ class WebViewActivity :
      */
     private fun triggerBlobDownload(url: String, contentDisposition: String, mimetype: String) {
         lifecycleScope.launch {
-            Timber.d("Triggering blob download for $url")
+            Timber.d("Triggering blob download for ${sensitive(url)}")
             val fallbackFilename = withContext(Dispatchers.IO) {
                 URLUtil.guessFileName(url, contentDisposition, mimetype)
             }
