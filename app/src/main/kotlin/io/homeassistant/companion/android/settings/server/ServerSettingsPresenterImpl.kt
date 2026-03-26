@@ -1,8 +1,11 @@
 package io.homeassistant.companion.android.settings.server
 
+import android.content.Context
 import androidx.preference.PreferenceDataStore
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.data.network.WifiHelper
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.mediacontrol.HaMediaSessionService
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -13,6 +16,7 @@ import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
 class ServerSettingsPresenterImpl @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val serverManager: ServerManager,
     private val wifiHelper: WifiHelper,
 ) : PreferenceDataStore(),
@@ -115,6 +119,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
                 // Remove server anyway, the user wants to delete and we don't need the server for that
             }
             serverManager.removeServer(serverId)
+            HaMediaSessionService.onServerRemoved(context)
             view.onRemovedServer(
                 success = true,
                 hasAnyRemaining = serverManager.servers().any { it.id != serverId },

@@ -84,5 +84,16 @@ class HaMediaSessionService : MediaSessionService() {
                 context.startService(Intent(context, HaMediaSessionService::class.java))
             }
         }
+
+        /**
+         * Should be called after a server is removed. If the service is running with the removed
+         * server's configuration, it will re-check its config, find no entity, and stop itself.
+         */
+        fun onServerRemoved(context: Context) {
+            context.startService(
+                Intent(context, HaMediaSessionService::class.java)
+                    .setAction(ACTION_RESTART_OBSERVATION),
+            )
+        }
     }
 }
