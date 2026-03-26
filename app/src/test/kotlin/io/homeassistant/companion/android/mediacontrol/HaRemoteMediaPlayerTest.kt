@@ -262,23 +262,29 @@ class HaRemoteMediaPlayerTest {
 
     // -- Volume command tests --
 
+    @Suppress("DEPRECATION")
     @Test
     fun `Given volume supported when getState then volume commands available`() {
         player.updateState(state = createState(supportsVolumeSet = true, volumeLevel = 0.5f), artworkPngBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertTrue(player.availableCommands.contains(Player.COMMAND_GET_DEVICE_VOLUME))
+        assertTrue(player.availableCommands.contains(Player.COMMAND_SET_DEVICE_VOLUME))
         assertTrue(player.availableCommands.contains(Player.COMMAND_SET_DEVICE_VOLUME_WITH_FLAGS))
+        assertTrue(player.availableCommands.contains(Player.COMMAND_ADJUST_DEVICE_VOLUME))
         assertTrue(player.availableCommands.contains(Player.COMMAND_ADJUST_DEVICE_VOLUME_WITH_FLAGS))
     }
 
+    @Suppress("DEPRECATION")
     @Test
     fun `Given volume not supported when getState then volume commands not available`() {
         player.updateState(state = createState(supportsVolumeSet = false), artworkPngBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertFalse(player.availableCommands.contains(Player.COMMAND_GET_DEVICE_VOLUME))
+        assertFalse(player.availableCommands.contains(Player.COMMAND_SET_DEVICE_VOLUME))
         assertFalse(player.availableCommands.contains(Player.COMMAND_SET_DEVICE_VOLUME_WITH_FLAGS))
+        assertFalse(player.availableCommands.contains(Player.COMMAND_ADJUST_DEVICE_VOLUME))
         assertFalse(player.availableCommands.contains(Player.COMMAND_ADJUST_DEVICE_VOLUME_WITH_FLAGS))
     }
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 9.0.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.0.1)" variant="all" version="9.0.1">
+<issues format="6" by="lint 9.1.0" type="baseline" client="gradle" dependencies="false" name="AGP (9.1.0)" variant="all" version="9.1.0">
 
     <issue
         id="MissingPermission"
@@ -140,7 +140,7 @@
         errorLine2="                             ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/controls/HaControlsProviderService.kt"
-            line="46"
+            line="47"
             column="30"/>
     </issue>
 
@@ -646,7 +646,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="554"
+            line="555"
             column="17"/>
     </issue>
 
@@ -657,7 +657,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="554"
+            line="555"
             column="17"/>
     </issue>
 
@@ -1183,12 +1183,12 @@
     <issue
         id="AvoidAnySerializer"
         message="Prefer polymorphic serializer over AnySerializer."
-        errorLine1="                        MapAnySerializer,"
-        errorLine2="                        ~~~~~~~~~~~~~~~~">
+        errorLine1="                    MapAnySerializer,"
+        errorLine2="                    ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/button/ButtonWidget.kt"
-            line="317"
-            column="25"/>
+            line="318"
+            column="21"/>
     </issue>
 
     <issue
@@ -1341,7 +1341,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/assist/AssistSettingsScreen.kt"
-            line="375"
+            line="381"
             column="22"/>
     </issue>
 
@@ -1616,19 +1616,41 @@
         errorLine2="             ~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/mediacontrol/views/MediaControlSettingsView.kt"
-            line="62"
+            line="155"
             column="14"/>
     </issue>
 
     <issue
         id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Entity> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `sortedEntities: ImmutableList&lt;Entity>` or create an `@Immutable` wrapper for this class: `@Immutable data class SortedEntitiesList(val items: List&lt;Entity>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    sortedEntities: List&lt;Entity>,"
-        errorLine2="                    ~~~~~~~~~~~~">
+        message="The Compose Compiler cannot infer the stability of a parameter if a Map&lt;Int, List&lt;Entity>> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entitiesPerServer: ImmutableMap&lt;Int, List&lt;Entity>>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesPerServerMap(val items: Map&lt;Int, List&lt;Entity>>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    entitiesPerServer: Map&lt;Int, List&lt;Entity>>,"
+        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/mediacontrol/views/MediaControlSettingsView.kt"
-            line="63"
-            column="21"/>
+            line="156"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Server> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `servers: ImmutableList&lt;Server>` or create an `@Immutable` wrapper for this class: `@Immutable data class ServersList(val items: List&lt;Server>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    servers: List&lt;Server>,"
+        errorLine2="             ~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/settings/mediacontrol/views/MediaControlSettingsView.kt"
+            line="199"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Entity> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `pendingEntities: ImmutableList&lt;Entity>` or create an `@Immutable` wrapper for this class: `@Immutable data class PendingEntitiesList(val items: List&lt;Entity>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    pendingEntities: List&lt;Entity>,"
+        errorLine2="                     ~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/settings/mediacontrol/views/MediaControlSettingsView.kt"
+            line="201"
+            column="22"/>
     </issue>
 
     <issue
@@ -1638,7 +1660,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/mediacontrol/views/MediaControlSettingsView.kt"
-            line="64"
+            line="202"
             column="21"/>
     </issue>
 
@@ -1649,7 +1671,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/mediacontrol/views/MediaControlSettingsView.kt"
-            line="65"
+            line="203"
             column="21"/>
     </issue>
 
@@ -1660,7 +1682,7 @@
         errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/mediacontrol/views/MediaControlSettingsView.kt"
-            line="66"
+            line="204"
             column="19"/>
     </issue>
 

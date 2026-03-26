@@ -176,7 +176,15 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
         }
         if (state.supportsVolumeSet) {
             builder.add(Player.COMMAND_GET_DEVICE_VOLUME)
+            // Both the deprecated and _WITH_FLAGS variants are required: the deprecated ones are
+            // checked by Media3's MediaSessionLegacyStub when setting up VolumeProviderCompat
+            // (which drives the SystemUI device-chip volume slider), while the _WITH_FLAGS variants
+            // are used by newer clients and the volume button key-event path.
+            @Suppress("DEPRECATION")
+            builder.add(Player.COMMAND_SET_DEVICE_VOLUME)
             builder.add(Player.COMMAND_SET_DEVICE_VOLUME_WITH_FLAGS)
+            @Suppress("DEPRECATION")
+            builder.add(Player.COMMAND_ADJUST_DEVICE_VOLUME)
             builder.add(Player.COMMAND_ADJUST_DEVICE_VOLUME_WITH_FLAGS)
         }
         builder.add(Player.COMMAND_GET_METADATA)
