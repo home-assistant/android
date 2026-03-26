@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.settings.mediacontrol
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -7,10 +8,15 @@ import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.mediacontrol.HaMediaSessionService
 import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.mediacontrol.views.MediaControlSettingsView
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MediaControlSettingsFragment : Fragment() {
@@ -26,6 +32,23 @@ class MediaControlSettingsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         addHelpMenuProvider("https://companion.home-assistant.io/docs/integrations/android-media-controls")
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.serviceEvents.collect { event ->
+                    when (event) {
+                        MediaControlServiceEvent.Start -> {
+                            requireContext().startService(
+                                Intent(requireContext(), HaMediaSessionService::class.java)
+                                    .setAction(HaMediaSessionService.ACTION_RESTART_OBSERVATION),
+                            )
+                        }
+                        MediaControlServiceEvent.Stop -> {
+                            requireContext().stopService(Intent(requireContext(), HaMediaSessionService::class.java))
+                        }
+                    }
+                }
+            }
+        }
     }
 
     override fun onResume() {

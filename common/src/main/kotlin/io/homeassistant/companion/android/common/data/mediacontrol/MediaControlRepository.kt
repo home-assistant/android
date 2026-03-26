@@ -3,20 +3,27 @@ package io.homeassistant.companion.android.common.data.mediacontrol
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Manages the configuration and state observation for a single media_player entity
- * used to drive native Android media controls in the notification shade.
+ * Manages configuration and state observation for media_player entities
+ * exposed as native Android media controls in the notification shade.
  */
 interface MediaControlRepository {
 
-    /** Emits the current [MediaControlState] whenever the configured entity's state changes. Emits null when not configured. */
-    fun observeMediaControlState(): Flow<MediaControlState?>
+    /**
+     * Emits the current [MediaControlState] for a single entity whenever its state changes.
+     * Emits null when the entity is unavailable or the WebSocket subscription fails.
+     */
+    fun observeEntityState(config: MediaControlEntityConfig): Flow<MediaControlState?>
 
-    /** Returns the currently configured server ID, or null if not configured. */
-    suspend fun getConfiguredServerId(): Int?
+    /**
+     * Emits the combined state of all configured entities. Each emission is a list of non-null
+     * states for entities that are currently reachable. Emits an empty list when nothing is
+     * configured.
+     */
+    fun observeMediaControlStates(): Flow<List<MediaControlState>>
 
-    /** Returns the currently configured entity ID, or null if not configured. */
-    suspend fun getConfiguredEntityId(): String?
+    /** Returns the list of all configured media_player entities. */
+    suspend fun getConfiguredEntities(): List<MediaControlEntityConfig>
 
-    /** Sets the configured media_player entity. Pass null values to clear the configuration. */
-    suspend fun setConfiguredEntity(serverId: Int?, entityId: String?)
+    /** Replaces the full list of configured media_player entities. */
+    suspend fun setConfiguredEntities(entities: List<MediaControlEntityConfig>)
 }

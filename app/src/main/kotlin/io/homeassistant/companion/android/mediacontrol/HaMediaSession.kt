@@ -10,6 +10,7 @@ import coil3.imageLoader
 import coil3.request.ImageRequest
 import coil3.toBitmap
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
+import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlRepository
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlState
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -30,25 +31,27 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 /**
- * Owns the [MediaSession] and [HaRemoteMediaPlayer] for the Home Assistant media control feature.
+ * Owns the [MediaSession] and [HaRemoteMediaPlayer] for a single Home Assistant media_player entity.
  *
  * Observes [MediaControlRepository] for entity state changes, loads artwork via Coil, and
  * translates Media3 player commands into Home Assistant service calls via [ServerManager].
  *
- * Call [release] when the hosting service is destroyed to cancel observation and release
+ * Call [release] when the session is no longer needed to cancel observation and release
  * Media3 resources.
  *
  * @param context Used for Coil image loading and [MediaSession] construction.
- * @param mediaControlRepository Source of truth for configured entity and state flow.
+ * @param config Identifies the media_player entity this session represents.
+ * @param mediaControlRepository Provides the per-entity state flow.
  * @param serverManager Used to resolve artwork base URLs and call HA integration actions.
- * @param onStopRequested Called on the main thread when no entity is configured and the
- *   hosting service should stop itself.
+ * @param onEntityGone Called on the main thread when the WebSocket flow ends unexpectedly and
+ *   the retry loop gives up, so the hosting service can remove this session.
  */
 class HaMediaSession(
     private val context: Context,
+    private val config: MediaControlEntityConfig,
     private val mediaControlRepository: MediaControlRepository,
     private val serverManager: ServerManager,
-    private val onStopRequested: () -> Unit,
+    private val onEntityGone: () -> Unit,
 ) {
     val mediaSession: MediaSession
 
@@ -111,8 +114,7 @@ class HaMediaSession(
     }
 
     /**
-     * Cancels any existing entity state observation and starts a new one,
-     * re-reading the current configuration from preferences.
+     * Cancels any existing entity state observation and starts a new one for [config].
      */
     fun startObservingState() {
         observationJob?.cancel()
@@ -121,14 +123,7 @@ class HaMediaSession(
         observationJob = scope.launch(Dispatchers.IO) {
             while (true) {
                 ensureActive()
-                val isConfigured = mediaControlRepository.getConfiguredServerId() != null &&
-                    mediaControlRepository.getConfiguredEntityId() != null
-                if (!isConfigured) {
-                    Timber.d("No media control entity configured, stopping service")
-                    withContext(Dispatchers.Main) { onStopRequested() }
-                    return@launch
-                }
-                mediaControlRepository.observeMediaControlState().collect { state ->
+                mediaControlRepository.observeEntityState(config).collect { state ->
                     if (state == null) {
                         withContext(Dispatchers.Main) {
                             player.updateState(state = null, artworkPngBytes = null)
@@ -138,7 +133,11 @@ class HaMediaSession(
                     loadArtworkAndUpdatePlayer(state)
                 }
                 // Flow completed (WebSocket not ready, connection lost, etc) — retry
-                Timber.d("Media control observation completed, retrying in %s", OBSERVATION_RETRY_DELAY)
+                Timber.d(
+                    "Media control observation completed for %s, retrying in %s",
+                    config.entityId,
+                    OBSERVATION_RETRY_DELAY,
+                )
                 delay(OBSERVATION_RETRY_DELAY)
             }
         }
@@ -153,23 +152,16 @@ class HaMediaSession(
 
     private fun callMediaAction(action: String, extraData: Map<String, Any> = emptyMap()) {
         scope.launch(Dispatchers.IO) {
-            val serverId = mediaControlRepository.getConfiguredServerId()
-            val entityId = mediaControlRepository.getConfiguredEntityId()
-            if (serverId == null || entityId == null) {
-                Timber.w("Cannot call media action %s: no configured entity", action)
-                return@launch
-            }
-
-            val actionData = hashMapOf<String, Any>("entity_id" to entityId)
+            val actionData = hashMapOf<String, Any>("entity_id" to config.entityId)
             actionData.putAll(extraData)
 
             try {
-                serverManager.integrationRepository(serverId)
+                serverManager.integrationRepository(config.serverId)
                     .callAction(MEDIA_PLAYER_DOMAIN, action, actionData)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Failed to call media action $action")
+                Timber.e(e, "Failed to call media action %s", action)
             }
         }
     }
@@ -232,7 +224,7 @@ class HaMediaSession(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.e(e, "Failed to load album art from ${sensitive(url)}")
+            Timber.e(e, "Failed to load album art from %s", sensitive(url))
             null
         }
     }

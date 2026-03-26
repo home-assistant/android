@@ -33,6 +33,8 @@ class MediaControlRepositoryImplTest {
 
     private lateinit var repository: MediaControlRepositoryImpl
 
+    private val testConfig = MediaControlEntityConfig(serverId = 1, entityId = "media_player.test")
+
     @BeforeEach
     fun setUp() {
         coEvery { serverManager.webSocketRepository(any()) } returns webSocketRepository
@@ -43,24 +45,10 @@ class MediaControlRepositoryImplTest {
     }
 
     @Nested
-    inner class ObserveMediaControlStateTest {
+    inner class ObserveEntityStateTest {
 
         @Test
-        fun `Given no configured entity when observing then emit null`() = runTest {
-            coEvery { prefsRepository.getMediaControlServerId() } returns null
-            coEvery { prefsRepository.getMediaControlEntityId() } returns null
-
-            repository.observeMediaControlState().test {
-                assertNull(awaitItem())
-                awaitComplete()
-            }
-        }
-
-        @Test
-        fun `Given configured entity when state arrives then emit MediaControlState`() = runTest {
-            coEvery { prefsRepository.getMediaControlServerId() } returns 1
-            coEvery { prefsRepository.getMediaControlEntityId() } returns "media_player.test"
-
+        fun `Given entity when state arrives then emit MediaControlState`() = runTest {
             val entityState = CompressedEntityState(
                 state = JsonPrimitive("playing"),
                 attributes = mapOf(
@@ -80,7 +68,7 @@ class MediaControlRepositoryImplTest {
                 webSocketRepository.getCompressedStateAndChanges(listOf("media_player.test"))
             } returns flowOf(event)
 
-            repository.observeMediaControlState().test {
+            repository.observeEntityState(testConfig).test {
                 val state = awaitItem()
                 assertEquals("media_player.test", state?.entityId)
                 assertEquals(1, state?.serverId)
@@ -92,10 +80,7 @@ class MediaControlRepositoryImplTest {
         }
 
         @Test
-        fun `Given configured entity when entity removed then emit null`() = runTest {
-            coEvery { prefsRepository.getMediaControlServerId() } returns 1
-            coEvery { prefsRepository.getMediaControlEntityId() } returns "media_player.test"
-
+        fun `Given entity when entity removed then emit null`() = runTest {
             val event = CompressedStateChangedEvent(
                 removed = listOf("media_player.test"),
             )
@@ -103,21 +88,19 @@ class MediaControlRepositoryImplTest {
                 webSocketRepository.getCompressedStateAndChanges(listOf("media_player.test"))
             } returns flowOf(event)
 
-            repository.observeMediaControlState().test {
+            repository.observeEntityState(testConfig).test {
                 assertNull(awaitItem())
                 awaitComplete()
             }
         }
 
         @Test
-        fun `Given configured entity when websocket returns null then emit null`() = runTest {
-            coEvery { prefsRepository.getMediaControlServerId() } returns 1
-            coEvery { prefsRepository.getMediaControlEntityId() } returns "media_player.test"
+        fun `Given entity when websocket returns null then emit null`() = runTest {
             coEvery {
                 webSocketRepository.getCompressedStateAndChanges(listOf("media_player.test"))
             } returns null
 
-            repository.observeMediaControlState().test {
+            repository.observeEntityState(testConfig).test {
                 assertNull(awaitItem())
                 awaitComplete()
             }
@@ -125,12 +108,56 @@ class MediaControlRepositoryImplTest {
     }
 
     @Nested
-    inner class PlaybackStateMappingTest {
+    inner class ObserveMediaControlStatesTest {
 
-        private fun configureEntity() {
-            coEvery { prefsRepository.getMediaControlServerId() } returns 1
-            coEvery { prefsRepository.getMediaControlEntityId() } returns "media_player.test"
+        @Test
+        fun `Given no configured entities when observing then emit empty list`() = runTest {
+            coEvery { prefsRepository.getMediaControlEntities() } returns emptyList()
+
+            repository.observeMediaControlStates().test {
+                assertEquals(emptyList<MediaControlState>(), awaitItem())
+                awaitComplete()
+            }
         }
+
+        @Test
+        fun `Given two configured entities when states arrive then emit combined list`() = runTest {
+            val config1 = MediaControlEntityConfig(serverId = 1, entityId = "media_player.living_room")
+            val config2 = MediaControlEntityConfig(serverId = 1, entityId = "media_player.bedroom")
+            coEvery { prefsRepository.getMediaControlEntities() } returns listOf(config1, config2)
+
+            val state1 = CompressedEntityState(
+                state = JsonPrimitive("playing"),
+                attributes = mapOf("media_title" to "Song A"),
+                lastChanged = 1000.0,
+                lastUpdated = 1000.0,
+            )
+            val state2 = CompressedEntityState(
+                state = JsonPrimitive("paused"),
+                attributes = mapOf("media_title" to "Song B"),
+                lastChanged = 1000.0,
+                lastUpdated = 1000.0,
+            )
+            coEvery { serverManager.webSocketRepository(1) } returns webSocketRepository
+            coEvery {
+                webSocketRepository.getCompressedStateAndChanges(listOf("media_player.living_room"))
+            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.living_room" to state1)))
+            coEvery {
+                webSocketRepository.getCompressedStateAndChanges(listOf("media_player.bedroom"))
+            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.bedroom" to state2)))
+
+            repository.observeMediaControlStates().test {
+                val states = awaitItem()
+                assertEquals(2, states.size)
+                assertTrue(states.any { it.entityId == "media_player.living_room" && it.title == "Song A" })
+                assertTrue(states.any { it.entityId == "media_player.bedroom" && it.title == "Song B" })
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+    }
+
+    @Nested
+    inner class PlaybackStateMappingTest {
 
         private fun entityWithState(state: String, attributes: Map<String, Any?> = emptyMap()) = CompressedEntityState(
             state = JsonPrimitive(state),
@@ -139,14 +166,17 @@ class MediaControlRepositoryImplTest {
             lastUpdated = 1000.0,
         )
 
-        @Test
-        fun `Given paused state then maps to Paused`() = runTest {
-            configureEntity()
+        private fun configureWebSocketWith(state: String) {
             coEvery {
                 webSocketRepository.getCompressedStateAndChanges(any())
-            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityWithState("paused"))))
+            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityWithState(state))))
+        }
 
-            repository.observeMediaControlState().test {
+        @Test
+        fun `Given paused state then maps to Paused`() = runTest {
+            configureWebSocketWith("paused")
+
+            repository.observeEntityState(testConfig).test {
                 assertEquals(MediaPlaybackState.Paused, awaitItem()?.playbackState)
                 awaitComplete()
             }
@@ -154,12 +184,9 @@ class MediaControlRepositoryImplTest {
 
         @Test
         fun `Given buffering state then maps to Buffering`() = runTest {
-            configureEntity()
-            coEvery {
-                webSocketRepository.getCompressedStateAndChanges(any())
-            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityWithState("buffering"))))
+            configureWebSocketWith("buffering")
 
-            repository.observeMediaControlState().test {
+            repository.observeEntityState(testConfig).test {
                 assertEquals(MediaPlaybackState.Buffering, awaitItem()?.playbackState)
                 awaitComplete()
             }
@@ -167,12 +194,9 @@ class MediaControlRepositoryImplTest {
 
         @Test
         fun `Given idle state then maps to Idle`() = runTest {
-            configureEntity()
-            coEvery {
-                webSocketRepository.getCompressedStateAndChanges(any())
-            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityWithState("idle"))))
+            configureWebSocketWith("idle")
 
-            repository.observeMediaControlState().test {
+            repository.observeEntityState(testConfig).test {
                 assertEquals(MediaPlaybackState.Idle, awaitItem()?.playbackState)
                 awaitComplete()
             }
@@ -180,12 +204,9 @@ class MediaControlRepositoryImplTest {
 
         @Test
         fun `Given standby state then maps to Idle`() = runTest {
-            configureEntity()
-            coEvery {
-                webSocketRepository.getCompressedStateAndChanges(any())
-            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityWithState("standby"))))
+            configureWebSocketWith("standby")
 
-            repository.observeMediaControlState().test {
+            repository.observeEntityState(testConfig).test {
                 assertEquals(MediaPlaybackState.Idle, awaitItem()?.playbackState)
                 awaitComplete()
             }
@@ -193,12 +214,9 @@ class MediaControlRepositoryImplTest {
 
         @Test
         fun `Given off state then maps to Off`() = runTest {
-            configureEntity()
-            coEvery {
-                webSocketRepository.getCompressedStateAndChanges(any())
-            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityWithState("off"))))
+            configureWebSocketWith("off")
 
-            repository.observeMediaControlState().test {
+            repository.observeEntityState(testConfig).test {
                 assertEquals(MediaPlaybackState.Off, awaitItem()?.playbackState)
                 awaitComplete()
             }
@@ -206,12 +224,9 @@ class MediaControlRepositoryImplTest {
 
         @Test
         fun `Given unknown state then maps to Off`() = runTest {
-            configureEntity()
-            coEvery {
-                webSocketRepository.getCompressedStateAndChanges(any())
-            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityWithState("unavailable"))))
+            configureWebSocketWith("unavailable")
 
-            repository.observeMediaControlState().test {
+            repository.observeEntityState(testConfig).test {
                 assertEquals(MediaPlaybackState.Off, awaitItem()?.playbackState)
                 awaitComplete()
             }
@@ -219,13 +234,12 @@ class MediaControlRepositoryImplTest {
 
         @Test
         fun `Given entity with partial attributes then null fields are null`() = runTest {
-            configureEntity()
             val entityState = entityWithState("playing", attributes = mapOf("media_title" to "Only Title"))
             coEvery {
                 webSocketRepository.getCompressedStateAndChanges(any())
             } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityState)))
 
-            repository.observeMediaControlState().test {
+            repository.observeEntityState(testConfig).test {
                 val state = awaitItem()!!
                 assertEquals("Only Title", state.title)
                 assertNull(state.artist)
@@ -239,7 +253,6 @@ class MediaControlRepositoryImplTest {
 
         @Test
         fun `Given entity with all attributes then all fields populated`() = runTest {
-            configureEntity()
             val entityState = entityWithState(
                 "playing",
                 attributes = mapOf(
@@ -262,7 +275,7 @@ class MediaControlRepositoryImplTest {
                 webSocketRepository.getCompressedStateAndChanges(any())
             } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityState)))
 
-            repository.observeMediaControlState().test {
+            repository.observeEntityState(testConfig).test {
                 val state = awaitItem()!!
                 assertEquals("Song", state.title)
                 assertEquals("Artist", state.artist)
@@ -283,11 +296,6 @@ class MediaControlRepositoryImplTest {
     @Nested
     inner class VolumeMappingTest {
 
-        private fun configureEntity() {
-            coEvery { prefsRepository.getMediaControlServerId() } returns 1
-            coEvery { prefsRepository.getMediaControlEntityId() } returns "media_player.test"
-        }
-
         private fun entityWithVolumeAttributes(attributes: Map<String, Any?>) = CompressedEntityState(
             state = JsonPrimitive("playing"),
             attributes = attributes,
@@ -297,7 +305,6 @@ class MediaControlRepositoryImplTest {
 
         @Test
         fun `Given entity with volume support and volume_level then volumeLevel and supportsVolumeSet are set`() = runTest {
-            configureEntity()
             val entityState = entityWithVolumeAttributes(
                 mapOf(
                     "supported_features" to EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_SET,
@@ -308,7 +315,7 @@ class MediaControlRepositoryImplTest {
                 webSocketRepository.getCompressedStateAndChanges(any())
             } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityState)))
 
-            repository.observeMediaControlState().test {
+            repository.observeEntityState(testConfig).test {
                 val state = awaitItem()!!
                 assertTrue(state.supportsVolumeSet)
                 assertEquals(0.7f, state.volumeLevel)
@@ -318,7 +325,6 @@ class MediaControlRepositoryImplTest {
 
         @Test
         fun `Given entity without volume support then volumeLevel is null and supportsVolumeSet is false`() = runTest {
-            configureEntity()
             val entityState = entityWithVolumeAttributes(
                 mapOf("supported_features" to EntityExt.MEDIA_PLAYER_SUPPORT_PLAY),
             )
@@ -326,7 +332,7 @@ class MediaControlRepositoryImplTest {
                 webSocketRepository.getCompressedStateAndChanges(any())
             } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityState)))
 
-            repository.observeMediaControlState().test {
+            repository.observeEntityState(testConfig).test {
                 val state = awaitItem()!!
                 assertFalse(state.supportsVolumeSet)
                 assertNull(state.volumeLevel)
@@ -336,7 +342,6 @@ class MediaControlRepositoryImplTest {
 
         @Test
         fun `Given entity with is_volume_muted true then isVolumeMuted is true`() = runTest {
-            configureEntity()
             val entityState = entityWithVolumeAttributes(
                 mapOf(
                     "supported_features" to EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_SET,
@@ -348,7 +353,7 @@ class MediaControlRepositoryImplTest {
                 webSocketRepository.getCompressedStateAndChanges(any())
             } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityState)))
 
-            repository.observeMediaControlState().test {
+            repository.observeEntityState(testConfig).test {
                 val state = awaitItem()!!
                 assertTrue(state.isVolumeMuted)
                 awaitComplete()
@@ -357,7 +362,6 @@ class MediaControlRepositoryImplTest {
 
         @Test
         fun `Given entity with friendly_name then entityFriendlyName is set`() = runTest {
-            configureEntity()
             val entityState = entityWithVolumeAttributes(
                 mapOf("friendly_name" to "Living Room TV"),
             )
@@ -365,7 +369,7 @@ class MediaControlRepositoryImplTest {
                 webSocketRepository.getCompressedStateAndChanges(any())
             } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityState)))
 
-            repository.observeMediaControlState().test {
+            repository.observeEntityState(testConfig).test {
                 val state = awaitItem()!!
                 assertEquals("Living Room TV", state.entityFriendlyName)
                 awaitComplete()
@@ -378,9 +382,6 @@ class MediaControlRepositoryImplTest {
 
         @Test
         fun `Given duplicate state emissions then only first is emitted`() = runTest {
-            coEvery { prefsRepository.getMediaControlServerId() } returns 1
-            coEvery { prefsRepository.getMediaControlEntityId() } returns "media_player.test"
-
             val entityState = CompressedEntityState(
                 state = JsonPrimitive("playing"),
                 attributes = mapOf("media_title" to "Song"),
@@ -392,7 +393,7 @@ class MediaControlRepositoryImplTest {
                 webSocketRepository.getCompressedStateAndChanges(any())
             } returns stateFlow
 
-            repository.observeMediaControlState().test {
+            repository.observeEntityState(testConfig).test {
                 // Emit the same entity state twice — distinctUntilChanged should filter the duplicate
                 stateFlow.emit(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityState)))
                 val first = awaitItem()
@@ -410,33 +411,20 @@ class MediaControlRepositoryImplTest {
     inner class ConfigurationTest {
 
         @Test
-        fun `Given server id when getConfiguredServerId then delegates to prefs`() = runTest {
-            coEvery { prefsRepository.getMediaControlServerId() } returns 42
+        fun `Given entities when getConfiguredEntities then delegates to prefs`() = runTest {
+            val entities = listOf(MediaControlEntityConfig(serverId = 1, entityId = "media_player.tv"))
+            coEvery { prefsRepository.getMediaControlEntities() } returns entities
 
-            assertEquals(42, repository.getConfiguredServerId())
+            assertEquals(entities, repository.getConfiguredEntities())
         }
 
         @Test
-        fun `Given entity id when getConfiguredEntityId then delegates to prefs`() = runTest {
-            coEvery { prefsRepository.getMediaControlEntityId() } returns "media_player.kitchen"
+        fun `Given entities when setConfiguredEntities then updates prefs`() = runTest {
+            val entities = listOf(MediaControlEntityConfig(serverId = 5, entityId = "media_player.office"))
 
-            assertEquals("media_player.kitchen", repository.getConfiguredEntityId())
-        }
+            repository.setConfiguredEntities(entities)
 
-        @Test
-        fun `Given values when setConfiguredEntity then updates both prefs`() = runTest {
-            repository.setConfiguredEntity(serverId = 5, entityId = "media_player.office")
-
-            coVerify { prefsRepository.setMediaControlServerId(5) }
-            coVerify { prefsRepository.setMediaControlEntityId("media_player.office") }
-        }
-
-        @Test
-        fun `Given null values when setConfiguredEntity then clears both prefs`() = runTest {
-            repository.setConfiguredEntity(serverId = null, entityId = null)
-
-            coVerify { prefsRepository.setMediaControlServerId(null) }
-            coVerify { prefsRepository.setMediaControlEntityId(null) }
+            coVerify { prefsRepository.setMediaControlEntities(entities) }
         }
     }
 }

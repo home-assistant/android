@@ -1,41 +1,52 @@
 package io.homeassistant.companion.android.settings.mediacontrol
 
 import android.app.Application
-import android.content.Intent
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
+import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.database.server.Server
-import io.homeassistant.companion.android.mediacontrol.HaMediaSessionService
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+/** One-shot events emitted by [MediaControlSettingsViewModel] for the UI layer to act on. */
+sealed interface MediaControlServiceEvent {
+    data object Start : MediaControlServiceEvent
+    data object Stop : MediaControlServiceEvent
+}
+
 data class MediaControlSettingsUiState(
     val servers: List<Server> = emptyList(),
-    val entities: List<Entity> = emptyList(),
-    val entityRegistry: List<EntityRegistryResponse> = emptyList(),
-    val deviceRegistry: List<DeviceRegistryResponse> = emptyList(),
-    val areaRegistry: List<AreaRegistryResponse> = emptyList(),
-    val selectedServerId: Int = ServerManager.SERVER_ID_ACTIVE,
-    val selectedEntityId: String = "",
-    val isConfigured: Boolean = false,
+    // All loaded entities/registries per server, used by the entity picker
+    val entitiesPerServer: Map<Int, List<Entity>> = emptyMap(),
+    val entityRegistryPerServer: Map<Int, List<EntityRegistryResponse>> = emptyMap(),
+    val deviceRegistryPerServer: Map<Int, List<DeviceRegistryResponse>> = emptyMap(),
+    val areaRegistryPerServer: Map<Int, List<AreaRegistryResponse>> = emptyMap(),
+    // The in-memory list of entities being configured
+    val configuredEntities: List<MediaControlEntityConfig> = emptyList(),
+    // Whether the "add entity" inline form is currently shown
+    val showAddSlot: Boolean = false,
+    // Server selection within the pending add form
+    val pendingServerId: Int = ServerManager.SERVER_ID_ACTIVE,
 )
 
 @HiltViewModel
@@ -48,10 +59,13 @@ class MediaControlSettingsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(MediaControlSettingsUiState())
     val uiState: StateFlow<MediaControlSettingsUiState> = _uiState.asStateFlow()
 
-    private val entities = ConcurrentHashMap<Int, List<Entity>>()
-    private val entityRegistries = ConcurrentHashMap<Int, List<EntityRegistryResponse>>()
-    private val deviceRegistries = ConcurrentHashMap<Int, List<DeviceRegistryResponse>>()
-    private val areaRegistries = ConcurrentHashMap<Int, List<AreaRegistryResponse>>()
+    private val _serviceEvents = MutableSharedFlow<MediaControlServiceEvent>(extraBufferCapacity = 1)
+    val serviceEvents: SharedFlow<MediaControlServiceEvent> = _serviceEvents.asSharedFlow()
+
+    private val entitiesPerServer = ConcurrentHashMap<Int, List<Entity>>()
+    private val entityRegistriesPerServer = ConcurrentHashMap<Int, List<EntityRegistryResponse>>()
+    private val deviceRegistriesPerServer = ConcurrentHashMap<Int, List<DeviceRegistryResponse>>()
+    private val areaRegistriesPerServer = ConcurrentHashMap<Int, List<AreaRegistryResponse>>()
 
     private data class ServerRegistries(
         val serverId: Int,
@@ -62,9 +76,11 @@ class MediaControlSettingsViewModel @Inject constructor(
     )
 
     init {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             val loadedServers = serverManager.servers()
-            _uiState.update { it.copy(servers = loadedServers) }
+            val defaultServerId = serverManager.getServer()?.id ?: ServerManager.SERVER_ID_ACTIVE
+            _uiState.update { it.copy(servers = loadedServers, pendingServerId = defaultServerId) }
+
             val results = loadedServers.map { server ->
                 async {
                     ServerRegistries(
@@ -83,89 +99,89 @@ class MediaControlSettingsViewModel @Inject constructor(
                 }
             }.awaitAll()
             results.forEach { registries ->
-                entities[registries.serverId] = registries.entities
-                entityRegistries[registries.serverId] = registries.entityRegistry
-                deviceRegistries[registries.serverId] = registries.deviceRegistry
-                areaRegistries[registries.serverId] = registries.areaRegistry
+                entitiesPerServer[registries.serverId] = registries.entities
+                entityRegistriesPerServer[registries.serverId] = registries.entityRegistry
+                deviceRegistriesPerServer[registries.serverId] = registries.deviceRegistry
+                areaRegistriesPerServer[registries.serverId] = registries.areaRegistry
             }
 
-            val configuredServerId = mediaControlRepository.getConfiguredServerId()
-            val configuredEntityId = mediaControlRepository.getConfiguredEntityId()
+            val configuredEntities = mediaControlRepository.getConfiguredEntities()
+            _uiState.update { state ->
+                state.copy(
+                    entitiesPerServer = entitiesPerServer.toMap(),
+                    entityRegistryPerServer = entityRegistriesPerServer.toMap(),
+                    deviceRegistryPerServer = deviceRegistriesPerServer.toMap(),
+                    areaRegistryPerServer = areaRegistriesPerServer.toMap(),
+                    configuredEntities = configuredEntities,
+                )
+            }
+        }
+    }
 
-            if (configuredServerId != null && configuredEntityId != null) {
-                _uiState.update {
-                    it.copy(
-                        selectedServerId = configuredServerId,
-                        selectedEntityId = configuredEntityId,
-                        isConfigured = true,
-                    )
-                }
+    /** Opens the inline form to add a new entity slot. */
+    fun showAddEntity() {
+        val defaultServerId = _uiState.value.let { state ->
+            if (state.servers.isNotEmpty()) state.servers.first().id else ServerManager.SERVER_ID_ACTIVE
+        }
+        _uiState.update { it.copy(showAddSlot = true, pendingServerId = defaultServerId) }
+    }
+
+    /** Cancels the pending add-entity form without making changes. */
+    fun cancelAddEntity() {
+        _uiState.update { it.copy(showAddSlot = false) }
+    }
+
+    /** Updates the selected server in the pending add form, resetting entity selection. */
+    fun selectPendingServerId(serverId: Int) {
+        _uiState.update { it.copy(pendingServerId = serverId) }
+    }
+
+    /**
+     * Adds the entity identified by [entityId] from the pending server to the configured list,
+     * then hides the add form. Has no effect if the entity is already in the list.
+     */
+    fun addPendingEntity(entityId: String) {
+        val config = MediaControlEntityConfig(
+            serverId = _uiState.value.pendingServerId,
+            entityId = entityId,
+        )
+        _uiState.update { state ->
+            if (state.configuredEntities.contains(config)) {
+                state.copy(showAddSlot = false)
             } else {
-                _uiState.update {
-                    it.copy(selectedServerId = serverManager.getServer()?.id ?: 0)
-                }
+                state.copy(
+                    configuredEntities = state.configuredEntities + config,
+                    showAddSlot = false,
+                )
             }
-            loadEntities(_uiState.value.selectedServerId)
         }
     }
 
-    fun selectServerId(serverId: Int) {
-        if (serverId != _uiState.value.selectedServerId) {
-            _uiState.update {
-                it.copy(selectedServerId = serverId, selectedEntityId = "")
-            }
-            loadEntities(serverId)
+    /** Removes the configured entity at [index] from the list. */
+    fun removeEntity(index: Int) {
+        _uiState.update { state ->
+            state.copy(configuredEntities = state.configuredEntities.toMutableList().also { it.removeAt(index) })
         }
     }
 
-    fun selectEntityId(entityId: String) {
-        _uiState.update { it.copy(selectedEntityId = entityId) }
-    }
-
-    /** Saves the current entity selection and starts the media session service. */
+    /** Saves the current list of configured entities and emits a service event to the UI layer. */
     fun saveConfiguration() {
         viewModelScope.launch {
-            val state = _uiState.value
-            mediaControlRepository.setConfiguredEntity(
-                serverId = state.selectedServerId,
-                entityId = state.selectedEntityId,
+            val entities = _uiState.value.configuredEntities
+            mediaControlRepository.setConfiguredEntities(entities)
+            _serviceEvents.emit(
+                if (entities.isEmpty()) MediaControlServiceEvent.Stop else MediaControlServiceEvent.Start,
             )
-            _uiState.update { it.copy(isConfigured = true) }
-            startService()
         }
     }
 
-    /** Clears the configuration and stops the media session service. */
-    fun clearConfiguration() {
+    /** Clears all configured entities and emits a stop event to the UI layer. */
+    fun clearAllConfiguration() {
         viewModelScope.launch {
-            mediaControlRepository.setConfiguredEntity(serverId = null, entityId = null)
-            _uiState.update { it.copy(selectedEntityId = "", isConfigured = false) }
-            stopService()
+            mediaControlRepository.setConfiguredEntities(emptyList())
+            _uiState.update { it.copy(configuredEntities = emptyList(), showAddSlot = false) }
+            _serviceEvents.emit(MediaControlServiceEvent.Stop)
         }
-    }
-
-    private fun loadEntities(serverId: Int) {
-        _uiState.update {
-            it.copy(
-                entities = entities[serverId] ?: emptyList(),
-                entityRegistry = entityRegistries[serverId] ?: emptyList(),
-                deviceRegistry = deviceRegistries[serverId] ?: emptyList(),
-                areaRegistry = areaRegistries[serverId] ?: emptyList(),
-            )
-        }
-    }
-
-    private fun startService() {
-        val context = getApplication<Application>()
-        val intent = Intent(context, HaMediaSessionService::class.java)
-        intent.action = HaMediaSessionService.ACTION_RESTART_OBSERVATION
-        context.startService(intent)
-    }
-
-    private fun stopService() {
-        val context = getApplication<Application>()
-        val intent = Intent(context, HaMediaSessionService::class.java)
-        context.stopService(intent)
     }
 
     private suspend fun loadMediaPlayerEntities(serverId: Int): List<Entity> = try {

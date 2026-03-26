@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.common.data.prefs
 
 import android.os.Parcelable
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
+import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.HAGesture
 import kotlinx.parcelize.Parcelize
@@ -141,15 +142,9 @@ interface PrefsRepository {
 
     suspend fun setSelectedWakeWord(wakeWord: String)
 
-    /** Returns the server ID of the configured media control entity, or null if not configured. */
-    suspend fun getMediaControlServerId(): Int?
+    /** Returns all configured media control entities. */
+    suspend fun getMediaControlEntities(): List<MediaControlEntityConfig>
 
-    /** Sets the server ID for the media control entity. Pass null to clear. */
-    suspend fun setMediaControlServerId(serverId: Int?)
-
-    /** Returns the entity ID of the configured media control entity, or null if not configured. */
-    suspend fun getMediaControlEntityId(): String?
-
-    /** Sets the entity ID for the media control entity. Pass null to clear. */
-    suspend fun setMediaControlEntityId(entityId: String?)
+    /** Sets the list of configured media control entities. */
+    suspend fun setMediaControlEntities(entities: List<MediaControlEntityConfig>)
 }

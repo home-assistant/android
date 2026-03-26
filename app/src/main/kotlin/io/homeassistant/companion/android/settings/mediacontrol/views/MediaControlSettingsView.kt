@@ -1,33 +1,43 @@
 package io.homeassistant.companion.android.settings.mediacontrol.views
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
+import io.homeassistant.companion.android.common.compose.composable.HAIconButton
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.settings.mediacontrol.MediaControlSettingsUiState
 import io.homeassistant.companion.android.settings.mediacontrol.MediaControlSettingsViewModel
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
@@ -39,19 +49,14 @@ fun MediaControlSettingsView(viewModel: MediaControlSettingsViewModel, modifier:
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     HATheme {
         MediaControlSettingsContent(
-            servers = uiState.servers,
-            entities = uiState.entities,
-            entityRegistry = uiState.entityRegistry,
-            deviceRegistry = uiState.deviceRegistry,
-            areaRegistry = uiState.areaRegistry,
-            selectedServerId = uiState.selectedServerId,
-            selectedEntityId = uiState.selectedEntityId,
-            isConfigured = uiState.isConfigured,
-            onServerSelected = viewModel::selectServerId,
-            onEntitySelected = viewModel::selectEntityId,
-            onEntityCleared = { viewModel.selectEntityId("") },
+            uiState = uiState,
+            onAddEntity = viewModel::showAddEntity,
+            onCancelAddEntity = viewModel::cancelAddEntity,
+            onPendingServerSelected = viewModel::selectPendingServerId,
+            onPendingEntitySelected = viewModel::addPendingEntity,
+            onRemoveEntity = viewModel::removeEntity,
             onSave = viewModel::saveConfiguration,
-            onClear = viewModel::clearConfiguration,
+            onClearAll = viewModel::clearAllConfiguration,
             modifier = modifier,
         )
     }
@@ -59,30 +64,21 @@ fun MediaControlSettingsView(viewModel: MediaControlSettingsViewModel, modifier:
 
 @Composable
 internal fun MediaControlSettingsContent(
-    servers: List<Server>,
-    entities: List<Entity>,
-    entityRegistry: List<EntityRegistryResponse>,
-    deviceRegistry: List<DeviceRegistryResponse>,
-    areaRegistry: List<AreaRegistryResponse>,
-    selectedServerId: Int,
-    selectedEntityId: String,
-    isConfigured: Boolean,
-    onServerSelected: (Int) -> Unit,
-    onEntitySelected: (String) -> Unit,
-    onEntityCleared: () -> Unit,
+    uiState: MediaControlSettingsUiState,
+    onAddEntity: () -> Unit,
+    onCancelAddEntity: () -> Unit,
+    onPendingServerSelected: (Int) -> Unit,
+    onPendingEntitySelected: (String) -> Unit,
+    onRemoveEntity: (Int) -> Unit,
     onSave: () -> Unit,
-    onClear: () -> Unit,
+    onClearAll: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scrollState = rememberScrollState()
     val colorScheme = LocalHAColorScheme.current
-    val saveEnabled = selectedEntityId.isNotBlank() &&
-        servers.any { it.id == selectedServerId } &&
-        entities.any { it.entityId == selectedEntityId }
+    val pendingEntities = uiState.entitiesPerServer[uiState.pendingServerId] ?: emptyList()
 
-    Box(
-        modifier = modifier.verticalScroll(scrollState),
-    ) {
+    Box(modifier = modifier.verticalScroll(scrollState)) {
         Column(
             modifier = Modifier
                 .padding(safeBottomPaddingValues(applyHorizontal = false))
@@ -96,41 +92,56 @@ internal fun MediaControlSettingsContent(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            if (servers.size > 1 || servers.none { it.id == selectedServerId }) {
-                ServerExposedDropdownMenu(
-                    servers = servers,
-                    current = selectedServerId,
-                    onSelected = onServerSelected,
-                    title = R.string.server,
+            uiState.configuredEntities.forEachIndexed { index, config ->
+                ConfiguredEntityRow(
+                    config = config,
+                    servers = uiState.servers,
+                    entitiesPerServer = uiState.entitiesPerServer,
+                    onRemove = { onRemoveEntity(index) },
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                if (index < uiState.configuredEntities.lastIndex) {
+                    HorizontalDivider()
+                }
             }
 
-            EntityPicker(
-                entities = entities,
-                selectedEntityId = selectedEntityId,
-                onEntitySelectedId = onEntitySelected,
-                onEntityCleared = onEntityCleared,
-                addButtonText = stringResource(R.string.media_control_select_entity),
-                entityRegistry = entityRegistry,
-                deviceRegistry = deviceRegistry,
-                areaRegistry = areaRegistry,
-            )
+            if (uiState.configuredEntities.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            if (uiState.showAddSlot) {
+                AddEntitySlot(
+                    servers = uiState.servers,
+                    pendingServerId = uiState.pendingServerId,
+                    pendingEntities = pendingEntities,
+                    entityRegistry = uiState.entityRegistryPerServer[uiState.pendingServerId] ?: emptyList(),
+                    deviceRegistry = uiState.deviceRegistryPerServer[uiState.pendingServerId] ?: emptyList(),
+                    areaRegistry = uiState.areaRegistryPerServer[uiState.pendingServerId] ?: emptyList(),
+                    onServerSelected = onPendingServerSelected,
+                    onEntitySelected = onPendingEntitySelected,
+                    onCancel = onCancelAddEntity,
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            } else {
+                HAFilledButton(
+                    text = stringResource(R.string.media_control_add_entity),
+                    onClick = onAddEntity,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
 
             HAFilledButton(
                 text = stringResource(R.string.save),
                 onClick = onSave,
-                enabled = saveEnabled,
+                enabled = uiState.configuredEntities.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            if (isConfigured) {
+            if (uiState.configuredEntities.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 HAPlainButton(
                     text = stringResource(R.string.media_control_clear),
-                    onClick = onClear,
+                    onClick = onClearAll,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -138,46 +149,129 @@ internal fun MediaControlSettingsContent(
     }
 }
 
-@Preview
 @Composable
-private fun MediaControlSettingsContentPreview() {
-    HAThemeForPreview {
-        MediaControlSettingsContent(
-            servers = emptyList(),
-            entities = emptyList(),
-            entityRegistry = emptyList(),
-            deviceRegistry = emptyList(),
-            areaRegistry = emptyList(),
-            selectedServerId = 0,
-            selectedEntityId = "",
-            isConfigured = false,
-            onServerSelected = {},
-            onEntitySelected = {},
+private fun ConfiguredEntityRow(
+    config: MediaControlEntityConfig,
+    servers: List<Server>,
+    entitiesPerServer: Map<Int, List<Entity>>,
+    onRemove: () -> Unit,
+) {
+    val colorScheme = LocalHAColorScheme.current
+    val serverName = servers.firstOrNull { it.id == config.serverId }?.friendlyName
+    val entityName = entitiesPerServer[config.serverId]
+        ?.firstOrNull { it.entityId == config.entityId }
+        ?.attributes?.get("friendly_name") as? String
+    val displayName = entityName ?: config.entityId
+    val subtitle = if (servers.size > 1 && serverName != null) serverName else null
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = displayName,
+                style = HATextStyle.Body,
+                color = colorScheme.colorTextPrimary,
+            )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    style = HATextStyle.BodyMedium,
+                    color = colorScheme.colorTextSecondary,
+                )
+            }
+        }
+        HAIconButton(
+            icon = Icons.Default.Clear,
+            onClick = onRemove,
+            contentDescription = stringResource(R.string.media_control_remove_entity),
+            variant = ButtonVariant.NEUTRAL,
+        )
+    }
+}
+
+@Composable
+private fun AddEntitySlot(
+    servers: List<Server>,
+    pendingServerId: Int,
+    pendingEntities: List<Entity>,
+    entityRegistry: List<EntityRegistryResponse>,
+    deviceRegistry: List<DeviceRegistryResponse>,
+    areaRegistry: List<AreaRegistryResponse>,
+    onServerSelected: (Int) -> Unit,
+    onEntitySelected: (String) -> Unit,
+    onCancel: () -> Unit,
+) {
+    Column {
+        if (servers.size > 1 || servers.none { it.id == pendingServerId }) {
+            ServerExposedDropdownMenu(
+                servers = servers,
+                current = pendingServerId,
+                onSelected = onServerSelected,
+                title = R.string.server,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        EntityPicker(
+            entities = pendingEntities,
+            selectedEntityId = null,
+            onEntitySelectedId = onEntitySelected,
             onEntityCleared = {},
-            onSave = {},
-            onClear = {},
+            addButtonText = stringResource(R.string.media_control_select_entity),
+            entityRegistry = entityRegistry,
+            deviceRegistry = deviceRegistry,
+            areaRegistry = areaRegistry,
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+        HAPlainButton(
+            text = stringResource(R.string.cancel),
+            onClick = onCancel,
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }
 
 @Preview
 @Composable
-private fun MediaControlSettingsContentConfiguredPreview() {
+private fun MediaControlSettingsContentEmptyPreview() {
     HAThemeForPreview {
         MediaControlSettingsContent(
-            servers = emptyList(),
-            entities = emptyList(),
-            entityRegistry = emptyList(),
-            deviceRegistry = emptyList(),
-            areaRegistry = emptyList(),
-            selectedServerId = 1,
-            selectedEntityId = "media_player.living_room",
-            isConfigured = true,
-            onServerSelected = {},
-            onEntitySelected = {},
-            onEntityCleared = {},
+            uiState = MediaControlSettingsUiState(),
+            onAddEntity = {},
+            onCancelAddEntity = {},
+            onPendingServerSelected = {},
+            onPendingEntitySelected = {},
+            onRemoveEntity = {},
             onSave = {},
-            onClear = {},
+            onClearAll = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun MediaControlSettingsContentWithEntitiesPreview() {
+    HAThemeForPreview {
+        MediaControlSettingsContent(
+            uiState = MediaControlSettingsUiState(
+                configuredEntities = listOf(
+                    MediaControlEntityConfig(serverId = 1, entityId = "media_player.living_room"),
+                    MediaControlEntityConfig(serverId = 1, entityId = "media_player.bedroom"),
+                ),
+            ),
+            onAddEntity = {},
+            onCancelAddEntity = {},
+            onPendingServerSelected = {},
+            onPendingEntitySelected = {},
+            onRemoveEntity = {},
+            onSave = {},
+            onClearAll = {},
         )
     }
 }
