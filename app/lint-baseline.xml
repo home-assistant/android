@@ -1796,4 +1796,15 @@
             column="42"/>
     </issue>
 
+    <issue
+        id="ExportedReceiver"
+        message="Exported receiver does not require permission"
+        errorLine1="        &lt;receiver"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="1024"
+            column="9"/>
+    </issue>
+
 </issues>
