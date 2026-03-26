@@ -12,6 +12,7 @@ import io.homeassistant.companion.android.common.data.connectivity.ConnectivityC
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
+import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
 import io.homeassistant.companion.android.frontend.handler.FrontendMessageHandler
 import io.homeassistant.companion.android.frontend.navigation.FrontendNavigationEvent
@@ -136,6 +137,9 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
     private val _navigationEvents = MutableSharedFlow<FrontendNavigationEvent>(extraBufferCapacity = 1)
     val navigationEvents: SharedFlow<FrontendNavigationEvent> = _navigationEvents.asSharedFlow()
+
+    private val _hapticEvents = MutableSharedFlow<HapticType>(extraBufferCapacity = 16)
+    val hapticEvents: SharedFlow<HapticType> = _hapticEvents.asSharedFlow()
 
     override val urlFlow: StateFlow<String?> =
         _viewState.map { it.url }
@@ -333,6 +337,10 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                         startListening = result.startListening,
                     ),
                 )
+            }
+
+            is FrontendHandlerEvent.PerformHaptic -> {
+                _hapticEvents.tryEmit(result.hapticType)
             }
 
             is FrontendHandlerEvent.AuthError -> {
