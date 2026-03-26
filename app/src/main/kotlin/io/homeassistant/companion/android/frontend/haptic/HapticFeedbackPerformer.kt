@@ -44,7 +44,7 @@ object HapticFeedbackPerformer {
             is HapticType.Medium -> view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
             is HapticType.Heavy -> view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
             is HapticType.Selection -> performSelection(view)
-            is HapticType.Unknown -> Timber.d("Ignoring unknown haptic type")
+            is HapticType.Unknown -> Timber.w("Ignoring unknown haptic type")
         }
     }
 
