@@ -24,6 +24,7 @@ import java.util.Date
 import java.util.Locale
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -35,7 +36,7 @@ object DataUriDownloadManager {
                 "text/plain"
             }
         }
-        val result = writeDataUriToFile(context, url, mime)
+        val result = writeDataUriToFile(context, url, mime, filename)
 
         createNotificationChannel(context)
         val notification = NotificationCompat.Builder(context, CHANNEL_DOWNLOADS)
@@ -65,7 +66,7 @@ object DataUriDownloadManager {
             .notify(url.hashCode(), notification.build())
     }
 
-    private suspend fun writeDataUriToFile(context: Context, url: String, mimetype: String): Uri? =
+    private suspend fun writeDataUriToFile(context: Context, url: String, mimetype: String, filename: String?): Uri? =
         withContext(Dispatchers.IO) {
             try {
                 val decodedBytes = if (url.split(",")[0].endsWith("base64")) {
@@ -75,13 +76,18 @@ object DataUriDownloadManager {
                     Uri.decode(url.substring(url.indexOf(",") + 1)).toByteArray()
                 }
 
-                // URLUtil doesn't handle data URIs correctly, so we have to use a generic filename
-                var fileName = "Home Assistant ${SimpleDateFormat(
-                    "yyyy-MM-dd HH:mm:ss",
-                    Locale.getDefault(),
-                ).format(Date())}"
-                MimeTypeMap.getSingleton().getExtensionFromMimeType(mimetype)?.let { extension ->
-                    fileName += ".$extension"
+                val fileName = if (!filename.isNullOrBlank()) {
+                    filename
+                } else {
+                    // URLUtil doesn't handle data URIs correctly, so we have to use a generic filename
+                    var generated = "Home Assistant ${SimpleDateFormat(
+                        "yyyy-MM-dd HH:mm:ss",
+                        Locale.getDefault(),
+                    ).format(Date())}"
+                    MimeTypeMap.getSingleton().getExtensionFromMimeType(mimetype)?.let { extension ->
+                        generated += ".$extension"
+                    }
+                    generated
                 }
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -119,6 +125,8 @@ object DataUriDownloadManager {
 
                     return@withContext scanAndGetDownload(context, dataFile.absolutePath, mimetype)
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Timber.e(e, "Exception while writing file from data URI")
                 return@withContext null

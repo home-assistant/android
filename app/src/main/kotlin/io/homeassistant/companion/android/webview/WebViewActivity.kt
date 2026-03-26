@@ -154,6 +154,7 @@ import io.homeassistant.companion.android.webview.externalbus.NavigateTo
 import io.homeassistant.companion.android.webview.externalbus.ShowSidebar
 import io.homeassistant.companion.android.webview.insecure.BlockInsecureFragment
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -163,6 +164,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import org.json.JSONObject
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -1969,6 +1971,8 @@ class WebViewActivity :
                     }
                     try {
                         request.addRequestHeader("Cookie", CookieManager.getInstance().getCookie(url))
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         // Cannot get cookies, probably not relevant
                     }
@@ -2050,10 +2054,12 @@ class WebViewActivity :
             val fallbackFilename = withContext(Dispatchers.IO) {
                 URLUtil.guessFileName(url, contentDisposition, mimetype)
             }
+            val safeUrl = JSONObject.quote(url)
+            val safeFallback = JSONObject.quote(fallbackFilename)
             val jsCode = """
                 (function() {
-                    var url = '$url';
-                    var fallbackFilename = '$fallbackFilename';
+                    var url = $safeUrl;
+                    var fallbackFilename = $safeFallback;
                     function readAndSend(blob, filename) {
                         var reader = new FileReader();
                         reader.onloadend = function() {
