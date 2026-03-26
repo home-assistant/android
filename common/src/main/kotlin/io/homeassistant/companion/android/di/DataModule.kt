@@ -75,8 +75,13 @@ internal abstract class DataModule {
             context = appContext,
             okHttpClientProvider = okHttpClient,
             usesMtls = {
-                !keyChainRepository.getAlias().isNullOrEmpty() ||
-                    !keyStoreRepository.getAlias().isNullOrEmpty()
+                val keyChainHasClientCert =
+                    keyChainRepository.getPrivateKey() != null &&
+                        !keyChainRepository.getCertificateChain().isNullOrEmpty()
+                val keyStoreHasClientCert =
+                    keyStoreRepository.getPrivateKey() != null &&
+                        !keyStoreRepository.getCertificateChain().isNullOrEmpty()
+                keyChainHasClientCert || keyStoreHasClientCert
             },
         )
 

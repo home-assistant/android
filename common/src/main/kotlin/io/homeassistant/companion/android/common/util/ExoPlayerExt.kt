@@ -174,7 +174,7 @@ private fun buildHttpEngineFactory(context: Context): DataSource.Factory? {
  * @param okHttpClientProvider lazily provides the shared [OkHttpClient] configured with mTLS
  * @param usesMtls called on every [createDataSource] to check if mTLS is currently used
  */
-class MtlsAwareDataSourceFactory(
+internal class MtlsAwareDataSourceFactory(
     context: Context,
     okHttpClientProvider: Lazy<OkHttpClient>,
     private val usesMtls: () -> Boolean,
