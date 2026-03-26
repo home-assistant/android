@@ -22,6 +22,8 @@ set(KISSFFT_TOOLS OFF CACHE BOOL "" FORCE)
 # Fetch tflite-micro from GitHub (archive download, faster than git clone).
 # When bumping tflite-micro, the dependencies below (flatbuffers, gemmlowp, ruy) must also
 # be updated to match the versions pinned in tflite-micro's own third_party/ configuration.
+# To update dependencies, check the tflite-micro repository at the pinned commit
+# for the exact versions of flatbuffers, gemmlowp, and ruy.
 FetchContent_Declare(
     tflite_micro
     URL https://github.com/tensorflow/tflite-micro/archive/2747abd5c82a95fb1624106a946fc671c31f16e8.tar.gz # January 22nd 2026
@@ -32,7 +34,7 @@ FetchContent_Declare(
 FetchContent_Declare(
     flatbuffers
     GIT_REPOSITORY https://github.com/google/flatbuffers.git
-    GIT_TAG v23.5.26
+    GIT_TAG 0100f6a5779831fa7a651e4b67ef389a8752bd9b # v23.5.26
 )
 set(FLATBUFFERS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(FLATBUFFERS_INSTALL OFF CACHE BOOL "" FORCE)
