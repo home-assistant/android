@@ -69,16 +69,18 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     }
     private var isServiceReady = false
 
-    private val actionReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            handleAction(intent.action)
-        }
-    }
+    /** Non-null only while the receiver is registered (between [onReady] and [onShutdown]). */
+    private var actionReceiver: BroadcastReceiver? = null
 
     override fun onReady() {
         super.onReady()
         isServiceReady = true
         Timber.d("VoiceInteractionService is ready")
+        actionReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                handleAction(intent.action)
+            }
+        }
         ContextCompat.registerReceiver(
             this,
             actionReceiver,
@@ -103,7 +105,8 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         super.onShutdown()
         isServiceReady = false
         Timber.d("VoiceInteractionService is shutting down")
-        unregisterReceiver(actionReceiver)
+        actionReceiver?.let(::unregisterReceiver)
+        actionReceiver = null
         // Don't use stopListening() as it launches a coroutine that may not complete before cancel
         serviceScope.cancel()
     }
