@@ -945,6 +945,11 @@
     <string name="tts_error_utterance">Unable to process notification \"%1$s\" as text to speech.</string>
     <string name="tts_error_init">Failed to initialize a text to speech engine.</string>
     <string name="tts_no_text">Please set the text for text to speech to process</string>
+    <string name="unable_to_register">Unable to register application</string>
+    <string name="push_provider">Push provider</string>
+    <string name="push_provider_fcm">Firebase Cloud Messaging</string>
+    <string name="push_provider_websocket">WebSocket</string>
+    <string name="push_provider_websocket_enabled">WebSocket push enabled</string>
     <string name="unknown_address">Unknown address</string>
     <string name="update_shortcut">Update shortcut data</string>
     <string name="update_widget">Update widget</string>
