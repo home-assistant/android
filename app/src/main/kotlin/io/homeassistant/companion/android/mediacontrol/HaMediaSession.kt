@@ -43,15 +43,12 @@ import timber.log.Timber
  * @param config Identifies the media_player entity this session represents.
  * @param mediaControlRepository Provides the per-entity state flow.
  * @param serverManager Used to resolve artwork base URLs and call HA integration actions.
- * @param onEntityGone Called on the main thread when the WebSocket flow ends unexpectedly and
- *   the retry loop gives up, so the hosting service can remove this session.
  */
 class HaMediaSession(
     private val context: Context,
     private val config: MediaControlEntityConfig,
     private val mediaControlRepository: MediaControlRepository,
     private val serverManager: ServerManager,
-    private val onEntityGone: () -> Unit,
 ) {
     val mediaSession: MediaSession
 
@@ -62,53 +59,51 @@ class HaMediaSession(
     private var currentArtworkUrl: String? = null
     private var currentArtworkBytes: ByteArray? = null
 
-    /** Whether a state observation coroutine is currently active. */
-    val isObserving: Boolean get() = observationJob?.isActive == true
-
     init {
         val commandCallback = object : HaRemoteMediaPlayer.CommandCallback {
             override fun onPlayRequested() {
-                callMediaAction("media_play")
+                callMediaAction(ACTION_MEDIA_PLAY)
             }
 
             override fun onPauseRequested() {
-                callMediaAction("media_pause")
+                callMediaAction(ACTION_MEDIA_PAUSE)
             }
 
             override fun onSeekRequested(positionMs: Long) {
                 callMediaAction(
-                    action = "media_seek",
+                    action = ACTION_MEDIA_SEEK,
                     extraData = mapOf("seek_position" to positionMs / 1000.0),
                 )
             }
 
             override fun onNextRequested() {
-                callMediaAction("media_next_track")
+                callMediaAction(ACTION_MEDIA_NEXT_TRACK)
             }
 
             override fun onPreviousRequested() {
-                callMediaAction("media_previous_track")
+                callMediaAction(ACTION_MEDIA_PREVIOUS_TRACK)
             }
 
             override fun onSetVolumeRequested(volume: Float) {
                 callMediaAction(
-                    action = "volume_set",
+                    action = ACTION_VOLUME_SET,
                     extraData = mapOf("volume_level" to volume),
                 )
             }
 
             override fun onIncreaseVolumeRequested() {
-                callMediaAction("volume_up")
+                callMediaAction(ACTION_VOLUME_UP)
             }
 
             override fun onDecreaseVolumeRequested() {
-                callMediaAction("volume_down")
+                callMediaAction(ACTION_VOLUME_DOWN)
             }
         }
 
         player = HaRemoteMediaPlayer(Looper.getMainLooper(), commandCallback)
 
         mediaSession = MediaSession.Builder(context, player)
+            .setId("${config.serverId}_${config.entityId}")
             .setCallback(MediaSessionCallback())
             .build()
     }
@@ -120,7 +115,7 @@ class HaMediaSession(
         observationJob?.cancel()
         currentArtworkUrl = null
         currentArtworkBytes = null
-        observationJob = scope.launch(Dispatchers.IO) {
+        observationJob = scope.launch {
             while (true) {
                 ensureActive()
                 mediaControlRepository.observeEntityState(config).collect { state ->
@@ -136,9 +131,7 @@ class HaMediaSession(
                 // state so the notification stays visible but controls are disabled, then retry
                 withContext(Dispatchers.Main) { player.setConnecting() }
                 Timber.d(
-                    "Media control observation completed for %s, retrying in %s",
-                    config.entityId,
-                    OBSERVATION_RETRY_DELAY,
+                    "Media control observation completed for ${config.entityId}, retrying in $OBSERVATION_RETRY_DELAY",
                 )
                 delay(OBSERVATION_RETRY_DELAY)
             }
@@ -153,7 +146,7 @@ class HaMediaSession(
     }
 
     private fun callMediaAction(action: String, extraData: Map<String, Any> = emptyMap()) {
-        scope.launch(Dispatchers.IO) {
+        scope.launch {
             val actionData = hashMapOf<String, Any>("entity_id" to config.entityId)
             actionData.putAll(extraData)
 
@@ -163,7 +156,7 @@ class HaMediaSession(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Failed to call media action %s", action)
+                Timber.e(e, "Failed to call media action $action")
             }
         }
     }
@@ -216,6 +209,7 @@ class HaMediaSession(
             val request = ImageRequest.Builder(context)
                 .data(url)
                 .size(ARTWORK_SIZE_PX)
+                .allowHardware(false)
                 .build()
             val result = context.imageLoader.execute(request)
             result.image?.toBitmap()?.let { bitmap ->
@@ -226,7 +220,7 @@ class HaMediaSession(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.e(e, "Failed to load album art from %s", sensitive(url))
+            Timber.e(e, "Failed to load album art from ${sensitive(url)}")
             null
         }
     }
@@ -236,16 +230,13 @@ class HaMediaSession(
      * or apps with MEDIA_CONTENT_CONTROL / notification listener access).
      */
     @OptIn(UnstableApi::class)
-    private inner class MediaSessionCallback : MediaSession.Callback {
+    private class MediaSessionCallback : MediaSession.Callback {
         override fun onConnect(
             session: MediaSession,
             controller: MediaSession.ControllerInfo,
         ): MediaSession.ConnectionResult {
             if (!controller.isTrusted) {
-                Timber.w(
-                    "Rejecting connection from untrusted media controller package=%s",
-                    controller.packageName,
-                )
+                Timber.w("Rejecting connection from untrusted media controller package=${controller.packageName}")
                 return MediaSession.ConnectionResult.reject()
             }
             return MediaSession.ConnectionResult.accept(
@@ -258,5 +249,14 @@ class HaMediaSession(
     private companion object {
         val OBSERVATION_RETRY_DELAY = 5.seconds
         const val ARTWORK_SIZE_PX = 512
+
+        const val ACTION_MEDIA_PLAY = "media_play"
+        const val ACTION_MEDIA_PAUSE = "media_pause"
+        const val ACTION_MEDIA_SEEK = "media_seek"
+        const val ACTION_MEDIA_NEXT_TRACK = "media_next_track"
+        const val ACTION_MEDIA_PREVIOUS_TRACK = "media_previous_track"
+        const val ACTION_VOLUME_SET = "volume_set"
+        const val ACTION_VOLUME_UP = "volume_up"
+        const val ACTION_VOLUME_DOWN = "volume_down"
     }
 }

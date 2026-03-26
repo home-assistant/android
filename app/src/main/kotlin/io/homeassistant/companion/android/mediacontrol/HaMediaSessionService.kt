@@ -87,7 +87,7 @@ class HaMediaSessionService : MediaSessionService() {
                 val session = activeSessions.remove(key) ?: return@forEach
                 removeSession(session.mediaSession)
                 session.release()
-                Timber.d("Removed media session for %s", key)
+                Timber.d("Removed media session for $key")
             }
 
             // Add sessions for newly configured entities
@@ -98,24 +98,12 @@ class HaMediaSessionService : MediaSessionService() {
                     config = entityConfig,
                     mediaControlRepository = mediaControlRepository,
                     serverManager = serverManager,
-                    onEntityGone = { handleEntityGone(entityConfig) },
                 )
                 addSession(session.mediaSession)
                 session.startObservingState()
                 activeSessions[key] = session
-                Timber.d("Added media session for %s", key)
+                Timber.d("Added media session for $key")
             }
-        }
-    }
-
-    private fun handleEntityGone(config: MediaControlEntityConfig) {
-        val key = config.sessionKey()
-        val session = activeSessions.remove(key) ?: return
-        removeSession(session.mediaSession)
-        session.release()
-        Timber.d("Entity gone, removed media session for %s", key)
-        if (activeSessions.isEmpty()) {
-            stopSelf()
         }
     }
 

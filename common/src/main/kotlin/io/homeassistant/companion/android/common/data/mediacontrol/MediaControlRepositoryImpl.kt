@@ -36,7 +36,7 @@ internal class MediaControlRepositoryImpl @Inject constructor(
                 val stateFlow = serverManager.webSocketRepository(config.serverId)
                     .getCompressedStateAndChanges(listOf(config.entityId))
                 if (stateFlow == null) {
-                    Timber.w("WebSocket subscription returned null for entity %s", config.entityId)
+                    Timber.w("WebSocket subscription returned null for entity ${config.entityId}")
                     emit(null)
                     return@flow
                 }
@@ -65,7 +65,7 @@ internal class MediaControlRepositoryImpl @Inject constructor(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Failed to subscribe to media control entity %s", config.entityId)
+                Timber.e(e, "Failed to subscribe to media control entity ${config.entityId}")
                 emit(null)
             }
         }.distinctUntilChanged()
