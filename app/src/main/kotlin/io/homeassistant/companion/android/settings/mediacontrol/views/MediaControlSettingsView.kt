@@ -31,9 +31,7 @@ import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
-import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.composable.HAIconButton
-import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
@@ -60,8 +58,7 @@ fun MediaControlSettingsView(viewModel: MediaControlSettingsViewModel, modifier:
             onEntitySelected = viewModel::addEntity,
             onRemoveEntity = viewModel::removeEntity,
             onMove = viewModel::onMove,
-            onSave = viewModel::saveConfiguration,
-            onClearAll = viewModel::clearAllConfiguration,
+            onReorderComplete = viewModel::onReorderComplete,
             modifier = modifier,
         )
     }
@@ -74,8 +71,7 @@ internal fun MediaControlSettingsContent(
     onEntitySelected: (String) -> Unit,
     onRemoveEntity: (Int) -> Unit,
     onMove: (LazyListItemInfo, LazyListItemInfo) -> Unit,
-    onSave: () -> Unit,
-    onClearAll: () -> Unit,
+    onReorderComplete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colorScheme = LocalHAColorScheme.current
@@ -151,31 +147,12 @@ internal fun MediaControlSettingsContent(
                         ?.firstOrNull { it.entityId == config.entityId }
                         ?.attributes?.get("friendly_name") as? String,
                     onRemove = { onRemoveEntity(uiState.configuredEntities.indexOf(config)) },
+                    onReorderComplete = onReorderComplete,
                     isDragging = isDragging,
                 )
                 if (config != uiState.configuredEntities.last()) {
                     HorizontalDivider()
                 }
-            }
-        }
-
-        item {
-            if (uiState.configuredEntities.isNotEmpty()) {
-                Spacer(modifier = Modifier.size(8.dp))
-            }
-            HAFilledButton(
-                text = stringResource(R.string.save),
-                onClick = onSave,
-                enabled = uiState.configuredEntities.isNotEmpty(),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            if (uiState.configuredEntities.isNotEmpty()) {
-                Spacer(modifier = Modifier.size(8.dp))
-                HAPlainButton(
-                    text = stringResource(R.string.media_control_clear),
-                    onClick = onClearAll,
-                    modifier = Modifier.fillMaxWidth(),
-                )
             }
         }
     }
@@ -187,6 +164,7 @@ private fun ReorderableCollectionItemScope.ConfiguredEntityRow(
     subtitle: String?,
     entityName: String?,
     onRemove: () -> Unit,
+    onReorderComplete: () -> Unit,
     isDragging: Boolean,
 ) {
     val colorScheme = LocalHAColorScheme.current
@@ -199,7 +177,7 @@ private fun ReorderableCollectionItemScope.ConfiguredEntityRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 56.dp)
-                .longPressDraggableHandle()
+                .longPressDraggableHandle(onDragStopped = { onReorderComplete() })
                 .padding(vertical = 4.dp),
         ) {
             Column(modifier = Modifier.weight(1f)) {
@@ -244,8 +222,7 @@ private fun MediaControlSettingsContentEmptyPreview() {
             onEntitySelected = {},
             onRemoveEntity = {},
             onMove = { _, _ -> },
-            onSave = {},
-            onClearAll = {},
+            onReorderComplete = {},
         )
     }
 }
@@ -265,8 +242,7 @@ private fun MediaControlSettingsContentWithEntitiesPreview() {
             onEntitySelected = {},
             onRemoveEntity = {},
             onMove = { _, _ -> },
-            onSave = {},
-            onClearAll = {},
+            onReorderComplete = {},
         )
     }
 }

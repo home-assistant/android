@@ -126,7 +126,7 @@ class MediaControlSettingsViewModel @Inject constructor(
 
     /**
      * Adds the entity identified by [entityId] from the currently selected server to the configured
-     * list. Has no effect if the entity is already in the list.
+     * list, then persists the change immediately. Has no effect if the entity is already in the list.
      */
     fun addEntity(entityId: String) {
         val config = MediaControlEntityConfig(
@@ -140,18 +140,20 @@ class MediaControlSettingsViewModel @Inject constructor(
                 state.copy(configuredEntities = state.configuredEntities + config)
             }
         }
+        persistAndNotifyService()
     }
 
-    /** Removes the configured entity at [index] from the list. */
+    /** Removes the configured entity at [index] from the list, then persists the change immediately. */
     fun removeEntity(index: Int) {
         _uiState.update { state ->
             state.copy(configuredEntities = state.configuredEntities.toMutableList().also { it.removeAt(index) })
         }
+        persistAndNotifyService()
     }
 
     /**
      * Moves a configured entity from one position to another in response to a drag gesture.
-     * Does not persist the change — call [saveConfiguration] to save.
+     * Does not persist — call [onReorderComplete] once the drag ends to save the final order.
      */
     fun onMove(from: LazyListItemInfo, to: LazyListItemInfo) {
         _uiState.update { state ->
@@ -165,23 +167,18 @@ class MediaControlSettingsViewModel @Inject constructor(
         }
     }
 
-    /** Saves the current list of configured entities and emits a service event to the UI layer. */
-    fun saveConfiguration() {
+    /** Persists the current entity order after a drag-to-reorder gesture completes. */
+    fun onReorderComplete() {
+        persistAndNotifyService()
+    }
+
+    private fun persistAndNotifyService() {
         viewModelScope.launch {
             val entities = _uiState.value.configuredEntities
             mediaControlRepository.setConfiguredEntities(entities)
             _serviceEvents.emit(
                 if (entities.isEmpty()) MediaControlServiceEvent.Stop else MediaControlServiceEvent.Start,
             )
-        }
-    }
-
-    /** Clears all configured entities and emits a stop event to the UI layer. */
-    fun clearAllConfiguration() {
-        viewModelScope.launch {
-            mediaControlRepository.setConfiguredEntities(emptyList())
-            _uiState.update { it.copy(configuredEntities = emptyList()) }
-            _serviceEvents.emit(MediaControlServiceEvent.Stop)
         }
     }
 

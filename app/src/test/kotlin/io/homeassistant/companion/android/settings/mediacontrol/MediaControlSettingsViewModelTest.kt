@@ -111,6 +111,25 @@ class MediaControlSettingsViewModelTest {
         }
 
         @Test
+        fun `Given viewModel when addEntity called then repository updated and start event emitted`() = runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceUntilIdle()
+
+            viewModel.serviceEvents.test {
+                viewModel.addEntity("media_player.living_room")
+                advanceUntilIdle()
+
+                coVerify {
+                    mediaControlRepository.setConfiguredEntities(
+                        match { it.size == 1 && it[0].entityId == "media_player.living_room" },
+                    )
+                }
+                assertEquals(MediaControlServiceEvent.Start, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
         fun `Given viewModel when selectServerId called then selectedServerId updated`() = runTest(testDispatcher) {
             viewModel = createViewModel()
 
@@ -171,24 +190,46 @@ class MediaControlSettingsViewModelTest {
             assertEquals(1, viewModel.uiState.value.configuredEntities.size)
             assertEquals("media_player.radio", viewModel.uiState.value.configuredEntities.first().entityId)
         }
-    }
-
-    @Nested
-    inner class SaveConfigurationTest {
 
         @Test
-        fun `Given entities added when saveConfiguration called then repository updated and start event emitted`() = runTest(testDispatcher) {
+        fun `Given one entity when removeEntity called then repository cleared and stop event emitted`() = runTest(testDispatcher) {
             viewModel = createViewModel()
             advanceUntilIdle()
-            viewModel.addEntity("media_player.living_room")
+            viewModel.addEntity("media_player.tv")
 
             viewModel.serviceEvents.test {
-                viewModel.saveConfiguration()
+                // Drain the Start event from addEntity
+                advanceUntilIdle()
+                awaitItem()
+
+                viewModel.removeEntity(0)
+                advanceUntilIdle()
+
+                coVerify { mediaControlRepository.setConfiguredEntities(emptyList()) }
+                assertEquals(MediaControlServiceEvent.Stop, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given two entities when removeEntity called then repository updated and start event emitted`() = runTest(testDispatcher) {
+            viewModel = createViewModel()
+            advanceUntilIdle()
+            viewModel.addEntity("media_player.tv")
+            viewModel.addEntity("media_player.radio")
+
+            viewModel.serviceEvents.test {
+                // Drain the Start events from addEntity calls
+                advanceUntilIdle()
+                awaitItem()
+                awaitItem()
+
+                viewModel.removeEntity(0)
                 advanceUntilIdle()
 
                 coVerify {
                     mediaControlRepository.setConfiguredEntities(
-                        match { it.size == 1 && it[0].entityId == "media_player.living_room" },
+                        match { it.size == 1 && it[0].entityId == "media_player.radio" },
                     )
                 }
                 assertEquals(MediaControlServiceEvent.Start, awaitItem())
@@ -198,22 +239,36 @@ class MediaControlSettingsViewModelTest {
     }
 
     @Nested
-    inner class ClearAllConfigurationTest {
+    inner class ReorderCompleteTest {
 
         @Test
-        fun `Given configured entities when clearAllConfiguration called then repository cleared and stop event emitted`() = runTest(testDispatcher) {
-            val entities = listOf(MediaControlEntityConfig(serverId = 1, entityId = "media_player.tv"))
-            coEvery { mediaControlRepository.getConfiguredEntities() } returns entities
+        fun `Given reordered entities when onReorderComplete called then repository updated and start event emitted`() = runTest(testDispatcher) {
+            val entityA = MediaControlEntityConfig(serverId = SERVER_ID_ACTIVE, entityId = "media_player.a")
+            val entityB = MediaControlEntityConfig(serverId = SERVER_ID_ACTIVE, entityId = "media_player.b")
             viewModel = createViewModel()
             advanceUntilIdle()
+            viewModel.addEntity(entityA.entityId)
+            viewModel.addEntity(entityB.entityId)
+            viewModel.onMove(
+                from = fakeLazyListItemInfo(key = entityA),
+                to = fakeLazyListItemInfo(key = entityB),
+            )
 
             viewModel.serviceEvents.test {
-                viewModel.clearAllConfiguration()
+                // Drain Start events from addEntity calls
+                advanceUntilIdle()
+                awaitItem()
+                awaitItem()
+
+                viewModel.onReorderComplete()
                 advanceUntilIdle()
 
-                coVerify { mediaControlRepository.setConfiguredEntities(emptyList()) }
-                assertEquals(emptyList<MediaControlEntityConfig>(), viewModel.uiState.value.configuredEntities)
-                assertEquals(MediaControlServiceEvent.Stop, awaitItem())
+                coVerify {
+                    mediaControlRepository.setConfiguredEntities(
+                        match { it == listOf(entityB, entityA) },
+                    )
+                }
+                assertEquals(MediaControlServiceEvent.Start, awaitItem())
                 cancelAndIgnoreRemainingEvents()
             }
         }
