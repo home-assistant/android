@@ -34,17 +34,16 @@ internal class MediaControlRepositoryImpl @Inject constructor(
     private val serverManager: ServerManager,
 ) : MediaControlRepository {
 
-    override suspend fun getEntityState(config: MediaControlEntityConfig): MediaControlState? =
-        try {
-            serverManager.integrationRepository(config.serverId)
-                .getEntity(config.entityId)
-                ?.toMediaControlState(serverId = config.serverId)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to fetch entity state for ${config.entityId}")
-            null
-        }
+    override suspend fun getEntityState(config: MediaControlEntityConfig): MediaControlState? = try {
+        serverManager.integrationRepository(config.serverId)
+            .getEntity(config.entityId)
+            ?.toMediaControlState(serverId = config.serverId)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Timber.e(e, "Failed to fetch entity state for ${config.entityId}")
+        null
+    }
 
     override fun observeEntityState(config: MediaControlEntityConfig): Flow<MediaControlState?> =
         flow<MediaControlState?> {
@@ -87,18 +86,17 @@ internal class MediaControlRepositoryImpl @Inject constructor(
         }.distinctUntilChanged()
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun observeMediaControlStates(): Flow<List<MediaControlState>> =
-        dao.getAllFlow()
-            .flatMapLatest { entities ->
-                if (entities.isEmpty()) {
-                    flowOf(emptyList())
-                } else {
-                    combine(entities.map { observeEntityState(it.toEntityConfig()) }) { states ->
-                        states.filterNotNull()
-                    }
+    override fun observeMediaControlStates(): Flow<List<MediaControlState>> = dao.getAllFlow()
+        .flatMapLatest { entities ->
+            if (entities.isEmpty()) {
+                flowOf(emptyList())
+            } else {
+                combine(entities.map { observeEntityState(it.toEntityConfig()) }) { states ->
+                    states.filterNotNull()
                 }
             }
-            .distinctUntilChanged()
+        }
+        .distinctUntilChanged()
 
     override suspend fun getConfiguredEntities(): List<MediaControlEntityConfig> =
         dao.getAll().map { it.toEntityConfig() }

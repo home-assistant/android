@@ -9,7 +9,6 @@ import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
@@ -119,5 +118,4 @@ class PrefsRepositoryImplTest {
         // Verify no integration storage was accessed since no migration was needed
         coVerify(exactly = 0) { integrationStorage.getString(any()) }
     }
-
 }

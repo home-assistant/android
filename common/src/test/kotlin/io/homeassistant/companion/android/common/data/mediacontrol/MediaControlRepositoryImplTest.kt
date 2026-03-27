@@ -3,11 +3,11 @@ package io.homeassistant.companion.android.common.data.mediacontrol
 import app.cash.turbine.test
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.database.mediacontrol.MediaControlConfig
-import io.homeassistant.companion.android.database.mediacontrol.MediaControlDao
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedEntityState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
+import io.homeassistant.companion.android.database.mediacontrol.MediaControlConfig
+import io.homeassistant.companion.android.database.mediacontrol.MediaControlDao
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.mockk.coEvery
 import io.mockk.coVerify

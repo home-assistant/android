@@ -88,7 +88,7 @@ private class LocalStorageWithMigration(
                         localStorage.putBoolean(PREF_WEBVIEW_DEBUG_ENABLED, it)
                     }
 
-                    localStorage.putInt(MIGRATION_PREF, 1)
+                    localStorage.putInt(MIGRATION_PREF, MIGRATION_VERSION)
                 }
                 migrationChecked.set(true)
             }
@@ -356,7 +356,6 @@ internal class PrefsRepositoryImpl @Inject constructor(
             localStorage().remove(CONTROLS_PANEL_SERVER)
             setControlsPanelPath(null)
         }
-
     }
 
     override suspend fun showPrivacyHint(): Boolean {
@@ -382,5 +381,4 @@ internal class PrefsRepositoryImpl @Inject constructor(
     override suspend fun setSelectedWakeWord(wakeWord: String) {
         localStorage().putString(PREF_SELECTED_WAKE_WORD, wakeWord)
     }
-
 }
