@@ -12,7 +12,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.wear.activity.ConfirmationActivity
 import androidx.wear.remote.interactions.RemoteActivityHelper
 import androidx.wear.widget.WearableRecyclerView
-import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.CapabilityInfo
 import com.google.android.gms.wearable.DataMapItem
@@ -25,6 +24,7 @@ import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegr
 import io.homeassistant.companion.android.onboarding.phoneinstall.PhoneInstallActivity
 import io.homeassistant.companion.android.util.LoadingView
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
@@ -98,16 +98,14 @@ class OnboardingActivity :
         Wearable.getDataClient(this).addListener(presenter)
 
         lifecycleScope.launch {
-            launch {
-                findExistingInstances()
-            }
-            launch {
-                // Request authentication token in separate task
-                requestInstances()
-            }
-            launch {
-                requestPhoneSignIn()
-            }
+            findExistingInstances()
+        }
+        lifecycleScope.launch {
+            // Request authentication token in separate task
+            requestInstances()
+        }
+        lifecycleScope.launch {
+            requestPhoneSignIn()
         }
     }
 
@@ -134,6 +132,8 @@ class OnboardingActivity :
                     null,
                 ).await()
                 showContinueOnPhone()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 if (e is RemoteActivityHelper.RemoteIntentException) {
                     Timber.e(e, "Unable to open sign in activity on phone with app, falling back to OAuth")
@@ -202,17 +202,19 @@ class OnboardingActivity :
         try {
             Wearable.getDataClient(this@OnboardingActivity)
                 .getDataItems("wear://*/home_assistant_instance".toUri())
-                .await().apply {
-                    Timber.d("findExistingInstances: success, found ${this.count}")
-                    this.forEach { item ->
+                .await().use { dataItemBuffer ->
+                    Timber.d("findExistingInstances: success, found ${dataItemBuffer.count}")
+                    dataItemBuffer.forEach { item ->
                         val instance = presenter.getInstance(DataMapItem.fromDataItem(item).dataMap)
                         withContext(Dispatchers.Main) {
                             onInstanceFound(instance)
                         }
                     }
                 }
-        } catch (e: ApiException) {
-            Timber.e(e, "Impossible get existing instances")
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Unable to get existing instances")
         }
     }
 
@@ -248,7 +250,9 @@ class OnboardingActivity :
                     }
                 }
             }
-        } catch (e: ApiException) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
             Timber.w(e, "Failed to request instances from phone")
         }
     }
@@ -272,7 +276,9 @@ class OnboardingActivity :
                     requestPhoneAppInstall()
                 }
             }
-        } catch (e: ApiException) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
             Timber.w(e, "Failed to check for phone sign-in capability")
         }
     }

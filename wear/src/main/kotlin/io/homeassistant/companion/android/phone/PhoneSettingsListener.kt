@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.phone
 
 import android.content.Intent
 import androidx.wear.tiles.TileService
-import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
@@ -143,7 +142,9 @@ class PhoneSettingsListener :
         try {
             Wearable.getDataClient(this@PhoneSettingsListener).putDataItem(putDataRequest).await()
             Timber.d("Successfully sent /config to device")
-        } catch (e: ApiException) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
             Timber.e(e, "Failed to send /config to device")
         }
     }
@@ -261,7 +262,9 @@ class PhoneSettingsListener :
             }
             Wearable.getDataClient(this@PhoneSettingsListener).putDataItem(putDataRequest).await()
             Timber.d("Successfully sent ${WearDataMessages.PATH_LOGIN_RESULT} to device")
-        } catch (e: ApiException) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
             Timber.w(e, "Failed to send ${WearDataMessages.PATH_LOGIN_RESULT} to device")
         }
     }
@@ -290,13 +293,17 @@ class PhoneSettingsListener :
         wearPrefsRepository.setAllTemplateTiles(templateTilesFromPhone)
     }
 
-    private fun updateTiles() = try {
-        val updater = TileService.getUpdater(applicationContext)
-        updater.requestUpdate(CameraTile::class.java)
-        updater.requestUpdate(ConversationTile::class.java)
-        updater.requestUpdate(ShortcutsTile::class.java)
-        updater.requestUpdate(TemplateTile::class.java)
-    } catch (e: Exception) {
-        Timber.w(e, "Unable to request tiles update")
+    private suspend fun updateTiles() = withContext(Dispatchers.Main) {
+        try {
+            val updater = TileService.getUpdater(applicationContext)
+            updater.requestUpdate(CameraTile::class.java)
+            updater.requestUpdate(ConversationTile::class.java)
+            updater.requestUpdate(ShortcutsTile::class.java)
+            updater.requestUpdate(TemplateTile::class.java)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.w(e, "Unable to request tiles update")
+        }
     }
 }

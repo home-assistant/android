@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.onboarding
 
-import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.PutDataRequest
@@ -9,6 +8,7 @@ import com.google.android.gms.wearable.WearableListenerService
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -58,7 +58,9 @@ class WearOnboardingListener : WearableListenerService() {
                         .putDataItem(putDataReq)
                         .await()
                     Timber.d("sendHomeAssistantInstance: success")
-                } catch (e: ApiException) {
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
                     Timber.e(e, "Failed to send home assistant instance")
                 }
             }
