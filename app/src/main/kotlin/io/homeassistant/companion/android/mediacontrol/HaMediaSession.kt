@@ -174,8 +174,7 @@ class HaMediaSession(
             bytes ?: currentArtworkBytes
         } else if (artworkUrl == null) {
             currentArtworkUrl = null
-            currentArtworkBytes = null
-            null
+            currentArtworkBytes
         } else {
             currentArtworkBytes
         }

@@ -137,9 +137,9 @@ internal fun MediaControlSettingsContent(
 
         items(
             items = uiState.configuredEntities,
-            key = { it },
+            key = { "${it.serverId}_${it.entityId}" },
         ) { config ->
-            ReorderableItem(state = reorderState, key = config) { isDragging ->
+            ReorderableItem(state = reorderState, key = "${config.serverId}_${config.entityId}") { isDragging ->
                 ConfiguredEntityRow(
                     config = config,
                     subtitle = if (uiState.servers.size > 1) {
