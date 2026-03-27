@@ -339,4 +339,63 @@ class HaRemoteMediaPlayerTest {
 
         verify { commandCallback.onDecreaseVolumeRequested() }
     }
+
+    // -- setConnecting tests --
+
+    @Test
+    fun `Given prior state when setConnecting then playback state is buffering`() {
+        player.updateState(state = createState(playbackState = MediaPlaybackState.Playing), artworkPngBytes = null)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        player.setConnecting()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(Player.STATE_BUFFERING, player.playbackState)
+    }
+
+    @Test
+    fun `Given prior state when setConnecting then all media commands are disabled`() {
+        player.updateState(
+            state = createState(
+                supportsPlay = true,
+                supportsPause = true,
+                supportsSeek = true,
+                supportsPreviousTrack = true,
+                supportsNextTrack = true,
+                supportsVolumeSet = true,
+                volumeLevel = 0.5f,
+            ),
+            artworkPngBytes = null,
+        )
+        shadowOf(Looper.getMainLooper()).idle()
+
+        player.setConnecting()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertFalse(player.availableCommands.contains(Player.COMMAND_PLAY_PAUSE))
+        assertFalse(player.availableCommands.contains(Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM))
+        assertFalse(player.availableCommands.contains(Player.COMMAND_SEEK_TO_NEXT))
+        assertFalse(player.availableCommands.contains(Player.COMMAND_SEEK_TO_PREVIOUS))
+        @Suppress("DEPRECATION")
+        assertFalse(player.availableCommands.contains(Player.COMMAND_SET_DEVICE_VOLUME))
+        @Suppress("DEPRECATION")
+        assertFalse(player.availableCommands.contains(Player.COMMAND_ADJUST_DEVICE_VOLUME))
+    }
+
+    @Test
+    fun `Given prior metadata when setConnecting then metadata is retained in player state`() {
+        player.updateState(
+            state = createState(title = "Retained Title", artist = "Retained Artist", albumName = "Retained Album"),
+            artworkPngBytes = null,
+        )
+        shadowOf(Looper.getMainLooper()).idle()
+
+        player.setConnecting()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        val metadata = player.mediaMetadata
+        assertEquals("Retained Title", metadata.title?.toString())
+        assertEquals("Retained Artist", metadata.artist?.toString())
+        assertEquals("Retained Album", metadata.albumTitle?.toString())
+    }
 }

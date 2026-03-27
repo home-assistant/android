@@ -20,13 +20,9 @@ import io.homeassistant.companion.android.database.mediacontrol.MediaControlConf
 import io.homeassistant.companion.android.database.mediacontrol.MediaControlDao
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import timber.log.Timber
 
 internal class MediaControlRepositoryImpl @Inject constructor(
@@ -84,19 +80,6 @@ internal class MediaControlRepositoryImpl @Inject constructor(
                 emit(null)
             }
         }.distinctUntilChanged()
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override fun observeMediaControlStates(): Flow<List<MediaControlState>> = dao.getAllFlow()
-        .flatMapLatest { entities ->
-            if (entities.isEmpty()) {
-                flowOf(emptyList())
-            } else {
-                combine(entities.map { observeEntityState(it.toEntityConfig()) }) { states ->
-                    states.filterNotNull()
-                }
-            }
-        }
-        .distinctUntilChanged()
 
     override suspend fun getConfiguredEntities(): List<MediaControlEntityConfig> =
         dao.getAll().map { it.toEntityConfig() }

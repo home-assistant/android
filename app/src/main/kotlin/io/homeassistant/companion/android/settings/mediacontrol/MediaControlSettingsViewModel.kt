@@ -1,9 +1,8 @@
 package io.homeassistant.companion.android.settings.mediacontrol
 
-import android.app.Application
 import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.runtime.Stable
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -54,8 +53,7 @@ data class MediaControlSettingsUiState(
 class MediaControlSettingsViewModel @Inject constructor(
     private val serverManager: ServerManager,
     private val mediaControlRepository: MediaControlRepository,
-    application: Application,
-) : AndroidViewModel(application) {
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MediaControlSettingsUiState())
     val uiState: StateFlow<MediaControlSettingsUiState> = _uiState.asStateFlow()

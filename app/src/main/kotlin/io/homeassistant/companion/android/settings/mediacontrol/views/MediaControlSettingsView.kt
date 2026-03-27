@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
@@ -36,6 +37,7 @@ import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
 import io.homeassistant.companion.android.settings.mediacontrol.MediaControlSettingsUiState
 import io.homeassistant.companion.android.settings.mediacontrol.MediaControlSettingsViewModel
@@ -131,10 +133,10 @@ internal fun MediaControlSettingsContent(
             }
         }
 
-        items(
+        itemsIndexed(
             items = uiState.configuredEntities,
-            key = { "${it.serverId}_${it.entityId}" },
-        ) { config ->
+            key = { _, config -> "${config.serverId}_${config.entityId}" },
+        ) { index, config ->
             ReorderableItem(state = reorderState, key = "${config.serverId}_${config.entityId}") { isDragging ->
                 ConfiguredEntityRow(
                     config = config,
@@ -145,12 +147,12 @@ internal fun MediaControlSettingsContent(
                     },
                     entityName = uiState.entitiesPerServer[config.serverId]
                         ?.firstOrNull { it.entityId == config.entityId }
-                        ?.attributes?.get("friendly_name") as? String,
-                    onRemove = { onRemoveEntity(uiState.configuredEntities.indexOf(config)) },
+                        ?.friendlyName,
+                    onRemove = { onRemoveEntity(index) },
                     onReorderComplete = onReorderComplete,
                     isDragging = isDragging,
                 )
-                if (config != uiState.configuredEntities.last()) {
+                if (index < uiState.configuredEntities.lastIndex) {
                     HorizontalDivider()
                 }
             }

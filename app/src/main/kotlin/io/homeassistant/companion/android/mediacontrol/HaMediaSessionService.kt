@@ -7,7 +7,6 @@ import androidx.media3.session.MediaSessionService
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlRepository
-import io.homeassistant.companion.android.common.data.servers.ServerManager
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,10 +30,10 @@ class HaMediaSessionService : MediaSessionService() {
     lateinit var mediaControlRepository: MediaControlRepository
 
     @Inject
-    lateinit var serverManager: ServerManager
+    lateinit var haMediaSessionFactory: HaMediaSession.Factory
 
     // Keyed by "$serverId:$entityId"
-    private val activeSessions = mutableMapOf<String, HaMediaSession>()
+    internal val activeSessions = mutableMapOf<String, HaMediaSession>()
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     override fun onCreate() {
@@ -52,8 +51,7 @@ class HaMediaSessionService : MediaSessionService() {
         return result
     }
 
-    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? =
-        activeSessions.values.firstOrNull()?.mediaSession
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = null
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         val anyPlaying = activeSessions.values.any { session ->
@@ -70,7 +68,7 @@ class HaMediaSessionService : MediaSessionService() {
         super.onDestroy()
     }
 
-    private fun reconcileSessions() {
+    internal fun reconcileSessions() {
         serviceScope.launch {
             val configuredEntities = mediaControlRepository.getConfiguredEntities()
             if (configuredEntities.isEmpty()) {
@@ -93,11 +91,9 @@ class HaMediaSessionService : MediaSessionService() {
             // Add sessions for newly configured entities
             (desiredKeys - currentKeys).forEach { key ->
                 val entityConfig = configuredEntities.first { it.sessionKey() == key }
-                val session = HaMediaSession(
+                val session = haMediaSessionFactory.create(
                     context = this@HaMediaSessionService,
                     config = entityConfig,
-                    mediaControlRepository = mediaControlRepository,
-                    serverManager = serverManager,
                 )
                 addSession(session.mediaSession)
                 session.startObservingState()

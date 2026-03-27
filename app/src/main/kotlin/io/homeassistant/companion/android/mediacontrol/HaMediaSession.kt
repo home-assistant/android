@@ -10,6 +10,9 @@ import coil3.imageLoader
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
 import coil3.toBitmap
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlRepository
@@ -46,9 +49,9 @@ import timber.log.Timber
  * @param mediaControlRepository Provides the per-entity state flow.
  * @param serverManager Used to resolve artwork base URLs and call HA integration actions.
  */
-class HaMediaSession(
-    private val context: Context,
-    private val config: MediaControlEntityConfig,
+class HaMediaSession @AssistedInject constructor(
+    @Assisted private val context: Context,
+    @Assisted private val config: MediaControlEntityConfig,
     private val mediaControlRepository: MediaControlRepository,
     private val serverManager: ServerManager,
 ) {
@@ -58,6 +61,9 @@ class HaMediaSession(
     private val player: HaRemoteMediaPlayer
 
     private var observationJob: Job? = null
+    // Accessed only from loadArtworkAndUpdatePlayer, which is always called sequentially
+    // within a single observationJob on the Default dispatcher. The observationJob is
+    // cancelled before a new one starts, so there is no concurrent write risk.
     private var currentArtworkUrl: String? = null
     private var currentArtworkBytes: ByteArray? = null
 
@@ -173,6 +179,9 @@ class HaMediaSession(
             }
             bytes ?: currentArtworkBytes
         } else if (artworkUrl == null) {
+            // The HA server temporarily removes entity_picture during track transitions
+            // before sending the new URL. Keep the previous artwork visible to avoid a
+            // blank flash; clearing currentArtworkUrl ensures the next URL triggers a fetch.
             currentArtworkUrl = null
             currentArtworkBytes
         } else {
@@ -194,8 +203,8 @@ class HaMediaSession(
                 .firstUrlOrNull()
         } catch (e: CancellationException) {
             throw e
-        } catch (e: IllegalStateException) {
-            Timber.e(e, "Server does not exist for artwork URL resolution")
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to resolve artwork URL for server ${state.serverId}")
             null
         } ?: return null
 
@@ -257,5 +266,11 @@ class HaMediaSession(
         const val ACTION_VOLUME_SET = "volume_set"
         const val ACTION_VOLUME_UP = "volume_up"
         const val ACTION_VOLUME_DOWN = "volume_down"
+    }
+
+    /** Creates [HaMediaSession] instances with runtime-provided [context] and [config]. */
+    @AssistedFactory
+    interface Factory {
+        fun create(context: Context, config: MediaControlEntityConfig): HaMediaSession
     }
 }

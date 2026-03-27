@@ -20,13 +20,6 @@ interface MediaControlRepository {
      */
     fun observeEntityState(config: MediaControlEntityConfig): Flow<MediaControlState?>
 
-    /**
-     * Emits the combined state of all configured entities. Each emission is a list of non-null
-     * states for entities that are currently reachable. Emits an empty list when nothing is
-     * configured.
-     */
-    fun observeMediaControlStates(): Flow<List<MediaControlState>>
-
     /** Returns the list of all configured media_player entities. */
     suspend fun getConfiguredEntities(): List<MediaControlEntityConfig>
 

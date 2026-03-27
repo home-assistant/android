@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.settings.mediacontrol
 
-import android.app.Application
 import androidx.compose.foundation.lazy.LazyListItemInfo
 import app.cash.turbine.test
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
@@ -33,7 +32,6 @@ class MediaControlSettingsViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private val serverManager: ServerManager = mockk(relaxed = true)
     private val mediaControlRepository: MediaControlRepository = mockk(relaxed = true)
-    private val application: Application = mockk(relaxed = true)
 
     private lateinit var viewModel: MediaControlSettingsViewModel
 
@@ -56,7 +54,6 @@ class MediaControlSettingsViewModelTest {
         return MediaControlSettingsViewModel(
             serverManager = serverManager,
             mediaControlRepository = mediaControlRepository,
-            application = application,
         )
     }
 
@@ -136,6 +133,19 @@ class MediaControlSettingsViewModelTest {
             viewModel.selectServerId(42)
 
             assertEquals(42, viewModel.uiState.value.selectedServerId)
+        }
+
+        @Test
+        fun `Given non-default server selected when addEntity called then entity config has that server's id`() = runTest(testDispatcher) {
+            val serverBId = 99
+            viewModel = createViewModel()
+
+            viewModel.selectServerId(serverBId)
+            viewModel.addEntity("media_player.bedroom")
+
+            val addedEntity = viewModel.uiState.value.configuredEntities.first()
+            assertEquals(serverBId, addedEntity.serverId)
+            assertEquals("media_player.bedroom", addedEntity.entityId)
         }
     }
 
