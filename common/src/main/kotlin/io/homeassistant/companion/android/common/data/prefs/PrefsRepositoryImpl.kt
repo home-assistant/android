@@ -19,7 +19,7 @@ import kotlinx.serialization.json.Json
 const val MIGRATION_PREF = "migration"
 
 @VisibleForTesting
-const val MIGRATION_VERSION = 2
+const val MIGRATION_VERSION = 1
 
 private const val PREF_VER = "version"
 private const val PREF_NIGHT_MODE_THEME = "theme"

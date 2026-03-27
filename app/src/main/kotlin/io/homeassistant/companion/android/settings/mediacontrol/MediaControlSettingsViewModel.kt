@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings.mediacontrol
 
 import android.app.Application
 import androidx.compose.foundation.lazy.LazyListItemInfo
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -35,6 +36,7 @@ sealed interface MediaControlServiceEvent {
     data object Stop : MediaControlServiceEvent
 }
 
+@Stable
 data class MediaControlSettingsUiState(
     val servers: List<Server> = emptyList(),
     // All loaded entities/registries per server, used by the entity picker

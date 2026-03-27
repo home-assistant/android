@@ -38,9 +38,7 @@ import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
-import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
-import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.settings.mediacontrol.MediaControlSettingsUiState
 import io.homeassistant.companion.android.settings.mediacontrol.MediaControlSettingsViewModel
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
@@ -144,8 +142,14 @@ internal fun MediaControlSettingsContent(
             ReorderableItem(state = reorderState, key = config) { isDragging ->
                 ConfiguredEntityRow(
                     config = config,
-                    servers = uiState.servers,
-                    entitiesPerServer = uiState.entitiesPerServer,
+                    subtitle = if (uiState.servers.size > 1) {
+                        uiState.servers.firstOrNull { it.id == config.serverId }?.friendlyName
+                    } else {
+                        null
+                    },
+                    entityName = uiState.entitiesPerServer[config.serverId]
+                        ?.firstOrNull { it.entityId == config.entityId }
+                        ?.attributes?.get("friendly_name") as? String,
                     onRemove = { onRemoveEntity(uiState.configuredEntities.indexOf(config)) },
                     isDragging = isDragging,
                 )
@@ -180,19 +184,14 @@ internal fun MediaControlSettingsContent(
 @Composable
 private fun ReorderableCollectionItemScope.ConfiguredEntityRow(
     config: MediaControlEntityConfig,
-    servers: List<Server>,
-    entitiesPerServer: Map<Int, List<Entity>>,
+    subtitle: String?,
+    entityName: String?,
     onRemove: () -> Unit,
     isDragging: Boolean,
 ) {
     val colorScheme = LocalHAColorScheme.current
     val elevation = animateDpAsState(targetValue = if (isDragging) 8.dp else 0.dp)
-    val serverName = servers.firstOrNull { it.id == config.serverId }?.friendlyName
-    val entityName = entitiesPerServer[config.serverId]
-        ?.firstOrNull { it.entityId == config.entityId }
-        ?.attributes?.get("friendly_name") as? String
     val displayName = entityName ?: config.entityId
-    val subtitle = if (servers.size > 1 && serverName != null) serverName else null
 
     Surface(shadowElevation = elevation.value) {
         Row(
