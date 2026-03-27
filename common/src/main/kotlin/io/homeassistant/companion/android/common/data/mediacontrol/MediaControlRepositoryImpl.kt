@@ -34,6 +34,18 @@ internal class MediaControlRepositoryImpl @Inject constructor(
     private val serverManager: ServerManager,
 ) : MediaControlRepository {
 
+    override suspend fun getEntityState(config: MediaControlEntityConfig): MediaControlState? =
+        try {
+            serverManager.integrationRepository(config.serverId)
+                .getEntity(config.entityId)
+                ?.toMediaControlState(serverId = config.serverId)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to fetch entity state for ${config.entityId}")
+            null
+        }
+
     override fun observeEntityState(config: MediaControlEntityConfig): Flow<MediaControlState?> =
         flow<MediaControlState?> {
             try {

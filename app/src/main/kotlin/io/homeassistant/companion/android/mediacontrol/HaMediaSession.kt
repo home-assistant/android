@@ -116,8 +116,8 @@ class HaMediaSession(
     fun startObservingState() {
         observationJob?.cancel()
         currentArtworkUrl = null
-        currentArtworkBytes = null
         observationJob = scope.launch {
+            mediaControlRepository.getEntityState(config)?.let { loadArtworkAndUpdatePlayer(it) }
             while (true) {
                 ensureActive()
                 mediaControlRepository.observeEntityState(config).collect { state ->

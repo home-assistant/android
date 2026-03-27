@@ -9,6 +9,12 @@ import kotlinx.coroutines.flow.Flow
 interface MediaControlRepository {
 
     /**
+     * Returns the current [MediaControlState] for a single entity via a one-shot REST fetch,
+     * or null if the entity is unavailable or the request fails.
+     */
+    suspend fun getEntityState(config: MediaControlEntityConfig): MediaControlState?
+
+    /**
      * Emits the current [MediaControlState] for a single entity whenever its state changes.
      * Emits null when the entity is unavailable or the WebSocket subscription fails.
      */
