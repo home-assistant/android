@@ -61,6 +61,7 @@ class HaMediaSession @AssistedInject constructor(
     private val player: HaRemoteMediaPlayer
 
     private var observationJob: Job? = null
+
     // Accessed only from loadArtworkAndUpdatePlayer, which is always called sequentially
     // within a single observationJob on the Default dispatcher. The observationJob is
     // cancelled before a new one starts, so there is no concurrent write risk.

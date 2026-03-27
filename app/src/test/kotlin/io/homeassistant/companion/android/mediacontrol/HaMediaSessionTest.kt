@@ -16,10 +16,10 @@ import io.mockk.mockk
 import io.mockk.slot
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.isActive
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -82,13 +82,12 @@ class HaMediaSessionTest {
         entityFriendlyName = null,
     )
 
-    private fun buildSession(): HaMediaSession =
-        HaMediaSession(
-            context = ApplicationProvider.getApplicationContext(),
-            config = config,
-            mediaControlRepository = mediaControlRepository,
-            serverManager = serverManager,
-        )
+    private fun buildSession(): HaMediaSession = HaMediaSession(
+        context = ApplicationProvider.getApplicationContext(),
+        config = config,
+        mediaControlRepository = mediaControlRepository,
+        serverManager = serverManager,
+    )
 
     /**
      * Waits for `HaMediaSession`'s internal `Dispatchers.Default` coroutines to settle,
