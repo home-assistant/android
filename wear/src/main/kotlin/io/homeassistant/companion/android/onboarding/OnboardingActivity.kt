@@ -266,13 +266,13 @@ class OnboardingActivity :
                 "sign_in_to_home_assistant_instance",
                 CapabilityClient.FILTER_REACHABLE,
             ).await()
+            withContext(Dispatchers.Main) {
+                Timber.d("requestPhoneSignIn: found ${capabilityInfo.nodes.size} nodes")
+                phoneSignInAvailable = capabilityInfo.nodes.isNotEmpty()
 
-            Timber.d("requestPhoneSignIn: found ${capabilityInfo.nodes.size} nodes")
-            phoneSignInAvailable = capabilityInfo.nodes.isNotEmpty()
+                if (!phoneSignInAvailable && !phoneInstallOpened) {
+                    phoneInstallOpened = true
 
-            if (!phoneSignInAvailable && !phoneInstallOpened) {
-                phoneInstallOpened = true
-                withContext(Dispatchers.Main) {
                     requestPhoneAppInstall()
                 }
             }
