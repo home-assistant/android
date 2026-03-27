@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.common.data.prefs
 import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
-import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.HAGesture
 import io.homeassistant.companion.android.di.qualifiers.NamedIntegrationStorage
@@ -12,8 +11,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 
 @VisibleForTesting
 const val MIGRATION_PREF = "migration"
@@ -49,9 +46,6 @@ private const val PREF_CHANGE_LOG_POPUP_ENABLED = "change_log_popup_enabled"
 private const val PREF_SHOW_PRIVACY_HINT = "show_privacy_hint"
 private const val PREF_WAKE_WORD_ENABLED = "wake_word_enabled"
 private const val PREF_SELECTED_WAKE_WORD = "selected_wake_word"
-private const val PREF_MEDIA_CONTROL_SERVER_ID = "media_control_server_id"
-private const val PREF_MEDIA_CONTROL_ENTITY_ID = "media_control_entity_id"
-private const val PREF_MEDIA_CONTROL_ENTITIES = "media_control_entities"
 
 /**
  * This class ensure that when we use the local storage in [PrefsRepositoryImpl] the migrations has been made
@@ -95,19 +89,6 @@ private class LocalStorageWithMigration(
                     }
 
                     localStorage.putInt(MIGRATION_PREF, 1)
-                }
-                if (currentVersion == null || currentVersion < 2) {
-                    val oldServerId = localStorage.getInt(PREF_MEDIA_CONTROL_SERVER_ID)
-                    val oldEntityId = localStorage.getString(PREF_MEDIA_CONTROL_ENTITY_ID)
-                    val entities = if (oldServerId != null && oldEntityId != null) {
-                        listOf(MediaControlEntityConfig(serverId = oldServerId, entityId = oldEntityId))
-                    } else {
-                        emptyList()
-                    }
-                    localStorage.putString(PREF_MEDIA_CONTROL_ENTITIES, Json.encodeToString(entities))
-                    localStorage.remove(PREF_MEDIA_CONTROL_SERVER_ID)
-                    localStorage.remove(PREF_MEDIA_CONTROL_ENTITY_ID)
-                    localStorage.putInt(MIGRATION_PREF, 2)
                 }
                 migrationChecked.set(true)
             }
@@ -376,8 +357,6 @@ internal class PrefsRepositoryImpl @Inject constructor(
             setControlsPanelPath(null)
         }
 
-        val updatedEntities = getMediaControlEntities().filter { it.serverId != serverId }
-        setMediaControlEntities(updatedEntities)
     }
 
     override suspend fun showPrivacyHint(): Boolean {
@@ -404,12 +383,4 @@ internal class PrefsRepositoryImpl @Inject constructor(
         localStorage().putString(PREF_SELECTED_WAKE_WORD, wakeWord)
     }
 
-    override suspend fun getMediaControlEntities(): List<MediaControlEntityConfig> {
-        val json = localStorage().getString(PREF_MEDIA_CONTROL_ENTITIES) ?: return emptyList()
-        return Json.decodeFromString(json)
-    }
-
-    override suspend fun setMediaControlEntities(entities: List<MediaControlEntityConfig>) {
-        localStorage().putString(PREF_MEDIA_CONTROL_ENTITIES, Json.encodeToString(entities))
-    }
 }

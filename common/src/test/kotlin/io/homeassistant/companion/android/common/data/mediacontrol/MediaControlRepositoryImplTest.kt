@@ -2,8 +2,9 @@ package io.homeassistant.companion.android.common.data.mediacontrol
 
 import app.cash.turbine.test
 import io.homeassistant.companion.android.common.data.integration.EntityExt
-import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.database.mediacontrol.MediaControlConfig
+import io.homeassistant.companion.android.database.mediacontrol.MediaControlDao
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedEntityState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
@@ -27,7 +28,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 @ExtendWith(ConsoleLogExtension::class)
 class MediaControlRepositoryImplTest {
 
-    private val prefsRepository: PrefsRepository = mockk(relaxed = true)
+    private val dao: MediaControlDao = mockk(relaxed = true)
     private val serverManager: ServerManager = mockk(relaxed = true)
     private val webSocketRepository: WebSocketRepository = mockk(relaxed = true)
 
@@ -39,7 +40,7 @@ class MediaControlRepositoryImplTest {
     fun setUp() {
         coEvery { serverManager.webSocketRepository(any()) } returns webSocketRepository
         repository = MediaControlRepositoryImpl(
-            prefsRepository = prefsRepository,
+            dao = dao,
             serverManager = serverManager,
         )
     }
@@ -112,19 +113,22 @@ class MediaControlRepositoryImplTest {
 
         @Test
         fun `Given no configured entities when observing then emit empty list`() = runTest {
-            coEvery { prefsRepository.getMediaControlEntities() } returns emptyList()
+            coEvery { dao.getAllFlow() } returns flowOf(emptyList())
 
             repository.observeMediaControlStates().test {
                 assertEquals(emptyList<MediaControlState>(), awaitItem())
-                awaitComplete()
+                cancelAndIgnoreRemainingEvents()
             }
         }
 
         @Test
         fun `Given two configured entities when states arrive then emit combined list`() = runTest {
-            val config1 = MediaControlEntityConfig(serverId = 1, entityId = "media_player.living_room")
-            val config2 = MediaControlEntityConfig(serverId = 1, entityId = "media_player.bedroom")
-            coEvery { prefsRepository.getMediaControlEntities() } returns listOf(config1, config2)
+            coEvery { dao.getAllFlow() } returns flowOf(
+                listOf(
+                    MediaControlConfig(id = 1, serverId = 1, entityId = "media_player.living_room", position = 0),
+                    MediaControlConfig(id = 2, serverId = 1, entityId = "media_player.bedroom", position = 1),
+                ),
+            )
 
             val state1 = CompressedEntityState(
                 state = JsonPrimitive("playing"),
@@ -411,20 +415,34 @@ class MediaControlRepositoryImplTest {
     inner class ConfigurationTest {
 
         @Test
-        fun `Given entities when getConfiguredEntities then delegates to prefs`() = runTest {
-            val entities = listOf(MediaControlEntityConfig(serverId = 1, entityId = "media_player.tv"))
-            coEvery { prefsRepository.getMediaControlEntities() } returns entities
+        fun `Given entities in database when getConfiguredEntities then returns mapped list`() = runTest {
+            coEvery { dao.getAll() } returns listOf(
+                MediaControlConfig(id = 1, serverId = 1, entityId = "media_player.tv", position = 0),
+            )
 
-            assertEquals(entities, repository.getConfiguredEntities())
+            assertEquals(
+                listOf(MediaControlEntityConfig(serverId = 1, entityId = "media_player.tv")),
+                repository.getConfiguredEntities(),
+            )
         }
 
         @Test
-        fun `Given entities when setConfiguredEntities then updates prefs`() = runTest {
-            val entities = listOf(MediaControlEntityConfig(serverId = 5, entityId = "media_player.office"))
+        fun `Given entities when setConfiguredEntities then replaces all in database with positions`() = runTest {
+            val entities = listOf(
+                MediaControlEntityConfig(serverId = 1, entityId = "media_player.tv"),
+                MediaControlEntityConfig(serverId = 2, entityId = "media_player.office"),
+            )
 
             repository.setConfiguredEntities(entities)
 
-            coVerify { prefsRepository.setMediaControlEntities(entities) }
+            coVerify {
+                dao.replaceAll(
+                    listOf(
+                        MediaControlConfig(serverId = 1, entityId = "media_player.tv", position = 0),
+                        MediaControlConfig(serverId = 2, entityId = "media_player.office", position = 1),
+                    ),
+                )
+            }
         }
     }
 }

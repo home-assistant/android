@@ -15,18 +15,22 @@ import io.homeassistant.companion.android.common.data.integration.supportsPlay
 import io.homeassistant.companion.android.common.data.integration.supportsPreviousTrack
 import io.homeassistant.companion.android.common.data.integration.supportsSeek
 import io.homeassistant.companion.android.common.data.integration.supportsVolumeSet
-import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.database.mediacontrol.MediaControlConfig
+import io.homeassistant.companion.android.database.mediacontrol.MediaControlDao
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import timber.log.Timber
 
 internal class MediaControlRepositoryImpl @Inject constructor(
-    private val prefsRepository: PrefsRepository,
+    private val dao: MediaControlDao,
     private val serverManager: ServerManager,
 ) : MediaControlRepository {
 
@@ -70,26 +74,40 @@ internal class MediaControlRepositoryImpl @Inject constructor(
             }
         }.distinctUntilChanged()
 
-    override fun observeMediaControlStates(): Flow<List<MediaControlState>> = flow {
-        val entities = prefsRepository.getMediaControlEntities()
-        if (entities.isEmpty()) {
-            emit(emptyList())
-            return@flow
-        }
-
-        val perEntityFlows = entities.map { config -> observeEntityState(config) }
-        combine(perEntityFlows) { states -> states.filterNotNull() }
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun observeMediaControlStates(): Flow<List<MediaControlState>> =
+        dao.getAllFlow()
+            .flatMapLatest { entities ->
+                if (entities.isEmpty()) {
+                    flowOf(emptyList())
+                } else {
+                    combine(entities.map { observeEntityState(it.toEntityConfig()) }) { states ->
+                        states.filterNotNull()
+                    }
+                }
+            }
             .distinctUntilChanged()
-            .collect { emit(it) }
-    }
 
     override suspend fun getConfiguredEntities(): List<MediaControlEntityConfig> =
-        prefsRepository.getMediaControlEntities()
+        dao.getAll().map { it.toEntityConfig() }
 
     override suspend fun setConfiguredEntities(entities: List<MediaControlEntityConfig>) {
-        prefsRepository.setMediaControlEntities(entities)
+        dao.replaceAll(
+            entities.mapIndexed { index, config ->
+                MediaControlConfig(
+                    serverId = config.serverId,
+                    entityId = config.entityId,
+                    position = index,
+                )
+            },
+        )
     }
 }
+
+private fun MediaControlConfig.toEntityConfig() = MediaControlEntityConfig(
+    serverId = serverId,
+    entityId = entityId,
+)
 
 private fun Entity.toMediaControlState(serverId: Int): MediaControlState {
     val playbackState = when (state) {

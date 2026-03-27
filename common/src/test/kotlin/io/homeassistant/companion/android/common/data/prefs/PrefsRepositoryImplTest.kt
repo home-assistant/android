@@ -1,15 +1,12 @@
 package io.homeassistant.companion.android.common.data.prefs
 
 import io.homeassistant.companion.android.common.data.LocalStorage
-import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.HAGesture
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -123,81 +120,4 @@ class PrefsRepositoryImplTest {
         coVerify(exactly = 0) { integrationStorage.getString(any()) }
     }
 
-    @Nested
-    inner class MigrationV2Test {
-
-        @Test
-        fun `Given version 1 prefs with single entity when migrating then entity written as list and old keys removed`() = runTest {
-            // Simulate a user at migration version 1 who had a single entity configured
-            coEvery { localStorage.getInt(MIGRATION_PREF) } returns 1
-            coEvery { localStorage.getInt("media_control_server_id") } returns 42
-            coEvery { localStorage.getString("media_control_entity_id") } returns "media_player.tv"
-            coEvery { localStorage.getString("media_control_entities") } returns null
-            coEvery { localStorage.putString(any(), any()) } returns Unit
-            coEvery { localStorage.remove(any()) } returns Unit
-            coEvery { localStorage.putInt(any(), any()) } returns Unit
-
-            // Trigger migration by accessing the repository
-            repository.getMediaControlEntities()
-
-            val expectedJson = Json.encodeToString(listOf(MediaControlEntityConfig(serverId = 42, entityId = "media_player.tv")))
-            coVerify { localStorage.putString("media_control_entities", expectedJson) }
-            coVerify { localStorage.remove("media_control_server_id") }
-            coVerify { localStorage.remove("media_control_entity_id") }
-            coVerify { localStorage.putInt(MIGRATION_PREF, 2) }
-        }
-
-        @Test
-        fun `Given version 1 prefs with no entity configured when migrating then empty list written`() = runTest {
-            coEvery { localStorage.getInt(MIGRATION_PREF) } returns 1
-            coEvery { localStorage.getInt("media_control_server_id") } returns null
-            coEvery { localStorage.getString("media_control_entity_id") } returns null
-            coEvery { localStorage.getString("media_control_entities") } returns null
-            coEvery { localStorage.putString(any(), any()) } returns Unit
-            coEvery { localStorage.remove(any()) } returns Unit
-            coEvery { localStorage.putInt(any(), any()) } returns Unit
-
-            repository.getMediaControlEntities()
-
-            val expectedJson = Json.encodeToString(emptyList<MediaControlEntityConfig>())
-            coVerify { localStorage.putString("media_control_entities", expectedJson) }
-            coVerify { localStorage.putInt(MIGRATION_PREF, 2) }
-        }
-    }
-
-    @Nested
-    inner class MediaControlEntitiesTest {
-
-        @Test
-        fun `Given no stored entities when getMediaControlEntities called then empty list returned`() = runTest {
-            coEvery { localStorage.getString("media_control_entities") } returns null
-
-            val result = repository.getMediaControlEntities()
-
-            assertEquals(emptyList<MediaControlEntityConfig>(), result)
-        }
-
-        @Test
-        fun `Given stored entities when getMediaControlEntities called then list returned`() = runTest {
-            val entities = listOf(
-                MediaControlEntityConfig(serverId = 1, entityId = "media_player.tv"),
-                MediaControlEntityConfig(serverId = 2, entityId = "media_player.radio"),
-            )
-            coEvery { localStorage.getString("media_control_entities") } returns Json.encodeToString(entities)
-
-            val result = repository.getMediaControlEntities()
-
-            assertEquals(entities, result)
-        }
-
-        @Test
-        fun `Given entities when setMediaControlEntities called then serialized to prefs`() = runTest {
-            val entities = listOf(MediaControlEntityConfig(serverId = 1, entityId = "media_player.tv"))
-            coEvery { localStorage.putString(any(), any()) } returns Unit
-
-            repository.setMediaControlEntities(entities)
-
-            coVerify { localStorage.putString("media_control_entities", Json.encodeToString(entities)) }
-        }
-    }
 }
