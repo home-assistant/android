@@ -105,6 +105,35 @@ class HaMediaSessionTest {
     // -- State observation tests --
 
     /**
+     * Verifies the cold-start recovery path: when `getEntityState` returns state on the first
+     * attempt and `observeEntityState` emits null (subscription not ready) but stays open,
+     * the player retains the REST-fetched state and does not drop to idle.
+     *
+     * Uses a `MutableSharedFlow` with `replay=1` so the null emission is received by the
+     * Default dispatcher collector without racing, and the flow stays open so the observation
+     * loop does not call `setConnecting()` and overwrite the state.
+     */
+    @Test
+    fun `Given getEntityState returns state and observeEntityState emits null when startObservingState then player retains state from REST`() {
+        val stateFlow = MutableSharedFlow<MediaControlState?>(replay = 1)
+        stateFlow.tryEmit(null)
+        coEvery { mediaControlRepository.getEntityState(config) } returns createState(
+            playbackState = MediaPlaybackState.Playing,
+        )
+        coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
+
+        val session = buildSession()
+        session.startObservingState()
+        drainDefaultDispatcherAndMainLooper()
+
+        val player = session.mediaSession.player
+        assertEquals(Player.STATE_READY, player.playbackState)
+        assertEquals(true, player.playWhenReady)
+
+        session.release()
+    }
+
+    /**
      * Verifies that when `observeEntityState` emits a playing state, the player transitions
      * to STATE_READY with `playWhenReady = true`.
      *

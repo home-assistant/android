@@ -124,14 +124,16 @@ class HaMediaSession @AssistedInject constructor(
         observationJob?.cancel()
         currentArtworkUrl = null
         observationJob = scope.launch {
-            mediaControlRepository.getEntityState(config)?.let { loadArtworkAndUpdatePlayer(it) }
             while (true) {
                 ensureActive()
+                // Fetch initial state via REST before subscribing via WebSocket. Placed inside
+                // the retry loop so cold-start failures (connection not yet ready) are retried
+                // automatically on each reconnect attempt.
+                mediaControlRepository.getEntityState(config)?.let { loadArtworkAndUpdatePlayer(it) }
                 mediaControlRepository.observeEntityState(config).collect { state ->
                     if (state == null) {
-                        withContext(Dispatchers.Main) {
-                            player.updateState(state = null, artworkPngBytes = null)
-                        }
+                        // Entity not yet available or subscription not ready; keep the last
+                        // known state visible. Flow completion triggers setConnecting() below.
                         return@collect
                     }
                     loadArtworkAndUpdatePlayer(state)
