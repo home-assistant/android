@@ -10,10 +10,7 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.unmockkAll
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -33,7 +30,6 @@ import org.robolectric.annotation.Config
  * Reconciliation results are asserted via [HaMediaSessionService.activeSessions], which is
  * the service's source of truth for which sessions are currently active.
  */
-@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = dagger.hilt.android.testing.HiltTestApplication::class)
 class HaMediaSessionServiceTest {
@@ -75,25 +71,21 @@ class HaMediaSessionServiceTest {
     }
 
     @Test
-    fun `Given new entity in config when reconcileSessions then session is added`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `Given new entity in config when reconcileSessions then session is added`() {
         val config = MediaControlEntityConfig(serverId = 1, entityId = "media_player.living_room")
-        coEvery { mediaControlRepository.getConfiguredEntities() } returns listOf(config)
 
-        service.reconcileSessions()
-        advanceUntilIdle()
+        service.reconcileSessions(listOf(config))
 
         assertEquals(1, service.activeSessions.size)
         assertTrue(service.activeSessions.containsKey("1:media_player.living_room"))
     }
 
     @Test
-    fun `Given two entities in config when reconcileSessions then sessions added for each`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `Given two entities in config when reconcileSessions then sessions added for each`() {
         val configA = MediaControlEntityConfig(serverId = 1, entityId = "media_player.living_room")
         val configB = MediaControlEntityConfig(serverId = 1, entityId = "media_player.bedroom")
-        coEvery { mediaControlRepository.getConfiguredEntities() } returns listOf(configA, configB)
 
-        service.reconcileSessions()
-        advanceUntilIdle()
+        service.reconcileSessions(listOf(configA, configB))
 
         assertEquals(2, service.activeSessions.size)
         assertTrue(service.activeSessions.containsKey("1:media_player.living_room"))
@@ -101,43 +93,33 @@ class HaMediaSessionServiceTest {
     }
 
     @Test
-    fun `Given active session when entity removed from config then session is removed`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `Given active session when entity removed from config then session is removed`() {
         val configA = MediaControlEntityConfig(serverId = 1, entityId = "media_player.living_room")
         val configB = MediaControlEntityConfig(serverId = 1, entityId = "media_player.bedroom")
-        coEvery { mediaControlRepository.getConfiguredEntities() } returns listOf(configA, configB)
-        service.reconcileSessions()
-        advanceUntilIdle()
+        service.reconcileSessions(listOf(configA, configB))
 
-        coEvery { mediaControlRepository.getConfiguredEntities() } returns listOf(configB)
-        service.reconcileSessions()
-        advanceUntilIdle()
+        service.reconcileSessions(listOf(configB))
 
         assertEquals(1, service.activeSessions.size)
         assertTrue(service.activeSessions.containsKey("1:media_player.bedroom"))
     }
 
     @Test
-    fun `Given existing session when entity remains in config then session is not recreated`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `Given existing session when entity remains in config then session is not recreated`() {
         val config = MediaControlEntityConfig(serverId = 1, entityId = "media_player.living_room")
-        coEvery { mediaControlRepository.getConfiguredEntities() } returns listOf(config)
-        service.reconcileSessions()
-        advanceUntilIdle()
+        service.reconcileSessions(listOf(config))
 
         val sessionBefore = service.activeSessions["1:media_player.living_room"]
 
-        service.reconcileSessions()
-        advanceUntilIdle()
+        service.reconcileSessions(listOf(config))
 
         assertEquals(1, service.activeSessions.size)
         assertTrue(service.activeSessions["1:media_player.living_room"] === sessionBefore)
     }
 
     @Test
-    fun `Given empty config when reconcileSessions then service stops itself`() = runTest(mainDispatcherRule.testDispatcher) {
-        coEvery { mediaControlRepository.getConfiguredEntities() } returns emptyList()
-
-        service.reconcileSessions()
-        advanceUntilIdle()
+    fun `Given empty config when reconcileSessions then service stops itself`() {
+        service.reconcileSessions(emptyList())
 
         assertTrue(Shadows.shadowOf(service).isStoppedBySelf)
     }

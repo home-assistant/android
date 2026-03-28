@@ -23,6 +23,9 @@ interface MediaControlRepository {
     /** Returns the list of all configured media_player entities. */
     suspend fun getConfiguredEntities(): List<MediaControlEntityConfig>
 
+    /** Emits the list of configured entities whenever it changes in the database. */
+    fun observeConfiguredEntities(): Flow<List<MediaControlEntityConfig>>
+
     /** Replaces the full list of configured media_player entities. */
     suspend fun setConfiguredEntities(entities: List<MediaControlEntityConfig>)
 }

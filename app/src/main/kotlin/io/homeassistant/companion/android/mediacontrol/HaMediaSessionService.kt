@@ -12,7 +12,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import timber.log.Timber
 
 /**
@@ -39,16 +40,9 @@ class HaMediaSessionService : MediaSessionService() {
     override fun onCreate() {
         super.onCreate()
         Timber.d("HaMediaSessionService created")
-        reconcileSessions()
-    }
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val result = super.onStartCommand(intent, flags, startId)
-        if (intent?.action == ACTION_RESTART_OBSERVATION) {
-            Timber.d("Restarting observation due to config change")
-            reconcileSessions()
-        }
-        return result
+        mediaControlRepository.observeConfiguredEntities()
+            .onEach { entities -> reconcileSessions(entities) }
+            .launchIn(serviceScope)
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = null
@@ -68,66 +62,50 @@ class HaMediaSessionService : MediaSessionService() {
         super.onDestroy()
     }
 
-    internal fun reconcileSessions() {
-        serviceScope.launch {
-            val configuredEntities = mediaControlRepository.getConfiguredEntities()
-            if (configuredEntities.isEmpty()) {
-                Timber.d("No media control entities configured, stopping service")
-                stopSelf()
-                return@launch
-            }
+    internal fun reconcileSessions(configuredEntities: List<MediaControlEntityConfig>) {
+        if (configuredEntities.isEmpty()) {
+            Timber.d("No media control entities configured, stopping service")
+            stopSelf()
+            return
+        }
 
-            val desiredKeys = configuredEntities.map { it.sessionKey() }.toSet()
-            val currentKeys = activeSessions.keys.toSet()
+        val desiredKeys = configuredEntities.map { it.sessionKey() }.toSet()
+        val currentKeys = activeSessions.keys.toSet()
 
-            // Remove sessions that are no longer configured
-            (currentKeys - desiredKeys).forEach { key ->
-                val session = activeSessions.remove(key) ?: return@forEach
-                removeSession(session.mediaSession)
-                session.release()
-                Timber.d("Removed media session for $key")
-            }
+        // Remove sessions that are no longer configured
+        (currentKeys - desiredKeys).forEach { key ->
+            val session = activeSessions.remove(key) ?: return@forEach
+            removeSession(session.mediaSession)
+            session.release()
+            Timber.d("Removed media session for $key")
+        }
 
-            // Add sessions for newly configured entities
-            (desiredKeys - currentKeys).forEach { key ->
-                val entityConfig = configuredEntities.first { it.sessionKey() == key }
-                val session = haMediaSessionFactory.create(
-                    context = this@HaMediaSessionService,
-                    config = entityConfig,
-                )
-                addSession(session.mediaSession)
-                session.startObservingState()
-                activeSessions[key] = session
-                Timber.d("Added media session for $key")
-            }
+        // Add sessions for newly configured entities
+        (desiredKeys - currentKeys).forEach { key ->
+            val entityConfig = configuredEntities.first { it.sessionKey() == key }
+            val session = haMediaSessionFactory.create(
+                context = this@HaMediaSessionService,
+                config = entityConfig,
+            )
+            addSession(session.mediaSession)
+            session.startObservingState()
+            activeSessions[key] = session
+            Timber.d("Added media session for $key")
         }
     }
 
-    internal companion object {
-        const val ACTION_RESTART_OBSERVATION =
-            "io.homeassistant.companion.android.mediacontrol.RESTART_OBSERVATION"
-
+    companion object {
         /**
          * Starts the service if any media_player entities are configured.
          * Should be called from a foreground context (e.g. Activity) to avoid
          * Android 15+ restrictions on starting mediaPlayback foreground services from background.
+         * Once running, the service observes the database and reconciles sessions automatically.
          */
         suspend fun startIfConfigured(context: Context, mediaControlRepository: MediaControlRepository) {
             if (mediaControlRepository.getConfiguredEntities().isNotEmpty()) {
                 Timber.d("Media control entities configured, starting HaMediaSessionService")
                 context.startService(Intent(context, HaMediaSessionService::class.java))
             }
-        }
-
-        /**
-         * Should be called after a server is removed. The service will re-check its configuration,
-         * remove any sessions for the deleted server, and stop itself if none remain.
-         */
-        fun onServerRemoved(context: Context) {
-            context.startService(
-                Intent(context, HaMediaSessionService::class.java)
-                    .setAction(ACTION_RESTART_OBSERVATION),
-            )
         }
     }
 }

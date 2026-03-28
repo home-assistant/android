@@ -37,13 +37,7 @@ class MediaControlSettingsFragment : Fragment() {
                 viewModel.serviceEvents.collect { event ->
                     when (event) {
                         MediaControlServiceEvent.Start -> {
-                            requireContext().startService(
-                                Intent(requireContext(), HaMediaSessionService::class.java)
-                                    .setAction(HaMediaSessionService.ACTION_RESTART_OBSERVATION),
-                            )
-                        }
-                        MediaControlServiceEvent.Stop -> {
-                            requireContext().stopService(Intent(requireContext(), HaMediaSessionService::class.java))
+                            requireContext().startService(Intent(requireContext(), HaMediaSessionService::class.java))
                         }
                     }
                 }

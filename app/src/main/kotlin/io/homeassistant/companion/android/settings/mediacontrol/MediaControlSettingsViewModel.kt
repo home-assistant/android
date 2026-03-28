@@ -32,7 +32,6 @@ import timber.log.Timber
 /** One-shot events emitted by [MediaControlSettingsViewModel] for the UI layer to act on. */
 sealed interface MediaControlServiceEvent {
     data object Start : MediaControlServiceEvent
-    data object Stop : MediaControlServiceEvent
 }
 
 @Stable
@@ -174,9 +173,9 @@ class MediaControlSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val entities = _uiState.value.configuredEntities
             mediaControlRepository.setConfiguredEntities(entities)
-            _serviceEvents.emit(
-                if (entities.isEmpty()) MediaControlServiceEvent.Stop else MediaControlServiceEvent.Start,
-            )
+            if (entities.isNotEmpty()) {
+                _serviceEvents.emit(MediaControlServiceEvent.Start)
+            }
         }
     }
 

@@ -23,6 +23,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import timber.log.Timber
 
 internal class MediaControlRepositoryImpl @Inject constructor(
@@ -83,6 +84,9 @@ internal class MediaControlRepositoryImpl @Inject constructor(
 
     override suspend fun getConfiguredEntities(): List<MediaControlEntityConfig> =
         dao.getAll().map { it.toEntityConfig() }
+
+    override fun observeConfiguredEntities(): Flow<List<MediaControlEntityConfig>> =
+        dao.getAllFlow().map { list -> list.map { it.toEntityConfig() } }
 
     override suspend fun setConfiguredEntities(entities: List<MediaControlEntityConfig>) {
         dao.replaceAll(
