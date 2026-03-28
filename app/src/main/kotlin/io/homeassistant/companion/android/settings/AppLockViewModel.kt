@@ -10,7 +10,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @HiltViewModel
-class SettingsActivityViewModel @Inject constructor(private val serverManager: ServerManager) : ViewModel() {
+class AppLockViewModel @Inject constructor(private val serverManager: ServerManager) : ViewModel() {
 
     /**
      * Set the app active state for a specific server. Uses [viewModelScope] to ensure the
@@ -18,7 +18,7 @@ class SettingsActivityViewModel @Inject constructor(private val serverManager: S
      * which is critical for the app lock feature.
      */
     fun setAppActive(serverId: Int?, active: Boolean) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.Default) {
             val resolvedId = serverId ?: ServerManager.SERVER_ID_ACTIVE
             serverManager.getServer(resolvedId)?.let {
                 try {
