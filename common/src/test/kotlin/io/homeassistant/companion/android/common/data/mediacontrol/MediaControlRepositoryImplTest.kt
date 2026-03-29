@@ -327,6 +327,102 @@ class MediaControlRepositoryImplTest {
                 awaitComplete()
             }
         }
+
+        @Test
+        fun `Given entity with STOP support then supportsStop is true`() = runTest {
+            val entityState = entityWithVolumeAttributes(
+                mapOf("supported_features" to EntityExt.MEDIA_PLAYER_SUPPORT_STOP),
+            )
+            coEvery {
+                webSocketRepository.getCompressedStateAndChanges(any())
+            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityState)))
+
+            repository.observeEntityState(testConfig).test {
+                assertTrue(awaitItem()!!.supportsStop)
+                awaitComplete()
+            }
+        }
+
+        @Test
+        fun `Given entity with VOLUME_MUTE support then supportsMute is true`() = runTest {
+            val entityState = entityWithVolumeAttributes(
+                mapOf("supported_features" to EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_MUTE),
+            )
+            coEvery {
+                webSocketRepository.getCompressedStateAndChanges(any())
+            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityState)))
+
+            repository.observeEntityState(testConfig).test {
+                assertTrue(awaitItem()!!.supportsMute)
+                awaitComplete()
+            }
+        }
+
+        @Test
+        fun `Given entity with SHUFFLE_SET support and shuffle true then supportsShuffleSet and shuffle are true`() = runTest {
+            val entityState = entityWithVolumeAttributes(
+                mapOf(
+                    "supported_features" to EntityExt.MEDIA_PLAYER_SUPPORT_SHUFFLE_SET,
+                    "shuffle" to true,
+                ),
+            )
+            coEvery {
+                webSocketRepository.getCompressedStateAndChanges(any())
+            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityState)))
+
+            repository.observeEntityState(testConfig).test {
+                val state = awaitItem()!!
+                assertTrue(state.supportsShuffleSet)
+                assertTrue(state.shuffle)
+                awaitComplete()
+            }
+        }
+
+        @Test
+        fun `Given entity with REPEAT_SET support and repeat all then supportsRepeatSet is true and repeatMode is All`() = runTest {
+            val entityState = entityWithVolumeAttributes(
+                mapOf(
+                    "supported_features" to EntityExt.MEDIA_PLAYER_SUPPORT_REPEAT_SET,
+                    "repeat" to "all",
+                ),
+            )
+            coEvery {
+                webSocketRepository.getCompressedStateAndChanges(any())
+            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityState)))
+
+            repository.observeEntityState(testConfig).test {
+                val state = awaitItem()!!
+                assertTrue(state.supportsRepeatSet)
+                assertEquals(MediaRepeatMode.All, state.repeatMode)
+                awaitComplete()
+            }
+        }
+
+        @Test
+        fun `Given entity with repeat one then repeatMode is One`() = runTest {
+            val entityState = entityWithVolumeAttributes(mapOf("repeat" to "one"))
+            coEvery {
+                webSocketRepository.getCompressedStateAndChanges(any())
+            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityState)))
+
+            repository.observeEntityState(testConfig).test {
+                assertEquals(MediaRepeatMode.One, awaitItem()!!.repeatMode)
+                awaitComplete()
+            }
+        }
+
+        @Test
+        fun `Given entity with no repeat attribute then repeatMode is Off`() = runTest {
+            val entityState = entityWithVolumeAttributes(emptyMap())
+            coEvery {
+                webSocketRepository.getCompressedStateAndChanges(any())
+            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityState)))
+
+            repository.observeEntityState(testConfig).test {
+                assertEquals(MediaRepeatMode.Off, awaitItem()!!.repeatMode)
+                awaitComplete()
+            }
+        }
     }
 
     @Nested

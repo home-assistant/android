@@ -12,6 +12,16 @@ sealed interface MediaPlaybackState {
 }
 
 /**
+ * Represents the repeat mode of a media player entity, matching Home Assistant's repeat attribute
+ * values: "off", "one", and "all".
+ */
+sealed interface MediaRepeatMode {
+    data object Off : MediaRepeatMode
+    data object One : MediaRepeatMode
+    data object All : MediaRepeatMode
+}
+
+/**
  * Captures all the information from a Home Assistant media_player entity that is needed
  * to populate an Android MediaSession.
  */
@@ -31,7 +41,13 @@ data class MediaControlState(
     val supportsPreviousTrack: Boolean,
     val supportsNextTrack: Boolean,
     val supportsVolumeSet: Boolean,
+    val supportsStop: Boolean,
+    val supportsMute: Boolean,
+    val supportsShuffleSet: Boolean,
+    val supportsRepeatSet: Boolean,
     val volumeLevel: Float?,
     val isVolumeMuted: Boolean,
+    val shuffle: Boolean,
+    val repeatMode: MediaRepeatMode,
     val entityFriendlyName: String?,
 )

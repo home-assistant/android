@@ -143,9 +143,13 @@ object EntityExt {
     const val MEDIA_PLAYER_SUPPORT_PAUSE = 1
     const val MEDIA_PLAYER_SUPPORT_SEEK = 2
     const val MEDIA_PLAYER_SUPPORT_VOLUME_SET = 4
+    const val MEDIA_PLAYER_SUPPORT_VOLUME_MUTE = 8
     const val MEDIA_PLAYER_SUPPORT_PREVIOUS_TRACK = 16
     const val MEDIA_PLAYER_SUPPORT_NEXT_TRACK = 32
+    const val MEDIA_PLAYER_SUPPORT_STOP = 4096
     const val MEDIA_PLAYER_SUPPORT_PLAY = 16384
+    const val MEDIA_PLAYER_SUPPORT_SHUFFLE_SET = 32768
+    const val MEDIA_PLAYER_SUPPORT_REPEAT_SET = 262144
 
     val DOMAINS_PRESS = listOf("button", "input_button")
     val DOMAINS_TOGGLE = listOf(
@@ -1340,3 +1344,23 @@ internal fun Entity.getMediaDuration(): Double? =
 /** Returns the entity_picture attribute URL, if available. */
 internal fun Entity.getEntityPictureUrl(): String? =
     if (domain == MEDIA_PLAYER_DOMAIN) attributes["entity_picture"]?.toString() else null
+
+/** Whether this media_player entity supports stop. */
+internal fun Entity.supportsStop(): Boolean = domain == MEDIA_PLAYER_DOMAIN &&
+    (supportedFeatures() and EntityExt.MEDIA_PLAYER_SUPPORT_STOP != 0)
+
+/** Whether this media_player entity supports explicit mute toggling via the volume_mute service. */
+internal fun Entity.supportsVolumeMute(): Boolean = domain == MEDIA_PLAYER_DOMAIN &&
+    (supportedFeatures() and EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_MUTE != 0)
+
+/** Whether this media_player entity supports setting shuffle mode. */
+internal fun Entity.supportsShuffleSet(): Boolean = domain == MEDIA_PLAYER_DOMAIN &&
+    (supportedFeatures() and EntityExt.MEDIA_PLAYER_SUPPORT_SHUFFLE_SET != 0)
+
+/** Whether this media_player entity supports setting repeat mode. */
+internal fun Entity.supportsRepeatSet(): Boolean = domain == MEDIA_PLAYER_DOMAIN &&
+    (supportedFeatures() and EntityExt.MEDIA_PLAYER_SUPPORT_REPEAT_SET != 0)
+
+/** Returns whether shuffle mode is currently enabled. */
+internal fun Entity.getShuffle(): Boolean =
+    if (domain == MEDIA_PLAYER_DOMAIN) attributes["shuffle"] as? Boolean ?: false else false

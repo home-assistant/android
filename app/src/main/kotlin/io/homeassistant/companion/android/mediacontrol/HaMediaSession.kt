@@ -17,6 +17,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationDom
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlRepository
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlState
+import io.homeassistant.companion.android.common.data.mediacontrol.MediaRepeatMode
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.util.sensitive
@@ -106,6 +107,36 @@ class HaMediaSession @AssistedInject constructor(
 
             override fun onDecreaseVolumeRequested() {
                 callMediaAction(ACTION_VOLUME_DOWN)
+            }
+
+            override fun onMuteRequested(muted: Boolean) {
+                callMediaAction(
+                    action = ACTION_VOLUME_MUTE,
+                    extraData = mapOf("is_volume_muted" to muted),
+                )
+            }
+
+            override fun onStopRequested() {
+                callMediaAction(ACTION_MEDIA_STOP)
+            }
+
+            override fun onShuffleRequested(shuffle: Boolean) {
+                callMediaAction(
+                    action = ACTION_SHUFFLE_SET,
+                    extraData = mapOf("shuffle" to shuffle),
+                )
+            }
+
+            override fun onRepeatRequested(repeatMode: MediaRepeatMode) {
+                val haRepeatValue = when (repeatMode) {
+                    is MediaRepeatMode.Off -> "off"
+                    is MediaRepeatMode.One -> "one"
+                    is MediaRepeatMode.All -> "all"
+                }
+                callMediaAction(
+                    action = ACTION_REPEAT_SET,
+                    extraData = mapOf("repeat" to haRepeatValue),
+                )
             }
         }
 
@@ -263,12 +294,16 @@ class HaMediaSession @AssistedInject constructor(
 
         const val ACTION_MEDIA_PLAY = "media_play"
         const val ACTION_MEDIA_PAUSE = "media_pause"
+        const val ACTION_MEDIA_STOP = "media_stop"
         const val ACTION_MEDIA_SEEK = "media_seek"
         const val ACTION_MEDIA_NEXT_TRACK = "media_next_track"
         const val ACTION_MEDIA_PREVIOUS_TRACK = "media_previous_track"
         const val ACTION_VOLUME_SET = "volume_set"
         const val ACTION_VOLUME_UP = "volume_up"
         const val ACTION_VOLUME_DOWN = "volume_down"
+        const val ACTION_VOLUME_MUTE = "volume_mute"
+        const val ACTION_SHUFFLE_SET = "shuffle_set"
+        const val ACTION_REPEAT_SET = "repeat_set"
     }
 
     /** Creates [HaMediaSession] instances with runtime-provided [context] and [config]. */

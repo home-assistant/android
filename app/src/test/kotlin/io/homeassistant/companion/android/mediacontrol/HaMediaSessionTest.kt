@@ -9,6 +9,7 @@ import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlE
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlRepository
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlState
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaPlaybackState
+import io.homeassistant.companion.android.common.data.mediacontrol.MediaRepeatMode
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -77,8 +78,14 @@ class HaMediaSessionTest {
         supportsPreviousTrack = false,
         supportsNextTrack = false,
         supportsVolumeSet = false,
+        supportsStop = false,
+        supportsMute = false,
+        supportsShuffleSet = false,
+        supportsRepeatSet = false,
         volumeLevel = null,
         isVolumeMuted = false,
+        shuffle = false,
+        repeatMode = MediaRepeatMode.Off,
         entityFriendlyName = null,
     )
 

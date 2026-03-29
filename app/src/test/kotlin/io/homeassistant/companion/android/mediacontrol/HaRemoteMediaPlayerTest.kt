@@ -4,6 +4,7 @@ import android.os.Looper
 import androidx.media3.common.Player
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlState
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaPlaybackState
+import io.homeassistant.companion.android.common.data.mediacontrol.MediaRepeatMode
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Assert.assertEquals
@@ -42,8 +43,14 @@ class HaRemoteMediaPlayerTest {
         supportsPreviousTrack: Boolean = true,
         supportsNextTrack: Boolean = true,
         supportsVolumeSet: Boolean = false,
+        supportsStop: Boolean = false,
+        supportsMute: Boolean = false,
+        supportsShuffleSet: Boolean = false,
+        supportsRepeatSet: Boolean = false,
         volumeLevel: Float? = null,
         isVolumeMuted: Boolean = false,
+        shuffle: Boolean = false,
+        repeatMode: MediaRepeatMode = MediaRepeatMode.Off,
         entityFriendlyName: String? = null,
     ) = MediaControlState(
         entityId = "media_player.test",
@@ -61,8 +68,14 @@ class HaRemoteMediaPlayerTest {
         supportsPreviousTrack = supportsPreviousTrack,
         supportsNextTrack = supportsNextTrack,
         supportsVolumeSet = supportsVolumeSet,
+        supportsStop = supportsStop,
+        supportsMute = supportsMute,
+        supportsShuffleSet = supportsShuffleSet,
+        supportsRepeatSet = supportsRepeatSet,
         volumeLevel = volumeLevel,
         isVolumeMuted = isVolumeMuted,
+        shuffle = shuffle,
+        repeatMode = repeatMode,
         entityFriendlyName = entityFriendlyName,
     )
 
@@ -338,6 +351,147 @@ class HaRemoteMediaPlayerTest {
         shadowOf(Looper.getMainLooper()).idle()
 
         verify { commandCallback.onDecreaseVolumeRequested() }
+    }
+
+    // -- Stop command tests --
+
+    @Test
+    fun `Given stop supported when getState then stop command available`() {
+        player.updateState(state = createState(supportsStop = true), artworkPngBytes = null)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertTrue(player.availableCommands.contains(Player.COMMAND_STOP))
+    }
+
+    @Test
+    fun `Given stop not supported when getState then stop command not available`() {
+        player.updateState(state = createState(supportsStop = false), artworkPngBytes = null)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertFalse(player.availableCommands.contains(Player.COMMAND_STOP))
+    }
+
+    @Test
+    fun `Given stop supported when stop requested then onStopRequested called`() {
+        player.updateState(state = createState(supportsStop = true), artworkPngBytes = null)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        player.stop()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        verify { commandCallback.onStopRequested() }
+    }
+
+    // -- Mute command tests --
+
+    @Test
+    fun `Given mute supported when mute requested then onMuteRequested called with true`() {
+        player.updateState(
+            state = createState(supportsVolumeSet = true, supportsMute = true, isVolumeMuted = false),
+            artworkPngBytes = null,
+        )
+        shadowOf(Looper.getMainLooper()).idle()
+
+        player.setDeviceMuted(true, 0)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        verify { commandCallback.onMuteRequested(muted = true) }
+    }
+
+    @Test
+    fun `Given mute not supported when mute requested then onMuteRequested not called`() {
+        player.updateState(
+            state = createState(supportsVolumeSet = true, supportsMute = false),
+            artworkPngBytes = null,
+        )
+        shadowOf(Looper.getMainLooper()).idle()
+
+        player.setDeviceMuted(true, 0)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        verify(exactly = 0) { commandCallback.onMuteRequested(any()) }
+    }
+
+    // -- Shuffle command tests --
+
+    @Test
+    fun `Given shuffle supported when getState then shuffle command available`() {
+        player.updateState(state = createState(supportsShuffleSet = true), artworkPngBytes = null)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertTrue(player.availableCommands.contains(Player.COMMAND_SET_SHUFFLE_MODE))
+    }
+
+    @Test
+    fun `Given shuffle not supported when getState then shuffle command not available`() {
+        player.updateState(state = createState(supportsShuffleSet = false), artworkPngBytes = null)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertFalse(player.availableCommands.contains(Player.COMMAND_SET_SHUFFLE_MODE))
+    }
+
+    @Test
+    fun `Given shuffle enabled in state when getState then shuffleModeEnabled is true`() {
+        player.updateState(state = createState(shuffle = true), artworkPngBytes = null)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertTrue(player.shuffleModeEnabled)
+    }
+
+    @Test
+    fun `Given shuffle supported when shuffle enabled then onShuffleRequested called with true`() {
+        player.updateState(state = createState(supportsShuffleSet = true, shuffle = false), artworkPngBytes = null)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        player.shuffleModeEnabled = true
+        shadowOf(Looper.getMainLooper()).idle()
+
+        verify { commandCallback.onShuffleRequested(shuffle = true) }
+    }
+
+    // -- Repeat command tests --
+
+    @Test
+    fun `Given repeat supported when getState then repeat command available`() {
+        player.updateState(state = createState(supportsRepeatSet = true), artworkPngBytes = null)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertTrue(player.availableCommands.contains(Player.COMMAND_SET_REPEAT_MODE))
+    }
+
+    @Test
+    fun `Given repeat not supported when getState then repeat command not available`() {
+        player.updateState(state = createState(supportsRepeatSet = false), artworkPngBytes = null)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertFalse(player.availableCommands.contains(Player.COMMAND_SET_REPEAT_MODE))
+    }
+
+    private fun assertRepeatModeRoundTrip(mediaRepeatMode: MediaRepeatMode, media3RepeatMode: Int) {
+        player.updateState(state = createState(supportsRepeatSet = true, repeatMode = mediaRepeatMode), artworkPngBytes = null)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(media3RepeatMode, player.repeatMode)
+
+        player.repeatMode = media3RepeatMode
+        shadowOf(Looper.getMainLooper()).idle()
+
+        verify { commandCallback.onRepeatRequested(repeatMode = mediaRepeatMode) }
+    }
+
+    @Test
+    fun `Given repeat mode Off in state when getState then repeatMode is REPEAT_MODE_OFF`() {
+        assertRepeatModeRoundTrip(mediaRepeatMode = MediaRepeatMode.Off, media3RepeatMode = Player.REPEAT_MODE_OFF)
+    }
+
+    @Test
+    fun `Given repeat mode One in state when getState then repeatMode is REPEAT_MODE_ONE`() {
+        assertRepeatModeRoundTrip(mediaRepeatMode = MediaRepeatMode.One, media3RepeatMode = Player.REPEAT_MODE_ONE)
+    }
+
+    @Test
+    fun `Given repeat mode All in state when getState then repeatMode is REPEAT_MODE_ALL`() {
+        assertRepeatModeRoundTrip(mediaRepeatMode = MediaRepeatMode.All, media3RepeatMode = Player.REPEAT_MODE_ALL)
     }
 
     // -- setConnecting tests --

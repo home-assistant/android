@@ -8,12 +8,17 @@ import io.homeassistant.companion.android.common.data.integration.getMediaArtist
 import io.homeassistant.companion.android.common.data.integration.getMediaDuration
 import io.homeassistant.companion.android.common.data.integration.getMediaPosition
 import io.homeassistant.companion.android.common.data.integration.getMediaTitle
+import io.homeassistant.companion.android.common.data.integration.getShuffle
 import io.homeassistant.companion.android.common.data.integration.getVolumeMuted
 import io.homeassistant.companion.android.common.data.integration.supportsNextTrack
 import io.homeassistant.companion.android.common.data.integration.supportsPause
 import io.homeassistant.companion.android.common.data.integration.supportsPlay
 import io.homeassistant.companion.android.common.data.integration.supportsPreviousTrack
+import io.homeassistant.companion.android.common.data.integration.supportsRepeatSet
 import io.homeassistant.companion.android.common.data.integration.supportsSeek
+import io.homeassistant.companion.android.common.data.integration.supportsShuffleSet
+import io.homeassistant.companion.android.common.data.integration.supportsStop
+import io.homeassistant.companion.android.common.data.integration.supportsVolumeMute
 import io.homeassistant.companion.android.common.data.integration.supportsVolumeSet
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.mediacontrol.MediaControlConfig
@@ -115,6 +120,12 @@ private fun Entity.toMediaControlState(serverId: Int): MediaControlState {
         else -> MediaPlaybackState.Off
     }
 
+    val repeatMode = when (attributes["repeat"]?.toString()) {
+        "one" -> MediaRepeatMode.One
+        "all" -> MediaRepeatMode.All
+        else -> MediaRepeatMode.Off
+    }
+
     return MediaControlState(
         entityId = entityId,
         serverId = serverId,
@@ -131,8 +142,14 @@ private fun Entity.toMediaControlState(serverId: Int): MediaControlState {
         supportsPreviousTrack = supportsPreviousTrack(),
         supportsNextTrack = supportsNextTrack(),
         supportsVolumeSet = supportsVolumeSet(),
+        supportsStop = supportsStop(),
+        supportsMute = supportsVolumeMute(),
+        supportsShuffleSet = supportsShuffleSet(),
+        supportsRepeatSet = supportsRepeatSet(),
         volumeLevel = if (supportsVolumeSet()) (attributes["volume_level"] as? Number)?.toFloat() else null,
         isVolumeMuted = getVolumeMuted(),
+        shuffle = getShuffle(),
+        repeatMode = repeatMode,
         entityFriendlyName = attributes["friendly_name"] as? String,
     )
 }

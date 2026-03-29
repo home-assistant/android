@@ -13,6 +13,7 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlState
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaPlaybackState
+import io.homeassistant.companion.android.common.data.mediacontrol.MediaRepeatMode
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -26,6 +27,7 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
     interface CommandCallback {
         fun onPlayRequested()
         fun onPauseRequested()
+        fun onStopRequested()
         fun onSeekRequested(positionMs: Long)
         fun onNextRequested()
         fun onPreviousRequested()
@@ -37,6 +39,10 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
         fun onSetVolumeRequested(volume: Float)
         fun onIncreaseVolumeRequested()
         fun onDecreaseVolumeRequested()
+        fun onMuteRequested(muted: Boolean)
+
+        fun onShuffleRequested(shuffle: Boolean)
+        fun onRepeatRequested(repeatMode: MediaRepeatMode)
     }
 
     private var mediaState: MediaControlState? = null
@@ -115,6 +121,12 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
 
         val bufferedPositionMs = if (durationUs != DURATION_UNSET_US) durationUs / 1000 else positionMs
 
+        val media3RepeatMode = when (state.repeatMode) {
+            is MediaRepeatMode.Off -> Player.REPEAT_MODE_OFF
+            is MediaRepeatMode.One -> Player.REPEAT_MODE_ONE
+            is MediaRepeatMode.All -> Player.REPEAT_MODE_ALL
+        }
+
         return State.Builder()
             .setAvailableCommands(availableCommands)
             .setPlaybackState(playbackState)
@@ -127,6 +139,8 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
             .setDeviceInfo(REMOTE_DEVICE_INFO)
             .setDeviceVolume(deviceVolume)
             .setIsDeviceMuted(state.isVolumeMuted)
+            .setShuffleModeEnabled(state.shuffle)
+            .setRepeatMode(media3RepeatMode)
             .build()
     }
 
@@ -173,6 +187,33 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
         return Futures.immediateVoidFuture()
     }
 
+    override fun handleSetDeviceMuted(muted: Boolean, flags: Int): ListenableFuture<*> {
+        if (mediaState?.supportsMute == true) {
+            commandCallback.onMuteRequested(muted = muted)
+        }
+        return Futures.immediateVoidFuture()
+    }
+
+    override fun handleStop(): ListenableFuture<*> {
+        commandCallback.onStopRequested()
+        return Futures.immediateVoidFuture()
+    }
+
+    override fun handleSetShuffleModeEnabled(shuffleModeEnabled: Boolean): ListenableFuture<*> {
+        commandCallback.onShuffleRequested(shuffle = shuffleModeEnabled)
+        return Futures.immediateVoidFuture()
+    }
+
+    override fun handleSetRepeatMode(repeatMode: Int): ListenableFuture<*> {
+        val haRepeatMode = when (repeatMode) {
+            Player.REPEAT_MODE_ONE -> MediaRepeatMode.One
+            Player.REPEAT_MODE_ALL -> MediaRepeatMode.All
+            else -> MediaRepeatMode.Off
+        }
+        commandCallback.onRepeatRequested(repeatMode = haRepeatMode)
+        return Futures.immediateVoidFuture()
+    }
+
     private fun buildIdleState(): State = State.Builder()
         .setAvailableCommands(Player.Commands.EMPTY)
         .setPlaybackState(STATE_IDLE)
@@ -212,6 +253,7 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
     private fun buildAvailableCommands(state: MediaControlState): Player.Commands {
         val builder = Player.Commands.Builder()
         if (state.supportsPlay || state.supportsPause) builder.add(Player.COMMAND_PLAY_PAUSE)
+        if (state.supportsStop) builder.add(Player.COMMAND_STOP)
         if (state.supportsSeek) builder.add(Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM)
         builder.add(Player.COMMAND_GET_CURRENT_MEDIA_ITEM)
         if (state.supportsPreviousTrack) {
@@ -235,6 +277,8 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
             builder.add(Player.COMMAND_ADJUST_DEVICE_VOLUME)
             builder.add(Player.COMMAND_ADJUST_DEVICE_VOLUME_WITH_FLAGS)
         }
+        if (state.supportsShuffleSet) builder.add(Player.COMMAND_SET_SHUFFLE_MODE)
+        if (state.supportsRepeatSet) builder.add(Player.COMMAND_SET_REPEAT_MODE)
         builder.add(Player.COMMAND_GET_METADATA)
         builder.add(Player.COMMAND_GET_TIMELINE)
         return builder.build()
