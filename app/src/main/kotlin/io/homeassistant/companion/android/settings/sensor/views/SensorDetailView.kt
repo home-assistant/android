@@ -911,8 +911,11 @@ internal fun filterSettingEntries(
     query: String,
 ): List<Pair<String, String>> {
     val trimmed = query.trim()
-    return if (trimmed.isBlank()) entries
-    else entries.filter { (_, label) -> label.contains(trimmed, ignoreCase = true) }
+    return if (trimmed.isBlank()) {
+        entries
+    } else {
+        entries.filter { (_, label) -> label.contains(trimmed, ignoreCase = true) }
+    }
 }
 
 @Composable
