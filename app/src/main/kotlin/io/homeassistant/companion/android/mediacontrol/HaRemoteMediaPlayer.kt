@@ -7,7 +7,6 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.SimpleBasePlayer
-import androidx.media3.common.SimpleBasePlayer.PositionSupplier
 import androidx.media3.common.util.UnstableApi
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
@@ -124,8 +123,6 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
 
         val deviceVolume = state.volumeLevel?.let { (it * VOLUME_SCALE).toInt() } ?: 0
 
-        val bufferedPositionMs = if (durationUs != DURATION_UNSET_US) durationUs / 1000 else positionMs
-
         val media3RepeatMode = when (state.repeatMode) {
             is MediaRepeatMode.Off -> Player.REPEAT_MODE_OFF
             is MediaRepeatMode.One -> Player.REPEAT_MODE_ONE
@@ -139,7 +136,6 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
             .setPlaybackParameters(PlaybackParameters(PLAYBACK_SPEED))
             .setCurrentMediaItemIndex(CURRENT_ITEM_INDEX)
             .setContentPositionMs(positionMs)
-            .setContentBufferedPositionMs(PositionSupplier.getConstant(bufferedPositionMs))
             .setPlaylist(playlist)
             .setDeviceInfo(REMOTE_DEVICE_INFO)
             .setDeviceVolume(deviceVolume)
