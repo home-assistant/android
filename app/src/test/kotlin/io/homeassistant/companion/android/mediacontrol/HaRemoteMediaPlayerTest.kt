@@ -9,6 +9,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -52,6 +53,12 @@ class HaRemoteMediaPlayerTest {
         shuffle: Boolean = false,
         repeatMode: MediaRepeatMode = MediaRepeatMode.Off,
         entityFriendlyName: String? = null,
+        albumArtist: String? = null,
+        mediaContentType: String? = null,
+        mediaTrack: Int? = null,
+        mediaChannel: String? = null,
+        mediaSeriesTitle: String? = null,
+        appName: String? = null,
     ) = MediaControlState(
         entityId = "media_player.test",
         serverId = 1,
@@ -77,6 +84,12 @@ class HaRemoteMediaPlayerTest {
         shuffle = shuffle,
         repeatMode = repeatMode,
         entityFriendlyName = entityFriendlyName,
+        albumArtist = albumArtist,
+        mediaContentType = mediaContentType,
+        mediaTrack = mediaTrack,
+        mediaChannel = mediaChannel,
+        mediaSeriesTitle = mediaSeriesTitle,
+        appName = appName,
     )
 
     // -- getState tests --
@@ -144,6 +157,105 @@ class HaRemoteMediaPlayerTest {
         assertEquals("My Song", metadata.title?.toString())
         assertEquals("My Artist", metadata.artist?.toString())
         assertEquals("My Album", metadata.albumTitle?.toString())
+    }
+
+    @Test
+    fun `Given state with album artist when getState then albumArtist is populated`() {
+        player.updateState(
+            state = createState(albumArtist = "Various Artists"),
+            artworkPngBytes = null,
+        )
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals("Various Artists", player.mediaMetadata.albumArtist?.toString())
+    }
+
+    @Test
+    fun `Given state with track number when getState then trackNumber is populated`() {
+        player.updateState(
+            state = createState(mediaTrack = 5),
+            artworkPngBytes = null,
+        )
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(5, player.mediaMetadata.trackNumber)
+    }
+
+    @Test
+    fun `Given state with channel when getState then station is populated`() {
+        player.updateState(
+            state = createState(mediaChannel = "BBC Radio 4"),
+            artworkPngBytes = null,
+        )
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals("BBC Radio 4", player.mediaMetadata.station?.toString())
+    }
+
+    @Test
+    fun `Given state with series title when getState then subtitle is series title`() {
+        player.updateState(
+            state = createState(mediaSeriesTitle = "Breaking Bad", appName = "Plex"),
+            artworkPngBytes = null,
+        )
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals("Breaking Bad", player.mediaMetadata.subtitle?.toString())
+    }
+
+    @Test
+    fun `Given state with app name but no series title when getState then subtitle is app name`() {
+        player.updateState(
+            state = createState(mediaSeriesTitle = null, appName = "Spotify"),
+            artworkPngBytes = null,
+        )
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals("Spotify", player.mediaMetadata.subtitle?.toString())
+    }
+
+    @Test
+    fun `Given state with music content type when getState then mediaType is MEDIA_TYPE_MUSIC`() {
+        player.updateState(
+            state = createState(mediaContentType = "music"),
+            artworkPngBytes = null,
+        )
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(androidx.media3.common.MediaMetadata.MEDIA_TYPE_MUSIC, player.mediaMetadata.mediaType)
+    }
+
+    @Test
+    fun `Given state with tvshow content type when getState then mediaType is MEDIA_TYPE_TV_SHOW`() {
+        player.updateState(
+            state = createState(mediaContentType = "tvshow"),
+            artworkPngBytes = null,
+        )
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(androidx.media3.common.MediaMetadata.MEDIA_TYPE_TV_SHOW, player.mediaMetadata.mediaType)
+    }
+
+    @Test
+    fun `Given state with episode content type when getState then mediaType is MEDIA_TYPE_TV_SHOW`() {
+        player.updateState(
+            state = createState(mediaContentType = "episode"),
+            artworkPngBytes = null,
+        )
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(androidx.media3.common.MediaMetadata.MEDIA_TYPE_TV_SHOW, player.mediaMetadata.mediaType)
+    }
+
+    @Test
+    fun `Given state with unknown content type when getState then mediaType is null`() {
+        player.updateState(
+            state = createState(mediaContentType = "game"),
+            artworkPngBytes = null,
+        )
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertNull(player.mediaMetadata.mediaType)
     }
 
     @Test

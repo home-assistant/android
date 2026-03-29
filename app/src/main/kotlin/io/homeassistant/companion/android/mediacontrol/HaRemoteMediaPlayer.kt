@@ -91,6 +91,11 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
             .setTitle(state.title)
             .setArtist(state.artist)
             .setAlbumTitle(state.albumName)
+            .setAlbumArtist(state.albumArtist)
+            .setTrackNumber(state.mediaTrack)
+            .setStation(state.mediaChannel)
+            .setSubtitle(state.mediaSeriesTitle ?: state.appName)
+            .setMediaType(state.mediaContentType?.toMedia3MediaType())
         artworkBytes?.let {
             metadataBuilder.setArtworkData(it, MediaMetadata.PICTURE_TYPE_FRONT_COVER)
         }
@@ -231,6 +236,11 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
             .setTitle(state.title)
             .setArtist(state.artist)
             .setAlbumTitle(state.albumName)
+            .setAlbumArtist(state.albumArtist)
+            .setTrackNumber(state.mediaTrack)
+            .setStation(state.mediaChannel)
+            .setSubtitle(state.mediaSeriesTitle ?: state.appName)
+            .setMediaType(state.mediaContentType?.toMedia3MediaType())
         artworkBytes?.let { metadataBuilder.setArtworkData(it, MediaMetadata.PICTURE_TYPE_FRONT_COVER) }
         val currentItem = MediaItemData.Builder(state.entityId)
             .setMediaMetadata(metadataBuilder.build())
@@ -282,6 +292,20 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
         builder.add(Player.COMMAND_GET_METADATA)
         builder.add(Player.COMMAND_GET_TIMELINE)
         return builder.build()
+    }
+
+    /**
+     * Maps a Home Assistant media_content_type string to the corresponding Media3 media type
+     * constant, or null if there is no suitable mapping.
+     */
+    private fun String.toMedia3MediaType(): Int? = when (this) {
+        "music" -> MediaMetadata.MEDIA_TYPE_MUSIC
+        "tvshow", "episode" -> MediaMetadata.MEDIA_TYPE_TV_SHOW
+        "movie" -> MediaMetadata.MEDIA_TYPE_MOVIE
+        "video" -> MediaMetadata.MEDIA_TYPE_VIDEO
+        "channel" -> MediaMetadata.MEDIA_TYPE_TV_CHANNEL
+        "playlist" -> MediaMetadata.MEDIA_TYPE_PLAYLIST
+        else -> null
     }
 
     private companion object {

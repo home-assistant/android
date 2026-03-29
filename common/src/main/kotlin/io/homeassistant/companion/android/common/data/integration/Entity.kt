@@ -1364,3 +1364,27 @@ internal fun Entity.supportsRepeatSet(): Boolean = domain == MEDIA_PLAYER_DOMAIN
 /** Returns whether shuffle mode is currently enabled. */
 internal fun Entity.getShuffle(): Boolean =
     if (domain == MEDIA_PLAYER_DOMAIN) attributes["shuffle"] as? Boolean ?: false else false
+
+/** Returns the album artist attribute directly, without falling back to media_artist. */
+internal fun Entity.getMediaAlbumArtist(): String? =
+    if (domain == MEDIA_PLAYER_DOMAIN) attributes["media_album_artist"]?.toString() else null
+
+/** Returns the media content type (e.g. "music", "tvshow", "movie"), if available. */
+internal fun Entity.getMediaContentType(): String? =
+    if (domain == MEDIA_PLAYER_DOMAIN) attributes["media_content_type"]?.toString() else null
+
+/** Returns the track number within the album, if available. */
+internal fun Entity.getMediaTrack(): Int? =
+    if (domain == MEDIA_PLAYER_DOMAIN) attributes["media_track"]?.toString()?.toIntOrNull() else null
+
+/** Returns the TV or radio channel name, if available. */
+internal fun Entity.getMediaChannel(): String? =
+    if (domain == MEDIA_PLAYER_DOMAIN) attributes["media_channel"]?.toString() else null
+
+/** Returns the TV series title when playing an episode, if available. */
+internal fun Entity.getMediaSeriesTitle(): String? =
+    if (domain == MEDIA_PLAYER_DOMAIN) attributes["media_series_title"]?.toString() else null
+
+/** Returns the name of the app currently active on this media player, if available. */
+internal fun Entity.getAppName(): String? =
+    if (domain == MEDIA_PLAYER_DOMAIN) attributes["app_name"]?.toString() else null

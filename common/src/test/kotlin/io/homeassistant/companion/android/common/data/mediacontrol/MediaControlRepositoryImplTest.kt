@@ -426,6 +426,99 @@ class MediaControlRepositoryImplTest {
     }
 
     @Nested
+    inner class MetadataMappingTest {
+
+        private fun entityWithAttributes(attributes: Map<String, Any?>) = CompressedEntityState(
+            state = JsonPrimitive("playing"),
+            attributes = attributes,
+            lastChanged = 1000.0,
+            lastUpdated = 1000.0,
+        )
+
+        private fun emitEntity(attributes: Map<String, Any?>) {
+            coEvery {
+                webSocketRepository.getCompressedStateAndChanges(any())
+            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityWithAttributes(attributes))))
+        }
+
+        @Test
+        fun `Given entity with media_album_artist then albumArtist is set`() = runTest {
+            emitEntity(mapOf("media_album_artist" to "Various Artists"))
+
+            repository.observeEntityState(testConfig).test {
+                assertEquals("Various Artists", awaitItem()?.albumArtist)
+                awaitComplete()
+            }
+        }
+
+        @Test
+        fun `Given entity with media_content_type then mediaContentType is set`() = runTest {
+            emitEntity(mapOf("media_content_type" to "music"))
+
+            repository.observeEntityState(testConfig).test {
+                assertEquals("music", awaitItem()?.mediaContentType)
+                awaitComplete()
+            }
+        }
+
+        @Test
+        fun `Given entity with media_track then mediaTrack is set`() = runTest {
+            emitEntity(mapOf("media_track" to 3))
+
+            repository.observeEntityState(testConfig).test {
+                assertEquals(3, awaitItem()?.mediaTrack)
+                awaitComplete()
+            }
+        }
+
+        @Test
+        fun `Given entity with media_channel then mediaChannel is set`() = runTest {
+            emitEntity(mapOf("media_channel" to "BBC Radio 4"))
+
+            repository.observeEntityState(testConfig).test {
+                assertEquals("BBC Radio 4", awaitItem()?.mediaChannel)
+                awaitComplete()
+            }
+        }
+
+        @Test
+        fun `Given entity with media_series_title then mediaSeriesTitle is set`() = runTest {
+            emitEntity(mapOf("media_series_title" to "Breaking Bad"))
+
+            repository.observeEntityState(testConfig).test {
+                assertEquals("Breaking Bad", awaitItem()?.mediaSeriesTitle)
+                awaitComplete()
+            }
+        }
+
+        @Test
+        fun `Given entity with app_name then appName is set`() = runTest {
+            emitEntity(mapOf("app_name" to "Netflix"))
+
+            repository.observeEntityState(testConfig).test {
+                assertEquals("Netflix", awaitItem()?.appName)
+                awaitComplete()
+            }
+        }
+
+        @Test
+        fun `Given entity without new metadata attributes then all new fields are null`() = runTest {
+            emitEntity(mapOf("media_title" to "Song"))
+
+            repository.observeEntityState(testConfig).test {
+                val state = awaitItem()!!
+                assertNull(state.albumArtist)
+                assertNull(state.mediaContentType)
+                assertNull(state.mediaTrack)
+                assertNull(state.mediaChannel)
+                assertNull(state.mediaSeriesTitle)
+                assertNull(state.appName)
+                awaitComplete()
+            }
+        }
+    }
+
+    @Nested
     inner class DistinctUntilChangedTest {
 
         @Test

@@ -50,4 +50,10 @@ data class MediaControlState(
     val shuffle: Boolean,
     val repeatMode: MediaRepeatMode,
     val entityFriendlyName: String?,
+    val albumArtist: String? = null,
+    val mediaContentType: String? = null,
+    val mediaTrack: Int? = null,
+    val mediaChannel: String? = null,
+    val mediaSeriesTitle: String? = null,
+    val appName: String? = null,
 )

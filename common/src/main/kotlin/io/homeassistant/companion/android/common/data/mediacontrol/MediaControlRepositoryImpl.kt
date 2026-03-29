@@ -2,12 +2,18 @@ package io.homeassistant.companion.android.common.data.mediacontrol
 
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.applyCompressedStateDiff
+import io.homeassistant.companion.android.common.data.integration.getAppName
 import io.homeassistant.companion.android.common.data.integration.getEntityPictureUrl
+import io.homeassistant.companion.android.common.data.integration.getMediaAlbumArtist
 import io.homeassistant.companion.android.common.data.integration.getMediaAlbumName
 import io.homeassistant.companion.android.common.data.integration.getMediaArtist
+import io.homeassistant.companion.android.common.data.integration.getMediaChannel
+import io.homeassistant.companion.android.common.data.integration.getMediaContentType
 import io.homeassistant.companion.android.common.data.integration.getMediaDuration
 import io.homeassistant.companion.android.common.data.integration.getMediaPosition
+import io.homeassistant.companion.android.common.data.integration.getMediaSeriesTitle
 import io.homeassistant.companion.android.common.data.integration.getMediaTitle
+import io.homeassistant.companion.android.common.data.integration.getMediaTrack
 import io.homeassistant.companion.android.common.data.integration.getShuffle
 import io.homeassistant.companion.android.common.data.integration.getVolumeMuted
 import io.homeassistant.companion.android.common.data.integration.supportsNextTrack
@@ -151,5 +157,11 @@ private fun Entity.toMediaControlState(serverId: Int): MediaControlState {
         shuffle = getShuffle(),
         repeatMode = repeatMode,
         entityFriendlyName = attributes["friendly_name"] as? String,
+        albumArtist = getMediaAlbumArtist(),
+        mediaContentType = getMediaContentType(),
+        mediaTrack = getMediaTrack(),
+        mediaChannel = getMediaChannel(),
+        mediaSeriesTitle = getMediaSeriesTitle(),
+        appName = getAppName(),
     )
 }
