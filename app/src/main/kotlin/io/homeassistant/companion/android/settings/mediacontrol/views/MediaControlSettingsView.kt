@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.settings.mediacontrol.views
 
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -11,11 +12,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListItemInfo
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -25,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -91,7 +93,7 @@ internal fun MediaControlSettingsContent(
 
     LazyColumn(
         state = lazyListState,
-        contentPadding = PaddingValues(all = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
+        contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
         modifier = modifier,
     ) {
         item {
@@ -99,37 +101,47 @@ internal fun MediaControlSettingsContent(
                 text = stringResource(R.string.media_control_description),
                 style = HATextStyle.Body,
                 color = colorScheme.colorTextSecondary,
+                textAlign = TextAlign.Start,
+                modifier = Modifier.padding(horizontal = 16.dp),
             )
             Spacer(modifier = Modifier.size(16.dp))
         }
 
-        if (uiState.servers.size > 1) {
+        if (uiState.isLoading) {
             item {
-                ServerExposedDropdownMenu(
-                    servers = uiState.servers,
-                    current = uiState.selectedServerId,
-                    onSelected = onServerSelected,
-                    title = R.string.server,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Spacer(modifier = Modifier.size(8.dp))
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
             }
-        }
+        } else {
+            if (uiState.servers.size > 1) {
+                item {
+                    ServerExposedDropdownMenu(
+                        servers = uiState.servers,
+                        current = uiState.selectedServerId,
+                        onSelected = onServerSelected,
+                        title = R.string.server,
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                }
+            }
 
-        item {
-            EntityPicker(
-                entities = availableEntities,
-                selectedEntityId = null,
-                onEntitySelectedId = onEntitySelected,
-                onEntityCleared = {},
-                addButtonText = stringResource(R.string.media_control_select_entity),
-                entityRegistry = uiState.entityRegistryPerServer[uiState.selectedServerId] ?: emptyList(),
-                deviceRegistry = uiState.deviceRegistryPerServer[uiState.selectedServerId] ?: emptyList(),
-                areaRegistry = uiState.areaRegistryPerServer[uiState.selectedServerId] ?: emptyList(),
-            )
-            if (uiState.configuredEntities.isNotEmpty()) {
-                Spacer(modifier = Modifier.size(8.dp))
-                HorizontalDivider()
+            item {
+                EntityPicker(
+                    entities = availableEntities,
+                    selectedEntityId = null,
+                    onEntitySelectedId = onEntitySelected,
+                    onEntityCleared = {},
+                    addButtonText = stringResource(R.string.media_control_select_entity),
+                    entityRegistry = uiState.entityRegistryPerServer[uiState.selectedServerId] ?: emptyList(),
+                    deviceRegistry = uiState.deviceRegistryPerServer[uiState.selectedServerId] ?: emptyList(),
+                    areaRegistry = uiState.areaRegistryPerServer[uiState.selectedServerId] ?: emptyList(),
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
             }
         }
 
@@ -173,26 +185,28 @@ private fun ReorderableCollectionItemScope.ConfiguredEntityRow(
     val elevation = animateDpAsState(targetValue = if (isDragging) 8.dp else 0.dp)
     val displayName = entityName ?: config.entityId
 
-    Surface(shadowElevation = elevation.value) {
+    Surface(color = colorScheme.colorSurfaceLow, shadowElevation = elevation.value) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 56.dp)
+                .heightIn(min = 72.dp)
                 .longPressDraggableHandle(onDragStopped = { onReorderComplete() })
                 .padding(vertical = 4.dp),
         ) {
-            Column(modifier = Modifier.weight(1f)) {
+            Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
                 Text(
                     text = displayName,
                     style = HATextStyle.Body,
                     color = colorScheme.colorTextPrimary,
+                    textAlign = TextAlign.Start,
                 )
                 if (subtitle != null) {
                     Text(
                         text = subtitle,
                         style = HATextStyle.BodyMedium,
                         color = colorScheme.colorTextSecondary,
+                        textAlign = TextAlign.Start,
                     )
                 }
             }
@@ -216,10 +230,25 @@ private fun ReorderableCollectionItemScope.ConfiguredEntityRow(
 
 @Preview
 @Composable
+private fun MediaControlSettingsContentLoadingPreview() {
+    HAThemeForPreview {
+        MediaControlSettingsContent(
+            uiState = MediaControlSettingsUiState(isLoading = true),
+            onServerSelected = {},
+            onEntitySelected = {},
+            onRemoveEntity = {},
+            onMove = { _, _ -> },
+            onReorderComplete = {},
+        )
+    }
+}
+
+@Preview
+@Composable
 private fun MediaControlSettingsContentEmptyPreview() {
     HAThemeForPreview {
         MediaControlSettingsContent(
-            uiState = MediaControlSettingsUiState(),
+            uiState = MediaControlSettingsUiState(isLoading = false),
             onServerSelected = {},
             onEntitySelected = {},
             onRemoveEntity = {},

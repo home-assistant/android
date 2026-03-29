@@ -46,6 +46,8 @@ data class MediaControlSettingsUiState(
     val configuredEntities: List<MediaControlEntityConfig> = emptyList(),
     // Server selection for the entity picker
     val selectedServerId: Int = ServerManager.SERVER_ID_ACTIVE,
+    // True while entities and registries are being loaded from the server
+    val isLoading: Boolean = true,
 )
 
 @HiltViewModel
@@ -77,9 +79,11 @@ class MediaControlSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val loadedServers = serverManager.servers()
             val defaultServerId = serverManager.getServer()?.id ?: ServerManager.SERVER_ID_ACTIVE
-            _uiState.update { it.copy(servers = loadedServers, selectedServerId = defaultServerId) }
 
-            val results = loadedServers.map { server ->
+            // Load configured entities (local DB) and server registries (network) concurrently.
+            // Emit the configured list as soon as the DB read completes so the list appears immediately.
+            val configuredEntitiesDeferred = async { mediaControlRepository.getConfiguredEntities() }
+            val registryResults = loadedServers.map { server ->
                 async {
                     ServerRegistries(
                         serverId = server.id,
@@ -95,22 +99,31 @@ class MediaControlSettingsViewModel @Inject constructor(
                         },
                     )
                 }
-            }.awaitAll()
+            }
+
+            val configuredEntities = configuredEntitiesDeferred.await()
+            _uiState.update {
+                it.copy(
+                    servers = loadedServers,
+                    selectedServerId = defaultServerId,
+                    configuredEntities = configuredEntities,
+                )
+            }
+
+            val results = registryResults.awaitAll()
             results.forEach { registries ->
                 entitiesPerServer[registries.serverId] = registries.entities
                 entityRegistriesPerServer[registries.serverId] = registries.entityRegistry
                 deviceRegistriesPerServer[registries.serverId] = registries.deviceRegistry
                 areaRegistriesPerServer[registries.serverId] = registries.areaRegistry
             }
-
-            val configuredEntities = mediaControlRepository.getConfiguredEntities()
             _uiState.update { state ->
                 state.copy(
                     entitiesPerServer = entitiesPerServer.toMap(),
                     entityRegistryPerServer = entityRegistriesPerServer.toMap(),
                     deviceRegistryPerServer = deviceRegistriesPerServer.toMap(),
                     areaRegistryPerServer = areaRegistriesPerServer.toMap(),
-                    configuredEntities = configuredEntities,
+                    isLoading = false,
                 )
             }
         }
