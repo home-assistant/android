@@ -89,6 +89,8 @@ import io.homeassistant.companion.android.common.compose.composable.HAHint
 import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.theme.HADimens
+import io.homeassistant.companion.android.common.compose.theme.HATextStyle
+import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.common.util.openSystemAppSettings
@@ -914,10 +916,15 @@ fun SensorDetailSettingRow(
     onClick: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val parts = label.split("\n", limit = 2)
+    val primaryText = parts[0]
+    val secondaryText = parts.getOrNull(1)?.removeSurrounding("(", ")")
+
     Row(
         modifier = modifier
             .clickable { onClick(!checked) }
             .padding(horizontal = 12.dp)
+            .heightIn(min = 64.dp)
             .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -934,6 +941,21 @@ fun SensorDetailSettingRow(
                 modifier = Modifier.size(width = 48.dp, height = 48.dp),
             )
         }
-        Text(label)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = primaryText,
+                style = HATextStyle.Body.copy(
+                    textAlign = TextAlign.Start,
+                    color = LocalHAColorScheme.current.colorTextPrimary,
+                ),
+            )
+            if (secondaryText != null) {
+                Spacer(Modifier.height(HADimens.SPACE1))
+                Text(
+                    text = secondaryText,
+                    style = HATextStyle.BodyMedium.copy(textAlign = TextAlign.Start),
+                )
+            }
+        }
     }
 }
