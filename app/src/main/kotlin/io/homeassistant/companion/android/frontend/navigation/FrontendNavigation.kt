@@ -5,6 +5,9 @@ import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
@@ -70,6 +73,13 @@ internal fun NavGraphBuilder.frontendScreen(
     if (WIPFeature.USE_FRONTEND_V2) {
         composable<FrontendRoute> {
             val viewModel: FrontendViewModel = hiltViewModel()
+
+            val lifecycle = LocalLifecycleOwner.current.lifecycle
+            LaunchedEffect(lifecycle) {
+                lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                    viewModel.startMediaSessionServiceIfConfigured()
+                }
+            }
 
             FrontendNavigationHandler(
                 navigationEvents = viewModel.navigationEvents,

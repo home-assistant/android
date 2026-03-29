@@ -1,14 +1,18 @@
 package io.homeassistant.companion.android.frontend
 
+import android.content.Context
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
+import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlRepository
+import io.homeassistant.companion.android.mediacontrol.HaMediaSessionService
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
@@ -69,6 +73,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val urlManager: FrontendUrlManager,
     private val connectivityCheckRepository: ConnectivityCheckRepository,
     private val permissionManager: PermissionManager,
+    private val appContext: Context,
+    private val mediaControlRepository: MediaControlRepository,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -80,6 +86,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         urlManager: FrontendUrlManager,
         connectivityCheckRepository: ConnectivityCheckRepository,
         permissionManager: PermissionManager,
+        @ApplicationContext appContext: Context,
+        mediaControlRepository: MediaControlRepository,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
         initialPath = savedStateHandle.toRoute<FrontendRoute>().path,
@@ -88,7 +96,21 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         urlManager = urlManager,
         connectivityCheckRepository = connectivityCheckRepository,
         permissionManager = permissionManager,
+        appContext = appContext,
+        mediaControlRepository = mediaControlRepository,
     )
+
+    /**
+     * Starts [HaMediaSessionService] if any media_player entities are configured. Equivalent
+     * to the call in [WebViewActivity.onResume] for the legacy frontend path — should be called
+     * every time the frontend screen is resumed so the service recovers if it was killed while
+     * the app was in the background.
+     */
+    fun startMediaSessionServiceIfConfigured() {
+        viewModelScope.launch {
+            HaMediaSessionService.startIfConfigured(appContext, mediaControlRepository)
+        }
+    }
 
     /**
      * Manages the frontend view state with protection against transitions out of unrecoverable states.
