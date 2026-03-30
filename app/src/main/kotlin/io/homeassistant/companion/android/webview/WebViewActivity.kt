@@ -2006,34 +2006,68 @@ class WebViewActivity :
      * download listener fires asynchronously.
      *
      * Without this, blob downloads (e.g. "Download trace") fail with ERR_FILE_NOT_FOUND
-     * because the frontend revokes the blob URL synchronously after clicking the anchor,
+     * because the webpage may revoke the blob URL synchronously after clicking the anchor,
      * but the WebView download listener and subsequent XHR happen asynchronously.
+     *
+     * The registry is scoped to the closure and not exposed globally. Only [window.__popBlob]
+     * is exposed, which requires the exact blob URL to retrieve and consume an entry,
+     * preventing enumeration by third-party scripts.
      */
     private fun injectBlobInterceptor(view: WebView?) {
         view?.evaluateJavascript(
             """
             (function() {
-                if (window.__blobRegistry) return;
+                if (window.__popBlob) return;
+
+                // Ensure registry operations cannot be overridden by capturing
+                // native Map methods before any other script can patch them.
+                var mapProto = Map.prototype;
+                var mapSet = Function.prototype.call.bind(mapProto.set);
+                var mapGet = Function.prototype.call.bind(mapProto.get);
+                var mapDelete = Function.prototype.call.bind(mapProto.delete);
+
+                // The registry is closure-scoped and never exposed globally,
+                // preventing third-party scripts from enumerating stored blobs.
                 var registry = new Map();
-                window.__blobRegistry = registry;
+
                 var origCreate = URL.createObjectURL.bind(URL);
                 URL.createObjectURL = function(obj) {
                     var url = origCreate(obj);
                     if (obj instanceof Blob) {
-                        registry.set(url, { blob: obj, filename: null });
+                        mapSet(registry, url, { blob: obj, filename: null });
                     }
                     return url;
                 };
+
+                // Intercept anchor click dispatches to capture the download
+                // filename before the blob URL is potentially revoked.
                 var origDispatch = HTMLAnchorElement.prototype.dispatchEvent;
                 HTMLAnchorElement.prototype.dispatchEvent = function(event) {
                     if (event.type === 'click' && this.href && this.href.startsWith('blob:') && this.download) {
-                        var entry = registry.get(this.href);
+                        var entry = mapGet(registry, this.href);
                         if (entry) {
                             entry.filename = this.download;
                         }
                     }
                     return origDispatch.call(this, event);
                 };
+
+                // Expose a single retrieval function that requires the exact blob
+                // URL. Entries are consumed on read (deleted from the registry).
+                // Defined as non-writable and non-configurable to prevent
+                // third-party scripts from replacing it with a logging wrapper.
+                Object.defineProperty(window, '__popBlob', {
+                    value: function(url) {
+                        var entry = mapGet(registry, url);
+                        if (entry) {
+                            mapDelete(registry, url);
+                            return entry;
+                        }
+                        return null;
+                    },
+                    writable: false,
+                    configurable: false,
+                });
             })();
             """.trimIndent(),
             null,
@@ -2064,10 +2098,8 @@ class WebViewActivity :
                         };
                         reader.readAsDataURL(blob);
                     }
-                    var registry = window.__blobRegistry;
-                    var entry = registry && registry.get(url);
+                    var entry = window.__popBlob && window.__popBlob(url);
                     if (entry) {
-                        registry.delete(url);
                         readAndSend(entry.blob, entry.filename);
                     } else {
                         var xhr = new XMLHttpRequest();
