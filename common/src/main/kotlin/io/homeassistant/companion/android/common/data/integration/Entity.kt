@@ -466,9 +466,9 @@ fun Entity.getVolumeStep(): Float {
 fun Entity.getIcon(context: Context): IIcon {
     val attributes = this.attributes
     val icon = attributes["icon"] as? String
-    return if (icon?.startsWith("mdi") == true) {
-        val mdiIcon = icon.split(":")[1]
-        return IconicsDrawable(context, "cmd-$mdiIcon").icon ?: Icon.cmd_bookmark
+    return if (icon?.startsWith("mdi:") == true) {
+        val mdiIcon = icon.split(":").getOrElse(1, { _ -> "" })
+        IconicsDrawable(context, "cmd-$mdiIcon").icon ?: Icon.cmd_bookmark
     } else {
         /**
          * Return a default icon for the domain that matches the icon used in the frontend, see
