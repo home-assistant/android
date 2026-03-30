@@ -155,9 +155,7 @@ import io.homeassistant.companion.android.webview.externalbus.ShowSidebar
 import io.homeassistant.companion.android.webview.insecure.BlockInsecureFragment
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -191,7 +189,6 @@ class WebViewActivity :
         private const val CONNECTION_DELAY = 10000L
     }
 
-    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
     private val requestPermissions =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
             if (it.any { result -> result.value }) {
@@ -512,7 +509,7 @@ class WebViewActivity :
 
                     setWebViewZoom()
                     if (moreInfoEntity != "" && view?.progress == 100 && isConnected) {
-                        ioScope.launch {
+                        lifecycleScope.launch {
                             val owner = "onPageFinished:$moreInfoEntity"
                             if (moreInfoMutex.tryLock(owner)) {
                                 delay(2000L)
@@ -1715,10 +1712,10 @@ class WebViewActivity :
                 alert.setMessage(commonR.string.tls_cert_not_found_message)
                 alert.setTitle(commonR.string.tls_cert_title)
                 alert.setPositiveButton(android.R.string.ok) { _, _ ->
-                    ioScope.launch {
+                    lifecycleScope.launch {
                         serverManager.getServer(presenter.getActiveServer())?.let {
                             serverManager.removeServer(it.id)
-                            withContext(Dispatchers.Main) { relaunchApp() }
+                            relaunchApp()
                         }
                     }
                 }
@@ -1732,18 +1729,18 @@ class WebViewActivity :
                 alert.setMessage(commonR.string.tls_cert_expired_message)
                 alert.setTitle(commonR.string.tls_cert_title)
                 alert.setPositiveButton(android.R.string.ok) { _, _ ->
-                    ioScope.launch {
+                    lifecycleScope.launch {
                         keyChainRepository.clear()
+                        relaunchApp()
                     }
-                    relaunchApp()
                 }
             } else if (errorType == ErrorType.AUTHENTICATION) {
                 alert.setMessage(commonR.string.error_auth_revoked)
                 alert.setPositiveButton(android.R.string.ok) { _, _ ->
-                    ioScope.launch {
+                    lifecycleScope.launch {
                         serverManager.getServer(presenter.getActiveServer())?.let {
                             serverManager.removeServer(it.id)
-                            withContext(Dispatchers.Main) { relaunchApp() }
+                            relaunchApp()
                         }
                     }
                 }
