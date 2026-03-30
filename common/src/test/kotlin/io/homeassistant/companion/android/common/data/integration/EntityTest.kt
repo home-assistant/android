@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
+import org.junit.jupiter.params.provider.ValueSource
 
 @ExtendWith(ConsoleLogExtension::class)
 class EntityTest {
@@ -126,25 +127,27 @@ class EntityTest {
             assertDoesNotThrow { entity.getIcon(context) }
         }
 
-        @Test
-        fun `Given unknown mdi icon attribute when getting icon then returns fallback`() {
+        @ParameterizedTest
+        @ValueSource(strings = ["mdi:", "mdi:abcdefgh"])
+        fun `Given invalid mdi icon attribute when getting icon then returns fallback`(iconAttr: String) {
             val context = mockk<Context>(relaxed = true)
             val entity = createEntity(
                 entityId = "sensor.test",
                 state = "42",
-                attributes = mapOf("icon" to "mdi:abcdefgh"),
+                attributes = mapOf("icon" to iconAttr),
             )
             val icon = entity.getIcon(context)
             assertEquals(Icon.cmd_bookmark, icon)
         }
 
-        @Test
-        fun `Given custom non-mdi icon attribute attribute when getting icon then returns domain default`() {
+        @ParameterizedTest
+        @ValueSource(strings = ["mdicustom:abcdefgh", "hue:bulb-filament"])
+        fun `Given custom non-mdi icon attribute when getting icon then returns domain default`(iconAttr: String) {
             val context = mockk<Context>()
             val entity = createEntity(
                 entityId = "sensor.test",
                 state = "42",
-                attributes = mapOf("icon" to "mdicustom:abcdefgh"),
+                attributes = mapOf("icon" to iconAttr),
             )
             val icon = entity.getIcon(context)
             assertEquals(Icon.cmd_eye, icon)
