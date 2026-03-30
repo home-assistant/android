@@ -14,7 +14,6 @@ import coil3.imageLoader
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
-import coil3.size.Dimension
 import coil3.size.Precision
 import coil3.size.Size
 import coil3.toBitmap
@@ -282,24 +281,14 @@ class CameraWidget : AppWidgetProvider() {
      * under roughly 90% of that limit to leave headroom for other bitmap work in the same
      * RemoteViews.
      */
-    private const val WIDGET_SCREEN_AREA_MULTIPLIER = 1.5
-    private const val BYTES_PER_PIXEL_ARGB_8888 = 4.0
-    private const val BITMAP_MEMORY_SAFETY_FACTOR = 0.9
-
     private fun getWidgetSize(appWidgetManager: AppWidgetManager, appWidgetId: Int): Size {
         val res = Resources.getSystem()
         val screenWidth = res.displayMetrics.widthPixels
         val screenHeight = res.displayMetrics.heightPixels
-        // The system limit is 1.5 × screen area × 4 bytes/pixel (ARGB_8888).
-        val maxBitmapBytes = WIDGET_SCREEN_AREA_MULTIPLIER *
-            screenWidth *
-            screenHeight *
-            BYTES_PER_PIXEL_ARGB_8888
-        // The widget is essentially a single full-bleed camera bitmap, so we can use
-        // most of the budget. Keep a 10% margin for the RemoteViews overhead itself.
-        val safeBitmapBytes = maxBitmapBytes * BITMAP_MEMORY_SAFETY_FACTOR
-        // Convert from bytes to pixels (4 bytes per ARGB_8888 pixel).
-        val maxPixels = (safeBitmapBytes / BYTES_PER_PIXEL_ARGB_8888).toInt()
+        // System limit = 1.5 × screen area × 4 bytes/pixel (ARGB_8888).
+        // Bytes-per-pixel cancels out when converting to pixels: 1.5 * w * h * 4 * 0.9 / 4 = 1.35 * w * h.
+        // The 0.9 factor keeps a 10% margin for RemoteViews overhead.
+        val maxPixels = (1.35 * screenWidth * screenHeight).toInt()
 
         val options = appWidgetManager.getAppWidgetOptions(appWidgetId)
         val widthDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, 0)
@@ -317,17 +306,19 @@ class CameraWidget : AppWidgetProvider() {
         }
 
         if (heightPx <= 0) {
-            // Height unknown, cap width only and let Coil preserve the aspect ratio
-            val maxWidth = maxPixels / maxOf(screenHeight, 1)
-            return Size(minOf(widthPx, maxWidth), Dimension.Undefined)
+            // Height unknown, derive a max height from the pixel budget so the
+            // bitmap stays within limits even if the source image is unusually tall.
+            val cappedWidth = minOf(widthPx, maxPixels / maxOf(screenHeight, 1)).coerceAtLeast(1)
+            val maxHeight = (maxPixels / cappedWidth).coerceAtLeast(1)
+            return Size(cappedWidth, maxHeight)
         }
 
         // Scale down proportionally if the bitmap would exceed the safe pixel budget
         return if (widthPx.toLong() * heightPx > maxPixels) {
             val scale = sqrt(maxPixels.toDouble() / (widthPx.toLong() * heightPx)).toFloat()
-            Size((widthPx * scale).toInt(), (heightPx * scale).toInt())
+            Size((widthPx * scale).toInt().coerceAtLeast(1), (heightPx * scale).toInt().coerceAtLeast(1))
         } else {
-            Size(widthPx, heightPx)
+            Size(widthPx.coerceAtLeast(1), heightPx.coerceAtLeast(1))
         }
     }
 }
