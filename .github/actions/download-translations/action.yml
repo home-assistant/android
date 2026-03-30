@@ -10,36 +10,27 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Get Translations
-      id: translations
+    - name: Pull from Lokalise
+      uses: lokalise/lokalise-pull-action@a4968e06b7f44c32317b162d825ed17abb5772d0 # v5.0.1
+      with:
+        api_token: ${{ inputs.lokalise-token }}
+        project_id: ${{ inputs.lokalise-project }}
+        file_format: xml
+        async_mode: true
+        skip_include_tags: true
+        skip_original_filenames: true
+        additional_params: |
+          {
+            "original_filenames": false,
+            "bundle_structure": "common/src/main/res/values-%LANG_ISO%/strings.%FORMAT%",
+            "add_newline_eof": true,
+            "replace_breaks": true,
+            "export_empty_as": "skip"
+          }
+
+    - name: Generate locales_config.xml
       shell: bash
-      env:
-        LOKALISE_PROJECT: ${{ inputs.lokalise-project }}
-        LOKALISE_TOKEN: ${{ inputs.lokalise-token }}
       run: |
-        ZIP=`\
-          curl --location --request POST "https://api.lokalise.com/api2/projects/${LOKALISE_PROJECT}/files/download" \
-            --header "X-Api-Token: ${LOKALISE_TOKEN}" \
-            --header 'Content-Type: application/json' \
-            --data-raw '{
-                "format": "xml",
-                "original_filenames": false,
-                "bundle_structure": "common/src/main/res/values-%LANG_ISO%/strings.%FORMAT%",
-                "add_newline_eof": true,
-                "replace_breaks": true,
-                "export_empty_as": "skip"
-            }' \
-          | jq -r '.bundle_url' \
-        `
-
-        echo "Download Ready: $ZIP"
-
-        curl "$ZIP" --output strings.zip
-
-        echo "Download Complete, unzipping"
-        unzip -n strings.zip
-        echo "Unzipped strings, generating locales_config.xml"
-
         XML_START='<?xml version="1.0" encoding="utf-8"?>\n<locale-config xmlns:android="http://schemas.android.com/apk/res/android">\n'
         XML_LOCALES=''
         XML_END='</locale-config>'
