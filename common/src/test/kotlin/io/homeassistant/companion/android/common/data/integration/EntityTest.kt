@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.data.integration
 
 import android.content.Context
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedEntityRemoved
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedEntityState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateDiff
@@ -123,6 +124,30 @@ class EntityTest {
                 attributes = mapOf("state" to 42),
             )
             assertDoesNotThrow { entity.getIcon(context) }
+        }
+
+        @Test
+        fun `Given unknown mdi icon attribute when getting icon then returns fallback`() {
+            val context = mockk<Context>(relaxed = true)
+            val entity = createEntity(
+                entityId = "sensor.test",
+                state = "42",
+                attributes = mapOf("icon" to "mdi:abcdefgh"),
+            )
+            val icon = entity.getIcon(context)
+            assertEquals(Icon.cmd_bookmark, icon)
+        }
+
+        @Test
+        fun `Given custom non-mdi icon attribute attribute when getting icon then returns domain default`() {
+            val context = mockk<Context>()
+            val entity = createEntity(
+                entityId = "sensor.test",
+                state = "42",
+                attributes = mapOf("icon" to "mdicustom:abcdefgh"),
+            )
+            val icon = entity.getIcon(context)
+            assertEquals(Icon.cmd_eye, icon)
         }
     }
 
