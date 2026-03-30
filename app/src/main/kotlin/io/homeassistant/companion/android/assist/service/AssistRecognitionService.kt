@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.assist.service
 
 import android.content.Intent
+import android.os.Build
 import android.speech.RecognitionService
 import android.speech.SpeechRecognizer
 import timber.log.Timber
@@ -21,6 +22,12 @@ class AssistRecognitionService : RecognitionService() {
 
     override fun onCancel(listener: Callback) {
         Timber.d("RecognitionService canceled")
+    }
+
+    override fun onCheckRecognitionSupport(recognizerIntent: Intent, supportCallback: SupportCallback) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            supportCallback.onError(SpeechRecognizer.ERROR_CLIENT)
+        }
     }
 
     override fun onStopListening(listener: Callback) {
