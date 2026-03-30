@@ -272,14 +272,15 @@ class CameraWidget : AppWidgetProvider() {
 
     /**
      * Returns a [Size] based on the widget's allocated dimensions, capped to stay within the
-     * RemoteViews bitmap memory limit. Falls back to the screen width when the widget manager
-     * does not report a size.
+     * RemoteViews bitmap memory limit. Falls back to the full screen width and height when the
+     * widget manager does not report a size.
      *
      * The system computes the limit as `6 * screenWidth * screenHeight`
      * (1.5× screen area × 4 bytes/pixel) in `AppWidgetServiceImpl.computeMaximumWidgetBitmapMemory`.
      * https://cs.android.com/android/platform/superproject/+/8b289e3d7cf7fd9242870758a894c6e9b4c3e655:frameworks/base/services/appwidget/java/com/android/server/appwidget/AppWidgetServiceImpl.java;l=513
-     * There is no public API for this, so we replicate the formula and keep bitmap memory under
-     * half the limit to leave room for other bitmap actions in the same RemoteViews.
+     * There is no public API for this, so we replicate the formula and keep the camera bitmap
+     * under roughly 90% of that limit to leave headroom for other bitmap work in the same
+     * RemoteViews.
      */
     private fun getWidgetSize(appWidgetManager: AppWidgetManager, appWidgetId: Int): Size {
         val res = Resources.getSystem()
