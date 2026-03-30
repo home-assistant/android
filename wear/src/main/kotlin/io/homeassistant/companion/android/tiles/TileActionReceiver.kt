@@ -32,16 +32,21 @@ class TileActionReceiver : BroadcastReceiver() {
         if (entityId != null) {
             launchAsync(receiverScope) {
                 val hasHapticFeedback = wearPrefsRepository.getWearHapticFeedback()
+
+                if (hasHapticFeedback) hapticClick(context)
+
                 try {
                     onEntityPressedWithoutState(
                         entityId = entityId,
                         integrationRepository = serverManager.integrationRepository(),
                     )
-                    if (hasHapticFeedback) hapticClick(context)
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    Timber.e(e, "Cannot call tile service")
+                    Timber.e(
+                        e,
+                        "Failed to call integration entity action for entityId=$entityId from TileActionReceiver",
+                    )
                 }
             }
         }
