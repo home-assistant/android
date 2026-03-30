@@ -32,6 +32,7 @@ import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.UPDATE_WIDGETS
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
 import javax.inject.Inject
+import kotlin.math.sqrt
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -82,8 +83,7 @@ class CameraWidget : AppWidgetProvider() {
             Timber.d("Skipping widget update since network connection is not active")
             return
         }
-        val views = getWidgetRemoteViews(context, appWidgetId)
-        views?.let { appWidgetManager.updateAppWidget(appWidgetId, it) }
+        appWidgetManager.updateAppWidget(appWidgetId, getWidgetRemoteViews(context, appWidgetId))
     }
 
     private suspend fun updateAllWidgets(context: Context) {
@@ -108,7 +108,7 @@ class CameraWidget : AppWidgetProvider() {
         }
     }
 
-    private suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews? {
+    private suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews {
         val updateCameraIntent = Intent(context, CameraWidget::class.java).apply {
             action = UPDATE_IMAGE
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
@@ -174,7 +174,7 @@ class CameraWidget : AppWidgetProvider() {
                                 .diskCachePolicy(CachePolicy.DISABLED)
                                 .memoryCachePolicy(CachePolicy.DISABLED)
                                 .networkCachePolicy(CachePolicy.READ_ONLY)
-                                .size(Size(getScreenWidth(), Dimension.Undefined))
+                                .size(getWidgetSize(AppWidgetManager.getInstance(context), appWidgetId))
                                 .precision(Precision.INEXACT)
                                 .build(),
                         ).image?.toBitmap()?.let {
@@ -270,7 +270,56 @@ class CameraWidget : AppWidgetProvider() {
         // Enter relevant functionality for when the last widget is disabled
     }
 
-    private fun getScreenWidth(): Int {
-        return Resources.getSystem().displayMetrics.widthPixels
+    /**
+     * Returns a [Size] based on the widget's allocated dimensions, capped to stay within the
+     * RemoteViews bitmap memory limit. Falls back to the screen width when the widget manager
+     * does not report a size.
+     *
+     * The system computes the limit as `6 * screenWidth * screenHeight`
+     * (1.5× screen area × 4 bytes/pixel) in `AppWidgetServiceImpl.computeMaximumWidgetBitmapMemory`.
+     * https://cs.android.com/android/platform/superproject/+/8b289e3d7cf7fd9242870758a894c6e9b4c3e655:frameworks/base/services/appwidget/java/com/android/server/appwidget/AppWidgetServiceImpl.java;l=513
+     * There is no public API for this, so we replicate the formula and keep bitmap memory under
+     * half the limit to leave room for other bitmap actions in the same RemoteViews.
+     */
+    private fun getWidgetSize(appWidgetManager: AppWidgetManager, appWidgetId: Int): Size {
+        val res = Resources.getSystem()
+        val screenWidth = res.displayMetrics.widthPixels
+        val screenHeight = res.displayMetrics.heightPixels
+        // The system limit is 1.5 × screen area × 4 bytes/pixel (ARGB_8888).
+        val maxBitmapBytes = 1.5 * screenWidth * screenHeight * 4
+        // The widget is essentially a single full-bleed camera bitmap, so we can use
+        // most of the budget. Keep a 10% margin for the RemoteViews overhead itself.
+        val safeBitmapBytes = maxBitmapBytes * 0.9
+        // Convert from bytes to pixels (4 bytes per ARGB_8888 pixel).
+        val maxPixels = (safeBitmapBytes / 4).toInt()
+
+        val options = appWidgetManager.getAppWidgetOptions(appWidgetId)
+        val widthDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, 0)
+        val heightDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 0)
+
+        val widthPx: Int
+        val heightPx: Int
+        if (widthDp <= 0) {
+            widthPx = screenWidth
+            heightPx = screenHeight
+        } else {
+            val density = res.displayMetrics.density
+            widthPx = (widthDp * density).toInt()
+            heightPx = if (heightDp > 0) (heightDp * density).toInt() else 0
+        }
+
+        if (heightPx <= 0) {
+            // Height unknown, cap width only and let Coil preserve the aspect ratio
+            val maxWidth = maxPixels / maxOf(screenHeight, 1)
+            return Size(minOf(widthPx, maxWidth), Dimension.Undefined)
+        }
+
+        // Scale down proportionally if the bitmap would exceed the safe pixel budget
+        return if (widthPx.toLong() * heightPx > maxPixels) {
+            val scale = sqrt(maxPixels.toDouble() / (widthPx.toLong() * heightPx)).toFloat()
+            Size((widthPx * scale).toInt(), (heightPx * scale).toInt())
+        } else {
+            Size(widthPx, heightPx)
+        }
     }
 }
