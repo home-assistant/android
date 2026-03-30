@@ -358,7 +358,7 @@ class AssistVoiceInteractionServiceTest {
 
     @Test
     fun `Given service not ready when onShutdown then do not crash`() = runTest {
-        // Reproduces Sentry:ANDROID-27RA: onShutdown called before onReady should not throw
+        // Reproduces https://github.com/home-assistant/android/pull/6628: onShutdown called before onReady should not throw
         // IllegalArgumentException for unregistering a receiver that was never registered
         service.onShutdown()
     }
