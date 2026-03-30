@@ -11,6 +11,8 @@ import android.widget.RemoteViews
 import android.widget.Toast
 import coil3.imageLoader
 import coil3.request.ImageRequest
+import coil3.request.allowHardware
+import coil3.toBitmap
 import com.google.android.material.color.DynamicColors
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -24,7 +26,6 @@ import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWid
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
-import io.homeassistant.companion.android.widgets.common.RemoteViewsTarget
 import java.util.LinkedList
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -253,12 +254,18 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                     )
                     Timber.d("Fetching media preview image")
                     try {
-                        val request = ImageRequest.Builder(context)
-                            .data(url)
-                            .target(RemoteViewsTarget(context, appWidgetId, this, R.id.widgetMediaImage))
-                            .size(1024)
-                            .build()
-                        context.imageLoader.enqueue(request)
+                        context.imageLoader.execute(
+                            ImageRequest.Builder(context)
+                                .data(url)
+                                // RemoteViews requires software bitmaps for serialization
+                                .allowHardware(false)
+                                .size(1024)
+                                .build(),
+                        ).image?.toBitmap()?.let {
+                            setImageViewBitmap(R.id.widgetMediaImage, it)
+                        }
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         Timber.e(e, "Unable to load image")
                     }

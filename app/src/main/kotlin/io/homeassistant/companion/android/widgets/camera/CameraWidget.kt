@@ -13,9 +13,11 @@ import androidx.core.os.BundleCompat
 import coil3.imageLoader
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
+import coil3.request.allowHardware
 import coil3.size.Dimension
 import coil3.size.Precision
 import coil3.size.Size
+import coil3.toBitmap
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -29,7 +31,6 @@ import io.homeassistant.companion.android.webview.WebViewActivity
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.UPDATE_WIDGETS
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
-import io.homeassistant.companion.android.widgets.common.RemoteViewsTarget
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -165,16 +166,22 @@ class CameraWidget : AppWidgetProvider() {
                     )
                     Timber.d("Fetching camera image")
                     try {
-                        val request = ImageRequest.Builder(context)
-                            .data(url)
-                            .target(RemoteViewsTarget(context, appWidgetId, this, R.id.widgetCameraImage))
-                            .diskCachePolicy(CachePolicy.DISABLED)
-                            .memoryCachePolicy(CachePolicy.DISABLED)
-                            .networkCachePolicy(CachePolicy.READ_ONLY)
-                            .size(Size(getScreenWidth(), Dimension.Undefined))
-                            .precision(Precision.INEXACT)
-                            .build()
-                        context.imageLoader.enqueue(request)
+                        context.imageLoader.execute(
+                            ImageRequest.Builder(context)
+                                .data(url)
+                                // RemoteViews requires software bitmaps for serialization
+                                .allowHardware(false)
+                                .diskCachePolicy(CachePolicy.DISABLED)
+                                .memoryCachePolicy(CachePolicy.DISABLED)
+                                .networkCachePolicy(CachePolicy.READ_ONLY)
+                                .size(Size(getScreenWidth(), Dimension.Undefined))
+                                .precision(Precision.INEXACT)
+                                .build(),
+                        ).image?.toBitmap()?.let {
+                            setImageViewBitmap(R.id.widgetCameraImage, it)
+                        }
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         Timber.e(e, "Unable to fetch image")
                     }
@@ -199,8 +206,7 @@ class CameraWidget : AppWidgetProvider() {
                 setOnClickPendingIntent(R.id.widgetCameraPlaceholder, tapWidgetPendingIntent)
             }
         }
-        // If there is an url, Coil will call appWidgetManager.updateAppWidget
-        return if (url == null) views else null
+        return views
     }
 
     private suspend fun retrieveCameraImageUrl(serverId: Int, entityId: String): String? {
