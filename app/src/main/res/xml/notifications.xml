@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <Preference
+        android:key="no_notifications"
+        android:title="@string/no_notifications"
+        android:summary="@string/no_notifications_summary"
+        android:selectable="false"
+        app:icon="@drawable/ic_ringer_mute"
+        app:isPreferenceVisible="false" />
+
+    <PreferenceCategory
+        android:key="list_notifications"
+        android:title="@string/notifications"
+        app:iconSpaceReserved="false"
+        app:isPreferenceVisible="false" />
+</androidx.preference.PreferenceScreen>

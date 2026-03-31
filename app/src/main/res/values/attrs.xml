@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="SsidPreference">
+        <attr name="summaryMaxLines" format="integer"/>
+    </declare-styleable>
+
+    <declare-styleable name="Theme.HomeAssistant.Widget">
+        <attr name="colorWidgetPrimary" format="color" />
+        <attr name="colorWidgetButton" format="color" />
+        <attr name="colorWidgetBackground" format="color" />
+        <attr name="colorWidgetOnBackground" format="color" />
+        <attr name="dimenWidgetCornerRadius" format="dimension" />
+    </declare-styleable>
+</resources>

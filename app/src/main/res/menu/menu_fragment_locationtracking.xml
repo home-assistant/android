@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/history_filter"
+        android:title="@string/filter_updates"
+        android:icon="@drawable/ic_filter_toolbar"
+        app:showAsAction="ifRoom">
+        <menu>
+            <group
+                android:id="@+id/history_filter_options"
+                android:checkableBehavior="single">
+                <item
+                    android:id="@+id/history_all"
+                    android:title="@string/all_results"
+                    android:checked="true"/>
+                <item
+                    android:id="@+id/history_sent"
+                    android:title="@string/location_history_sent"/>
+                <item
+                    android:id="@+id/history_skipped"
+                    android:title="@string/location_history_skipped"/>
+                <item
+                    android:id="@+id/history_failed"
+                    android:title="@string/location_history_failed_send"/>
+            </group>
+        </menu>
+    </item>
+    <item
+        android:id="@+id/get_help"
+        android:title="@string/get_help"
+        android:icon="@drawable/ic_question_toolbar"
+        app:showAsAction="always"/>
+</menu>

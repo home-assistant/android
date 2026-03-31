@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <issue id="ComposePreviewPublic">
+        <ignore path="src/screenshotTest" />
+    </issue>
+    <issue id="ComposeUnstableReceiver">
+        <ignore path="src/screenshotTest" />
+    </issue>
+</lint>

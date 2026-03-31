@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:configure="io.homeassistant.companion.android.widgets.camera.CameraWidgetConfigureActivity"
+    android:initialKeyguardLayout="@layout/widget_camera"
+    android:initialLayout="@layout/widget_camera"
+    android:minWidth="40dp"
+    android:minHeight="40dp"
+    android:targetCellHeight="2"
+    android:targetCellWidth="2"
+    android:resizeMode="vertical|horizontal"
+    android:updatePeriodMillis="3600000"
+    android:widgetCategory="keyguard|home_screen"
+    android:widgetFeatures="reconfigurable"
+    android:description="@string/camera_widget_desc"
+    android:previewImage="@drawable/widget_example_camera" />

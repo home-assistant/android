@@ -1,0 +1,40 @@
+name: Production Deploy
+
+on: # yamllint disable-line rule:truthy
+  workflow_dispatch:
+  release:
+    types: [released]
+
+env:
+  SUPPLY_UPLOAD_MAX_RETRIES: 5
+
+permissions:
+  contents: read
+
+jobs:
+  play_promote_production:
+    name: Play Publish Production
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - uses: ruby/setup-ruby@3ff19f5e2baf30647122352b96108b1fbe250c64 # v1.299.0
+        with:
+          ruby-version: "4.0.2"
+          bundler-cache: false
+
+      - uses: ./.github/actions/inflate-secrets
+        name: Inflate Secrets
+        with:
+          keystore: ${{ secrets.ORIGINAL_KEYSTORE_FILE }}
+          google-services: ${{ secrets.GOOGLESERVICES }}
+          firebase-creds: ${{ secrets.FIREBASECREDS }}
+          playstore-creds: ${{ secrets.PLAYSTORECREDS }}
+
+      - name: Install Fastlane dependencies
+        run: bundle install
+
+      - name: Promote Beta to Production Play Store
+        run: bundle exec fastlane promote_to_production

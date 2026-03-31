@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <group android:id="@+id/notification_toolbar_group">
+
+        <item
+            android:id="@+id/search_notifications"
+            android:icon="@drawable/ic_search_toolbar"
+            android:title="@string/search_notifications"
+            app:actionViewClass="androidx.appcompat.widget.SearchView"
+            app:showAsAction="ifRoom" />
+        <item
+            android:id="@+id/notification_filter"
+            android:title="@string/filter_notifications"
+            android:icon="@drawable/ic_filter_toolbar"
+            app:showAsAction="ifRoom">
+            <menu>
+                <group
+                    android:id="@+id/notification_filter_options"
+                    android:checkableBehavior="single">
+                    <item
+                        android:id="@+id/last25"
+                        android:title="@string/last_num_notifications"
+                        android:checked="true"/>
+                    <item
+                        android:id="@+id/last50"
+                        android:title="@string/last_num_notifications"/>
+                    <item
+                        android:id="@+id/last100"
+                        android:title="@string/last_num_notifications"/>
+                </group>
+            </menu>
+        </item>
+        <item
+            android:id="@+id/action_delete"
+            android:icon="@drawable/ic_delete_toolbar"
+            android:title="@string/delete_all_notifications"
+            app:showAsAction="ifRoom" />
+    </group>
+    <item
+        android:id="@+id/get_help"
+        android:title="@string/get_help"
+        android:icon="@drawable/ic_question_toolbar"
+        app:showAsAction="always"/>
+</menu>

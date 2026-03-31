@@ -1,0 +1,232 @@
+package io.homeassistant.companion.android.settings
+
+import android.content.ComponentName
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.core.app.NotificationManagerCompat
+import androidx.preference.PreferenceDataStore
+import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
+import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.database.settings.SettingsDao
+import io.homeassistant.companion.android.settings.assist.DefaultAssistantManager
+import io.homeassistant.companion.android.settings.language.LanguagesManager
+import io.homeassistant.companion.android.themes.NightModeManager
+import io.homeassistant.companion.android.util.ChangeLog
+import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import timber.log.Timber
+
+class SettingsPresenterImpl @Inject constructor(
+    private val serverManager: ServerManager,
+    private val prefsRepository: PrefsRepository,
+    private val nightModeManager: NightModeManager,
+    private val langsManager: LanguagesManager,
+    private val changeLog: ChangeLog,
+    private val settingsDao: SettingsDao,
+    private val defaultAssistantManager: DefaultAssistantManager,
+) : PreferenceDataStore(),
+    SettingsPresenter {
+
+    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+
+    private lateinit var view: SettingsView
+
+    private val voiceCommandAppComponent = ComponentName(
+        BuildConfig.APPLICATION_ID,
+        "io.homeassistant.companion.android.assist.VoiceCommandIntentActivity",
+    )
+
+    private val launcherAliasComponent = ComponentName(
+        BuildConfig.APPLICATION_ID,
+        "io.homeassistant.companion.android.launch.LauncherAlias",
+    )
+
+    private var suggestionFlow = MutableStateFlow<SettingsHomeSuggestion?>(null)
+
+    override fun getBoolean(key: String, defValue: Boolean): Boolean = runBlocking {
+        return@runBlocking when (key) {
+            "fullscreen" -> prefsRepository.isFullScreenEnabled()
+            "keep_screen_on" -> prefsRepository.isKeepScreenOnEnabled()
+            "pinch_to_zoom" -> prefsRepository.isPinchToZoomEnabled()
+            "crash_reporting" -> prefsRepository.isCrashReporting()
+            "autoplay_video" -> prefsRepository.isAutoPlayVideoEnabled()
+            "always_show_first_view_on_app_start" -> prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled()
+            "change_log_popup_enabled" -> prefsRepository.isChangeLogPopupEnabled()
+            "assist_voice_command_intent" -> {
+                val componentSetting = view.getPackageManager()?.getComponentEnabledSetting(voiceCommandAppComponent)
+                componentSetting != null && componentSetting != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+            }
+            "enable_ha_launcher" -> {
+                val componentSetting = view.getPackageManager()?.getComponentEnabledSetting(launcherAliasComponent)
+                // By default it should be disabled and only shown when the user enabled it
+                componentSetting != null && componentSetting == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+            }
+            else -> throw IllegalArgumentException("No boolean found by this key: $key")
+        }
+    }
+
+    override fun putBoolean(key: String, value: Boolean) {
+        mainScope.launch {
+            when (key) {
+                "fullscreen" -> prefsRepository.setFullScreenEnabled(value)
+                "keep_screen_on" -> prefsRepository.setKeepScreenOnEnabled(value)
+                "pinch_to_zoom" -> prefsRepository.setPinchToZoomEnabled(value)
+                "crash_reporting" -> prefsRepository.setCrashReporting(value)
+                "autoplay_video" -> prefsRepository.setAutoPlayVideo(value)
+                "always_show_first_view_on_app_start" -> prefsRepository.setAlwaysShowFirstViewOnAppStart(value)
+                "change_log_popup_enabled" -> prefsRepository.setChangeLogPopupEnabled(value)
+                "assist_voice_command_intent" ->
+                    view.getPackageManager()?.setComponentEnabledSetting(
+                        voiceCommandAppComponent,
+                        if (value) {
+                            PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
+                        } else {
+                            PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+                        },
+                        PackageManager.DONT_KILL_APP,
+                    )
+                "enable_ha_launcher" -> enableLauncherMode(value)
+                else -> throw IllegalArgumentException("No boolean found by this key: $key")
+            }
+        }
+    }
+
+    override fun getString(key: String, defValue: String?): String? = runBlocking {
+        when (key) {
+            "themes" -> nightModeManager.getCurrentNightMode().storageValue
+            "languages" -> langsManager.getCurrentLang()
+            "page_zoom" -> prefsRepository.getPageZoomLevel().toString()
+            "screen_orientation" -> prefsRepository.getScreenOrientation()
+            else -> throw IllegalArgumentException("No string found by this key: $key")
+        }
+    }
+
+    override fun putString(key: String, value: String?) {
+        mainScope.launch {
+            when (key) {
+                "themes" -> nightModeManager.saveNightMode(NightModeTheme.fromStorageValue(value))
+                "languages" -> langsManager.saveLang(value)
+                "page_zoom" -> prefsRepository.setPageZoomLevel(value?.toIntOrNull())
+                "screen_orientation" -> prefsRepository.saveScreenOrientation(value)
+                else -> throw IllegalArgumentException("No string found by this key: $key")
+            }
+        }
+    }
+
+    override fun init(view: SettingsView) {
+        this.view = view
+    }
+
+    override fun getPreferenceDataStore(): PreferenceDataStore {
+        return this
+    }
+
+    override fun onFinish() {
+        mainScope.cancel()
+    }
+
+    override fun getSuggestionFlow(): StateFlow<SettingsHomeSuggestion?> = suggestionFlow
+
+    override suspend fun getServersFlow(): Flow<List<Server>> = serverManager.serversFlow
+
+    override suspend fun getNotificationRateLimits(): RateLimitResponse? = withContext(Dispatchers.IO) {
+        try {
+            if (serverManager.isRegistered()) {
+                serverManager.integrationRepository().getNotificationRateLimits()
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            Timber.d(e, "Unable to get rate limits")
+            return@withContext null
+        }
+    }
+
+    override suspend fun showChangeLog(context: Context) {
+        changeLog.showChangeLog(context, true)
+    }
+
+    override suspend fun isChangeLogPopupEnabled(): Boolean {
+        return prefsRepository.isChangeLogPopupEnabled()
+    }
+
+    override suspend fun setChangeLogPopupEnabled(enabled: Boolean) {
+        prefsRepository.setChangeLogPopupEnabled(enabled)
+    }
+
+    override fun updateSuggestions(context: Context) {
+        mainScope.launch { getSuggestions(context, false) }
+    }
+
+    override fun cancelSuggestion(context: Context, id: String) {
+        mainScope.launch {
+            val ignored = prefsRepository.getIgnoredSuggestions()
+            if (!ignored.contains(id)) {
+                prefsRepository.setIgnoredSuggestions(ignored + id)
+            }
+            getSuggestions(context, true)
+        }
+    }
+
+    private suspend fun getSuggestions(context: Context, overwrite: Boolean) {
+        val suggestions = mutableListOf<SettingsHomeSuggestion>()
+
+        // Assist
+        if (defaultAssistantManager.shouldSuggestAssistantSetup()) {
+            suggestions += SettingsHomeSuggestion(
+                SettingsPresenter.SUGGESTION_ASSISTANT_APP,
+                commonR.string.suggestion_assist_title,
+                commonR.string.suggestion_assist_summary,
+                R.drawable.ic_comment_processing_outline,
+            )
+        }
+
+        // Notifications
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            !NotificationManagerCompat.from(context).areNotificationsEnabled()
+        ) {
+            suggestions += SettingsHomeSuggestion(
+                SettingsPresenter.SUGGESTION_NOTIFICATION_PERMISSION,
+                commonR.string.suggestion_notifications_title,
+                commonR.string.suggestion_notifications_summary,
+                commonR.drawable.ic_notifications,
+            )
+        }
+
+        val ignored = prefsRepository.getIgnoredSuggestions()
+        val filteredSuggestions = suggestions.filter { !ignored.contains(it.id) }
+        if (overwrite || suggestionFlow.value == null) {
+            suggestionFlow.emit(filteredSuggestions.randomOrNull())
+        } else if (filteredSuggestions.none { it.id == suggestionFlow.value?.id }) {
+            suggestionFlow.emit(null)
+        }
+    }
+
+    private fun enableLauncherMode(enable: Boolean) {
+        view.getPackageManager()?.setComponentEnabledSetting(
+            launcherAliasComponent,
+            if (enable) {
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+            } else {
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+            },
+            PackageManager.DONT_KILL_APP,
+        )
+    }
+}

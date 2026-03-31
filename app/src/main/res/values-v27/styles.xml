@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.LaunchScreen.Base" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:statusBarColor">@color/colorLaunchScreenBackground</item>
+        <item name="android:navigationBarColor">@color/colorLaunchScreenBackground</item>
+        <item name="android:windowLightStatusBar">@bool/isLightMode</item>
+        <item name="android:windowLightNavigationBar">@bool/isLightMode</item>
+    </style>
+
+    <!-- Only start overriding navigation bar on API 27 because android:windowLightNavigationBar isn't available before this version -->
+    <style name="Theme.HomeAssistant.Config" parent="Theme.HomeAssistant">
+        <item name="android:statusBarColor">@color/colorBackground</item>
+        <item name="android:navigationBarColor">@color/colorBackground</item>
+        <item name="android:windowLightStatusBar">@bool/isLightMode</item>
+        <item name="android:windowLightNavigationBar">@bool/isLightMode</item>
+    </style>
+
+    <style name="ThemeOverlay.HomeAssistant.BottomSheetDialog" parent="ThemeOverlay.HomeAssistant.BottomSheetDialog.Base">
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightNavigationBar">@bool/isLightMode</item>
+        <item name="enableEdgeToEdge">true</item>
+        <item name="paddingBottomSystemWindowInsets">false</item>
+        <item name="paddingLeftSystemWindowInsets">false</item>
+        <item name="paddingRightSystemWindowInsets">false</item>
+    </style>
+</resources>

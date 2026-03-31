@@ -1,0 +1,30 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.HomeAssistant.Dialog.Alert" parent="Theme.MaterialComponents.DayNight.Dialog.Alert">
+        <item name="android:textColor">@color/colorDialogTitle</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Alert.Button.Positive</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Alert.Button.Negative</item>
+        <item name="buttonBarNeutralButtonStyle">@style/Alert.Button.Neutral</item>
+        <item name="android:textColorPrimary">@color/colorDialogMessage</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="textColorAlertDialogListItem">@color/colorDialogMessage</item>
+        <item name="colorControlNormal">@color/colorDialogMessage</item>
+    </style>
+
+    <style name="Authentication_Dialog" parent="Theme.MaterialComponents.DayNight.Dialog">
+        <item name="android:textColor">@color/colorDialogTitle</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Alert.Button.Positive</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Alert.Button.Negative</item>
+        <item name="buttonBarNeutralButtonStyle">@style/Alert.Button.Neutral</item>
+        <item name="windowMinWidthMajor">300dp</item>
+        <item name="windowMinWidthMinor">0dp</item>
+        <item name="android:textColorPrimary">@color/colorDialogMessage</item>
+    </style>
+
+    <style name="ThemeOverlay.HomeAssistant.ActionBar" parent="ThemeOverlay.MaterialComponents.ActionBar">
+        <item name="popupTheme">@style/Theme.HomeAssistant.PopupTheme</item>
+    </style>
+
+    <style name="Theme.HomeAssistant.PopupTheme" parent="ThemeOverlay.MaterialComponents.Dark">
+        <item name="android:background">@color/colorActionBarPopupBackground</item>
+    </style>
+</resources>

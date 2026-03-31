@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <io.homeassistant.companion.android.settings.SettingsSuggestionPreference
+        android:key="settings_suggestion"
+        app:isPreferenceVisible="false" />
+    <PreferenceCategory
+        android:key="servers_devices_category"
+        android:title="@string/servers_devices_category">
+        <!-- Servers will be added at runtime -->
+        <Preference
+            android:key="server_add"
+            android:icon="@drawable/ic_plus"
+            android:order="998"
+            android:title="@string/server_add" />
+        <Preference
+            android:key="wear_settings"
+            app:isPreferenceVisible="false"
+            android:title="@string/wear_os_settings_title"
+            android:icon="@drawable/ic_baseline_watch_24"
+            android:order="999"
+            android:summary="@string/wear_os_settings_summary" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="@string/sensors">
+        <Preference
+            android:key="sensors"
+            android:icon="@drawable/leak"
+            android:title="@string/sensor_title"
+            android:summary="@string/sensor_summary"/>
+        <Preference
+            android:key="sensor_update_frequency"
+            android:icon="@drawable/ic_clock_fast"
+            android:title="@string/sensor_update_frequency"
+            android:summary="@string/sensor_update_frequency_summary" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="@string/other_settings">
+        <Preference
+            android:key="gestures"
+            android:icon="@drawable/ic_gestures"
+            android:title="@string/gestures"/>
+        <SwitchPreference
+            android:key="fullscreen"
+            android:icon="@drawable/ic_fullscreen"
+            android:title="@string/fullscreen"
+            android:summary="@string/fullscreen_def"/>
+        <ListPreference
+            android:key="screen_orientation"
+            android:defaultValue="@string/screen_orientation_option_array_value_system"
+            android:entries="@array/pref_screen_orientation_option_labels"
+            android:entryValues="@array/pref_screen_orientation_option_values"
+            android:icon="@drawable/ic_screen_orientation"
+            android:title="@string/screen_orientation_title_settings"
+            app:useSimpleSummaryProvider="true"/>
+        <SwitchPreference
+            android:key="keep_screen_on"
+            android:icon="@drawable/ic_phone_check"
+            android:title="@string/keep_screen_on"
+            android:summary="@string/keep_screen_on_def"/>
+        <ListPreference
+            android:key="page_zoom"
+            android:icon="@drawable/ic_zoom_in"
+            android:title="@string/page_zoom"
+            app:useSimpleSummaryProvider="true"/>
+        <SwitchPreference
+            android:key="pinch_to_zoom"
+            android:icon="@drawable/ic_gesture_pinch"
+            android:title="@string/pinch_to_zoom"
+            android:summary="@string/pinch_to_zoom_def"/>
+        <SwitchPreference
+            android:key="autoplay_video"
+            android:icon="@drawable/ic_baseline_video_settings_24"
+            android:title="@string/autoplay_video"
+            android:summary="@string/autoplay_video_summary" />
+        <SwitchPreference
+            android:key="always_show_first_view_on_app_start"
+            android:icon="@drawable/ic_home_variant_outline"
+            android:title="@string/always_show_first_view_on_app_start"
+            android:summary="@string/always_show_first_view_on_app_start_summary" />
+        <Preference
+            android:key="nfc_tags"
+            android:icon="@drawable/ic_nfc"
+            android:title="@string/nfc_title_settings"
+            android:summary="@string/nfc_summary" />
+        <ListPreference
+            android:key="languages"
+            android:defaultValue="@string/lang_option_value_default"
+            android:icon="@drawable/ic_languages"
+            android:title="@string/lang_title_settings"
+            android:summary="@string/lang_summary_settings" />
+        <ListPreference
+            android:key="themes"
+            android:defaultValue="@string/themes_option_array_value_light"
+            android:entries="@array/pref_theme_option_labels"
+            android:entryValues="@array/pref_theme_option_values"
+            android:icon="@drawable/ic_color_lens_24dp"
+            android:title="@string/themes_title_settings"
+            app:useSimpleSummaryProvider="true"/>
+        <Preference
+            android:key="background"
+            android:title="@string/background_access_title"/>
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="@string/notifications"
+        android:key="notifications"
+        app:isPreferenceVisible="false">
+        <Preference
+            android:key="notification_permission"
+            android:title="@string/notification_permission"
+            android:summary="@string/notification_permission_summary"
+            app:isPreferenceVisible="false"
+            android:icon="@drawable/ic_notification_off" />
+        <Preference
+            android:key="notification_channels"
+            android:title="@string/notification_channels"
+            android:summary="@string/notification_channels_summary"
+            app:isPreferenceVisible="false"
+            android:icon="@drawable/ic_notification_channel" />
+        <Preference
+            android:key="notification_history"
+            app:isPreferenceVisible="false"
+            android:title="@string/notification_history"
+            android:icon="@drawable/ic_notification_history"
+            android:summary="@string/notification_history_summary" />
+        <Preference
+            android:key="notification_rate_limit"
+            android:title="@string/rate_limit_title"
+            app:isPreferenceVisible="false"
+            app:enableCopying="true"
+            android:icon="@drawable/ic_notifications"
+            android:summary="@string/rate_limit_summary"/>
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="@string/assist"
+        android:key="assist">
+        <Preference
+            android:key="assist_settings"
+            android:icon="@drawable/ic_comment_processing_outline"
+            android:title="@string/assist_for_android"
+            android:summary="@string/assist_summary" />
+        <SwitchPreference
+            android:key="assist_voice_command_intent"
+            android:icon="@drawable/ic_headphones_settings"
+            android:title="@string/open_with_headphone_button"
+            android:summary="@string/open_with_headphone_button_summary" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="@string/basic_sensor_name_android_auto"
+        android:key="android_auto">
+        <Preference
+            android:key="auto_favorites"
+            android:icon="@drawable/ic_car"
+            android:title="@string/aa_favorites"
+            android:summary="@string/aa_favorites_summary" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:key="device_controls"
+        android:title="@string/controls_setting_category"
+        app:isPreferenceVisible="false">
+        <Preference
+            android:key="manage_device_controls"
+            android:icon="@drawable/ic_home_variant_outline"
+            android:title="@string/controls_setting_title"
+            android:summary="@string/controls_setting_summary" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:key="quick_settings"
+        android:title="@string/quick_settings"
+        app:isPreferenceVisible="false">
+        <Preference
+            android:key="manage_tiles"
+            android:icon="@drawable/ic_tile"
+            android:title="@string/manage_tiles"
+            android:summary="@string/manage_tiles_summary" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:key="shortcuts"
+        android:title="@string/shortcuts"
+        app:isPreferenceVisible="false">
+        <Preference
+            android:key="manage_shortcuts"
+            android:icon="@drawable/ic_shortcut"
+            android:title="@string/manage_shortcuts"
+            android:summary="@string/manage_shortcuts_summary" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:key="widgets"
+        android:title="@string/widgets">
+        <Preference
+            android:key="manage_widgets"
+            android:icon="@drawable/ic_widget"
+            android:title="@string/manage_widgets"
+            android:summary="@string/manage_widgets_summary" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:key="launcher_category"
+        android:title="@string/launcher"
+        app:isPreferenceVisible="false">
+        <SwitchPreference
+            android:key="enable_ha_launcher"
+            android:icon="@drawable/ic_android_debug_bridge"
+            app:isPreferenceVisible="true"
+            android:title="@string/launcher_option_title"
+            android:summary="@string/launcher_option_summary" />
+        <Preference
+            android:key="set_launcher_app"
+            android:title="@string/default_launcher_prompt"
+            android:summary="@string/default_launcher_prompt_def"
+            android:icon="@drawable/ic_home_variant_outline" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="@string/need_help">
+        <Preference
+            android:key="docs"
+            android:icon="@drawable/ic_question"
+            android:title="@string/documentation"
+            android:summary="https://companion.home-assistant.io"
+            app:enableCopying="true">
+            <intent android:action="android.intent.action.VIEW"
+                android:data="https://companion.home-assistant.io" />
+        </Preference>
+        <Preference
+            android:key="developer"
+            android:icon="@drawable/ic_bug_report"
+            android:title="@string/troubleshooting"
+            android:summary="@string/troubleshooting_summary"/>
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="@string/app_version_info">
+        <Preference
+            android:key="changelog_prompt"
+            android:icon="@drawable/ic_changelog"
+            android:title="@string/show_changelog"
+            android:summary="@string/show_changelog_summary" />
+        <SwitchPreference
+            android:key="change_log_popup_enabled"
+            android:icon="@drawable/ic_changelog"
+            android:title="@string/enable_change_log_popup"
+            android:summary="@string/enable_change_log_popup_summary" />
+        <Preference
+            android:key="changelog_github"
+            android:title="@string/changelog"
+            android:icon="@drawable/ic_github"
+            android:summary="https://github.com/home-assistant/android/releases"
+            app:enableCopying="true" />
+        <Preference
+            android:key="version"
+            android:icon="@drawable/ic_stat_ic_notification_blue"
+            android:title="@string/application_version"
+            android:summary="1.0.0 (1)"/>
+        <Preference
+            android:key="licenses"
+            android:icon="@drawable/ic_license"
+            android:title="@string/licenses"
+            android:summary="@string/licenses_summary"/>
+        <Preference
+            android:key="privacy"
+            android:icon="@drawable/ic_incognito"
+            android:title="@string/privacy_policy"
+            android:summary="@string/privacy_url" />
+        <SwitchPreference
+            android:key="crash_reporting"
+            android:icon="@drawable/ic_android_debug_bridge"
+            app:isPreferenceVisible="false"
+            android:title="@string/crash_reporting"
+            android:summary="@string/crash_reporting_summary" />
+    </PreferenceCategory>
+
+</androidx.preference.PreferenceScreen>

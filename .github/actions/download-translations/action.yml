@@ -1,0 +1,56 @@
+name: "Download Translations"
+description: "Reaches out to Lokalise to download the latest translations."
+inputs:
+  lokalise-project:
+    description: "The project id in lokalise"
+    required: true
+  lokalise-token:
+    description: "An API token that has read access to the desired project"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Get Translations
+      id: translations
+      shell: bash
+      env:
+        LOKALISE_PROJECT: ${{ inputs.lokalise-project }}
+        LOKALISE_TOKEN: ${{ inputs.lokalise-token }}
+      run: |
+        ZIP=`\
+          curl --location --request POST "https://api.lokalise.com/api2/projects/${LOKALISE_PROJECT}/files/download" \
+            --header "X-Api-Token: ${LOKALISE_TOKEN}" \
+            --header 'Content-Type: application/json' \
+            --data-raw '{
+                "format": "xml",
+                "original_filenames": false,
+                "bundle_structure": "common/src/main/res/values-%LANG_ISO%/strings.%FORMAT%",
+                "add_newline_eof": true,
+                "replace_breaks": true,
+                "export_empty_as": "skip"
+            }' \
+          | jq -r '.bundle_url' \
+        `
+
+        echo "Download Ready: $ZIP"
+
+        curl "$ZIP" --output strings.zip
+
+        echo "Download Complete, unzipping"
+        unzip -n strings.zip
+        echo "Unzipped strings, generating locales_config.xml"
+
+        XML_START='<?xml version="1.0" encoding="utf-8"?>\n<locale-config xmlns:android="http://schemas.android.com/apk/res/android">\n'
+        XML_LOCALES=''
+        XML_END='</locale-config>'
+        for i in common/src/main/res/values*/strings.xml; do
+          FOLDER="$(basename $(dirname $i))"
+          CODE="${FOLDER#*-}" # remove "values-"
+          CODE="${CODE/-r/-}" # replace region "-rXX" with "-XX"
+          if [ "$CODE" == "values" ]; then CODE="en"; fi
+          XML_LOCALES="$XML_LOCALES    <locale android:name=\"$CODE\"/>\n"
+        done
+        printf "$XML_START$XML_LOCALES$XML_END" > app/src/main/res/xml/locales_config.xml
+        printf "$XML_START$XML_LOCALES$XML_END" > wear/src/main/res/xml/locales_config.xml
+
+        echo "Complete"
