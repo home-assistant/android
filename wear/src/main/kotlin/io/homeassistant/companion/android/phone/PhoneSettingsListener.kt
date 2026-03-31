@@ -42,7 +42,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
@@ -79,12 +78,10 @@ class PhoneSettingsListener :
     @Inject
     lateinit var messagingTokenProvider: MessagingTokenProvider
 
+    // This scope is never canceled so coroutines survive service destruction, keeping the service
+    // in memory until the coroutine completes. A better approach would be to use runBlocking for
+    // short operations (or a worker) and delegate login to the onboarding activity.
     private val serviceScope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-
-    override fun onDestroy() {
-        serviceScope.cancel()
-        super.onDestroy()
-    }
 
     override fun onMessageReceived(event: MessageEvent) {
         Timber.d("Message received: $event")
