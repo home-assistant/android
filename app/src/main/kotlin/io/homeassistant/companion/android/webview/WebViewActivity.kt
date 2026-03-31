@@ -496,7 +496,6 @@ class WebViewActivity :
                 }
 
                 override fun onPageFinished(view: WebView?, url: String?) {
-                    injectBlobInterceptor(view)
                     webViewInitialized.value = true
                     if (clearHistory) {
                         webView.clearHistory()
@@ -2001,83 +2000,9 @@ class WebViewActivity :
     }
 
     /**
-     * Injects a script that intercepts [URL.createObjectURL] to keep a reference to [Blob]
-     * objects, so they survive [URL.revokeObjectURL] and can still be read when the WebView
-     * download listener fires asynchronously.
-     *
-     * Without this, blob downloads (e.g. "Download trace") fail with ERR_FILE_NOT_FOUND
-     * because the webpage may revoke the blob URL synchronously after clicking the anchor,
-     * but the WebView download listener and subsequent XHR happen asynchronously.
-     *
-     * The registry is scoped to the closure and not exposed globally. Only [window.__popBlob]
-     * is exposed, which requires the exact blob URL to retrieve and consume an entry,
-     * preventing enumeration by third-party scripts.
-     */
-    private fun injectBlobInterceptor(view: WebView?) {
-        view?.evaluateJavascript(
-            """
-            (function() {
-                if (window.__popBlob) return;
-
-                // Ensure registry operations cannot be overridden by capturing
-                // native Map methods before any other script can patch them.
-                var mapProto = Map.prototype;
-                var mapSet = Function.prototype.call.bind(mapProto.set);
-                var mapGet = Function.prototype.call.bind(mapProto.get);
-                var mapDelete = Function.prototype.call.bind(mapProto.delete);
-
-                // The registry is closure-scoped and never exposed globally,
-                // preventing third-party scripts from enumerating stored blobs.
-                var registry = new Map();
-
-                var origCreate = URL.createObjectURL.bind(URL);
-                URL.createObjectURL = function(obj) {
-                    var url = origCreate(obj);
-                    if (obj instanceof Blob) {
-                        mapSet(registry, url, { blob: obj, filename: null });
-                    }
-                    return url;
-                };
-
-                // Intercept anchor click dispatches to capture the download
-                // filename before the blob URL is potentially revoked.
-                var origDispatch = HTMLAnchorElement.prototype.dispatchEvent;
-                HTMLAnchorElement.prototype.dispatchEvent = function(event) {
-                    if (event.type === 'click' && this.href && this.href.startsWith('blob:') && this.download) {
-                        var entry = mapGet(registry, this.href);
-                        if (entry) {
-                            entry.filename = this.download;
-                        }
-                    }
-                    return origDispatch.call(this, event);
-                };
-
-                // Expose a single retrieval function that requires the exact blob
-                // URL. Entries are consumed on read (deleted from the registry).
-                // Defined as non-writable and non-configurable to prevent
-                // third-party scripts from replacing it with a logging wrapper.
-                Object.defineProperty(window, '__popBlob', {
-                    value: function(url) {
-                        var entry = mapGet(registry, url);
-                        if (entry) {
-                            mapDelete(registry, url);
-                            return entry;
-                        }
-                        return null;
-                    },
-                    writable: false,
-                    configurable: false,
-                });
-            })();
-            """.trimIndent(),
-            null,
-        )
-    }
-
-    /**
-     * Triggers a blob download by reading the blob data and passing it to the native
-     * [handleBlob] interface. First tries to retrieve the blob from the intercepted registry
-     * (see [injectBlobInterceptor]), then falls back to XHR for non-intercepted blob URLs.
+     * Triggers a blob download by fetching the blob data via XHR and passing it to the native
+     * [handleBlob] interface as a data URI. Requires the blob URL to still be valid (not yet
+     * revoked by the frontend).
      */
     private fun triggerBlobDownload(url: String, contentDisposition: String, mimetype: String) {
         lifecycleScope.launch {
@@ -2088,29 +2013,21 @@ class WebViewActivity :
             val safeUrl = JSONObject.quote(url)
             val safeFallback = JSONObject.quote(fallbackFilename)
             val jsCode = """
-                (function() {
-                    var url = $safeUrl;
-                    var fallbackFilename = $safeFallback;
-                    function readAndSend(blob, filename) {
-                        var reader = new FileReader();
+                (async function() {
+                    try {
+                        const response = await fetch($safeUrl);
+                        if (!response.ok) {
+                            console.error('[HA] Blob download failed: HTTP ' + response.status + ' for ' + $safeUrl);
+                            return;
+                        }
+                        const blob = await response.blob();
+                        const reader = new FileReader();
                         reader.onloadend = function() {
-                            $javascriptInterface.handleBlob(reader.result, filename || fallbackFilename);
+                            $javascriptInterface.handleBlob(reader.result, $safeFallback);
                         };
                         reader.readAsDataURL(blob);
-                    }
-                    var entry = window.__popBlob && window.__popBlob(url);
-                    if (entry) {
-                        readAndSend(entry.blob, entry.filename);
-                    } else {
-                        var xhr = new XMLHttpRequest();
-                        xhr.open('GET', url, true);
-                        xhr.responseType = 'blob';
-                        xhr.onload = function() {
-                            if (xhr.status == 200) {
-                                readAndSend(xhr.response, null);
-                            }
-                        };
-                        xhr.send();
+                    } catch (e) {
+                        console.error('[HA] Blob download failed:', e);
                     }
                 })();
             """.trimIndent()
