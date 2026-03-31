@@ -15,18 +15,17 @@ runs:
       with:
         api_token: ${{ inputs.lokalise-token }}
         project_id: ${{ inputs.lokalise-project }}
+        custom_github_token: "FAKE_GH_TOKEN"
         file_format: xml
         async_mode: true
         skip_include_tags: true
         skip_original_filenames: true
         additional_params: |
-          {
-            "original_filenames": false,
-            "bundle_structure": "common/src/main/res/values-%LANG_ISO%/strings.%FORMAT%",
-            "add_newline_eof": true,
-            "replace_breaks": true,
-            "export_empty_as": "skip"
-          }
+          original_filenames: false
+          bundle_structure: common/src/main/res/values-%LANG_ISO%/strings.%FORMAT%
+          add_newline_eof: true
+          replace_breaks: true
+          export_empty_as: skip
 
     - name: Generate locales_config.xml
       shell: bash
