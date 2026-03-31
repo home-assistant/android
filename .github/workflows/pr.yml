@@ -25,7 +25,7 @@ jobs:
         id: changes
         shell: bash
         run: |
-          if git diff --name-only "origin/main..HEAD" -- '.github/actions/download-translations/' | grep -q .; then
+          if git diff --name-only "origin/main...HEAD" -- '.github/actions/download-translations/' | grep -q .; then
             echo "Lokalise setup changes detected"
             echo "skip=false" >> "$GITHUB_OUTPUT"
           else
