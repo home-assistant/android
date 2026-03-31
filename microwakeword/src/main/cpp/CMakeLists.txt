@@ -12,8 +12,8 @@ include(FetchContent)
 
 FetchContent_Declare(
     kissfft
-    GIT_REPOSITORY https://github.com/mborgerding/kissfft.git
-    GIT_TAG 131.2.0
+    URL https://github.com/mborgerding/kissfft/archive/7bce4153c6bc8aba2db0e889e576f9d00505cbe1.tar.gz # 131.2.0
+    URL_HASH SHA256=7ad1124648a46977b16ddde03bf243bcd52fc452516c57016584ab4b4f2baadc
 )
 set(KISSFFT_STATIC ON CACHE BOOL "" FORCE)
 set(KISSFFT_TEST OFF CACHE BOOL "" FORCE)
@@ -33,8 +33,8 @@ FetchContent_Declare(
 # Header-only: flatbuffers for model parsing (version matching tflite-micro)
 FetchContent_Declare(
     flatbuffers
-    GIT_REPOSITORY https://github.com/google/flatbuffers.git
-    GIT_TAG 0100f6a5779831fa7a651e4b67ef389a8752bd9b # v23.5.26
+    URL https://github.com/google/flatbuffers/archive/0100f6a5779831fa7a651e4b67ef389a8752bd9b.tar.gz # v23.5.26
+    URL_HASH SHA256=85db3520acc4010b21984e2fb5ead3ec0d2c48df8009b614cb73562a82846554
 )
 set(FLATBUFFERS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(FLATBUFFERS_INSTALL OFF CACHE BOOL "" FORCE)
