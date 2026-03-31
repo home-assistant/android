@@ -173,7 +173,7 @@ class CameraWidget : AppWidgetProvider() {
                                 .diskCachePolicy(CachePolicy.DISABLED)
                                 .memoryCachePolicy(CachePolicy.DISABLED)
                                 .networkCachePolicy(CachePolicy.READ_ONLY)
-                                .size(getWidgetSize(AppWidgetManager.getInstance(context), appWidgetId))
+                                .size(getWidgetBitmapSize(AppWidgetManager.getInstance(context), appWidgetId))
                                 .precision(Precision.INEXACT)
                                 .build(),
                         ).image?.toBitmap()?.let {
@@ -281,7 +281,7 @@ class CameraWidget : AppWidgetProvider() {
      * under roughly 90% of that limit to leave headroom for other bitmap work in the same
      * RemoteViews.
      */
-    private fun getWidgetSize(appWidgetManager: AppWidgetManager, appWidgetId: Int): Size {
+    private fun getWidgetBitmapSize(appWidgetManager: AppWidgetManager, appWidgetId: Int): Size {
         val res = Resources.getSystem()
         val screenWidth = res.displayMetrics.widthPixels
         val screenHeight = res.displayMetrics.heightPixels
