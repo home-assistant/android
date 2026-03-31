@@ -63,7 +63,7 @@ class AssistSettingsViewModel @Inject internal constructor(
             _uiState.update {
                 it.copy(
                     isLoading = false,
-                    isDefaultAssistant = defaultAssistantManager.isDefaultAssistant(),
+                    isDefaultAssistant = isDefaultAssistant,
                     isWakeWordEnabled = isEnabled,
                     selectedWakeWordModel = selectedModel,
                     availableModels = models,

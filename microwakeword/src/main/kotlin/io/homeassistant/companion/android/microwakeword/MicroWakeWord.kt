@@ -51,6 +51,8 @@ class MicroWakeWord(
         require(featureStepSizeMs > 0) { "featureStepSizeMs must be positive, was $featureStepSizeMs" }
         require(slidingWindowSize > 0) { "slidingWindowSize must be positive, was $slidingWindowSize" }
         require(probabilityCutoff in 0f..1f) { "probabilityCutoff must be in [0.0, 1.0], was $probabilityCutoff" }
+        require(modelBuffer.isDirect) { "modelBuffer must be a direct ByteBuffer for JNI access" }
+        require(modelBuffer.capacity() > 0) { "modelBuffer must not be empty" }
         ensureLibraryLoaded()
         nativeHandle =
             nativeCreate(modelBuffer, DEFAULT_SAMPLE_RATE, featureStepSizeMs, probabilityCutoff, slidingWindowSize)
