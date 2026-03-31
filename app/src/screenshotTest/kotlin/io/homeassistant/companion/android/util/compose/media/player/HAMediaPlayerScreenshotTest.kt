@@ -15,35 +15,35 @@ class HAMediaPlayerScreenshotTest {
     @Preview
     @Composable
     fun `Media Player with 1 hour position`() {
-        HAMediaPlayer(FakePlayer(currentPosition = 1.hours), true, ContentScale.Companion.Inside)
+        HAMediaPlayer(FakePlayer(currentPosition = 1.hours), true, ContentScale.Inside)
     }
 
     @PreviewTest
     @Preview
     @Composable
     fun `Media Player with 26 hours position`() {
-        HAMediaPlayer(FakePlayer(currentPosition = 26.hours), true, ContentScale.Companion.Inside)
+        HAMediaPlayer(FakePlayer(currentPosition = 26.hours), true, ContentScale.Inside)
     }
 
     @PreviewTest
     @Preview
     @Composable
     fun `Media Player is muted`() {
-        HAMediaPlayer(FakePlayer(muted = true), true, ContentScale.Companion.Inside)
+        HAMediaPlayer(FakePlayer(muted = true), true, ContentScale.Inside)
     }
 
     @PreviewTest
     @Preview
     @Composable
     fun `Media Player is playing`() {
-        HAMediaPlayer(FakePlayer(playing = true), true, ContentScale.Companion.Inside)
+        HAMediaPlayer(FakePlayer(playing = true), true, ContentScale.Inside)
     }
 
     @PreviewTest
     @Preview
     @Composable
     fun `Media Player is playing controls hidden`() {
-        HAMediaPlayer(FakePlayer(playing = true), false, ContentScale.Companion.Inside)
+        HAMediaPlayer(FakePlayer(playing = true), false, ContentScale.Inside)
     }
 
     @PreviewTest
@@ -53,8 +53,8 @@ class HAMediaPlayerScreenshotTest {
         HAMediaPlayer(
             FakePlayer(playing = true),
             true,
-            ContentScale.Companion.Inside,
-            modifier = Modifier.Companion.size(100.dp),
+            ContentScale.Inside,
+            modifier = Modifier.size(100.dp),
         )
     }
 }
