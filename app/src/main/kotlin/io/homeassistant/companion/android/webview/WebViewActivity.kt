@@ -2011,23 +2011,25 @@ class WebViewActivity :
                 URLUtil.guessFileName(url, contentDisposition, mimetype)
             }
             val safeUrl = JSONObject.quote(url)
-            val safeFallback = JSONObject.quote(fallbackFilename)
+            val safeFallbackFilename = JSONObject.quote(fallbackFilename)
             val jsCode = """
                 (async function() {
                     try {
                         const response = await fetch($safeUrl);
                         if (!response.ok) {
-                            console.error('[HA] Blob download failed: HTTP ' + response.status + ' for ' + $safeUrl);
+                            console.error('Blob download failed: HTTP ' + response.status + ' for ' + ${sensitive(
+                safeUrl,
+            )});
                             return;
                         }
                         const blob = await response.blob();
                         const reader = new FileReader();
                         reader.onloadend = function() {
-                            $javascriptInterface.handleBlob(reader.result, $safeFallback);
+                            $javascriptInterface.handleBlob(reader.result, $safeFallbackFilename);
                         };
                         reader.readAsDataURL(blob);
                     } catch (e) {
-                        console.error('[HA] Blob download failed:', e);
+                        console.error('Blob download failed:', e);
                     }
                 })();
             """.trimIndent()
