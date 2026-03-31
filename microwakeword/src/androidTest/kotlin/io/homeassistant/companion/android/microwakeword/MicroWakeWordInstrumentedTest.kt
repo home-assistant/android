@@ -70,4 +70,17 @@ class MicroWakeWordInstrumentedTest {
             )
         }
     }
+
+    @Test
+    fun createWithNonDirectBufferThrows() {
+        val heapBuffer = ByteBuffer.allocate(64)
+        assertThrows(IllegalArgumentException::class.java) {
+            MicroWakeWord(
+                modelBuffer = heapBuffer,
+                featureStepSizeMs = 10,
+                probabilityCutoff = 0.5f,
+                slidingWindowSize = 20,
+            )
+        }
+    }
 }
