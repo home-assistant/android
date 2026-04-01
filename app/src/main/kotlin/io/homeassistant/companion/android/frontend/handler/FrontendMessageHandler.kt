@@ -4,6 +4,8 @@ import android.content.pm.PackageManager
 import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
+import io.homeassistant.companion.android.frontend.FrontendJsHandler
+import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConfigGetMessage
@@ -55,11 +57,12 @@ class FrontendMessageHandler @Inject constructor(
     private val threadManager: ThreadManager,
     private val appVersionProvider: AppVersionProvider,
     private val sessionManager: ServerSessionManager,
+    private val downloadManager: FrontendDownloadManager,
     @param:IsAutomotive private val isAutomotive: Boolean,
 ) : FrontendJsHandler,
     FrontendBusObserver {
 
-    private val authResultsFlow = MutableSharedFlow<FrontendHandlerEvent>(extraBufferCapacity = 1)
+    private val jsCallbackEvents = MutableSharedFlow<FrontendHandlerEvent>(extraBufferCapacity = 1)
 
     /**
      * Called when the frontend requests authentication.
@@ -75,7 +78,7 @@ class FrontendMessageHandler @Inject constructor(
 
             is ExternalAuthResult.Failed -> {
                 evaluateScript(result.callbackScript)
-                result.error?.let { authResultsFlow.tryEmit(FrontendHandlerEvent.AuthError(it)) }
+                result.error?.let { jsCallbackEvents.tryEmit(FrontendHandlerEvent.AuthError(it)) }
             }
         }
     }
@@ -99,14 +102,28 @@ class FrontendMessageHandler @Inject constructor(
     }
 
     /**
-     * Merges deserialized external bus messages with auth-related events into a single
-     * stream of [FrontendHandlerEvent].
+     * Called by the JavaScript interface when blob data is available for download.
+     *
+     * Delegates to [FrontendDownloadManager] to save the data URI to the Downloads directory
+     * and emits the result as a [FrontendHandlerEvent.DownloadCompleted] event.
+     */
+    override suspend fun handleBlob(data: String, filename: String?) {
+        Timber.d("handleBlob called with filename=$filename")
+        val result = downloadManager.handleBlob(data = data, filename = filename)
+        jsCallbackEvents.tryEmit(FrontendHandlerEvent.DownloadCompleted(result))
+    }
+
+    /**
+     * Flow of events from incoming external bus messages and JavaScript bridge callbacks.
+     *
+     * Merges deserialized external bus messages with events from JS callbacks (auth errors,
+     * download results) into a single stream of [FrontendHandlerEvent].
      */
     override fun messageResults(): Flow<FrontendHandlerEvent> {
         val incomingResults = externalBusRepository.incomingMessages().map { message ->
             handleMessage(message)
         }
-        return merge(incomingResults, authResultsFlow)
+        return merge(incomingResults, jsCallbackEvents)
     }
 
     override fun scriptsToEvaluate(): Flow<WebViewScript> = externalBusRepository.scriptsToEvaluate()

@@ -1,0 +1,169 @@
+package io.homeassistant.companion.android.frontend.download
+
+import android.app.DownloadManager
+import android.os.Environment
+import android.webkit.CookieManager
+import android.webkit.URLUtil
+import androidx.core.net.toUri
+import dagger.hilt.android.scopes.ViewModelScoped
+import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.frontend.FrontendJsBridge
+import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
+import io.homeassistant.companion.android.frontend.session.ServerSessionManager
+import io.homeassistant.companion.android.util.DataUriDownloadManager
+import io.homeassistant.companion.android.util.sensitive
+import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
+import timber.log.Timber
+
+/**
+ * Manages file downloads triggered by the WebView.
+ *
+ * Handles four URI schemes:
+ * - `blob:` — Fetches the blob via JavaScript and passes it as a data URI via the JS bridge
+ * - `http/https:` — Delegates to the system [DownloadManager] with auth headers and cookies
+ * - `data:` — Saves the inline data URI to the Downloads directory via [DataUriDownloadManager]
+ * - Other — Returns [DownloadResult.OpenWithSystem] for the ViewModel to handle
+ *
+ * The [handleBlob] callback is called from the JS bridge when blob data arrives.
+ */
+@ViewModelScoped
+class FrontendDownloadManager @Inject constructor(
+    private val systemDownloadManager: DownloadManager?,
+    private val dataUriDownloadManager: DataUriDownloadManager,
+    private val sessionManager: ServerSessionManager,
+    private val externalBusRepository: FrontendExternalBusRepository,
+) {
+
+    /**
+     * Dispatches a download request based on the URI scheme.
+     *
+     * Called by the WebView download listener when the user initiates a download.
+     *
+     * @param url The URL of the file to download
+     * @param contentDisposition The Content-Disposition header value
+     * @param mimetype The MIME type of the file
+     * @param serverId The current server ID for attaching auth credentials
+     * @return The result of the download operation for the ViewModel to act on
+     */
+    suspend fun downloadFile(url: String, contentDisposition: String, mimetype: String, serverId: Int): DownloadResult {
+        Timber.d("WebView requested download of ${sensitive(url)}")
+        val uri = url.toUri()
+        return when (uri.scheme?.lowercase()) {
+            "blob" -> triggerBlobDownload(url = url, contentDisposition = contentDisposition, mimetype = mimetype)
+            "http", "https" -> downloadViaDownloadManager(
+                url = url,
+                contentDisposition = contentDisposition,
+                mimetype = mimetype,
+                serverId = serverId,
+            )
+
+            "data" -> {
+                dataUriDownloadManager.saveDataUri(url = url, mimetype = mimetype)
+                DownloadResult.Success
+            }
+
+            else -> DownloadResult.OpenWithSystem(uri = uri)
+        }
+    }
+
+    /**
+     * Handles a blob download that was read by the JavaScript fetch in [triggerBlobDownload].
+     *
+     * The fetch reads the blob as a data URL and passes it to the native code
+     * via the JS bridge. This method saves that data URL to the Downloads directory.
+     *
+     * @param data The blob content encoded as a data URI
+     * @param filename The filename from the anchor element, or null
+     * @return The result of the save operation
+     */
+    suspend fun handleBlob(data: String, filename: String?): DownloadResult {
+        dataUriDownloadManager.saveDataUri(
+            url = data,
+            mimetype = "",
+            filename = filename,
+        )
+        return DownloadResult.Success
+    }
+
+    private suspend fun downloadViaDownloadManager(
+        url: String,
+        contentDisposition: String,
+        mimetype: String,
+        serverId: Int,
+    ): DownloadResult {
+        val manager = systemDownloadManager
+        if (manager == null) {
+            Timber.e("Unable to start download, cannot get DownloadManager")
+            return DownloadResult.Error(messageResId = commonR.string.downloads_failed)
+        }
+        withContext(Dispatchers.IO) {
+            val uri = url.toUri()
+            val request = DownloadManager.Request(uri)
+                .setMimeType(mimetype)
+                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                .setDestinationInExternalPublicDir(
+                    Environment.DIRECTORY_DOWNLOADS,
+                    URLUtil.guessFileName(url, contentDisposition, mimetype),
+                )
+
+            try {
+                if (sessionManager.canSafelySendCredentials(serverId = serverId, url = url)) {
+                    val authHeader = sessionManager.getAuthorizationHeader(serverId)
+                    if (authHeader.isNotEmpty()) {
+                        request.addRequestHeader("Authorization", authHeader)
+                    }
+                }
+
+                request.addRequestHeader("Cookie", CookieManager.getInstance().getCookie(url))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Unable to prepare request")
+            }
+
+            manager.enqueue(request)
+        }
+        return DownloadResult.Success
+    }
+
+    /**
+     * Triggers a blob download by fetching the blob data via the Fetch API and passing it to the
+     * native [handleBlob] interface as a data URI. Requires the blob URL to still be valid
+     * (not yet revoked by the frontend).
+     */
+    private suspend fun triggerBlobDownload(url: String, contentDisposition: String, mimetype: String): DownloadResult {
+        Timber.d("Triggering blob download for ${sensitive(url)}")
+        val fallbackFilename = withContext(Dispatchers.IO) {
+            URLUtil.guessFileName(url, contentDisposition, mimetype)
+        }
+        val safeUrl = JSONObject.quote(url)
+        val safeFallbackFilename = JSONObject.quote(fallbackFilename)
+        val jsCode = """
+            (async function() {
+                try {
+                    const response = await fetch($safeUrl);
+                    if (!response.ok) {
+                        console.error('Blob download failed: HTTP ' + response.status + ' for ' + ${sensitive(
+            safeUrl,
+        )});
+                        return;
+                    }
+                    const blob = await response.blob();
+                    const reader = new FileReader();
+                    reader.onloadend = function() {
+                        ${FrontendJsBridge.INTERFACE_NAME}.handleBlob(reader.result, $safeFallbackFilename);
+                    };
+                    reader.readAsDataURL(blob);
+                } catch (e) {
+                    console.error('Blob download failed:', e);
+                }
+            })();
+        """.trimIndent()
+        externalBusRepository.evaluateScript(jsCode)
+        return DownloadResult.Dispatched
+    }
+}

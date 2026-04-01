@@ -5,6 +5,8 @@ import app.cash.turbine.test
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.AppVersionProvider
+import io.homeassistant.companion.android.frontend.download.DownloadResult
+import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
@@ -60,6 +62,7 @@ class FrontendMessageHandlerTest {
     private val threadManager: ThreadManager = mockk()
     private val appVersionProvider: AppVersionProvider = mockk()
     private val sessionManager: ServerSessionManager = mockk(relaxed = true)
+    private val downloadManager: FrontendDownloadManager = mockk(relaxed = true)
     private lateinit var handler: FrontendMessageHandler
 
     @BeforeEach
@@ -78,6 +81,7 @@ class FrontendMessageHandlerTest {
             threadManager = threadManager,
             appVersionProvider = appVersionProvider,
             sessionManager = sessionManager,
+            downloadManager = downloadManager,
             isAutomotive = false,
         )
     }
@@ -147,6 +151,7 @@ class FrontendMessageHandlerTest {
             threadManager = threadManager,
             appVersionProvider = appVersionProvider,
             sessionManager = sessionManager,
+            downloadManager = downloadManager,
             isAutomotive = false,
         )
 
@@ -184,6 +189,7 @@ class FrontendMessageHandlerTest {
             threadManager = threadManager,
             appVersionProvider = appVersionProvider,
             sessionManager = sessionManager,
+            downloadManager = downloadManager,
             isAutomotive = false,
         )
 
@@ -293,6 +299,7 @@ class FrontendMessageHandlerTest {
             threadManager = threadManager,
             appVersionProvider = appVersionProvider,
             sessionManager = sessionManager,
+            downloadManager = downloadManager,
             isAutomotive = true,
         )
 
@@ -324,6 +331,7 @@ class FrontendMessageHandlerTest {
             threadManager = threadManager,
             appVersionProvider = appVersionProvider,
             sessionManager = sessionManager,
+            downloadManager = downloadManager,
             isAutomotive = false,
         )
 
@@ -468,5 +476,24 @@ class FrontendMessageHandlerTest {
         handler.externalBus(message)
 
         coVerify { externalBusRepository.onMessageReceived(message) }
+    }
+
+    @Test
+    fun `Given blob data when handleBlob called then emits DownloadCompleted with result`() = runTest {
+        val testData = "data:application/pdf;base64,SGVsbG8="
+        val testFilename = "test.pdf"
+        coEvery { downloadManager.handleBlob(data = testData, filename = testFilename) } returns DownloadResult.Success
+        every { externalBusRepository.incomingMessages() } returns emptyFlow()
+
+        handler.messageResults().test {
+            handler.handleBlob(data = testData, filename = testFilename)
+
+            val event = awaitItem()
+            assertTrue(event is FrontendHandlerEvent.DownloadCompleted)
+            assertEquals(DownloadResult.Success, (event as FrontendHandlerEvent.DownloadCompleted).result)
+            expectNoEvents()
+        }
+
+        coVerify { downloadManager.handleBlob(data = testData, filename = testFilename) }
     }
 }
