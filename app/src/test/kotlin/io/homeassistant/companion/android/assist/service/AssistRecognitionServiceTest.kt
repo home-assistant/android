@@ -31,6 +31,16 @@ class AssistRecognitionServiceTest {
         verify { callback.error(SpeechRecognizer.ERROR_CLIENT) }
     }
 
+    @Test
+    fun `Given onCheckRecognitionSupport when invoked then report client error`() {
+        val service = Robolectric.buildService(AssistRecognitionService::class.java).get()
+        val callback = mockk<RecognitionService.SupportCallback>(relaxed = true)
+
+        invokeOnCheckRecognitionSupport(service, Intent(Intent.ACTION_VOICE_COMMAND), callback)
+
+        verify { callback.onError(SpeechRecognizer.ERROR_CLIENT) }
+    }
+
     private fun invokeOnStartListening(
         service: AssistRecognitionService,
         intent: Intent,
@@ -43,5 +53,19 @@ class AssistRecognitionServiceTest {
         )
         method.isAccessible = true
         method.invoke(service, intent, callback)
+    }
+
+    private fun invokeOnCheckRecognitionSupport(
+        service: AssistRecognitionService,
+        recognizerIntent: Intent,
+        supportCallback: RecognitionService.SupportCallback,
+    ) {
+        val method = AssistRecognitionService::class.java.getDeclaredMethod(
+            "onCheckRecognitionSupport",
+            Intent::class.java,
+            RecognitionService.SupportCallback::class.java,
+        )
+        method.isAccessible = true
+        method.invoke(service, recognizerIntent, supportCallback)
     }
 }
