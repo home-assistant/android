@@ -260,6 +260,9 @@ class WebViewActivity :
     lateinit var entityAddToHandler: EntityAddToHandler
 
     @Inject
+    lateinit var dataUriDownloadManager: DataUriDownloadManager
+
+    @Inject
     lateinit var dataSourceFactory: DataSource.Factory
 
     private lateinit var webView: WebView
@@ -2092,7 +2095,7 @@ class WebViewActivity :
 
             "data" -> {
                 lifecycleScope.launch {
-                    DataUriDownloadManager.saveDataUri(this@WebViewActivity, url, mimetype)
+                    dataUriDownloadManager.saveDataUri(url = url, mimetype = mimetype)
                 }
             }
 
