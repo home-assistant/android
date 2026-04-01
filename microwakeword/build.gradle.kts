@@ -18,10 +18,15 @@ android {
         }
     }
 
-    packaging {
-        jniLibs {
-            // Required for HWASan wrap.sh to be included uncompressed in the test APK
-            useLegacyPackaging = true
+    buildTypes {
+        debug {
+            // Required for HWASan wrap.sh to be included uncompressed in the APK
+            // See https://developer.android.com/ndk/guides/hwasan
+            packaging {
+                jniLibs {
+                    useLegacyPackaging = true
+                }
+            }
         }
     }
 
