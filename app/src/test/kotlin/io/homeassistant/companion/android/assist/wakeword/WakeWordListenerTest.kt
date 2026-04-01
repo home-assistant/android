@@ -2,10 +2,10 @@ package io.homeassistant.companion.android.assist.wakeword
 
 import android.content.Context
 import io.homeassistant.companion.android.common.util.VoiceAudioRecorder
+import io.homeassistant.companion.android.microwakeword.MicroWakeWord
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.util.microWakeWordModelConfigs
 import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -27,7 +27,6 @@ import org.junit.jupiter.api.extension.ExtendWith
 class WakeWordListenerTest {
 
     private lateinit var context: Context
-    private lateinit var tfLiteInitializer: TfLiteInitializer
     private lateinit var microWakeWord: MicroWakeWord
     private lateinit var voiceAudioRecorder: VoiceAudioRecorder
     private lateinit var audioFlow: MutableSharedFlow<ShortArray>
@@ -37,7 +36,6 @@ class WakeWordListenerTest {
     @BeforeEach
     fun setup() {
         context = mockk(relaxed = true)
-        tfLiteInitializer = mockk(relaxed = true)
         microWakeWord = mockk(relaxed = true)
         audioFlow = MutableSharedFlow()
         voiceAudioRecorder = mockk {
@@ -49,7 +47,6 @@ class WakeWordListenerTest {
         onListenerReady: (MicroWakeWordModelConfig) -> Unit = {},
         onWakeWordDetected: (MicroWakeWordModelConfig) -> Unit = {},
         onListenerStopped: () -> Unit = {},
-        onListenerFailed: () -> Unit = {},
     ): WakeWordListener {
         return WakeWordListener(
             context = context,
@@ -57,61 +54,12 @@ class WakeWordListenerTest {
             onListenerReady = onListenerReady,
             onWakeWordDetected = onWakeWordDetected,
             onListenerStopped = onListenerStopped,
-            onListenerFailed = onListenerFailed,
-            tfLiteInitializer = tfLiteInitializer,
             microWakeWordFactory = { microWakeWord },
         )
     }
 
     @Nested
-    inner class IsListeningTests {
-
-        @Test
-        fun `Given listener not started then isListening returns false`() {
-            val listener = createListener()
-
-            assertFalse(listener.isListening)
-        }
-
-        @Test
-        fun `Given listener started then isListening returns true`() = runTest {
-            var wasListeningWhenReady = false
-            lateinit var listener: WakeWordListener
-            listener = createListener(
-                onListenerReady = { wasListeningWhenReady = listener.isListening },
-            )
-
-            listener.start(backgroundScope, testModelConfig, testScheduler)
-            runCurrent()
-
-            // Check isListening was true during the ready callback
-            assertTrue(wasListeningWhenReady)
-        }
-
-        @Test
-        fun `Given listener stopped then isListening returns false`() = runTest {
-            val listener = createListener()
-
-            listener.start(backgroundScope, testModelConfig)
-            listener.stop()
-            runCurrent()
-
-            assertFalse(listener.isListening)
-        }
-    }
-
-    @Nested
     inner class StartTests {
-
-        @Test
-        fun `Given start called then initializes TFLite`() = runTest {
-            val listener = createListener()
-
-            listener.start(backgroundScope, testModelConfig, testScheduler)
-            runCurrent()
-
-            coVerify { tfLiteInitializer.initialize(context) }
-        }
 
         @Test
         fun `Given start called then creates detector with model config`() = runTest {
@@ -120,7 +68,6 @@ class WakeWordListenerTest {
                 context = context,
                 voiceAudioRecorder = voiceAudioRecorder,
                 onWakeWordDetected = {},
-                tfLiteInitializer = tfLiteInitializer,
                 microWakeWordFactory = { model ->
                     factoryCalledWithModel = model
                     microWakeWord
@@ -153,7 +100,6 @@ class WakeWordListenerTest {
                 context = context,
                 voiceAudioRecorder = voiceAudioRecorder,
                 onWakeWordDetected = {},
-                tfLiteInitializer = tfLiteInitializer,
                 microWakeWordFactory = {
                     factoryCallCount++
                     microWakeWord
@@ -373,36 +319,6 @@ class WakeWordListenerTest {
     inner class ErrorHandlingTests {
 
         @Test
-        fun `Given TFLite initialization fails when Play Services is unavailable then failed callback is invoked`() = runTest {
-            var detectedCalled = false
-            val listener = createListener(
-                onListenerFailed = { detectedCalled = true },
-            )
-            val expectedException = TfLiteInitializeException(null, "Play Services is unavailable")
-
-            coEvery { tfLiteInitializer.initialize(any()) } throws expectedException
-
-            listener.start(backgroundScope, testModelConfig, this.testScheduler)
-            runCurrent()
-
-            assertTrue(detectedCalled)
-        }
-
-        @Test
-        fun `Given TFLite initialization fails unexpectedly then throws`() = runTest {
-            val listener = createListener()
-            val expectedException = RuntimeException("Init failed")
-
-            coEvery { tfLiteInitializer.initialize(any()) } throws expectedException
-
-            try {
-                listener.start(backgroundScope, testModelConfig)
-            } catch (e: RuntimeException) {
-                assertEquals(expectedException, e)
-            }
-        }
-
-        @Test
         fun `Given detector creation fails then throws`() = runTest {
             val expectedException = RuntimeException("Init failed")
 
@@ -410,7 +326,6 @@ class WakeWordListenerTest {
                 context = context,
                 voiceAudioRecorder = voiceAudioRecorder,
                 onWakeWordDetected = {},
-                tfLiteInitializer = tfLiteInitializer,
                 microWakeWordFactory = { throw expectedException },
             )
 
@@ -419,18 +334,6 @@ class WakeWordListenerTest {
             } catch (e: RuntimeException) {
                 assertEquals(expectedException, e)
             }
-        }
-
-        @Test
-        fun `Given listener stopped then closes detector`() = runTest {
-            val listener = createListener()
-
-            listener.start(backgroundScope, testModelConfig, UnconfinedTestDispatcher(testScheduler))
-            runCurrent()
-            listener.stop()
-            runCurrent()
-
-            verify { microWakeWord.close() }
         }
     }
 }

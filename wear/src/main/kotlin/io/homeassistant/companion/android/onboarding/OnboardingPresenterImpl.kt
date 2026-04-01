@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.onboarding
 
-import android.annotation.SuppressLint
 import android.content.Context
 import androidx.core.net.toUri
 import androidx.wear.phone.interactions.authentication.CodeChallenge
@@ -26,7 +25,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-@SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
 class OnboardingPresenterImpl @Inject constructor(
     @ActivityContext context: Context,
     private val serverRegistrationRepository: ServerRegistrationRepository,

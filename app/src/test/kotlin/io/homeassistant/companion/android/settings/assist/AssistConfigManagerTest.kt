@@ -4,9 +4,8 @@ import android.content.Context
 import io.homeassistant.companion.android.assist.service.AssistVoiceInteractionService
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
-import io.homeassistant.companion.android.common.util.DefaultFailFastHandler
 import io.homeassistant.companion.android.common.util.FailFast
-import io.homeassistant.companion.android.microfrontend.isMicroFrontendSupported
+import io.homeassistant.companion.android.util.FailFastExtension
 import io.homeassistant.companion.android.util.microWakeWordModelConfigs
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -15,7 +14,6 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkObject
-import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
@@ -26,7 +24,9 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 
+@ExtendWith(FailFastExtension::class)
 class AssistConfigManagerTest {
 
     private val context: Context = mockk(relaxed = true)
@@ -37,9 +37,7 @@ class AssistConfigManagerTest {
     fun setUp() {
         mockkObject(MicroWakeWordModelConfig.Companion)
         mockkObject(AssistVoiceInteractionService.Companion)
-        mockkStatic(::isMicroFrontendSupported)
 
-        every { isMicroFrontendSupported } returns true
         coEvery { MicroWakeWordModelConfig.loadAvailableModels(any()) } returns microWakeWordModelConfigs
         every { AssistVoiceInteractionService.startListening(any()) } just Runs
         every { AssistVoiceInteractionService.stopListening(any()) } just Runs
@@ -50,29 +48,6 @@ class AssistConfigManagerTest {
     @AfterEach
     fun tearDown() {
         unmockkAll()
-        FailFast.setHandler(DefaultFailFastHandler)
-    }
-
-    @Nested
-    inner class IsWakeWordSupportedTest {
-
-        @Test
-        fun `Given supported device when isWakeWordSupported then return true`() {
-            every { isMicroFrontendSupported } returns true
-
-            val result = manager.isWakeWordSupported()
-
-            assertTrue(result)
-        }
-
-        @Test
-        fun `Given unsupported device when isWakeWordSupported then return false`() {
-            every { isMicroFrontendSupported } returns false
-
-            val result = manager.isWakeWordSupported()
-
-            assertFalse(result)
-        }
     }
 
     @Nested
@@ -93,16 +68,6 @@ class AssistConfigManagerTest {
             manager.getAvailableModels()
 
             coVerify(exactly = 1) { MicroWakeWordModelConfig.loadAvailableModels(any()) }
-        }
-
-        @Test
-        fun `Given unsupported device when getAvailableModels then return empty list`() = runTest {
-            every { isMicroFrontendSupported } returns false
-
-            val result = manager.getAvailableModels()
-
-            assertTrue(result.isEmpty())
-            coVerify(exactly = 0) { MicroWakeWordModelConfig.loadAvailableModels(any()) }
         }
     }
 

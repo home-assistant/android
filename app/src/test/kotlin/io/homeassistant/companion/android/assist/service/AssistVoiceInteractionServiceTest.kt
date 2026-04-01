@@ -16,7 +16,6 @@ import io.homeassistant.companion.android.settings.assist.AssistConfigManager
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
 import io.homeassistant.companion.android.util.microWakeWordModelConfigs
-import io.mockk.Ordering
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -57,16 +56,14 @@ class AssistVoiceInteractionServiceTest {
     private val assistConfigManager: AssistConfigManager = mockk(relaxed = true)
     private val wakeWordListener: WakeWordListener = mockk(relaxed = true)
     private val onWakeWordDetectedSlot = slot<(MicroWakeWordModelConfig) -> Unit>()
-    private val onListenerFailureSlot = slot<() -> Unit>()
     private val wakeWordListenerFactory: WakeWordListenerFactory = mockk {
-        every { create(capture(onWakeWordDetectedSlot), any(), any(), capture(onListenerFailureSlot)) } returns wakeWordListener
+        every { create(capture(onWakeWordDetectedSlot), any(), any()) } returns wakeWordListener
     }
     private lateinit var serviceController: ServiceController<AssistVoiceInteractionService>
     private lateinit var service: AssistVoiceInteractionService
 
     @Before
     fun setUp() {
-        every { assistConfigManager.isWakeWordSupported() } returns true
         coEvery { assistConfigManager.getAvailableModels() } returns microWakeWordModelConfigs
 
         serviceController = Robolectric.buildService(AssistVoiceInteractionService::class.java)
@@ -144,21 +141,6 @@ class AssistVoiceInteractionServiceTest {
     }
 
     @Test
-    fun `Given unsupported device when onReady then do not start listening`() = runTest {
-        every { assistConfigManager.isWakeWordSupported() } returns false
-        coEvery { assistConfigManager.isWakeWordEnabled() } returns true
-
-        service.onReady()
-        advanceUntilIdle()
-
-        coVerify(exactly = 0) { wakeWordListener.start(any(), any()) }
-        coVerify(ordering = Ordering.ORDERED) {
-            assistConfigManager.isWakeWordEnabled()
-            assistConfigManager.isWakeWordSupported()
-        }
-    }
-
-    @Test
     fun `Given START_LISTENING action then start listening`() = runTest {
         coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
 
@@ -226,19 +208,6 @@ class AssistVoiceInteractionServiceTest {
         advanceUntilIdle()
 
         coVerify(exactly = 0) { wakeWordListener.start(any(), any()) }
-    }
-
-    @Test
-    fun `Given wake word listening initialization failure when start listening then failure callback disables wake word`() = runTest {
-        coEvery { wakeWordListener.start(any(), any()) } coAnswers {
-            // Simulate a failure during initialization calling the failure callback
-            onListenerFailureSlot.captured.invoke()
-        }
-
-        sendAction(ACTION_START_LISTENING)
-        advanceUntilIdle()
-
-        coVerify(exactly = 1) { assistConfigManager.setWakeWordEnabled(false) }
     }
 
     @Test

@@ -26,7 +26,7 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
             extensions.getByType<ApplicationExtension>().apply {
                 dependencies {
                     "implementation"(project(":common"))
-                    "implementation"(project(":microfrontend"))
+                    "implementation"(project(":microwakeword"))
 
                     "implementation"(libs.blurView)
                     "implementation"(libs.haze)
@@ -102,9 +102,6 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
 
                     "implementation"(libs.zxing)
                     "implementation"(libs.improv)
-
-                    "fullImplementation"(libs.play.services.tflite)
-                    "minimalImplementation"(libs.litert)
 
                     "implementation"(libs.car.core)
 

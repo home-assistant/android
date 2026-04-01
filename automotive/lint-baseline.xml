@@ -2645,6 +2645,17 @@
 
     <issue
         id="UnusedResources"
+        message="The resource `R.xml.recognition_service` appears to be unused"
+        errorLine1="&lt;recognition-service xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="^">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/xml/recognition_service.xml"
+            line="3"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
         message="The resource `R.style.TextAppearance_HomeAssistant_Title` appears to be unused"
         errorLine1="    &lt;style name=&quot;TextAppearance.HomeAssistant.Title&quot; parent=&quot;TextAppearance.MaterialComponents.Headline2&quot;>"
         errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">

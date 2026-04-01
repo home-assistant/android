@@ -64,7 +64,6 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
             onWakeWordDetected = ::onWakeWordDetected,
             onListenerReady = ::onListenerReady,
             onListenerStopped = ::onListenerStopped,
-            onListenerFailed = ::onListenerFailed,
         )
     }
     private var isServiceReady = false
@@ -142,10 +141,6 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
      */
     @SuppressLint("MissingPermission")
     private fun startListening() {
-        if (!assistConfigManager.isWakeWordSupported()) {
-            Timber.d("Wake word detection is not supported on this device")
-            return
-        }
         if (!hasRecordAudioPermission()) {
             Timber.w("RECORD_AUDIO permission not granted, cannot start listening")
             return
@@ -184,14 +179,6 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
 
     private fun onListenerStopped() {
         stopForegroundCompat()
-    }
-
-    private fun onListenerFailed() {
-        serviceScope.launch {
-            Timber.w("Wake word listener failed, disabling wake word to prevent issue")
-            @SuppressLint("MissingPermission")
-            assistConfigManager.setWakeWordEnabled(false)
-        }
     }
 
     /**
