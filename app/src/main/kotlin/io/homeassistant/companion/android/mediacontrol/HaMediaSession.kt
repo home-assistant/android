@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.mediacontrol
 
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap.CompressFormat
 import android.os.Looper
 import androidx.annotation.OptIn
@@ -21,6 +23,7 @@ import io.homeassistant.companion.android.common.data.mediacontrol.MediaRepeatMo
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.util.sensitive
+import io.homeassistant.companion.android.webview.WebViewActivity
 import java.io.ByteArrayOutputStream
 import java.net.URL
 import kotlin.time.Duration.Companion.seconds
@@ -146,6 +149,24 @@ class HaMediaSession @AssistedInject constructor(
             .setId("${config.serverId}_${config.entityId}")
             .setCallback(MediaSessionCallback())
             .build()
+
+        // FLAG_ACTIVITY_NEW_TASK is required when starting an activity from a service context
+        // (PendingIntents from notifications always fire in a non-Activity context).
+        // FLAG_ACTIVITY_SINGLE_TOP prevents stacking a redundant WebViewActivity if one is
+        // already at the top; onNewIntent delivers the path to the existing instance instead.
+        val tapIntent = WebViewActivity.newInstance(
+            context = context,
+            path = "entityId:${config.entityId}",
+            serverId = config.serverId,
+        ).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        mediaSession.sessionActivity = PendingIntent.getActivity(
+            context,
+            "${config.serverId}:${config.entityId}".hashCode(),
+            tapIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
     }
 
     /**
