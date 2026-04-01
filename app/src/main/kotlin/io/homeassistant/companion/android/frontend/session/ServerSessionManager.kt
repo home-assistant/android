@@ -101,4 +101,46 @@ class ServerSessionManager @Inject constructor(private val serverManager: Server
             RevokeAuthResult.Failed(callbackScript = "${payload.callback}(false)")
         }
     }
+
+    /**
+     * Build the Bearer token authorization header for the given server.
+     *
+     * Used by the download manager to attach credentials to HTTP download requests
+     * made via [android.app.DownloadManager].
+     *
+     * @param serverId The server ID to build the token for
+     * @return The Bearer token string, or empty string if unavailable
+     */
+    suspend fun getAuthorizationHeader(serverId: Int): String {
+        return try {
+            serverManager.authenticationRepository(serverId).buildBearerToken()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: IllegalStateException) {
+            Timber.e(e, "Failed to build bearer token")
+            ""
+        }
+    }
+
+    /**
+     * Check whether credentials can safely be sent to a given URL.
+     *
+     * Credentials are safe to send when the URL uses HTTPS, or belongs to the server
+     * and the device is on the home network or insecure connections are explicitly allowed.
+     *
+     * @param serverId The server ID to check against
+     * @param url The URL to verify
+     * @return `true` if credentials can safely be included in a request to this URL
+     */
+    suspend fun canSafelySendCredentials(serverId: Int, url: String): Boolean {
+        return try {
+            serverManager.getServer(serverId) != null &&
+                serverManager.connectionStateProvider(serverId).canSafelySendCredentials(url)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.w(e, "Unable to check if credentials can safely be sent")
+            false
+        }
+    }
 }
