@@ -44,3 +44,7 @@ runs:
         printf "$XML_START$XML_LOCALES$XML_END" > wear/src/main/res/xml/locales_config.xml
 
         echo "Complete"
+
+    - name: Zip Translations
+      shell: bash
+      run: zip -r strings.zip common/src/main/res/values/strings.xml common/src/main/res/values-*/strings.xml
