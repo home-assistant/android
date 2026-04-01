@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalResources
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -16,7 +17,6 @@ import io.homeassistant.companion.android.assist.AssistActivity
 import io.homeassistant.companion.android.common.data.servers.ServerManager.Companion.SERVER_ID_ACTIVE
 import io.homeassistant.companion.android.frontend.FrontendScreen
 import io.homeassistant.companion.android.frontend.FrontendViewModel
-import io.homeassistant.companion.android.frontend.FrontendViewState
 import io.homeassistant.companion.android.launch.HAStartDestinationRoute
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.getActivity
@@ -71,8 +71,9 @@ internal fun NavGraphBuilder.frontendScreen(
         composable<FrontendRoute> {
             val viewModel: FrontendViewModel = hiltViewModel()
 
-            FrontendNavigationHandler(
-                navigationEvents = viewModel.navigationEvents,
+            FrontendEventHandler(
+                events = viewModel.events,
+                onShowSnackbar = onShowSnackbar,
                 onNavigateToSettings = onNavigateToSettings,
                 onNavigateToAssist = { serverId, pipelineId, startListening ->
                     navController.context.startActivity(
@@ -84,6 +85,7 @@ internal fun NavGraphBuilder.frontendScreen(
                         ),
                     )
                 },
+                onOpenExternalLink = onOpenExternalLink,
             )
 
             FrontendScreen(
@@ -112,28 +114,41 @@ internal fun NavGraphBuilder.frontendScreen(
 }
 
 /**
- * Handles navigation side effects for [FrontendViewState].
+ * Handles one-shot events from the [FrontendViewModel].
+ *
+ * Collects [FrontendEvent]s and performs the appropriate action
  */
 @Composable
 @VisibleForTesting
-internal fun FrontendNavigationHandler(
-    navigationEvents: SharedFlow<FrontendNavigationEvent>,
+internal fun FrontendEventHandler(
+    events: SharedFlow<FrontendEvent>,
+    onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onNavigateToSettings: (SettingsActivity.Deeplink?) -> Unit,
     onNavigateToAssist: (serverId: Int, pipelineId: String?, startListening: Boolean) -> Unit,
+    onOpenExternalLink: suspend (Uri) -> Unit,
 ) {
+    val resources = LocalResources.current
     LaunchedEffect(Unit) {
-        navigationEvents.collect { event ->
+        events.collect { event ->
             when (event) {
-                is FrontendNavigationEvent.NavigateToSettings -> {
+                is FrontendEvent.ShowSnackbar -> {
+                    onShowSnackbar(resources.getString(event.messageResId), null)
+                }
+
+                is FrontendEvent.NavigateToSettings -> {
                     onNavigateToSettings(null)
                 }
 
-                is FrontendNavigationEvent.NavigateToAssistSettings -> {
+                is FrontendEvent.NavigateToAssistSettings -> {
                     onNavigateToSettings(SettingsActivity.Deeplink.AssistSettings)
                 }
 
-                is FrontendNavigationEvent.NavigateToAssist -> {
+                is FrontendEvent.NavigateToAssist -> {
                     onNavigateToAssist(event.serverId, event.pipelineId, event.startListening)
+                }
+
+                is FrontendEvent.OpenExternalLink -> {
+                    onOpenExternalLink(event.uri)
                 }
             }
         }

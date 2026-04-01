@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend.navigation
 
+import android.net.Uri
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -20,7 +21,7 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
 @HiltAndroidTest
-class FrontendNavigationTest {
+class FrontendEventHandlerTest {
 
     @get:Rule(order = 0)
     var consoleLog = ConsoleLogRule()
@@ -35,21 +36,23 @@ class FrontendNavigationTest {
     fun `Given NavigateToSettings event then onNavigateToSettings is called`() = runTest {
         var settingsNavigated = false
         var deepLink: SettingsActivity.Deeplink? = null
-        val navigationEvents = MutableSharedFlow<FrontendNavigationEvent>()
+        val events = MutableSharedFlow<FrontendEvent>()
 
         composeTestRule.setContent {
-            FrontendNavigationHandler(
-                navigationEvents = navigationEvents,
+            FrontendEventHandler(
+                events = events,
+                onShowSnackbar = { _, _ -> false },
                 onNavigateToSettings = {
                     settingsNavigated = true
                     deepLink = it
                 },
                 onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = {},
             )
         }
 
         composeTestRule.waitForIdle()
-        navigationEvents.emit(FrontendNavigationEvent.NavigateToSettings)
+        events.emit(FrontendEvent.NavigateToSettings)
         composeTestRule.waitForIdle()
 
         assertEquals(true, settingsNavigated)
@@ -57,24 +60,26 @@ class FrontendNavigationTest {
     }
 
     @Test
-    fun `Given NavigateToVoiceDeviceSettings event then onNavigateToSettings is called`() = runTest {
+    fun `Given NavigateToAssistSettings event then onNavigateToSettings is called with deeplink`() = runTest {
         var settingsNavigated = false
         var deepLink: SettingsActivity.Deeplink? = null
-        val navigationEvents = MutableSharedFlow<FrontendNavigationEvent>()
+        val events = MutableSharedFlow<FrontendEvent>()
 
         composeTestRule.setContent {
-            FrontendNavigationHandler(
-                navigationEvents = navigationEvents,
+            FrontendEventHandler(
+                events = events,
+                onShowSnackbar = { _, _ -> false },
                 onNavigateToSettings = {
                     settingsNavigated = true
                     deepLink = it
                 },
                 onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = {},
             )
         }
 
         composeTestRule.waitForIdle()
-        navigationEvents.emit(FrontendNavigationEvent.NavigateToAssistSettings)
+        events.emit(FrontendEvent.NavigateToAssistSettings)
         composeTestRule.waitForIdle()
 
         assertEquals(true, settingsNavigated)
@@ -86,23 +91,25 @@ class FrontendNavigationTest {
         var capturedServerId: Int? = null
         var capturedPipelineId: String? = null
         var capturedStartListening: Boolean? = null
-        val navigationEvents = MutableSharedFlow<FrontendNavigationEvent>()
+        val events = MutableSharedFlow<FrontendEvent>()
 
         composeTestRule.setContent {
-            FrontendNavigationHandler(
-                navigationEvents = navigationEvents,
+            FrontendEventHandler(
+                events = events,
+                onShowSnackbar = { _, _ -> false },
                 onNavigateToSettings = { },
                 onNavigateToAssist = { serverId, pipelineId, startListening ->
                     capturedServerId = serverId
                     capturedPipelineId = pipelineId
                     capturedStartListening = startListening
                 },
+                onOpenExternalLink = {},
             )
         }
 
         composeTestRule.waitForIdle()
-        navigationEvents.emit(
-            FrontendNavigationEvent.NavigateToAssist(
+        events.emit(
+            FrontendEvent.NavigateToAssist(
                 serverId = 1,
                 pipelineId = "abc",
                 startListening = false,
@@ -113,5 +120,56 @@ class FrontendNavigationTest {
         assertEquals(1, capturedServerId)
         assertEquals("abc", capturedPipelineId)
         assertEquals(false, capturedStartListening)
+    }
+
+    @Test
+    fun `Given ShowSnackbar event then onShowSnackbar is called with resolved message`() = runTest {
+        var capturedMessage: String? = null
+        var capturedAction: String? = null
+        val events = MutableSharedFlow<FrontendEvent>()
+
+        composeTestRule.setContent {
+            FrontendEventHandler(
+                events = events,
+                onShowSnackbar = { message, action ->
+                    capturedMessage = message
+                    capturedAction = action
+                    false
+                },
+                onNavigateToSettings = {},
+                onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = {},
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        events.emit(FrontendEvent.ShowSnackbar(messageResId = android.R.string.ok))
+        composeTestRule.waitForIdle()
+
+        assertEquals("OK", capturedMessage)
+        assertNull(capturedAction)
+    }
+
+    @Test
+    fun `Given OpenExternalLink event then onOpenExternalLink is called with the URI`() = runTest {
+        var capturedUri: Uri? = null
+        val events = MutableSharedFlow<FrontendEvent>()
+
+        composeTestRule.setContent {
+            FrontendEventHandler(
+                events = events,
+                onShowSnackbar = { _, _ -> false },
+                onNavigateToSettings = {},
+                onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = { uri -> capturedUri = uri },
+            )
+        }
+
+        val testUri = Uri.parse("https://example.com")
+        composeTestRule.waitForIdle()
+        events.emit(FrontendEvent.OpenExternalLink(uri = testUri))
+        composeTestRule.waitForIdle()
+
+        assertEquals(testUri, capturedUri)
     }
 }
