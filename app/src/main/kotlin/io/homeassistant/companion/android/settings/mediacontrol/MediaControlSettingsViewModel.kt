@@ -58,9 +58,12 @@ data class MediaControlSettingsUiState(
     // True while entities and registries are being loaded from the server
     val isLoading: Boolean = true,
 ) {
-    fun entityRegistryForServer(serverId: Int): List<EntityRegistryResponse> = entityRegistryPerServer[serverId] ?: emptyList()
-    fun deviceRegistryForServer(serverId: Int): List<DeviceRegistryResponse> = deviceRegistryPerServer[serverId] ?: emptyList()
-    fun areaRegistryForServer(serverId: Int): List<AreaRegistryResponse> = areaRegistryPerServer[serverId] ?: emptyList()
+    fun entityRegistryForServer(serverId: Int): List<EntityRegistryResponse> =
+        entityRegistryPerServer[serverId] ?: emptyList()
+    fun deviceRegistryForServer(serverId: Int): List<DeviceRegistryResponse> =
+        deviceRegistryPerServer[serverId] ?: emptyList()
+    fun areaRegistryForServer(serverId: Int): List<AreaRegistryResponse> =
+        areaRegistryPerServer[serverId] ?: emptyList()
 }
 
 @HiltViewModel

@@ -127,7 +127,6 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
     private fun buildMetadata(state: MediaControlState, artwork: ByteArray?): MediaMetadata {
         val builder = MediaMetadata.Builder()
             .setTitle(state.title)
-            .setDisplayTitle(state.entityFriendlyName)
             .setArtist(state.artist)
             .setAlbumTitle(state.albumName)
             .setAlbumArtist(state.albumArtist)

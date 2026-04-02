@@ -2,9 +2,12 @@ package io.homeassistant.companion.android.mediacontrol
 
 import android.content.Context
 import android.content.Intent
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlRepository
 import javax.inject.Inject
@@ -39,8 +42,12 @@ class HaMediaSessionService : MediaSessionService() {
     internal val activeSessions = mutableMapOf<String, HaMediaSession>()
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
+    @androidx.annotation.OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
+        val notificationProvider = DefaultMediaNotificationProvider.Builder(this).build()
+        notificationProvider.setSmallIcon(commonR.drawable.ic_stat_ic_notification)
+        setMediaNotificationProvider(notificationProvider)
         Timber.d("HaMediaSessionService created")
         mediaControlRepository.observeConfiguredEntities()
             .onEach { entities -> withContext(Dispatchers.Main) { reconcileSessions(entities) } }
