@@ -1,10 +1,9 @@
 package io.homeassistant.companion.android.frontend.permissions
 
 import android.os.Build
-import android.webkit.PermissionRequest
+import android.webkit.PermissionRequest as WebViewPermissionRequest
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.NotificationStatusProvider
 import io.homeassistant.companion.android.common.util.PermissionChecker
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
@@ -67,7 +66,7 @@ class PermissionManagerTest {
         )
     }
 
-    private fun mockPermissionRequest(vararg resources: String): PermissionRequest {
+    private fun mockPermissionRequest(vararg resources: String): WebViewPermissionRequest {
         return mockk(relaxed = true) {
             every { getResources() } returns resources.toList().toTypedArray()
         }
@@ -102,7 +101,7 @@ class PermissionManagerTest {
             manager.checkNotificationPermission(serverId)
 
             if (expectedPending) {
-                assertInstanceOf(PendingPermissionRequest.Notification::class.java, manager.pendingPermissionRequest.value)
+                assertInstanceOf(PermissionRequest.Notification::class.java, manager.pendingPermissionRequest.value)
             } else {
                 assertNull(manager.pendingPermissionRequest.value)
             }
@@ -131,10 +130,24 @@ class PermissionManagerTest {
     @Nested
     inner class OnNotificationPermissionResult {
 
+        private fun mockShouldAsk() {
+            every { notificationStatusProvider.areNotificationsEnabled() } returns false
+            coEvery { integrationRepository.shouldAskNotificationPermission() } returns true
+        }
+
+        private suspend fun resolveNotificationPermission(manager: PermissionManager, granted: Boolean) {
+            val pending = manager.pendingPermissionRequest.value as PermissionRequest.Notification
+            manager.clearPendingPermissionRequest()
+            pending.onResult(PermissionRequest.Result.Single(granted = granted))
+        }
+
         @Test
         fun `Given permission granted when doesn't have FcmPushSupport then inserts websocket settings`() = runTest {
-            val manager = createManager(hasFcmPushSupport = false)
-            manager.onNotificationPermissionResult(serverId = serverId, granted = true)
+            mockShouldAsk()
+            val manager = createManager(hasFcmPushSupport = false, sdkInt = Build.VERSION_CODES.TIRAMISU)
+            manager.checkNotificationPermission(serverId)
+
+            resolveNotificationPermission(manager, granted = true)
 
             coVerify {
                 settingsDao.insert(
@@ -158,8 +171,11 @@ class PermissionManagerTest {
             hasFcm: Boolean,
             granted: Boolean,
         ) = runTest {
-            val manager = createManager(hasFcmPushSupport = hasFcm)
-            manager.onNotificationPermissionResult(serverId = serverId, granted = granted)
+            mockShouldAsk()
+            val manager = createManager(hasFcmPushSupport = hasFcm, sdkInt = Build.VERSION_CODES.TIRAMISU)
+            manager.checkNotificationPermission(serverId)
+
+            resolveNotificationPermission(manager, granted = granted)
 
             coVerify(exactly = 0) { settingsDao.insert(any()) }
         }
@@ -167,8 +183,11 @@ class PermissionManagerTest {
         @ParameterizedTest(name = "granted={0} -> persists do not ask again")
         @ValueSource(booleans = [true, false])
         fun `Given any result then persists do not ask again`(granted: Boolean) = runTest {
-            val manager = createManager(hasFcmPushSupport = false)
-            manager.onNotificationPermissionResult(serverId = serverId, granted = granted)
+            mockShouldAsk()
+            val manager = createManager(hasFcmPushSupport = false, sdkInt = Build.VERSION_CODES.TIRAMISU)
+            manager.checkNotificationPermission(serverId)
+
+            resolveNotificationPermission(manager, granted = granted)
 
             coVerify { integrationRepository.setAskNotificationPermission(false) }
         }
@@ -184,39 +203,39 @@ class PermissionManagerTest {
         @Test
         fun `Given camera already granted when video capture requested then auto-grants without pending request`() = runTest {
             every { permissionChecker.hasPermission(android.Manifest.permission.CAMERA) } returns true
-            val request = mockPermissionRequest(PermissionRequest.RESOURCE_VIDEO_CAPTURE)
+            val request = mockPermissionRequest(WebViewPermissionRequest.RESOURCE_VIDEO_CAPTURE)
 
             val manager = createManager()
             manager.onWebViewPermissionRequest(request)
 
-            verify { request.grant(arrayOf(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) }
+            verify { request.grant(arrayOf(WebViewPermissionRequest.RESOURCE_VIDEO_CAPTURE)) }
             assertNull(manager.pendingPermissionRequest.value)
         }
 
         @Test
         fun `Given camera not granted when video capture requested then creates pending request`() = runTest {
             every { permissionChecker.hasPermission(android.Manifest.permission.CAMERA) } returns false
-            val request = mockPermissionRequest(PermissionRequest.RESOURCE_VIDEO_CAPTURE)
+            val request = mockPermissionRequest(WebViewPermissionRequest.RESOURCE_VIDEO_CAPTURE)
 
             val manager = createManager()
             manager.onWebViewPermissionRequest(request)
 
             verify(exactly = 0) { request.grant(any()) }
             val pending = manager.pendingPermissionRequest.value
-            assertInstanceOf(PendingPermissionRequest.WebView::class.java, pending)
+            assertInstanceOf(PermissionRequest.WebView::class.java, pending)
             assertEquals(listOf(android.Manifest.permission.CAMERA), pending?.permissions)
         }
 
         @Test
         fun `Given mic not granted when audio capture requested then creates pending request for RECORD_AUDIO`() = runTest {
             every { permissionChecker.hasPermission(android.Manifest.permission.RECORD_AUDIO) } returns false
-            val request = mockPermissionRequest(PermissionRequest.RESOURCE_AUDIO_CAPTURE)
+            val request = mockPermissionRequest(WebViewPermissionRequest.RESOURCE_AUDIO_CAPTURE)
 
             val manager = createManager()
             manager.onWebViewPermissionRequest(request)
 
             val pending = manager.pendingPermissionRequest.value
-            assertInstanceOf(PendingPermissionRequest.WebView::class.java, pending)
+            assertInstanceOf(PermissionRequest.WebView::class.java, pending)
             assertEquals(listOf(android.Manifest.permission.RECORD_AUDIO), pending?.permissions)
         }
 
@@ -225,8 +244,8 @@ class PermissionManagerTest {
             every { permissionChecker.hasPermission(android.Manifest.permission.CAMERA) } returns true
             every { permissionChecker.hasPermission(android.Manifest.permission.RECORD_AUDIO) } returns false
             val request = mockPermissionRequest(
-                PermissionRequest.RESOURCE_VIDEO_CAPTURE,
-                PermissionRequest.RESOURCE_AUDIO_CAPTURE,
+                WebViewPermissionRequest.RESOURCE_VIDEO_CAPTURE,
+                WebViewPermissionRequest.RESOURCE_AUDIO_CAPTURE,
             )
 
             val manager = createManager()
@@ -234,10 +253,10 @@ class PermissionManagerTest {
 
             verify(exactly = 0) { request.grant(any()) }
             val pending = manager.pendingPermissionRequest.value
-            assertInstanceOf(PendingPermissionRequest.WebView::class.java, pending)
-            val webView = pending as PendingPermissionRequest.WebView
+            assertInstanceOf(PermissionRequest.WebView::class.java, pending)
+            val webView = pending as PermissionRequest.WebView
             assertEquals(listOf(android.Manifest.permission.RECORD_AUDIO), webView.permissions)
-            assertEquals(listOf(PermissionRequest.RESOURCE_VIDEO_CAPTURE), webView.alreadyGrantedResources)
+            assertEquals(listOf(WebViewPermissionRequest.RESOURCE_VIDEO_CAPTURE), webView.alreadyGrantedResources)
         }
 
         @Test
@@ -245,8 +264,8 @@ class PermissionManagerTest {
             every { permissionChecker.hasPermission(android.Manifest.permission.CAMERA) } returns true
             every { permissionChecker.hasPermission(android.Manifest.permission.RECORD_AUDIO) } returns true
             val request = mockPermissionRequest(
-                PermissionRequest.RESOURCE_VIDEO_CAPTURE,
-                PermissionRequest.RESOURCE_AUDIO_CAPTURE,
+                WebViewPermissionRequest.RESOURCE_VIDEO_CAPTURE,
+                WebViewPermissionRequest.RESOURCE_AUDIO_CAPTURE,
             )
 
             val manager = createManager()
@@ -254,7 +273,7 @@ class PermissionManagerTest {
 
             verify {
                 request.grant(
-                    arrayOf(PermissionRequest.RESOURCE_VIDEO_CAPTURE, PermissionRequest.RESOURCE_AUDIO_CAPTURE),
+                    arrayOf(WebViewPermissionRequest.RESOURCE_VIDEO_CAPTURE, WebViewPermissionRequest.RESOURCE_AUDIO_CAPTURE),
                 )
             }
             assertNull(manager.pendingPermissionRequest.value)
@@ -286,38 +305,30 @@ class PermissionManagerTest {
         @Test
         fun `Given pending request when camera granted then grants WebView resource`() = runTest {
             every { permissionChecker.hasPermission(android.Manifest.permission.CAMERA) } returns false
-            val request = mockPermissionRequest(PermissionRequest.RESOURCE_VIDEO_CAPTURE)
+            val request = mockPermissionRequest(WebViewPermissionRequest.RESOURCE_VIDEO_CAPTURE)
 
             val manager = createManager()
             manager.onWebViewPermissionRequest(request)
-            manager.onPermissionResult(mapOf(android.Manifest.permission.CAMERA to true))
+            val pending = manager.pendingPermissionRequest.value as PermissionRequest.WebView
+            manager.clearPendingPermissionRequest()
+            pending.onResult(PermissionRequest.Result.Multiple(permissions = mapOf(android.Manifest.permission.CAMERA to true)))
 
-            verify { request.grant(arrayOf(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) }
+            verify { request.grant(arrayOf(WebViewPermissionRequest.RESOURCE_VIDEO_CAPTURE)) }
             assertNull(manager.pendingPermissionRequest.value)
         }
 
         @Test
         fun `Given pending request when permission denied then denies WebView request`() = runTest {
             every { permissionChecker.hasPermission(android.Manifest.permission.CAMERA) } returns false
-            val request = mockPermissionRequest(PermissionRequest.RESOURCE_VIDEO_CAPTURE)
+            val request = mockPermissionRequest(WebViewPermissionRequest.RESOURCE_VIDEO_CAPTURE)
 
             val manager = createManager()
             manager.onWebViewPermissionRequest(request)
-            manager.onPermissionResult(mapOf(android.Manifest.permission.CAMERA to false))
+            val pending = manager.pendingPermissionRequest.value as PermissionRequest.WebView
+            manager.clearPendingPermissionRequest()
+            pending.onResult(PermissionRequest.Result.Multiple(permissions = mapOf(android.Manifest.permission.CAMERA to false)))
 
             verify { request.deny() }
-            assertNull(manager.pendingPermissionRequest.value)
-        }
-
-        @Test
-        fun `Given no pending request when result received then triggers FailFast`() = runTest {
-            var caughtException: Throwable? = null
-            FailFast.setHandler { exception, _ -> caughtException = exception }
-
-            val manager = createManager()
-            manager.onPermissionResult(mapOf(android.Manifest.permission.CAMERA to true))
-
-            assertNotNull(caughtException)
             assertNull(manager.pendingPermissionRequest.value)
         }
 
@@ -326,19 +337,21 @@ class PermissionManagerTest {
             every { permissionChecker.hasPermission(android.Manifest.permission.CAMERA) } returns true
             every { permissionChecker.hasPermission(android.Manifest.permission.RECORD_AUDIO) } returns false
             val request = mockPermissionRequest(
-                PermissionRequest.RESOURCE_VIDEO_CAPTURE,
-                PermissionRequest.RESOURCE_AUDIO_CAPTURE,
+                WebViewPermissionRequest.RESOURCE_VIDEO_CAPTURE,
+                WebViewPermissionRequest.RESOURCE_AUDIO_CAPTURE,
             )
 
             val manager = createManager()
             manager.onWebViewPermissionRequest(request)
-            manager.onPermissionResult(
-                mapOf(android.Manifest.permission.RECORD_AUDIO to true),
+            val pending = manager.pendingPermissionRequest.value as PermissionRequest.WebView
+            manager.clearPendingPermissionRequest()
+            pending.onResult(
+                PermissionRequest.Result.Multiple(permissions = mapOf(android.Manifest.permission.RECORD_AUDIO to true)),
             )
 
             verify {
                 request.grant(
-                    arrayOf(PermissionRequest.RESOURCE_VIDEO_CAPTURE, PermissionRequest.RESOURCE_AUDIO_CAPTURE),
+                    arrayOf(WebViewPermissionRequest.RESOURCE_VIDEO_CAPTURE, WebViewPermissionRequest.RESOURCE_AUDIO_CAPTURE),
                 )
             }
             assertNull(manager.pendingPermissionRequest.value)
@@ -349,17 +362,19 @@ class PermissionManagerTest {
             every { permissionChecker.hasPermission(android.Manifest.permission.CAMERA) } returns true
             every { permissionChecker.hasPermission(android.Manifest.permission.RECORD_AUDIO) } returns false
             val request = mockPermissionRequest(
-                PermissionRequest.RESOURCE_VIDEO_CAPTURE,
-                PermissionRequest.RESOURCE_AUDIO_CAPTURE,
+                WebViewPermissionRequest.RESOURCE_VIDEO_CAPTURE,
+                WebViewPermissionRequest.RESOURCE_AUDIO_CAPTURE,
             )
 
             val manager = createManager()
             manager.onWebViewPermissionRequest(request)
-            manager.onPermissionResult(
-                mapOf(android.Manifest.permission.RECORD_AUDIO to false),
+            val pending = manager.pendingPermissionRequest.value as PermissionRequest.WebView
+            manager.clearPendingPermissionRequest()
+            pending.onResult(
+                PermissionRequest.Result.Multiple(permissions = mapOf(android.Manifest.permission.RECORD_AUDIO to false)),
             )
 
-            verify { request.grant(arrayOf(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) }
+            verify { request.grant(arrayOf(WebViewPermissionRequest.RESOURCE_VIDEO_CAPTURE)) }
             assertNull(manager.pendingPermissionRequest.value)
         }
 
@@ -368,20 +383,24 @@ class PermissionManagerTest {
             every { permissionChecker.hasPermission(android.Manifest.permission.CAMERA) } returns false
             every { permissionChecker.hasPermission(android.Manifest.permission.RECORD_AUDIO) } returns false
             val request = mockPermissionRequest(
-                PermissionRequest.RESOURCE_VIDEO_CAPTURE,
-                PermissionRequest.RESOURCE_AUDIO_CAPTURE,
+                WebViewPermissionRequest.RESOURCE_VIDEO_CAPTURE,
+                WebViewPermissionRequest.RESOURCE_AUDIO_CAPTURE,
             )
 
             val manager = createManager()
             manager.onWebViewPermissionRequest(request)
-            manager.onPermissionResult(
-                mapOf(
-                    android.Manifest.permission.CAMERA to false,
-                    android.Manifest.permission.RECORD_AUDIO to true,
+            val pending = manager.pendingPermissionRequest.value as PermissionRequest.WebView
+            manager.clearPendingPermissionRequest()
+            pending.onResult(
+                PermissionRequest.Result.Multiple(
+                    permissions = mapOf(
+                        android.Manifest.permission.CAMERA to false,
+                        android.Manifest.permission.RECORD_AUDIO to true,
+                    ),
                 ),
             )
 
-            verify { request.grant(arrayOf(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) }
+            verify { request.grant(arrayOf(WebViewPermissionRequest.RESOURCE_AUDIO_CAPTURE)) }
             assertNull(manager.pendingPermissionRequest.value)
         }
     }
@@ -426,7 +445,7 @@ class PermissionManagerTest {
 
             assertTrue(result)
             val pending = manager.pendingPermissionRequest.value
-            assertInstanceOf(PendingPermissionRequest.StorageForDownload::class.java, pending)
+            assertInstanceOf(PermissionRequest.ExternalStorage::class.java, pending)
             assertEquals(
                 listOf(android.Manifest.permission.WRITE_EXTERNAL_STORAGE),
                 pending?.permissions,
@@ -447,8 +466,10 @@ class PermissionManagerTest {
             val manager = createManager(sdkInt = Build.VERSION_CODES.P)
             manager.requiresStoragePermissionForDownload { onGrantedCalled = true }
 
-            manager.onPermissionResult(
-                mapOf(android.Manifest.permission.WRITE_EXTERNAL_STORAGE to true),
+            val pending = manager.pendingPermissionRequest.value as PermissionRequest.ExternalStorage
+            manager.clearPendingPermissionRequest()
+            pending.onResult(
+                PermissionRequest.Result.Single(granted = true),
             )
 
             assertTrue(onGrantedCalled)
@@ -465,25 +486,13 @@ class PermissionManagerTest {
             val manager = createManager(sdkInt = Build.VERSION_CODES.P)
             manager.requiresStoragePermissionForDownload { onGrantedCalled = true }
 
-            manager.onPermissionResult(
-                mapOf(android.Manifest.permission.WRITE_EXTERNAL_STORAGE to false),
+            val pending = manager.pendingPermissionRequest.value as PermissionRequest.ExternalStorage
+            manager.clearPendingPermissionRequest()
+            pending.onResult(
+                PermissionRequest.Result.Single(granted = false),
             )
 
             assertFalse(onGrantedCalled)
-            assertNull(manager.pendingPermissionRequest.value)
-        }
-
-        @Test
-        fun `Given no pending request when result received then triggers FailFast`() = runTest {
-            var caughtException: Throwable? = null
-            FailFast.setHandler { exception, _ -> caughtException = exception }
-
-            val manager = createManager()
-            manager.onPermissionResult(
-                mapOf(android.Manifest.permission.WRITE_EXTERNAL_STORAGE to true),
-            )
-
-            assertNotNull(caughtException)
             assertNull(manager.pendingPermissionRequest.value)
         }
     }
@@ -508,7 +517,7 @@ class PermissionManagerTest {
 
             assertNotNull(manager.pendingPermissionRequest.value)
 
-            manager.dismissPendingPermission()
+            manager.clearPendingPermissionRequest()
 
             assertNull(manager.pendingPermissionRequest.value)
         }
@@ -535,20 +544,22 @@ class PermissionManagerTest {
 
             assertNotNull(manager.pendingPermissionRequest.value)
 
-            val webViewRequest = mockPermissionRequest(PermissionRequest.RESOURCE_VIDEO_CAPTURE)
+            val webViewRequest = mockPermissionRequest(WebViewPermissionRequest.RESOURCE_VIDEO_CAPTURE)
             val job = launch { manager.onWebViewPermissionRequest(webViewRequest) }
             advanceUntilIdle()
 
             // Still waiting — storage request is pending
-            assertInstanceOf(PendingPermissionRequest.StorageForDownload::class.java, manager.pendingPermissionRequest.value)
+            assertInstanceOf(PermissionRequest.ExternalStorage::class.java, manager.pendingPermissionRequest.value)
 
             // Resolve storage
-            manager.onPermissionResult(mapOf(android.Manifest.permission.WRITE_EXTERNAL_STORAGE to true))
+            val pending = manager.pendingPermissionRequest.value as PermissionRequest.ExternalStorage
+            manager.clearPendingPermissionRequest()
+            pending.onResult(PermissionRequest.Result.Single(granted = true))
             advanceUntilIdle()
             job.join()
 
             // Now WebView request is pending
-            assertInstanceOf(PendingPermissionRequest.WebView::class.java, manager.pendingPermissionRequest.value)
+            assertInstanceOf(PermissionRequest.WebView::class.java, manager.pendingPermissionRequest.value)
         }
 
         @Test
@@ -561,7 +572,7 @@ class PermissionManagerTest {
             } returns false
 
             val manager = createManager(sdkInt = Build.VERSION_CODES.P)
-            launch { manager.onWebViewPermissionRequest(mockPermissionRequest(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) }
+            launch { manager.onWebViewPermissionRequest(mockPermissionRequest(WebViewPermissionRequest.RESOURCE_VIDEO_CAPTURE)) }
             advanceUntilIdle()
 
             val job = launch {
@@ -571,15 +582,17 @@ class PermissionManagerTest {
             advanceUntilIdle()
 
             // Still waiting — WebView request is pending
-            assertInstanceOf(PendingPermissionRequest.WebView::class.java, manager.pendingPermissionRequest.value)
+            assertInstanceOf(PermissionRequest.WebView::class.java, manager.pendingPermissionRequest.value)
 
             // Resolve WebView
-            manager.onPermissionResult(mapOf(android.Manifest.permission.CAMERA to true))
+            val pending = manager.pendingPermissionRequest.value as PermissionRequest.WebView
+            manager.clearPendingPermissionRequest()
+            pending.onResult(PermissionRequest.Result.Multiple(permissions = mapOf(android.Manifest.permission.CAMERA to true)))
             advanceUntilIdle()
             job.join()
 
             // Now storage request is pending
-            assertInstanceOf(PendingPermissionRequest.StorageForDownload::class.java, manager.pendingPermissionRequest.value)
+            assertInstanceOf(PermissionRequest.ExternalStorage::class.java, manager.pendingPermissionRequest.value)
         }
 
         @Test
@@ -591,7 +604,7 @@ class PermissionManagerTest {
             coEvery { integrationRepository.shouldAskNotificationPermission() } returns true
 
             val manager = createManager(sdkInt = Build.VERSION_CODES.TIRAMISU)
-            launch { manager.onWebViewPermissionRequest(mockPermissionRequest(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) }
+            launch { manager.onWebViewPermissionRequest(mockPermissionRequest(WebViewPermissionRequest.RESOURCE_VIDEO_CAPTURE)) }
             advanceUntilIdle()
 
             // checkNotificationPermission suspends until pending is null
@@ -599,15 +612,17 @@ class PermissionManagerTest {
             advanceUntilIdle()
 
             // Still waiting — WebView request is pending
-            assertInstanceOf(PendingPermissionRequest.WebView::class.java, manager.pendingPermissionRequest.value)
+            assertInstanceOf(PermissionRequest.WebView::class.java, manager.pendingPermissionRequest.value)
 
             // Resolve the WebView request
-            manager.onPermissionResult(mapOf(android.Manifest.permission.CAMERA to true))
+            val pending = manager.pendingPermissionRequest.value as PermissionRequest.WebView
+            manager.clearPendingPermissionRequest()
+            pending.onResult(PermissionRequest.Result.Multiple(permissions = mapOf(android.Manifest.permission.CAMERA to true)))
             advanceUntilIdle()
 
             // Now the notification request should be set
             job.join()
-            assertInstanceOf(PendingPermissionRequest.Notification::class.java, manager.pendingPermissionRequest.value)
+            assertInstanceOf(PermissionRequest.Notification::class.java, manager.pendingPermissionRequest.value)
         }
     }
 
