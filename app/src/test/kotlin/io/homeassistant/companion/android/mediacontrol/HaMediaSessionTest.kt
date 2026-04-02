@@ -17,6 +17,7 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.slot
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -76,8 +77,8 @@ class HaMediaSessionTest {
         artist = null,
         albumName = null,
         entityPictureUrl = entityPictureUrl,
-        mediaDurationSeconds = 300.0,
-        mediaPositionSeconds = 60.0,
+        mediaDuration = 300.0.seconds,
+        mediaPosition = 60.0.seconds,
         supportsPause = true,
         supportsPlay = true,
         supportsSeek = false,

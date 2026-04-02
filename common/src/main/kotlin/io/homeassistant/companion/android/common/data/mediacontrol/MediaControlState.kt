@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.common.data.mediacontrol
 
+import kotlin.time.Duration
+
 /**
  * Represents the playback state of a media player entity used for native Android media controls.
  */
@@ -33,8 +35,8 @@ data class MediaControlState(
     val artist: String?,
     val albumName: String?,
     val entityPictureUrl: String?,
-    val mediaDurationSeconds: Double?,
-    val mediaPositionSeconds: Double?,
+    val mediaDuration: Duration?,
+    val mediaPosition: Duration?,
     val supportsPause: Boolean,
     val supportsPlay: Boolean,
     val supportsSeek: Boolean,

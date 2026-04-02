@@ -12,6 +12,7 @@ import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -197,8 +198,8 @@ class MediaControlRepositoryImplTest {
                 assertNull(state.artist)
                 assertNull(state.albumName)
                 assertNull(state.entityPictureUrl)
-                assertNull(state.mediaDurationSeconds)
-                assertNull(state.mediaPositionSeconds)
+                assertNull(state.mediaDuration)
+                assertNull(state.mediaPosition)
                 awaitComplete()
             }
         }
@@ -233,8 +234,8 @@ class MediaControlRepositoryImplTest {
                 assertEquals("Artist", state.artist)
                 assertEquals("Album", state.albumName)
                 assertEquals("/api/picture", state.entityPictureUrl)
-                assertEquals(300.0, state.mediaDurationSeconds)
-                assertEquals(120.5, state.mediaPositionSeconds)
+                assertEquals(300.0.seconds, state.mediaDuration)
+                assertEquals(120.5.seconds, state.mediaPosition)
                 assertTrue(state.supportsPause)
                 assertTrue(state.supportsPlay)
                 assertTrue(state.supportsSeek)

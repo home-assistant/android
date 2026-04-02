@@ -32,6 +32,8 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import timber.log.Timber
 
 /**
@@ -1333,13 +1335,13 @@ internal fun Entity.getMediaArtist(): String? = if (domain == MEDIA_PLAYER_DOMAI
 internal fun Entity.getMediaAlbumName(): String? =
     if (domain == MEDIA_PLAYER_DOMAIN) attributes["media_album_name"]?.toString() else null
 
-/** Returns the current media position in seconds, if available. */
-internal fun Entity.getMediaPosition(): Double? =
-    if (domain == MEDIA_PLAYER_DOMAIN) attributes["media_position"]?.toString()?.toDoubleOrNull() else null
+/** Returns the current media position, if available. */
+internal fun Entity.getMediaPosition(): Duration? =
+    if (domain == MEDIA_PLAYER_DOMAIN) attributes["media_position"]?.toString()?.toDoubleOrNull()?.seconds else null
 
-/** Returns the media duration in seconds, if available. */
-internal fun Entity.getMediaDuration(): Double? =
-    if (domain == MEDIA_PLAYER_DOMAIN) attributes["media_duration"]?.toString()?.toDoubleOrNull() else null
+/** Returns the media duration, if available. */
+internal fun Entity.getMediaDuration(): Duration? =
+    if (domain == MEDIA_PLAYER_DOMAIN) attributes["media_duration"]?.toString()?.toDoubleOrNull()?.seconds else null
 
 /** Returns the entity_picture attribute URL, if available. */
 internal fun Entity.getEntityPictureUrl(): String? =

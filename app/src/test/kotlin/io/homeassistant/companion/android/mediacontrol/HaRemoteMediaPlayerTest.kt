@@ -7,6 +7,8 @@ import io.homeassistant.companion.android.common.data.mediacontrol.MediaPlayback
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaRepeatMode
 import io.mockk.mockk
 import io.mockk.verify
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -36,8 +38,8 @@ class HaRemoteMediaPlayerTest {
         artist: String? = "Test Artist",
         albumName: String? = "Test Album",
         entityPictureUrl: String? = null,
-        mediaDurationSeconds: Double? = 300.0,
-        mediaPositionSeconds: Double? = 120.0,
+        mediaDuration: Duration? = 300.0.seconds,
+        mediaPosition: Duration? = 120.0.seconds,
         supportsPause: Boolean = true,
         supportsPlay: Boolean = true,
         supportsSeek: Boolean = true,
@@ -67,8 +69,8 @@ class HaRemoteMediaPlayerTest {
         artist = artist,
         albumName = albumName,
         entityPictureUrl = entityPictureUrl,
-        mediaDurationSeconds = mediaDurationSeconds,
-        mediaPositionSeconds = mediaPositionSeconds,
+        mediaDuration = mediaDuration,
+        mediaPosition = mediaPosition,
         supportsPause = supportsPause,
         supportsPlay = supportsPlay,
         supportsSeek = supportsSeek,
@@ -272,7 +274,7 @@ class HaRemoteMediaPlayerTest {
     @Test
     fun `Given state with duration and position when getState then timeline has correct values`() {
         player.updateState(
-            state = createState(mediaDurationSeconds = 300.0, mediaPositionSeconds = 120.0),
+            state = createState(mediaDuration = 300.0.seconds, mediaPosition = 120.0.seconds),
             artworkPngBytes = null,
         )
         shadowOf(Looper.getMainLooper()).idle()
@@ -301,7 +303,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given any state when getState then GET_CURRENT_MEDIA_ITEM always available`() {
-        player.updateState(state = createState(supportsSeek = false, mediaDurationSeconds = null), artworkPngBytes = null)
+        player.updateState(state = createState(supportsSeek = false, mediaDuration = null), artworkPngBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertTrue(player.availableCommands.contains(Player.COMMAND_GET_CURRENT_MEDIA_ITEM))
@@ -309,7 +311,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given seek not supported when getState then seek command not available`() {
-        player.updateState(state = createState(supportsSeek = false, mediaDurationSeconds = 300.0), artworkPngBytes = null)
+        player.updateState(state = createState(supportsSeek = false, mediaDuration = 300.0.seconds), artworkPngBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertFalse(player.availableCommands.contains(Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM))

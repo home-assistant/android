@@ -13,7 +13,6 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ar
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.database.server.Server
-import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
@@ -61,11 +60,6 @@ class MediaControlSettingsViewModel @Inject constructor(
     private val _serviceEvents = MutableSharedFlow<MediaControlServiceEvent>(extraBufferCapacity = 1)
     val serviceEvents: SharedFlow<MediaControlServiceEvent> = _serviceEvents.asSharedFlow()
 
-    private val entitiesPerServer = ConcurrentHashMap<Int, List<Entity>>()
-    private val entityRegistriesPerServer = ConcurrentHashMap<Int, List<EntityRegistryResponse>>()
-    private val deviceRegistriesPerServer = ConcurrentHashMap<Int, List<DeviceRegistryResponse>>()
-    private val areaRegistriesPerServer = ConcurrentHashMap<Int, List<AreaRegistryResponse>>()
-
     private data class ServerRegistries(
         val serverId: Int,
         val entities: List<Entity>,
@@ -110,18 +104,12 @@ class MediaControlSettingsViewModel @Inject constructor(
             }
 
             val results = registryResults.awaitAll()
-            results.forEach { registries ->
-                entitiesPerServer[registries.serverId] = registries.entities
-                entityRegistriesPerServer[registries.serverId] = registries.entityRegistry
-                deviceRegistriesPerServer[registries.serverId] = registries.deviceRegistry
-                areaRegistriesPerServer[registries.serverId] = registries.areaRegistry
-            }
             _uiState.update { state ->
                 state.copy(
-                    entitiesPerServer = entitiesPerServer.toMap(),
-                    entityRegistryPerServer = entityRegistriesPerServer.toMap(),
-                    deviceRegistryPerServer = deviceRegistriesPerServer.toMap(),
-                    areaRegistryPerServer = areaRegistriesPerServer.toMap(),
+                    entitiesPerServer = results.associate { it.serverId to it.entities },
+                    entityRegistryPerServer = results.associate { it.serverId to it.entityRegistry },
+                    deviceRegistryPerServer = results.associate { it.serverId to it.deviceRegistry },
+                    areaRegistryPerServer = results.associate { it.serverId to it.areaRegistry },
                     isLoading = false,
                 )
             }
