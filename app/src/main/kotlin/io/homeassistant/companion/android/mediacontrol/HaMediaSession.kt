@@ -219,7 +219,7 @@ class HaMediaSession @AssistedInject constructor(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Failed to call media action $action")
+                Timber.e(e, "Failed to call media action $action on ${config.entityId}")
             }
         }
     }
@@ -311,6 +311,9 @@ class HaMediaSession @AssistedInject constructor(
 
     private companion object {
         val OBSERVATION_RETRY_DELAY = 5.seconds
+
+        // 512px is the recommended size for MediaSession artwork per Android guidelines:
+        // https://developer.android.com/media/media3/session/now-playing#set-artwork
         const val ARTWORK_SIZE_PX = 512
 
         const val ACTION_MEDIA_PLAY = "media_play"

@@ -50,8 +50,10 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
 
     /**
      * Updates the internal state from a new [MediaControlState] and triggers a state refresh.
+     * Must be called on the main thread (the looper passed to [SimpleBasePlayer]).
      * @param artworkPngBytes Pre-compressed PNG bytes for album art (compress off main thread).
      */
+    @androidx.annotation.MainThread
     fun updateState(state: MediaControlState?, artworkPngBytes: ByteArray?) {
         isConnecting = false
         mediaState = state
@@ -64,7 +66,9 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
      * Transitions to [STATE_BUFFERING] with the last known metadata visible but all
      * interactive commands disabled, so the notification stays visible without showing
      * stale controls.
+     * Must be called on the main thread (the looper passed to [SimpleBasePlayer]).
      */
+    @androidx.annotation.MainThread
     fun setConnecting() {
         isConnecting = true
         invalidateState()
@@ -113,8 +117,12 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
             .setDurationUs(durationUs)
             .build()
 
-        // 3-item playlist with current at index 1 so SimpleBasePlayer's seekToNext/seekToPrevious
-        // find valid adjacent items instead of ignoring the seek on a single-item playlist.
+        // SimpleBasePlayer.seekToNext() / seekToPrevious() check hasNextMediaItem() /
+        // hasPreviousMediaItem() before calling handleSeek(). With a single-item playlist both
+        // return false, so the seek is silently dropped and handleSeek() is never invoked.
+        // Using a 3-item playlist with the real item at index 1 ensures valid adjacent items exist,
+        // so the seek reaches handleSeek() where seekCommand is used to dispatch to the
+        // correct HA action.
         val playlist = listOf(
             MediaItemData.Builder(PLACEHOLDER_PREVIOUS_ID).build(),
             currentItem,
@@ -311,7 +319,8 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
         const val PLACEHOLDER_PREVIOUS_ID = "__ha_previous__"
         const val PLACEHOLDER_NEXT_ID = "__ha_next__"
 
-        /** HA uses 0.0–1.0, Media3 uses integer 0–100. */
+        // HA uses 0.0–1.0; we tell Media3 our volume range is 0–VOLUME_SCALE via
+        // REMOTE_DEVICE_INFO, so Media3 will call handleSetDeviceVolume with values in that range.
         const val VOLUME_SCALE = 100
 
         val REMOTE_DEVICE_INFO: DeviceInfo = DeviceInfo.Builder(DeviceInfo.PLAYBACK_TYPE_REMOTE)

@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.mediacontrol
 
 import android.content.Context
+import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -31,7 +32,7 @@ import org.robolectric.annotation.Config
  * the service's source of truth for which sessions are currently active.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(application = dagger.hilt.android.testing.HiltTestApplication::class)
+@Config(application = HiltTestApplication::class)
 class HaMediaSessionServiceTest {
 
     @get:Rule(order = 0)

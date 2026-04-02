@@ -53,45 +53,44 @@ internal class MediaControlRepositoryImpl @Inject constructor(
         null
     }
 
-    override fun observeEntityState(config: MediaControlEntityConfig): Flow<MediaControlState?> =
-        flow<MediaControlState?> {
-            try {
-                val stateFlow = serverManager.webSocketRepository(config.serverId)
-                    .getCompressedStateAndChanges(listOf(config.entityId))
-                if (stateFlow == null) {
-                    Timber.w("WebSocket subscription returned null for entity ${config.entityId}")
-                    emit(null)
-                    return@flow
-                }
-
-                var currentEntity: Entity? = null
-                stateFlow.collect { event ->
-                    event.added?.get(config.entityId)?.let {
-                        currentEntity = it.toEntity(config.entityId)
-                    }
-                    event.changed?.get(config.entityId)?.let { diff ->
-                        currentEntity = currentEntity?.applyCompressedStateDiff(diff)
-                    }
-                    event.removed?.let { removed ->
-                        if (config.entityId in removed) {
-                            currentEntity = null
-                        }
-                    }
-
-                    val entity = currentEntity
-                    if (entity != null) {
-                        emit(entity.toMediaControlState(serverId = config.serverId))
-                    } else {
-                        emit(null)
-                    }
-                }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to subscribe to media control entity ${config.entityId}")
+    override fun observeEntityState(config: MediaControlEntityConfig): Flow<MediaControlState?> = flow {
+        try {
+            val stateFlow = serverManager.webSocketRepository(config.serverId)
+                .getCompressedStateAndChanges(listOf(config.entityId))
+            if (stateFlow == null) {
+                Timber.w("WebSocket subscription returned null for entity ${config.entityId}")
                 emit(null)
+                return@flow
             }
-        }.distinctUntilChanged()
+
+            var currentEntity: Entity? = null
+            stateFlow.collect { event ->
+                event.added?.get(config.entityId)?.let {
+                    currentEntity = it.toEntity(config.entityId)
+                }
+                event.changed?.get(config.entityId)?.let { diff ->
+                    currentEntity = currentEntity?.applyCompressedStateDiff(diff)
+                }
+                event.removed?.let { removed ->
+                    if (config.entityId in removed) {
+                        currentEntity = null
+                    }
+                }
+
+                val entity = currentEntity
+                if (entity != null) {
+                    emit(entity.toMediaControlState(serverId = config.serverId))
+                } else {
+                    emit(null)
+                }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to subscribe to media control entity ${config.entityId}")
+            emit(null)
+        }
+    }.distinctUntilChanged()
 
     override suspend fun getConfiguredEntities(): List<MediaControlEntityConfig> =
         dao.getAll().map { it.toEntityConfig() }

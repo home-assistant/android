@@ -1298,25 +1298,25 @@ fun Entity.isActive() = when {
 /** Returns the bitmask of supported features for this entity, or 0 if unavailable. */
 private fun Entity.supportedFeatures(): Int = (attributes["supported_features"] as? Number)?.toInt() ?: 0
 
+/** Whether this media_player entity supports the given feature flag from [EntityExt]. */
+internal fun Entity.supportsMediaFeature(feature: Int): Boolean =
+    domain == MEDIA_PLAYER_DOMAIN && (supportedFeatures() and feature != 0)
+
 /** Whether this media_player entity supports pause. */
-internal fun Entity.supportsPause(): Boolean = domain == MEDIA_PLAYER_DOMAIN &&
-    (supportedFeatures() and EntityExt.MEDIA_PLAYER_SUPPORT_PAUSE != 0)
+internal fun Entity.supportsPause(): Boolean = supportsMediaFeature(EntityExt.MEDIA_PLAYER_SUPPORT_PAUSE)
 
 /** Whether this media_player entity supports seek. */
-internal fun Entity.supportsSeek(): Boolean = domain == MEDIA_PLAYER_DOMAIN &&
-    (supportedFeatures() and EntityExt.MEDIA_PLAYER_SUPPORT_SEEK != 0)
+internal fun Entity.supportsSeek(): Boolean = supportsMediaFeature(EntityExt.MEDIA_PLAYER_SUPPORT_SEEK)
 
 /** Whether this media_player entity supports previous track. */
-internal fun Entity.supportsPreviousTrack(): Boolean = domain == MEDIA_PLAYER_DOMAIN &&
-    (supportedFeatures() and EntityExt.MEDIA_PLAYER_SUPPORT_PREVIOUS_TRACK != 0)
+internal fun Entity.supportsPreviousTrack(): Boolean =
+    supportsMediaFeature(EntityExt.MEDIA_PLAYER_SUPPORT_PREVIOUS_TRACK)
 
 /** Whether this media_player entity supports next track. */
-internal fun Entity.supportsNextTrack(): Boolean = domain == MEDIA_PLAYER_DOMAIN &&
-    (supportedFeatures() and EntityExt.MEDIA_PLAYER_SUPPORT_NEXT_TRACK != 0)
+internal fun Entity.supportsNextTrack(): Boolean = supportsMediaFeature(EntityExt.MEDIA_PLAYER_SUPPORT_NEXT_TRACK)
 
 /** Whether this media_player entity supports play. */
-internal fun Entity.supportsPlay(): Boolean = domain == MEDIA_PLAYER_DOMAIN &&
-    (supportedFeatures() and EntityExt.MEDIA_PLAYER_SUPPORT_PLAY != 0)
+internal fun Entity.supportsPlay(): Boolean = supportsMediaFeature(EntityExt.MEDIA_PLAYER_SUPPORT_PLAY)
 
 /** Returns the media title, if available. */
 internal fun Entity.getMediaTitle(): String? =
@@ -1346,20 +1346,16 @@ internal fun Entity.getEntityPictureUrl(): String? =
     if (domain == MEDIA_PLAYER_DOMAIN) attributes["entity_picture"]?.toString() else null
 
 /** Whether this media_player entity supports stop. */
-internal fun Entity.supportsStop(): Boolean = domain == MEDIA_PLAYER_DOMAIN &&
-    (supportedFeatures() and EntityExt.MEDIA_PLAYER_SUPPORT_STOP != 0)
+internal fun Entity.supportsStop(): Boolean = supportsMediaFeature(EntityExt.MEDIA_PLAYER_SUPPORT_STOP)
 
 /** Whether this media_player entity supports explicit mute toggling via the volume_mute service. */
-internal fun Entity.supportsVolumeMute(): Boolean = domain == MEDIA_PLAYER_DOMAIN &&
-    (supportedFeatures() and EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_MUTE != 0)
+internal fun Entity.supportsVolumeMute(): Boolean = supportsMediaFeature(EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_MUTE)
 
 /** Whether this media_player entity supports setting shuffle mode. */
-internal fun Entity.supportsShuffleSet(): Boolean = domain == MEDIA_PLAYER_DOMAIN &&
-    (supportedFeatures() and EntityExt.MEDIA_PLAYER_SUPPORT_SHUFFLE_SET != 0)
+internal fun Entity.supportsShuffleSet(): Boolean = supportsMediaFeature(EntityExt.MEDIA_PLAYER_SUPPORT_SHUFFLE_SET)
 
 /** Whether this media_player entity supports setting repeat mode. */
-internal fun Entity.supportsRepeatSet(): Boolean = domain == MEDIA_PLAYER_DOMAIN &&
-    (supportedFeatures() and EntityExt.MEDIA_PLAYER_SUPPORT_REPEAT_SET != 0)
+internal fun Entity.supportsRepeatSet(): Boolean = supportsMediaFeature(EntityExt.MEDIA_PLAYER_SUPPORT_REPEAT_SET)
 
 /** Returns whether shuffle mode is currently enabled. */
 internal fun Entity.getShuffle(): Boolean =

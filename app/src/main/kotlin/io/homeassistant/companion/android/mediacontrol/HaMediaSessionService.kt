@@ -45,6 +45,10 @@ class HaMediaSessionService : MediaSessionService() {
             .launchIn(serviceScope)
     }
 
+    // Returns null intentionally: Media3 routes each controller to the session whose ID matches
+    // the one it was constructed with. Returning a specific session here would cause all
+    // controllers (including the notification) to connect to that one session, breaking
+    // multi-session behavior where each entity has its own independent media control card.
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = null
 
     override fun onTaskRemoved(rootIntent: Intent?) {
@@ -104,7 +108,11 @@ class HaMediaSessionService : MediaSessionService() {
         suspend fun startIfConfigured(context: Context, mediaControlRepository: MediaControlRepository) {
             if (mediaControlRepository.getConfiguredEntities().isNotEmpty()) {
                 Timber.d("Media control entities configured, starting HaMediaSessionService")
-                context.startService(Intent(context, HaMediaSessionService::class.java))
+                try {
+                    context.startService(Intent(context, HaMediaSessionService::class.java))
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to start HaMediaSessionService")
+                }
             }
         }
     }

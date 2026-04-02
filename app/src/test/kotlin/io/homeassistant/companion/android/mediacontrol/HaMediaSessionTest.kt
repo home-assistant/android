@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.mediacontrol
 import android.os.Looper
 import androidx.media3.common.Player
 import androidx.test.core.app.ApplicationProvider
+import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
@@ -36,7 +37,7 @@ private const val SERVER_ID = 1
 private val sessionCounter = AtomicInteger(0)
 
 @RunWith(RobolectricTestRunner::class)
-@Config(application = dagger.hilt.android.testing.HiltTestApplication::class)
+@Config(application = HiltTestApplication::class)
 class HaMediaSessionTest {
 
     private lateinit var mediaControlRepository: MediaControlRepository

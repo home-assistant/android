@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
@@ -53,7 +52,7 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 
 /** Outer composable that extracts state from the ViewModel and delegates to the stateless content. */
 @Composable
-fun MediaControlSettingsView(viewModel: MediaControlSettingsViewModel, modifier: Modifier = Modifier) {
+fun MediaControlSettingsScreen(viewModel: MediaControlSettingsViewModel, modifier: Modifier = Modifier) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     HATheme {
         MediaControlSettingsContent(
@@ -74,14 +73,14 @@ internal fun MediaControlSettingsContent(
     onServerSelected: (Int) -> Unit,
     onEntitySelected: (String) -> Unit,
     onRemoveEntity: (Int) -> Unit,
-    onMove: (LazyListItemInfo, LazyListItemInfo) -> Unit,
+    onMove: (Any, Any) -> Unit,
     onReorderComplete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colorScheme = LocalHAColorScheme.current
     val lazyListState = rememberLazyListState()
     val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
-        onMove(from, to)
+        onMove(from.key, to.key)
     }
 
     val availableEntities = uiState.entitiesPerServer[uiState.selectedServerId]
@@ -119,6 +118,7 @@ internal fun MediaControlSettingsContent(
         } else {
             if (uiState.servers.size > 1) {
                 item {
+                    // TODO replace with Material3 composable https://github.com/home-assistant/android/issues/6664
                     ServerExposedDropdownMenu(
                         servers = uiState.servers,
                         current = uiState.selectedServerId,

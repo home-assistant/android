@@ -1,35 +1,33 @@
 package io.homeassistant.companion.android.settings.mediacontrol
 
-import androidx.compose.foundation.lazy.LazyListItemInfo
 import app.cash.turbine.test
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.ServerManager.Companion.SERVER_ID_ACTIVE
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
+import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.extension.RegisterExtension
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @ExtendWith(ConsoleLogExtension::class)
 class MediaControlSettingsViewModelTest {
 
-    private val testDispatcher = StandardTestDispatcher()
+    @RegisterExtension
+    val mainDispatcherExtension = MainDispatcherJUnit5Extension()
+
+    private val testDispatcher get() = mainDispatcherExtension.testDispatcher
     private val serverManager: ServerManager = mockk(relaxed = true)
     private val mediaControlRepository: MediaControlRepository = mockk(relaxed = true)
 
@@ -37,7 +35,6 @@ class MediaControlSettingsViewModelTest {
 
     @BeforeEach
     fun setUp() {
-        Dispatchers.setMain(testDispatcher)
         coEvery { serverManager.servers() } returns emptyList()
         coEvery { serverManager.getServer(any<Int>()) } returns null
         coEvery { serverManager.integrationRepository(any()) } returns mockk(relaxed = true)
@@ -45,20 +42,11 @@ class MediaControlSettingsViewModelTest {
         coEvery { mediaControlRepository.getConfiguredEntities() } returns emptyList()
     }
 
-    @AfterEach
-    fun tearDown() {
-        Dispatchers.resetMain()
-    }
-
     private fun createViewModel(): MediaControlSettingsViewModel {
         return MediaControlSettingsViewModel(
             serverManager = serverManager,
             mediaControlRepository = mediaControlRepository,
         )
-    }
-
-    private fun fakeLazyListItemInfo(key: Any): LazyListItemInfo = mockk {
-        every { this@mockk.key } returns key
     }
 
     @Nested
@@ -161,8 +149,8 @@ class MediaControlSettingsViewModelTest {
             viewModel.addEntity(entityB.entityId)
 
             viewModel.onMove(
-                from = fakeLazyListItemInfo(key = entityA),
-                to = fakeLazyListItemInfo(key = entityB),
+                fromKey = entityA,
+                toKey = entityB,
             )
 
             assertEquals(
@@ -178,8 +166,8 @@ class MediaControlSettingsViewModelTest {
             viewModel.addEntity(entityA.entityId)
 
             viewModel.onMove(
-                from = fakeLazyListItemInfo(key = "unknown"),
-                to = fakeLazyListItemInfo(key = entityA),
+                fromKey = "unknown",
+                toKey = entityA,
             )
 
             assertEquals(listOf(entityA), viewModel.uiState.value.configuredEntities)
@@ -260,8 +248,8 @@ class MediaControlSettingsViewModelTest {
             viewModel.addEntity(entityA.entityId)
             viewModel.addEntity(entityB.entityId)
             viewModel.onMove(
-                from = fakeLazyListItemInfo(key = entityA),
-                to = fakeLazyListItemInfo(key = entityB),
+                fromKey = entityA,
+                toKey = entityB,
             )
 
             viewModel.serviceEvents.test {

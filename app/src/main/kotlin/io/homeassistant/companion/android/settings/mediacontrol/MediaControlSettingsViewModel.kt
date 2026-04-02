@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.settings.mediacontrol
 
-import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -139,11 +138,11 @@ class MediaControlSettingsViewModel @Inject constructor(
      * list, then persists the change immediately. Has no effect if the entity is already in the list.
      */
     fun addEntity(entityId: String) {
-        val config = MediaControlEntityConfig(
-            serverId = _uiState.value.selectedServerId,
-            entityId = entityId,
-        )
         _uiState.update { state ->
+            val config = MediaControlEntityConfig(
+                serverId = state.selectedServerId,
+                entityId = entityId,
+            )
             if (state.configuredEntities.contains(config)) {
                 state
             } else {
@@ -164,12 +163,14 @@ class MediaControlSettingsViewModel @Inject constructor(
     /**
      * Moves a configured entity from one position to another in response to a drag gesture.
      * Does not persist — call [onReorderComplete] once the drag ends to save the final order.
+     * @param fromKey the list item key of the entity being dragged
+     * @param toKey the list item key of the target position
      */
-    fun onMove(from: LazyListItemInfo, to: LazyListItemInfo) {
+    fun onMove(fromKey: Any, toKey: Any) {
         _uiState.update { state ->
             val list = state.configuredEntities.toMutableList()
-            val fromIndex = list.indexOfFirst { it == from.key }
-            val toIndex = list.indexOfFirst { it == to.key }
+            val fromIndex = list.indexOfFirst { it == fromKey }
+            val toIndex = list.indexOfFirst { it == toKey }
             if (fromIndex >= 0 && toIndex >= 0) {
                 list.add(toIndex, list.removeAt(fromIndex))
             }
@@ -198,7 +199,7 @@ class MediaControlSettingsViewModel @Inject constructor(
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
-        Timber.e(e, "Couldn't load media_player entities for server")
+        Timber.e(e, "Couldn't load media_player entities for server $serverId")
         emptyList()
     }
 

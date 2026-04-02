@@ -15,7 +15,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.mediacontrol.HaMediaSessionService
 import io.homeassistant.companion.android.settings.addHelpMenuProvider
-import io.homeassistant.companion.android.settings.mediacontrol.views.MediaControlSettingsView
+import io.homeassistant.companion.android.settings.mediacontrol.views.MediaControlSettingsScreen
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -25,7 +25,7 @@ class MediaControlSettingsFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
-                MediaControlSettingsView(viewModel = viewModel)
+                MediaControlSettingsScreen(viewModel = viewModel)
             }
         }
     }
