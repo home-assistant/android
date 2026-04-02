@@ -160,6 +160,17 @@ class HaRemoteMediaPlayerTest {
     }
 
     @Test
+    fun `Given state with entity friendly name when getState then displayTitle is populated`() {
+        player.updateState(
+            state = createState(entityFriendlyName = "Living Room TV"),
+            artworkPngBytes = null,
+        )
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals("Living Room TV", player.mediaMetadata.displayTitle?.toString())
+    }
+
+    @Test
     fun `Given state with album artist when getState then albumArtist is populated`() {
         player.updateState(
             state = createState(albumArtist = "Various Artists"),

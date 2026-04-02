@@ -77,7 +77,10 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
     override fun getState(): State {
         if (isConnecting) return buildConnectingState()
         val state = mediaState ?: return buildIdleState()
+        return buildNormalState(state, artworkBytes)
+    }
 
+    private fun buildNormalState(state: MediaControlState, artwork: ByteArray?): State {
         val availableCommands = buildAvailableCommands(state)
 
         val playbackState = when (state.playbackState) {
@@ -90,19 +93,6 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
 
         val isPlaying = state.playbackState is MediaPlaybackState.Playing
 
-        val metadataBuilder = MediaMetadata.Builder()
-            .setTitle(state.title)
-            .setArtist(state.artist)
-            .setAlbumTitle(state.albumName)
-            .setAlbumArtist(state.albumArtist)
-            .setTrackNumber(state.mediaTrack)
-            .setStation(state.mediaChannel)
-            .setSubtitle(state.mediaSeriesTitle ?: state.appName)
-            .setMediaType(state.mediaContentType?.toMedia3MediaType())
-        artworkBytes?.let {
-            metadataBuilder.setArtworkData(it, MediaMetadata.PICTURE_TYPE_FRONT_COVER)
-        }
-
         val durationUs = state.mediaDurationSeconds
             ?.seconds
             ?.inWholeMicroseconds
@@ -113,21 +103,9 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
             ?: 0L
 
         val currentItem = MediaItemData.Builder(state.entityId)
-            .setMediaMetadata(metadataBuilder.build())
+            .setMediaMetadata(buildMetadata(state, artwork))
             .setDurationUs(durationUs)
             .build()
-
-        // SimpleBasePlayer.seekToNext() / seekToPrevious() check hasNextMediaItem() /
-        // hasPreviousMediaItem() before calling handleSeek(). With a single-item playlist both
-        // return false, so the seek is silently dropped and handleSeek() is never invoked.
-        // Using a 3-item playlist with the real item at index 1 ensures valid adjacent items exist,
-        // so the seek reaches handleSeek() where seekCommand is used to dispatch to the
-        // correct HA action.
-        val playlist = listOf(
-            MediaItemData.Builder(PLACEHOLDER_PREVIOUS_ID).build(),
-            currentItem,
-            MediaItemData.Builder(PLACEHOLDER_NEXT_ID).build(),
-        )
 
         val deviceVolume = state.volumeLevel?.let { (it * VOLUME_SCALE).toInt() } ?: 0
 
@@ -144,7 +122,7 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
             .setPlaybackParameters(PlaybackParameters(PLAYBACK_SPEED))
             .setCurrentMediaItemIndex(CURRENT_ITEM_INDEX)
             .setContentPositionMs(positionMs)
-            .setPlaylist(playlist)
+            .setPlaylist(buildPlaylist(currentItem))
             .setDeviceInfo(REMOTE_DEVICE_INFO)
             .setDeviceVolume(deviceVolume)
             .setIsDeviceMuted(state.isVolumeMuted)
@@ -152,6 +130,33 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
             .setRepeatMode(media3RepeatMode)
             .build()
     }
+
+    private fun buildMetadata(state: MediaControlState, artwork: ByteArray?): MediaMetadata {
+        val builder = MediaMetadata.Builder()
+            .setTitle(state.title)
+            .setDisplayTitle(state.entityFriendlyName)
+            .setArtist(state.artist)
+            .setAlbumTitle(state.albumName)
+            .setAlbumArtist(state.albumArtist)
+            .setTrackNumber(state.mediaTrack)
+            .setStation(state.mediaChannel)
+            .setSubtitle(state.mediaSeriesTitle ?: state.appName)
+            .setMediaType(state.mediaContentType?.toMedia3MediaType())
+        artwork?.let { builder.setArtworkData(it, MediaMetadata.PICTURE_TYPE_FRONT_COVER) }
+        return builder.build()
+    }
+
+    // SimpleBasePlayer.seekToNext() / seekToPrevious() check hasNextMediaItem() /
+    // hasPreviousMediaItem() before calling handleSeek(). With a single-item playlist both
+    // return false, so the seek is silently dropped and handleSeek() is never invoked.
+    // Using a 3-item playlist with the real item at index 1 ensures valid adjacent items exist,
+    // so the seek reaches handleSeek() where seekCommand is used to dispatch to the
+    // correct HA action.
+    private fun buildPlaylist(currentItem: MediaItemData): List<MediaItemData> = listOf(
+        MediaItemData.Builder(PLACEHOLDER_PREVIOUS_ID).build(),
+        currentItem,
+        MediaItemData.Builder(PLACEHOLDER_NEXT_ID).build(),
+    )
 
     override fun handleSetPlayWhenReady(playWhenReady: Boolean): ListenableFuture<*> = handleCommand {
         if (playWhenReady) commandCallback.onPlayRequested() else commandCallback.onPauseRequested()
@@ -230,30 +235,15 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
      */
     private fun buildConnectingState(): State {
         val state = mediaState ?: return buildIdleState()
-        val metadataBuilder = MediaMetadata.Builder()
-            .setTitle(state.title)
-            .setArtist(state.artist)
-            .setAlbumTitle(state.albumName)
-            .setAlbumArtist(state.albumArtist)
-            .setTrackNumber(state.mediaTrack)
-            .setStation(state.mediaChannel)
-            .setSubtitle(state.mediaSeriesTitle ?: state.appName)
-            .setMediaType(state.mediaContentType?.toMedia3MediaType())
-        artworkBytes?.let { metadataBuilder.setArtworkData(it, MediaMetadata.PICTURE_TYPE_FRONT_COVER) }
         val currentItem = MediaItemData.Builder(state.entityId)
-            .setMediaMetadata(metadataBuilder.build())
+            .setMediaMetadata(buildMetadata(state, artworkBytes))
             .build()
-        val playlist = listOf(
-            MediaItemData.Builder(PLACEHOLDER_PREVIOUS_ID).build(),
-            currentItem,
-            MediaItemData.Builder(PLACEHOLDER_NEXT_ID).build(),
-        )
         return State.Builder()
             .setAvailableCommands(Player.Commands.EMPTY)
             .setPlaybackState(STATE_BUFFERING)
             .setPlayWhenReady(false, PLAY_WHEN_READY_CHANGE_REASON_REMOTE)
             .setCurrentMediaItemIndex(CURRENT_ITEM_INDEX)
-            .setPlaylist(playlist)
+            .setPlaylist(buildPlaylist(currentItem))
             .setDeviceInfo(REMOTE_DEVICE_INFO)
             .build()
     }
