@@ -15,7 +15,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -27,18 +26,19 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
+import io.homeassistant.companion.android.common.compose.theme.HADimens
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mikepenz.iconics.compose.Image
+import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
 import io.homeassistant.companion.android.common.compose.composable.HAIconButton
+import io.homeassistant.companion.android.common.compose.composable.HALoading
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
-import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
 import io.homeassistant.companion.android.settings.mediacontrol.MediaControlSettingsUiState
 import io.homeassistant.companion.android.settings.mediacontrol.MediaControlSettingsViewModel
@@ -83,16 +83,9 @@ internal fun MediaControlSettingsContent(
         onMove(from.key, to.key)
     }
 
-    val availableEntities = uiState.entitiesPerServer[uiState.selectedServerId]
-        ?.filter { entity ->
-            uiState.configuredEntities.none {
-                it.serverId == uiState.selectedServerId && it.entityId == entity.entityId
-            }
-        } ?: emptyList()
-
     LazyColumn(
         state = lazyListState,
-        contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
+        contentPadding = PaddingValues(vertical = HADimens.SPACE4) + safeBottomPaddingValues(applyHorizontal = false),
         modifier = modifier,
     ) {
         item {
@@ -101,18 +94,18 @@ internal fun MediaControlSettingsContent(
                 style = HATextStyle.Body,
                 color = colorScheme.colorTextSecondary,
                 textAlign = TextAlign.Start,
-                modifier = Modifier.padding(horizontal = 16.dp),
+                modifier = Modifier.padding(horizontal = HADimens.SPACE4),
             )
-            Spacer(modifier = Modifier.size(16.dp))
+            Spacer(modifier = Modifier.size(HADimens.SPACE4))
         }
 
         if (uiState.isLoading) {
             item {
                 Box(
-                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                    modifier = Modifier.fillMaxWidth().padding(top = HADimens.SPACE4),
                     contentAlignment = Alignment.Center,
                 ) {
-                    CircularProgressIndicator()
+                    HALoading()
                 }
             }
         } else {
@@ -124,23 +117,23 @@ internal fun MediaControlSettingsContent(
                         current = uiState.selectedServerId,
                         onSelected = onServerSelected,
                         title = R.string.server,
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = HADimens.SPACE4),
                     )
-                    Spacer(modifier = Modifier.size(8.dp))
+                    Spacer(modifier = Modifier.size(HADimens.SPACE2))
                 }
             }
 
             item {
                 EntityPicker(
-                    entities = availableEntities,
+                    entities = uiState.availableEntities,
                     selectedEntityId = null,
                     onEntitySelectedId = onEntitySelected,
                     onEntityCleared = {},
                     addButtonText = stringResource(R.string.media_control_select_entity),
-                    entityRegistry = uiState.entityRegistryPerServer[uiState.selectedServerId] ?: emptyList(),
-                    deviceRegistry = uiState.deviceRegistryPerServer[uiState.selectedServerId] ?: emptyList(),
-                    areaRegistry = uiState.areaRegistryPerServer[uiState.selectedServerId] ?: emptyList(),
-                    modifier = Modifier.padding(horizontal = 16.dp),
+                    entityRegistry = uiState.entityRegistryForServer(uiState.selectedServerId),
+                    deviceRegistry = uiState.deviceRegistryForServer(uiState.selectedServerId),
+                    areaRegistry = uiState.areaRegistryForServer(uiState.selectedServerId),
+                    modifier = Modifier.padding(horizontal = HADimens.SPACE4),
                 )
             }
         }
@@ -157,9 +150,8 @@ internal fun MediaControlSettingsContent(
                     } else {
                         null
                     },
-                    entityName = uiState.entitiesPerServer[config.serverId]
-                        ?.firstOrNull { it.entityId == config.entityId }
-                        ?.friendlyName,
+                    entityName = uiState.entityNamesByConfig[config],
+                    entityIcon = uiState.entityIconsByConfig[config],
                     onRemove = { onRemoveEntity(index) },
                     onReorderComplete = onReorderComplete,
                     isDragging = isDragging,
@@ -177,12 +169,13 @@ private fun ReorderableCollectionItemScope.ConfiguredEntityRow(
     config: MediaControlEntityConfig,
     subtitle: String?,
     entityName: String?,
+    entityIcon: IIcon?,
     onRemove: () -> Unit,
     onReorderComplete: () -> Unit,
     isDragging: Boolean,
 ) {
     val colorScheme = LocalHAColorScheme.current
-    val elevation = animateDpAsState(targetValue = if (isDragging) 8.dp else 0.dp)
+    val elevation = animateDpAsState(targetValue = if (isDragging) HADimens.SPACE2 else HADimens.SPACE0)
     val displayName = entityName ?: config.entityId
 
     Surface(color = colorScheme.colorSurfaceLow, shadowElevation = elevation.value) {
@@ -190,11 +183,25 @@ private fun ReorderableCollectionItemScope.ConfiguredEntityRow(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 72.dp)
+                .heightIn(min = HADimens.SPACE18)
                 .longPressDraggableHandle(onDragStopped = { onReorderComplete() })
-                .padding(vertical = 4.dp),
+                .padding(vertical = HADimens.SPACE1),
         ) {
-            Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
+            if (entityIcon != null) {
+                Image(
+                    asset = entityIcon,
+                    colorFilter = ColorFilter.tint(colorScheme.colorTextSecondary),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .padding(start = HADimens.SPACE4)
+                        .size(HADimens.SPACE6),
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = if (entityIcon != null) HADimens.SPACE2 else HADimens.SPACE4),
+            ) {
                 Text(
                     text = displayName,
                     style = HATextStyle.Body,
@@ -221,8 +228,8 @@ private fun ReorderableCollectionItemScope.ConfiguredEntityRow(
                 contentDescription = stringResource(R.string.hold_to_reorder),
                 colorFilter = ColorFilter.tint(colorScheme.colorTextSecondary),
                 modifier = Modifier
-                    .size(width = 40.dp, height = 24.dp)
-                    .padding(end = 16.dp),
+                    .size(width = HADimens.SPACE10, height = HADimens.SPACE6)
+                    .padding(end = HADimens.SPACE4),
             )
         }
     }

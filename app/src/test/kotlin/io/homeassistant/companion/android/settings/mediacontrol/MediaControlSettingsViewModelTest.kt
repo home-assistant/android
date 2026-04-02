@@ -7,6 +7,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.ServerManager.Companion.SERVER_ID_ACTIVE
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
+import android.app.Application
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -44,6 +45,7 @@ class MediaControlSettingsViewModelTest {
 
     private fun createViewModel(): MediaControlSettingsViewModel {
         return MediaControlSettingsViewModel(
+            application = mockk<Application>(relaxed = true),
             serverManager = serverManager,
             mediaControlRepository = mediaControlRepository,
         )

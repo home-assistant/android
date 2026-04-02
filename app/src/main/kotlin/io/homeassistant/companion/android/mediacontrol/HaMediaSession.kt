@@ -51,6 +51,7 @@ import timber.log.Timber
  * @param mediaControlRepository Provides the per-entity state flow.
  * @param serverManager Used to resolve artwork base URLs and call HA integration actions.
  */
+@OptIn(UnstableApi::class)
 class HaMediaSession @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted private val config: MediaControlEntityConfig,

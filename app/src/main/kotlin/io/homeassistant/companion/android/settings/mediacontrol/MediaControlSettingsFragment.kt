@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.settings.mediacontrol
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -13,14 +12,18 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlRepository
 import io.homeassistant.companion.android.mediacontrol.HaMediaSessionService
 import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.mediacontrol.views.MediaControlSettingsScreen
+import javax.inject.Inject
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MediaControlSettingsFragment : Fragment() {
     private val viewModel: MediaControlSettingsViewModel by viewModels()
+
+    @Inject lateinit var mediaControlRepository: MediaControlRepository
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
@@ -37,7 +40,7 @@ class MediaControlSettingsFragment : Fragment() {
                 viewModel.serviceEvents.collect { event ->
                     when (event) {
                         MediaControlServiceEvent.Start -> {
-                            requireContext().startService(Intent(requireContext(), HaMediaSessionService::class.java))
+                            HaMediaSessionService.startIfConfigured(requireContext(), mediaControlRepository)
                         }
                     }
                 }
