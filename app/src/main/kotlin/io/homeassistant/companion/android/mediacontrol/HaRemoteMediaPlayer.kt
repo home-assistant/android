@@ -153,74 +153,68 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
             .build()
     }
 
-    override fun handleSetPlayWhenReady(playWhenReady: Boolean): ListenableFuture<*> {
-        if (playWhenReady) {
-            commandCallback.onPlayRequested()
-        } else {
-            commandCallback.onPauseRequested()
-        }
-        return Futures.immediateVoidFuture()
+    override fun handleSetPlayWhenReady(playWhenReady: Boolean): ListenableFuture<*> = handleCommand {
+        if (playWhenReady) commandCallback.onPlayRequested() else commandCallback.onPauseRequested()
     }
 
-    override fun handleSeek(mediaItemIndex: Int, positionMs: Long, seekCommand: Int): ListenableFuture<*> {
-        when (seekCommand) {
-            Player.COMMAND_SEEK_TO_NEXT,
-            Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM,
-            -> commandCallback.onNextRequested()
+    override fun handleSeek(mediaItemIndex: Int, positionMs: Long, seekCommand: Int): ListenableFuture<*> =
+        handleCommand {
+            when (seekCommand) {
+                Player.COMMAND_SEEK_TO_NEXT,
+                Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM,
+                -> commandCallback.onNextRequested()
 
-            Player.COMMAND_SEEK_TO_PREVIOUS,
-            Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM,
-            -> commandCallback.onPreviousRequested()
+                Player.COMMAND_SEEK_TO_PREVIOUS,
+                Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM,
+                -> commandCallback.onPreviousRequested()
 
-            else -> {
-                if (mediaState?.supportsSeek == true) {
-                    commandCallback.onSeekRequested(positionMs)
+                else -> {
+                    if (mediaState?.supportsSeek == true) {
+                        commandCallback.onSeekRequested(positionMs)
+                    }
                 }
             }
         }
-        return Futures.immediateVoidFuture()
-    }
 
-    override fun handleSetDeviceVolume(deviceVolume: Int, flags: Int): ListenableFuture<*> {
-        commandCallback.onSetVolumeRequested(volume = deviceVolume / VOLUME_SCALE.toFloat())
-        return Futures.immediateVoidFuture()
-    }
+    override fun handleSetDeviceVolume(deviceVolume: Int, flags: Int): ListenableFuture<*> =
+        handleCommand { commandCallback.onSetVolumeRequested(volume = deviceVolume / VOLUME_SCALE.toFloat()) }
 
-    override fun handleIncreaseDeviceVolume(flags: Int): ListenableFuture<*> {
-        commandCallback.onIncreaseVolumeRequested()
-        return Futures.immediateVoidFuture()
-    }
+    override fun handleIncreaseDeviceVolume(flags: Int): ListenableFuture<*> =
+        handleCommand { commandCallback.onIncreaseVolumeRequested() }
 
-    override fun handleDecreaseDeviceVolume(flags: Int): ListenableFuture<*> {
-        commandCallback.onDecreaseVolumeRequested()
-        return Futures.immediateVoidFuture()
-    }
+    override fun handleDecreaseDeviceVolume(flags: Int): ListenableFuture<*> =
+        handleCommand { commandCallback.onDecreaseVolumeRequested() }
 
-    override fun handleSetDeviceMuted(muted: Boolean, flags: Int): ListenableFuture<*> {
+    override fun handleSetDeviceMuted(muted: Boolean, flags: Int): ListenableFuture<*> = handleCommand {
         if (mediaState?.supportsMute == true) {
             commandCallback.onMuteRequested(muted = muted)
         }
-        return Futures.immediateVoidFuture()
     }
 
-    override fun handleStop(): ListenableFuture<*> {
-        commandCallback.onStopRequested()
-        return Futures.immediateVoidFuture()
-    }
+    override fun handleStop(): ListenableFuture<*> = handleCommand { commandCallback.onStopRequested() }
 
-    override fun handleSetShuffleModeEnabled(shuffleModeEnabled: Boolean): ListenableFuture<*> {
-        commandCallback.onShuffleRequested(shuffle = shuffleModeEnabled)
-        return Futures.immediateVoidFuture()
-    }
+    override fun handleSetShuffleModeEnabled(shuffleModeEnabled: Boolean): ListenableFuture<*> =
+        handleCommand { commandCallback.onShuffleRequested(shuffle = shuffleModeEnabled) }
 
-    override fun handleSetRepeatMode(repeatMode: Int): ListenableFuture<*> {
+    override fun handleSetRepeatMode(repeatMode: Int): ListenableFuture<*> = handleCommand {
         val haRepeatMode = when (repeatMode) {
             Player.REPEAT_MODE_ONE -> MediaRepeatMode.One
             Player.REPEAT_MODE_ALL -> MediaRepeatMode.All
             else -> MediaRepeatMode.Off
         }
         commandCallback.onRepeatRequested(repeatMode = haRepeatMode)
-        return Futures.immediateVoidFuture()
+    }
+
+    /**
+     * Executes [block] and returns an immediate void future on success, or an immediate
+     * failed future if [block] throws, so that any exception is captured in the
+     * [ListenableFuture] rather than propagating into [SimpleBasePlayer].
+     */
+    private inline fun handleCommand(block: () -> Unit): ListenableFuture<*> = try {
+        block()
+        Futures.immediateVoidFuture()
+    } catch (e: Exception) {
+        Futures.immediateFailedFuture<Void>(e)
     }
 
     private fun buildIdleState(): State = State.Builder()

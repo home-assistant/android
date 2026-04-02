@@ -30,11 +30,8 @@ import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -50,25 +47,23 @@ import timber.log.Timber
  *
  * @param context Used for Coil image loading and [MediaSession] construction.
  * @param config Identifies the media_player entity this session represents.
+ * @param scope The coroutine scope that owns this session's lifecycle. [release] cancels it.
  * @param mediaControlRepository Provides the per-entity state flow.
  * @param serverManager Used to resolve artwork base URLs and call HA integration actions.
  */
 class HaMediaSession @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted private val config: MediaControlEntityConfig,
+    @Assisted private val scope: CoroutineScope,
     private val mediaControlRepository: MediaControlRepository,
     private val serverManager: ServerManager,
 ) {
     val mediaSession: MediaSession
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val player: HaRemoteMediaPlayer
 
-    private var observationJob: Job? = null
-
     // Accessed only from loadArtworkAndUpdatePlayer, which is always called sequentially
-    // within a single observationJob on the Default dispatcher. The observationJob is
-    // cancelled before a new one starts, so there is no concurrent write risk.
+    // within startObservingState on the Default dispatcher.
     private var currentArtworkUrl: String? = null
     private var currentArtworkBytes: ByteArray? = null
 
@@ -170,34 +165,33 @@ class HaMediaSession @AssistedInject constructor(
     }
 
     /**
-     * Cancels any existing entity state observation and starts a new one for [config].
+     * Observes entity state for [config] until the coroutine is cancelled. Suspends
+     * indefinitely, retrying after [OBSERVATION_RETRY_DELAY] whenever the WebSocket flow
+     * completes (e.g. on disconnection). Intended to be launched in the scope provided at
+     * construction time.
      */
-    fun startObservingState() {
-        observationJob?.cancel()
+    suspend fun startObservingState() {
         currentArtworkUrl = null
-        observationJob = scope.launch {
-            while (true) {
-                ensureActive()
-                // Fetch initial state via REST before subscribing via WebSocket. Placed inside
-                // the retry loop so cold-start failures (connection not yet ready) are retried
-                // automatically on each reconnect attempt.
-                mediaControlRepository.getEntityState(config)?.let { loadArtworkAndUpdatePlayer(it) }
-                mediaControlRepository.observeEntityState(config).collect { state ->
-                    if (state == null) {
-                        // Entity not yet available or subscription not ready; keep the last
-                        // known state visible. Flow completion triggers setConnecting() below.
-                        return@collect
-                    }
-                    loadArtworkAndUpdatePlayer(state)
+        while (true) {
+            // Fetch initial state via REST before subscribing via WebSocket. Placed inside
+            // the retry loop so cold-start failures (connection not yet ready) are retried
+            // automatically on each reconnect attempt.
+            mediaControlRepository.getEntityState(config)?.let { loadArtworkAndUpdatePlayer(it) }
+            mediaControlRepository.observeEntityState(config).collect { state ->
+                if (state == null) {
+                    // Entity not yet available or subscription not ready; keep the last
+                    // known state visible. Flow completion triggers setConnecting() below.
+                    return@collect
                 }
-                // Flow completed (WebSocket not ready, connection lost, etc) — show buffering
-                // state so the notification stays visible but controls are disabled, then retry
-                withContext(Dispatchers.Main) { player.setConnecting() }
-                Timber.d(
-                    "Media control observation completed for ${config.entityId}, retrying in $OBSERVATION_RETRY_DELAY",
-                )
-                delay(OBSERVATION_RETRY_DELAY)
+                loadArtworkAndUpdatePlayer(state)
             }
+            // Flow completed (WebSocket not ready, connection lost, etc) — show buffering
+            // state so the notification stays visible but controls are disabled, then retry
+            withContext(Dispatchers.Main) { player.setConnecting() }
+            Timber.d(
+                "Media control observation completed for ${config.entityId}, retrying in $OBSERVATION_RETRY_DELAY",
+            )
+            delay(OBSERVATION_RETRY_DELAY)
         }
     }
 
@@ -330,9 +324,9 @@ class HaMediaSession @AssistedInject constructor(
         const val ACTION_REPEAT_SET = "repeat_set"
     }
 
-    /** Creates [HaMediaSession] instances with runtime-provided [context] and [config]. */
+    /** Creates [HaMediaSession] instances with runtime-provided [context], [config], and [scope]. */
     @AssistedFactory
     interface Factory {
-        fun create(context: Context, config: MediaControlEntityConfig): HaMediaSession
+        fun create(context: Context, config: MediaControlEntityConfig, scope: CoroutineScope): HaMediaSession
     }
 }

@@ -14,6 +14,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 /**
@@ -35,13 +37,13 @@ class HaMediaSessionService : MediaSessionService() {
 
     // Keyed by "$serverId:$entityId"
     internal val activeSessions = mutableMapOf<String, HaMediaSession>()
-    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override fun onCreate() {
         super.onCreate()
         Timber.d("HaMediaSessionService created")
         mediaControlRepository.observeConfiguredEntities()
-            .onEach { entities -> reconcileSessions(entities) }
+            .onEach { entities -> withContext(Dispatchers.Main) { reconcileSessions(entities) } }
             .launchIn(serviceScope)
     }
 
@@ -87,12 +89,14 @@ class HaMediaSessionService : MediaSessionService() {
         // Add sessions for newly configured entities
         (desiredKeys - currentKeys).forEach { key ->
             val entityConfig = configuredEntities.first { it.sessionKey() == key }
+            val sessionScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
             val session = haMediaSessionFactory.create(
                 context = this@HaMediaSessionService,
                 config = entityConfig,
+                scope = sessionScope,
             )
             addSession(session.mediaSession)
-            session.startObservingState()
+            sessionScope.launch { session.startObservingState() }
             activeSessions[key] = session
             Timber.d("Added media session for $key")
         }

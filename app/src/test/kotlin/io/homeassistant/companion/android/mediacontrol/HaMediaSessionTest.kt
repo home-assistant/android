@@ -18,10 +18,13 @@ import io.mockk.mockk
 import io.mockk.slot
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -40,6 +43,7 @@ private val sessionCounter = AtomicInteger(0)
 @Config(application = HiltTestApplication::class)
 class HaMediaSessionTest {
 
+    private lateinit var testScope: CoroutineScope
     private lateinit var mediaControlRepository: MediaControlRepository
     private lateinit var serverManager: ServerManager
     private lateinit var integrationRepository: IntegrationRepository
@@ -47,6 +51,7 @@ class HaMediaSessionTest {
 
     @Before
     fun setUp() {
+        testScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         mediaControlRepository = mockk()
         serverManager = mockk()
         integrationRepository = mockk(relaxed = true)
@@ -93,17 +98,17 @@ class HaMediaSessionTest {
     private fun buildSession(): HaMediaSession = HaMediaSession(
         context = ApplicationProvider.getApplicationContext(),
         config = config,
+        scope = testScope,
         mediaControlRepository = mediaControlRepository,
         serverManager = serverManager,
     )
 
     /**
-     * Waits for `HaMediaSession`'s internal `Dispatchers.Default` coroutines to settle,
+     * Waits for `Dispatchers.Default` coroutines (launched via `testScope`) to settle,
      * then drains the Robolectric main looper so that `player.updateState` calls take effect.
      *
-     * `HaMediaSession` uses its own `CoroutineScope(SupervisorJob() + Dispatchers.Default)`,
-     * which is not controlled by `runTest`'s fake scheduler. A short real-time wait is required
-     * before draining the main looper.
+     * `testScope` uses `Dispatchers.Default`, which is not controlled by `runTest`'s fake
+     * scheduler. A short real-time wait is required before draining the main looper.
      */
     private fun drainDefaultDispatcherAndMainLooper() {
         Thread.sleep(REAL_DISPATCHER_SETTLE_MS)
@@ -131,7 +136,7 @@ class HaMediaSessionTest {
         coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
 
         val session = buildSession()
-        session.startObservingState()
+        testScope.launch { session.startObservingState() }
         drainDefaultDispatcherAndMainLooper()
 
         val player = session.mediaSession.player
@@ -156,7 +161,7 @@ class HaMediaSessionTest {
         coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
 
         val session = buildSession()
-        session.startObservingState()
+        testScope.launch { session.startObservingState() }
         drainDefaultDispatcherAndMainLooper()
 
         val player = session.mediaSession.player
@@ -179,7 +184,7 @@ class HaMediaSessionTest {
         coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
 
         val session = buildSession()
-        session.startObservingState()
+        testScope.launch { session.startObservingState() }
         drainDefaultDispatcherAndMainLooper()
 
         val player = session.mediaSession.player
@@ -206,7 +211,7 @@ class HaMediaSessionTest {
         ) andThen emptyFlow()
 
         val session = buildSession()
-        session.startObservingState()
+        testScope.launch { session.startObservingState() }
         drainDefaultDispatcherAndMainLooper()
         drainDefaultDispatcherAndMainLooper()
 
@@ -232,7 +237,7 @@ class HaMediaSessionTest {
         coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
 
         val session = buildSession()
-        session.startObservingState()
+        testScope.launch { session.startObservingState() }
         drainDefaultDispatcherAndMainLooper()
 
         val player = session.mediaSession.player
@@ -259,7 +264,7 @@ class HaMediaSessionTest {
         coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
 
         val session = buildSession()
-        session.startObservingState()
+        testScope.launch { session.startObservingState() }
         drainDefaultDispatcherAndMainLooper()
 
         stateFlow.tryEmit(createState(entityPictureUrl = null, title = "Track 2"))
@@ -289,7 +294,7 @@ class HaMediaSessionTest {
         coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
 
         val session = buildSession()
-        session.startObservingState()
+        testScope.launch { session.startObservingState() }
         drainDefaultDispatcherAndMainLooper()
 
         session.mediaSession.player.play()
@@ -324,7 +329,7 @@ class HaMediaSessionTest {
         coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
 
         val session = buildSession()
-        session.startObservingState()
+        testScope.launch { session.startObservingState() }
         drainDefaultDispatcherAndMainLooper()
 
         session.mediaSession.player.pause()
@@ -345,11 +350,8 @@ class HaMediaSessionTest {
     }
 
     /**
-     * Verifies that calling `release()` cancels the internal coroutine scope, preventing
+     * Verifies that calling `release()` cancels the coroutine scope, preventing
      * any further observation or action dispatch.
-     *
-     * The scope is read via reflection because it is private — this is the only way to assert
-     * on cancellation without adding test-only surface to the production class.
      */
     @Test
     fun `Given observing session when release called then internal scope is cancelled`() {
@@ -358,7 +360,7 @@ class HaMediaSessionTest {
         coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
 
         val session = buildSession()
-        session.startObservingState()
+        testScope.launch { session.startObservingState() }
         drainDefaultDispatcherAndMainLooper()
 
         val scopeField = HaMediaSession::class.java.getDeclaredField("scope")
