@@ -866,11 +866,7 @@ fun SensorDetailSettingSheet(
 }
 
 @Composable
-private fun SettingSearchField(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    modifier: Modifier = Modifier,
-) {
+private fun SettingSearchField(query: String, onQueryChange: (String) -> Unit, modifier: Modifier = Modifier) {
     TextField(
         value = query,
         onValueChange = onQueryChange,
@@ -899,10 +895,7 @@ private fun SettingSearchField(
  * Filters setting entries by matching the query against entry labels (case-insensitive).
  * Returns all entries when the query is blank.
  */
-internal fun filterSettingEntries(
-    entries: List<Pair<String, String>>,
-    query: String,
-): List<Pair<String, String>> {
+internal fun filterSettingEntries(entries: List<Pair<String, String>>, query: String): List<Pair<String, String>> {
     val trimmed = query.trim()
     return if (trimmed.isBlank()) {
         entries
