@@ -30,6 +30,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -165,13 +166,25 @@ class HaMediaSession @AssistedInject constructor(
         )
     }
 
+    private var observingJob: Job? = null
+
+    /**
+     * Starts (or restarts) observation of entity state. Cancels any in-flight observation
+     * before launching a new one, making it safe to call when already observing (e.g. to
+     * recover a stuck WebSocket subscription after a network reconnect).
+     */
+    internal fun reconnect() {
+        observingJob?.cancel()
+        observingJob = scope.launch { startObservingState() }
+    }
+
     /**
      * Observes entity state for [config] until the coroutine is cancelled. Suspends
      * indefinitely, retrying after [OBSERVATION_RETRY_DELAY] whenever the WebSocket flow
      * completes (e.g. on disconnection). Intended to be launched in the scope provided at
      * construction time.
      */
-    suspend fun startObservingState() {
+    internal suspend fun startObservingState() {
         currentArtworkUrl = null
         while (true) {
             // Fetch initial state via REST before subscribing via WebSocket. Placed inside

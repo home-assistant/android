@@ -17,7 +17,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -59,6 +58,12 @@ class HaMediaSessionService : MediaSessionService() {
     // controllers (including the notification) to connect to that one session, breaking
     // multi-session behavior where each entity has its own independent media control card.
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = null
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Timber.d("HaMediaSessionService onStartCommand, reconnecting ${activeSessions.size} sessions")
+        activeSessions.values.forEach { it.reconnect() }
+        return super.onStartCommand(intent, flags, startId)
+    }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         val anyPlaying = activeSessions.values.any { session ->
@@ -103,7 +108,7 @@ class HaMediaSessionService : MediaSessionService() {
                 scope = sessionScope,
             )
             addSession(session.mediaSession)
-            sessionScope.launch { session.startObservingState() }
+            session.reconnect()
             activeSessions[key] = session
             Timber.d("Added media session for $key")
         }

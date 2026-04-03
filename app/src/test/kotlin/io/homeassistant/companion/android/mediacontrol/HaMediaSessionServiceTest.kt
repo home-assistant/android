@@ -11,6 +11,7 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.unmockkAll
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -124,5 +125,33 @@ class HaMediaSessionServiceTest {
         service.reconcileSessions(emptyList())
 
         assertTrue(Shadows.shadowOf(service).isStoppedBySelf)
+    }
+
+    /**
+     * Verifies that `onStartCommand` reconnects active sessions by restarting their observation.
+     * This is the recovery path when the app is opened after a network disconnect left sessions
+     * stuck with a non-completing WebSocket subscription flow.
+     */
+    @Test
+    fun `Given active sessions when onStartCommand then sessions are reconnected`() {
+        var observeCallCount = 0
+        coEvery { mediaControlRepository.observeEntityState(any()) } answers {
+            observeCallCount++
+            MutableSharedFlow()
+        }
+        val config = MediaControlEntityConfig(serverId = 1, entityId = "media_player.living_room")
+
+        service.reconcileSessions(listOf(config))
+        Thread.sleep(DISPATCHER_SETTLE_MS)
+        val countAfterReconcile = observeCallCount
+
+        service.onStartCommand(intent = null, flags = 0, startId = 0)
+        Thread.sleep(DISPATCHER_SETTLE_MS)
+
+        assertTrue(observeCallCount > countAfterReconcile)
+    }
+
+    private companion object {
+        const val DISPATCHER_SETTLE_MS = 200L
     }
 }
