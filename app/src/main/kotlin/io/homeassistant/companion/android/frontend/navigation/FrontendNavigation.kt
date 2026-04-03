@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -21,6 +22,7 @@ import io.homeassistant.companion.android.frontend.FrontendScreen
 import io.homeassistant.companion.android.frontend.FrontendViewModel
 import io.homeassistant.companion.android.frontend.FrontendViewState
 import io.homeassistant.companion.android.launch.HAStartDestinationRoute
+import io.homeassistant.companion.android.mediacontrol.MediaControlStarterViewModel
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.getActivity
 import io.homeassistant.companion.android.webview.WebViewActivity
@@ -73,11 +75,13 @@ internal fun NavGraphBuilder.frontendScreen(
     if (WIPFeature.USE_FRONTEND_V2) {
         composable<FrontendRoute> {
             val viewModel: FrontendViewModel = hiltViewModel()
+            val mediaControlStarter: MediaControlStarterViewModel = hiltViewModel()
+            val context = LocalContext.current
 
             val lifecycle = LocalLifecycleOwner.current.lifecycle
             LaunchedEffect(lifecycle) {
                 lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                    viewModel.startMediaSessionServiceIfConfigured()
+                    mediaControlStarter.startIfConfigured(context)
                 }
             }
 

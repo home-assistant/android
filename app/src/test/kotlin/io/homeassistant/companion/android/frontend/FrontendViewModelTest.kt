@@ -1,10 +1,8 @@
 package io.homeassistant.companion.android.frontend
 
-import android.content.Context
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
-import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlRepository
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
 import io.homeassistant.companion.android.frontend.handler.FrontendMessageHandler
@@ -55,8 +53,6 @@ class FrontendViewModelTest {
     private val urlManager: FrontendUrlManager = mockk(relaxed = true)
     private val connectivityCheckRepository: ConnectivityCheckRepository = mockk(relaxed = true)
     private val permissionManager: PermissionManager = mockk(relaxed = true)
-    private val appContext: Context = mockk(relaxed = true)
-    private val mediaControlRepository: MediaControlRepository = mockk(relaxed = true)
 
     private val serverId = 1
     private val testUrlWithAuth = "https://example.com?external_auth=1"
@@ -80,8 +76,6 @@ class FrontendViewModelTest {
             urlManager = urlManager,
             connectivityCheckRepository = connectivityCheckRepository,
             permissionManager = permissionManager,
-            appContext = appContext,
-            mediaControlRepository = mediaControlRepository,
         )
     }
 
