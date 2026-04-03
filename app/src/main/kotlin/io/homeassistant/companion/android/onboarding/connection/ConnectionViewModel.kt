@@ -116,6 +116,19 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
 
     init {
         viewModelScope.launch {
+            // Pre-set the mTLS flag before emitting the auth URL. If the phone is currently
+            // connected to an mTLS-protected instance whose certificate covers this host, the
+            // onboarding WebView will reuse the live TLS session (session resumption) and
+            // onReceivedClientCertRequest will never fire — pre-setting the flag ensures the
+            // Wear OS cert-selection screen is not silently skipped.
+            // Matching against the cert's SANs/CN rather than mere key presence avoids a false
+            // positive when the user has multiple servers where only one requires mTLS.
+            try {
+                webViewClient.preInitializeTLSClientAuthState(rawUrl.toHttpUrl().host)
+            } catch (_: Exception) {
+                // Malformed URL: preInitializeTLSClientAuthState is a best-effort optimisation;
+                // buildAuthUrl below will surface the error to the user.
+            }
             buildAuthUrl(rawUrl)
         }
     }

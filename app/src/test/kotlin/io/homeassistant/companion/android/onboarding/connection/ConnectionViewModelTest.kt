@@ -23,6 +23,7 @@ import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.verify
 import java.net.URL
+import java.security.cert.X509Certificate
 import kotlin.reflect.KClass
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -416,5 +417,92 @@ class ConnectionViewModelTest {
         assertEquals("dlopen failed: libwebviewchromium.so is 32-bit", error.errorDetails)
         assertEquals("class java.lang.UnsatisfiedLinkError", error.rawErrorType)
         verify(exactly = 1) { connectivityCheckRepository.runChecks(rawUrl) }
+    }
+
+    // --- preInitializeTLSClientAuthState / cert-host matching tests ---
+
+    @Test
+    fun `Given cert with exact DNS SAN matching target host when initializing then isTLSClientAuthNeeded is pre-set to true`() = runTest {
+        val cert = mockk<X509Certificate> {
+            every { subjectAlternativeNames } returns listOf(listOf(2, "homeassistant.local"))
+        }
+        every { keyChainRepository.getCertificateChain() } returns arrayOf(cert)
+
+        val viewModel = ConnectionViewModel(
+            "http://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+        )
+        advanceUntilIdle()
+
+        assertTrue(viewModel.webViewClient.isTLSClientAuthNeeded)
+    }
+
+    @Test
+    fun `Given cert with wildcard DNS SAN matching target host when initializing then isTLSClientAuthNeeded is pre-set to true`() = runTest {
+        val cert = mockk<X509Certificate> {
+            every { subjectAlternativeNames } returns listOf(listOf(2, "*.example.com"))
+        }
+        every { keyChainRepository.getCertificateChain() } returns arrayOf(cert)
+
+        val viewModel = ConnectionViewModel(
+            "https://ha.example.com",
+            webViewClientFactory,
+            connectivityCheckRepository,
+        )
+        advanceUntilIdle()
+
+        assertTrue(viewModel.webViewClient.isTLSClientAuthNeeded)
+    }
+
+    @Test
+    fun `Given cert with DNS SAN for a different host when initializing then isTLSClientAuthNeeded remains false`() = runTest {
+        val cert = mockk<X509Certificate> {
+            every { subjectAlternativeNames } returns listOf(listOf(2, "other-server.example.com"))
+        }
+        every { keyChainRepository.getCertificateChain() } returns arrayOf(cert)
+
+        val viewModel = ConnectionViewModel(
+            "http://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+        )
+        advanceUntilIdle()
+
+        assertFalse(viewModel.webViewClient.isTLSClientAuthNeeded)
+    }
+
+    @Test
+    fun `Given no certificate chain in memory when initializing then isTLSClientAuthNeeded remains false`() = runTest {
+        every { keyChainRepository.getCertificateChain() } returns null
+
+        val viewModel = ConnectionViewModel(
+            "http://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+        )
+        advanceUntilIdle()
+
+        assertFalse(viewModel.webViewClient.isTLSClientAuthNeeded)
+    }
+
+    @Test
+    fun `Given cert with CN matching target host and no SANs when initializing then isTLSClientAuthNeeded is pre-set to true`() = runTest {
+        val cert = mockk<X509Certificate> {
+            every { subjectAlternativeNames } returns null
+            every { subjectX500Principal } returns mockk {
+                every { getName("RFC2253") } returns "CN=homeassistant.local,O=Home Assistant"
+            }
+        }
+        every { keyChainRepository.getCertificateChain() } returns arrayOf(cert)
+
+        val viewModel = ConnectionViewModel(
+            "http://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+        )
+        advanceUntilIdle()
+
+        assertTrue(viewModel.webViewClient.isTLSClientAuthNeeded)
     }
 }

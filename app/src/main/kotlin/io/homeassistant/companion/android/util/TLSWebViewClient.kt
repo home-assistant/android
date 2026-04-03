@@ -14,6 +14,7 @@ import java.lang.ref.WeakReference
 import java.security.PrivateKey
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
+import javax.security.auth.x500.X500Principal
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -38,6 +39,91 @@ open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) 
 
     private var key: PrivateKey? = null
     private var chain: Array<X509Certificate>? = null
+
+    /**
+     * Pre-initializes [isTLSClientAuthNeeded] by verifying whether the currently loaded
+     * certificate chain covers [targetHost], to handle TLS session resumption.
+     *
+     * Normally [isTLSClientAuthNeeded] is set when [onReceivedClientCertRequest] fires during
+     * a full TLS handshake. However, when TLS session resumption occurs (the WebView reuses an
+     * existing session from the same process), the server does not issue a new
+     * `CertificateRequest`, so [onReceivedClientCertRequest] is never called — even if the
+     * server requires a client certificate.
+     *
+     * This is the root cause of the Wear OS onboarding mTLS failure: the main app WebView
+     * establishes a TLS session while the user is connected; the onboarding WebView immediately
+     * resumes it, bypassing the callback that would reveal the mTLS requirement to the
+     * navigation layer.
+     *
+     * The fix inspects the in-memory certificate chain (if any) and checks whether it covers
+     * [targetHost] via its Subject Alternative Names (SANs), or its Common Name (CN) as a
+     * fallback. This avoids a false positive when the user has multiple servers where only one
+     * requires mTLS: the loaded cert will not match the non-mTLS server's hostname.
+     *
+     * If the app was force-stopped first (clearing in-memory state) no TLS session can be
+     * resumed either, so [onReceivedClientCertRequest] will fire naturally on the fresh handshake.
+     *
+     * Must be called **before** the WebView starts loading (i.e. before the URL is emitted).
+     * Idempotent: if the flag is already `true` (set by a real handshake) this is a no-op.
+     *
+     * @param targetHost the hostname of the server being connected to (e.g. "myha.example.com")
+     */
+    fun preInitializeTLSClientAuthState(targetHost: String) {
+        if (isTLSClientAuthNeeded) return
+        val cert = keyChainRepository.getCertificateChain()?.firstOrNull() ?: return
+        isTLSClientAuthNeeded = certCoversHost(cert, targetHost)
+    }
+
+    /**
+     * Returns `true` if [cert] is valid for [host].
+     *
+     * Checks Subject Alternative Names (SANs) first — both DNS names (with wildcard support)
+     * and IP addresses. Falls back to the Common Name (CN) in the Subject DN if no SANs are
+     * present, matching the behaviour of legacy TLS stacks.
+     */
+    @VisibleForTesting
+    internal fun certCoversHost(cert: X509Certificate, host: String): Boolean {
+        val sans: Collection<List<*>>? = try {
+            cert.subjectAlternativeNames
+        } catch (_: Exception) {
+            null
+        }
+
+        return if (!sans.isNullOrEmpty()) {
+            sans.any { san ->
+                val type = san[0] as? Int ?: return@any false
+                val value = san[1] as? String ?: return@any false
+                when (type) {
+                    2 -> hostMatchesSan(host, value) // dNSName
+                    7 -> host.equals(value, ignoreCase = true) // iPAddress
+                    else -> false
+                }
+            }
+        } else {
+            // Fallback: parse the CN from the Subject DN (RFC 2253 comma-separated AVAs)
+            val cn = cert.subjectX500Principal.getName(X500Principal.RFC2253)
+                .splitToSequence(",")
+                .map { it.trim() }
+                .firstOrNull { it.startsWith("CN=", ignoreCase = true) }
+                ?.removePrefix("CN=")
+                ?.trim()
+            cn != null && hostMatchesSan(host, cn)
+        }
+    }
+
+    /**
+     * Matches [host] against a SAN value that may contain a leading wildcard.
+     *
+     * A wildcard (`*.example.com`) covers any single label: `foo.example.com` matches but
+     * `foo.bar.example.com` and `example.com` do not (per RFC 2818 §3.1).
+     */
+    private fun hostMatchesSan(host: String, san: String): Boolean {
+        if (!san.startsWith("*.")) return host.equals(san, ignoreCase = true)
+        val suffix = san.substring(1) // ".example.com"
+        if (!host.endsWith(suffix, ignoreCase = true)) return false
+        val wildcardLabel = host.substring(0, host.length - suffix.length)
+        return wildcardLabel.isNotEmpty() && !wildcardLabel.contains('.')
+    }
 
     private fun getActivity(context: Context?): Activity? {
         if (context == null) {
