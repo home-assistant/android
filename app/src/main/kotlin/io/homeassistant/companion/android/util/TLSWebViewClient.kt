@@ -11,6 +11,7 @@ import android.webkit.WebViewClient
 import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import java.lang.ref.WeakReference
+import java.net.InetAddress
 import java.security.PrivateKey
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
@@ -92,21 +93,33 @@ open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) 
         return if (!sans.isNullOrEmpty()) {
             sans.any { san ->
                 val type = san[0] as? Int ?: return@any false
-                val value = san[1] as? String ?: return@any false
                 when (type) {
-                    2 -> hostMatchesSan(host, value) // dNSName
-                    7 -> host.equals(value, ignoreCase = true) // iPAddress
+                    2 -> { // dNSName — returned as String
+                        val value = san[1] as? String ?: return@any false
+                        hostMatchesSan(host, value)
+                    }
+                    7 -> { // iPAddress — returned as ByteArray per the Java X.509 API contract
+                        val ipBytes = san[1] as? ByteArray ?: return@any false
+                        try {
+                            host.equals(InetAddress.getByAddress(ipBytes).hostAddress, ignoreCase = true)
+                        } catch (_: Exception) {
+                            false
+                        }
+                    }
                     else -> false
                 }
             }
         } else {
-            // Fallback: parse the CN from the Subject DN (RFC 2253 comma-separated AVAs)
-            val cn = cert.subjectX500Principal.getName(X500Principal.RFC2253)
-                .splitToSequence(",")
+            // Fallback: extract CN from the Subject DN.
+            // getName(RFC2253) uses comma as AVA separator; commas inside values are escaped
+            // as \, which we don't need to handle because hostnames never contain commas.
+            val dn = cert.subjectX500Principal.getName(X500Principal.RFC2253)
+            val cn = dn.splitToSequence(",")
                 .map { it.trim() }
                 .firstOrNull { it.startsWith("CN=", ignoreCase = true) }
-                ?.removePrefix("CN=")
-                ?.trim()
+                // Use substring-after-'=' so the extraction is case-insensitive (matches the
+                // startsWith check above) rather than a case-sensitive removePrefix("CN=").
+                ?.let { it.substring(it.indexOf('=') + 1).trim() }
             cn != null && hostMatchesSan(host, cn)
         }
     }

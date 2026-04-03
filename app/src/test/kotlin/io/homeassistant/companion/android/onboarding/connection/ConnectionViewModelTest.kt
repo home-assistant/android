@@ -22,6 +22,7 @@ import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.verify
+import java.net.InetAddress
 import java.net.URL
 import java.security.cert.X509Certificate
 import kotlin.reflect.KClass
@@ -498,6 +499,43 @@ class ConnectionViewModelTest {
 
         val viewModel = ConnectionViewModel(
             "http://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+        )
+        advanceUntilIdle()
+
+        assertTrue(viewModel.webViewClient.isTLSClientAuthNeeded)
+    }
+
+    @Test
+    fun `Given cert with wildcard SAN that does not cover a multi-label subdomain when initializing then isTLSClientAuthNeeded remains false`() = runTest {
+        val cert = mockk<X509Certificate> {
+            // *.example.com covers foo.example.com but not foo.bar.example.com
+            every { subjectAlternativeNames } returns listOf(listOf(2, "*.example.com"))
+        }
+        every { keyChainRepository.getCertificateChain() } returns arrayOf(cert)
+
+        val viewModel = ConnectionViewModel(
+            "https://foo.bar.example.com",
+            webViewClientFactory,
+            connectivityCheckRepository,
+        )
+        advanceUntilIdle()
+
+        assertFalse(viewModel.webViewClient.isTLSClientAuthNeeded)
+    }
+
+    @Test
+    fun `Given cert with IP address SAN matching target host when initializing then isTLSClientAuthNeeded is pre-set to true`() = runTest {
+        // getSubjectAlternativeNames() returns iPAddress (type 7) as a ByteArray, not a String
+        val ipBytes = InetAddress.getByName("192.168.1.100").address
+        val cert = mockk<X509Certificate> {
+            every { subjectAlternativeNames } returns listOf(listOf(7, ipBytes))
+        }
+        every { keyChainRepository.getCertificateChain() } returns arrayOf(cert)
+
+        val viewModel = ConnectionViewModel(
+            "https://192.168.1.100",
             webViewClientFactory,
             connectivityCheckRepository,
         )
