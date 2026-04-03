@@ -42,7 +42,7 @@ internal class MediaControlRepositoryImpl @Inject constructor(
     private val serverManager: ServerManager,
 ) : MediaControlRepository {
 
-    override suspend fun getEntityState(config: MediaControlEntityConfig): MediaControlState? = try {
+    private suspend fun getEntityState(config: MediaControlEntityConfig): MediaControlState? = try {
         serverManager.integrationRepository(config.serverId)
             .getEntity(config.entityId)
             ?.toMediaControlState(serverId = config.serverId)
@@ -54,6 +54,11 @@ internal class MediaControlRepositoryImpl @Inject constructor(
     }
 
     override fun observeEntityState(config: MediaControlEntityConfig): Flow<MediaControlState?> = flow {
+        // Emit current state via REST so the caller has something to show immediately.
+        // The WebSocket added event delivers the same state again; distinctUntilChanged()
+        // at the end suppresses the duplicate.
+        getEntityState(config)?.let { emit(it) }
+
         try {
             val stateFlow = serverManager.webSocketRepository(config.serverId)
                 .getCompressedStateAndChanges(listOf(config.entityId))

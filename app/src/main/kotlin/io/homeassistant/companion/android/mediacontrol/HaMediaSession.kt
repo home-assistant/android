@@ -187,10 +187,6 @@ class HaMediaSession @AssistedInject constructor(
     internal suspend fun startObservingState() {
         currentArtworkUrl = null
         while (true) {
-            // Fetch initial state via REST before subscribing via WebSocket. Placed inside
-            // the retry loop so cold-start failures (connection not yet ready) are retried
-            // automatically on each reconnect attempt.
-            mediaControlRepository.getEntityState(config)?.let { loadArtworkAndUpdatePlayer(it) }
             mediaControlRepository.observeEntityState(config).collect { state ->
                 if (state == null) {
                     // Entity not yet available or subscription not ready; keep the last

@@ -51,7 +51,6 @@ class HaMediaSessionServiceTest {
     @Before
     fun setUp() {
         coEvery { mediaControlRepository.observeEntityState(any()) } returns flowOf(null)
-        coEvery { mediaControlRepository.getEntityState(any()) } returns null
         every { haMediaSessionFactory.create(any<Context>(), any(), any()) } answers {
             HaMediaSession(
                 context = firstArg(),

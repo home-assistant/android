@@ -60,7 +60,6 @@ class HaMediaSessionTest {
         val uniqueEntityId = "media_player.test_${sessionCounter.incrementAndGet()}"
         config = MediaControlEntityConfig(serverId = SERVER_ID, entityId = uniqueEntityId)
 
-        coEvery { mediaControlRepository.getEntityState(config) } returns null
         coEvery { mediaControlRepository.observeEntityState(config) } returns flowOf()
         coEvery { serverManager.integrationRepository(SERVER_ID) } returns integrationRepository
     }
@@ -119,21 +118,18 @@ class HaMediaSessionTest {
     // -- State observation tests --
 
     /**
-     * Verifies the cold-start recovery path: when `getEntityState` returns state on the first
-     * attempt and `observeEntityState` emits null (subscription not ready) but stays open,
-     * the player retains the REST-fetched state and does not drop to idle.
+     * Verifies the cold-start recovery path: when `observeEntityState` emits the current state
+     * first (as a REST pre-fetch inside the repository) followed by null (WebSocket not ready)
+     * but stays open, the player retains the emitted state and does not drop to idle.
      *
-     * Uses a `MutableSharedFlow` with `replay=1` so the null emission is received by the
-     * Default dispatcher collector without racing, and the flow stays open so the observation
-     * loop does not call `setConnecting()` and overwrite the state.
+     * Uses a `MutableSharedFlow` with `replay=1` so emissions are received by the Default
+     * dispatcher collector without racing, and the flow stays open so the observation loop
+     * does not call `setConnecting()` and overwrite the state.
      */
     @Test
-    fun `Given getEntityState returns state and observeEntityState emits null when startObservingState then player retains state from REST`() {
+    fun `Given observeEntityState emits state then null when startObservingState then player retains initial state`() {
         val stateFlow = MutableSharedFlow<MediaControlState?>(replay = 1)
-        stateFlow.tryEmit(null)
-        coEvery { mediaControlRepository.getEntityState(config) } returns createState(
-            playbackState = MediaPlaybackState.Playing,
-        )
+        stateFlow.tryEmit(createState(playbackState = MediaPlaybackState.Playing))
         coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
 
         val session = buildSession()
@@ -141,6 +137,13 @@ class HaMediaSessionTest {
         drainDefaultDispatcherAndMainLooper()
 
         val player = session.mediaSession.player
+        assertEquals(Player.STATE_READY, player.playbackState)
+        assertEquals(true, player.playWhenReady)
+
+        // Emitting null afterwards (simulating WebSocket-not-ready) should not clear state
+        stateFlow.tryEmit(null)
+        drainDefaultDispatcherAndMainLooper()
+
         assertEquals(Player.STATE_READY, player.playbackState)
         assertEquals(true, player.playWhenReady)
 
