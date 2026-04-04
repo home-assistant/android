@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package io.homeassistant.companion.android.tiles
 
 import android.content.Context
@@ -29,6 +31,7 @@ import androidx.wear.tiles.TileService
 import com.google.common.util.concurrent.ListenableFuture
 import com.mikepenz.iconics.IconicsColor
 import com.mikepenz.iconics.IconicsDrawable
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon3
 import com.mikepenz.iconics.utils.backgroundColor
 import com.mikepenz.iconics.utils.colorInt
 import com.mikepenz.iconics.utils.sizeDp
@@ -45,11 +48,17 @@ import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.min
 import kotlin.math.roundToInt
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.guava.future
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -61,6 +70,8 @@ private const val ICON_SIZE_SMALL = 40f * 0.7071f // square that fits in 48dp ci
 private const val SPACING = 8f
 private const val TEXT_SIZE = 8f
 private const val TEXT_PADDING = 2f
+private val LOADING_TIMEOUT = 5.seconds
+private const val LOADING_RESOURCE_SUFFIX = "_loading"
 
 @AndroidEntryPoint
 class ShortcutsTile : TileService() {
@@ -73,6 +84,13 @@ class ShortcutsTile : TileService() {
     @Inject
     lateinit var wearPrefsRepository: WearPrefsRepository
 
+    @Inject
+    lateinit var clock: Clock
+
+    private var pendingEntityId: String? = null
+    private var pendingOriginalState: String? = null
+    private var pendingTimestamp: Instant = Instant.DISTANT_PAST
+
     override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> = serviceScope.future {
         val state = requestParams.currentState
         if (state.lastClickableId.isNotEmpty()) {
@@ -82,13 +100,74 @@ class ShortcutsTile : TileService() {
                 intent.setPackage(packageName)
                 sendBroadcast(intent)
             }
+
+            // Enter loading state: store original state so we detect when it changes
+            pendingEntityId = state.lastClickableId
+            pendingTimestamp = clock.now()
+            pendingOriginalState = if (serverManager.isRegistered()) {
+                try {
+                    serverManager.integrationRepository().getEntity(state.lastClickableId)?.state
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.w(e, "Failed to fetch original state for ${state.lastClickableId}")
+                    null
+                }
+            } else {
+                null
+            }
+
+            // Schedule polling re-renders to pick up state change
+            serviceScope.launch {
+                delay(1.seconds)
+                requestUpdate(this@ShortcutsTile)
+                delay(3.seconds)
+                requestUpdate(this@ShortcutsTile)
+            }
         }
 
         val tileId = requestParams.tileId
         val entities = getEntities(tileId)
 
+        // Fetch entity states for resource version — ensures cache invalidation on state change
+        val entityStatesMap = if (serverManager.isRegistered()) {
+            entities.map { entity ->
+                async {
+                    try {
+                        val e = serverManager.integrationRepository().getEntity(entity.entityId)
+                        entity.entityId to (e?.state ?: "unknown")
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Timber.w(e, "Failed to fetch entity ${entity.entityId} state for tile version")
+                        entity.entityId to "unknown"
+                    }
+                }
+            }.map { it.await() }.toMap()
+        } else {
+            emptyMap()
+        }
+
+        // Clear loading state if entity state has changed or timeout exceeded
+        if (pendingEntityId != null) {
+            val elapsed = clock.now() - pendingTimestamp
+            val currentState = entityStatesMap[pendingEntityId]
+            if (elapsed > LOADING_TIMEOUT ||
+                (pendingOriginalState != null && currentState != null && currentState != pendingOriginalState)
+            ) {
+                pendingEntityId = null
+                pendingOriginalState = null
+            }
+        }
+
+        val entityStatesVersion = entityStatesMap.entries
+            .sortedBy { it.key }
+            .joinToString(",") { "${it.key}=${it.value}" }
+        val loadingSuffix = pendingEntityId?.let { "|loading:$it" }.orEmpty()
+        val resourcesVersion = "$entities|$entityStatesVersion$loadingSuffix"
+
         Tile.Builder()
-            .setResourcesVersion(entities.toString())
+            .setResourcesVersion(resourcesVersion)
             .setTileTimeline(
                 if (serverManager.isRegistered()) {
                     timeline(tileId)
@@ -130,7 +209,7 @@ class ShortcutsTile : TileService() {
             }
 
             Resources.Builder()
-                .setVersion(entities.toString())
+                .setVersion(requestParams.version)
                 .apply {
                     entities.map { entity ->
                         // Find icon: try state-aware icon from full entity, fall back to domain icon
@@ -168,6 +247,30 @@ class ShortcutsTile : TileService() {
                             .build()
                     }.forEach { (id, imageResource) ->
                         addIdToImageMapping(id, imageResource)
+                    }
+
+                    // Generate loading icon for the pending entity
+                    pendingEntityId?.let { loadingId ->
+                        val loadingBitmap = IconicsDrawable(this@ShortcutsTile, Icon3.cmd_progress_clock).apply {
+                            colorInt = Color.WHITE
+                            sizeDp = iconSize.roundToInt()
+                            backgroundColor = IconicsColor.colorRes(R.color.colorOverlay)
+                        }.toBitmap(iconSizePx, iconSizePx, Bitmap.Config.RGB_565)
+                        val loadingData = ByteBuffer.allocate(loadingBitmap.byteCount).apply {
+                            loadingBitmap.copyPixelsToBuffer(this)
+                        }.array()
+                        addIdToImageMapping(
+                            loadingId + LOADING_RESOURCE_SUFFIX,
+                            ResourceBuilders.ImageResource.Builder()
+                                .setInlineResource(
+                                    ResourceBuilders.InlineImageResource.Builder()
+                                        .setData(loadingData)
+                                        .setWidthPx(iconSizePx)
+                                        .setHeightPx(iconSizePx)
+                                        .setFormat(ResourceBuilders.IMAGE_FORMAT_RGB_565)
+                                        .build(),
+                                ).build(),
+                        )
                     }
                 }
                 .build()
@@ -249,6 +352,11 @@ class ShortcutsTile : TileService() {
 
     private fun iconLayout(entity: SimplifiedEntity, showLabels: Boolean): LayoutElement = Box.Builder().apply {
         val iconSize = if (showLabels) ICON_SIZE_SMALL else ICON_SIZE_FULL
+        val resourceId = if (entity.entityId == pendingEntityId) {
+            entity.entityId + LOADING_RESOURCE_SUFFIX
+        } else {
+            entity.entityId
+        }
         setWidth(dp(CIRCLE_SIZE))
         setHeight(dp(CIRCLE_SIZE))
         setHorizontalAlignment(HORIZONTAL_ALIGN_CENTER)
@@ -279,7 +387,7 @@ class ShortcutsTile : TileService() {
         addContent(
             // Add icon
             LayoutElementBuilders.Image.Builder()
-                .setResourceId(entity.entityId)
+                .setResourceId(resourceId)
                 .setWidth(dp(iconSize))
                 .setHeight(dp(iconSize))
                 .build(),
