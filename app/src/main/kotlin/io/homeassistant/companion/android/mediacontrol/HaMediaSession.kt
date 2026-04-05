@@ -66,6 +66,8 @@ class HaMediaSession @AssistedInject constructor(
 
     // Accessed only from loadArtworkAndUpdatePlayer, which is always called sequentially
     // within startObservingState on the Default dispatcher.
+    // currentArtworkUrl stores the raw HA entity_picture path (not the resolved URL) so the
+    // cache key stays stable across local/external URL switches for the same image.
     private var currentArtworkUrl: String? = null
     private var currentArtworkBytes: ByteArray? = null
 
@@ -229,15 +231,16 @@ class HaMediaSession @AssistedInject constructor(
     }
 
     private suspend fun loadArtworkAndUpdatePlayer(state: MediaControlState) {
-        val artworkUrl = resolveArtworkUrl(state)
-        val pngBytes = if (artworkUrl != null && artworkUrl != currentArtworkUrl) {
-            val bytes = loadBitmapAsPng(artworkUrl)
+        val rawPictureUrl = state.entityPictureUrl
+        val pngBytes = if (rawPictureUrl != null && rawPictureUrl != currentArtworkUrl) {
+            val resolvedUrl = resolveArtworkUrl(state)
+            val bytes = resolvedUrl?.let { loadBitmapAsPng(it) }
             if (bytes != null) {
-                currentArtworkUrl = artworkUrl
+                currentArtworkUrl = rawPictureUrl
                 currentArtworkBytes = bytes
             }
             bytes ?: currentArtworkBytes
-        } else if (artworkUrl == null) {
+        } else if (rawPictureUrl == null) {
             // The HA server temporarily removes entity_picture during track transitions
             // before sending the new URL. Keep the previous artwork visible to avoid a
             // blank flash; clearing currentArtworkUrl ensures the next URL triggers a fetch.
