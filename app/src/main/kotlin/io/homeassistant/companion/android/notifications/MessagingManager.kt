@@ -1186,7 +1186,7 @@ class MessagingManager @Inject constructor(
                         carIntent.hashCode(),
                         carIntent,
                         PendingIntent.FLAG_IMMUTABLE,
-                    )
+                    ),
                 )
             }
             builder.extend(carExtender.build())
