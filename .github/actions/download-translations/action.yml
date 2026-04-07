@@ -10,6 +10,11 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Record commit before pull
+      id: before-pull
+      shell: bash
+      run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
     - name: Pull from Lokalise
       uses: lokalise/lokalise-pull-action@a4968e06b7f44c32317b162d825ed17abb5772d0 # v5.0.1
       with:
@@ -26,6 +31,14 @@ runs:
           add_newline_eof: true
           replace_breaks: true
           export_empty_as: skip
+
+    - name: Verify no commit was created by pull
+      shell: bash
+      run: |
+        if [ "$(git rev-parse HEAD)" != "${{ steps.before-pull.outputs.sha }}" ]; then
+          echo "::error::Lokalise pull action created an unexpected commit"
+          exit 1
+        fi
 
     - name: Generate locales_config.xml
       shell: bash
