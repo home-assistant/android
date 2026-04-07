@@ -933,7 +933,7 @@ class WebViewActivity :
                 return@addWebMessageListener
             }
             if (!sourceOrigin.hasSameOrigin(loadedUrl)) {
-                Timber.w("Ignored message from unexpected origin: $sourceOrigin")
+                Timber.w("Ignored message from unexpected origin: ${sensitive(sourceOrigin.toString())}")
                 return@addWebMessageListener
             }
 
@@ -1672,10 +1672,10 @@ class WebViewActivity :
         )
         this.serverHandleInsets.value = serverHandleInsets
         lifecycleScope.launch {
-            // Register the native bridge depending on the server and webview capabilities
-            webViewAddJavascriptInterface()
-
             if (openInApp) {
+                // Register the native bridge depending on the server and webview capabilities
+                webViewAddJavascriptInterface()
+
                 runFragmentTransactionIfStateSafe {
                     // Remove any displayed fragments (e.g., BlockInsecureFragment, ConnectionSecurityLevelFragment)
                     supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
