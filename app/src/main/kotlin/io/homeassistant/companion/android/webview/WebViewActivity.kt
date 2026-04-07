@@ -1367,28 +1367,19 @@ class WebViewActivity :
 
     fun processHaptic(hapticType: String) {
         Timber.d("Processing haptic tag for $hapticType")
-        when (hapticType) {
-            "success" ->
-                HapticFeedbackPerformer.perform(webView, HapticType.Success)
-
-            "warning" ->
-                HapticFeedbackPerformer.perform(webView, HapticType.Warning)
-
-            "failure" ->
-                HapticFeedbackPerformer.perform(webView, HapticType.Failure)
-
-            "light" ->
-                HapticFeedbackPerformer.perform(webView, HapticType.Light)
-
-            "medium" ->
-                HapticFeedbackPerformer.perform(webView, HapticType.Medium)
-
-            "heavy" ->
-                HapticFeedbackPerformer.perform(webView, HapticType.Heavy)
-
-            "selection" ->
-                HapticFeedbackPerformer.perform(webView, HapticType.Selection)
-        }
+        HapticFeedbackPerformer.perform(
+            webView,
+            when (hapticType) {
+                "success" -> HapticType.Success
+                "warning" -> HapticType.Warning
+                "failure" -> HapticType.Failure
+                "light" -> HapticType.Light
+                "medium" -> HapticType.Medium
+                "heavy" -> HapticType.Heavy
+                "selection" -> HapticType.Selection
+                else -> HapticType.Unknown
+            },
+        )
     }
 
     private fun authenticationResult(result: Int) {
