@@ -12,7 +12,7 @@ runs:
   steps:
     - name: Pull from Lokalise
       uses: lokalise/lokalise-pull-action@a4968e06b7f44c32317b162d825ed17abb5772d0 # v5.0.1
-      with: &lokalise-pull-config
+      with:
         api_token: ${{ inputs.lokalise-token }}
         project_id: ${{ inputs.lokalise-project }}
         custom_github_token: "FAKE_GH_TOKEN"
@@ -51,7 +51,20 @@ runs:
     - name: Retry pull from Lokalise
       if: steps.first-sync-check.outputs.dirty == 'true'
       uses: lokalise/lokalise-pull-action@a4968e06b7f44c32317b162d825ed17abb5772d0 # v5.0.1
-      with: *lokalise-pull-config
+      with:
+        api_token: ${{ inputs.lokalise-token }}
+        project_id: ${{ inputs.lokalise-project }}
+        custom_github_token: "FAKE_GH_TOKEN"
+        file_format: xml
+        async_mode: true
+        skip_include_tags: true
+        skip_original_filenames: true
+        additional_params: |
+          original_filenames: false
+          bundle_structure: common/src/main/res/values-%LANG_ISO%/strings.%FORMAT%
+          add_newline_eof: true
+          replace_breaks: true
+          export_empty_as: skip
 
     - name: Verify source strings are in sync with Lokalise
       if: steps.first-sync-check.outputs.dirty == 'true'
