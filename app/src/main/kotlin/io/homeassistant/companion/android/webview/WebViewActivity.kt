@@ -175,6 +175,18 @@ class WebViewActivity :
         const val EXTRA_SERVER = "server"
         const val EXTRA_SHOW_WHEN_LOCKED = "show_when_locked"
 
+        private const val EXTERNAL_APP_V1 = "externalApp"
+        private const val EXTERNAL_APP_V2_LISTENER = "externalAppV2"
+
+        /**
+         * Expected callback names for external authentication.
+         *
+         * The frontend sends a dynamic callback name in its requests, but the app
+         * only allows these hardcoded values.
+         */
+        private const val GET_AUTH_CALLBACK = "externalAuthSetToken"
+        private const val REVOKE_AUTH_CALLBACK = "externalAuthRevokeToken"
+
         private const val APP_PREFIX = "app://"
         private const val INTENT_PREFIX = "intent:"
         private const val MARKET_PREFIX = "https://play.google.com/store/apps/details?id="
@@ -317,7 +329,6 @@ class WebViewActivity :
     private var downloadFileUrl = ""
     private var downloadFileContentDisposition = ""
     private var downloadFileMimetype = ""
-    private val javascriptInterface = "externalApp"
     private var serverHandleInsets = mutableStateOf(false)
 
     private val snackbarHostState = SnackbarHostState()
@@ -563,7 +574,9 @@ class WebViewActivity :
                     Timber.e("onRenderProcessGone: webView crashed")
                     view?.let {
                         reload()
-                        webViewAddJavascriptInterface()
+                        lifecycleScope.launch {
+                            webViewAddJavascriptInterface()
+                        }
                     }
 
                     return true
@@ -730,8 +743,6 @@ class WebViewActivity :
                     super.onHideCustomView()
                 }
             }
-
-            webViewAddJavascriptInterface()
         }
 
         val cookieManager = CookieManager.getInstance()
@@ -797,14 +808,17 @@ class WebViewActivity :
                             val message = when (it) {
                                 MatterThreadStep.ERROR_MATTER_CANCELLED ->
                                     commonR.string.matter_commissioning_cancelled
+
                                 MatterThreadStep.ERROR_MATTER_OTHER ->
                                     commonR.string.matter_commissioning_unavailable
+
                                 MatterThreadStep.ERROR_THREAD_OTHER ->
                                     commonR.string.thread_export_unavailable
                             }
                             val uri = when (it) {
                                 MatterThreadStep.ERROR_MATTER_CANCELLED ->
                                     "https://www.home-assistant.io/integrations/matter#troubleshooting"
+
                                 MatterThreadStep.ERROR_MATTER_OTHER,
                                 MatterThreadStep.ERROR_THREAD_OTHER,
                                 ->
@@ -841,195 +855,322 @@ class WebViewActivity :
         }
     }
 
-    private fun webViewAddJavascriptInterface() {
-        webView.apply {
-            removeJavascriptInterface(javascriptInterface)
-            addJavascriptInterface(
-                object : Any() {
-                    // TODO This feature is deprecated and should be removed after 2022.6
-                    @JavascriptInterface
-                    fun onHomeAssistantSetTheme() {
-                        // We need to launch the getAndSetStatusBarNavigationBarColors in another thread, because otherwise the evaluateJavascript inside the method
-                        // will not trigger it's callback method :/
-                        lifecycleScope.launch(Dispatchers.Main) {
-                            getAndSetStatusBarNavigationBarColors()
-                        }
-                    }
-
-                    @JavascriptInterface
-                    fun getExternalAuth(payload: String) {
-                        payload.toJsonObjectOrNull().let {
-                            presenter.onGetExternalAuth(
-                                this@WebViewActivity,
-                                it?.getStringOrNull("callback") ?: "",
-                                it?.getBooleanOrNull("force") ?: false,
-                            )
-                        }
-                    }
-
-                    @JavascriptInterface
-                    fun revokeExternalAuth(callback: String) {
-                        presenter.onRevokeExternalAuth(callback.toJsonObjectOrNull()?.getStringOrNull("callback") ?: "")
-                        isRelaunching = true // Prevent auth errors from showing
-                    }
-
-                    @JavascriptInterface
-                    fun externalBus(message: String) {
-                        Timber.d("External bus $message")
-                        webView.post {
-                            val json = message.toJsonObjectOrNull() ?: return@post
-                            when (json.getStringOrNull("type")) {
-                                "connection-status" -> {
-                                    isConnected = json["payload"]?.jsonObjectOrNull()
-                                        ?.getStringOrNull("event") == "connected"
-                                    if (isConnected) {
-                                        alertDialog?.cancel()
-                                        presenter.checkSecurityVersion()
-                                    }
-                                }
-
-                                "config/get" -> {
-                                    val pm: PackageManager = context.packageManager
-                                    val hasNfc = pm.hasSystemFeature(PackageManager.FEATURE_NFC)
-                                    val canCommissionMatter = presenter.appCanCommissionMatterDevice()
-                                    val canExportThread = presenter.appCanExportThreadCredentials()
-                                    val hasBarCodeScanner =
-                                        if (
-                                            pm.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) &&
-                                            !isAutomotive()
-                                        ) {
-                                            1
-                                        } else {
-                                            0
-                                        }
-                                    sendExternalBusMessage(
-                                        ExternalConfigResponse(
-                                            id = json["id"],
-                                            hasNfc = hasNfc,
-                                            canCommissionMatter = canCommissionMatter,
-                                            canExportThread = canExportThread,
-                                            hasBarCodeScanner = hasBarCodeScanner,
-                                            appVersion = appVersionProvider(),
-                                        ),
-                                    )
-
-                                    // TODO This feature is deprecated and should be removed after 2022.6
-                                    getAndSetStatusBarNavigationBarColors()
-
-                                    // TODO This feature is deprecated and should be removed after 2022.6
-                                    // Set event lister for HA theme change
-                                    webView.evaluateJavascript(
-                                        "document.addEventListener('settheme', function ()" +
-                                            "{" +
-                                            "window.externalApp.onHomeAssistantSetTheme();" +
-                                            "});",
-                                        null,
-                                    )
-                                }
-
-                                "assist/show" -> {
-                                    val payload = json["payload"]?.jsonObjectOrNull()
-                                    startActivity(
-                                        AssistActivity.newInstance(
-                                            this@WebViewActivity,
-                                            serverId = presenter.getActiveServer(),
-                                            pipelineId = payload?.getStringOrNull("pipeline_id"),
-                                            startListening = payload?.getBooleanOrNull("start_listening") ?: true,
-                                        ),
-                                    )
-                                }
-
-                                "assist/settings" -> startActivity(
-                                    SettingsActivity.newInstance(
-                                        this@WebViewActivity,
-                                        SettingsActivity.Deeplink.AssistSettings,
-                                    ),
-                                )
-
-                                "config_screen/show" ->
-                                    startActivity(
-                                        SettingsActivity.newInstance(this@WebViewActivity),
-                                    )
-
-                                "tag/write" ->
-                                    writeNfcTag.launch(
-                                        WriteNfcTag.Input(
-                                            tagId = json["payload"]?.jsonObjectOrNull()?.getStringOrNull("tag"),
-                                            messageId = json.getIntOrElse("id", -1),
-                                        ),
-                                    )
-
-                                "matter/commission" -> presenter.startCommissioningMatterDevice(this@WebViewActivity)
-                                "thread/import_credentials" -> {
-                                    presenter.exportThreadCredentials(this@WebViewActivity)
-
-                                    alertDialog = AlertDialog.Builder(this@WebViewActivity)
-                                        .setMessage(commonR.string.thread_debug_active)
-                                        .create()
-                                    alertDialog?.show()
-                                }
-
-                                "bar_code/scan" -> {
-                                    val payload = json["payload"]?.jsonObjectOrNull()
-                                    if (payload?.containsKey("title") != true ||
-                                        !payload.containsKey("description")
-                                    ) {
-                                        return@post
-                                    }
-                                    startActivity(
-                                        BarcodeScannerActivity.newInstance(
-                                            this@WebViewActivity,
-                                            messageId = json.getIntOrElse("id", 0),
-                                            title = payload.getStringOrElse("title", ""),
-                                            subtitle = payload.getStringOrElse("description", ""),
-                                            action = payload.getStringOrNull("alternative_option_label")?.ifBlank {
-                                                null
-                                            },
-                                        ),
-                                    )
-                                }
-
-                                "improv/scan" -> scanForImprov()
-                                "improv/configure_device" -> {
-                                    val payload = json["payload"]?.jsonObjectOrNull()
-                                    val deviceName = payload?.getStringOrNull("name") ?: return@post
-                                    configureImprovDevice(deviceName)
-                                }
-
-                                "exoplayer/play_hls" -> exoPlayHls(json)
-                                "exoplayer/stop" -> exoStopHls()
-                                "exoplayer/resize" -> exoResizeHls(json)
-                                "haptic" -> processHaptic(
-                                    json["payload"]?.jsonObjectOrNull()?.getStringOrNull("hapticType") ?: "",
-                                )
-
-                                "theme-update" -> getAndSetStatusBarNavigationBarColors()
-                                "entity/add_to/get_actions" -> getActions(json)
-                                "entity/add_to" -> addEntityTo(json)
-
-                                else -> presenter.onExternalBusMessage(json)
-                            }
-                        }
-                    }
-
-                    @JavascriptInterface
-                    fun handleBlob(data: String?, filename: String?) {
-                        data?.let {
-                            lifecycleScope.launch {
-                                DataUriDownloadManager.saveDataUri(
-                                    this@WebViewActivity,
-                                    url = data,
-                                    mimetype = "",
-                                    filename = filename,
-                                )
-                            }
-                        }
-                    }
-                },
-                javascriptInterface,
-            )
+    /**
+     * Registers the appropriate native bridge for the current server.
+     *
+     * Queries [isServerSupportingExternalAppV2] to determine whether to use the `externalAppV2` bridge or the legacy
+     * `externalApp` bridge. V2 also requires [WebViewFeature.WEB_MESSAGE_LISTENER] support;
+     * falls back to V1 if the feature is unavailable.
+     *
+     * Both directions are safe: V1 uses [android.webkit.WebView.removeJavascriptInterface] and
+     * V2 uses [WebViewCompat.removeWebMessageListener].
+     */
+    @SuppressLint("RequiresFeature")
+    private suspend fun webViewAddJavascriptInterface() {
+        if (isServerSupportingExternalAppV2() &&
+            WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)
+        ) {
+            webView.removeJavascriptInterface(EXTERNAL_APP_V1)
+            registerExternalAppV2()
+        } else {
+            if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
+                WebViewCompat.removeWebMessageListener(webView, EXTERNAL_APP_V2_LISTENER)
+            }
+            registerExternalAppV1()
         }
     }
+
+    /**
+     * Registers the legacy `externalApp` bridge using [android.webkit.WebView.addJavascriptInterface].
+     *
+     * The HA frontend detects `window.externalApp` and calls named methods directly.
+     * Re-registration is safe because the old interface is removed first.
+     */
+    private fun registerExternalAppV1() {
+        webView.removeJavascriptInterface(EXTERNAL_APP_V1)
+        webView.addJavascriptInterface(
+            object : Any() {
+                @JavascriptInterface
+                fun getExternalAuth(payload: String) {
+                    handleGetExternalAuth(payload = payload.toJsonObjectOrNull())
+                }
+
+                @JavascriptInterface
+                fun revokeExternalAuth(callback: String) {
+                    handleRevokeExternalAuth(payload = callback.toJsonObjectOrNull())
+                }
+
+                @JavascriptInterface
+                fun externalBus(message: String) {
+                    Timber.d("External bus $message")
+                    webView.post {
+                        val json = message.toJsonObjectOrNull() ?: return@post
+                        handleExternalBusMessage(json)
+                    }
+                }
+            },
+            EXTERNAL_APP_V1,
+        )
+    }
+
+    /**
+     * Registers the `externalAppV2` bridge using [WebViewCompat.addWebMessageListener].
+     *
+     * The HA frontend detects `window.externalAppV2.postMessage` and sends all messages
+     * through it with a `type` discriminator. Messages are rejected if they come from
+     * an iframe or from an origin that doesn't match the currently loaded server URL.
+     */
+    @SuppressLint("RequiresFeature")
+    private fun registerExternalAppV2() {
+        WebViewCompat.removeWebMessageListener(webView, EXTERNAL_APP_V2_LISTENER)
+        WebViewCompat.addWebMessageListener(
+            webView,
+            EXTERNAL_APP_V2_LISTENER,
+            setOf("*"),
+        ) { _, message, sourceOrigin, isMainFrame, _ ->
+            if (!isMainFrame) {
+                Timber.w("Ignored message from iframe")
+                return@addWebMessageListener
+            }
+            if (!sourceOrigin.hasSameOrigin(loadedUrl)) {
+                Timber.w("Ignored message from unexpected origin: $sourceOrigin")
+                return@addWebMessageListener
+            }
+
+            val data = message.data ?: return@addWebMessageListener
+            val json = data.toJsonObjectOrNull() ?: return@addWebMessageListener
+            val type = json.getStringOrNull("type") ?: return@addWebMessageListener
+            val payload = json["payload"]?.jsonObjectOrNull()
+
+            when (type) {
+                "getExternalAuth" -> {
+                    handleGetExternalAuth(payload)
+                }
+
+                "revokeExternalAuth" -> {
+                    handleRevokeExternalAuth(payload)
+                }
+
+                "externalBus" -> {
+                    if (payload == null) {
+                        Timber.w("externalBus message missing payload")
+                        return@addWebMessageListener
+                    }
+                    Timber.d("External bus $payload")
+                    webView.post {
+                        handleExternalBusMessage(payload)
+                    }
+                }
+
+                else -> Timber.w("Unknown bridge message type: $type")
+            }
+        }
+    }
+
+    /**
+     * Validates and handles a `getExternalAuth` request from either V1 or V2 bridge.
+     *
+     * Rejects requests whose callback name does not match the expected [GET_AUTH_CALLBACK].
+     */
+    private fun handleGetExternalAuth(payload: JsonObject?) {
+        val callback = payload?.getStringOrNull("callback") ?: ""
+        if (callback == GET_AUTH_CALLBACK) {
+            presenter.onGetExternalAuth(
+                this,
+                callback,
+                force = payload?.getBooleanOrNull("force") ?: false,
+            )
+        } else {
+            Timber.w("Aborting getExternalAuth callback is not the one expected ($GET_AUTH_CALLBACK)")
+        }
+    }
+
+    /**
+     * Validates and handles a `revokeExternalAuth` request from either V1 or V2 bridge.
+     *
+     * Rejects requests whose callback name does not match the expected [REVOKE_AUTH_CALLBACK].
+     */
+    private fun handleRevokeExternalAuth(payload: JsonObject?) {
+        val callback = payload?.getStringOrNull("callback") ?: ""
+        if (callback == REVOKE_AUTH_CALLBACK) {
+            presenter.onRevokeExternalAuth(callback)
+            isRelaunching = true
+        } else {
+            Timber.w("Aborting revokeExternalAuth callback is not the one expected ($REVOKE_AUTH_CALLBACK)")
+        }
+    }
+
+    /**
+     * Handles an external bus message received from the frontend via the native bridge.
+     */
+    private fun handleExternalBusMessage(json: JsonObject) {
+        when (json.getStringOrNull("type")) {
+            "connection-status" -> {
+                isConnected = json["payload"]?.jsonObjectOrNull()
+                    ?.getStringOrNull("event") == "connected"
+                if (isConnected) {
+                    alertDialog?.cancel()
+                    presenter.checkSecurityVersion()
+                }
+            }
+
+            "config/get" -> {
+                val pm: PackageManager = this@WebViewActivity.packageManager
+                val hasNfc = pm.hasSystemFeature(PackageManager.FEATURE_NFC)
+                val canCommissionMatter = presenter.appCanCommissionMatterDevice()
+                val canExportThread = presenter.appCanExportThreadCredentials()
+                val hasBarCodeScanner =
+                    if (
+                        pm.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) &&
+                        !isAutomotive()
+                    ) {
+                        1
+                    } else {
+                        0
+                    }
+                sendExternalBusMessage(
+                    ExternalConfigResponse(
+                        id = json["id"],
+                        hasNfc = hasNfc,
+                        canCommissionMatter = canCommissionMatter,
+                        canExportThread = canExportThread,
+                        hasBarCodeScanner = hasBarCodeScanner,
+                        appVersion = appVersionProvider(),
+                    ),
+                )
+
+                // TODO This feature is deprecated and should be removed after 2022.6
+                getAndSetStatusBarNavigationBarColors()
+
+                // TODO This feature is deprecated and should be removed after 2022.6
+                // Set event listener for HA theme change
+                lifecycleScope.launch {
+                    val themeCallback = externalBusCall("{type:'onHomeAssistantSetTheme'}")
+                    webView.evaluateJavascript(
+                        "document.addEventListener('settheme', function (){$themeCallback});",
+                        null,
+                    )
+                }
+            }
+
+            "assist/show" -> {
+                val payload = json["payload"]?.jsonObjectOrNull()
+                startActivity(
+                    AssistActivity.newInstance(
+                        this@WebViewActivity,
+                        serverId = presenter.getActiveServer(),
+                        pipelineId = payload?.getStringOrNull("pipeline_id"),
+                        startListening = payload?.getBooleanOrNull("start_listening") ?: true,
+                    ),
+                )
+            }
+
+            "assist/settings" -> startActivity(
+                SettingsActivity.newInstance(
+                    this@WebViewActivity,
+                    SettingsActivity.Deeplink.AssistSettings,
+                ),
+            )
+
+            "config_screen/show" ->
+                startActivity(
+                    SettingsActivity.newInstance(this@WebViewActivity),
+                )
+
+            "tag/write" ->
+                writeNfcTag.launch(
+                    WriteNfcTag.Input(
+                        tagId = json["payload"]?.jsonObjectOrNull()?.getStringOrNull("tag"),
+                        messageId = json.getIntOrElse("id", -1),
+                    ),
+                )
+
+            "matter/commission" -> presenter.startCommissioningMatterDevice(this@WebViewActivity)
+            "thread/import_credentials" -> {
+                presenter.exportThreadCredentials(this@WebViewActivity)
+
+                alertDialog = AlertDialog.Builder(this@WebViewActivity)
+                    .setMessage(commonR.string.thread_debug_active)
+                    .create()
+                alertDialog?.show()
+            }
+
+            "bar_code/scan" -> {
+                val payload = json["payload"]?.jsonObjectOrNull()
+                if (payload?.containsKey("title") != true ||
+                    !payload.containsKey("description")
+                ) {
+                    return
+                }
+                startActivity(
+                    BarcodeScannerActivity.newInstance(
+                        this@WebViewActivity,
+                        messageId = json.getIntOrElse("id", 0),
+                        title = payload.getStringOrElse("title", ""),
+                        subtitle = payload.getStringOrElse("description", ""),
+                        action = payload.getStringOrNull("alternative_option_label")?.ifBlank {
+                            null
+                        },
+                    ),
+                )
+            }
+
+            "improv/scan" -> scanForImprov()
+            "improv/configure_device" -> {
+                val payload = json["payload"]?.jsonObjectOrNull()
+                val deviceName = payload?.getStringOrNull("name") ?: return
+                configureImprovDevice(deviceName)
+            }
+
+            "exoplayer/play_hls" -> exoPlayHls(json)
+            "exoplayer/stop" -> exoStopHls()
+            "exoplayer/resize" -> exoResizeHls(json)
+            "haptic" -> processHaptic(
+                json["payload"]?.jsonObjectOrNull()?.getStringOrNull("hapticType") ?: "",
+            )
+
+            "theme-update" -> getAndSetStatusBarNavigationBarColors()
+            "entity/add_to/get_actions" -> getActions(json)
+            "entity/add_to" -> addEntityTo(json)
+
+            "onHomeAssistantSetTheme" -> {
+                lifecycleScope.launch(Dispatchers.Main) {
+                    getAndSetStatusBarNavigationBarColors()
+                }
+            }
+
+            "handleBlob" -> {
+                val blobData = json.getStringOrNull("data")
+                val filename = json.getStringOrNull("filename")
+                blobData?.let {
+                    lifecycleScope.launch {
+                        DataUriDownloadManager.saveDataUri(
+                            this@WebViewActivity,
+                            url = it,
+                            mimetype = "",
+                            filename = filename,
+                        )
+                    }
+                }
+            }
+
+            else -> presenter.onExternalBusMessage(json)
+        }
+    }
+
+    /**
+     * Returns a JS snippet that sends [jsonPayload] through the external bus.
+     *
+     * For V1: calls `window.externalApp.externalBus(...)` directly.
+     * For V2: posts a `{type:'externalBus', payload:...}` message via `window.externalAppV2`.
+     */
+    private fun externalBusCall(jsonPayload: String): String = """
+        if (typeof window.$EXTERNAL_APP_V2_LISTENER !== 'undefined') {
+            window.$EXTERNAL_APP_V2_LISTENER.postMessage(JSON.stringify({type:'externalBus',payload:$jsonPayload}));
+        } else {
+            window.$EXTERNAL_APP_V1.externalBus(JSON.stringify($jsonPayload));
+        }
+    """.trimIndent()
 
     private fun addEntityTo(json: JsonObject) {
         val payload = json["payload"]?.jsonObjectOrNull()
@@ -1530,34 +1671,45 @@ class WebViewActivity :
             } (keepHistory $keepHistory, openInApp $openInApp, serverHandleInsets $serverHandleInsets)",
         )
         this.serverHandleInsets.value = serverHandleInsets
-        if (openInApp) {
-            runFragmentTransactionIfStateSafe {
-                // Remove any displayed fragments (e.g., BlockInsecureFragment, ConnectionSecurityLevelFragment)
-                supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-            }
-            supportFragmentManager.clearFragmentResultListener(BlockInsecureFragment.RESULT_KEY)
+        lifecycleScope.launch {
+            // Register the native bridge depending on the server and webview capabilities
+            webViewAddJavascriptInterface()
 
-            val oldUrl = loadedUrl
-            // It means that if we loaded an URL with a path previously and we try to load the same URL without
-            // a path we don't do anything.
-            val shouldLoadUrl = !url.hasSameOrigin(oldUrl) || url.hasNonRootPath()
-            if (shouldLoadUrl) {
-                clearHistory = !keepHistory
-                loadedUrl = url
-                webView.loadUrl(url.toString())
-                waitForConnection()
+            if (openInApp) {
+                runFragmentTransactionIfStateSafe {
+                    // Remove any displayed fragments (e.g., BlockInsecureFragment, ConnectionSecurityLevelFragment)
+                    supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+                }
+                supportFragmentManager.clearFragmentResultListener(BlockInsecureFragment.RESULT_KEY)
+
+                val oldUrl = loadedUrl
+                // It means that if we loaded an URL with a path previously and we try to load the same URL without
+                // a path we don't do anything.
+                val shouldLoadUrl = !url.hasSameOrigin(oldUrl) || url.hasNonRootPath()
+                if (shouldLoadUrl) {
+                    clearHistory = !keepHistory
+                    loadedUrl = url
+                    webView.loadUrl(url.toString())
+                    waitForConnection()
+                } else {
+                    Timber.d("Same base URL without meaningful path, skipping load")
+                }
             } else {
-                Timber.d("Same base URL without meaningful path, skipping load")
-            }
-        } else {
-            try {
-                val browserIntent = Intent(Intent.ACTION_VIEW, url)
-                startActivity(browserIntent)
-            } catch (e: Exception) {
-                Timber.e(e, "Unable to view url")
+                try {
+                    val browserIntent = Intent(Intent.ACTION_VIEW, url)
+                    startActivity(browserIntent)
+                } catch (e: Exception) {
+                    Timber.e(e, "Unable to view url")
+                }
             }
         }
     }
+
+    /**
+     * Whether the active server supports the `externalAppV2` bridge (>= 2026.4.2).
+     */
+    private suspend fun isServerSupportingExternalAppV2(): Boolean =
+        serverManager.getServer(presenter.getActiveServer())?.version?.isAtLeast(2026, 4, 2) == true
 
     override fun showConnectionSecurityLevel(serverId: Int) {
         // Skip if already showing ConnectionSecurityLevelFragment to avoid blinking
@@ -2001,7 +2153,7 @@ class WebViewActivity :
 
     /**
      * Triggers a blob download by fetching the blob data via XHR and passing it to the native
-     * [handleBlob] interface as a data URI. Requires the blob URL to still be valid (not yet
+     * `handleBlob` bridge handler as a data URI. Requires the blob URL to still be valid (not yet
      * revoked by the frontend).
      */
     private fun triggerBlobDownload(url: String, contentDisposition: String, mimetype: String) {
@@ -2012,20 +2164,25 @@ class WebViewActivity :
             }
             val safeUrl = JSONObject.quote(url)
             val safeFallbackFilename = JSONObject.quote(fallbackFilename)
+            val blobCallback = externalBusCall(
+                jsonPayload = "{type:'handleBlob',data:reader.result,filename:$safeFallbackFilename}",
+            )
             val jsCode = """
                 (async function() {
                     try {
                         const response = await fetch($safeUrl);
                         if (!response.ok) {
-                            console.error('Blob download failed: HTTP ' + response.status + ' for ' + ${sensitive(
-                safeUrl,
-            )});
+                            console.error('Blob download failed: HTTP ' + response.status + ' for ' + ${
+                sensitive(
+                    safeUrl,
+                )
+            });
                             return;
                         }
                         const blob = await response.blob();
                         const reader = new FileReader();
                         reader.onloadend = function() {
-                            $javascriptInterface.handleBlob(reader.result, $safeFallbackFilename);
+                            $blobCallback
                         };
                         reader.readAsDataURL(blob);
                     } catch (e) {
