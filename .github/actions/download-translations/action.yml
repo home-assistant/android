@@ -27,54 +27,13 @@ runs:
           replace_breaks: true
           export_empty_as: skip
 
-    - name: Check source strings are in sync with Lokalise
-      id: first-sync-check
+    # Source strings (English) are managed in git, not Lokalise.
+    # Restore the file in case Lokalise overwrote it.
+    - name: Revert source strings to git version
       shell: bash
       run: |
-        if ! git diff --quiet common/src/main/res/values/strings.xml; then
-          echo "::warning::Source strings were modified by Lokalise pull, retrying in 30s"
-          echo "dirty=true" >> "$GITHUB_OUTPUT"
-          git checkout common/src/main/res/values/strings.xml
-        fi
-
-    # Source strings out of sync usually means Lokalise hasn't processed the
-    # GitHub webhook yet (propagation delay) or the webhook token has expired.
-    # Wait 1 minute to give Lokalise time to sync, then retry.
-    # If it still fails, check the webhook configuration in Lokalise.
-    # Proceeding with dirty source strings would leave uncommitted changes in git
-    # and lead to a wrong version name within the app.
-    - name: Wait for Lokalise to sync
-      if: steps.first-sync-check.outputs.dirty == 'true'
-      shell: bash
-      run: sleep 60
-
-    - name: Retry pull from Lokalise
-      if: steps.first-sync-check.outputs.dirty == 'true'
-      uses: lokalise/lokalise-pull-action@a4968e06b7f44c32317b162d825ed17abb5772d0 # v5.0.1
-      with:
-        api_token: ${{ inputs.lokalise-token }}
-        project_id: ${{ inputs.lokalise-project }}
-        custom_github_token: "FAKE_GH_TOKEN"
-        file_format: xml
-        async_mode: true
-        skip_include_tags: true
-        skip_original_filenames: true
-        additional_params: |
-          original_filenames: false
-          bundle_structure: common/src/main/res/values-%LANG_ISO%/strings.%FORMAT%
-          add_newline_eof: true
-          replace_breaks: true
-          export_empty_as: skip
-
-    - name: Verify source strings are in sync with Lokalise
-      if: steps.first-sync-check.outputs.dirty == 'true'
-      shell: bash
-      run: |
-        if ! git diff --quiet common/src/main/res/values/strings.xml; then
-          echo "::error::Source strings (common/src/main/res/values/strings.xml) were modified by Lokalise pull after retry, Lokalise is out of sync"
-          git diff common/src/main/res/values/strings.xml
-          exit 1
-        fi
+        git checkout common/src/main/res/values/strings.xml
+        git status
 
     - name: Generate locales_config.xml
       shell: bash
