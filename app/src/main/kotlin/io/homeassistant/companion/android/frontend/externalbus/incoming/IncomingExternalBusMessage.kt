@@ -35,10 +35,10 @@ sealed interface IncomingExternalBusMessage {
          * Unknown types are deserialized as [UnknownIncomingMessage] instead of throwing an exception.
          */
         internal val serializersModule = SerializersModule {
-            polymorphicDefaultDeserializer(IncomingExternalBusMessage::class) {
+            polymorphicDefaultDeserializer(IncomingExternalBusMessage::class) { className ->
                 object : UnknownJsonContentDeserializer<UnknownIncomingMessage>() {
                     override val builder = UnknownJsonContentBuilder { content ->
-                        UnknownIncomingMessage(content)
+                        UnknownIncomingMessage(className, content)
                     }
                 }
             }
@@ -55,7 +55,7 @@ sealed interface IncomingExternalBusMessage {
  *
  * @property content The raw JSON content of the unknown message
  */
-data class UnknownIncomingMessage(override val content: JsonElement) :
+data class UnknownIncomingMessage(override val discriminator: String?, override val content: JsonElement) :
     IncomingExternalBusMessage,
     UnknownJsonContent {
     override val id: Int? = null
