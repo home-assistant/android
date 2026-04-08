@@ -15,7 +15,6 @@ import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
 class ServerSettingsPresenterImpl @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val serverManager: ServerManager,
     private val wifiHelper: WifiHelper,
 ) : PreferenceDataStore(),
@@ -49,6 +48,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
                 "app_lock_home_bypass" -> serverManager.authenticationRepository(
                     serverId,
                 ).setLockHomeBypassEnabled(value)
+
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
@@ -77,6 +77,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
                     }
                     view.updateServerName(serverManager.getServer(serverId)?.friendlyName ?: "")
                 }
+
                 "registration_name" -> {
                     serverManager.getServer(serverId)?.let {
                         serverManager.updateServer(
@@ -86,6 +87,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
                         )
                     }
                 }
+
                 "connection_internal" -> {
                     serverManager.getServer(serverId)?.let {
                         serverManager.updateServer(
@@ -97,6 +99,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
                         )
                     }
                 }
+
                 "session_timeout" -> {
                     try {
                         serverManager.integrationRepository(serverId).sessionTimeOut(value.toString().toInt())
@@ -104,6 +107,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
                         Timber.e(e, "Issue saving session timeout value")
                     }
                 }
+
                 else -> throw IllegalArgumentException("No string found by this key: $key")
             }
         }

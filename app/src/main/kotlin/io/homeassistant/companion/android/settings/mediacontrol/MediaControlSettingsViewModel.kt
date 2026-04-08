@@ -79,14 +79,6 @@ class MediaControlSettingsViewModel @Inject constructor(
     private val _serviceEvents = MutableSharedFlow<MediaControlServiceEvent>(extraBufferCapacity = 1)
     val serviceEvents: SharedFlow<MediaControlServiceEvent> = _serviceEvents.asSharedFlow()
 
-    private data class ServerRegistries(
-        val serverId: Int,
-        val entities: List<Entity>,
-        val entityRegistry: List<EntityRegistryResponse>,
-        val deviceRegistry: List<DeviceRegistryResponse>,
-        val areaRegistry: List<AreaRegistryResponse>,
-    )
-
     init {
         viewModelScope.launch {
             val loadedServers = serverManager.servers()
@@ -95,21 +87,28 @@ class MediaControlSettingsViewModel @Inject constructor(
             // Load configured entities (local DB) and server registries (network) concurrently.
             // Emit the configured list as soon as the DB read completes so the list appears immediately.
             val configuredEntitiesDeferred = async { mediaControlRepository.getConfiguredEntities() }
-            val registryResults = loadedServers.map { server ->
+            val entitiesDeferred = loadedServers.map { server ->
+                async { server.id to loadMediaPlayerEntities(server.id) }
+            }
+            val entityRegistryDeferred = loadedServers.map { server ->
                 async {
-                    ServerRegistries(
-                        serverId = server.id,
-                        entities = loadMediaPlayerEntities(server.id),
-                        entityRegistry = loadRegistry(server.id, "entity registry") {
-                            serverManager.webSocketRepository(it).getEntityRegistry()
-                        },
-                        deviceRegistry = loadRegistry(server.id, "device registry") {
-                            serverManager.webSocketRepository(it).getDeviceRegistry()
-                        },
-                        areaRegistry = loadRegistry(server.id, "area registry") {
-                            serverManager.webSocketRepository(it).getAreaRegistry()
-                        },
-                    )
+                    server.id to loadRegistry(server.id, "entity registry") {
+                        serverManager.webSocketRepository(it).getEntityRegistry()
+                    }
+                }
+            }
+            val deviceRegistryDeferred = loadedServers.map { server ->
+                async {
+                    server.id to loadRegistry(server.id, "device registry") {
+                        serverManager.webSocketRepository(it).getDeviceRegistry()
+                    }
+                }
+            }
+            val areaRegistryDeferred = loadedServers.map { server ->
+                async {
+                    server.id to loadRegistry(server.id, "area registry") {
+                        serverManager.webSocketRepository(it).getAreaRegistry()
+                    }
                 }
             }
 
@@ -122,14 +121,13 @@ class MediaControlSettingsViewModel @Inject constructor(
                 )
             }
 
-            val results = registryResults.awaitAll()
+            val entitiesPerServer = entitiesDeferred.awaitAll().toMap()
             _uiState.update { state ->
-                val entitiesPerServer = results.associate { it.serverId to it.entities }
                 state.copy(
                     entitiesPerServer = entitiesPerServer,
-                    entityRegistryPerServer = results.associate { it.serverId to it.entityRegistry },
-                    deviceRegistryPerServer = results.associate { it.serverId to it.deviceRegistry },
-                    areaRegistryPerServer = results.associate { it.serverId to it.areaRegistry },
+                    entityRegistryPerServer = entityRegistryDeferred.awaitAll().toMap(),
+                    deviceRegistryPerServer = deviceRegistryDeferred.awaitAll().toMap(),
+                    areaRegistryPerServer = areaRegistryDeferred.awaitAll().toMap(),
                     entityNamesByConfig = buildEntityNamesByConfig(entitiesPerServer, state.configuredEntities),
                     entityIconsByConfig = buildEntityIconsByConfig(entitiesPerServer, state.configuredEntities),
                     isLoading = false,
