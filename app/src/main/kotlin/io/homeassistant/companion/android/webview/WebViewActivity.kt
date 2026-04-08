@@ -858,12 +858,13 @@ class WebViewActivity :
     /**
      * Registers the appropriate native bridge for the current server.
      *
-     * Queries [isServerSupportingExternalAppV2] to determine whether to use the `externalAppV2` bridge or the legacy
-     * `externalApp` bridge. V2 also requires [WebViewFeature.WEB_MESSAGE_LISTENER] support;
+     * Queries [isServerSupportingExternalAppV2] to determine whether to use the
+     * `externalAppV2` bridge or the legacy `externalApp` bridge.
+     * V2 also requires [WebViewFeature.WEB_MESSAGE_LISTENER] support;
      * falls back to V1 if the feature is unavailable.
      *
-     * Both directions are safe: V1 uses [android.webkit.WebView.removeJavascriptInterface] and
-     * V2 uses [WebViewCompat.removeWebMessageListener].
+     * Safe to call multiple times: each path removes the previously
+     * registered interface before adding the new one.
      */
     @SuppressLint("RequiresFeature")
     private suspend fun webViewAddJavascriptInterface() {
@@ -902,7 +903,6 @@ class WebViewActivity :
 
                 @JavascriptInterface
                 fun externalBus(message: String) {
-                    Timber.d("External bus $message")
                     webView.post {
                         val json = message.toJsonObjectOrNull() ?: return@post
                         handleExternalBusMessage(json)
@@ -943,13 +943,8 @@ class WebViewActivity :
             val payload = json["payload"]?.jsonObjectOrNull()
 
             when (type) {
-                "getExternalAuth" -> {
-                    handleGetExternalAuth(payload)
-                }
-
-                "revokeExternalAuth" -> {
-                    handleRevokeExternalAuth(payload)
-                }
+                "getExternalAuth" -> handleGetExternalAuth(payload)
+                "revokeExternalAuth" -> handleRevokeExternalAuth(payload)
 
                 "externalBus" -> {
                     if (payload == null) {
@@ -1004,7 +999,10 @@ class WebViewActivity :
      * Handles an external bus message received from the frontend via the native bridge.
      */
     private fun handleExternalBusMessage(json: JsonObject) {
-        when (json.getStringOrNull("type")) {
+        val type = json.getStringOrNull("type")
+        val messageId = json.getIntOrNull("id")
+        Timber.d("External bus id=$messageId type=$type raw=${sensitive{ json.toString() }}")
+        when (type) {
             "connection-status" -> {
                 isConnected = json["payload"]?.jsonObjectOrNull()
                     ?.getStringOrNull("event") == "connected"
@@ -1030,7 +1028,7 @@ class WebViewActivity :
                     }
                 sendExternalBusMessage(
                     ExternalConfigResponse(
-                        id = json["id"],
+                        id = messageId,
                         hasNfc = hasNfc,
                         canCommissionMatter = canCommissionMatter,
                         canExportThread = canExportThread,
@@ -1045,9 +1043,9 @@ class WebViewActivity :
                 // TODO This feature is deprecated and should be removed after 2022.6
                 // Set event listener for HA theme change
                 lifecycleScope.launch {
-                    val themeCallback = externalBusCall("{type:'onHomeAssistantSetTheme'}")
+                    val themeCallback = externalBusCallback("{type:'onHomeAssistantSetTheme'}")
                     webView.evaluateJavascript(
-                        "document.addEventListener('settheme', function (){$themeCallback});",
+                        "document.addEventListener('settheme', $themeCallback);",
                         null,
                     )
                 }
@@ -1105,7 +1103,7 @@ class WebViewActivity :
                 startActivity(
                     BarcodeScannerActivity.newInstance(
                         this@WebViewActivity,
-                        messageId = json.getIntOrElse("id", 0),
+                        messageId = messageId ?: 0,
                         title = payload.getStringOrElse("title", ""),
                         subtitle = payload.getStringOrElse("description", ""),
                         action = payload.getStringOrNull("alternative_option_label")?.ifBlank {
@@ -1159,16 +1157,21 @@ class WebViewActivity :
     }
 
     /**
-     * Returns a JS snippet that sends [jsonPayload] through the external bus.
+     * Returns a JS `function()` expression that sends [jsonPayload] through the external bus.
+     *
+     * The returned string is a complete `function() { ... }` expression that can be used
+     * directly as a callback.
      *
      * For V1: calls `window.externalApp.externalBus(...)` directly.
      * For V2: posts a `{type:'externalBus', payload:...}` message via `window.externalAppV2`.
      */
-    private fun externalBusCall(jsonPayload: String): String = """
-        if (typeof window.$EXTERNAL_APP_V2_LISTENER !== 'undefined') {
-            window.$EXTERNAL_APP_V2_LISTENER.postMessage(JSON.stringify({type:'externalBus',payload:$jsonPayload}));
-        } else {
-            window.$EXTERNAL_APP_V1.externalBus(JSON.stringify($jsonPayload));
+    private fun externalBusCallback(jsonPayload: String): String = """
+        function() {
+            if (typeof window.$EXTERNAL_APP_V2_LISTENER !== 'undefined') {
+                window.$EXTERNAL_APP_V2_LISTENER.postMessage(JSON.stringify({type:'externalBus',payload:$jsonPayload}));
+            } else {
+                window.$EXTERNAL_APP_V1.externalBus(JSON.stringify($jsonPayload));
+            }
         }
     """.trimIndent()
 
@@ -1673,9 +1676,6 @@ class WebViewActivity :
         this.serverHandleInsets.value = serverHandleInsets
         lifecycleScope.launch {
             if (openInApp) {
-                // Register the native bridge depending on the server and webview capabilities
-                webViewAddJavascriptInterface()
-
                 runFragmentTransactionIfStateSafe {
                     // Remove any displayed fragments (e.g., BlockInsecureFragment, ConnectionSecurityLevelFragment)
                     supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
@@ -1689,6 +1689,10 @@ class WebViewActivity :
                 if (shouldLoadUrl) {
                     clearHistory = !keepHistory
                     loadedUrl = url
+
+                    // Register the native bridge depending on the server and webview capabilities
+                    webViewAddJavascriptInterface()
+
                     webView.loadUrl(url.toString())
                     waitForConnection()
                 } else {
@@ -2164,7 +2168,7 @@ class WebViewActivity :
             }
             val safeUrl = JSONObject.quote(url)
             val safeFallbackFilename = JSONObject.quote(fallbackFilename)
-            val blobCallback = externalBusCall(
+            val blobCallback = externalBusCallback(
                 jsonPayload = "{type:'handleBlob',data:reader.result,filename:$safeFallbackFilename}",
             )
             val jsCode = """
@@ -2181,9 +2185,7 @@ class WebViewActivity :
                         }
                         const blob = await response.blob();
                         const reader = new FileReader();
-                        reader.onloadend = function() {
-                            $blobCallback
-                        };
+                        reader.onloadend = $blobCallback;
                         reader.readAsDataURL(blob);
                     } catch (e) {
                         console.error('Blob download failed:', e);
