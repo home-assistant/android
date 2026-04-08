@@ -275,6 +275,37 @@ class FrontendViewModelTest {
     }
 
     @Nested
+    inner class DerivedFlows {
+
+        @Test
+        fun `Given url manager returns success when urlFlow is subscribed then urlFlow value matches viewState url`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+
+            val job = backgroundScope.launch { viewModel.urlFlow.collect {} }
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            assertEquals(testUrlWithAuth, viewModel.urlFlow.value)
+            job.cancel()
+        }
+
+        @Test
+        fun `Given error state then errorFlow value matches viewState error`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.ServerNotFound(serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            assertTrue(viewModel.errorFlow.value is FrontendConnectionError.UnreachableError)
+        }
+    }
+
+    @Nested
     inner class ErrorFlow {
 
         @Test
@@ -284,15 +315,9 @@ class FrontendViewModelTest {
             )
 
             val viewModel = createViewModel()
-
-            // Subscribe to errorFlow to activate the stateIn with WhileSubscribed
-            val errors = mutableListOf<FrontendConnectionError?>()
-            val job = backgroundScope.launch { viewModel.errorFlow.collect { errors.add(it) } }
-
             advanceUntilIdle()
 
-            assertTrue(errors.any { it is FrontendConnectionError.UnreachableError })
-            job.cancel()
+            assertTrue(viewModel.errorFlow.value is FrontendConnectionError.UnreachableError)
         }
 
         @Test
@@ -301,15 +326,10 @@ class FrontendViewModelTest {
             every { urlManager.serverUrlFlow(any(), any()) } returns urlResults
 
             val viewModel = createViewModel()
-
-            // Subscribe to errorFlow to activate the stateIn with WhileSubscribed
-            val errors = mutableListOf<FrontendConnectionError?>()
-            val job = backgroundScope.launch { viewModel.errorFlow.collect { errors.add(it) } }
-
             advanceUntilIdle()
 
             // Verify error exists
-            assertTrue(errors.any { it != null })
+            assertTrue(viewModel.errorFlow.value != null)
 
             // Setup successful response for retry
             urlResults.value = UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId)
@@ -317,9 +337,8 @@ class FrontendViewModelTest {
             viewModel.onRetry()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
 
-            // Error should be cleared - the last emitted error should be null
-            assertTrue(errors.last() == null)
-            job.cancel()
+            // Error should be cleared
+            assertEquals(null, viewModel.errorFlow.value)
         }
 
         @Test

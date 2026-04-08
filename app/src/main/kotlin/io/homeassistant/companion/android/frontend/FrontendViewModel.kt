@@ -24,7 +24,6 @@ import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.Job
@@ -35,7 +34,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -49,9 +47,6 @@ import timber.log.Timber
 /** Maximum time to wait for the frontend to load before showing a timeout error. */
 @VisibleForTesting
 val CONNECTION_TIMEOUT = 10.seconds
-
-/** Delay before stopping shared flows after the last subscriber disconnects. */
-private val SUBSCRIPTION_STOP_DELAY = 500.milliseconds
 
 /**
  * ViewModel for frontend screen.
@@ -144,12 +139,12 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     override val urlFlow: StateFlow<String?> =
         _viewState.map { it.url }
             .distinctUntilChanged()
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_STOP_DELAY), null)
+            .stateIn(viewModelScope, SharingStarted.Eagerly, _viewState.value.url)
 
     override val errorFlow: StateFlow<FrontendConnectionError?> =
         _viewState.map { state -> (state as? FrontendViewState.Error)?.error }
             .distinctUntilChanged()
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_STOP_DELAY), null)
+            .stateIn(viewModelScope, SharingStarted.Eagerly, (_viewState.value as? FrontendViewState.Error)?.error)
 
     /** Flow of scripts to be evaluated in the WebView. */
     val scriptsToEvaluate: Flow<WebViewScript> = frontendMessageHandler.scriptsToEvaluate()
