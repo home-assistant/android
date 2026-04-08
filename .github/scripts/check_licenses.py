@@ -1,44 +1,22 @@
 #!/usr/bin/env python3
-"""Verify that all dependency licenses are compatible with the project's Apache-2.0 license."""
+"""
+Verify that all dependency licenses are compatible
+with the project's Apache-2.0 license.
+"""
 
 import json
 import sys
 from fnmatch import fnmatch
 from pathlib import Path
+from typing import NamedTuple
 
-# OSI-approved SPDX license identifiers, aligned with
-# https://github.com/home-assistant/core/blob/dev/script/licenses.py
+# Licenses compatible with Apache-2.0
 ALLOWED_LICENSES = {
-    "0BSD",
-    "AFL-2.1",
-    "AGPL-3.0-only",
-    "AGPL-3.0-or-later",
     "Apache-2.0",
-    "BSD-1-Clause",
+    "MIT",
     "BSD-2-Clause",
     "BSD-3-Clause",
-    "EPL-1.0",
-    "EPL-2.0",
-    "GPL-2.0-only",
-    "GPL-2.0-or-later",
-    "GPL-3.0-only",
-    "GPL-3.0-or-later",
-    "HPND",
     "ISC",
-    "LGPL-2.1-only",
-    "LGPL-2.1-or-later",
-    "LGPL-3.0-only",
-    "LGPL-3.0-or-later",
-    "MIT",
-    "MIT-CMU",
-    "MPL-1.1",
-    "MPL-2.0",
-    "PSF-2.0",
-    "Python-2.0",
-    "Unlicense",
-    "Zlib",
-    "ZPL-2.1",
-    # Android-specific licenses
     "ASDKL",  # Android Software Development Kit License
     "PCSDKToS",  # Play Core Software Development Kit Terms of Service
 }
@@ -47,9 +25,18 @@ ALLOWED_LICENSES = {
 # These are used when the library does not publish a standard SPDX license
 # identifier.
 EXCEPTED_LIBRARIES = [
-    "org.chromium.net:*", # Chromium publishes a BSD-style license but only as a URL
-    "com.github.Dimezis:BlurView", # https://github.com/Dimezis/BlurView/issues/259
+    # Chromium publishes a BSD-style license but only as a URL
+    "org.chromium.net:*",
+    # https://github.com/Dimezis/BlurView/issues/259
+    "com.github.Dimezis:BlurView",
 ]
+
+
+class LicenseViolation(NamedTuple):
+    library_id: str
+    version: str
+    license_id: str
+    flavor: str
 
 
 def is_excepted(library_id: str) -> bool:
@@ -58,14 +45,14 @@ def is_excepted(library_id: str) -> bool:
 
 def check_licenses(
     json_path: str, flavor: str
-) -> tuple[list[str], dict[str, list[str]]]:
+) -> tuple[list[LicenseViolation], dict[str, list[str]]]:
     path = Path(json_path)
     if not path.exists():
         print(f"::error::aboutlibraries JSON not found at {json_path}")
         sys.exit(1)
 
     data = json.loads(path.read_text())
-    violations = []
+    violations: list[LicenseViolation] = []
     library_licenses: dict[str, list[str]] = {}
 
     for library in data["libraries"]:
@@ -78,16 +65,24 @@ def check_licenses(
 
         version = library.get("artifactVersion", "unknown")
         if not licenses:
-            violations.append((lib_id, version, "NONE", flavor))
+            violations.append(
+                LicenseViolation(lib_id, version, "NONE", flavor)
+            )
             continue
         for license_id in licenses:
             if license_id not in ALLOWED_LICENSES:
-                violations.append((lib_id, version, license_id, flavor))
+                violations.append(
+                    LicenseViolation(
+                        lib_id, version, license_id, flavor
+                    )
+                )
 
     return violations, library_licenses
 
 
-def check_stale_exceptions(all_library_licenses: dict[str, list[str]]) -> list[str]:
+def check_stale_exceptions(
+    all_library_licenses: dict[str, list[str]],
+) -> list[str]:
     """Check for EXCEPTED_LIBRARIES entries that are no longer needed.
 
     An exception is stale when:
@@ -114,10 +109,13 @@ def check_stale_exceptions(all_library_licenses: dict[str, list[str]]) -> list[s
 
 def main() -> None:
     if len(sys.argv) < 3 or len(sys.argv) % 2 == 0:
-        print(f"Usage: {sys.argv[0]} <json_path> <flavor> [<json_path> <flavor> ...]")
+        print(
+            f"Usage: {sys.argv[0]}"
+            " <json_path> <flavor> [<json_path> <flavor> ...]"
+        )
         sys.exit(1)
 
-    all_violations = []
+    all_violations: list[LicenseViolation] = []
     all_library_licenses: dict[str, list[str]] = {}
     pairs = list(zip(sys.argv[1::2], sys.argv[2::2]))
 
@@ -132,11 +130,14 @@ def main() -> None:
     if stale_exceptions:
         has_errors = True
         print()
-        print("❌ Stale entries in EXCEPTED_LIBRARIES (no longer match any dependency):")
+        print("❌ Stale entries in EXCEPTED_LIBRARIES (no longer needed):")
         for pattern in stale_exceptions:
             print(f"  - {pattern}")
         print()
-        print("Please remove them from EXCEPTED_LIBRARIES in .github/scripts/check_licenses.py")
+        print(
+            "Please remove them from EXCEPTED_LIBRARIES"
+            " in .github/scripts/check_licenses.py"
+        )
         stale_list = ", ".join(stale_exceptions)
         print(
             f"::error title=⛔ Stale Exceptions::{len(stale_exceptions)} stale"
@@ -147,21 +148,32 @@ def main() -> None:
         has_errors = True
         print()
         print("❌ Libraries with incompatible or unknown licenses:")
-        for lib_id, version, license_id, flavor in all_violations:
-            print(f"  - {lib_id} ({version}) — license: {license_id} (flavor: {flavor})")
+        for v in all_violations:
+            print(
+                f"  - {v.library_id} ({v.version})"
+                f" — license: {v.license_id}"
+                f" (flavor: {v.flavor})"
+            )
         print()
         print("To fix this, either:")
-        print("  1. Replace the dependency with one using a compatible license")
         print(
-            "  2. Add the library to EXCEPTED_LIBRARIES in .github/scripts/check_licenses.py"
+            "  1. Replace the dependency with one"
+            " using a compatible license"
+        )
+        print(
+            "  2. Add the library to EXCEPTED_LIBRARIES in"
+            " .github/scripts/check_licenses.py"
             " after manual review"
         )
         print()
         print(f"Allowed licenses: {', '.join(sorted(ALLOWED_LICENSES))}")
-        bad_libs = ", ".join(sorted({lib_id for lib_id, _, _, _ in all_violations}))
+        bad_libs = ", ".join(
+            sorted({v.library_id for v in all_violations})
+        )
         count = len(all_violations)
         print(
-            f"::error title=⛔ License Check Failed::{count} incompatible or unknown"
+            f"::error title=⛔ License Check Failed::"
+            f"{count} incompatible or unknown"
             f" licenses found: {bad_libs}"
         )
 

@@ -129,11 +129,11 @@ jobs:
       - name: Check licenses
         run: |
           python3 .github/scripts/check_licenses.py \
-            app/build/generated/aboutLibraries/fullDebug/res/raw/aboutlibraries.json fullDebug \
-            app/build/generated/aboutLibraries/minimalDebug/res/raw/aboutlibraries.json minimalDebug \
-            automotive/build/generated/aboutLibraries/fullDebug/res/raw/aboutlibraries.json fullDebug \
-            automotive/build/generated/aboutLibraries/minimalDebug/res/raw/aboutlibraries.json minimalDebug \
-            wear/build/generated/aboutLibraries/debug/res/raw/aboutlibraries.json wear
+            app/build/generated/aboutLibraries/fullDebug/res/raw/aboutlibraries.json appFullDebug \
+            app/build/generated/aboutLibraries/minimalDebug/res/raw/aboutlibraries.json appMinimalDebug \
+            automotive/build/generated/aboutLibraries/fullDebug/res/raw/aboutlibraries.json automotiveFullDebug \
+            automotive/build/generated/aboutLibraries/minimalDebug/res/raw/aboutlibraries.json automotiveMinimalDebug \
+            wear/build/generated/aboutLibraries/debug/res/raw/aboutlibraries.json wearDebug
 
   ktlint:
     needs: [license_check, yamllint, validate_localize_setup]
