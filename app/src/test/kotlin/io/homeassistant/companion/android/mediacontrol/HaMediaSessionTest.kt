@@ -19,13 +19,14 @@ import io.mockk.slot
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -52,7 +53,8 @@ class HaMediaSessionTest {
 
     @Before
     fun setUp() {
-        testScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        @OptIn(ExperimentalCoroutinesApi::class)
+        testScope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher())
         mediaControlRepository = mockk()
         serverManager = mockk()
         integrationRepository = mockk(relaxed = true)
@@ -104,14 +106,14 @@ class HaMediaSessionTest {
     )
 
     /**
-     * Waits for `Dispatchers.Default` coroutines (launched via `testScope`) to settle,
-     * then drains the Robolectric main looper so that `player.updateState` calls take effect.
+     * Drains the Robolectric main looper so that `player.updateState` and `player.setConnecting`
+     * calls dispatched via `withContext(Dispatchers.Main)` take effect.
      *
-     * `testScope` uses `Dispatchers.Default`, which is not controlled by `runTest`'s fake
-     * scheduler. A short real-time wait is required before draining the main looper.
+     * `testScope` uses [UnconfinedTestDispatcher], so coroutines run eagerly on the calling
+     * thread until they reach a `withContext(Dispatchers.Main)` suspension point. A single
+     * `idle()` is enough to flush those pending main-looper tasks and resume the coroutine.
      */
-    private fun drainDefaultDispatcherAndMainLooper() {
-        Thread.sleep(REAL_DISPATCHER_SETTLE_MS)
+    private fun idleMainLooper() {
         shadowOf(Looper.getMainLooper()).idle()
     }
 
@@ -134,7 +136,7 @@ class HaMediaSessionTest {
 
         val session = buildSession()
         testScope.launch { session.startObservingState() }
-        drainDefaultDispatcherAndMainLooper()
+        idleMainLooper()
 
         val player = session.mediaSession.player
         assertEquals(Player.STATE_READY, player.playbackState)
@@ -142,7 +144,7 @@ class HaMediaSessionTest {
 
         // Emitting null afterwards (simulating WebSocket-not-ready) should not clear state
         stateFlow.tryEmit(null)
-        drainDefaultDispatcherAndMainLooper()
+        idleMainLooper()
 
         assertEquals(Player.STATE_READY, player.playbackState)
         assertEquals(true, player.playWhenReady)
@@ -155,7 +157,7 @@ class HaMediaSessionTest {
      * to STATE_READY with `playWhenReady = true`.
      *
      * Uses `replay=1` so the emission is cached and replayed to the collector on
-     * `Dispatchers.Default` regardless of when it subscribes. The flow stays open so the
+     * [UnconfinedTestDispatcher] regardless of when it subscribes. The flow stays open so the
      * observation loop does not immediately call `setConnecting()` and overwrite the READY state.
      */
     @Test
@@ -166,7 +168,7 @@ class HaMediaSessionTest {
 
         val session = buildSession()
         testScope.launch { session.startObservingState() }
-        drainDefaultDispatcherAndMainLooper()
+        idleMainLooper()
 
         val player = session.mediaSession.player
         assertEquals(Player.STATE_READY, player.playbackState)
@@ -189,7 +191,7 @@ class HaMediaSessionTest {
 
         val session = buildSession()
         testScope.launch { session.startObservingState() }
-        drainDefaultDispatcherAndMainLooper()
+        idleMainLooper()
 
         val player = session.mediaSession.player
         assertEquals(Player.STATE_READY, player.playbackState)
@@ -204,9 +206,10 @@ class HaMediaSessionTest {
      * that the notification remains visible but controls are disabled.
      *
      * Both flows complete immediately so the observation loop calls `setConnecting()` right after
-     * the first iteration without needing the retry delay. Two settle cycles are used: the first
-     * allows the playing-state update to reach the Main looper, and the second allows the
-     * `setConnecting()` call (which follows on the Default dispatcher) to reach the Main looper.
+     * the first iteration without needing the retry delay. Two `idleMainLooper()` calls are used:
+     * the first allows the playing-state update to reach the Main looper, and the second allows
+     * the `setConnecting()` call (which posts a new Main looper task when the coroutine resumes)
+     * to take effect.
      */
     @Test
     fun `Given observeEntityState flow completes when startObservingState then player enters connecting state`() {
@@ -216,8 +219,8 @@ class HaMediaSessionTest {
 
         val session = buildSession()
         testScope.launch { session.startObservingState() }
-        drainDefaultDispatcherAndMainLooper()
-        drainDefaultDispatcherAndMainLooper()
+        idleMainLooper()
+        idleMainLooper()
 
         val player = session.mediaSession.player
         assertEquals(Player.STATE_BUFFERING, player.playbackState)
@@ -232,7 +235,7 @@ class HaMediaSessionTest {
      * Verifies that when the emitted state has a null artwork URL, the player's media metadata
      * contains no artwork bytes.
      *
-     * Uses `replay=1` so the emission is available when the Default dispatcher starts collecting.
+     * Uses `replay=1` so the emission is available immediately when the collector starts.
      */
     @Test
     fun `Given state with null artwork URL when startObservingState then player artwork is null`() {
@@ -242,7 +245,7 @@ class HaMediaSessionTest {
 
         val session = buildSession()
         testScope.launch { session.startObservingState() }
-        drainDefaultDispatcherAndMainLooper()
+        idleMainLooper()
 
         val player = session.mediaSession.player
         assertNull(player.mediaMetadata.artworkData)
@@ -258,8 +261,8 @@ class HaMediaSessionTest {
      * `currentArtworkUrl` is cleared and `currentArtworkBytes` is passed through (which is
      * null here because no real image was ever loaded in this test).
      *
-     * Uses `replay=1` for reliable delivery to the late-starting Default dispatcher collector.
-     * The second emission is made after the first is confirmed to be processed.
+     * Uses `replay=1` for reliable delivery to the collector. The second emission is made after
+     * the first is confirmed to be processed.
      */
     @Test
     fun `Given two consecutive states where second has null artwork URL when startObservingState then artwork is null`() {
@@ -269,10 +272,10 @@ class HaMediaSessionTest {
 
         val session = buildSession()
         testScope.launch { session.startObservingState() }
-        drainDefaultDispatcherAndMainLooper()
+        idleMainLooper()
 
         stateFlow.tryEmit(createState(entityPictureUrl = null, title = "Track 2"))
-        drainDefaultDispatcherAndMainLooper()
+        idleMainLooper()
 
         val player = session.mediaSession.player
         assertNull(player.mediaMetadata.artworkData)
@@ -287,9 +290,9 @@ class HaMediaSessionTest {
      * Verifies that triggering play on the media session player causes `callMediaAction` to
      * dispatch a `media_play` action to the integration repository for the configured entity.
      *
-     * Uses `replay=1` so the paused state is reliably received by the Default dispatcher
-     * collector before `player.play()` is invoked. `callMediaAction` also runs on the Default
-     * dispatcher, so a real-time wait is required after triggering the player command.
+     * Uses `replay=1` so the paused state is reliably received by the collector before
+     * `player.play()` is invoked. `callMediaAction` launches on [UnconfinedTestDispatcher] and
+     * runs eagerly inside the main looper drain, so no additional wait is required.
      */
     @Test
     fun `Given paused player when play requested then media_play action is called`() {
@@ -299,11 +302,10 @@ class HaMediaSessionTest {
 
         val session = buildSession()
         testScope.launch { session.startObservingState() }
-        drainDefaultDispatcherAndMainLooper()
+        idleMainLooper()
 
         session.mediaSession.player.play()
         shadowOf(Looper.getMainLooper()).idle()
-        Thread.sleep(REAL_DISPATCHER_SETTLE_MS)
 
         val capturedDomain = slot<String>()
         val capturedAction = slot<String>()
@@ -334,11 +336,10 @@ class HaMediaSessionTest {
 
         val session = buildSession()
         testScope.launch { session.startObservingState() }
-        drainDefaultDispatcherAndMainLooper()
+        idleMainLooper()
 
         session.mediaSession.player.pause()
         shadowOf(Looper.getMainLooper()).idle()
-        Thread.sleep(REAL_DISPATCHER_SETTLE_MS)
 
         val capturedAction = slot<String>()
         coVerify {
@@ -371,11 +372,11 @@ class HaMediaSessionTest {
 
         val session = buildSession()
         testScope.launch { session.startObservingState() }
-        drainDefaultDispatcherAndMainLooper()
+        idleMainLooper()
         assertEquals(1, observeCallCount)
 
         session.reconnect()
-        drainDefaultDispatcherAndMainLooper()
+        idleMainLooper()
         assertEquals(2, observeCallCount)
 
         session.release()
@@ -393,7 +394,7 @@ class HaMediaSessionTest {
 
         val session = buildSession()
         testScope.launch { session.startObservingState() }
-        drainDefaultDispatcherAndMainLooper()
+        idleMainLooper()
 
         val scopeField = HaMediaSession::class.java.getDeclaredField("scope")
         scopeField.isAccessible = true
@@ -404,14 +405,4 @@ class HaMediaSessionTest {
         org.junit.Assert.assertFalse(scope.isActive)
     }
 
-    private companion object {
-        /**
-         * Milliseconds to allow `HaMediaSession`'s `Dispatchers.Default` coroutines to
-         * complete before inspecting state or verifying mock calls.
-         *
-         * `HaMediaSession` uses a real `Dispatchers.Default` scope that is not controlled by
-         * the test. 1 second is used to provide a stable budget on slower CI machines.
-         */
-        const val REAL_DISPATCHER_SETTLE_MS = 1000L
-    }
 }
