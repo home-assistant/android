@@ -156,6 +156,7 @@ import io.homeassistant.companion.android.webview.insecure.BlockInsecureFragment
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -282,6 +283,7 @@ class WebViewActivity :
     private var isShowingError = false
     private var isRelaunching = false
     private var alertDialog: AlertDialog? = null
+    private var loadUrlJob: Job? = null
     private var isVideoFullScreen = false
     private var videoHeight = 0
     private var firstAuthTime: Long = 0
@@ -1674,37 +1676,38 @@ class WebViewActivity :
             } (keepHistory $keepHistory, openInApp $openInApp, serverHandleInsets $serverHandleInsets)",
         )
         this.serverHandleInsets.value = serverHandleInsets
-        lifecycleScope.launch {
-            if (openInApp) {
-                runFragmentTransactionIfStateSafe {
-                    // Remove any displayed fragments (e.g., BlockInsecureFragment, ConnectionSecurityLevelFragment)
-                    supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-                }
-                supportFragmentManager.clearFragmentResultListener(BlockInsecureFragment.RESULT_KEY)
+        if (openInApp) {
+            runFragmentTransactionIfStateSafe {
+                // Remove any displayed fragments (e.g., BlockInsecureFragment, ConnectionSecurityLevelFragment)
+                supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+            }
+            supportFragmentManager.clearFragmentResultListener(BlockInsecureFragment.RESULT_KEY)
 
-                val oldUrl = loadedUrl
-                // It means that if we loaded an URL with a path previously and we try to load the same URL without
-                // a path we don't do anything.
-                val shouldLoadUrl = !url.hasSameOrigin(oldUrl) || url.hasNonRootPath()
-                if (shouldLoadUrl) {
-                    clearHistory = !keepHistory
-                    loadedUrl = url
+            val oldUrl = loadedUrl
+            // It means that if we loaded an URL with a path previously and we try to load the same URL without
+            // a path we don't do anything.
+            val shouldLoadUrl = !url.hasSameOrigin(oldUrl) || url.hasNonRootPath()
+            if (shouldLoadUrl) {
+                clearHistory = !keepHistory
+                loadedUrl = url
 
+                loadUrlJob?.cancel()
+                loadUrlJob = lifecycleScope.launch {
                     // Register the native bridge depending on the server and webview capabilities
                     webViewAddJavascriptInterface()
 
                     webView.loadUrl(url.toString())
                     waitForConnection()
-                } else {
-                    Timber.d("Same base URL without meaningful path, skipping load")
                 }
             } else {
-                try {
-                    val browserIntent = Intent(Intent.ACTION_VIEW, url)
-                    startActivity(browserIntent)
-                } catch (e: Exception) {
-                    Timber.e(e, "Unable to view url")
-                }
+                Timber.d("Same base URL without meaningful path, skipping load")
+            }
+        } else {
+            try {
+                val browserIntent = Intent(Intent.ACTION_VIEW, url)
+                startActivity(browserIntent)
+            } catch (e: Exception) {
+                Timber.e(e, "Unable to view url")
             }
         }
     }
