@@ -38,9 +38,11 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -260,7 +262,7 @@ class FrontendMessageHandlerTest {
 
     @Test
     fun `Given unknown message when messageResults then emits UnknownMessage`() = runTest {
-        val message = UnknownIncomingMessage(content = JsonPrimitive("unknown-type"))
+        val message = UnknownIncomingMessage(discriminator = "unknown-type", content = JsonPrimitive("unknown-type"))
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
         handler.messageResults().test {
@@ -478,7 +480,10 @@ class FrontendMessageHandlerTest {
 
     @Test
     fun `Given message when externalBus then forwards to repository`() = runTest {
-        val message = """{"type":"test","id":1}"""
+        val message = buildJsonObject {
+            put("type", "test")
+            put("id", 1)
+        }
 
         handler.externalBus(message)
 

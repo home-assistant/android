@@ -26,11 +26,13 @@ import io.homeassistant.companion.android.frontend.session.RevokeAuthResult
 import io.homeassistant.companion.android.frontend.session.ServerSessionManager
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
+import io.homeassistant.companion.android.util.sensitive
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.serialization.json.JsonElement
 import timber.log.Timber
 
 /**
@@ -105,10 +107,10 @@ class FrontendMessageHandler @Inject constructor(
     }
 
     /**
-     * Called by the JavaScript interface when an external bus message is received.
+     * Called when the frontend sends an external bus message.
      */
-    override suspend fun externalBus(message: String) {
-        Timber.v("externalBus: $message")
+    override suspend fun externalBus(message: JsonElement) {
+        Timber.v("External bus message received: ${sensitive { message.toString() }}")
         externalBusRepository.onMessageReceived(message)
     }
 
