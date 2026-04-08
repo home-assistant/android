@@ -273,18 +273,6 @@ class FrontendMessageHandlerTest {
     }
 
     @Test
-    fun `Given script when evaluateScript then calls repository evaluateScript`() = runTest {
-        val script = "console.log('test')"
-        val expectedResult = "undefined"
-        coEvery { externalBusRepository.evaluateScript(script) } returns expectedResult
-
-        val result = handler.evaluateScript(script)
-
-        assertEquals(expectedResult, result)
-        coVerify { externalBusRepository.evaluateScript(script) }
-    }
-
-    @Test
     fun `Given scripts flow when scriptsToEvaluate then returns repository flow`() = runTest {
         val script = WebViewScript(script = "test()")
         every { externalBusRepository.scriptsToEvaluate() } returns flowOf(script)

@@ -60,7 +60,7 @@ interface FrontendExternalBusRepository {
      *
      * The message is deserialized and emitted to subscribers of [incomingMessages].
      *
-     * @param messageJson The raw JSON string from the frontend
+     * @param messageJson The JSON message from the frontend
      */
     suspend fun onMessageReceived(messageJson: JsonElement)
 }

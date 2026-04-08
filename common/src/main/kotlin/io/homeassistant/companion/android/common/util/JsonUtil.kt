@@ -143,14 +143,17 @@ fun interface UnknownJsonContentBuilder<T : UnknownJsonContent> {
  *     data class KnownType(val data: String) : MyResponse
  *
  *     @Serializable
- *     data class UnknownType(override val content: JsonElement) : MyResponse, UnknownJsonContent
+ *     data class UnknownType(
+ *         override val discriminator: String?,
+ *         override val content: JsonElement,
+ *     ) : MyResponse, UnknownJsonContent
  * }
  *
  * val module = SerializersModule {
- *     polymorphicDefaultDeserializer(MyResponse::class) {
+ *     polymorphicDefaultDeserializer(MyResponse::class) { className ->
  *         object : UnknownJsonContentDeserializer<MyResponse.UnknownType>() {
  *             override val builder = UnknownJsonContentBuilder { content ->
- *                 MyResponse.UnknownType(content)
+ *                 MyResponse.UnknownType(discriminator = className, content = content)
  *             }
  *         }
  *     }

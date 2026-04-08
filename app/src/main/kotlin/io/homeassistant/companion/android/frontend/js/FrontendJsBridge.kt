@@ -17,7 +17,6 @@ import io.homeassistant.companion.android.common.util.UnknownJsonContentBuilder
 import io.homeassistant.companion.android.common.util.UnknownJsonContentDeserializer
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.frontend.externalbus.frontendExternalBusJson
-import io.homeassistant.companion.android.frontend.handler.FrontendMessageHandler
 import io.homeassistant.companion.android.frontend.session.AuthPayload
 import io.homeassistant.companion.android.util.hasSameOrigin
 import io.homeassistant.companion.android.util.sensitive
@@ -113,7 +112,7 @@ private val bridgeMessageJson = Json(frontendExternalBusJson) {
  * @param stateProvider Provides the current server ID and URL from the ViewModel state
  */
 class FrontendJsBridge @AssistedInject constructor(
-    private val handler: FrontendMessageHandler,
+    private val handler: FrontendJsHandler,
     private val serverManager: ServerManager,
     @Assisted private val scope: CoroutineScope,
     @Assisted private val stateProvider: () -> BridgeState,
@@ -318,7 +317,7 @@ class FrontendJsBridge @AssistedInject constructor(
          *
          * V2 was introduced in Home Assistant 2026.4.2.
          */
-        fun Server?.isServerSupportingExternalAppV2(): Boolean = this?.version?.isAtLeast(2026, 4, 0) == true
+        fun Server?.isServerSupportingExternalAppV2(): Boolean = this?.version?.isAtLeast(2026, 4, 2) == true
 
         /** A no-op implementation for use in tests and previews. */
         val noOp = object : FrontendJsCallback {
@@ -329,9 +328,6 @@ class FrontendJsBridge @AssistedInject constructor(
 
 /**
  * Factory for creating [FrontendJsBridge] instances via assisted injection.
- *
- * [ServerManager] and [FrontendMessageHandler] are provided by Hilt;
- * the remaining parameters are supplied by the caller.
  */
 @AssistedFactory
 interface FrontendJsBridgeFactory {

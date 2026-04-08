@@ -13,8 +13,8 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
+import io.homeassistant.companion.android.frontend.handler.FrontendBusObserver
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
-import io.homeassistant.companion.android.frontend.handler.FrontendMessageHandler
 import io.homeassistant.companion.android.frontend.js.BridgeState
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridgeFactory
 import io.homeassistant.companion.android.frontend.js.FrontendJsCallback
@@ -64,7 +64,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     initialServerId: Int,
     initialPath: String?,
     webViewClientFactory: HAWebViewClientFactory,
-    private val frontendMessageHandler: FrontendMessageHandler,
+    private val frontendBusObserver: FrontendBusObserver,
     private val urlManager: FrontendUrlManager,
     private val connectivityCheckRepository: ConnectivityCheckRepository,
     private val permissionManager: PermissionManager,
@@ -76,7 +76,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     constructor(
         savedStateHandle: SavedStateHandle,
         webViewClientFactory: HAWebViewClientFactory,
-        frontendMessageHandler: FrontendMessageHandler,
+        frontendBusObserver: FrontendBusObserver,
         urlManager: FrontendUrlManager,
         connectivityCheckRepository: ConnectivityCheckRepository,
         permissionManager: PermissionManager,
@@ -85,7 +85,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
         initialPath = savedStateHandle.toRoute<FrontendRoute>().path,
         webViewClientFactory = webViewClientFactory,
-        frontendMessageHandler = frontendMessageHandler,
+        frontendBusObserver = frontendBusObserver,
         urlManager = urlManager,
         connectivityCheckRepository = connectivityCheckRepository,
         permissionManager = permissionManager,
@@ -153,7 +153,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             .stateIn(viewModelScope, SharingStarted.Eagerly, (_viewState.value as? FrontendViewState.Error)?.error)
 
     /** Flow of scripts to be evaluated in the WebView. */
-    val scriptsToEvaluate: Flow<WebViewScript> = frontendMessageHandler.scriptsToEvaluate()
+    val scriptsToEvaluate: Flow<WebViewScript> = frontendBusObserver.scriptsToEvaluate()
 
     /**
      * JavaScript bridge for communication between the WebView and native code.
@@ -204,7 +204,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         }
 
         viewModelScope.launch {
-            frontendMessageHandler.messageResults().collect { result ->
+            frontendBusObserver.messageResults().collect { result ->
                 handleMessageResult(result)
             }
         }

@@ -56,7 +56,8 @@ class FrontendMessageHandler @Inject constructor(
     private val appVersionProvider: AppVersionProvider,
     private val sessionManager: ServerSessionManager,
     @param:IsAutomotive private val isAutomotive: Boolean,
-) : FrontendJsHandler {
+) : FrontendJsHandler,
+    FrontendBusObserver {
 
     private val authResultsFlow = MutableSharedFlow<FrontendHandlerEvent>(extraBufferCapacity = 1)
 
@@ -79,11 +80,6 @@ class FrontendMessageHandler @Inject constructor(
         }
     }
 
-    /**
-     * Called when the frontend revokes authentication.
-     *
-     * The bridge has already parsed and validated the callback name before calling this.
-     */
     override suspend fun revokeExternalAuth(authPayload: AuthPayload, serverId: Int) {
         Timber.d("revokeExternalAuth called")
         when (val result = sessionManager.revokeExternalAuth(serverId, authPayload)) {
@@ -97,44 +93,27 @@ class FrontendMessageHandler @Inject constructor(
         }
     }
 
-    /**
-     * Called when the frontend sends an external bus message.
-     */
     override suspend fun externalBus(message: JsonElement) {
         Timber.v("External bus message received: ${sensitive { message.toString() }}")
         externalBusRepository.onMessageReceived(message)
     }
 
     /**
-     * Flow of events from incoming external bus messages and authentication results.
-     *
      * Merges deserialized external bus messages with auth-related events into a single
      * stream of [FrontendHandlerEvent].
      */
-    fun messageResults(): Flow<FrontendHandlerEvent> {
+    override fun messageResults(): Flow<FrontendHandlerEvent> {
         val incomingResults = externalBusRepository.incomingMessages().map { message ->
             handleMessage(message)
         }
         return merge(incomingResults, authResultsFlow)
     }
 
-    /**
-     * Evaluate script in WebView.
-     *
-     * @param script The JavaScript code to evaluate
-     * @return The evaluation result from the WebView, or null if the script returns no value
-     */
-    suspend fun evaluateScript(script: String): String? {
+    override fun scriptsToEvaluate(): Flow<WebViewScript> = externalBusRepository.scriptsToEvaluate()
+
+    private suspend fun evaluateScript(script: String): String? {
         return externalBusRepository.evaluateScript(script)
     }
-
-    /**
-     * Expose scripts flow for WebView.
-     *
-     * The WebView should collect this flow and call `evaluateJavascript` for each script,
-     * then complete the deferred result with the evaluation output.
-     */
-    fun scriptsToEvaluate(): Flow<WebViewScript> = externalBusRepository.scriptsToEvaluate()
 
     private suspend fun handleMessage(message: IncomingExternalBusMessage): FrontendHandlerEvent {
         return when (message) {

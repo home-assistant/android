@@ -13,7 +13,6 @@ import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.frontend.externalbus.frontendExternalBusJson
-import io.homeassistant.companion.android.frontend.handler.FrontendMessageHandler
 import io.homeassistant.companion.android.frontend.session.AuthPayload
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.util.FailFastExtension
@@ -46,7 +45,7 @@ import org.junit.jupiter.params.provider.EnumSource
 @OptIn(ExperimentalCoroutinesApi::class)
 class FrontendJsBridgeTest {
 
-    private val handler: FrontendMessageHandler = mockk(relaxed = true)
+    private val handler: FrontendJsHandler = mockk(relaxed = true)
     private val serverManager: ServerManager = mockk(relaxed = true)
     private val serverId = 42
     private val serverUrl = "https://example.com"

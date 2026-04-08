@@ -5,8 +5,8 @@ import io.homeassistant.companion.android.common.data.connectivity.ConnectivityC
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
+import io.homeassistant.companion.android.frontend.handler.FrontendBusObserver
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
-import io.homeassistant.companion.android.frontend.handler.FrontendMessageHandler
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridgeFactory
 import io.homeassistant.companion.android.frontend.navigation.FrontendNavigationEvent
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
@@ -51,7 +51,7 @@ class FrontendViewModelTest {
     val mainDispatcherExtension = MainDispatcherJUnit5Extension(UnconfinedTestDispatcher())
 
     private val webViewClientFactory: HAWebViewClientFactory = mockk(relaxed = true)
-    private val externalBusHandler: FrontendMessageHandler = mockk(relaxed = true)
+    private val frontendBusObserver: FrontendBusObserver = mockk(relaxed = true)
     private val urlManager: FrontendUrlManager = mockk(relaxed = true)
     private val connectivityCheckRepository: ConnectivityCheckRepository = mockk(relaxed = true)
     private val permissionManager: PermissionManager = mockk(relaxed = true)
@@ -62,8 +62,8 @@ class FrontendViewModelTest {
 
     @BeforeEach
     fun setUp() {
-        every { externalBusHandler.messageResults() } returns emptyFlow()
-        every { externalBusHandler.scriptsToEvaluate() } returns emptyFlow()
+        every { frontendBusObserver.messageResults() } returns emptyFlow()
+        every { frontendBusObserver.scriptsToEvaluate() } returns emptyFlow()
         every { connectivityCheckRepository.runChecks(any()) } returns flowOf(ConnectivityCheckState())
     }
 
@@ -75,7 +75,7 @@ class FrontendViewModelTest {
             initialServerId = serverId,
             initialPath = path,
             webViewClientFactory = webViewClientFactory,
-            frontendMessageHandler = externalBusHandler,
+            frontendBusObserver = frontendBusObserver,
             urlManager = urlManager,
             connectivityCheckRepository = connectivityCheckRepository,
             permissionManager = permissionManager,
@@ -415,7 +415,7 @@ class FrontendViewModelTest {
         @Test
         fun `Given connected message result when collected then state transitions to Content`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
-            every { externalBusHandler.messageResults() } returns messageFlow
+            every { frontendBusObserver.messageResults() } returns messageFlow
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
@@ -438,7 +438,7 @@ class FrontendViewModelTest {
         @Test
         fun `Given auth error message result when collected then state transitions to Error`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
-            every { externalBusHandler.messageResults() } returns messageFlow
+            every { frontendBusObserver.messageResults() } returns messageFlow
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
@@ -466,7 +466,7 @@ class FrontendViewModelTest {
         @Test
         fun `Given show assist message result when collected then NavigateToAssist event is emitted`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
-            every { externalBusHandler.messageResults() } returns messageFlow
+            every { frontendBusObserver.messageResults() } returns messageFlow
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
@@ -494,7 +494,7 @@ class FrontendViewModelTest {
         @Test
         fun `Given open settings message result when collected then navigation event is emitted`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
-            every { externalBusHandler.messageResults() } returns messageFlow
+            every { frontendBusObserver.messageResults() } returns messageFlow
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
@@ -518,7 +518,7 @@ class FrontendViewModelTest {
         @Test
         fun `Given haptic message when collected then hapticEvents emits the type`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
-            every { externalBusHandler.messageResults() } returns messageFlow
+            every { frontendBusObserver.messageResults() } returns messageFlow
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
@@ -545,7 +545,7 @@ class FrontendViewModelTest {
         @Test
         fun `Given open assist settings message result when collected then navigation event is emitted`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
-            every { externalBusHandler.messageResults() } returns messageFlow
+            every { frontendBusObserver.messageResults() } returns messageFlow
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
@@ -723,7 +723,7 @@ class FrontendViewModelTest {
             shouldAsk: Boolean,
         ) = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
-            every { externalBusHandler.messageResults() } returns messageFlow
+            every { frontendBusObserver.messageResults() } returns messageFlow
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
@@ -743,7 +743,7 @@ class FrontendViewModelTest {
         @Test
         fun `Given notification permission result when called then showNotificationPermission becomes false`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
-            every { externalBusHandler.messageResults() } returns messageFlow
+            every { frontendBusObserver.messageResults() } returns messageFlow
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
@@ -825,7 +825,7 @@ class FrontendViewModelTest {
         @Test
         fun `Given loading state when connected before timeout then no timeout error`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
-            every { externalBusHandler.messageResults() } returns messageFlow
+            every { frontendBusObserver.messageResults() } returns messageFlow
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
