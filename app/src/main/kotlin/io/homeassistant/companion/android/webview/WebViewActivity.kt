@@ -899,8 +899,8 @@ class WebViewActivity :
                 }
 
                 @JavascriptInterface
-                fun revokeExternalAuth(callback: String) {
-                    handleRevokeExternalAuth(payload = callback.toJsonObjectOrNull())
+                fun revokeExternalAuth(payload: String) {
+                    handleRevokeExternalAuth(payload = payload.toJsonObjectOrNull())
                 }
 
                 @JavascriptInterface
@@ -953,7 +953,6 @@ class WebViewActivity :
                         Timber.w("externalBus message missing payload")
                         return@addWebMessageListener
                     }
-                    Timber.d("External bus $payload")
                     webView.post {
                         handleExternalBusMessage(payload)
                     }
@@ -1003,7 +1002,7 @@ class WebViewActivity :
     private fun handleExternalBusMessage(json: JsonObject) {
         val type = json.getStringOrNull("type")
         val messageId = json.getIntOrNull("id")
-        Timber.d("External bus id=$messageId type=$type raw=${sensitive{ json.toString() }}")
+        Timber.d("External bus id=$messageId type=$type raw=${sensitive { json.toString() }}")
         when (type) {
             "connection-status" -> {
                 isConnected = json["payload"]?.jsonObjectOrNull()
@@ -2179,11 +2178,9 @@ class WebViewActivity :
                     try {
                         const response = await fetch($safeUrl);
                         if (!response.ok) {
-                            console.error('Blob download failed: HTTP ' + response.status + ' for ' + ${
-                sensitive(
-                    safeUrl,
-                )
-            });
+                            console.error('Blob download failed: HTTP ' + response.status + ' for ${
+                sensitive(safeUrl)
+            }');
                             return;
                         }
                         const blob = await response.blob();
