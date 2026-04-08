@@ -3,10 +3,7 @@ package io.homeassistant.companion.android.frontend.handler
 import android.content.pm.PackageManager
 import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.util.AppVersionProvider
-import io.homeassistant.companion.android.common.util.FailFast
-import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
-import io.homeassistant.companion.android.frontend.FrontendJsHandler
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConfigGetMessage
@@ -20,6 +17,7 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.ThemeUpd
 import io.homeassistant.companion.android.frontend.externalbus.incoming.UnknownIncomingMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResult
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage
+import io.homeassistant.companion.android.frontend.js.FrontendJsHandler
 import io.homeassistant.companion.android.frontend.session.AuthPayload
 import io.homeassistant.companion.android.frontend.session.ExternalAuthResult
 import io.homeassistant.companion.android.frontend.session.RevokeAuthResult
@@ -63,12 +61,12 @@ class FrontendMessageHandler @Inject constructor(
     private val authResultsFlow = MutableSharedFlow<FrontendHandlerEvent>(extraBufferCapacity = 1)
 
     /**
-     * Called by the JavaScript interface when the frontend requests authentication.
+     * Called when the frontend requests authentication.
+     *
+     * The bridge has already parsed and validated the callback name before calling this.
      */
-    override suspend fun getExternalAuth(payload: String, serverId: Int) {
+    override suspend fun getExternalAuth(authPayload: AuthPayload, serverId: Int) {
         Timber.d("getExternalAuth called")
-        val authPayload = parseAuthPayload(payload) ?: return
-
         when (val result = sessionManager.getExternalAuth(serverId, authPayload)) {
             is ExternalAuthResult.Success -> {
                 evaluateScript(result.callbackScript)
@@ -81,20 +79,13 @@ class FrontendMessageHandler @Inject constructor(
         }
     }
 
-    private fun parseAuthPayload(json: String): AuthPayload? {
-        return FailFast.failOnCatch(
-            message = { "Failed to parse auth payload" },
-            fallback = null,
-        ) { kotlinJsonMapper.decodeFromString<AuthPayload>(json) }
-    }
-
     /**
-     * Called by the JavaScript interface when the frontend revokes authentication.
+     * Called when the frontend revokes authentication.
+     *
+     * The bridge has already parsed and validated the callback name before calling this.
      */
-    override suspend fun revokeExternalAuth(payload: String, serverId: Int) {
+    override suspend fun revokeExternalAuth(authPayload: AuthPayload, serverId: Int) {
         Timber.d("revokeExternalAuth called")
-        val authPayload = parseAuthPayload(payload) ?: return
-
         when (val result = sessionManager.revokeExternalAuth(serverId, authPayload)) {
             is RevokeAuthResult.Success -> {
                 evaluateScript(result.callbackScript)

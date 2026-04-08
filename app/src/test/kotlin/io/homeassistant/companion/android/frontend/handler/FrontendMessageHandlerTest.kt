@@ -357,37 +357,34 @@ class FrontendMessageHandlerTest {
     }
 
     @Test
-    fun `Given valid payload and successful auth when getExternalAuth then evaluates success callback`() = runTest {
-        val payload = """{"callback":"authCallback","force":false}"""
-        val authPayload = AuthPayload(callback = "authCallback", force = false)
-        val authResult = ExternalAuthResult.Success(callbackScript = "authCallback(true, {token})")
+    fun `Given successful auth when getExternalAuth then evaluates success callback`() = runTest {
+        val authPayload = AuthPayload(callback = "externalAuthSetToken", force = false)
+        val authResult = ExternalAuthResult.Success(callbackScript = "externalAuthSetToken(true, {token})")
 
         coEvery { sessionManager.getExternalAuth(1, authPayload) } returns authResult
-        coEvery { externalBusRepository.evaluateScript("authCallback(true, {token})") } returns null
+        coEvery { externalBusRepository.evaluateScript("externalAuthSetToken(true, {token})") } returns null
 
-        handler.getExternalAuth(payload, serverId = 1)
+        handler.getExternalAuth(authPayload, serverId = 1)
 
-        coVerify { externalBusRepository.evaluateScript("authCallback(true, {token})") }
+        coVerify { externalBusRepository.evaluateScript("externalAuthSetToken(true, {token})") }
     }
 
     @Test
-    fun `Given valid payload and failed auth with error when getExternalAuth then evaluates callback and emits AuthError`() = runTest {
-        val payload = """{"callback":"authCallback","force":false}"""
-        val authPayload = AuthPayload(callback = "authCallback", force = false)
+    fun `Given failed auth with error when getExternalAuth then evaluates callback and emits AuthError`() = runTest {
+        val authPayload = AuthPayload(callback = "externalAuthSetToken", force = false)
         val error = FrontendConnectionError.AuthenticationError(
             message = commonR.string.error_connection_failed,
             errorDetails = "Auth failed",
             rawErrorType = "ExternalAuthFailed",
         )
-        val authResult = ExternalAuthResult.Failed(callbackScript = "authCallback(false)", error = error)
+        val authResult = ExternalAuthResult.Failed(callbackScript = "externalAuthSetToken(false)", error = error)
 
         coEvery { sessionManager.getExternalAuth(1, authPayload) } returns authResult
-        coEvery { externalBusRepository.evaluateScript("authCallback(false)") } returns null
+        coEvery { externalBusRepository.evaluateScript("externalAuthSetToken(false)") } returns null
         every { externalBusRepository.incomingMessages() } returns emptyFlow()
 
-        // Start collecting BEFORE calling getExternalAuth to catch the emitted event
         handler.messageResults().test {
-            handler.getExternalAuth(payload, serverId = 1)
+            handler.getExternalAuth(authPayload, serverId = 1)
 
             val event = awaitItem()
             assertTrue(event is FrontendHandlerEvent.AuthError)
@@ -395,24 +392,22 @@ class FrontendMessageHandlerTest {
             expectNoEvents()
         }
 
-        coVerify { externalBusRepository.evaluateScript("authCallback(false)") }
+        coVerify { externalBusRepository.evaluateScript("externalAuthSetToken(false)") }
     }
 
     @Test
-    fun `Given valid payload and failed auth without error when getExternalAuth then evaluates callback only`() = runTest {
-        val payload = """{"callback":"authCallback","force":false}"""
-        val authPayload = AuthPayload(callback = "authCallback", force = false)
-        val authResult = ExternalAuthResult.Failed(callbackScript = "authCallback(false)", error = null)
+    fun `Given failed auth without error when getExternalAuth then evaluates callback only`() = runTest {
+        val authPayload = AuthPayload(callback = "externalAuthSetToken", force = false)
+        val authResult = ExternalAuthResult.Failed(callbackScript = "externalAuthSetToken(false)", error = null)
 
         coEvery { sessionManager.getExternalAuth(1, authPayload) } returns authResult
-        coEvery { externalBusRepository.evaluateScript("authCallback(false)") } returns null
+        coEvery { externalBusRepository.evaluateScript("externalAuthSetToken(false)") } returns null
         every { externalBusRepository.incomingMessages() } returns emptyFlow()
 
-        handler.getExternalAuth(payload, serverId = 1)
+        handler.getExternalAuth(authPayload, serverId = 1)
 
-        coVerify { externalBusRepository.evaluateScript("authCallback(false)") }
+        coVerify { externalBusRepository.evaluateScript("externalAuthSetToken(false)") }
 
-        // No AuthError should be emitted - flow should have no items from auth
         handler.messageResults().test {
             expectNoEvents()
             expectNoEvents()
@@ -421,44 +416,41 @@ class FrontendMessageHandlerTest {
 
     @Test
     fun `Given force true when getExternalAuth then passes force to sessionManager`() = runTest {
-        val payload = """{"callback":"authCallback","force":true}"""
-        val authPayload = AuthPayload(callback = "authCallback", force = true)
-        val authResult = ExternalAuthResult.Success(callbackScript = "authCallback(true, {token})")
+        val authPayload = AuthPayload(callback = "externalAuthSetToken", force = true)
+        val authResult = ExternalAuthResult.Success(callbackScript = "externalAuthSetToken(true, {token})")
 
         coEvery { sessionManager.getExternalAuth(1, authPayload) } returns authResult
         coEvery { externalBusRepository.evaluateScript(any()) } returns null
 
-        handler.getExternalAuth(payload, serverId = 1)
+        handler.getExternalAuth(authPayload, serverId = 1)
 
         coVerify { sessionManager.getExternalAuth(1, authPayload) }
     }
 
     @Test
-    fun `Given valid payload and successful revoke when revokeExternalAuth then evaluates success callback`() = runTest {
-        val payload = """{"callback":"revokeCallback","force":false}"""
-        val authPayload = AuthPayload(callback = "revokeCallback", force = false)
-        val revokeResult = RevokeAuthResult.Success(callbackScript = "revokeCallback(true)")
+    fun `Given successful revoke when revokeExternalAuth then evaluates success callback`() = runTest {
+        val authPayload = AuthPayload(callback = "externalAuthRevokeToken", force = false)
+        val revokeResult = RevokeAuthResult.Success(callbackScript = "externalAuthRevokeToken(true)")
 
         coEvery { sessionManager.revokeExternalAuth(1, authPayload) } returns revokeResult
-        coEvery { externalBusRepository.evaluateScript("revokeCallback(true)") } returns null
+        coEvery { externalBusRepository.evaluateScript("externalAuthRevokeToken(true)") } returns null
 
-        handler.revokeExternalAuth(payload, serverId = 1)
+        handler.revokeExternalAuth(authPayload, serverId = 1)
 
-        coVerify { externalBusRepository.evaluateScript("revokeCallback(true)") }
+        coVerify { externalBusRepository.evaluateScript("externalAuthRevokeToken(true)") }
     }
 
     @Test
-    fun `Given valid payload and failed revoke when revokeExternalAuth then evaluates failure callback`() = runTest {
-        val payload = """{"callback":"revokeCallback","force":false}"""
-        val authPayload = AuthPayload(callback = "revokeCallback", force = false)
-        val revokeResult = RevokeAuthResult.Failed(callbackScript = "revokeCallback(false)")
+    fun `Given failed revoke when revokeExternalAuth then evaluates failure callback`() = runTest {
+        val authPayload = AuthPayload(callback = "externalAuthRevokeToken", force = false)
+        val revokeResult = RevokeAuthResult.Failed(callbackScript = "externalAuthRevokeToken(false)")
 
         coEvery { sessionManager.revokeExternalAuth(1, authPayload) } returns revokeResult
-        coEvery { externalBusRepository.evaluateScript("revokeCallback(false)") } returns null
+        coEvery { externalBusRepository.evaluateScript("externalAuthRevokeToken(false)") } returns null
 
-        handler.revokeExternalAuth(payload, serverId = 1)
+        handler.revokeExternalAuth(authPayload, serverId = 1)
 
-        coVerify { externalBusRepository.evaluateScript("revokeCallback(false)") }
+        coVerify { externalBusRepository.evaluateScript("externalAuthRevokeToken(false)") }
     }
 
     @Test
