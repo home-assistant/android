@@ -119,13 +119,21 @@ jobs:
           mock-google-services: "true"
 
       - name: Generate aboutlibraries JSON
-        run: ./gradlew :app:exportLibraryDefinitionsFullDebug :app:exportLibraryDefinitionsMinimalDebug
+        run: |
+          ./gradlew :app:exportLibraryDefinitionsFullDebug \
+            :app:exportLibraryDefinitionsMinimalDebug \
+            :automotive:exportLibraryDefinitionsFullDebug \
+            :automotive:exportLibraryDefinitionsMinimalDebug \
+            :wear:exportLibraryDefinitionsDebug
 
       - name: Check licenses
         run: |
           python3 .github/scripts/check_licenses.py \
             app/build/generated/aboutLibraries/fullDebug/res/raw/aboutlibraries.json fullDebug \
-            app/build/generated/aboutLibraries/minimalDebug/res/raw/aboutlibraries.json minimalDebug
+            app/build/generated/aboutLibraries/minimalDebug/res/raw/aboutlibraries.json minimalDebug \
+            automotive/build/generated/aboutLibraries/fullDebug/res/raw/aboutlibraries.json fullDebug \
+            automotive/build/generated/aboutLibraries/minimalDebug/res/raw/aboutlibraries.json minimalDebug \
+            wear/build/generated/aboutLibraries/debug/res/raw/aboutlibraries.json wear
 
   ktlint:
     needs: [license_check, yamllint, validate_localize_setup]
