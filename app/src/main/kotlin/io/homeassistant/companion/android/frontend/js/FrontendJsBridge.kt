@@ -32,6 +32,14 @@ import kotlinx.serialization.modules.plus
 import timber.log.Timber
 
 /**
+ * Current state of the frontend.
+ *
+ * @property serverId The current server ID for authentication and version checks
+ * @property url The current URL for V2 origin validation, or `null` if not yet resolved
+ */
+data class BridgeState(val serverId: Int, val url: String?)
+
+/**
  * Parsed message received from the Home Assistant frontend via the JavaScript bridge.
  *
  * Both V1 and V2 protocols convert their raw input into a [BridgeMessage] variant
@@ -101,16 +109,14 @@ private val bridgeMessageJson = Json(frontendExternalBusJson) {
  *
  * @param handler Handler that processes the JavaScript callbacks asynchronously
  * @param serverManager Used to check server version for V2 protocol support
- * @param serverIdProvider Provides the current server ID for authentication operations
  * @param scope Coroutine scope for launching async operations from synchronous JS calls
- * @param currentUrlProvider Provides the current URL for V2 origin validation
+ * @param stateProvider Provides the current server ID and URL from the ViewModel state
  */
 class FrontendJsBridge @AssistedInject constructor(
     private val handler: FrontendMessageHandler,
     private val serverManager: ServerManager,
-    @Assisted private val serverIdProvider: () -> Int,
     @Assisted private val scope: CoroutineScope,
-    @Assisted private val currentUrlProvider: () -> String?,
+    @Assisted private val stateProvider: () -> BridgeState,
 ) : FrontendJsCallback {
 
     /**
@@ -125,7 +131,7 @@ class FrontendJsBridge @AssistedInject constructor(
      */
     @SuppressLint("RequiresFeature")
     override suspend fun attachToWebView(webView: WebView) {
-        val useV2 = serverManager.getServer(serverIdProvider()).isServerSupportingExternalAppV2()
+        val useV2 = serverManager.getServer(stateProvider().serverId).isServerSupportingExternalAppV2()
         val webMessageListenerSupported = WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)
         if (useV2 && webMessageListenerSupported) {
             webView.removeJavascriptInterface(EXTERNAL_APP_V1)
@@ -154,7 +160,7 @@ class FrontendJsBridge @AssistedInject constructor(
                     ) {
                         return@launch
                     }
-                    handler.getExternalAuth(message.payload, serverIdProvider())
+                    handler.getExternalAuth(message.payload, stateProvider().serverId)
                 }
 
                 is BridgeMessage.RevokeExternalAuth -> {
@@ -164,15 +170,17 @@ class FrontendJsBridge @AssistedInject constructor(
                     ) {
                         return@launch
                     }
-                    handler.revokeExternalAuth(message.payload, serverIdProvider())
+                    handler.revokeExternalAuth(message.payload, stateProvider().serverId)
                 }
 
                 is BridgeMessage.ExternalBus -> handler.externalBus(message.payload)
 
                 is BridgeMessage.Unknown -> FailFast.fail {
-                    "Unknown bridge message type '${message.discriminator}' content ${sensitive {
-                        message.content.toString()
-                    }}"
+                    "Unknown bridge message type '${message.discriminator}' content ${
+                        sensitive {
+                            message.content.toString()
+                        }
+                    }"
                 }
             }
         }
@@ -232,8 +240,15 @@ class FrontendJsBridge @AssistedInject constructor(
                 Timber.w("Ignored message from iframe")
                 return@addWebMessageListener
             }
-            if (!sourceOrigin.hasSameOrigin(currentUrlProvider()?.toUri())) {
-                Timber.w("Ignored message from unexpected origin: ${sensitive(sourceOrigin.toString())}")
+            val currentUri = stateProvider().url?.toUri()
+            if (!sourceOrigin.hasSameOrigin(currentUri)) {
+                Timber.w(
+                    "Ignored message from unexpected origin: ${sensitive(sourceOrigin.toString())} current ${
+                        sensitive {
+                            currentUri.toString()
+                        }
+                    }",
+                )
                 return@addWebMessageListener
             }
 
@@ -303,7 +318,7 @@ class FrontendJsBridge @AssistedInject constructor(
          *
          * V2 was introduced in Home Assistant 2026.4.2.
          */
-        fun Server?.isServerSupportingExternalAppV2(): Boolean = this?.version?.isAtLeast(2026, 4, 2) == true
+        fun Server?.isServerSupportingExternalAppV2(): Boolean = this?.version?.isAtLeast(2026, 4, 0) == true
 
         /** A no-op implementation for use in tests and previews. */
         val noOp = object : FrontendJsCallback {
@@ -323,9 +338,8 @@ interface FrontendJsBridgeFactory {
     /**
      * Creates a new [FrontendJsBridge].
      *
-     * @param serverIdProvider Provides the current server ID for authentication operations
      * @param scope Coroutine scope for launching async operations from synchronous JS calls
-     * @param currentUrlProvider Provides the current URL for V2 origin validation
+     * @param stateProvider Provides the current server ID and URL from the ViewModel state
      */
-    fun create(serverIdProvider: () -> Int, scope: CoroutineScope, currentUrlProvider: () -> String?): FrontendJsBridge
+    fun create(scope: CoroutineScope, stateProvider: () -> BridgeState): FrontendJsBridge
 }

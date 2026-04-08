@@ -60,14 +60,13 @@ class FrontendJsBridgeTest {
     }
 
     private fun createBridge(
-        serverIdProvider: () -> Int = { serverId },
+        stateProvider: () -> BridgeState = { BridgeState(serverId = serverId, url = serverUrl) },
         scope: TestScope,
     ) = FrontendJsBridge(
         handler = handler,
         serverManager = serverManager,
-        serverIdProvider = serverIdProvider,
         scope = scope,
-        currentUrlProvider = { serverUrl },
+        stateProvider = stateProvider,
     )
 
     private fun mockGetServer(version: String?) {
@@ -258,7 +257,10 @@ class FrontendJsBridgeTest {
         @EnumSource(BridgeVersion::class)
         fun `Given changing serverId then uses current serverId each time`(bridgeVersion: BridgeVersion) = runTest {
             var currentServerId = 1
-            val bridge = createBridge(serverIdProvider = { currentServerId }, scope = this)
+            val bridge = createBridge(
+                stateProvider = { BridgeState(serverId = currentServerId, url = serverUrl) },
+                scope = this,
+            )
             val invoke = attach(bridge, bridgeVersion)
             val payload = """{"callback":"externalAuthSetToken","force":false}"""
             val expectedPayload = AuthPayload(callback = "externalAuthSetToken", force = false)

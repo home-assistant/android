@@ -15,6 +15,7 @@ import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
 import io.homeassistant.companion.android.frontend.handler.FrontendMessageHandler
+import io.homeassistant.companion.android.frontend.js.BridgeState
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridgeFactory
 import io.homeassistant.companion.android.frontend.js.FrontendJsCallback
 import io.homeassistant.companion.android.frontend.navigation.FrontendNavigationEvent
@@ -160,9 +161,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      * Must be attached to the WebView via [io.homeassistant.companion.android.frontend.js.FrontendJsBridge.attachToWebView].
      */
     val frontendJsCallback: FrontendJsCallback = frontendJsBridgeFactory.create(
-        serverIdProvider = { viewState.value.serverId },
         scope = viewModelScope,
-        currentUrlProvider = { urlFlow.value },
+        stateProvider = { BridgeState(serverId = viewState.value.serverId, url = viewState.value.url) },
     )
 
     val webViewClient: HAWebViewClient = webViewClientFactory.create(
