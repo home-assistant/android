@@ -58,7 +58,6 @@ class ConnectionViewModelTest {
             create(
                 currentUrlFlow = any<StateFlow<String?>>(),
                 onFrontendError = any(),
-                frontendJsCallback = any(),
                 onCrash = any(),
                 onUrlIntercepted = any(),
                 onPageFinished = any(),
@@ -68,10 +67,9 @@ class ConnectionViewModelTest {
                 keyChainRepository = keyChainRepository,
                 currentUrlFlow = firstArg(),
                 onFrontendError = secondArg(),
-                frontendJsCallback = thirdArg(),
-                onCrash = arg(3),
-                onUrlIntercepted = arg(4),
-                onPageFinished = arg(5),
+                onCrash = thirdArg(),
+                onUrlIntercepted = arg(3),
+                onPageFinished = arg(4),
             )
         }
     }
