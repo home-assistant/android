@@ -121,6 +121,11 @@ import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
+import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.EXPECTED_GET_AUTH_CALLBACK
+import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.EXPECTED_REVOKE_AUTH_CALLBACK
+import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.EXTERNAL_APP_V1
+import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.EXTERNAL_APP_V2_LISTENER
+import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.isServerSupportingExternalAppV2
 import io.homeassistant.companion.android.improv.ui.ImprovPermissionDialog
 import io.homeassistant.companion.android.improv.ui.ImprovSetupDialog
 import io.homeassistant.companion.android.launch.LaunchActivity
@@ -174,18 +179,6 @@ class WebViewActivity :
         const val EXTRA_PATH = "path"
         const val EXTRA_SERVER = "server"
         const val EXTRA_SHOW_WHEN_LOCKED = "show_when_locked"
-
-        private const val EXTERNAL_APP_V1 = "externalApp"
-        private const val EXTERNAL_APP_V2_LISTENER = "externalAppV2"
-
-        /**
-         * Expected callback names for external authentication.
-         *
-         * The frontend sends a dynamic callback name in its requests, but the app
-         * only allows these hardcoded values.
-         */
-        private const val GET_AUTH_CALLBACK = "externalAuthSetToken"
-        private const val REVOKE_AUTH_CALLBACK = "externalAuthRevokeToken"
 
         private const val APP_PREFIX = "app://"
         private const val INTENT_PREFIX = "intent:"
@@ -869,7 +862,9 @@ class WebViewActivity :
      */
     @SuppressLint("RequiresFeature")
     private suspend fun webViewAddJavascriptInterface() {
-        if (isServerSupportingExternalAppV2() &&
+        val isServerSupportingExternalAppV2 =
+            serverManager.getServer(presenter.getActiveServer()).isServerSupportingExternalAppV2()
+        if (isServerSupportingExternalAppV2 &&
             WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)
         ) {
             webView.removeJavascriptInterface(EXTERNAL_APP_V1)
@@ -965,34 +960,38 @@ class WebViewActivity :
     /**
      * Validates and handles a `getExternalAuth` request from either V1 or V2 bridge.
      *
-     * Rejects requests whose callback name does not match the expected [GET_AUTH_CALLBACK].
+     * Rejects requests whose callback name does not match the expected [EXPECTED_GET_AUTH_CALLBACK].
      */
     private fun handleGetExternalAuth(payload: JsonObject?) {
         val callback = payload?.getStringOrNull("callback") ?: ""
-        if (callback == GET_AUTH_CALLBACK) {
-            presenter.onGetExternalAuth(
-                this,
-                callback,
-                force = payload?.getBooleanOrNull("force") ?: false,
-            )
-        } else {
-            Timber.w("Aborting getExternalAuth callback is not the one expected ($GET_AUTH_CALLBACK)")
+        if (FailFast.failWhen(callback != EXPECTED_GET_AUTH_CALLBACK) {
+                "Aborting getExternalAuth: callback '$callback' does not match expected '$EXPECTED_GET_AUTH_CALLBACK'"
+            }
+        ) {
+            return
         }
+        presenter.onGetExternalAuth(
+            this,
+            callback,
+            force = payload?.getBooleanOrNull("force") ?: false,
+        )
     }
 
     /**
      * Validates and handles a `revokeExternalAuth` request from either V1 or V2 bridge.
      *
-     * Rejects requests whose callback name does not match the expected [REVOKE_AUTH_CALLBACK].
+     * Rejects requests whose callback name does not match the expected [EXPECTED_REVOKE_AUTH_CALLBACK].
      */
     private fun handleRevokeExternalAuth(payload: JsonObject?) {
         val callback = payload?.getStringOrNull("callback") ?: ""
-        if (callback == REVOKE_AUTH_CALLBACK) {
-            presenter.onRevokeExternalAuth(callback)
-            isRelaunching = true
-        } else {
-            Timber.w("Aborting revokeExternalAuth callback is not the one expected ($REVOKE_AUTH_CALLBACK)")
+        if (FailFast.failWhen(callback != EXPECTED_REVOKE_AUTH_CALLBACK) {
+                "Aborting revokeExternalAuth: callback '$callback' does not match expected '$EXPECTED_REVOKE_AUTH_CALLBACK'"
+            }
+        ) {
+            return
         }
+        presenter.onRevokeExternalAuth(callback)
+        isRelaunching = true
     }
 
     /**
@@ -1671,12 +1670,6 @@ class WebViewActivity :
             }
         }
     }
-
-    /**
-     * Whether the active server supports the `externalAppV2` bridge (>= 2026.4.2).
-     */
-    private suspend fun isServerSupportingExternalAppV2(): Boolean =
-        serverManager.getServer(presenter.getActiveServer())?.version?.isAtLeast(2026, 4, 2) == true
 
     override fun showConnectionSecurityLevel(serverId: Int) {
         // Skip if already showing ConnectionSecurityLevelFragment to avoid blinking
