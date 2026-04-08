@@ -15,6 +15,8 @@ import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
 import io.homeassistant.companion.android.frontend.handler.FrontendMessageHandler
+import io.homeassistant.companion.android.frontend.js.FrontendJsBridgeFactory
+import io.homeassistant.companion.android.frontend.js.FrontendJsCallback
 import io.homeassistant.companion.android.frontend.navigation.FrontendNavigationEvent
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
@@ -65,6 +67,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val urlManager: FrontendUrlManager,
     private val connectivityCheckRepository: ConnectivityCheckRepository,
     private val permissionManager: PermissionManager,
+    private val frontendJsBridgeFactory: FrontendJsBridgeFactory,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -76,6 +79,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         urlManager: FrontendUrlManager,
         connectivityCheckRepository: ConnectivityCheckRepository,
         permissionManager: PermissionManager,
+        frontendJsBridgeFactory: FrontendJsBridgeFactory,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
         initialPath = savedStateHandle.toRoute<FrontendRoute>().path,
@@ -84,6 +88,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         urlManager = urlManager,
         connectivityCheckRepository = connectivityCheckRepository,
         permissionManager = permissionManager,
+        frontendJsBridgeFactory = frontendJsBridgeFactory,
     )
 
     /**
@@ -152,18 +157,17 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     /**
      * JavaScript bridge for communication between the WebView and native code.
      *
-     * Must be attached to the WebView via [FrontendJsBridge.attachToWebView].
+     * Must be attached to the WebView via [io.homeassistant.companion.android.frontend.js.FrontendJsBridge.attachToWebView].
      */
-    val frontendJsCallback: FrontendJsCallback = FrontendJsBridge(
-        handler = frontendMessageHandler,
+    val frontendJsCallback: FrontendJsCallback = frontendJsBridgeFactory.create(
         serverIdProvider = { viewState.value.serverId },
         scope = viewModelScope,
+        currentUrlProvider = { urlFlow.value },
     )
 
     val webViewClient: HAWebViewClient = webViewClientFactory.create(
         currentUrlFlow = urlFlow,
         onFrontendError = ::onError,
-        frontendJsCallback = frontendJsCallback,
         onCrash = ::onRetry,
     )
 
