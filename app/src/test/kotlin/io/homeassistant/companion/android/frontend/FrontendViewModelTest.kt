@@ -278,22 +278,20 @@ class FrontendViewModelTest {
     inner class DerivedFlows {
 
         @Test
-        fun `Given url manager returns success when urlFlow is subscribed then urlFlow value matches viewState url`() = runTest {
+        fun `Given url manager returns success then urlFlow value matches viewState url without subscribers`() = runTest {
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
             val viewModel = createViewModel()
-
-            val job = backgroundScope.launch { viewModel.urlFlow.collect {} }
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
 
+            // No collector on urlFlow — value must still be up to date (SharingStarted.Eagerly)
             assertEquals(testUrlWithAuth, viewModel.urlFlow.value)
-            job.cancel()
         }
 
         @Test
-        fun `Given error state then errorFlow value matches viewState error`() = runTest {
+        fun `Given error state then errorFlow value matches viewState error without subscribers`() = runTest {
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.ServerNotFound(serverId),
             )
