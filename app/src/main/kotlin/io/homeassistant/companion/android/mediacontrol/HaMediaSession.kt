@@ -278,7 +278,6 @@ class HaMediaSession @AssistedInject constructor(
         try {
             val request = ImageRequest.Builder(context)
                 .data(url)
-                .size(ARTWORK_SIZE_PX)
                 .allowHardware(false)
                 .build()
             val result = context.imageLoader.execute(request)
@@ -318,10 +317,6 @@ class HaMediaSession @AssistedInject constructor(
 
     private companion object {
         val OBSERVATION_RETRY_DELAY = 5.seconds
-
-        // 512px is the recommended size for MediaSession artwork per Android guidelines:
-        // https://developer.android.com/media/media3/session/now-playing#set-artwork
-        const val ARTWORK_SIZE_PX = 512
 
         const val ACTION_MEDIA_PLAY = "media_play"
         const val ACTION_MEDIA_PAUSE = "media_pause"
