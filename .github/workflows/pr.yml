@@ -13,6 +13,54 @@ permissions:
   contents: read
 
 jobs:
+  validate_localize_setup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check for Lokalise setup changes
+        id: changes
+        shell: bash
+        run: |
+          if git diff --name-only "origin/main...HEAD" -- '.github/actions/download-translations/' | grep -q .; then
+            echo "Lokalise setup changes detected"
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "No Lokalise setup changes detected, skipping validation"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: ./.github/actions/download-translations
+        if: steps.changes.outputs.skip != 'true'
+        name: Download Translations
+        with:
+          lokalise-project: ${{ secrets.LOKALISE_PROJECT }}
+          lokalise-token: ${{ secrets.LOKALISE_TOKEN }}
+
+      - name: Validate French translation is not empty
+        if: steps.changes.outputs.skip != 'true'
+        shell: bash
+        run: |
+          FR_FILE="common/src/main/res/values-fr/strings.xml"
+          if [ ! -f "$FR_FILE" ]; then
+            echo "::error::French translation file not found at $FR_FILE"
+            exit 1
+          fi
+          if ! grep -q '<string ' "$FR_FILE"; then
+            echo "::error::French translation file exists but contains no string entries"
+            exit 1
+          fi
+
+      - name: Archive Translations
+        if: steps.changes.outputs.skip != 'true'
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: strings
+          path: strings.zip
+
   yamllint:
     runs-on: ubuntu-latest
     steps:
@@ -58,7 +106,7 @@ jobs:
           fi
 
   ktlint:
-    needs: [yamllint]
+    needs: [yamllint, validate_localize_setup]
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -254,23 +302,23 @@ jobs:
             arch: x86_64
             profile: "Nexus 5"
             target: "google_apis"
-            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest :microfrontend:connectedDebugAndroidTest"
+            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest :microwakeword:connectedDebugAndroidTest"
           - api-level: 36
             arch: x86_64
             profile: "pixel_7"
             target: "google_apis"
-            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest :microfrontend:connectedDebugAndroidTest"
+            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest :microwakeword:connectedDebugAndroidTest"
           - api-level: 33
             arch: x86_64
             profile: "automotive_1024p_landscape"
             target: "android-automotive"
-            gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest :microfrontend:connectedDebugAndroidTest"
+            gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest :microwakeword:connectedDebugAndroidTest"
           - api-level: "34"
             system-image-api-level: "34-ext9"
             arch: x86_64
             profile: "automotive_1024p_landscape"
             target: "android-automotive"
-            gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest :microfrontend:connectedDebugAndroidTest"
+            gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest :microwakeword:connectedDebugAndroidTest"
           - api-level: 26
             arch: x86
             profile: "wearos_square"
@@ -280,7 +328,7 @@ jobs:
             arch: x86_64
             profile: "wearos_small_round"
             target: "android-wear"
-            gradle_target: ":wear:connectedDebugAndroidTest :common:connectedDebugAndroidTest :microfrontend:connectedDebugAndroidTest"
+            gradle_target: ":wear:connectedDebugAndroidTest :common:connectedDebugAndroidTest :microwakeword:connectedDebugAndroidTest"
     steps:
       - name: Delete unnecessary tools 🔧
         uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1

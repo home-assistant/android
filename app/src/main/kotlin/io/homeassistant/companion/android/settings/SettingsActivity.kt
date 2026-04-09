@@ -7,6 +7,7 @@ import android.os.Parcelable
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.viewModels
 import androidx.biometric.BiometricManager
 import androidx.core.content.IntentCompat
 import androidx.fragment.app.commit
@@ -33,7 +34,6 @@ import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFra
 import io.homeassistant.companion.android.util.applySafeDrawingInsets
 import javax.inject.Inject
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.parcelize.Parcelize
 import timber.log.Timber
 
@@ -44,6 +44,8 @@ class SettingsActivity : BaseActivity() {
 
     @Inject
     lateinit var serverManager: ServerManager
+
+    private val viewModel: AppLockViewModel by viewModels()
 
     private lateinit var authenticator: Authenticator
     private lateinit var blurView: BlurView
@@ -210,19 +212,10 @@ class SettingsActivity : BaseActivity() {
      */
     private suspend fun isAppLocked(): Boolean {
         val serverFragment = supportFragmentManager.findFragmentByTag(ServerSettingsFragment.TAG)
-        val serverLocked = serverFragment?.let { isAppLocked((it as ServerSettingsFragment).getServerId()) } ?: false
-        return serverLocked || isAppLocked(ServerManager.SERVER_ID_ACTIVE)
-    }
-
-    suspend fun isAppLocked(serverId: Int?): Boolean {
-        return serverManager.getServer(serverId ?: ServerManager.SERVER_ID_ACTIVE)?.let {
-            try {
-                serverManager.integrationRepository(it.id).isAppLocked()
-            } catch (e: IllegalArgumentException) {
-                Timber.w(e, "Cannot determine app locked state")
-                false
-            }
+        val serverLocked = serverFragment?.let {
+            viewModel.isAppLocked((it as ServerSettingsFragment).getServerId())
         } ?: false
+        return serverLocked || viewModel.isAppLocked(ServerManager.SERVER_ID_ACTIVE)
     }
 
     /**
@@ -231,19 +224,8 @@ class SettingsActivity : BaseActivity() {
      */
     private fun setAppActive(active: Boolean) {
         val serverFragment = supportFragmentManager.findFragmentByTag(ServerSettingsFragment.TAG)
-        serverFragment?.let { setAppActive((it as ServerSettingsFragment).getServerId(), active) }
-        setAppActive(ServerManager.SERVER_ID_ACTIVE, active)
-    }
-
-    // TODO remove runBlocking https://github.com/home-assistant/android/issues/5688
-    fun setAppActive(serverId: Int?, active: Boolean) = runBlocking {
-        serverManager.getServer(serverId ?: ServerManager.SERVER_ID_ACTIVE)?.let {
-            try {
-                serverManager.integrationRepository(it.id).setAppActive(active)
-            } catch (e: IllegalArgumentException) {
-                Timber.w(e, "Cannot set app active $active for server $serverId")
-            }
-        }
+        serverFragment?.let { viewModel.setAppActive((it as ServerSettingsFragment).getServerId(), active) }
+        viewModel.setAppActive(ServerManager.SERVER_ID_ACTIVE, active)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

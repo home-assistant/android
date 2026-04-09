@@ -64,21 +64,22 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
             onWakeWordDetected = ::onWakeWordDetected,
             onListenerReady = ::onListenerReady,
             onListenerStopped = ::onListenerStopped,
-            onListenerFailed = ::onListenerFailed,
         )
     }
     private var isServiceReady = false
 
-    private val actionReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            handleAction(intent.action)
-        }
-    }
+    /** Non-null only while the receiver is registered (between [onReady] and [onShutdown]). */
+    private var actionReceiver: BroadcastReceiver? = null
 
     override fun onReady() {
         super.onReady()
         isServiceReady = true
         Timber.d("VoiceInteractionService is ready")
+        actionReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                handleAction(intent.action)
+            }
+        }
         ContextCompat.registerReceiver(
             this,
             actionReceiver,
@@ -103,7 +104,8 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         super.onShutdown()
         isServiceReady = false
         Timber.d("VoiceInteractionService is shutting down")
-        unregisterReceiver(actionReceiver)
+        actionReceiver?.let(::unregisterReceiver)
+        actionReceiver = null
         // Don't use stopListening() as it launches a coroutine that may not complete before cancel
         serviceScope.cancel()
     }
@@ -139,10 +141,6 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
      */
     @SuppressLint("MissingPermission")
     private fun startListening() {
-        if (!assistConfigManager.isWakeWordSupported()) {
-            Timber.d("Wake word detection is not supported on this device")
-            return
-        }
         if (!hasRecordAudioPermission()) {
             Timber.w("RECORD_AUDIO permission not granted, cannot start listening")
             return
@@ -181,14 +179,6 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
 
     private fun onListenerStopped() {
         stopForegroundCompat()
-    }
-
-    private fun onListenerFailed() {
-        serviceScope.launch {
-            Timber.w("Wake word listener failed, disabling wake word to prevent issue")
-            @SuppressLint("MissingPermission")
-            assistConfigManager.setWakeWordEnabled(false)
-        }
     }
 
     /**

@@ -11,6 +11,7 @@ import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalB
 import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConfigGetMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConnectionStatusMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.IncomingExternalBusMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistSettingsMessage
@@ -181,6 +182,10 @@ class FrontendMessageHandler @Inject constructor(
             is ThemeUpdateMessage -> {
                 Timber.d("Theme update received")
                 FrontendHandlerEvent.ThemeUpdated
+            }
+
+            is HapticMessage -> {
+                FrontendHandlerEvent.PerformHaptic(message.payload)
             }
 
             is UnknownIncomingMessage -> {

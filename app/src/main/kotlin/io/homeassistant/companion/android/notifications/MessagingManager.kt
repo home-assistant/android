@@ -44,6 +44,7 @@ import androidx.core.graphics.scale
 import androidx.core.net.toUri
 import androidx.core.text.isDigitsOnly
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.R as commonR
@@ -67,6 +68,7 @@ import io.homeassistant.companion.android.common.notifications.parseVibrationPat
 import io.homeassistant.companion.android.common.notifications.prepareText
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.getActiveNotification
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.common.util.toJsonObject
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
@@ -1173,21 +1175,21 @@ class MessagingManager @Inject constructor(
         data: Map<String, String>,
     ): Boolean {
         if (data[CAR_UI]?.toBoolean() == true && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val carIntent = Intent(Intent.ACTION_VIEW).apply {
-                component = ComponentName(context, HaCarAppService::class.java)
+            val carExtender = CarAppExtender.Builder()
+            if (context.isAutomotive() || BuildConfig.FLAVOR == "full") {
+                val carIntent = Intent(Intent.ACTION_VIEW).apply {
+                    component = ComponentName(context, HaCarAppService::class.java)
+                }
+                carExtender.setContentIntent(
+                    CarPendingIntent.getCarApp(
+                        context,
+                        carIntent.hashCode(),
+                        carIntent,
+                        PendingIntent.FLAG_IMMUTABLE,
+                    ),
+                )
             }
-            builder.extend(
-                CarAppExtender.Builder()
-                    .setContentIntent(
-                        CarPendingIntent.getCarApp(
-                            context,
-                            carIntent.hashCode(),
-                            carIntent,
-                            PendingIntent.FLAG_IMMUTABLE,
-                        ),
-                    )
-                    .build(),
-            )
+            builder.extend(carExtender.build())
             return true
         }
         return false

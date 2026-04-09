@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.frontend.externalbus
 
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.externalbus.incoming.IncomingExternalBusMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.OutgoingExternalBusMessage
 import io.homeassistant.companion.android.util.sensitive
@@ -26,6 +27,7 @@ private const val BUFFER_CAPACITY = 10
 val frontendExternalBusJson = Json(kotlinJsonMapper) {
     namingStrategy = null
     serializersModule += IncomingExternalBusMessage.serializersModule
+    serializersModule += HapticType.serializersModule
 }
 
 /**

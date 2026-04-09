@@ -10,36 +10,34 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Get Translations
-      id: translations
+    - name: Pull from Lokalise
+      uses: lokalise/lokalise-pull-action@a4968e06b7f44c32317b162d825ed17abb5772d0 # v5.0.1
+      with:
+        api_token: ${{ inputs.lokalise-token }}
+        project_id: ${{ inputs.lokalise-project }}
+        custom_github_token: "FAKE_GH_TOKEN"
+        file_format: xml
+        async_mode: true
+        skip_include_tags: true
+        skip_original_filenames: true
+        additional_params: |
+          original_filenames: false
+          bundle_structure: common/src/main/res/values-%LANG_ISO%/strings.%FORMAT%
+          add_newline_eof: true
+          replace_breaks: true
+          export_empty_as: skip
+
+    # Source strings (English) are managed in git, not Lokalise.
+    # Restore the file in case Lokalise overwrote it.
+    - name: Revert source strings to git version
       shell: bash
-      env:
-        LOKALISE_PROJECT: ${{ inputs.lokalise-project }}
-        LOKALISE_TOKEN: ${{ inputs.lokalise-token }}
       run: |
-        ZIP=`\
-          curl --location --request POST "https://api.lokalise.com/api2/projects/${LOKALISE_PROJECT}/files/download" \
-            --header "X-Api-Token: ${LOKALISE_TOKEN}" \
-            --header 'Content-Type: application/json' \
-            --data-raw '{
-                "format": "xml",
-                "original_filenames": false,
-                "bundle_structure": "common/src/main/res/values-%LANG_ISO%/strings.%FORMAT%",
-                "add_newline_eof": true,
-                "replace_breaks": true,
-                "export_empty_as": "skip"
-            }' \
-          | jq -r '.bundle_url' \
-        `
+        git checkout common/src/main/res/values/strings.xml
+        git status
 
-        echo "Download Ready: $ZIP"
-
-        curl "$ZIP" --output strings.zip
-
-        echo "Download Complete, unzipping"
-        unzip -n strings.zip
-        echo "Unzipped strings, generating locales_config.xml"
-
+    - name: Generate locales_config.xml
+      shell: bash
+      run: |
         XML_START='<?xml version="1.0" encoding="utf-8"?>\n<locale-config xmlns:android="http://schemas.android.com/apk/res/android">\n'
         XML_LOCALES=''
         XML_END='</locale-config>'
@@ -54,3 +52,8 @@ runs:
         printf "$XML_START$XML_LOCALES$XML_END" > wear/src/main/res/xml/locales_config.xml
 
         echo "Complete"
+
+    - name: Zip Translations
+      shell: bash
+      run: zip -r strings.zip common/src/main/res/values/strings.xml common/src/main/res/values-*/strings.xml
+

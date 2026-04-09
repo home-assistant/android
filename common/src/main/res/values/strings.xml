@@ -573,7 +573,7 @@
     <string name="search_refine_for_more">Refine your search to view more…</string>
     <string name="search_results">Search results</string>
     <string name="search_sensors">Search sensors</string>
-    <string name="security_vulnerably_message">Your version of Home Assistant does not protect for recently discovered security vulnerabilities in custom components. Please view the details via the bulletin and update as soon as possible.</string>
+    <string name="security_vulnerably_message">Your version of Home Assistant does not protect for recently discovered security vulnerabilities in community integrations. Please view the details via the bulletin and update as soon as possible.</string>
     <string name="security_vulnerably_title">Security vulnerability warning</string>
     <string name="security_vulnerably_understand">I understand</string>
     <string name="security_vulnerably_view">View bulletin</string>
@@ -998,7 +998,7 @@
     <string name="widget_button_image_description">Action button</string>
     <string name="widget_camera_description">Picture widget</string>
     <string name="widget_camera_contentdescription">Image</string>
-    <string name="widget_config_action_error">A custom component is preventing action data from loading.</string>
+    <string name="widget_config_action_error">A community integration is preventing action data from loading.</string>
     <string name="widget_creation_error">Unable to create widget.</string>
     <string name="widget_entity_fetch_error">Unable to fetch data for configured entity.</string>
     <string name="widget_label_placeholder_text_button">Toggle</string>
@@ -1228,8 +1228,6 @@
     <string name="assist_wake_word_test_hint">Say \"%s\" to test</string>
     <string name="assist_wake_word_detected">Wake word detected!</string>
     <string name="assist_wake_word_battery_warning">Wake word detection runs entirely on your device, no network connection required. It continuously listens for your wake word, which will increase battery usage.</string>
-    <string name="assist_wake_word_unsupported_device">Wake word detection is not available on this device due to hardware limitations.</string>
-    <string name="assist_wake_word_missing_play_services">Google Play Services is required to enable wake word detection.</string>
     <string name="assist_permission_microphone_required">Requires \'Microphone\' permission</string>
     <string name="not_registered">Please open the Home Assistant app and log in to start using Assist</string>
     <string name="ha_assist">HA: Assist</string>

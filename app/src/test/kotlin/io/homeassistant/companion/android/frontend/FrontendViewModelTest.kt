@@ -4,6 +4,7 @@ import io.homeassistant.companion.android.common.data.connectivity.ConnectivityC
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
+import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
 import io.homeassistant.companion.android.frontend.handler.FrontendMessageHandler
 import io.homeassistant.companion.android.frontend.navigation.FrontendNavigationEvent
@@ -491,6 +492,33 @@ class FrontendViewModelTest {
             advanceUntilIdle()
 
             assertTrue(navigationEvents.any { it is FrontendNavigationEvent.NavigateToSettings })
+            job.cancel()
+        }
+
+        @Test
+        fun `Given haptic message when collected then hapticEvents emits the type`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { externalBusHandler.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+
+            val hapticEvents = mutableListOf<HapticType>()
+            val job = backgroundScope.launch { viewModel.hapticEvents.collect { hapticEvents.add(it) } }
+
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            messageFlow.emit(FrontendHandlerEvent.PerformHaptic(HapticType.Success))
+            messageFlow.emit(FrontendHandlerEvent.PerformHaptic(HapticType.Light))
+            messageFlow.emit(FrontendHandlerEvent.PerformHaptic(HapticType.Heavy))
+            advanceUntilIdle()
+
+            assertEquals(3, hapticEvents.size)
+            assertEquals(HapticType.Success, hapticEvents[0])
+            assertEquals(HapticType.Light, hapticEvents[1])
+            assertEquals(HapticType.Heavy, hapticEvents[2])
             job.cancel()
         }
 

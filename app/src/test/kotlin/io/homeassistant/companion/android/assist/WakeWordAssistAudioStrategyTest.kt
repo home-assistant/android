@@ -81,14 +81,16 @@ class WakeWordAssistAudioStrategyTest {
     }
 
     @Test
-    fun `Given strategy When requestFocus called Then does nothing`() {
-        // Should not throw
+    fun `Given no audio manager When requestFocus called Then does not throw`() {
+        // AudioFocusHelper with null audioManager is a safe no-op.
+        // Full focus behavior is tested in AudioFocusHelperTest.
         strategy.requestFocus()
     }
 
     @Test
-    fun `Given strategy When abandonFocus called Then does nothing`() {
-        // Should not throw
+    fun `Given no audio manager When abandonFocus called Then does not throw`() {
+        // AudioFocusHelper with null audioManager is a safe no-op.
+        // Full focus behavior is tested in AudioFocusHelperTest.
         strategy.abandonFocus()
     }
 

@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Configuration for the VoiceInteractionService -->
+<!-- recognitionService is required by the framework metadata parser even though wake-word logic stays in the VoiceInteractionService. -->
 <voice-interaction-service xmlns:android="http://schemas.android.com/apk/res/android"
     android:sessionService="io.homeassistant.companion.android.assist.service.AssistVoiceInteractionSessionService"
-    android:recognitionService="io.homeassistant.companion.android.assist.service.AssistVoiceInteractionSessionService"
+    android:recognitionService="io.homeassistant.companion.android.assist.service.AssistRecognitionService"
     android:supportsAssist="true"
     android:supportsLaunchVoiceAssistFromKeyguard="true"
     android:settingsActivity="io.homeassistant.companion.android.settings.SettingsActivity" />

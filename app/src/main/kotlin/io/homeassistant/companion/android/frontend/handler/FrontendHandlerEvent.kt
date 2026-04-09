@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.frontend.handler
 
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
+import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 
 /**
  * Events emitted by [FrontendMessageHandler].
@@ -44,6 +45,11 @@ sealed interface FrontendHandlerEvent {
      * Frontend theme changed (colors, dark mode, etc.).
      */
     data object ThemeUpdated : FrontendHandlerEvent
+
+    /**
+     * Frontend requested haptic feedback.
+     */
+    data class PerformHaptic(val hapticType: HapticType) : FrontendHandlerEvent
 
     /**
      * Received an unrecognized message type from the frontend.

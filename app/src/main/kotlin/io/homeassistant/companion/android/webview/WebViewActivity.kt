@@ -16,13 +16,10 @@ import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
-import android.os.VibrationEffect
-import android.os.Vibrator
 import android.text.method.HideReturnsTransformationMethod
 import android.text.method.PasswordTransformationMethod
 import android.util.DisplayMetrics
 import android.util.Rational
-import android.view.HapticFeedbackConstants
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
@@ -123,6 +120,8 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
+import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
+import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
 import io.homeassistant.companion.android.improv.ui.ImprovPermissionDialog
 import io.homeassistant.companion.android.improv.ui.ImprovSetupDialog
 import io.homeassistant.companion.android.launch.LaunchActivity
@@ -156,12 +155,15 @@ import io.homeassistant.companion.android.webview.externalbus.NavigateTo
 import io.homeassistant.companion.android.webview.externalbus.ShowSidebar
 import io.homeassistant.companion.android.webview.insecure.BlockInsecureFragment
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import org.json.JSONObject
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -1370,58 +1372,20 @@ class WebViewActivity :
     }
 
     fun processHaptic(hapticType: String) {
-        val vm = getSystemService<Vibrator>()
-
         Timber.d("Processing haptic tag for $hapticType")
-        when (hapticType) {
-            "success" -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    webView.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
-                } else {
-                    @Suppress("DEPRECATION")
-                    vm?.vibrate(500)
-                }
-            }
-
-            "warning" -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    vm?.vibrate(VibrationEffect.createOneShot(400, VibrationEffect.EFFECT_HEAVY_CLICK))
-                } else {
-                    @Suppress("DEPRECATION")
-                    vm?.vibrate(1500)
-                }
-            }
-
-            "failure" -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    webView.performHapticFeedback(HapticFeedbackConstants.REJECT)
-                } else {
-                    @Suppress("DEPRECATION")
-                    vm?.vibrate(1000)
-                }
-            }
-
-            "light" -> {
-                webView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-            }
-
-            "medium" -> {
-                webView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-            }
-
-            "heavy" -> {
-                webView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-            }
-
-            "selection" -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    webView.performHapticFeedback(HapticFeedbackConstants.GESTURE_START)
-                } else {
-                    @Suppress("DEPRECATION")
-                    vm?.vibrate(50)
-                }
-            }
-        }
+        HapticFeedbackPerformer.perform(
+            webView,
+            when (hapticType) {
+                "success" -> HapticType.Success
+                "warning" -> HapticType.Warning
+                "failure" -> HapticType.Failure
+                "light" -> HapticType.Light
+                "medium" -> HapticType.Medium
+                "heavy" -> HapticType.Heavy
+                "selection" -> HapticType.Selection
+                else -> HapticType.Unknown
+            },
+        )
     }
 
     private fun authenticationResult(result: Int) {
@@ -1978,6 +1942,8 @@ class WebViewActivity :
                     }
                     try {
                         request.addRequestHeader("Cookie", CookieManager.getInstance().getCookie(url))
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         // Cannot get cookies, probably not relevant
                     }
@@ -2008,28 +1974,42 @@ class WebViewActivity :
         }
     }
 
+    /**
+     * Triggers a blob download by fetching the blob data via XHR and passing it to the native
+     * [handleBlob] interface as a data URI. Requires the blob URL to still be valid (not yet
+     * revoked by the frontend).
+     */
     private fun triggerBlobDownload(url: String, contentDisposition: String, mimetype: String) {
-        val filename = URLUtil.guessFileName(url, contentDisposition, mimetype)
-        val jsCode = """
-        (function() {
-            var url = '$url';
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', url, true);
-            xhr.responseType = 'blob';
-            xhr.onload = function(e) {
-                if (xhr.status == 200) {
-                    var blob = xhr.response;
-                    var reader = new FileReader();
-                    reader.onloadend = function() {
-                        $javascriptInterface.handleBlob(reader.result, '$filename');
-                    };
-                    reader.readAsDataURL(blob);
-                }
-            };
-            xhr.send();
-        })();
-        """.trimIndent()
-        webView.evaluateJavascript(jsCode, null)
+        lifecycleScope.launch {
+            Timber.d("Triggering blob download for ${sensitive(url)}")
+            val fallbackFilename = withContext(Dispatchers.IO) {
+                URLUtil.guessFileName(url, contentDisposition, mimetype)
+            }
+            val safeUrl = JSONObject.quote(url)
+            val safeFallbackFilename = JSONObject.quote(fallbackFilename)
+            val jsCode = """
+                (async function() {
+                    try {
+                        const response = await fetch($safeUrl);
+                        if (!response.ok) {
+                            console.error('Blob download failed: HTTP ' + response.status + ' for ' + ${sensitive(
+                safeUrl,
+            )});
+                            return;
+                        }
+                        const blob = await response.blob();
+                        const reader = new FileReader();
+                        reader.onloadend = function() {
+                            $javascriptInterface.handleBlob(reader.result, $safeFallbackFilename);
+                        };
+                        reader.readAsDataURL(blob);
+                    } catch (e) {
+                        console.error('Blob download failed:', e);
+                    }
+                })();
+            """.trimIndent()
+            webView.evaluateJavascript(jsCode, null)
+        }
     }
 
     /**

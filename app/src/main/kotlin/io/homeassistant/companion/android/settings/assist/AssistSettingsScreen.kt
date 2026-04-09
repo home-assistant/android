@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.settings.assist
 
 import android.Manifest
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
@@ -56,15 +55,12 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.compose.composable.ButtonSize
-import io.homeassistant.companion.android.common.compose.composable.HABanner
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.composable.HAHint
 import io.homeassistant.companion.android.common.compose.composable.HALabel
 import io.homeassistant.companion.android.common.compose.composable.HALoading
-import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.composable.HASettingsCard
 import io.homeassistant.companion.android.common.compose.composable.HASwitch
 import io.homeassistant.companion.android.common.compose.composable.LabelVariant
@@ -73,8 +69,6 @@ import io.homeassistant.companion.android.common.compose.theme.HARadius
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
-import io.homeassistant.companion.android.common.util.openUri
-import io.homeassistant.companion.android.util.PLAY_SERVICES_FLAVOR_DOC_URL
 import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import kotlinx.coroutines.launch
@@ -118,8 +112,6 @@ private fun rememberRecordAudioPermissionState(
 fun AssistSettingsScreen(viewModel: AssistSettingsViewModel, modifier: Modifier = Modifier) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
-    val coroutineContext = rememberCoroutineScope()
 
     val togglePermissionState = rememberRecordAudioPermissionState(snackbarHostState) {
         viewModel.onToggleWakeWord(true)
@@ -157,11 +149,6 @@ fun AssistSettingsScreen(viewModel: AssistSettingsViewModel, modifier: Modifier 
             onSelectWakeWord = viewModel::onSelectWakeWordModel,
             onStartTestWakeWord = { viewModel.setTestingWakeWord(true) },
             onStopTestWakeWord = { viewModel.setTestingWakeWord(false) },
-            onLearnMorePlayServices = {
-                coroutineContext.launch {
-                    openLeanMoreAboutFlavors(context, snackbarHostState)
-                }
-            },
             modifier = Modifier.padding(contentPadding),
         )
     }
@@ -178,7 +165,6 @@ internal fun AssistSettingsContent(
     onStartTestWakeWord: () -> Unit,
     onStopTestWakeWord: () -> Unit,
     modifier: Modifier = Modifier,
-    onLearnMorePlayServices: () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -212,39 +198,14 @@ internal fun AssistSettingsContent(
                 HALabel(stringResource(commonR.string.experimental), variant = LabelVariant.WARNING)
             }
 
-            if (uiState.showMissingPlayServicesHint) {
-                HABanner(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = stringResource(commonR.string.assist_wake_word_missing_play_services),
-                        style = HATextStyle.Body.copy(textAlign = TextAlign.Start),
-                        modifier = Modifier.weight(1f),
-                    )
-                    HAPlainButton(
-                        text = stringResource(commonR.string.learn_more),
-                        onClick = onLearnMorePlayServices,
-                        size = ButtonSize.SMALL,
-                    )
-                }
-            }
-
-            if (uiState.isWakeWordSupported) {
-                WakeWordSection(
-                    uiState = uiState,
-                    hasAudioPermission = hasAudioPermission,
-                    onToggleWakeWord = onToggleWakeWord,
-                    onSelectWakeWord = onSelectWakeWord,
-                    onStartTestWakeWord = onStartTestWakeWord,
-                    onStopTestWakeWord = onStopTestWakeWord,
-                )
-            } else if (uiState.showHardwareNotSupportedHint) {
-                HABanner(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = stringResource(commonR.string.assist_wake_word_unsupported_device),
-                        style = HATextStyle.Body.copy(textAlign = TextAlign.Start),
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-            }
+            WakeWordSection(
+                uiState = uiState,
+                hasAudioPermission = hasAudioPermission,
+                onToggleWakeWord = onToggleWakeWord,
+                onSelectWakeWord = onSelectWakeWord,
+                onStartTestWakeWord = onStartTestWakeWord,
+                onStopTestWakeWord = onStopTestWakeWord,
+            )
         }
     }
 }
@@ -465,19 +426,6 @@ private fun WakeWordTestSection(
     }
 }
 
-private suspend fun openLeanMoreAboutFlavors(context: Context, snackbarHostState: SnackbarHostState) {
-    context.openUri(
-        PLAY_SERVICES_FLAVOR_DOC_URL,
-        onShowSnackbar = { message, action ->
-            snackbarHostState.showSnackbar(
-                message = message,
-                actionLabel = action,
-                duration = SnackbarDuration.Short,
-            ) == SnackbarResult.ActionPerformed
-        },
-    )
-}
-
 @Preview
 @Composable
 private fun AssistSettingsContentPreview() {
@@ -532,7 +480,6 @@ private fun AssistSettingsContentUnsupportedDevicePreview() {
             uiState = AssistSettingsUiState(
                 isLoading = false,
                 isDefaultAssistant = true,
-                showHardwareNotSupportedHint = true,
                 isWakeWordEnabled = false,
                 selectedWakeWordModel = null,
                 availableModels = emptyList(),
@@ -543,30 +490,6 @@ private fun AssistSettingsContentUnsupportedDevicePreview() {
             onSelectWakeWord = {},
             onStartTestWakeWord = {},
             onStopTestWakeWord = {},
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun AssistSettingsContentMissingPlayServicesPreview() {
-    HAThemeForPreview {
-        AssistSettingsContent(
-            uiState = AssistSettingsUiState(
-                isLoading = false,
-                isDefaultAssistant = true,
-                showMissingPlayServicesHint = true,
-                isWakeWordEnabled = false,
-                selectedWakeWordModel = null,
-                availableModels = emptyList(),
-            ),
-            hasAudioPermission = true,
-            onSetDefaultAssistant = {},
-            onToggleWakeWord = {},
-            onSelectWakeWord = {},
-            onStartTestWakeWord = {},
-            onStopTestWakeWord = {},
-            onLearnMorePlayServices = {},
         )
     }
 }

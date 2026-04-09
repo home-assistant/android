@@ -11,6 +11,8 @@ import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConfigGetMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConnectionStatusMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConnectionStatusPayload
+import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistPayload
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistSettingsMessage
@@ -455,6 +457,23 @@ class FrontendMessageHandlerTest {
         handler.revokeExternalAuth(payload, serverId = 1)
 
         coVerify { externalBusRepository.evaluateScript("revokeCallback(false)") }
+    }
+
+    @Test
+    fun `Given haptic messages when messageResults then emits PerformHaptic with correct types`() = runTest {
+        val messages = flowOf(
+            HapticMessage(payload = HapticType.Success),
+            HapticMessage(payload = HapticType.Light),
+            HapticMessage(payload = HapticType.Heavy),
+        )
+        every { externalBusRepository.incomingMessages() } returns messages
+
+        handler.messageResults().test {
+            assertEquals(HapticType.Success, (awaitItem() as FrontendHandlerEvent.PerformHaptic).hapticType)
+            assertEquals(HapticType.Light, (awaitItem() as FrontendHandlerEvent.PerformHaptic).hapticType)
+            assertEquals(HapticType.Heavy, (awaitItem() as FrontendHandlerEvent.PerformHaptic).hapticType)
+            expectNoEvents()
+        }
     }
 
     @Test
