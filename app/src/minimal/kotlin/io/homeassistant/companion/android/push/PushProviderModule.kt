@@ -9,7 +9,7 @@ import io.homeassistant.companion.android.common.push.PushProvider
 
 /**
  * Dagger module that provides push provider implementations for the minimal flavor.
- * Includes WebSocket provider only (no FCM).
+ * Includes WebSocket and UnifiedPush providers (no FCM).
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -18,4 +18,8 @@ abstract class PushProviderModule {
     @Binds
     @IntoSet
     abstract fun bindWebSocketPushProvider(provider: WebSocketPushProvider): PushProvider
+
+    @Binds
+    @IntoSet
+    abstract fun bindUnifiedPushProvider(provider: UnifiedPushProvider): PushProvider
 }

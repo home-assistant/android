@@ -572,14 +572,35 @@ class SettingsFragment(
 
             lifecycleScope.launch(Dispatchers.IO) {
                 val providerNames = presenter.getAvailablePushProviders()
-                val values = providerNames.toMutableList()
-                val entries = providerNames.map { name ->
-                    when (name) {
-                        "FCM" -> getString(commonR.string.push_provider_fcm)
-                        "WebSocket" -> getString(commonR.string.push_provider_websocket)
-                        else -> name
+                val entries = mutableListOf<String>()
+                val values = mutableListOf<String>()
+                val pm = requireContext().packageManager
+
+                for (name in providerNames) {
+                    if (name == "UnifiedPush") {
+                        val distributors = presenter.getUnifiedPushDistributors()
+                        for (distributor in distributors) {
+                            val label = try {
+                                pm.getApplicationLabel(
+                                    pm.getApplicationInfo(distributor, PackageManager.GET_META_DATA),
+                                ).toString()
+                            } catch (_: PackageManager.NameNotFoundException) {
+                                distributor
+                            }
+                            entries.add("UnifiedPush ($label)")
+                            values.add("${SettingsPresenter.PUSH_PROVIDER_UP_PREFIX}$distributor")
+                        }
+                    } else {
+                        entries.add(
+                            when (name) {
+                                "FCM" -> getString(commonR.string.push_provider_fcm)
+                                "WebSocket" -> getString(commonR.string.push_provider_websocket)
+                                else -> name
+                            },
+                        )
+                        values.add(name)
                     }
-                }.toMutableList()
+                }
 
                 val activeValue = presenter.getActivePushProviderValue()
 

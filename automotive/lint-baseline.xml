@@ -3448,4 +3448,15 @@
             column="42"/>
     </issue>
 
+    <issue
+        id="ObsoleteSdkInt"
+        message="Unnecessary; SDK_INT is never &lt; 29"
+        errorLine1="            Build.VERSION.SDK_INT &lt; Build.VERSION_CODES.O ||"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/SettingsFragment.kt"
+            line="548"
+            column="13"/>
+    </issue>
+
 </issues>

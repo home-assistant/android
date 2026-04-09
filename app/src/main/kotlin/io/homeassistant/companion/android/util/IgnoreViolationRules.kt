@@ -24,6 +24,7 @@ val threadPolicyIgnoredViolationRules = listOf(
     IgnoreAndroidAutoRendererServiceDiskRead,
     IgnoreMiuiFontSettingsDiskRead,
     IgnoreMiuiTurboSchedMonitorDiskRead,
+    IgnoreUnifiedPushConnectorDiskRead,
 )
 
 /**
@@ -224,6 +225,21 @@ private data object IgnoreMiuiTurboSchedMonitorDiskRead : IgnoreViolationRule {
 
         return violation.stackTrace.any {
             it.className == "android.os.TurboSchedMonitorImpl"
+        }
+    }
+}
+
+/**
+ * Ignore StrictMode violations in the UnifiedPush connector library.
+ * The library performs disk I/O (SharedPreferences), KeyStore operations (key generation,
+ * encryption), and slow calls internally during registration and distributor management,
+ * which is beyond application control.
+ */
+private data object IgnoreUnifiedPushConnectorDiskRead : IgnoreViolationRule {
+    @RequiresApi(Build.VERSION_CODES.P)
+    override fun shouldIgnore(violation: Violation): Boolean {
+        return violation.stackTrace.any {
+            it.className.startsWith("org.unifiedpush.android.connector")
         }
     }
 }

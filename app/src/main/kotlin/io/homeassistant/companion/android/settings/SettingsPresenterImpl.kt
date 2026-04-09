@@ -20,6 +20,7 @@ import io.homeassistant.companion.android.push.WebSocketPushProvider
 import io.homeassistant.companion.android.settings.assist.DefaultAssistantManager
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.NightModeManager
+import io.homeassistant.companion.android.unifiedpush.UnifiedPushManager
 import io.homeassistant.companion.android.util.ChangeLog
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -39,10 +40,11 @@ class SettingsPresenterImpl @Inject constructor(
     private val prefsRepository: PrefsRepository,
     private val nightModeManager: NightModeManager,
     private val langsManager: LanguagesManager,
+    private val unifiedPushManager: UnifiedPushManager,
+    private val pushProviderManager: PushProviderManager,
     private val changeLog: ChangeLog,
     private val settingsDao: SettingsDao,
     private val defaultAssistantManager: DefaultAssistantManager,
-    private val pushProviderManager: PushProviderManager,
 ) : PreferenceDataStore(),
     SettingsPresenter {
 
@@ -221,6 +223,8 @@ class SettingsPresenterImpl @Inject constructor(
         }
     }
 
+    override fun getUnifiedPushDistributors(): List<String> = unifiedPushManager.getDistributors()
+
     override fun getAvailablePushProviders(): List<String> {
         return pushProviderManager.getAllProviders().map { it.name }
     }
@@ -228,16 +232,33 @@ class SettingsPresenterImpl @Inject constructor(
     override suspend fun getActivePushProviderValue(): String {
         val persisted = prefsRepository.getSelectedPushProvider()
         if (persisted != null) return persisted
-        return pushProviderManager.getAllProviders().firstOrNull()?.name
-            ?: WebSocketPushProvider.NAME
+        val distributor = unifiedPushManager.getDistributor()
+        val value = if (distributor != null && distributor != UnifiedPushManager.DISTRIBUTOR_DISABLED) {
+            "${SettingsPresenter.PUSH_PROVIDER_UP_PREFIX}$distributor"
+        } else {
+            pushProviderManager.getAllProviders().firstOrNull()?.name
+                ?: WebSocketPushProvider.NAME
+        }
+        prefsRepository.setSelectedPushProvider(value)
+        return value
     }
 
     override suspend fun handlePushProviderChange(value: String?) {
         if (value == null) return
         prefsRepository.setSelectedPushProvider(value)
-        val result = pushProviderManager.selectAndRegister(value)
-        if (result != null) {
-            pushProviderManager.updateServerRegistration(result)
+        if (value.startsWith(SettingsPresenter.PUSH_PROVIDER_UP_PREFIX)) {
+            val distributor = value.removePrefix(SettingsPresenter.PUSH_PROVIDER_UP_PREFIX)
+            unifiedPushManager.saveDistributor(distributor)
+            val result = pushProviderManager.selectAndRegister("UnifiedPush")
+            if (result != null) {
+                pushProviderManager.updateServerRegistration(result)
+            }
+        } else {
+            unifiedPushManager.saveDistributor(null)
+            val result = pushProviderManager.selectAndRegister(value)
+            if (result != null) {
+                pushProviderManager.updateServerRegistration(result)
+            }
         }
     }
 

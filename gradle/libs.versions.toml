@@ -2,7 +2,7 @@
 # You need to update the lock if you update or add a dependency
 # you can do that with `./gradlew alldependencies --write-locks`
 [versions]
-aboutlibraries = "14.0.0-b03"
+aboutlibraries = "14.0.0-b02"
 accompanist = "0.37.3"
 activity-compose = "1.13.0"
 androidBeaconLibrary = "2.21.2"
@@ -39,7 +39,7 @@ core-splashscreen = "1.2.0"
 core-remoteviews = "1.1.0"
 cronet = "143.7445.0"
 emojiJava = "5.1.1"
-firebase-bom = "34.11.0"
+firebase-bom = "34.10.0"
 firebaseAppdistributionGradle = "5.2.1"
 fragment-ktx = "1.8.9"
 glance = "1.1.1"
@@ -85,6 +85,7 @@ sentry-android = "8.37.1"
 timber = "5.0.1"
 tools-desugar-jdk-libs = "2.1.5"
 turbine = "1.2.1"
+unifiedpush-connector = "3.0.9"
 watchfaceComplicationsDataSourceKtx = "1.3.0"
 wear = "1.4.0"
 wear-compose = "1.6.0"
@@ -253,6 +254,7 @@ sentry-android-core = { module = "io.sentry:sentry-android-core", version.ref = 
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 tools-desugar-jdk = { module = "com.android.tools:desugar_jdk_libs", version.ref = "tools-desugar-jdk-libs" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
+unifiedpush-connector = { module = "org.unifiedpush.android:connector", version.ref = "unifiedpush-connector" }
 wear = { module = "androidx.wear:wear", version.ref = "wear" }
 wear-compose-foundation = { module = "androidx.wear.compose:compose-foundation", version.ref = "wear-compose" }
 wear-compose-material = { module = "androidx.wear.compose:compose-material3", version.ref = "wear-compose" }
@@ -277,3 +279,4 @@ coil = ["coil-views", "coil-okhttp", "coil-svg"]
 media3 = ["media3-exoplayer", "media3-exoplayer-hls", "media3-ui-compose", "media3-session"]
 paging = ["paging-runtime", "paging-compose"]
 wear-tiles = ["wear-tiles", "wear-protolayout-main", "wear-protolayout-expression", "wear-protolayout-material"]
+unifiedpush = ["unifiedpush-connector"]
