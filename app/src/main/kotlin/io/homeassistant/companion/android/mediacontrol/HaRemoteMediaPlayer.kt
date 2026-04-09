@@ -138,17 +138,7 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
         return builder.build()
     }
 
-    // SimpleBasePlayer.seekToNext() / seekToPrevious() check hasNextMediaItem() /
-    // hasPreviousMediaItem() before calling handleSeek(). With a single-item playlist both
-    // return false, so the seek is silently dropped and handleSeek() is never invoked.
-    // Using a 3-item playlist with the real item at index 1 ensures valid adjacent items exist,
-    // so the seek reaches handleSeek() where seekCommand is used to dispatch to the
-    // correct HA action.
-    private fun buildPlaylist(currentItem: MediaItemData): List<MediaItemData> = listOf(
-        MediaItemData.Builder(PLACEHOLDER_PREVIOUS_ID).build(),
-        currentItem,
-        MediaItemData.Builder(PLACEHOLDER_NEXT_ID).build(),
-    )
+    private fun buildPlaylist(currentItem: MediaItemData): List<MediaItemData> = listOf(currentItem)
 
     override fun handleSetPlayWhenReady(playWhenReady: Boolean): ListenableFuture<*> = handleCommand {
         if (playWhenReady) commandCallback.onPlayRequested() else commandCallback.onPauseRequested()
@@ -290,10 +280,8 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
 
     private companion object {
         const val DURATION_UNSET_US = androidx.media3.common.C.TIME_UNSET
-        const val CURRENT_ITEM_INDEX = 1
+        const val CURRENT_ITEM_INDEX = 0
         const val PLAYBACK_SPEED = 1.0f
-        const val PLACEHOLDER_PREVIOUS_ID = "__ha_previous__"
-        const val PLACEHOLDER_NEXT_ID = "__ha_next__"
 
         // HA uses 0.0–1.0; we tell Media3 our volume range is 0–VOLUME_SCALE via
         // REMOTE_DEVICE_INFO, so Media3 will call handleSetDeviceVolume with values in that range.
