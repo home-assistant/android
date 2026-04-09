@@ -233,7 +233,7 @@ class SettingsFragment(
             }
 
             findPreference<PreferenceCategory>("media_controls")?.let {
-                it.isVisible = true
+                it.isVisible = !isAutomotive
             }
             findPreference<Preference>("manage_media_controls")?.setOnPreferenceClickListener {
                 parentFragmentManager.commit {
