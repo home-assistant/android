@@ -686,13 +686,12 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             // Encryption is controlled by the push provider: UnifiedPush sets this to true
             // when public keys are available, FCM/WebSocket leave it false.
             appData["push_encrypt"] = deviceRegistration.pushEncrypt
-        } else if (!pushUrl.isNullOrBlank()) {
-            appData["push_url"] = pushUrl
-            appData["push_token"] = ""
-            appData["push_encrypt"] = false
         } else {
-            // No token and no URL: explicitly clear server-side push config (e.g. when switching to WebSocket)
-            appData["push_url"] = ""
+            // No token: either the initial WebSocket registration or clearing a previous
+            // push config (e.g. when switching from UnifiedPush/FCM back to WebSocket).
+            // Home Assistant validates push_url as a URL so we must send a placeholder
+            // instead of an empty string; an empty push_token disables server-side push.
+            appData["push_url"] = pushUrl?.ifBlank { PUSH_URL } ?: PUSH_URL
             appData["push_token"] = ""
             appData["push_encrypt"] = false
         }
