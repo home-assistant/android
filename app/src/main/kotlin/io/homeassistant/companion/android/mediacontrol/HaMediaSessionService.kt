@@ -48,9 +48,18 @@ class HaMediaSessionService : MediaSessionService() {
         notificationProvider.setSmallIcon(commonR.drawable.ic_stat_ic_notification)
         setMediaNotificationProvider(notificationProvider)
         Timber.d("HaMediaSessionService created")
+        startObservingEntities()
+    }
+
+    /**
+     * Starts collecting [MediaControlRepository.observeConfiguredEntities] and reconciling
+     * sessions on each emission. Extracted to allow tests to supply a controlled [scope] without
+     * calling [onCreate], which would trigger Hilt injection and Media3 setup.
+     */
+    internal fun startObservingEntities(scope: CoroutineScope = serviceScope) {
         mediaControlRepository.observeConfiguredEntities()
             .onEach { entities -> withContext(Dispatchers.Main) { reconcileSessions(entities) } }
-            .launchIn(serviceScope)
+            .launchIn(scope)
     }
 
     // Returns null intentionally: Media3 routes each controller to the session whose ID matches
