@@ -105,6 +105,10 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
 
                     "implementation"(libs.car.core)
 
+                    "implementation"(libs.unifiedpush.connector) {
+                        exclude(group = "com.google.protobuf", module = "protobuf-java")
+                    }
+
                     "androidTestImplementation"(libs.bundles.androidx.test)
                     "androidTestImplementation"(libs.leakcanary.android.instrumentation)
                     "androidTestImplementation"(libs.hilt.android.testing)

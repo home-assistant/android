@@ -13,11 +13,14 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.push.PushProviderManager
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.settings.SettingsDao
+import io.homeassistant.companion.android.push.WebSocketPushProvider
 import io.homeassistant.companion.android.settings.assist.DefaultAssistantManager
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.NightModeManager
+import io.homeassistant.companion.android.unifiedpush.UnifiedPushManager
 import io.homeassistant.companion.android.util.ChangeLog
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -37,6 +40,8 @@ class SettingsPresenterImpl @Inject constructor(
     private val prefsRepository: PrefsRepository,
     private val nightModeManager: NightModeManager,
     private val langsManager: LanguagesManager,
+    private val unifiedPushManager: UnifiedPushManager,
+    private val pushProviderManager: PushProviderManager,
     private val changeLog: ChangeLog,
     private val settingsDao: SettingsDao,
     private val defaultAssistantManager: DefaultAssistantManager,
@@ -113,6 +118,7 @@ class SettingsPresenterImpl @Inject constructor(
             "languages" -> langsManager.getCurrentLang()
             "page_zoom" -> prefsRepository.getPageZoomLevel().toString()
             "screen_orientation" -> prefsRepository.getScreenOrientation()
+            "notification_push_provider" -> prefsRepository.getSelectedPushProvider() ?: defValue
             else -> throw IllegalArgumentException("No string found by this key: $key")
         }
     }
@@ -124,6 +130,7 @@ class SettingsPresenterImpl @Inject constructor(
                 "languages" -> langsManager.saveLang(value)
                 "page_zoom" -> prefsRepository.setPageZoomLevel(value?.toIntOrNull())
                 "screen_orientation" -> prefsRepository.saveScreenOrientation(value)
+                "notification_push_provider" -> value?.let { prefsRepository.setSelectedPushProvider(it) }
                 else -> throw IllegalArgumentException("No string found by this key: $key")
             }
         }
@@ -215,6 +222,45 @@ class SettingsPresenterImpl @Inject constructor(
             suggestionFlow.emit(filteredSuggestions.randomOrNull())
         } else if (filteredSuggestions.none { it.id == suggestionFlow.value?.id }) {
             suggestionFlow.emit(null)
+        }
+    }
+
+    override fun getUnifiedPushDistributors(): List<String> = unifiedPushManager.getDistributors()
+
+    override fun getAvailablePushProviders(): List<String> {
+        return pushProviderManager.getAllProviders().map { it.name }
+    }
+
+    override suspend fun getActivePushProviderValue(): String {
+        val persisted = prefsRepository.getSelectedPushProvider()
+        if (persisted != null) return persisted
+        val distributor = unifiedPushManager.getDistributor()
+        val value = if (distributor != null && distributor != UnifiedPushManager.DISTRIBUTOR_DISABLED) {
+            "${SettingsPresenter.PUSH_PROVIDER_UP_PREFIX}$distributor"
+        } else {
+            pushProviderManager.getAllProviders().firstOrNull()?.name
+                ?: WebSocketPushProvider.NAME
+        }
+        prefsRepository.setSelectedPushProvider(value)
+        return value
+    }
+
+    override suspend fun handlePushProviderChange(value: String?) {
+        if (value == null) return
+        prefsRepository.setSelectedPushProvider(value)
+        if (value.startsWith(SettingsPresenter.PUSH_PROVIDER_UP_PREFIX)) {
+            val distributor = value.removePrefix(SettingsPresenter.PUSH_PROVIDER_UP_PREFIX)
+            unifiedPushManager.saveDistributor(distributor)
+            val result = pushProviderManager.selectAndRegister("UnifiedPush")
+            if (result != null) {
+                pushProviderManager.updateServerRegistration(result)
+            }
+        } else {
+            unifiedPushManager.saveDistributor(null)
+            val result = pushProviderManager.selectAndRegister(value)
+            if (result != null) {
+                pushProviderManager.updateServerRegistration(result)
+            }
         }
     }
 

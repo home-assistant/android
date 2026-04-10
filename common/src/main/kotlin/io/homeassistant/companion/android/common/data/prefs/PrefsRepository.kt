@@ -126,6 +126,14 @@ interface PrefsRepository {
 
     suspend fun setChangeLogPopupEnabled(enabled: Boolean)
 
+    suspend fun getUnifiedPushDistributor(): String?
+
+    suspend fun setUnifiedPushDistributor(distributor: String?)
+
+    suspend fun isUnifiedPushEnabled(): Boolean
+
+    suspend fun setUnifiedPushEnabled(enabled: Boolean)
+
     /** Clean up any app-level preferences that might reference servers */
     suspend fun removeServer(serverId: Int)
 
@@ -140,4 +148,8 @@ interface PrefsRepository {
     suspend fun getSelectedWakeWord(): String?
 
     suspend fun setSelectedWakeWord(wakeWord: String)
+
+    suspend fun getSelectedPushProvider(): String?
+
+    suspend fun setSelectedPushProvider(provider: String)
 }
