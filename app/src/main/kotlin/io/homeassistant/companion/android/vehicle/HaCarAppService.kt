@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.vehicle
 
 import android.content.Intent
-import android.content.pm.ApplicationInfo
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.car.app.CarAppService
@@ -78,6 +77,41 @@ class HaCarAppService : CarAppService() {
 
             override fun onCreateScreen(intent: Intent): Screen {
                 carInfo = carContext.getCarService(CarHardwareManager::class.java).carInfo
+
+                if (intent.action == AssistActivity.ACTION_TRIGGER_AUTOMOTIVE_ASSIST) {
+                    val serverId = intent.getIntExtra(AssistActivity.EXTRA_SERVER, ServerManager.SERVER_ID_ACTIVE)
+
+                    val audioManager = application.getSystemService(android.content.Context.AUDIO_SERVICE) as android.media.AudioManager
+                    val dataSourceFactory = androidx.media3.datasource.DefaultHttpDataSource.Factory()
+                    
+                    val audioStrategyFactory = AssistAudioStrategyFactory(
+                        AssistVoiceInteractionService.getVoiceAudioRecorder(application),
+                        io.homeassistant.companion.android.assist.wakeword.WakeWordListenerFactory(application),
+                        io.homeassistant.companion.android.settings.assist.AssistConfigManager(application),
+                    )
+                    
+                    val audioUrlPlayer = io.homeassistant.companion.android.common.util.AudioUrlPlayer(
+                        audioManager,
+                        { player ->
+                            val exoPlayer = androidx.media3.exoplayer.ExoPlayer.Builder(application).build()
+                            exoPlayer.apply(player)
+                            exoPlayer
+                        }
+                    )
+
+                    return AutomotiveAssistScreen(
+                        carContext,
+                        serverManager,
+                        serverId,
+                        audioStrategyFactory,
+                        audioUrlPlayer,
+                        application,
+                    )
+                }
+                        ),
+                        application,
+                    )
+                }
 
                 if (intent.getBooleanExtra("TRANSITION_LAUNCH", false)) {
                     carContext

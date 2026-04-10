@@ -50,6 +50,7 @@ class AssistShortcutActivity : BaseActivity() {
             fromFrontend = false,
         ).apply {
             action = Intent.ACTION_VIEW
+            putExtra(AssistActivity.EXTRA_TRIGGER_SOURCE, AssistActivity.TRIGGER_SOURCE_ASSIST)
         }
         val shortcutInfo = ShortcutInfoCompat.Builder(this, "$SHORTCUT_PREFIX${UUID.randomUUID()}")
             .setIntent(assistIntent)

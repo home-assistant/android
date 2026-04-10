@@ -53,6 +53,9 @@ class AssistActivity : BaseActivity() {
         private const val EXTRA_START_LISTENING = "start_listening"
         private const val EXTRA_FROM_FRONTEND = "from_frontend"
         private const val EXTRA_FROM_WAKE_WORD_PHRASE = "from_wake_word_phrase"
+        const val EXTRA_TRIGGER_SOURCE = "trigger_source"
+        const val TRIGGER_SOURCE_ASSIST = "assist"
+        const val ACTION_TRIGGER_AUTOMOTIVE_ASSIST = "ACTION_TRIGGER_AUTOMOTIVE_ASSIST"
 
         fun newInstance(
             context: Context,
@@ -61,6 +64,7 @@ class AssistActivity : BaseActivity() {
             startListening: Boolean = true,
             fromFrontend: Boolean = true,
             wakeWordPhrase: String? = null,
+            triggerSource: String? = null,
         ): Intent {
             return Intent(context, AssistActivity::class.java).apply {
                 putExtra(EXTRA_SERVER, serverId)
@@ -68,6 +72,7 @@ class AssistActivity : BaseActivity() {
                 putExtra(EXTRA_START_LISTENING, startListening)
                 putExtra(EXTRA_FROM_FRONTEND, fromFrontend)
                 putExtra(EXTRA_FROM_WAKE_WORD_PHRASE, wakeWordPhrase)
+                putExtra(EXTRA_TRIGGER_SOURCE, triggerSource)
             }
         }
     }
@@ -113,6 +118,23 @@ class AssistActivity : BaseActivity() {
         }
 
         val fromFrontend = intent.getBooleanExtra(EXTRA_FROM_FRONTEND, false)
+        val triggerSource = intent.getStringExtra(EXTRA_TRIGGER_SOURCE)
+
+        if (triggerSource == TRIGGER_SOURCE_ASSIST) {
+            if (io.homeassistant.companion.android.vehicle.HaCarAppService.carInfo != null) {
+                val automotiveIntent = Intent(this, io.homeassistant.companion.android.vehicle.HaCarAppService::class.java).apply {
+                    action = ACTION_TRIGGER_AUTOMOTIVE_ASSIST
+                    putExtra(EXTRA_SERVER, if (intent.hasExtra(EXTRA_SERVER)) {
+                        intent.getIntExtra(EXTRA_SERVER, ServerManager.SERVER_ID_ACTIVE)
+                    } else {
+                        ServerManager.SERVER_ID_ACTIVE
+                    })
+                }
+                startService(automotiveIntent)
+                finish()
+                return
+            }
+        }
 
         setContent {
             if (viewModel.shouldFinish) {
