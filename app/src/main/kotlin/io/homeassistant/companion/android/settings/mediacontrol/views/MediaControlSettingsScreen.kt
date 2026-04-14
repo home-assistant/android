@@ -32,6 +32,8 @@ import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
+import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
+import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
 import io.homeassistant.companion.android.common.compose.composable.HAIconButton
 import io.homeassistant.companion.android.common.compose.composable.HALoading
 import io.homeassistant.companion.android.common.compose.theme.HADimens
@@ -42,7 +44,6 @@ import io.homeassistant.companion.android.common.compose.theme.LocalHAColorSchem
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
 import io.homeassistant.companion.android.settings.mediacontrol.MediaControlSettingsUiState
 import io.homeassistant.companion.android.settings.mediacontrol.MediaControlSettingsViewModel
-import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
@@ -111,12 +112,11 @@ internal fun MediaControlSettingsContent(
         } else {
             if (uiState.servers.size > 1) {
                 item {
-                    // TODO replace with Material3 composable https://github.com/home-assistant/android/issues/6664
-                    ServerExposedDropdownMenu(
-                        servers = uiState.servers,
-                        current = uiState.selectedServerId,
-                        onSelected = onServerSelected,
-                        title = R.string.server,
+                    HADropdownMenu(
+                        items = uiState.servers.map { HADropdownItem(key = it.id, label = it.friendlyName) },
+                        selectedKey = uiState.selectedServerId,
+                        onItemSelected = onServerSelected,
+                        label = stringResource(R.string.server),
                         modifier = Modifier.fillMaxWidth().padding(horizontal = HADimens.SPACE4),
                     )
                     Spacer(modifier = Modifier.size(HADimens.SPACE2))
@@ -140,16 +140,15 @@ internal fun MediaControlSettingsContent(
 
         itemsIndexed(
             items = uiState.configuredEntities,
-            key = { _, config -> "${config.serverId}_${config.entityId}" },
+            key = { _, config -> config.listKey() },
         ) { index, config ->
-            ReorderableItem(state = reorderState, key = "${config.serverId}_${config.entityId}") { isDragging ->
+            ReorderableItem(state = reorderState, key = config.listKey()) { isDragging ->
                 ConfiguredEntityRow(
                     config = config,
-                    subtitle = if (uiState.servers.size > 1) {
-                        uiState.servers.firstOrNull { it.id == config.serverId }?.friendlyName
-                    } else {
-                        null
-                    },
+                    subtitle = uiState.servers
+                        .takeIf { it.size > 1 }
+                        ?.firstOrNull { it.id == config.serverId }
+                        ?.friendlyName,
                     entityName = uiState.entityNamesByConfig[config],
                     entityIcon = uiState.entityIconsByConfig[config],
                     onRemove = { onRemoveEntity(index) },

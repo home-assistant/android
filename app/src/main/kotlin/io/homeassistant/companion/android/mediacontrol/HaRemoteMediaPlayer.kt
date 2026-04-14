@@ -154,11 +154,11 @@ internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: 
             when (seekCommand) {
                 Player.COMMAND_SEEK_TO_NEXT,
                 Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM,
-                    -> commandCallback.onNextRequested()
+                -> commandCallback.onNextRequested()
 
                 Player.COMMAND_SEEK_TO_PREVIOUS,
                 Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM,
-                    -> commandCallback.onPreviousRequested()
+                -> commandCallback.onPreviousRequested()
 
                 else -> {
                     if (mediaState?.supportsSeek == true) {
@@ -239,7 +239,12 @@ internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: 
         val builder = Player.Commands.Builder()
         if (state.supportsPlay || state.supportsPause) builder.add(Player.COMMAND_PLAY_PAUSE)
         if (state.supportsStop) builder.add(Player.COMMAND_STOP)
-        if (state.supportsSeek) builder.add(Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM)
+        if (state.supportsSeek) {
+            builder.add(Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM)
+            builder.add(Player.COMMAND_SEEK_TO_DEFAULT_POSITION)
+            builder.add(Player.COMMAND_SEEK_BACK)
+            builder.add(Player.COMMAND_SEEK_FORWARD)
+        }
         builder.add(Player.COMMAND_GET_CURRENT_MEDIA_ITEM)
         if (state.supportsPreviousTrack) {
             builder.add(Player.COMMAND_SEEK_TO_PREVIOUS)

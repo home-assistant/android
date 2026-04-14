@@ -80,7 +80,7 @@ class MediaControlSettingsViewModel @Inject constructor(
     val serviceEvents: SharedFlow<MediaControlServiceEvent> = _serviceEvents.asSharedFlow()
 
     init {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             val loadedServers = serverManager.servers()
             val defaultServerId = serverManager.getServer()?.id ?: ServerManager.SERVER_ID_ACTIVE
 
@@ -191,8 +191,8 @@ class MediaControlSettingsViewModel @Inject constructor(
     fun onMove(fromKey: Any, toKey: Any) {
         _uiState.update { state ->
             val list = state.configuredEntities.toMutableList()
-            val fromIndex = list.indexOfFirst { it == fromKey }
-            val toIndex = list.indexOfFirst { it == toKey }
+            val fromIndex = list.indexOfFirst { it.listKey() == fromKey }
+            val toIndex = list.indexOfFirst { it.listKey() == toKey }
             if (fromIndex >= 0 && toIndex >= 0) {
                 list.add(toIndex, list.removeAt(fromIndex))
             }
