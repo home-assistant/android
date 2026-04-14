@@ -153,19 +153,17 @@ class HaMediaSessionService : MediaSessionService() {
 
     companion object {
         /**
-         * Starts the service if any media_player entities are configured.
-         * Should be called from a foreground context (e.g. Activity) to avoid
+         * Starts the service. Should be called from a foreground context (e.g. Activity) to avoid
          * Android 15+ restrictions on starting mediaPlayback foreground services from background.
+         * If no entities are configured the service will stop itself immediately after starting.
          * Once running, the service observes the database and reconciles sessions automatically.
          */
-        suspend fun startIfConfigured(context: Context, mediaControlRepository: MediaControlRepository) {
-            if (mediaControlRepository.getConfiguredEntities().isNotEmpty()) {
-                Timber.d("Media control entities configured, starting HaMediaSessionService")
-                try {
-                    context.startService(Intent(context, HaMediaSessionService::class.java))
-                } catch (e: Exception) {
-                    Timber.e(e, "Failed to start HaMediaSessionService")
-                }
+        fun start(context: Context) {
+            Timber.d("Starting HaMediaSessionService")
+            try {
+                context.startService(Intent(context, HaMediaSessionService::class.java))
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to start HaMediaSessionService")
             }
         }
     }
