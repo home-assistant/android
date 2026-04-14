@@ -566,7 +566,7 @@
     <string name="search_refine_for_more">Refine your search to view more…</string>
     <string name="search_results">Search results</string>
     <string name="search_sensors">Search sensors</string>
-    <string name="security_vulnerably_message">Your version of Home Assistant does not protect for recently discovered security vulnerabilities in community integrations. Please view the details via the bulletin and update as soon as possible.</string>
+    <string name="security_vulnerably_message">Your version of Home Assistant does not protect for recently discovered security vulnerabilities in custom components. Please view the details via the bulletin and update as soon as possible.</string>
     <string name="security_vulnerably_title">Security vulnerability warning</string>
     <string name="security_vulnerably_understand">I understand</string>
     <string name="security_vulnerably_view">View bulletin</string>
@@ -991,7 +991,7 @@
     <string name="widget_button_image_description">Action button</string>
     <string name="widget_camera_description">Picture widget</string>
     <string name="widget_camera_contentdescription">Image</string>
-    <string name="widget_config_action_error">A community integration is preventing action data from loading.</string>
+    <string name="widget_config_action_error">A custom component is preventing action data from loading.</string>
     <string name="widget_creation_error">Unable to create widget.</string>
     <string name="widget_entity_fetch_error">Unable to fetch data for configured entity.</string>
     <string name="widget_label_placeholder_text_button">Toggle</string>
