@@ -65,7 +65,7 @@ class FrontendDownloadManager @Inject constructor(
 
             "data" -> {
                 dataUriDownloadManager.saveDataUri(url = url, mimetype = mimetype)
-                DownloadResult.Success
+                DownloadResult.Handled
             }
 
             else -> DownloadResult.OpenWithSystem(uri = uri)
@@ -89,7 +89,7 @@ class FrontendDownloadManager @Inject constructor(
             mimetype = "",
             filename = filename,
         )
-        return DownloadResult.Success
+        return DownloadResult.Handled
     }
 
     private suspend fun downloadViaDownloadManager(
@@ -129,7 +129,7 @@ class FrontendDownloadManager @Inject constructor(
 
             systemDownloadManager.enqueue(request)
         }
-        return DownloadResult.Success
+        return DownloadResult.Handled
     }
 
     /**

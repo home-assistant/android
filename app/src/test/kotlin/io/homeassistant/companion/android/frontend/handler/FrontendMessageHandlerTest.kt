@@ -483,13 +483,13 @@ class FrontendMessageHandlerTest {
     fun `Given handle blob message when messageResults then emits DownloadCompleted with result`() = runTest {
         val testData = "data:application/pdf;base64,SGVsbG8="
         val testFilename = "test.pdf"
-        coEvery { downloadManager.handleBlob(data = testData, filename = testFilename) } returns DownloadResult.Success
+        coEvery { downloadManager.handleBlob(data = testData, filename = testFilename) } returns DownloadResult.Handled
         every { externalBusRepository.incomingMessages() } returns flowOf(HandleBlobMessage(data = testData, filename = testFilename))
 
         handler.messageResults().test {
             val event = awaitItem()
             assertTrue(event is FrontendHandlerEvent.DownloadCompleted)
-            assertEquals(DownloadResult.Success, (event as FrontendHandlerEvent.DownloadCompleted).result)
+            assertEquals(DownloadResult.Handled, (event as FrontendHandlerEvent.DownloadCompleted).result)
             expectNoEvents()
         }
 

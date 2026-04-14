@@ -4,6 +4,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import io.homeassistant.companion.android.common.util.FailFast
 
 /**
  * Composable effect that requests multiple Android permissions via the system dialog.
@@ -28,6 +29,7 @@ internal fun MultiplePermissionsEffect(
 
     if (pendingRequest != null) {
         LaunchedEffect(pendingRequest) {
+            FailFast.failWhen(pendingRequest.permissions.isEmpty()) { "Missing multiple permissions" }
             permissionLauncher.launch(pendingRequest.permissions.toTypedArray())
         }
     }

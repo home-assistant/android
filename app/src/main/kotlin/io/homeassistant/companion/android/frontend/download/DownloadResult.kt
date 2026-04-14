@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.frontend.download
 
 import android.net.Uri
 import androidx.annotation.StringRes
+import io.homeassistant.companion.android.util.DataUriDownloadManager
 
 /**
  * Result of a download operation initiated by the WebView.
@@ -12,12 +13,12 @@ import androidx.annotation.StringRes
 sealed interface DownloadResult {
 
     /**
-     * The download was started or completed successfully.
+     * The download was handled, it might have failed but this has been handle properly by the system or the [DataUriDownloadManager].
      *
      * For system [android.app.DownloadManager] downloads this means the request was enqueued;
      * for data URI downloads the file was saved to the Downloads directory.
      */
-    data object Success : DownloadResult
+    data object Handled : DownloadResult
 
     /**
      * The download was dispatched via JavaScript (blob downloads).

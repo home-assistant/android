@@ -882,13 +882,13 @@ class FrontendViewModelTest {
         }
 
         @Test
-        fun `Given success result when download requested then no UI event emitted`() = runTest {
+        fun `Given handled result when download requested then no UI event emitted`() = runTest {
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             coEvery {
                 downloadManager.downloadFile(any(), any(), any(), any())
-            } returns DownloadResult.Success
+            } returns DownloadResult.Handled
 
             val viewModel = createViewModel()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
@@ -913,7 +913,7 @@ class FrontendViewModelTest {
             )
             coEvery {
                 downloadManager.downloadFile(any(), any(), any(), any())
-            } returns DownloadResult.Success
+            } returns DownloadResult.Handled
 
             val viewModel = createViewModel()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
@@ -968,7 +968,7 @@ class FrontendViewModelTest {
             } returns true
             coEvery {
                 downloadManager.downloadFile(any(), any(), any(), any())
-            } returns DownloadResult.Success
+            } returns DownloadResult.Handled
 
             val viewModel = createViewModel()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)

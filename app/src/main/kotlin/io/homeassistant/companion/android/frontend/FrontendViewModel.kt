@@ -473,7 +473,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
     private fun handleDownloadResult(result: DownloadResult) {
         when (result) {
-            is DownloadResult.Success,
+            is DownloadResult.Handled,
             is DownloadResult.Dispatched,
             -> {
                 // No UI feedback needed — success notification is handled by
