@@ -13,7 +13,7 @@ import io.homeassistant.companion.android.util.DataUriDownloadManager
 sealed interface DownloadResult {
 
     /**
-     * The download was handled, it might have failed but this has been handle properly by the system or the [DataUriDownloadManager].
+     * The download was handled, it might have failed but this has been handled properly by the system or the [DataUriDownloadManager].
      *
      * For system [android.app.DownloadManager] downloads this means the request was enqueued;
      * for data URI downloads the file was saved to the Downloads directory.
