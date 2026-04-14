@@ -106,8 +106,8 @@ class HaMediaSessionTest {
     )
 
     /**
-     * Drains the Robolectric main looper so that `player.updateState` and `player.setConnecting`
-     * calls dispatched via `withContext(Dispatchers.Main)` take effect.
+     * Drains the Robolectric main looper so that `player.updateState` calls dispatched via
+     * `withContext(Dispatchers.Main)` take effect.
      *
      * `testScope` uses [UnconfinedTestDispatcher], so coroutines run eagerly on the calling
      * thread until they reach a `withContext(Dispatchers.Main)` suspension point. A single
@@ -125,8 +125,7 @@ class HaMediaSessionTest {
      * but stays open, the player retains the emitted state and does not drop to idle.
      *
      * Uses a `MutableSharedFlow` with `replay=1` so emissions are received by the Default
-     * dispatcher collector without racing, and the flow stays open so the observation loop
-     * does not call `setConnecting()` and overwrite the state.
+     * dispatcher collector without racing, and the flow stays open.
      */
     @Test
     fun `Given observeEntityState emits state then null when startObservingState then player retains initial state`() {
@@ -157,8 +156,7 @@ class HaMediaSessionTest {
      * to STATE_READY with `playWhenReady = true`.
      *
      * Uses `replay=1` so the emission is cached and replayed to the collector on
-     * [UnconfinedTestDispatcher] regardless of when it subscribes. The flow stays open so the
-     * observation loop does not immediately call `setConnecting()` and overwrite the READY state.
+     * [UnconfinedTestDispatcher] regardless of when it subscribes. The flow stays open.
      */
     @Test
     fun `Given observeEntityState emits playing state when startObservingState then player is ready and playing`() {
@@ -201,30 +199,22 @@ class HaMediaSessionTest {
     }
 
     /**
-     * Verifies that when `observeEntityState` flow completes (entity disconnects), the player
-     * enters STATE_BUFFERING (the "connecting" state) and exposes an empty command set so
-     * that the notification remains visible but controls are disabled.
-     *
-     * Both flows complete immediately so the observation loop calls `setConnecting()` right after
-     * the first iteration without needing the retry delay. Two `idleMainLooper()` calls are used:
-     * the first allows the playing-state update to reach the Main looper, and the second allows
-     * the `setConnecting()` call (which posts a new Main looper task when the coroutine resumes)
-     * to take effect.
+     * Verifies that when `observeEntityState` flow completes (WebSocket not yet connected),
+     * the player retains its last known state rather than resetting.
      */
     @Test
-    fun `Given observeEntityState flow completes when startObservingState then player enters connecting state`() {
+    fun `Given observeEntityState flow completes when startObservingState then player retains last state`() {
         coEvery { mediaControlRepository.observeEntityState(config) } returns flowOf(
             createState(playbackState = MediaPlaybackState.Playing),
-        ) andThen emptyFlow()
+        )
 
         val session = buildSession()
         testScope.launch { session.startObservingState() }
         idleMainLooper()
-        idleMainLooper()
 
         val player = session.mediaSession.player
-        assertEquals(Player.STATE_BUFFERING, player.playbackState)
-        assertEquals(Player.Commands.EMPTY, player.availableCommands)
+        assertEquals(Player.STATE_READY, player.playbackState)
+        assertEquals(true, player.playWhenReady)
 
         session.release()
     }

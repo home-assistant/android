@@ -26,13 +26,11 @@ import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.webview.WebViewActivity
 import java.io.ByteArrayOutputStream
 import java.net.URL
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -180,30 +178,21 @@ class HaMediaSession @AssistedInject constructor(
     }
 
     /**
-     * Observes entity state for [config] until the coroutine is cancelled. Suspends
-     * indefinitely, retrying after [OBSERVATION_RETRY_DELAY] whenever the WebSocket flow
-     * completes (e.g. on disconnection). Intended to be launched in the scope provided at
-     * construction time.
+     * Observes entity state for [config] until the flow completes or the coroutine is cancelled.
+     * The flow completes when the WebSocket subscription returns null (not yet connected), and
+     * is cancelled when the WebSocket disconnects (the backing SharedFlow's scope is cancelled).
+     * In both cases the session is not restarted here; reconnection happens when the user opens
+     * the app, which recreates active sessions via [HaMediaSessionService].
      */
     internal suspend fun startObservingState() {
         currentArtworkUrl = null
-        while (true) {
-            mediaControlRepository.observeEntityState(config).collect { state ->
-                if (state == null) {
-                    // Entity not yet available or subscription not ready; keep the last
-                    // known state visible. Flow completion triggers setConnecting() below.
-                    return@collect
-                }
-                loadArtworkAndUpdatePlayer(state)
+        mediaControlRepository.observeEntityState(config).collect { state ->
+            if (state == null) {
+                return@collect
             }
-            // Flow completed (WebSocket not ready, connection lost, etc) — show buffering
-            // state so the notification stays visible but controls are disabled, then retry
-            withContext(Dispatchers.Main) { player.setConnecting() }
-            Timber.d(
-                "Media control observation completed for ${config.entityId}, retrying in $OBSERVATION_RETRY_DELAY",
-            )
-            delay(OBSERVATION_RETRY_DELAY)
+            loadArtworkAndUpdatePlayer(state)
         }
+        Timber.d("Media control observation completed for ${config.entityId}")
     }
 
     /** Releases Media3 resources and cancels all coroutines. */
@@ -315,8 +304,6 @@ class HaMediaSession @AssistedInject constructor(
     }
 
     private companion object {
-        val OBSERVATION_RETRY_DELAY = 5.seconds
-
         const val ACTION_MEDIA_PLAY = "media_play"
         const val ACTION_MEDIA_PAUSE = "media_pause"
         const val ACTION_MEDIA_STOP = "media_stop"
