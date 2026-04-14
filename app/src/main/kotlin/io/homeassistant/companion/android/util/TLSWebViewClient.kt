@@ -12,6 +12,7 @@ import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import java.lang.ref.WeakReference
 import java.net.InetAddress
+import java.net.UnknownHostException
 import java.security.PrivateKey
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
@@ -98,13 +99,27 @@ open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) 
                         val value = san[1] as? String ?: return@any false
                         hostMatchesSan(host, value)
                     }
-                    7 -> { // iPAddress — returned as ByteArray per the Java X.509 API contract
-                        val ipBytes = san[1] as? ByteArray ?: return@any false
-                        try {
-                            host.equals(InetAddress.getByAddress(ipBytes).hostAddress, ignoreCase = true)
-                        } catch (_: Exception) {
-                            false
+                    7 -> {
+                        // iPAddress — the standard Java X.509 API returns this as a String
+                        // (dotted-quad or colon-hex), but some providers (e.g. BouncyCastle)
+                        // return a ByteArray; handle both defensively.
+                        // Compare via InetAddress equality so that different textual forms of
+                        // the same address are treated as equal (e.g. "::1" vs "0:0:0:0:0:0:0:1").
+                        val sanAddress: InetAddress = try {
+                            when (val ipEntry = san[1]) {
+                                is ByteArray -> InetAddress.getByAddress(ipEntry)
+                                is String -> InetAddress.getByName(ipEntry)
+                                else -> return@any false
+                            }
+                        } catch (_: UnknownHostException) {
+                            return@any false
                         }
+                        val hostAddress: InetAddress = try {
+                            InetAddress.getByName(host)
+                        } catch (_: UnknownHostException) {
+                            return@any false
+                        }
+                        hostAddress == sanAddress
                     }
                     else -> false
                 }
