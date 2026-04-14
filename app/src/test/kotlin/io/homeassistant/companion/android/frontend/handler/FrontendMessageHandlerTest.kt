@@ -13,6 +13,7 @@ import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConfigGetMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConnectionStatusMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConnectionStatusPayload
+import io.homeassistant.companion.android.frontend.externalbus.incoming.HandleBlobMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistMessage
@@ -479,15 +480,13 @@ class FrontendMessageHandlerTest {
     }
 
     @Test
-    fun `Given blob data when handleBlob called then emits DownloadCompleted with result`() = runTest {
+    fun `Given handle blob message when messageResults then emits DownloadCompleted with result`() = runTest {
         val testData = "data:application/pdf;base64,SGVsbG8="
         val testFilename = "test.pdf"
         coEvery { downloadManager.handleBlob(data = testData, filename = testFilename) } returns DownloadResult.Success
-        every { externalBusRepository.incomingMessages() } returns emptyFlow()
+        every { externalBusRepository.incomingMessages() } returns flowOf(HandleBlobMessage(data = testData, filename = testFilename))
 
         handler.messageResults().test {
-            handler.handleBlob(data = testData, filename = testFilename)
-
             val event = awaitItem()
             assertTrue(event is FrontendHandlerEvent.DownloadCompleted)
             assertEquals(DownloadResult.Success, (event as FrontendHandlerEvent.DownloadCompleted).result)

@@ -96,7 +96,7 @@ class FrontendDownloadManagerTest {
 
             assertEquals(DownloadResult.Dispatched, result)
             coVerify { externalBusRepository.evaluateScript(any()) }
-            assertTrue(scriptSlot.captured.contains("externalApp.handleBlob"))
+            assertTrue(scriptSlot.captured.contains("type:'handleBlob',data:reader.result"))
             assertTrue(scriptSlot.captured.contains("fetch("))
         }
     }

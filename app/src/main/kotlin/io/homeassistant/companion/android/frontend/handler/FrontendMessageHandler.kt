@@ -4,12 +4,12 @@ import android.content.pm.PackageManager
 import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
-import io.homeassistant.companion.android.frontend.FrontendJsHandler
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConfigGetMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConnectionStatusMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.HandleBlobMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.IncomingExternalBusMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistMessage
@@ -102,18 +102,6 @@ class FrontendMessageHandler @Inject constructor(
     }
 
     /**
-     * Called by the JavaScript interface when blob data is available for download.
-     *
-     * Delegates to [FrontendDownloadManager] to save the data URI to the Downloads directory
-     * and emits the result as a [FrontendHandlerEvent.DownloadCompleted] event.
-     */
-    override suspend fun handleBlob(data: String, filename: String?) {
-        Timber.d("handleBlob called with filename=$filename")
-        val result = downloadManager.handleBlob(data = data, filename = filename)
-        jsCallbackEvents.tryEmit(FrontendHandlerEvent.DownloadCompleted(result))
-    }
-
-    /**
      * Flow of events from incoming external bus messages and JavaScript bridge callbacks.
      *
      * Merges deserialized external bus messages with events from JS callbacks (auth errors,
@@ -173,8 +161,12 @@ class FrontendMessageHandler @Inject constructor(
                 FrontendHandlerEvent.ThemeUpdated
             }
 
-            is HapticMessage -> {
-                FrontendHandlerEvent.PerformHaptic(message.payload)
+            is HapticMessage -> FrontendHandlerEvent.PerformHaptic(message.payload)
+
+            is HandleBlobMessage -> {
+                Timber.d("handleBlob called with filename=${message.filename}")
+                val result = downloadManager.handleBlob(data = message.data, filename = message.filename)
+                FrontendHandlerEvent.DownloadCompleted(result)
             }
 
             is UnknownIncomingMessage -> {

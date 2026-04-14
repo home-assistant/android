@@ -90,6 +90,19 @@ class IncomingExternalBusMessageTest {
     }
 
     @Test
+    fun `Given handleBlob JSON then parses to HandleBlobMessage`() {
+        val json = """{"type":"handleBlob","id":10,"data":"data:application/pdf;base64,abc","filename":"file.pdf"}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(HandleBlobMessage::class.java, message)
+        val blobMessage = message as HandleBlobMessage
+        assertEquals(10, blobMessage.id)
+        assertEquals("data:application/pdf;base64,abc", blobMessage.data)
+        assertEquals("file.pdf", blobMessage.filename)
+    }
+
+    @Test
     fun `Given unknown type JSON then parses to UnknownIncomingMessage`() {
         val json = """{"type":"future-feature","id":99,"payload":{"data":"something"}}"""
 

@@ -142,3 +142,16 @@ data class OpenAssistPayload(
 @Serializable
 @SerialName("haptic")
 data class HapticMessage(override val id: Int? = null, val payload: HapticType) : IncomingExternalBusMessage
+
+/**
+ * Message carrying blob data for a file download initiated by the frontend.
+ *
+ * Sent internally by JavaScript injected in
+ * [io.homeassistant.companion.android.frontend.download.FrontendDownloadManager] via the external bus callback.
+ * The blob is read as a data URI and passed in [data], along with a [filename] derived from the
+ * original URL's content disposition or MIME type.
+ */
+@Serializable
+@SerialName("handleBlob")
+data class HandleBlobMessage(override val id: Int? = null, val data: String, val filename: String) :
+    IncomingExternalBusMessage

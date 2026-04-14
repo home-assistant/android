@@ -9,6 +9,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
+import io.homeassistant.companion.android.frontend.download.DownloadResult
+import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
@@ -18,7 +20,8 @@ import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
 import io.homeassistant.companion.android.frontend.js.BridgeState
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridgeFactory
 import io.homeassistant.companion.android.frontend.js.FrontendJsCallback
-import io.homeassistant.companion.android.frontend.navigation.FrontendNavigationEvent
+import io.homeassistant.companion.android.frontend.handler.FrontendMessageHandler
+import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
@@ -69,6 +72,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val connectivityCheckRepository: ConnectivityCheckRepository,
     private val permissionManager: PermissionManager,
     private val frontendJsBridgeFactory: FrontendJsBridgeFactory,
+    private val downloadManager: FrontendDownloadManager,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -81,6 +85,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         connectivityCheckRepository: ConnectivityCheckRepository,
         permissionManager: PermissionManager,
         frontendJsBridgeFactory: FrontendJsBridgeFactory,
+        downloadManager: FrontendDownloadManager,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
         initialPath = savedStateHandle.toRoute<FrontendRoute>().path,
@@ -90,6 +95,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         connectivityCheckRepository = connectivityCheckRepository,
         permissionManager = permissionManager,
         frontendJsBridgeFactory = frontendJsBridgeFactory,
+        downloadManager = downloadManager,
     )
 
     /**
@@ -136,8 +142,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val _connectivityCheckState = MutableStateFlow(ConnectivityCheckState())
     override val connectivityCheckState: StateFlow<ConnectivityCheckState> = _connectivityCheckState.asStateFlow()
 
-    private val _navigationEvents = MutableSharedFlow<FrontendNavigationEvent>(extraBufferCapacity = 1)
-    val navigationEvents: SharedFlow<FrontendNavigationEvent> = _navigationEvents.asSharedFlow()
+    private val _events = MutableSharedFlow<FrontendEvent>(extraBufferCapacity = 1)
+    val events: SharedFlow<FrontendEvent> = _events.asSharedFlow()
 
     private val _hapticEvents = MutableSharedFlow<HapticType>(extraBufferCapacity = 16)
     val hapticEvents: SharedFlow<HapticType> = _hapticEvents.asSharedFlow()
@@ -172,11 +178,15 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     )
 
     val webChromeClient: HAWebChromeClient = HAWebChromeClient(
-        onPermissionRequest = permissionManager::onWebViewPermissionRequest,
+        onPermissionRequest = { request ->
+            viewModelScope.launch {
+                permissionManager.onWebViewPermissionRequest(request)
+            }
+        },
     )
 
-    /** Pending WebView permission request that needs the system permission dialog. */
-    val pendingWebViewPermission = permissionManager.pendingWebViewPermission
+    /** The current pending permission request that needs user approval, or null if none. */
+    val pendingPermissionRequest = permissionManager.pendingPermissionRequest
 
     private var connectivityCheckJob: Job? = null
 
@@ -224,10 +234,6 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 _connectivityCheckState.value = state
             }
         }
-    }
-
-    fun onWebViewPermissionResult(results: Map<String, Boolean>) {
-        permissionManager.onWebViewPermissionResult(results)
     }
 
     fun onRetry() {
@@ -278,6 +284,49 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         loadServer()
     }
 
+    /**
+     * Handles a download request from the WebView.
+     *
+     * On pre-Q devices, checks for [android.Manifest.permission.WRITE_EXTERNAL_STORAGE]
+     * before proceeding. If the permission is not granted, the request is deferred and the
+     * system permission dialog is triggered via [pendingPermissionRequest]. The download
+     * is retried automatically when permission is granted.
+     *
+     * Delegates to [FrontendDownloadManager] to dispatch the download based on URI scheme,
+     * then processes the [DownloadResult] to emit appropriate UI events.
+     *
+     * @param url The URL of the file to download
+     * @param contentDisposition The Content-Disposition header value
+     * @param mimetype The MIME type of the file
+     */
+    fun onDownloadRequested(url: String, contentDisposition: String, mimetype: String) {
+        viewModelScope.launch {
+            if (permissionManager.requiresStoragePermissionForDownload {
+                    onDownloadRequested(url = url, contentDisposition = contentDisposition, mimetype = mimetype)
+                }
+            ) {
+                return@launch
+            }
+
+            val result = downloadManager.downloadFile(
+                url = url,
+                contentDisposition = contentDisposition,
+                mimetype = mimetype,
+                serverId = viewState.value.serverId,
+            )
+            handleDownloadResult(result)
+        }
+    }
+
+    /**
+     * Clears the current pending permission request from the slot.
+     *
+     * Delegates to [PermissionManager.clearPendingPermissionRequest].
+     */
+    fun clearPendingPermissionRequest() {
+        permissionManager.clearPendingPermissionRequest()
+    }
+
     private fun loadServer() {
         urlFlowJob?.cancel()
         urlFlowJob = viewModelScope.launch {
@@ -309,7 +358,9 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                         currentState
                     }
                 }
-                checkNotificationPermission()
+                viewModelScope.launch {
+                    permissionManager.checkNotificationPermission(_viewState.value.serverId)
+                }
             }
 
             is FrontendHandlerEvent.Disconnected -> {
@@ -321,16 +372,16 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             }
 
             is FrontendHandlerEvent.OpenSettings -> {
-                _navigationEvents.tryEmit(FrontendNavigationEvent.NavigateToSettings)
+                _events.tryEmit(FrontendEvent.NavigateToSettings)
             }
 
             is FrontendHandlerEvent.OpenAssistSettings -> {
-                _navigationEvents.tryEmit(FrontendNavigationEvent.NavigateToAssistSettings)
+                _events.tryEmit(FrontendEvent.NavigateToAssistSettings)
             }
 
             is FrontendHandlerEvent.ShowAssist -> {
-                _navigationEvents.tryEmit(
-                    FrontendNavigationEvent.NavigateToAssist(
+                _events.tryEmit(
+                    FrontendEvent.NavigateToAssist(
                         serverId = _viewState.value.serverId,
                         pipelineId = result.pipelineId,
                         startListening = result.startListening,
@@ -346,9 +397,13 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 onError(result.error)
             }
 
+            is FrontendHandlerEvent.DownloadCompleted -> {
+                handleDownloadResult(result.result)
+            }
+
             is FrontendHandlerEvent.ConfigSent,
             is FrontendHandlerEvent.UnknownMessage,
-            -> {
+                -> {
                 // No-op
             }
         }
@@ -417,35 +472,21 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         }
     }
 
-    /**
-     * Handles the result of the notification permission request.
-     *
-     * Delegates to [PermissionManager] and hides the prompt by updating the view state.
-     */
-    fun onNotificationPermissionResult(granted: Boolean) {
-        val serverId = _viewState.value.serverId
-        _viewState.update { currentState ->
-            if (currentState is FrontendViewState.Content && currentState.serverId == serverId) {
-                currentState.copy(showNotificationPermission = false)
-            } else {
-                currentState
+    private fun handleDownloadResult(result: DownloadResult) {
+        when (result) {
+            is DownloadResult.Success,
+            is DownloadResult.Dispatched,
+                -> {
+                // No UI feedback needed — success notification is handled by
+                // the system DownloadManager or DataUriDownloadManager
             }
-        }
-        viewModelScope.launch {
-            permissionManager.onNotificationPermissionResult(serverId = serverId, granted = granted)
-        }
-    }
 
-    private fun checkNotificationPermission() {
-        val serverId = _viewState.value.serverId
-        viewModelScope.launch {
-            val shouldAsk = permissionManager.shouldAskNotificationPermission(serverId)
-            _viewState.update { currentState ->
-                if (currentState is FrontendViewState.Content && currentState.serverId == serverId) {
-                    currentState.copy(showNotificationPermission = shouldAsk)
-                } else {
-                    currentState
-                }
+            is DownloadResult.OpenWithSystem -> {
+                _events.tryEmit(FrontendEvent.OpenExternalLink(result.uri))
+            }
+
+            is DownloadResult.Error -> {
+                _events.tryEmit(FrontendEvent.ShowSnackbar(result.messageResId))
             }
         }
     }

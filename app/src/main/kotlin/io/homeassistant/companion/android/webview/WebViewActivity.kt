@@ -125,6 +125,7 @@ import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.EXPECTED_REVOKE_AUTH_CALLBACK
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.EXTERNAL_APP_V1
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.EXTERNAL_APP_V2_LISTENER
+import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.externalBusCallback
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.isServerSupportingExternalAppV2
 import io.homeassistant.companion.android.improv.ui.ImprovPermissionDialog
 import io.homeassistant.companion.android.improv.ui.ImprovSetupDialog
@@ -1144,8 +1145,7 @@ class WebViewActivity :
                 val filename = json.getStringOrNull("filename")
                 blobData?.let {
                     lifecycleScope.launch {
-                        DataUriDownloadManager.saveDataUri(
-                            this@WebViewActivity,
+                        dataUriDownloadManager.saveDataUri(
                             url = it,
                             mimetype = "",
                             filename = filename,
@@ -1157,25 +1157,6 @@ class WebViewActivity :
             else -> presenter.onExternalBusMessage(json)
         }
     }
-
-    /**
-     * Returns a JS `function()` expression that sends [jsonPayload] through the external bus.
-     *
-     * The returned string is a complete `function() { ... }` expression that can be used
-     * directly as a callback.
-     *
-     * For V1: calls `window.externalApp.externalBus(...)` directly.
-     * For V2: posts a `{type:'externalBus', payload:...}` message via `window.externalAppV2`.
-     */
-    private fun externalBusCallback(jsonPayload: String): String = """
-        function() {
-            if (typeof window.$EXTERNAL_APP_V2_LISTENER !== 'undefined') {
-                window.$EXTERNAL_APP_V2_LISTENER.postMessage(JSON.stringify({type:'externalBus',payload:$jsonPayload}));
-            } else {
-                window.$EXTERNAL_APP_V1.externalBus(JSON.stringify($jsonPayload));
-            }
-        }
-    """.trimIndent()
 
     private fun addEntityTo(json: JsonObject) {
         val payload = json["payload"]?.jsonObjectOrNull()

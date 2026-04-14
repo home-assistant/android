@@ -1,14 +1,19 @@
 package io.homeassistant.companion.android.frontend
 
+import android.net.Uri
+import app.cash.turbine.test
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
+import io.homeassistant.companion.android.frontend.download.DownloadResult
+import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.handler.FrontendBusObserver
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridgeFactory
-import io.homeassistant.companion.android.frontend.navigation.FrontendNavigationEvent
+import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
@@ -34,15 +39,12 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.ValueSource
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @ExtendWith(ConsoleLogExtension::class)
@@ -56,6 +58,7 @@ class FrontendViewModelTest {
     private val connectivityCheckRepository: ConnectivityCheckRepository = mockk(relaxed = true)
     private val permissionManager: PermissionManager = mockk(relaxed = true)
     private val frontendJsBridgeFactory: FrontendJsBridgeFactory = mockk(relaxed = true)
+    private val downloadManager: FrontendDownloadManager = mockk(relaxed = true)
 
     private val serverId = 1
     private val testUrlWithAuth = "https://example.com?external_auth=1"
@@ -80,6 +83,7 @@ class FrontendViewModelTest {
             connectivityCheckRepository = connectivityCheckRepository,
             permissionManager = permissionManager,
             frontendJsBridgeFactory = frontendJsBridgeFactory,
+            downloadManager = downloadManager,
         )
     }
 
@@ -473,9 +477,9 @@ class FrontendViewModelTest {
 
             val viewModel = createViewModel()
 
-            // Collect navigation events
-            val navigationEvents = mutableListOf<FrontendNavigationEvent>()
-            val job = backgroundScope.launch { viewModel.navigationEvents.collect { navigationEvents.add(it) } }
+            // Collect events
+            val events = mutableListOf<FrontendEvent>()
+            val job = backgroundScope.launch { viewModel.events.collect { events.add(it) } }
 
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
 
@@ -483,7 +487,7 @@ class FrontendViewModelTest {
             messageFlow.emit(FrontendHandlerEvent.ShowAssist(pipelineId = "abc", startListening = false))
             advanceUntilIdle()
 
-            val event = navigationEvents.filterIsInstance<FrontendNavigationEvent.NavigateToAssist>().firstOrNull()
+            val event = events.filterIsInstance<FrontendEvent.NavigateToAssist>().firstOrNull()
             assertTrue(event != null, "Expected NavigateToAssist event")
             assertEquals(serverId, event!!.serverId)
             assertEquals("abc", event.pipelineId)
@@ -492,7 +496,7 @@ class FrontendViewModelTest {
         }
 
         @Test
-        fun `Given open settings message result when collected then navigation event is emitted`() = runTest {
+        fun `Given open settings message result when collected then NavigateToSettings event is emitted`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
@@ -501,9 +505,9 @@ class FrontendViewModelTest {
 
             val viewModel = createViewModel()
 
-            // Collect navigation events
-            val navigationEvents = mutableListOf<FrontendNavigationEvent>()
-            val job = backgroundScope.launch { viewModel.navigationEvents.collect { navigationEvents.add(it) } }
+            // Collect events
+            val events = mutableListOf<FrontendEvent>()
+            val job = backgroundScope.launch { viewModel.events.collect { events.add(it) } }
 
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
 
@@ -511,7 +515,7 @@ class FrontendViewModelTest {
             messageFlow.emit(FrontendHandlerEvent.OpenSettings)
             advanceUntilIdle()
 
-            assertTrue(navigationEvents.any { it is FrontendNavigationEvent.NavigateToSettings })
+            assertTrue(events.any { it is FrontendEvent.NavigateToSettings })
             job.cancel()
         }
 
@@ -543,7 +547,7 @@ class FrontendViewModelTest {
         }
 
         @Test
-        fun `Given open assist settings message result when collected then navigation event is emitted`() = runTest {
+        fun `Given open assist settings message result when collected then NavigateToAssistSettings event is emitted`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
@@ -552,16 +556,16 @@ class FrontendViewModelTest {
 
             val viewModel = createViewModel()
 
-            // Collect navigation events
-            val navigationEvents = mutableListOf<FrontendNavigationEvent>()
-            val job = backgroundScope.launch { viewModel.navigationEvents.collect { navigationEvents.add(it) } }
+            // Collect events
+            val events = mutableListOf<FrontendEvent>()
+            val job = backgroundScope.launch { viewModel.events.collect { events.add(it) } }
 
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
 
             messageFlow.emit(FrontendHandlerEvent.OpenAssistSettings)
             advanceUntilIdle()
 
-            assertTrue(navigationEvents.any { it is FrontendNavigationEvent.NavigateToAssistSettings })
+            assertTrue(events.any { it is FrontendEvent.NavigateToAssistSettings })
             job.cancel()
         }
     }
@@ -717,62 +721,43 @@ class FrontendViewModelTest {
     @Nested
     inner class NotificationPermission {
 
-        @ParameterizedTest(name = "shouldAsk={0} -> showNotificationPermission={0}")
-        @ValueSource(booleans = [true, false])
-        fun `Given connected when permission manager returns value then Content state matches`(
-            shouldAsk: Boolean,
-        ) = runTest {
+        @Test
+        fun `Given connected then checks notification permission via permission manager`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
-            coEvery { permissionManager.shouldAskNotificationPermission(serverId) } returns shouldAsk
 
-            val viewModel = createViewModel()
+            createViewModel()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
 
             messageFlow.emit(FrontendHandlerEvent.Connected)
             advanceUntilIdle()
 
-            val state = viewModel.viewState.value
-            assertTrue(state is FrontendViewState.Content)
-            assertEquals(shouldAsk, (state as FrontendViewState.Content).showNotificationPermission)
+            coVerify { permissionManager.checkNotificationPermission(serverId) }
         }
 
         @Test
-        fun `Given notification permission result when called then showNotificationPermission becomes false`() = runTest {
-            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
-            every { frontendBusObserver.messageResults() } returns messageFlow
+        fun `Given permission dismissed then delegates to permission manager`() = runTest {
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
-            coEvery { permissionManager.shouldAskNotificationPermission(serverId) } returns true
 
             val viewModel = createViewModel()
-            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-
-            messageFlow.emit(FrontendHandlerEvent.Connected)
             advanceUntilIdle()
 
-            // Verify prompt is shown
-            assertTrue((viewModel.viewState.value as FrontendViewState.Content).showNotificationPermission)
+            viewModel.clearPendingPermissionRequest()
 
-            // Handle permission result
-            viewModel.onNotificationPermissionResult(granted = true)
-            advanceUntilIdle()
-
-            // Verify prompt is hidden
-            assertFalse((viewModel.viewState.value as FrontendViewState.Content).showNotificationPermission)
-            coVerify { permissionManager.onNotificationPermissionResult(serverId = serverId, granted = true) }
+            verify { permissionManager.clearPendingPermissionRequest() }
         }
     }
 
     @Nested
-    inner class WebViewPermission {
+    inner class Permission {
 
         @Test
-        fun `Given webView permission result when called then delegates to permission manager`() = runTest {
+        fun `Given pending permission then viewModel exposes it from permission manager`() = runTest {
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
@@ -780,22 +765,7 @@ class FrontendViewModelTest {
             val viewModel = createViewModel()
             advanceUntilIdle()
 
-            val results = mapOf(android.Manifest.permission.CAMERA to true)
-            viewModel.onWebViewPermissionResult(results)
-
-            verify { permissionManager.onWebViewPermissionResult(results) }
-        }
-
-        @Test
-        fun `Given pending webView permission then viewModel exposes it from permission manager`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
-                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
-            )
-
-            val viewModel = createViewModel()
-            advanceUntilIdle()
-
-            assertEquals(permissionManager.pendingWebViewPermission, viewModel.pendingWebViewPermission)
+            assertEquals(permissionManager.pendingPermissionRequest, viewModel.pendingPermissionRequest)
         }
     }
 
@@ -848,6 +818,184 @@ class FrontendViewModelTest {
 
             // Should still be content state, not error
             assertTrue(viewModel.viewState.value is FrontendViewState.Content)
+        }
+    }
+
+    @Nested
+    inner class DownloadHandling {
+
+        @Test
+        fun `Given download error result when download requested then emits ShowSnackbar UI event`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery {
+                downloadManager.downloadFile(any(), any(), any(), any())
+            } returns DownloadResult.Error(messageResId = commonR.string.downloads_failed)
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            viewModel.events.test {
+                viewModel.onDownloadRequested(
+                    url = "https://example.com/file.pdf",
+                    contentDisposition = "attachment",
+                    mimetype = "application/pdf",
+                )
+                advanceUntilIdle()
+
+                val event = awaitItem()
+                assertTrue(event is FrontendEvent.ShowSnackbar)
+                assertEquals(commonR.string.downloads_failed, (event as FrontendEvent.ShowSnackbar).messageResId)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given open with system result when download requested then emits OpenExternalLink event`() = runTest {
+            val testUri = mockk<Uri> {
+                every { this@mockk.toString() } returns "ftp://example.com/file.txt"
+            }
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery {
+                downloadManager.downloadFile(any(), any(), any(), any())
+            } returns DownloadResult.OpenWithSystem(uri = testUri)
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            viewModel.events.test {
+                viewModel.onDownloadRequested(
+                    url = "ftp://example.com/file.txt",
+                    contentDisposition = "attachment",
+                    mimetype = "application/octet-stream",
+                )
+                advanceUntilIdle()
+
+                val event = awaitItem()
+                assertTrue(event is FrontendEvent.OpenExternalLink)
+                assertEquals(testUri, (event as FrontendEvent.OpenExternalLink).uri)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given success result when download requested then no UI event emitted`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery {
+                downloadManager.downloadFile(any(), any(), any(), any())
+            } returns DownloadResult.Success
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            viewModel.events.test {
+                viewModel.onDownloadRequested(
+                    url = "https://example.com/file.pdf",
+                    contentDisposition = "attachment",
+                    mimetype = "application/pdf",
+                )
+                advanceUntilIdle()
+
+                expectNoEvents()
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given download requested when downloadManager called then passes current serverId`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery {
+                downloadManager.downloadFile(any(), any(), any(), any())
+            } returns DownloadResult.Success
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            viewModel.onDownloadRequested(
+                url = "https://example.com/file.pdf",
+                contentDisposition = "attachment",
+                mimetype = "application/pdf",
+            )
+            advanceUntilIdle()
+
+            coVerify {
+                downloadManager.downloadFile(
+                    url = "https://example.com/file.pdf",
+                    contentDisposition = "attachment",
+                    mimetype = "application/pdf",
+                    serverId = serverId,
+                )
+            }
+        }
+
+        @Test
+        fun `Given storage permission required when download requested then does not call downloadManager`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery {
+                permissionManager.requiresStoragePermissionForDownload(any())
+            } returns true
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            viewModel.onDownloadRequested(
+                url = "https://example.com/file.pdf",
+                contentDisposition = "attachment",
+                mimetype = "application/pdf",
+            )
+            advanceUntilIdle()
+
+            coVerify(exactly = 0) { downloadManager.downloadFile(any(), any(), any(), any()) }
+        }
+
+        @Test
+        fun `Given storage permission required when onGranted called then retries download`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val onGrantedSlot = mutableListOf<() -> Unit>()
+            coEvery {
+                permissionManager.requiresStoragePermissionForDownload(capture(onGrantedSlot))
+            } returns true
+            coEvery {
+                downloadManager.downloadFile(any(), any(), any(), any())
+            } returns DownloadResult.Success
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            viewModel.onDownloadRequested(
+                url = "https://example.com/file.pdf",
+                contentDisposition = "attachment",
+                mimetype = "application/pdf",
+            )
+
+            coVerify(exactly = 0) { downloadManager.downloadFile(any(),any(),any(), any()) }
+
+            // Simulate permission granted: onGranted retries the download
+            coEvery {
+                permissionManager.requiresStoragePermissionForDownload(any())
+            } returns false
+            onGrantedSlot.last().invoke()
+            advanceUntilIdle()
+
+            coVerify {
+                downloadManager.downloadFile(
+                    url = "https://example.com/file.pdf",
+                    contentDisposition = "attachment",
+                    mimetype = "application/pdf",
+                    serverId = serverId,
+                )
+            }
         }
     }
 }

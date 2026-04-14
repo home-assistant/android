@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.frontend
 
 import android.annotation.SuppressLint
 import android.net.Uri
-import android.os.Build
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -28,6 +27,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,9 +50,10 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticTy
 import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge
 import io.homeassistant.companion.android.frontend.js.FrontendJsCallback
+import io.homeassistant.companion.android.frontend.permissions.MultiplePermissionsEffect
 import io.homeassistant.companion.android.frontend.permissions.NotificationPermissionPrompt
-import io.homeassistant.companion.android.frontend.permissions.PendingWebViewPermissionRequest
-import io.homeassistant.companion.android.frontend.permissions.WebViewPermissionEffect
+import io.homeassistant.companion.android.frontend.permissions.PermissionRequest
+import io.homeassistant.companion.android.frontend.permissions.SinglePermissionEffect
 import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModel
@@ -63,6 +64,7 @@ import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.webview.insecure.BlockInsecureScreen
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
@@ -96,7 +98,7 @@ internal fun FrontendScreen(
     modifier: Modifier = Modifier,
 ) {
     val viewState by viewModel.viewState.collectAsStateWithLifecycle()
-    val pendingWebViewPermission by viewModel.pendingWebViewPermission.collectAsStateWithLifecycle()
+    val pendingPermissionRequest by viewModel.pendingPermissionRequest.collectAsStateWithLifecycle()
 
     // Create SecurityLevel ViewModel only when needed
     val securityLevelViewModel: LocationForSecureConnectionViewModel? =
@@ -117,8 +119,8 @@ internal fun FrontendScreen(
         frontendJsCallback = viewModel.frontendJsCallback,
         scriptsToEvaluate = viewModel.scriptsToEvaluate,
         hapticEvents = viewModel.hapticEvents,
-        pendingWebViewPermission = pendingWebViewPermission,
-        onWebViewPermissionResult = viewModel::onWebViewPermissionResult,
+        pendingPermissionRequest = pendingPermissionRequest,
+        onClearPendingPermissionRequest = viewModel::clearPendingPermissionRequest,
         onBlockInsecureRetry = viewModel::onRetry,
         onOpenExternalLink = onOpenExternalLink,
         onBlockInsecureHelpClick = onBlockInsecureHelpClick,
@@ -131,7 +133,7 @@ internal fun FrontendScreen(
         onSecurityLevelHelpClick = onSecurityLevelHelpClick,
         onShowSnackbar = onShowSnackbar,
         onWebViewCreationFailed = viewModel::onWebViewCreationFailed,
-        onNotificationPermissionResult = viewModel::onNotificationPermissionResult,
+        onDownloadRequested = viewModel::onDownloadRequested,
         modifier = modifier,
     )
 }
@@ -156,13 +158,12 @@ internal fun FrontendScreenContent(
     onWebViewCreationFailed: (Throwable) -> Unit,
     modifier: Modifier = Modifier,
     hapticEvents: Flow<HapticType> = emptyFlow(),
-    pendingWebViewPermission: PendingWebViewPermissionRequest? = null,
-    onWebViewPermissionResult: (Map<String, Boolean>) -> Unit = {},
+    pendingPermissionRequest: PermissionRequest<*>? = null,
+    onClearPendingPermissionRequest: () -> Unit = {},
     errorStateProvider: FrontendConnectionErrorStateProvider = FrontendConnectionErrorStateProvider.noOp,
     securityLevelViewModel: LocationForSecureConnectionViewModel? = null,
     onSecurityLevelDone: () -> Unit = {},
-    onNotificationPermissionResult: (Boolean) -> Unit = {},
-    supportsNotificationPermission: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU,
+    onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit = { _, _, _ -> },
 ) {
     var webView by remember { mutableStateOf<WebView?>(null) }
 
@@ -174,9 +175,9 @@ internal fun FrontendScreenContent(
         hapticEvents = hapticEvents,
     )
 
-    WebViewPermissionEffect(
-        pendingPermission = pendingWebViewPermission,
-        onPermissionResult = onWebViewPermissionResult,
+    PendingPermissionHandler(
+        pendingRequest = pendingPermissionRequest,
+        onClearPendingPermissionRequest = onClearPendingPermissionRequest,
     )
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -188,6 +189,7 @@ internal fun FrontendScreenContent(
             webChromeClient = webChromeClient,
             contentState = viewState as? FrontendViewState.Content,
             onWebViewCreationFailed = onWebViewCreationFailed,
+            onDownloadRequested = onDownloadRequested,
         )
 
         StateOverlay(
@@ -204,8 +206,6 @@ internal fun FrontendScreenContent(
             onConfigureHomeNetwork = onConfigureHomeNetwork,
             onOpenExternalLink = onOpenExternalLink,
             onShowSnackbar = onShowSnackbar,
-            onNotificationPermissionResult = onNotificationPermissionResult,
-            supportsNotificationPermission = supportsNotificationPermission,
         )
     }
 }
@@ -228,8 +228,6 @@ private fun StateOverlay(
     onConfigureHomeNetwork: (serverId: Int) -> Unit,
     onOpenExternalLink: suspend (Uri) -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
-    onNotificationPermissionResult: (Boolean) -> Unit,
-    supportsNotificationPermission: Boolean,
 ) {
     when (viewState) {
         is FrontendViewState.LoadServer,
@@ -237,10 +235,7 @@ private fun StateOverlay(
         -> LoadingScreen(modifier = Modifier.background(LocalHAColorScheme.current.colorSurfaceDefault))
 
         is FrontendViewState.Content -> {
-            if (viewState.showNotificationPermission && supportsNotificationPermission) {
-                @SuppressLint("InlinedApi")
-                NotificationPermissionPrompt(onPermissionResult = onNotificationPermissionResult)
-            }
+            // No overlay for content state to show the underlying WebView
         }
 
         is FrontendViewState.SecurityLevelRequired -> SecurityLevelOverlay(
@@ -376,6 +371,7 @@ private fun SafeHAWebView(
     contentState: FrontendViewState.Content?,
     onWebViewCreationFailed: (Throwable) -> Unit,
     webChromeClient: WebChromeClient? = null,
+    onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit = { _, _, _ -> },
 ) {
     val serverHandleInsets = contentState?.serverHandleInsets ?: false
     val backgroundColor = contentState?.backgroundColor
@@ -414,6 +410,9 @@ private fun SafeHAWebView(
                     onWebViewCreated(this)
                     this.webViewClient = webViewClient
                     webChromeClient?.let { this.webChromeClient = it }
+                    setDownloadListener { url, _, contentDisposition, mimetype, _ ->
+                        onDownloadRequested(url, contentDisposition, mimetype)
+                    }
                 },
                 onBackPressed = onBackClick,
                 onWebViewCreationFailed = onWebViewCreationFailed,
@@ -444,6 +443,63 @@ private fun SafeHAWebView(
 @Composable
 private fun Color.Overlay(modifier: Modifier = Modifier) {
     Spacer(modifier = modifier.background(this))
+}
+
+/**
+ * Routes a [PermissionRequest] to the appropriate UI and delivers results directly.
+ *
+ * When the user responds, this composable:
+ * 1. Clears the pending slot via [onClearPendingPermissionRequest] (unblocking queued requests)
+ * 2. Calls [PermissionRequest.onResult] directly using a composable coroutine scope
+ *
+ * Types with custom UI (e.g. [PermissionRequest.Notification] bottom sheet) are matched first.
+ * Remaining types fall through to the system dialog based on their category:
+ * [PermissionRequest.MultiplePermissions] or [PermissionRequest.SinglePermission].
+ *
+ * Adding a new permission type that uses the system dialog requires no changes here.
+ */
+@Composable
+private fun PendingPermissionHandler(
+    pendingRequest: PermissionRequest<*>?,
+    onClearPendingPermissionRequest: () -> Unit,
+) {
+    val coroutineScope = rememberCoroutineScope()
+
+    fun <T: PermissionRequest.Result>resolveResult(request: PermissionRequest<T>, result: T) {
+        onClearPendingPermissionRequest()
+        coroutineScope.launch { request.onResult(result) }
+    }
+
+    when (pendingRequest) {
+        // Types with custom UI
+        is PermissionRequest.Notification -> {
+            @SuppressLint("InlinedApi")
+            NotificationPermissionPrompt(
+                onPermissionResult = { granted ->
+                    resolveResult(pendingRequest, PermissionRequest.Result.Single(granted = granted))
+                },
+                onDismiss = onClearPendingPermissionRequest,
+            )
+        }
+        // Default system dialogs by category
+        is PermissionRequest.MultiplePermissions -> {
+            MultiplePermissionsEffect(
+                pendingRequest = pendingRequest,
+                onPermissionResult = { permissions ->
+                    resolveResult(pendingRequest, PermissionRequest.Result.Multiple(permissions = permissions))
+                },
+            )
+        }
+        is PermissionRequest.SinglePermission -> {
+            SinglePermissionEffect(
+                pendingRequest = pendingRequest,
+                onPermissionResult = { granted ->
+                    resolveResult(pendingRequest, PermissionRequest.Result.Single(granted = granted))
+                },
+            )
+        }
+        null -> { /* No pending permission */ }
+    }
 }
 
 /**

@@ -7,8 +7,8 @@ import android.webkit.URLUtil
 import androidx.core.net.toUri
 import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.frontend.FrontendJsBridge
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
+import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.externalBusCallback
 import io.homeassistant.companion.android.frontend.session.ServerSessionManager
 import io.homeassistant.companion.android.util.DataUriDownloadManager
 import io.homeassistant.companion.android.util.sensitive
@@ -142,27 +142,28 @@ class FrontendDownloadManager @Inject constructor(
         }
         val safeUrl = JSONObject.quote(url)
         val safeFallbackFilename = JSONObject.quote(fallbackFilename)
+        val blobCallback = externalBusCallback(
+            jsonPayload = "{type:'handleBlob',data:reader.result,filename:$safeFallbackFilename}",
+        )
         val jsCode = """
-            (async function() {
-                try {
-                    const response = await fetch($safeUrl);
-                    if (!response.ok) {
-                        console.error('Blob download failed: HTTP ' + response.status + ' for ' + ${sensitive(
-            safeUrl,
-        )});
-                        return;
+                (async function() {
+                    try {
+                        const response = await fetch($safeUrl);
+                        if (!response.ok) {
+                            console.error('Blob download failed: HTTP ' + response.status + ' for ${
+            sensitive(safeUrl)
+        }');
+                            return;
+                        }
+                        const blob = await response.blob();
+                        const reader = new FileReader();
+                        reader.onloadend = $blobCallback;
+                        reader.readAsDataURL(blob);
+                    } catch (e) {
+                        console.error('Blob download failed:', e);
                     }
-                    const blob = await response.blob();
-                    const reader = new FileReader();
-                    reader.onloadend = function() {
-                        ${FrontendJsBridge.INTERFACE_NAME}.handleBlob(reader.result, $safeFallbackFilename);
-                    };
-                    reader.readAsDataURL(blob);
-                } catch (e) {
-                    console.error('Blob download failed:', e);
-                }
-            })();
-        """.trimIndent()
+                })();
+            """.trimIndent()
         externalBusRepository.evaluateScript(jsCode)
         return DownloadResult.Dispatched
     }
