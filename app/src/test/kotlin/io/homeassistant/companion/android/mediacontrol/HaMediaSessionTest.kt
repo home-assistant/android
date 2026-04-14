@@ -355,15 +355,15 @@ class HaMediaSessionTest {
     }
 
     /**
-     * Verifies that calling `reconnect()` while an observation is already running cancels the
+     * Verifies that calling `observe()` while an observation is already running cancels the
      * previous observation job and starts a fresh one, re-calling `observeEntityState`.
      *
      * This is the recovery path for a stuck WebSocket subscription (flow never completes after
      * network disconnect). The test simulates the stuck case with a `MutableSharedFlow` that
-     * never completes, then verifies that `reconnect()` triggers a second subscription call.
+     * never completes, then verifies that `observe()` triggers a second subscription call.
      */
     @Test
-    fun `Given running observation when reconnect called then observation is restarted`() {
+    fun `Given running observation when observe called then observation is restarted`() {
         var observeCallCount = 0
         coEvery { mediaControlRepository.observeEntityState(config) } answers {
             observeCallCount++
@@ -375,7 +375,7 @@ class HaMediaSessionTest {
         idleMainLooper()
         assertEquals(1, observeCallCount)
 
-        session.reconnect()
+        session.observe()
         idleMainLooper()
         assertEquals(2, observeCallCount)
 

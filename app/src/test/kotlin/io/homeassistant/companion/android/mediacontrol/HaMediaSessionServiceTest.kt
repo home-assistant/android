@@ -54,7 +54,7 @@ private val sessionCounter = AtomicInteger(0)
  * delivered to the active subscriber.
  *
  * [HaMediaSession] instances are created with [UnconfinedTestDispatcher] scopes so that
- * [HaMediaSession.reconnect] and [HaMediaSession.startObservingState] run eagerly. Main-looper
+ * [HaMediaSession.observe] and [HaMediaSession.startObservingState] run eagerly. Main-looper
  * tasks (such as [HaRemoteMediaPlayer.updateState] dispatched by [HaMediaSession]) are flushed
  * with [idleMainLooper].
  *
@@ -85,7 +85,7 @@ class HaMediaSessionServiceTest {
         every { mediaControlRepository.observeConfiguredEntities() } returns configuredEntitiesFlow
         coEvery { mediaControlRepository.observeEntityState(any()) } returns flowOf(null)
 
-        // Each session gets its own UnconfinedTestDispatcher scope so that reconnect() and
+        // Each session gets its own UnconfinedTestDispatcher scope so that observe() and
         // startObservingState() run eagerly on the calling thread without Thread.sleep.
         every { haMediaSessionFactory.create(any<Context>(), any(), any()) } answers {
             HaMediaSession(
@@ -229,34 +229,6 @@ class HaMediaSessionServiceTest {
         idleMainLooper()
 
         assertTrue(Shadows.shadowOf(service).isStoppedBySelf)
-    }
-
-    // -- onStartCommand --
-
-    /**
-     * Verifies that [HaMediaSessionService.onStartCommand] reconnects active sessions by
-     * restarting their observation. This is the recovery path for sessions whose WebSocket
-     * subscription got stuck after a network disconnect.
-     *
-     * With [UnconfinedTestDispatcher] session scopes, [HaMediaSession.reconnect] runs eagerly
-     * and [MediaControlRepository.observeEntityState] is called synchronously — no sleep needed.
-     */
-    @Test
-    fun `Given active sessions when onStartCommand then sessions are reconnected`() {
-        var observeCallCount = 0
-        coEvery { mediaControlRepository.observeEntityState(any()) } answers {
-            observeCallCount++
-            MutableSharedFlow()
-        }
-        val config = uniqueConfig()
-        configuredEntitiesFlow.tryEmit(listOf(config))
-        startObserving()
-        idleMainLooper()
-        val countAfterSetup = observeCallCount
-
-        service.onStartCommand(intent = null, flags = 0, startId = 0)
-
-        assertTrue(observeCallCount > countAfterSetup)
     }
 
     // -- onTaskRemoved --

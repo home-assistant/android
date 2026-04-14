@@ -60,113 +60,112 @@ class HaMediaSession @AssistedInject constructor(
     private val mediaControlRepository: MediaControlRepository,
     private val serverManager: ServerManager,
 ) {
-    val mediaSession: MediaSession
+    private val commandCallback = object : HaRemoteMediaPlayer.CommandCallback {
+        override fun onPlayRequested() {
+            callMediaAction(ACTION_MEDIA_PLAY)
+        }
 
-    private val player: HaRemoteMediaPlayer
+        override fun onPauseRequested() {
+            callMediaAction(ACTION_MEDIA_PAUSE)
+        }
 
-    // Accessed only from loadArtworkAndUpdatePlayer, which is always called sequentially
-    // within startObservingState on the Default dispatcher.
-    // currentArtworkUrl stores the raw HA entity_picture path (not the resolved URL) so the
-    // cache key stays stable across local/external URL switches for the same image.
+        override fun onSeekRequested(positionMs: Long) {
+            callMediaAction(
+                action = ACTION_MEDIA_SEEK,
+                extraData = mapOf("seek_position" to positionMs / 1000.0),
+            )
+        }
+
+        override fun onNextRequested() {
+            callMediaAction(ACTION_MEDIA_NEXT_TRACK)
+        }
+
+        override fun onPreviousRequested() {
+            callMediaAction(ACTION_MEDIA_PREVIOUS_TRACK)
+        }
+
+        override fun onSetVolumeRequested(volume: Float) {
+            callMediaAction(
+                action = ACTION_VOLUME_SET,
+                extraData = mapOf("volume_level" to volume),
+            )
+        }
+
+        override fun onIncreaseVolumeRequested() {
+            callMediaAction(ACTION_VOLUME_UP)
+        }
+
+        override fun onDecreaseVolumeRequested() {
+            callMediaAction(ACTION_VOLUME_DOWN)
+        }
+
+        override fun onMuteRequested(muted: Boolean) {
+            callMediaAction(
+                action = ACTION_VOLUME_MUTE,
+                extraData = mapOf("is_volume_muted" to muted),
+            )
+        }
+
+        override fun onStopRequested() {
+            callMediaAction(ACTION_MEDIA_STOP)
+        }
+
+        override fun onShuffleRequested(shuffle: Boolean) {
+            callMediaAction(
+                action = ACTION_SHUFFLE_SET,
+                extraData = mapOf("shuffle" to shuffle),
+            )
+        }
+
+        override fun onRepeatRequested(repeatMode: MediaRepeatMode) {
+            val haRepeatValue = when (repeatMode) {
+                is MediaRepeatMode.Off -> "off"
+                is MediaRepeatMode.One -> "one"
+                is MediaRepeatMode.All -> "all"
+            }
+            callMediaAction(
+                action = ACTION_REPEAT_SET,
+                extraData = mapOf("repeat" to haRepeatValue),
+            )
+        }
+    }
+
+    private val player = HaRemoteMediaPlayer(Looper.getMainLooper(), commandCallback)
+
+    /**
+     * Accessed only from loadArtworkAndUpdatePlayer, which is always called sequentially
+     * within startObservingState on the Default dispatcher.
+     * currentArtworkUrl stores the raw HA entity_picture path (not the resolved URL) so the
+     * cache key stays stable across local/external URL switches for the same image.
+     */
     private var currentArtworkUrl: String? = null
     private var currentArtworkBytes: ByteArray? = null
 
-    init {
-        val commandCallback = object : HaRemoteMediaPlayer.CommandCallback {
-            override fun onPlayRequested() {
-                callMediaAction(ACTION_MEDIA_PLAY)
+    val mediaSession: MediaSession = MediaSession.Builder(context, player)
+        .setId("${config.serverId}_${config.entityId}")
+        .setCallback(MediaSessionCallback())
+        .build()
+        .also { session ->
+            /**
+             * FLAG_ACTIVITY_NEW_TASK is required when starting an activity from a service context
+             * (PendingIntents from notifications always fire in a non-Activity context).
+             * FLAG_ACTIVITY_SINGLE_TOP prevents stacking a redundant WebViewActivity if one is
+             * already at the top; onNewIntent delivers the path to the existing instance instead.
+             */
+            val tapIntent = WebViewActivity.newInstance(
+                context = context,
+                path = "entityId:${config.entityId}",
+                serverId = config.serverId,
+            ).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
             }
-
-            override fun onPauseRequested() {
-                callMediaAction(ACTION_MEDIA_PAUSE)
-            }
-
-            override fun onSeekRequested(positionMs: Long) {
-                callMediaAction(
-                    action = ACTION_MEDIA_SEEK,
-                    extraData = mapOf("seek_position" to positionMs / 1000.0),
-                )
-            }
-
-            override fun onNextRequested() {
-                callMediaAction(ACTION_MEDIA_NEXT_TRACK)
-            }
-
-            override fun onPreviousRequested() {
-                callMediaAction(ACTION_MEDIA_PREVIOUS_TRACK)
-            }
-
-            override fun onSetVolumeRequested(volume: Float) {
-                callMediaAction(
-                    action = ACTION_VOLUME_SET,
-                    extraData = mapOf("volume_level" to volume),
-                )
-            }
-
-            override fun onIncreaseVolumeRequested() {
-                callMediaAction(ACTION_VOLUME_UP)
-            }
-
-            override fun onDecreaseVolumeRequested() {
-                callMediaAction(ACTION_VOLUME_DOWN)
-            }
-
-            override fun onMuteRequested(muted: Boolean) {
-                callMediaAction(
-                    action = ACTION_VOLUME_MUTE,
-                    extraData = mapOf("is_volume_muted" to muted),
-                )
-            }
-
-            override fun onStopRequested() {
-                callMediaAction(ACTION_MEDIA_STOP)
-            }
-
-            override fun onShuffleRequested(shuffle: Boolean) {
-                callMediaAction(
-                    action = ACTION_SHUFFLE_SET,
-                    extraData = mapOf("shuffle" to shuffle),
-                )
-            }
-
-            override fun onRepeatRequested(repeatMode: MediaRepeatMode) {
-                val haRepeatValue = when (repeatMode) {
-                    is MediaRepeatMode.Off -> "off"
-                    is MediaRepeatMode.One -> "one"
-                    is MediaRepeatMode.All -> "all"
-                }
-                callMediaAction(
-                    action = ACTION_REPEAT_SET,
-                    extraData = mapOf("repeat" to haRepeatValue),
-                )
-            }
+            session.sessionActivity = PendingIntent.getActivity(
+                context,
+                "${config.serverId}:${config.entityId}".hashCode(),
+                tapIntent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            )
         }
-
-        player = HaRemoteMediaPlayer(Looper.getMainLooper(), commandCallback)
-
-        mediaSession = MediaSession.Builder(context, player)
-            .setId("${config.serverId}_${config.entityId}")
-            .setCallback(MediaSessionCallback())
-            .build()
-
-        // FLAG_ACTIVITY_NEW_TASK is required when starting an activity from a service context
-        // (PendingIntents from notifications always fire in a non-Activity context).
-        // FLAG_ACTIVITY_SINGLE_TOP prevents stacking a redundant WebViewActivity if one is
-        // already at the top; onNewIntent delivers the path to the existing instance instead.
-        val tapIntent = WebViewActivity.newInstance(
-            context = context,
-            path = "entityId:${config.entityId}",
-            serverId = config.serverId,
-        ).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
-        }
-        mediaSession.sessionActivity = PendingIntent.getActivity(
-            context,
-            "${config.serverId}:${config.entityId}".hashCode(),
-            tapIntent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-        )
-    }
 
     private var observingJob: Job? = null
 
@@ -175,7 +174,7 @@ class HaMediaSession @AssistedInject constructor(
      * before launching a new one, making it safe to call when already observing (e.g. to
      * recover a stuck WebSocket subscription after a network reconnect).
      */
-    internal fun reconnect() {
+    internal fun observe() {
         observingJob?.cancel()
         observingJob = scope.launch { startObservingState() }
     }

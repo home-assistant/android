@@ -69,8 +69,7 @@ class HaMediaSessionService : MediaSessionService() {
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Timber.d("HaMediaSessionService onStartCommand, reconnecting ${activeSessions.size} sessions")
-        activeSessions.values.forEach { it.reconnect() }
+        Timber.d("HaMediaSessionService onStartCommand, ${activeSessions.size} active sessions")
         return super.onStartCommand(intent, flags, startId)
     }
 
@@ -117,7 +116,7 @@ class HaMediaSessionService : MediaSessionService() {
                 scope = sessionScope,
             )
             addSession(session.mediaSession)
-            session.reconnect()
+            session.observe()
             activeSessions[key] = session
             Timber.d("Added media session for $key")
         }
