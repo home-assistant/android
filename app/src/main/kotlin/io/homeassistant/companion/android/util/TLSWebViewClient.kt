@@ -105,8 +105,9 @@ open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) 
                         hostMatchesSan(host, value)
                     }
                     SAN_TYPE_IP_ADDRESS -> {
-                        // iPAddress — the Java X.509 API contract returns it as a ByteArray,
-                        // but some implementations may return it as a String; handle both.
+                        // iPAddress — the standard Java X.509 API returns this as a String
+                        // (dotted-quad or colon-hex), but some providers (e.g. BouncyCastle)
+                        // return a ByteArray; handle both defensively.
                         // Normalize both sides through InetAddress so that different textual
                         // representations of the same address compare equal (e.g. "::1" vs
                         // "0:0:0:0:0:0:0:1").

@@ -24,6 +24,7 @@ import io.mockk.slot
 import io.mockk.verify
 import java.net.InetAddress
 import java.net.URL
+import java.security.cert.CertificateParsingException
 import java.security.cert.X509Certificate
 import kotlin.reflect.KClass
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -525,7 +526,6 @@ class ConnectionViewModelTest {
         assertFalse(viewModel.webViewClient.isTLSClientAuthNeeded)
     }
 
-    @Test
     fun `Given cert with wildcard SAN that does not cover apex domain when initializing then isTLSClientAuthNeeded remains false`() = runTest {
         val cert = mockk<X509Certificate> {
             // *.example.com covers foo.example.com but not example.com itself (RFC 2818 §3.1)
@@ -566,8 +566,8 @@ class ConnectionViewModelTest {
     }
 
     @Test
-    fun `Given cert with IP address SAN matching target host when initializing then isTLSClientAuthNeeded is pre-set to true`() = runTest {
-        // getSubjectAlternativeNames() returns iPAddress (type 7) as a ByteArray, not a String
+    fun `Given cert with IP address SAN as ByteArray matching target host when initializing then isTLSClientAuthNeeded is pre-set to true`() = runTest {
+        // Some providers (e.g. BouncyCastle) return iPAddress (type 7) as a ByteArray.
         val ipBytes = InetAddress.getByName("192.168.1.100").address
         val cert = mockk<X509Certificate> {
             every { subjectAlternativeNames } returns listOf(listOf(7, ipBytes))
@@ -576,6 +576,79 @@ class ConnectionViewModelTest {
 
         val viewModel = ConnectionViewModel(
             "https://192.168.1.100",
+            webViewClientFactory,
+            connectivityCheckRepository,
+        )
+        advanceUntilIdle()
+
+        assertTrue(viewModel.webViewClient.isTLSClientAuthNeeded)
+    }
+
+    @Test
+    fun `Given cert with IP address SAN as String matching target host when initializing then isTLSClientAuthNeeded is pre-set to true`() = runTest {
+        // The standard Java X.509 API returns iPAddress (type 7) as a String (dotted-quad or colon-hex).
+        val cert = mockk<X509Certificate> {
+            every { subjectAlternativeNames } returns listOf(listOf(7, "192.168.1.100"))
+        }
+        every { keyChainRepository.getCertificateChain() } returns arrayOf(cert)
+
+        val viewModel = ConnectionViewModel(
+            "https://192.168.1.100",
+            webViewClientFactory,
+            connectivityCheckRepository,
+        )
+        advanceUntilIdle()
+
+        assertTrue(viewModel.webViewClient.isTLSClientAuthNeeded)
+    }
+
+    @Test
+    fun `Given cert with IPv6 SAN in expanded form matching target host in compressed form when initializing then isTLSClientAuthNeeded is pre-set to true`() = runTest {
+        // InetAddress equality normalizes different textual forms of the same IPv6 address.
+        val cert = mockk<X509Certificate> {
+            every { subjectAlternativeNames } returns listOf(listOf(7, "0:0:0:0:0:0:0:1"))
+        }
+        every { keyChainRepository.getCertificateChain() } returns arrayOf(cert)
+
+        val viewModel = ConnectionViewModel(
+            "https://[::1]",
+            webViewClientFactory,
+            connectivityCheckRepository,
+        )
+        advanceUntilIdle()
+
+        assertTrue(viewModel.webViewClient.isTLSClientAuthNeeded)
+    }
+
+    @Test
+    fun `Given cert with DNS SAN in mixed case when initializing then isTLSClientAuthNeeded is pre-set to true`() = runTest {
+        val cert = mockk<X509Certificate> {
+            every { subjectAlternativeNames } returns listOf(listOf(2, "HomeAssistant.Local"))
+        }
+        every { keyChainRepository.getCertificateChain() } returns arrayOf(cert)
+
+        val viewModel = ConnectionViewModel(
+            "http://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+        )
+        advanceUntilIdle()
+
+        assertTrue(viewModel.webViewClient.isTLSClientAuthNeeded)
+    }
+
+    @Test
+    fun `Given cert whose subjectAlternativeNames throws CertificateParsingException when initializing then falls back to CN matching`() = runTest {
+        val cert = mockk<X509Certificate> {
+            every { subjectAlternativeNames } throws CertificateParsingException("bad extension")
+            every { subjectX500Principal } returns mockk {
+                every { getName("RFC2253") } returns "CN=homeassistant.local,O=Home Assistant"
+            }
+        }
+        every { keyChainRepository.getCertificateChain() } returns arrayOf(cert)
+
+        val viewModel = ConnectionViewModel(
+            "http://homeassistant.local:8123",
             webViewClientFactory,
             connectivityCheckRepository,
         )
