@@ -87,6 +87,10 @@ class HaMediaSessionService : MediaSessionService() {
         val anyPlaying = activeSessions.values.any { (session, _) ->
             session.mediaSession?.player?.let { it.playWhenReady && it.mediaItemCount > 0 } == true
         }
+        // Keep the service alive while playback is active so the media notification and
+        // foreground state are not torn down mid-playback. The service will stop itself
+        // once all sessions become idle (via reconcileSessions) or the user explicitly
+        // removes all configured entities.
         if (!anyPlaying) stopSelf()
     }
 
