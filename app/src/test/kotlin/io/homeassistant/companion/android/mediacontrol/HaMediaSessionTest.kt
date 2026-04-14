@@ -357,6 +357,42 @@ class HaMediaSessionTest {
         job.cancel()
     }
 
+    /**
+     * Verifies that when `callAction` throws an exception, `callMediaAction` catches it and does
+     * not propagate the crash, while still having attempted the call.
+     *
+     * This guards the `catch (e: Exception)` branch at the end of `callMediaAction`, which ensures
+     * a transient network or server error never terminates the media session coroutine.
+     */
+    @Test
+    fun `Given callAction throws when play requested then exception is caught and does not crash`() {
+        val stateFlow = MutableSharedFlow<MediaControlState?>(replay = 1)
+        stateFlow.tryEmit(createState(playbackState = MediaPlaybackState.Paused))
+        coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
+        coEvery {
+            integrationRepository.callAction(any(), any(), any())
+        } throws RuntimeException("Simulated server error")
+
+        val session = buildSession()
+        val job = testScope.launch {
+            session.observe { }
+        }
+        idleMainLooper()
+
+        session.mediaSession?.player?.play()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        coVerify {
+            integrationRepository.callAction(
+                domain = MEDIA_PLAYER_DOMAIN,
+                action = "media_play",
+                actionData = any(),
+            )
+        }
+
+        job.cancel()
+    }
+
     // -- observe() lifecycle tests --
 
     /**

@@ -114,9 +114,9 @@ class HaMediaSessionServiceTest {
      * Starts [HaMediaSessionService.startObservingEntities] with [observationScope] for both
      * the entities flow and the per-session observation jobs. Because [configuredEntitiesFlow]
      * uses replay=1 and [observationScope] uses [UnconfinedTestDispatcher], the subscriber
-     * receives any pre-emitted value immediately and runs the [onEach] block synchronously
-     * until it hits [withContext(Dispatchers.Main)]. Call [idleMainLooper] after this to flush
-     * the pending [HaMediaSessionService.reconcileSessions] task.
+     * receives any pre-emitted value immediately and [HaMediaSessionService.reconcileSessions]
+     * runs synchronously on the test dispatcher. Call [idleMainLooper] after this to flush any
+     * Main-thread tasks posted by [HaMediaSession] (e.g. [HaRemoteMediaPlayer.updateState]).
      */
     private fun startObserving() {
         service.startObservingEntities(
@@ -127,9 +127,8 @@ class HaMediaSessionServiceTest {
 
     /**
      * Drains the Robolectric main looper so that tasks posted via [withContext(Dispatchers.Main)]
-     * (e.g. [HaMediaSessionService.reconcileSessions] from the flow's [onEach] block, or
-     * [HaRemoteMediaPlayer.updateState] from [HaMediaSession.startObservingState]) take effect
-     * before assertions.
+     * from within [HaMediaSession] (e.g. [HaRemoteMediaPlayer.updateState] dispatched by
+     * [HaMediaSession.startObservingState]) take effect before assertions.
      *
      * Robolectric's [shadowOf(Looper.getMainLooper()).idle()] processes nested posts too, so a
      * single call is sufficient even when multiple tasks are queued in sequence.

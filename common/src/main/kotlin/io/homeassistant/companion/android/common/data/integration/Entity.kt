@@ -467,7 +467,7 @@ fun Entity.getVolumeMuted(): Boolean {
     return try {
         (attributes["is_volume_muted"] as? Boolean) ?: false
     } catch (e: Exception) {
-        Timber.tag(EntityExt.TAG).e(e, "Unable to get getVolumeMuted")
+        Timber.tag(EntityExt.TAG).e(e, "Unable to get volumeMuted")
         false
     }
 }
