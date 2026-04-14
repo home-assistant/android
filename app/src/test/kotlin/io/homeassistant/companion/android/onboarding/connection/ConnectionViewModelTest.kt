@@ -526,6 +526,46 @@ class ConnectionViewModelTest {
     }
 
     @Test
+    fun `Given cert with wildcard SAN that does not cover apex domain when initializing then isTLSClientAuthNeeded remains false`() = runTest {
+        val cert = mockk<X509Certificate> {
+            // *.example.com covers foo.example.com but not example.com itself (RFC 2818 §3.1)
+            every { subjectAlternativeNames } returns listOf(listOf(2, "*.example.com"))
+        }
+        every { keyChainRepository.getCertificateChain() } returns arrayOf(cert)
+
+        val viewModel = ConnectionViewModel(
+            "https://example.com",
+            webViewClientFactory,
+            connectivityCheckRepository,
+        )
+        advanceUntilIdle()
+
+        assertFalse(viewModel.webViewClient.isTLSClientAuthNeeded)
+    }
+
+    @Test
+    fun `Given cert with non-matching SANs and matching CN when initializing then isTLSClientAuthNeeded remains false`() = runTest {
+        // When SANs are present, the CN must not be used as fallback even if it would match —
+        // this is the standard behaviour defined in RFC 2818 §3.1.
+        val cert = mockk<X509Certificate> {
+            every { subjectAlternativeNames } returns listOf(listOf(2, "other-server.example.com"))
+            every { subjectX500Principal } returns mockk {
+                every { getName("RFC2253") } returns "CN=homeassistant.local,O=Home Assistant"
+            }
+        }
+        every { keyChainRepository.getCertificateChain() } returns arrayOf(cert)
+
+        val viewModel = ConnectionViewModel(
+            "http://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+        )
+        advanceUntilIdle()
+
+        assertFalse(viewModel.webViewClient.isTLSClientAuthNeeded)
+    }
+
+    @Test
     fun `Given cert with IP address SAN matching target host when initializing then isTLSClientAuthNeeded is pre-set to true`() = runTest {
         // getSubjectAlternativeNames() returns iPAddress (type 7) as a ByteArray, not a String
         val ipBytes = InetAddress.getByName("192.168.1.100").address

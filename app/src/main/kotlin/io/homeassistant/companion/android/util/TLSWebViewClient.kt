@@ -12,8 +12,10 @@ import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import java.lang.ref.WeakReference
 import java.net.InetAddress
+import java.net.UnknownHostException
 import java.security.PrivateKey
 import java.security.cert.CertificateException
+import java.security.cert.CertificateParsingException
 import java.security.cert.X509Certificate
 import javax.security.auth.x500.X500Principal
 import kotlinx.coroutines.CoroutineScope
@@ -21,6 +23,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
+
+// SAN (Subject Alternative Name) type codes per RFC 5280 section 4.2.1.6
+private const val SAN_TYPE_DNS_NAME = 2
+private const val SAN_TYPE_IP_ADDRESS = 7
 
 /*
  * [TLSWebViewClient] is on the onboarding module for convenience, since we don't have yet
@@ -82,29 +88,35 @@ open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) 
      * and IP addresses. Falls back to the Common Name (CN) in the Subject DN if no SANs are
      * present, matching the behaviour of legacy TLS stacks.
      */
-    @VisibleForTesting
-    internal fun certCoversHost(cert: X509Certificate, host: String): Boolean {
+    private fun certCoversHost(cert: X509Certificate, host: String): Boolean {
         val sans: Collection<List<*>>? = try {
             cert.subjectAlternativeNames
-        } catch (_: Exception) {
+        } catch (_: CertificateParsingException) {
             null
         }
 
         return if (!sans.isNullOrEmpty()) {
             sans.any { san ->
+                if (san.size < 2) return@any false
                 val type = san[0] as? Int ?: return@any false
                 when (type) {
-                    2 -> { // dNSName — returned as String
+                    SAN_TYPE_DNS_NAME -> { // dNSName — returned as String
                         val value = san[1] as? String ?: return@any false
                         hostMatchesSan(host, value)
                     }
-                    7 -> { // iPAddress — returned as ByteArray per the Java X.509 API contract
-                        val ipBytes = san[1] as? ByteArray ?: return@any false
-                        try {
-                            host.equals(InetAddress.getByAddress(ipBytes).hostAddress, ignoreCase = true)
-                        } catch (_: Exception) {
-                            false
+                    SAN_TYPE_IP_ADDRESS -> {
+                        // iPAddress — the Java X.509 API contract returns it as a ByteArray,
+                        // but some implementations may return it as a String; handle both.
+                        val ipAddress = when (val ipEntry = san[1]) {
+                            is ByteArray -> try {
+                                InetAddress.getByAddress(ipEntry).hostAddress
+                            } catch (_: UnknownHostException) {
+                                return@any false
+                            }
+                            is String -> ipEntry
+                            else -> return@any false
                         }
+                        host.equals(ipAddress, ignoreCase = true)
                     }
                     else -> false
                 }
@@ -117,9 +129,8 @@ open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) 
             val cn = dn.splitToSequence(",")
                 .map { it.trim() }
                 .firstOrNull { it.startsWith("CN=", ignoreCase = true) }
-                // Use substring-after-'=' so the extraction is case-insensitive (matches the
-                // startsWith check above) rather than a case-sensitive removePrefix("CN=").
                 ?.let { it.substring(it.indexOf('=') + 1).trim() }
+                ?.takeIf { it.isNotEmpty() }
             cn != null && hostMatchesSan(host, cn)
         }
     }
