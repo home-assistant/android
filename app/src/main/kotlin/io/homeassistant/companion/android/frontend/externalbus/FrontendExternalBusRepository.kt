@@ -4,6 +4,7 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.Incoming
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.OutgoingExternalBusMessage
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.json.JsonElement
 
 /**
  * Represents a JavaScript script to be evaluated in the WebView.
@@ -59,7 +60,7 @@ interface FrontendExternalBusRepository {
      *
      * The message is deserialized and emitted to subscribers of [incomingMessages].
      *
-     * @param messageJson The raw JSON string from the frontend
+     * @param messageJson The JSON message from the frontend
      */
-    suspend fun onMessageReceived(messageJson: String)
+    suspend fun onMessageReceived(messageJson: JsonElement)
 }

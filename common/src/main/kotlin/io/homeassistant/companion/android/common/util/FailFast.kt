@@ -82,14 +82,21 @@ object FailFast {
      * If the `condition` evaluates to `true`, a [FailFastException] is created with the provided
      * `message` and passed to the [FailFastHandler].
      *
+     * Returns the [condition] value so it can be used as an inline guard:
+     * ```kotlin
+     * if (FailFast.failWhen(invalid) { "Unexpected state" }) return
+     * ```
+     *
      * @param condition The boolean condition to check. If true, the handler is triggered.
      * @param message A lambda function that returns the message for the [FailFastException].
      *                This is evaluated only if the condition is true.
+     * @return The [condition] value, allowing callers to branch on the same check
      */
-    fun failWhen(condition: Boolean, message: () -> String) {
+    fun failWhen(condition: Boolean, message: () -> String): Boolean {
         if (condition) {
             fail(message)
         }
+        return condition
     }
 
     /**

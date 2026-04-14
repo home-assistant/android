@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.frontend.externalbus
 
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.externalbus.incoming.IncomingExternalBusMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.OutgoingExternalBusMessage
 import io.homeassistant.companion.android.util.sensitive
@@ -10,6 +11,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.modules.plus
 import timber.log.Timber
 
@@ -26,6 +29,7 @@ private const val BUFFER_CAPACITY = 10
 val frontendExternalBusJson = Json(kotlinJsonMapper) {
     namingStrategy = null
     serializersModule += IncomingExternalBusMessage.serializersModule
+    serializersModule += HapticType.serializersModule
 }
 
 /**
@@ -63,22 +67,20 @@ class FrontendExternalBusRepositoryImpl @Inject constructor() : FrontendExternal
 
     override fun incomingMessages(): Flow<IncomingExternalBusMessage> = incomingFlow.asSharedFlow()
 
-    override suspend fun onMessageReceived(messageJson: String) {
+    override suspend fun onMessageReceived(messageJson: JsonElement) {
         val message = deserializeMessage(messageJson)
         if (message != null) {
             incomingFlow.emit(message)
         }
     }
 
-    private fun deserializeMessage(json: String): IncomingExternalBusMessage? {
-        if (json.isBlank()) return null
-
+    private fun deserializeMessage(json: JsonElement): IncomingExternalBusMessage? {
         return runCatching {
-            frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+            frontendExternalBusJson.decodeFromJsonElement<IncomingExternalBusMessage>(json)
         }.onFailure { error ->
             Timber.w(
                 error,
-                "Failed to deserialize external bus message: ${sensitive(json)}",
+                "Failed to deserialize external bus message: ${sensitive { json.toString() }}",
             )
         }.getOrNull()
     }

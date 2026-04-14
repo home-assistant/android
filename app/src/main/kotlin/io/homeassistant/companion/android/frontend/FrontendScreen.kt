@@ -46,6 +46,10 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorScreen
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
+import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
+import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
+import io.homeassistant.companion.android.frontend.js.FrontendJsBridge
+import io.homeassistant.companion.android.frontend.js.FrontendJsCallback
 import io.homeassistant.companion.android.frontend.permissions.NotificationPermissionPrompt
 import io.homeassistant.companion.android.frontend.permissions.PendingWebViewPermissionRequest
 import io.homeassistant.companion.android.frontend.permissions.WebViewPermissionEffect
@@ -112,6 +116,7 @@ internal fun FrontendScreen(
         webChromeClient = viewModel.webChromeClient,
         frontendJsCallback = viewModel.frontendJsCallback,
         scriptsToEvaluate = viewModel.scriptsToEvaluate,
+        hapticEvents = viewModel.hapticEvents,
         pendingWebViewPermission = pendingWebViewPermission,
         onWebViewPermissionResult = viewModel::onWebViewPermissionResult,
         onBlockInsecureRetry = viewModel::onRetry,
@@ -150,6 +155,7 @@ internal fun FrontendScreenContent(
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onWebViewCreationFailed: (Throwable) -> Unit,
     modifier: Modifier = Modifier,
+    hapticEvents: Flow<HapticType> = emptyFlow(),
     pendingWebViewPermission: PendingWebViewPermissionRequest? = null,
     onWebViewPermissionResult: (Map<String, Boolean>) -> Unit = {},
     errorStateProvider: FrontendConnectionErrorStateProvider = FrontendConnectionErrorStateProvider.noOp,
@@ -163,7 +169,9 @@ internal fun FrontendScreenContent(
     WebViewEffects(
         webView = webView,
         url = viewState.url,
+        frontendJsCallback = frontendJsCallback,
         scriptsToEvaluate = scriptsToEvaluate,
+        hapticEvents = hapticEvents,
     )
 
     WebViewPermissionEffect(
@@ -178,7 +186,6 @@ internal fun FrontendScreenContent(
             onWebViewCreated = { webView = it },
             webViewClient = webViewClient,
             webChromeClient = webChromeClient,
-            frontendJsCallback = frontendJsCallback,
             contentState = viewState as? FrontendViewState.Content,
             onWebViewCreationFailed = onWebViewCreationFailed,
         )
@@ -366,7 +373,6 @@ private fun SafeHAWebView(
     onBackClick: () -> Unit,
     onWebViewCreated: (WebView) -> Unit,
     webViewClient: WebViewClient,
-    frontendJsCallback: FrontendJsCallback,
     contentState: FrontendViewState.Content?,
     onWebViewCreationFailed: (Throwable) -> Unit,
     webChromeClient: WebChromeClient? = null,
@@ -406,9 +412,6 @@ private fun SafeHAWebView(
                     .background(Color.Transparent),
                 configure = {
                     onWebViewCreated(this)
-                    // Injecting the javascript interface should happen as early as possible in the process
-                    // even before loading the server URL to not miss any events from the frontend.
-                    frontendJsCallback.attachToWebView(this)
                     this.webViewClient = webViewClient
                     webChromeClient?.let { this.webChromeClient = it }
                 },
@@ -444,12 +447,19 @@ private fun Color.Overlay(modifier: Modifier = Modifier) {
 }
 
 /**
- * Handles WebView side effects: URL loading and script evaluation.
+ * Handles WebView side effects: URL loading, script evaluation, haptics.
  */
 @Composable
-private fun WebViewEffects(webView: WebView?, url: String, scriptsToEvaluate: Flow<WebViewScript>) {
+private fun WebViewEffects(
+    webView: WebView?,
+    url: String,
+    frontendJsCallback: FrontendJsCallback,
+    scriptsToEvaluate: Flow<WebViewScript>,
+    hapticEvents: Flow<HapticType>,
+) {
     if (webView != null) {
         LaunchedEffect(webView, url) {
+            frontendJsCallback.attachToWebView(webView)
             Timber.v("Load url ${sensitive(url)}")
             webView.loadUrl(url)
         }
@@ -459,6 +469,11 @@ private fun WebViewEffects(webView: WebView?, url: String, scriptsToEvaluate: Fl
                 webView.evaluateJavascript(webViewScript.script) { result ->
                     webViewScript.result.complete(result)
                 }
+            }
+        }
+        LaunchedEffect(webView) {
+            hapticEvents.collect { hapticType ->
+                HapticFeedbackPerformer.perform(webView, hapticType)
             }
         }
     }

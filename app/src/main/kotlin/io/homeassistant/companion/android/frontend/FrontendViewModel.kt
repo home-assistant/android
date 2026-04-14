@@ -12,8 +12,12 @@ import io.homeassistant.companion.android.common.data.connectivity.ConnectivityC
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
+import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
+import io.homeassistant.companion.android.frontend.handler.FrontendBusObserver
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
-import io.homeassistant.companion.android.frontend.handler.FrontendMessageHandler
+import io.homeassistant.companion.android.frontend.js.BridgeState
+import io.homeassistant.companion.android.frontend.js.FrontendJsBridgeFactory
+import io.homeassistant.companion.android.frontend.js.FrontendJsCallback
 import io.homeassistant.companion.android.frontend.navigation.FrontendNavigationEvent
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
@@ -23,7 +27,6 @@ import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.Job
@@ -34,7 +37,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -49,9 +51,6 @@ import timber.log.Timber
 @VisibleForTesting
 val CONNECTION_TIMEOUT = 10.seconds
 
-/** Delay before stopping shared flows after the last subscriber disconnects. */
-private val SUBSCRIPTION_STOP_DELAY = 500.milliseconds
-
 /**
  * ViewModel for frontend screen.
  *
@@ -65,10 +64,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     initialServerId: Int,
     initialPath: String?,
     webViewClientFactory: HAWebViewClientFactory,
-    private val frontendMessageHandler: FrontendMessageHandler,
+    private val frontendBusObserver: FrontendBusObserver,
     private val urlManager: FrontendUrlManager,
     private val connectivityCheckRepository: ConnectivityCheckRepository,
     private val permissionManager: PermissionManager,
+    private val frontendJsBridgeFactory: FrontendJsBridgeFactory,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -76,18 +76,20 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     constructor(
         savedStateHandle: SavedStateHandle,
         webViewClientFactory: HAWebViewClientFactory,
-        frontendMessageHandler: FrontendMessageHandler,
+        frontendBusObserver: FrontendBusObserver,
         urlManager: FrontendUrlManager,
         connectivityCheckRepository: ConnectivityCheckRepository,
         permissionManager: PermissionManager,
+        frontendJsBridgeFactory: FrontendJsBridgeFactory,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
         initialPath = savedStateHandle.toRoute<FrontendRoute>().path,
         webViewClientFactory = webViewClientFactory,
-        frontendMessageHandler = frontendMessageHandler,
+        frontendBusObserver = frontendBusObserver,
         urlManager = urlManager,
         connectivityCheckRepository = connectivityCheckRepository,
         permissionManager = permissionManager,
+        frontendJsBridgeFactory = frontendJsBridgeFactory,
     )
 
     /**
@@ -137,34 +139,35 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val _navigationEvents = MutableSharedFlow<FrontendNavigationEvent>(extraBufferCapacity = 1)
     val navigationEvents: SharedFlow<FrontendNavigationEvent> = _navigationEvents.asSharedFlow()
 
+    private val _hapticEvents = MutableSharedFlow<HapticType>(extraBufferCapacity = 16)
+    val hapticEvents: SharedFlow<HapticType> = _hapticEvents.asSharedFlow()
+
     override val urlFlow: StateFlow<String?> =
         _viewState.map { it.url }
             .distinctUntilChanged()
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_STOP_DELAY), null)
+            .stateIn(viewModelScope, SharingStarted.Eagerly, _viewState.value.url)
 
     override val errorFlow: StateFlow<FrontendConnectionError?> =
         _viewState.map { state -> (state as? FrontendViewState.Error)?.error }
             .distinctUntilChanged()
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_STOP_DELAY), null)
+            .stateIn(viewModelScope, SharingStarted.Eagerly, (_viewState.value as? FrontendViewState.Error)?.error)
 
     /** Flow of scripts to be evaluated in the WebView. */
-    val scriptsToEvaluate: Flow<WebViewScript> = frontendMessageHandler.scriptsToEvaluate()
+    val scriptsToEvaluate: Flow<WebViewScript> = frontendBusObserver.scriptsToEvaluate()
 
     /**
      * JavaScript bridge for communication between the WebView and native code.
      *
-     * Must be attached to the WebView via [FrontendJsBridge.attachToWebView].
+     * Must be attached to the WebView via [io.homeassistant.companion.android.frontend.js.FrontendJsBridge.attachToWebView].
      */
-    val frontendJsCallback: FrontendJsCallback = FrontendJsBridge(
-        handler = frontendMessageHandler,
-        serverIdProvider = { viewState.value.serverId },
+    val frontendJsCallback: FrontendJsCallback = frontendJsBridgeFactory.create(
         scope = viewModelScope,
+        stateProvider = { BridgeState(serverId = viewState.value.serverId, url = viewState.value.url) },
     )
 
     val webViewClient: HAWebViewClient = webViewClientFactory.create(
         currentUrlFlow = urlFlow,
         onFrontendError = ::onError,
-        frontendJsCallback = frontendJsCallback,
         onCrash = ::onRetry,
     )
 
@@ -201,7 +204,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         }
 
         viewModelScope.launch {
-            frontendMessageHandler.messageResults().collect { result ->
+            frontendBusObserver.messageResults().collect { result ->
                 handleMessageResult(result)
             }
         }
@@ -333,6 +336,10 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                         startListening = result.startListening,
                     ),
                 )
+            }
+
+            is FrontendHandlerEvent.PerformHaptic -> {
+                _hapticEvents.tryEmit(result.hapticType)
             }
 
             is FrontendHandlerEvent.AuthError -> {

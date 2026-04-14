@@ -11,7 +11,7 @@ runs:
   using: "composite"
   steps:
     - name: Pull from Lokalise
-      uses: lokalise/lokalise-pull-action@a4968e06b7f44c32317b162d825ed17abb5772d0 # v5.0.1
+      uses: lokalise/lokalise-pull-action@7d8a2df5d4c3d3890a9988601a0b5d2ffdbdc2e9 # v5.1.0
       with:
         api_token: ${{ inputs.lokalise-token }}
         project_id: ${{ inputs.lokalise-project }}
@@ -26,6 +26,14 @@ runs:
           add_newline_eof: true
           replace_breaks: true
           export_empty_as: skip
+
+    # Source strings (English) are managed in git, not Lokalise.
+    # Restore the file in case Lokalise overwrote it.
+    - name: Revert source strings to git version
+      shell: bash
+      run: |
+        git checkout common/src/main/res/values/strings.xml
+        git status
 
     - name: Generate locales_config.xml
       shell: bash

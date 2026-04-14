@@ -9,6 +9,10 @@ import io.homeassistant.companion.android.frontend.externalbus.outgoing.Outgoing
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage
 import kotlinx.coroutines.async
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
@@ -27,7 +31,7 @@ class FrontendExternalBusRepositoryImplTest {
 
     @Test
     fun `Given connection-status message when received then emit ConnectionStatusMessage`() = runTest {
-        val json = """{"type":"connection-status","id":1,"payload":{"event":"connected"}}"""
+        val json = Json.parseToJsonElement("""{"type":"connection-status","id":1,"payload":{"event":"connected"}}""")
 
         repository.incomingMessages().test {
             repository.onMessageReceived(json)
@@ -42,7 +46,7 @@ class FrontendExternalBusRepositoryImplTest {
 
     @Test
     fun `Given config-get message when received then emit ConfigGetMessage`() = runTest {
-        val json = """{"type":"config/get","id":42}"""
+        val json = Json.parseToJsonElement("""{"type":"config/get","id":42}""")
 
         repository.incomingMessages().test {
             repository.onMessageReceived(json)
@@ -55,7 +59,7 @@ class FrontendExternalBusRepositoryImplTest {
 
     @Test
     fun `Given unknown type when received then emit UnknownIncomingMessage`() = runTest {
-        val json = """{"type":"future-feature","id":99,"payload":{"data":"something"}}"""
+        val json = Json.parseToJsonElement("""{"type":"future-feature","id":99,"payload":{"data":"something"}}""")
 
         repository.incomingMessages().test {
             repository.onMessageReceived(json)
@@ -68,20 +72,29 @@ class FrontendExternalBusRepositoryImplTest {
     }
 
     @Test
-    fun `Given invalid input when received then do not emit`() = runTest {
+    fun `Given non-object JsonElement when received then do not emit`() = runTest {
         repository.incomingMessages().test {
-            repository.onMessageReceived("")
-            repository.onMessageReceived("   ")
-            repository.onMessageReceived("not valid json")
-            repository.onMessageReceived("{invalid}")
+            repository.onMessageReceived(JsonNull)
 
             expectNoEvents()
         }
     }
 
     @Test
+    fun `Given object without type when received then emit UnknownIncomingMessage`() = runTest {
+        val json = buildJsonObject { put("data", "value") }
+
+        repository.incomingMessages().test {
+            repository.onMessageReceived(json)
+
+            val message = awaitItem()
+            assertInstanceOf(UnknownIncomingMessage::class.java, message)
+        }
+    }
+
+    @Test
     fun `Given message without id when received then id is null`() = runTest {
-        val json = """{"type":"config/get"}"""
+        val json = Json.parseToJsonElement("""{"type":"config/get"}""")
 
         repository.incomingMessages().test {
             repository.onMessageReceived(json)
