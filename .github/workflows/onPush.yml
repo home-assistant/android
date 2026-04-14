@@ -47,11 +47,11 @@ jobs:
           firebase-creds: ${{ secrets.FIREBASECREDS }}
           playstore-creds: ${{ secrets.PLAYSTORECREDS }}
 
-     # - uses: ./.github/actions/create-release-notes
-     #  name: Create Release Notes
-     #   with:
-     #     tag-name: ${{ steps.rel_number.outputs.version }}
-     #    gh-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: ./.github/actions/create-release-notes
+        name: Create Release Notes
+        with:
+          tag-name: ${{ steps.rel_number.outputs.version }}
+          gh-token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: ./.github/actions/download-translations
         name: Download Translations
