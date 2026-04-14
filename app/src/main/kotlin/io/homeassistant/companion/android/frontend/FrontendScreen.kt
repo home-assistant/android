@@ -465,7 +465,7 @@ private fun PendingPermissionHandler(
 ) {
     val coroutineScope = rememberCoroutineScope()
 
-    fun <T: PermissionRequest.Result>resolveResult(request: PermissionRequest<T>, result: T) {
+    fun <T : PermissionRequest.Result> resolveResult(request: PermissionRequest<T>, result: T) {
         onClearPendingPermissionRequest()
         coroutineScope.launch { request.onResult(result) }
     }

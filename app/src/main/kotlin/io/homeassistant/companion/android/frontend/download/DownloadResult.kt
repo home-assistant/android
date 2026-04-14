@@ -22,14 +22,13 @@ sealed interface DownloadResult {
     /**
      * The download was dispatched via JavaScript (blob downloads).
      *
-     * The actual download result will arrive later via the JS bridge [handleBlob] callback.
-     * No immediate UI feedback is needed.
+     * The actual download result will arrive later as a [io.homeassistant.companion.android.frontend.externalbus.incoming.HandleBlobMessage]
+     * through the external bus. No immediate UI feedback is needed.
      */
     data object Dispatched : DownloadResult
 
     /**
-     * The URI scheme is not directly supported. The ViewModel should emit a
-     * [FrontendEvent.OpenExternalLink][io.homeassistant.companion.android.frontend.navigation.FrontendEvent.OpenExternalLink]
+     * The URI scheme is not directly supported. The ViewModel should emit a [io.homeassistant.companion.android.frontend.navigation.FrontendEvent.OpenExternalLink]
      * event to open this URI externally.
      */
     data class OpenWithSystem(val uri: Uri) : DownloadResult

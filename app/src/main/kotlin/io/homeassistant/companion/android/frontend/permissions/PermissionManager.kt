@@ -18,6 +18,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 
 /**
@@ -76,9 +78,15 @@ internal class PermissionManager @VisibleForTesting constructor(
     private class PendingPermissionManager(
         private val _state: MutableStateFlow<PermissionRequest<*>?> = MutableStateFlow(null),
     ) : StateFlow<PermissionRequest<*>?> by _state.asStateFlow() {
+        private val mutex = Mutex()
         suspend fun emit(request: PermissionRequest<*>) {
-            _state.first { it == null }
-            _state.value = request
+            mutex.withLock {
+                // Wait for the slot to be free, then fill it atomically.
+                // The mutex ensures only one caller can observe null and set a value,
+                // preventing concurrent emitters from overwriting each other.
+                _state.first { it == null }
+                _state.value = request
+            }
         }
 
         fun clear() {

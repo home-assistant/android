@@ -2,8 +2,10 @@ package io.homeassistant.companion.android.frontend.permissions
 
 import android.os.Build
 import android.webkit.PermissionRequest as WebViewPermissionRequest
+import app.cash.turbine.turbineScope
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.NotificationStatusProvider
 import io.homeassistant.companion.android.common.util.PermissionChecker
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
@@ -17,6 +19,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -24,6 +27,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -505,6 +509,19 @@ class PermissionManagerTest {
     inner class DismissPendingPermission {
 
         @Test
+        fun `Given no pending request when clearPendingPermissionRequest called then triggers FailFast`() = runTest {
+            var failFastTriggered = false
+            FailFast.setHandler { _, _ -> failFastTriggered = true }
+
+            val manager = createManager()
+            assertNull(manager.pendingPermissionRequest.value)
+
+            manager.clearPendingPermissionRequest()
+
+            assertTrue(failFastTriggered, "FailFast should trigger when clearing without a pending request")
+        }
+
+        @Test
         fun `Given pending request when dismissed then clears without calling callbacks`() = runTest {
             every {
                 permissionChecker.hasPermission(android.Manifest.permission.POST_NOTIFICATIONS)
@@ -593,6 +610,46 @@ class PermissionManagerTest {
 
             // Now storage request is pending
             assertInstanceOf(PermissionRequest.ExternalStorage::class.java, manager.pendingPermissionRequest.value)
+        }
+
+        @Test
+        fun `Given two concurrent requests waiting when each is cleared then both are served sequentially`() = runTest {
+            every { permissionChecker.hasPermission(any()) } returns false
+
+            val manager = createManager(sdkInt = Build.VERSION_CODES.P)
+
+            turbineScope {
+                val turbine = manager.pendingPermissionRequest.testIn(backgroundScope)
+                assertNull(turbine.awaitItem())
+
+                manager.requiresStoragePermissionForDownload {}
+                assertInstanceOf(PermissionRequest.ExternalStorage::class.java, turbine.awaitItem())
+
+                launch(Dispatchers.Default) {
+                    manager.onWebViewPermissionRequest(mockPermissionRequest(WebViewPermissionRequest.RESOURCE_VIDEO_CAPTURE))
+                }
+                launch(Dispatchers.Default) {
+                    manager.onWebViewPermissionRequest(mockPermissionRequest(WebViewPermissionRequest.RESOURCE_AUDIO_CAPTURE))
+                }
+
+                // Clear storage — first waiter fills the slot, second stays suspended
+                manager.clearPendingPermissionRequest()
+                assertNull(turbine.awaitItem())
+                val firstPending = turbine.awaitItem()
+                assertInstanceOf(PermissionRequest.WebView::class.java, firstPending)
+                turbine.expectNoEvents()
+
+                // Clear first waiter — second waiter now fills the slot
+                manager.clearPendingPermissionRequest()
+                assertNull(turbine.awaitItem())
+                val secondPending = turbine.awaitItem()
+                assertInstanceOf(PermissionRequest.WebView::class.java, secondPending)
+
+                // Both were served, and they are different permissions
+                assertNotEquals(firstPending?.permissions, secondPending?.permissions)
+
+                turbine.cancelAndIgnoreRemainingEvents()
+            }
         }
 
         @Test

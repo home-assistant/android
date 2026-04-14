@@ -31,11 +31,6 @@ sealed interface FrontendEvent {
     data class NavigateToAssist(val serverId: Int, val pipelineId: String?, val startListening: Boolean) :
         FrontendEvent
 
-    /**
-     * Open a URI externally using the host-provided external link handler.
-     *
-     * Used when the URI scheme is not directly downloadable (e.g. `ftp://`) and should
-     * be opened by the system instead.
-     */
+    /** Open a URI externally using the host-provided external link handler. */
     data class OpenExternalLink(val uri: Uri) : FrontendEvent
 }

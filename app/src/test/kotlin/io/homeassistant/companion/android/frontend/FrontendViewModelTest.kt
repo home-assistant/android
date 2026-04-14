@@ -979,7 +979,7 @@ class FrontendViewModelTest {
                 mimetype = "application/pdf",
             )
 
-            coVerify(exactly = 0) { downloadManager.downloadFile(any(),any(),any(), any()) }
+            coVerify(exactly = 0) { downloadManager.downloadFile(any(), any(), any(), any()) }
 
             // Simulate permission granted: onGranted retries the download
             coEvery {

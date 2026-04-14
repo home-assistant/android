@@ -329,14 +329,14 @@ class FrontendJsBridge @AssistedInject constructor(
                 window.$EXTERNAL_APP_V1.externalBus(JSON.stringify($jsonPayload));
             }
         }
-    """.trimIndent()
+        """.trimIndent()
 
         /**
          * Whether this server supports the V2 bridge protocol.
          *
          * V2 was introduced in Home Assistant 2026.4.2.
          */
-        fun Server?.isServerSupportingExternalAppV2(): Boolean = this?.version?.isAtLeast(2026, 4, 0) == true
+        fun Server?.isServerSupportingExternalAppV2(): Boolean = this?.version?.isAtLeast(2026, 4, 2) == true
 
         /** A no-op implementation for use in tests and previews. */
         val noOp = object : FrontendJsCallback {

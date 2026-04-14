@@ -20,7 +20,6 @@ import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
 import io.homeassistant.companion.android.frontend.js.BridgeState
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridgeFactory
 import io.homeassistant.companion.android.frontend.js.FrontendJsCallback
-import io.homeassistant.companion.android.frontend.handler.FrontendMessageHandler
 import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
@@ -403,7 +402,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
             is FrontendHandlerEvent.ConfigSent,
             is FrontendHandlerEvent.UnknownMessage,
-                -> {
+            -> {
                 // No-op
             }
         }
@@ -476,7 +475,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         when (result) {
             is DownloadResult.Success,
             is DownloadResult.Dispatched,
-                -> {
+            -> {
                 // No UI feedback needed — success notification is handled by
                 // the system DownloadManager or DataUriDownloadManager
             }

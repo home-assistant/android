@@ -23,12 +23,14 @@ import timber.log.Timber
  * Manages file downloads triggered by the WebView.
  *
  * Handles four URI schemes:
- * - `blob:` — Fetches the blob via JavaScript and passes it as a data URI via the JS bridge
+ * - `blob:` — Injects JavaScript that reads the blob and sends it back as a data URI
+ *   via the external bus (arriving as a [io.homeassistant.companion.android.frontend.externalbus.incoming.HandleBlobMessage])
  * - `http/https:` — Delegates to the system [DownloadManager] with auth headers and cookies
  * - `data:` — Saves the inline data URI to the Downloads directory via [DataUriDownloadManager]
  * - Other — Returns [DownloadResult.OpenWithSystem] for the ViewModel to handle
  *
- * The [handleBlob] callback is called from the JS bridge when blob data arrives.
+ * The [handleBlob] method is called by the [io.homeassistant.companion.android.frontend.handler.FrontendMessageHandler]
+ * when blob data arrives through the external bus.
  */
 @ViewModelScoped
 class FrontendDownloadManager @Inject constructor(
@@ -73,8 +75,9 @@ class FrontendDownloadManager @Inject constructor(
     /**
      * Handles a blob download that was read by the JavaScript fetch in [triggerBlobDownload].
      *
-     * The fetch reads the blob as a data URL and passes it to the native code
-     * via the JS bridge. This method saves that data URL to the Downloads directory.
+     * The fetch reads the blob as a data URL and sends it back through the external bus
+     * as a [io.homeassistant.companion.android.frontend.externalbus.incoming.HandleBlobMessage].
+     * This method saves that data URL to the Downloads directory.
      *
      * @param data The blob content encoded as a data URI
      * @param filename The filename from the anchor element, or null
@@ -95,8 +98,7 @@ class FrontendDownloadManager @Inject constructor(
         mimetype: String,
         serverId: Int,
     ): DownloadResult {
-        val manager = systemDownloadManager
-        if (manager == null) {
+        if (systemDownloadManager == null) {
             Timber.e("Unable to start download, cannot get DownloadManager")
             return DownloadResult.Error(messageResId = commonR.string.downloads_failed)
         }
@@ -125,15 +127,15 @@ class FrontendDownloadManager @Inject constructor(
                 Timber.e(e, "Unable to prepare request")
             }
 
-            manager.enqueue(request)
+            systemDownloadManager.enqueue(request)
         }
         return DownloadResult.Success
     }
 
     /**
-     * Triggers a blob download by fetching the blob data via the Fetch API and passing it to the
-     * native [handleBlob] interface as a data URI. Requires the blob URL to still be valid
-     * (not yet revoked by the frontend).
+     * Triggers a blob download by fetching the blob data via the Fetch API and sending it back
+     * through the external bus as a data URI for [handleBlob] to process.
+     * Requires the blob URL to still be valid (not yet revoked by the frontend).
      */
     private suspend fun triggerBlobDownload(url: String, contentDisposition: String, mimetype: String): DownloadResult {
         Timber.d("Triggering blob download for ${sensitive(url)}")
@@ -163,7 +165,7 @@ class FrontendDownloadManager @Inject constructor(
                         console.error('Blob download failed:', e);
                     }
                 })();
-            """.trimIndent()
+        """.trimIndent()
         externalBusRepository.evaluateScript(jsCode)
         return DownloadResult.Dispatched
     }

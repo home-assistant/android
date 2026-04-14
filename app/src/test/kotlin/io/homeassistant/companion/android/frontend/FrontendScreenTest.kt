@@ -318,7 +318,7 @@ class FrontendScreenTest {
     }
 
     @Test
-    fun `Given WebView requests camera when permission not granted then system permission dialog is launched for CAMERA`() = runTest{
+    fun `Given WebView requests camera when permission not granted then system permission dialog is launched for CAMERA`() = runTest {
         val registry = FakePermissionResultRegistry(grantedPermissions = setOf(Manifest.permission.CAMERA))
         val permissionRequest: WebViewPermissionRequest = mockk(relaxed = true) {
             every { resources } returns arrayOf(WebViewPermissionRequest.RESOURCE_VIDEO_CAPTURE)
