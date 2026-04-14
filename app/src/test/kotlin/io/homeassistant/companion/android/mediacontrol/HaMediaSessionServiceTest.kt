@@ -13,7 +13,6 @@ import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.unmockkAll
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -107,7 +106,6 @@ class HaMediaSessionServiceTest {
         observationScope.cancel()
         // Safe when onDestroy() was already called — activeSessions will already be empty.
         service.activeSessions.values.forEach { (_, job) -> job.cancel() }
-        unmockkAll()
     }
 
     /**
