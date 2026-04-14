@@ -53,7 +53,8 @@ private val sessionCounter = AtomicInteger(0)
  * [HaMediaSessionTest] where mock flows are set up before collecting. Subsequent emissions are
  * delivered to the active subscriber.
  *
- * [HaMediaSession] instances are created with [UnconfinedTestDispatcher] scopes so that
+ * [HaMediaSession] instances are created with [UnconfinedTestDispatcher] scopes via
+ * [startObserving], which passes [observationScope] as the session scope so that
  * [HaMediaSession.observe] and [HaMediaSession.startObservingState] run eagerly. Main-looper
  * tasks (such as [HaRemoteMediaPlayer.updateState] dispatched by [HaMediaSession]) are flushed
  * with [idleMainLooper].
@@ -85,13 +86,12 @@ class HaMediaSessionServiceTest {
         every { mediaControlRepository.observeConfiguredEntities() } returns configuredEntitiesFlow
         coEvery { mediaControlRepository.observeEntityState(any()) } returns flowOf(null)
 
-        // Each session gets its own UnconfinedTestDispatcher scope so that observe() and
-        // startObservingState() run eagerly on the calling thread without Thread.sleep.
-        every { haMediaSessionFactory.create(any<Context>(), any(), any()) } answers {
+        // Each session is created without a scope — HaMediaSession.observe() derives its scope
+        // from the coroutine that calls it (observationScope with UnconfinedTestDispatcher).
+        every { haMediaSessionFactory.create(any<Context>(), any()) } answers {
             HaMediaSession(
                 context = firstArg(),
                 config = secondArg(),
-                scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher()),
                 mediaControlRepository = mediaControlRepository,
                 serverManager = serverManager,
             )
@@ -106,19 +106,23 @@ class HaMediaSessionServiceTest {
     fun tearDown() {
         observationScope.cancel()
         // Safe when onDestroy() was already called — activeSessions will already be empty.
-        service.activeSessions.values.forEach { it.release() }
+        service.activeSessions.values.forEach { (_, job) -> job.cancel() }
         unmockkAll()
     }
 
     /**
-     * Starts [HaMediaSessionService.startObservingEntities] with the test scope. Because
-     * [configuredEntitiesFlow] uses replay=1 and [observationScope] uses [UnconfinedTestDispatcher],
-     * the subscriber receives any pre-emitted value immediately and runs the [onEach] block
-     * synchronously until it hits [withContext(Dispatchers.Main)]. Call [idleMainLooper] after
-     * this to flush the pending [HaMediaSessionService.reconcileSessions] task.
+     * Starts [HaMediaSessionService.startObservingEntities] with [observationScope] for both
+     * the entities flow and the per-session observation jobs. Because [configuredEntitiesFlow]
+     * uses replay=1 and [observationScope] uses [UnconfinedTestDispatcher], the subscriber
+     * receives any pre-emitted value immediately and runs the [onEach] block synchronously
+     * until it hits [withContext(Dispatchers.Main)]. Call [idleMainLooper] after this to flush
+     * the pending [HaMediaSessionService.reconcileSessions] task.
      */
     private fun startObserving() {
-        service.startObservingEntities(observationScope)
+        service.startObservingEntities(
+            scope = observationScope,
+            sessionScope = observationScope,
+        )
     }
 
     /**
@@ -213,13 +217,13 @@ class HaMediaSessionServiceTest {
         configuredEntitiesFlow.tryEmit(listOf(config))
         startObserving()
         idleMainLooper()
-        val sessionBefore = service.activeSessions["1:${config.entityId}"]
+        val entryBefore = service.activeSessions["1:${config.entityId}"]
 
         configuredEntitiesFlow.tryEmit(listOf(config))
         idleMainLooper()
 
         assertEquals(1, service.activeSessions.size)
-        assertSame(sessionBefore, service.activeSessions["1:${config.entityId}"])
+        assertSame(entryBefore, service.activeSessions["1:${config.entityId}"])
     }
 
     @Test

@@ -29,8 +29,7 @@ import java.net.URL
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -41,12 +40,11 @@ import timber.log.Timber
  * Observes [MediaControlRepository] for entity state changes, loads artwork via Coil, and
  * translates Media3 player commands into Home Assistant service calls via [ServerManager].
  *
- * Call [release] when the session is no longer needed to cancel observation and release
- * Media3 resources.
+ * Call [observe] to start the session. The session and its Media3 resources are created when
+ * [observe] is called and released automatically when the calling coroutine is cancelled.
  *
  * @param context Used for Coil image loading and [MediaSession] construction.
  * @param config Identifies the media_player entity this session represents.
- * @param scope The coroutine scope that owns this session's lifecycle. [release] cancels it.
  * @param mediaControlRepository Provides the per-entity state flow.
  * @param serverManager Used to resolve artwork base URLs and call HA integration actions.
  */
@@ -54,10 +52,23 @@ import timber.log.Timber
 class HaMediaSession @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted private val config: MediaControlEntityConfig,
-    @Assisted private val scope: CoroutineScope,
     private val mediaControlRepository: MediaControlRepository,
     private val serverManager: ServerManager,
 ) {
+    /**
+     * The active [MediaSession] while [observe] is running, null otherwise.
+     * The service uses this to call [androidx.media3.session.MediaSessionService.removeSession]
+     * and to check playback state in [androidx.media3.session.MediaSessionService.onTaskRemoved].
+     */
+    var mediaSession: MediaSession? = null
+        private set
+
+    /**
+     * The coroutine scope active during [observe], used to fire-and-forget media action calls.
+     * Null when no observation is running.
+     */
+    private var actionScope: CoroutineScope? = null
+
     private val commandCallback = object : HaRemoteMediaPlayer.CommandCallback {
         override fun onPlayRequested() {
             callMediaAction(ACTION_MEDIA_PLAY)
@@ -128,18 +139,50 @@ class HaMediaSession @AssistedInject constructor(
         }
     }
 
-    private val player = HaRemoteMediaPlayer(Looper.getMainLooper(), commandCallback)
+    /**
+     * Creates the [MediaSession] and player, starts observing entity state, and suspends until
+     * the calling coroutine is cancelled. Calls [onSessionReady] with the new session immediately
+     * after creation so the caller can register it with
+     * [androidx.media3.session.MediaSessionService.addSession].
+     *
+     * All Media3 resources are released in a `finally` block, so they are always cleaned up
+     * regardless of how the coroutine ends (cancellation or normal flow completion).
+     */
+    suspend fun observe(onSessionReady: suspend (MediaSession) -> Unit) = coroutineScope {
+        actionScope = this
+        val player = HaRemoteMediaPlayer(Looper.getMainLooper(), commandCallback)
+        val session = buildMediaSession(player)
+        mediaSession = session
+        try {
+            onSessionReady(session)
+            startObservingState()
+            Timber.d("Media control observation completed for ${config.entityId}")
+        } finally {
+            actionScope = null
+            mediaSession = null
+            player.release()
+            session.release()
+        }
+    }
 
     /**
-     * Accessed only from loadArtworkAndUpdatePlayer, which is always called sequentially
-     * within startObservingState on the Default dispatcher.
-     * currentArtworkUrl stores the raw HA entity_picture path (not the resolved URL) so the
-     * cache key stays stable across local/external URL switches for the same image.
+     * Observes entity state for [config] until the flow completes or the coroutine is cancelled.
+     * The flow completes when the WebSocket subscription returns null (not yet connected), and
+     * is cancelled when the WebSocket disconnects (the backing SharedFlow's scope is cancelled).
+     * In both cases the session is not restarted here; reconnection happens when the user opens
+     * the app, which recreates active sessions via [HaMediaSessionService].
      */
-    private var currentArtworkUrl: String? = null
-    private var currentArtworkBytes: ByteArray? = null
+    internal suspend fun startObservingState() {
+        var artworkCache = ArtworkCache()
+        mediaControlRepository.observeEntityState(config).collect { state ->
+            if (state == null) {
+                return@collect
+            }
+            artworkCache = loadArtworkAndUpdatePlayer(state, artworkCache)
+        }
+    }
 
-    val mediaSession: MediaSession = MediaSession.Builder(context, player)
+    private fun buildMediaSession(player: HaRemoteMediaPlayer): MediaSession = MediaSession.Builder(context, player)
         .setId("${config.serverId}_${config.entityId}")
         .setCallback(MediaSessionCallback())
         .build()
@@ -165,44 +208,12 @@ class HaMediaSession @AssistedInject constructor(
             )
         }
 
-    private var observingJob: Job? = null
-
-    /**
-     * Starts (or restarts) observation of entity state. Cancels any in-flight observation
-     * before launching a new one, making it safe to call when already observing (e.g. to
-     * recover a stuck WebSocket subscription after a network reconnect).
-     */
-    internal fun observe() {
-        observingJob?.cancel()
-        observingJob = scope.launch { startObservingState() }
-    }
-
-    /**
-     * Observes entity state for [config] until the flow completes or the coroutine is cancelled.
-     * The flow completes when the WebSocket subscription returns null (not yet connected), and
-     * is cancelled when the WebSocket disconnects (the backing SharedFlow's scope is cancelled).
-     * In both cases the session is not restarted here; reconnection happens when the user opens
-     * the app, which recreates active sessions via [HaMediaSessionService].
-     */
-    internal suspend fun startObservingState() {
-        currentArtworkUrl = null
-        mediaControlRepository.observeEntityState(config).collect { state ->
-            if (state == null) {
-                return@collect
-            }
-            loadArtworkAndUpdatePlayer(state)
-        }
-        Timber.d("Media control observation completed for ${config.entityId}")
-    }
-
-    /** Releases Media3 resources and cancels all coroutines. */
-    fun release() {
-        scope.cancel()
-        mediaSession.player.release()
-        mediaSession.release()
-    }
-
     private fun callMediaAction(action: String, extraData: Map<String, Any> = emptyMap()) {
+        val scope = actionScope
+        if (scope == null) {
+            Timber.w("callMediaAction called when not observing, ignoring action=$action")
+            return
+        }
         scope.launch {
             val actionData = hashMapOf<String, Any>("entity_id" to config.entityId)
             actionData.putAll(extraData)
@@ -218,29 +229,38 @@ class HaMediaSession @AssistedInject constructor(
         }
     }
 
-    private suspend fun loadArtworkAndUpdatePlayer(state: MediaControlState) {
+    /**
+     * Loads artwork for [state] if the URL has changed, then updates the player on the main thread.
+     *
+     * @return An updated [ArtworkCache] reflecting the outcome of the load attempt.
+     */
+    private suspend fun loadArtworkAndUpdatePlayer(state: MediaControlState, cache: ArtworkCache): ArtworkCache {
         val rawPictureUrl = state.entityPictureUrl
-        val pngBytes = if (rawPictureUrl != null && rawPictureUrl != currentArtworkUrl) {
-            val resolvedUrl = resolveArtworkUrl(state)
-            val bytes = resolvedUrl?.let { loadBitmapAsPng(it) }
-            if (bytes != null) {
-                currentArtworkUrl = rawPictureUrl
-                currentArtworkBytes = bytes
+        val (updatedCache, pngBytes) = when {
+            rawPictureUrl != null && rawPictureUrl != cache.url -> {
+                val resolvedUrl = resolveArtworkUrl(state)
+                val bytes = resolvedUrl?.let { loadBitmapAsPng(it) }
+                if (bytes != null) {
+                    ArtworkCache(url = rawPictureUrl, bytes = bytes) to bytes
+                } else {
+                    cache to cache.bytes
+                }
             }
-            bytes ?: currentArtworkBytes
-        } else if (rawPictureUrl == null) {
-            // The HA server temporarily removes entity_picture during track transitions
-            // before sending the new URL. Keep the previous artwork visible to avoid a
-            // blank flash; clearing currentArtworkUrl ensures the next URL triggers a fetch.
-            currentArtworkUrl = null
-            currentArtworkBytes
-        } else {
-            currentArtworkBytes
+            rawPictureUrl == null -> {
+                // The HA server temporarily removes entity_picture during track transitions
+                // before sending the new URL. Keep the previous artwork visible to avoid a
+                // blank flash; clearing the cached URL ensures the next URL triggers a fetch.
+                cache.copy(url = null) to cache.bytes
+            }
+            else -> cache to cache.bytes
         }
 
         withContext(Dispatchers.Main) {
-            player.updateState(state = state, artworkPngBytes = pngBytes)
+            mediaSession?.player?.let { player ->
+                (player as? HaRemoteMediaPlayer)?.updateState(state = state, artworkPngBytes = pngBytes)
+            }
         }
+        return updatedCache
     }
 
     private suspend fun resolveArtworkUrl(state: MediaControlState): String? {
@@ -303,6 +323,9 @@ class HaMediaSession @AssistedInject constructor(
         }
     }
 
+    /** Immutable cache of the last successfully loaded artwork. */
+    private data class ArtworkCache(val url: String? = null, val bytes: ByteArray? = null)
+
     private companion object {
         const val ACTION_MEDIA_PLAY = "media_play"
         const val ACTION_MEDIA_PAUSE = "media_pause"
@@ -318,9 +341,9 @@ class HaMediaSession @AssistedInject constructor(
         const val ACTION_REPEAT_SET = "repeat_set"
     }
 
-    /** Creates [HaMediaSession] instances with runtime-provided [context], [config], and [scope]. */
+    /** Creates [HaMediaSession] instances with runtime-provided [context] and [config]. */
     @AssistedFactory
     interface Factory {
-        fun create(context: Context, config: MediaControlEntityConfig, scope: CoroutineScope): HaMediaSession
+        fun create(context: Context, config: MediaControlEntityConfig): HaMediaSession
     }
 }

@@ -13,10 +13,12 @@ import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlR
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -37,8 +39,8 @@ class HaMediaSessionService : MediaSessionService() {
     @Inject
     lateinit var haMediaSessionFactory: HaMediaSession.Factory
 
-    // Keyed by "$serverId:$entityId"
-    internal val activeSessions = mutableMapOf<String, HaMediaSession>()
+    // Keyed by "$serverId:$entityId". Each entry pairs the session with the job running observe().
+    internal val activeSessions = mutableMapOf<String, Pair<HaMediaSession, Job>>()
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     @androidx.annotation.OptIn(UnstableApi::class)
@@ -53,12 +55,20 @@ class HaMediaSessionService : MediaSessionService() {
 
     /**
      * Starts collecting [MediaControlRepository.observeConfiguredEntities] and reconciling
-     * sessions on each emission. Extracted to allow tests to supply a controlled [scope] without
+     * sessions on each emission.
+     *
+     * Both parameters are extracted to allow tests to supply controlled scopes without
      * calling [onCreate], which would trigger Hilt injection and Media3 setup.
+     *
+     * @param scope The scope used to collect the entities flow.
+     * @param sessionScope The scope used to launch each session's [HaMediaSession.observe] coroutine.
      */
-    internal fun startObservingEntities(scope: CoroutineScope = serviceScope) {
+    internal fun startObservingEntities(
+        scope: CoroutineScope = serviceScope,
+        sessionScope: CoroutineScope = serviceScope,
+    ) {
         mediaControlRepository.observeConfiguredEntities()
-            .onEach { entities -> withContext(Dispatchers.Main) { reconcileSessions(entities) } }
+            .onEach { entities -> withContext(Dispatchers.Main) { reconcileSessions(entities, sessionScope) } }
             .launchIn(scope)
     }
 
@@ -74,21 +84,27 @@ class HaMediaSessionService : MediaSessionService() {
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
-        val anyPlaying = activeSessions.values.any { session ->
-            session.mediaSession.player.playWhenReady && session.mediaSession.player.mediaItemCount > 0
+        val anyPlaying = activeSessions.values.any { (session, _) ->
+            session.mediaSession?.player?.let { it.playWhenReady && it.mediaItemCount > 0 } == true
         }
         if (!anyPlaying) stopSelf()
     }
 
     override fun onDestroy() {
         Timber.d("HaMediaSessionService destroyed")
-        activeSessions.values.forEach { it.release() }
+        activeSessions.values.forEach { (session, job) ->
+            session.mediaSession?.let { removeSession(it) }
+            job.cancel()
+        }
         activeSessions.clear()
         serviceScope.cancel()
         super.onDestroy()
     }
 
-    internal fun reconcileSessions(configuredEntities: List<MediaControlEntityConfig>) {
+    internal fun reconcileSessions(
+        configuredEntities: List<MediaControlEntityConfig>,
+        sessionScope: CoroutineScope = serviceScope,
+    ) {
         if (configuredEntities.isEmpty()) {
             Timber.d("No media control entities configured, stopping service")
             stopSelf()
@@ -100,24 +116,25 @@ class HaMediaSessionService : MediaSessionService() {
 
         // Remove sessions that are no longer configured
         (currentKeys - desiredKeys).forEach { key ->
-            val session = activeSessions.remove(key) ?: return@forEach
-            removeSession(session.mediaSession)
-            session.release()
+            val (session, job) = activeSessions.remove(key) ?: return@forEach
+            session.mediaSession?.let { removeSession(it) }
+            job.cancel()
             Timber.d("Removed media session for $key")
         }
 
         // Add sessions for newly configured entities
         (desiredKeys - currentKeys).forEach { key ->
             val entityConfig = configuredEntities.first { it.sessionKey() == key }
-            val sessionScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
             val session = haMediaSessionFactory.create(
                 context = this@HaMediaSessionService,
                 config = entityConfig,
-                scope = sessionScope,
             )
-            addSession(session.mediaSession)
-            session.observe()
-            activeSessions[key] = session
+            val job = sessionScope.launch {
+                session.observe { mediaSession ->
+                    withContext(Dispatchers.Main) { addSession(mediaSession) }
+                }
+            }
+            activeSessions[key] = session to job
             Timber.d("Added media session for $key")
         }
     }

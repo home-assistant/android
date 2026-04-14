@@ -1,8 +1,6 @@
 package io.homeassistant.companion.android.settings.server
 
-import android.content.Context
 import androidx.preference.PreferenceDataStore
-import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.data.network.WifiHelper
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import javax.inject.Inject

@@ -19,15 +19,14 @@ import io.mockk.slot
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
@@ -100,7 +99,6 @@ class HaMediaSessionTest {
     private fun buildSession(): HaMediaSession = HaMediaSession(
         context = ApplicationProvider.getApplicationContext(),
         config = config,
-        scope = testScope,
         mediaControlRepository = mediaControlRepository,
         serverManager = serverManager,
     )
@@ -134,21 +132,23 @@ class HaMediaSessionTest {
         coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
 
         val session = buildSession()
-        testScope.launch { session.startObservingState() }
+        val job = testScope.launch {
+            session.observe { /* no-op: addSession not needed in unit tests */ }
+        }
         idleMainLooper()
 
-        val player = session.mediaSession.player
-        assertEquals(Player.STATE_READY, player.playbackState)
-        assertEquals(true, player.playWhenReady)
+        val player = session.mediaSession?.player
+        assertEquals(Player.STATE_READY, player?.playbackState)
+        assertEquals(true, player?.playWhenReady)
 
         // Emitting null afterwards (simulating WebSocket-not-ready) should not clear state
         stateFlow.tryEmit(null)
         idleMainLooper()
 
-        assertEquals(Player.STATE_READY, player.playbackState)
-        assertEquals(true, player.playWhenReady)
+        assertEquals(Player.STATE_READY, player?.playbackState)
+        assertEquals(true, player?.playWhenReady)
 
-        session.release()
+        job.cancel()
     }
 
     /**
@@ -165,14 +165,16 @@ class HaMediaSessionTest {
         coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
 
         val session = buildSession()
-        testScope.launch { session.startObservingState() }
+        val job = testScope.launch {
+            session.observe { }
+        }
         idleMainLooper()
 
-        val player = session.mediaSession.player
-        assertEquals(Player.STATE_READY, player.playbackState)
-        assertEquals(true, player.playWhenReady)
+        val player = session.mediaSession?.player
+        assertEquals(Player.STATE_READY, player?.playbackState)
+        assertEquals(true, player?.playWhenReady)
 
-        session.release()
+        job.cancel()
     }
 
     /**
@@ -188,14 +190,16 @@ class HaMediaSessionTest {
         coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
 
         val session = buildSession()
-        testScope.launch { session.startObservingState() }
+        val job = testScope.launch {
+            session.observe { }
+        }
         idleMainLooper()
 
-        val player = session.mediaSession.player
-        assertEquals(Player.STATE_READY, player.playbackState)
-        assertEquals(false, player.playWhenReady)
+        val player = session.mediaSession?.player
+        assertEquals(Player.STATE_READY, player?.playbackState)
+        assertEquals(false, player?.playWhenReady)
 
-        session.release()
+        job.cancel()
     }
 
     /**
@@ -209,14 +213,15 @@ class HaMediaSessionTest {
         )
 
         val session = buildSession()
-        testScope.launch { session.startObservingState() }
+        val job = testScope.launch {
+            session.observe { }
+        }
         idleMainLooper()
 
-        val player = session.mediaSession.player
-        assertEquals(Player.STATE_READY, player.playbackState)
-        assertEquals(true, player.playWhenReady)
-
-        session.release()
+        // Flow has completed; observe() has run its finally block and released the session.
+        // The player's last known state is retained until Media3 releases it.
+        assertNull(session.mediaSession)
+        org.junit.Assert.assertFalse(job.isActive)
     }
 
     // -- Artwork caching tests --
@@ -234,13 +239,15 @@ class HaMediaSessionTest {
         coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
 
         val session = buildSession()
-        testScope.launch { session.startObservingState() }
+        val job = testScope.launch {
+            session.observe { }
+        }
         idleMainLooper()
 
-        val player = session.mediaSession.player
-        assertNull(player.mediaMetadata.artworkData)
+        val player = session.mediaSession?.player
+        assertNull(player?.mediaMetadata?.artworkData)
 
-        session.release()
+        job.cancel()
     }
 
     /**
@@ -248,8 +255,8 @@ class HaMediaSessionTest {
      * retained — the player's metadata artwork is null and the second state's title is applied.
      *
      * This exercises the branch in `loadArtworkAndUpdatePlayer` where the URL is null:
-     * `currentArtworkUrl` is cleared and `currentArtworkBytes` is passed through (which is
-     * null here because no real image was ever loaded in this test).
+     * the cached URL is cleared and cached bytes are passed through (which is null here
+     * because no real image was ever loaded in this test).
      *
      * Uses `replay=1` for reliable delivery to the collector. The second emission is made after
      * the first is confirmed to be processed.
@@ -261,17 +268,19 @@ class HaMediaSessionTest {
         coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
 
         val session = buildSession()
-        testScope.launch { session.startObservingState() }
+        val job = testScope.launch {
+            session.observe { }
+        }
         idleMainLooper()
 
         stateFlow.tryEmit(createState(entityPictureUrl = null, title = "Track 2"))
         idleMainLooper()
 
-        val player = session.mediaSession.player
-        assertNull(player.mediaMetadata.artworkData)
-        assertEquals("Track 2", player.mediaMetadata.title?.toString())
+        val player = session.mediaSession?.player
+        assertNull(player?.mediaMetadata?.artworkData)
+        assertEquals("Track 2", player?.mediaMetadata?.title?.toString())
 
-        session.release()
+        job.cancel()
     }
 
     // -- callMediaAction tests --
@@ -291,10 +300,12 @@ class HaMediaSessionTest {
         coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
 
         val session = buildSession()
-        testScope.launch { session.startObservingState() }
+        val job = testScope.launch {
+            session.observe { }
+        }
         idleMainLooper()
 
-        session.mediaSession.player.play()
+        session.mediaSession?.player?.play()
         shadowOf(Looper.getMainLooper()).idle()
 
         val capturedDomain = slot<String>()
@@ -309,7 +320,7 @@ class HaMediaSessionTest {
         assertEquals(MEDIA_PLAYER_DOMAIN, capturedDomain.captured)
         assertEquals("media_play", capturedAction.captured)
 
-        session.release()
+        job.cancel()
     }
 
     /**
@@ -325,10 +336,12 @@ class HaMediaSessionTest {
         coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
 
         val session = buildSession()
-        testScope.launch { session.startObservingState() }
+        val job = testScope.launch {
+            session.observe { }
+        }
         idleMainLooper()
 
-        session.mediaSession.player.pause()
+        session.mediaSession?.player?.pause()
         shadowOf(Looper.getMainLooper()).idle()
 
         val capturedAction = slot<String>()
@@ -341,58 +354,53 @@ class HaMediaSessionTest {
         }
         assertEquals("media_pause", capturedAction.captured)
 
-        session.release()
+        job.cancel()
     }
 
-    /**
-     * Verifies that calling `observe()` while an observation is already running cancels the
-     * previous observation job and starts a fresh one, re-calling `observeEntityState`.
-     *
-     * This is the recovery path for a stuck WebSocket subscription (flow never completes after
-     * network disconnect). The test simulates the stuck case with a `MutableSharedFlow` that
-     * never completes, then verifies that `observe()` triggers a second subscription call.
-     */
-    @Test
-    fun `Given running observation when observe called then observation is restarted`() {
-        var observeCallCount = 0
-        coEvery { mediaControlRepository.observeEntityState(config) } answers {
-            observeCallCount++
-            MutableSharedFlow()
-        }
-
-        val session = buildSession()
-        testScope.launch { session.startObservingState() }
-        idleMainLooper()
-        assertEquals(1, observeCallCount)
-
-        session.observe()
-        idleMainLooper()
-        assertEquals(2, observeCallCount)
-
-        session.release()
-    }
+    // -- observe() lifecycle tests --
 
     /**
-     * Verifies that calling `release()` cancels the coroutine scope, preventing
-     * any further observation or action dispatch.
+     * Verifies that [HaMediaSession.mediaSession] is set during observation and becomes null
+     * after the observing job is cancelled, confirming Media3 resources are released.
      */
     @Test
-    fun `Given observing session when release called then internal scope is cancelled`() {
+    fun `Given observing session when job cancelled then mediaSession is null`() {
         val stateFlow = MutableSharedFlow<MediaControlState?>(replay = 1)
         stateFlow.tryEmit(createState(playbackState = MediaPlaybackState.Playing))
         coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
 
         val session = buildSession()
-        testScope.launch { session.startObservingState() }
+        val job = testScope.launch {
+            session.observe { }
+        }
         idleMainLooper()
 
-        val scopeField = HaMediaSession::class.java.getDeclaredField("scope")
-        scopeField.isAccessible = true
-        val scope = scopeField.get(session) as CoroutineScope
+        assertNotNull(session.mediaSession)
 
-        session.release()
+        job.cancel()
+        idleMainLooper()
 
-        org.junit.Assert.assertFalse(scope.isActive)
+        assertNull(session.mediaSession)
     }
 
+    /**
+     * Verifies that [HaMediaSession.observe] calls [onSessionReady] with a non-null session
+     * before starting state observation.
+     */
+    @Test
+    fun `Given session when observe called then onSessionReady is invoked with the session`() {
+        val stateFlow = MutableSharedFlow<MediaControlState?>()
+        coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
+
+        val session = buildSession()
+        var capturedSession: androidx.media3.session.MediaSession? = null
+        val job = testScope.launch {
+            session.observe { capturedSession = it }
+        }
+        idleMainLooper()
+
+        assertNotNull(capturedSession)
+
+        job.cancel()
+    }
 }
