@@ -38,7 +38,6 @@ import io.homeassistant.companion.android.common.compose.composable.HAIconButton
 import io.homeassistant.companion.android.common.compose.composable.HALoading
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
-import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
@@ -55,17 +54,15 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 @Composable
 fun MediaControlSettingsScreen(viewModel: MediaControlSettingsViewModel, modifier: Modifier = Modifier) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    HATheme {
-        MediaControlSettingsContent(
-            uiState = uiState,
-            onServerSelected = viewModel::selectServerId,
-            onEntitySelected = viewModel::addEntity,
-            onRemoveEntity = viewModel::removeEntity,
-            onMove = viewModel::onMove,
-            onReorderComplete = viewModel::onReorderComplete,
-            modifier = modifier,
-        )
-    }
+    MediaControlSettingsContent(
+        uiState = uiState,
+        onServerSelected = viewModel::selectServerId,
+        onEntitySelected = viewModel::addEntity,
+        onRemoveEntity = viewModel::removeEntity,
+        onMove = viewModel::onMove,
+        onReorderComplete = viewModel::onReorderComplete,
+        modifier = modifier,
+    )
 }
 
 @Composable
