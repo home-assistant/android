@@ -109,7 +109,7 @@ internal class MediaControlRepositoryImpl @Inject constructor(
                 MediaControlConfig(
                     serverId = config.serverId,
                     entityId = config.entityId,
-                    position = index,
+                    index = index,
                 )
             },
         )

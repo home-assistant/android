@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 52,
-    "identityHash": "c4130a8113d8dec57f7821bcd94d52b1",
+    "identityHash": "3c21b887932188439db367536976cf8a",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -1144,7 +1144,7 @@
       },
       {
         "tableName": "media_control_entity_config",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `server_id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, `position` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `server_id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, `index` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -1165,8 +1165,8 @@
             "notNull": true
           },
           {
-            "fieldPath": "position",
-            "columnName": "position",
+            "fieldPath": "index",
+            "columnName": "index",
             "affinity": "INTEGER",
             "notNull": true
           }
@@ -1181,7 +1181,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c4130a8113d8dec57f7821bcd94d52b1')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3c21b887932188439db367536976cf8a')"
     ]
   }
 }
