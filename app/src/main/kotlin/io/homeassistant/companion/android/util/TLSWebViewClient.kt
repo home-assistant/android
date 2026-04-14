@@ -107,16 +107,24 @@ open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) 
                     SAN_TYPE_IP_ADDRESS -> {
                         // iPAddress — the Java X.509 API contract returns it as a ByteArray,
                         // but some implementations may return it as a String; handle both.
-                        val ipAddress = when (val ipEntry = san[1]) {
-                            is ByteArray -> try {
-                                InetAddress.getByAddress(ipEntry).hostAddress
-                            } catch (_: UnknownHostException) {
-                                return@any false
+                        // Normalize both sides through InetAddress so that different textual
+                        // representations of the same address compare equal (e.g. "::1" vs
+                        // "0:0:0:0:0:0:0:1").
+                        val sanAddress = try {
+                            when (val ipEntry = san[1]) {
+                                is ByteArray -> InetAddress.getByAddress(ipEntry)
+                                is String -> InetAddress.getByName(ipEntry)
+                                else -> return@any false
                             }
-                            is String -> ipEntry
-                            else -> return@any false
+                        } catch (_: UnknownHostException) {
+                            return@any false
                         }
-                        host.equals(ipAddress, ignoreCase = true)
+                        val hostAddress = try {
+                            InetAddress.getByName(host)
+                        } catch (_: UnknownHostException) {
+                            return@any false
+                        }
+                        hostAddress == sanAddress
                     }
                     else -> false
                 }
