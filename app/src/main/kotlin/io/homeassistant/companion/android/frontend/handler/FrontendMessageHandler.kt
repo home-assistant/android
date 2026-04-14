@@ -3,32 +3,34 @@ package io.homeassistant.companion.android.frontend.handler
 import android.content.pm.PackageManager
 import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.util.AppVersionProvider
-import io.homeassistant.companion.android.common.util.FailFast
-import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
-import io.homeassistant.companion.android.frontend.FrontendJsHandler
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConfigGetMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConnectionStatusMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.IncomingExternalBusMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistSettingsMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenSettingsMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ThemeUpdateMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.UnknownIncomingMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResult
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage
+import io.homeassistant.companion.android.frontend.js.FrontendJsHandler
 import io.homeassistant.companion.android.frontend.session.AuthPayload
 import io.homeassistant.companion.android.frontend.session.ExternalAuthResult
 import io.homeassistant.companion.android.frontend.session.RevokeAuthResult
 import io.homeassistant.companion.android.frontend.session.ServerSessionManager
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
+import io.homeassistant.companion.android.util.sensitive
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.serialization.json.JsonElement
 import timber.log.Timber
 
 /**
@@ -54,17 +56,18 @@ class FrontendMessageHandler @Inject constructor(
     private val appVersionProvider: AppVersionProvider,
     private val sessionManager: ServerSessionManager,
     @param:IsAutomotive private val isAutomotive: Boolean,
-) : FrontendJsHandler {
+) : FrontendJsHandler,
+    FrontendBusObserver {
 
     private val authResultsFlow = MutableSharedFlow<FrontendHandlerEvent>(extraBufferCapacity = 1)
 
     /**
-     * Called by the JavaScript interface when the frontend requests authentication.
+     * Called when the frontend requests authentication.
+     *
+     * The bridge has already parsed and validated the callback name before calling this.
      */
-    override suspend fun getExternalAuth(payload: String, serverId: Int) {
+    override suspend fun getExternalAuth(authPayload: AuthPayload, serverId: Int) {
         Timber.d("getExternalAuth called")
-        val authPayload = parseAuthPayload(payload) ?: return
-
         when (val result = sessionManager.getExternalAuth(serverId, authPayload)) {
             is ExternalAuthResult.Success -> {
                 evaluateScript(result.callbackScript)
@@ -77,20 +80,8 @@ class FrontendMessageHandler @Inject constructor(
         }
     }
 
-    private fun parseAuthPayload(json: String): AuthPayload? {
-        return FailFast.failOnCatch(
-            message = { "Failed to parse auth payload" },
-            fallback = null,
-        ) { kotlinJsonMapper.decodeFromString<AuthPayload>(json) }
-    }
-
-    /**
-     * Called by the JavaScript interface when the frontend revokes authentication.
-     */
-    override suspend fun revokeExternalAuth(payload: String, serverId: Int) {
+    override suspend fun revokeExternalAuth(authPayload: AuthPayload, serverId: Int) {
         Timber.d("revokeExternalAuth called")
-        val authPayload = parseAuthPayload(payload) ?: return
-
         when (val result = sessionManager.revokeExternalAuth(serverId, authPayload)) {
             is RevokeAuthResult.Success -> {
                 evaluateScript(result.callbackScript)
@@ -102,44 +93,27 @@ class FrontendMessageHandler @Inject constructor(
         }
     }
 
-    /**
-     * Called by the JavaScript interface when an external bus message is received.
-     */
-    override suspend fun externalBus(message: String) {
-        Timber.v("externalBus: $message")
+    override suspend fun externalBus(message: JsonElement) {
+        Timber.v("External bus message received: ${sensitive { message.toString() }}")
         externalBusRepository.onMessageReceived(message)
     }
 
     /**
-     * Flow of events from incoming external bus messages and authentication results.
-     *
      * Merges deserialized external bus messages with auth-related events into a single
      * stream of [FrontendHandlerEvent].
      */
-    fun messageResults(): Flow<FrontendHandlerEvent> {
+    override fun messageResults(): Flow<FrontendHandlerEvent> {
         val incomingResults = externalBusRepository.incomingMessages().map { message ->
             handleMessage(message)
         }
         return merge(incomingResults, authResultsFlow)
     }
 
-    /**
-     * Evaluate script in WebView.
-     *
-     * @param script The JavaScript code to evaluate
-     * @return The evaluation result from the WebView, or null if the script returns no value
-     */
-    suspend fun evaluateScript(script: String): String? {
+    override fun scriptsToEvaluate(): Flow<WebViewScript> = externalBusRepository.scriptsToEvaluate()
+
+    private suspend fun evaluateScript(script: String): String? {
         return externalBusRepository.evaluateScript(script)
     }
-
-    /**
-     * Expose scripts flow for WebView.
-     *
-     * The WebView should collect this flow and call `evaluateJavascript` for each script,
-     * then complete the deferred result with the evaluation output.
-     */
-    fun scriptsToEvaluate(): Flow<WebViewScript> = externalBusRepository.scriptsToEvaluate()
 
     private suspend fun handleMessage(message: IncomingExternalBusMessage): FrontendHandlerEvent {
         return when (message) {
@@ -164,6 +138,11 @@ class FrontendMessageHandler @Inject constructor(
                 FrontendHandlerEvent.OpenSettings
             }
 
+            is OpenAssistSettingsMessage -> {
+                Timber.d("Open assist settings request received with id: ${message.id}")
+                FrontendHandlerEvent.OpenAssistSettings
+            }
+
             is OpenAssistMessage -> {
                 Timber.d("Open assist request received with id: ${message.id}")
                 FrontendHandlerEvent.ShowAssist(
@@ -175,6 +154,10 @@ class FrontendMessageHandler @Inject constructor(
             is ThemeUpdateMessage -> {
                 Timber.d("Theme update received")
                 FrontendHandlerEvent.ThemeUpdated
+            }
+
+            is HapticMessage -> {
+                FrontendHandlerEvent.PerformHaptic(message.payload)
             }
 
             is UnknownIncomingMessage -> {

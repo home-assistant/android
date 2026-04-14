@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.widget.TodoWidgetDao
 import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
+import io.homeassistant.companion.android.util.FailFastExtension
 import io.mockk.Called
 import io.mockk.coEvery
 import io.mockk.coJustRun
@@ -41,7 +42,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 private data class FakeGlanceId(val id: Int) : GlanceId
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(ConsoleLogExtension::class)
+@ExtendWith(ConsoleLogExtension::class, FailFastExtension::class)
 class BaseGlanceEntityWidgetReceiverTest {
 
     val mockedDao: TodoWidgetDao = mockk()

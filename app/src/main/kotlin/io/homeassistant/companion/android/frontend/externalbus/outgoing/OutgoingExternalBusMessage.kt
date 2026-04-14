@@ -72,6 +72,7 @@ data class ConfigResult(
     val downloadFileSupported: Boolean = true,
     val appVersion: String,
     val hasEntityAddTo: Boolean = true,
+    val hasAssistSettings: Boolean = true,
 ) {
     companion object {
         fun create(

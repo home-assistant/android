@@ -9,7 +9,7 @@ import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.util.IgnoreViolationRule
 
 val vmPolicyIgnoredViolationRules = listOf(
-    IgnoreChromiumTrichomeWrongContextUsage,
+    IgnoreChromiumWebViewWrongContextUsage,
     IgnoreBarcodeScannerRotationListenerWrongContextUsage,
 )
 
@@ -27,21 +27,24 @@ val threadPolicyIgnoredViolationRules = listOf(
 )
 
 /**
- * Ignore an [IncorrectContextUseViolation] that can occur
- * in the Chromium WebView client (specifically involving `chromium-TrichromeWebViewGoogle`).
+ * Ignore an [IncorrectContextUseViolation] that can occur in the Chromium WebView client
+ * during configuration changes.
  *
  * This issue typically arises when the application context is incorrectly used during
  * configuration changes (e.g., screen rotation) within the WebView's internal mechanisms.
+ * It reproduces across multiple WebView packaging variants, whose stack frames have different
+ * file name prefixes (e.g. `chromium-TrichromeWebViewGoogle*`, `chromium-SystemWebViewGoogle*`),
+ * so the match is kept broad on the `chromium-` prefix paired with `onConfigurationChanged`.
  *
  * It doesn't seem to be tracked anywhere.
  */
-private data object IgnoreChromiumTrichomeWrongContextUsage : IgnoreViolationRule {
+private data object IgnoreChromiumWebViewWrongContextUsage : IgnoreViolationRule {
     @RequiresApi(Build.VERSION_CODES.S)
     override fun shouldIgnore(violation: Violation): Boolean {
         if (violation !is IncorrectContextUseViolation) return false
 
         return violation.stackTrace.any {
-            it.fileName?.startsWith("chromium-TrichromeWebViewGoogle") == true &&
+            it.fileName?.startsWith("chromium-") == true &&
                 it.methodName == "onConfigurationChanged"
         }
     }

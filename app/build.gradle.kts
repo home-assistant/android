@@ -5,7 +5,6 @@ plugins {
     alias(libs.plugins.google.services)
     alias(libs.plugins.homeassistant.android.dependencies)
     alias(libs.plugins.kotlin.parcelize)
-    alias(libs.plugins.aboutlibraries)
 }
 
 android {
@@ -19,6 +18,18 @@ android {
             language {
                 // We want to keep the translations in the final AAB for all the language
                 enableSplit = false
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            // Required for HWASan wrap.sh to be included uncompressed in the APK
+            // See https://developer.android.com/ndk/guides/hwasan
+            packaging {
+                jniLibs {
+                    useLegacyPackaging = true
+                }
             }
         }
     }

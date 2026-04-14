@@ -20,9 +20,9 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ruby/setup-ruby@dffb23f65a78bba8db45d387d5ea1bbd6be3ef18 # v1.293.0
+      - uses: ruby/setup-ruby@e65c17d16e57e481586a6a5a0282698790062f92 # v1.300.0
         with:
-          ruby-version: "4.0.1"
+          ruby-version: "4.0.2"
           bundler-cache: false
 
       - uses: ./.github/actions/inflate-secrets

@@ -56,7 +56,7 @@ import io.homeassistant.companion.android.onboarding.wearmtls.navigation.navigat
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
 import io.homeassistant.companion.android.testing.unit.stringResource
-import io.homeassistant.companion.android.util.LocationPermissionActivityResultRegistry
+import io.homeassistant.companion.android.util.FakePermissionResultRegistry
 import io.homeassistant.companion.android.util.compose.navigateToUri
 import io.homeassistant.companion.android.util.compose.webview.HA_WEBVIEW_TAG
 import io.mockk.Runs
@@ -165,7 +165,7 @@ internal class WearOnboardingNavigationTest {
 
             CompositionLocalProvider(
                 LocalActivityResultRegistryOwner provides object : ActivityResultRegistryOwner {
-                    override val activityResultRegistry: ActivityResultRegistry = LocationPermissionActivityResultRegistry(true)
+                    override val activityResultRegistry: ActivityResultRegistry = FakePermissionResultRegistry(true)
                 },
             ) {
                 NavHost(

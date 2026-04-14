@@ -35,10 +35,10 @@ sealed interface IncomingExternalBusMessage {
          * Unknown types are deserialized as [UnknownIncomingMessage] instead of throwing an exception.
          */
         internal val serializersModule = SerializersModule {
-            polymorphicDefaultDeserializer(IncomingExternalBusMessage::class) {
+            polymorphicDefaultDeserializer(IncomingExternalBusMessage::class) { className ->
                 object : UnknownJsonContentDeserializer<UnknownIncomingMessage>() {
                     override val builder = UnknownJsonContentBuilder { content ->
-                        UnknownIncomingMessage(content)
+                        UnknownIncomingMessage(className, content)
                     }
                 }
             }
@@ -55,7 +55,7 @@ sealed interface IncomingExternalBusMessage {
  *
  * @property content The raw JSON content of the unknown message
  */
-data class UnknownIncomingMessage(override val content: JsonElement) :
+data class UnknownIncomingMessage(override val discriminator: String?, override val content: JsonElement) :
     IncomingExternalBusMessage,
     UnknownJsonContent {
     override val id: Int? = null
@@ -90,12 +90,20 @@ data class ConnectionStatusPayload(val event: String) {
 data class ConfigGetMessage(override val id: Int? = null) : IncomingExternalBusMessage
 
 /**
- * Message requesting the app's to open its settings.
+ * Message requesting the app to open its settings.
  * No response is expected for this message
  */
 @Serializable
 @SerialName("config_screen/show")
 data class OpenSettingsMessage(override val id: Int? = null) : IncomingExternalBusMessage
+
+/**
+ * Message requesting the app to open its assist settings
+ * No response is expected for this message
+ */
+@Serializable
+@SerialName("assist/settings")
+data class OpenAssistSettingsMessage(override val id: Int? = null) : IncomingExternalBusMessage
 
 /**
  * Message indicating that the frontend theme has changed.
@@ -123,3 +131,14 @@ data class OpenAssistPayload(
     @SerialName("pipeline_id") val pipelineId: String? = null,
     @SerialName("start_listening") val startListening: Boolean = true,
 )
+
+/**
+ * Message requesting haptic feedback from the Home Assistant frontend.
+ *
+ * Sent when the user interacts with UI elements in the frontend that provide
+ * tactile feedback (e.g., toggling a switch, long-pressing an entity).
+ * This is a fire-and-forget message — no response is expected.
+ */
+@Serializable
+@SerialName("haptic")
+data class HapticMessage(override val id: Int? = null, val payload: HapticType) : IncomingExternalBusMessage

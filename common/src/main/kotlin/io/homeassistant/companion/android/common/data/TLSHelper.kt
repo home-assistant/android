@@ -13,7 +13,6 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509ExtendedKeyManager
 import javax.net.ssl.X509TrustManager
-import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 
 class TLSHelper @Inject constructor(
@@ -51,25 +50,11 @@ class TLSHelper @Inject constructor(
             }
 
             override fun getCertificateChain(p0: String?): Array<X509Certificate>? {
-                var chain: Array<X509Certificate>?
-
-                // block until a chain is provided via the TLSWebView
-                runBlocking {
-                    chain = keyChainRepository.getCertificateChain() ?: keyStore.getCertificateChain()
-                }
-
-                return chain
+                return keyChainRepository.getCertificateChain() ?: keyStore.getCertificateChain()
             }
 
             override fun getPrivateKey(p0: String?): PrivateKey? {
-                var key: PrivateKey?
-
-                // block until a key is provided via the TLSWebView
-                runBlocking {
-                    key = keyChainRepository.getPrivateKey() ?: keyStore.getPrivateKey()
-                }
-
-                return key
+                return keyChainRepository.getPrivateKey() ?: keyStore.getPrivateKey()
             }
         }
     }

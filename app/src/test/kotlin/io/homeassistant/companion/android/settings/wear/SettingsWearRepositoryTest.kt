@@ -8,6 +8,7 @@ import io.homeassistant.companion.android.common.data.integration.impl.Integrati
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
+import io.homeassistant.companion.android.util.FailFastExtension
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -29,7 +30,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import retrofit2.Response
 
-@ExtendWith(ConsoleLogExtension::class)
+@ExtendWith(ConsoleLogExtension::class, FailFastExtension::class)
 class SettingsWearRepositoryTest {
 
     private val authenticationService: AuthenticationService = mockk()

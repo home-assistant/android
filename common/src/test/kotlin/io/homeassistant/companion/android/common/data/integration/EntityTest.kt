@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.data.integration
 
 import android.content.Context
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedEntityRemoved
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedEntityState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateDiff
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
+import org.junit.jupiter.params.provider.ValueSource
 
 @ExtendWith(ConsoleLogExtension::class)
 class EntityTest {
@@ -123,6 +125,32 @@ class EntityTest {
                 attributes = mapOf("state" to 42),
             )
             assertDoesNotThrow { entity.getIcon(context) }
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = ["mdi:", "mdi:abcdefgh"])
+        fun `Given invalid mdi icon attribute when getting icon then returns fallback`(iconAttr: String) {
+            val context = mockk<Context>(relaxed = true)
+            val entity = createEntity(
+                entityId = "sensor.test",
+                state = "42",
+                attributes = mapOf("icon" to iconAttr),
+            )
+            val icon = entity.getIcon(context)
+            assertEquals(Icon.cmd_bookmark, icon)
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = ["mdicustom:abcdefgh", "hue:bulb-filament"])
+        fun `Given custom non-mdi icon attribute when getting icon then returns domain default`(iconAttr: String) {
+            val context = mockk<Context>()
+            val entity = createEntity(
+                entityId = "sensor.test",
+                state = "42",
+                attributes = mapOf("icon" to iconAttr),
+            )
+            val icon = entity.getIcon(context)
+            assertEquals(Icon.cmd_eye, icon)
         }
     }
 

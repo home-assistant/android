@@ -16,7 +16,7 @@ import androidx.navigation.testing.TestNavHostController
 import dagger.hilt.android.testing.HiltAndroidRule
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
-import io.homeassistant.companion.android.util.LocationPermissionActivityResultRegistry
+import io.homeassistant.companion.android.util.FakePermissionResultRegistry
 import io.homeassistant.companion.android.util.compose.navigateToUri
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -67,7 +67,7 @@ internal abstract class BaseOnboardingNavigationTest {
             CompositionLocalProvider(
                 LocalActivityResultRegistryOwner provides object : ActivityResultRegistryOwner {
                     override val activityResultRegistry: ActivityResultRegistry =
-                        LocationPermissionActivityResultRegistry(true)
+                        FakePermissionResultRegistry(true)
                 },
             ) {
                 NavHost(

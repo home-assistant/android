@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
+import io.homeassistant.companion.android.util.FailFastExtension
 import io.homeassistant.companion.android.widgets.camera.CameraWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControlsWidgetConfigureActivity
@@ -40,7 +41,7 @@ import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.ValueSource
 
 @ExperimentalCoroutinesApi
-@ExtendWith(ConsoleLogExtension::class)
+@ExtendWith(ConsoleLogExtension::class, FailFastExtension::class)
 class EntityAddToHandlerTest {
 
     private lateinit var serverManager: ServerManager

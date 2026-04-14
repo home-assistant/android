@@ -450,6 +450,7 @@
     <string name="manage_widgets">Manage widgets</string>
     <string name="manual_setup">Enter address manually</string>
     <string name="manual_title">What is your Home Assistant address?</string>
+    <string name="matter_commissioning_cancelled">Unable to add Matter device?</string>
     <string name="matter_commissioning_unavailable">Matter is currently unavailable</string>
     <string name="matter_shared_title">Add Matter device</string>
     <string name="matter_shared_status_not_registered">Please connect to your Home Assistant server before adding a Matter device.</string>
@@ -1220,8 +1221,6 @@
     <string name="assist_wake_word_test_hint">Say \"%s\" to test</string>
     <string name="assist_wake_word_detected">Wake word detected!</string>
     <string name="assist_wake_word_battery_warning">Wake word detection runs entirely on your device, no network connection required. It continuously listens for your wake word, which will increase battery usage.</string>
-    <string name="assist_wake_word_unsupported_device">Wake word detection is not available on this device due to hardware limitations.</string>
-    <string name="assist_wake_word_missing_play_services">Google Play Services is required to enable wake word detection.</string>
     <string name="assist_permission_microphone_required">Requires \'Microphone\' permission</string>
     <string name="not_registered">Please open the Home Assistant app and log in to start using Assist</string>
     <string name="ha_assist">HA: Assist</string>

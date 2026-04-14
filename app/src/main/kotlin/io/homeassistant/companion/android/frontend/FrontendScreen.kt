@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.frontend
 import android.annotation.SuppressLint
 import android.net.Uri
 import android.os.Build
+import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.background
@@ -45,7 +46,13 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorScreen
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
+import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
+import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
+import io.homeassistant.companion.android.frontend.js.FrontendJsBridge
+import io.homeassistant.companion.android.frontend.js.FrontendJsCallback
 import io.homeassistant.companion.android.frontend.permissions.NotificationPermissionPrompt
+import io.homeassistant.companion.android.frontend.permissions.PendingWebViewPermissionRequest
+import io.homeassistant.companion.android.frontend.permissions.WebViewPermissionEffect
 import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModel
@@ -89,6 +96,7 @@ internal fun FrontendScreen(
     modifier: Modifier = Modifier,
 ) {
     val viewState by viewModel.viewState.collectAsStateWithLifecycle()
+    val pendingWebViewPermission by viewModel.pendingWebViewPermission.collectAsStateWithLifecycle()
 
     // Create SecurityLevel ViewModel only when needed
     val securityLevelViewModel: LocationForSecureConnectionViewModel? =
@@ -105,8 +113,12 @@ internal fun FrontendScreen(
         viewState = viewState,
         errorStateProvider = viewModel as FrontendConnectionErrorStateProvider,
         webViewClient = viewModel.webViewClient,
+        webChromeClient = viewModel.webChromeClient,
         frontendJsCallback = viewModel.frontendJsCallback,
         scriptsToEvaluate = viewModel.scriptsToEvaluate,
+        hapticEvents = viewModel.hapticEvents,
+        pendingWebViewPermission = pendingWebViewPermission,
+        onWebViewPermissionResult = viewModel::onWebViewPermissionResult,
         onBlockInsecureRetry = viewModel::onRetry,
         onOpenExternalLink = onOpenExternalLink,
         onBlockInsecureHelpClick = onBlockInsecureHelpClick,
@@ -129,6 +141,7 @@ internal fun FrontendScreenContent(
     onBackClick: () -> Unit,
     viewState: FrontendViewState,
     webViewClient: WebViewClient,
+    webChromeClient: WebChromeClient,
     frontendJsCallback: FrontendJsCallback,
     scriptsToEvaluate: Flow<WebViewScript>,
     onBlockInsecureRetry: () -> Unit,
@@ -142,6 +155,9 @@ internal fun FrontendScreenContent(
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onWebViewCreationFailed: (Throwable) -> Unit,
     modifier: Modifier = Modifier,
+    hapticEvents: Flow<HapticType> = emptyFlow(),
+    pendingWebViewPermission: PendingWebViewPermissionRequest? = null,
+    onWebViewPermissionResult: (Map<String, Boolean>) -> Unit = {},
     errorStateProvider: FrontendConnectionErrorStateProvider = FrontendConnectionErrorStateProvider.noOp,
     securityLevelViewModel: LocationForSecureConnectionViewModel? = null,
     onSecurityLevelDone: () -> Unit = {},
@@ -153,7 +169,14 @@ internal fun FrontendScreenContent(
     WebViewEffects(
         webView = webView,
         url = viewState.url,
+        frontendJsCallback = frontendJsCallback,
         scriptsToEvaluate = scriptsToEvaluate,
+        hapticEvents = hapticEvents,
+    )
+
+    WebViewPermissionEffect(
+        pendingPermission = pendingWebViewPermission,
+        onPermissionResult = onWebViewPermissionResult,
     )
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -162,7 +185,7 @@ internal fun FrontendScreenContent(
             onBackClick = onBackClick,
             onWebViewCreated = { webView = it },
             webViewClient = webViewClient,
-            frontendJsCallback = frontendJsCallback,
+            webChromeClient = webChromeClient,
             contentState = viewState as? FrontendViewState.Content,
             onWebViewCreationFailed = onWebViewCreationFailed,
         )
@@ -350,9 +373,9 @@ private fun SafeHAWebView(
     onBackClick: () -> Unit,
     onWebViewCreated: (WebView) -> Unit,
     webViewClient: WebViewClient,
-    frontendJsCallback: FrontendJsCallback,
     contentState: FrontendViewState.Content?,
     onWebViewCreationFailed: (Throwable) -> Unit,
+    webChromeClient: WebChromeClient? = null,
 ) {
     val serverHandleInsets = contentState?.serverHandleInsets ?: false
     val backgroundColor = contentState?.backgroundColor
@@ -389,10 +412,8 @@ private fun SafeHAWebView(
                     .background(Color.Transparent),
                 configure = {
                     onWebViewCreated(this)
-                    // Injecting the javascript interface should happen as early as possible in the process
-                    // even before loading the server URL to not miss any events from the frontend.
-                    frontendJsCallback.attachToWebView(this)
                     this.webViewClient = webViewClient
+                    webChromeClient?.let { this.webChromeClient = it }
                 },
                 onBackPressed = onBackClick,
                 onWebViewCreationFailed = onWebViewCreationFailed,
@@ -426,12 +447,19 @@ private fun Color.Overlay(modifier: Modifier = Modifier) {
 }
 
 /**
- * Handles WebView side effects: URL loading and script evaluation.
+ * Handles WebView side effects: URL loading, script evaluation, haptics.
  */
 @Composable
-private fun WebViewEffects(webView: WebView?, url: String, scriptsToEvaluate: Flow<WebViewScript>) {
+private fun WebViewEffects(
+    webView: WebView?,
+    url: String,
+    frontendJsCallback: FrontendJsCallback,
+    scriptsToEvaluate: Flow<WebViewScript>,
+    hapticEvents: Flow<HapticType>,
+) {
     if (webView != null) {
         LaunchedEffect(webView, url) {
+            frontendJsCallback.attachToWebView(webView)
             Timber.v("Load url ${sensitive(url)}")
             webView.loadUrl(url)
         }
@@ -441,6 +469,11 @@ private fun WebViewEffects(webView: WebView?, url: String, scriptsToEvaluate: Fl
                 webView.evaluateJavascript(webViewScript.script) { result ->
                     webViewScript.result.complete(result)
                 }
+            }
+        }
+        LaunchedEffect(webView) {
+            hapticEvents.collect { hapticType ->
+                HapticFeedbackPerformer.perform(webView, hapticType)
             }
         }
     }
@@ -457,6 +490,7 @@ private fun FrontendScreenLoadingPreview() {
                 url = "https://example.com",
             ),
             webViewClient = WebViewClient(),
+            webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
             scriptsToEvaluate = emptyFlow(),
             onBlockInsecureRetry = {},
@@ -489,6 +523,7 @@ private fun FrontendScreenErrorPreview() {
                 ),
             ),
             webViewClient = WebViewClient(),
+            webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
             scriptsToEvaluate = emptyFlow(),
             onBlockInsecureRetry = {},
@@ -517,6 +552,7 @@ private fun FrontendScreenInsecurePreview() {
                 missingLocation = true,
             ),
             webViewClient = WebViewClient(),
+            webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
             scriptsToEvaluate = emptyFlow(),
             onBlockInsecureRetry = {},
@@ -543,6 +579,7 @@ private fun FrontendScreenSecurityLevelRequiredPreview() {
                 serverId = 1,
             ),
             webViewClient = WebViewClient(),
+            webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
             scriptsToEvaluate = emptyFlow(),
             onBlockInsecureRetry = {},

@@ -11,6 +11,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon3
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateDiff
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryOptions
@@ -23,6 +24,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.util.Locale
 import kotlin.math.round
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
@@ -159,7 +161,7 @@ object EntityExt {
         "binary_sensor",
         "calendar",
         CAMERA_DOMAIN,
-        "climate",
+        CLIMATE_DOMAIN,
         "cover",
         "device_tracker",
         "fan",
@@ -465,9 +467,9 @@ fun Entity.getVolumeStep(): Float {
 fun Entity.getIcon(context: Context): IIcon {
     val attributes = this.attributes
     val icon = attributes["icon"] as? String
-    return if (icon?.startsWith("mdi") == true) {
-        val mdiIcon = icon.split(":")[1]
-        return IconicsDrawable(context, "cmd-$mdiIcon").icon ?: Icon.cmd_bookmark
+    return if (icon?.startsWith("mdi:") == true) {
+        val mdiIcon = icon.split(":").getOrElse(1, { _ -> "" })
+        IconicsDrawable(context, "cmd-$mdiIcon").icon ?: Icon.cmd_bookmark
     } else {
         /**
          * Return a default icon for the domain that matches the icon used in the frontend, see
@@ -519,7 +521,7 @@ fun Entity.getIcon(context: Context): IIcon {
                 Icon3.cmd_video
             }
 
-            "climate" -> Icon3.cmd_thermostat
+            CLIMATE_DOMAIN -> Icon3.cmd_thermostat
             "configurator" -> Icon.cmd_cog
             "conversation" -> Icon3.cmd_microphone_message
             "cover" -> coverIcon(compareState, this)
@@ -946,7 +948,10 @@ suspend fun onEntityPressedWithoutState(entityId: String, integrationRepository:
         "lock" -> {
             val lockEntity = try {
                 integrationRepository.getEntity(entityId)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
+                Timber.w(e, "Failed to get lock entity $entityId")
                 null
             }
             if (lockEntity?.state == "locked") "unlock" else "lock"

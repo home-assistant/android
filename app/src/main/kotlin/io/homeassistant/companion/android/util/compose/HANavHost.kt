@@ -28,7 +28,6 @@ import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.n
 import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.setHomeNetworkScreen
 import io.homeassistant.companion.android.onboarding.wearOnboarding
 import io.homeassistant.companion.android.settings.navigation.navigateToSettings
-import io.homeassistant.companion.android.settings.navigation.settingsScreen
 
 /**
  * Navigation host for the main application.
@@ -108,7 +107,7 @@ internal fun HANavHost(
                     navController.navigateToUri(uri.toString(), onShowSnackbar)
                 },
                 onNavigateToSettings = {
-                    navController.navigateToSettings()
+                    navController.navigateToSettings(it)
                 },
                 onSecurityLevelHelpClick = {
                     navController.navigateToUri(URL_SECURITY_LEVEL_DOCUMENTATION, onShowSnackbar)
@@ -129,7 +128,7 @@ internal fun HANavHost(
                     navController.navigateToUri(URL_SECURITY_LEVEL_DOCUMENTATION, onShowSnackbar)
                 },
             )
-            settingsScreen()
+
             if (isAutomotive) {
                 carAppActivity(navController)
             }

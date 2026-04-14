@@ -20,3 +20,20 @@ import io.homeassistant.companion.android.common.BuildConfig
  * @return the original value when it is secure, "HIDDEN" otherwise
  */
 fun sensitive(sensitive: String): String = sensitive.takeIf { BuildConfig.DEBUG } ?: "HIDDEN"
+
+/**
+ * Lazy variant of [sensitive] that avoids evaluating the string when not in a secure environment.
+ *
+ * Use this overload when building the sensitive string involves computation (e.g. string
+ * interpolation, `toString()` on complex objects) that should be skipped entirely in release builds.
+ *
+ * ```kotlin
+ * Timber.d("Payload: ${sensitive { payload.toString() }}")
+ * // Debug:   "Payload: {type:config/get}"
+ * // Release: "Payload: HIDDEN"
+ * ```
+ *
+ * @param sensitive lambda producing the value to sanitize, only invoked in a secure environment
+ * @return the produced value when it is secure, "HIDDEN" otherwise
+ */
+fun sensitive(sensitive: () -> String): String = sensitive.takeIf { BuildConfig.DEBUG }?.invoke() ?: "HIDDEN"
