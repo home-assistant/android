@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.mediacontrol
 
 import android.os.Looper
+import androidx.annotation.MainThread
 import androidx.annotation.OptIn
 import androidx.media3.common.DeviceInfo
 import androidx.media3.common.MediaMetadata
@@ -17,9 +18,13 @@ import io.homeassistant.companion.android.common.data.mediacontrol.MediaRepeatMo
 /**
  * A [SimpleBasePlayer] that acts as a remote control proxy for a Home Assistant media_player entity.
  * It does not play audio itself — it reports state and translates playback commands into callbacks.
+ *
+ * This class is not thread-safe. All public methods must be called on the looper thread passed to
+ * the constructor, which is enforced by [SimpleBasePlayer].
  */
 @OptIn(UnstableApi::class)
-class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCallback) : SimpleBasePlayer(looper) {
+internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCallback) :
+    SimpleBasePlayer(looper) {
 
     /** Callback interface for translating player commands into HA service calls. */
     interface CommandCallback {
@@ -49,10 +54,10 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
 
     /**
      * Updates the internal state from a new [MediaControlState] and triggers a state refresh.
-     * Must be called on the main thread (the looper passed to [SimpleBasePlayer]).
+     * Must be called on the looper thread passed to the constructor.
      * @param artworkPngBytes Pre-compressed PNG bytes for album art (compress off main thread).
      */
-    @androidx.annotation.MainThread
+    @MainThread
     fun updateState(state: MediaControlState?, artworkPngBytes: ByteArray?) {
         isConnecting = false
         mediaState = state
@@ -65,9 +70,9 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
      * Transitions to [STATE_BUFFERING] with the last known metadata visible but all
      * interactive commands disabled, so the notification stays visible without showing
      * stale controls.
-     * Must be called on the main thread (the looper passed to [SimpleBasePlayer]).
+     * Must be called on the looper thread passed to the constructor.
      */
-    @androidx.annotation.MainThread
+    @MainThread
     fun setConnecting() {
         isConnecting = true
         invalidateState()
@@ -76,10 +81,10 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
     override fun getState(): State {
         if (isConnecting) return buildConnectingState()
         val state = mediaState ?: return buildIdleState()
-        return buildNormalState(state, artworkBytes)
+        return buildConnectedState(state, artworkBytes)
     }
 
-    private fun buildNormalState(state: MediaControlState, artwork: ByteArray?): State {
+    private fun buildConnectedState(state: MediaControlState, artwork: ByteArray?): State {
         val availableCommands = buildAvailableCommands(state)
 
         val playbackState = when (state.playbackState) {
@@ -149,11 +154,11 @@ class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCa
             when (seekCommand) {
                 Player.COMMAND_SEEK_TO_NEXT,
                 Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM,
-                -> commandCallback.onNextRequested()
+                    -> commandCallback.onNextRequested()
 
                 Player.COMMAND_SEEK_TO_PREVIOUS,
                 Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM,
-                -> commandCallback.onPreviousRequested()
+                    -> commandCallback.onPreviousRequested()
 
                 else -> {
                     if (mediaState?.supportsSeek == true) {
