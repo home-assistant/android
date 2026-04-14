@@ -181,7 +181,7 @@ class FrontendScreenScreenshotTest {
                 onSecurityLevelHelpClick = {},
                 onShowSnackbar = { _, _ -> true },
                 onWebViewCreationFailed = {},
-                pendingPermissionRequest = PermissionRequest.Notification(1) {}
+                pendingPermissionRequest = PermissionRequest.Notification(1) {},
             )
         }
     }
