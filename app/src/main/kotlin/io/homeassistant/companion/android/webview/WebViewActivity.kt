@@ -1422,22 +1422,14 @@ class WebViewActivity :
                     // https://github.com/home-assistant/core/blob/dev/homeassistant/core.py#L159
                     val pattern = "(?<=^entityId:)((?!.+__)(?!_)[\\da-z_]+(?<!_)\\.(?!_)[\\da-z_]+(?<!_)$)".toRegex()
                     val entity = pattern.find(path)?.value ?: ""
-                    if (entity.isNotBlank()) {
-                        if (isConnected && webView.progress == 100) {
-                            // HA is already loaded — dispatch the more-info event directly via
-                            // JavaScript instead of navigating to a URL. The URL approach
-                            // (/?more-info-entity-id=) is skipped by WebView when the page is
-                            // already at the same origin root, because hasNonRootPath() returns
-                            // false for a path of "/".
-                            webView.evaluateJavascript(
-                                "document.querySelector(\"home-assistant\").dispatchEvent(new CustomEvent(\"hass-more-info\", { detail: { entityId: \"$entity\" }}))",
-                                null,
-                            )
-                        } else {
-                            moreInfoEntity = entity
-                        }
+                    if (
+                        entity.isNotBlank() &&
+                        serverManager.getServer(presenter.getActiveServer())?.version?.isAtLeast(2025, 6, 0) == true
+                    ) {
+                        path = "/?more-info-entity-id=$entity"
+                    } else {
+                        moreInfoEntity = entity
                     }
-                    path = null
                 }
                 intent.removeExtra(EXTRA_PATH)
                 presenter.load(lifecycle, path, isInternalOverride)
