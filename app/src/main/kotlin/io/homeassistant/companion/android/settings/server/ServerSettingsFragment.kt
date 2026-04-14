@@ -147,10 +147,9 @@ class ServerSettingsFragment :
 
         findPreference<EditTextPreference>("connection_internal")?.let {
             it.setOnBindEditTextListener { edit ->
-                edit.inputType = InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+                edit.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
             }
-            it.onPreferenceChangeListener =
-                onChangeUrlValidator
+            it.onPreferenceChangeListener = onChangeUrlValidator
             it.isVisible = presenter.hasWifi()
         }
 

@@ -112,6 +112,7 @@
         <activity
             android:name="io.homeassistant.companion.android.launch.LaunchActivity"
             android:exported="true"
+            android:configChanges="uiMode"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.LaunchScreen">
             <intent-filter>
@@ -456,7 +457,7 @@
             android:supportsPictureInPicture="true"
             android:resizeableActivity="true"
             android:exported="false"
-            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation" />
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|uiMode" />
 
         <activity
             android:name=".settings.SettingsActivity"
