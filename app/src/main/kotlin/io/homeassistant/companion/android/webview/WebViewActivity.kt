@@ -2078,11 +2078,14 @@ class WebViewActivity :
                         request.addRequestHeader("Authorization", presenter.getAuthorizationHeader())
                     }
                     try {
-                        request.addRequestHeader("Cookie", CookieManager.getInstance().getCookie(url))
+                        CookieManager.getInstance().getCookie(url)?.let { cookie ->
+                            request.addRequestHeader("Cookie", cookie)
+                        }
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: Exception) {
                         // Cannot get cookies, probably not relevant
+                        Timber.w(e, "Cookie header not set for download request")
                     }
 
                     getSystemService<DownloadManager>()?.enqueue(request)
