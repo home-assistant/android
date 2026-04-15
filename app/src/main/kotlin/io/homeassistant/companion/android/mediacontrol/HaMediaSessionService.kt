@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.mediacontrol
 
 import android.content.Context
 import android.content.Intent
+import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
@@ -43,7 +44,7 @@ class HaMediaSessionService : MediaSessionService() {
     internal val activeSessions = mutableMapOf<String, Pair<HaMediaSession, Job>>()
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    @androidx.annotation.OptIn(UnstableApi::class)
+    @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
         val notificationProvider = DefaultMediaNotificationProvider.Builder(this).build()
