@@ -111,6 +111,13 @@ class HaMediaSessionService : MediaSessionService() {
         configuredEntities: List<MediaControlEntityConfig>,
         sessionScope: CoroutineScope = serviceScope,
     ) {
+        Timber.d(
+            "reconcileSessions: received ${configuredEntities.size} entities=${configuredEntities.map {
+                it.entityId
+            }}, " +
+                "activeSessions=${activeSessions.keys.toList()}",
+        )
+
         if (configuredEntities.isEmpty()) {
             Timber.d("No media control entities configured, stopping service")
             withContext(Dispatchers.Main) { stopSelf() }
@@ -119,6 +126,8 @@ class HaMediaSessionService : MediaSessionService() {
 
         val desiredKeys = configuredEntities.map { it.sessionKey() }.toSet()
         val currentKeys = activeSessions.keys.toSet()
+
+        Timber.d("reconcileSessions: desiredKeys=$desiredKeys, currentKeys=$currentKeys")
 
         // Precompute the diff and prepare new sessions on Default before touching Main.
         val toRemove = (currentKeys - desiredKeys).mapNotNull { key ->
@@ -134,11 +143,15 @@ class HaMediaSessionService : MediaSessionService() {
             key to session
         }
 
+        Timber.d("reconcileSessions: toRemove=${toRemove.map { it.first }}, toAdd=${toAdd.map { it.first }}")
+
         // Execute all Android/Media3 API calls that require Main in a single dispatcher hop.
         withContext(Dispatchers.Main) {
             toRemove.forEach { (key, pair) ->
                 val (session, job) = pair
+                Timber.d("removeSession: calling removeSession for $key, mediaSession=${if (session.mediaSession != null) "non-null" else "null"}")
                 session.mediaSession?.let { removeSession(it) }
+                Timber.d("removeSession: removeSession returned for $key, calling cancelAndJoin")
                 job.cancelAndJoin()
                 Timber.d("Removed media session for $key")
             }
@@ -150,7 +163,26 @@ class HaMediaSessionService : MediaSessionService() {
                 activeSessions[key] = session to job
                 Timber.d("Added media session for $key")
             }
+
+            // When a session is removed, Media3 stops the foreground notification but does not
+            // automatically re-post it for remaining sessions, even when they are actively playing.
+            // invalidateState() on the remaining players is a no-op because their state hasn't
+            // changed, so Media3 sees nothing to update. The only reliable way to re-trigger the
+            // foreground notification is to remove and re-add each remaining session, which causes
+            // Media3's MediaNotificationManager to re-initialize and re-post the notification.
+            if (toRemove.isNotEmpty()) {
+                Timber.d("refreshNotification: re-adding ${activeSessions.size} remaining sessions to trigger notification")
+                activeSessions.values.forEach { (session, _) ->
+                    session.mediaSession?.let { mediaSession ->
+                        removeSession(mediaSession)
+                        addSession(mediaSession)
+                    }
+                }
+                Timber.d("refreshNotification: done")
+            }
         }
+
+        Timber.d("reconcileSessions: done, activeSessions=${activeSessions.keys.toList()}")
     }
 
     companion object {

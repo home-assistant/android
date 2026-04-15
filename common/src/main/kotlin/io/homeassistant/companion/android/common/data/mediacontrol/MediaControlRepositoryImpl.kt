@@ -54,30 +54,41 @@ internal class MediaControlRepositoryImpl @Inject constructor(
     }
 
     override fun observeEntityState(config: MediaControlEntityConfig): Flow<MediaControlState?> = flow {
+        Timber.d("observeEntityState: starting for ${config.entityId}")
+
         // Emit current state via REST so the caller has something to show immediately.
         // The WebSocket added event delivers the same state again; distinctUntilChanged()
         // at the end suppresses the duplicate.
-        getEntityState(config)?.let { emit(it) }
+        getEntityState(config)?.let {
+            Timber.d("observeEntityState: emitting REST state for ${config.entityId}")
+            emit(it)
+        }
 
         try {
             val stateFlow = serverManager.webSocketRepository(config.serverId)
                 .getCompressedStateAndChanges(listOf(config.entityId))
             if (stateFlow == null) {
-                Timber.w("WebSocket subscription returned null for entity ${config.entityId}")
+                Timber.w(
+                    "observeEntityState: WebSocket subscription returned null for entity ${config.entityId}, flow will complete",
+                )
                 emit(null)
                 return@flow
             }
 
+            Timber.d("observeEntityState: WebSocket subscription established for ${config.entityId}, collecting events")
             var currentEntity: Entity? = null
             stateFlow.collect { event ->
                 event.added?.get(config.entityId)?.let {
+                    Timber.d("observeEntityState: 'added' event for ${config.entityId}")
                     currentEntity = it.toEntity(config.entityId)
                 }
                 event.changed?.get(config.entityId)?.let { diff ->
+                    Timber.d("observeEntityState: 'changed' event for ${config.entityId}")
                     currentEntity = currentEntity?.applyCompressedStateDiff(diff)
                 }
                 event.removed?.let { removed ->
                     if (config.entityId in removed) {
+                        Timber.d("observeEntityState: 'removed' event for ${config.entityId}")
                         currentEntity = null
                     }
                 }
@@ -89,6 +100,7 @@ internal class MediaControlRepositoryImpl @Inject constructor(
                     emit(null)
                 }
             }
+            Timber.d("observeEntityState: WebSocket stateFlow collection ended for ${config.entityId}")
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -100,8 +112,11 @@ internal class MediaControlRepositoryImpl @Inject constructor(
     override suspend fun getConfiguredEntities(): List<MediaControlEntityConfig> =
         dao.getAll().map { it.toEntityConfig() }
 
-    override fun observeConfiguredEntities(): Flow<List<MediaControlEntityConfig>> =
-        dao.getAllFlow().map { list -> list.map { it.toEntityConfig() } }
+    override fun observeConfiguredEntities(): Flow<List<MediaControlEntityConfig>> = dao.getAllFlow().map { list ->
+        val configs = list.map { it.toEntityConfig() }
+        Timber.d("observeConfiguredEntities: DB emitted ${configs.size} entities=${configs.map { it.entityId }}")
+        configs
+    }
 
     override suspend fun setConfiguredEntities(entities: List<MediaControlEntityConfig>) {
         dao.replaceAll(

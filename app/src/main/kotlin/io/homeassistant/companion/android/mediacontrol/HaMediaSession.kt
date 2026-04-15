@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationDom
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlRepository
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlState
+import io.homeassistant.companion.android.common.data.mediacontrol.MediaPlaybackState
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaRepeatMode
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
@@ -150,6 +151,7 @@ class HaMediaSession @AssistedInject constructor(
      * regardless of how the coroutine ends (cancellation or normal flow completion).
      */
     suspend fun observe(onSessionReady: suspend (MediaSession) -> Unit) = coroutineScope {
+        Timber.d("observe: starting for ${config.entityId}")
         actionScope = this
         val player = HaRemoteMediaPlayer(Looper.getMainLooper(), commandCallback)
         val session = buildMediaSession(player)
@@ -157,8 +159,14 @@ class HaMediaSession @AssistedInject constructor(
         try {
             onSessionReady(session)
             startObservingState()
-            Timber.d("Media control observation completed for ${config.entityId}")
+            Timber.d(
+                "observe: startObservingState returned normally for ${config.entityId} (flow completed or WebSocket returned null)",
+            )
+        } catch (e: CancellationException) {
+            Timber.d("observe: cancelled for ${config.entityId}")
+            throw e
         } finally {
+            Timber.d("observe: finally block running for ${config.entityId}, releasing player and session")
             actionScope = null
             mediaSession = null
             withContext(NonCancellable + Dispatchers.Main) {
@@ -176,13 +184,30 @@ class HaMediaSession @AssistedInject constructor(
      * the app, which recreates active sessions via [HaMediaSessionService].
      */
     internal suspend fun startObservingState() {
+        Timber.d("startObservingState: starting for ${config.entityId}")
         var artworkCache = ArtworkCache()
         mediaControlRepository.observeEntityState(config).collect { state ->
             if (state == null) {
+                Timber.d("startObservingState: received null state for ${config.entityId}, skipping update")
                 return@collect
             }
-            artworkCache = loadArtworkAndUpdatePlayer(state, artworkCache)
+            Timber.d("startObservingState: received state for ${config.entityId}, playbackState=${state.playbackState}")
+            if (state.playbackState is MediaPlaybackState.Off) {
+                // Entity is off: reset the player to idle (no playlist, no commands) so Media3
+                // does not create a notification for this session. A notification for an idle
+                // session with no content would replace the foreground notification of any
+                // currently-playing session (e.g. another configured entity), hiding its control.
+                artworkCache = ArtworkCache()
+                withContext(Dispatchers.Main) {
+                    mediaSession?.player?.let {
+                        (it as? HaRemoteMediaPlayer)?.updateState(state = null, artworkPngBytes = null)
+                    }
+                }
+            } else {
+                artworkCache = loadArtworkAndUpdatePlayer(state, artworkCache)
+            }
         }
+        Timber.d("startObservingState: flow collection ended for ${config.entityId}")
     }
 
     private fun buildMediaSession(player: HaRemoteMediaPlayer): MediaSession = MediaSession.Builder(context, player)
