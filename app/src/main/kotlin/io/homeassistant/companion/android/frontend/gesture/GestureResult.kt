@@ -28,7 +28,7 @@ sealed interface GestureResult {
     /**
      * The gesture requires a WebView operation that must complete before continuing.
      *
-     * The ViewModel emits [action], awaits its [WebViewAction.Awaitable.result],
+     * The ViewModel emits [action], awaits its [WebViewAction.AwaitableAction.result],
      * then recursively handles the result of [then].
      */
     data class PerformWebViewActionThen<T>(
