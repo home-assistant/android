@@ -161,7 +161,6 @@ private fun openSystemLocationSettings(activity: Activity) {
     activity.startActivity(intent)
 }
 
-
 private fun showServerSwitcher(activity: Activity?, onServerSelected: (Int) -> Unit) {
     val fragmentActivity = activity as? FragmentActivity
     if (fragmentActivity == null) {
