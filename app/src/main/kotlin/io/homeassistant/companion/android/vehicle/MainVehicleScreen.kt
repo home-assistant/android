@@ -1,11 +1,13 @@
 package io.homeassistant.companion.android.vehicle
 
+import android.content.Intent
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.car.app.CarContext
 import androidx.car.app.model.Action
 import androidx.car.app.model.CarColor
 import androidx.car.app.model.CarIcon
+import androidx.car.app.model.GridItem
 import androidx.car.app.model.GridTemplate
 import androidx.car.app.model.ItemList
 import androidx.car.app.model.Template
@@ -202,6 +204,35 @@ class MainVehicleScreen(
                 ) { onChangeServer(it) }.build(),
             )
         }
+
+        listBuilder.addItem(
+            GridItem.Builder()
+                .setLoading(false)
+                .setTitle(carContext.getString(commonR.string.assist))
+                .setImage(
+                    CarIcon.Builder(
+                        IconicsDrawable(carContext, CommunityMaterial.Icon3.cmd_microphone).apply {
+                            sizeDp = 64
+                        }.toAndroidIconCompat(),
+                    )
+                        .setTint(CarColor.DEFAULT)
+                        .build(),
+                )
+                .setOnClickListener {
+                    val intent = Intent(
+                        io.homeassistant.companion.android.vehicle.HaCarAppService.ACTION_NAVIGATE_TO_AUTOMOTIVE_ASSIST,
+                    ).apply {
+                        if (serverId.value != 0) {
+                            putExtra(
+                                io.homeassistant.companion.android.vehicle.HaCarAppService.EXTRA_SERVER,
+                                serverId.value,
+                            )
+                        }
+                    }
+                    carContext.sendBroadcast(intent)
+                }
+                .build(),
+        )
         val refreshAction = Action.Builder()
             .setIcon(
                 CarIcon.Builder(

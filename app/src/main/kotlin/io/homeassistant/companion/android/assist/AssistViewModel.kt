@@ -506,13 +506,13 @@ class AssistViewModel @AssistedInject constructor(
         if (!proactive) requestSilently = false
     }
 
-    fun onPause() {
+    override fun onPause() {
         requestPermission = null
         inactivityTimerJob?.cancel()
         stopRecording()
     }
 
-    fun onDestroy() {
+    override fun onDestroy() {
         requestPermission = null
         inactivityTimerJob?.cancel()
         stopRecording()

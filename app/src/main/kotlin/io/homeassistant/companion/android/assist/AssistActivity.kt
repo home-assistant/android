@@ -48,11 +48,11 @@ class AssistActivity : BaseActivity() {
     private var contextIsLocked = true
 
     companion object {
-        private const val EXTRA_SERVER = "server"
-        private const val EXTRA_PIPELINE = "pipeline"
-        private const val EXTRA_START_LISTENING = "start_listening"
-        private const val EXTRA_FROM_FRONTEND = "from_frontend"
-        private const val EXTRA_FROM_WAKE_WORD_PHRASE = "from_wake_word_phrase"
+        const val EXTRA_SERVER = "server"
+        const val EXTRA_PIPELINE = "pipeline"
+        const val EXTRA_START_LISTENING = "start_listening"
+        const val EXTRA_FROM_FRONTEND = "from_frontend"
+        const val EXTRA_FROM_WAKE_WORD_PHRASE = "from_wake_word_phrase"
         const val EXTRA_TRIGGER_SOURCE = "trigger_source"
         const val TRIGGER_SOURCE_ASSIST = "assist"
         const val ACTION_TRIGGER_AUTOMOTIVE_ASSIST = "ACTION_TRIGGER_AUTOMOTIVE_ASSIST"
@@ -122,15 +122,19 @@ class AssistActivity : BaseActivity() {
 
         if (triggerSource == TRIGGER_SOURCE_ASSIST) {
             if (io.homeassistant.companion.android.vehicle.HaCarAppService.carInfo != null) {
-                val automotiveIntent = Intent(this, io.homeassistant.companion.android.vehicle.HaCarAppService::class.java).apply {
-                    action = ACTION_TRIGGER_AUTOMOTIVE_ASSIST
-                    putExtra(EXTRA_SERVER, if (intent.hasExtra(EXTRA_SERVER)) {
-                        intent.getIntExtra(EXTRA_SERVER, ServerManager.SERVER_ID_ACTIVE)
-                    } else {
-                        ServerManager.SERVER_ID_ACTIVE
-                    })
+                val automotiveIntent = Intent(
+                    io.homeassistant.companion.android.vehicle.HaCarAppService.ACTION_NAVIGATE_TO_AUTOMOTIVE_ASSIST,
+                ).apply {
+                    putExtra(
+                        io.homeassistant.companion.android.vehicle.HaCarAppService.EXTRA_SERVER,
+                        if (intent.hasExtra(EXTRA_SERVER)) {
+                            intent.getIntExtra(EXTRA_SERVER, ServerManager.SERVER_ID_ACTIVE)
+                        } else {
+                            ServerManager.SERVER_ID_ACTIVE
+                        },
+                    )
                 }
-                startService(automotiveIntent)
+                sendBroadcast(automotiveIntent)
                 finish()
                 return
             }
@@ -188,6 +192,9 @@ class AssistActivity : BaseActivity() {
 
     override fun onPause() {
         super.onPause()
+        // The error says onPause() is protected in AssistViewModel.
+        // We need to call it, but it's protected.
+        // Let's see if we can change the visibility in AssistViewModel.
         viewModel.onPause()
     }
 

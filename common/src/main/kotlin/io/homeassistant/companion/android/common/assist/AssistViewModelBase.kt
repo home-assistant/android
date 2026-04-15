@@ -59,11 +59,19 @@ sealed interface AssistEvent {
 }
 
 abstract class AssistViewModelBase(
-    protected val serverManager: ServerManager,
-    protected val audioStrategy: AssistAudioStrategy,
+    protected open val serverManager: ServerManager,
+    protected open val audioStrategy: AssistAudioStrategy,
     private val audioUrlPlayer: AudioUrlPlayer,
     application: Application,
 ) : AndroidViewModel(application) {
+
+    open fun onPause() {}
+    open fun onDestroy() {}
+
+    override fun onCleared() {
+        super.onCleared()
+        onDestroy()
+    }
 
     companion object {
         const val PIPELINE_PREFERRED = "preferred"
