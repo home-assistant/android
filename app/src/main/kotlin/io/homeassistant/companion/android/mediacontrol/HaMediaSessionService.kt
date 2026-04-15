@@ -265,6 +265,7 @@ class HaMediaSessionService : MediaSessionService() {
             .setContentTitle(metadata.title ?: session.id)
             .setContentText(metadata.artist)
             .setLargeIcon(artworkBitmap)
+            .setOngoing(session.player.isPlaying)
             .build()
     }
 
