@@ -150,6 +150,10 @@ internal fun FrontendEventHandler(
                 is FrontendEvent.OpenExternalLink -> {
                     onOpenExternalLink(event.uri)
                 }
+
+                is FrontendEvent.NavigateToDeveloperSettings -> {
+                    onNavigateToSettings(SettingsActivity.Deeplink.Developer)
+                }
             }
         }
     }

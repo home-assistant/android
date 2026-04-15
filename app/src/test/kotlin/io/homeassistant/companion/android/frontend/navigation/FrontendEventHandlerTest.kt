@@ -172,4 +172,31 @@ class FrontendEventHandlerTest {
 
         assertEquals(testUri, capturedUri)
     }
+
+    @Test
+    fun `Given NavigateToDeveloperSettings event then onNavigateToSettings is called with Developer deeplink`() = runTest {
+        var settingsNavigated = false
+        var deepLink: SettingsActivity.Deeplink? = null
+        val navigationEvents = MutableSharedFlow<FrontendEvent>()
+
+        composeTestRule.setContent {
+            FrontendEventHandler(
+                events = navigationEvents,
+                onShowSnackbar = { _, _ -> false },
+                onNavigateToSettings = {
+                    settingsNavigated = true
+                    deepLink = it
+                },
+                onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = {},
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        navigationEvents.emit(FrontendEvent.NavigateToDeveloperSettings)
+        composeTestRule.waitForIdle()
+
+        assertEquals(true, settingsNavigated)
+        assertEquals(SettingsActivity.Deeplink.Developer, deepLink)
+    }
 }

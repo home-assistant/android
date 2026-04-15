@@ -6,10 +6,13 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
+import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
+import io.homeassistant.companion.android.frontend.gesture.FrontendGestureHandler
+import io.homeassistant.companion.android.frontend.gesture.GestureResult
 import io.homeassistant.companion.android.frontend.handler.FrontendBusObserver
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridgeFactory
@@ -39,6 +42,7 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -59,6 +63,7 @@ class FrontendViewModelTest {
     private val permissionManager: PermissionManager = mockk(relaxed = true)
     private val frontendJsBridgeFactory: FrontendJsBridgeFactory = mockk(relaxed = true)
     private val downloadManager: FrontendDownloadManager = mockk(relaxed = true)
+    private val gestureHandler: FrontendGestureHandler = mockk(relaxed = true)
 
     private val serverId = 1
     private val testUrlWithAuth = "https://example.com?external_auth=1"
@@ -84,6 +89,7 @@ class FrontendViewModelTest {
             permissionManager = permissionManager,
             frontendJsBridgeFactory = frontendJsBridgeFactory,
             downloadManager = downloadManager,
+            gestureHandler = gestureHandler,
         )
     }
 
@@ -539,6 +545,41 @@ class FrontendViewModelTest {
                 assertEquals(HapticType.Heavy, (awaitItem() as WebViewAction.Haptic).type)
                 cancelAndIgnoreRemainingEvents()
             }
+        }
+
+        @Test
+        fun `Given gesture returns PerformWebViewActionThen when handled then action is emitted and then is executed`() = runTest {
+            every { frontendBusObserver.messageResults() } returns emptyFlow()
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val clearHistory = WebViewAction.ClearHistory()
+            coEvery {
+                gestureHandler.handleGesture(serverId = any(), direction = any(), pointerCount = any())
+            } returns GestureResult.PerformWebViewActionThen(
+                action = clearHistory,
+                then = {
+                    GestureResult.PerformWebViewAction(WebViewAction.Reload())
+                },
+            )
+
+            val viewModel = createViewModel()
+            val actions = mutableListOf<WebViewAction>()
+            val job = backgroundScope.launch { viewModel.webViewActions.collect { actions.add(it) } }
+
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            viewModel.onGesture(GestureDirection.UP, pointerCount = 2)
+
+            // Simulate Screen completing the ClearHistory action
+            clearHistory.result.complete(Unit)
+            advanceUntilIdle()
+
+            assertEquals(2, actions.size)
+            assertInstanceOf(WebViewAction.ClearHistory::class.java, actions[0])
+            assertInstanceOf(WebViewAction.Reload::class.java, actions[1])
+            job.cancel()
         }
 
         @Test

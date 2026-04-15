@@ -2,6 +2,8 @@ package io.homeassistant.companion.android.frontend
 
 import android.annotation.SuppressLint
 import android.net.Uri
+import android.view.MotionEvent
+import android.view.View
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -42,6 +44,7 @@ import io.homeassistant.companion.android.common.compose.composable.HAPlainButto
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorScreen
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
@@ -55,6 +58,7 @@ import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModel
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModelFactory
+import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.compose.webview.HAWebView
 import io.homeassistant.companion.android.util.sensitive
@@ -63,6 +67,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
+
+/** Minimum swipe velocity (pixels/second) to trigger a gesture action. */
+private const val MINIMUM_GESTURE_VELOCITY = 75f
 
 /**
  * Frontend screen that renders based on the ViewModel's current view state.
@@ -130,6 +137,7 @@ internal fun FrontendScreen(
         onWebViewCreationFailed = viewModel::onWebViewCreationFailed,
         onDownloadRequested = viewModel::onDownloadRequested,
         webViewActions = viewModel.webViewActions,
+        onGesture = viewModel::onGesture,
         modifier = modifier,
     )
 }
@@ -159,6 +167,7 @@ internal fun FrontendScreenContent(
     onSecurityLevelDone: () -> Unit = {},
     onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit = { _, _, _ -> },
     webViewActions: Flow<WebViewAction> = emptyFlow(),
+    onGesture: (GestureDirection, Int) -> Unit = { _, _ -> },
 ) {
     var webView by remember { mutableStateOf<WebView?>(null) }
 
@@ -184,6 +193,7 @@ internal fun FrontendScreenContent(
             contentState = viewState as? FrontendViewState.Content,
             onWebViewCreationFailed = onWebViewCreationFailed,
             onDownloadRequested = onDownloadRequested,
+            onGesture = onGesture,
         )
 
         StateOverlay(
@@ -366,6 +376,7 @@ private fun SafeHAWebView(
     onWebViewCreationFailed: (Throwable) -> Unit,
     webChromeClient: WebChromeClient? = null,
     onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit = { _, _, _ -> },
+    onGesture: (GestureDirection, Int) -> Unit = { _, _ -> },
 ) {
     val serverHandleInsets = contentState?.serverHandleInsets ?: false
     val backgroundColor = contentState?.backgroundColor
@@ -407,6 +418,24 @@ private fun SafeHAWebView(
                     setDownloadListener { url, _, contentDisposition, mimetype, _ ->
                         onDownloadRequested(url, contentDisposition, mimetype)
                     }
+                    setOnTouchListener(
+                        object : OnSwipeListener(context) {
+                            override fun onSwipe(
+                                e1: MotionEvent,
+                                e2: MotionEvent,
+                                velocity: Float,
+                                direction: GestureDirection,
+                                pointerCount: Int,
+                            ): Boolean {
+                                if (pointerCount > 1 && velocity >= MINIMUM_GESTURE_VELOCITY) {
+                                    onGesture(direction, pointerCount)
+                                }
+                                return false
+                            }
+
+                            override fun onMotionEventHandled(v: View?, event: MotionEvent?): Boolean = false
+                        },
+                    )
                 },
                 onBackPressed = onBackClick,
                 onWebViewCreationFailed = onWebViewCreationFailed,

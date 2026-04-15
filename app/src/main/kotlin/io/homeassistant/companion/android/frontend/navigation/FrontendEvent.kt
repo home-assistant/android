@@ -33,4 +33,7 @@ sealed interface FrontendEvent {
 
     /** Open a URI externally using the host-provided external link handler. */
     data class OpenExternalLink(val uri: Uri) : FrontendEvent
+
+    /** Navigate to the developer tools settings screen */
+    data object NavigateToDeveloperSettings : FrontendEvent
 }

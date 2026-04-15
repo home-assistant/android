@@ -9,10 +9,13 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
+import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
+import io.homeassistant.companion.android.frontend.gesture.FrontendGestureHandler
+import io.homeassistant.companion.android.frontend.gesture.GestureResult
 import io.homeassistant.companion.android.frontend.handler.FrontendBusObserver
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
 import io.homeassistant.companion.android.frontend.js.BridgeState
@@ -71,6 +74,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val permissionManager: PermissionManager,
     private val frontendJsBridgeFactory: FrontendJsBridgeFactory,
     private val downloadManager: FrontendDownloadManager,
+    private val gestureHandler: FrontendGestureHandler,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -84,6 +88,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         permissionManager: PermissionManager,
         frontendJsBridgeFactory: FrontendJsBridgeFactory,
         downloadManager: FrontendDownloadManager,
+        gestureHandler: FrontendGestureHandler,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
         initialPath = savedStateHandle.toRoute<FrontendRoute>().path,
@@ -94,6 +99,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         permissionManager = permissionManager,
         frontendJsBridgeFactory = frontendJsBridgeFactory,
         downloadManager = downloadManager,
+        gestureHandler = gestureHandler,
     )
 
     /**
@@ -318,6 +324,35 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         permissionManager.clearPendingPermissionRequest()
     }
 
+    /**
+     * Handles a swipe gesture detected on the WebView.
+     *
+     * @param direction The swipe direction
+     * @param pointerCount Number of pointers in the gesture
+     */
+    fun onGesture(direction: GestureDirection, pointerCount: Int) {
+        viewModelScope.launch {
+            val result = gestureHandler.handleGesture(
+                serverId = _viewState.value.serverId,
+                direction = direction,
+                pointerCount = pointerCount,
+            )
+            handleGestureResult(result)
+        }
+    }
+
+    private suspend fun handleGestureResult(result: GestureResult) {
+        when (result) {
+            is GestureResult.Navigate -> _events.tryEmit(result.event)
+            is GestureResult.PerformWebViewAction -> _webViewActions.emit(result.action)
+            is GestureResult.PerformWebViewActionThen<*> -> {
+                _webViewActions.emit(result.action)
+                result.action.result.await()
+                handleGestureResult(result.then())
+            }
+            is GestureResult.Forwarded, is GestureResult.Ignored -> { /* no-op */ }
+        }
+    }
     private fun loadServer() {
         urlFlowJob?.cancel()
         urlFlowJob = viewModelScope.launch {
