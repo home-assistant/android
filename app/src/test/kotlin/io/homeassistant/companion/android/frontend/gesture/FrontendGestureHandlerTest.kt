@@ -265,6 +265,119 @@ class FrontendGestureHandlerTest {
     }
 
     @Test
+    fun `Given SERVER_NEXT when handleGesture then returns SwitchServer with next server in list order`() = runTest {
+        coEvery { prefsRepository.getGestureAction(HAGesture.SWIPE_LEFT_TWO) } returns GestureAction.SERVER_NEXT
+        val serverA = mockServer(url = "https://a.test", name = "A", serverId = 1)
+        val serverB = mockServer(url = "https://b.test", name = "B", serverId = 2)
+        val serverC = mockServer(url = "https://c.test", name = "C", serverId = 3)
+        coEvery { serverManager.servers() } returns listOf(serverA, serverB, serverC)
+
+        val result = handler.handleGesture(
+            serverId = 2,
+            direction = GestureDirection.LEFT,
+            pointerCount = 2,
+        )
+
+        assertEquals(GestureResult.SwitchServer(3), result)
+    }
+
+    @Test
+    fun `Given SERVER_NEXT on last server when handleGesture then wraps around to first server`() = runTest {
+        coEvery { prefsRepository.getGestureAction(HAGesture.SWIPE_LEFT_TWO) } returns GestureAction.SERVER_NEXT
+        val serverA = mockServer(url = "https://a.test", name = "A", serverId = 1)
+        val serverB = mockServer(url = "https://b.test", name = "B", serverId = 2)
+        coEvery { serverManager.servers() } returns listOf(serverA, serverB)
+
+        val result = handler.handleGesture(
+            serverId = 2,
+            direction = GestureDirection.LEFT,
+            pointerCount = 2,
+        )
+
+        assertEquals(GestureResult.SwitchServer(1), result)
+    }
+
+    @Test
+    fun `Given SERVER_PREVIOUS when handleGesture then returns SwitchServer with previous server in list order`() = runTest {
+        coEvery { prefsRepository.getGestureAction(HAGesture.SWIPE_LEFT_TWO) } returns GestureAction.SERVER_PREVIOUS
+        val serverA = mockServer(url = "https://a.test", name = "A", serverId = 1)
+        val serverB = mockServer(url = "https://b.test", name = "B", serverId = 2)
+        val serverC = mockServer(url = "https://c.test", name = "C", serverId = 3)
+        coEvery { serverManager.servers() } returns listOf(serverA, serverB, serverC)
+
+        val result = handler.handleGesture(
+            serverId = 2,
+            direction = GestureDirection.LEFT,
+            pointerCount = 2,
+        )
+
+        assertEquals(GestureResult.SwitchServer(1), result)
+    }
+
+    @Test
+    fun `Given SERVER_PREVIOUS on first server when handleGesture then wraps around to last server`() = runTest {
+        coEvery { prefsRepository.getGestureAction(HAGesture.SWIPE_LEFT_TWO) } returns GestureAction.SERVER_PREVIOUS
+        val serverA = mockServer(url = "https://a.test", name = "A", serverId = 1)
+        val serverB = mockServer(url = "https://b.test", name = "B", serverId = 2)
+        val serverC = mockServer(url = "https://c.test", name = "C", serverId = 3)
+        coEvery { serverManager.servers() } returns listOf(serverA, serverB, serverC)
+
+        val result = handler.handleGesture(
+            serverId = 1,
+            direction = GestureDirection.LEFT,
+            pointerCount = 2,
+        )
+
+        assertEquals(GestureResult.SwitchServer(3), result)
+    }
+
+    @Test
+    fun `Given SERVER_NEXT with only one server when handleGesture then returns Ignored`() = runTest {
+        coEvery { prefsRepository.getGestureAction(HAGesture.SWIPE_LEFT_TWO) } returns GestureAction.SERVER_NEXT
+        val onlyServer = mockServer(url = "https://a.test", name = "A", serverId = 1)
+        coEvery { serverManager.servers() } returns listOf(onlyServer)
+
+        val result = handler.handleGesture(
+            serverId = 1,
+            direction = GestureDirection.LEFT,
+            pointerCount = 2,
+        )
+
+        assertEquals(GestureResult.Ignored, result)
+    }
+
+    @Test
+    fun `Given SERVER_PREVIOUS with only one server when handleGesture then returns Ignored`() = runTest {
+        coEvery { prefsRepository.getGestureAction(HAGesture.SWIPE_LEFT_TWO) } returns GestureAction.SERVER_PREVIOUS
+        val onlyServer = mockServer(url = "https://a.test", name = "A", serverId = 1)
+        coEvery { serverManager.servers() } returns listOf(onlyServer)
+
+        val result = handler.handleGesture(
+            serverId = 1,
+            direction = GestureDirection.LEFT,
+            pointerCount = 2,
+        )
+
+        assertEquals(GestureResult.Ignored, result)
+    }
+
+    @Test
+    fun `Given SERVER_NEXT with current server not in list when handleGesture then returns Ignored`() = runTest {
+        coEvery { prefsRepository.getGestureAction(HAGesture.SWIPE_LEFT_TWO) } returns GestureAction.SERVER_NEXT
+        val serverA = mockServer(url = "https://a.test", name = "A", serverId = 1)
+        val serverB = mockServer(url = "https://b.test", name = "B", serverId = 2)
+        coEvery { serverManager.servers() } returns listOf(serverA, serverB)
+
+        val result = handler.handleGesture(
+            serverId = 99,
+            direction = GestureDirection.LEFT,
+            pointerCount = 2,
+        )
+
+        assertEquals(GestureResult.Ignored, result)
+    }
+
+    @Test
     fun `Given unsupported pointer count when handleGesture then returns Ignored`() = runTest {
         val result = handler.handleGesture(
             serverId = 1,

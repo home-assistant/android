@@ -82,8 +82,8 @@ class FrontendGestureHandler @Inject constructor(
             GestureAction.NAVIGATE_FORWARD -> GestureResult.PerformWebViewAction(WebViewAction.Forward())
             GestureAction.NAVIGATE_RELOAD -> GestureResult.PerformWebViewAction(WebViewAction.Reload())
             GestureAction.SERVER_LIST -> TODO("Gesture action SERVER_LIST not yet implemented")
-            GestureAction.SERVER_NEXT -> TODO("Gesture action SERVER_NEXT not yet implemented")
-            GestureAction.SERVER_PREVIOUS -> TODO("Gesture action SERVER_PREVIOUS not yet implemented")
+            GestureAction.SERVER_NEXT -> switchServerBy(currentServerId = serverId, offset = 1)
+            GestureAction.SERVER_PREVIOUS -> switchServerBy(currentServerId = serverId, offset = -1)
         }
     }
 
@@ -128,6 +128,26 @@ class FrontendGestureHandler @Inject constructor(
             document.dispatchEvent(event);
         """.trimIndent()
         externalBusRepository.evaluateScript(script)
+    }
+
+    /**
+     * Resolves the neighboring server in the user-defined order and returns a [GestureResult.SwitchServer]
+     * for the ViewModel to execute.
+     *
+     * Wraps around: next on the last server goes to the first, previous on the first goes to the last.
+     * Returns [GestureResult.Ignored] when there are fewer than two servers or the current server is
+     * not in the list.
+     *
+     * @param currentServerId ID of the currently active server
+     * @param offset `+1` for next, `-1` for previous
+     */
+    private suspend fun switchServerBy(currentServerId: Int, offset: Int): GestureResult {
+        val servers = serverManager.servers()
+        if (servers.size < 2) return GestureResult.Ignored
+        val currentIndex = servers.indexOfFirst { it.id == currentServerId }
+        if (currentIndex == -1) return GestureResult.Ignored
+        val nextIndex = (currentIndex + offset).mod(servers.size)
+        return GestureResult.SwitchServer(servers[nextIndex].id)
     }
 
     private suspend fun navigateToDashboard(serverId: Int): GestureResult {

@@ -548,6 +548,31 @@ class FrontendViewModelTest {
         }
 
         @Test
+        fun `Given gesture returns SwitchServer when handled then viewState transitions to new server`() = runTest {
+            every { frontendBusObserver.messageResults() } returns emptyFlow()
+            every { urlManager.serverUrlFlow(1, any()) } returns flowOf(
+                UrlLoadResult.Success(url = "https://server1.com?external_auth=1", serverId = 1),
+            )
+            every { urlManager.serverUrlFlow(2, any()) } returns flowOf(
+                UrlLoadResult.Success(url = "https://server2.com?external_auth=1", serverId = 2),
+            )
+            coEvery {
+                gestureHandler.handleGesture(serverId = any(), direction = any(), pointerCount = any())
+            } returns GestureResult.SwitchServer(2)
+
+            val viewModel = createViewModel(serverId = 1)
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            assertEquals(1, viewModel.viewState.value.serverId)
+
+            viewModel.onGesture(GestureDirection.LEFT, pointerCount = 2)
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            assertEquals(2, viewModel.viewState.value.serverId)
+            assertTrue(viewModel.viewState.value.url.contains("server2.com"))
+        }
+
+        @Test
         fun `Given gesture returns PerformWebViewActionThen when handled then action is emitted and then is executed`() = runTest {
             every { frontendBusObserver.messageResults() } returns emptyFlow()
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(

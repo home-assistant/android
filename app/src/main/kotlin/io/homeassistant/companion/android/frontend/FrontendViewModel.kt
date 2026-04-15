@@ -350,6 +350,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 result.action.result.await()
                 handleGestureResult(result.then())
             }
+            is GestureResult.SwitchServer -> switchServer(result.serverId)
             is GestureResult.Forwarded, is GestureResult.Ignored -> { /* no-op */ }
         }
     }
