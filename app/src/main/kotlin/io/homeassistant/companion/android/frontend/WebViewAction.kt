@@ -27,8 +27,10 @@ sealed interface WebViewAction {
         /**
          * Marker for actions that signal completion via [CompletableDeferred].
          *
-         * The Screen must call [result].complete() after executing the action.
-         * Callers can await [result] to suspend until the action is fully processed.
+         * The Screen executes the action by calling [run], and the action
+         * implementation is responsible for completing [result] when processing has
+         * finished. Completion may happen directly inside [run] or asynchronously
+         * from a callback started by [run].
          */
         val result: CompletableDeferred<T>
     }

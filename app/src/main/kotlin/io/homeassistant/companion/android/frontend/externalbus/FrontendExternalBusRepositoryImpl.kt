@@ -62,7 +62,7 @@ class FrontendExternalBusRepositoryImpl @Inject constructor() : FrontendExternal
      *
      * [send] enforces strong typing by accepting an [OutgoingExternalBusMessage] parameter,
      * hiding the JSON serialization and script wrapping from callers. This keeps the raw
-     * `evaluateScript` usage confined to this single site so callers doesn't have to construct
+     * `evaluateScript` usage confined to this single site so callers do not have to construct
      * arbitrary scripts and use the typed message API.
      */
     @OptIn(EvaluateScriptUsage::class)

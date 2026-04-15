@@ -499,7 +499,6 @@ private fun PendingPermissionHandler(
 /**
  * Handles WebView side effects: URL loading and [WebViewAction] dispatch.
  */
-@OptIn(EvaluateScriptUsage::class)
 @Composable
 private fun WebViewEffects(
     webView: WebView?,
