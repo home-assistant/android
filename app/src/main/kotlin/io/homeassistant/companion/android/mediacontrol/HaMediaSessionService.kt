@@ -1,12 +1,19 @@
 package io.homeassistant.companion.android.mediacontrol
 
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.graphics.BitmapFactory
+import android.os.Build
 import androidx.annotation.OptIn
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import androidx.media3.session.MediaStyleNotificationHelper
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
@@ -29,6 +36,10 @@ import timber.log.Timber
  * Android media controls in the notification shade. Each configured entity gets its own
  * [HaMediaSession] and [MediaSession], which Media3 registers and presents individually.
  *
+ * Notifications are managed via [onUpdateNotification], which is called per-session by Media3
+ * whenever a session's player state changes. Each entity receives a notification with a unique ID
+ * derived from its session ID, so each entity appears as a separate card in the notification shade.
+ *
  * This service is responsible only for the Android service lifecycle and session reconciliation.
  * All per-entity session logic is delegated to [HaMediaSession].
  */
@@ -45,12 +56,13 @@ class HaMediaSessionService : MediaSessionService() {
     internal val activeSessions = mutableMapOf<String, Pair<HaMediaSession, Job>>()
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    @OptIn(UnstableApi::class)
+    /** The notification ID last passed to [startForeground], or null if not in the foreground. */
+    private var foregroundNotificationId: Int? = null
+    private val notificationManager by lazy { NotificationManagerCompat.from(this) }
+
     override fun onCreate() {
         super.onCreate()
-        val notificationProvider = DefaultMediaNotificationProvider.Builder(this).build()
-        notificationProvider.setSmallIcon(commonR.drawable.ic_stat_ic_notification)
-        setMediaNotificationProvider(notificationProvider)
+        createNotificationChannel()
         Timber.d("HaMediaSessionService created")
         startObservingEntities()
     }
@@ -96,10 +108,47 @@ class HaMediaSessionService : MediaSessionService() {
         if (!anyPlaying) stopSelf()
     }
 
+    /**
+     * Called by Media3 whenever a session's player state changes and the notification needs to be
+     * updated. Each session gets a notification with a unique ID derived from the session's ID,
+     * so each entity appears as its own card in the media controls carousel.
+     */
+    @OptIn(UnstableApi::class)
+    override fun onUpdateNotification(session: MediaSession, startInForegroundRequired: Boolean) {
+        val notificationId = session.id.hashCode()
+
+        if (session.player.mediaItemCount == 0) {
+            // Entity is off or no state has arrived yet — nothing to show.
+            notificationManager.cancel(notificationId)
+            if (foregroundNotificationId == notificationId) {
+                promoteForegroundOrStop(excludeId = notificationId)
+            }
+            return
+        }
+
+        val notification = buildNotification(session)
+        if (foregroundNotificationId == null && startInForegroundRequired) {
+            // Service is not yet in the foreground and playback requires it — start foreground
+            // with this session's notification. All subsequent sessions (and updates to this one)
+            // go through notificationManager.notify() to avoid replacing the foreground
+            // notification ID, which would dismiss the previously-shown notification on Android 13+.
+            startForeground(notificationId, notification)
+            foregroundNotificationId = notificationId
+        } else {
+            // Service is already in the foreground (or foreground not yet required).
+            // notificationManager.notify() works for both regular notifications and for updating
+            // the foreground notification in-place when the ID matches.
+            notificationManager.notify(notificationId, notification)
+        }
+    }
+
     override fun onDestroy() {
         Timber.d("HaMediaSessionService destroyed")
         activeSessions.values.forEach { (session, job) ->
-            session.mediaSession?.let { removeSession(it) }
+            session.mediaSession?.let { ms ->
+                notificationManager.cancel(ms.id.hashCode())
+                removeSession(ms)
+            }
             job.cancel()
         }
         activeSessions.clear()
@@ -148,10 +197,15 @@ class HaMediaSessionService : MediaSessionService() {
         // Execute all Android/Media3 API calls that require Main in a single dispatcher hop.
         withContext(Dispatchers.Main) {
             toRemove.forEach { (key, pair) ->
-                val (session, job) = pair
-                Timber.d("removeSession: calling removeSession for $key, mediaSession=${if (session.mediaSession != null) "non-null" else "null"}")
-                session.mediaSession?.let { removeSession(it) }
-                Timber.d("removeSession: removeSession returned for $key, calling cancelAndJoin")
+                val (haSession, job) = pair
+                haSession.mediaSession?.let { ms ->
+                    val notificationId = ms.id.hashCode()
+                    notificationManager.cancel(notificationId)
+                    if (foregroundNotificationId == notificationId) {
+                        promoteForegroundOrStop(excludeId = notificationId)
+                    }
+                    removeSession(ms)
+                }
                 job.cancelAndJoin()
                 Timber.d("Removed media session for $key")
             }
@@ -163,29 +217,73 @@ class HaMediaSessionService : MediaSessionService() {
                 activeSessions[key] = session to job
                 Timber.d("Added media session for $key")
             }
-
-            // When a session is removed, Media3 stops the foreground notification but does not
-            // automatically re-post it for remaining sessions, even when they are actively playing.
-            // invalidateState() on the remaining players is a no-op because their state hasn't
-            // changed, so Media3 sees nothing to update. The only reliable way to re-trigger the
-            // foreground notification is to remove and re-add each remaining session, which causes
-            // Media3's MediaNotificationManager to re-initialize and re-post the notification.
-            if (toRemove.isNotEmpty()) {
-                Timber.d("refreshNotification: re-adding ${activeSessions.size} remaining sessions to trigger notification")
-                activeSessions.values.forEach { (session, _) ->
-                    session.mediaSession?.let { mediaSession ->
-                        removeSession(mediaSession)
-                        addSession(mediaSession)
-                    }
-                }
-                Timber.d("refreshNotification: done")
-            }
         }
 
         Timber.d("reconcileSessions: done, activeSessions=${activeSessions.keys.toList()}")
     }
 
+    /**
+     * Promotes a remaining active session to the foreground notification when the current
+     * foreground session is removed or goes idle. If no active session has media content,
+     * stops the foreground state.
+     *
+     * @param excludeId The notification ID of the session being removed, to skip it when searching
+     * for a replacement.
+     */
+    @OptIn(UnstableApi::class)
+    private fun promoteForegroundOrStop(excludeId: Int) {
+        val nextSession = activeSessions.values
+            .mapNotNull { (haSession, _) -> haSession.mediaSession }
+            .firstOrNull { it.id.hashCode() != excludeId && it.player.mediaItemCount > 0 }
+
+        if (nextSession != null) {
+            val nextId = nextSession.id.hashCode()
+            startForeground(nextId, buildNotification(nextSession))
+            foregroundNotificationId = nextId
+            Timber.d("promoteForegroundOrStop: promoted session ${nextSession.id}")
+        } else {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            foregroundNotificationId = null
+            Timber.d("promoteForegroundOrStop: no active sessions, stopped foreground")
+        }
+    }
+
+    /**
+     * Builds a [MediaStyleNotificationHelper.MediaStyle] notification for [session]
+     * using the player's current metadata (title, artist, artwork).
+     */
+    @OptIn(UnstableApi::class)
+    private fun buildNotification(session: MediaSession): Notification {
+        val metadata = session.player.mediaMetadata
+        val artworkBitmap = metadata.artworkData?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
+
+        return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+            .setStyle(MediaStyleNotificationHelper.MediaStyle(session))
+            .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
+            .setContentTitle(metadata.title ?: session.id)
+            .setContentText(metadata.artist)
+            .setLargeIcon(artworkBitmap)
+            .build()
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                NOTIFICATION_CHANNEL_ID,
+                getString(commonR.string.media_controls),
+                NotificationManager.IMPORTANCE_LOW,
+            ).apply {
+                setShowBadge(false)
+            }
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
+
     companion object {
+        private const val NOTIFICATION_CHANNEL_ID = "media_session"
+
         /**
          * Starts the service. Should be called from a foreground context (e.g. Activity) to avoid
          * Android 15+ restrictions on starting mediaPlayback foreground services from background.
