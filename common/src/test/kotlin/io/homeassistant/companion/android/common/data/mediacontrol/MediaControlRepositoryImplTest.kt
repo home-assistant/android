@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.common.data.mediacontrol
 
 import app.cash.turbine.test
 import io.homeassistant.companion.android.common.data.integration.EntityExt
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedEntityState
@@ -32,6 +33,7 @@ class MediaControlRepositoryImplTest {
     private val dao: MediaControlDao = mockk(relaxed = true)
     private val serverManager: ServerManager = mockk(relaxed = true)
     private val webSocketRepository: WebSocketRepository = mockk(relaxed = true)
+    private val integrationRepository: IntegrationRepository = mockk(relaxed = true)
 
     private lateinit var repository: MediaControlRepositoryImpl
 
@@ -40,6 +42,8 @@ class MediaControlRepositoryImplTest {
     @BeforeEach
     fun setUp() {
         coEvery { serverManager.webSocketRepository(any()) } returns webSocketRepository
+        coEvery { serverManager.integrationRepository(any()) } returns integrationRepository
+        coEvery { integrationRepository.getEntity(any()) } returns null
         repository = MediaControlRepositoryImpl(
             dao = dao,
             serverManager = serverManager,
@@ -555,7 +559,7 @@ class MediaControlRepositoryImplTest {
         @Test
         fun `Given entities in database when getConfiguredEntities then returns mapped list`() = runTest {
             coEvery { dao.getAll() } returns listOf(
-                MediaControlConfig(id = 1, serverId = 1, entityId = "media_player.tv", position = 0),
+                MediaControlConfig(id = 1, serverId = 1, entityId = "media_player.tv", index = 0),
             )
 
             assertEquals(
@@ -576,8 +580,8 @@ class MediaControlRepositoryImplTest {
             coVerify {
                 dao.replaceAll(
                     listOf(
-                        MediaControlConfig(serverId = 1, entityId = "media_player.tv", position = 0),
-                        MediaControlConfig(serverId = 2, entityId = "media_player.office", position = 1),
+                        MediaControlConfig(serverId = 1, entityId = "media_player.tv", index = 0),
+                        MediaControlConfig(serverId = 2, entityId = "media_player.office", index = 1),
                     ),
                 )
             }
