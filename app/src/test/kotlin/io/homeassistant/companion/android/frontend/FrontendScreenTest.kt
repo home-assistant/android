@@ -41,7 +41,6 @@ import io.mockk.verify
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
@@ -392,7 +391,6 @@ class FrontendScreenTest {
                     webViewClient = WebViewClient(),
                     webChromeClient = WebChromeClient(),
                     frontendJsCallback = FrontendJsBridge.noOp,
-                    scriptsToEvaluate = emptyFlow(),
                     errorStateProvider = errorStateProvider,
                     pendingPermissionRequest = pendingPermissionRequest,
                     onBlockInsecureRetry = onBlockInsecureRetry,
@@ -447,7 +445,6 @@ class FrontendScreenTest {
                     webViewClient = WebViewClient(),
                     webChromeClient = WebChromeClient(),
                     frontendJsCallback = FrontendJsBridge.noOp,
-                    scriptsToEvaluate = emptyFlow(),
                     onBlockInsecureRetry = {},
                     onOpenExternalLink = {},
                     onBlockInsecureHelpClick = {},

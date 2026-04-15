@@ -1,10 +1,10 @@
 package io.homeassistant.companion.android.frontend.handler
 
-import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
+import io.homeassistant.companion.android.frontend.WebViewAction
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Observes the frontend external bus for incoming events and scripts to evaluate.
+ * Observes the frontend external bus for incoming events and WebView actions.
  *
  * This interface exposes the ViewModel-facing API of [FrontendMessageHandler],
  * separating it from the bridge-facing [io.homeassistant.companion.android.frontend.js.FrontendJsHandler].
@@ -17,10 +17,9 @@ interface FrontendBusObserver {
     fun messageResults(): Flow<FrontendHandlerEvent>
 
     /**
-     * Returns a flow of scripts to evaluate in the WebView.
+     * Returns a flow of [WebViewAction] to be executed by the WebView.
      *
-     * The WebView should collect this flow and call `evaluateJavascript` for each script,
-     * then complete the deferred result with the evaluation output.
+     * The WebView should collect this flow and execute each action accordingly.
      */
-    fun scriptsToEvaluate(): Flow<WebViewScript>
+    fun webViewActions(): Flow<WebViewAction>
 }

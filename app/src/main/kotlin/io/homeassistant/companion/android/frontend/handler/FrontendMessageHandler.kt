@@ -4,9 +4,10 @@ import android.content.pm.PackageManager
 import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
+import io.homeassistant.companion.android.frontend.EvaluateScriptUsage
+import io.homeassistant.companion.android.frontend.WebViewAction
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
-import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConfigGetMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConnectionStatusMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HandleBlobMessage
@@ -68,30 +69,44 @@ class FrontendMessageHandler @Inject constructor(
      * Called when the frontend requests authentication.
      *
      * The bridge has already parsed and validated the callback name before calling this.
+     *
+     * Opts into [EvaluateScriptUsage] because the auth protocol runs on its own channel,
+     * not the external bus: the frontend installs a callback on `window` (e.g.
+     * `window.externalAuthSetToken`) and waits for the native app to invoke it directly
+     * with the auth response.
      */
+    @OptIn(EvaluateScriptUsage::class)
     override suspend fun getExternalAuth(authPayload: AuthPayload, serverId: Int) {
         Timber.d("getExternalAuth called")
         when (val result = sessionManager.getExternalAuth(serverId, authPayload)) {
             is ExternalAuthResult.Success -> {
-                evaluateScript(result.callbackScript)
+                externalBusRepository.evaluateScript(result.callbackScript)
             }
 
             is ExternalAuthResult.Failed -> {
-                evaluateScript(result.callbackScript)
+                externalBusRepository.evaluateScript(result.callbackScript)
                 result.error?.let { jsCallbackEvents.tryEmit(FrontendHandlerEvent.AuthError(it)) }
             }
         }
     }
 
+    /**
+     * Called when the frontend requests to revoke the current authentication.
+     *
+     * Opts into [EvaluateScriptUsage] for the same reason as [getExternalAuth]: the frontend
+     * installs a `window.externalAuthRevokeToken` callback and waits for the native app to
+     * invoke it directly.
+     */
+    @OptIn(EvaluateScriptUsage::class)
     override suspend fun revokeExternalAuth(authPayload: AuthPayload, serverId: Int) {
         Timber.d("revokeExternalAuth called")
         when (val result = sessionManager.revokeExternalAuth(serverId, authPayload)) {
             is RevokeAuthResult.Success -> {
-                evaluateScript(result.callbackScript)
+                externalBusRepository.evaluateScript(result.callbackScript)
             }
 
             is RevokeAuthResult.Failed -> {
-                evaluateScript(result.callbackScript)
+                externalBusRepository.evaluateScript(result.callbackScript)
             }
         }
     }
@@ -114,11 +129,7 @@ class FrontendMessageHandler @Inject constructor(
         return merge(incomingResults, jsCallbackEvents)
     }
 
-    override fun scriptsToEvaluate(): Flow<WebViewScript> = externalBusRepository.scriptsToEvaluate()
-
-    private suspend fun evaluateScript(script: String): String? {
-        return externalBusRepository.evaluateScript(script)
-    }
+    override fun webViewActions(): Flow<WebViewAction> = externalBusRepository.webViewActions()
 
     private suspend fun handleMessage(message: IncomingExternalBusMessage): FrontendHandlerEvent {
         return when (message) {

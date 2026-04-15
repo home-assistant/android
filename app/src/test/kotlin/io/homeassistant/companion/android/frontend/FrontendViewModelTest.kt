@@ -66,7 +66,7 @@ class FrontendViewModelTest {
     @BeforeEach
     fun setUp() {
         every { frontendBusObserver.messageResults() } returns emptyFlow()
-        every { frontendBusObserver.scriptsToEvaluate() } returns emptyFlow()
+        every { frontendBusObserver.webViewActions() } returns emptyFlow()
         every { connectivityCheckRepository.runChecks(any()) } returns flowOf(ConnectivityCheckState())
     }
 
@@ -520,7 +520,7 @@ class FrontendViewModelTest {
         }
 
         @Test
-        fun `Given haptic message when collected then hapticEvents emits the type`() = runTest {
+        fun `Given haptic message when collected then webViewActions emits Haptic action`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
@@ -529,21 +529,16 @@ class FrontendViewModelTest {
 
             val viewModel = createViewModel()
 
-            val hapticEvents = mutableListOf<HapticType>()
-            val job = backgroundScope.launch { viewModel.hapticEvents.collect { hapticEvents.add(it) } }
+            viewModel.webViewActions.test {
+                messageFlow.emit(FrontendHandlerEvent.PerformHaptic(HapticType.Success))
+                messageFlow.emit(FrontendHandlerEvent.PerformHaptic(HapticType.Light))
+                messageFlow.emit(FrontendHandlerEvent.PerformHaptic(HapticType.Heavy))
 
-            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-
-            messageFlow.emit(FrontendHandlerEvent.PerformHaptic(HapticType.Success))
-            messageFlow.emit(FrontendHandlerEvent.PerformHaptic(HapticType.Light))
-            messageFlow.emit(FrontendHandlerEvent.PerformHaptic(HapticType.Heavy))
-            advanceUntilIdle()
-
-            assertEquals(3, hapticEvents.size)
-            assertEquals(HapticType.Success, hapticEvents[0])
-            assertEquals(HapticType.Light, hapticEvents[1])
-            assertEquals(HapticType.Heavy, hapticEvents[2])
-            job.cancel()
+                assertEquals(HapticType.Success, (awaitItem() as WebViewAction.Haptic).type)
+                assertEquals(HapticType.Light, (awaitItem() as WebViewAction.Haptic).type)
+                assertEquals(HapticType.Heavy, (awaitItem() as WebViewAction.Haptic).type)
+                cancelAndIgnoreRemainingEvents()
+            }
         }
 
         @Test

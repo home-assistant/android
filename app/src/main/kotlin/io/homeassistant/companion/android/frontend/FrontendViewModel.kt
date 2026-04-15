@@ -13,8 +13,6 @@ import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
-import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
-import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.handler.FrontendBusObserver
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
 import io.homeassistant.companion.android.frontend.js.BridgeState
@@ -44,6 +42,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -144,8 +143,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val _events = MutableSharedFlow<FrontendEvent>(extraBufferCapacity = 1)
     val events: SharedFlow<FrontendEvent> = _events.asSharedFlow()
 
-    private val _hapticEvents = MutableSharedFlow<HapticType>(extraBufferCapacity = 16)
-    val hapticEvents: SharedFlow<HapticType> = _hapticEvents.asSharedFlow()
+    private val _webViewActions = MutableSharedFlow<WebViewAction>(extraBufferCapacity = 1)
+    val webViewActions: Flow<WebViewAction> = merge(_webViewActions, frontendBusObserver.webViewActions())
 
     override val urlFlow: StateFlow<String?> =
         _viewState.map { it.url }
@@ -156,9 +155,6 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         _viewState.map { state -> (state as? FrontendViewState.Error)?.error }
             .distinctUntilChanged()
             .stateIn(viewModelScope, SharingStarted.Eagerly, (_viewState.value as? FrontendViewState.Error)?.error)
-
-    /** Flow of scripts to be evaluated in the WebView. */
-    val scriptsToEvaluate: Flow<WebViewScript> = frontendBusObserver.scriptsToEvaluate()
 
     /**
      * JavaScript bridge for communication between the WebView and native code.
@@ -385,7 +381,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             }
 
             is FrontendHandlerEvent.PerformHaptic -> {
-                _hapticEvents.tryEmit(result.hapticType)
+                _webViewActions.tryEmit(WebViewAction.Haptic(result.hapticType))
             }
 
             is FrontendHandlerEvent.AuthError -> {

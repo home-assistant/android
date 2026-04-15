@@ -5,11 +5,12 @@ import app.cash.turbine.test
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.AppVersionProvider
+import io.homeassistant.companion.android.frontend.EvaluateScriptUsage
+import io.homeassistant.companion.android.frontend.WebViewAction
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
-import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConfigGetMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConnectionStatusMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConnectionStatusPayload
@@ -47,6 +48,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -54,7 +56,7 @@ import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(ConsoleLogExtension::class)
-@OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class, EvaluateScriptUsage::class)
 class FrontendMessageHandlerTest {
 
     private val externalBusRepository: FrontendExternalBusRepository = mockk(relaxed = true)
@@ -73,7 +75,7 @@ class FrontendMessageHandlerTest {
         every { matterManager.appSupportsCommissioning() } returns false
         every { threadManager.appSupportsThread() } returns false
         every { appVersionProvider() } returns AppVersion.from("1.0.0", 1)
-        every { externalBusRepository.scriptsToEvaluate() } returns emptyFlow()
+        every { externalBusRepository.webViewActions() } returns emptyFlow()
 
         handler = FrontendMessageHandler(
             externalBusRepository = externalBusRepository,
@@ -280,13 +282,14 @@ class FrontendMessageHandlerTest {
     }
 
     @Test
-    fun `Given scripts flow when scriptsToEvaluate then returns repository flow`() = runTest {
-        val script = WebViewScript(script = "test()")
-        every { externalBusRepository.scriptsToEvaluate() } returns flowOf(script)
+    fun `Given webViewActions flow when webViewActions then returns repository flow`() = runTest {
+        val action = WebViewAction.EvaluateScript(script = "test()")
+        every { externalBusRepository.webViewActions() } returns flowOf(action)
 
-        handler.scriptsToEvaluate().test {
+        handler.webViewActions().test {
             val result = awaitItem()
-            assertEquals(script.script, result.script)
+            assertInstanceOf(WebViewAction.EvaluateScript::class.java, result)
+            assertEquals("test()", (result as WebViewAction.EvaluateScript).script)
             awaitComplete()
         }
     }
