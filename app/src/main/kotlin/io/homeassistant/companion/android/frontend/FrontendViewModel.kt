@@ -300,7 +300,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      */
     fun onDownloadRequested(url: String, contentDisposition: String, mimetype: String) {
         viewModelScope.launch {
-            if (permissionManager.requiresStoragePermissionForDownload {
+            if (permissionManager.checkStoragePermissionForDownload {
                     onDownloadRequested(url = url, contentDisposition = contentDisposition, mimetype = mimetype)
                 }
             ) {
@@ -317,11 +317,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         }
     }
 
-    /**
-     * Clears the current pending permission request from the slot.
-     *
-     * Delegates to [PermissionManager.clearPendingPermissionRequest].
-     */
+    /** Clears the current pending permission request from the slot. */
     fun clearPendingPermissionRequest() {
         permissionManager.clearPendingPermissionRequest()
     }
@@ -473,9 +469,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
     private fun handleDownloadResult(result: DownloadResult) {
         when (result) {
-            is DownloadResult.Handled,
-            is DownloadResult.Dispatched,
-            -> {
+            is DownloadResult.Forwarded -> {
                 // No UI feedback needed — success notification is handled by
                 // the system DownloadManager or DataUriDownloadManager
             }

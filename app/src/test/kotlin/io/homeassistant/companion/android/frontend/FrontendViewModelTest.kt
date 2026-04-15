@@ -888,7 +888,7 @@ class FrontendViewModelTest {
             )
             coEvery {
                 downloadManager.downloadFile(any(), any(), any(), any())
-            } returns DownloadResult.Handled
+            } returns DownloadResult.Forwarded
 
             val viewModel = createViewModel()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
@@ -913,7 +913,7 @@ class FrontendViewModelTest {
             )
             coEvery {
                 downloadManager.downloadFile(any(), any(), any(), any())
-            } returns DownloadResult.Handled
+            } returns DownloadResult.Forwarded
 
             val viewModel = createViewModel()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
@@ -941,7 +941,7 @@ class FrontendViewModelTest {
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             coEvery {
-                permissionManager.requiresStoragePermissionForDownload(any())
+                permissionManager.checkStoragePermissionForDownload(any())
             } returns true
 
             val viewModel = createViewModel()
@@ -964,11 +964,11 @@ class FrontendViewModelTest {
             )
             val onGrantedSlot = mutableListOf<() -> Unit>()
             coEvery {
-                permissionManager.requiresStoragePermissionForDownload(capture(onGrantedSlot))
+                permissionManager.checkStoragePermissionForDownload(capture(onGrantedSlot))
             } returns true
             coEvery {
                 downloadManager.downloadFile(any(), any(), any(), any())
-            } returns DownloadResult.Handled
+            } returns DownloadResult.Forwarded
 
             val viewModel = createViewModel()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
@@ -983,7 +983,7 @@ class FrontendViewModelTest {
 
             // Simulate permission granted: onGranted retries the download
             coEvery {
-                permissionManager.requiresStoragePermissionForDownload(any())
+                permissionManager.checkStoragePermissionForDownload(any())
             } returns false
             onGrantedSlot.last().invoke()
             advanceUntilIdle()

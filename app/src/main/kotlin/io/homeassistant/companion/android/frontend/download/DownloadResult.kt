@@ -13,20 +13,15 @@ import io.homeassistant.companion.android.util.DataUriDownloadManager
 sealed interface DownloadResult {
 
     /**
-     * The download was handled, it might have failed but this has been handled properly by the system or the [DataUriDownloadManager].
+     * The download was forwarded, it might have failed but this has been handled properly by the system or the [DataUriDownloadManager].
      *
-     * For system [android.app.DownloadManager] downloads this means the request was enqueued;
-     * for data URI downloads the file was saved to the Downloads directory.
+     * Depending on the URI scheme this means:
+     * - system [android.app.DownloadManager] downloads: the request was enqueued
+     * - data URI downloads: the file was saved to the Downloads directory
+     * - blob URI downloads: JavaScript was injected in the frontend to read the blob; the data then arrives
+     *   later via `handleBlob` and is saved to the Downloads directory
      */
-    data object Handled : DownloadResult
-
-    /**
-     * The download was dispatched via JavaScript (blob downloads).
-     *
-     * The actual download result will arrive later as a [io.homeassistant.companion.android.frontend.externalbus.incoming.HandleBlobMessage]
-     * through the external bus. No immediate UI feedback is needed.
-     */
-    data object Dispatched : DownloadResult
+    data object Forwarded : DownloadResult
 
     /**
      * The URI scheme is not directly supported. The ViewModel should emit a [io.homeassistant.companion.android.frontend.navigation.FrontendEvent.OpenExternalLink]

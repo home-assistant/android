@@ -28,8 +28,7 @@ import timber.log.Timber
  * ## How it works
  *
  * All permission requests flow through a single [pendingPermissionRequest] state.
- * The UI observes this flow and either launches the system permission dialog or shows a custom
- * prompt (notification bottom sheet), depending on the [PermissionRequest] type.
+ * The UI observes this flow and decides what to do with it.
  *
  * Requests are queued: if a request is already in-flight, new requests suspend until the
  * current one is resolved or dismissed via [clearPendingPermissionRequest].
@@ -38,9 +37,9 @@ import timber.log.Timber
  *
  * 1. A trigger (WebView callback, frontend connect, download) calls one of the `check*` / `on*` methods
  * 2. The method creates a [PermissionRequest] and emits it (suspending if one is already active)
- * 3. The composable layer observes the change and shows the appropriate UI
- * 4. The user responds — the composable calls [clearPendingPermissionRequest] (freeing the slot
- *    for the next queued request) then [PermissionRequest.onResult] to let the request handle its result
+ * 3. The observer reacts to the new request
+ * 4. Once the user has responded, [clearPendingPermissionRequest] is called (freeing the slot
+ *    for the next queued request) followed by [PermissionRequest.onResult] to let the request handle its result
  */
 internal class PermissionManager @VisibleForTesting constructor(
     private val serverManager: ServerManager,
@@ -72,7 +71,7 @@ internal class PermissionManager @VisibleForTesting constructor(
      * Single-slot holder that queues permission requests.
      *
      * [emit] suspends until the slot is free (value is `null`), ensuring only one permission
-     * dialog is active at a time. [clear] frees the slot and unblocks the next waiting caller.
+     * request is active at a time. [clear] frees the slot and unblocks the next waiting caller.
      */
     @OptIn(ExperimentalForInheritanceCoroutinesApi::class)
     private class PendingPermissionManager(
@@ -100,7 +99,7 @@ internal class PermissionManager @VisibleForTesting constructor(
     val pendingPermissionRequest: StateFlow<PermissionRequest<*>?> = _pendingPermissionRequest
 
     /**
-     * Checks whether the notification permission prompt should be shown and, if so,
+     * Checks whether the notification permission request should be made and, if so,
      * enqueues a [PermissionRequest.Notification].
      *
      * Does nothing on pre-TIRAMISU devices (POST_NOTIFICATIONS does not exist).
@@ -108,7 +107,7 @@ internal class PermissionManager @VisibleForTesting constructor(
      * Suspends if another permission request is already in-flight, and resumes once
      * the slot is free.
      *
-     * Whether to prompt depends on the flavor:
+     * Whether to request depends on the flavor:
      * - **Full** (FCM available): skips if notification permission is already granted system-wide,
      *   since FCM handles push delivery without websocket configuration.
      * - **Minimal** (no FCM): always respects the per-server stored preference, allowing the user
@@ -130,6 +129,30 @@ internal class PermissionManager @VisibleForTesting constructor(
     }
 
     /**
+     * Checks whether the storage permission request should be made for a download and, if so,
+     * enqueues a [PermissionRequest.ExternalStorage].
+     *
+     * Does nothing on API 29+ (scoped storage) or when the permission is already granted.
+     *
+     * Suspends if another permission request is already in-flight, and resumes once
+     * the slot is free.
+     *
+     * @param onGranted Callback invoked after the user grants the permission, typically
+     *        used to retry the download that was blocked
+     * @return `true` if the download must wait for permission; `false` if it can proceed now
+     */
+    suspend fun checkStoragePermissionForDownload(onGranted: () -> Unit): Boolean {
+        if (sdkInt >= Build.VERSION_CODES.Q) return false
+        if (permissionChecker.hasPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)) return false
+
+        Timber.d("Storage permission required for download, deferring until granted")
+        _pendingPermissionRequest.emit(
+            PermissionRequest.ExternalStorage(onGranted = onGranted),
+        )
+        return true
+    }
+
+    /**
      * Processes a WebView permission request (camera, microphone).
      *
      * Resources for which the app already holds Android runtime permissions are collected
@@ -137,7 +160,8 @@ internal class PermissionManager @VisibleForTesting constructor(
      * single [WebViewPermissionRequest.grant] call.
      *
      * If permissions still need to be requested, a [PermissionRequest.WebView] is enqueued.
-     * Suspends if another permission request is already in-flight.
+     * Suspends if another permission request is already in-flight, and resumes once
+     * the slot is free.
      *
      * @param request The [WebViewPermissionRequest] from the WebView's `onPermissionRequest` callback
      */
@@ -176,36 +200,12 @@ internal class PermissionManager @VisibleForTesting constructor(
     }
 
     /**
-     * Checks whether storage permission is needed for a download and, if so, enqueues a
-     * [PermissionRequest.ExternalStorage].
-     *
-     * On API 29+ (scoped storage) or when the permission is already granted, returns `false`
-     * immediately without enqueuing anything.
-     *
-     * Suspends if another permission request is already in-flight.
-     *
-     * @param onGranted Callback invoked after the user grants the permission, typically
-     *        used to retry the download that was blocked
-     * @return `true` if the download must wait for permission; `false` if it can proceed now
-     */
-    suspend fun requiresStoragePermissionForDownload(onGranted: () -> Unit): Boolean {
-        if (sdkInt >= Build.VERSION_CODES.Q) return false
-        if (permissionChecker.hasPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)) return false
-
-        Timber.d("Storage permission required for download, deferring until granted")
-        _pendingPermissionRequest.emit(
-            PermissionRequest.ExternalStorage(onGranted = onGranted),
-        )
-        return true
-    }
-
-    /**
      * Clears the current pending permission request.
      *
-     * Called by the composable layer in two scenarios:
+     * Called by the observer in two scenarios:
      * - Before delivering a result via [PermissionRequest.onResult] (freeing the slot for queued requests)
-     * - When the user dismisses a prompt without making an explicit choice (e.g. swiping
-     *   away the notification bottom sheet), in which case the request may reappear on the next trigger
+     * - When the user dismisses the request without making an explicit choice, in which case
+     *   the request may reappear on the next trigger
      *
      * Must only be called when a request is in-flight; triggers [FailFast] otherwise.
      */

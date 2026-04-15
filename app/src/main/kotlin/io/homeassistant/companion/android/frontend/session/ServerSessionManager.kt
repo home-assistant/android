@@ -105,20 +105,17 @@ class ServerSessionManager @Inject constructor(private val serverManager: Server
     /**
      * Build the Bearer token authorization header for the given server.
      *
-     * Used by the download manager to attach credentials to HTTP download requests
-     * made via [android.app.DownloadManager].
-     *
      * @param serverId The server ID to build the token for
-     * @return The Bearer token string, or empty string if unavailable
+     * @return The Bearer token string, or null if unavailable
      */
-    suspend fun getAuthorizationHeader(serverId: Int): String {
+    suspend fun getAuthorizationHeader(serverId: Int): String? {
         return try {
             serverManager.authenticationRepository(serverId).buildBearerToken()
         } catch (e: CancellationException) {
             throw e
         } catch (e: IllegalStateException) {
             Timber.e(e, "Failed to build bearer token")
-            ""
+            null
         }
     }
 

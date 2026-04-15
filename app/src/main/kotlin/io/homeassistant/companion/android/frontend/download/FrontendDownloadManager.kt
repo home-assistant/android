@@ -65,7 +65,7 @@ class FrontendDownloadManager @Inject constructor(
 
             "data" -> {
                 dataUriDownloadManager.saveDataUri(url = url, mimetype = mimetype)
-                DownloadResult.Handled
+                DownloadResult.Forwarded
             }
 
             else -> DownloadResult.OpenWithSystem(uri = uri)
@@ -89,7 +89,7 @@ class FrontendDownloadManager @Inject constructor(
             mimetype = "",
             filename = filename,
         )
-        return DownloadResult.Handled
+        return DownloadResult.Forwarded
     }
 
     private suspend fun downloadViaDownloadManager(
@@ -114,22 +114,30 @@ class FrontendDownloadManager @Inject constructor(
 
             try {
                 if (sessionManager.canSafelySendCredentials(serverId = serverId, url = url)) {
-                    val authHeader = sessionManager.getAuthorizationHeader(serverId)
-                    if (authHeader.isNotEmpty()) {
+                    sessionManager.getAuthorizationHeader(serverId)?.let { authHeader ->
                         request.addRequestHeader("Authorization", authHeader)
                     }
                 }
-
-                request.addRequestHeader("Cookie", CookieManager.getInstance().getCookie(url))
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 Timber.e(e, "Unable to prepare request")
             }
 
+            try {
+                CookieManager.getInstance().getCookie(url)?.let { cookie ->
+                    request.addRequestHeader("Cookie", cookie)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Cannot get cookies, probably not relevant
+                Timber.w(e, "Cookie header not set for download request")
+            }
+
             systemDownloadManager.enqueue(request)
         }
-        return DownloadResult.Handled
+        return DownloadResult.Forwarded
     }
 
     /**
@@ -167,6 +175,6 @@ class FrontendDownloadManager @Inject constructor(
                 })();
         """.trimIndent()
         externalBusRepository.evaluateScript(jsCode)
-        return DownloadResult.Dispatched
+        return DownloadResult.Forwarded
     }
 }

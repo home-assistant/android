@@ -157,12 +157,10 @@ class ServerSessionManagerTest {
     }
 
     @Test
-    fun `Given token build failure when getAuthorizationHeader then returns empty string`() = runTest {
+    fun `Given token build failure when getAuthorizationHeader then returns null`() = runTest {
         coEvery { authRepository.buildBearerToken() } throws IllegalStateException("No token")
 
-        val result = manager.getAuthorizationHeader(serverId = 1)
-
-        assertEquals("", result)
+        assertNull(manager.getAuthorizationHeader(serverId = 1))
     }
 
     @Test

@@ -83,7 +83,7 @@ class FrontendDownloadManagerTest {
     inner class BlobDownload {
 
         @Test
-        fun `Given blob URL when downloadFile called then evaluates blob trigger script and returns Dispatched`() = runTest {
+        fun `Given blob URL when downloadFile called then evaluates blob trigger script and returns Forwarded`() = runTest {
             val scriptSlot = slot<String>()
             coEvery { externalBusRepository.evaluateScript(capture(scriptSlot)) } returns null
 
@@ -94,7 +94,7 @@ class FrontendDownloadManagerTest {
                 serverId = 1,
             )
 
-            assertEquals(DownloadResult.Dispatched, result)
+            assertEquals(DownloadResult.Forwarded, result)
             coVerify { externalBusRepository.evaluateScript(any()) }
             assertTrue(scriptSlot.captured.contains("type:'handleBlob',data:reader.result"))
             assertTrue(scriptSlot.captured.contains("fetch("))
@@ -116,7 +116,7 @@ class FrontendDownloadManagerTest {
                 serverId = 1,
             )
 
-            assertEquals(DownloadResult.Handled, result)
+            assertEquals(DownloadResult.Forwarded, result)
             coVerify { systemDownloadManager.enqueue(any()) }
             verify { anyConstructed<DownloadManager.Request>().addRequestHeader("Authorization", "Bearer token123") }
         }
@@ -132,7 +132,7 @@ class FrontendDownloadManagerTest {
                 serverId = 1,
             )
 
-            assertEquals(DownloadResult.Handled, result)
+            assertEquals(DownloadResult.Forwarded, result)
             coVerify { systemDownloadManager.enqueue(any()) }
             verify(exactly = 0) {
                 anyConstructed<DownloadManager.Request>().addRequestHeader("Authorization", any())
@@ -174,7 +174,7 @@ class FrontendDownloadManagerTest {
                 serverId = 1,
             )
 
-            assertEquals(DownloadResult.Handled, result)
+            assertEquals(DownloadResult.Forwarded, result)
             coVerify { dataUriDownloadManager.saveDataUri(url = dataUrl, mimetype = "application/pdf") }
         }
     }
@@ -206,7 +206,7 @@ class FrontendDownloadManagerTest {
 
             val result = manager.handleBlob(data = data, filename = filename)
 
-            assertEquals(DownloadResult.Handled, result)
+            assertEquals(DownloadResult.Forwarded, result)
             coVerify {
                 dataUriDownloadManager.saveDataUri(
                     url = data,

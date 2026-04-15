@@ -92,7 +92,7 @@ class PermissionManagerTest {
             "false,false,false,false", // No FCM + not granted + user already answered -> skip
             "false,true,false,false", // No FCM + granted + user already answered -> skip
         )
-        fun `Given inputs then sets pending request only when should ask`(
+        fun `Given inputs then sets pending request only if it should be asked`(
             hasFcm: Boolean,
             notifEnabled: Boolean,
             storedPref: String?,
@@ -414,38 +414,38 @@ class PermissionManagerTest {
     // region Storage permission for downloads (pre-Q)
 
     @Nested
-    inner class RequiresStoragePermissionForDownload {
+    inner class CheckStoragePermissionForDownload {
 
         @Test
         fun `Given Q+ device then returns false without checking permission`() = runTest {
             val manager = createManager(sdkInt = Build.VERSION_CODES.Q)
-            val result = manager.requiresStoragePermissionForDownload {}
+            val result = manager.checkStoragePermissionForDownload {}
 
             assertFalse(result)
             assertNull(manager.pendingPermissionRequest.value)
         }
 
         @Test
-        fun `Given pre-Q device with storage permission already granted then returns false`() = runTest {
+        fun `Given pre-Q device when storage permission already granted then returns false`() = runTest {
             every {
                 permissionChecker.hasPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
             } returns true
 
             val manager = createManager(sdkInt = Build.VERSION_CODES.P)
-            val result = manager.requiresStoragePermissionForDownload {}
+            val result = manager.checkStoragePermissionForDownload {}
 
             assertFalse(result)
             assertNull(manager.pendingPermissionRequest.value)
         }
 
         @Test
-        fun `Given pre-Q device with storage permission not granted then returns true and emits pending request`() = runTest {
+        fun `Given pre-Q device when storage permission not granted then returns true and emits pending request`() = runTest {
             every {
                 permissionChecker.hasPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
             } returns false
 
             val manager = createManager(sdkInt = Build.VERSION_CODES.P)
-            val result = manager.requiresStoragePermissionForDownload {}
+            val result = manager.checkStoragePermissionForDownload {}
 
             assertTrue(result)
             val pending = manager.pendingPermissionRequest.value
@@ -468,7 +468,7 @@ class PermissionManagerTest {
 
             var onGrantedCalled = false
             val manager = createManager(sdkInt = Build.VERSION_CODES.P)
-            manager.requiresStoragePermissionForDownload { onGrantedCalled = true }
+            manager.checkStoragePermissionForDownload { onGrantedCalled = true }
 
             val pending = manager.pendingPermissionRequest.value as PermissionRequest.ExternalStorage
             manager.clearPendingPermissionRequest()
@@ -488,7 +488,7 @@ class PermissionManagerTest {
 
             var onGrantedCalled = false
             val manager = createManager(sdkInt = Build.VERSION_CODES.P)
-            manager.requiresStoragePermissionForDownload { onGrantedCalled = true }
+            manager.checkStoragePermissionForDownload { onGrantedCalled = true }
 
             val pending = manager.pendingPermissionRequest.value as PermissionRequest.ExternalStorage
             manager.clearPendingPermissionRequest()
@@ -557,7 +557,7 @@ class PermissionManagerTest {
             } returns false
 
             val manager = createManager(sdkInt = Build.VERSION_CODES.P)
-            manager.requiresStoragePermissionForDownload {}
+            manager.checkStoragePermissionForDownload {}
 
             assertNotNull(manager.pendingPermissionRequest.value)
 
@@ -593,7 +593,7 @@ class PermissionManagerTest {
             advanceUntilIdle()
 
             val job = launch {
-                val result = manager.requiresStoragePermissionForDownload {}
+                val result = manager.checkStoragePermissionForDownload {}
                 assertTrue(result)
             }
             advanceUntilIdle()
@@ -622,7 +622,7 @@ class PermissionManagerTest {
                 val turbine = manager.pendingPermissionRequest.testIn(backgroundScope)
                 assertNull(turbine.awaitItem())
 
-                manager.requiresStoragePermissionForDownload {}
+                manager.checkStoragePermissionForDownload {}
                 assertInstanceOf(PermissionRequest.ExternalStorage::class.java, turbine.awaitItem())
 
                 launch(Dispatchers.Default) {
