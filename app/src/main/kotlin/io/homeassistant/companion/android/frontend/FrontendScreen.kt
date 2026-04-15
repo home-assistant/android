@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.net.Uri
 import android.view.MotionEvent
 import android.view.View
+import android.webkit.CookieManager
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -412,29 +413,12 @@ private fun SafeHAWebView(
                     .weight(1f)
                     .background(Color.Transparent),
                 configure = {
-                    onWebViewCreated(this)
-                    this.webViewClient = webViewClient
-                    webChromeClient?.let { this.webChromeClient = it }
-                    setDownloadListener { url, _, contentDisposition, mimetype, _ ->
-                        onDownloadRequested(url, contentDisposition, mimetype)
-                    }
-                    setOnTouchListener(
-                        object : OnSwipeListener(context) {
-                            override fun onSwipe(
-                                e1: MotionEvent,
-                                e2: MotionEvent,
-                                velocity: Float,
-                                direction: GestureDirection,
-                                pointerCount: Int,
-                            ): Boolean {
-                                if (pointerCount > 1 && velocity >= MINIMUM_GESTURE_VELOCITY) {
-                                    onGesture(direction, pointerCount)
-                                }
-                                return false
-                            }
-
-                            override fun onMotionEventHandled(v: View?, event: MotionEvent?): Boolean = false
-                        },
+                    configureForFrontend(
+                        webViewClient = webViewClient,
+                        webChromeClient = webChromeClient,
+                        onWebViewCreated = onWebViewCreated,
+                        onDownloadRequested = onDownloadRequested,
+                        onGesture = onGesture,
                     )
                 },
                 onBackPressed = onBackClick,
@@ -466,6 +450,59 @@ private fun SafeHAWebView(
 @Composable
 private fun Color.Overlay(modifier: Modifier = Modifier) {
     Spacer(modifier = modifier.background(this))
+}
+
+/**
+ * Applies the WebView configuration required to host the Home Assistant frontend
+ *
+ * The `ClickableViewAccessibility` lint is suppressed because the touch listener only observes
+ * multi-pointer swipe gestures (returning `false` for every event) — clicks still flow through
+ * the WebView's built-in handling, so overriding `performClick` would add no accessibility value.
+ */
+@SuppressLint("ClickableViewAccessibility")
+private fun WebView.configureForFrontend(
+    webViewClient: WebViewClient,
+    webChromeClient: WebChromeClient?,
+    onWebViewCreated: (WebView) -> Unit,
+    onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit,
+    onGesture: (GestureDirection, Int) -> Unit,
+) {
+    onWebViewCreated(this)
+
+    this.webViewClient = webViewClient
+
+    webChromeClient?.let { this.webChromeClient = it }
+
+    // Enable first-party cookies globally and third-party cookies for this WebView.
+    // The Home Assistant frontend relies on third-party cookies for some integrations
+    // (e.g. embedded content served from a different origin).
+    CookieManager.getInstance().apply {
+        setAcceptCookie(true)
+        setAcceptThirdPartyCookies(this@configureForFrontend, true)
+    }
+
+    setDownloadListener { url, _, contentDisposition, mimetype, _ ->
+        onDownloadRequested(url, contentDisposition, mimetype)
+    }
+
+    setOnTouchListener(
+        object : OnSwipeListener(context) {
+            override fun onSwipe(
+                e1: MotionEvent,
+                e2: MotionEvent,
+                velocity: Float,
+                direction: GestureDirection,
+                pointerCount: Int,
+            ): Boolean {
+                if (pointerCount > 1 && velocity >= MINIMUM_GESTURE_VELOCITY) {
+                    onGesture(direction, pointerCount)
+                }
+                return false
+            }
+
+            override fun onMotionEventHandled(v: View?, event: MotionEvent?): Boolean = false
+        },
+    )
 }
 
 /**
