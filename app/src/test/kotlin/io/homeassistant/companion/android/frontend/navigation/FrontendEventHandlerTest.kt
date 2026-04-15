@@ -48,6 +48,7 @@ class FrontendEventHandlerTest {
                 },
                 onNavigateToAssist = { _, _, _ -> },
                 onOpenExternalLink = {},
+                onShowServerSwitcher = {},
             )
         }
 
@@ -75,6 +76,7 @@ class FrontendEventHandlerTest {
                 },
                 onNavigateToAssist = { _, _, _ -> },
                 onOpenExternalLink = {},
+                onShowServerSwitcher = {},
             )
         }
 
@@ -104,6 +106,7 @@ class FrontendEventHandlerTest {
                     capturedStartListening = startListening
                 },
                 onOpenExternalLink = {},
+                onShowServerSwitcher = {},
             )
         }
 
@@ -139,6 +142,7 @@ class FrontendEventHandlerTest {
                 onNavigateToSettings = {},
                 onNavigateToAssist = { _, _, _ -> },
                 onOpenExternalLink = {},
+                onShowServerSwitcher = {},
             )
         }
 
@@ -162,6 +166,7 @@ class FrontendEventHandlerTest {
                 onNavigateToSettings = {},
                 onNavigateToAssist = { _, _, _ -> },
                 onOpenExternalLink = { uri -> capturedUri = uri },
+                onShowServerSwitcher = {},
             )
         }
 
@@ -171,6 +176,29 @@ class FrontendEventHandlerTest {
         composeTestRule.waitForIdle()
 
         assertEquals(testUri, capturedUri)
+    }
+
+    @Test
+    fun `Given ShowServerSwitcher event then onShowServerSwitcher is called`() = runTest {
+        var serverSwitcherShown = false
+        val events = MutableSharedFlow<FrontendEvent>()
+
+        composeTestRule.setContent {
+            FrontendEventHandler(
+                events = events,
+                onShowSnackbar = { _, _ -> false },
+                onNavigateToSettings = {},
+                onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = {},
+                onShowServerSwitcher = { serverSwitcherShown = true },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        events.emit(FrontendEvent.ShowServerSwitcher)
+        composeTestRule.waitForIdle()
+
+        assertEquals(true, serverSwitcherShown)
     }
 
     @Test
@@ -189,6 +217,7 @@ class FrontendEventHandlerTest {
                 },
                 onNavigateToAssist = { _, _, _ -> },
                 onOpenExternalLink = {},
+                onShowServerSwitcher = {},
             )
         }
 

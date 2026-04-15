@@ -81,7 +81,7 @@ class FrontendGestureHandler @Inject constructor(
             )
             GestureAction.NAVIGATE_FORWARD -> GestureResult.PerformWebViewAction(WebViewAction.Forward())
             GestureAction.NAVIGATE_RELOAD -> GestureResult.PerformWebViewAction(WebViewAction.Reload())
-            GestureAction.SERVER_LIST -> TODO("Gesture action SERVER_LIST not yet implemented")
+            GestureAction.SERVER_LIST -> showServerSwitcherOrIgnore()
             GestureAction.SERVER_NEXT -> switchServerBy(currentServerId = serverId, offset = 1)
             GestureAction.SERVER_PREVIOUS -> switchServerBy(currentServerId = serverId, offset = -1)
         }
@@ -128,6 +128,12 @@ class FrontendGestureHandler @Inject constructor(
             document.dispatchEvent(event);
         """.trimIndent()
         externalBusRepository.evaluateScript(script)
+    }
+
+    private suspend fun showServerSwitcherOrIgnore(): GestureResult = if (serverManager.servers().size < 2) {
+        GestureResult.Ignored
+    } else {
+        GestureResult.Navigate(FrontendEvent.ShowServerSwitcher)
     }
 
     /**
