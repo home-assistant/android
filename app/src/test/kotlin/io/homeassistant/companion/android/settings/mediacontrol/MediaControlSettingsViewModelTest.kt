@@ -5,7 +5,6 @@ import app.cash.turbine.test
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.data.servers.ServerManager.Companion.SERVER_ID_ACTIVE
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
@@ -140,43 +139,6 @@ class MediaControlSettingsViewModelTest {
     }
 
     @Nested
-    inner class ReorderTest {
-
-        @Test
-        fun `Given two configured entities when onMove called then order is updated`() = runTest(testDispatcher) {
-            val entityA = MediaControlEntityConfig(serverId = SERVER_ID_ACTIVE, entityId = "media_player.a")
-            val entityB = MediaControlEntityConfig(serverId = SERVER_ID_ACTIVE, entityId = "media_player.b")
-            viewModel = createViewModel()
-            viewModel.addEntity(entityA.entityId)
-            viewModel.addEntity(entityB.entityId)
-
-            viewModel.onMove(
-                fromKey = entityA,
-                toKey = entityB,
-            )
-
-            assertEquals(
-                listOf(entityB, entityA),
-                viewModel.uiState.value.configuredEntities,
-            )
-        }
-
-        @Test
-        fun `Given entities when onMove called with unknown key then list unchanged`() = runTest(testDispatcher) {
-            val entityA = MediaControlEntityConfig(serverId = SERVER_ID_ACTIVE, entityId = "media_player.a")
-            viewModel = createViewModel()
-            viewModel.addEntity(entityA.entityId)
-
-            viewModel.onMove(
-                fromKey = "unknown",
-                toKey = entityA,
-            )
-
-            assertEquals(listOf(entityA), viewModel.uiState.value.configuredEntities)
-        }
-    }
-
-    @Nested
     inner class RemoveEntityTest {
 
         @Test
@@ -238,39 +200,4 @@ class MediaControlSettingsViewModelTest {
         }
     }
 
-    @Nested
-    inner class ReorderCompleteTest {
-
-        @Test
-        fun `Given reordered entities when onReorderComplete called then repository updated and start event emitted`() = runTest(testDispatcher) {
-            val entityA = MediaControlEntityConfig(serverId = SERVER_ID_ACTIVE, entityId = "media_player.a")
-            val entityB = MediaControlEntityConfig(serverId = SERVER_ID_ACTIVE, entityId = "media_player.b")
-            viewModel = createViewModel()
-            advanceUntilIdle()
-            viewModel.addEntity(entityA.entityId)
-            viewModel.addEntity(entityB.entityId)
-            viewModel.onMove(
-                fromKey = entityA,
-                toKey = entityB,
-            )
-
-            viewModel.serviceEvents.test {
-                // Drain Start events from addEntity calls
-                advanceUntilIdle()
-                awaitItem()
-                awaitItem()
-
-                viewModel.onReorderComplete()
-                advanceUntilIdle()
-
-                coVerify {
-                    mediaControlRepository.setConfiguredEntities(
-                        match { it == listOf(entityB, entityA) },
-                    )
-                }
-                assertEquals(MediaControlServiceEvent.Start, awaitItem())
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
-    }
 }

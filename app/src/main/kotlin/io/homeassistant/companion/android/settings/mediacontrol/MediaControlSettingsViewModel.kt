@@ -182,29 +182,6 @@ class MediaControlSettingsViewModel @Inject constructor(
         persistAndNotifyService()
     }
 
-    /**
-     * Moves a configured entity from one position to another in response to a drag gesture.
-     * Does not persist — call [onReorderComplete] once the drag ends to save the final order.
-     * @param fromKey the list item key of the entity being dragged
-     * @param toKey the list item key of the target position
-     */
-    fun onMove(fromKey: Any, toKey: Any) {
-        _uiState.update { state ->
-            val list = state.configuredEntities.toMutableList()
-            val fromIndex = list.indexOfFirst { it.listKey() == fromKey }
-            val toIndex = list.indexOfFirst { it.listKey() == toKey }
-            if (fromIndex >= 0 && toIndex >= 0) {
-                list.add(toIndex, list.removeAt(fromIndex))
-            }
-            state.copy(configuredEntities = list)
-        }
-    }
-
-    /** Persists the current entity order after a drag-to-reorder gesture completes. */
-    fun onReorderComplete() {
-        persistAndNotifyService()
-    }
-
     private fun persistAndNotifyService() {
         viewModelScope.launch {
             val entities = _uiState.value.configuredEntities

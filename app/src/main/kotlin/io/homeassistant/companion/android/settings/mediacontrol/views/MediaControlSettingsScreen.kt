@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.settings.mediacontrol.views
 
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.HorizontalDivider
@@ -29,7 +27,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.IIcon
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
@@ -46,9 +43,6 @@ import io.homeassistant.companion.android.settings.mediacontrol.MediaControlSett
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
-import sh.calvin.reorderable.ReorderableCollectionItemScope
-import sh.calvin.reorderable.ReorderableItem
-import sh.calvin.reorderable.rememberReorderableLazyListState
 
 /** Outer composable that extracts state from the ViewModel and delegates to the stateless content. */
 @Composable
@@ -59,8 +53,6 @@ fun MediaControlSettingsScreen(viewModel: MediaControlSettingsViewModel, modifie
         onServerSelected = viewModel::selectServerId,
         onEntitySelected = viewModel::addEntity,
         onRemoveEntity = viewModel::removeEntity,
-        onMove = viewModel::onMove,
-        onReorderComplete = viewModel::onReorderComplete,
         modifier = modifier,
     )
 }
@@ -71,18 +63,11 @@ internal fun MediaControlSettingsContent(
     onServerSelected: (Int) -> Unit,
     onEntitySelected: (String) -> Unit,
     onRemoveEntity: (Int) -> Unit,
-    onMove: (Any, Any) -> Unit,
-    onReorderComplete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colorScheme = LocalHAColorScheme.current
-    val lazyListState = rememberLazyListState()
-    val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
-        onMove(from.key, to.key)
-    }
 
     LazyColumn(
-        state = lazyListState,
         contentPadding = PaddingValues(vertical = HADimens.SPACE4) + safeBottomPaddingValues(applyHorizontal = false),
         modifier = modifier,
     ) {
@@ -139,48 +124,37 @@ internal fun MediaControlSettingsContent(
             items = uiState.configuredEntities,
             key = { _, config -> config.listKey() },
         ) { index, config ->
-            ReorderableItem(state = reorderState, key = config.listKey()) { isDragging ->
-                ConfiguredEntityRow(
-                    config = config,
-                    subtitle = uiState.servers
-                        .takeIf { it.size > 1 }
-                        ?.firstOrNull { it.id == config.serverId }
-                        ?.friendlyName,
-                    entityName = uiState.entityNamesByConfig[config],
-                    entityIcon = uiState.entityIconsByConfig[config],
-                    onRemove = { onRemoveEntity(index) },
-                    onReorderComplete = onReorderComplete,
-                    isDragging = isDragging,
-                )
-                if (index < uiState.configuredEntities.lastIndex) {
-                    HorizontalDivider()
-                }
-            }
+            ConfiguredEntityRow(
+                config = config,
+                subtitle = uiState.servers
+                    .takeIf { it.size > 1 }
+                    ?.firstOrNull { it.id == config.serverId }
+                    ?.friendlyName,
+                entityName = uiState.entityNamesByConfig[config],
+                entityIcon = uiState.entityIconsByConfig[config],
+                onRemove = { onRemoveEntity(index) },
+            )
         }
     }
 }
 
 @Composable
-private fun ReorderableCollectionItemScope.ConfiguredEntityRow(
+private fun ConfiguredEntityRow(
     config: MediaControlEntityConfig,
     subtitle: String?,
     entityName: String?,
     entityIcon: IIcon?,
     onRemove: () -> Unit,
-    onReorderComplete: () -> Unit,
-    isDragging: Boolean,
 ) {
     val colorScheme = LocalHAColorScheme.current
-    val elevation = animateDpAsState(targetValue = if (isDragging) HADimens.SPACE2 else HADimens.SPACE0)
     val displayName = entityName ?: config.entityId
 
-    Surface(color = colorScheme.colorSurfaceLow, shadowElevation = elevation.value) {
+    Surface(color = colorScheme.colorSurfaceLow, shadowElevation = HADimens.SPACE0) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = HADimens.SPACE18)
-                .longPressDraggableHandle(onDragStopped = { onReorderComplete() })
                 .padding(vertical = HADimens.SPACE1),
         ) {
             if (entityIcon != null) {
@@ -219,14 +193,6 @@ private fun ReorderableCollectionItemScope.ConfiguredEntityRow(
                 contentDescription = stringResource(R.string.media_control_remove_entity),
                 variant = ButtonVariant.NEUTRAL,
             )
-            Image(
-                asset = CommunityMaterial.Icon.cmd_drag_horizontal_variant,
-                contentDescription = stringResource(R.string.hold_to_reorder),
-                colorFilter = ColorFilter.tint(colorScheme.colorTextSecondary),
-                modifier = Modifier
-                    .size(width = HADimens.SPACE10, height = HADimens.SPACE6)
-                    .padding(end = HADimens.SPACE4),
-            )
         }
     }
 }
@@ -240,8 +206,6 @@ private fun MediaControlSettingsContentLoadingPreview() {
             onServerSelected = {},
             onEntitySelected = {},
             onRemoveEntity = {},
-            onMove = { _, _ -> },
-            onReorderComplete = {},
         )
     }
 }
@@ -255,8 +219,6 @@ private fun MediaControlSettingsContentEmptyPreview() {
             onServerSelected = {},
             onEntitySelected = {},
             onRemoveEntity = {},
-            onMove = { _, _ -> },
-            onReorderComplete = {},
         )
     }
 }
@@ -275,8 +237,6 @@ private fun MediaControlSettingsContentWithEntitiesPreview() {
             onServerSelected = {},
             onEntitySelected = {},
             onRemoveEntity = {},
-            onMove = { _, _ -> },
-            onReorderComplete = {},
         )
     }
 }
