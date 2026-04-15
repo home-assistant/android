@@ -17,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -138,7 +139,7 @@ class HaMediaSessionService : MediaSessionService() {
             toRemove.forEach { (key, pair) ->
                 val (session, job) = pair
                 session.mediaSession?.let { removeSession(it) }
-                job.cancel()
+                job.cancelAndJoin()
                 Timber.d("Removed media session for $key")
             }
 

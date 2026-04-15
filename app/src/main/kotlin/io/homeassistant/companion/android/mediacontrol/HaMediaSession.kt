@@ -29,6 +29,7 @@ import java.net.URL
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -160,8 +161,10 @@ class HaMediaSession @AssistedInject constructor(
         } finally {
             actionScope = null
             mediaSession = null
-            player.release()
-            session.release()
+            withContext(NonCancellable + Dispatchers.Main) {
+                player.release()
+                session.release()
+            }
         }
     }
 
