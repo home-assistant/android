@@ -89,9 +89,7 @@ sealed interface WebViewAction {
     }
 }
 
-/**
- * Gates direct JavaScript evaluation in the WebView behind an explicit opt-in.
- */
+/** Gates direct JavaScript evaluation in the WebView behind an explicit opt-in. */
 @RequiresOptIn(
     message =
     "Evaluating raw JavaScript tightly couples the app to frontend internals and is fragile across frontend changes. " +
