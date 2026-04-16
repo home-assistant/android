@@ -110,6 +110,8 @@ internal fun FrontendScreen(
             null
         }
 
+    BackgroundWorkersEffect()
+
     FrontendScreenContent(
         onBackClick = onBackClick,
         viewState = viewState,
