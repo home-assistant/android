@@ -8,6 +8,7 @@ import android.content.Intent
 import android.graphics.BitmapFactory
 import android.os.Build
 import androidx.annotation.OptIn
+import androidx.annotation.VisibleForTesting
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.media3.common.util.UnstableApi
@@ -44,7 +45,10 @@ import timber.log.Timber
  * All per-entity session logic is delegated to [HaMediaSession].
  */
 @AndroidEntryPoint
-class HaMediaSessionService : MediaSessionService() {
+class HaMediaSessionService @VisibleForTesting constructor(private val serviceScope: CoroutineScope) :
+    MediaSessionService() {
+
+    @Inject constructor() : this(CoroutineScope(SupervisorJob() + Dispatchers.Default))
 
     @Inject
     lateinit var mediaControlRepository: MediaControlRepository
@@ -53,8 +57,7 @@ class HaMediaSessionService : MediaSessionService() {
     lateinit var haMediaSessionFactory: HaMediaSession.Factory
 
     // Keyed by "$serverId:$entityId". Each entry pairs the session with the job running observe().
-    internal val activeSessions = mutableMapOf<String, Pair<HaMediaSession, Job>>()
-    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val activeSessions = mutableMapOf<String, Pair<HaMediaSession, Job>>()
 
     /** The notification ID last passed to [startForeground], or null if not in the foreground. */
     private var foregroundNotificationId: Int? = null
@@ -67,23 +70,11 @@ class HaMediaSessionService : MediaSessionService() {
         startObservingEntities()
     }
 
-    /**
-     * Starts collecting [MediaControlRepository.observeConfiguredEntities] and reconciling
-     * sessions on each emission.
-     *
-     * Both parameters are extracted to allow tests to supply controlled scopes without
-     * calling [onCreate], which would trigger Hilt injection and Media3 setup.
-     *
-     * @param scope The scope used to collect the entities flow.
-     * @param sessionScope The scope used to launch each session's [HaMediaSession.observe] coroutine.
-     */
-    internal fun startObservingEntities(
-        scope: CoroutineScope = serviceScope,
-        sessionScope: CoroutineScope = serviceScope,
-    ) {
+    @VisibleForTesting
+    internal fun startObservingEntities() {
         mediaControlRepository.observeConfiguredEntities()
-            .onEach { entities -> reconcileSessions(entities, sessionScope) }
-            .launchIn(scope)
+            .onEach { entities -> reconcileSessions(entities) }
+            .launchIn(serviceScope)
     }
 
     // Returns null intentionally: Media3 routes each controller to the session whose ID matches
@@ -101,7 +92,15 @@ class HaMediaSessionService : MediaSessionService() {
         val anyPlaying = activeSessions.values.any { (session, _) ->
             session.mediaSession?.player?.let { it.playWhenReady && it.mediaItemCount > 0 } == true
         }
-        stopSelf()
+        // Keep the service alive while playback is active so the media notification remains
+        // visible and controllable from the notification shade after the app is dismissed.
+        // If nothing is playing there is no reason to keep the service alive.
+        // Note: there is no automatic stop when playback ends after this point — the service
+        // will only stop when the user removes all configured entities, which causes
+        // reconcileSessions to call stopSelf() on an empty list.
+        if (!anyPlaying) {
+            stopSelf()
+        }
     }
 
     /**
@@ -165,10 +164,7 @@ class HaMediaSessionService : MediaSessionService() {
         super.onDestroy()
     }
 
-    internal suspend fun reconcileSessions(
-        configuredEntities: List<MediaControlEntityConfig>,
-        sessionScope: CoroutineScope = serviceScope,
-    ) {
+    private suspend fun reconcileSessions(configuredEntities: List<MediaControlEntityConfig>) {
         Timber.d(
             "reconcileSessions: received ${configuredEntities.size} entities=${configuredEntities.map {
                 it.entityId
@@ -220,7 +216,7 @@ class HaMediaSessionService : MediaSessionService() {
             }
 
             toAdd.forEach { (key, session) ->
-                val job = sessionScope.launch {
+                val job = serviceScope.launch {
                     session.observe { mediaSession -> addSession(mediaSession) }
                 }
                 activeSessions[key] = session to job
@@ -275,6 +271,7 @@ class HaMediaSessionService : MediaSessionService() {
             .setContentText(metadata.artist)
             .setLargeIcon(artworkBitmap)
             .setOngoing(session.player.isPlaying)
+            .setContentIntent(session.sessionActivity)
             .build()
     }
 

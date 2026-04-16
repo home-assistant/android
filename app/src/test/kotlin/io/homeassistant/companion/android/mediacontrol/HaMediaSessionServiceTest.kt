@@ -19,7 +19,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -43,22 +42,24 @@ private val sessionCounter = AtomicInteger(0)
  * Tests for [HaMediaSessionService] session reconciliation and lifecycle behavior.
  *
  * Session management is driven through [MediaControlRepository.observeConfiguredEntities] flow
- * emissions via [HaMediaSessionService.startObservingEntities], rather than calling
- * [HaMediaSessionService.reconcileSessions] directly. This exercises the full path from
- * a DB change to session creation or removal.
+ * emissions via [HaMediaSessionService.startObservingEntities], rather than through [onCreate],
+ * which is intentionally not called in tests: [onCreate] triggers Hilt's field injection, which
+ * requires a fully-initialized Hilt application component that is not available in this test setup.
+ * Instead, dependencies are injected manually into the service's [Inject]-annotated fields after
+ * construction, and observation is started via [HaMediaSessionService.startObservingEntities].
+ *
+ * The service is created via [Robolectric.buildService] (using [get] rather than [create]) so that
+ * the service is properly attached to an Android context without triggering [onCreate]. The private
+ * [serviceScope] field is then replaced via reflection with [observationScope] (backed by
+ * [UnconfinedTestDispatcher]) before observation starts, so that flow collection and session
+ * coroutines run eagerly and synchronously on the test dispatcher.
  *
  * Each test pre-populates [configuredEntitiesFlow] (replay=1) before starting observation, so
- * the subscriber receives the value immediately upon subscribing — matching the pattern used in
- * [HaMediaSessionTest] where mock flows are set up before collecting. Subsequent emissions are
+ * the subscriber receives the value immediately upon subscribing. Subsequent emissions are
  * delivered to the active subscriber.
  *
- * [HaMediaSession] instances are created with [UnconfinedTestDispatcher] scopes via
- * [startObserving], which passes [observationScope] as the session scope so that
- * [HaMediaSession.observe] and [HaMediaSession.startObservingState] run eagerly. Main-looper
- * tasks (such as [HaRemoteMediaPlayer.updateState] dispatched by [HaMediaSession]) are flushed
- * with [idleMainLooper].
- *
- * Injected dependencies bypass Hilt by directly setting the service's lateinit fields.
+ * Main-looper tasks (such as [HaRemoteMediaPlayer.updateState] dispatched by [HaMediaSession])
+ * are flushed with [idleMainLooper].
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -74,6 +75,12 @@ class HaMediaSessionServiceTest {
 
     // replay=1 ensures tryEmit always succeeds and the value is available to new subscribers.
     private lateinit var configuredEntitiesFlow: MutableSharedFlow<List<MediaControlEntityConfig>>
+
+    // A non-completing SharedFlow: observeEntityState() suspends indefinitely by default so that
+    // HaMediaSession.observe() doesn't exit normally, keeping the session alive in getSessions().
+    // MediaSession.release() auto-removes the session from getSessions(), so we need it alive.
+    private val entityStateFlow = MutableSharedFlow<MediaControlState?>(replay = 0)
+
     private lateinit var observationScope: CoroutineScope
     private lateinit var service: HaMediaSessionService
 
@@ -83,7 +90,7 @@ class HaMediaSessionServiceTest {
         observationScope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher())
 
         every { mediaControlRepository.observeConfiguredEntities() } returns configuredEntitiesFlow
-        coEvery { mediaControlRepository.observeEntityState(any()) } returns flowOf(null)
+        coEvery { mediaControlRepository.observeEntityState(any()) } returns entityStateFlow
 
         // Each session is created without a scope — HaMediaSession.observe() derives its scope
         // from the coroutine that calls it (observationScope with UnconfinedTestDispatcher).
@@ -99,28 +106,33 @@ class HaMediaSessionServiceTest {
         service = Robolectric.buildService(HaMediaSessionService::class.java).get()
         service.mediaControlRepository = mediaControlRepository
         service.haMediaSessionFactory = haMediaSessionFactory
+
+        // Replace the private serviceScope field with the test-controlled scope so that
+        // startObservingEntities() and all session coroutines run on the UnconfinedTestDispatcher.
+        val scopeField = HaMediaSessionService::class.java.getDeclaredField("serviceScope")
+        scopeField.isAccessible = true
+        scopeField.set(service, observationScope)
     }
 
     @After
     fun tearDown() {
+        // Cancelling observationScope cancels all session observation coroutines, which triggers
+        // each HaMediaSession.observe() finally block → session.release() → auto-removed from
+        // getSessions(). onDestroy() is not called here to avoid double-calling it in tests that
+        // explicitly invoke it (e.g. the onDestroy lifecycle test).
         observationScope.cancel()
-        // Safe when onDestroy() was already called — activeSessions will already be empty.
-        service.activeSessions.values.forEach { (_, job) -> job.cancel() }
     }
 
     /**
-     * Starts [HaMediaSessionService.startObservingEntities] with [observationScope] for both
-     * the entities flow and the per-session observation jobs. Because [configuredEntitiesFlow]
-     * uses replay=1 and [observationScope] uses [UnconfinedTestDispatcher], the subscriber
-     * receives any pre-emitted value immediately and [HaMediaSessionService.reconcileSessions]
-     * runs synchronously on the test dispatcher. Call [idleMainLooper] after this to flush any
-     * Main-thread tasks posted by [HaMediaSession] (e.g. [HaRemoteMediaPlayer.updateState]).
+     * Starts [HaMediaSessionService.startObservingEntities] with the test-controlled
+     * [observationScope] (already set via reflection in [setUp]) as the service scope. Because
+     * [configuredEntitiesFlow] uses replay=1 and [observationScope] uses [UnconfinedTestDispatcher],
+     * the subscriber receives any pre-emitted value immediately and reconciliation runs synchronously.
+     * Call [idleMainLooper] after this to flush any Main-thread tasks posted by [HaMediaSession]
+     * (e.g. [HaRemoteMediaPlayer.updateState]).
      */
     private fun startObserving() {
-        service.startObservingEntities(
-            scope = observationScope,
-            sessionScope = observationScope,
-        )
+        service.startObservingEntities()
     }
 
     /**
@@ -176,8 +188,8 @@ class HaMediaSessionServiceTest {
         startObserving()
         idleMainLooper()
 
-        assertEquals(1, service.activeSessions.size)
-        assertTrue(service.activeSessions.containsKey("1:${config.entityId}"))
+        assertEquals(1, service.getSessions().size)
+        assertTrue(service.getSessions().any { it.id == "1_${config.entityId}" })
     }
 
     @Test
@@ -188,9 +200,9 @@ class HaMediaSessionServiceTest {
         startObserving()
         idleMainLooper()
 
-        assertEquals(2, service.activeSessions.size)
-        assertTrue(service.activeSessions.containsKey("1:${configA.entityId}"))
-        assertTrue(service.activeSessions.containsKey("1:${configB.entityId}"))
+        assertEquals(2, service.getSessions().size)
+        assertTrue(service.getSessions().any { it.id == "1_${configA.entityId}" })
+        assertTrue(service.getSessions().any { it.id == "1_${configB.entityId}" })
     }
 
     @Test
@@ -204,8 +216,8 @@ class HaMediaSessionServiceTest {
         configuredEntitiesFlow.tryEmit(listOf(configB))
         idleMainLooper()
 
-        assertEquals(1, service.activeSessions.size)
-        assertTrue(service.activeSessions.containsKey("1:${configB.entityId}"))
+        assertEquals(1, service.getSessions().size)
+        assertTrue(service.getSessions().any { it.id == "1_${configB.entityId}" })
     }
 
     @Test
@@ -214,13 +226,13 @@ class HaMediaSessionServiceTest {
         configuredEntitiesFlow.tryEmit(listOf(config))
         startObserving()
         idleMainLooper()
-        val entryBefore = service.activeSessions["1:${config.entityId}"]
+        val sessionBefore = service.getSessions().first()
 
         configuredEntitiesFlow.tryEmit(listOf(config))
         idleMainLooper()
 
-        assertEquals(1, service.activeSessions.size)
-        assertSame(entryBefore, service.activeSessions["1:${config.entityId}"])
+        assertEquals(1, service.getSessions().size)
+        assertSame(sessionBefore, service.getSessions().first())
     }
 
     @Test
@@ -283,10 +295,13 @@ class HaMediaSessionServiceTest {
         configuredEntitiesFlow.tryEmit(listOf(config))
         startObserving()
         idleMainLooper()
-        assertEquals(1, service.activeSessions.size)
+        assertEquals(1, service.getSessions().size)
 
+        // onDestroy() calls removeSession() explicitly for each active session before cancelling
+        // the observation jobs, so getSessions() is empty immediately after the call.
         service.onDestroy()
+        idleMainLooper()
 
-        assertTrue(service.activeSessions.isEmpty())
+        assertTrue(service.getSessions().isEmpty())
     }
 }
