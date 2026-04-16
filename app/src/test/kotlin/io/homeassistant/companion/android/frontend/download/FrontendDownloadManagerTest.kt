@@ -105,7 +105,7 @@ class FrontendDownloadManagerTest {
     inner class HttpDownload {
 
         @Test
-        fun `Given http URL with safe credentials when downloadFile called then enqueues download with auth and returns Handled`() = runTest {
+        fun `Given https URL with safe credentials when downloadFile called then enqueues download with auth and returns Forwarded`() = runTest {
             coEvery { sessionManager.canSafelySendCredentials(serverId = 1, url = "https://example.com/file.pdf") } returns true
             coEvery { sessionManager.getAuthorizationHeader(serverId = 1) } returns "Bearer token123"
 
@@ -122,7 +122,7 @@ class FrontendDownloadManagerTest {
         }
 
         @Test
-        fun `Given http URL without safe credentials when downloadFile called then enqueues download without auth and returns Handled`() = runTest {
+        fun `Given https URL without safe credentials when downloadFile called then enqueues download without auth and returns Forwarded`() = runTest {
             coEvery { sessionManager.canSafelySendCredentials(serverId = 1, url = "https://untrusted.com/file.pdf") } returns false
 
             val result = manager.downloadFile(
@@ -140,7 +140,7 @@ class FrontendDownloadManagerTest {
         }
 
         @Test
-        fun `Given null system download manager when downloadFile called with http URL then returns Error`() = runTest {
+        fun `Given null system download manager when downloadFile called with https URL then returns Error`() = runTest {
             val managerWithoutSystem = FrontendDownloadManager(
                 systemDownloadManager = null,
                 dataUriDownloadManager = dataUriDownloadManager,
@@ -164,7 +164,7 @@ class FrontendDownloadManagerTest {
     inner class DataUriDownload {
 
         @Test
-        fun `Given data URL when downloadFile called then saves via DataUriDownloadManager and returns Handled`() = runTest {
+        fun `Given data URL when downloadFile called then saves via DataUriDownloadManager and returns Forwarded`() = runTest {
             val dataUrl = "data:application/pdf;base64,SGVsbG8="
 
             val result = manager.downloadFile(
@@ -200,7 +200,7 @@ class FrontendDownloadManagerTest {
     inner class HandleBlob {
 
         @Test
-        fun `Given blob data when handleBlob called then saves via DataUriDownloadManager and returns Handled`() = runTest {
+        fun `Given blob data when handleBlob called then saves via DataUriDownloadManager and returns Forwarded`() = runTest {
             val data = "data:application/pdf;base64,SGVsbG8="
             val filename = "test.pdf"
 

@@ -882,7 +882,7 @@ class FrontendViewModelTest {
         }
 
         @Test
-        fun `Given handled result when download requested then no UI event emitted`() = runTest {
+        fun `Given forwarded result when download requested then no UI event emitted`() = runTest {
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )

@@ -132,7 +132,7 @@ class PermissionManagerTest {
     }
 
     @Nested
-    inner class OnNotificationPermissionResult {
+    inner class OnPermissionResultNotification {
 
         private fun mockShouldAsk() {
             every { notificationStatusProvider.areNotificationsEnabled() } returns false
