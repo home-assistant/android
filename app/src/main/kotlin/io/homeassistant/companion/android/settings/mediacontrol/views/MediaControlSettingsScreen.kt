@@ -74,7 +74,7 @@ internal fun MediaControlSettingsContent(
             Text(
                 text = stringResource(R.string.media_control_description),
                 style = HATextStyle.Body,
-                color = colorScheme.colorTextSecondary,
+                color = colorScheme.colorTextPrimary,
                 textAlign = TextAlign.Start,
                 modifier = Modifier.padding(horizontal = HADimens.SPACE4),
             )
@@ -92,19 +92,21 @@ internal fun MediaControlSettingsContent(
             }
         } else {
             if (uiState.servers.size > 1) {
-                item {
-                    HADropdownMenu(
-                        items = uiState.servers.map { HADropdownItem(key = it.id, label = it.friendlyName) },
-                        selectedKey = uiState.selectedServerId,
-                        onItemSelected = onServerSelected,
-                        label = stringResource(R.string.server),
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = HADimens.SPACE4),
-                    )
-                    Spacer(modifier = Modifier.size(HADimens.SPACE2))
+                item(key = "server_dropdown") {
+                    Column(modifier = Modifier.animateItem()) {
+                        HADropdownMenu(
+                            items = uiState.servers.map { HADropdownItem(key = it.id, label = it.friendlyName) },
+                            selectedKey = uiState.selectedServerId,
+                            onItemSelected = onServerSelected,
+                            label = stringResource(R.string.server),
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = HADimens.SPACE4),
+                        )
+                        Spacer(modifier = Modifier.size(HADimens.SPACE2))
+                    }
                 }
             }
 
-            item {
+            item(key = "entity_picker") {
                 EntityPicker(
                     entities = uiState.availableEntities,
                     selectedEntityId = null,
@@ -114,22 +116,23 @@ internal fun MediaControlSettingsContent(
                     entityRegistry = uiState.entityRegistryForServer(uiState.selectedServerId),
                     deviceRegistry = uiState.deviceRegistryForServer(uiState.selectedServerId),
                     areaRegistry = uiState.areaRegistryForServer(uiState.selectedServerId),
-                    modifier = Modifier.padding(horizontal = HADimens.SPACE4),
+                    modifier = Modifier.padding(horizontal = HADimens.SPACE4).animateItem(),
                 )
             }
-        }
 
-        itemsIndexed(
-            items = uiState.configuredEntities,
-            key = { _, config -> config.listKey() },
-        ) { index, config ->
-            ConfiguredEntityRow(
-                config = config,
-                subtitle = config.entityId,
-                entityName = uiState.entityNamesByConfig[config],
-                entityIcon = uiState.entityIconsByConfig[config],
-                onRemove = { onRemoveEntity(index) },
-            )
+            itemsIndexed(
+                items = uiState.configuredEntities,
+                key = { _, config -> config.listKey() },
+            ) { index, config ->
+                ConfiguredEntityRow(
+                    config = config,
+                    subtitle = config.entityId,
+                    entityName = uiState.entityNamesByConfig[config],
+                    entityIcon = uiState.entityIconsByConfig[config],
+                    onRemove = { onRemoveEntity(index) },
+                    modifier = Modifier.animateItem(),
+                )
+            }
         }
     }
 }
@@ -141,11 +144,12 @@ private fun ConfiguredEntityRow(
     entityName: String?,
     entityIcon: IIcon?,
     onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val colorScheme = LocalHAColorScheme.current
     val displayName = entityName ?: config.entityId
 
-    Surface(color = colorScheme.colorSurfaceLow, shadowElevation = HADimens.SPACE0) {
+    Surface(modifier = modifier, color = colorScheme.colorSurfaceLow, shadowElevation = HADimens.SPACE0) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
