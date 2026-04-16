@@ -48,6 +48,7 @@ class FrontendEventHandlerTest {
                 },
                 onNavigateToAssist = { _, _, _ -> },
                 onOpenExternalLink = {},
+                onLaunchNfcWrite = { _, _ -> },
             )
         }
 
@@ -75,6 +76,7 @@ class FrontendEventHandlerTest {
                 },
                 onNavigateToAssist = { _, _, _ -> },
                 onOpenExternalLink = {},
+                onLaunchNfcWrite = { _, _ -> },
             )
         }
 
@@ -104,6 +106,7 @@ class FrontendEventHandlerTest {
                     capturedStartListening = startListening
                 },
                 onOpenExternalLink = {},
+                onLaunchNfcWrite = { _, _ -> },
             )
         }
 
@@ -139,6 +142,7 @@ class FrontendEventHandlerTest {
                 onNavigateToSettings = {},
                 onNavigateToAssist = { _, _, _ -> },
                 onOpenExternalLink = {},
+                onLaunchNfcWrite = { _, _ -> },
             )
         }
 
@@ -162,6 +166,7 @@ class FrontendEventHandlerTest {
                 onNavigateToSettings = {},
                 onNavigateToAssist = { _, _, _ -> },
                 onOpenExternalLink = { uri -> capturedUri = uri },
+                onLaunchNfcWrite = { _, _ -> },
             )
         }
 
@@ -171,5 +176,61 @@ class FrontendEventHandlerTest {
         composeTestRule.waitForIdle()
 
         assertEquals(testUri, capturedUri)
+    }
+
+    @Test
+    fun `Given LaunchNfcWrite event then onLaunchNfcWrite is called with messageId and tagId`() = runTest {
+        var capturedMessageId: Int? = null
+        var capturedTagId: String? = "not-captured"
+        val events = MutableSharedFlow<FrontendEvent>()
+
+        composeTestRule.setContent {
+            FrontendEventHandler(
+                events = events,
+                onShowSnackbar = { _, _ -> false },
+                onNavigateToSettings = {},
+                onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = {},
+                onLaunchNfcWrite = { messageId, tagId ->
+                    capturedMessageId = messageId
+                    capturedTagId = tagId
+                },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        events.emit(FrontendEvent.LaunchNfcWrite(messageId = 42, tagId = "tag-abc"))
+        composeTestRule.waitForIdle()
+
+        assertEquals(42, capturedMessageId)
+        assertEquals("tag-abc", capturedTagId)
+    }
+
+    @Test
+    fun `Given LaunchNfcWrite event without tagId then onLaunchNfcWrite is called with null tagId`() = runTest {
+        var capturedMessageId: Int? = null
+        var capturedTagId: String? = "not-captured"
+        val events = MutableSharedFlow<FrontendEvent>()
+
+        composeTestRule.setContent {
+            FrontendEventHandler(
+                events = events,
+                onShowSnackbar = { _, _ -> false },
+                onNavigateToSettings = {},
+                onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = {},
+                onLaunchNfcWrite = { messageId, tagId ->
+                    capturedMessageId = messageId
+                    capturedTagId = tagId
+                },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        events.emit(FrontendEvent.LaunchNfcWrite(messageId = 7, tagId = null))
+        composeTestRule.waitForIdle()
+
+        assertEquals(7, capturedMessageId)
+        assertEquals(null, capturedTagId)
     }
 }

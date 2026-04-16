@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.frontend.navigation
 
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -18,6 +19,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager.Comp
 import io.homeassistant.companion.android.frontend.FrontendScreen
 import io.homeassistant.companion.android.frontend.FrontendViewModel
 import io.homeassistant.companion.android.launch.HAStartDestinationRoute
+import io.homeassistant.companion.android.nfc.WriteNfcTag
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.getActivity
 import io.homeassistant.companion.android.webview.WebViewActivity
@@ -71,6 +73,10 @@ internal fun NavGraphBuilder.frontendScreen(
         composable<FrontendRoute> {
             val viewModel: FrontendViewModel = hiltViewModel()
 
+            val nfcWriteLauncher = rememberLauncherForActivityResult(WriteNfcTag()) { resultCode ->
+                viewModel.onNfcWriteCompleted(resultCode)
+            }
+
             FrontendEventHandler(
                 events = viewModel.events,
                 onShowSnackbar = onShowSnackbar,
@@ -86,6 +92,9 @@ internal fun NavGraphBuilder.frontendScreen(
                     )
                 },
                 onOpenExternalLink = onOpenExternalLink,
+                onLaunchNfcWrite = { messageId, tagId ->
+                    nfcWriteLauncher.launch(WriteNfcTag.Input(tagId = tagId, messageId = messageId))
+                },
             )
 
             FrontendScreen(
@@ -126,6 +135,7 @@ internal fun FrontendEventHandler(
     onNavigateToSettings: (SettingsActivity.Deeplink?) -> Unit,
     onNavigateToAssist: (serverId: Int, pipelineId: String?, startListening: Boolean) -> Unit,
     onOpenExternalLink: suspend (Uri) -> Unit,
+    onLaunchNfcWrite: (messageId: Int, tagId: String?) -> Unit,
 ) {
     val resources = LocalResources.current
     LaunchedEffect(Unit) {
@@ -149,6 +159,10 @@ internal fun FrontendEventHandler(
 
                 is FrontendEvent.OpenExternalLink -> {
                     onOpenExternalLink(event.uri)
+                }
+
+                is FrontendEvent.LaunchNfcWrite -> {
+                    onLaunchNfcWrite(event.messageId, event.tagId)
                 }
             }
         }

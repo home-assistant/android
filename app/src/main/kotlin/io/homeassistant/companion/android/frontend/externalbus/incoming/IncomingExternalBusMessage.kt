@@ -144,6 +144,21 @@ data class OpenAssistPayload(
 data class HapticMessage(override val id: Int? = null, val payload: HapticType) : IncomingExternalBusMessage
 
 /**
+ * Message requesting the app to open the NFC tag-write flow.
+ *
+ * The optional [TagWritePayload.tag] is a pre-filled tag identifier. When null or missing, the
+ * user is prompted to enter/scan a tag manually. The response is a [ResultMessage] correlated via
+ * [id] once the user completes or cancels the flow.
+ */
+@Serializable
+@SerialName("tag/write")
+data class TagWriteMessage(override val id: Int? = null, val payload: TagWritePayload = TagWritePayload()) :
+    IncomingExternalBusMessage
+
+@Serializable
+data class TagWritePayload(val tag: String? = null)
+
+/**
  * Message carrying blob data for a file download initiated by the frontend.
  *
  * Sent internally by JavaScript injected in

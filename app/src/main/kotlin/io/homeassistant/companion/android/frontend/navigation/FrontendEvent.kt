@@ -33,4 +33,15 @@ sealed interface FrontendEvent {
 
     /** Open a URI externally using the host-provided external link handler. */
     data class OpenExternalLink(val uri: Uri) : FrontendEvent
+
+    /**
+     * Launch the NFC tag-write flow.
+     *
+     * The host is responsible for launching the corresponding activity contract and forwarding the
+     * result back to the ViewModel via [FrontendViewModel.onNfcWriteCompleted].
+     *
+     * @param messageId Correlation id from the originating `tag/write` request.
+     * @param tagId Optional pre-filled tag identifier.
+     */
+    data class LaunchNfcWrite(val messageId: Int, val tagId: String?) : FrontendEvent
 }
