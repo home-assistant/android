@@ -214,7 +214,7 @@ class DataUriDownloadManagerTest {
         assertNotNull("Expected a notification to be posted", notification)
         val contentText = shadowOf(notification).contentText.toString()
         assertEquals(
-            app.getString(io.homeassistant.companion.android.common.R.string.downloads_complete),
+            app.getString(commonR.string.downloads_complete),
             contentText,
         )
     }
@@ -282,10 +282,7 @@ class DataUriDownloadManagerTest {
         val notification = getLatestNotification(url)
         assertNotNull("Expected a notification to be posted", notification)
         val contentText = shadowOf(notification).contentText.toString()
-        assertEquals(
-            app.getString(io.homeassistant.companion.android.common.R.string.downloads_failed),
-            contentText,
-        )
+        assertEquals(app.getString(commonR.string.downloads_failed), contentText)
     }
 
     // endregion
@@ -301,10 +298,7 @@ class DataUriDownloadManagerTest {
 
         val channel = notificationManager.getNotificationChannel(CHANNEL_DOWNLOADS)
         assertNotNull("Expected downloads notification channel to be created", channel)
-        assertEquals(
-            app.getString(io.homeassistant.companion.android.common.R.string.downloads),
-            channel!!.name.toString(),
-        )
+        assertEquals(app.getString(commonR.string.downloads), channel.name.toString())
     }
 
     // endregion
