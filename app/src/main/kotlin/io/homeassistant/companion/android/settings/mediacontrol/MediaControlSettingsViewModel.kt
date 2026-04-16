@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.settings.mediacontrol
 
 import android.app.Application
+import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -19,6 +20,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.En
 import io.homeassistant.companion.android.database.server.Server
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -67,11 +69,19 @@ data class MediaControlSettingsUiState(
 }
 
 @HiltViewModel
-class MediaControlSettingsViewModel @Inject constructor(
+class MediaControlSettingsViewModel @VisibleForTesting constructor(
     application: Application,
     private val serverManager: ServerManager,
     private val mediaControlRepository: MediaControlRepository,
+    private val backgroundDispatcher: CoroutineDispatcher,
 ) : AndroidViewModel(application) {
+
+    @Inject
+    constructor(
+        application: Application,
+        serverManager: ServerManager,
+        mediaControlRepository: MediaControlRepository,
+    ) : this(application, serverManager, mediaControlRepository, Dispatchers.Default)
 
     private val _uiState = MutableStateFlow(MediaControlSettingsUiState())
     val uiState: StateFlow<MediaControlSettingsUiState> = _uiState.asStateFlow()
@@ -80,7 +90,7 @@ class MediaControlSettingsViewModel @Inject constructor(
     val serviceEvents: SharedFlow<MediaControlServiceEvent> = _serviceEvents.asSharedFlow()
 
     init {
-        viewModelScope.launch(Dispatchers.Default) {
+        viewModelScope.launch(backgroundDispatcher) {
             val loadedServers = serverManager.servers()
             val defaultServerId = serverManager.getServer()?.id ?: ServerManager.SERVER_ID_ACTIVE
 
@@ -193,7 +203,7 @@ class MediaControlSettingsViewModel @Inject constructor(
     }
 
     private fun updateAvailableEntities() {
-        viewModelScope.launch(Dispatchers.Default) {
+        viewModelScope.launch(backgroundDispatcher) {
             _uiState.update { state ->
                 val configuredForServer = state.configuredEntities
                     .filter { it.serverId == state.selectedServerId }

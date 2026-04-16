@@ -47,6 +47,7 @@ class MediaControlSettingsViewModelTest {
             application = mockk<Application>(relaxed = true),
             serverManager = serverManager,
             mediaControlRepository = mediaControlRepository,
+            backgroundDispatcher = testDispatcher,
         )
     }
 
