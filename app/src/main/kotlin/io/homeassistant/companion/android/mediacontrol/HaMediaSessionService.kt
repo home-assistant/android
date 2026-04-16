@@ -101,11 +101,7 @@ class HaMediaSessionService : MediaSessionService() {
         val anyPlaying = activeSessions.values.any { (session, _) ->
             session.mediaSession?.player?.let { it.playWhenReady && it.mediaItemCount > 0 } == true
         }
-        // Keep the service alive while playback is active so the media notification and
-        // foreground state are not torn down mid-playback. The service will stop itself
-        // once all sessions become idle (via reconcileSessions) or the user explicitly
-        // removes all configured entities.
-        if (!anyPlaying) stopSelf()
+        stopSelf()
     }
 
     /**
@@ -117,8 +113,13 @@ class HaMediaSessionService : MediaSessionService() {
     override fun onUpdateNotification(session: MediaSession, startInForegroundRequired: Boolean) {
         val notificationId = session.id.hashCode()
 
-        if (session.player.mediaItemCount == 0) {
-            // Entity is off or no state has arrived yet — nothing to show.
+        // A session not in activeSessions is being torn down. removeSession() and player.release()
+        // both trigger onUpdateNotification, so without this guard we would re-post a notification
+        // we just cancelled, leaving a zombie media control card after removal.
+        val isActive = activeSessions.values.any { (haSession, _) -> haSession.mediaSession?.id == session.id }
+
+        if (!isActive || session.player.mediaItemCount == 0) {
+            // Entity is off, no state has arrived yet, or the session is being torn down.
             notificationManager.cancel(notificationId)
             if (foregroundNotificationId == notificationId) {
                 promoteForegroundOrStop(excludeId = notificationId)
@@ -144,14 +145,22 @@ class HaMediaSessionService : MediaSessionService() {
 
     override fun onDestroy() {
         Timber.d("HaMediaSessionService destroyed")
-        activeSessions.values.forEach { (session, job) ->
+        if (foregroundNotificationId != null) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            foregroundNotificationId = null
+        }
+        // Snapshot and clear activeSessions before calling removeSession so that the
+        // onUpdateNotification guard (!isActive check) treats these sessions as inactive and
+        // cancels rather than re-posts their notifications during teardown.
+        val sessionsToClean = activeSessions.values.toList()
+        activeSessions.clear()
+        sessionsToClean.forEach { (session, job) ->
             session.mediaSession?.let { ms ->
                 notificationManager.cancel(ms.id.hashCode())
                 removeSession(ms)
             }
             job.cancel()
         }
-        activeSessions.clear()
         serviceScope.cancel()
         super.onDestroy()
     }

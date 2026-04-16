@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -126,10 +125,7 @@ internal fun MediaControlSettingsContent(
         ) { index, config ->
             ConfiguredEntityRow(
                 config = config,
-                subtitle = uiState.servers
-                    .takeIf { it.size > 1 }
-                    ?.firstOrNull { it.id == config.serverId }
-                    ?.friendlyName,
+                subtitle = config.entityId,
                 entityName = uiState.entityNamesByConfig[config],
                 entityIcon = uiState.entityIconsByConfig[config],
                 onRemove = { onRemoveEntity(index) },
