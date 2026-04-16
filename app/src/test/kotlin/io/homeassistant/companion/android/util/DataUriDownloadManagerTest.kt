@@ -14,6 +14,7 @@ import android.provider.MediaStore
 import android.util.Base64
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltTestApplication
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.CHANNEL_DOWNLOADS
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.mockk.every
@@ -181,7 +182,7 @@ class DataUriDownloadManagerTest {
         val notification = getLatestNotification(url)
         assertNotNull("Expected a notification to be posted", notification)
         val title = shadowOf(notification).contentTitle.toString()
-        assertEquals(app.getString(io.homeassistant.companion.android.common.R.string.downloads_unnamed_file), title)
+        assertEquals(app.getString(commonR.string.downloads_unnamed_file), title)
     }
 
     @Test
