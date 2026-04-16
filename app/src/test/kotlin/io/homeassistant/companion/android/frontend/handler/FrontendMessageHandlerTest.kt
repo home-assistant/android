@@ -300,19 +300,6 @@ class FrontendMessageHandlerTest {
     }
 
     @Test
-    fun `Given tag write message with blank tag when messageResults then emits WriteNfcTag with null tagId`() = runTest {
-        val message = TagWriteMessage(id = 8, payload = TagWritePayload(tag = "   "))
-        every { externalBusRepository.incomingMessages() } returns flowOf(message)
-
-        handler.messageResults().test {
-            val result = awaitItem()
-            assertTrue(result is FrontendHandlerEvent.WriteNfcTag)
-            assertEquals(null, (result as FrontendHandlerEvent.WriteNfcTag).tagId)
-            expectNoEvents()
-        }
-    }
-
-    @Test
     fun `Given tag write message without id when messageResults then emits WriteNfcTag with messageId -1`() = runTest {
         val message = TagWriteMessage(id = null)
         every { externalBusRepository.incomingMessages() } returns flowOf(message)

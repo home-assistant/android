@@ -73,8 +73,8 @@ internal fun NavGraphBuilder.frontendScreen(
         composable<FrontendRoute> {
             val viewModel: FrontendViewModel = hiltViewModel()
 
-            val nfcWriteLauncher = rememberLauncherForActivityResult(WriteNfcTag()) { resultCode ->
-                viewModel.onNfcWriteCompleted(resultCode)
+            val nfcWriteLauncher = rememberLauncherForActivityResult(WriteNfcTag()) { messageId ->
+                viewModel.onNfcWriteCompleted(messageId)
             }
 
             FrontendEventHandler(

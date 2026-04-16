@@ -147,8 +147,8 @@ data class HapticMessage(override val id: Int? = null, val payload: HapticType) 
  * Message requesting the app to open the NFC tag-write flow.
  *
  * The optional [TagWritePayload.tag] is a pre-filled tag identifier. When null or missing, the
- * user is prompted to enter/scan a tag manually. The response is a [ResultMessage] correlated via
- * [id] once the user completes or cancels the flow.
+ * user is prompted to enter/scan a tag manually. Once handled, a [io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage.success]
+ * should be sent back to the frontend with the [id].
  */
 @Serializable
 @SerialName("tag/write")
