@@ -21,10 +21,12 @@ import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -49,6 +51,16 @@ class HaMediaSessionTest {
     private lateinit var serverManager: ServerManager
     private lateinit var integrationRepository: IntegrationRepository
     private lateinit var config: MediaControlEntityConfig
+
+    @After
+    fun tearDown() {
+        // Cancel all test coroutines and drain the main looper so that the observe() finally
+        // block's withContext(NonCancellable + Dispatchers.Main) call completes and
+        // session.release() runs. Without this, MediaSession IDs linger in Media3's global
+        // registry and cause "Session ID must be unique" failures in subsequent test classes.
+        testScope.cancel()
+        idleMainLooper()
+    }
 
     @Before
     fun setUp() {

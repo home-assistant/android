@@ -121,6 +121,11 @@ class HaMediaSessionServiceTest {
         // getSessions(). onDestroy() is not called here to avoid double-calling it in tests that
         // explicitly invoke it (e.g. the onDestroy lifecycle test).
         observationScope.cancel()
+        // Drain the main looper so that the withContext(NonCancellable + Dispatchers.Main) calls
+        // in the observe() finally blocks complete and session.release() runs before the next test
+        // class starts. Without this, MediaSession IDs linger in Media3's global registry and
+        // cause "Session ID must be unique" failures in subsequent test classes.
+        idleMainLooper()
     }
 
     /**

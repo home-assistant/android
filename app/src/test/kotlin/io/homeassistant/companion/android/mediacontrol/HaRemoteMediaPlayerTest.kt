@@ -9,6 +9,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -26,6 +27,12 @@ class HaRemoteMediaPlayerTest {
 
     private val commandCallback: HaRemoteMediaPlayer.CommandCallback = mockk(relaxed = true)
     private lateinit var player: HaRemoteMediaPlayer
+
+    @After
+    fun tearDown() {
+        player.release()
+        shadowOf(Looper.getMainLooper()).idle()
+    }
 
     @Before
     fun setUp() {
