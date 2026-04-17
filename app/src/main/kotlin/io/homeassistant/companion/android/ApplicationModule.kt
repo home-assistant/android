@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android
 
+import android.app.DownloadManager
 import android.content.Context
+import androidx.core.content.getSystemService
 import androidx.work.WorkManager
 import dagger.Module
 import dagger.Provides
@@ -65,5 +67,11 @@ object ApplicationModule {
     @IsAutomotive
     fun providesIsAutomotive(@ApplicationContext context: Context): Boolean {
         return context.isAutomotive()
+    }
+
+    @Provides
+    @Singleton
+    fun providesDownloadManager(@ApplicationContext context: Context): DownloadManager? {
+        return context.getSystemService<DownloadManager>()
     }
 }

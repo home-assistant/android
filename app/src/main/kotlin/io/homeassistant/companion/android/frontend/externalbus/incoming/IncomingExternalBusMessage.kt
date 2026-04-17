@@ -35,10 +35,10 @@ sealed interface IncomingExternalBusMessage {
          * Unknown types are deserialized as [UnknownIncomingMessage] instead of throwing an exception.
          */
         internal val serializersModule = SerializersModule {
-            polymorphicDefaultDeserializer(IncomingExternalBusMessage::class) {
+            polymorphicDefaultDeserializer(IncomingExternalBusMessage::class) { className ->
                 object : UnknownJsonContentDeserializer<UnknownIncomingMessage>() {
                     override val builder = UnknownJsonContentBuilder { content ->
-                        UnknownIncomingMessage(content)
+                        UnknownIncomingMessage(className, content)
                     }
                 }
             }
@@ -55,7 +55,7 @@ sealed interface IncomingExternalBusMessage {
  *
  * @property content The raw JSON content of the unknown message
  */
-data class UnknownIncomingMessage(override val content: JsonElement) :
+data class UnknownIncomingMessage(override val discriminator: String?, override val content: JsonElement) :
     IncomingExternalBusMessage,
     UnknownJsonContent {
     override val id: Int? = null
@@ -142,3 +142,16 @@ data class OpenAssistPayload(
 @Serializable
 @SerialName("haptic")
 data class HapticMessage(override val id: Int? = null, val payload: HapticType) : IncomingExternalBusMessage
+
+/**
+ * Message carrying blob data for a file download initiated by the frontend.
+ *
+ * Sent internally by JavaScript injected in
+ * [io.homeassistant.companion.android.frontend.download.FrontendDownloadManager] via the external bus callback.
+ * The blob is read as a data URI and passed in [data], along with a [filename] derived from the
+ * original URL's content disposition or MIME type.
+ */
+@Serializable
+@SerialName("handleBlob")
+data class HandleBlobMessage(override val id: Int? = null, val data: String, val filename: String) :
+    IncomingExternalBusMessage

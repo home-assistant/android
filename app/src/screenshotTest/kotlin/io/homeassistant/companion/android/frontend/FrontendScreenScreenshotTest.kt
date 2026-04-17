@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend
 
+import android.annotation.SuppressLint
 import android.webkit.WebChromeClient
 import android.webkit.WebViewClient
 import androidx.compose.runtime.Composable
@@ -7,8 +8,9 @@ import com.android.tools.screenshot.PreviewTest
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
+import io.homeassistant.companion.android.frontend.js.FrontendJsBridge
+import io.homeassistant.companion.android.frontend.permissions.PermissionRequest
 import io.homeassistant.companion.android.util.compose.HAPreviews
-import kotlinx.coroutines.flow.emptyFlow
 
 class FrontendScreenScreenshotTest {
 
@@ -23,7 +25,6 @@ class FrontendScreenScreenshotTest {
                 webViewClient = WebViewClient(),
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
-                scriptsToEvaluate = emptyFlow(),
                 onBlockInsecureRetry = {},
                 onOpenExternalLink = {},
                 onBlockInsecureHelpClick = {},
@@ -52,7 +53,6 @@ class FrontendScreenScreenshotTest {
                 webViewClient = WebViewClient(),
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
-                scriptsToEvaluate = emptyFlow(),
                 onBlockInsecureRetry = {},
                 onOpenExternalLink = {},
                 onBlockInsecureHelpClick = {},
@@ -78,7 +78,6 @@ class FrontendScreenScreenshotTest {
                 webViewClient = WebViewClient(),
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
-                scriptsToEvaluate = emptyFlow(),
                 onBlockInsecureRetry = {},
                 onOpenExternalLink = {},
                 onBlockInsecureHelpClick = {},
@@ -108,7 +107,6 @@ class FrontendScreenScreenshotTest {
                 webViewClient = WebViewClient(),
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
-                scriptsToEvaluate = emptyFlow(),
                 onBlockInsecureRetry = {},
                 onOpenExternalLink = {},
                 onBlockInsecureHelpClick = {},
@@ -137,7 +135,6 @@ class FrontendScreenScreenshotTest {
                 webViewClient = WebViewClient(),
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
-                scriptsToEvaluate = emptyFlow(),
                 onBlockInsecureRetry = {},
                 onOpenExternalLink = {},
                 onBlockInsecureHelpClick = {},
@@ -152,6 +149,7 @@ class FrontendScreenScreenshotTest {
         }
     }
 
+    @SuppressLint("NewApi")
     @PreviewTest
     @HAPreviews
     @Composable
@@ -162,12 +160,10 @@ class FrontendScreenScreenshotTest {
                 viewState = FrontendViewState.Content(
                     serverId = 1,
                     url = "https://example.com",
-                    showNotificationPermission = true,
                 ),
                 webViewClient = WebViewClient(),
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
-                scriptsToEvaluate = emptyFlow(),
                 onBlockInsecureRetry = {},
                 onOpenExternalLink = {},
                 onBlockInsecureHelpClick = {},
@@ -177,8 +173,8 @@ class FrontendScreenScreenshotTest {
                 onConfigureHomeNetwork = { _ -> },
                 onSecurityLevelHelpClick = {},
                 onShowSnackbar = { _, _ -> true },
-                supportsNotificationPermission = true,
                 onWebViewCreationFailed = {},
+                pendingPermissionRequest = PermissionRequest.Notification(1) {},
             )
         }
     }
@@ -202,7 +198,6 @@ class FrontendScreenScreenshotTest {
                 webViewClient = WebViewClient(),
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
-                scriptsToEvaluate = emptyFlow(),
                 onBlockInsecureRetry = {},
                 onOpenExternalLink = {},
                 onBlockInsecureHelpClick = {},

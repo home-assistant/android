@@ -12,9 +12,9 @@ import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
  * changed (e.g., loading indicators, error screens, security prompts). The state survives
  * recomposition and is preserved until a user action or system event triggers a transition.
  *
- * For one-shot navigation to external screens (e.g., opening Settings), use
- * [io.homeassistant.companion.android.frontend.navigation.FrontendNavigationEvent] instead.
- * Navigation events are consumed once and don't persist in state.
+ * For one-shot events (e.g., opening Settings, showing a snackbar), use
+ * [io.homeassistant.companion.android.frontend.navigation.FrontendEvent] instead.
+ * Events are consumed once and don't persist in state.
  */
 sealed interface FrontendViewState {
 
@@ -54,7 +54,6 @@ sealed interface FrontendViewState {
         val nightModeTheme: NightModeTheme? = null,
         val statusBarColor: Color? = null,
         val backgroundColor: Color? = null,
-        val showNotificationPermission: Boolean = false,
     ) : FrontendViewState
 
     /**

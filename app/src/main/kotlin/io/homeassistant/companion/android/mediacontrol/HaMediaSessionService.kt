@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.mediacontrol
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -11,6 +12,7 @@ import androidx.annotation.OptIn
 import androidx.annotation.VisibleForTesting
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.app.ServiceCompat
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
@@ -108,6 +110,10 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
      * updated. Each session gets a notification with a unique ID derived from the session's ID,
      * so each entity appears as its own card in the media controls carousel.
      */
+    // POST_NOTIFICATIONS is not required for notifications linked to an active MediaSession
+    // (MediaStyle notifications). This is a platform-level guarantee on API 33+; on API < 33
+    // the permission does not exist at all.
+    @SuppressLint("MissingPermission")
     @OptIn(UnstableApi::class)
     override fun onUpdateNotification(session: MediaSession, startInForegroundRequired: Boolean) {
         val notificationId = session.id.hashCode()
@@ -145,7 +151,7 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
     override fun onDestroy() {
         Timber.d("HaMediaSessionService destroyed")
         if (foregroundNotificationId != null) {
-            stopForeground(STOP_FOREGROUND_REMOVE)
+            ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
             foregroundNotificationId = null
         }
         // Snapshot and clear activeSessions before calling removeSession so that the
@@ -247,7 +253,7 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
             foregroundNotificationId = nextId
             Timber.d("promoteForegroundOrStop: promoted session ${nextSession.id}")
         } else {
-            stopForeground(STOP_FOREGROUND_REMOVE)
+            ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
             foregroundNotificationId = null
             Timber.d("promoteForegroundOrStop: no active sessions, stopped foreground")
         }

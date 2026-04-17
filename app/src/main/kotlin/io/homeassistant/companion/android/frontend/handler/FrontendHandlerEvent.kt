@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend.handler
 
+import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 
@@ -62,4 +63,11 @@ sealed interface FrontendHandlerEvent {
      * This occurs when the session is anonymous and external auth retrieval fails.
      */
     data class AuthError(val error: FrontendConnectionError) : FrontendHandlerEvent
+
+    /**
+     * A blob download completed (via the JS bridge [handleBlob] callback).
+     *
+     * The ViewModel should process the [result] to emit appropriate UI feedback.
+     */
+    data class DownloadCompleted(val result: DownloadResult) : FrontendHandlerEvent
 }

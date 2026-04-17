@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.frontend
 
 import android.annotation.SuppressLint
 import android.net.Uri
-import android.os.Build
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -28,6 +27,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,12 +45,12 @@ import io.homeassistant.companion.android.common.compose.theme.LocalHAColorSchem
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorScreen
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
-import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
-import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
-import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
+import io.homeassistant.companion.android.frontend.js.FrontendJsBridge
+import io.homeassistant.companion.android.frontend.js.FrontendJsCallback
+import io.homeassistant.companion.android.frontend.permissions.MultiplePermissionsEffect
 import io.homeassistant.companion.android.frontend.permissions.NotificationPermissionPrompt
-import io.homeassistant.companion.android.frontend.permissions.PendingWebViewPermissionRequest
-import io.homeassistant.companion.android.frontend.permissions.WebViewPermissionEffect
+import io.homeassistant.companion.android.frontend.permissions.PermissionRequest
+import io.homeassistant.companion.android.frontend.permissions.SinglePermissionEffect
 import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModel
@@ -61,6 +61,7 @@ import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.webview.insecure.BlockInsecureScreen
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
@@ -94,7 +95,7 @@ internal fun FrontendScreen(
     modifier: Modifier = Modifier,
 ) {
     val viewState by viewModel.viewState.collectAsStateWithLifecycle()
-    val pendingWebViewPermission by viewModel.pendingWebViewPermission.collectAsStateWithLifecycle()
+    val pendingPermissionRequest by viewModel.pendingPermissionRequest.collectAsStateWithLifecycle()
 
     // Create SecurityLevel ViewModel only when needed
     val securityLevelViewModel: LocationForSecureConnectionViewModel? =
@@ -113,10 +114,8 @@ internal fun FrontendScreen(
         webViewClient = viewModel.webViewClient,
         webChromeClient = viewModel.webChromeClient,
         frontendJsCallback = viewModel.frontendJsCallback,
-        scriptsToEvaluate = viewModel.scriptsToEvaluate,
-        hapticEvents = viewModel.hapticEvents,
-        pendingWebViewPermission = pendingWebViewPermission,
-        onWebViewPermissionResult = viewModel::onWebViewPermissionResult,
+        pendingPermissionRequest = pendingPermissionRequest,
+        onClearPendingPermissionRequest = viewModel::clearPendingPermissionRequest,
         onBlockInsecureRetry = viewModel::onRetry,
         onOpenExternalLink = onOpenExternalLink,
         onBlockInsecureHelpClick = onBlockInsecureHelpClick,
@@ -129,7 +128,8 @@ internal fun FrontendScreen(
         onSecurityLevelHelpClick = onSecurityLevelHelpClick,
         onShowSnackbar = onShowSnackbar,
         onWebViewCreationFailed = viewModel::onWebViewCreationFailed,
-        onNotificationPermissionResult = viewModel::onNotificationPermissionResult,
+        onDownloadRequested = viewModel::onDownloadRequested,
+        webViewActions = viewModel.webViewActions,
         modifier = modifier,
     )
 }
@@ -141,7 +141,6 @@ internal fun FrontendScreenContent(
     webViewClient: WebViewClient,
     webChromeClient: WebChromeClient,
     frontendJsCallback: FrontendJsCallback,
-    scriptsToEvaluate: Flow<WebViewScript>,
     onBlockInsecureRetry: () -> Unit,
     onOpenExternalLink: suspend (Uri) -> Unit,
     onBlockInsecureHelpClick: suspend () -> Unit,
@@ -153,27 +152,26 @@ internal fun FrontendScreenContent(
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onWebViewCreationFailed: (Throwable) -> Unit,
     modifier: Modifier = Modifier,
-    hapticEvents: Flow<HapticType> = emptyFlow(),
-    pendingWebViewPermission: PendingWebViewPermissionRequest? = null,
-    onWebViewPermissionResult: (Map<String, Boolean>) -> Unit = {},
+    pendingPermissionRequest: PermissionRequest<*>? = null,
+    onClearPendingPermissionRequest: () -> Unit = {},
     errorStateProvider: FrontendConnectionErrorStateProvider = FrontendConnectionErrorStateProvider.noOp,
     securityLevelViewModel: LocationForSecureConnectionViewModel? = null,
     onSecurityLevelDone: () -> Unit = {},
-    onNotificationPermissionResult: (Boolean) -> Unit = {},
-    supportsNotificationPermission: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU,
+    onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit = { _, _, _ -> },
+    webViewActions: Flow<WebViewAction> = emptyFlow(),
 ) {
     var webView by remember { mutableStateOf<WebView?>(null) }
 
     WebViewEffects(
         webView = webView,
         url = viewState.url,
-        scriptsToEvaluate = scriptsToEvaluate,
-        hapticEvents = hapticEvents,
+        frontendJsCallback = frontendJsCallback,
+        webViewActions = webViewActions,
     )
 
-    WebViewPermissionEffect(
-        pendingPermission = pendingWebViewPermission,
-        onPermissionResult = onWebViewPermissionResult,
+    PendingPermissionHandler(
+        pendingRequest = pendingPermissionRequest,
+        onClearPendingPermissionRequest = onClearPendingPermissionRequest,
     )
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -183,9 +181,9 @@ internal fun FrontendScreenContent(
             onWebViewCreated = { webView = it },
             webViewClient = webViewClient,
             webChromeClient = webChromeClient,
-            frontendJsCallback = frontendJsCallback,
             contentState = viewState as? FrontendViewState.Content,
             onWebViewCreationFailed = onWebViewCreationFailed,
+            onDownloadRequested = onDownloadRequested,
         )
 
         StateOverlay(
@@ -202,8 +200,6 @@ internal fun FrontendScreenContent(
             onConfigureHomeNetwork = onConfigureHomeNetwork,
             onOpenExternalLink = onOpenExternalLink,
             onShowSnackbar = onShowSnackbar,
-            onNotificationPermissionResult = onNotificationPermissionResult,
-            supportsNotificationPermission = supportsNotificationPermission,
         )
     }
 }
@@ -226,8 +222,6 @@ private fun StateOverlay(
     onConfigureHomeNetwork: (serverId: Int) -> Unit,
     onOpenExternalLink: suspend (Uri) -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
-    onNotificationPermissionResult: (Boolean) -> Unit,
-    supportsNotificationPermission: Boolean,
 ) {
     when (viewState) {
         is FrontendViewState.LoadServer,
@@ -235,10 +229,7 @@ private fun StateOverlay(
         -> LoadingScreen(modifier = Modifier.background(LocalHAColorScheme.current.colorSurfaceDefault))
 
         is FrontendViewState.Content -> {
-            if (viewState.showNotificationPermission && supportsNotificationPermission) {
-                @SuppressLint("InlinedApi")
-                NotificationPermissionPrompt(onPermissionResult = onNotificationPermissionResult)
-            }
+            // No overlay for content state to show the underlying WebView
         }
 
         is FrontendViewState.SecurityLevelRequired -> SecurityLevelOverlay(
@@ -371,10 +362,10 @@ private fun SafeHAWebView(
     onBackClick: () -> Unit,
     onWebViewCreated: (WebView) -> Unit,
     webViewClient: WebViewClient,
-    frontendJsCallback: FrontendJsCallback,
     contentState: FrontendViewState.Content?,
     onWebViewCreationFailed: (Throwable) -> Unit,
     webChromeClient: WebChromeClient? = null,
+    onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit = { _, _, _ -> },
 ) {
     val serverHandleInsets = contentState?.serverHandleInsets ?: false
     val backgroundColor = contentState?.backgroundColor
@@ -411,11 +402,11 @@ private fun SafeHAWebView(
                     .background(Color.Transparent),
                 configure = {
                     onWebViewCreated(this)
-                    // Injecting the javascript interface should happen as early as possible in the process
-                    // even before loading the server URL to not miss any events from the frontend.
-                    frontendJsCallback.attachToWebView(this)
                     this.webViewClient = webViewClient
                     webChromeClient?.let { this.webChromeClient = it }
+                    setDownloadListener { url, _, contentDisposition, mimetype, _ ->
+                        onDownloadRequested(url, contentDisposition, mimetype)
+                    }
                 },
                 onBackPressed = onBackClick,
                 onWebViewCreationFailed = onWebViewCreationFailed,
@@ -449,31 +440,81 @@ private fun Color.Overlay(modifier: Modifier = Modifier) {
 }
 
 /**
- * Handles WebView side effects: URL loading, script evaluation, haptics.
+ * Routes a [PermissionRequest] to the appropriate UI and delivers results directly.
+ *
+ * When the user responds, this composable:
+ * 1. Clears the pending slot via [onClearPendingPermissionRequest] (unblocking queued requests)
+ * 2. Calls [PermissionRequest.onResult] directly using a composable coroutine scope
+ *
+ * Types with custom UI (e.g. [PermissionRequest.Notification] bottom sheet) are matched first.
+ * Remaining types fall through to the system dialog based on their category:
+ * [PermissionRequest.MultiplePermissions] or [PermissionRequest.SinglePermission].
+ *
+ * Adding a new permission type that uses the system dialog requires no changes here.
+ */
+@Composable
+private fun PendingPermissionHandler(
+    pendingRequest: PermissionRequest<*>?,
+    onClearPendingPermissionRequest: () -> Unit,
+) {
+    val coroutineScope = rememberCoroutineScope()
+
+    fun <T : PermissionRequest.Result> resolveResult(request: PermissionRequest<T>, result: T) {
+        onClearPendingPermissionRequest()
+        coroutineScope.launch { request.onResult(result) }
+    }
+
+    when (pendingRequest) {
+        // Types with custom UI
+        is PermissionRequest.Notification -> {
+            @SuppressLint("InlinedApi")
+            NotificationPermissionPrompt(
+                onPermissionResult = { granted ->
+                    resolveResult(pendingRequest, PermissionRequest.Result.Single(granted = granted))
+                },
+                onDismiss = onClearPendingPermissionRequest,
+            )
+        }
+        // Default system dialogs by category
+        is PermissionRequest.MultiplePermissions -> {
+            MultiplePermissionsEffect(
+                pendingRequest = pendingRequest,
+                onPermissionResult = { permissions ->
+                    resolveResult(pendingRequest, PermissionRequest.Result.Multiple(permissions = permissions))
+                },
+            )
+        }
+        is PermissionRequest.SinglePermission -> {
+            SinglePermissionEffect(
+                pendingRequest = pendingRequest,
+                onPermissionResult = { granted ->
+                    resolveResult(pendingRequest, PermissionRequest.Result.Single(granted = granted))
+                },
+            )
+        }
+        null -> { /* No pending permission */ }
+    }
+}
+
+/**
+ * Handles WebView side effects: URL loading and [WebViewAction] dispatch.
  */
 @Composable
 private fun WebViewEffects(
     webView: WebView?,
     url: String,
-    scriptsToEvaluate: Flow<WebViewScript>,
-    hapticEvents: Flow<HapticType>,
+    frontendJsCallback: FrontendJsCallback,
+    webViewActions: Flow<WebViewAction>,
 ) {
     if (webView != null) {
         LaunchedEffect(webView, url) {
+            frontendJsCallback.attachToWebView(webView)
             Timber.v("Load url ${sensitive(url)}")
             webView.loadUrl(url)
         }
         LaunchedEffect(webView) {
-            scriptsToEvaluate.collect { webViewScript ->
-                Timber.d("Evaluating script: ${sensitive(webViewScript.script)}")
-                webView.evaluateJavascript(webViewScript.script) { result ->
-                    webViewScript.result.complete(result)
-                }
-            }
-        }
-        LaunchedEffect(webView) {
-            hapticEvents.collect { hapticType ->
-                HapticFeedbackPerformer.perform(webView, hapticType)
+            webViewActions.collect { action ->
+                action.run(webView)
             }
         }
     }
@@ -492,7 +533,6 @@ private fun FrontendScreenLoadingPreview() {
             webViewClient = WebViewClient(),
             webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
-            scriptsToEvaluate = emptyFlow(),
             onBlockInsecureRetry = {},
             onOpenExternalLink = {},
             onBlockInsecureHelpClick = {},
@@ -525,7 +565,6 @@ private fun FrontendScreenErrorPreview() {
             webViewClient = WebViewClient(),
             webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
-            scriptsToEvaluate = emptyFlow(),
             onBlockInsecureRetry = {},
             onOpenExternalLink = {},
             onBlockInsecureHelpClick = {},
@@ -554,7 +593,6 @@ private fun FrontendScreenInsecurePreview() {
             webViewClient = WebViewClient(),
             webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
-            scriptsToEvaluate = emptyFlow(),
             onBlockInsecureRetry = {},
             onOpenExternalLink = {},
             onBlockInsecureHelpClick = {},
@@ -581,7 +619,6 @@ private fun FrontendScreenSecurityLevelRequiredPreview() {
             webViewClient = WebViewClient(),
             webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
-            scriptsToEvaluate = emptyFlow(),
             onBlockInsecureRetry = {},
             onOpenExternalLink = {},
             onBlockInsecureHelpClick = {},

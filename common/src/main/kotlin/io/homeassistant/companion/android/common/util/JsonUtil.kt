@@ -65,7 +65,7 @@ val kotlinJsonMapper = Json {
     encodeDefaults = true
     prettyPrint = false
     // explicitNulls = true // default is to print null values in the JSON send if you don't want this behavior you need a custom serializer
-    serializersModule += SocketResponse.socketResponseSerializerModuler
+    serializersModule += SocketResponse.socketResponseSerializerModule
 }
 
 /**
@@ -99,9 +99,13 @@ class LocalDateTimeSerializer : KSerializer<LocalDateTime> {
  * where some types are well-known and explicitly handled, while others are unknown
  * and need to be captured as raw JSON content.
  *
+ * @property discriminator The unrecognized type discriminator value,
+ *           or `null` if the discriminator was missing from the JSON input.
+ *           Useful for logging which unknown type was received.
  * @property content The raw JSON content of the object.
  */
 interface UnknownJsonContent {
+    val discriminator: String?
     val content: JsonElement
 }
 
@@ -139,14 +143,17 @@ fun interface UnknownJsonContentBuilder<T : UnknownJsonContent> {
  *     data class KnownType(val data: String) : MyResponse
  *
  *     @Serializable
- *     data class UnknownType(override val content: JsonElement) : MyResponse, UnknownJsonContent
+ *     data class UnknownType(
+ *         override val discriminator: String?,
+ *         override val content: JsonElement,
+ *     ) : MyResponse, UnknownJsonContent
  * }
  *
  * val module = SerializersModule {
- *     polymorphicDefaultDeserializer(MyResponse::class) {
+ *     polymorphicDefaultDeserializer(MyResponse::class) { className ->
  *         object : UnknownJsonContentDeserializer<MyResponse.UnknownType>() {
  *             override val builder = UnknownJsonContentBuilder { content ->
- *                 MyResponse.UnknownType(content)
+ *                 MyResponse.UnknownType(discriminator = className, content = content)
  *             }
  *         }
  *     }

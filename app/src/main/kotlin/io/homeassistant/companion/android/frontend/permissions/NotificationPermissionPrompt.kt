@@ -43,7 +43,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-internal fun NotificationPermissionPrompt(onPermissionResult: (Boolean) -> Unit) {
+internal fun NotificationPermissionPrompt(onPermissionResult: (Boolean) -> Unit, onDismiss: () -> Unit) {
     val bottomSheetState = rememberHAModalBottomSheetState()
     val coroutineScope = rememberCoroutineScope()
 
@@ -75,6 +75,7 @@ internal fun NotificationPermissionPrompt(onPermissionResult: (Boolean) -> Unit)
         HAModalBottomSheet(
             bottomSheetState = bottomSheetState,
             onDismissRequest = {
+                onDismiss()
                 closeSheet()
             },
         ) {
@@ -128,6 +129,6 @@ internal fun NotificationPermissionPrompt(onPermissionResult: (Boolean) -> Unit)
 @Composable
 private fun NotificationPermissionPromptPreview() {
     HAThemeForPreview {
-        NotificationPermissionPrompt(onPermissionResult = {})
+        NotificationPermissionPrompt(onPermissionResult = {}, onDismiss = {})
     }
 }

@@ -13,7 +13,6 @@ import androidx.core.net.toUri
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
-import io.homeassistant.companion.android.frontend.FrontendJsCallback
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import javax.inject.Inject
 import kotlinx.coroutines.flow.StateFlow
@@ -32,10 +31,7 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
      * @param currentUrlFlow StateFlow providing the current URL being loaded.
      *        Used to filter errors - only errors for this URL trigger [onFrontendError].
      * @param onFrontendError Callback when a WebView error is mapped to a [FrontendConnectionError].
-     * @param frontendJsCallback Optional JS interface to attach to the WebView.
-     *        If will be re-attached after WebView crash recovery.
      * @param onCrash Optional callback invoked after WebView crash recovery.
-     *        Called after the JS bridge is re-attached (if present).
      * @param onUrlIntercepted Optional callback to intercept URL navigation.
      *        Receives the URI and whether TLS client auth was required.
      *        Return `true` to prevent WebView from loading the URL.
@@ -44,7 +40,6 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
     fun create(
         currentUrlFlow: StateFlow<String?>,
         onFrontendError: (FrontendConnectionError) -> Unit,
-        frontendJsCallback: FrontendJsCallback? = null,
         onCrash: (() -> Unit)? = null,
         onUrlIntercepted: ((uri: Uri, isTLSClientAuthNeeded: Boolean) -> Boolean)? = null,
         onPageFinished: (() -> Unit)? = null,
@@ -53,7 +48,6 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
             keyChainRepository = keyChainRepository,
             currentUrlFlow = currentUrlFlow,
             onFrontendError = onFrontendError,
-            frontendJsCallback = frontendJsCallback,
             onCrash = onCrash,
             onUrlIntercepted = onUrlIntercepted,
             onPageFinished = onPageFinished,
@@ -71,7 +65,6 @@ class HAWebViewClient internal constructor(
     keyChainRepository: KeyChainRepository,
     private val currentUrlFlow: StateFlow<String?>,
     private val onFrontendError: (FrontendConnectionError) -> Unit,
-    private val frontendJsCallback: FrontendJsCallback?,
     private val onCrash: (() -> Unit)?,
     private val onUrlIntercepted: ((uri: Uri, isTLSClientAuthNeeded: Boolean) -> Boolean)?,
     private val onPageFinished: (() -> Unit)?,
@@ -210,10 +203,7 @@ class HAWebViewClient internal constructor(
 
     override fun onRenderProcessGone(view: WebView?, detail: RenderProcessGoneDetail?): Boolean {
         Timber.e("onRenderProcessGone: webView crashed")
-        view?.let { webView ->
-            frontendJsCallback?.attachToWebView(webView)
-            onCrash?.invoke()
-        }
+        onCrash?.invoke()
         return true
     }
 
