@@ -11,6 +11,7 @@ import androidx.media3.common.SimpleBasePlayer
 import androidx.media3.common.util.UnstableApi
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.SettableFuture
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlState
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaPlaybackState
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaRepeatMode
@@ -51,6 +52,7 @@ internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: 
     private var mediaState: MediaControlState? = null
     private var artworkBytes: ByteArray? = null
     private var isConnecting: Boolean = false
+    private var pendingCommandFuture: SettableFuture<Void>? = null
 
     /**
      * Updates the internal state from a new [MediaControlState] and triggers a state refresh.
@@ -62,6 +64,8 @@ internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: 
         isConnecting = false
         mediaState = state
         artworkBytes = artworkPngBytes
+        pendingCommandFuture?.set(null)
+        pendingCommandFuture = null
         invalidateState()
     }
 
@@ -75,6 +79,8 @@ internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: 
     @MainThread
     fun setConnecting() {
         isConnecting = true
+        pendingCommandFuture?.set(null)
+        pendingCommandFuture = null
         invalidateState()
     }
 
@@ -198,15 +204,24 @@ internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: 
     }
 
     /**
-     * Executes [block] and returns an immediate void future on success, or an immediate
-     * failed future if [block] throws, so that any exception is captured in the
-     * [ListenableFuture] rather than propagating into [SimpleBasePlayer].
+     * Executes [block] and returns a pending [SettableFuture] that will be completed by the next
+     * [updateState] or [setConnecting] call. Keeping the future pending prevents
+     * [SimpleBasePlayer] from calling [getState] until the server responds, which preserves the
+     * position extrapolation anchor and avoids a seek bar jump on every button press.
+     *
+     * If [block] throws, returns an immediate failed future instead so the exception is captured
+     * in the [ListenableFuture] rather than propagating into [SimpleBasePlayer].
      */
-    private inline fun handleCommand(block: () -> Unit): ListenableFuture<*> = try {
-        block()
-        Futures.immediateVoidFuture()
-    } catch (e: Exception) {
-        Futures.immediateFailedFuture<Void>(e)
+    private inline fun handleCommand(block: () -> Unit): ListenableFuture<Void> {
+        try {
+            block()
+        } catch (e: Exception) {
+            return Futures.immediateFailedFuture(e)
+        }
+        // Complete any in-flight future before creating a new one — orphaned futures stay in
+        // SimpleBasePlayer's pendingOperations set permanently, blocking all future getState calls.
+        pendingCommandFuture?.set(null)
+        return SettableFuture.create<Void>().also { pendingCommandFuture = it }
     }
 
     private fun buildIdleState(): State = State.Builder()
