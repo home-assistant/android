@@ -2,7 +2,7 @@ package io.homeassistant.companion.android.settings.mediacontrol
 
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon3
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
 import io.homeassistant.companion.android.settings.mediacontrol.views.MediaControlSettingsContent
@@ -23,8 +23,6 @@ class MediaControlSettingsScreenScreenshotTest {
                 onServerSelected = {},
                 onEntitySelected = {},
                 onRemoveEntity = {},
-                onMove = { _, _ -> },
-                onReorderComplete = {},
             )
         }
     }
@@ -39,8 +37,6 @@ class MediaControlSettingsScreenScreenshotTest {
                 onServerSelected = {},
                 onEntitySelected = {},
                 onRemoveEntity = {},
-                onMove = { _, _ -> },
-                onReorderComplete = {},
             )
         }
     }
@@ -62,8 +58,6 @@ class MediaControlSettingsScreenScreenshotTest {
                 onServerSelected = {},
                 onEntitySelected = {},
                 onRemoveEntity = {},
-                onMove = { _, _ -> },
-                onReorderComplete = {},
             )
         }
     }
@@ -82,15 +76,13 @@ class MediaControlSettingsScreenScreenshotTest {
                         bedroomConfig to "Bedroom Speaker",
                     ),
                     entityIconsByConfig = mapOf(
-                        livingRoomConfig to CommunityMaterial.Icon.cmd_cast,
-                        bedroomConfig to CommunityMaterial.Icon.cmd_cast,
+                        livingRoomConfig to Icon3.cmd_television,
+                        bedroomConfig to Icon3.cmd_speaker,
                     ),
                 ),
                 onServerSelected = {},
                 onEntitySelected = {},
                 onRemoveEntity = {},
-                onMove = { _, _ -> },
-                onReorderComplete = {},
             )
         }
     }
