@@ -112,7 +112,12 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         onFrontendError = ::onError,
         onUrlIntercepted = ::interceptRedirectIfRequired,
         onPageFinished = { _isLoadingFlow.update { false } },
-    )
+    ).apply {
+        // Anchor the WebView client to the onboarding server so auth-provider
+        // navigation on third-party domains is kept inside the WebView instead
+        // of being forwarded to the system browser.
+        serverHost = rawUri.host
+    }
 
     init {
         viewModelScope.launch {

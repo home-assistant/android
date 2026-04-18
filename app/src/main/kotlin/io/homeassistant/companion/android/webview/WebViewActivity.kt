@@ -267,6 +267,11 @@ class WebViewActivity :
     lateinit var dataSourceFactory: DataSource.Factory
 
     private lateinit var webView: WebView
+
+    // Reference to the WebViewClient instance bound to [webView]. Kept alongside the
+    // WebView itself because WebView.getWebViewClient() is only available from API 26,
+    // while the app's minimum SDK is 23.
+    private var webViewTlsClient: TLSWebViewClient? = null
     private var loadedUrl: Uri? = null
     private lateinit var decor: FrameLayout
     private var customViewFromWebView = mutableStateOf<View?>(null)
@@ -490,7 +495,7 @@ class WebViewActivity :
                 }
             }
 
-            webViewClient = object : TLSWebViewClient(keyChainRepository) {
+            val tlsClient = object : TLSWebViewClient(keyChainRepository) {
                 @Deprecated("Deprecated in Java for SDK >= 23")
                 override fun onReceivedError(
                     view: WebView?,
@@ -647,6 +652,8 @@ class WebViewActivity :
                     presenter.stopScanningForImprov(false)
                 }
             }
+            webViewClient = tlsClient
+            this@WebViewActivity.webViewTlsClient = tlsClient
 
             setDownloadListener { url, _, contentDisposition, mimetype, _ ->
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
@@ -1633,6 +1640,10 @@ class WebViewActivity :
             if (shouldLoadUrl) {
                 clearHistory = !keepHistory
                 loadedUrl = url
+                // Anchor the WebView client to the server host so auth-provider
+                // navigation on third-party domains can be distinguished from
+                // user-tapped external links on the HA frontend.
+                webViewTlsClient?.serverHost = url.host
 
                 loadUrlJob?.cancel()
                 loadUrlJob = lifecycleScope.launch {

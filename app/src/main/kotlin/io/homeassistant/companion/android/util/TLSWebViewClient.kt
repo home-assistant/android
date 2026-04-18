@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.util
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
@@ -19,6 +20,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import timber.log.Timber
 
 /*
@@ -37,6 +39,22 @@ open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) 
     var isCertificateChainValid = false
         @VisibleForTesting set
 
+    /**
+     * Host of the Home Assistant server the WebView is anchored to (e.g. `ha.local`,
+     * `home.example.com`). Used to distinguish user-initiated external link taps from
+     * in-flight authentication flows on third-party domains.
+     *
+     * When set, any main-frame http(s) navigation that happens while the WebView is
+     * currently on a host other than [serverHost] is treated as part of an ongoing
+     * authentication handshake (for example a Cloudflare Access login page redirecting
+     * to Google Workspace or an Authelia instance redirecting to a WebAuthn challenge)
+     * and is kept inside the WebView. Once the flow returns to [serverHost] the
+     * original external-link behaviour resumes.
+     *
+     * When null, only server-initiated redirects are kept in the WebView.
+     */
+    var serverHost: String? = null
+
     private var key: PrivateKey? = null
     private var chain: Array<X509Certificate>? = null
 
@@ -50,38 +68,63 @@ open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) 
     }
 
     /**
-     * Allows the WebView to follow server-initiated redirects on the main frame to any
-     * http(s) destination, instead of handing them off to the system browser.
+     * Allows the WebView to follow authentication-provider navigation on the main frame
+     * instead of handing it off to the system browser.
      *
      * This enables authentication proxies placed in front of Home Assistant (for example
      * Cloudflare Access, Authelia, Authentik, or any other OIDC / OAuth 2.0 compliant
-     * reverse proxy) to complete their login handshake inside the app WebView. Once the
-     * proxy sets its session cookie and redirects back to the Home Assistant origin, the
-     * session continues transparently — the same way a browser would handle it.
+     * reverse proxy) to complete their login handshake inside the app WebView. Two forms
+     * of auth-provider navigation are kept in-WebView:
      *
-     * User-initiated navigation is not affected: when a user taps a link to an external
-     * resource, [WebResourceRequest.isRedirect] is `false`, so the call falls through to
-     * the existing deprecated override and the link still opens in the system browser.
+     * 1. Server-initiated redirects on the main frame (the initial auth challenge from
+     *    the HA origin to the proxy, or the proxy's return redirect back to HA).
+     * 2. Any main-frame http(s) navigation that happens while the WebView is currently
+     *    sitting on a host other than [serverHost]. This covers the common case where
+     *    the auth proxy page requires the user to tap a federated login button (e.g.
+     *    "Sign in with Google Workspace") that would otherwise be classed as user-
+     *    initiated and ejected to the system browser.
+     *
+     * User-initiated external links from the HA frontend are not affected: when the
+     * WebView is currently on [serverHost] and the user taps a link to an external
+     * resource, the call falls through to the existing deprecated override and the
+     * link still opens in the system browser.
      *
      * On Android versions below API 24 this override is never invoked; the deprecated
-     * overload is called directly by the framework, preserving existing behaviour.
+     * overload is called directly by the framework, preserving existing behaviour. The
+     * [SuppressLint] below reflects that framework contract — the method body safely
+     * accesses API 24+ members (`WebResourceRequest.isRedirect`, `isForMainFrame`)
+     * because the framework does not dispatch this overload on older platforms.
      */
+    @SuppressLint("NewApi")
     override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-        if (isAuthProviderRedirect(request)) {
-            Timber.d("Allowing main-frame auth redirect to ${request?.url?.host} to load in WebView")
+        if (isAuthProviderNavigation(view, request)) {
+            Timber.d(
+                "Allowing main-frame navigation to ${sensitive(
+                    request?.url?.host.orEmpty(),
+                )} to load in WebView (auth flow)",
+            )
             return false
         }
         @Suppress("DEPRECATION")
         return shouldOverrideUrlLoading(view, request?.url?.toString())
     }
 
+    // Only called from [shouldOverrideUrlLoading] above (which the framework only
+    // dispatches on API 24+) and from unit tests (which run on the JVM and mock the
+    // API 24+ members directly). The SuppressLint covers both call paths.
+    @SuppressLint("NewApi")
     @VisibleForTesting
-    internal fun isAuthProviderRedirect(request: WebResourceRequest?): Boolean {
+    internal fun isAuthProviderNavigation(view: WebView?, request: WebResourceRequest?): Boolean {
         if (request == null) return false
         if (!request.isForMainFrame) return false
-        if (!request.isRedirect) return false
         val scheme = request.url?.scheme?.lowercase()
-        return scheme == "http" || scheme == "https"
+        if (scheme != "http" && scheme != "https") return false
+
+        if (request.isRedirect) return true
+
+        val anchor = serverHost ?: return false
+        val currentHost = view?.url?.toHttpUrlOrNull()?.host ?: return false
+        return !currentHost.equals(anchor, ignoreCase = true)
     }
 
     override fun onReceivedClientCertRequest(view: WebView, request: ClientCertRequest) {
