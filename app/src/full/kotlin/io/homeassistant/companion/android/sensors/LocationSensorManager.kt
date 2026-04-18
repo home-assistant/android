@@ -1098,22 +1098,26 @@ class LocationSensorManager :
         var geofenceCount = 0
         getEnabledServers(latestContext, zoneLocation).map { serverId ->
             ioScope.async {
-                val configuredZones = getZones(serverId, forceRefresh = true)
-                configuredZones.forEach {
-                    addGeofenceToBuilder(geofencingRequestBuilder, serverId, it)
-                    geofenceCount++
-                    if (geofenceCount >= 100) {
-                        return@async
-                    }
-                    if (highAccuracyTriggerRange > 0 && highAccuracyZones.contains("${serverId}_${it.entityId}")) {
-                        addGeofenceToBuilder(geofencingRequestBuilder, serverId, it, highAccuracyTriggerRange)
+                try {
+                    val configuredZones = getZones(serverId, forceRefresh = true)
+                    configuredZones.forEach {
+                        addGeofenceToBuilder(geofencingRequestBuilder, serverId, it)
                         geofenceCount++
                         if (geofenceCount >= 100) {
                             return@async
                         }
+                        if (highAccuracyTriggerRange > 0 && highAccuracyZones.contains("${serverId}_${it.entityId}")) {
+                            addGeofenceToBuilder(geofencingRequestBuilder, serverId, it, highAccuracyTriggerRange)
+                            geofenceCount++
+                            if (geofenceCount >= 100) {
+                                return@async
+                            }
+                        }
                     }
+                    geofenceRegistered.add(serverId)
+                } catch (e: Exception) {
+                    Timber.w(e, "Failed to fetch zones for server $serverId, skipping")
                 }
-                geofenceRegistered.add(serverId)
             }
         }.awaitAll()
         return if (geofenceCount > 0) geofencingRequestBuilder.build() else null
