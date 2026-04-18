@@ -1,7 +1,9 @@
 package io.homeassistant.companion.android.util
 
+import android.net.Uri
 import android.net.http.SslError
 import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient.ERROR_AUTHENTICATION
@@ -23,6 +25,7 @@ import io.mockk.slot
 import kotlin.reflect.KClass
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -366,6 +369,102 @@ class HAWebViewClientTest {
     private fun mockRequest(url: String) = mockk<android.webkit.WebResourceRequest> {
         every { this@mockk.url } returns mockk {
             every { this@mockk.toString() } returns url
+        }
+    }
+
+    @Test
+    fun `Given main-frame https redirect when shouldOverrideUrlLoading then follows in WebView`() {
+        val request = mockRedirectRequest(
+            url = "https://auth.example.com/login",
+            scheme = "https",
+            isForMainFrame = true,
+            isRedirect = true,
+        )
+
+        val shouldOverride = webViewClient.shouldOverrideUrlLoading(mockWebView(), request)
+
+        assertFalse(shouldOverride, "WebView should follow main-frame auth-provider redirects")
+    }
+
+    @Test
+    fun `Given main-frame http redirect when shouldOverrideUrlLoading then follows in WebView`() {
+        val request = mockRedirectRequest(
+            url = "http://auth.example.com/login",
+            scheme = "http",
+            isForMainFrame = true,
+            isRedirect = true,
+        )
+
+        val shouldOverride = webViewClient.shouldOverrideUrlLoading(mockWebView(), request)
+
+        assertFalse(shouldOverride, "WebView should follow main-frame auth-provider redirects")
+    }
+
+    @Test
+    fun `Given user-initiated main-frame navigation then isAuthProviderRedirect is false`() {
+        val request = mockRedirectRequest(
+            url = "https://external.example.com/article",
+            scheme = "https",
+            isForMainFrame = true,
+            isRedirect = false,
+        )
+
+        assertFalse(
+            webViewClient.isAuthProviderRedirect(request),
+            "User-tapped links are not server-initiated redirects and should not short-circuit",
+        )
+    }
+
+    @Test
+    fun `Given sub-frame redirect then isAuthProviderRedirect is false`() {
+        val request = mockRedirectRequest(
+            url = "https://iframe.example.com/widget",
+            scheme = "https",
+            isForMainFrame = false,
+            isRedirect = true,
+        )
+
+        assertFalse(
+            webViewClient.isAuthProviderRedirect(request),
+            "Only main-frame redirects represent an auth handshake; iframes should not short-circuit",
+        )
+    }
+
+    @Test
+    fun `Given non-http scheme main-frame redirect then isAuthProviderRedirect is false`() {
+        val request = mockRedirectRequest(
+            url = "homeassistant://auth-callback?code=abc",
+            scheme = "homeassistant",
+            isForMainFrame = true,
+            isRedirect = true,
+        )
+
+        assertFalse(
+            webViewClient.isAuthProviderRedirect(request),
+            "Non-http(s) schemes (e.g. app OAuth callbacks) must still reach the URL interceptor",
+        )
+    }
+
+    @Test
+    fun `Given null request then isAuthProviderRedirect is false`() {
+        assertFalse(webViewClient.isAuthProviderRedirect(null))
+    }
+
+    private fun mockRedirectRequest(
+        url: String,
+        scheme: String,
+        isForMainFrame: Boolean,
+        isRedirect: Boolean,
+    ): WebResourceRequest {
+        val uri = mockk<Uri> {
+            every { this@mockk.scheme } returns scheme
+            every { this@mockk.host } returns "example.com"
+            every { this@mockk.toString() } returns url
+        }
+        return mockk {
+            every { this@mockk.url } returns uri
+            every { this@mockk.isForMainFrame } returns isForMainFrame
+            every { this@mockk.isRedirect } returns isRedirect
         }
     }
 }

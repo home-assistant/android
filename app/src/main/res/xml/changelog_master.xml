@@ -2,6 +2,7 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2026.4.4 - Main" versioncode="3">
+        <change>Support external authentication providers in front of Home Assistant (Cloudflare Access, Authelia, Authentik, and other OIDC / OAuth 2.0 proxies) — the WebView now follows auth redirects instead of kicking out to the browser</change>
         <change>Wake word detection no longer requires specific hardware</change>
         <change>Expanded wake word support to continue conversations after using your wake word to open Assist</change>
         <change>Assist conversations started with a wake word now auto-close after 30 seconds of inactivity</change>

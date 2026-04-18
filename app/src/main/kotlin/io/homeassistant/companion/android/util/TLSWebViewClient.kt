@@ -6,6 +6,7 @@ import android.content.ContextWrapper
 import android.security.KeyChain
 import android.security.KeyChainAliasCallback
 import android.webkit.ClientCertRequest
+import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.annotation.VisibleForTesting
@@ -46,6 +47,41 @@ open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) 
             return context as? Activity ?: getActivity(context.baseContext)
         }
         return null
+    }
+
+    /**
+     * Allows the WebView to follow server-initiated redirects on the main frame to any
+     * http(s) destination, instead of handing them off to the system browser.
+     *
+     * This enables authentication proxies placed in front of Home Assistant (for example
+     * Cloudflare Access, Authelia, Authentik, or any other OIDC / OAuth 2.0 compliant
+     * reverse proxy) to complete their login handshake inside the app WebView. Once the
+     * proxy sets its session cookie and redirects back to the Home Assistant origin, the
+     * session continues transparently — the same way a browser would handle it.
+     *
+     * User-initiated navigation is not affected: when a user taps a link to an external
+     * resource, [WebResourceRequest.isRedirect] is `false`, so the call falls through to
+     * the existing deprecated override and the link still opens in the system browser.
+     *
+     * On Android versions below API 24 this override is never invoked; the deprecated
+     * overload is called directly by the framework, preserving existing behaviour.
+     */
+    override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+        if (isAuthProviderRedirect(request)) {
+            Timber.d("Allowing main-frame auth redirect to ${request?.url?.host} to load in WebView")
+            return false
+        }
+        @Suppress("DEPRECATION")
+        return shouldOverrideUrlLoading(view, request?.url?.toString())
+    }
+
+    @VisibleForTesting
+    internal fun isAuthProviderRedirect(request: WebResourceRequest?): Boolean {
+        if (request == null) return false
+        if (!request.isForMainFrame) return false
+        if (!request.isRedirect) return false
+        val scheme = request.url?.scheme?.lowercase()
+        return scheme == "http" || scheme == "https"
     }
 
     override fun onReceivedClientCertRequest(view: WebView, request: ClientCertRequest) {
