@@ -49,6 +49,7 @@ import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import io.homeassistant.companion.android.notifications.MessagingManager
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -1096,30 +1097,38 @@ class LocationSensorManager :
         val highAccuracyZones = getHighAccuracyModeZones(false)
 
         var geofenceCount = 0
-        getEnabledServers(latestContext, zoneLocation).map { serverId ->
+        val serverZones = getEnabledServers(latestContext, zoneLocation).map { serverId ->
             ioScope.async {
                 try {
-                    val configuredZones = getZones(serverId, forceRefresh = true)
-                    configuredZones.forEach {
-                        addGeofenceToBuilder(geofencingRequestBuilder, serverId, it)
-                        geofenceCount++
-                        if (geofenceCount >= 100) {
-                            return@async
-                        }
-                        if (highAccuracyTriggerRange > 0 && highAccuracyZones.contains("${serverId}_${it.entityId}")) {
-                            addGeofenceToBuilder(geofencingRequestBuilder, serverId, it, highAccuracyTriggerRange)
-                            geofenceCount++
-                            if (geofenceCount >= 100) {
-                                return@async
-                            }
-                        }
-                    }
-                    geofenceRegistered.add(serverId)
+                    serverId to getZones(serverId, forceRefresh = true)
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     Timber.w(e, "Failed to fetch zones for server $serverId, skipping")
+                    null
                 }
             }
         }.awaitAll()
+
+        serverZones.forEach { result ->
+            if (result == null || geofenceCount >= 100) return@forEach
+
+            val (serverId, configuredZones) = result
+            configuredZones.forEach {
+                if (geofenceCount >= 100) return@forEach
+
+                addGeofenceToBuilder(geofencingRequestBuilder, serverId, it)
+                geofenceCount++
+                if (geofenceCount >= 100) return@forEach
+
+                if (highAccuracyTriggerRange > 0 && highAccuracyZones.contains("${serverId}_${it.entityId}")) {
+                    addGeofenceToBuilder(geofencingRequestBuilder, serverId, it, highAccuracyTriggerRange)
+                    geofenceCount++
+                }
+            }
+            geofenceRegistered.add(serverId)
+        }
+
         return if (geofenceCount > 0) geofencingRequestBuilder.build() else null
     }
 
