@@ -98,7 +98,7 @@ class AutomotiveAssistScreen @AssistedInject constructor(
                 CommunityMaterial.Icon3.cmd_speaker
             }
             isProcessing -> {
-                CommunityMaterial.Icon3.cmd_refresh
+                CommunityMaterial.Icon3.cmd_sync
             }
             else -> {
                 CommunityMaterial.Icon3.cmd_microphone_outline
@@ -120,7 +120,7 @@ class AutomotiveAssistScreen @AssistedInject constructor(
                     )
                     .setOnClickListener {
                         Timber.d("Assist button clicked")
-                        viewModel.onMicrophoneInput()
+                        viewModel.onMicrophoneInput(proactive = true, clearConversation = true)
                     }
                     .build(),
             )

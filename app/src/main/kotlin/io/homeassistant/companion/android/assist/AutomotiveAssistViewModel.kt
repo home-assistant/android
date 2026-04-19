@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.common.assist.AssistEvent
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,7 +31,15 @@ class AutomotiveAssistViewModel @AssistedInject constructor(
     @Assisted private val application: Application,
 ) : AssistViewModelBase(serverManager, audioStrategy, audioUrlPlayer, application) {
 
-    val isAudioPlaying: Boolean get() = isPlayingAudio
+    var isAudioPlaying by mutableStateOf(false)
+        private set
+
+  
+
+    private var pipelineJob: Job? = null
+    private var activeUserMessage: AssistMessage? = null
+    private var activeHaMessage: AssistMessage? = null
+    private var isContinuationTurn = false
 
     var isProcessing by mutableStateOf(false)
         private set
@@ -47,12 +56,6 @@ class AutomotiveAssistViewModel @AssistedInject constructor(
 
     private val _conversation = MutableStateFlow<List<AssistMessage>>(emptyList())
     val conversation: StateFlow<List<AssistMessage>> = _conversation.asStateFlow()
-
-    private val startMessage =
-        AssistMessage(
-            app.getString(io.homeassistant.companion.android.common.R.string.assist_how_can_i_assist),
-            isInput = false,
-        )
 
     var inputMode by mutableStateOf<AssistInputMode?>(null)
         private set
@@ -73,7 +76,7 @@ class AutomotiveAssistViewModel @AssistedInject constructor(
         viewModelScope.launch {
             audioStrategy.wakeWordDetected.collect { detectedPhrase ->
                 if (inputMode != AssistInputMode.VOICE_ACTIVE) {
-                    onMicrophoneInput(proactive = false)
+                    onMicrophoneInput(clearConversation = false)
                 }
             }
         }
@@ -100,7 +103,9 @@ class AutomotiveAssistViewModel @AssistedInject constructor(
 
             if (pipelineId != null) {
                 setPipeline(pipelineId)
-            } else if (serverManager.integrationRepository(selectedServerId).getLastUsedPipelineId() != null) {
+            } else if (
+                serverManager.integrationRepository(selectedServerId).getLastUsedPipelineId() != null
+            ) {
                 setPipeline(serverManager.integrationRepository(selectedServerId).getLastUsedPipelineId())
             } else {
                 inputMode = AssistInputMode.BLOCKED
@@ -113,7 +118,7 @@ class AutomotiveAssistViewModel @AssistedInject constructor(
             }
 
             if (hasPermission && recorderAutoStart) {
-                onMicrophoneInput(proactive = true)
+                onMicrophoneInput(proactive = true, clearConversation = true)
             }
         }
     }
@@ -127,21 +132,34 @@ class AutomotiveAssistViewModel @AssistedInject constructor(
         }
 
         if (pipeline != null) {
-            _conversation.value = listOf(startMessage)
+            _conversation.value = emptyList()
+            activeUserMessage = null
+            activeHaMessage = null
             inputMode = if (pipeline.sttEngine != null) AssistInputMode.VOICE_INACTIVE else AssistInputMode.TEXT_ONLY
-            if (pipeline.sttEngine != null) {
-                onMicrophoneInput(proactive = true)
-            }
         } else {
             inputMode = AssistInputMode.BLOCKED
         }
     }
 
-    fun onMicrophoneInput(proactive: Boolean = false) {
-        Timber.d("onMicrophoneInput called (proactive=$proactive, hasPermission=$hasPermission)")
+    fun onMicrophoneInput(
+        proactive: Boolean = false,
+        isContinuation: Boolean = false,
+        clearConversation: Boolean = false,
+    ) {
+        Timber.d(
+            "onMicrophoneInput called " +
+                "(proactive=$proactive, isContinuation=$isContinuation, clearConversation=$clearConversation)",
+        )
         if (!hasPermission) {
             Timber.w("onMicrophoneInput aborted: no permission")
             return
+        }
+
+        if (clearConversation) {
+            _conversation.value = emptyList()
+            activeUserMessage = null
+            activeHaMessage = null
+            pipelineJob?.cancel()
         }
 
         stopPlayback()
@@ -152,33 +170,35 @@ class AutomotiveAssistViewModel @AssistedInject constructor(
                 isInput = false,
                 isError = true,
             )
+            Timber.e(it, "Recorder setup failed")
         })
-        inputMode = AssistInputMode.VOICE_ACTIVE
+        if (!isContinuation) {
+            inputMode = AssistInputMode.VOICE_ACTIVE
+        }
+
         if (proactive) {
-            _conversation.value = _conversation.value + AssistMessage.placeholder(isInput = true)
-            runAssistPipeline(null, isProactive = true)
-        } else {
-            runAssistPipeline(null)
+              if (isContinuation) {
+                    // Just add user placeholder, pipeline already running
+                    activeUserMessage = AssistMessage.placeholder(isInput = true)
+                    _conversation.value = _conversation.value + activeUserMessage!!
+                    activeHaMessage = AssistMessage.placeholder(isInput = false)
+                } else {
+                // New pipeline, add placeholders and start pipeline
+                activeUserMessage = AssistMessage.placeholder(isInput = true)
+                activeHaMessage = AssistMessage.placeholder(isInput = false)
+                _conversation.value = _conversation.value + activeUserMessage!! + activeHaMessage!!
+                runAssistPipeline(null)
+            }
         }
     }
 
-    private fun runAssistPipeline(text: String?, isProactive: Boolean = false) {
+    private fun runAssistPipeline(text: String?, skipStopPlayback: Boolean = false) {
         val isVoice = text == null
-        stopPlayback()
+        if (!skipStopPlayback) {
+            stopPlayback()
+        }
 
-        val userMessage = text?.let { AssistMessage(it, isInput = true) } ?: AssistMessage.placeholder(isInput = true)
-        val haMessage = AssistMessage.placeholder(isInput = false)
-
-        viewModelScope.launch {
-            val currentList = _conversation.value.toMutableList()
-            if (!isProactive || text != null) {
-                currentList.add(userMessage)
-                if (!isVoice) currentList.add(haMessage)
-            }
-            _conversation.value = currentList
-
-            var message = if (isVoice) userMessage else haMessage
-
+        pipelineJob = viewModelScope.launch {
             val pipeline = try {
                 val lastPipelineId = serverManager.integrationRepository(selectedServerId).getLastUsedPipelineId()
                 lastPipelineId?.let {
@@ -198,33 +218,58 @@ class AutomotiveAssistViewModel @AssistedInject constructor(
                 when (event) {
                     is AssistEvent.Message -> {
                         val currentList = _conversation.value.toMutableList()
-                        val index = currentList.indexOf(message)
-                        if (index != -1) {
-                            val isInput = event is AssistEvent.Message.Input
-                            val isError = event is AssistEvent.Message.Error
-                            currentList[index] = message.copy(
-                                message = event.message.trim(),
-                                isInput = isInput,
-                                isError = isError,
-                            )
-                            if (isInput) {
-                                currentList.add(haMessage)
-                                message = haMessage
+                        if (event is AssistEvent.Message.Error) {
+                            if (activeHaMessage != null) {
+                                val haIndex = currentList.indexOf(activeHaMessage)
+                                if (haIndex != -1) {
+                                    currentList[haIndex] = activeHaMessage!!.copy(
+                                        message = event.message.trim(),
+                                        isError = true,
+                                    )
+                                    _conversation.value = currentList
+                                }
                             }
-                            _conversation.value = currentList
+                        } else if (event is AssistEvent.Message.Input) {
+                            if (activeUserMessage != null) {
+                                val userIndex = currentList.indexOf(activeUserMessage)
+                                if (userIndex != -1) {
+                                    currentList[userIndex] = activeUserMessage!!.copy(
+                                        message = event.message.trim(),
+                                        isError = false,
+                                    )
+                                    // Add assistant placeholder for the response if not already in list
+                                    if (currentList.indexOf(activeHaMessage) == -1) {
+                                        activeHaMessage = AssistMessage.placeholder(isInput = false)
+                                        currentList.add(activeHaMessage!!)
+                                    }
+                                    _conversation.value = currentList
+                                }
+                            }
+                        } else if (event is AssistEvent.Message.Output) {
+                            if (activeHaMessage != null) {
+                                val haIndex = currentList.indexOf(activeHaMessage)
+                                if (haIndex != -1) {
+                                    currentList[haIndex] = activeHaMessage!!.copy(
+                                        message = event.message.trim(),
+                                        isError = false,
+                                    )
+                                    _conversation.value = currentList
+                                }
+                            }
                         }
                     }
 
                     is AssistEvent.MessageChunk -> {
                         val currentList = _conversation.value.toMutableList()
-                        val lastIndex = currentList.lastIndex
-                        if (lastIndex >= 0 && currentList[lastIndex] == haMessage) {
-                            currentList[lastIndex] = haMessage.copy(message = haMessage.message + event.chunk)
-                            _conversation.value = currentList
-                        } else if (lastIndex >= 0) {
-                            val lastMsg = currentList[lastIndex]
-                            currentList[lastIndex] = lastMsg.copy(message = lastMsg.message + event.chunk)
-                            _conversation.value = currentList
+                        if (activeHaMessage != null) {
+                            val haIndex = currentList.indexOf(activeHaMessage)
+                            if (haIndex != -1) {
+                                activeHaMessage = activeHaMessage!!.copy(
+                                    message = activeHaMessage!!.message + event.chunk,
+                                )
+                                currentList[haIndex] = activeHaMessage!!
+                                _conversation.value = currentList
+                            }
                         }
                     }
 
@@ -233,18 +278,19 @@ class AutomotiveAssistViewModel @AssistedInject constructor(
                         shouldFinish = true
                     }
 
-                    is AssistEvent.ContinueConversation -> onMicrophoneInput(proactive = true)
+                    is AssistEvent.ContinueConversation -> {
+                        onMicrophoneInput(proactive = true, isContinuation = true)
+                        isContinuationTurn = true
+                        runAssistPipeline(null, skipStopPlayback = true)
+                    }
 
                     is AssistEvent.PipelineEnded -> {
                         isProcessing = false
-                        val currentList = _conversation.value.toMutableList()
-                        if (currentList.isNotEmpty() &&
-                            currentList.last().isPlaceholder &&
-                            !currentList.last().isInput
-                        ) {
-                            currentList.removeAt(currentList.lastIndex)
-                            _conversation.value = currentList
+                        if (!isContinuationTurn) {
+                            activeUserMessage = null
+                            activeHaMessage = null
                         }
+                        isContinuationTurn = false
                     }
 
                     else -> {}
