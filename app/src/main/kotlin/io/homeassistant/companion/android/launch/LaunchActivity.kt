@@ -41,12 +41,13 @@ private const val DEEP_LINK_KEY = "deep_link_key"
 
 /**
  * Main entry point of the application, responsible for holding the whole navigation graph
- * and managing background workers tied to the Activity lifecycle.
+ * and triggering lifecycle-based refresh of background work.
  *
  * It also handles the splash screen display based on a condition exposed by the [LaunchViewModel].
  *
- * On resume, starts periodic sensor collection via [SensorWorker] and the persistent
- * WebSocket connection via [WebsocketManager].
+ * On resume, refreshes the scheduling of periodic sensor collection via [SensorWorker]
+ * and the background WebSocket work via [WebsocketManager].
+ * These jobs are managed outside the Activity and may continue beyond this lifecycle.
  * On pause, triggers an immediate sensor update via [SensorReceiver] so the server
  * has fresh data before the app goes to the background.
  */
@@ -116,7 +117,7 @@ class LaunchActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        SensorReceiver.updateAllSensors(this)
+        if (!isFinishing) SensorReceiver.updateAllSensors(this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
