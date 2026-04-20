@@ -48,6 +48,7 @@ class FrontendEventHandlerTest {
                 },
                 onNavigateToAssist = { _, _, _ -> },
                 onOpenExternalLink = {},
+                onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
             )
         }
@@ -76,6 +77,7 @@ class FrontendEventHandlerTest {
                 },
                 onNavigateToAssist = { _, _, _ -> },
                 onOpenExternalLink = {},
+                onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
             )
         }
@@ -106,6 +108,7 @@ class FrontendEventHandlerTest {
                     capturedStartListening = startListening
                 },
                 onOpenExternalLink = {},
+                onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
             )
         }
@@ -142,6 +145,7 @@ class FrontendEventHandlerTest {
                 onNavigateToSettings = {},
                 onNavigateToAssist = { _, _, _ -> },
                 onOpenExternalLink = {},
+                onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
             )
         }
@@ -166,6 +170,7 @@ class FrontendEventHandlerTest {
                 onNavigateToSettings = {},
                 onNavigateToAssist = { _, _, _ -> },
                 onOpenExternalLink = { uri -> capturedUri = uri },
+                onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
             )
         }
@@ -176,6 +181,59 @@ class FrontendEventHandlerTest {
         composeTestRule.waitForIdle()
 
         assertEquals(testUri, capturedUri)
+    }
+
+    @Test
+    fun `Given ShowServerSwitcher event then onShowServerSwitcher is called`() = runTest {
+        var serverSwitcherShown = false
+        val events = MutableSharedFlow<FrontendEvent>()
+
+        composeTestRule.setContent {
+            FrontendEventHandler(
+                events = events,
+                onShowSnackbar = { _, _ -> false },
+                onNavigateToSettings = {},
+                onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = {},
+                onShowServerSwitcher = { serverSwitcherShown = true },
+                onNavigateToNfcWrite = { _, _ -> },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        events.emit(FrontendEvent.ShowServerSwitcher)
+        composeTestRule.waitForIdle()
+
+        assertEquals(true, serverSwitcherShown)
+    }
+
+    @Test
+    fun `Given NavigateToDeveloperSettings event then onNavigateToSettings is called with Developer deeplink`() = runTest {
+        var settingsNavigated = false
+        var deepLink: SettingsActivity.Deeplink? = null
+        val navigationEvents = MutableSharedFlow<FrontendEvent>()
+
+        composeTestRule.setContent {
+            FrontendEventHandler(
+                events = navigationEvents,
+                onShowSnackbar = { _, _ -> false },
+                onNavigateToSettings = {
+                    settingsNavigated = true
+                    deepLink = it
+                },
+                onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = {},
+                onShowServerSwitcher = {},
+                onNavigateToNfcWrite = { _, _ -> },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        navigationEvents.emit(FrontendEvent.NavigateToDeveloperSettings)
+        composeTestRule.waitForIdle()
+
+        assertEquals(true, settingsNavigated)
+        assertEquals(SettingsActivity.Deeplink.Developer, deepLink)
     }
 
     @Test
@@ -191,6 +249,7 @@ class FrontendEventHandlerTest {
                 onNavigateToSettings = {},
                 onNavigateToAssist = { _, _, _ -> },
                 onOpenExternalLink = {},
+                onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { messageId, tagId ->
                     capturedMessageId = messageId
                     capturedTagId = tagId
@@ -219,6 +278,7 @@ class FrontendEventHandlerTest {
                 onNavigateToSettings = {},
                 onNavigateToAssist = { _, _, _ -> },
                 onOpenExternalLink = {},
+                onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { messageId, tagId ->
                     capturedMessageId = messageId
                     capturedTagId = tagId

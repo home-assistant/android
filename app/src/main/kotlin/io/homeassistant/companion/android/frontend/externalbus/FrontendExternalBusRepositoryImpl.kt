@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.frontend.externalbus
 
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.frontend.EvaluateScriptUsage
+import io.homeassistant.companion.android.frontend.WebViewAction
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.externalbus.incoming.IncomingExternalBusMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.OutgoingExternalBusMessage
@@ -41,7 +43,7 @@ val frontendExternalBusJson = Json(kotlinJsonMapper) {
  */
 class FrontendExternalBusRepositoryImpl @Inject constructor() : FrontendExternalBusRepository {
 
-    private val scriptsFlow = MutableSharedFlow<WebViewScript>(
+    private val actionsFlow = MutableSharedFlow<WebViewAction>(
         // Don't suspend if the WebView is temporarily unavailable
         extraBufferCapacity = BUFFER_CAPACITY,
     )
@@ -50,19 +52,34 @@ class FrontendExternalBusRepositoryImpl @Inject constructor() : FrontendExternal
         extraBufferCapacity = BUFFER_CAPACITY,
     )
 
+    /**
+     * Opts into [EvaluateScriptUsage] because this is the internal mechanism that
+     * implements the external bus itself. The frontend installs `window.externalBus`
+     * as the entry point for messages from the native app (see `ExternalMessaging.attach`
+     * in the frontend), so delivering a bus message means invoking that function via
+     * `evaluateJavascript`. There is no higher-level alternative — this call is what
+     * other callers rely on when they use [send].
+     *
+     * [send] enforces strong typing by accepting an [OutgoingExternalBusMessage] parameter,
+     * hiding the JSON serialization and script wrapping from callers. This keeps the raw
+     * `evaluateScript` usage confined to this single site so callers do not have to construct
+     * arbitrary scripts and use the typed message API.
+     */
+    @OptIn(EvaluateScriptUsage::class)
     override suspend fun send(message: OutgoingExternalBusMessage) {
         val json = frontendExternalBusJson.encodeToString(message)
         val script = "externalBus($json);"
         Timber.d("Queuing external bus message: ${sensitive(script)}")
-        scriptsFlow.emit(WebViewScript(script))
+        actionsFlow.emit(WebViewAction.EvaluateScript(script))
     }
 
-    override fun scriptsToEvaluate(): Flow<WebViewScript> = scriptsFlow.asSharedFlow()
+    override fun webViewActions(): Flow<WebViewAction> = actionsFlow.asSharedFlow()
 
+    @EvaluateScriptUsage
     override suspend fun evaluateScript(script: String): String? {
-        val webViewScript = WebViewScript(script)
-        scriptsFlow.emit(webViewScript)
-        return webViewScript.result.await()
+        val action = WebViewAction.EvaluateScript(script)
+        actionsFlow.emit(action)
+        return action.result.await()
     }
 
     override fun incomingMessages(): Flow<IncomingExternalBusMessage> = incomingFlow.asSharedFlow()

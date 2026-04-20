@@ -6,12 +6,15 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
+import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage
+import io.homeassistant.companion.android.frontend.gesture.FrontendGestureHandler
+import io.homeassistant.companion.android.frontend.gesture.GestureResult
 import io.homeassistant.companion.android.frontend.handler.FrontendBusObserver
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridgeFactory
@@ -42,6 +45,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -63,6 +67,7 @@ class FrontendViewModelTest {
     private val permissionManager: PermissionManager = mockk(relaxed = true)
     private val frontendJsBridgeFactory: FrontendJsBridgeFactory = mockk(relaxed = true)
     private val downloadManager: FrontendDownloadManager = mockk(relaxed = true)
+    private val gestureHandler: FrontendGestureHandler = mockk(relaxed = true)
 
     private val serverId = 1
     private val testUrlWithAuth = "https://example.com?external_auth=1"
@@ -70,7 +75,7 @@ class FrontendViewModelTest {
     @BeforeEach
     fun setUp() {
         every { frontendBusObserver.messageResults() } returns emptyFlow()
-        every { frontendBusObserver.scriptsToEvaluate() } returns emptyFlow()
+        every { frontendBusObserver.webViewActions() } returns emptyFlow()
         every { connectivityCheckRepository.runChecks(any()) } returns flowOf(ConnectivityCheckState())
     }
 
@@ -89,6 +94,7 @@ class FrontendViewModelTest {
             permissionManager = permissionManager,
             frontendJsBridgeFactory = frontendJsBridgeFactory,
             downloadManager = downloadManager,
+            gestureHandler = gestureHandler,
         )
     }
 
@@ -525,7 +531,7 @@ class FrontendViewModelTest {
         }
 
         @Test
-        fun `Given haptic message when collected then hapticEvents emits the type`() = runTest {
+        fun `Given haptic message when collected then webViewActions emits Haptic action`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
@@ -534,20 +540,75 @@ class FrontendViewModelTest {
 
             val viewModel = createViewModel()
 
-            val hapticEvents = mutableListOf<HapticType>()
-            val job = backgroundScope.launch { viewModel.hapticEvents.collect { hapticEvents.add(it) } }
+            viewModel.webViewActions.test {
+                messageFlow.emit(FrontendHandlerEvent.PerformHaptic(HapticType.Success))
+                messageFlow.emit(FrontendHandlerEvent.PerformHaptic(HapticType.Light))
+                messageFlow.emit(FrontendHandlerEvent.PerformHaptic(HapticType.Heavy))
+
+                assertEquals(HapticType.Success, (awaitItem() as WebViewAction.Haptic).type)
+                assertEquals(HapticType.Light, (awaitItem() as WebViewAction.Haptic).type)
+                assertEquals(HapticType.Heavy, (awaitItem() as WebViewAction.Haptic).type)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given gesture returns SwitchServer when handled then viewState transitions to new server`() = runTest {
+            every { frontendBusObserver.messageResults() } returns emptyFlow()
+            every { urlManager.serverUrlFlow(1, any()) } returns flowOf(
+                UrlLoadResult.Success(url = "https://server1.com?external_auth=1", serverId = 1),
+            )
+            every { urlManager.serverUrlFlow(2, any()) } returns flowOf(
+                UrlLoadResult.Success(url = "https://server2.com?external_auth=1", serverId = 2),
+            )
+            coEvery {
+                gestureHandler.handleGesture(serverId = any(), direction = any(), pointerCount = any())
+            } returns GestureResult.SwitchServer(2)
+
+            val viewModel = createViewModel(serverId = 1)
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            assertEquals(1, viewModel.viewState.value.serverId)
+
+            viewModel.onGesture(GestureDirection.LEFT, pointerCount = 2)
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            assertEquals(2, viewModel.viewState.value.serverId)
+            assertTrue(viewModel.viewState.value.url.contains("server2.com"))
+        }
+
+        @Test
+        fun `Given gesture returns PerformWebViewActionThen when handled then action is emitted and then is executed`() = runTest {
+            every { frontendBusObserver.messageResults() } returns emptyFlow()
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val clearHistory = WebViewAction.ClearHistory()
+            coEvery {
+                gestureHandler.handleGesture(serverId = any(), direction = any(), pointerCount = any())
+            } returns GestureResult.PerformWebViewActionThen(
+                action = clearHistory,
+                then = {
+                    GestureResult.PerformWebViewAction(WebViewAction.Reload())
+                },
+            )
+
+            val viewModel = createViewModel()
+            val actions = mutableListOf<WebViewAction>()
+            val job = backgroundScope.launch { viewModel.webViewActions.collect { actions.add(it) } }
 
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
 
-            messageFlow.emit(FrontendHandlerEvent.PerformHaptic(HapticType.Success))
-            messageFlow.emit(FrontendHandlerEvent.PerformHaptic(HapticType.Light))
-            messageFlow.emit(FrontendHandlerEvent.PerformHaptic(HapticType.Heavy))
+            viewModel.onGesture(GestureDirection.UP, pointerCount = 2)
+
+            // Simulate Screen completing the ClearHistory action
+            clearHistory.result.complete(Unit)
             advanceUntilIdle()
 
-            assertEquals(3, hapticEvents.size)
-            assertEquals(HapticType.Success, hapticEvents[0])
-            assertEquals(HapticType.Light, hapticEvents[1])
-            assertEquals(HapticType.Heavy, hapticEvents[2])
+            assertEquals(2, actions.size)
+            assertInstanceOf(WebViewAction.ClearHistory::class.java, actions[0])
+            assertInstanceOf(WebViewAction.Reload::class.java, actions[1])
             job.cancel()
         }
 

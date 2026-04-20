@@ -59,6 +59,8 @@ internal fun NavController.navigateToFrontend(
  * @param onConfigureHomeNetwork Callback to configure home network (receives serverId)
  * @param onSecurityLevelHelpClick Callback when user taps help on security level screen
  * @param onShowSnackbar Callback to show snackbar messages
+ * @param onShowServerSwitcher Callback to display the server switcher bottom sheet. Receives an
+ *   `onServerSelected` callback that must be invoked with the chosen server ID.
  */
 internal fun NavGraphBuilder.frontendScreen(
     navController: NavController,
@@ -68,6 +70,7 @@ internal fun NavGraphBuilder.frontendScreen(
     onOpenLocationSettings: () -> Unit,
     onConfigureHomeNetwork: (serverId: Int) -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
+    onShowServerSwitcher: (onServerSelected: (Int) -> Unit) -> Unit,
 ) {
     if (WIPFeature.USE_FRONTEND_V2) {
         composable<FrontendRoute> {
@@ -92,6 +95,7 @@ internal fun NavGraphBuilder.frontendScreen(
                     )
                 },
                 onOpenExternalLink = onOpenExternalLink,
+                onShowServerSwitcher = { onShowServerSwitcher(viewModel::switchServer) },
                 onNavigateToNfcWrite = { messageId, tagId ->
                     nfcWriteLauncher.launch(WriteNfcTag.Input(tagId = tagId, messageId = messageId))
                 },
@@ -135,6 +139,7 @@ internal fun FrontendEventHandler(
     onNavigateToSettings: (SettingsActivity.Deeplink?) -> Unit,
     onNavigateToAssist: (serverId: Int, pipelineId: String?, startListening: Boolean) -> Unit,
     onOpenExternalLink: suspend (Uri) -> Unit,
+    onShowServerSwitcher: () -> Unit,
     onNavigateToNfcWrite: (messageId: Int, tagId: String?) -> Unit,
 ) {
     val resources = LocalResources.current
@@ -159,6 +164,14 @@ internal fun FrontendEventHandler(
 
                 is FrontendEvent.OpenExternalLink -> {
                     onOpenExternalLink(event.uri)
+                }
+
+                is FrontendEvent.NavigateToDeveloperSettings -> {
+                    onNavigateToSettings(SettingsActivity.Deeplink.Developer)
+                }
+
+                is FrontendEvent.ShowServerSwitcher -> {
+                    onShowServerSwitcher()
                 }
 
                 is FrontendEvent.NavigateToNfcWrite -> {

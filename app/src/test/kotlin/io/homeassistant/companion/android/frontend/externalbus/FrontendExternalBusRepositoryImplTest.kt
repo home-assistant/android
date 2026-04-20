@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.frontend.externalbus
 
 import app.cash.turbine.test
+import io.homeassistant.companion.android.frontend.EvaluateScriptUsage
+import io.homeassistant.companion.android.frontend.WebViewAction
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConfigGetMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConnectionStatusMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.UnknownIncomingMessage
@@ -20,6 +22,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
+@OptIn(EvaluateScriptUsage::class)
 class FrontendExternalBusRepositoryImplTest {
 
     private lateinit var repository: FrontendExternalBusRepositoryImpl
@@ -105,7 +108,7 @@ class FrontendExternalBusRepositoryImplTest {
     }
 
     @Test
-    fun `Given outgoing message when sent then emit as script on scriptsToEvaluate flow`() = runTest {
+    fun `Given outgoing message when sent then emit as EvaluateScript on webViewActions flow`() = runTest {
         val configResponse = ResultMessage.config(
             id = 1,
             config = ConfigResult(
@@ -117,12 +120,13 @@ class FrontendExternalBusRepositoryImplTest {
             ),
         )
 
-        repository.scriptsToEvaluate().test {
+        repository.webViewActions().test {
             repository.send(configResponse)
 
-            val script = awaitItem()
-            assertEquals("externalBus(${frontendExternalBusJson.encodeToString<OutgoingExternalBusMessage>(configResponse)});", script.script)
-            assertFalse(script.result.isCompleted)
+            val action = awaitItem()
+            assertInstanceOf(WebViewAction.EvaluateScript::class.java, action)
+            val evaluateScript = action as WebViewAction.EvaluateScript
+            assertEquals("externalBus(${frontendExternalBusJson.encodeToString<OutgoingExternalBusMessage>(configResponse)});", evaluateScript.script)
         }
     }
 
@@ -131,17 +135,19 @@ class FrontendExternalBusRepositoryImplTest {
         val testScript = "testCallback(true)"
         val expectedResult = "success"
 
-        repository.scriptsToEvaluate().test {
+        repository.webViewActions().test {
             // Start evaluateScript in background - it will suspend
             val resultDeferred = async { repository.evaluateScript(testScript) }
 
-            // Collect the emitted script
-            val webViewScript = awaitItem()
-            assertEquals(testScript, webViewScript.script)
-            assertFalse(webViewScript.result.isCompleted)
+            // Collect the emitted action
+            val action = awaitItem()
+            assertInstanceOf(WebViewAction.EvaluateScript::class.java, action)
+            val evaluateScript = action as WebViewAction.EvaluateScript
+            assertEquals(testScript, evaluateScript.script)
+            assertFalse(evaluateScript.result.isCompleted)
 
             // Simulate WebView completing the result
-            webViewScript.result.complete(expectedResult)
+            evaluateScript.result.complete(expectedResult)
 
             // Now evaluateScript should return
             val result = resultDeferred.await()

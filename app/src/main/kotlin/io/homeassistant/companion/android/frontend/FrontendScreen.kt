@@ -2,6 +2,9 @@ package io.homeassistant.companion.android.frontend
 
 import android.annotation.SuppressLint
 import android.net.Uri
+import android.view.MotionEvent
+import android.view.View
+import android.webkit.CookieManager
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -42,12 +45,10 @@ import io.homeassistant.companion.android.common.compose.composable.HAPlainButto
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorScreen
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
-import io.homeassistant.companion.android.frontend.externalbus.WebViewScript
-import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
-import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge
 import io.homeassistant.companion.android.frontend.js.FrontendJsCallback
 import io.homeassistant.companion.android.frontend.permissions.MultiplePermissionsEffect
@@ -58,6 +59,7 @@ import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModel
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModelFactory
+import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.compose.webview.HAWebView
 import io.homeassistant.companion.android.util.sensitive
@@ -66,6 +68,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
+
+/** Minimum swipe velocity (pixels/second) to trigger a gesture action. */
+private const val MINIMUM_GESTURE_VELOCITY = 75f
 
 /**
  * Frontend screen that renders based on the ViewModel's current view state.
@@ -117,8 +122,6 @@ internal fun FrontendScreen(
         webViewClient = viewModel.webViewClient,
         webChromeClient = viewModel.webChromeClient,
         frontendJsCallback = viewModel.frontendJsCallback,
-        scriptsToEvaluate = viewModel.scriptsToEvaluate,
-        hapticEvents = viewModel.hapticEvents,
         pendingPermissionRequest = pendingPermissionRequest,
         onClearPendingPermissionRequest = viewModel::clearPendingPermissionRequest,
         onBlockInsecureRetry = viewModel::onRetry,
@@ -134,6 +137,8 @@ internal fun FrontendScreen(
         onShowSnackbar = onShowSnackbar,
         onWebViewCreationFailed = viewModel::onWebViewCreationFailed,
         onDownloadRequested = viewModel::onDownloadRequested,
+        webViewActions = viewModel.webViewActions,
+        onGesture = viewModel::onGesture,
         modifier = modifier,
     )
 }
@@ -145,7 +150,6 @@ internal fun FrontendScreenContent(
     webViewClient: WebViewClient,
     webChromeClient: WebChromeClient,
     frontendJsCallback: FrontendJsCallback,
-    scriptsToEvaluate: Flow<WebViewScript>,
     onBlockInsecureRetry: () -> Unit,
     onOpenExternalLink: suspend (Uri) -> Unit,
     onBlockInsecureHelpClick: suspend () -> Unit,
@@ -157,13 +161,14 @@ internal fun FrontendScreenContent(
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onWebViewCreationFailed: (Throwable) -> Unit,
     modifier: Modifier = Modifier,
-    hapticEvents: Flow<HapticType> = emptyFlow(),
     pendingPermissionRequest: PermissionRequest<*>? = null,
     onClearPendingPermissionRequest: () -> Unit = {},
     errorStateProvider: FrontendConnectionErrorStateProvider = FrontendConnectionErrorStateProvider.noOp,
     securityLevelViewModel: LocationForSecureConnectionViewModel? = null,
     onSecurityLevelDone: () -> Unit = {},
     onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit = { _, _, _ -> },
+    webViewActions: Flow<WebViewAction> = emptyFlow(),
+    onGesture: (GestureDirection, Int) -> Unit = { _, _ -> },
 ) {
     var webView by remember { mutableStateOf<WebView?>(null) }
 
@@ -171,8 +176,7 @@ internal fun FrontendScreenContent(
         webView = webView,
         url = viewState.url,
         frontendJsCallback = frontendJsCallback,
-        scriptsToEvaluate = scriptsToEvaluate,
-        hapticEvents = hapticEvents,
+        webViewActions = webViewActions,
     )
 
     PendingPermissionHandler(
@@ -190,6 +194,7 @@ internal fun FrontendScreenContent(
             contentState = viewState as? FrontendViewState.Content,
             onWebViewCreationFailed = onWebViewCreationFailed,
             onDownloadRequested = onDownloadRequested,
+            onGesture = onGesture,
         )
 
         StateOverlay(
@@ -372,6 +377,7 @@ private fun SafeHAWebView(
     onWebViewCreationFailed: (Throwable) -> Unit,
     webChromeClient: WebChromeClient? = null,
     onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit = { _, _, _ -> },
+    onGesture: (GestureDirection, Int) -> Unit = { _, _ -> },
 ) {
     val serverHandleInsets = contentState?.serverHandleInsets ?: false
     val backgroundColor = contentState?.backgroundColor
@@ -407,12 +413,13 @@ private fun SafeHAWebView(
                     .weight(1f)
                     .background(Color.Transparent),
                 configure = {
-                    onWebViewCreated(this)
-                    this.webViewClient = webViewClient
-                    webChromeClient?.let { this.webChromeClient = it }
-                    setDownloadListener { url, _, contentDisposition, mimetype, _ ->
-                        onDownloadRequested(url, contentDisposition, mimetype)
-                    }
+                    configureForFrontend(
+                        webViewClient = webViewClient,
+                        webChromeClient = webChromeClient,
+                        onWebViewCreated = onWebViewCreated,
+                        onDownloadRequested = onDownloadRequested,
+                        onGesture = onGesture,
+                    )
                 },
                 onBackPressed = onBackClick,
                 onWebViewCreationFailed = onWebViewCreationFailed,
@@ -443,6 +450,59 @@ private fun SafeHAWebView(
 @Composable
 private fun Color.Overlay(modifier: Modifier = Modifier) {
     Spacer(modifier = modifier.background(this))
+}
+
+/**
+ * Applies the WebView configuration required to host the Home Assistant frontend
+ *
+ * The `ClickableViewAccessibility` lint is suppressed because the touch listener only observes
+ * multi-pointer swipe gestures (returning `false` for every event) — clicks still flow through
+ * the WebView's built-in handling, so overriding `performClick` would add no accessibility value.
+ */
+@SuppressLint("ClickableViewAccessibility")
+private fun WebView.configureForFrontend(
+    webViewClient: WebViewClient,
+    webChromeClient: WebChromeClient?,
+    onWebViewCreated: (WebView) -> Unit,
+    onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit,
+    onGesture: (GestureDirection, Int) -> Unit,
+) {
+    onWebViewCreated(this)
+
+    this.webViewClient = webViewClient
+
+    webChromeClient?.let { this.webChromeClient = it }
+
+    // Enable first-party cookies globally and third-party cookies for this WebView.
+    // The Home Assistant frontend relies on third-party cookies for some integrations
+    // (e.g. embedded content served from a different origin).
+    CookieManager.getInstance().apply {
+        setAcceptCookie(true)
+        setAcceptThirdPartyCookies(this@configureForFrontend, true)
+    }
+
+    setDownloadListener { url, _, contentDisposition, mimetype, _ ->
+        onDownloadRequested(url, contentDisposition, mimetype)
+    }
+
+    setOnTouchListener(
+        object : OnSwipeListener(context) {
+            override fun onSwipe(
+                e1: MotionEvent,
+                e2: MotionEvent,
+                velocity: Float,
+                direction: GestureDirection,
+                pointerCount: Int,
+            ): Boolean {
+                if (pointerCount > 1 && velocity >= MINIMUM_GESTURE_VELOCITY) {
+                    onGesture(direction, pointerCount)
+                }
+                return false
+            }
+
+            override fun onMotionEventHandled(v: View?, event: MotionEvent?): Boolean = false
+        },
+    )
 }
 
 /**
@@ -503,15 +563,14 @@ private fun PendingPermissionHandler(
 }
 
 /**
- * Handles WebView side effects: URL loading, script evaluation, haptics.
+ * Handles WebView side effects: URL loading and [WebViewAction] dispatch.
  */
 @Composable
 private fun WebViewEffects(
     webView: WebView?,
     url: String,
     frontendJsCallback: FrontendJsCallback,
-    scriptsToEvaluate: Flow<WebViewScript>,
-    hapticEvents: Flow<HapticType>,
+    webViewActions: Flow<WebViewAction>,
 ) {
     if (webView != null) {
         LaunchedEffect(webView, url) {
@@ -520,16 +579,8 @@ private fun WebViewEffects(
             webView.loadUrl(url)
         }
         LaunchedEffect(webView) {
-            scriptsToEvaluate.collect { webViewScript ->
-                Timber.d("Evaluating script: ${sensitive(webViewScript.script)}")
-                webView.evaluateJavascript(webViewScript.script) { result ->
-                    webViewScript.result.complete(result)
-                }
-            }
-        }
-        LaunchedEffect(webView) {
-            hapticEvents.collect { hapticType ->
-                HapticFeedbackPerformer.perform(webView, hapticType)
+            webViewActions.collect { action ->
+                action.run(webView)
             }
         }
     }
@@ -548,7 +599,6 @@ private fun FrontendScreenLoadingPreview() {
             webViewClient = WebViewClient(),
             webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
-            scriptsToEvaluate = emptyFlow(),
             onBlockInsecureRetry = {},
             onOpenExternalLink = {},
             onBlockInsecureHelpClick = {},
@@ -581,7 +631,6 @@ private fun FrontendScreenErrorPreview() {
             webViewClient = WebViewClient(),
             webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
-            scriptsToEvaluate = emptyFlow(),
             onBlockInsecureRetry = {},
             onOpenExternalLink = {},
             onBlockInsecureHelpClick = {},
@@ -610,7 +659,6 @@ private fun FrontendScreenInsecurePreview() {
             webViewClient = WebViewClient(),
             webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
-            scriptsToEvaluate = emptyFlow(),
             onBlockInsecureRetry = {},
             onOpenExternalLink = {},
             onBlockInsecureHelpClick = {},
@@ -637,7 +685,6 @@ private fun FrontendScreenSecurityLevelRequiredPreview() {
             webViewClient = WebViewClient(),
             webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
-            scriptsToEvaluate = emptyFlow(),
             onBlockInsecureRetry = {},
             onOpenExternalLink = {},
             onBlockInsecureHelpClick = {},

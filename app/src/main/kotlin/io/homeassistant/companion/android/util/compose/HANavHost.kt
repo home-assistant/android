@@ -6,11 +6,13 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
+import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import io.homeassistant.companion.android.automotive.navigation.carAppActivity
 import io.homeassistant.companion.android.automotive.navigation.navigateToCarAppActivity
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.frontend.navigation.frontendScreen
@@ -28,6 +30,7 @@ import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.n
 import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.setHomeNetworkScreen
 import io.homeassistant.companion.android.onboarding.wearOnboarding
 import io.homeassistant.companion.android.settings.navigation.navigateToSettings
+import io.homeassistant.companion.android.settings.server.ServerChooserFragment
 
 /**
  * Navigation host for the main application.
@@ -119,6 +122,7 @@ internal fun HANavHost(
                     navController.navigateToSetHomeNetworkRoute(serverId)
                 },
                 onShowSnackbar = onShowSnackbar,
+                onShowServerSwitcher = { onServerSelected -> showServerSwitcher(activity, onServerSelected) },
             )
             setHomeNetworkScreen(
                 onGotoNextScreen = {
@@ -155,4 +159,23 @@ private fun openSystemLocationSettings(activity: Activity) {
         intent.action = Settings.ACTION_SETTINGS
     }
     activity.startActivity(intent)
+}
+
+private fun showServerSwitcher(activity: Activity?, onServerSelected: (Int) -> Unit) {
+    val fragmentActivity = activity as? FragmentActivity
+    if (fragmentActivity == null) {
+        FailFast.fail { "Cannot show server switcher: hosting activity is not a FragmentActivity" }
+    } else {
+        val fragmentManager = fragmentActivity.supportFragmentManager
+        fragmentManager.setFragmentResultListener(
+            ServerChooserFragment.RESULT_KEY,
+            fragmentActivity,
+        ) { _, bundle ->
+            if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
+                onServerSelected(bundle.getInt(ServerChooserFragment.RESULT_SERVER))
+            }
+            fragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
+        }
+        ServerChooserFragment().show(fragmentManager, ServerChooserFragment.TAG)
+    }
 }
