@@ -10,6 +10,7 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import dagger.hilt.android.testing.UninstallModules
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.di.ServerManagerModule
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
@@ -56,9 +57,11 @@ class LaunchActivityTest {
         mockkObject(SensorWorker.Companion)
         mockkObject(WebsocketManager.Companion)
         mockkObject(SensorReceiver.Companion)
+        mockkObject(DisabledLocationHandler)
         every { SensorWorker.start(any()) } just Runs
         coEvery { WebsocketManager.start(any()) } just Runs
         every { SensorReceiver.updateAllSensors(any()) } just Runs
+        every { DisabledLocationHandler.isLocationEnabled(any()) } returns true
     }
 
     @After
@@ -66,6 +69,7 @@ class LaunchActivityTest {
         unmockkObject(SensorWorker.Companion)
         unmockkObject(WebsocketManager.Companion)
         unmockkObject(SensorReceiver.Companion)
+        unmockkObject(DisabledLocationHandler)
     }
 
     @Test
@@ -73,6 +77,7 @@ class LaunchActivityTest {
         ActivityScenario.launch(LaunchActivity::class.java).use {
             verify { SensorWorker.start(any()) }
             coVerify { WebsocketManager.start(any()) }
+            verify { DisabledLocationHandler.isLocationEnabled(any()) }
         }
     }
 

@@ -1,9 +1,7 @@
 package io.homeassistant.companion.android.util.compose
 
 import android.app.Activity
-import android.content.Intent
 import android.net.Uri
-import android.provider.Settings
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.fragment.app.FragmentActivity
@@ -150,15 +148,7 @@ private fun openSystemLocationSettings(activity: Activity) {
     if (DisabledLocationHandler.isLocationEnabled(activity)) {
         return
     }
-    val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS).apply {
-        flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
-        addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
-    }
-    if (intent.resolveActivity(activity.packageManager) == null) {
-        intent.action = Settings.ACTION_SETTINGS
-    }
-    activity.startActivity(intent)
+    activity.startActivity(DisabledLocationHandler.locationSettingsIntent(activity))
 }
 
 private fun showServerSwitcher(activity: Activity?, onServerSelected: (Int) -> Unit) {
