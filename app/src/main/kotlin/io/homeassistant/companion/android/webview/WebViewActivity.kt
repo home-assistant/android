@@ -20,7 +20,6 @@ import android.text.method.HideReturnsTransformationMethod
 import android.text.method.PasswordTransformationMethod
 import android.util.DisplayMetrics
 import android.util.Rational
-import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
@@ -2161,16 +2160,6 @@ class WebViewActivity :
         document.dispatchEvent(event);
         """.trimIndent()
         evaluateJavascript(eventCode, null)
-    }
-
-    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        // Workaround to sideload on Android TV and use a remote for basic navigation in WebView
-        if (event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN && event.action == KeyEvent.ACTION_DOWN) {
-            dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_TAB))
-            return true
-        }
-
-        return super.dispatchKeyEvent(event)
     }
 
     private fun setWebViewZoom() = lifecycleScope.launch {
