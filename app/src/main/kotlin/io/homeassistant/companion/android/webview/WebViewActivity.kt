@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.graphics.Rect
 import android.net.Uri
 import android.net.http.SslError
@@ -501,6 +502,35 @@ class WebViewActivity :
                     Timber.e("onReceivedError: errorCode: $errorCode url:$failingUrl")
                     if (failingUrl == loadedUrl.toString()) {
                         showError()
+                    }
+                }
+
+                override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                    super.onPageStarted(view, url, favicon)
+                    // Align the lifecycle of the legacy `externalApp` JavaScript bridge with
+                    // the configured Home Assistant origin. The V1 bridge is registered via
+                    // [WebView.addJavascriptInterface] and has no per-call origin check, so any
+                    // page loaded in the WebView can reach it and call methods such as
+                    // `getExternalAuth`. The V2 bridge uses [WebViewCompat.addWebMessageListener]
+                    // and already rejects messages whose `sourceOrigin` does not match the
+                    // configured server, so it does not need to be torn down here.
+                    //
+                    // Stripping the V1 interface whenever the WebView navigates off-origin is
+                    // defence-in-depth against scenarios where the WebView could otherwise be
+                    // pointed at untrusted content that attempts to exfiltrate the user's
+                    // Home Assistant auth token through the bridge.
+                    val target = url?.toUri()
+                    if (target != null && !target.hasSameOrigin(loadedUrl)) {
+                        Timber.d("WebView navigated off the configured server origin, removing legacy external bridge")
+                        view?.removeJavascriptInterface(EXTERNAL_APP_V1)
+                    } else if (target != null) {
+                        // Returning to (or still on) the Home Assistant origin — reinstate the
+                        // bridge chosen for this server and WebView pair (V1 or V2). The helper
+                        // is idempotent: it removes whichever interface is not in use before
+                        // registering the one that is.
+                        lifecycleScope.launch {
+                            webViewAddJavascriptInterface()
+                        }
                     }
                 }
 
