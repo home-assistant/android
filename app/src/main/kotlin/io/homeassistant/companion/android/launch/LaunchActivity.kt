@@ -18,25 +18,37 @@ import androidx.compose.ui.res.stringResource
 import androidx.core.content.IntentCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.sensors.SensorReceiver
+import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.util.PLAY_SERVICES_FLAVOR_DOC_URL
 import io.homeassistant.companion.android.util.PlayServicesAvailability
 import io.homeassistant.companion.android.util.compose.HAApp
 import io.homeassistant.companion.android.util.compose.navigateToUri
 import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
+import io.homeassistant.companion.android.websocket.WebsocketManager
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 
 private const val DEEP_LINK_KEY = "deep_link_key"
 
 /**
- * Main entry point of the application, it is mostly responsible to hold the whole navigation of the application.
+ * Main entry point of the application, responsible for holding the whole navigation graph
+ * and managing background workers tied to the Activity lifecycle.
+ *
  * It also handles the splash screen display based on a condition exposed by the [LaunchViewModel].
+ *
+ * On resume, starts periodic sensor collection via [SensorWorker] and the persistent
+ * WebSocket connection via [WebsocketManager].
+ * On pause, triggers an immediate sensor update via [SensorReceiver] so the server
+ * has fresh data before the app goes to the background.
  */
 @AndroidEntryPoint
 class LaunchActivity : AppCompatActivity() {
@@ -93,6 +105,19 @@ class LaunchActivity : AppCompatActivity() {
             }
         },
     )
+
+    override fun onResume() {
+        super.onResume()
+        SensorWorker.start(this)
+        lifecycleScope.launch {
+            WebsocketManager.start(this@LaunchActivity)
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        SensorReceiver.updateAllSensors(this)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
