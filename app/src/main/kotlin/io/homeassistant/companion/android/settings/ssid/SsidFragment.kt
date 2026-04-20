@@ -109,7 +109,6 @@ class SsidFragment : Fragment() {
                 arrayOf(
                     getString(commonR.string.manage_ssids_wifi),
                 ),
-                showAsNotification = false,
             )
         }
     }

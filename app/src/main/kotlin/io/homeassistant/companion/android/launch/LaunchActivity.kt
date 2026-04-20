@@ -28,6 +28,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
+import io.homeassistant.companion.android.util.CheckLocationDisabledUseCase
 import io.homeassistant.companion.android.util.PLAY_SERVICES_FLAVOR_DOC_URL
 import io.homeassistant.companion.android.util.PlayServicesAvailability
 import io.homeassistant.companion.android.util.compose.HAApp
@@ -56,6 +57,9 @@ private const val DEEP_LINK_KEY = "deep_link_key"
 class LaunchActivity : AppCompatActivity() {
     @Inject
     internal lateinit var playServicesAvailability: PlayServicesAvailability
+
+    @Inject
+    internal lateinit var checkLocationDisabled: CheckLocationDisabledUseCase
 
     /**
      * Represents deep link actions that can be passed to [LaunchActivity] to navigate to specific destinations.
@@ -151,6 +155,7 @@ class LaunchActivity : AppCompatActivity() {
             SensorWorker.start(this)
             lifecycleScope.launch {
                 WebsocketManager.start(this@LaunchActivity)
+                checkLocationDisabled()
             }
         }
     }

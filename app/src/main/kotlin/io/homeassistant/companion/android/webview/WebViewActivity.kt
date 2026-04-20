@@ -99,7 +99,6 @@ import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.AppVersionProvider
-import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
@@ -138,6 +137,7 @@ import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
 import io.homeassistant.companion.android.themes.NightModeManager
 import io.homeassistant.companion.android.util.ChangeLog
+import io.homeassistant.companion.android.util.CheckLocationDisabledUseCase
 import io.homeassistant.companion.android.util.DataUriDownloadManager
 import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.util.OnSwipeListener
@@ -262,6 +262,9 @@ class WebViewActivity :
 
     @Inject
     lateinit var dataUriDownloadManager: DataUriDownloadManager
+
+    @Inject
+    lateinit var checkLocationDisabled: CheckLocationDisabledUseCase
 
     @Inject
     lateinit var dataSourceFactory: DataSource.Factory
@@ -1354,7 +1357,7 @@ class WebViewActivity :
                 window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             }
 
-            checkAndWarnForDisabledLocation()
+            checkLocationDisabled()
             changeLog.showChangeLog(this@WebViewActivity, false)
         }
 
@@ -1376,40 +1379,6 @@ class WebViewActivity :
             presenter.setAppActive(false)
         }
         if (!isFinishing && !isRelaunching) SensorReceiver.updateAllSensors(this)
-    }
-
-    private suspend fun checkAndWarnForDisabledLocation() {
-        var showLocationDisabledWarning = false
-        val settingsWithLocationPermissions = mutableListOf<String>()
-        if (!DisabledLocationHandler.isLocationEnabled(this) && presenter.isSsidUsed()) {
-            showLocationDisabledWarning = true
-            settingsWithLocationPermissions.add(getString(commonR.string.pref_connection_homenetwork))
-        }
-        for (manager in SensorReceiver.MANAGERS) {
-            for (basicSensor in manager.getAvailableSensors(this)) {
-                if (manager.isEnabled(this, basicSensor)) {
-                    val permissions = manager.requiredPermissions(this, basicSensor.id)
-
-                    val fineLocation = DisabledLocationHandler.containsLocationPermission(permissions, true)
-                    val coarseLocation = DisabledLocationHandler.containsLocationPermission(permissions, false)
-
-                    if ((fineLocation || coarseLocation)) {
-                        if (!DisabledLocationHandler.isLocationEnabled(this)) showLocationDisabledWarning = true
-                        settingsWithLocationPermissions.add(getString(basicSensor.name))
-                    }
-                }
-            }
-        }
-
-        if (showLocationDisabledWarning) {
-            DisabledLocationHandler.showLocationDisabledWarnDialog(
-                this@WebViewActivity,
-                settingsWithLocationPermissions.toTypedArray(),
-                true,
-            )
-        } else {
-            DisabledLocationHandler.removeLocationDisabledWarning(this@WebViewActivity)
-        }
     }
 
     fun exoPlayHls(json: JsonObject) {
