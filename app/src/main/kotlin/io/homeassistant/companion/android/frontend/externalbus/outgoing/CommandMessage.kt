@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend.externalbus.outgoing
 
+import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.frontend.externalbus.frontendExternalBusJson
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -49,6 +50,10 @@ object NavigateToMessage {
             NavigatePayload(path = path, options = NavigateOptions(replace = replace)),
         ),
     )
+
+    fun isAvailable(homeAssistantVersion: HomeAssistantVersion?): Boolean {
+        return homeAssistantVersion?.isAtLeast(2025, 6, 0) == true
+    }
 
     @Serializable
     private data class NavigatePayload(val path: String, val options: NavigateOptions = NavigateOptions())

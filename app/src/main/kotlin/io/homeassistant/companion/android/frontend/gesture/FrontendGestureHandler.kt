@@ -81,7 +81,7 @@ class FrontendGestureHandler @Inject constructor(
             )
             GestureAction.NAVIGATE_FORWARD -> GestureResult.PerformWebViewAction(WebViewAction.Forward())
             GestureAction.NAVIGATE_RELOAD -> GestureResult.PerformWebViewAction(WebViewAction.Reload())
-            GestureAction.SERVER_LIST -> showServerSwitcherOrIgnore()
+            GestureAction.SERVER_LIST -> GestureResult.Navigate(FrontendEvent.ShowServerSwitcher)
             GestureAction.SERVER_NEXT -> switchServerBy(currentServerId = serverId, offset = 1)
             GestureAction.SERVER_PREVIOUS -> switchServerBy(currentServerId = serverId, offset = -1)
         }
@@ -130,12 +130,6 @@ class FrontendGestureHandler @Inject constructor(
         externalBusRepository.evaluateScript(script)
     }
 
-    private suspend fun showServerSwitcherOrIgnore(): GestureResult = if (serverManager.servers().size < 2) {
-        GestureResult.Ignored
-    } else {
-        GestureResult.Navigate(FrontendEvent.ShowServerSwitcher)
-    }
-
     /**
      * Resolves the neighboring server in the user-defined order and returns a [GestureResult.SwitchServer]
      * for the ViewModel to execute.
@@ -158,7 +152,7 @@ class FrontendGestureHandler @Inject constructor(
 
     private suspend fun navigateToDashboard(serverId: Int): GestureResult {
         val version = serverManager.getServer(serverId)?.version
-        if (version?.isAtLeast(2025, 6) != true) {
+        if (!NavigateToMessage.isAvailable(version)) {
             Timber.w(
                 "Server version $version does not support navigate command, requires 2025.6+",
             )

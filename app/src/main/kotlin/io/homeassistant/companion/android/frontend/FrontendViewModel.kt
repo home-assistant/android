@@ -343,7 +343,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
     private suspend fun handleGestureResult(result: GestureResult) {
         when (result) {
-            is GestureResult.Navigate -> _events.tryEmit(result.event)
+            is GestureResult.Navigate -> _events.emit(result.event)
             is GestureResult.PerformWebViewAction -> _webViewActions.emit(result.action)
             is GestureResult.PerformWebViewActionThen<*> -> {
                 _webViewActions.emit(result.action)
@@ -372,7 +372,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         }
     }
 
-    private fun handleMessageResult(result: FrontendHandlerEvent) {
+    private suspend fun handleMessageResult(result: FrontendHandlerEvent) {
         when (result) {
             is FrontendHandlerEvent.Connected -> {
                 _viewState.update { currentState ->
@@ -385,9 +385,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                         currentState
                     }
                 }
-                viewModelScope.launch {
-                    permissionManager.checkNotificationPermission(_viewState.value.serverId)
-                }
+                permissionManager.checkNotificationPermission(_viewState.value.serverId)
             }
 
             is FrontendHandlerEvent.Disconnected -> {
@@ -399,15 +397,15 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             }
 
             is FrontendHandlerEvent.OpenSettings -> {
-                _events.tryEmit(FrontendEvent.NavigateToSettings)
+                _events.emit(FrontendEvent.NavigateToSettings)
             }
 
             is FrontendHandlerEvent.OpenAssistSettings -> {
-                _events.tryEmit(FrontendEvent.NavigateToAssistSettings)
+                _events.emit(FrontendEvent.NavigateToAssistSettings)
             }
 
             is FrontendHandlerEvent.ShowAssist -> {
-                _events.tryEmit(
+                _events.emit(
                     FrontendEvent.NavigateToAssist(
                         serverId = _viewState.value.serverId,
                         pipelineId = result.pipelineId,
@@ -417,7 +415,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             }
 
             is FrontendHandlerEvent.PerformHaptic -> {
-                _webViewActions.tryEmit(WebViewAction.Haptic(result.hapticType))
+                _webViewActions.emit(WebViewAction.Haptic(result.hapticType))
             }
 
             is FrontendHandlerEvent.AuthError -> {
@@ -499,7 +497,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         }
     }
 
-    private fun handleDownloadResult(result: DownloadResult) {
+    private suspend fun handleDownloadResult(result: DownloadResult) {
         when (result) {
             is DownloadResult.Forwarded -> {
                 // No UI feedback needed — success notification is handled by
@@ -507,11 +505,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             }
 
             is DownloadResult.OpenWithSystem -> {
-                _events.tryEmit(FrontendEvent.OpenExternalLink(result.uri))
+                _events.emit(FrontendEvent.OpenExternalLink(result.uri))
             }
 
             is DownloadResult.Error -> {
-                _events.tryEmit(FrontendEvent.ShowSnackbar(result.messageResId))
+                _events.emit(FrontendEvent.ShowSnackbar(result.messageResId))
             }
         }
     }
