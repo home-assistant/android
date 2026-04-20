@@ -48,7 +48,7 @@ class FrontendEventHandlerTest {
                 },
                 onNavigateToAssist = { _, _, _ -> },
                 onOpenExternalLink = {},
-                onLaunchNfcWrite = { _, _ -> },
+                onNavigateToNfcWrite = { _, _ -> },
             )
         }
 
@@ -76,7 +76,7 @@ class FrontendEventHandlerTest {
                 },
                 onNavigateToAssist = { _, _, _ -> },
                 onOpenExternalLink = {},
-                onLaunchNfcWrite = { _, _ -> },
+                onNavigateToNfcWrite = { _, _ -> },
             )
         }
 
@@ -106,7 +106,7 @@ class FrontendEventHandlerTest {
                     capturedStartListening = startListening
                 },
                 onOpenExternalLink = {},
-                onLaunchNfcWrite = { _, _ -> },
+                onNavigateToNfcWrite = { _, _ -> },
             )
         }
 
@@ -142,7 +142,7 @@ class FrontendEventHandlerTest {
                 onNavigateToSettings = {},
                 onNavigateToAssist = { _, _, _ -> },
                 onOpenExternalLink = {},
-                onLaunchNfcWrite = { _, _ -> },
+                onNavigateToNfcWrite = { _, _ -> },
             )
         }
 
@@ -166,7 +166,7 @@ class FrontendEventHandlerTest {
                 onNavigateToSettings = {},
                 onNavigateToAssist = { _, _, _ -> },
                 onOpenExternalLink = { uri -> capturedUri = uri },
-                onLaunchNfcWrite = { _, _ -> },
+                onNavigateToNfcWrite = { _, _ -> },
             )
         }
 
@@ -179,7 +179,7 @@ class FrontendEventHandlerTest {
     }
 
     @Test
-    fun `Given LaunchNfcWrite event then onLaunchNfcWrite is called with messageId and tagId`() = runTest {
+    fun `Given NavigateToNfcWrite event then onNavigateToNfcWrite is called with messageId and tagId`() = runTest {
         var capturedMessageId: Int? = null
         var capturedTagId: String? = "not-captured"
         val events = MutableSharedFlow<FrontendEvent>()
@@ -191,7 +191,7 @@ class FrontendEventHandlerTest {
                 onNavigateToSettings = {},
                 onNavigateToAssist = { _, _, _ -> },
                 onOpenExternalLink = {},
-                onLaunchNfcWrite = { messageId, tagId ->
+                onNavigateToNfcWrite = { messageId, tagId ->
                     capturedMessageId = messageId
                     capturedTagId = tagId
                 },
@@ -199,7 +199,7 @@ class FrontendEventHandlerTest {
         }
 
         composeTestRule.waitForIdle()
-        events.emit(FrontendEvent.LaunchNfcWrite(messageId = 42, tagId = "tag-abc"))
+        events.emit(FrontendEvent.NavigateToNfcWrite(messageId = 42, tagId = "tag-abc"))
         composeTestRule.waitForIdle()
 
         assertEquals(42, capturedMessageId)
@@ -207,7 +207,7 @@ class FrontendEventHandlerTest {
     }
 
     @Test
-    fun `Given LaunchNfcWrite event without tagId then onLaunchNfcWrite is called with null tagId`() = runTest {
+    fun `Given NavigateToNfcWrite event without tagId then onNavigateToNfcWrite is called with null tagId`() = runTest {
         var capturedMessageId: Int? = null
         var capturedTagId: String? = "not-captured"
         val events = MutableSharedFlow<FrontendEvent>()
@@ -219,7 +219,7 @@ class FrontendEventHandlerTest {
                 onNavigateToSettings = {},
                 onNavigateToAssist = { _, _, _ -> },
                 onOpenExternalLink = {},
-                onLaunchNfcWrite = { messageId, tagId ->
+                onNavigateToNfcWrite = { messageId, tagId ->
                     capturedMessageId = messageId
                     capturedTagId = tagId
                 },
@@ -227,7 +227,7 @@ class FrontendEventHandlerTest {
         }
 
         composeTestRule.waitForIdle()
-        events.emit(FrontendEvent.LaunchNfcWrite(messageId = 7, tagId = null))
+        events.emit(FrontendEvent.NavigateToNfcWrite(messageId = 7, tagId = null))
         composeTestRule.waitForIdle()
 
         assertEquals(7, capturedMessageId)

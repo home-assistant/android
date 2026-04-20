@@ -575,7 +575,7 @@ class FrontendViewModelTest {
         }
 
         @Test
-        fun `Given WriteNfcTag handler event when collected then LaunchNfcWrite is emitted`() = runTest {
+        fun `Given WriteNfcTag handler event when collected then NavigateToNfcWrite is emitted`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
@@ -589,7 +589,7 @@ class FrontendViewModelTest {
 
                 messageFlow.emit(FrontendHandlerEvent.WriteNfcTag(messageId = 42, tagId = "tag-abc"))
 
-                assertEquals(FrontendEvent.LaunchNfcWrite(messageId = 42, tagId = "tag-abc"), awaitItem())
+                assertEquals(FrontendEvent.NavigateToNfcWrite(messageId = 42, tagId = "tag-abc"), awaitItem())
                 cancelAndIgnoreRemainingEvents()
             }
         }

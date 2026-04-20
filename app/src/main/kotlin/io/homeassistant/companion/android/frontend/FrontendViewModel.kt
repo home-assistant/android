@@ -420,7 +420,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             }
 
             is FrontendHandlerEvent.WriteNfcTag -> {
-                _events.tryEmit(FrontendEvent.LaunchNfcWrite(messageId = result.messageId, tagId = result.tagId))
+                _events.tryEmit(FrontendEvent.NavigateToNfcWrite(messageId = result.messageId, tagId = result.tagId))
             }
 
             is FrontendHandlerEvent.ConfigSent,
