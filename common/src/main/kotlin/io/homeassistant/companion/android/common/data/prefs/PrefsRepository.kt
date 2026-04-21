@@ -92,7 +92,7 @@ interface PrefsRepository {
     suspend fun setPinchToZoomEnabled(enabled: Boolean)
 
     /** Emits the current [ZoomSettings] immediately on collection, then on every change. */
-    val zoomSettingsFlow: Flow<ZoomSettings>
+    suspend fun zoomSettingsFlow(): Flow<ZoomSettings>
 
     suspend fun isAutoPlayVideoEnabled(): Boolean
 

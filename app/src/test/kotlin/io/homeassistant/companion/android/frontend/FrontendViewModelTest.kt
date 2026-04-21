@@ -68,7 +68,7 @@ class FrontendViewModelTest {
     private val gestureHandler: FrontendGestureHandler = mockk(relaxed = true)
     private val zoomSettingsFlow = MutableStateFlow(ZoomSettings())
     private val prefsRepository: PrefsRepository = mockk(relaxed = true) {
-        every { this@mockk.zoomSettingsFlow } returns this@FrontendViewModelTest.zoomSettingsFlow
+        coEvery { this@mockk.zoomSettingsFlow() } returns this@FrontendViewModelTest.zoomSettingsFlow
     }
 
     private val serverId = 1

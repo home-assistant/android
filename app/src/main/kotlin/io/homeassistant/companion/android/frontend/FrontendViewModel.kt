@@ -546,7 +546,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private fun onPageFinished() {
         zoomObserverJob?.cancel()
         zoomObserverJob = viewModelScope.launch {
-            prefsRepository.zoomSettingsFlow.collect { settings ->
+            prefsRepository.zoomSettingsFlow().collect { settings ->
                 _webViewActions.emit(
                     WebViewAction.ApplyZoom(
                         zoomLevel = settings.zoomLevel,

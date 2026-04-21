@@ -231,8 +231,9 @@ internal class PrefsRepositoryImpl @Inject constructor(
         localStorage().putBoolean(PREF_PINCH_TO_ZOOM_ENABLED, enabled)
     }
 
-    override val zoomSettingsFlow: Flow<ZoomSettings> =
-        merge(
+    override suspend fun zoomSettingsFlow(): Flow<ZoomSettings> {
+        val localStorage = localStorage()
+        return merge(
             localStorage.observeChanges(PREF_PAGE_ZOOM_LEVEL),
             localStorage.observeChanges(PREF_PINCH_TO_ZOOM_ENABLED),
             // Seed an initial emission so collectors read the current values immediately
@@ -243,6 +244,7 @@ internal class PrefsRepositoryImpl @Inject constructor(
                 pinchToZoomEnabled = isPinchToZoomEnabled(),
             )
         }
+    }
 
     override suspend fun isAutoPlayVideoEnabled(): Boolean {
         return localStorage().getBoolean(PREF_AUTOPLAY_VIDEO)
