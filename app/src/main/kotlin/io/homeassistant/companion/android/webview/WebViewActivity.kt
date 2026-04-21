@@ -119,6 +119,7 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
+import io.homeassistant.companion.android.frontend.EvaluateScriptUsage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.EXPECTED_GET_AUTH_CALLBACK
@@ -172,6 +173,7 @@ import org.json.JSONObject
 import timber.log.Timber
 
 @AndroidEntryPoint
+@OptIn(EvaluateScriptUsage::class)
 class WebViewActivity :
     BaseActivity(),
     io.homeassistant.companion.android.webview.WebView {
