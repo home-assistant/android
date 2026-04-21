@@ -20,7 +20,7 @@ import org.jetbrains.uast.getParentOfType
 private const val EVALUATE_JAVASCRIPT_METHOD = "evaluateJavascript"
 private const val WEBVIEW_FQN = "android.webkit.WebView"
 private const val EVALUATE_SCRIPT_USAGE_FQN =
-    "io.homeassistant.companion.android.frontend.EvaluateScriptUsage"
+    "io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage"
 private const val KOTLIN_OPT_IN_FQN = "kotlin.OptIn"
 private const val ANDROIDX_OPT_IN_FQN = "androidx.annotation.OptIn"
 
@@ -61,38 +61,41 @@ object EvaluateJavascriptDetector {
                 ISSUE,
                 node,
                 context.getLocation(node),
-                "Usage of `WebView.evaluateJavascript` requires `@EvaluateScriptUsage` " +
-                    "or `@OptIn(EvaluateScriptUsage::class)` on the enclosing function or class.",
+                "Usage of `WebView.evaluateJavascript` requires `@EvaluateJavascriptUsage` " +
+                    "or `@OptIn(EvaluateJavascriptUsage::class)` on the enclosing function or class.",
             )
         }
 
         /**
          * Walks up from [node] through enclosing methods and classes, returning `true`
-         * if any of them carry `@EvaluateScriptUsage` or `@OptIn(EvaluateScriptUsage::class)`.
+         * if any of them carry `@EvaluateJavascriptUsage` or `@OptIn(EvaluateJavascriptUsage::class)`.
          */
         private fun hasOptIn(node: UCallExpression): Boolean {
             val enclosingMethod = node.getParentOfType<UMethod>()
-            if (enclosingMethod != null && hasEvaluateScriptAnnotation(enclosingMethod.uAnnotations)) {
+            if (enclosingMethod != null && hasEvaluateJavascriptAnnotation(enclosingMethod.uAnnotations)) {
                 return true
             }
 
             val enclosingClass = node.getParentOfType<UClass>()
-            return enclosingClass != null && hasEvaluateScriptAnnotation(enclosingClass.uAnnotations)
+            return enclosingClass != null && hasEvaluateJavascriptAnnotation(enclosingClass.uAnnotations)
         }
 
-        private fun hasEvaluateScriptAnnotation(annotations: List<UAnnotation>): Boolean {
+        private fun hasEvaluateJavascriptAnnotation(annotations: List<UAnnotation>): Boolean {
             return annotations.any { annotation ->
                 val fqn = annotation.qualifiedName
                 fqn == EVALUATE_SCRIPT_USAGE_FQN ||
-                    ((fqn == KOTLIN_OPT_IN_FQN || fqn == ANDROIDX_OPT_IN_FQN) && referencesEvaluateScript(annotation))
+                    (
+                        (fqn == KOTLIN_OPT_IN_FQN || fqn == ANDROIDX_OPT_IN_FQN) &&
+                            referencesEvaluateJavascript(annotation)
+                        )
             }
         }
 
         /**
-         * Checks whether an `@OptIn(...)` annotation includes `EvaluateScriptUsage::class`
+         * Checks whether an `@OptIn(...)` annotation includes `EvaluateJavascriptUsage::class`
          * among its arguments by resolving the class literal types.
          */
-        private fun referencesEvaluateScript(optInAnnotation: UAnnotation): Boolean {
+        private fun referencesEvaluateJavascript(optInAnnotation: UAnnotation): Boolean {
             return optInAnnotation.attributeValues.any { attribute ->
                 collectClassLiterals(attribute.expression)
                     .any { it.type?.canonicalText == EVALUATE_SCRIPT_USAGE_FQN }

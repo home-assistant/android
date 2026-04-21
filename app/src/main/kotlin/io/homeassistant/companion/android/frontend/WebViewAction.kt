@@ -75,7 +75,7 @@ sealed interface WebViewAction {
      * Evaluate a JavaScript script in the WebView, the result of the execution is
      * emitted through [result].
      */
-    @EvaluateScriptUsage
+    @EvaluateJavascriptUsage
     data class EvaluateScript(
         val script: String,
         override val result: CompletableDeferred<String?> = CompletableDeferred(),
@@ -98,4 +98,4 @@ sealed interface WebViewAction {
 )
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
-annotation class EvaluateScriptUsage
+annotation class EvaluateJavascriptUsage

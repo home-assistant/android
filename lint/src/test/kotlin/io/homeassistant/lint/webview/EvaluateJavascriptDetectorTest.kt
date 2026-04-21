@@ -16,14 +16,14 @@ class EvaluateJavascriptDetectorTest {
         """,
     ).indented()
 
-    private val evaluateScriptUsageStub = kotlin(
+    private val evaluateJavascriptUsageStub = kotlin(
         """
         package io.homeassistant.companion.android.frontend
 
         @RequiresOptIn
         @Retention(AnnotationRetention.BINARY)
         @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
-        annotation class EvaluateScriptUsage
+        annotation class EvaluateJavascriptUsage
         """,
     ).indented()
 
@@ -43,7 +43,7 @@ class EvaluateJavascriptDetectorTest {
             .allowMissingSdk()
             .files(
                 webViewStub,
-                evaluateScriptUsageStub,
+                evaluateJavascriptUsageStub,
                 kotlin(
                     """
                     package com.example
@@ -59,7 +59,7 @@ class EvaluateJavascriptDetectorTest {
             .run()
             .expect(
                 """
-                src/com/example/test.kt:6: Error: Usage of WebView.evaluateJavascript requires @EvaluateScriptUsage or @OptIn(EvaluateScriptUsage::class) on the enclosing function or class. [EvaluateJavascriptUsage]
+                src/com/example/test.kt:6: Error: Usage of WebView.evaluateJavascript requires @EvaluateJavascriptUsage or @OptIn(EvaluateJavascriptUsage::class) on the enclosing function or class. [EvaluateJavascriptUsage]
                     webView.evaluateJavascript("alert('hello')") {}
                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 1 error
@@ -68,20 +68,20 @@ class EvaluateJavascriptDetectorTest {
     }
 
     @Test
-    fun `Given evaluateJavascript call with @EvaluateScriptUsage on function then no error`() {
+    fun `Given evaluateJavascript call with @EvaluateJavascriptUsage on function then no error`() {
         lint().issues(EvaluateJavascriptDetector.ISSUE)
             .allowMissingSdk()
             .files(
                 webViewStub,
-                evaluateScriptUsageStub,
+                evaluateJavascriptUsageStub,
                 kotlin(
                     """
                     package com.example
 
                     import android.webkit.WebView
-                    import io.homeassistant.companion.android.frontend.EvaluateScriptUsage
+                    import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 
-                    @EvaluateScriptUsage
+                    @EvaluateJavascriptUsage
                     fun doSomething(webView: WebView) {
                         webView.evaluateJavascript("alert('hello')") {}
                     }
@@ -98,21 +98,21 @@ class EvaluateJavascriptDetectorTest {
             .allowMissingSdk()
             .files(
                 webViewStub,
-                evaluateScriptUsageStub,
+                evaluateJavascriptUsageStub,
                 optInStub,
                 kotlin(
                     """
                     package com.example
 
                     import android.webkit.WebView
-                    import io.homeassistant.companion.android.frontend.EvaluateScriptUsage
+                    import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 
                     @RequiresOptIn
                     @Retention(AnnotationRetention.BINARY)
                     @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
                     annotation class OtherOptIn
 
-                    @OptIn(OtherOptIn::class, EvaluateScriptUsage::class)
+                    @OptIn(OtherOptIn::class, EvaluateJavaScriptUsage::class)
                     fun doSomething(webView: WebView) {
                         webView.evaluateJavascript("alert('hello')") {}
                     }
@@ -124,20 +124,20 @@ class EvaluateJavascriptDetectorTest {
     }
 
     @Test
-    fun `Given evaluateJavascript call with @EvaluateScriptUsage on class then no error`() {
+    fun `Given evaluateJavascript call with @EvaluateJavascriptUsage on class then no error`() {
         lint().issues(EvaluateJavascriptDetector.ISSUE)
             .allowMissingSdk()
             .files(
                 webViewStub,
-                evaluateScriptUsageStub,
+                evaluateJavascriptUsageStub,
                 kotlin(
                     """
                     package com.example
 
                     import android.webkit.WebView
-                    import io.homeassistant.companion.android.frontend.EvaluateScriptUsage
+                    import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 
-                    @EvaluateScriptUsage
+                    @EvaluateJavascriptUsage
                     class MyAction {
                         fun run(webView: WebView) {
                             webView.evaluateJavascript("alert('hello')") {}
@@ -156,16 +156,16 @@ class EvaluateJavascriptDetectorTest {
             .allowMissingSdk()
             .files(
                 webViewStub,
-                evaluateScriptUsageStub,
+                evaluateJavascriptUsageStub,
                 optInStub,
                 kotlin(
                     """
                     package com.example
 
                     import android.webkit.WebView
-                    import io.homeassistant.companion.android.frontend.EvaluateScriptUsage
+                    import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 
-                    @OptIn(EvaluateScriptUsage::class)
+                    @OptIn(EvaluateJavascriptUsage::class)
                     class MyAction {
                         fun run(webView: WebView) {
                             webView.evaluateJavascript("alert('hello')") {}
@@ -194,7 +194,7 @@ class EvaluateJavascriptDetectorTest {
             .allowMissingSdk()
             .files(
                 webViewStub,
-                evaluateScriptUsageStub,
+                evaluateJavascriptUsageStub,
                 androidxOptInStub,
                 kotlin(
                     """
@@ -202,9 +202,9 @@ class EvaluateJavascriptDetectorTest {
 
                     import android.webkit.WebView
                     import androidx.annotation.OptIn
-                    import io.homeassistant.companion.android.frontend.EvaluateScriptUsage
+                    import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 
-                    @OptIn(EvaluateScriptUsage::class)
+                    @OptIn(EvaluateJavascriptUsage::class)
                     fun doSomething(webView: WebView) {
                         webView.evaluateJavascript("alert('hello')") {}
                     }

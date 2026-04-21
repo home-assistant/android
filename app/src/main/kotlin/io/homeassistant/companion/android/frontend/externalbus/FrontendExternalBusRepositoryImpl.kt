@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.frontend.externalbus
 
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
-import io.homeassistant.companion.android.frontend.EvaluateScriptUsage
+import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import io.homeassistant.companion.android.frontend.WebViewAction
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.externalbus.incoming.IncomingExternalBusMessage
@@ -53,7 +53,7 @@ class FrontendExternalBusRepositoryImpl @Inject constructor() : FrontendExternal
     )
 
     /**
-     * Opts into [EvaluateScriptUsage] because this is the internal mechanism that
+     * Opts into [EvaluateJavascriptUsage] because this is the internal mechanism that
      * implements the external bus itself. The frontend installs `window.externalBus`
      * as the entry point for messages from the native app (see `ExternalMessaging.attach`
      * in the frontend), so delivering a bus message means invoking that function via
@@ -65,7 +65,7 @@ class FrontendExternalBusRepositoryImpl @Inject constructor() : FrontendExternal
      * `evaluateScript` usage confined to this single site so callers do not have to construct
      * arbitrary scripts and use the typed message API.
      */
-    @OptIn(EvaluateScriptUsage::class)
+    @OptIn(EvaluateJavascriptUsage::class)
     override suspend fun send(message: OutgoingExternalBusMessage) {
         val json = frontendExternalBusJson.encodeToString(message)
         val script = "externalBus($json);"
@@ -75,7 +75,7 @@ class FrontendExternalBusRepositoryImpl @Inject constructor() : FrontendExternal
 
     override fun webViewActions(): Flow<WebViewAction> = actionsFlow.asSharedFlow()
 
-    @EvaluateScriptUsage
+    @EvaluateJavascriptUsage
     override suspend fun evaluateScript(script: String): String? {
         val action = WebViewAction.EvaluateScript(script)
         actionsFlow.emit(action)

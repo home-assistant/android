@@ -21,7 +21,7 @@ import androidx.core.view.WindowInsetsCompat.Type.ime
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
 import androidx.core.view.updatePadding
 import androidx.preference.PreferenceFragmentCompat
-import io.homeassistant.companion.android.frontend.EvaluateScriptUsage
+import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import timber.log.Timber
 
 operator fun PaddingValues.plus(that: PaddingValues): PaddingValues = object : PaddingValues {
@@ -112,7 +112,7 @@ fun View.applySafeDrawingInsets(
  * Applies safe area insets to the WebView by setting CSS custom properties.
  * These properties are used by the Home Assistant frontend for edge-to-edge display.
  */
-@OptIn(EvaluateScriptUsage::class)
+@OptIn(EvaluateJavascriptUsage::class)
 fun WebView.applyInsets(
     insets: WindowInsets,
     density: Density,
