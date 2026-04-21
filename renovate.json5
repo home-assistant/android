@@ -106,8 +106,17 @@
         {
             groupName: 'com.android.*',
             matchPackageNames: [
+                '!com.android.compose.screenshot{/,}**',
+                '!com.android.tools.screenshot{/,}**',
                 'com.android:{/,}**',
                 'com.android.{/,}**',
+            ],
+        },
+        {
+            groupName: 'com.android.*.screenshot',
+            matchPackageNames: [
+                'com.android.compose.screenshot{/,}**',
+                'com.android.tools.screenshot{/,}**',
             ],
         },
         {
