@@ -19,7 +19,7 @@ import org.jetbrains.uast.getParentOfType
 
 private const val EVALUATE_JAVASCRIPT_METHOD = "evaluateJavascript"
 private const val WEBVIEW_FQN = "android.webkit.WebView"
-private const val EVALUATE_SCRIPT_USAGE_FQN =
+private const val EVALUATE_JAVASCRIPT_USAGE_FQN =
     "io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage"
 private const val KOTLIN_OPT_IN_FQN = "kotlin.OptIn"
 private const val ANDROIDX_OPT_IN_FQN = "androidx.annotation.OptIn"
@@ -83,7 +83,7 @@ object EvaluateJavascriptDetector {
         private fun hasEvaluateJavascriptAnnotation(annotations: List<UAnnotation>): Boolean {
             return annotations.any { annotation ->
                 val fqn = annotation.qualifiedName
-                fqn == EVALUATE_SCRIPT_USAGE_FQN ||
+                fqn == EVALUATE_JAVASCRIPT_USAGE_FQN ||
                     (
                         (fqn == KOTLIN_OPT_IN_FQN || fqn == ANDROIDX_OPT_IN_FQN) &&
                             referencesEvaluateJavascript(annotation)
@@ -98,7 +98,7 @@ object EvaluateJavascriptDetector {
         private fun referencesEvaluateJavascript(optInAnnotation: UAnnotation): Boolean {
             return optInAnnotation.attributeValues.any { attribute ->
                 collectClassLiterals(attribute.expression)
-                    .any { it.type?.canonicalText == EVALUATE_SCRIPT_USAGE_FQN }
+                    .any { it.type?.canonicalText == EVALUATE_JAVASCRIPT_USAGE_FQN }
             }
         }
 

@@ -27,16 +27,6 @@ class EvaluateJavascriptDetectorTest {
         """,
     ).indented()
 
-    private val optInStub = kotlin(
-        """
-        package kotlin
-
-        @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.CONSTRUCTOR)
-        @Retention(AnnotationRetention.SOURCE)
-        annotation class OptIn(vararg val markerClass: kotlin.reflect.KClass<out Annotation>)
-        """,
-    ).indented()
-
     @Test
     fun `Given evaluateJavascript call without annotation then error is reported`() {
         lint().issues(EvaluateJavascriptDetector.ISSUE)
@@ -99,7 +89,6 @@ class EvaluateJavascriptDetectorTest {
             .files(
                 webViewStub,
                 evaluateJavascriptUsageStub,
-                optInStub,
                 kotlin(
                     """
                     package com.example
@@ -112,7 +101,7 @@ class EvaluateJavascriptDetectorTest {
                     @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
                     annotation class OtherOptIn
 
-                    @OptIn(OtherOptIn::class, EvaluateJavaScriptUsage::class)
+                    @OptIn(OtherOptIn::class, EvaluateJavascriptUsage::class)
                     fun doSomething(webView: WebView) {
                         webView.evaluateJavascript("alert('hello')") {}
                     }
@@ -157,7 +146,6 @@ class EvaluateJavascriptDetectorTest {
             .files(
                 webViewStub,
                 evaluateJavascriptUsageStub,
-                optInStub,
                 kotlin(
                     """
                     package com.example
