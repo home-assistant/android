@@ -23,6 +23,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
+import io.homeassistant.companion.android.WIPFeature
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.sensors.SensorReceiver
@@ -107,19 +108,6 @@ class LaunchActivity : AppCompatActivity() {
         },
     )
 
-    override fun onResume() {
-        super.onResume()
-        SensorWorker.start(this)
-        lifecycleScope.launch {
-            WebsocketManager.start(this@LaunchActivity)
-        }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        if (!isFinishing) SensorReceiver.updateAllSensors(this)
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val splashScreen = installSplashScreen()
@@ -155,6 +143,21 @@ class LaunchActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (WIPFeature.USE_FRONTEND_V2) {
+            SensorWorker.start(this)
+            lifecycleScope.launch {
+                WebsocketManager.start(this@LaunchActivity)
+            }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (!isFinishing && WIPFeature.USE_FRONTEND_V2) SensorReceiver.updateAllSensors(this)
     }
 }
 
