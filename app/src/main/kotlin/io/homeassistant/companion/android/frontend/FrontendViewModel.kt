@@ -18,6 +18,7 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage
+import io.homeassistant.companion.android.frontend.filechooser.FileChooserRequest
 import io.homeassistant.companion.android.frontend.gesture.FrontendGestureHandler
 import io.homeassistant.companion.android.frontend.gesture.GestureResult
 import io.homeassistant.companion.android.frontend.handler.FrontendBusObserver
@@ -192,6 +193,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         onPageFinished = ::onPageFinished,
     )
 
+    private val _pendingFileChooser = MutableStateFlow<FileChooserRequest?>(null)
+
+    /** The current pending file chooser request from the WebView, or null if none. */
+    val pendingFileChooser: StateFlow<FileChooserRequest?> = _pendingFileChooser.asStateFlow()
+
     val webChromeClient: HAWebChromeClient = HAWebChromeClient(
         onPermissionRequest = { request ->
             viewModelScope.launch {
@@ -202,6 +208,13 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             viewModelScope.launch {
                 if (dialogManager.showJsConfirm(message)) jsResult.confirm() else jsResult.cancel()
             }
+            true
+        },
+        onShowFileChooser = { filePathCallback, fileChooserParams ->
+            _pendingFileChooser.value = FileChooserRequest(
+                filePathCallback = filePathCallback,
+                fileChooserParams = fileChooserParams,
+            )
             true
         },
     )
@@ -595,5 +608,10 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 )
             }
         }
+    }
+
+    /** Clears the pending file chooser request after it has been handled. */
+    fun clearPendingFileChooser() {
+        _pendingFileChooser.value = null
     }
 }
