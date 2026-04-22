@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend
 
+import android.webkit.JsResult
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -10,6 +11,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.common.util.GestureDirection
+import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
@@ -183,6 +185,10 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             viewModelScope.launch {
                 permissionManager.onWebViewPermissionRequest(request)
             }
+        },
+        onJsConfirm = { message, jsResult ->
+            onJsConfirm(message, jsResult)
+            true
         },
     )
 
@@ -524,5 +530,37 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         }
         // Automatically run connectivity checks when an error occurs
         runConnectivityChecks()
+    }
+
+    private fun onJsConfirm(message: String, jsResult: JsResult) {
+        _viewState.update { currentState ->
+            if (currentState is FrontendViewState.Content) {
+                currentState.copy(
+                    pendingDialog = FrontendDialog.Confirm(
+                        message = message,
+                        onConfirm = {
+                            jsResult.confirm()
+                            clearPendingDialog()
+                        },
+                        onCancel = {
+                            jsResult.cancel()
+                            clearPendingDialog()
+                        },
+                    ),
+                )
+            } else {
+                currentState
+            }
+        }
+    }
+
+    private fun clearPendingDialog() {
+        _viewState.update { currentState ->
+            if (currentState is FrontendViewState.Content) {
+                currentState.copy(pendingDialog = null)
+            } else {
+                currentState
+            }
+        }
     }
 }

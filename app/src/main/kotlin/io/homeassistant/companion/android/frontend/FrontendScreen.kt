@@ -46,6 +46,7 @@ import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.util.GestureDirection
+import io.homeassistant.companion.android.frontend.dialog.PendingDialogHandler
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorScreen
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
@@ -182,6 +183,10 @@ internal fun FrontendScreenContent(
     PendingPermissionHandler(
         pendingRequest = pendingPermissionRequest,
         onClearPendingPermissionRequest = onClearPendingPermissionRequest,
+    )
+
+    PendingDialogHandler(
+        pendingDialog = (viewState as? FrontendViewState.Content)?.pendingDialog,
     )
 
     Box(modifier = modifier.fillMaxSize()) {
