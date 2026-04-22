@@ -70,6 +70,7 @@ class ConnectionViewModelTest {
                 onCrash = thirdArg(),
                 onUrlIntercepted = arg(3),
                 onPageFinished = arg(4),
+                onReceivedHttpAuthRequest = arg(5),
             )
         }
     }
