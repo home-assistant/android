@@ -29,10 +29,8 @@ interface LocalStorage {
     suspend fun remove(key: String)
 
     /**
-     * Returns a [Flow] that emits the [key] each time the value associated with it changes.
-     *
-     * The flow uses [android.content.SharedPreferences.OnSharedPreferenceChangeListener]
-     * under the hood and only emits for the specified key.
+     * Returns a [Flow] that emits the [key] each time the value associated with it changes
+     * and only emits for the specified [key].
      */
     fun observeChanges(key: String): Flow<String>
 }
