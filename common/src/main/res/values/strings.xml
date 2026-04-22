@@ -314,6 +314,7 @@
     <string name="get_help">Get help</string>
     <string name="help">Help</string>
     <string name="hide_password">Hide password</string>
+    <string name="show_password">Show password</string>
     <string name="high_accuracy_mode_channel_name">High accuracy location</string>
     <string name="high_accuracy_mode_notification_title">High accuracy (GPS) mode enabled</string>
     <string name="hold_to_reorder">Hold to reorder</string>
