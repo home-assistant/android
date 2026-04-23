@@ -601,17 +601,17 @@ class HaRemoteMediaPlayerTest {
     }
 
     @Test
-    fun `Given repeat mode Off in state when getState then repeatMode is REPEAT_MODE_OFF`() {
+    fun `Given repeat mode Off when getState then maps to REPEAT_MODE_OFF and set triggers callback`() {
         assertRepeatModeRoundTrip(mediaRepeatMode = MediaRepeatMode.Off, media3RepeatMode = Player.REPEAT_MODE_OFF)
     }
 
     @Test
-    fun `Given repeat mode One in state when getState then repeatMode is REPEAT_MODE_ONE`() {
+    fun `Given repeat mode One when getState then maps to REPEAT_MODE_ONE and set triggers callback`() {
         assertRepeatModeRoundTrip(mediaRepeatMode = MediaRepeatMode.One, media3RepeatMode = Player.REPEAT_MODE_ONE)
     }
 
     @Test
-    fun `Given repeat mode All in state when getState then repeatMode is REPEAT_MODE_ALL`() {
+    fun `Given repeat mode All when getState then maps to REPEAT_MODE_ALL and set triggers callback`() {
         assertRepeatModeRoundTrip(mediaRepeatMode = MediaRepeatMode.All, media3RepeatMode = Player.REPEAT_MODE_ALL)
     }
 

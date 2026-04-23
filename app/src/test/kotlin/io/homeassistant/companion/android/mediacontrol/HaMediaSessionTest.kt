@@ -215,11 +215,12 @@ class HaMediaSessionTest {
     }
 
     /**
-     * Verifies that when `observeEntityState` flow completes (WebSocket not yet connected),
-     * the player retains its last known state rather than resetting.
+     * Verifies that when `observeEntityState` flow completes naturally (e.g. WebSocket disconnected),
+     * the session stays alive — `observe()` keeps running via `awaitCancellation()` and
+     * `mediaSession` remains non-null so the notification is not removed.
      */
     @Test
-    fun `Given observeEntityState flow completes when startObservingState then player retains last state`() {
+    fun `Given observeEntityState flow completes when startObservingState then session stays alive`() {
         coEvery { mediaControlRepository.observeEntityState(config) } returns flowOf(
             createState(playbackState = MediaPlaybackState.Playing),
         )
@@ -230,10 +231,54 @@ class HaMediaSessionTest {
         }
         idleMainLooper()
 
-        // Flow has completed; observe() has run its finally block and released the session.
-        // The player's last known state is retained until Media3 releases it.
-        assertNull(session.mediaSession)
-        org.junit.Assert.assertFalse(job.isActive)
+        // The observation job completed naturally but observe() is still suspended in
+        // awaitCancellation(), so the session and its notification remain active.
+        assertNotNull(session.mediaSession)
+        org.junit.Assert.assertTrue(job.isActive)
+
+        job.cancel()
+    }
+
+    /**
+     * Verifies that after the observation flow ends (simulating a WebSocket disconnect),
+     * a successful media command restarts state observation so future state updates are received.
+     *
+     * This covers the reconnection path: user taps play → REST call succeeds → `callMediaAction`
+     * sees `observationJob.isActive == false` and re-launches `startObservingState()`.
+     */
+    @Test
+    fun `Given observation ended when play requested and action succeeds then observation is restarted`() {
+        // First call: immediately-completing flow (simulates WebSocket disconnect).
+        // Second call: open flow that stays alive so we can verify it was subscribed to.
+        val reopenedFlow = MutableSharedFlow<MediaControlState?>(replay = 1)
+        reopenedFlow.tryEmit(createState(playbackState = MediaPlaybackState.Paused))
+        var callCount = 0
+        coEvery { mediaControlRepository.observeEntityState(config) } answers {
+            callCount++
+            if (callCount == 1) {
+                flowOf(createState(playbackState = MediaPlaybackState.Playing))
+            } else {
+                reopenedFlow
+            }
+        }
+
+        val session = buildSession()
+        val job = testScope.launch {
+            session.observe { }
+        }
+        idleMainLooper()
+
+        // After the first flow completes, observation is inactive but observe() is still alive.
+        assertNotNull(session.mediaSession)
+
+        // Trigger a play command; the action succeeds (integrationRepository is relaxed).
+        session.mediaSession?.player?.play()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        // observeEntityState should have been called a second time (observation restarted).
+        assertEquals(2, callCount)
+
+        job.cancel()
     }
 
     // -- Artwork caching tests --
@@ -263,18 +308,14 @@ class HaMediaSessionTest {
     }
 
     /**
-     * Verifies that when a second state emission has a null artwork URL, old artwork is not
-     * retained — the player's metadata artwork is null and the second state's title is applied.
-     *
-     * This exercises the branch in `loadArtworkAndUpdatePlayer` where the URL is null:
-     * the cached URL is cleared and cached bytes are passed through (which is null here
-     * because no real image was ever loaded in this test).
+     * Verifies that when a second state emission arrives with a null artwork URL, the player
+     * state still updates — the second state's title is applied and artwork stays null.
      *
      * Uses `replay=1` for reliable delivery to the collector. The second emission is made after
      * the first is confirmed to be processed.
      */
     @Test
-    fun `Given two consecutive states where second has null artwork URL when startObservingState then artwork is null`() {
+    fun `Given two consecutive states both with null artwork URL when startObservingState then title updates and artwork stays null`() {
         val stateFlow = MutableSharedFlow<MediaControlState?>(replay = 1)
         stateFlow.tryEmit(createState(entityPictureUrl = null, title = "Track 1"))
         coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow

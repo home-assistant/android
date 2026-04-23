@@ -275,10 +275,7 @@ class HaMediaSession @AssistedInject constructor(
                 }
             }
             rawPictureUrl == null -> {
-                // The HA server temporarily removes entity_picture during track transitions
-                // before sending the new URL. Keep the previous artwork visible to avoid a
-                // blank flash; clearing the cached URL ensures the next URL triggers a fetch.
-                cache.copy(url = null) to cache.bytes
+                ArtworkCache() to null
             }
             else -> cache to cache.bytes
         }

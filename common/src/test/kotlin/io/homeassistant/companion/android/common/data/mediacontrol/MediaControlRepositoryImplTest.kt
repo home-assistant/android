@@ -317,30 +317,27 @@ class MediaControlRepositoryImplTest {
             }
         }
 
-        @Test
-        fun `Given entity with friendly_name then entityFriendlyName is set`() = runTest {
-            val entityState = entityWithVolumeAttributes(
-                mapOf("friendly_name" to "Living Room TV"),
-            )
+    }
+
+    @Nested
+    inner class FeatureSupportMappingTest {
+
+        private fun entityWith(attributes: Map<String, Any?>) = CompressedEntityState(
+            state = JsonPrimitive("playing"),
+            attributes = attributes,
+            lastChanged = 1000.0,
+            lastUpdated = 1000.0,
+        )
+
+        private fun emitWith(attributes: Map<String, Any?>) {
             coEvery {
                 webSocketRepository.getCompressedStateAndChanges(any())
-            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityState)))
-
-            repository.observeEntityState(testConfig).test {
-                val state = awaitItem()!!
-                assertEquals("Living Room TV", state.entityFriendlyName)
-                awaitComplete()
-            }
+            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityWith(attributes))))
         }
 
         @Test
         fun `Given entity with STOP support then supportsStop is true`() = runTest {
-            val entityState = entityWithVolumeAttributes(
-                mapOf("supported_features" to EntityExt.MEDIA_PLAYER_SUPPORT_STOP),
-            )
-            coEvery {
-                webSocketRepository.getCompressedStateAndChanges(any())
-            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityState)))
+            emitWith(mapOf("supported_features" to EntityExt.MEDIA_PLAYER_SUPPORT_STOP))
 
             repository.observeEntityState(testConfig).test {
                 assertTrue(awaitItem()!!.supportsStop)
@@ -350,12 +347,7 @@ class MediaControlRepositoryImplTest {
 
         @Test
         fun `Given entity with VOLUME_MUTE support then supportsMute is true`() = runTest {
-            val entityState = entityWithVolumeAttributes(
-                mapOf("supported_features" to EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_MUTE),
-            )
-            coEvery {
-                webSocketRepository.getCompressedStateAndChanges(any())
-            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityState)))
+            emitWith(mapOf("supported_features" to EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_MUTE))
 
             repository.observeEntityState(testConfig).test {
                 assertTrue(awaitItem()!!.supportsMute)
@@ -365,15 +357,12 @@ class MediaControlRepositoryImplTest {
 
         @Test
         fun `Given entity with SHUFFLE_SET support and shuffle true then supportsShuffleSet and shuffle are true`() = runTest {
-            val entityState = entityWithVolumeAttributes(
+            emitWith(
                 mapOf(
                     "supported_features" to EntityExt.MEDIA_PLAYER_SUPPORT_SHUFFLE_SET,
                     "shuffle" to true,
                 ),
             )
-            coEvery {
-                webSocketRepository.getCompressedStateAndChanges(any())
-            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityState)))
 
             repository.observeEntityState(testConfig).test {
                 val state = awaitItem()!!
@@ -385,15 +374,12 @@ class MediaControlRepositoryImplTest {
 
         @Test
         fun `Given entity with REPEAT_SET support and repeat all then supportsRepeatSet is true and repeatMode is All`() = runTest {
-            val entityState = entityWithVolumeAttributes(
+            emitWith(
                 mapOf(
                     "supported_features" to EntityExt.MEDIA_PLAYER_SUPPORT_REPEAT_SET,
                     "repeat" to "all",
                 ),
             )
-            coEvery {
-                webSocketRepository.getCompressedStateAndChanges(any())
-            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityState)))
 
             repository.observeEntityState(testConfig).test {
                 val state = awaitItem()!!
@@ -405,10 +391,7 @@ class MediaControlRepositoryImplTest {
 
         @Test
         fun `Given entity with repeat one then repeatMode is One`() = runTest {
-            val entityState = entityWithVolumeAttributes(mapOf("repeat" to "one"))
-            coEvery {
-                webSocketRepository.getCompressedStateAndChanges(any())
-            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityState)))
+            emitWith(mapOf("repeat" to "one"))
 
             repository.observeEntityState(testConfig).test {
                 assertEquals(MediaRepeatMode.One, awaitItem()!!.repeatMode)
@@ -418,10 +401,7 @@ class MediaControlRepositoryImplTest {
 
         @Test
         fun `Given entity with no repeat attribute then repeatMode is Off`() = runTest {
-            val entityState = entityWithVolumeAttributes(emptyMap())
-            coEvery {
-                webSocketRepository.getCompressedStateAndChanges(any())
-            } returns flowOf(CompressedStateChangedEvent(added = mapOf("media_player.test" to entityState)))
+            emitWith(emptyMap())
 
             repository.observeEntityState(testConfig).test {
                 assertEquals(MediaRepeatMode.Off, awaitItem()!!.repeatMode)
@@ -502,6 +482,16 @@ class MediaControlRepositoryImplTest {
 
             repository.observeEntityState(testConfig).test {
                 assertEquals("Netflix", awaitItem()?.appName)
+                awaitComplete()
+            }
+        }
+
+        @Test
+        fun `Given entity with friendly_name then entityFriendlyName is set`() = runTest {
+            emitEntity(mapOf("friendly_name" to "Living Room TV"))
+
+            repository.observeEntityState(testConfig).test {
+                assertEquals("Living Room TV", awaitItem()?.entityFriendlyName)
                 awaitComplete()
             }
         }

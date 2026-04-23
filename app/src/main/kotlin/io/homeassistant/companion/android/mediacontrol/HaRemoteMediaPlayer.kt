@@ -228,6 +228,7 @@ internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: 
         .setAvailableCommands(Player.Commands.EMPTY)
         .setPlaybackState(STATE_IDLE)
         .setPlayWhenReady(false, PLAY_WHEN_READY_CHANGE_REASON_REMOTE)
+        .setDeviceInfo(REMOTE_DEVICE_INFO) 
         .build()
 
     /**
