@@ -12,6 +12,8 @@ import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -81,7 +83,7 @@ class PrefsRepositoryImplTest {
 
         val result = repository.isChangeLogPopupEnabled()
 
-        assertEquals(true, result)
+        assertTrue(result)
     }
 
     @Test
@@ -92,7 +94,7 @@ class PrefsRepositoryImplTest {
 
         val result = repository.isChangeLogPopupEnabled()
 
-        assertEquals(true, result)
+        assertTrue(result)
     }
 
     @Test
@@ -103,7 +105,7 @@ class PrefsRepositoryImplTest {
 
         val result = repository.isChangeLogPopupEnabled()
 
-        assertEquals(false, result)
+        assertFalse(result)
     }
 
     @Test
@@ -140,7 +142,7 @@ class PrefsRepositoryImplTest {
             repository.zoomSettingsFlow().test {
                 val settings = awaitItem()
                 assertEquals(150, settings.zoomLevel)
-                assertEquals(true, settings.pinchToZoomEnabled)
+                assertTrue(settings.pinchToZoomEnabled)
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -158,7 +160,7 @@ class PrefsRepositoryImplTest {
 
                 val updated = awaitItem()
                 assertEquals(200, updated.zoomLevel)
-                assertEquals(false, updated.pinchToZoomEnabled)
+                assertFalse(updated.pinchToZoomEnabled)
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -176,7 +178,7 @@ class PrefsRepositoryImplTest {
 
                 val updated = awaitItem()
                 assertEquals(100, updated.zoomLevel)
-                assertEquals(true, updated.pinchToZoomEnabled)
+                assertTrue(updated.pinchToZoomEnabled)
                 cancelAndIgnoreRemainingEvents()
             }
         }
