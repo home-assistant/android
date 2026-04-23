@@ -149,8 +149,12 @@ class AutomotiveAssistViewModel @AssistedInject constructor(
             null
         }
 
-        Timber.tag("[AA-Assist]").d("setPipeline: pipeline=%s, ttsEngine=%s, sttEngine=%s",
-            pipeline?.id, pipeline?.ttsEngine, pipeline?.sttEngine)
+        Timber.tag("[AA-Assist]").d(
+            "setPipeline: pipeline=%s, ttsEngine=%s, sttEngine=%s",
+            pipeline?.id,
+            pipeline?.ttsEngine,
+            pipeline?.sttEngine,
+        )
         if (pipeline != null) {
             _conversation.value = emptyList()
             activeUserMessage = null
@@ -197,12 +201,12 @@ class AutomotiveAssistViewModel @AssistedInject constructor(
         }
 
         if (proactive) {
-              if (isContinuation) {
-                    // Just add user placeholder, pipeline already running
-                    activeUserMessage = AssistMessage.placeholder(isInput = true)
-                    _conversation.value = _conversation.value + activeUserMessage!!
-                    activeHaMessage = AssistMessage.placeholder(isInput = false)
-                } else {
+            if (isContinuation) {
+                // Just add user placeholder, pipeline already running
+                activeUserMessage = AssistMessage.placeholder(isInput = true)
+                _conversation.value = _conversation.value + activeUserMessage!!
+                activeHaMessage = AssistMessage.placeholder(isInput = false)
+            } else {
                 // New pipeline, add placeholders and start pipeline
                 activeUserMessage = AssistMessage.placeholder(isInput = true)
                 activeHaMessage = AssistMessage.placeholder(isInput = false)
@@ -221,8 +225,11 @@ class AutomotiveAssistViewModel @AssistedInject constructor(
         pipelineJob = viewModelScope.launch {
             val pipeline = try {
                 val id = pipelineId ?: serverManager.integrationRepository(selectedServerId).getLastUsedPipelineId()
-                Timber.tag("[AA-Assist]").d("runAssistPipeline: pipelineId=%s, lastPipelineId=%s",
-                    pipelineId, serverManager.integrationRepository(selectedServerId).getLastUsedPipelineId())
+                Timber.tag("[AA-Assist]").d(
+                    "runAssistPipeline: pipelineId=%s, lastPipelineId=%s",
+                    pipelineId,
+                    serverManager.integrationRepository(selectedServerId).getLastUsedPipelineId(),
+                )
                 id?.let {
                     serverManager.webSocketRepository(selectedServerId).getAssistPipeline(it)
                 }
@@ -231,8 +238,12 @@ class AutomotiveAssistViewModel @AssistedInject constructor(
                 null
             }
 
-            Timber.tag("[AA-Assist]").d("runAssistPipeline: pipeline=%s, ttsEngine=%s, sttEngine=%s",
-                pipeline?.id, pipeline?.ttsEngine, pipeline?.sttEngine)
+            Timber.tag("[AA-Assist]").d(
+                "runAssistPipeline: pipeline=%s, ttsEngine=%s, sttEngine=%s",
+                pipeline?.id,
+                pipeline?.ttsEngine,
+                pipeline?.sttEngine,
+            )
             isProcessing = true
             runAssistPipelineInternal(
                 text = text,
@@ -304,7 +315,7 @@ class AutomotiveAssistViewModel @AssistedInject constructor(
                     }
 
                     is AssistEvent.ContinueConversation -> {
-                        onMicrophoneInput(proactive = true, isContinuation = true)
+                        onMicrophoneInput(proactive = true, isContinuation = false)
                         isContinuationTurn = true
                         runAssistPipeline(null, skipStopPlayback = true)
                     }

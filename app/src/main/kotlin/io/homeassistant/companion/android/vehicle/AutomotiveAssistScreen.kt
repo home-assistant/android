@@ -95,7 +95,7 @@ class AutomotiveAssistScreen @AssistedInject constructor(
                 CommunityMaterial.Icon3.cmd_microphone
             }
             isPlayingAudio -> {
-                CommunityMaterial.Icon3.cmd_speaker
+                CommunityMaterial.Icon3.cmd_volume_high
             }
             isProcessing -> {
                 CommunityMaterial.Icon3.cmd_sync
