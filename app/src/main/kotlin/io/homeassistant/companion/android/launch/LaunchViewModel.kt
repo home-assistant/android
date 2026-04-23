@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.launch
 
 import androidx.annotation.VisibleForTesting
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkManager
@@ -9,6 +11,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.WIPFeature
 import io.homeassistant.companion.android.automotive.navigation.AutomotiveRoute
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.network.NetworkState
@@ -20,6 +23,7 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
 import io.homeassistant.companion.android.di.qualifiers.LocationTrackingSupport
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
+import io.homeassistant.companion.android.launch.applock.AppLockManager
 import io.homeassistant.companion.android.onboarding.OnboardingRoute
 import io.homeassistant.companion.android.onboarding.WearOnboardingRoute
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -77,7 +81,9 @@ internal class LaunchViewModel @VisibleForTesting constructor(
     private val hasLocationTrackingSupport: Boolean,
     isAutomotive: Boolean,
     isFullFlavor: Boolean,
-) : ViewModel() {
+    private val appLockManager: AppLockManager,
+) : ViewModel(),
+    DefaultLifecycleObserver {
 
     @AssistedInject
     constructor(
@@ -88,6 +94,7 @@ internal class LaunchViewModel @VisibleForTesting constructor(
         prefsRepository: PrefsRepository,
         @LocationTrackingSupport hasLocationTrackingSupport: Boolean,
         @IsAutomotive isAutomotive: Boolean,
+        appLockManager: AppLockManager,
     ) : this(
         initialDeepLink,
         workManager,
@@ -97,6 +104,7 @@ internal class LaunchViewModel @VisibleForTesting constructor(
         hasLocationTrackingSupport,
         isAutomotive = isAutomotive,
         isFullFlavor = BuildConfig.FLAVOR == "full",
+        appLockManager = appLockManager,
     )
 
     /**
@@ -116,6 +124,9 @@ internal class LaunchViewModel @VisibleForTesting constructor(
         emitAll(prefsRepository.fullScreenEnabledFlow())
     }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = false)
 
+    private val _isAppLocked = MutableStateFlow(false)
+    val isAppLocked: StateFlow<Boolean> = _isAppLocked.asStateFlow()
+
     init {
         viewModelScope.launch {
             cleanupServers()
@@ -127,6 +138,33 @@ internal class LaunchViewModel @VisibleForTesting constructor(
      * Determine when to hide the application's splash screen.
      */
     fun shouldShowSplashScreen(): Boolean = _uiState.value is LaunchUiState.Loading
+
+    override fun onStart(owner: LifecycleOwner) {
+        viewModelScope.launch {
+            if (WIPFeature.USE_FRONTEND_V2) {
+                _isAppLocked.value = appLockManager.isAppLocked()
+            }
+        }
+    }
+
+    override fun onStop(owner: LifecycleOwner) {
+        viewModelScope.launch {
+            if (WIPFeature.USE_FRONTEND_V2) {
+                appLockManager.setAppActive(false)
+            }
+        }
+    }
+
+    /**
+     * Called when biometric authentication succeeds.
+     * Marks the app as active and removes the lock overlay.
+     */
+    fun onAuthSucceeded() {
+        viewModelScope.launch {
+            appLockManager.setAppActive(true)
+            _isAppLocked.value = false
+        }
+    }
 
     private suspend fun handleInitialState(initialDeepLink: LaunchActivity.DeepLink?) {
         when (initialDeepLink) {
