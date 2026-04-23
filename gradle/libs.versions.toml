@@ -25,7 +25,6 @@ androidxTestRunner = "1.7.0"
 apacheCommonsText = "1.15.0"
 appcompat = "1.7.1"
 biometric = "1.1.0"
-biometric-compose = "1.4.0-alpha06"
 blurView = "version-2.0.6"
 car-versions = "1.7.0"
 changeLog = "3.8.2"
@@ -161,7 +160,6 @@ androidx-test-runner = { group = "androidx.test", name = "runner", version.ref =
 apache-commons-text = { module = "org.apache.commons:commons-text", version.ref = "apacheCommonsText" }
 appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 biometric = { module = "androidx.biometric:biometric", version.ref = "biometric" }
-biometric-compose = { module = "androidx.biometric:biometric-compose", version.ref = "biometric-compose" }
 blurView = { module = "com.github.Dimezis:BlurView", version.ref = "blurView" }
 car-core = { module = "androidx.car.app:app", version.ref = "car-versions" }
 car-automotive = { module = "androidx.car.app:app-automotive", version.ref = "car-versions" }

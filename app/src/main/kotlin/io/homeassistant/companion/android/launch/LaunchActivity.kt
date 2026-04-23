@@ -8,10 +8,6 @@ import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.biometric.AuthenticationRequest
-import androidx.biometric.AuthenticationResult
-import androidx.biometric.BiometricPrompt
-import androidx.biometric.compose.rememberAuthenticationLauncher
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult.ActionPerformed
@@ -26,6 +22,7 @@ import androidx.core.content.IntentCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
@@ -35,6 +32,8 @@ import dagger.hilt.android.lifecycle.withCreationCallback
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import io.homeassistant.companion.android.WIPFeature
+import io.homeassistant.companion.android.authenticator.Authenticator
+import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.launch.applock.HazeLockOverlay
@@ -51,7 +50,6 @@ import io.homeassistant.companion.android.websocket.WebsocketManager
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
-import timber.log.Timber
 
 private const val DEEP_LINK_KEY = "deep_link_key"
 
@@ -207,36 +205,21 @@ class LaunchActivity : AppCompatActivity() {
  */
 @Composable
 private fun AppLockEffect(isAppLocked: Boolean, onAuthSucceeded: () -> Unit) {
-    val activity = LocalActivity.current
+    val activity = LocalActivity.current as? FragmentActivity ?: return
     val biometricTitle = stringResource(commonR.string.biometric_title)
-
-    val authLauncher = rememberAuthenticationLauncher { result ->
-        when (result) {
-            is AuthenticationResult.Success -> onAuthSucceeded()
-            is AuthenticationResult.Error -> {
-                if (result.errorCode == BiometricPrompt.ERROR_USER_CANCELED) {
-                    activity?.finishAffinity()
-                } else {
-                    Timber.w("Biometric authentication failed with errorCode=${result.errorCode}: ${result.errString}")
-                }
-            }
-
-            is AuthenticationResult.CustomFallbackSelected -> {
-                Timber.d("Custom fallback selected during biometric authentication")
+    val authenticator = remember {
+        Authenticator(activity) { result ->
+            when (result) {
+                AuthenticationResult.ERROR -> activity.finishAffinity()
+                AuthenticationResult.SUCCESS -> onAuthSucceeded()
+                AuthenticationResult.CANCELED -> {}
             }
         }
     }
 
     LaunchedEffect(isAppLocked) {
         if (isAppLocked) {
-            authLauncher.launch(
-                AuthenticationRequest.biometricRequest(
-                    title = biometricTitle,
-                    authFallbacks = arrayOf(
-                        AuthenticationRequest.Biometric.Fallback.DeviceCredential,
-                    ),
-                ) {},
-            )
+            authenticator.authenticate(biometricTitle)
         }
     }
 }

@@ -66,7 +66,6 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     "fullImplementation"(libs.wear.remote.interactions)
 
                     "implementation"(libs.biometric)
-                    "implementation"(libs.biometric.compose)
                     "implementation"(libs.webkit)
 
                     "implementation"(libs.bundles.media3)
