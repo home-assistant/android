@@ -75,6 +75,9 @@ interface PrefsRepository {
 
     suspend fun setFullScreenEnabled(enabled: Boolean)
 
+    /** Emits the current fullscreen preference immediately on collection, then on every change. */
+    suspend fun fullScreenEnabledFlow(): Flow<Boolean>
+
     suspend fun isKeepScreenOnEnabled(): Boolean
 
     suspend fun setKeepScreenOnEnabled(enabled: Boolean)

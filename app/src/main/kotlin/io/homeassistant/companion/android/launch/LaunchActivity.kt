@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Parcelable
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -14,9 +15,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.IntentCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.core.view.WindowInsetsCompat.Type.systemBars
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
@@ -130,7 +134,10 @@ class LaunchActivity : AppCompatActivity() {
             HATheme {
                 val navController = rememberNavController()
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+                val isFullScreen by viewModel.isFullScreen.collectAsStateWithLifecycle()
                 val snackbarHostState = remember { SnackbarHostState() }
+
+                FullscreenEffect(isFullScreen = isFullScreen)
 
                 MissingPlayServicesNotice(
                     isMissingRequiredPlayServices = playServicesAvailability.isMissingRequiredPlayServices(),
@@ -168,6 +175,22 @@ class LaunchActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         if (!isFinishing && WIPFeature.USE_FRONTEND_V2) SensorReceiver.updateAllSensors(this)
+    }
+}
+
+@Composable
+private fun FullscreenEffect(isFullScreen: Boolean) {
+    val view = LocalView.current
+    val window = LocalActivity.current?.window ?: return
+    LaunchedEffect(isFullScreen) {
+        val controller = WindowInsetsControllerCompat(window, view)
+        if (isFullScreen) {
+            controller.systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            controller.hide(systemBars())
+        } else {
+            controller.show(systemBars())
+        }
     }
 }
 
