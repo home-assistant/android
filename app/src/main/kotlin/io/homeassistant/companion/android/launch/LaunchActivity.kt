@@ -28,6 +28,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
+import io.homeassistant.companion.android.util.ChangeLog
 import io.homeassistant.companion.android.util.CheckLocationDisabledUseCase
 import io.homeassistant.companion.android.util.PLAY_SERVICES_FLAVOR_DOC_URL
 import io.homeassistant.companion.android.util.PlayServicesAvailability
@@ -60,6 +61,9 @@ class LaunchActivity : AppCompatActivity() {
 
     @Inject
     internal lateinit var checkLocationDisabled: CheckLocationDisabledUseCase
+
+    @Inject
+    internal lateinit var changeLog: ChangeLog
 
     /**
      * Represents deep link actions that can be passed to [LaunchActivity] to navigate to specific destinations.
@@ -156,6 +160,7 @@ class LaunchActivity : AppCompatActivity() {
             lifecycleScope.launch {
                 WebsocketManager.start(this@LaunchActivity)
                 checkLocationDisabled()
+                changeLog.showChangeLog(this@LaunchActivity, forceShow = false)
             }
         }
     }
