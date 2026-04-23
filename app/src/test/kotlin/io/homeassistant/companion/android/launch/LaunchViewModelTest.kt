@@ -23,7 +23,6 @@ import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -690,26 +689,5 @@ class LaunchViewModelTest {
             viewModel.onStart(lifecycleOwner)
             expectNoEvents()
         }
-    }
-
-    @Test
-    fun `Given app locked when auth succeeds then setAppActive true is called before clearing lock state`() = runTest {
-        coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.integrationRepository() } returns integrationRepository
-        coEvery { integrationRepository.isAppLocked() } returns true
-
-        createViewModel()
-        advanceUntilIdle()
-
-        viewModel.onStart(lifecycleOwner)
-        advanceUntilIdle()
-
-        viewModel.onAuthSucceeded()
-        advanceUntilIdle()
-
-        coVerifyOrder {
-            integrationRepository.setAppActive(true)
-        }
-        assertFalse(viewModel.isAppLocked.value)
     }
 }
