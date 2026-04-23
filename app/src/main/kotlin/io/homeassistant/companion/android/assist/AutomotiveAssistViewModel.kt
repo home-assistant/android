@@ -31,10 +31,10 @@ class AutomotiveAssistViewModel @AssistedInject constructor(
     @Assisted private val application: Application,
 ) : AssistViewModelBase(serverManager, audioStrategy, audioUrlPlayer, application) {
 
-    val isAudioPlaying: Boolean
-        get() = isPlayingAudio
+    val isAudioPlaying: StateFlow<Boolean> = isPlayingAudioState
 
-  
+    private val _processingState = MutableStateFlow(false)
+    val processingState: StateFlow<Boolean> = _processingState
 
     private var pipelineId: String? = null
     private var pipelineJob: Job? = null
@@ -299,6 +299,7 @@ class AutomotiveAssistViewModel @AssistedInject constructor(
 
                     is AssistEvent.Dismiss -> {
                         isProcessing = false
+                        _processingState.value = false
                         shouldFinish = true
                     }
 
@@ -310,6 +311,7 @@ class AutomotiveAssistViewModel @AssistedInject constructor(
 
                     is AssistEvent.PipelineEnded -> {
                         isProcessing = false
+                        _processingState.value = false
                         if (!isContinuationTurn) {
                             activeUserMessage = null
                             activeHaMessage = null

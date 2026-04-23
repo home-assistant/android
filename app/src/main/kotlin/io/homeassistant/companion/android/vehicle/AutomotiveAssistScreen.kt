@@ -53,12 +53,12 @@ class AutomotiveAssistScreen @AssistedInject constructor(
             }
         }
         scope.launch {
-            snapshotFlow { viewModel.isProcessing }.collect {
+            viewModel.processingState.collect {
                 invalidate()
             }
         }
         scope.launch {
-            snapshotFlow { viewModel.isAudioPlaying }.collect {
+            viewModel.isAudioPlaying.collect {
                 invalidate()
             }
         }
@@ -86,7 +86,7 @@ class AutomotiveAssistScreen @AssistedInject constructor(
     override fun onGetTemplate(): Template {
         Timber.d("onGetTemplate called")
         val conversation = viewModel.conversation.value
-        val isPlayingAudio = viewModel.isAudioPlaying
+        val isPlayingAudio = viewModel.isAudioPlaying.value
         val isProcessing = viewModel.isProcessing
         val inputMode = viewModel.getInput()
 

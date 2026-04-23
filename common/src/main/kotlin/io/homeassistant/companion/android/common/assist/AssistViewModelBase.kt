@@ -30,6 +30,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
@@ -136,6 +138,15 @@ abstract class AssistViewModelBase(
 
     /** Whether TTS audio is currently being played back. Updated by playback handlers. */
     protected var isPlayingAudio = false
+        private set
+
+    private val _isPlayingAudioFlow = MutableStateFlow(false)
+    val isPlayingAudioState: StateFlow<Boolean> = _isPlayingAudioFlow
+
+    protected fun setIsPlayingAudio(value: Boolean) {
+        isPlayingAudio = value
+        _isPlayingAudioFlow.value = value
+    }
 
     /**
      * @param text input to run an intent pipeline with, or `null` to run a STT pipeline (check if
@@ -245,9 +256,9 @@ abstract class AssistViewModelBase(
                         playAudio(audioPath).collect { state ->
                             Timber.tag("[AA-Assist]").d("handleRunStart: playback state=%s", state)
                             when (state) {
-                                PlaybackState.PLAYING -> isPlayingAudio = true
+                                PlaybackState.PLAYING -> setIsPlayingAudio(true)
                                 PlaybackState.STOP_PLAYING -> {
-                                    isPlayingAudio = false
+                                    setIsPlayingAudio(false)
                                     onEvent(AssistEvent.PlaybackFinished)
                                     notifyContinueConversationIfNeeded(onEvent)
                                 }
@@ -257,7 +268,7 @@ abstract class AssistViewModelBase(
                         Timber.tag("[AA-Assist]").d("handleRunStart: audio playback flow completed")
                     } finally {
                         Timber.tag("[AA-Assist]").d("handleRunStart: finally block - setting isPlayingAudio=false")
-                        isPlayingAudio = false
+                        setIsPlayingAudio(false)
                     }
                 }
             }
@@ -307,12 +318,12 @@ abstract class AssistViewModelBase(
 
         currentPlayAudioJob = viewModelScope.launch {
             val audioPath = data?.ttsOutput?.url
-            if (!audioPath.isNullOrBlank()) {
-                isPlayingAudio = true
-                try {
+             if (!audioPath.isNullOrBlank()) {
+                setIsPlayingAudio(true)
+               try {
                     playAudio(audioPath).first { state -> state == PlaybackState.STOP_PLAYING }
                 } finally {
-                    isPlayingAudio = false
+                    setIsPlayingAudio(false)
                 }
                 onEvent(AssistEvent.PlaybackFinished)
             }
