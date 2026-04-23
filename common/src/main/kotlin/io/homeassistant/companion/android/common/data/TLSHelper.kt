@@ -24,8 +24,9 @@ class TLSHelper @Inject constructor(
     fun setupOkHttpClientSSLSocketFactory(builder: OkHttpClient.Builder) {
         val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
         // Load AndroidCAStore explicitly to include user-installed CAs alongside
-        // system CAs. Passing null only loads the system store, which bypasses the
-        // user-CA trust configured in network_security_config.xml (#5565).
+        // system CAs. On some Android builds, passing null may load only the
+        // system store, which can bypass user-CA trust configured in
+        // network_security_config.xml (#5565).
         val androidCaStore: KeyStore? = try {
             KeyStore.getInstance("AndroidCAStore").apply { load(null) }
         } catch (e: Throwable) {
