@@ -8,7 +8,11 @@ import com.android.tools.lint.detector.api.JavaContext
 import com.android.tools.lint.detector.api.Scope
 import com.android.tools.lint.detector.api.Severity
 import com.android.tools.lint.detector.api.SourceCodeScanner
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
+import org.jetbrains.kotlin.psi.KtAnnotatedExpression
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UClass
@@ -16,6 +20,7 @@ import org.jetbrains.uast.UClassLiteralExpression
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.getParentOfType
+import org.jetbrains.uast.toUElement
 
 private const val EVALUATE_JAVASCRIPT_METHOD = "evaluateJavascript"
 private const val WEBVIEW_FQN = "android.webkit.WebView"
@@ -67,10 +72,15 @@ object EvaluateJavascriptDetector {
         }
 
         /**
-         * Walks up from [node] through enclosing methods and classes, returning `true`
+         * Walks up from [node] through enclosing expressions, methods and classes, returning `true`
          * if any of them carry `@EvaluateJavascriptUsage` or `@OptIn(EvaluateJavascriptUsage::class)`.
+         *
+         * Expression-level annotations (e.g. `@OptIn(...) evaluateJavascript(...)`) are not
+         * exposed by UAST's `uAnnotations`, so we fall back to the Kotlin PSI tree for those.
          */
         private fun hasOptIn(node: UCallExpression): Boolean {
+            if (hasExpressionLevelOptIn(node.sourcePsi)) return true
+
             val enclosingMethod = node.getParentOfType<UMethod>()
             if (enclosingMethod != null && hasEvaluateJavascriptAnnotation(enclosingMethod.uAnnotations)) {
                 return true
@@ -78,6 +88,22 @@ object EvaluateJavascriptDetector {
 
             val enclosingClass = node.getParentOfType<UClass>()
             return enclosingClass != null && hasEvaluateJavascriptAnnotation(enclosingClass.uAnnotations)
+        }
+
+        /**
+         * Walks up the Kotlin PSI tree from [psi] looking for [KtAnnotatedExpression] nodes
+         * that carry the opt-in annotation. Stops at function or class boundaries.
+         */
+        private fun hasExpressionLevelOptIn(psi: PsiElement?): Boolean {
+            var current = psi?.parent
+            while (current != null && current !is KtFunction && current !is KtClassOrObject) {
+                if (current is KtAnnotatedExpression) {
+                    val uAnnotations = current.annotationEntries.mapNotNull { it.toUElement() as? UAnnotation }
+                    if (hasEvaluateJavascriptAnnotation(uAnnotations)) return true
+                }
+                current = current.parent
+            }
+            return false
         }
 
         private fun hasEvaluateJavascriptAnnotation(annotations: List<UAnnotation>): Boolean {

@@ -112,7 +112,6 @@ fun View.applySafeDrawingInsets(
  * Applies safe area insets to the WebView by setting CSS custom properties.
  * These properties are used by the Home Assistant frontend for edge-to-edge display.
  */
-@OptIn(EvaluateJavascriptUsage::class)
 fun WebView.applyInsets(
     insets: WindowInsets,
     density: Density,
@@ -131,5 +130,8 @@ fun WebView.applyInsets(
     """.trimIndent()
     Timber.d("Safe area is $safeAreaJs")
 
+    // No externalBus alternative: safe area must be set as early as possible, even before the
+    // frontend is ready to receive messages.
+    @OptIn(EvaluateJavascriptUsage::class)
     evaluateJavascript(safeAreaJs, null)
 }

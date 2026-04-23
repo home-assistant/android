@@ -167,6 +167,31 @@ class EvaluateJavascriptDetectorTest {
     }
 
     @Test
+    fun `Given evaluateJavascript call with inline @OptIn on expression then no error`() {
+        lint().issues(EvaluateJavascriptDetector.ISSUE)
+            .allowMissingSdk()
+            .files(
+                webViewStub,
+                evaluateJavascriptUsageStub,
+                kotlin(
+                    """
+                    package com.example
+
+                    import android.webkit.WebView
+                    import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
+
+                    fun WebView.doSomething() {
+                        @OptIn(EvaluateJavascriptUsage::class)
+                        evaluateJavascript("alert('hello')", null)
+                    }
+                    """,
+                ).indented(),
+            )
+            .run()
+            .expectClean()
+    }
+
+    @Test
     fun `Given evaluateJavascript call with androidx @OptIn on function then no error`() {
         val androidxOptInStub = kotlin(
             """

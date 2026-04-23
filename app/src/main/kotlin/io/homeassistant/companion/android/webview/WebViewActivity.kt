@@ -173,6 +173,8 @@ import org.json.JSONObject
 import timber.log.Timber
 
 @AndroidEntryPoint
+// Class-level opt-in: WebViewActivity is being removed; each script usage is documented
+// individually in the new implementation.
 @OptIn(EvaluateJavascriptUsage::class)
 class WebViewActivity :
     BaseActivity(),
