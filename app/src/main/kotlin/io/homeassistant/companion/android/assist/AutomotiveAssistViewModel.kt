@@ -31,11 +31,12 @@ class AutomotiveAssistViewModel @AssistedInject constructor(
     @Assisted private val application: Application,
 ) : AssistViewModelBase(serverManager, audioStrategy, audioUrlPlayer, application) {
 
-    var isAudioPlaying by mutableStateOf(false)
-        private set
+    val isAudioPlaying: Boolean
+        get() = isPlayingAudio
 
   
 
+    private var pipelineId: String? = null
     private var pipelineJob: Job? = null
     private var activeUserMessage: AssistMessage? = null
     private var activeHaMessage: AssistMessage? = null
@@ -103,18 +104,33 @@ class AutomotiveAssistViewModel @AssistedInject constructor(
 
             if (pipelineId != null) {
                 setPipeline(pipelineId)
-            } else if (
-                serverManager.integrationRepository(selectedServerId).getLastUsedPipelineId() != null
-            ) {
-                setPipeline(serverManager.integrationRepository(selectedServerId).getLastUsedPipelineId())
             } else {
-                inputMode = AssistInputMode.BLOCKED
-                _conversation.value = listOf(
-                    AssistMessage(
-                        app.getString(io.homeassistant.companion.android.common.R.string.assist_error),
-                        isInput = false,
-                    ),
-                )
+                val lastPipelineId = serverManager.integrationRepository(selectedServerId).getLastUsedPipelineId()
+                Timber.tag("[AA-Assist]").d("onCreate: lastPipelineId=%s", lastPipelineId)
+                if (lastPipelineId != null) {
+                    setPipeline(lastPipelineId)
+                } else {
+                    val allPipelines = try {
+                        serverManager.webSocketRepository(selectedServerId).getAssistPipelines()
+                    } catch (e: Exception) {
+                        Timber.e(e, "Failed to get assist pipelines")
+                        null
+                    }
+                    Timber.tag("[AA-Assist]").d("onCreate: allPipelines=%s", allPipelines?.pipelines?.map { it.id })
+                    val ttsPipeline = allPipelines?.pipelines?.firstOrNull { it.ttsEngine != null }
+                    if (ttsPipeline != null) {
+                        Timber.tag("[AA-Assist]").d("onCreate: using TTS pipeline=%s", ttsPipeline.id)
+                        setPipeline(ttsPipeline.id)
+                    } else {
+                        inputMode = AssistInputMode.BLOCKED
+                        _conversation.value = listOf(
+                            AssistMessage(
+                                app.getString(io.homeassistant.companion.android.common.R.string.assist_error),
+                                isInput = false,
+                            ),
+                        )
+                    }
+                }
             }
 
             if (hasPermission && recorderAutoStart) {
@@ -124,6 +140,8 @@ class AutomotiveAssistViewModel @AssistedInject constructor(
     }
 
     private suspend fun setPipeline(id: String?) {
+        pipelineId = id
+        Timber.tag("[AA-Assist]").d("setPipeline: id=%s", id)
         val pipeline = try {
             serverManager.webSocketRepository(selectedServerId).getAssistPipeline(id)
         } catch (e: Exception) {
@@ -131,6 +149,8 @@ class AutomotiveAssistViewModel @AssistedInject constructor(
             null
         }
 
+        Timber.tag("[AA-Assist]").d("setPipeline: pipeline=%s, ttsEngine=%s, sttEngine=%s",
+            pipeline?.id, pipeline?.ttsEngine, pipeline?.sttEngine)
         if (pipeline != null) {
             _conversation.value = emptyList()
             activeUserMessage = null
@@ -193,15 +213,17 @@ class AutomotiveAssistViewModel @AssistedInject constructor(
     }
 
     private fun runAssistPipeline(text: String?, skipStopPlayback: Boolean = false) {
-        val isVoice = text == null
+        Timber.tag("[AA-Assist]").d("runAssistPipeline: text=%s, isVoice=%s", text, text == null)
         if (!skipStopPlayback) {
             stopPlayback()
         }
 
         pipelineJob = viewModelScope.launch {
             val pipeline = try {
-                val lastPipelineId = serverManager.integrationRepository(selectedServerId).getLastUsedPipelineId()
-                lastPipelineId?.let {
+                val id = pipelineId ?: serverManager.integrationRepository(selectedServerId).getLastUsedPipelineId()
+                Timber.tag("[AA-Assist]").d("runAssistPipeline: pipelineId=%s, lastPipelineId=%s",
+                    pipelineId, serverManager.integrationRepository(selectedServerId).getLastUsedPipelineId())
+                id?.let {
                     serverManager.webSocketRepository(selectedServerId).getAssistPipeline(it)
                 }
             } catch (e: Exception) {
@@ -209,6 +231,8 @@ class AutomotiveAssistViewModel @AssistedInject constructor(
                 null
             }
 
+            Timber.tag("[AA-Assist]").d("runAssistPipeline: pipeline=%s, ttsEngine=%s, sttEngine=%s",
+                pipeline?.id, pipeline?.ttsEngine, pipeline?.sttEngine)
             isProcessing = true
             runAssistPipelineInternal(
                 text = text,

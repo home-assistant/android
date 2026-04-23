@@ -153,10 +153,13 @@ abstract class AssistViewModelBase(
         var job: Job? = null
         job = viewModelScope.launch {
             val flow = try {
+                val outputTts = pipeline?.ttsEngine?.isNotBlank() == true
+                Timber.tag("[AA-Assist]").d("runAssistPipelineInternal: isVoice=%s, pipelineId=%s, ttsEngine=%s, outputTts=%s",
+                    isVoice, pipeline?.id, pipeline?.ttsEngine, outputTts)
                 if (isVoice) {
                     serverManager.webSocketRepository(selectedServerId).runAssistPipelineForVoice(
                         sampleRate = VOICE_SAMPLE_RATE,
-                        outputTts = pipeline?.ttsEngine?.isNotBlank() == true,
+                        outputTts = outputTts,
                         pipelineId = pipeline?.id,
                         conversationId = conversationId,
                         wakeWordPhrase = wakeWordPhrase,
@@ -225,17 +228,22 @@ abstract class AssistViewModelBase(
     }
 
     private fun handleRunStart(data: AssistPipelineRunStart?, isVoice: Boolean, onEvent: (AssistEvent) -> Unit) {
+        Timber.tag("[AA-Assist]").d("handleRunStart: isVoice=%s, hasTtsOutput=%s", isVoice, data?.ttsOutput != null)
         if (!isVoice) return
 
         data?.ttsOutput?.let { ttsOutput ->
             val audioPath = ttsOutput.url
+            Timber.tag("[AA-Assist]").d("handleRunStart: audioPath=%s, currentPath=%s", audioPath, currentPathBeingPlayed)
             val shouldPlay = currentPathBeingPlayed != audioPath || currentPlayAudioJob?.isActive != true
+            Timber.tag("[AA-Assist]").d("handleRunStart: shouldPlay=%s, audioPathNotBlank=%s", shouldPlay, audioPath.isNotBlank())
             if (audioPath.isNotBlank() && shouldPlay) {
                 currentPathBeingPlayed = audioPath
                 stopPlayback()
                 currentPlayAudioJob = viewModelScope.launch {
                     try {
+                        Timber.tag("[AA-Assist]").d("handleRunStart: starting audio playback for %s", audioPath)
                         playAudio(audioPath).collect { state ->
+                            Timber.tag("[AA-Assist]").d("handleRunStart: playback state=%s", state)
                             when (state) {
                                 PlaybackState.PLAYING -> isPlayingAudio = true
                                 PlaybackState.STOP_PLAYING -> {
@@ -246,7 +254,9 @@ abstract class AssistViewModelBase(
                                 PlaybackState.READY -> { /* No op */ }
                             }
                         }
+                        Timber.tag("[AA-Assist]").d("handleRunStart: audio playback flow completed")
                     } finally {
+                        Timber.tag("[AA-Assist]").d("handleRunStart: finally block - setting isPlayingAudio=false")
                         isPlayingAudio = false
                     }
                 }
@@ -276,9 +286,12 @@ abstract class AssistViewModelBase(
     }
 
     private fun handleIntentEnd(data: AssistPipelineIntentEnd?, onEvent: (AssistEvent) -> Unit) {
+        Timber.tag("[AA-Assist]").d("handleIntentEnd: intentOutput=%s", data?.intentOutput != null)
         val intentOutput = data?.intentOutput ?: return
         conversationId = intentOutput.conversationId
         continueConversation.set(intentOutput.continueConversation)
+        Timber.tag("[AA-Assist]").d("handleIntentEnd: continueConversation=%s, speech=%s",
+            intentOutput.continueConversation, intentOutput.response.speech?.plain?.get("speech"))
         intentOutput.response.speech?.plain?.get("speech")?.let { speech ->
             onEvent(AssistEvent.Message.Output(speech))
         }
@@ -377,15 +390,24 @@ abstract class AssistViewModelBase(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private suspend fun playAudio(path: String): Flow<PlaybackState> {
+        Timber.tag("[AA-Assist]").d("playAudio: resolving path=%s", path)
         return serverManager.connectionStateProvider(selectedServerId).urlFlow().flatMapLatest { urlState ->
             val baseUrl = if (urlState is UrlState.HasUrl) {
+                Timber.tag("[AA-Assist]").d("playAudio: urlState=HasUrl, baseUrl=%s", urlState.url)
                 urlState.url
             } else {
+                Timber.tag("[AA-Assist]").d("playAudio: urlState not HasUrl, baseUrl=null, stateType=%s", urlState::class.simpleName)
                 null
             }
-            UrlUtil.handle(baseUrl, path)?.let {
+            val resolvedUrl = UrlUtil.handle(baseUrl, path)
+            Timber.tag("[AA-Assist]").d("playAudio: resolvedUrl=%s", resolvedUrl)
+            resolvedUrl?.let {
+                Timber.tag("[AA-Assist]").d("playAudio: calling audioUrlPlayer.playAudio(%s)", it)
                 audioUrlPlayer.playAudio(it.toString())
-            } ?: emptyFlow()
+            } ?: run {
+                Timber.tag("[AA-Assist]").e("playAudio: URL resolution failed, returning emptyFlow")
+                emptyFlow()
+            }
         }
     }
 

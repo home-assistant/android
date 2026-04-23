@@ -71,10 +71,13 @@ class AudioUrlPlayer @VisibleForTesting constructor(
      */
     @OptIn(UnstableApi::class)
     fun playAudio(url: String, isAssistant: Boolean = true): Flow<PlaybackState> = callbackFlow {
+        Timber.tag("[AA-Assist]").d("AudioUrlPlayer.playAudio: url=%s, isAssistant=%s", url, isAssistant)
         if (!canPlayMusic()) {
+            Timber.tag("[AA-Assist]").d("AudioUrlPlayer.playAudio: canPlayMusic=false, closing flow")
             close()
             return@callbackFlow
         }
+        Timber.tag("[AA-Assist]").d("AudioUrlPlayer.playAudio: canPlayMusic=true, creating player")
         var request: AudioFocusRequestCompat? = null
 
         val player = playerCreator {
@@ -88,10 +91,14 @@ class AudioUrlPlayer @VisibleForTesting constructor(
             addListener(
                 object : Player.Listener {
                     override fun onPlaybackStateChanged(playbackState: Int) {
+                        Timber.tag("[AA-Assist]").d("AudioUrlPlayer: onPlaybackStateChanged=%s, hasStartedPlayback=%s",
+                            playbackState, hasStartedPlayback)
                         when (playbackState) {
                             Player.STATE_READY -> {
+                                Timber.tag("[AA-Assist]").d("AudioUrlPlayer: STATE_READY reached")
                                 if (!hasStartedPlayback) {
                                     hasStartedPlayback = true
+                                    Timber.tag("[AA-Assist]").d("AudioUrlPlayer: requesting focus and playing")
                                     trySend(PlaybackState.READY)
                                     request = requestFocus(isAssistant)
                                     play()
@@ -142,7 +149,10 @@ class AudioUrlPlayer @VisibleForTesting constructor(
 
     private fun canPlayMusic(): Boolean {
         return try {
-            audioManager != null && audioManager.getStreamVolume(STREAM_MUSIC) != 0
+            val canPlay = audioManager != null && audioManager.getStreamVolume(STREAM_MUSIC) != 0
+            Timber.tag("[AA-Assist]").d("AudioUrlPlayer.canPlayMusic: audioManager=%s, volume=%s, canPlay=%s",
+                audioManager != null, audioManager?.getStreamVolume(STREAM_MUSIC), canPlay)
+            canPlay
         } catch (e: RuntimeException) {
             Timber.e(e, "Couldn't get stream volume")
             true

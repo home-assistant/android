@@ -1,5 +1,4 @@
 package io.homeassistant.companion.android.assist
-
 import android.content.Context
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.assist.service.AssistVoiceInteractionService
