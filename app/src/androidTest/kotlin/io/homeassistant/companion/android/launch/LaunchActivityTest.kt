@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.launch
 
+import android.os.Build
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import leakcanary.DetectLeaksAfterTestSuccess
 import leakcanary.LeakCanary
@@ -27,7 +28,7 @@ class LaunchActivityTest {
                     AndroidReferenceMatchers.nativeGlobalVariableLeak(
                         className = "android.app.job.JobService\$1",
                         description = "API 23 can retain JobService binder stubs after Service.onDestroy().",
-                        patternApplies = { sdkInt < 24 },
+                        patternApplies = { sdkInt < Build.VERSION_CODES.N },
                     ),
             )
         }
