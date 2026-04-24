@@ -10,8 +10,6 @@ import android.net.wifi.WifiManager
 import android.nfc.NfcAdapter
 import android.os.Build
 import android.os.PowerManager
-import androidx.compose.runtime.Composer
-import androidx.compose.runtime.ExperimentalComposeRuntimeApi
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
@@ -19,6 +17,7 @@ import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepositor
 import io.homeassistant.companion.android.common.data.keychain.NamedKeyStore
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.util.HAStrictMode
+import io.homeassistant.companion.android.common.util.configureComposeDiagnosticStackTrace
 import io.homeassistant.companion.android.complications.ComplicationReceiver
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import javax.inject.Inject
@@ -36,7 +35,6 @@ open class HomeAssistantApplication : Application() {
     @NamedKeyStore
     lateinit var keyStore: KeyChainRepository
 
-    @OptIn(ExperimentalComposeRuntimeApi::class)
     override fun onCreate() {
         // We should initialize the logger as early as possible in the lifecycle of the application
         Timber.plant(Timber.DebugTree())
@@ -51,8 +49,7 @@ open class HomeAssistantApplication : Application() {
 
         Timber.i("Running ${BuildConfig.VERSION_NAME} on SDK ${Build.VERSION.SDK_INT}")
 
-        // Enable only for debug flavor to avoid perf regressions in release
-        Composer.setDiagnosticStackTraceEnabled(BuildConfig.DEBUG)
+        configureComposeDiagnosticStackTrace(isDebug = BuildConfig.DEBUG)
 
         ioScope.launch {
             keyStore.load(applicationContext, KeyStoreRepository.ALIAS)
