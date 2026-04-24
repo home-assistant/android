@@ -319,6 +319,31 @@ jobs:
         with:
           test-name: Unit test
 
+  instrumentation_test_wtf:
+    name: "Instrumentation Test WTF"
+    # needs: [lint, lockfiles, ktlint]
+    environment: ui-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-build-env
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+          mock-google-services: "true"
+
+      - name: Run test
+        run: ./gradlew :app:testFullDebugWithEmulatorWtf
+        env:
+          EW_API_TOKEN: ${{ secrets.EMULATOR_WTF_TOKEN }}
+
+      - uses: ./.github/actions/upload-test-results
+        if: always()
+        with:
+          test-name: Instrumentation Test WTF
+
   instrumentation_test:
     name: "Instrumentation Tests"
     needs: [lint, lockfiles, ktlint]
