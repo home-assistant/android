@@ -1452,7 +1452,7 @@ class WebViewActivity :
         }
     }
 
-    @OptIn(UnstableApi::class)
+    @androidx.annotation.OptIn(UnstableApi::class)
     fun exoResizeHls(json: JsonObject) {
         val payload = json["payload"]?.jsonObjectOrNull() ?: return
         // Payload is https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect
