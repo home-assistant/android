@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.frontend.externalbus
 
 import app.cash.turbine.test
-import io.homeassistant.companion.android.frontend.EvaluateScriptUsage
+import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import io.homeassistant.companion.android.frontend.WebViewAction
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConfigGetMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConnectionStatusMessage
@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-@OptIn(EvaluateScriptUsage::class)
+@OptIn(EvaluateJavascriptUsage::class)
 class FrontendExternalBusRepositoryImplTest {
 
     private lateinit var repository: FrontendExternalBusRepositoryImpl

@@ -43,7 +43,6 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.OptIn
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.displayCutout
@@ -118,6 +117,7 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
+import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.EXPECTED_GET_AUTH_CALLBACK
@@ -525,6 +525,13 @@ class WebViewActivity :
                             if (moreInfoMutex.tryLock(owner)) {
                                 delay(2000L)
                                 Timber.d("More info entity: $moreInfoEntity")
+                                // Opts into [EvaluateJavascriptUsage] to open the "more-info" dialog
+                                // for an entity (e.g. from a notification deep-link) by dispatching
+                                // a `hass-more-info` CustomEvent on the `home-assistant` root. This
+                                // is a legacy fallback for frontends that don't support the
+                                // `?more-info-entity-id=` URL parameter (see where moreInfoEntity
+                                // is assigned). Kept for backward compatibility.
+                                @OptIn(EvaluateJavascriptUsage::class)
                                 webView.evaluateJavascript(
                                     "document.querySelector(\"home-assistant\").dispatchEvent(new CustomEvent(\"hass-more-info\", { detail: { entityId: \"$moreInfoEntity\" }}))",
                                 ) {
@@ -1050,6 +1057,12 @@ class WebViewActivity :
                 // Set event listener for HA theme change
                 lifecycleScope.launch {
                     val themeCallback = externalBusCallback("{type:'onHomeAssistantSetTheme'}")
+                    // Opts into [EvaluateJavascriptUsage] to install a DOM listener for the
+                    // `settheme` event so theme changes are forwarded to the native app through
+                    // the external bus as `onHomeAssistantSetTheme`. This should be replaced with
+                    // a proper external bus message, but this was made before the
+                    // [EvaluateJavascriptUsage] policy.
+                    @OptIn(EvaluateJavascriptUsage::class)
                     webView.evaluateJavascript(
                         "document.addEventListener('settheme', $themeCallback);",
                         null,
@@ -1287,6 +1300,12 @@ class WebViewActivity :
 
     private fun getAndSetStatusBarNavigationBarColors() {
         val htmlArraySpacer = "-SPACER-"
+
+        // Opts into [EvaluateJavascriptUsage] because no external bus message exposes computed CSS
+        // values reading these tokens from JavaScript is the only way to match system chrome to
+        // the theme. This should be replaced with a proper external bus message, but this was
+        // made before the [EvaluateJavascriptUsage] policy.
+        @OptIn(EvaluateJavascriptUsage::class)
         webView.evaluateJavascript(
             "[" +
                 "document.getElementsByTagName('html')[0].computedStyleMap().get('--app-header-background-color')[0]," +
@@ -1433,7 +1452,7 @@ class WebViewActivity :
         }
     }
 
-    @OptIn(UnstableApi::class)
+    @androidx.annotation.OptIn(UnstableApi::class)
     fun exoResizeHls(json: JsonObject) {
         val payload = json["payload"]?.jsonObjectOrNull() ?: return
         // Payload is https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect
@@ -1726,6 +1745,12 @@ class WebViewActivity :
 
     override fun setExternalAuth(script: String) {
         webView.post {
+            // Opts into [EvaluateJavascriptUsage] because the external auth protocol runs on its
+            // own channel, not the external bus: the frontend installs callbacks on `window`
+            // (e.g. `window.externalAuthSetToken`) and waits for the native app to invoke them
+            // directly. The [script] is the pre-formed callback invocation no external bus
+            // equivalent exists.
+            @OptIn(EvaluateJavascriptUsage::class)
             webView.evaluateJavascript(script, null)
         }
     }
@@ -2003,6 +2028,11 @@ class WebViewActivity :
 
         Timber.d("Sending: $script")
 
+        // Opts into [EvaluateJavascriptUsage] because this IS the external bus: the frontend
+        // installs `window.externalBus` as the entry point for messages, so delivering a typed
+        // [ExternalBusMessage] means invoking that function via `evaluateJavascript`. There is
+        // no higher-level alternative.
+        @OptIn(EvaluateJavascriptUsage::class)
         webView.evaluateJavascript(script, message.callback)
     }
 
@@ -2102,6 +2132,11 @@ class WebViewActivity :
                     }
                 })();
             """.trimIndent()
+            // Opts into [EvaluateJavascriptUsage] because the injected async function calls back
+            // into the external bus (via `window.externalBus(...)`) so the result is delivered
+            // through the normal typed message path. This should be replaced with a proper
+            // external bus message, but this was made before the [EvaluateJavascriptUsage] policy.
+            @OptIn(EvaluateJavascriptUsage::class)
             webView.evaluateJavascript(jsCode, null)
         }
     }
@@ -2129,6 +2164,11 @@ class WebViewActivity :
         });
         document.dispatchEvent(event);
         """.trimIndent()
+        // Opts into [EvaluateJavascriptUsage] to simulate a keyboard input, which is an
+        // interaction the frontend already handles through its normal DOM event listeners — no
+        // frontend internals are being poked. This should be replaced with a proper external bus
+        // message, but this was made before the [EvaluateJavascriptUsage] policy.
+        @OptIn(EvaluateJavascriptUsage::class)
         evaluateJavascript(eventCode, null)
     }
 
@@ -2150,6 +2190,11 @@ class WebViewActivity :
         webView.settings.builtInZoomControls = presenter.isPinchToZoomEnabled()
         // Use idea from https://github.com/home-assistant/iOS/pull/1472 to filter viewport
         val pinchToZoom = if (presenter.isPinchToZoomEnabled()) "true" else "false"
+        // Opts into [EvaluateJavascriptUsage] to rewrite the `<meta name="viewport">` tag and
+        // toggle pinch-to-zoom. Viewport configuration is a WebView/HTML concern that sits below
+        // the frontend, so no external bus message can express it — this script is the only way
+        // to adjust these settings at runtime.
+        @OptIn(EvaluateJavascriptUsage::class)
         webView.evaluateJavascript(
             """
             if (typeof viewport === 'undefined') {
@@ -2202,6 +2247,12 @@ class WebViewActivity :
                     NavigateTo("/", true),
                 )
             } else {
+                // Opts into [EvaluateJavascriptUsage] to navigate to the default panel by
+                // simulating a click on the matching sidebar anchor, reaching deep into the
+                // frontend's shadow-DOM structure. Legacy fallback used only when [NavigateTo]
+                // is not supported by the server — the typed [NavigateTo] external bus message
+                // above is the modern path. Kept for backward compatibility.
+                @OptIn(EvaluateJavascriptUsage::class)
                 webView.evaluateJavascript(
                     """
                     var anchor = 'a:nth-child(1)';

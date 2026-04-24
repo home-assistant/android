@@ -11,8 +11,6 @@ import android.nfc.NfcAdapter
 import android.os.Build
 import android.os.PowerManager
 import android.telephony.TelephonyManager
-import androidx.compose.runtime.Composer
-import androidx.compose.runtime.ExperimentalComposeRuntimeApi
 import androidx.core.content.ContextCompat
 import coil3.ImageLoader
 import coil3.PlatformContext
@@ -25,6 +23,7 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
 import io.homeassistant.companion.android.common.util.HAStrictMode
+import io.homeassistant.companion.android.common.util.configureComposeDiagnosticStackTrace
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
@@ -80,7 +79,6 @@ open class HomeAssistantApplication :
     @Inject
     lateinit var settingsDao: SettingsDao
 
-    @OptIn(ExperimentalComposeRuntimeApi::class)
     override fun onCreate() {
         // We should initialize the logger as early as possible in the lifecycle of the application
         Timber.plant(Timber.DebugTree())
@@ -110,8 +108,7 @@ open class HomeAssistantApplication :
             nightModeManager.applyCurrentNightMode()
         }
 
-        // Enable only for debug flavor to avoid perf regressions in release
-        Composer.setDiagnosticStackTraceEnabled(BuildConfig.DEBUG)
+        configureComposeDiagnosticStackTrace(isDebug = BuildConfig.DEBUG)
 
         // This will make sure we start/stop when we actually need too.
         ContextCompat.registerReceiver(

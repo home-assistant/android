@@ -5,7 +5,7 @@ import app.cash.turbine.test
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.AppVersionProvider
-import io.homeassistant.companion.android.frontend.EvaluateScriptUsage
+import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import io.homeassistant.companion.android.frontend.WebViewAction
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
@@ -58,7 +58,7 @@ import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(ConsoleLogExtension::class)
-@OptIn(ExperimentalCoroutinesApi::class, EvaluateScriptUsage::class)
+@OptIn(ExperimentalCoroutinesApi::class, EvaluateJavascriptUsage::class)
 class FrontendMessageHandlerTest {
 
     private val externalBusRepository: FrontendExternalBusRepository = mockk(relaxed = true)

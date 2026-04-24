@@ -76,7 +76,7 @@ sealed interface WebViewAction {
      * Evaluate a JavaScript script in the WebView, the result of the execution is
      * emitted through [result].
      */
-    @EvaluateScriptUsage
+    @EvaluateJavascriptUsage
     data class EvaluateScript(
         val script: String,
         override val result: CompletableDeferred<String?> = CompletableDeferred(),
@@ -137,6 +137,11 @@ sealed interface WebViewAction {
             val density = webView.resources.displayMetrics.density
             webView.setInitialScale((density * zoomLevel).toInt())
             webView.settings { builtInZoomControls = pinchToZoomEnabled }
+            // Opts into [EvaluateJavascriptUsage] to rewrite the `<meta name="viewport">` tag
+            // and toggle pinch-to-zoom. Viewport configuration is a WebView/HTML concern that
+            // sits below the frontend, so no external bus message can express it — this script
+            // is the only way to adjust these settings at runtime.
+            @OptIn(EvaluateJavascriptUsage::class)
             webView.evaluateJavascript(viewportZoomScript(pinchToZoomEnabled)) {}
         }
     }
@@ -151,4 +156,4 @@ sealed interface WebViewAction {
 )
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
-annotation class EvaluateScriptUsage
+annotation class EvaluateJavascriptUsage

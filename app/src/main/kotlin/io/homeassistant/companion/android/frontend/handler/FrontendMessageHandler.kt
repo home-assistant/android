@@ -4,7 +4,7 @@ import android.content.pm.PackageManager
 import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
-import io.homeassistant.companion.android.frontend.EvaluateScriptUsage
+import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import io.homeassistant.companion.android.frontend.WebViewAction
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
@@ -71,12 +71,12 @@ class FrontendMessageHandler @Inject constructor(
      *
      * The bridge has already parsed and validated the callback name before calling this.
      *
-     * Opts into [EvaluateScriptUsage] because the auth protocol runs on its own channel,
+     * Opts into [EvaluateJavascriptUsage] because the auth protocol runs on its own channel,
      * not the external bus: the frontend installs a callback on `window` (e.g.
      * `window.externalAuthSetToken`) and waits for the native app to invoke it directly
      * with the auth response.
      */
-    @OptIn(EvaluateScriptUsage::class)
+    @OptIn(EvaluateJavascriptUsage::class)
     override suspend fun getExternalAuth(authPayload: AuthPayload, serverId: Int) {
         Timber.d("getExternalAuth called")
         when (val result = sessionManager.getExternalAuth(serverId, authPayload)) {
@@ -94,11 +94,11 @@ class FrontendMessageHandler @Inject constructor(
     /**
      * Called when the frontend requests to revoke the current authentication.
      *
-     * Opts into [EvaluateScriptUsage] for the same reason as [getExternalAuth]: the frontend
+     * Opts into [EvaluateJavascriptUsage] for the same reason as [getExternalAuth]: the frontend
      * installs a `window.externalAuthRevokeToken` callback and waits for the native app to
      * invoke it directly.
      */
-    @OptIn(EvaluateScriptUsage::class)
+    @OptIn(EvaluateJavascriptUsage::class)
     override suspend fun revokeExternalAuth(authPayload: AuthPayload, serverId: Int) {
         Timber.d("revokeExternalAuth called")
         when (val result = sessionManager.revokeExternalAuth(serverId, authPayload)) {

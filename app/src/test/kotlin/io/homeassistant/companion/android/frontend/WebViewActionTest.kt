@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-@OptIn(EvaluateScriptUsage::class)
+@OptIn(EvaluateJavascriptUsage::class)
 class WebViewActionTest {
 
     private val webView: WebView = mockk(relaxed = true)

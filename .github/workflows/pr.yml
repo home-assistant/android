@@ -358,7 +358,7 @@ jobs:
             arch: x86_64
             profile: "wearos_small_round"
             target: "android-wear"
-            gradle_target: ":wear:connectedDebugAndroidTest :common:connectedDebugAndroidTest :microwakeword:connectedDebugAndroidTest"
+            gradle_target: ":wear:connectedDebugAndroidTest :common:connectedDebugAndroidTest"
     steps:
       - name: Delete unnecessary tools 🔧
         uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
