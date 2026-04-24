@@ -70,4 +70,13 @@ sealed interface FrontendHandlerEvent {
      * The ViewModel should process the [result] to emit appropriate UI feedback.
      */
     data class DownloadCompleted(val result: DownloadResult) : FrontendHandlerEvent
+
+    /**
+     * Frontend requested the NFC tag-write flow to be launched.
+     *
+     * @param messageId The correlation id from the incoming `tag/write` message; used to respond back
+     *   to the frontend once the flow completes.
+     * @param tagId Optional pre-filled tag identifier. When null, the user is prompted to enter one.
+     */
+    data class WriteNfcTag(val messageId: Int, val tagId: String?) : FrontendHandlerEvent
 }

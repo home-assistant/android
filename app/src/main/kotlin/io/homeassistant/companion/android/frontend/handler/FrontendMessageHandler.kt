@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.Incoming
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistSettingsMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenSettingsMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.TagWriteMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ThemeUpdateMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.UnknownIncomingMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResult
@@ -173,6 +174,14 @@ class FrontendMessageHandler @Inject constructor(
             }
 
             is HapticMessage -> FrontendHandlerEvent.PerformHaptic(message.payload)
+
+            is TagWriteMessage -> {
+                Timber.d("Tag write request received with id: ${message.id}")
+                FrontendHandlerEvent.WriteNfcTag(
+                    messageId = message.id ?: -1,
+                    tagId = message.payload.tag,
+                )
+            }
 
             is HandleBlobMessage -> {
                 Timber.d("handleBlob called with filename=${message.filename}")

@@ -6,11 +6,15 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.data.prefs.ZoomSettings
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
+import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
+import io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage
 import io.homeassistant.companion.android.frontend.gesture.FrontendGestureHandler
 import io.homeassistant.companion.android.frontend.gesture.GestureResult
 import io.homeassistant.companion.android.frontend.handler.FrontendBusObserver
@@ -41,6 +45,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.JsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -58,12 +63,17 @@ class FrontendViewModelTest {
 
     private val webViewClientFactory: HAWebViewClientFactory = mockk(relaxed = true)
     private val frontendBusObserver: FrontendBusObserver = mockk(relaxed = true)
+    private val externalBusRepository: FrontendExternalBusRepository = mockk(relaxed = true)
     private val urlManager: FrontendUrlManager = mockk(relaxed = true)
     private val connectivityCheckRepository: ConnectivityCheckRepository = mockk(relaxed = true)
     private val permissionManager: PermissionManager = mockk(relaxed = true)
     private val frontendJsBridgeFactory: FrontendJsBridgeFactory = mockk(relaxed = true)
     private val downloadManager: FrontendDownloadManager = mockk(relaxed = true)
     private val gestureHandler: FrontendGestureHandler = mockk(relaxed = true)
+    private val zoomSettingsFlow = MutableStateFlow(ZoomSettings())
+    private val prefsRepository: PrefsRepository = mockk(relaxed = true) {
+        coEvery { this@mockk.zoomSettingsFlow() } returns this@FrontendViewModelTest.zoomSettingsFlow
+    }
 
     private val serverId = 1
     private val testUrlWithAuth = "https://example.com?external_auth=1"
@@ -84,12 +94,14 @@ class FrontendViewModelTest {
             initialPath = path,
             webViewClientFactory = webViewClientFactory,
             frontendBusObserver = frontendBusObserver,
+            externalBusRepository = externalBusRepository,
             urlManager = urlManager,
             connectivityCheckRepository = connectivityCheckRepository,
             permissionManager = permissionManager,
             frontendJsBridgeFactory = frontendJsBridgeFactory,
             downloadManager = downloadManager,
             gestureHandler = gestureHandler,
+            prefsRepository = prefsRepository,
         )
     }
 
@@ -629,6 +641,44 @@ class FrontendViewModelTest {
             assertTrue(events.any { it is FrontendEvent.NavigateToAssistSettings })
             job.cancel()
         }
+
+        @Test
+        fun `Given WriteNfcTag handler event when collected then NavigateToNfcWrite is emitted`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+
+            viewModel.events.test {
+                advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+                messageFlow.emit(FrontendHandlerEvent.WriteNfcTag(messageId = 42, tagId = "tag-abc"))
+
+                assertEquals(FrontendEvent.NavigateToNfcWrite(messageId = 42, tagId = "tag-abc"), awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given onNfcWriteCompleted when called then sends empty-result ResultMessage back to frontend`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+
+            viewModel.onNfcWriteCompleted(messageId = 42)
+            advanceUntilIdle()
+
+            coVerify {
+                externalBusRepository.send(
+                    ResultMessage(id = 42, success = true, result = JsonObject(emptyMap())),
+                )
+            }
+        }
     }
 
     @Nested
@@ -827,6 +877,94 @@ class FrontendViewModelTest {
             advanceUntilIdle()
 
             assertEquals(permissionManager.pendingPermissionRequest, viewModel.pendingPermissionRequest)
+        }
+    }
+
+    @Nested
+    inner class Zoom {
+
+        private fun createViewModelWithPageFinishedCapture(): Pair<FrontendViewModel, () -> Unit> {
+            var capturedPageFinished: (() -> Unit)? = null
+            every {
+                webViewClientFactory.create(
+                    currentUrlFlow = any(),
+                    onFrontendError = any(),
+                    onCrash = any(),
+                    onPageFinished = any(),
+                )
+            } answers {
+                capturedPageFinished = lastArg()
+                mockk(relaxed = true)
+            }
+
+            val viewModel = createViewModel()
+            return viewModel to { capturedPageFinished!!.invoke() }
+        }
+
+        @Test
+        fun `Given page finishes then ApplyZoom action is emitted with current settings`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            zoomSettingsFlow.value = ZoomSettings(zoomLevel = 150, pinchToZoomEnabled = true)
+
+            val (viewModel, triggerPageFinished) = createViewModelWithPageFinishedCapture()
+
+            viewModel.webViewActions.test {
+                triggerPageFinished()
+
+                val action = awaitItem() as WebViewAction.ApplyZoom
+                assertEquals(150, action.zoomLevel)
+                assertEquals(true, action.pinchToZoomEnabled)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given page loaded when settings change then ApplyZoom action is emitted without page finish`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val (viewModel, triggerPageFinished) = createViewModelWithPageFinishedCapture()
+
+            viewModel.webViewActions.test {
+                triggerPageFinished()
+                awaitItem() // consume initial emission
+
+                zoomSettingsFlow.value = ZoomSettings(zoomLevel = 150, pinchToZoomEnabled = true)
+
+                val action = awaitItem() as WebViewAction.ApplyZoom
+                assertEquals(150, action.zoomLevel)
+                assertEquals(true, action.pinchToZoomEnabled)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given page finishes again then observer restarts with fresh values`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            zoomSettingsFlow.value = ZoomSettings(zoomLevel = 100, pinchToZoomEnabled = false)
+
+            val (viewModel, triggerPageFinished) = createViewModelWithPageFinishedCapture()
+
+            viewModel.webViewActions.test {
+                triggerPageFinished()
+                val first = awaitItem() as WebViewAction.ApplyZoom
+                assertEquals(100, first.zoomLevel)
+
+                // Settings changed between page loads
+                zoomSettingsFlow.value = ZoomSettings(zoomLevel = 200, pinchToZoomEnabled = true)
+
+                triggerPageFinished()
+                val second = awaitItem() as WebViewAction.ApplyZoom
+                assertEquals(200, second.zoomLevel)
+                assertEquals(true, second.pinchToZoomEnabled)
+
+                cancelAndIgnoreRemainingEvents()
+            }
         }
     }
 

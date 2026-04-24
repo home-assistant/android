@@ -7,6 +7,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.encodeToJsonElement
 
 /**
@@ -38,6 +39,13 @@ data class ResultMessage(
 ) : OutgoingExternalBusMessage {
 
     companion object {
+
+        fun success(id: Int?): ResultMessage {
+            return ResultMessage(
+                id = id,
+                result = JsonObject(emptyMap()),
+            )
+        }
 
         /**
          * Creates a config response with app capabilities.

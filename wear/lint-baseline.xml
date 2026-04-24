@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 9.0.0" type="baseline" client="gradle" dependencies="false" name="AGP (9.0.0)" variant="all" version="9.0.0">
+<issues format="6" by="lint 9.1.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.1.1)" variant="all" version="9.1.1">
 
     <issue
         id="CustomSplashScreen"
@@ -140,7 +140,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/OnboardingActivity.kt"
-            line="182"
+            line="188"
             column="13"/>
     </issue>
 
@@ -151,7 +151,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/OnboardingActivity.kt"
-            line="190"
+            line="196"
             column="13"/>
     </issue>
 
@@ -560,7 +560,7 @@
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/phone/PhoneSettingsListener.kt"
-            line="220"
+            line="225"
             column="35"/>
     </issue>
 
@@ -571,7 +571,7 @@
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/phone/PhoneSettingsListener.kt"
-            line="220"
+            line="225"
             column="35"/>
     </issue>
 

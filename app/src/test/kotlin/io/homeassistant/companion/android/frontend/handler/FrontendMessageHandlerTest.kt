@@ -21,6 +21,8 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssi
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistPayload
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistSettingsMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenSettingsMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.TagWriteMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.TagWritePayload
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ThemeUpdateMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.UnknownIncomingMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.OutgoingExternalBusMessage
@@ -265,6 +267,49 @@ class FrontendMessageHandlerTest {
         handler.messageResults().test {
             val result = awaitItem()
             assertTrue(result is FrontendHandlerEvent.ThemeUpdated)
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given tag write message with tag when messageResults then emits WriteNfcTag with tagId`() = runTest {
+        val message = TagWriteMessage(id = 42, payload = TagWritePayload(tag = "abc-123"))
+        every { externalBusRepository.incomingMessages() } returns flowOf(message)
+
+        handler.messageResults().test {
+            val result = awaitItem()
+            assertTrue(result is FrontendHandlerEvent.WriteNfcTag)
+            val nfcEvent = result as FrontendHandlerEvent.WriteNfcTag
+            assertEquals(42, nfcEvent.messageId)
+            assertEquals("abc-123", nfcEvent.tagId)
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given tag write message without tag when messageResults then emits WriteNfcTag with null tagId`() = runTest {
+        val message = TagWriteMessage(id = 7, payload = TagWritePayload(tag = null))
+        every { externalBusRepository.incomingMessages() } returns flowOf(message)
+
+        handler.messageResults().test {
+            val result = awaitItem()
+            assertTrue(result is FrontendHandlerEvent.WriteNfcTag)
+            val nfcEvent = result as FrontendHandlerEvent.WriteNfcTag
+            assertEquals(7, nfcEvent.messageId)
+            assertEquals(null, nfcEvent.tagId)
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given tag write message without id when messageResults then emits WriteNfcTag with messageId -1`() = runTest {
+        val message = TagWriteMessage(id = null)
+        every { externalBusRepository.incomingMessages() } returns flowOf(message)
+
+        handler.messageResults().test {
+            val result = awaitItem()
+            assertTrue(result is FrontendHandlerEvent.WriteNfcTag)
+            assertEquals(-1, (result as FrontendHandlerEvent.WriteNfcTag).messageId)
             expectNoEvents()
         }
     }
