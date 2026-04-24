@@ -24,6 +24,7 @@ val threadPolicyIgnoredViolationRules = listOf(
     IgnoreAndroidAutoRendererServiceDiskRead,
     IgnoreMiuiFontSettingsDiskRead,
     IgnoreMiuiTurboSchedMonitorDiskRead,
+    IgnoreChromiumKeyStoreDiskWrite,
 )
 
 /**
@@ -228,5 +229,26 @@ private data object IgnoreMiuiTurboSchedMonitorDiskRead : IgnoreViolationRule {
         return violation.stackTrace.any {
             it.className == "android.os.TurboSchedMonitorImpl"
         }
+    }
+}
+
+/**
+ * Ignore a [DiskWriteViolation] in Chromium's WebView when the Android KeyStore
+ * performs a signing operation during a client certificate TLS handshake.
+ * The disk write happens inside `KeyStoreSecurityLevel.createOperation` which is
+ * beyond application control.
+ */
+private data object IgnoreChromiumKeyStoreDiskWrite : IgnoreViolationRule {
+    @RequiresApi(Build.VERSION_CODES.P)
+    override fun shouldIgnore(violation: Violation): Boolean {
+        if (violation !is DiskWriteViolation) return false
+
+        return violation.stackTrace.any {
+            it.className == "android.security.KeyStoreSecurityLevel" &&
+                it.methodName == "createOperation"
+        } &&
+            violation.stackTrace.any {
+                it.fileName?.startsWith("chromium-") == true
+            }
     }
 }

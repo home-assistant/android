@@ -9,6 +9,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
@@ -78,6 +79,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val frontendJsBridgeFactory: FrontendJsBridgeFactory,
     private val downloadManager: FrontendDownloadManager,
     private val gestureHandler: FrontendGestureHandler,
+    private val prefsRepository: PrefsRepository,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -93,6 +95,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         frontendJsBridgeFactory: FrontendJsBridgeFactory,
         downloadManager: FrontendDownloadManager,
         gestureHandler: FrontendGestureHandler,
+        prefsRepository: PrefsRepository,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
         initialPath = savedStateHandle.toRoute<FrontendRoute>().path,
@@ -105,6 +108,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         frontendJsBridgeFactory = frontendJsBridgeFactory,
         downloadManager = downloadManager,
         gestureHandler = gestureHandler,
+        prefsRepository = prefsRepository,
     )
 
     /**
@@ -181,6 +185,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         currentUrlFlow = urlFlow,
         onFrontendError = ::onError,
         onCrash = ::onRetry,
+        onPageFinished = ::onPageFinished,
     )
 
     val webChromeClient: HAWebChromeClient = HAWebChromeClient(
@@ -198,6 +203,9 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
     /** Job tracking the urlFlow collection - cancelled when switching servers. */
     private var urlFlowJob: Job? = null
+
+    /** Job tracking the zoom settings flow collection - restarted on each page load. */
+    private var zoomObserverJob: Job? = null
 
     init {
         // Timeout watcher - cancels automatically when state changes from Loading
@@ -551,5 +559,28 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         }
         // Automatically run connectivity checks when an error occurs
         runConnectivityChecks()
+    }
+
+    /**
+     * Called when a page finishes loading in the WebView.
+     *
+     * Cancels any previous zoom observer and starts a fresh collection of
+     * [PrefsRepository.zoomSettingsFlow]. Because the flow emits the current values
+     * on start, this immediately applies zoom against the loaded DOM (needed because
+     * navigations can reset the viewport meta tag). The collection then stays active
+     * to react to settings changes until the next page load restarts it.
+     */
+    private fun onPageFinished() {
+        zoomObserverJob?.cancel()
+        zoomObserverJob = viewModelScope.launch {
+            prefsRepository.zoomSettingsFlow().collect { settings ->
+                _webViewActions.emit(
+                    WebViewAction.ApplyZoom(
+                        zoomLevel = settings.zoomLevel,
+                        pinchToZoomEnabled = settings.pinchToZoomEnabled,
+                    ),
+                )
+            }
+        }
     }
 }
