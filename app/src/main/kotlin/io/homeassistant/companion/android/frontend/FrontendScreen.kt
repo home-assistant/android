@@ -21,9 +21,11 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -35,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -65,6 +68,7 @@ import io.homeassistant.companion.android.onboarding.locationforsecureconnection
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModelFactory
 import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.compose.HAPreviews
+import io.homeassistant.companion.android.util.compose.media.player.HAMediaPlayer
 import io.homeassistant.companion.android.util.compose.webview.HAWebView
 import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.webview.insecure.BlockInsecureScreen
@@ -145,6 +149,7 @@ internal fun FrontendScreen(
         onDownloadRequested = viewModel::onDownloadRequested,
         webViewActions = viewModel.webViewActions,
         onGesture = viewModel::onGesture,
+        onExoPlayerFullscreenChanged = viewModel::onExoPlayerFullscreenChanged,
         modifier = modifier,
     )
 }
@@ -176,6 +181,7 @@ internal fun FrontendScreenContent(
     onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit = { _, _, _ -> },
     webViewActions: Flow<WebViewAction> = emptyFlow(),
     onGesture: (GestureDirection, Int) -> Unit = { _, _ -> },
+    onExoPlayerFullscreenChanged: (Boolean) -> Unit = {},
 ) {
     var webView by remember { mutableStateOf<WebView?>(null) }
 
@@ -209,6 +215,11 @@ internal fun FrontendScreenContent(
             onWebViewCreationFailed = onWebViewCreationFailed,
             onDownloadRequested = onDownloadRequested,
             onGesture = onGesture,
+        )
+
+        ExoPlayerOverlay(
+            contentState = viewState as? FrontendViewState.Content,
+            onFullscreenChanged = onExoPlayerFullscreenChanged,
         )
 
         StateOverlay(
@@ -583,6 +594,23 @@ private fun WebViewEffects(
             }
         }
     }
+}
+
+@Composable
+private fun ExoPlayerOverlay(contentState: FrontendViewState.Content?, onFullscreenChanged: (Boolean) -> Unit) {
+    val exoState = contentState?.exoPlayerState ?: return
+    val size = exoState.size ?: return
+    HAMediaPlayer(
+        player = exoState.player,
+        contentScale = ContentScale.Inside,
+        modifier = Modifier
+            .offset(exoState.left, exoState.top)
+            .size(size),
+        fullscreenModifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black),
+        onFullscreenClicked = onFullscreenChanged,
+    )
 }
 
 @HAPreviews
