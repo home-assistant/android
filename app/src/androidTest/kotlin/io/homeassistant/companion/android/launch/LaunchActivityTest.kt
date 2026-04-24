@@ -21,8 +21,9 @@ class LaunchActivityTest {
 
         override fun before() {
             previousConfig = LeakCanary.config
-            // WorkManager on API 23 can retain the JobService binder stub after onDestroy(),
-            // which is external to LaunchActivity and should be treated as a library leak here.
+            // WorkManager on lower APIs can retain the JobService binder stub after onDestroy(),
+            // which is external to LaunchActivity and should be treated as a library leak here for
+            // observed and confirmed leaks (API 23 only).
             LeakCanary.config = previousConfig.copy(
                 referenceMatchers = previousConfig.referenceMatchers +
                     AndroidReferenceMatchers.nativeGlobalVariableLeak(
