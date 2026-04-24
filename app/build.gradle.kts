@@ -66,9 +66,14 @@ emulatorwtf {
     recordVideo.set(false)
 
     // devices to test on, Defaults to Pixel7, version 30, gpu auto
-    device {
-        model.set(DeviceModel.PIXEL_7)
-        version.set(30)
-        gpu.set(GpuMode.AUTO)
+    (
+        libs.versions.androidSdk.min.get().toInt()..libs.versions.androidSdk.target.get()
+            .toInt()
+        ).forEach { androidVersion ->
+        device {
+            model.set(DeviceModel.PIXEL_7)
+            version.set(androidVersion)
+            gpu.set(GpuMode.AUTO)
+        }
     }
 }
