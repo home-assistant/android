@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.frontend
 import android.webkit.WebView
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
+import io.homeassistant.companion.android.util.compose.webview.settings
 import io.homeassistant.companion.android.util.sensitive
 import kotlinx.coroutines.CompletableDeferred
 import timber.log.Timber
@@ -85,6 +86,58 @@ sealed interface WebViewAction {
             webView.evaluateJavascript(script) { scriptResult ->
                 result.complete(scriptResult)
             }
+        }
+    }
+
+    /**
+     * Applies zoom settings to the WebView.
+     *
+     * Sets the base zoom level via [WebView.setInitialScale] (scaled by device density),
+     * enables or disables pinch-to-zoom via [android.webkit.WebSettings.setBuiltInZoomControls],
+     * and injects JavaScript to modify the viewport meta tag.
+     *
+     * @param zoomLevel Zoom level percentage (e.g. 100 for no zoom, 150 for 150%).
+     * @param pinchToZoomEnabled Whether the user has enabled pinch-to-zoom.
+     */
+    data class ApplyZoom(val zoomLevel: Int, val pinchToZoomEnabled: Boolean) : WebViewAction {
+        /**
+         * JavaScript that adjusts the viewport meta tag for pinch-to-zoom support.
+         *
+         * When [pinchToZoom] is true, removes `user-scalable`, `minimum-scale`, and `maximum-scale`
+         * restrictions and adds `user-scalable=yes`.
+         * When false, restores the original viewport content.
+         *
+         * Idea from https://github.com/home-assistant/iOS/pull/1472
+         */
+        private fun viewportZoomScript(pinchToZoom: Boolean): String {
+            val enabled = if (pinchToZoom) "true" else "false"
+            return """
+        if (typeof viewport === 'undefined') {
+            var viewport = document.querySelector('meta[name="viewport"]');
+            if (viewport != null && typeof original_elements === 'undefined') {
+                var original_elements = viewport['content'];
+            }
+        }
+        if (viewport != null) {
+            if ($enabled) {
+                const ignoredBits = ['user-scalable', 'minimum-scale', 'maximum-scale'];
+                let elements = viewport['content'].split(',').filter(contentItem => {
+                    return ignoredBits.every(ignoredBit => !contentItem.includes(ignoredBit));
+                });
+                elements.push('user-scalable=yes');
+                viewport['content'] = elements.join(',');
+            } else {
+                viewport['content'] = original_elements;
+            }
+        }
+            """.trimIndent()
+        }
+
+        override fun run(webView: WebView) {
+            val density = webView.resources.displayMetrics.density
+            webView.setInitialScale((density * zoomLevel).toInt())
+            webView.settings { builtInZoomControls = pinchToZoomEnabled }
+            webView.evaluateJavascript(viewportZoomScript(pinchToZoomEnabled)) {}
         }
     }
 }

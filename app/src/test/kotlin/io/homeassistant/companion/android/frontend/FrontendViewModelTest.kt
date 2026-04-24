@@ -6,6 +6,8 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.data.prefs.ZoomSettings
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
@@ -68,6 +70,10 @@ class FrontendViewModelTest {
     private val frontendJsBridgeFactory: FrontendJsBridgeFactory = mockk(relaxed = true)
     private val downloadManager: FrontendDownloadManager = mockk(relaxed = true)
     private val gestureHandler: FrontendGestureHandler = mockk(relaxed = true)
+    private val zoomSettingsFlow = MutableStateFlow(ZoomSettings())
+    private val prefsRepository: PrefsRepository = mockk(relaxed = true) {
+        coEvery { this@mockk.zoomSettingsFlow() } returns this@FrontendViewModelTest.zoomSettingsFlow
+    }
 
     private val serverId = 1
     private val testUrlWithAuth = "https://example.com?external_auth=1"
@@ -95,6 +101,7 @@ class FrontendViewModelTest {
             frontendJsBridgeFactory = frontendJsBridgeFactory,
             downloadManager = downloadManager,
             gestureHandler = gestureHandler,
+            prefsRepository = prefsRepository,
         )
     }
 
@@ -870,6 +877,94 @@ class FrontendViewModelTest {
             advanceUntilIdle()
 
             assertEquals(permissionManager.pendingPermissionRequest, viewModel.pendingPermissionRequest)
+        }
+    }
+
+    @Nested
+    inner class Zoom {
+
+        private fun createViewModelWithPageFinishedCapture(): Pair<FrontendViewModel, () -> Unit> {
+            var capturedPageFinished: (() -> Unit)? = null
+            every {
+                webViewClientFactory.create(
+                    currentUrlFlow = any(),
+                    onFrontendError = any(),
+                    onCrash = any(),
+                    onPageFinished = any(),
+                )
+            } answers {
+                capturedPageFinished = lastArg()
+                mockk(relaxed = true)
+            }
+
+            val viewModel = createViewModel()
+            return viewModel to { capturedPageFinished!!.invoke() }
+        }
+
+        @Test
+        fun `Given page finishes then ApplyZoom action is emitted with current settings`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            zoomSettingsFlow.value = ZoomSettings(zoomLevel = 150, pinchToZoomEnabled = true)
+
+            val (viewModel, triggerPageFinished) = createViewModelWithPageFinishedCapture()
+
+            viewModel.webViewActions.test {
+                triggerPageFinished()
+
+                val action = awaitItem() as WebViewAction.ApplyZoom
+                assertEquals(150, action.zoomLevel)
+                assertEquals(true, action.pinchToZoomEnabled)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given page loaded when settings change then ApplyZoom action is emitted without page finish`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val (viewModel, triggerPageFinished) = createViewModelWithPageFinishedCapture()
+
+            viewModel.webViewActions.test {
+                triggerPageFinished()
+                awaitItem() // consume initial emission
+
+                zoomSettingsFlow.value = ZoomSettings(zoomLevel = 150, pinchToZoomEnabled = true)
+
+                val action = awaitItem() as WebViewAction.ApplyZoom
+                assertEquals(150, action.zoomLevel)
+                assertEquals(true, action.pinchToZoomEnabled)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given page finishes again then observer restarts with fresh values`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            zoomSettingsFlow.value = ZoomSettings(zoomLevel = 100, pinchToZoomEnabled = false)
+
+            val (viewModel, triggerPageFinished) = createViewModelWithPageFinishedCapture()
+
+            viewModel.webViewActions.test {
+                triggerPageFinished()
+                val first = awaitItem() as WebViewAction.ApplyZoom
+                assertEquals(100, first.zoomLevel)
+
+                // Settings changed between page loads
+                zoomSettingsFlow.value = ZoomSettings(zoomLevel = 200, pinchToZoomEnabled = true)
+
+                triggerPageFinished()
+                val second = awaitItem() as WebViewAction.ApplyZoom
+                assertEquals(200, second.zoomLevel)
+                assertEquals(true, second.pinchToZoomEnabled)
+
+                cancelAndIgnoreRemainingEvents()
+            }
         }
     }
 

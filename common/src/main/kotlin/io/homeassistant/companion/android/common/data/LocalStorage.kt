@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.common.data
 
+import kotlinx.coroutines.flow.Flow
+
 interface LocalStorage {
 
     suspend fun putString(key: String, value: String?)
@@ -25,4 +27,10 @@ interface LocalStorage {
     suspend fun getStringSet(key: String): Set<String>?
 
     suspend fun remove(key: String)
+
+    /**
+     * Returns a [Flow] that emits the [key] each time the value associated with it changes
+     * and only emits for the specified [key].
+     */
+    fun observeChanges(key: String): Flow<String>
 }

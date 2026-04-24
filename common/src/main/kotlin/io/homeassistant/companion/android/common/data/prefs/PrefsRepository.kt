@@ -4,6 +4,7 @@ import android.os.Parcelable
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.HAGesture
+import kotlinx.coroutines.flow.Flow
 import kotlinx.parcelize.Parcelize
 
 enum class NightModeTheme(val storageValue: String) {
@@ -22,6 +23,16 @@ enum class NightModeTheme(val storageValue: String) {
 
 @Parcelize
 data class AutoFavorite(val serverId: Int, val entityId: String) : Parcelable
+
+/**
+ * Holds the current zoom configuration for the WebView.
+ *
+ * @param zoomLevel Zoom level percentage (e.g. 100 for no zoom, 150 for 150%).
+ * @param pinchToZoomEnabled Whether the user has enabled pinch-to-zoom.
+ */
+data class ZoomSettings(val zoomLevel: Int = DEFAULT_ZOOM_LEVEL, val pinchToZoomEnabled: Boolean = false)
+
+private const val DEFAULT_ZOOM_LEVEL = 100
 
 interface PrefsRepository {
     suspend fun getAppVersion(): String?
@@ -79,6 +90,9 @@ interface PrefsRepository {
     suspend fun isPinchToZoomEnabled(): Boolean
 
     suspend fun setPinchToZoomEnabled(enabled: Boolean)
+
+    /** Emits the current [ZoomSettings] immediately on collection, then on every change. */
+    suspend fun zoomSettingsFlow(): Flow<ZoomSettings>
 
     suspend fun isAutoPlayVideoEnabled(): Boolean
 
