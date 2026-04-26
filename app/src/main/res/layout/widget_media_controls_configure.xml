@@ -68,9 +68,10 @@
             android:layout_height="wrap_content"
             android:layout_gravity="start"
             android:layout_margin="5dp"
-            android:checked="true"
+            android:checked="false"
             android:layoutDirection="rtl"
-            android:text="@string/widget_media_show_volume" />
+            android:text="@string/widget_media_show_volume"
+            android:visibility="gone" />
 
         <CheckBox
             android:id="@+id/widget_show_skip_buttons_checkbox"
@@ -79,8 +80,9 @@
             android:layout_gravity="start"
             android:layoutDirection="rtl"
             android:layout_margin="5dp"
-            android:checked="true"
-            android:text="@string/widget_media_show_skip" />
+            android:checked="false"
+            android:text="@string/widget_media_show_skip"
+            android:visibility="gone" />
 
         <CheckBox
             android:id="@+id/widget_show_seek_buttons_checkbox"
@@ -89,8 +91,9 @@
             android:layout_gravity="start"
             android:layoutDirection="rtl"
             android:layout_margin="5dp"
-            android:checked="true"
-            android:text="@string/widget_media_show_seek" />
+            android:checked="false"
+            android:text="@string/widget_media_show_seek"
+            android:visibility="gone" />
 
         <CheckBox
             android:id="@+id/widget_show_media_player_source"
