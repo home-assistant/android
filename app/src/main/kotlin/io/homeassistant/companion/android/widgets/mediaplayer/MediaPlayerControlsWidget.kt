@@ -125,6 +125,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                 val showSource: Boolean = widget.showSource
                 val entity = getEntity(context, widget.serverId, entityIds, suggestedEntity)
 
+                /*
                 if (entity?.state.equals("playing")) {
                     setImageViewResource(
                         R.id.widgetPlayPauseButton,
@@ -136,6 +137,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                         R.drawable.ic_play,
                     )
                 }
+                */
 
                 val artist = (
                     entity?.attributes?.get(
@@ -289,6 +291,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                     ),
                 )
+                /*
                 setOnClickPendingIntent(
                     R.id.widgetPlayPauseButton,
                     PendingIntent.getBroadcast(
@@ -298,7 +301,10 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                     ),
                 )
+                */
 
+                // Buttons are removed from layout
+                /*
                 if (showVolume) {
                     setOnClickPendingIntent(
                         R.id.widgetVolumeDownButton,
@@ -376,6 +382,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                     setViewVisibility(R.id.widgetRewindButton, View.GONE)
                     setViewVisibility(R.id.widgetFastForwardButton, View.GONE)
                 }
+                */
 
                 if (showSource) {
                     setTextViewText(R.id.widgetSourceLabel, entity?.attributes?.get("friendly_name").toString())
