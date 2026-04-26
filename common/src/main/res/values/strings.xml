@@ -1004,6 +1004,9 @@
     <string name="widget_media_next_track_button">Next track</string>
     <string name="widget_media_player_description">Media player widget</string>
     <string name="widget_media_playpause_button">Play/pause</string>
+    <string name="widget_media_previous_track_button">Previous track</string>
+    <string name="widget_media_volume_up_button">Volume up</string>
+    <string name="widget_media_volume_down_button">Volume down</string>
     <string name="widget_media_prev_track_button">Previous track</string>
     <string name="widget_media_volume_down_button">Volume down</string>
     <string name="widget_media_volume_up_button">Volume up</string>
