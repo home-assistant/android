@@ -1,17 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2026.4.5 - Main" versioncode="3">
-        <change>Wake word detection no longer requires specific hardware</change>
-        <change>Expanded wake word support to continue conversations after using your wake word to open Assist</change>
-        <change>Assist conversations started with a wake word now auto-close after 30 seconds of inactivity</change>
-        <change>Add 8 additional Health Connect sensors</change>
+    <release version="2026.4.6 - Main" versioncode="3">
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2026.4.5 - Wear" versioncode="2">
+    <release version="2026.4.6 - Wear" versioncode="2">
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2026.4.5 - Automotive" versioncode="1">
+    <release version="2026.4.6 - Automotive" versioncode="1">
         <change>Bug fixes and dependency updates</change>
     </release>
 </changelog>

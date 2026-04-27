@@ -1,27 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 9.0.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.0.1)" variant="all" version="9.0.1">
-
-    <issue
-        id="MissingPermission"
-        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
-        errorLine1="                NotificationManagerCompat.from("
-        errorLine2="                ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/common/util/DisabledLocationHandler.kt"
-            line="143"
-            column="17"/>
-    </issue>
-
-    <issue
-        id="MissingPermission"
-        message="Missing permissions required by NotificationManagerCompat.notify: android.permission.POST_NOTIFICATIONS"
-        errorLine1="                NotificationManagerCompat.from("
-        errorLine2="                ^">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/common/util/DisabledLocationHandler.kt"
-            line="143"
-            column="17"/>
-    </issue>
+<issues format="6" by="lint 9.1.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.1.1)" variant="all" version="9.1.1">
 
     <issue
         id="MissingPermission"
