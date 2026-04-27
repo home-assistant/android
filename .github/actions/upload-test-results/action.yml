@@ -14,7 +14,7 @@ runs:
         name: ${{ inputs.test-name }} results
         path: |
           **/build/test-results/**/TEST-*.xml
-          **/build/test-results/**/results.xml
+          **/build/build-results/**
           **/build/outputs/*/connected/*
 
     - name: Upload test reports
@@ -24,4 +24,3 @@ runs:
         name: ${{ inputs.test-name }} reports
         path: |
           **/build/reports/**
-          **/build/build-results/**

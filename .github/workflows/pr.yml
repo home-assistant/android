@@ -452,3 +452,4 @@ jobs:
           files: |
             **/androidTest-results/**/TEST-*.xml
             **/build/test-results/**/TEST-*.xml
+            **/build/build-results/**
