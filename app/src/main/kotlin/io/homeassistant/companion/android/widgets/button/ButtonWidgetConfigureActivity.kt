@@ -16,6 +16,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Checkbox
 import androidx.compose.material.DropdownMenu
@@ -29,10 +34,12 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusRequester
@@ -70,6 +77,7 @@ import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.button.ButtonWidgetViewModel.ButtonWidgetUiState
 import io.homeassistant.companion.android.widgets.common.ActionFieldBinder
 import io.homeassistant.companion.android.widgets.common.WidgetUtils
+import kotlinx.coroutines.flow.collectLatest
 import timber.log.Timber
 
 // TODO Migrate to compose https://github.com/home-assistant/android/issues/6305
@@ -227,13 +235,16 @@ private fun ButtonWidgetConfigureView(
             }
 
             Box {
+                val actionFieldState = rememberTextFieldState(initialText = "")
+                LaunchedEffect(Unit) {
+                    snapshotFlow { actionFieldState.text.toString() }.collectLatest {
+                        onActionTextUpdated(it)
+                    }
+                }
                 OutlinedTextField(
                     label = { Text(text = stringResource(commonR.string.label_action)) },
-                    value = action,
-                    onValueChange = {
-                        onActionTextUpdated(it)
-                    },
-                    singleLine = true,
+                    state = actionFieldState,
+                    lineLimits = TextFieldLineLimits.SingleLine,
                     modifier = Modifier
                         .fillMaxWidth()
                         .onFocusChanged { state ->
@@ -253,7 +264,7 @@ private fun ButtonWidgetConfigureView(
                             DropdownMenuItem(
                                 text = { Text(text = text) },
                                 onClick = {
-                                    onActionTextUpdated(text)
+                                    actionFieldState.setTextAndPlaceCursorAtEnd(text)
                                     isActionDropdownExpanded = false
                                 },
                                 contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,

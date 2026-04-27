@@ -348,7 +348,7 @@ class ButtonWidgetViewModel @Inject constructor(
         val validItems = ArrayList<Action>()
         for (i in 0 until selectedServerActions.size) {
             val item = selectedServerActions[i]
-            if (getActionString(item).startsWith(constraint)) {
+            if (getActionString(item).contains(constraint)) {
                 validItems.add(item)
             }
         }
