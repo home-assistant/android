@@ -40,6 +40,7 @@ internal class LocationSharingNavigationTest : BaseOnboardingNavigationTest() {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true)
 
             composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
+            waitForIdle()
 
             // In the test scenario since we never opened NameYourDevice the stack still contains Welcome
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
@@ -78,6 +79,8 @@ internal class LocationSharingNavigationTest : BaseOnboardingNavigationTest() {
             )
 
             composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
+
+            waitForIdle()
 
             // In the test scenario since we never opened NameYourDevice the stack still contains Welcome
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)

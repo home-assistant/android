@@ -36,6 +36,7 @@ import io.homeassistant.companion.android.onboarding.serverdiscovery.ONE_SERVER_
 import io.homeassistant.companion.android.onboarding.serverdiscovery.ServerDiscoveryModule
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
+import io.homeassistant.companion.android.testing.unit.TestSharedFlow
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.compose.navigateToUri
 import io.mockk.coVerify
@@ -46,7 +47,6 @@ import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.test.runTest
@@ -98,7 +98,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
 
     val instanceChannel = Channel<HomeAssistantInstance>()
 
-    val connectionNavigationEventFlow = MutableSharedFlow<ConnectionNavigationEvent>()
+    val connectionNavigationEventFlow = TestSharedFlow<ConnectionNavigationEvent>()
 
     @BindValue
     @JvmField

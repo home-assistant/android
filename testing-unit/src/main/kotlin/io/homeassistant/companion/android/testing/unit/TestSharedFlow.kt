@@ -4,6 +4,7 @@ import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Test double for a [SharedFlow] that publishes values without ever suspending the caller.
@@ -27,6 +28,13 @@ import kotlinx.coroutines.flow.SharedFlow
 class TestSharedFlow<T> private constructor(private val mutableFlow: MutableSharedFlow<T>) :
     SharedFlow<T> by mutableFlow {
     constructor() : this(MutableSharedFlow(extraBufferCapacity = 1))
+
+    /**
+     * Mirrors [MutableSharedFlow.subscriptionCount] so tests can assert that a collector has
+     * subscribed before publishing. Not part of the [SharedFlow] interface, hence re-exposed
+     * explicitly.
+     */
+    val subscriptionCount: StateFlow<Int> get() = mutableFlow.subscriptionCount
 
     fun emit(value: T) {
         assertTrue("Failed to emit $value", mutableFlow.tryEmit(value))
