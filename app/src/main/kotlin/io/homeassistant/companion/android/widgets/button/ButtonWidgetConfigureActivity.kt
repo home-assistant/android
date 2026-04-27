@@ -3,6 +3,8 @@ package io.homeassistant.companion.android.widgets.button
 import android.appwidget.AppWidgetManager
 import android.content.res.Configuration
 import android.os.Bundle
+import android.view.View
+import android.widget.Spinner
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Arrangement
@@ -33,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
@@ -53,6 +56,7 @@ import io.homeassistant.companion.android.common.compose.composable.HADropdownMe
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.integration.Action
 import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
@@ -62,6 +66,7 @@ import io.homeassistant.companion.android.util.previewServer1
 import io.homeassistant.companion.android.util.previewServer2
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import io.homeassistant.companion.android.util.safeTopWindowInsets
+import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.button.ButtonWidgetViewModel.ButtonWidgetUiState
 import io.homeassistant.companion.android.widgets.common.ActionFieldBinder
 import io.homeassistant.companion.android.widgets.common.WidgetUtils
@@ -71,8 +76,6 @@ import timber.log.Timber
 @AndroidEntryPoint
 class ButtonWidgetConfigureActivity : BaseActivity() {
     private val viewModel: ButtonWidgetViewModel by viewModels()
-
-    private var requestLauncherSetup = false
 
     private val supportedTextColors: List<String>
         get() = listOf(
@@ -97,7 +100,7 @@ class ButtonWidgetConfigureActivity : BaseActivity() {
         val appWidgetId =
             intent.extras?.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
                 ?: AppWidgetManager.INVALID_APPWIDGET_ID
-        requestLauncherSetup = intent.extras?.getBoolean(
+        val requestLauncherSetup = intent.extras?.getBoolean(
             ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER,
             false,
         ) ?: false
@@ -109,29 +112,6 @@ class ButtonWidgetConfigureActivity : BaseActivity() {
             finish()
             return
         }
-
-//        binding.addButton.setOnClickListener {
-//            if (requestLauncherSetup) {
-//                val widgetConfigAction = binding.widgetTextConfigService.text.toString()
-//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-//                    selectedServerId != null &&
-//                    (
-//                        widgetConfigAction in actions[selectedServerId].orEmpty().keys ||
-//                            widgetConfigAction.split(".", limit = 2).size == 2
-//                        )
-//                ) {
-//                    lifecycleScope.launch {
-//                        requestWidgetCreation()
-//                    }
-//                } else {
-//                    showAddWidgetError()
-//                }
-//            } else {
-//                lifecycleScope.launch {
-//                    updateWidget()
-//                }
-//            }
-//        }
     }
 }
 
@@ -145,7 +125,7 @@ private fun ButtonWidgetConfigureScreen(viewModel: ButtonWidgetViewModel) {
         servers = state.servers,
         selectedServerId = state.selectedServerId,
         onServerSelected = viewModel::setServer,
-        selectedServerActions = state.selectedServerActions,
+        serverActions = state.serverActions,
         dynamicFields = state.dynamicFields,
         icon = state.selectedIcon,
         onIconSelected = viewModel::selectIcon,
@@ -169,7 +149,7 @@ private fun ButtonWidgetConfigureView(
     servers: List<Server>,
     selectedServerId: Int?,
     onServerSelected: (Int) -> Unit,
-    selectedServerActions: List<Action>,
+    serverActions: List<Action>,
     dynamicFields: List<ActionFieldBinder>,
     icon: IIcon,
     onIconSelected: (IIcon) -> Unit,
@@ -260,7 +240,7 @@ private fun ButtonWidgetConfigureView(
                             isActionDropdownExpanded = state.hasFocus
                         },
                 )
-                if (selectedServerActions.isNotEmpty()) {
+                if (serverActions.isNotEmpty()) {
                     DropdownMenu(
                         expanded = isActionDropdownExpanded,
                         onDismissRequest = {
@@ -268,7 +248,7 @@ private fun ButtonWidgetConfigureView(
                         },
                         properties = PopupProperties(focusable = false),
                     ) {
-                        selectedServerActions.forEach { action ->
+                        serverActions.forEach { action ->
                             val text = "${action.domain}.${action.action}"
                             DropdownMenuItem(
                                 text = { Text(text = text) },
@@ -468,7 +448,7 @@ private fun ButtonWidgetConfigureScreenPreview() {
             ),
             selectedServerId = 0,
             onServerSelected = {},
-            selectedServerActions = emptyList(),
+            serverActions = emptyList(),
             dynamicFields = listOf(ActionFieldBinder("Test Action", "Test", 1)),
             icon = CommunityMaterial.Icon2.cmd_flash,
             onIconSelected = {},

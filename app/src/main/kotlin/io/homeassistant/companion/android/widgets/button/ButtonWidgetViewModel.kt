@@ -47,7 +47,7 @@ class ButtonWidgetViewModel @Inject constructor(
         val action: String = "",
         val selectedServerId: Int? = ServerManager.SERVER_ID_ACTIVE,
         val servers: List<Server> = emptyList(),
-        val selectedServerActions: List<Action> = emptyList(),
+        val serverActions: List<Action> = emptyList(),
         val dynamicFields: List<ActionFieldBinder> = emptyList(),
         val selectedIcon: IIcon = CommunityMaterial.Icon2.cmd_flash,
         val selectedIconId: String? = null,
@@ -63,7 +63,6 @@ class ButtonWidgetViewModel @Inject constructor(
 
     private val _uiState: MutableStateFlow<ButtonWidgetUiState> = MutableStateFlow(ButtonWidgetUiState())
     val uiState: StateFlow<ButtonWidgetUiState> = _uiState.asStateFlow()
-//    val uiState: StateFlow<ButtonWidgetUiState> = _uiState.asStateFlow()
 
     private var supportedTextColors: List<String> = emptyList()
 
@@ -73,6 +72,7 @@ class ButtonWidgetViewModel @Inject constructor(
     private var actions = mutableMapOf<Int, HashMap<String, Action>>()
     private var entities = mutableMapOf<Int, HashMap<String, Entity>>()
     private val selectedServerMutex = Mutex()
+    private var selectedServerActions: List<Action> = emptyList()
 
     private var ongoingJob: Job? = null
 
@@ -159,6 +159,7 @@ class ButtonWidgetViewModel @Inject constructor(
             )
         }
         updateActionFields(newAction)
+        filterAdapterActions(newAction)
     }
 
     private fun getActionString(action: Action): String {
@@ -236,6 +237,14 @@ class ButtonWidgetViewModel @Inject constructor(
         _uiState.update { currentState ->
             currentState.copy(
                 requiresAuthentication = authenticationRequired,
+            )
+        }
+    }
+
+    fun setServerActions(actions: List<Action>) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                serverActions = actions
             )
         }
     }
@@ -330,22 +339,41 @@ class ButtonWidgetViewModel @Inject constructor(
             val comparator = Comparator { t1: Action, t2: Action ->
                 getActionString(t1).compareTo(getActionString(t2))
             }
-            selectedServerActions = selectedServerActions.sortedWith(comparator)
-        }
-        _uiState.update { currentState ->
-            currentState.copy(
-                selectedServerActions = selectedServerActions,
-            )
+            this.selectedServerActions = selectedServerActions.sortedWith(comparator)
+            setServerActions(this.selectedServerActions)
         }
     }
 
-//    private fun filterAdapterActions(constraint: CharSequence) {
-//        val validItems = ArrayList<Action>()
-//        for (i in 0 until selectedServerActions.size) {
-//            val item = selectedServerActions[i]
-//            if (getActionString(item).contains(constraint)) {
-//                validItems.add(item)
+    private fun filterAdapterActions(constraint: CharSequence) {
+        val validItems = ArrayList<Action>()
+        for (i in 0 until selectedServerActions.size) {
+            val item = selectedServerActions[i]
+            if (getActionString(item).startsWith(constraint)) {
+                validItems.add(item)
+            }
+        }
+        setServerActions(validItems)
+    }
+//        binding.addButton.setOnClickListener {
+//            if (requestLauncherSetup) {
+//                val widgetConfigAction = binding.widgetTextConfigService.text.toString()
+//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+//                    selectedServerId != null &&
+//                    (
+//                        widgetConfigAction in actions[selectedServerId].orEmpty().keys ||
+//                            widgetConfigAction.split(".", limit = 2).size == 2
+//                        )
+//                ) {
+//                    lifecycleScope.launch {
+//                        requestWidgetCreation()
+//                    }
+//                } else {
+//                    showAddWidgetError()
+//                }
+//            } else {
+//                lifecycleScope.launch {
+//                    updateWidget()
+//                }
 //            }
 //        }
-//    }
 }
