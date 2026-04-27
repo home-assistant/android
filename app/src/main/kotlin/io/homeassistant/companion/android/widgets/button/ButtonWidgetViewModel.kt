@@ -208,6 +208,16 @@ class ButtonWidgetViewModel @Inject constructor(
         }
     }
 
+    fun updateDynamicField(index: Int, field: ActionFieldBinder) {
+        _uiState.update { currentState ->
+            val dynamicFields = currentState.dynamicFields.toMutableList()
+            dynamicFields[index] = field
+            currentState.copy(
+                dynamicFields = dynamicFields
+            )
+        }
+    }
+
     fun selectIcon(icon: IIcon) {
         _uiState.update { currentState ->
             currentState.copy(

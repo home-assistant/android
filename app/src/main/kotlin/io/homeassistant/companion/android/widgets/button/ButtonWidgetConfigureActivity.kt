@@ -98,12 +98,6 @@ class ButtonWidgetConfigureActivity : BaseActivity() {
         // out of the widget placement if the user presses the back button.
         setResult(RESULT_CANCELED)
 
-        setContent {
-            HATheme {
-                ButtonWidgetConfigureScreen(viewModel)
-            }
-        }
-
         // Find the widget id from the intent.
         val appWidgetId =
             intent.extras?.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
@@ -120,6 +114,12 @@ class ButtonWidgetConfigureActivity : BaseActivity() {
             finish()
             return
         }
+
+        setContent {
+            HATheme {
+                ButtonWidgetConfigureScreen(viewModel)
+            }
+        }
     }
 }
 
@@ -135,6 +135,7 @@ private fun ButtonWidgetConfigureScreen(viewModel: ButtonWidgetViewModel) {
         onServerSelected = viewModel::setServer,
         serverActions = state.serverActions,
         dynamicFields = state.dynamicFields,
+        onDynamicFieldUpdated = viewModel::updateDynamicField,
         icon = state.selectedIcon,
         onIconSelected = viewModel::selectIcon,
         onAddFieldDialogOkClicked = viewModel::addDynamicField,
@@ -159,6 +160,7 @@ private fun ButtonWidgetConfigureView(
     onServerSelected: (Int) -> Unit,
     serverActions: List<Action>,
     dynamicFields: List<ActionFieldBinder>,
+    onDynamicFieldUpdated: (Int, ActionFieldBinder) -> Unit,
     icon: IIcon,
     onIconSelected: (IIcon) -> Unit,
     onAddFieldDialogOkClicked: (Int, ActionFieldBinder) -> Unit,
@@ -275,15 +277,17 @@ private fun ButtonWidgetConfigureView(
             }
 
             if (dynamicFields.isNotEmpty()) {
-                dynamicFields.forEach { field ->
-                    var fieldInputText by remember { mutableStateOf("") }
+                dynamicFields.forEachIndexed { index, field ->
+                    val fieldInputState = rememberTextFieldState()
+                    LaunchedEffect(Unit) {
+                        snapshotFlow { fieldInputState.text.toString() }.collectLatest {
+                            onDynamicFieldUpdated(index, field)
+                        }
+                    }
                     OutlinedTextField(
                         label = { Text(text = field.field) },
-                        value = fieldInputText,
-                        onValueChange = {
-                            fieldInputText = it
-                        },
-                        singleLine = true,
+                        state = fieldInputState,
+                        lineLimits = TextFieldLineLimits.SingleLine,
                         modifier = Modifier
                             .fillMaxWidth(),
                     )
@@ -461,6 +465,7 @@ private fun ButtonWidgetConfigureScreenPreview() {
             onServerSelected = {},
             serverActions = emptyList(),
             dynamicFields = listOf(ActionFieldBinder("Test Action", "Test", 1)),
+            onDynamicFieldUpdated = { i: Int, binder: ActionFieldBinder -> },
             icon = CommunityMaterial.Icon2.cmd_flash,
             onIconSelected = {},
             label = "",
