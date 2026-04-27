@@ -57,6 +57,17 @@
     </issue>
 
     <issue
+        id="NonObservableLocale"
+        message="Reading locale in a non-observable way in a composable function"
+        errorLine1="                                ?: domain.replace(&apos;_&apos;, &apos; &apos;).capitalize(Locale.getDefault()),"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/views/ChooseEntityView.kt"
+            line="101"
+            column="72"/>
+    </issue>
+
+    <issue
         id="ProtoLayoutPrimaryLayoutResponsive"
         message="PrimaryLayout used, but responsiveness isn&apos;t set: Please call&#xA;`setResponsiveContentInsetEnabled(true)` for the best results across&#xA;different screen sizes."
         errorLine1="    val builder = PrimaryLayout.Builder(requestParams.deviceConfiguration)"
