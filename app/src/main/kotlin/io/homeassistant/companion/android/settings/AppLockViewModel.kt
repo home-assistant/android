@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -18,7 +17,7 @@ class AppLockViewModel @Inject constructor(private val serverManager: ServerMana
      * which is critical for the app lock feature.
      */
     fun setAppActive(serverId: Int?, active: Boolean) {
-        viewModelScope.launch(Dispatchers.Default) {
+        viewModelScope.launch {
             val resolvedId = serverId ?: ServerManager.SERVER_ID_ACTIVE
             serverManager.getServer(resolvedId)?.let {
                 try {
