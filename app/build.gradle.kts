@@ -76,4 +76,5 @@ emulatorwtf {
             gpu.set(GpuMode.AUTO)
         }
     }
+    baseOutputDir.set(layout.buildDirectory.dir("build-results"))
 }
