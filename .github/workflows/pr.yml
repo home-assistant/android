@@ -321,9 +321,11 @@ jobs:
 
   instrumentation_test_wtf:
     name: "Instrumentation Test WTF"
-    # needs: [lint, lockfiles, ktlint]
+    needs: [lint, lockfiles, ktlint]
     environment: ui-test
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -335,7 +337,11 @@ jobs:
           mock-google-services: "true"
 
       - name: Run test
-        run: ./gradlew :app:testFullDebugWithEmulatorWtf
+        # Tee stdout/stderr so a follow-up step can extract the emulator.wtf run URL.
+        # `set -o pipefail` preserves gradle's exit code through the pipe.
+        run: |
+          set -o pipefail
+          ./gradlew :app:testFullDebugWithEmulatorWtf 2>&1 | tee emulator-wtf.log
         env:
           EW_API_TOKEN: ${{ secrets.EMULATOR_WTF_TOKEN }}
 
@@ -343,6 +349,54 @@ jobs:
         if: always()
         with:
           test-name: Instrumentation Test WTF
+
+      - name: Extract emulator.wtf run URL
+        if: failure()
+        id: extract_url
+        run: |
+          URL=$(grep -oE 'https://emulator\.wtf/o/[^[:space:]]+' emulator-wtf.log | tail -n 1 || true)
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      # Locate any previous comment posted by this job so we can update it on
+      # failure or delete it on success. The hidden HTML marker is the stable
+      # identifier across runs.
+      - name: Find previous emulator.wtf PR comment
+        if: always() && github.event_name == 'pull_request'
+        id: find_comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          COMMENT_ID=$(gh api \
+            --paginate \
+            "/repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" \
+            --jq '.[] | select(.body | contains("<!-- emulator-wtf-comment -->")) | .id' \
+            | head -n 1)
+          echo "id=$COMMENT_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Upsert emulator.wtf PR comment on failure
+        if: failure() && github.event_name == 'pull_request' && steps.extract_url.outputs.url != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          URL: ${{ steps.extract_url.outputs.url }}
+          COMMENT_ID: ${{ steps.find_comment.outputs.id }}
+        run: |
+          BODY="<!-- emulator-wtf-comment -->
+          Instrumentation Test WTF failed. Full run results on emulator.wtf: $URL"
+          if [ -n "$COMMENT_ID" ]; then
+            gh api -X PATCH "/repos/$GITHUB_REPOSITORY/issues/comments/$COMMENT_ID" -f body="$BODY"
+          else
+            gh pr comment "$PR_NUMBER" --body "$BODY"
+          fi
+
+      - name: Remove stale emulator.wtf PR comment on success
+        if: github.event_name == 'pull_request' && steps.find_comment.outputs.id != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMENT_ID: ${{ steps.find_comment.outputs.id }}
+        run: |
+          gh api -X DELETE "/repos/$GITHUB_REPOSITORY/issues/comments/$COMMENT_ID"
 
   instrumentation_test:
     name: "Instrumentation Tests"
@@ -353,16 +407,6 @@ jobs:
       fail-fast: false
       matrix:
         configuration:
-          - api-level: 23
-            arch: x86_64
-            profile: "Nexus 5"
-            target: "google_apis"
-            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest :microwakeword:connectedDebugAndroidTest"
-          - api-level: 36
-            arch: x86_64
-            profile: "pixel_7"
-            target: "google_apis"
-            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest :microwakeword:connectedDebugAndroidTest"
           - api-level: 33
             arch: x86_64
             profile: "automotive_1024p_landscape"
@@ -431,7 +475,7 @@ jobs:
 
   publish_test_results:
     name: "Publish Tests Results"
-    needs: [instrumentation_test, unit_tests, screenshot_test]
+    needs: [instrumentation_test, unit_tests, screenshot_test, instrumentation_test_wtf]
     runs-on: ubuntu-latest
     permissions:
       checks: write
