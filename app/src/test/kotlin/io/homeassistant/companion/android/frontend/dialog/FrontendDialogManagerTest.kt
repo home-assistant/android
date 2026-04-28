@@ -84,4 +84,42 @@ class FrontendDialogManagerTest {
         advanceUntilIdle()
         assertEquals(false, second.await())
     }
+
+    @Test
+    fun `Given HTTP auth shown when user proceeds then suspend returns Proceed with credentials`() = runTest {
+        val manager = FrontendDialogManager()
+
+        val outcome = async {
+            manager.showHttpAuth(host = "example.com", message = { "auth required" })
+        }
+        advanceUntilIdle()
+
+        val pending = manager.pendingDialog.value
+        assertInstanceOf(FrontendDialog.HttpAuth::class.java, pending)
+        (pending as FrontendDialog.HttpAuth).onProceed("alice", "s3cret", true)
+        advanceUntilIdle()
+
+        val resolved = outcome.await()
+        assertInstanceOf(HttpAuthOutcome.Proceed::class.java, resolved)
+        val proceed = resolved as HttpAuthOutcome.Proceed
+        assertEquals("alice", proceed.username)
+        assertEquals("s3cret", proceed.password)
+        assertEquals(true, proceed.remember)
+        assertNull(manager.pendingDialog.value)
+    }
+
+    @Test
+    fun `Given HTTP auth shown when user cancels then suspend returns Cancel`() = runTest {
+        val manager = FrontendDialogManager()
+
+        val outcome = async {
+            manager.showHttpAuth(host = "example.com", message = { "auth required" })
+        }
+        advanceUntilIdle()
+        (manager.pendingDialog.value as FrontendDialog.HttpAuth).onCancel()
+        advanceUntilIdle()
+
+        assertEquals(HttpAuthOutcome.Cancel, outcome.await())
+        assertNull(manager.pendingDialog.value)
+    }
 }

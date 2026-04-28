@@ -6,6 +6,8 @@ import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
+import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
+import io.homeassistant.companion.android.frontend.dialog.HttpAuthOutcome
 import javax.inject.Inject
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
@@ -16,46 +18,49 @@ import kotlin.time.Instant
 private val RAPID_REAUTH_THRESHOLD = 500.milliseconds
 
 /**
- * Result of handling an HTTP Basic Auth request.
+ * The outcome of handling an HTTP Basic Auth request.
  */
-sealed interface HttpAuthResult {
-    /** Stored credentials were found and used to auto-proceed. No dialog needed. */
+internal sealed interface HttpAuthResult {
+    /** Stored credentials were found and used to auto-proceed. No dialog was shown. */
     data object AutoProceeded : HttpAuthResult
 
-    /**
-     * No stored credentials or stored credentials were rejected. A dialog should be shown.
-     *
-     * @param host The host requesting authentication
-     * @param message Formatted message
-     * @param isAuthError Whether this is a re-auth after stored credentials were rejected
-     * @param hostKey The credential storage key
-     */
-    data class ShowDialog(
-        val host: String,
-        val message: (Context) -> String,
-        val isAuthError: Boolean,
-        val hostKey: String,
-        val onProceed: suspend (username: String, password: String, remember: Boolean) -> Unit,
-        val onCancel: () -> Unit,
-    ) : HttpAuthResult
+    /** A dialog was shown and the user supplied credentials; the [HttpAuthHandler] has been told to proceed. */
+    data object Proceeded : HttpAuthResult
+
+    /** A dialog was shown and the user cancelled; the [HttpAuthHandler] has been told to cancel. */
+    data object Cancelled : HttpAuthResult
 }
 
 /**
- * Handles HTTP Basic Auth requests from the WebView.
+ * Handles HTTP Basic Auth requests from the WebView end-to-end.
  *
- * Looks up stored credentials from [AuthenticationDao] and auto-proceeds when possible.
- * Detects rapid re-authentication (within [RAPID_REAUTH_THRESHOLD]) as an indication that stored credentials
- * were rejected by the server. Uses [Clock] for timing to support deterministic testing.
+ * Looks up stored credentials from [AuthenticationDao] and auto-proceeds when possible. Otherwise
+ * shows a credential dialog through [FrontendDialogManager], suspends until the user responds,
+ * resolves the [HttpAuthHandler], persists credentials if requested, and returns an
+ * [HttpAuthResult] describing what happened so the caller can react (e.g. emit a snackbar on cancel).
+ *
+ * Detects rapid re-authentication (within [RAPID_REAUTH_THRESHOLD]) as an indication that stored
+ * credentials were rejected by the server, in which case the dialog is surfaced with the auth-error
+ * variant and any persisted credentials are updated rather than inserted.
+ *
+ * Uses [Clock] for timing to support deterministic testing.
  */
 @OptIn(ExperimentalTime::class)
 @ViewModelScoped
-class HttpAuthManager @Inject constructor(private val authenticationDao: AuthenticationDao, private val clock: Clock) {
+internal class HttpAuthManager @Inject constructor(
+    private val authenticationDao: AuthenticationDao,
+    private val clock: Clock,
+    private val dialogManager: FrontendDialogManager,
+) {
     private var lastAutoProceededAt: Instant = Instant.DISTANT_PAST
 
     /**
-     * Checks stored credentials and either auto-proceeds or requests a dialog.
+     * Resolves an HTTP Basic Auth request — auto-proceeds with stored credentials, or shows a dialog
+     * and waits for the user to respond.
      *
-     * @param handler The [HttpAuthHandler] to proceed with if stored credentials exist
+     * The [handler] is always resolved (`proceed` or `cancel`) before this function returns.
+     *
+     * @param handler The [HttpAuthHandler] to resolve with the user's choice
      * @param host The host requesting authentication
      * @param resource The URL being loaded (used for credential key and scheme detection)
      * @param realm The authentication realm
@@ -76,24 +81,29 @@ class HttpAuthManager @Inject constructor(private val authenticationDao: Authent
             return HttpAuthResult.AutoProceeded
         }
 
-        return HttpAuthResult.ShowDialog(
-            host = host,
-            message = formatAuthMessage(host = host, resource = resource),
-            isAuthError = isRapidReauth,
-            hostKey = hostKey,
-            onProceed = { username, password, remember ->
-                handler.proceed(username, password)
-                if (remember) {
+        return when (
+            val outcome = dialogManager.showHttpAuth(
+                host = host,
+                message = formatAuthMessage(host = host, resource = resource),
+            )
+        ) {
+            is HttpAuthOutcome.Proceed -> {
+                handler.proceed(outcome.username, outcome.password)
+                if (outcome.remember) {
                     persistCredentials(
                         hostKey = hostKey,
-                        username = username,
-                        password = password,
+                        username = outcome.username,
+                        password = outcome.password,
                         isUpdate = isRapidReauth,
                     )
                 }
-            },
-            onCancel = { handler.cancel() },
-        )
+                HttpAuthResult.Proceeded
+            }
+            HttpAuthOutcome.Cancel -> {
+                handler.cancel()
+                HttpAuthResult.Cancelled
+            }
+        }
     }
 
     private suspend fun persistCredentials(hostKey: String, username: String, password: String, isUpdate: Boolean) {

@@ -15,7 +15,6 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.frontend.auth.HttpAuthManager
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
-import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
@@ -97,11 +96,12 @@ class FrontendViewModelTest {
     private fun createViewModel(
         serverId: Int = this.serverId,
         path: String? = null,
+        dialogManager: FrontendDialogManager = FrontendDialogManager(),
         httpAuthManager: HttpAuthManager = HttpAuthManager(
             authenticationDao = mockk(relaxed = true),
             clock = FakeClock(),
+            dialogManager = dialogManager,
         ),
-        dialogManager: FrontendDialogManager = FrontendDialogManager(),
     ): FrontendViewModel {
         return FrontendViewModel(
             initialServerId = serverId,
@@ -116,8 +116,8 @@ class FrontendViewModelTest {
             downloadManager = downloadManager,
             gestureHandler = gestureHandler,
             prefsRepository = prefsRepository,
-            httpAuthManager = httpAuthManager,
             dialogManager = dialogManager,
+            httpAuthManager = httpAuthManager,
         )
     }
 
@@ -908,6 +908,7 @@ class FrontendViewModelTest {
                     onCrash = any(),
                     onUrlIntercepted = any(),
                     onPageFinished = any(),
+                    onReceivedHttpAuthRequest = any(),
                 )
             } answers {
                 // onPageFinished is the 5th of the 6 named arguments (zero-based index 4)
@@ -990,7 +991,12 @@ class FrontendViewModelTest {
     inner class HttpAuth {
 
         private val authenticationDao: AuthenticationDao = mockk(relaxed = true)
-        private val httpAuthManager = HttpAuthManager(authenticationDao = authenticationDao, clock = FakeClock())
+        private val dialogManager = FrontendDialogManager()
+        private val httpAuthManager = HttpAuthManager(
+            authenticationDao = authenticationDao,
+            clock = FakeClock(),
+            dialogManager = dialogManager,
+        )
 
         private fun createViewModelWithAuthCapture(): Pair<FrontendViewModel, (HttpAuthHandler, String, String, String) -> Unit> {
             var capturedCallback: ((HttpAuthHandler, String, String, String) -> Unit)? = null
@@ -999,6 +1005,8 @@ class FrontendViewModelTest {
                     currentUrlFlow = any(),
                     onFrontendError = any(),
                     onCrash = any(),
+                    onUrlIntercepted = any(),
+                    onPageFinished = any(),
                     onReceivedHttpAuthRequest = any(),
                 )
             } answers {
@@ -1006,7 +1014,7 @@ class FrontendViewModelTest {
                 mockk(relaxed = true)
             }
 
-            val viewModel = createViewModel(httpAuthManager = httpAuthManager)
+            val viewModel = createViewModel(httpAuthManager = httpAuthManager, dialogManager = dialogManager)
             return viewModel to capturedCallback!!
         }
 
@@ -1031,8 +1039,7 @@ class FrontendViewModelTest {
             advanceUntilIdle()
 
             verify { handler.proceed("user", "pass") }
-            val state = viewModel.viewState.value as FrontendViewState.Content
-            assertTrue(state.pendingDialog == null)
+            assertEquals(null, viewModel.pendingDialog.value)
         }
 
         @Test
@@ -1053,8 +1060,7 @@ class FrontendViewModelTest {
             triggerAuth(mockk(relaxed = true), "example.com", "https://example.com/", "realm")
             advanceUntilIdle()
 
-            val state = viewModel.viewState.value as FrontendViewState.Content
-            assertTrue(state.pendingDialog is FrontendDialog.HttpAuth)
+            assertInstanceOf(FrontendDialog.HttpAuth::class.java, viewModel.pendingDialog.value)
         }
 
         @Test
@@ -1077,7 +1083,7 @@ class FrontendViewModelTest {
             advanceUntilIdle()
 
             viewModel.events.test {
-                val dialog = (viewModel.viewState.value as FrontendViewState.Content).pendingDialog as FrontendDialog.HttpAuth
+                val dialog = viewModel.pendingDialog.value as FrontendDialog.HttpAuth
                 dialog.onCancel()
                 advanceUntilIdle()
 

@@ -197,9 +197,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         onPageFinished = ::onPageFinished,
         onReceivedHttpAuthRequest = { handler, host, resource, realm ->
             viewModelScope.launch {
-                when (val result = httpAuthManager.handleAuthRequest(handler, host, resource, realm)) {
-                    is HttpAuthResult.AutoProceeded -> { /* Stored credentials used — no dialog */ }
-                    is HttpAuthResult.ShowDialog -> showHttpAuthDialog(result)
+                if (httpAuthManager.handleAuthRequest(handler, host, resource, realm) == HttpAuthResult.Cancelled) {
+                    _events.tryEmit(FrontendEvent.ShowSnackbar(commonR.string.auth_cancel))
                 }
             }
         },

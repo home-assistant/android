@@ -3,6 +3,8 @@ package io.homeassistant.companion.android.frontend.auth
 import android.webkit.HttpAuthHandler
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
+import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
+import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.mockk.coEvery
@@ -13,22 +15,39 @@ import io.mockk.verify
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
-@OptIn(ExperimentalTime::class)
+@OptIn(ExperimentalTime::class, ExperimentalCoroutinesApi::class)
 @ExtendWith(ConsoleLogExtension::class)
 class HttpAuthManagerTest {
 
     private val authenticationDao: AuthenticationDao = mockk(relaxed = true)
     private val clock = FakeClock()
-    private val manager = HttpAuthManager(authenticationDao = authenticationDao, clock = clock)
+    private val dialogManager = FrontendDialogManager()
+    private val manager = HttpAuthManager(
+        authenticationDao = authenticationDao,
+        clock = clock,
+        dialogManager = dialogManager,
+    )
 
     private val handler: HttpAuthHandler = mockk(relaxed = true)
+
+    private fun unconfinedTest(block: suspend TestScope.() -> Unit) = runTest(UnconfinedTestDispatcher(), testBody = block)
+
+    private fun pendingHttpAuthDialog(): FrontendDialog.HttpAuth {
+        return dialogManager.pendingDialog.value as FrontendDialog.HttpAuth
+    }
 
     @Nested
     inner class AutoProceed {
@@ -48,23 +67,31 @@ class HttpAuthManagerTest {
                 realm = "testrealm",
             )
 
-            assertInstanceOf(HttpAuthResult.AutoProceeded::class.java, result)
+            assertEquals(HttpAuthResult.AutoProceeded, result)
             verify { handler.proceed("user", "pass") }
         }
 
         @Test
-        fun `Given no stored credentials when auth requested then shows dialog`() = runTest {
+        fun `Given no stored credentials when auth requested then shows dialog`() = unconfinedTest {
             coEvery { authenticationDao.get(any()) } returns null
 
-            val result = manager.handleAuthRequest(
-                handler = handler,
-                host = "example.com",
-                resource = "https://example.com/",
-                realm = "testrealm",
-            )
+            val result = async {
+                manager.handleAuthRequest(
+                    handler = handler,
+                    host = "example.com",
+                    resource = "https://example.com/",
+                    realm = "testrealm",
+                )
+            }
+            advanceUntilIdle()
 
-            assertInstanceOf(HttpAuthResult.ShowDialog::class.java, result)
+            assertInstanceOf(FrontendDialog.HttpAuth::class.java, dialogManager.pendingDialog.value)
             verify(exactly = 0) { handler.proceed(any(), any()) }
+
+            // Tidy up so the suspend returns and async doesn't leak
+            pendingHttpAuthDialog().onCancel()
+            advanceUntilIdle()
+            assertEquals(HttpAuthResult.Cancelled, result.await())
         }
     }
 
@@ -72,7 +99,7 @@ class HttpAuthManagerTest {
     inner class RapidReauth {
 
         @Test
-        fun `Given stored credentials when rapid reauth then shows dialog with auth error`() = runTest {
+        fun `Given stored credentials when rapid reauth then shows dialog instead of auto-proceeding`() = unconfinedTest {
             val storedAuth = Authentication(
                 host = "https://example.com/testrealm",
                 username = "user",
@@ -88,18 +115,24 @@ class HttpAuthManagerTest {
                 realm = "testrealm",
             )
 
-            // Second request within 500ms: rapid reauth detected
+            // Second request within 500ms: rapid reauth detected, dialog is shown
             clock.currentInstant += 200.milliseconds
 
-            val result = manager.handleAuthRequest(
-                handler = handler,
-                host = "example.com",
-                resource = "https://example.com/",
-                realm = "testrealm",
-            )
+            val result = async {
+                manager.handleAuthRequest(
+                    handler = handler,
+                    host = "example.com",
+                    resource = "https://example.com/",
+                    realm = "testrealm",
+                )
+            }
+            advanceUntilIdle()
 
-            val dialog = assertInstanceOf(HttpAuthResult.ShowDialog::class.java, result)
-            assertTrue(dialog.isAuthError)
+            assertInstanceOf(FrontendDialog.HttpAuth::class.java, dialogManager.pendingDialog.value)
+
+            pendingHttpAuthDialog().onCancel()
+            advanceUntilIdle()
+            assertEquals(HttpAuthResult.Cancelled, result.await())
         }
 
         @Test
@@ -129,7 +162,7 @@ class HttpAuthManagerTest {
                 realm = "testrealm",
             )
 
-            assertInstanceOf(HttpAuthResult.AutoProceeded::class.java, result)
+            assertEquals(HttpAuthResult.AutoProceeded, result)
         }
     }
 
@@ -137,24 +170,29 @@ class HttpAuthManagerTest {
     inner class CredentialPersistence {
 
         @Test
-        fun `Given no stored credentials when onProceed with remember then inserts into dao`() = runTest {
+        fun `Given no stored credentials when user proceeds with remember then inserts into dao`() = unconfinedTest {
             coEvery { authenticationDao.get(any()) } returns null
 
-            val result = manager.handleAuthRequest(
-                handler = handler,
-                host = "example.com",
-                resource = "https://example.com/",
-                realm = "realm",
-            ) as HttpAuthResult.ShowDialog
+            val result = async {
+                manager.handleAuthRequest(
+                    handler = handler,
+                    host = "example.com",
+                    resource = "https://example.com/",
+                    realm = "realm",
+                )
+            }
+            advanceUntilIdle()
+            pendingHttpAuthDialog().onProceed("user", "pass", true)
+            advanceUntilIdle()
 
-            result.onProceed("user", "pass", true)
-
+            assertEquals(HttpAuthResult.Proceeded, result.await())
+            verify { handler.proceed("user", "pass") }
             coVerify { authenticationDao.insert(Authentication("https://example.com/realm", "user", "pass")) }
             coVerify(exactly = 0) { authenticationDao.update(any()) }
         }
 
         @Test
-        fun `Given rapid reauth when onProceed with remember then updates in dao`() = runTest {
+        fun `Given rapid reauth when user proceeds with remember then updates in dao`() = unconfinedTest {
             val storedAuth = Authentication("https://example.com/realm", "user", "wrong")
             coEvery { authenticationDao.get(any()) } returns storedAuth
 
@@ -164,49 +202,61 @@ class HttpAuthManagerTest {
             // Second request within 500ms: rapid reauth
             clock.currentInstant += 200.milliseconds
 
-            val result = manager.handleAuthRequest(
-                handler = handler,
-                host = "example.com",
-                resource = "https://example.com/",
-                realm = "realm",
-            ) as HttpAuthResult.ShowDialog
+            val result = async {
+                manager.handleAuthRequest(
+                    handler = handler,
+                    host = "example.com",
+                    resource = "https://example.com/",
+                    realm = "realm",
+                )
+            }
+            advanceUntilIdle()
+            pendingHttpAuthDialog().onProceed("user", "newpass", true)
+            advanceUntilIdle()
 
-            result.onProceed("user", "newpass", true)
-
+            assertEquals(HttpAuthResult.Proceeded, result.await())
             coVerify { authenticationDao.update(Authentication("https://example.com/realm", "user", "newpass")) }
             coVerify(exactly = 0) { authenticationDao.insert(any()) }
         }
 
         @Test
-        fun `Given onProceed without remember then credentials are not persisted`() = runTest {
+        fun `Given user proceeds without remember then credentials are not persisted`() = unconfinedTest {
             coEvery { authenticationDao.get(any()) } returns null
 
-            val result = manager.handleAuthRequest(
-                handler = handler,
-                host = "example.com",
-                resource = "https://example.com/",
-                realm = "realm",
-            ) as HttpAuthResult.ShowDialog
+            val result = async {
+                manager.handleAuthRequest(
+                    handler = handler,
+                    host = "example.com",
+                    resource = "https://example.com/",
+                    realm = "realm",
+                )
+            }
+            advanceUntilIdle()
+            pendingHttpAuthDialog().onProceed("user", "pass", false)
+            advanceUntilIdle()
 
-            result.onProceed("user", "pass", false)
-
+            assertEquals(HttpAuthResult.Proceeded, result.await())
             coVerify(exactly = 0) { authenticationDao.insert(any()) }
             coVerify(exactly = 0) { authenticationDao.update(any()) }
         }
 
         @Test
-        fun `Given dialog shown when onCancel called then handler is cancelled`() = runTest {
+        fun `Given dialog shown when user cancels then handler is cancelled and result is Cancelled`() = unconfinedTest {
             coEvery { authenticationDao.get(any()) } returns null
 
-            val result = manager.handleAuthRequest(
-                handler = handler,
-                host = "example.com",
-                resource = "https://example.com/",
-                realm = "realm",
-            ) as HttpAuthResult.ShowDialog
+            val result = async {
+                manager.handleAuthRequest(
+                    handler = handler,
+                    host = "example.com",
+                    resource = "https://example.com/",
+                    realm = "realm",
+                )
+            }
+            advanceUntilIdle()
+            pendingHttpAuthDialog().onCancel()
+            advanceUntilIdle()
 
-            result.onCancel()
-
+            assertEquals(HttpAuthResult.Cancelled, result.await())
             verify { handler.cancel() }
         }
     }
@@ -225,35 +275,49 @@ class HttpAuthManagerTest {
         }
 
         @Test
-        fun `Given https resource when dialog shown then message contains https and required fields`() = runTest {
+        fun `Given https resource when dialog shown then message contains https and required fields`() = unconfinedTest {
             coEvery { authenticationDao.get(any()) } returns null
 
-            val result = manager.handleAuthRequest(
-                handler = handler,
-                host = "example.com",
-                resource = "https://example.com/",
-                realm = "realm",
-            ) as HttpAuthResult.ShowDialog
+            val result = async {
+                manager.handleAuthRequest(
+                    handler = handler,
+                    host = "example.com",
+                    resource = "https://example.com/",
+                    realm = "realm",
+                )
+            }
+            advanceUntilIdle()
 
-            val message = result.message(context)
+            val message = pendingHttpAuthDialog().message(context)
             assertTrue(message.startsWith("https://"))
             assertTrue(message.contains("requires a username and password."))
+
+            pendingHttpAuthDialog().onCancel()
+            advanceUntilIdle()
+            result.await()
         }
 
         @Test
-        fun `Given http resource when dialog shown then message contains http and not private warning`() = runTest {
+        fun `Given http resource when dialog shown then message contains http and not private warning`() = unconfinedTest {
             coEvery { authenticationDao.get(any()) } returns null
 
-            val result = manager.handleAuthRequest(
-                handler = handler,
-                host = "example.com",
-                resource = "http://example.com/",
-                realm = "realm",
-            ) as HttpAuthResult.ShowDialog
+            val result = async {
+                manager.handleAuthRequest(
+                    handler = handler,
+                    host = "example.com",
+                    resource = "http://example.com/",
+                    realm = "realm",
+                )
+            }
+            advanceUntilIdle()
 
-            val message = result.message(context)
+            val message = pendingHttpAuthDialog().message(context)
             assertTrue(message.startsWith("http://"))
             assertTrue(message.contains("Your connection to this site is not private."))
+
+            pendingHttpAuthDialog().onCancel()
+            advanceUntilIdle()
+            result.await()
         }
     }
 }

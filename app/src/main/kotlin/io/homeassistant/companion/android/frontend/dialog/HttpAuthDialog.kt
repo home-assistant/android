@@ -59,7 +59,7 @@ internal fun HttpAuthDialog(
 
     AlertDialog(
         onDismissRequest = onCancel,
-        title = { Text(text = stringResource(commonR.string.auth_request), style = HATextStyle.Headline) },
+        title = { Text(text = stringResource(commonR.string.auth_request), style = HATextStyle.HeadlineMedium) },
         text = {
             AuthDialogContent(
                 message = message,

@@ -1,10 +1,19 @@
 package io.homeassistant.companion.android.frontend.dialog
 
+import android.content.Context
 import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.util.SingleSlotQueue
 import javax.inject.Inject
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.StateFlow
+
+/**
+ * The user's response to a [FrontendDialog.HttpAuth].
+ */
+internal sealed interface HttpAuthOutcome {
+    data class Proceed(val username: String, val password: String, val remember: Boolean) : HttpAuthOutcome
+    data object Cancel : HttpAuthOutcome
+}
 
 /**
  * Owns the lifetime of [FrontendDialog]s shown over the frontend WebView.
@@ -36,6 +45,24 @@ internal class FrontendDialogManager @Inject constructor() {
             message = message,
             onConfirm = { outcome.complete(true) },
             onCancel = { outcome.complete(false) },
+        )
+    }
+
+    /**
+     * Shows an HTTP Basic Auth dialog and suspends until the user responds.
+     *
+     * The slot is freed before returning, including on cancellation of the calling coroutine.
+     */
+    suspend fun showHttpAuth(host: String, message: (Context) -> String): HttpAuthOutcome = showAndAwait { outcome ->
+        FrontendDialog.HttpAuth(
+            host = host,
+            message = message,
+            onProceed = { username, password, remember ->
+                outcome.complete(
+                    HttpAuthOutcome.Proceed(username = username, password = password, remember = remember),
+                )
+            },
+            onCancel = { outcome.complete(HttpAuthOutcome.Cancel) },
         )
     }
 
