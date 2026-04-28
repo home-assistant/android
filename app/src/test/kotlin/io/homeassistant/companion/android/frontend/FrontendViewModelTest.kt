@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.frontend
 
 import android.net.Uri
+import android.webkit.JsResult
 import app.cash.turbine.test
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
@@ -9,6 +10,8 @@ import io.homeassistant.companion.android.common.data.connectivity.ConnectivityC
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.ZoomSettings
 import io.homeassistant.companion.android.common.util.GestureDirection
+import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
+import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
@@ -88,6 +91,7 @@ class FrontendViewModelTest {
     private fun createViewModel(
         serverId: Int = this.serverId,
         path: String? = null,
+        dialogManager: FrontendDialogManager = FrontendDialogManager(),
     ): FrontendViewModel {
         return FrontendViewModel(
             initialServerId = serverId,
@@ -102,6 +106,7 @@ class FrontendViewModelTest {
             downloadManager = downloadManager,
             gestureHandler = gestureHandler,
             prefsRepository = prefsRepository,
+            dialogManager = dialogManager,
         )
     }
 
@@ -890,10 +895,12 @@ class FrontendViewModelTest {
                     currentUrlFlow = any(),
                     onFrontendError = any(),
                     onCrash = any(),
+                    onUrlIntercepted = any(),
                     onPageFinished = any(),
                 )
             } answers {
-                capturedPageFinished = lastArg()
+                // onPageFinished is the 5th of the 6 named arguments (zero-based index 4)
+                capturedPageFinished = arg(4)
                 mockk(relaxed = true)
             }
 
@@ -965,6 +972,103 @@ class FrontendViewModelTest {
 
                 cancelAndIgnoreRemainingEvents()
             }
+        }
+    }
+
+    @Nested
+    inner class JsConfirm {
+
+        private fun captureJsConfirmCallback(): Pair<FrontendViewModel, (String, JsResult) -> Boolean> {
+            val viewModel = createViewModel()
+            val client = viewModel.webChromeClient
+            val callback: (String, JsResult) -> Boolean = { message, result ->
+                // view and url are unused by HAWebChromeClient when message and result are non-null
+                client.onJsConfirm(null, null, message, result)
+            }
+            return viewModel to callback
+        }
+
+        @Test
+        fun `Given JS confirm received then dialog is exposed via pendingDialog`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val (viewModel, triggerJsConfirm) = captureJsConfirmCallback()
+            advanceUntilIdle()
+
+            triggerJsConfirm("Are you sure?", mockk(relaxed = true))
+            advanceUntilIdle()
+
+            val dialog = viewModel.pendingDialog.value
+            assertInstanceOf(FrontendDialog.Confirm::class.java, dialog)
+            assertEquals("Are you sure?", (dialog as FrontendDialog.Confirm).message)
+        }
+
+        @Test
+        fun `Given dialog confirmed then JsResult is confirmed and slot clears`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val (viewModel, triggerJsConfirm) = captureJsConfirmCallback()
+            advanceUntilIdle()
+            val jsResult: JsResult = mockk(relaxed = true)
+
+            triggerJsConfirm("Are you sure?", jsResult)
+            advanceUntilIdle()
+            (viewModel.pendingDialog.value as FrontendDialog.Confirm).onConfirm()
+            advanceUntilIdle()
+
+            verify { jsResult.confirm() }
+            assertEquals(null, viewModel.pendingDialog.value)
+        }
+
+        @Test
+        fun `Given dialog cancelled then JsResult is cancelled and slot clears`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val (viewModel, triggerJsConfirm) = captureJsConfirmCallback()
+            advanceUntilIdle()
+            val jsResult: JsResult = mockk(relaxed = true)
+
+            triggerJsConfirm("Are you sure?", jsResult)
+            advanceUntilIdle()
+            (viewModel.pendingDialog.value as FrontendDialog.Confirm).onCancel()
+            advanceUntilIdle()
+
+            verify { jsResult.cancel() }
+            assertEquals(null, viewModel.pendingDialog.value)
+        }
+
+        @Test
+        fun `Given a dialog already shown when second JS confirm arrives then it queues until first is resolved`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val (viewModel, triggerJsConfirm) = captureJsConfirmCallback()
+            advanceUntilIdle()
+            val firstResult: JsResult = mockk(relaxed = true)
+            val secondResult: JsResult = mockk(relaxed = true)
+
+            triggerJsConfirm("first", firstResult)
+            advanceUntilIdle()
+            triggerJsConfirm("second", secondResult)
+            advanceUntilIdle()
+
+            // Slot is still holding the first dialog; the second has not overwritten it.
+            assertEquals("first", (viewModel.pendingDialog.value as FrontendDialog.Confirm).message)
+
+            (viewModel.pendingDialog.value as FrontendDialog.Confirm).onConfirm()
+            advanceUntilIdle()
+            verify { firstResult.confirm() }
+
+            assertEquals("second", (viewModel.pendingDialog.value as FrontendDialog.Confirm).message)
+            verify(exactly = 0) { secondResult.confirm() }
+            verify(exactly = 0) { secondResult.cancel() }
         }
     }
 

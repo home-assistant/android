@@ -190,11 +190,11 @@ class FrontendScreenScreenshotTest {
                 viewState = FrontendViewState.Content(
                     serverId = 1,
                     url = "https://example.com",
-                    pendingDialog = FrontendDialog.Confirm(
-                        message = "Are you sure you want to proceed?",
-                        onConfirm = {},
-                        onCancel = {},
-                    ),
+                ),
+                pendingDialog = FrontendDialog.Confirm(
+                    message = "Are you sure you want to proceed?",
+                    onConfirm = {},
+                    onCancel = {},
                 ),
                 webViewClient = WebViewClient(),
                 webChromeClient = WebChromeClient(),

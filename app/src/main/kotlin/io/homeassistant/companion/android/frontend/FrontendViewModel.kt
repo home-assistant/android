@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.frontend
 
-import android.webkit.JsResult
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -12,7 +11,7 @@ import io.homeassistant.companion.android.common.data.connectivity.ConnectivityC
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.util.GestureDirection
-import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
+import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
@@ -82,6 +81,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val downloadManager: FrontendDownloadManager,
     private val gestureHandler: FrontendGestureHandler,
     private val prefsRepository: PrefsRepository,
+    private val dialogManager: FrontendDialogManager,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -98,6 +98,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         downloadManager: FrontendDownloadManager,
         gestureHandler: FrontendGestureHandler,
         prefsRepository: PrefsRepository,
+        dialogManager: FrontendDialogManager,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
         initialPath = savedStateHandle.toRoute<FrontendRoute>().path,
@@ -111,6 +112,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         downloadManager = downloadManager,
         gestureHandler = gestureHandler,
         prefsRepository = prefsRepository,
+        dialogManager = dialogManager,
     )
 
     /**
@@ -197,13 +199,18 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             }
         },
         onJsConfirm = { message, jsResult ->
-            onJsConfirm(message, jsResult)
+            viewModelScope.launch {
+                if (dialogManager.showJsConfirm(message)) jsResult.confirm() else jsResult.cancel()
+            }
             true
         },
     )
 
     /** The current pending permission request that needs user approval, or null if none. */
     val pendingPermissionRequest = permissionManager.pendingPermissionRequest
+
+    /** The current pending dialog over the WebView, or null if none. */
+    val pendingDialog = dialogManager.pendingDialog
 
     private var connectivityCheckJob: Job? = null
 
@@ -586,38 +593,6 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                         pinchToZoomEnabled = settings.pinchToZoomEnabled,
                     ),
                 )
-            }
-        }
-    }
-
-    private fun onJsConfirm(message: String, jsResult: JsResult) {
-        _viewState.update { currentState ->
-            if (currentState is FrontendViewState.Content) {
-                currentState.copy(
-                    pendingDialog = FrontendDialog.Confirm(
-                        message = message,
-                        onConfirm = {
-                            jsResult.confirm()
-                            clearPendingDialog()
-                        },
-                        onCancel = {
-                            jsResult.cancel()
-                            clearPendingDialog()
-                        },
-                    ),
-                )
-            } else {
-                currentState
-            }
-        }
-    }
-
-    private fun clearPendingDialog() {
-        _viewState.update { currentState ->
-            if (currentState is FrontendViewState.Content) {
-                currentState.copy(pendingDialog = null)
-            } else {
-                currentState
             }
         }
     }
