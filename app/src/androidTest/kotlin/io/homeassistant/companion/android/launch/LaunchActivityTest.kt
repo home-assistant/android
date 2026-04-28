@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.launch
 
 import android.os.Build
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import io.homeassistant.companion.android.common.util.DefaultFailFastHandler
 import io.homeassistant.companion.android.common.util.FailFast
 import leakcanary.DetectLeaksAfterTestSuccess
