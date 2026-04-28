@@ -14,7 +14,7 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 internal fun SimpleConfirmDialog(pendingDialog: FrontendDialog.Confirm) {
     AlertDialog(
         onDismissRequest = pendingDialog.onCancel,
-        title = { Text(text = stringResource(commonR.string.app_name), style = HATextStyle.Headline) },
+        title = { Text(text = stringResource(commonR.string.app_name), style = HATextStyle.HeadlineMedium) },
         text = { Text(text = pendingDialog.message, style = HATextStyle.Body) },
         confirmButton = {
             HAPlainButton(stringResource(commonR.string.ok), pendingDialog.onConfirm)
