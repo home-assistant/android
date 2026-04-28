@@ -337,11 +337,12 @@ jobs:
           mock-google-services: "true"
 
       - name: Run test
-        # Tee stdout/stderr so a follow-up step can extract the emulator.wtf run URL.
+        # Tee stdout/stderr so a follow-up step can extract the emulator.wtf run URLs.
         # `set -o pipefail` preserves gradle's exit code through the pipe.
+        # `--continue` ensures both flavors run even if one fails, so we get URLs for both.
         run: |
           set -o pipefail
-          ./gradlew :app:testFullDebugWithEmulatorWtf 2>&1 | tee emulator-wtf.log
+          ./gradlew :app:testFullDebugWithEmulatorWtf :app:testMinimalDebugWithEmulatorWtf --continue 2>&1 | tee emulator-wtf.log
         env:
           EW_API_TOKEN: ${{ secrets.EMULATOR_WTF_TOKEN }}
 
@@ -350,12 +351,15 @@ jobs:
         with:
           test-name: Instrumentation Test WTF
 
-      - name: Extract emulator.wtf run URL
+      - name: Extract emulator.wtf run URLs
         if: failure()
         id: extract_url
         run: |
-          URL=$(grep -oE 'https://emulator\.wtf/o/[^[:space:]]+' emulator-wtf.log | tail -n 1 || true)
-          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          {
+            echo 'urls<<URLS_EOF'
+            grep -oE 'https://emulator\.wtf/o/[^[:space:]]+' emulator-wtf.log | sort -u
+            echo 'URLS_EOF'
+          } >> "$GITHUB_OUTPUT"
 
       # Locate any previous comment posted by this job so we can update it on
       # failure or delete it on success. The hidden HTML marker is the stable
@@ -375,15 +379,17 @@ jobs:
           echo "id=$COMMENT_ID" >> "$GITHUB_OUTPUT"
 
       - name: Upsert emulator.wtf PR comment on failure
-        if: failure() && github.event_name == 'pull_request' && steps.extract_url.outputs.url != ''
+        if: failure() && github.event_name == 'pull_request' && steps.extract_url.outputs.urls != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          URL: ${{ steps.extract_url.outputs.url }}
+          URLS: ${{ steps.extract_url.outputs.urls }}
           COMMENT_ID: ${{ steps.find_comment.outputs.id }}
         run: |
+          LINKS=$(printf '%s\n' "$URLS" | sed 's|^|- |')
           BODY="<!-- emulator-wtf-comment -->
-          Instrumentation Test WTF failed. Full run results on emulator.wtf: $URL"
+          Instrumentation Test WTF failed. Full run results on emulator.wtf:
+          $LINKS"
           if [ -n "$COMMENT_ID" ]; then
             gh api -X PATCH "/repos/$GITHUB_REPOSITORY/issues/comments/$COMMENT_ID" -f body="$BODY"
           else
