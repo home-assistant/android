@@ -321,7 +321,7 @@ jobs:
 
   instrumentation_test_wtf:
     name: "Instrumentation Test WTF"
-    # needs: [lint, lockfiles, ktlint]
+    needs: [lint, lockfiles, ktlint]
     environment: ui-test
     runs-on: ubuntu-latest
     permissions:
