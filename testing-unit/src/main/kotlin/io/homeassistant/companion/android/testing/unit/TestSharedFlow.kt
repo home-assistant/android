@@ -1,10 +1,10 @@
 package io.homeassistant.companion.android.testing.unit
 
-import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import org.junit.jupiter.api.Assertions.assertTrue
 
 /**
  * Test double for a [SharedFlow] that publishes values without ever suspending the caller.
@@ -37,6 +37,6 @@ class TestSharedFlow<T> private constructor(private val mutableFlow: MutableShar
     val subscriptionCount: StateFlow<Int> get() = mutableFlow.subscriptionCount
 
     fun emit(value: T) {
-        assertTrue("Failed to emit $value", mutableFlow.tryEmit(value))
+        assertTrue(mutableFlow.tryEmit(value), "Failed to emit $value")
     }
 }
