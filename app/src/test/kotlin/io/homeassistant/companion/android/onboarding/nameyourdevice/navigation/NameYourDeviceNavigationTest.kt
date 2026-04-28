@@ -83,6 +83,7 @@ internal class NameYourDeviceNavigationTest : BaseOnboardingNavigationTest() {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocalFirstRoute>() == true)
 
             composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
+
             waitForIdle()
 
             // The back stack is unchanged in this situation, but in reality the app is in background
