@@ -64,6 +64,5 @@ class LaunchActivityTest {
     @Test
     fun launchActivity() {
         composeTestRule.waitForIdle()
-        throw IllegalStateException("Should fail for test")
     }
 }
