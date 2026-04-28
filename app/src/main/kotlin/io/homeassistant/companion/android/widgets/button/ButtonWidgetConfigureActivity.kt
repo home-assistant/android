@@ -1,12 +1,14 @@
 package io.homeassistant.companion.android.widgets.button
 
+import android.annotation.SuppressLint
 import android.appwidget.AppWidgetManager
 import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
-import android.view.View
-import android.widget.Spinner
+import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,9 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
-import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.foundation.verticalScroll
@@ -42,7 +42,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
@@ -52,6 +51,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.AndroidEntryPoint
@@ -63,7 +63,6 @@ import io.homeassistant.companion.android.common.compose.composable.HADropdownMe
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.integration.Action
 import io.homeassistant.companion.android.database.server.Server
-import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
@@ -73,11 +72,11 @@ import io.homeassistant.companion.android.util.previewServer1
 import io.homeassistant.companion.android.util.previewServer2
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import io.homeassistant.companion.android.util.safeTopWindowInsets
-import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.button.ButtonWidgetViewModel.ButtonWidgetUiState
 import io.homeassistant.companion.android.widgets.common.ActionFieldBinder
 import io.homeassistant.companion.android.widgets.common.WidgetUtils
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 // TODO Migrate to compose https://github.com/home-assistant/android/issues/6305
@@ -117,14 +116,59 @@ class ButtonWidgetConfigureActivity : BaseActivity() {
 
         setContent {
             HATheme {
-                ButtonWidgetConfigureScreen(viewModel)
+                ButtonWidgetConfigureScreen(viewModel, { onAddWidgetClicked() })
             }
         }
+    }
+
+    private fun onAddWidgetClicked() {
+        lifecycleScope.launch {
+            if (intent.extras?.getBoolean(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, false) == true) {
+                if (
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                ) {
+                    requestPinWidget()
+                } else {
+                    showAddWidgetError()
+                }
+            } else {
+                onUpdateWidget()
+            }
+        }
+    }
+
+    @SuppressLint("ObsoleteSdkInt")
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun requestPinWidget() {
+        val context = this@ButtonWidgetConfigureActivity
+        lifecycleScope.launch {
+            viewModel.requestWidgetCreation(context)
+            finish()
+        }
+    }
+
+    private suspend fun onUpdateWidget() {
+        try {
+            viewModel.updateWidgetConfiguration()
+            setResult(RESULT_OK)
+            viewModel.updateWidget(this@ButtonWidgetConfigureActivity)
+            finish()
+        } catch (_: Exception) {
+            showUpdateWidgetError()
+        }
+    }
+
+    private fun showAddWidgetError() {
+        Toast.makeText(applicationContext, commonR.string.widget_creation_error, Toast.LENGTH_LONG).show()
+    }
+
+    private fun showUpdateWidgetError() {
+        Toast.makeText(applicationContext, commonR.string.widget_update_error, Toast.LENGTH_LONG).show()
     }
 }
 
 @Composable
-private fun ButtonWidgetConfigureScreen(viewModel: ButtonWidgetViewModel) {
+private fun ButtonWidgetConfigureScreen(viewModel: ButtonWidgetViewModel, onAddWidgetClicked: () -> Unit) {
     val state by viewModel.uiState.collectAsStateWithLifecycle(ButtonWidgetUiState())
 
     ButtonWidgetConfigureView(
@@ -147,6 +191,7 @@ private fun ButtonWidgetConfigureScreen(viewModel: ButtonWidgetViewModel) {
         onBackgroundTypeSelected = viewModel::updateSelectedBackgroundType,
         isRequireAuthenticationChecked = state.requiresAuthentication,
         onRequireAuthenticationChecked = viewModel::setRequiresAuthentication,
+        onAddWidgetClicked = onAddWidgetClicked
     )
 }
 
@@ -172,6 +217,7 @@ private fun ButtonWidgetConfigureView(
     onTextColorSelected: (Int) -> Unit,
     isRequireAuthenticationChecked: Boolean,
     onRequireAuthenticationChecked: (Boolean) -> Unit,
+    onAddWidgetClicked: () -> Unit
 ) {
     var showAddFieldDialog by remember { mutableStateOf(false) }
     var showIconDialog by remember { mutableStateOf(false) }
@@ -344,7 +390,7 @@ private fun ButtonWidgetConfigureView(
             }
             HAAccentButton(
                 text = stringResource(commonR.string.add_widget),
-                onClick = {},
+                onClick = onAddWidgetClicked,
                 modifier = Modifier.align(Alignment.End),
             )
         }
@@ -440,7 +486,7 @@ fun WidgetTextColorSelector(textColorIndex: Int, onTextColorSelected: (Int) -> U
     HADropdownMenu(
         items = listOf(
             HADropdownItem(0, stringResource(commonR.string.widget_text_color_black)),
-            HADropdownItem(1, stringResource(commonR.string.widget_text_color_white))
+            HADropdownItem(1, stringResource(commonR.string.widget_text_color_white)),
         ),
         selectedKey = textColorIndex,
         onItemSelected = { onTextColorSelected(it) },
@@ -477,6 +523,7 @@ private fun ButtonWidgetConfigureScreenPreview() {
             onBackgroundTypeSelected = {},
             isRequireAuthenticationChecked = false,
             onRequireAuthenticationChecked = {},
+            onAddWidgetClicked = {}
         )
     }
 }

@@ -1,10 +1,10 @@
 package io.homeassistant.companion.android.widgets.button
 
+import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.glance.currentState
+import android.content.Context
+import android.content.Intent
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.material.color.DynamicColors
@@ -18,19 +18,21 @@ import io.homeassistant.companion.android.common.util.MapAnySerializer
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
+import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import io.homeassistant.companion.android.util.icondialog.mdiName
+import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
+import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
 import io.homeassistant.companion.android.widgets.common.ActionFieldBinder
 import javax.inject.Inject
-import kotlin.collections.indexOf
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -100,6 +102,55 @@ class ButtonWidgetViewModel @Inject constructor(
         this.supportedTextColors = supportedTextColors
         this.widgetId = widgetId
         maybeLoadPreviousState(widgetId)
+    }
+
+    /**
+     * Return a [ButtonWidgetEntity] with the current selection, but without pushing this to the [buttonWidgetDao]
+     */
+    private suspend fun getPendingDaoEntity(): ButtonWidgetEntity {
+        val state = _uiState.value
+        with (state) {
+            val serverId = checkNotNull(selectedServerId) { "Selected server ID is null" }
+            val actionText = action
+            val actions = actions[serverId].orEmpty()
+            val actionTextParts = actionText.split(".", limit = 2)
+            val domain = actions[actionText]?.domain ?: actionTextParts.getOrElse(0) { "" }
+            val action = actions[actionText]?.action ?: actionTextParts.getOrElse(1) { "" }
+            val actionDataMap = HashMap<String, Any>()
+
+            dynamicFields.forEach {
+                var value = it.value
+                if (value != null) {
+                    if (it.field == "entity_id" && value is String) {
+                        // Remove trailing commas and spaces
+                        val trailingRegex = "[, ]+$".toRegex()
+                        value = value.replace(trailingRegex, "")
+                    }
+                    actionDataMap[it.field] = value
+                }
+            }
+
+            return ButtonWidgetEntity(
+                id = widgetId,
+                serverId = serverId,
+                domain = domain,
+                service = action,
+                label = label,
+                iconName = selectedIcon.mdiName,
+                serviceData = kotlinJsonMapper.encodeToString(MapAnySerializer, actionDataMap),
+                backgroundType = selectedBackgroundType,
+                textColor = supportedTextColors[textColorIndex],
+                requireAuthentication = requiresAuthentication,
+            )
+        }
+    }
+
+    fun updateWidget(context: Context) {
+        val appContext = context.applicationContext
+        viewModelScope.launch {
+            val glanceId = GlanceAppWidgetManager(appContext).getGlanceIdBy(widgetId)
+            ButtonGlanceAppWidget().update(appContext, glanceId)
+        }
     }
 
     private fun maybeLoadPreviousState(widgetId: Int) {
@@ -213,7 +264,7 @@ class ButtonWidgetViewModel @Inject constructor(
             val dynamicFields = currentState.dynamicFields.toMutableList()
             dynamicFields[index] = field
             currentState.copy(
-                dynamicFields = dynamicFields
+                dynamicFields = dynamicFields,
             )
         }
     }
@@ -254,7 +305,7 @@ class ButtonWidgetViewModel @Inject constructor(
     fun setServerActions(actions: List<Action>) {
         _uiState.update { currentState ->
             currentState.copy(
-                serverActions = actions
+                serverActions = actions,
             )
         }
     }
@@ -364,26 +415,29 @@ class ButtonWidgetViewModel @Inject constructor(
         }
         setServerActions(validItems)
     }
-//        binding.addButton.setOnClickListener {
-//            if (requestLauncherSetup) {
-//                val widgetConfigAction = binding.widgetTextConfigService.text.toString()
-//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-//                    selectedServerId != null &&
-//                    (
-//                        widgetConfigAction in actions[selectedServerId].orEmpty().keys ||
-//                            widgetConfigAction.split(".", limit = 2).size == 2
-//                        )
-//                ) {
-//                    lifecycleScope.launch {
-//                        requestWidgetCreation()
-//                    }
-//                } else {
-//                    showAddWidgetError()
-//                }
-//            } else {
-//                lifecycleScope.launch {
-//                    updateWidget()
-//                }
-//            }
-//        }
+
+    suspend fun requestWidgetCreation(context: Context) {
+        // We drop the first value since we only care about knowing when the widget is actually added
+        buttonWidgetDao.getWidgetCountFlow().drop(1).onStart {
+            GlanceAppWidgetManager(context)
+                .requestPinGlanceAppWidget(
+                    ButtonWidget::class.java,
+                    successCallback = PendingIntent.getBroadcast(
+                        context,
+                        System.currentTimeMillis().toInt(),
+                        Intent(context, ButtonWidget::class.java).apply {
+                            action = ACTION_APPWIDGET_CREATED
+                            putExtra(EXTRA_WIDGET_ENTITY, getPendingDaoEntity())
+                        },
+                        // We need the PendingIntent to be mutable so the system inject the EXTRA_APPWIDGET_ID of the created widget
+                        PendingIntent.FLAG_MUTABLE,
+                    ),
+                )
+        }.first()
+    }
+
+    suspend fun updateWidgetConfiguration() {
+        val entity = getPendingDaoEntity()
+        buttonWidgetDao.add(entity)
+    }
 }
