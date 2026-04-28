@@ -44,4 +44,15 @@ sealed interface FrontendEvent {
      * for forwarding the user's selection back to the ViewModel via [FrontendViewModel.switchServer].
      */
     data object ShowServerSwitcher : FrontendEvent
+
+    /**
+     * Navigate to the NFC tag-write flow.
+     *
+     * The host is responsible for launching the corresponding activity contract and forwarding the
+     * result back to the ViewModel via [FrontendViewModel.onNfcWriteCompleted].
+     *
+     * @param messageId Correlation id from the originating `tag/write` request.
+     * @param tagId Optional pre-filled tag identifier.
+     */
+    data class NavigateToNfcWrite(val messageId: Int, val tagId: String?) : FrontendEvent
 }

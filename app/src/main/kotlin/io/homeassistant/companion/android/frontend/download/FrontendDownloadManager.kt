@@ -7,7 +7,7 @@ import android.webkit.URLUtil
 import androidx.core.net.toUri
 import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.frontend.EvaluateScriptUsage
+import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.externalBusCallback
 import io.homeassistant.companion.android.frontend.session.ServerSessionManager
@@ -146,15 +146,15 @@ class FrontendDownloadManager @Inject constructor(
      * through the external bus as a data URI for [handleBlob] to process.
      * Requires the blob URL to still be valid (not yet revoked by the frontend).
      *
-     * Opts into [EvaluateScriptUsage] because we inject a small async function into the
+     * Opts into [EvaluateJavascriptUsage] because we inject a small async function into the
      * frontend and, once it has read the blob as a data URL, we make it call back into
      * the external bus (via `window.externalBus(...)`) so the result is delivered through
      * the normal typed message path (see [handleBlob]). A dedicated externalBus event
      * could have been introduced for this, but the integration predates the
-     * [EvaluateScriptUsage] policy and we also need it to work against older frontend
+     * [EvaluateJavascriptUsage] policy and we also need it to work against older frontend
      * versions that do not expose such a message type.
      */
-    @OptIn(EvaluateScriptUsage::class)
+    @OptIn(EvaluateJavascriptUsage::class)
     private suspend fun triggerBlobDownload(url: String, contentDisposition: String, mimetype: String): DownloadResult {
         Timber.d("Triggering blob download for ${sensitive(url)}")
         val fallbackFilename = withContext(Dispatchers.IO) {

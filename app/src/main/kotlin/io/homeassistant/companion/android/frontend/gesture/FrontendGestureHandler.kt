@@ -6,7 +6,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.common.util.HAGesture
-import io.homeassistant.companion.android.frontend.EvaluateScriptUsage
+import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import io.homeassistant.companion.android.frontend.WebViewAction
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.NavigateToMessage
@@ -106,14 +106,14 @@ class FrontendGestureHandler @Inject constructor(
      * This bypasses the focused element to avoid interfering with text inputs,
      * triggering frontend keyboard shortcuts directly on the document.
      *
-     * Opts into [EvaluateScriptUsage] because the goal is to simulate a keyboard input,
+     * Opts into [EvaluateJavascriptUsage] because the goal is to simulate a keyboard input,
      * which is an interaction the frontend already handles through its normal DOM event
      * listeners — no frontend-specific internals are being poked. A dedicated externalBus
      * event could have been introduced to replace this, but the integration predates the
-     * [EvaluateScriptUsage] policy and is kept as-is for backward compatibility with older
+     * [EvaluateJavascriptUsage] policy and is kept as-is for backward compatibility with older
      * frontend versions that do not expose such a message type.
      */
-    @OptIn(EvaluateScriptUsage::class)
+    @OptIn(EvaluateJavascriptUsage::class)
     private suspend fun dispatchKeyDown(key: String, code: String, keyCode: Int, ctrlKey: Boolean = false) {
         val script = """
             var event = new KeyboardEvent('keydown', {

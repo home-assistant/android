@@ -21,6 +21,7 @@ import androidx.core.view.WindowInsetsCompat.Type.ime
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
 import androidx.core.view.updatePadding
 import androidx.preference.PreferenceFragmentCompat
+import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import timber.log.Timber
 
 operator fun PaddingValues.plus(that: PaddingValues): PaddingValues = object : PaddingValues {
@@ -129,5 +130,8 @@ fun WebView.applyInsets(
     """.trimIndent()
     Timber.d("Safe area is $safeAreaJs")
 
+    // No externalBus alternative: safe area must be set as early as possible, even before the
+    // frontend is ready to receive messages.
+    @OptIn(EvaluateJavascriptUsage::class)
     evaluateJavascript(safeAreaJs, null)
 }

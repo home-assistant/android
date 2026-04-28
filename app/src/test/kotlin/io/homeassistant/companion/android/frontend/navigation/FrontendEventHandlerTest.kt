@@ -49,6 +49,7 @@ class FrontendEventHandlerTest {
                 onNavigateToAssist = { _, _, _ -> },
                 onOpenExternalLink = {},
                 onShowServerSwitcher = {},
+                onNavigateToNfcWrite = { _, _ -> },
             )
         }
 
@@ -77,6 +78,7 @@ class FrontendEventHandlerTest {
                 onNavigateToAssist = { _, _, _ -> },
                 onOpenExternalLink = {},
                 onShowServerSwitcher = {},
+                onNavigateToNfcWrite = { _, _ -> },
             )
         }
 
@@ -107,6 +109,7 @@ class FrontendEventHandlerTest {
                 },
                 onOpenExternalLink = {},
                 onShowServerSwitcher = {},
+                onNavigateToNfcWrite = { _, _ -> },
             )
         }
 
@@ -143,6 +146,7 @@ class FrontendEventHandlerTest {
                 onNavigateToAssist = { _, _, _ -> },
                 onOpenExternalLink = {},
                 onShowServerSwitcher = {},
+                onNavigateToNfcWrite = { _, _ -> },
             )
         }
 
@@ -167,6 +171,7 @@ class FrontendEventHandlerTest {
                 onNavigateToAssist = { _, _, _ -> },
                 onOpenExternalLink = { uri -> capturedUri = uri },
                 onShowServerSwitcher = {},
+                onNavigateToNfcWrite = { _, _ -> },
             )
         }
 
@@ -191,6 +196,7 @@ class FrontendEventHandlerTest {
                 onNavigateToAssist = { _, _, _ -> },
                 onOpenExternalLink = {},
                 onShowServerSwitcher = { serverSwitcherShown = true },
+                onNavigateToNfcWrite = { _, _ -> },
             )
         }
 
@@ -218,6 +224,7 @@ class FrontendEventHandlerTest {
                 onNavigateToAssist = { _, _, _ -> },
                 onOpenExternalLink = {},
                 onShowServerSwitcher = {},
+                onNavigateToNfcWrite = { _, _ -> },
             )
         }
 
@@ -227,5 +234,63 @@ class FrontendEventHandlerTest {
 
         assertEquals(true, settingsNavigated)
         assertEquals(SettingsActivity.Deeplink.Developer, deepLink)
+    }
+
+    @Test
+    fun `Given NavigateToNfcWrite event then onNavigateToNfcWrite is called with messageId and tagId`() = runTest {
+        var capturedMessageId: Int? = null
+        var capturedTagId: String? = "not-captured"
+        val events = MutableSharedFlow<FrontendEvent>()
+
+        composeTestRule.setContent {
+            FrontendEventHandler(
+                events = events,
+                onShowSnackbar = { _, _ -> false },
+                onNavigateToSettings = {},
+                onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = {},
+                onShowServerSwitcher = {},
+                onNavigateToNfcWrite = { messageId, tagId ->
+                    capturedMessageId = messageId
+                    capturedTagId = tagId
+                },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        events.emit(FrontendEvent.NavigateToNfcWrite(messageId = 42, tagId = "tag-abc"))
+        composeTestRule.waitForIdle()
+
+        assertEquals(42, capturedMessageId)
+        assertEquals("tag-abc", capturedTagId)
+    }
+
+    @Test
+    fun `Given NavigateToNfcWrite event without tagId then onNavigateToNfcWrite is called with null tagId`() = runTest {
+        var capturedMessageId: Int? = null
+        var capturedTagId: String? = "not-captured"
+        val events = MutableSharedFlow<FrontendEvent>()
+
+        composeTestRule.setContent {
+            FrontendEventHandler(
+                events = events,
+                onShowSnackbar = { _, _ -> false },
+                onNavigateToSettings = {},
+                onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = {},
+                onShowServerSwitcher = {},
+                onNavigateToNfcWrite = { messageId, tagId ->
+                    capturedMessageId = messageId
+                    capturedTagId = tagId
+                },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        events.emit(FrontendEvent.NavigateToNfcWrite(messageId = 7, tagId = null))
+        composeTestRule.waitForIdle()
+
+        assertEquals(7, capturedMessageId)
+        assertEquals(null, capturedTagId)
     }
 }
