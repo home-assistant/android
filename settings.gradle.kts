@@ -53,9 +53,6 @@ dependencyResolutionManagement {
         }
         mavenCentral()
         google()
-        maven(url = "https://maven.emulator.wtf/releases/") {
-            content { includeGroup("wtf.emulator") }
-        }
         maven("https://jitpack.io")
     }
 }

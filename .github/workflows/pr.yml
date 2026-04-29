@@ -336,73 +336,44 @@ jobs:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
-      - name: Run test
-        # Tee stdout/stderr so a follow-up step can extract the emulator.wtf run URLs.
-        # `set -o pipefail` preserves gradle's exit code through the pipe.
-        # `--continue` ensures both flavors run even if one fails, so we get URLs for both.
+      - name: Build x86_64 APKs
+        run: ./gradlew :app:assembleDebug :app:assembleAndroidTest -Pabis=x86_64
+
+      - name: Build device list
+        id: devices
         run: |
-          set -o pipefail
-          ./gradlew :app:testFullDebugWithEmulatorWtf :app:testMinimalDebugWithEmulatorWtf --continue 2>&1 | tee emulator-wtf.log
-        env:
-          EW_API_TOKEN: ${{ secrets.EMULATOR_WTF_TOKEN }}
+          MIN=$(grep '^androidSdk-min' gradle/libs.versions.toml | cut -d'"' -f2)
+          MAX=$(grep '^androidSdk-target' gradle/libs.versions.toml | cut -d'"' -f2)
+          {
+            echo 'list<<DEVICES_EOF'
+            for v in $(seq "$MIN" "$MAX"); do
+              echo "model=Pixel7,version=$v"
+            done
+            echo 'DEVICES_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Run tests full
+        uses: emulator-wtf/run-tests@01944281be70008e1b97d9f8458039c18cd3d779 # v0.9.11
+        with:
+          api-token: ${{ secrets.EW_API_TOKEN }}
+          devices: ${{ steps.devices.outputs.list }}
+          app: app/build/outputs/apk/full/debug/app-full-debug.apk
+          test: app/build/outputs/apk/androidTest/full/debug/app-full-debug-androidTest.apk
+          outputs-dir: build/test-results/full
+
+      - name: Run tests minimal
+        uses: emulator-wtf/run-tests@01944281be70008e1b97d9f8458039c18cd3d779 # v0.9.11
+        with:
+          api-token: ${{ secrets.EW_API_TOKEN }}
+          devices: ${{ steps.devices.outputs.list }}
+          app: app/build/outputs/apk/minimal/debug/app-minimal-debug.apk
+          test: app/build/outputs/apk/androidTest/minimal/debug/app-minimal-debug-androidTest.apk
+          outputs-dir: build/test-results/minimal
 
       - uses: ./.github/actions/upload-test-results
         if: always()
         with:
           test-name: Instrumentation Test WTF
-
-      - name: Extract emulator.wtf run URLs
-        if: failure()
-        id: extract_url
-        run: |
-          {
-            echo 'urls<<URLS_EOF'
-            grep -oE 'https://emulator\.wtf/o/[^[:space:]]+' emulator-wtf.log | sort -u
-            echo 'URLS_EOF'
-          } >> "$GITHUB_OUTPUT"
-
-      # Locate any previous comment posted by this job so we can update it on
-      # failure or delete it on success. The hidden HTML marker is the stable
-      # identifier across runs.
-      - name: Find previous emulator.wtf PR comment
-        if: always() && github.event_name == 'pull_request'
-        id: find_comment
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          COMMENT_ID=$(gh api \
-            --paginate \
-            "/repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" \
-            --jq '.[] | select(.body | contains("<!-- emulator-wtf-comment -->")) | .id' \
-            | head -n 1)
-          echo "id=$COMMENT_ID" >> "$GITHUB_OUTPUT"
-
-      - name: Upsert emulator.wtf PR comment on failure
-        if: failure() && github.event_name == 'pull_request' && steps.extract_url.outputs.urls != ''
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          URLS: ${{ steps.extract_url.outputs.urls }}
-          COMMENT_ID: ${{ steps.find_comment.outputs.id }}
-        run: |
-          LINKS=$(printf '%s\n' "$URLS" | sed 's|^|- |')
-          BODY="<!-- emulator-wtf-comment -->
-          Instrumentation Test WTF failed. Full run results on emulator.wtf:
-          $LINKS"
-          if [ -n "$COMMENT_ID" ]; then
-            gh api -X PATCH "/repos/$GITHUB_REPOSITORY/issues/comments/$COMMENT_ID" -f body="$BODY"
-          else
-            gh pr comment "$PR_NUMBER" --body "$BODY"
-          fi
-
-      - name: Remove stale emulator.wtf PR comment on success
-        if: github.event_name == 'pull_request' && steps.find_comment.outputs.id != ''
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COMMENT_ID: ${{ steps.find_comment.outputs.id }}
-        run: |
-          gh api -X DELETE "/repos/$GITHUB_REPOSITORY/issues/comments/$COMMENT_ID"
 
   instrumentation_test:
     name: "Instrumentation Tests"

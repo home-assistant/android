@@ -1,6 +1,3 @@
-import wtf.emulator.DeviceModel
-import wtf.emulator.GpuMode
-
 plugins {
     alias(libs.plugins.homeassistant.android.application)
     alias(libs.plugins.homeassistant.android.flavor)
@@ -8,7 +5,6 @@ plugins {
     alias(libs.plugins.google.services)
     alias(libs.plugins.homeassistant.android.dependencies)
     alias(libs.plugins.kotlin.parcelize)
-    alias(libs.plugins.emulator.wtf)
 }
 
 android {
@@ -58,23 +54,4 @@ dependencies {
 // Disable to fix memory leak and be compatible with the configuration cache.
 googleServices {
     disableVersionCheck = true
-}
-
-emulatorwtf {
-    // Token is injected through the EW_API_TOKEN env variable
-
-    recordVideo.set(false)
-
-    // devices to test on, Defaults to Pixel7, version 30, gpu auto
-    (
-        libs.versions.androidSdk.min.get().toInt()..libs.versions.androidSdk.target.get()
-            .toInt()
-        ).forEach { androidVersion ->
-        device {
-            model.set(DeviceModel.PIXEL_7)
-            version.set(androidVersion)
-            gpu.set(GpuMode.AUTO)
-        }
-    }
-    baseOutputDir.set(layout.buildDirectory.dir("build-results"))
 }
