@@ -30,7 +30,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -70,7 +69,6 @@ import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.webview.insecure.BlockInsecureScreen
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /** Minimum swipe velocity (pixels/second) to trigger a gesture action. */
@@ -130,7 +128,6 @@ internal fun FrontendScreen(
         frontendJsCallback = viewModel.frontendJsCallback,
         pendingPermissionRequest = pendingPermissionRequest,
         pendingDialog = pendingDialog,
-        onClearPendingPermissionRequest = viewModel::clearPendingPermissionRequest,
         pendingFileChooser = pendingFileChooser,
         onBlockInsecureRetry = viewModel::onRetry,
         onOpenExternalLink = onOpenExternalLink,
@@ -169,9 +166,8 @@ internal fun FrontendScreenContent(
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onWebViewCreationFailed: (Throwable) -> Unit,
     modifier: Modifier = Modifier,
-    pendingPermissionRequest: PermissionRequest<*>? = null,
+    pendingPermissionRequest: PermissionRequest? = null,
     pendingDialog: FrontendDialog? = null,
-    onClearPendingPermissionRequest: () -> Unit = {},
     pendingFileChooser: FileChooserRequest? = null,
     errorStateProvider: FrontendConnectionErrorStateProvider = FrontendConnectionErrorStateProvider.noOp,
     securityLevelViewModel: LocationForSecureConnectionViewModel? = null,
@@ -191,7 +187,6 @@ internal fun FrontendScreenContent(
 
     PendingPermissionHandler(
         pendingRequest = pendingPermissionRequest,
-        onClearPendingPermissionRequest = onClearPendingPermissionRequest,
     )
 
     PendingDialogHandler(
@@ -524,11 +519,9 @@ private fun WebView.configureForFrontend(
 }
 
 /**
- * Routes a [PermissionRequest] to the appropriate UI and delivers results directly.
- *
- * When the user responds, this composable:
- * 1. Clears the pending slot via [onClearPendingPermissionRequest] (unblocking queued requests)
- * 2. Calls [PermissionRequest.onResult] directly using a composable coroutine scope
+ * Routes a [PermissionRequest] to the appropriate UI and delivers the result back through the
+ * request's own callback. The slot is freed automatically by the manager once the callback is
+ * invoked, so this composable doesn't have to clear anything itself.
  *
  * Types with custom UI (e.g. [PermissionRequest.Notification] bottom sheet) are matched first.
  * Remaining types fall through to the system dialog based on their category:
@@ -537,43 +530,25 @@ private fun WebView.configureForFrontend(
  * Adding a new permission type that uses the system dialog requires no changes here.
  */
 @Composable
-private fun PendingPermissionHandler(
-    pendingRequest: PermissionRequest<*>?,
-    onClearPendingPermissionRequest: () -> Unit,
-) {
-    val coroutineScope = rememberCoroutineScope()
-
-    fun <T : PermissionRequest.Result> resolveResult(request: PermissionRequest<T>, result: T) {
-        onClearPendingPermissionRequest()
-        coroutineScope.launch { request.onResult(result) }
-    }
-
+private fun PendingPermissionHandler(pendingRequest: PermissionRequest?) {
     when (pendingRequest) {
-        // Types with custom UI
         is PermissionRequest.Notification -> {
             @SuppressLint("InlinedApi")
             NotificationPermissionPrompt(
-                onPermissionResult = { granted ->
-                    resolveResult(pendingRequest, PermissionRequest.Result.Single(granted = granted))
-                },
-                onDismiss = onClearPendingPermissionRequest,
+                onPermissionResult = pendingRequest.onResult,
+                onDismiss = pendingRequest.onDismiss,
             )
         }
-        // Default system dialogs by category
         is PermissionRequest.MultiplePermissions -> {
             MultiplePermissionsEffect(
                 pendingRequest = pendingRequest,
-                onPermissionResult = { permissions ->
-                    resolveResult(pendingRequest, PermissionRequest.Result.Multiple(permissions = permissions))
-                },
+                onPermissionResult = pendingRequest.onResult,
             )
         }
         is PermissionRequest.SinglePermission -> {
             SinglePermissionEffect(
                 pendingRequest = pendingRequest,
-                onPermissionResult = { granted ->
-                    resolveResult(pendingRequest, PermissionRequest.Result.Single(granted = granted))
-                },
+                onPermissionResult = pendingRequest.onResult,
             )
         }
         null -> { /* No pending permission */ }

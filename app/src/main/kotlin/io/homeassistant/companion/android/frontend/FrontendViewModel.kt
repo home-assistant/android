@@ -328,13 +328,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     /**
      * Handles a download request from the WebView.
      *
-     * On pre-Q devices, checks for [android.Manifest.permission.WRITE_EXTERNAL_STORAGE]
-     * before proceeding. If the permission is not granted, the request is deferred and the
-     * system permission dialog is triggered via [pendingPermissionRequest]. The download
-     * is retried automatically when permission is granted.
+     * On pre-Q devices, awaits the storage permission via [PermissionManager.checkStoragePermissionForDownload]
+     * before proceeding. If the user declines, the download is silently dropped.
      *
-     * Delegates to [FrontendDownloadManager] to dispatch the download based on URI scheme,
-     * then processes the [DownloadResult] to emit appropriate UI events.
+     * Delegates to [FrontendDownloadManager] to dispatch the download based on URI scheme, then
+     * processes the [DownloadResult] to emit appropriate UI events.
      *
      * @param url The URL of the file to download
      * @param contentDisposition The Content-Disposition header value
@@ -342,12 +340,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      */
     fun onDownloadRequested(url: String, contentDisposition: String, mimetype: String) {
         viewModelScope.launch {
-            if (permissionManager.checkStoragePermissionForDownload {
-                    onDownloadRequested(url = url, contentDisposition = contentDisposition, mimetype = mimetype)
-                }
-            ) {
-                return@launch
-            }
+            if (!permissionManager.checkStoragePermissionForDownload()) return@launch
 
             val result = downloadManager.downloadFile(
                 url = url,
@@ -357,11 +350,6 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             )
             handleDownloadResult(result)
         }
-    }
-
-    /** Clears the current pending permission request from the slot. */
-    fun clearPendingPermissionRequest() {
-        permissionManager.clearPendingPermissionRequest()
     }
 
     /**
