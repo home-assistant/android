@@ -46,6 +46,8 @@ import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.util.GestureDirection
+import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
+import io.homeassistant.companion.android.frontend.dialog.PendingDialogHandler
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorScreen
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
@@ -104,6 +106,7 @@ internal fun FrontendScreen(
 ) {
     val viewState by viewModel.viewState.collectAsStateWithLifecycle()
     val pendingPermissionRequest by viewModel.pendingPermissionRequest.collectAsStateWithLifecycle()
+    val pendingDialog by viewModel.pendingDialog.collectAsStateWithLifecycle()
 
     // Create SecurityLevel ViewModel only when needed
     val securityLevelViewModel: LocationForSecureConnectionViewModel? =
@@ -123,6 +126,7 @@ internal fun FrontendScreen(
         webChromeClient = viewModel.webChromeClient,
         frontendJsCallback = viewModel.frontendJsCallback,
         pendingPermissionRequest = pendingPermissionRequest,
+        pendingDialog = pendingDialog,
         onClearPendingPermissionRequest = viewModel::clearPendingPermissionRequest,
         onBlockInsecureRetry = viewModel::onRetry,
         onOpenExternalLink = onOpenExternalLink,
@@ -162,6 +166,7 @@ internal fun FrontendScreenContent(
     onWebViewCreationFailed: (Throwable) -> Unit,
     modifier: Modifier = Modifier,
     pendingPermissionRequest: PermissionRequest<*>? = null,
+    pendingDialog: FrontendDialog? = null,
     onClearPendingPermissionRequest: () -> Unit = {},
     errorStateProvider: FrontendConnectionErrorStateProvider = FrontendConnectionErrorStateProvider.noOp,
     securityLevelViewModel: LocationForSecureConnectionViewModel? = null,
@@ -182,6 +187,10 @@ internal fun FrontendScreenContent(
     PendingPermissionHandler(
         pendingRequest = pendingPermissionRequest,
         onClearPendingPermissionRequest = onClearPendingPermissionRequest,
+    )
+
+    PendingDialogHandler(
+        pendingDialog = pendingDialog,
     )
 
     Box(modifier = modifier.fillMaxSize()) {

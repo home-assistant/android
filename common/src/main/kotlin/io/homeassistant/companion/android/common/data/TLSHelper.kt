@@ -14,6 +14,7 @@ import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509ExtendedKeyManager
 import javax.net.ssl.X509TrustManager
 import okhttp3.OkHttpClient
+import timber.log.Timber
 
 class TLSHelper @Inject constructor(
     @NamedKeyChain private val keyChainRepository: KeyChainRepository,
@@ -22,7 +23,17 @@ class TLSHelper @Inject constructor(
 
     fun setupOkHttpClientSSLSocketFactory(builder: OkHttpClient.Builder) {
         val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
-        trustManagerFactory.init(null as KeyStore?)
+        // Load AndroidCAStore explicitly to include user-installed CAs alongside
+        // system CAs. On some Android builds, passing null may load only the
+        // system store, which can bypass user-CA trust configured in
+        // network_security_config.xml (#5565).
+        val androidCaStore: KeyStore? = try {
+            KeyStore.getInstance("AndroidCAStore").apply { load(null) }
+        } catch (e: Throwable) {
+            Timber.w(e, "AndroidCAStore unavailable, falling back to system trust store")
+            null
+        }
+        trustManagerFactory.init(androidCaStore)
         val trustManagers = trustManagerFactory.trustManagers
 
         val sslContext = SSLContext.getInstance("TLS")

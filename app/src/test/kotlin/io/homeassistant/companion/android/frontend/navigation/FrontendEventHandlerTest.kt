@@ -1,16 +1,15 @@
 package io.homeassistant.companion.android.frontend.navigation
 
 import android.net.Uri
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
+import io.homeassistant.companion.android.testing.unit.TestSharedFlow
 import junit.framework.TestCase.assertEquals
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.assertNull
@@ -33,10 +32,10 @@ class FrontendEventHandlerTest {
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
     @Test
-    fun `Given NavigateToSettings event then onNavigateToSettings is called`() = runTest {
+    fun `Given NavigateToSettings event then onNavigateToSettings is called`() {
         var settingsNavigated = false
         var deepLink: SettingsActivity.Deeplink? = null
-        val events = MutableSharedFlow<FrontendEvent>()
+        val events = TestSharedFlow<FrontendEvent>()
 
         composeTestRule.setContent {
             FrontendEventHandler(
@@ -62,10 +61,10 @@ class FrontendEventHandlerTest {
     }
 
     @Test
-    fun `Given NavigateToAssistSettings event then onNavigateToSettings is called with deeplink`() = runTest {
+    fun `Given NavigateToAssistSettings event then onNavigateToSettings is called with deeplink`() {
         var settingsNavigated = false
         var deepLink: SettingsActivity.Deeplink? = null
-        val events = MutableSharedFlow<FrontendEvent>()
+        val events = TestSharedFlow<FrontendEvent>()
 
         composeTestRule.setContent {
             FrontendEventHandler(
@@ -91,11 +90,11 @@ class FrontendEventHandlerTest {
     }
 
     @Test
-    fun `Given NavigateToAssist event then onNavigateToAssist is called with correct params`() = runTest {
+    fun `Given NavigateToAssist event then onNavigateToAssist is called with correct params`() {
         var capturedServerId: Int? = null
         var capturedPipelineId: String? = null
         var capturedStartListening: Boolean? = null
-        val events = MutableSharedFlow<FrontendEvent>()
+        val events = TestSharedFlow<FrontendEvent>()
 
         composeTestRule.setContent {
             FrontendEventHandler(
@@ -129,10 +128,10 @@ class FrontendEventHandlerTest {
     }
 
     @Test
-    fun `Given ShowSnackbar event then onShowSnackbar is called with resolved message`() = runTest {
+    fun `Given ShowSnackbar event then onShowSnackbar is called with resolved message`() {
         var capturedMessage: String? = null
         var capturedAction: String? = null
-        val events = MutableSharedFlow<FrontendEvent>()
+        val events = TestSharedFlow<FrontendEvent>()
 
         composeTestRule.setContent {
             FrontendEventHandler(
@@ -159,9 +158,9 @@ class FrontendEventHandlerTest {
     }
 
     @Test
-    fun `Given OpenExternalLink event then onOpenExternalLink is called with the URI`() = runTest {
+    fun `Given OpenExternalLink event then onOpenExternalLink is called with the URI`() {
         var capturedUri: Uri? = null
-        val events = MutableSharedFlow<FrontendEvent>()
+        val events = TestSharedFlow<FrontendEvent>()
 
         composeTestRule.setContent {
             FrontendEventHandler(
@@ -184,9 +183,9 @@ class FrontendEventHandlerTest {
     }
 
     @Test
-    fun `Given ShowServerSwitcher event then onShowServerSwitcher is called`() = runTest {
+    fun `Given ShowServerSwitcher event then onShowServerSwitcher is called`() {
         var serverSwitcherShown = false
-        val events = MutableSharedFlow<FrontendEvent>()
+        val events = TestSharedFlow<FrontendEvent>()
 
         composeTestRule.setContent {
             FrontendEventHandler(
@@ -208,10 +207,10 @@ class FrontendEventHandlerTest {
     }
 
     @Test
-    fun `Given NavigateToDeveloperSettings event then onNavigateToSettings is called with Developer deeplink`() = runTest {
+    fun `Given NavigateToDeveloperSettings event then onNavigateToSettings is called with Developer deeplink`() {
         var settingsNavigated = false
         var deepLink: SettingsActivity.Deeplink? = null
-        val navigationEvents = MutableSharedFlow<FrontendEvent>()
+        val navigationEvents = TestSharedFlow<FrontendEvent>()
 
         composeTestRule.setContent {
             FrontendEventHandler(
@@ -237,10 +236,10 @@ class FrontendEventHandlerTest {
     }
 
     @Test
-    fun `Given NavigateToNfcWrite event then onNavigateToNfcWrite is called with messageId and tagId`() = runTest {
+    fun `Given NavigateToNfcWrite event then onNavigateToNfcWrite is called with messageId and tagId`() {
         var capturedMessageId: Int? = null
         var capturedTagId: String? = "not-captured"
-        val events = MutableSharedFlow<FrontendEvent>()
+        val events = TestSharedFlow<FrontendEvent>()
 
         composeTestRule.setContent {
             FrontendEventHandler(
@@ -266,10 +265,10 @@ class FrontendEventHandlerTest {
     }
 
     @Test
-    fun `Given NavigateToNfcWrite event without tagId then onNavigateToNfcWrite is called with null tagId`() = runTest {
+    fun `Given NavigateToNfcWrite event without tagId then onNavigateToNfcWrite is called with null tagId`() {
         var capturedMessageId: Int? = null
         var capturedTagId: String? = "not-captured"
-        val events = MutableSharedFlow<FrontendEvent>()
+        val events = TestSharedFlow<FrontendEvent>()
 
         composeTestRule.setContent {
             FrontendEventHandler(

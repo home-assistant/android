@@ -1,0 +1,113 @@
+package io.homeassistant.companion.android.common.util
+
+import app.cash.turbine.test
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class SingleSlotQueueTest {
+
+    @Test
+    fun `Given empty queue when emit then slot holds the item`() = runTest {
+        val queue = SingleSlotQueue<String>()
+
+        queue.emit("first")
+
+        assertEquals("first", queue.value)
+    }
+
+    @Test
+    fun `Given full slot when second emit then suspends until clear`() = runTest {
+        val queue = SingleSlotQueue<String>()
+        queue.emit("first")
+
+        val secondEmit = async { queue.emit("second") }
+        advanceUntilIdle()
+
+        assertFalse(secondEmit.isCompleted, "Second emit must suspend while slot is full")
+        assertEquals("first", queue.value)
+
+        queue.clear()
+        advanceUntilIdle()
+
+        assertTrue(secondEmit.isCompleted)
+        assertEquals("second", queue.value)
+    }
+
+    @Test
+    fun `Given multiple suspended emitters when slot frees then they fill in FIFO order`() = runTest {
+        val queue = SingleSlotQueue<String>()
+        queue.emit("first")
+
+        val second = async { queue.emit("second") }
+        val third = async { queue.emit("third") }
+        advanceUntilIdle()
+
+        queue.clear()
+        advanceUntilIdle()
+        assertEquals("second", queue.value)
+        assertTrue(second.isCompleted)
+        assertFalse(third.isCompleted)
+
+        queue.clear()
+        advanceUntilIdle()
+        assertEquals("third", queue.value)
+        assertTrue(third.isCompleted)
+    }
+
+    @Test
+    fun `Given suspended emitter when its scope cancels then other waiters can still progress`() = runTest {
+        val queue = SingleSlotQueue<String>()
+        queue.emit("first")
+
+        val cancellable = launch { queue.emit("cancelled") }
+        val survivor = async { queue.emit("survivor") }
+        advanceUntilIdle()
+
+        cancellable.cancel()
+        advanceUntilIdle()
+
+        queue.clear()
+        advanceUntilIdle()
+
+        assertEquals("survivor", queue.value)
+        assertTrue(survivor.isCompleted)
+    }
+
+    @Test
+    fun `Given empty slot when clear then no-op`() = runTest {
+        val queue = SingleSlotQueue<String>()
+
+        queue.clear()
+
+        assertNull(queue.value)
+    }
+
+    @Test
+    fun `Given subscribers when slot transitions then state flow emits each value`() = runTest {
+        val queue = SingleSlotQueue<String>()
+
+        queue.test {
+            assertNull(awaitItem())
+
+            queue.emit("first")
+            assertEquals("first", awaitItem())
+
+            queue.clear()
+            assertNull(awaitItem())
+
+            queue.emit("second")
+            assertEquals("second", awaitItem())
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+}
