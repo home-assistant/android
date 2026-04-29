@@ -21,10 +21,7 @@ internal sealed interface PermissionRequest {
     /** The Android runtime permissions to request. */
     val permissions: List<String>
 
-    /**
-     * Base class for requests that involve a single Android permission resolved via the system
-     * dialog (i.e. the Boolean granted/denied path, no dismiss-without-answering).
-     */
+    /** Base class for requests that involve a single Android permission resolved via the system dialog. */
     sealed class SinglePermission(val permission: String) : PermissionRequest {
         override val permissions: List<String> get() = listOf(permission)
 

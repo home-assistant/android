@@ -82,6 +82,8 @@ internal class PermissionManager @VisibleForTesting constructor(
      *   to configure websocket-based notification fallback.
      *
      * If the user dismisses the request without explicitly answering, no preference is persisted.
+     *
+     * @param serverId The server to check notification preferences for
      */
     @SuppressLint("NewApi")
     suspend fun checkNotificationPermission(serverId: Int) {

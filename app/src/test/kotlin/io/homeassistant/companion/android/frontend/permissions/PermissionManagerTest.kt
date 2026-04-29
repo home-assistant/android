@@ -18,16 +18,15 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
-import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -253,7 +252,6 @@ class PermissionManagerTest {
             assertInstanceOf(PermissionRequest.WebView::class.java, pending)
             assertEquals(listOf(android.Manifest.permission.CAMERA), pending?.permissions)
 
-            // Tidy up
             (pending as PermissionRequest.WebView).onResult(emptyMap())
             advanceUntilIdle()
             job.join()
@@ -626,12 +624,14 @@ class PermissionManagerTest {
                 val storageJob = launch { manager.checkStoragePermissionForDownload() }
                 assertInstanceOf(PermissionRequest.ExternalStorage::class.java, turbine.awaitItem())
 
-                val firstWebViewJob = launch(Dispatchers.Default) {
+                val firstWebViewJob = launch {
                     manager.onWebViewPermissionRequest(mockPermissionRequest(WebViewPermissionRequest.RESOURCE_VIDEO_CAPTURE))
                 }
-                val secondWebViewJob = launch(Dispatchers.Default) {
+                val secondWebViewJob = launch {
                     manager.onWebViewPermissionRequest(mockPermissionRequest(WebViewPermissionRequest.RESOURCE_AUDIO_CAPTURE))
                 }
+                // Ensure both waiters are parked in queue.awaitResult before we resolve storage
+                runCurrent()
 
                 // Resolve storage — slot becomes null briefly, then first waiter takes it
                 (manager.pendingPermissionRequest.value as PermissionRequest.ExternalStorage).onResult(false)
@@ -647,8 +647,9 @@ class PermissionManagerTest {
                 val secondPending = turbine.awaitItem()
                 assertInstanceOf(PermissionRequest.WebView::class.java, secondPending)
 
-                // Both were served, and they are different permissions
-                assertNotEquals(firstPending.permissions, secondPending?.permissions)
+                // FIFO order: first waiter gets CAMERA (video), second gets RECORD_AUDIO (audio)
+                assertEquals(listOf(android.Manifest.permission.CAMERA), firstPending.permissions)
+                assertEquals(listOf(android.Manifest.permission.RECORD_AUDIO), secondPending?.permissions)
 
                 (secondPending as PermissionRequest.WebView).onResult(emptyMap())
                 firstWebViewJob.join()
