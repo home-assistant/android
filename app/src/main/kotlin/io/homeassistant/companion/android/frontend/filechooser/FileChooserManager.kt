@@ -11,9 +11,10 @@ import kotlinx.coroutines.flow.StateFlow
  * Pending file chooser request from the WebView.
  *
  * @param fileChooserParams Parameters for configuring the file chooser intent
- * @param onResult Delivers the selected URIs (or `null` if the user cancelled). Called exactly
- *        once. The [FileChooserManager] uses this to complete its suspend `pickFiles` call, so
- *        the slot is freed automatically.
+ * @param onResult Delivers the selected URIs (or `null` if the user cancelled). This callback
+ *        should be called at most once. The [FileChooserManager] uses the first invocation to
+ *        complete its suspend `pickFiles` call and free the slot automatically. Any subsequent
+ *        invocations are ignored by the queue.
  */
 internal data class FileChooserRequest(val fileChooserParams: FileChooserParams, val onResult: (Array<Uri>?) -> Unit)
 
