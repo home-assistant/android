@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.frontend.handler
 
 import android.content.pm.PackageManager
+import androidx.core.net.toUri
 import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
@@ -196,7 +197,7 @@ class FrontendMessageHandler @Inject constructor(
                     externalBusRepository.send(ResultMessage(id = message.id, success = true))
                     FrontendHandlerEvent.ExoPlayerAction.PlayHls(
                         messageId = message.id,
-                        url = android.net.Uri.parse(url),
+                        url = url.toUri(),
                         muted = message.payload.muted,
                     )
                 }
