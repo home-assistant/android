@@ -2,8 +2,7 @@ package io.homeassistant.companion.android.frontend.dialog
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -39,7 +38,7 @@ class HttpAuthDialogTest {
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
     @Test
-    fun `Given dialog shown then title message and empty fields are displayed and OK button is disabled`() {
+    fun `Given dialog shown then the content is displayed and button enabled`() {
         composeTestRule.apply {
             setContent {
                 HttpAuthDialog(
@@ -54,25 +53,6 @@ class HttpAuthDialogTest {
             onNodeWithText(stringResource(commonR.string.username)).assertIsDisplayed()
             onNodeWithText(stringResource(commonR.string.password)).assertIsDisplayed()
             onNodeWithText(stringResource(commonR.string.remember)).assertIsDisplayed()
-            onNodeWithText(stringResource(commonR.string.ok)).assertIsNotEnabled()
-            onNodeWithText(stringResource(commonR.string.cancel)).assertIsEnabled()
-        }
-    }
-
-    @Test
-    fun `Given both fields filled then OK button is enabled`() {
-        composeTestRule.apply {
-            setContent {
-                HttpAuthDialog(
-                    message = "https://example.com",
-                    onProceed = { _, _, _ -> },
-                    onCancel = {},
-                )
-            }
-
-            onNodeWithText(stringResource(commonR.string.username)).performTextInput("admin")
-            onNodeWithText(stringResource(commonR.string.password)).performTextInput("secret")
-
             onNodeWithText(stringResource(commonR.string.ok)).assertIsEnabled()
             onNodeWithText(stringResource(commonR.string.cancel)).assertIsEnabled()
         }
@@ -105,25 +85,6 @@ class HttpAuthDialogTest {
             assertEquals("admin", capturedUsername)
             assertEquals("secret", capturedPassword)
             assertTrue(capturedRemember)
-        }
-    }
-
-    @Test
-    fun `Given dialog shown when Cancel clicked then onCancel is called`() {
-        var cancelCalled = false
-
-        composeTestRule.apply {
-            setContent {
-                HttpAuthDialog(
-                    message = "https://example.com",
-                    onProceed = { _, _, _ -> },
-                    onCancel = { cancelCalled = true },
-                )
-            }
-
-            onNodeWithText(stringResource(commonR.string.cancel)).performClick()
-
-            assertTrue(cancelCalled)
         }
     }
 

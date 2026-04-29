@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -26,6 +27,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
@@ -35,6 +37,7 @@ import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 
 /**
  * Native dialog for HTTP Basic Auth requests from the WebView.
@@ -77,7 +80,6 @@ internal fun HttpAuthDialog(
             HAPlainButton(
                 text = stringResource(commonR.string.ok),
                 onClick = { onProceed(username, password, rememberCredentials) },
-                enabled = username.isNotEmpty() && password.isNotEmpty(),
             )
         },
         dismissButton = {
@@ -100,9 +102,14 @@ private fun AuthDialogContent(
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
-        modifier = Modifier.verticalScroll(rememberScrollState()),
+        modifier = Modifier.verticalScroll(rememberScrollState()).widthIn(max = MaxButtonWidth),
     ) {
-        Text(text = message, style = HATextStyle.Body)
+        Text(
+            text = message,
+            style = HATextStyle.Body.copy(
+                textAlign = TextAlign.Start,
+            ),
+        )
         HATextField(
             value = username,
             onValueChange = onUsernameChange,
