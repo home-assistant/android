@@ -538,6 +538,39 @@ fun JsonObject.getFloatOrNull(key: String): Float? {
 }
 
 /**
+ * Retrieves a double value from this JsonObject, returning null if the value cannot be accessed.
+ *
+ * This function safely handles various scenarios including missing keys, null values, and
+ * type mismatches. It will return null if:
+ * - The key does not exist in the JsonObject
+ * - The value for the key is JsonNull
+ * - The value is not a JsonPrimitive (for example, it's a JsonObject or JsonArray)
+ * - The primitive value is not a double (for example, it's a string or boolean, or a number too large for Double)
+ *
+ * Example:
+ * ```kotlin
+ * val json = buildJsonObject {
+ *     put("age", JsonPrimitive(30.0))
+ *     put("name", JsonPrimitive("Alice"))
+ * }
+ * json.getDoubleOrNull("age")   // Returns 30.0
+ * json.getDoubleOrNull("name")  // Returns null (it's a string, not a double)
+ * json.getDoubleOrNull("score") // Returns null (key doesn't exist)
+ * ```
+ *
+ * @param key The key to look up in the JsonObject
+ * @return The double value if present and valid, null otherwise
+ */
+fun JsonObject.getDoubleOrNull(key: String): Double? {
+    return runCatching {
+        val value = this[key]
+        if (value is JsonNull) null else value?.jsonPrimitive?.doubleOrNull
+    }.onFailure {
+        Timber.w("Failed to get double value for $key in jsonObject: ${sensitive(this.toString())}")
+    }.getOrNull()
+}
+
+/**
  * Retrieves an integer value from this JsonObject, returning a fallback value if the value cannot be accessed.
  *
  * This is a convenience function that combines [getIntOrNull] with a default value. It will
@@ -571,7 +604,7 @@ fun JsonObject.getIntOrElse(key: String, fallback: Int): Int = this.getIntOrNull
  * val json = buildJsonObject {
  *     put("age", JsonPrimitive(30.0))
  * }
- * json.getFloatOrElse("age", 0)   // Returns 30.0
+ * json.getFloatOrElse("age", 0f)   // Returns 30.0
  * json.getFloatOrElse("score", 0f) // Returns 0.0
  * ```
  *
@@ -580,3 +613,25 @@ fun JsonObject.getIntOrElse(key: String, fallback: Int): Int = this.getIntOrNull
  * @return The float value if present and valid, the fallback value otherwise
  */
 fun JsonObject.getFloatOrElse(key: String, fallback: Float): Float = this.getFloatOrNull(key) ?: fallback
+
+/**
+ * Retrieves a double value from this JsonObject, returning a fallback value if the value cannot be accessed.
+ *
+ * This is a convenience function that combines [getDoubleOrNull] with a default value. It will
+ * return the fallback if the key doesn't exist, the value is null, or the value cannot be
+ * converted to a double.
+ *
+ * Example:
+ * ```kotlin
+ * val json = buildJsonObject {
+ *     put("age", JsonPrimitive(30.0))
+ * }
+ * json.getDoubleOrElse("age", 0.O)   // Returns 30.0
+ * json.getDoubleOrElse("score", 0.0) // Returns 0.0
+ * ```
+ *
+ * @param key The key to look up in the JsonObject
+ * @param fallback The default value to return if the key is missing or invalid
+ * @return The double value if present and valid, the fallback value otherwise
+ */
+fun JsonObject.getDoubleOrElse(key: String, fallback: Double): Double = this.getDoubleOrNull(key) ?: fallback
