@@ -1,12 +1,9 @@
 package io.homeassistant.companion.android.launch
 
-import androidx.lifecycle.LifecycleOwner
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
-import app.cash.turbine.test
 import io.homeassistant.companion.android.automotive.navigation.AutomotiveRoute
 import io.homeassistant.companion.android.common.data.authentication.SessionState
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.network.NetworkState
 import io.homeassistant.companion.android.common.data.network.NetworkStatusMonitor
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
@@ -16,7 +13,6 @@ import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
-import io.homeassistant.companion.android.launch.applock.AppLockManager
 import io.homeassistant.companion.android.onboarding.OnboardingRoute
 import io.homeassistant.companion.android.onboarding.WearOnboardingRoute
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
@@ -48,9 +44,6 @@ class LaunchViewModelTest {
     private val prefsRepository: PrefsRepository = mockk(relaxed = true) {
         coEvery { this@mockk.fullScreenEnabledFlow() } returns this@LaunchViewModelTest.fullScreenEnabledFlow
     }
-    private val integrationRepository: IntegrationRepository = mockk(relaxed = true)
-    private val appLockManager: AppLockManager = AppLockManager(serverManager)
-    private val lifecycleOwner: LifecycleOwner = mockk(relaxed = true)
 
     private val workManager: WorkManager = mockk()
 
@@ -71,7 +64,6 @@ class LaunchViewModelTest {
             hasLocationTrackingSupport,
             isAutomotive,
             isFullFlavor,
-            appLockManager,
         )
     }
 
@@ -592,102 +584,13 @@ class LaunchViewModelTest {
     }
 
     @Test
-    fun `Given app is locked when foregrounded then isAppLocked emits true`() = runTest {
-        coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.integrationRepository() } returns integrationRepository
-        coEvery { integrationRepository.isAppLocked() } returns true
-
+    fun `Given setAppLocked called when reading isAppLocked then it reflects the new value`() = runTest {
         createViewModel()
-        advanceUntilIdle()
 
-        viewModel.isAppLocked.test {
-            assertFalse(awaitItem())
-            viewModel.onStart(lifecycleOwner)
-            assertTrue(awaitItem())
-        }
-    }
+        viewModel.setAppLocked(true)
+        assertTrue(viewModel.isAppLocked.value)
 
-    @Test
-    fun `Given app is not locked when foregrounded then isAppLocked stays false`() = runTest {
-        coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.integrationRepository() } returns integrationRepository
-        coEvery { integrationRepository.isAppLocked() } returns false
-
-        createViewModel()
-        advanceUntilIdle()
-
-        viewModel.isAppLocked.test {
-            assertFalse(awaitItem())
-            viewModel.onStart(lifecycleOwner)
-            expectNoEvents()
-        }
-    }
-
-    @Test
-    fun `Given app is locked when auth succeeds then isAppLocked emits false and setAppActive true is called`() = runTest {
-        coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.integrationRepository() } returns integrationRepository
-        coEvery { integrationRepository.isAppLocked() } returns true
-
-        createViewModel()
-        advanceUntilIdle()
-
-        viewModel.isAppLocked.test {
-            assertFalse(awaitItem())
-
-            viewModel.onStart(lifecycleOwner)
-            assertTrue(awaitItem())
-
-            viewModel.onAuthSucceeded()
-            assertFalse(awaitItem())
-        }
-        coVerify { integrationRepository.setAppActive(true) }
-    }
-
-    @Test
-    fun `When app goes to background then setAppActive false is called`() = runTest {
-        coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.integrationRepository() } returns integrationRepository
-
-        createViewModel()
-        advanceUntilIdle()
-
-        viewModel.onStop(lifecycleOwner)
-        advanceUntilIdle()
-
-        coVerify { integrationRepository.setAppActive(false) }
-    }
-
-    @Test
-    fun `Given app locked when backgrounded and foregrounded then lock state follows lifecycle`() = runTest {
-        coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.integrationRepository() } returns integrationRepository
-        coEvery { integrationRepository.isAppLocked() } returns true
-
-        createViewModel()
-        advanceUntilIdle()
-
-        viewModel.isAppLocked.test {
-            assertFalse(awaitItem())
-
-            viewModel.onStop(lifecycleOwner)
-            viewModel.onStart(lifecycleOwner)
-            assertTrue(awaitItem())
-        }
-        coVerify { integrationRepository.setAppActive(false) }
-    }
-
-    @Test
-    fun `Given server not registered when foregrounded then isAppLocked stays false`() = runTest {
-        coEvery { serverManager.isRegistered() } returns false
-
-        createViewModel()
-        advanceUntilIdle()
-
-        viewModel.isAppLocked.test {
-            assertFalse(awaitItem())
-            viewModel.onStart(lifecycleOwner)
-            expectNoEvents()
-        }
+        viewModel.setAppLocked(false)
+        assertFalse(viewModel.isAppLocked.value)
     }
 }
