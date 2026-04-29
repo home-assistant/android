@@ -303,18 +303,18 @@ class FrontendEventHandlerTest {
     }
 
     @Test
-    fun `Given RequestFullscreen true event then onRequestFullscreen is called with true`() = runTest {
+    fun `Given RequestFullscreen true event then onRequestFullscreen is called with true`() {
         assertEquals(true, runRequestFullscreenTest(fullscreen = true))
     }
 
     @Test
-    fun `Given RequestFullscreen false event then onRequestFullscreen is called with false`() = runTest {
+    fun `Given RequestFullscreen false event then onRequestFullscreen is called with false`() {
         assertEquals(false, runRequestFullscreenTest(fullscreen = false))
     }
 
-    private suspend fun runRequestFullscreenTest(fullscreen: Boolean): Boolean? {
+    private fun runRequestFullscreenTest(fullscreen: Boolean): Boolean? {
         var captured: Boolean? = null
-        val events = MutableSharedFlow<FrontendEvent>()
+        val events = TestSharedFlow<FrontendEvent>()
 
         composeTestRule.setContent {
             FrontendEventHandler(
