@@ -1,7 +1,10 @@
 package io.homeassistant.companion.android.util
 
+import android.net.Uri
 import android.webkit.JsResult
 import android.webkit.PermissionRequest
+import android.webkit.ValueCallback
+import android.webkit.WebChromeClient
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.mockk.mockk
 import io.mockk.verify
@@ -96,28 +99,11 @@ class HAWebChromeClientTest {
         verify(exactly = 0) { jsResult.confirm() }
         verify(exactly = 0) { jsResult.cancel() }
     }
-}
-
-package io.homeassistant.companion.android.util
-
-import android.net.Uri
-import android.webkit.ValueCallback
-import android.webkit.WebChromeClient.FileChooserParams
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
-import io.mockk.mockk
-import io.mockk.verify
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
-
-@ExtendWith(ConsoleLogExtension::class)
-class HAWebChromeClientTest {
 
     @Test
     fun `Given onShowFileChooser callback when file chooser triggered then callback receives params`() {
         var capturedCallback: ValueCallback<Array<Uri>>? = null
-        var capturedParams: FileChooserParams? = null
+        var capturedParams: WebChromeClient.FileChooserParams? = null
         val client = HAWebChromeClient(
             onShowFileChooser = { filePathCallback, fileChooserParams ->
                 capturedCallback = filePathCallback
@@ -126,7 +112,7 @@ class HAWebChromeClientTest {
             },
         )
         val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
-        val fileChooserParams = mockk<FileChooserParams>(relaxed = true)
+        val fileChooserParams = mockk<WebChromeClient.FileChooserParams>(relaxed = true)
 
         val handled = client.onShowFileChooser(mockk(relaxed = true), filePathCallback, fileChooserParams)
 

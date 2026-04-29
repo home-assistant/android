@@ -18,6 +18,7 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage
+import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserRequest
 import io.homeassistant.companion.android.frontend.gesture.FrontendGestureHandler
 import io.homeassistant.companion.android.frontend.gesture.GestureResult
@@ -83,6 +84,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val gestureHandler: FrontendGestureHandler,
     private val prefsRepository: PrefsRepository,
     private val dialogManager: FrontendDialogManager,
+    private val fileChooserManager: FileChooserManager,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -100,6 +102,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         gestureHandler: FrontendGestureHandler,
         prefsRepository: PrefsRepository,
         dialogManager: FrontendDialogManager,
+        fileChooserManager: FileChooserManager,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
         initialPath = savedStateHandle.toRoute<FrontendRoute>().path,
@@ -114,6 +117,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         gestureHandler = gestureHandler,
         prefsRepository = prefsRepository,
         dialogManager = dialogManager,
+        fileChooserManager = fileChooserManager,
     )
 
     /**
@@ -193,10 +197,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         onPageFinished = ::onPageFinished,
     )
 
-    private val _pendingFileChooser = MutableStateFlow<FileChooserRequest?>(null)
-
     /** The current pending file chooser request from the WebView, or null if none. */
-    val pendingFileChooser: StateFlow<FileChooserRequest?> = _pendingFileChooser.asStateFlow()
+    val pendingFileChooser: StateFlow<FileChooserRequest?> = fileChooserManager.pendingFileChooser
 
     val webChromeClient: HAWebChromeClient = HAWebChromeClient(
         onPermissionRequest = { request ->
@@ -211,10 +213,9 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             true
         },
         onShowFileChooser = { filePathCallback, fileChooserParams ->
-            _pendingFileChooser.value = FileChooserRequest(
-                filePathCallback = filePathCallback,
-                fileChooserParams = fileChooserParams,
-            )
+            viewModelScope.launch {
+                filePathCallback.onReceiveValue(fileChooserManager.pickFiles(fileChooserParams))
+            }
             true
         },
     )
@@ -608,10 +609,5 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 )
             }
         }
-    }
-
-    /** Clears the pending file chooser request after it has been handled. */
-    fun clearPendingFileChooser() {
-        _pendingFileChooser.value = null
     }
 }

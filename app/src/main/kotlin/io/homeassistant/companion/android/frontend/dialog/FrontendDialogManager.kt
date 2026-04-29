@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.frontend.dialog
 import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.util.SingleSlotQueue
 import javax.inject.Inject
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -31,28 +30,11 @@ internal class FrontendDialogManager @Inject constructor() {
      * Returns `true` if the user confirmed, `false` if they cancelled. The slot is freed
      * before returning, including on cancellation of the calling coroutine.
      */
-    suspend fun showJsConfirm(message: String): Boolean = showAndAwait { outcome ->
+    suspend fun showJsConfirm(message: String): Boolean = queue.awaitResult { onResult ->
         FrontendDialog.Confirm(
             message = message,
-            onConfirm = { outcome.complete(true) },
-            onCancel = { outcome.complete(false) },
+            onConfirm = { onResult(true) },
+            onCancel = { onResult(false) },
         )
-    }
-
-    /**
-     * Builds a dialog via [buildDialog], emits it, suspends until the user responds, then frees the slot.
-     *
-     * [buildDialog] receives a [CompletableDeferred] that the dialog's callbacks complete with the
-     * user's response. The slot is cleared before returning, including on cancellation of the calling
-     * coroutine, so a cancelled show never leaves the queue stuck.
-     */
-    private suspend fun <T> showAndAwait(buildDialog: (CompletableDeferred<T>) -> FrontendDialog): T {
-        val outcome = CompletableDeferred<T>()
-        queue.emit(buildDialog(outcome))
-        return try {
-            outcome.await()
-        } finally {
-            queue.clear()
-        }
     }
 }

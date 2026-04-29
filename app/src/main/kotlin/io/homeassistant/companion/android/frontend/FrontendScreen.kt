@@ -132,7 +132,6 @@ internal fun FrontendScreen(
         pendingDialog = pendingDialog,
         onClearPendingPermissionRequest = viewModel::clearPendingPermissionRequest,
         pendingFileChooser = pendingFileChooser,
-        onClearPendingFileChooser = viewModel::clearPendingFileChooser,
         onBlockInsecureRetry = viewModel::onRetry,
         onOpenExternalLink = onOpenExternalLink,
         onBlockInsecureHelpClick = onBlockInsecureHelpClick,
@@ -174,7 +173,6 @@ internal fun FrontendScreenContent(
     pendingDialog: FrontendDialog? = null,
     onClearPendingPermissionRequest: () -> Unit = {},
     pendingFileChooser: FileChooserRequest? = null,
-    onClearPendingFileChooser: () -> Unit = {},
     errorStateProvider: FrontendConnectionErrorStateProvider = FrontendConnectionErrorStateProvider.noOp,
     securityLevelViewModel: LocationForSecureConnectionViewModel? = null,
     onSecurityLevelDone: () -> Unit = {},
@@ -202,7 +200,6 @@ internal fun FrontendScreenContent(
 
     FileChooserEffect(
         pendingRequest = pendingFileChooser,
-        onRequestHandled = onClearPendingFileChooser,
     )
 
     Box(modifier = modifier.fillMaxSize()) {
