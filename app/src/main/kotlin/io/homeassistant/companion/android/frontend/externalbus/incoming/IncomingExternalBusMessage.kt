@@ -211,8 +211,8 @@ data class ExoPlayerResizeMessage(
 
 @Serializable
 data class ExoPlayerResizePayload(
-    val left: Float = 0f,
-    val top: Float = 0f,
-    val right: Float = 0f,
-    val bottom: Float = 0f,
+    val left: Double = 0.0,
+    val top: Double = 0.0,
+    val right: Double = 0.0,
+    val bottom: Double = 0.0,
 )

@@ -22,5 +22,5 @@ data class ExoPlayerUiState(
     val top: Dp = 0.dp,
     val left: Dp = 0.dp,
     val isFullScreen: Boolean = false,
-    val videoAspectRatio: Float? = null,
+    val videoAspectRatio: Double? = null,
 )

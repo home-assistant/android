@@ -610,7 +610,7 @@ class FrontendMessageHandlerTest {
     @Test
     fun `Given exoplayer resize message when messageResults then emits Resize with payload values`() = runTest {
         val message = ExoPlayerResizeMessage(
-            payload = ExoPlayerResizePayload(left = 1.5f, top = 2.5f, right = 100.5f, bottom = 50.5f),
+            payload = ExoPlayerResizePayload(left = 1.5, top = 2.5, right = 100.5, bottom = 50.5),
         )
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
@@ -618,10 +618,10 @@ class FrontendMessageHandlerTest {
             val event = awaitItem()
             assertTrue(event is FrontendHandlerEvent.ExoPlayerAction.Resize)
             val resize = event as FrontendHandlerEvent.ExoPlayerAction.Resize
-            assertEquals(1.5f, resize.left)
-            assertEquals(2.5f, resize.top)
-            assertEquals(100.5f, resize.right)
-            assertEquals(50.5f, resize.bottom)
+            assertEquals(1.5, resize.left)
+            assertEquals(2.5, resize.top)
+            assertEquals(100.5, resize.right)
+            assertEquals(50.5, resize.bottom)
             expectNoEvents()
         }
     }

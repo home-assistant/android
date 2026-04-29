@@ -197,10 +197,10 @@ class IncomingExternalBusMessageTest {
         assertInstanceOf(ExoPlayerResizeMessage::class.java, message)
         val resize = message as ExoPlayerResizeMessage
         assertEquals(24, resize.id)
-        assertEquals(0f, resize.payload.left)
-        assertEquals(10.5f, resize.payload.top)
-        assertEquals(486.25f, resize.payload.right)
-        assertEquals(200.5f, resize.payload.bottom)
+        assertEquals(0.0, resize.payload.left)
+        assertEquals(10.5, resize.payload.top)
+        assertEquals(486.25, resize.payload.right)
+        assertEquals(200.5, resize.payload.bottom)
     }
 
     @Test
@@ -224,9 +224,9 @@ class IncomingExternalBusMessageTest {
 
         assertInstanceOf(ExoPlayerResizeMessage::class.java, message)
         val resize = message as ExoPlayerResizeMessage
-        assertEquals(0f, resize.payload.left)
-        assertEquals(0f, resize.payload.top)
-        assertEquals(0f, resize.payload.right)
-        assertEquals(0f, resize.payload.bottom)
+        assertEquals(0, resize.payload.left)
+        assertEquals(0, resize.payload.top)
+        assertEquals(0, resize.payload.right)
+        assertEquals(0, resize.payload.bottom)
     }
 }

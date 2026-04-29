@@ -85,7 +85,7 @@ class FrontendExoPlayerManager @VisibleForTesting constructor(
         }.also { player = it }
     }
 
-    private fun resize(left: Float, top: Float, right: Float, bottom: Float) {
+    private fun resize(left: Double, top: Double, right: Double, bottom: Double) {
         Timber.d("resize left=$left top=$top right=$right bottom=$bottom")
         _state.update { currentState ->
             if (currentState == null) return@update null
@@ -96,13 +96,13 @@ class FrontendExoPlayerManager @VisibleForTesting constructor(
             val height = if (bottom > top) {
                 bottom - top
             } else {
-                currentState.videoAspectRatio?.let { ratio -> width * ratio } ?: 0f
+                currentState.videoAspectRatio?.let { ratio -> width * ratio } ?: 0.0
             }
 
             currentState.copy(
                 left = left.dp,
                 top = top.dp,
-                size = DpSize(width.dp, height.coerceAtLeast(0f).dp),
+                size = DpSize(width.dp, height.coerceAtLeast(0.0).dp),
             )
         }
     }
@@ -130,7 +130,7 @@ class FrontendExoPlayerManager @VisibleForTesting constructor(
     private inner class VideoSizeListener : Player.Listener {
         override fun onVideoSizeChanged(videoSize: VideoSize) {
             if (videoSize.height == 0 || videoSize.width == 0) return
-            val ratio = videoSize.height.toFloat() / videoSize.width
+            val ratio = videoSize.height.toDouble() / videoSize.width
             Timber.d("onVideoSizeChanged ${videoSize.width}x${videoSize.height} (ratio=$ratio)")
             _state.update { currentState ->
                 if (currentState == null) return@update null
@@ -139,7 +139,7 @@ class FrontendExoPlayerManager @VisibleForTesting constructor(
                 // Also auto-size now if the current height was not imposed by the frontend.
                 val size = withRatio.size ?: return@update withRatio
                 if (size.height > 0.dp) return@update withRatio
-                withRatio.copy(size = DpSize(size.width, size.width * ratio))
+                withRatio.copy(size = DpSize(size.width, size.width * ratio.toFloat()))
             }
         }
     }

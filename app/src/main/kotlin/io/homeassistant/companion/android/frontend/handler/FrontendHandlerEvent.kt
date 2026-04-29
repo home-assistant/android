@@ -106,6 +106,6 @@ sealed interface FrontendHandlerEvent {
          * @param right Right edge in dp
          * @param bottom Bottom edge in dp, or 0 if the frontend does not impose a height constraint
          */
-        data class Resize(val left: Float, val top: Float, val right: Float, val bottom: Float) : ExoPlayerAction
+        data class Resize(val left: Double, val top: Double, val right: Double, val bottom: Double) : ExoPlayerAction
     }
 }

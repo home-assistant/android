@@ -140,7 +140,7 @@ class FrontendExoPlayerManagerTest {
             val uri = TEST_URI
             manager.handle(ExoPlayerAction.PlayHls(messageId = 1, url = uri, muted = false))
 
-            manager.handle(ExoPlayerAction.Resize(left = 10f, top = 20f, right = 310f, bottom = 220f))
+            manager.handle(ExoPlayerAction.Resize(left = 10.0, top = 20.0, right = 310.0, bottom = 220.0))
 
             val state = manager.state.value
             assertNotNull(state)
@@ -151,7 +151,7 @@ class FrontendExoPlayerManagerTest {
 
         @Test
         fun `Given not playing when resize then state stays null`() = runTest {
-            manager.handle(ExoPlayerAction.Resize(left = 10f, top = 20f, right = 310f, bottom = 220f))
+            manager.handle(ExoPlayerAction.Resize(left = 10.0, top = 20.0, right = 310.0, bottom = 220.0))
 
             assertNull(manager.state.value)
         }
