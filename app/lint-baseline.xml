@@ -393,8 +393,30 @@
         errorLine2="      ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/launch/LaunchActivity.kt"
-            line="42"
+            line="58"
             column="7"/>
+    </issue>
+
+    <issue
+        id="NonObservableLocale"
+        message="Reading locale in a non-observable way in a composable function"
+        errorLine1="                String.format(Locale.getDefault(), &quot;%02d:%02d:%02d&quot;, hours, minutes, seconds)"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/media/player/HAMediaPlayer.kt"
+            line="306"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="NonObservableLocale"
+        message="Reading locale in a non-observable way in a composable function"
+        errorLine1="                String.format(Locale.getDefault(), &quot;%02d:%02d&quot;, minutes, seconds)"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/media/player/HAMediaPlayer.kt"
+            line="308"
+            column="31"/>
     </issue>
 
     <issue
