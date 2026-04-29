@@ -336,8 +336,8 @@ jobs:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
-      - name: Build x86_64 APKs
-        run: ./gradlew :app:assembleDebug :app:assembleAndroidTest -Pabis=x86_64
+      - name: Build x86 APKs
+        run: ./gradlew :app:assembleDebug :app:assembleAndroidTest -Pabis=x86,x86_64
 
       - name: Build device list
         id: devices
