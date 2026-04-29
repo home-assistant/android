@@ -1,8 +1,10 @@
 package io.homeassistant.companion.android.frontend.dialog
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -43,6 +45,7 @@ class HttpAuthDialogTest {
             setContent {
                 HttpAuthDialog(
                     message = "https://example.com requires a username and password.",
+                    isAuthError = false,
                     onProceed = { _, _, _ -> },
                     onCancel = {},
                 )
@@ -68,6 +71,7 @@ class HttpAuthDialogTest {
             setContent {
                 HttpAuthDialog(
                     message = "https://example.com",
+                    isAuthError = false,
                     onProceed = { username, password, remember ->
                         capturedUsername = username
                         capturedPassword = password
@@ -94,6 +98,7 @@ class HttpAuthDialogTest {
             setContent {
                 HttpAuthDialog(
                     message = "https://example.com",
+                    isAuthError = false,
                     onProceed = { _, _, _ -> },
                     onCancel = {},
                 )
@@ -111,6 +116,38 @@ class HttpAuthDialogTest {
     }
 
     @Test
+    fun `Given isAuthError true when dialog shown then rejection notice is displayed`() {
+        composeTestRule.apply {
+            setContent {
+                HttpAuthDialog(
+                    message = "https://example.com",
+                    isAuthError = true,
+                    onProceed = { _, _, _ -> },
+                    onCancel = {},
+                )
+            }
+
+            onNodeWithText(stringResource(commonR.string.auth_request_rejected)).assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun `Given isAuthError false when dialog shown then rejection notice is absent`() {
+        composeTestRule.apply {
+            setContent {
+                HttpAuthDialog(
+                    message = "https://example.com",
+                    isAuthError = false,
+                    onProceed = { _, _, _ -> },
+                    onCancel = {},
+                )
+            }
+
+            onAllNodesWithText(stringResource(commonR.string.auth_request_rejected)).assertCountEquals(0)
+        }
+    }
+
+    @Test
     fun `Given remember unchecked when OK clicked then onProceed receives false`() {
         var capturedRemember = true
 
@@ -118,6 +155,7 @@ class HttpAuthDialogTest {
             setContent {
                 HttpAuthDialog(
                     message = "https://example.com",
+                    isAuthError = false,
                     onProceed = { _, _, remember -> capturedRemember = remember },
                     onCancel = {},
                 )

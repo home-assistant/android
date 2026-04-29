@@ -22,6 +22,7 @@ internal fun PendingDialogHandler(pendingDialog: FrontendDialog?) {
         is FrontendDialog.HttpAuth -> {
             HttpAuthDialog(
                 message = pendingDialog.message(LocalContext.current),
+                isAuthError = pendingDialog.isAuthError,
                 onProceed = pendingDialog.onProceed,
                 onCancel = pendingDialog.onCancel,
             )

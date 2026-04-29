@@ -21,12 +21,14 @@ sealed interface FrontendDialog {
      *
      * @param host The host requesting authentication
      * @param message Provides the formatted message using a [Context] for string resource resolution
+     * @param isAuthError `true` when shown after previously stored credentials were rejected by the server.
      * @param onProceed Called with username, password, and remember flag when user confirms
      * @param onCancel Called when user cancels or dismisses the dialog
      */
     data class HttpAuth(
         val host: String,
         val message: (Context) -> String,
+        val isAuthError: Boolean,
         val onProceed: (username: String, password: String, remember: Boolean) -> Unit,
         val onCancel: () -> Unit,
     ) : FrontendDialog

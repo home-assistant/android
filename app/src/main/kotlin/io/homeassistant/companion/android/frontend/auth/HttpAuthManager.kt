@@ -52,7 +52,17 @@ internal class HttpAuthManager @Inject constructor(
     private val clock: Clock,
     private val dialogManager: FrontendDialogManager,
 ) {
-    private var lastAutoProceededAt: Instant = Instant.DISTANT_PAST
+    /**
+     * Timestamp of the last [HttpAuthHandler.proceed] for [lastProceededHostKey], or
+     * [Instant.DISTANT_PAST] if none. Combined with the host key, this lets us detect a rapid
+     * re-authentication attempt: if the server bounces a `proceed` back fast enough on the *same*
+     * resource+realm, the follow-up request lands here within [RAPID_REAUTH_THRESHOLD] —
+     * regardless of whether the credentials came from auto-proceed or from a manual dialog (with
+     * or without `remember`). Tracking the key avoids tainting an unrelated resource that happens
+     * to challenge for credentials right after a successful proceed on a different one.
+     */
+    private var lastProceededAt: Instant = Instant.DISTANT_PAST
+    private var lastProceededHostKey: String? = null
 
     /**
      * Resolves an HTTP Basic Auth request — auto-proceeds with stored credentials, or shows a dialog
@@ -73,11 +83,11 @@ internal class HttpAuthManager @Inject constructor(
     ): HttpAuthResult {
         val hostKey = resource + realm
         val storedAuth = authenticationDao.get(hostKey)
-        val isRapidReauth = (clock.now() - lastAutoProceededAt) < RAPID_REAUTH_THRESHOLD
+        val isRapidReauth = lastProceededHostKey == hostKey &&
+            (clock.now() - lastProceededAt) < RAPID_REAUTH_THRESHOLD
 
         if (storedAuth != null && !isRapidReauth) {
-            handler.proceed(storedAuth.username, storedAuth.password)
-            lastAutoProceededAt = clock.now()
+            handler.proceed(hostKey = hostKey, username = storedAuth.username, password = storedAuth.password)
             return HttpAuthResult.AutoProceeded
         }
 
@@ -85,10 +95,11 @@ internal class HttpAuthManager @Inject constructor(
             val outcome = dialogManager.showHttpAuth(
                 host = host,
                 message = formatAuthMessage(host = host, resource = resource),
+                isAuthError = isRapidReauth,
             )
         ) {
             is HttpAuthOutcome.Proceed -> {
-                handler.proceed(outcome.username, outcome.password)
+                handler.proceed(hostKey = hostKey, username = outcome.username, password = outcome.password)
                 if (outcome.remember) {
                     persistCredentials(
                         hostKey = hostKey,
@@ -99,11 +110,18 @@ internal class HttpAuthManager @Inject constructor(
                 }
                 HttpAuthResult.Proceeded
             }
+
             HttpAuthOutcome.Cancel -> {
                 handler.cancel()
                 HttpAuthResult.Cancelled
             }
         }
+    }
+
+    private fun HttpAuthHandler.proceed(hostKey: String, username: String, password: String) {
+        proceed(username, password)
+        lastProceededAt = clock.now()
+        lastProceededHostKey = hostKey
     }
 
     private suspend fun persistCredentials(hostKey: String, username: String, password: String, isUpdate: Boolean) {

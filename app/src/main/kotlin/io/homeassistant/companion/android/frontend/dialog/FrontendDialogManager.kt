@@ -51,20 +51,24 @@ internal class FrontendDialogManager @Inject constructor() {
     /**
      * Shows an HTTP Basic Auth dialog and suspends until the user responds.
      *
+     * Pass `isAuthError = true` to surface a "credentials were rejected".
+     *
      * The slot is freed before returning, including on cancellation of the calling coroutine.
      */
-    suspend fun showHttpAuth(host: String, message: (Context) -> String): HttpAuthOutcome = showAndAwait { outcome ->
-        FrontendDialog.HttpAuth(
-            host = host,
-            message = message,
-            onProceed = { username, password, remember ->
-                outcome.complete(
-                    HttpAuthOutcome.Proceed(username = username, password = password, remember = remember),
-                )
-            },
-            onCancel = { outcome.complete(HttpAuthOutcome.Cancel) },
-        )
-    }
+    suspend fun showHttpAuth(host: String, message: (Context) -> String, isAuthError: Boolean): HttpAuthOutcome =
+        showAndAwait { outcome ->
+            FrontendDialog.HttpAuth(
+                host = host,
+                message = message,
+                isAuthError = isAuthError,
+                onProceed = { username, password, remember ->
+                    outcome.complete(
+                        HttpAuthOutcome.Proceed(username = username, password = password, remember = remember),
+                    )
+                },
+                onCancel = { outcome.complete(HttpAuthOutcome.Cancel) },
+            )
+        }
 
     /**
      * Builds a dialog via [buildDialog], emits it, suspends until the user responds, then frees the slot.

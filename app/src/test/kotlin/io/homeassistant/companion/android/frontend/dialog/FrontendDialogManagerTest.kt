@@ -90,7 +90,7 @@ class FrontendDialogManagerTest {
         val manager = FrontendDialogManager()
 
         val outcome = async {
-            manager.showHttpAuth(host = "example.com", message = { "auth required" })
+            manager.showHttpAuth(host = "example.com", message = { "auth required" }, isAuthError = false)
         }
         advanceUntilIdle()
 
@@ -113,7 +113,7 @@ class FrontendDialogManagerTest {
         val manager = FrontendDialogManager()
 
         val outcome = async {
-            manager.showHttpAuth(host = "example.com", message = { "auth required" })
+            manager.showHttpAuth(host = "example.com", message = { "auth required" }, isAuthError = false)
         }
         advanceUntilIdle()
         (manager.pendingDialog.value as FrontendDialog.HttpAuth).onCancel()
@@ -121,5 +121,22 @@ class FrontendDialogManagerTest {
 
         assertEquals(HttpAuthOutcome.Cancel, outcome.await())
         assertNull(manager.pendingDialog.value)
+    }
+
+    @Test
+    fun `Given isAuthError true when HTTP auth shown then dialog carries the flag`() = runTest {
+        val manager = FrontendDialogManager()
+
+        val outcome = async {
+            manager.showHttpAuth(host = "example.com", message = { "auth required" }, isAuthError = true)
+        }
+        advanceUntilIdle()
+
+        val pending = manager.pendingDialog.value as FrontendDialog.HttpAuth
+        assertTrue(pending.isAuthError)
+
+        pending.onCancel()
+        advanceUntilIdle()
+        outcome.await()
     }
 }

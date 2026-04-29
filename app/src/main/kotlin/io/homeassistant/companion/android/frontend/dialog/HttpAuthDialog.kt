@@ -35,6 +35,7 @@ import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 
 /**
@@ -43,13 +44,17 @@ import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
  * Displays username and password fields with a "Remember" checkbox and a password visibility toggle.
  * The OK button is disabled until both fields are non-empty.
  *
+ * When [isAuthError] is true, a "credentials were rejected" notice is shown.
+ *
  * @param message Formatted message with scheme and host
+ * @param isAuthError Whether to show the "credentials rejected" indicator
  * @param onProceed Called with username, password, and remember flag when user confirms
  * @param onCancel Called when user cancels or dismisses the dialog
  */
 @Composable
 internal fun HttpAuthDialog(
     message: String,
+    isAuthError: Boolean,
     onProceed: (username: String, password: String, remember: Boolean) -> Unit,
     onCancel: () -> Unit,
 ) {
@@ -64,6 +69,7 @@ internal fun HttpAuthDialog(
         text = {
             AuthDialogContent(
                 message = message,
+                isAuthError = isAuthError,
                 username = username,
                 onUsernameChange = { username = it },
                 password = password,
@@ -89,6 +95,7 @@ internal fun HttpAuthDialog(
 @Composable
 private fun AuthDialogContent(
     message: String,
+    isAuthError: Boolean,
     username: String,
     onUsernameChange: (String) -> Unit,
     password: String,
@@ -120,6 +127,15 @@ private fun AuthDialogContent(
             passwordVisible = passwordVisible,
             onToggleVisibility = onTogglePasswordVisibility,
         )
+        if (isAuthError) {
+            Text(
+                text = stringResource(commonR.string.auth_request_rejected),
+                style = HATextStyle.Body.copy(
+                    color = LocalHAColorScheme.current.colorOnDangerNormal,
+                    textAlign = TextAlign.Start,
+                ),
+            )
+        }
         RememberRow(
             checked = rememberCredentials,
             onToggle = onToggleRemember,
@@ -172,6 +188,14 @@ private fun RememberRow(checked: Boolean, onToggle: () -> Unit) {
 @Composable
 private fun PreviewHttpAuthDialog() {
     HAThemeForPreview {
-        HttpAuthDialog("Hello", onProceed = { _, _, _ -> }, onCancel = {})
+        HttpAuthDialog("Hello", isAuthError = false, onProceed = { _, _, _ -> }, onCancel = {})
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewHttpAuthDialogWithError() {
+    HAThemeForPreview {
+        HttpAuthDialog("Hello", isAuthError = true, onProceed = { _, _, _ -> }, onCancel = {})
     }
 }
