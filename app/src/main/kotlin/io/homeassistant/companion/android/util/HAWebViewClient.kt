@@ -86,13 +86,11 @@ class HAWebViewClient internal constructor(
 ) : TLSWebViewClient(keyChainRepository) {
 
     /** Last resource URL loaded by the WebView, used to identify the resource requesting auth. */
-    private var lastResourceUrl: String = ""
+    private var lastResourceUrl: String? = null
 
     override fun onLoadResource(view: WebView?, url: String?) {
         super.onLoadResource(view, url)
-        if (url != null) {
-            lastResourceUrl = url
-        }
+        lastResourceUrl = url
     }
 
     override fun onPageFinished(view: WebView?, url: String?) {
@@ -101,7 +99,13 @@ class HAWebViewClient internal constructor(
     }
 
     override fun onReceivedHttpAuthRequest(view: WebView?, handler: HttpAuthHandler?, host: String?, realm: String?) {
-        if (handler != null && host != null && realm != null && onReceivedHttpAuthRequest != null) {
+        val lastResourceUrl = lastResourceUrl
+        if (handler != null &&
+            host != null &&
+            realm != null &&
+            onReceivedHttpAuthRequest != null &&
+            lastResourceUrl != null
+        ) {
             onReceivedHttpAuthRequest.invoke(handler, host, lastResourceUrl, realm)
         } else {
             super.onReceivedHttpAuthRequest(view, handler, host, realm)

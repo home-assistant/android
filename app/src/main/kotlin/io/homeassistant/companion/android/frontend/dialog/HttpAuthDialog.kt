@@ -1,11 +1,11 @@
 package io.homeassistant.companion.android.frontend.dialog
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -22,8 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -163,8 +161,7 @@ private fun RememberRow(checked: Boolean, onToggle: () -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .semantics { role = Role.Checkbox }
-            .clickable(indication = null, interactionSource = null) { onToggle() },
+            .toggleable(checked, role = Role.Checkbox, indication = null, interactionSource = null) { onToggle() },
     ) {
         HACheckbox(checked = checked, onCheckedChange = { onToggle() })
         Text(text = stringResource(commonR.string.remember), style = HATextStyle.Body)
