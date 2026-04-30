@@ -51,6 +51,8 @@ import io.homeassistant.companion.android.frontend.dialog.PendingDialogHandler
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorScreen
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
+import io.homeassistant.companion.android.frontend.filechooser.FileChooserEffect
+import io.homeassistant.companion.android.frontend.filechooser.FileChooserRequest
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge
 import io.homeassistant.companion.android.frontend.js.FrontendJsCallback
 import io.homeassistant.companion.android.frontend.permissions.MultiplePermissionsEffect
@@ -107,6 +109,7 @@ internal fun FrontendScreen(
     val viewState by viewModel.viewState.collectAsStateWithLifecycle()
     val pendingPermissionRequest by viewModel.pendingPermissionRequest.collectAsStateWithLifecycle()
     val pendingDialog by viewModel.pendingDialog.collectAsStateWithLifecycle()
+    val pendingFileChooser by viewModel.pendingFileChooser.collectAsStateWithLifecycle()
 
     // Create SecurityLevel ViewModel only when needed
     val securityLevelViewModel: LocationForSecureConnectionViewModel? =
@@ -128,6 +131,7 @@ internal fun FrontendScreen(
         pendingPermissionRequest = pendingPermissionRequest,
         pendingDialog = pendingDialog,
         onClearPendingPermissionRequest = viewModel::clearPendingPermissionRequest,
+        pendingFileChooser = pendingFileChooser,
         onBlockInsecureRetry = viewModel::onRetry,
         onOpenExternalLink = onOpenExternalLink,
         onBlockInsecureHelpClick = onBlockInsecureHelpClick,
@@ -168,6 +172,7 @@ internal fun FrontendScreenContent(
     pendingPermissionRequest: PermissionRequest<*>? = null,
     pendingDialog: FrontendDialog? = null,
     onClearPendingPermissionRequest: () -> Unit = {},
+    pendingFileChooser: FileChooserRequest? = null,
     errorStateProvider: FrontendConnectionErrorStateProvider = FrontendConnectionErrorStateProvider.noOp,
     securityLevelViewModel: LocationForSecureConnectionViewModel? = null,
     onSecurityLevelDone: () -> Unit = {},
@@ -191,6 +196,10 @@ internal fun FrontendScreenContent(
 
     PendingDialogHandler(
         pendingDialog = pendingDialog,
+    )
+
+    FileChooserEffect(
+        pendingRequest = pendingFileChooser,
     )
 
     Box(modifier = modifier.fillMaxSize()) {

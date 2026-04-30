@@ -2,6 +2,8 @@ package io.homeassistant.companion.android.frontend
 
 import android.net.Uri
 import android.webkit.JsResult
+import android.webkit.ValueCallback
+import android.webkit.WebChromeClient
 import app.cash.turbine.test
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
@@ -18,6 +20,7 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage
+import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
 import io.homeassistant.companion.android.frontend.gesture.FrontendGestureHandler
 import io.homeassistant.companion.android.frontend.gesture.GestureResult
 import io.homeassistant.companion.android.frontend.handler.FrontendBusObserver
@@ -51,6 +54,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -92,6 +97,7 @@ class FrontendViewModelTest {
         serverId: Int = this.serverId,
         path: String? = null,
         dialogManager: FrontendDialogManager = FrontendDialogManager(),
+        fileChooserManager: FileChooserManager = FileChooserManager(),
     ): FrontendViewModel {
         return FrontendViewModel(
             initialServerId = serverId,
@@ -107,6 +113,7 @@ class FrontendViewModelTest {
             gestureHandler = gestureHandler,
             prefsRepository = prefsRepository,
             dialogManager = dialogManager,
+            fileChooserManager = fileChooserManager,
         )
     }
 
@@ -1069,6 +1076,84 @@ class FrontendViewModelTest {
             assertEquals("second", (viewModel.pendingDialog.value as FrontendDialog.Confirm).message)
             verify(exactly = 0) { secondResult.confirm() }
             verify(exactly = 0) { secondResult.cancel() }
+        }
+    }
+
+    @Nested
+    inner class FileChooser {
+
+        @Test
+        fun `Given file chooser triggered then pendingFileChooser exposes the params`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+
+            val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
+            val fileChooserParams = mockk<WebChromeClient.FileChooserParams>(relaxed = true)
+
+            val handled = viewModel.webChromeClient.onShowFileChooser(
+                mockk(relaxed = true),
+                filePathCallback,
+                fileChooserParams,
+            )
+            advanceUntilIdle()
+
+            assertTrue(handled)
+            val pending = viewModel.pendingFileChooser.value
+            assertNotNull(pending)
+            assertTrue(pending!!.fileChooserParams === fileChooserParams)
+        }
+
+        @Test
+        fun `Given pending file chooser when result delivered then filePathCallback receives uris and slot clears`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
+
+            viewModel.webChromeClient.onShowFileChooser(
+                mockk(relaxed = true),
+                filePathCallback,
+                mockk(relaxed = true),
+            )
+            advanceUntilIdle()
+
+            val pending = viewModel.pendingFileChooser.value
+            assertNotNull(pending)
+
+            val uris = arrayOf(mockk<Uri>())
+            pending!!.onResult(uris)
+            advanceUntilIdle()
+
+            verify { filePathCallback.onReceiveValue(uris) }
+            assertNull(viewModel.pendingFileChooser.value)
+        }
+
+        @Test
+        fun `Given pending file chooser when user cancels then filePathCallback receives null and slot clears`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
+
+            viewModel.webChromeClient.onShowFileChooser(
+                mockk(relaxed = true),
+                filePathCallback,
+                mockk(relaxed = true),
+            )
+            advanceUntilIdle()
+
+            viewModel.pendingFileChooser.value!!.onResult(null)
+            advanceUntilIdle()
+
+            verify { filePathCallback.onReceiveValue(null) }
+            assertNull(viewModel.pendingFileChooser.value)
         }
     }
 
