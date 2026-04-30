@@ -13,6 +13,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
+import timber.log.Timber
 
 /** Time window within which a repeated auth request indicates rejected credentials. */
 private val RAPID_REAUTH_THRESHOLD = 500.milliseconds
@@ -36,12 +37,17 @@ internal sealed interface HttpAuthResult {
  *
  * Looks up stored credentials from [AuthenticationDao] and auto-proceeds when possible. Otherwise
  * shows a credential dialog through [FrontendDialogManager], suspends until the user responds,
- * resolves the [HttpAuthHandler], persists credentials if requested, and returns an
- * [HttpAuthResult] describing what happened so the caller can react (e.g. emit a snackbar on cancel).
+ * resolves the [HttpAuthHandler], persists credentials if requested (updating an existing entry
+ * when one is present, inserting otherwise), and returns an [HttpAuthResult] describing what
+ * happened so the caller can react.
  *
- * Detects rapid re-authentication (within [RAPID_REAUTH_THRESHOLD]) as an indication that stored
- * credentials were rejected by the server, in which case the dialog is surfaced with the auth-error
- * variant and any persisted credentials are updated rather than inserted.
+ * Two complementary signals derived from the previous proceed govern the credential-rejection flow:
+ * - "Same hostKey as last proceed" surfaces the dialog's auth-error variant. The WebView caches
+ *   Basic Auth in-session, so any re-challenge for a hostKey we already answered is almost
+ *   certainly the server rejecting those credentials.
+ * - "Rapid re-authentication" (same hostKey within [RAPID_REAUTH_THRESHOLD]) gates auto-proceed.
+ *   Only this stronger signal suppresses reusing stored credentials, so legitimate re-challenges
+ *   outside the window (cache eviction, server cycling the realm) still benefit from auto-proceed.
  *
  * Uses [Clock] for timing to support deterministic testing.
  */
@@ -83,8 +89,11 @@ internal class HttpAuthManager @Inject constructor(
     ): HttpAuthResult {
         val hostKey = resource + realm
         val storedAuth = authenticationDao.get(hostKey)
-        val isRapidReauth = lastProceededHostKey == hostKey &&
+        val isSameHostAsLastProceed = lastProceededHostKey == hostKey
+        val isRapidReauth = isSameHostAsLastProceed &&
             (clock.now() - lastProceededAt) < RAPID_REAUTH_THRESHOLD
+
+        Timber.e("Debug isRapidAuth $isRapidReauth and is same host ? $isSameHostAsLastProceed and hostKey $hostKey")
 
         if (storedAuth != null && !isRapidReauth) {
             handler.proceed(hostKey = hostKey, username = storedAuth.username, password = storedAuth.password)
@@ -95,7 +104,7 @@ internal class HttpAuthManager @Inject constructor(
             val outcome = dialogManager.showHttpAuth(
                 host = host,
                 message = formatAuthMessage(host = host, resource = resource),
-                isAuthError = isRapidReauth,
+                isAuthError = isSameHostAsLastProceed,
             )
         ) {
             is HttpAuthOutcome.Proceed -> {
@@ -105,7 +114,7 @@ internal class HttpAuthManager @Inject constructor(
                         hostKey = hostKey,
                         username = outcome.username,
                         password = outcome.password,
-                        isUpdate = isRapidReauth,
+                        isUpdate = storedAuth != null,
                     )
                 }
                 HttpAuthResult.Proceeded

@@ -17,8 +17,6 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
-import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -43,8 +41,6 @@ class HttpAuthManagerTest {
     )
 
     private val handler: HttpAuthHandler = mockk(relaxed = true)
-
-    private fun unconfinedTest(block: suspend TestScope.() -> Unit) = runTest(UnconfinedTestDispatcher(), testBody = block)
 
     private fun pendingHttpAuthDialog(): FrontendDialog.HttpAuth {
         return dialogManager.pendingDialog.value as FrontendDialog.HttpAuth
@@ -73,7 +69,7 @@ class HttpAuthManagerTest {
         }
 
         @Test
-        fun `Given no stored credentials when auth requested then shows dialog`() = unconfinedTest {
+        fun `Given no stored credentials when auth requested then shows dialog`() = runTest {
             coEvery { authenticationDao.get(any()) } returns null
 
             val result = async {
@@ -100,7 +96,7 @@ class HttpAuthManagerTest {
     inner class RapidReauth {
 
         @Test
-        fun `Given stored credentials when rapid reauth then shows dialog instead of auto-proceeding`() = unconfinedTest {
+        fun `Given stored credentials when rapid reauth then shows dialog instead of auto-proceeding`() = runTest {
             val storedAuth = Authentication(
                 host = "https://example.com/testrealm",
                 username = "user",
@@ -139,7 +135,7 @@ class HttpAuthManagerTest {
         }
 
         @Test
-        fun `Given no stored credentials when auth requested then dialog is not in auth-error state`() = unconfinedTest {
+        fun `Given no stored credentials when auth requested then dialog is not in auth-error state`() = runTest {
             coEvery { authenticationDao.get(any()) } returns null
 
             val result = async {
@@ -160,7 +156,7 @@ class HttpAuthManagerTest {
         }
 
         @Test
-        fun `Given user proceeds without remember when rapid reauth then dialog shows auth-error`() = unconfinedTest {
+        fun `Given user proceeds without remember when rapid reauth then dialog shows auth-error`() = runTest {
             // No stored credentials: dialog shown for the first request.
             coEvery { authenticationDao.get(any()) } returns null
 
@@ -201,7 +197,7 @@ class HttpAuthManagerTest {
         }
 
         @Test
-        fun `Given proceed on resource A when resource B challenges right after then dialog is not in auth-error state`() = unconfinedTest {
+        fun `Given proceed on resource A when resource B challenges right after then dialog is not in auth-error state`() = runTest {
             coEvery { authenticationDao.get(any()) } returns null
 
             // Resource A: user proceeds with credentials
@@ -269,9 +265,10 @@ class HttpAuthManagerTest {
         }
 
         @Test
-        fun `Given user proceeds without remember when same key challenges after threshold then dialog is not in auth-error state`() = unconfinedTest {
-            // Manual proceed path — no stored credentials so the threshold is the only thing
-            // gating the auth-error indicator on the next dialog.
+        fun `Given user proceeds without remember when same key challenges after threshold then dialog still shows auth-error`() = runTest {
+            // WebView caches Basic Auth in-session, so any re-challenge for a hostKey we already
+            // proceeded on is almost certainly the server rejecting those credentials even past
+            // the rapid-reauth window. Only the host-key match (not timing) gates this indicator.
             coEvery { authenticationDao.get(any()) } returns null
 
             val firstRequest = async {
@@ -287,8 +284,7 @@ class HttpAuthManagerTest {
             advanceUntilIdle()
             firstRequest.await()
 
-            // Same key, but well past the threshold — fresh dialog.
-            clock.currentInstant += 1.seconds
+            clock.currentInstant += 10.seconds
 
             val secondRequest = async {
                 manager.handleAuthRequest(
@@ -300,7 +296,7 @@ class HttpAuthManagerTest {
             }
             advanceUntilIdle()
 
-            assertFalse(pendingHttpAuthDialog().isAuthError)
+            assertTrue(pendingHttpAuthDialog().isAuthError)
 
             pendingHttpAuthDialog().onCancel()
             advanceUntilIdle()
@@ -308,7 +304,7 @@ class HttpAuthManagerTest {
         }
 
         @Test
-        fun `Given user cancels when same key challenges right after then dialog is not in auth-error state`() = unconfinedTest {
+        fun `Given user cancels when same key challenges right after then dialog is not in auth-error state`() = runTest {
             // Cancelling must not record a proceed; otherwise the next challenge on the same key
             // would falsely show the rejection notice.
             coEvery { authenticationDao.get(any()) } returns null
@@ -351,7 +347,7 @@ class HttpAuthManagerTest {
     inner class CredentialPersistence {
 
         @Test
-        fun `Given no stored credentials when user proceeds with remember then inserts into dao`() = unconfinedTest {
+        fun `Given no stored credentials when user proceeds with remember then inserts into dao`() = runTest {
             coEvery { authenticationDao.get(any()) } returns null
 
             val result = async {
@@ -373,7 +369,47 @@ class HttpAuthManagerTest {
         }
 
         @Test
-        fun `Given rapid reauth when user proceeds with remember then updates in dao`() = unconfinedTest {
+        fun `Given no stored creds and prior manual proceed when rapid reauth with remember then inserts into dao`() = runTest {
+            // No stored creds because the first proceed was without remember. The rapid-reauth
+            // retry that ticks remember must INSERT falling back to update would crash on the
+            // primary-key mismatch since nothing is in the table yet.
+            coEvery { authenticationDao.get(any()) } returns null
+
+            val firstRequest = async {
+                manager.handleAuthRequest(
+                    handler = handler,
+                    host = "example.com",
+                    resource = "https://example.com/",
+                    realm = "realm",
+                )
+            }
+            advanceUntilIdle()
+            pendingHttpAuthDialog().onProceed("user", "wrong", false)
+            advanceUntilIdle()
+            firstRequest.await()
+
+            // Server bounces it back within the threshold; user retries with remember=true.
+            clock.currentInstant += 20.milliseconds
+
+            val secondRequest = async {
+                manager.handleAuthRequest(
+                    handler = handler,
+                    host = "example.com",
+                    resource = "https://example.com/",
+                    realm = "realm",
+                )
+            }
+            advanceUntilIdle()
+            pendingHttpAuthDialog().onProceed("user", "right", true)
+            advanceUntilIdle()
+
+            assertEquals(HttpAuthResult.Proceeded, secondRequest.await())
+            coVerify { authenticationDao.insert(Authentication("https://example.com/realm", "user", "right")) }
+            coVerify(exactly = 0) { authenticationDao.update(any()) }
+        }
+
+        @Test
+        fun `Given rapid reauth when user proceeds with remember then updates in dao`() = runTest {
             val storedAuth = Authentication("https://example.com/realm", "user", "wrong")
             coEvery { authenticationDao.get(any()) } returns storedAuth
 
@@ -401,7 +437,7 @@ class HttpAuthManagerTest {
         }
 
         @Test
-        fun `Given user proceeds without remember then credentials are not persisted`() = unconfinedTest {
+        fun `Given user proceeds without remember then credentials are not persisted`() = runTest {
             coEvery { authenticationDao.get(any()) } returns null
 
             val result = async {
@@ -422,7 +458,7 @@ class HttpAuthManagerTest {
         }
 
         @Test
-        fun `Given rapid reauth when user proceeds without remember then nothing is persisted`() = unconfinedTest {
+        fun `Given rapid reauth when user proceeds without remember then nothing is persisted`() = runTest {
             // Stored creds were rejected; user fixes them in their head but doesn't tick remember.
             // Persistence must stay untouched — neither update (despite isRapidReauth) nor insert.
             val storedAuth = Authentication("https://example.com/realm", "user", "wrong")
@@ -457,7 +493,7 @@ class HttpAuthManagerTest {
         }
 
         @Test
-        fun `Given dialog shown when user cancels then handler is cancelled and result is Cancelled`() = unconfinedTest {
+        fun `Given dialog shown when user cancels then handler is cancelled and result is Cancelled`() = runTest {
             coEvery { authenticationDao.get(any()) } returns null
 
             val result = async {
@@ -491,7 +527,7 @@ class HttpAuthManagerTest {
         }
 
         @Test
-        fun `Given https resource when dialog shown then message contains https and required fields`() = unconfinedTest {
+        fun `Given https resource when dialog shown then message contains https and required fields`() = runTest {
             coEvery { authenticationDao.get(any()) } returns null
 
             val result = async {
@@ -514,7 +550,7 @@ class HttpAuthManagerTest {
         }
 
         @Test
-        fun `Given http resource when dialog shown then message contains http and not private warning`() = unconfinedTest {
+        fun `Given http resource when dialog shown then message contains http and not private warning`() = runTest {
             coEvery { authenticationDao.get(any()) } returns null
 
             val result = async {

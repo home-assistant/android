@@ -197,7 +197,9 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         onPageFinished = ::onPageFinished,
         onReceivedHttpAuthRequest = { handler, host, resource, realm ->
             viewModelScope.launch {
-                if (httpAuthManager.handleAuthRequest(handler, host, resource, realm) == HttpAuthResult.Cancelled) {
+                if (httpAuthManager.handleAuthRequest(handler, host = host, resource = resource, realm = realm) ==
+                    HttpAuthResult.Cancelled
+                ) {
                     _events.tryEmit(FrontendEvent.ShowSnackbar(commonR.string.auth_cancel))
                 }
             }

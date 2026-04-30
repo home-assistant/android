@@ -42,7 +42,6 @@ import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
  * Native dialog for HTTP Basic Auth requests from the WebView.
  *
  * Displays username and password fields with a "Remember" checkbox and a password visibility toggle.
- * The OK button is disabled until both fields are non-empty.
  *
  * When [isAuthError] is true, a "credentials were rejected" notice is shown.
  *
