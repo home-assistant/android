@@ -28,8 +28,7 @@ import timber.log.Timber
  * which are forwarded here as [FrontendHandlerEvent.ExoPlayerAction] instances. This manager
  * owns the [Player] instance and exposes a [state] flow.
  *
- * The player is lazily created on the first `play_hls` and reused across streams. It is only
- * released when the manager is [close]d (typically in ViewModel's `onCleared`).
+ * The player need to be released by calling [close]d (typically in ViewModel's `onCleared`).
  */
 class FrontendExoPlayerManager @VisibleForTesting constructor(
     private val playerCreator: suspend (ExoPlayer.() -> Unit) -> ExoPlayer,
@@ -56,7 +55,7 @@ class FrontendExoPlayerManager @VisibleForTesting constructor(
                 playHls(url = message.url, muted = message.muted)
             }
 
-            is FrontendHandlerEvent.ExoPlayerAction.Stop -> stop()
+            is FrontendHandlerEvent.ExoPlayerAction.Stop -> close()
             is FrontendHandlerEvent.ExoPlayerAction.Resize -> {
                 resize(left = message.left, top = message.top, right = message.right, bottom = message.bottom)
             }
@@ -71,11 +70,6 @@ class FrontendExoPlayerManager @VisibleForTesting constructor(
         exoPlayer.volume = if (muted) 0f else 1f
         exoPlayer.prepare()
         _state.value = ExoPlayerUiState(player = exoPlayer)
-    }
-
-    private fun stop() {
-        player?.stop()
-        _state.value = null
     }
 
     private suspend fun getOrCreatePlayer(): ExoPlayer {

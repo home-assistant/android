@@ -6,6 +6,7 @@ import android.webkit.JsResult
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import androidx.lifecycle.ViewModel
+import androidx.media3.common.Player
 import app.cash.turbine.test
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
@@ -22,6 +23,7 @@ import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
+import io.homeassistant.companion.android.frontend.exoplayer.ExoPlayerUiState
 import io.homeassistant.companion.android.frontend.exoplayer.FrontendExoPlayerManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
@@ -40,6 +42,7 @@ import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
+import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -1535,6 +1538,75 @@ class FrontendViewModelTest {
             advanceUntilIdle()
 
             coVerify { exoPlayerManager.handle(action) }
+        }
+
+        @Test
+        fun `Given player is in fullscreen when player state becomes null then RequestFullscreen false is emitted`() = runTest {
+            val playerState = MutableStateFlow<ExoPlayerUiState?>(null)
+            every { exoPlayerManager.state } returns playerState
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            viewModel.events.test {
+                // Simulate the player entering fullscreen, then being torn down (e.g. via
+                // ExoPlayerAction.Stop or a server switch closing the manager).
+                playerState.value = ExoPlayerUiState(player = mockk(relaxed = true), isFullScreen = true)
+                playerState.value = null
+
+                assertEquals(FrontendEvent.RequestFullscreen(fullscreen = false), awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given player never entered fullscreen when player state becomes null then no RequestFullscreen is emitted`() = runTest {
+            val playerState = MutableStateFlow<ExoPlayerUiState?>(null)
+            every { exoPlayerManager.state } returns playerState
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            viewModel.events.test {
+                playerState.value = ExoPlayerUiState(player = mockk<Player>(relaxed = true), isFullScreen = false)
+                playerState.value = null
+                advanceUntilIdle()
+
+                expectNoEvents()
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given Content state when state transitions out of Content then player is closed`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            every { urlManager.serverUrlFlow(2, any()) } returns flowOf(
+                UrlLoadResult.Success(url = "https://example.com/2?external_auth=1", serverId = 2),
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+            assertTrue(viewModel.viewState.value is FrontendViewState.Content)
+
+            // Reset the recorded calls (without clearing the `state` stub) so we only verify
+            // the close() invoked by the transition out of Content.
+            clearMocks(exoPlayerManager, answers = false, childMocks = false)
+
+            viewModel.switchServer(serverId = 2)
+            advanceUntilIdle()
+
+            verify(atLeast = 1) { exoPlayerManager.close() }
         }
 
         @Test
