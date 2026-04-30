@@ -23,8 +23,7 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenSett
 import io.homeassistant.companion.android.frontend.externalbus.incoming.TagWriteMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ThemeUpdateMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.UnknownIncomingMessage
-import io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResult
-import io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage
+import io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResultMessage
 import io.homeassistant.companion.android.frontend.js.FrontendJsHandler
 import io.homeassistant.companion.android.frontend.session.AuthPayload
 import io.homeassistant.companion.android.frontend.session.ExternalAuthResult
@@ -243,15 +242,13 @@ class FrontendMessageHandler @Inject constructor(
             0
         }
 
-        val response = ResultMessage.config(
+        val response = ConfigResultMessage(
             id = messageId,
-            config = ConfigResult.create(
-                hasNfc = hasNfc,
-                canCommissionMatter = canCommissionMatter,
-                canExportThread = canExportThread,
-                hasBarCodeScanner = hasBarCodeScanner,
-                appVersion = appVersionProvider(),
-            ),
+            hasNfc = hasNfc,
+            canCommissionMatter = canCommissionMatter,
+            canExportThread = canExportThread,
+            hasBarCodeScanner = hasBarCodeScanner,
+            appVersion = appVersionProvider(),
         )
         externalBusRepository.send(response)
     }
