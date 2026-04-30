@@ -72,7 +72,7 @@ class SettingsFragment(
 ) : PreferenceFragmentCompat(),
     SettingsView {
 
-    private val activityViewModel: AppLockViewModel by activityViewModels()
+    private val activityViewModel: SettingsViewModel by activityViewModels()
 
     private val requestNotificationPermissionResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {

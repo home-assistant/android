@@ -46,7 +46,7 @@ class SettingsActivity : BaseActivity() {
     @Inject
     lateinit var serverManager: ServerManager
 
-    private val viewModel: AppLockViewModel by viewModels()
+    private val viewModel: SettingsViewModel by viewModels()
 
     private lateinit var authenticator: Authenticator
     private lateinit var blurView: BlurView

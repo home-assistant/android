@@ -36,11 +36,9 @@ import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
-import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.launch.applock.HazeLockOverlay
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
-import io.homeassistant.companion.android.settings.AppLockViewModel
 import io.homeassistant.companion.android.util.ChangeLog
 import io.homeassistant.companion.android.util.CheckLocationDisabledUseCase
 import io.homeassistant.companion.android.util.PLAY_SERVICES_FLAVOR_DOC_URL
@@ -129,8 +127,6 @@ class LaunchActivity : AppCompatActivity() {
         },
     )
 
-    private val appLockViewModel: AppLockViewModel by viewModels()
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val splashScreen = installSplashScreen()
@@ -174,7 +170,7 @@ class LaunchActivity : AppCompatActivity() {
                     LaunchUiState.Loading, is LaunchUiState.Ready -> {
                         AppLockEffect(
                             isAppLocked = isAppLocked,
-                            onAuthSucceeded = ::onActiveServerAuthenticated,
+                            onAuthSucceeded = viewModel::onAuthenticated,
                         )
                     }
                 }
@@ -185,9 +181,7 @@ class LaunchActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         if (WIPFeature.USE_FRONTEND_V2) {
-            lifecycleScope.launch {
-                viewModel.setAppLocked(appLockViewModel.isAppLocked(ServerManager.SERVER_ID_ACTIVE))
-            }
+            viewModel.refreshAppLockState()
         }
     }
 
@@ -211,13 +205,8 @@ class LaunchActivity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
         if (WIPFeature.USE_FRONTEND_V2) {
-            appLockViewModel.setAppActive(ServerManager.SERVER_ID_ACTIVE, false)
+            viewModel.onAppPaused()
         }
-    }
-
-    private fun onActiveServerAuthenticated() {
-        appLockViewModel.setAppActive(ServerManager.SERVER_ID_ACTIVE, true)
-        viewModel.setAppLocked(false)
     }
 }
 
