@@ -13,7 +13,6 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
-import timber.log.Timber
 
 /** Time window within which a repeated auth request indicates rejected credentials. */
 private val RAPID_REAUTH_THRESHOLD = 500.milliseconds
@@ -92,8 +91,6 @@ internal class HttpAuthManager @Inject constructor(
         val isSameHostAsLastProceed = lastProceededHostKey == hostKey
         val isRapidReauth = isSameHostAsLastProceed &&
             (clock.now() - lastProceededAt) < RAPID_REAUTH_THRESHOLD
-
-        Timber.e("Debug isRapidAuth $isRapidReauth and is same host ? $isSameHostAsLastProceed and hostKey $hostKey")
 
         if (storedAuth != null && !isRapidReauth) {
             handler.proceed(hostKey = hostKey, username = storedAuth.username, password = storedAuth.password)
