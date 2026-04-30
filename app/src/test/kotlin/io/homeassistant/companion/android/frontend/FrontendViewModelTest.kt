@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.frontend
 
 import android.net.Uri
+import android.view.View
 import android.webkit.HttpAuthHandler
 import android.webkit.JsResult
 import android.webkit.ValueCallback
@@ -66,6 +67,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -1106,7 +1108,7 @@ class FrontendViewModelTest {
 
         private fun captureJsConfirmCallback(): Pair<FrontendViewModel, (String, JsResult) -> Boolean> {
             val viewModel = createViewModel()
-            val client = viewModel.webChromeClient
+            val client = viewModel.createWebChromeClient(onShowCustomView = {}, onHideCustomView = {})
             val callback: (String, JsResult) -> Boolean = { message, result ->
                 // view and url are unused by HAWebChromeClient when message and result are non-null
                 client.onJsConfirm(null, null, message, result)
@@ -1624,6 +1626,77 @@ class FrontendViewModelTest {
             onCleared.invoke(viewModel)
 
             verify { exoPlayerManager.close() }
+        }
+    }
+
+    @Nested
+    inner class CustomView {
+
+        @Test
+        fun `Given factory client when onShowCustomView then provided show callback receives the View`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val viewModel = createViewModel()
+            var capturedView: View? = null
+            val client = viewModel.createWebChromeClient(
+                onShowCustomView = { capturedView = it },
+                onHideCustomView = {},
+            )
+            val customView = mockk<View>(relaxed = true)
+
+            client.onShowCustomView(customView, mockk(relaxed = true))
+
+            assertSame(customView, capturedView)
+        }
+
+        @Test
+        fun `Given factory client when onHideCustomView then provided hide callback is invoked`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val viewModel = createViewModel()
+            var hideInvoked = false
+            val client = viewModel.createWebChromeClient(
+                onShowCustomView = {},
+                onHideCustomView = { hideInvoked = true },
+            )
+
+            client.onHideCustomView()
+
+            assertTrue(hideInvoked)
+        }
+
+        @Test
+        fun `Given factory client when onShowCustomView then RequestFullscreen true emitted`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val viewModel = createViewModel()
+            val client = viewModel.createWebChromeClient(onShowCustomView = {}, onHideCustomView = {})
+
+            viewModel.events.test {
+                client.onShowCustomView(mockk<View>(relaxed = true), mockk(relaxed = true))
+                assertEquals(FrontendEvent.RequestFullscreen(fullscreen = true), awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given factory client when onHideCustomView then RequestFullscreen false emitted`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val viewModel = createViewModel()
+            val client = viewModel.createWebChromeClient(onShowCustomView = {}, onHideCustomView = {})
+
+            viewModel.events.test {
+                client.onShowCustomView(mockk<View>(relaxed = true), mockk(relaxed = true))
+                assertEquals(FrontendEvent.RequestFullscreen(fullscreen = true), awaitItem())
+                client.onHideCustomView()
+                assertEquals(FrontendEvent.RequestFullscreen(fullscreen = false), awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
         }
     }
 }

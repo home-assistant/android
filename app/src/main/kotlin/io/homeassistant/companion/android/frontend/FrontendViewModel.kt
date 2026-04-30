@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend
 
+import android.view.View
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -218,26 +219,6 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     /** The current pending file chooser request from the WebView, or null if none. */
     val pendingFileChooser: StateFlow<FileChooserRequest?> = fileChooserManager.pendingFileChooser
 
-    val webChromeClient: HAWebChromeClient = HAWebChromeClient(
-        onPermissionRequest = { request ->
-            viewModelScope.launch {
-                permissionManager.onWebViewPermissionRequest(request)
-            }
-        },
-        onJsConfirm = { message, jsResult ->
-            viewModelScope.launch {
-                if (dialogManager.showJsConfirm(message)) jsResult.confirm() else jsResult.cancel()
-            }
-            true
-        },
-        onShowFileChooser = { filePathCallback, fileChooserParams ->
-            viewModelScope.launch {
-                filePathCallback.onReceiveValue(fileChooserManager.pickFiles(fileChooserParams))
-            }
-            true
-        },
-    )
-
     /** The current pending permission request that needs user approval, or null if none. */
     val pendingPermissionRequest = permissionManager.pendingPermissionRequest
 
@@ -305,6 +286,46 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             }
         }
     }
+
+    /**
+     * Builds an [HAWebChromeClient] wired to this ViewModel for permission/JS handling, while
+     * delegating WebView fullscreen view ownership to the caller.
+     *
+     * The fullscreen [android.view.View] handed over by `onShowCustomView` is bound to the
+     * WebView's Activity context. Holding it in ViewModel state would leak that Activity across
+     * configuration changes, so the caller (a Composable) keeps the View in screen-scoped state
+     * and supplies setters via [onShowCustomView] and [onHideCustomView]. The ViewModel still
+     * owns the system-fullscreen request and emits [FrontendEvent.RequestFullscreen] on the
+     * caller's behalf.
+     */
+    fun createWebChromeClient(onShowCustomView: (View) -> Unit, onHideCustomView: () -> Unit): HAWebChromeClient =
+        HAWebChromeClient(
+            onPermissionRequest = { request ->
+                viewModelScope.launch {
+                    permissionManager.onWebViewPermissionRequest(request)
+                }
+            },
+            onJsConfirm = { message, jsResult ->
+                viewModelScope.launch {
+                    if (dialogManager.showJsConfirm(message)) jsResult.confirm() else jsResult.cancel()
+                }
+                true
+            },
+            onShowFileChooser = { filePathCallback, fileChooserParams ->
+                viewModelScope.launch {
+                    filePathCallback.onReceiveValue(fileChooserManager.pickFiles(fileChooserParams))
+                }
+                true
+            },
+            onShowCustomView = { view ->
+                onShowCustomView(view)
+                _events.tryEmit(FrontendEvent.RequestFullscreen(fullscreen = true))
+            },
+            onHideCustomView = {
+                onHideCustomView()
+                _events.tryEmit(FrontendEvent.RequestFullscreen(fullscreen = false))
+            },
+        )
 
     fun onRetry() {
         _viewState.update {

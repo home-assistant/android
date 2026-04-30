@@ -8,6 +8,7 @@ import android.webkit.CookieManager
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,8 +39,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.common.R as commonR
@@ -79,6 +82,10 @@ import timber.log.Timber
 /** Minimum swipe velocity (pixels/second) to trigger a gesture action. */
 private const val MINIMUM_GESTURE_VELOCITY = 75f
 
+/** Test tag applied to the WebView custom view fullscreen overlay. */
+@VisibleForTesting
+internal const val CUSTOM_VIEW_OVERLAY_TAG = "custom_view_overlay"
+
 /**
  * Frontend screen that renders based on the ViewModel's current view state.
  *
@@ -114,6 +121,16 @@ internal fun FrontendScreen(
     val pendingDialog by viewModel.pendingDialog.collectAsStateWithLifecycle()
     val pendingFileChooser by viewModel.pendingFileChooser.collectAsStateWithLifecycle()
 
+    // The fullscreen View handed over by the WebView is Activity-scoped. Keep it in screen
+    // state so it does not leak across configuration changes via the ViewModel.
+    var customView by remember { mutableStateOf<View?>(null) }
+    val webChromeClient = remember(viewModel) {
+        viewModel.createWebChromeClient(
+            onShowCustomView = { customView = it },
+            onHideCustomView = { customView = null },
+        )
+    }
+
     // Create SecurityLevel ViewModel only when needed
     val securityLevelViewModel: LocationForSecureConnectionViewModel? =
         if (viewState is FrontendViewState.SecurityLevelRequired) {
@@ -129,7 +146,8 @@ internal fun FrontendScreen(
         viewState = viewState,
         errorStateProvider = viewModel as FrontendConnectionErrorStateProvider,
         webViewClient = viewModel.webViewClient,
-        webChromeClient = viewModel.webChromeClient,
+        webChromeClient = webChromeClient,
+        customView = customView,
         frontendJsCallback = viewModel.frontendJsCallback,
         pendingPermissionRequest = pendingPermissionRequest,
         pendingDialog = pendingDialog,
@@ -172,6 +190,7 @@ internal fun FrontendScreenContent(
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onWebViewCreationFailed: (Throwable) -> Unit,
     modifier: Modifier = Modifier,
+    customView: View? = null,
     pendingPermissionRequest: PermissionRequest? = null,
     pendingDialog: FrontendDialog? = null,
     pendingFileChooser: FileChooserRequest? = null,
@@ -221,6 +240,8 @@ internal fun FrontendScreenContent(
             contentState = viewState as? FrontendViewState.Content,
             onFullscreenChanged = onExoPlayerFullscreenChanged,
         )
+
+        CustomViewOverlay(customView = customView)
 
         StateOverlay(
             viewState = viewState,
@@ -594,6 +615,17 @@ private fun WebViewEffects(
             }
         }
     }
+}
+
+@Composable
+private fun CustomViewOverlay(customView: View?) {
+    val view: View = customView ?: return
+    AndroidView(
+        factory = { view },
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag(CUSTOM_VIEW_OVERLAY_TAG),
+    )
 }
 
 @Composable
