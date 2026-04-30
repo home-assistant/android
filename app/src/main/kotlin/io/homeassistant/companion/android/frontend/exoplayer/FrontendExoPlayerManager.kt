@@ -28,7 +28,7 @@ import timber.log.Timber
  * which are forwarded here as [FrontendHandlerEvent.ExoPlayerAction] instances. This manager
  * owns the [Player] instance and exposes a [state] flow.
  *
- * The player need to be released by calling [close]d (typically in ViewModel's `onCleared`).
+ * The player need to be released by calling [close] (typically in ViewModel's `onCleared`).
  */
 class FrontendExoPlayerManager @VisibleForTesting constructor(
     private val playerCreator: suspend (ExoPlayer.() -> Unit) -> ExoPlayer,
