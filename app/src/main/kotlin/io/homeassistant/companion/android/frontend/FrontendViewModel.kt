@@ -21,7 +21,6 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.exoplayer.FrontendExoPlayerManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
-import io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserRequest
@@ -589,8 +588,13 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 exoPlayerManager.handle(result)
             }
 
+            is FrontendHandlerEvent.EntityAddToExecuted -> {
+                result.event?.let { _events.tryEmit(it) }
+            }
+
             is FrontendHandlerEvent.ConfigSent,
             is FrontendHandlerEvent.UnknownMessage,
+            is FrontendHandlerEvent.EntityAddToActionsSent,
             -> {
                 // No-op
             }

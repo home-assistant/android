@@ -4,6 +4,7 @@ import android.net.Uri
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
+import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 
 /**
  * Events emitted by [FrontendMessageHandler].
@@ -108,4 +109,17 @@ sealed interface FrontendHandlerEvent {
          */
         data class Resize(val left: Double, val top: Double, val right: Double, val bottom: Double) : ExoPlayerAction
     }
+
+    /**
+     * Frontend requested available EntityAddTo actions and the response was sent.
+     */
+    data object EntityAddToActionsSent : FrontendHandlerEvent
+
+    /**
+     * Frontend requested execution of an EntityAddTo action.
+     *
+     * The ViewModel should forward the [event] to the navigation layer.
+     * When null, the action is unimplemented and should be ignored.
+     */
+    data class EntityAddToExecuted(val event: FrontendEvent?) : FrontendHandlerEvent
 }

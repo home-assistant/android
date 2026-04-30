@@ -28,7 +28,6 @@ import io.homeassistant.companion.android.frontend.exoplayer.ExoPlayerUiState
 import io.homeassistant.companion.android.frontend.exoplayer.FrontendExoPlayerManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
-import io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
 import io.homeassistant.companion.android.frontend.gesture.FrontendGestureHandler
@@ -700,6 +699,77 @@ class FrontendViewModelTest {
                 messageFlow.emit(FrontendHandlerEvent.WriteNfcTag(messageId = 42, tagId = "tag-abc"))
 
                 assertEquals(FrontendEvent.NavigateToNfcWrite(messageId = 42, tagId = "tag-abc"), awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given EntityAddToExecuted with event when collected then event is forwarded`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+
+            viewModel.events.test {
+                advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+                messageFlow.emit(
+                    FrontendHandlerEvent.EntityAddToExecuted(
+                        FrontendEvent.LaunchWidgetConfig(
+                            entityId = "light.test",
+                            widgetType = io.homeassistant.companion.android.frontend.navigation.WidgetType.Entity,
+                        ),
+                    ),
+                )
+
+                val event = awaitItem()
+                assertTrue(event is FrontendEvent.LaunchWidgetConfig)
+                assertEquals("light.test", (event as FrontendEvent.LaunchWidgetConfig).entityId)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given EntityAddToExecuted with null event when collected then no event is emitted`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+
+            viewModel.events.test {
+                advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+                messageFlow.emit(FrontendHandlerEvent.EntityAddToExecuted(event = null))
+                advanceUntilIdle()
+
+                expectNoEvents()
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given EntityAddToActionsSent when collected then no event is emitted`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+
+            viewModel.events.test {
+                advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+                messageFlow.emit(FrontendHandlerEvent.EntityAddToActionsSent)
+                advanceUntilIdle()
+
+                expectNoEvents()
                 cancelAndIgnoreRemainingEvents()
             }
         }

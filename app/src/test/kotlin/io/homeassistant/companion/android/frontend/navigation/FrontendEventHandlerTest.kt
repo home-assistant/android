@@ -50,6 +50,7 @@ class FrontendEventHandlerTest {
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
                 onRequestFullscreen = {},
+                onLaunchWidgetConfig = { _, _ -> },
             )
         }
 
@@ -80,6 +81,7 @@ class FrontendEventHandlerTest {
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
                 onRequestFullscreen = {},
+                onLaunchWidgetConfig = { _, _ -> },
             )
         }
 
@@ -112,6 +114,7 @@ class FrontendEventHandlerTest {
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
                 onRequestFullscreen = {},
+                onLaunchWidgetConfig = { _, _ -> },
             )
         }
 
@@ -150,6 +153,7 @@ class FrontendEventHandlerTest {
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
                 onRequestFullscreen = {},
+                onLaunchWidgetConfig = { _, _ -> },
             )
         }
 
@@ -176,6 +180,7 @@ class FrontendEventHandlerTest {
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
                 onRequestFullscreen = {},
+                onLaunchWidgetConfig = { _, _ -> },
             )
         }
 
@@ -202,6 +207,7 @@ class FrontendEventHandlerTest {
                 onShowServerSwitcher = { serverSwitcherShown = true },
                 onNavigateToNfcWrite = { _, _ -> },
                 onRequestFullscreen = {},
+                onLaunchWidgetConfig = { _, _ -> },
             )
         }
 
@@ -231,6 +237,7 @@ class FrontendEventHandlerTest {
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
                 onRequestFullscreen = {},
+                onLaunchWidgetConfig = { _, _ -> },
             )
         }
 
@@ -261,6 +268,7 @@ class FrontendEventHandlerTest {
                     capturedTagId = tagId
                 },
                 onRequestFullscreen = {},
+                onLaunchWidgetConfig = { _, _ -> },
             )
         }
 
@@ -291,6 +299,7 @@ class FrontendEventHandlerTest {
                     capturedTagId = tagId
                 },
                 onRequestFullscreen = {},
+                onLaunchWidgetConfig = { _, _ -> },
             )
         }
 

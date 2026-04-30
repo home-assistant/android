@@ -7,10 +7,13 @@ import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
 import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import io.homeassistant.companion.android.frontend.WebViewAction
+import io.homeassistant.companion.android.frontend.addto.FrontendEntityAddToHandler
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConfigGetMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConnectionStatusMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.EntityAddToGetActionsMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.EntityAddToMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerPlayHlsMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerResizeMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerStopMessage
@@ -24,6 +27,7 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.TagWrite
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ThemeUpdateMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.UnknownIncomingMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResultMessage
+import io.homeassistant.companion.android.frontend.externalbus.outgoing.EntityAddToActionsResultMessage
 import io.homeassistant.companion.android.frontend.js.FrontendJsHandler
 import io.homeassistant.companion.android.frontend.session.AuthPayload
 import io.homeassistant.companion.android.frontend.session.ExternalAuthResult
@@ -32,6 +36,7 @@ import io.homeassistant.companion.android.frontend.session.ServerSessionManager
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
 import io.homeassistant.companion.android.util.sensitive
+import io.homeassistant.companion.android.webview.externalbus.ExternalEntityAddToAction
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -63,6 +68,7 @@ class FrontendMessageHandler @Inject constructor(
     private val appVersionProvider: AppVersionProvider,
     private val sessionManager: ServerSessionManager,
     private val downloadManager: FrontendDownloadManager,
+    private val entityAddToHandler: FrontendEntityAddToHandler,
     @param:IsAutomotive private val isAutomotive: Boolean,
 ) : FrontendJsHandler,
     FrontendBusObserver {
@@ -221,6 +227,20 @@ class FrontendMessageHandler @Inject constructor(
                 Timber.d("handleBlob called with filename=${message.filename}")
                 val result = downloadManager.handleBlob(data = message.data, filename = message.filename)
                 FrontendHandlerEvent.DownloadCompleted(result)
+            }
+
+            is EntityAddToGetActionsMessage -> {
+                Timber.d("Entity add_to get_actions request received for: ${message.payload.entityId}")
+                val actions = entityAddToHandler.getActionsForEntity(message.payload.entityId)
+                externalBusRepository.send(EntityAddToActionsResultMessage(id = message.id, actions = actions))
+                FrontendHandlerEvent.EntityAddToActionsSent
+            }
+
+            is EntityAddToMessage -> {
+                Timber.d("Entity add_to request received for: ${message.payload.entityId}")
+                val action = ExternalEntityAddToAction.appPayloadToAction(message.payload.appPayload)
+                val event = entityAddToHandler.execute(message.payload.entityId, action)
+                FrontendHandlerEvent.EntityAddToExecuted(event)
             }
 
             is UnknownIncomingMessage -> {

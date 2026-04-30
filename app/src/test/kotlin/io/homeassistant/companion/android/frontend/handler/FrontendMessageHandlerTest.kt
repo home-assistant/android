@@ -6,8 +6,10 @@ import app.cash.turbine.test
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.AppVersionProvider
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import io.homeassistant.companion.android.frontend.WebViewAction
+import io.homeassistant.companion.android.frontend.addto.FrontendEntityAddToHandler
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
@@ -15,6 +17,10 @@ import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalB
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConfigGetMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConnectionStatusMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConnectionStatusPayload
+import io.homeassistant.companion.android.frontend.externalbus.incoming.EntityAddToGetActionsMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.EntityAddToGetActionsPayload
+import io.homeassistant.companion.android.frontend.externalbus.incoming.EntityAddToMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.EntityAddToPayload
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerPlayHlsMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerPlayHlsPayload
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerResizeMessage
@@ -33,6 +39,7 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.ThemeUpd
 import io.homeassistant.companion.android.frontend.externalbus.incoming.UnknownIncomingMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.OutgoingExternalBusMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage
+import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.frontend.session.AuthPayload
 import io.homeassistant.companion.android.frontend.session.ExternalAuthResult
 import io.homeassistant.companion.android.frontend.session.RevokeAuthResult
@@ -40,6 +47,8 @@ import io.homeassistant.companion.android.frontend.session.ServerSessionManager
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.thread.ThreadManager
+import io.homeassistant.companion.android.webview.addto.EntityAddToAction
+import io.homeassistant.companion.android.webview.externalbus.ExternalEntityAddToAction
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -47,6 +56,7 @@ import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.unmockkAll
+import kotlin.io.encoding.Base64
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
@@ -77,6 +87,8 @@ class FrontendMessageHandlerTest {
     private val appVersionProvider: AppVersionProvider = mockk()
     private val sessionManager: ServerSessionManager = mockk(relaxed = true)
     private val downloadManager: FrontendDownloadManager = mockk(relaxed = true)
+    private val entityAddToHandler: FrontendEntityAddToHandler =
+        mockk(relaxed = true)
     private lateinit var handler: FrontendMessageHandler
 
     @BeforeEach
@@ -96,6 +108,7 @@ class FrontendMessageHandlerTest {
             appVersionProvider = appVersionProvider,
             sessionManager = sessionManager,
             downloadManager = downloadManager,
+            entityAddToHandler = entityAddToHandler,
             isAutomotive = false,
         )
     }
@@ -171,6 +184,7 @@ class FrontendMessageHandlerTest {
             appVersionProvider = appVersionProvider,
             sessionManager = sessionManager,
             downloadManager = downloadManager,
+            entityAddToHandler = entityAddToHandler,
             isAutomotive = false,
         )
 
@@ -209,6 +223,7 @@ class FrontendMessageHandlerTest {
             appVersionProvider = appVersionProvider,
             sessionManager = sessionManager,
             downloadManager = downloadManager,
+            entityAddToHandler = entityAddToHandler,
             isAutomotive = false,
         )
 
@@ -363,6 +378,7 @@ class FrontendMessageHandlerTest {
             appVersionProvider = appVersionProvider,
             sessionManager = sessionManager,
             downloadManager = downloadManager,
+            entityAddToHandler = entityAddToHandler,
             isAutomotive = true,
         )
 
@@ -395,6 +411,7 @@ class FrontendMessageHandlerTest {
             appVersionProvider = appVersionProvider,
             sessionManager = sessionManager,
             downloadManager = downloadManager,
+            entityAddToHandler = entityAddToHandler,
             isAutomotive = false,
         )
 
@@ -629,6 +646,67 @@ class FrontendMessageHandlerTest {
             assertEquals(2.5, resize.top)
             assertEquals(100.5, resize.right)
             assertEquals(50.5, resize.bottom)
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given entity add_to get_actions message when messageResults then sends response and emits EntityAddToActionsSent`() = runTest {
+        val actions = listOf(
+            ExternalEntityAddToAction(
+                appPayload = "dGVzdA==",
+                enabled = true,
+                name = "Entity Widget",
+                details = null,
+                mdiIcon = "mdi:shape",
+            ),
+        )
+        coEvery { entityAddToHandler.getActionsForEntity("light.living_room") } returns actions
+
+        val message = EntityAddToGetActionsMessage(
+            id = 20,
+            payload = EntityAddToGetActionsPayload(
+                entityId = "light.living_room",
+            ),
+        )
+        every { externalBusRepository.incomingMessages() } returns flowOf(message)
+
+        handler.messageResults().test {
+            val result = awaitItem()
+            assertTrue(result is FrontendHandlerEvent.EntityAddToActionsSent)
+            expectNoEvents()
+        }
+
+        val sentSlot = slot<OutgoingExternalBusMessage>()
+        coVerify { externalBusRepository.send(capture(sentSlot)) }
+        val sent = sentSlot.captured as ResultMessage
+        assertEquals(20, sent.id)
+        assertTrue(sent.success)
+    }
+
+    @Test
+    fun `Given entity add_to message when messageResults then emits EntityAddToExecuted with event from handler`() = runTest {
+        val entityWidgetPayload = Base64.UrlSafe.encode(kotlinJsonMapper.encodeToString<EntityAddToAction>(EntityAddToAction.EntityWidget).encodeToByteArray())
+        coEvery {
+            entityAddToHandler.execute("light.living_room", any())
+        } returns FrontendEvent.ShowSnackbar(
+            io.homeassistant.companion.android.common.R.string.add_to_android_auto_success,
+        )
+
+        val message = EntityAddToMessage(
+            id = 21,
+            payload = EntityAddToPayload(
+                entityId = "light.living_room",
+                appPayload = entityWidgetPayload,
+            ),
+        )
+        every { externalBusRepository.incomingMessages() } returns flowOf(message)
+
+        handler.messageResults().test {
+            val result = awaitItem()
+            assertTrue(result is FrontendHandlerEvent.EntityAddToExecuted)
+            val event = (result as FrontendHandlerEvent.EntityAddToExecuted).event
+            assertTrue(event is FrontendEvent.ShowSnackbar)
             expectNoEvents()
         }
     }

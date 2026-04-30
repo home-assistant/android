@@ -115,7 +115,7 @@ class FrontendExternalBusRepositoryImplTest {
             canCommissionMatter = false,
             canExportThread = true,
             hasBarCodeScanner = 2,
-            appVersion = AppVersion.from("1.0.0"),
+            appVersion = AppVersion.from("1.0.0 (1)"),
         )
 
         repository.webViewActions().test {
