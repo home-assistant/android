@@ -319,8 +319,8 @@ jobs:
         with:
           test-name: Unit test
 
-  instrumentation_test_wtf:
-    name: "Instrumentation Test WTF"
+  instrumentation_test_app:
+    name: "Instrumentation Test app"
     needs: [lint, lockfiles, ktlint]
     environment: ui-test
     runs-on: ubuntu-latest
@@ -373,7 +373,7 @@ jobs:
       - uses: ./.github/actions/upload-test-results
         if: always()
         with:
-          test-name: Instrumentation Test WTF
+          test-name: Instrumentation Test app
 
   instrumentation_test:
     name: "Instrumentation Tests"
@@ -452,7 +452,7 @@ jobs:
 
   publish_test_results:
     name: "Publish Tests Results"
-    needs: [instrumentation_test, unit_tests, screenshot_test, instrumentation_test_wtf]
+    needs: [instrumentation_test, unit_tests, screenshot_test, instrumentation_test_app]
     runs-on: ubuntu-latest
     permissions:
       checks: write
@@ -473,4 +473,4 @@ jobs:
           files: |
             **/androidTest-results/**/TEST-*.xml
             **/build/test-results/**/TEST-*.xml
-            **/build/build-results/**/results.xml
+            **/build/test-results/**/results.xml
