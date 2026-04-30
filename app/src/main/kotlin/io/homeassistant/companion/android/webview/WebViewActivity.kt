@@ -119,6 +119,7 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
 import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
+import io.homeassistant.companion.android.frontend.addto.FrontendEntityAddToHandler
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.EXPECTED_GET_AUTH_CALLBACK
@@ -127,6 +128,7 @@ import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.EXTERNAL_APP_V2_LISTENER
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.externalBusCallback
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.isServerSupportingExternalAppV2
+import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.improv.ui.ImprovPermissionDialog
 import io.homeassistant.companion.android.improv.ui.ImprovSetupDialog
 import io.homeassistant.companion.android.launch.LaunchActivity
@@ -151,7 +153,6 @@ import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
-import io.homeassistant.companion.android.webview.addto.EntityAddToHandler
 import io.homeassistant.companion.android.webview.externalbus.EntityAddToActionsResponse
 import io.homeassistant.companion.android.webview.externalbus.ExternalBusMessage
 import io.homeassistant.companion.android.webview.externalbus.ExternalConfigResponse
@@ -259,7 +260,7 @@ class WebViewActivity :
     lateinit var appVersionProvider: AppVersionProvider
 
     @Inject
-    lateinit var entityAddToHandler: EntityAddToHandler
+    lateinit var entityAddToHandler: FrontendEntityAddToHandler
 
     @Inject
     lateinit var dataUriDownloadManager: DataUriDownloadManager
@@ -1182,12 +1183,18 @@ class WebViewActivity :
         if (entityId != null && appPayload != null) {
             val action = ExternalEntityAddToAction.appPayloadToAction(appPayload)
             lifecycleScope.launch {
-                entityAddToHandler.execute(this@WebViewActivity, action, entityId) { message, action ->
-                    snackbarHostState.showSnackbar(
-                        message,
-                        action,
-                        duration = SnackbarDuration.Short,
-                    ) == SnackbarResult.ActionPerformed
+                when (val event = entityAddToHandler.execute(entityId, action)) {
+                    is FrontendEvent.LaunchWidgetConfig -> {
+                        startActivity(event.widgetType.toConfigureIntent(this@WebViewActivity, event.entityId))
+                    }
+                    is FrontendEvent.ShowSnackbar -> {
+                        snackbarHostState.showSnackbar(
+                            getString(event.messageResId),
+                            duration = SnackbarDuration.Short,
+                        )
+                    }
+                    null -> Unit
+                    else -> FailFast.fail { "Unexpected event $event from EntityAddTo execute" }
                 }
             }
         } else {
@@ -1200,13 +1207,11 @@ class WebViewActivity :
         val entityId = payload?.getStringOrNull("entity_id")
         entityId?.let {
             lifecycleScope.launch {
-                val actions = entityAddToHandler.actionsForEntity(this@WebViewActivity, entityId)
+                val actions = entityAddToHandler.getActionsForEntity(entityId)
                 sendExternalBusMessage(
                     EntityAddToActionsResponse(
                         id = json["id"],
-                        actions = actions.map { action ->
-                            ExternalEntityAddToAction.fromAction(this@WebViewActivity, action)
-                        },
+                        actions = actions,
                     ),
                 )
             }

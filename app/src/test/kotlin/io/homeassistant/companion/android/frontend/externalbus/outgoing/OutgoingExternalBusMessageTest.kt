@@ -32,7 +32,7 @@ class OutgoingExternalBusMessageTest {
 
     @Test
     fun `Given ConfigResult then default values are correct`() {
-        val config = ConfigResult.create(
+        val config = ConfigResultMessage.ConfigResult.create(
             hasNfc = false,
             canCommissionMatter = false,
             canExportThread = false,

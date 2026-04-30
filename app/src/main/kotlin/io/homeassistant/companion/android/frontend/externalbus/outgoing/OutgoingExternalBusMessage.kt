@@ -83,7 +83,8 @@ object ConfigResultMessage {
      * Contains the app's capabilities that the frontend needs to know about.
      */
     @Serializable
-    private data class ConfigResult(
+    @VisibleForTesting
+    data class ConfigResult(
         val hasSettingsScreen: Boolean = true,
         val canWriteTag: Boolean,
         val hasExoPlayer: Boolean = true,

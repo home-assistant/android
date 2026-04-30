@@ -101,6 +101,10 @@ internal fun NavGraphBuilder.frontendScreen(
                     nfcWriteLauncher.launch(WriteNfcTag.Input(tagId = tagId, messageId = messageId))
                 },
                 onRequestFullscreen = onRequestFullscreen,
+                onLaunchWidgetConfig = { entityId, widgetType ->
+                    val context = navController.context
+                    context.startActivity(widgetType.toConfigureIntent(context, entityId))
+                },
             )
 
             FrontendScreen(
@@ -144,6 +148,7 @@ internal fun FrontendEventHandler(
     onShowServerSwitcher: () -> Unit,
     onNavigateToNfcWrite: (messageId: Int, tagId: String?) -> Unit,
     onRequestFullscreen: (Boolean) -> Unit,
+    onLaunchWidgetConfig: (entityId: String, widgetType: WidgetType) -> Unit,
 ) {
     val resources = LocalResources.current
     LaunchedEffect(Unit) {
@@ -183,6 +188,10 @@ internal fun FrontendEventHandler(
 
                 is FrontendEvent.RequestFullscreen -> {
                     onRequestFullscreen(event.fullscreen)
+                }
+
+                is FrontendEvent.LaunchWidgetConfig -> {
+                    onLaunchWidgetConfig(event.entityId, event.widgetType)
                 }
             }
         }
