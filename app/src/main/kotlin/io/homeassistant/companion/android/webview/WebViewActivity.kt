@@ -581,12 +581,32 @@ class WebViewActivity :
                 }
 
                 override fun onRenderProcessGone(view: WebView?, handler: RenderProcessGoneDetail?): Boolean {
-                    Timber.e("onRenderProcessGone: webView crashed")
-                    view?.let {
-                        reload()
-                        lifecycleScope.launch {
-                            webViewAddJavascriptInterface()
+                    val didCrash = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        handler?.didCrash() == true
+                    } else {
+                        // On API < 26 didCrash() is unavailable; treat as a crash so we still recover.
+                        true
+                    }
+                    Timber.e(
+                        "onRenderProcessGone: WebView renderer is gone (didCrash=$didCrash). " +
+                            "This is commonly triggered by a GPU context loss or out-of-memory in the " +
+                            "renderer process (see #5823 — Mali GPU + EXT_robustness on Android 10), " +
+                            "which can leave dashboard cards rendering as blank/greyed-out surfaces. " +
+                            "Recreating the activity to recover with a fresh WebView.",
+                    )
+                    // Per the android.webkit.WebView contract, once the render process is gone the
+                    // WebView instance is unusable and must not be touched again — calling reload()
+                    // on the dead WebView is a no-op and leaves the user looking at greyed-out
+                    // cards forever. Detach and destroy the dead WebView so its native resources
+                    // are released, then recreate the activity to rebuild a fresh WebView and
+                    // reload the last URL through the normal onCreate path. Returning `true` tells
+                    // the system we have handled the crash so the hosting app process is not killed.
+                    if (!isFinishing && !isRelaunching) {
+                        view?.let { dead ->
+                            (dead.parent as? android.view.ViewGroup)?.removeView(dead)
+                            dead.destroy()
                         }
+                        recreate()
                     }
 
                     return true
