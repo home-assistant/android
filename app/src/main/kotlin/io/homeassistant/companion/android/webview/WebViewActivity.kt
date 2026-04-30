@@ -14,8 +14,6 @@ import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
-import android.os.Handler
-import android.os.Looper
 import android.text.method.HideReturnsTransformationMethod
 import android.text.method.PasswordTransformationMethod
 import android.util.DisplayMetrics
@@ -1998,19 +1996,22 @@ class WebViewActivity :
             Timber.i("Fragments ${supportFragmentManager.fragments} displayed, skipping connection wait")
         } else {
             Timber.d("Waiting for loadedUrl ${sensitive(loadedUrl.toString())}")
-            Handler(Looper.getMainLooper()).postDelayed(
-                {
-                    val firstSegment = loadedUrl?.pathSegments?.firstOrNull().orEmpty()
-                    if (
-                        !isConnected &&
-                        !firstSegment.contains("api") &&
-                        !firstSegment.contains("local")
-                    ) {
-                        showError(errorType = ErrorType.TIMEOUT_EXTERNAL_BUS)
-                    }
-                },
-                CONNECTION_DELAY,
-            )
+            // Use lifecycleScope so the delayed check is automatically cancelled when the
+            // activity is destroyed. Previously this used Handler(Looper.getMainLooper())
+            // .postDelayed { ... } with a lambda capturing `this`, which kept the destroyed
+            // WebViewActivity retained in the main MessageQueue for up to CONNECTION_DELAY ms
+            // (e.g. when the activity was recreated due to a theme change). See issue #5453.
+            lifecycleScope.launch {
+                delay(CONNECTION_DELAY)
+                val firstSegment = loadedUrl?.pathSegments?.firstOrNull().orEmpty()
+                if (
+                    !isConnected &&
+                    !firstSegment.contains("api") &&
+                    !firstSegment.contains("local")
+                ) {
+                    showError(errorType = ErrorType.TIMEOUT_EXTERNAL_BUS)
+                }
+            }
         }
     }
 
