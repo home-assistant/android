@@ -4,6 +4,7 @@ import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import io.homeassistant.companion.android.sensors.healthconnect.HealthConnectDataType
 import java.time.Instant
+import java.time.OffsetDateTime
 import java.time.format.DateTimeParseException
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
@@ -188,11 +189,26 @@ sealed class HealthConnectWriteCommandPayload {
         }
 
         private fun parseInstant(data: Map<String, String>, field: String, default: Instant): Instant {
-            val raw = data[field] ?: return default
+            val raw = data[field]?.takeIf { it.isNotBlank() } ?: return default
+            return parseIsoInstant(raw)
+                ?: throw InvalidPayloadException("Field $field must be ISO-8601 instant, got: $raw")
+        }
+
+        /**
+         * Parse an ISO-8601 timestamp accepting both `...Z` (what [Instant.parse] requires)
+         * and `...+HH:MM` offset forms. Home Assistant's `now().isoformat()` Jinja helper
+         * emits the offset form by default, so the strict [Instant.parse] alone would
+         * reject every payload built from the obvious template.
+         */
+        private fun parseIsoInstant(raw: String): Instant? {
             return try {
                 Instant.parse(raw)
-            } catch (e: DateTimeParseException) {
-                throw InvalidPayloadException("Field $field must be ISO-8601 instant, got: $raw")
+            } catch (_: DateTimeParseException) {
+                try {
+                    OffsetDateTime.parse(raw).toInstant()
+                } catch (_: DateTimeParseException) {
+                    null
+                }
             }
         }
 
@@ -210,11 +226,8 @@ sealed class HealthConnectWriteCommandPayload {
                 throw InvalidPayloadException("Field $FIELD_SAMPLES must contain at least one sample")
             }
             return parsed.map { dto ->
-                val time = try {
-                    Instant.parse(dto.time)
-                } catch (e: DateTimeParseException) {
-                    throw InvalidPayloadException("Heart rate sample time must be ISO-8601: ${dto.time}")
-                }
+                val time = parseIsoInstant(dto.time)
+                    ?: throw InvalidPayloadException("Heart rate sample time must be ISO-8601: ${dto.time}")
                 HeartRateRecord.Sample(time = time, beatsPerMinute = dto.beatsPerMinute)
             }
         }
@@ -229,16 +242,10 @@ sealed class HealthConnectWriteCommandPayload {
                 )
             }
             return parsed.map { dto ->
-                val start = try {
-                    Instant.parse(dto.startTime)
-                } catch (e: DateTimeParseException) {
-                    throw InvalidPayloadException("Sleep stage start_time must be ISO-8601: ${dto.startTime}")
-                }
-                val end = try {
-                    Instant.parse(dto.endTime)
-                } catch (e: DateTimeParseException) {
-                    throw InvalidPayloadException("Sleep stage end_time must be ISO-8601: ${dto.endTime}")
-                }
+                val start = parseIsoInstant(dto.startTime)
+                    ?: throw InvalidPayloadException("Sleep stage start_time must be ISO-8601: ${dto.startTime}")
+                val end = parseIsoInstant(dto.endTime)
+                    ?: throw InvalidPayloadException("Sleep stage end_time must be ISO-8601: ${dto.endTime}")
                 val stageInt = SLEEP_STAGE_NAME_TO_INT[dto.stage.lowercase()]
                     ?: throw InvalidPayloadException(
                         "Unknown sleep stage '${dto.stage}'. Expected one of: ${SLEEP_STAGE_NAME_TO_INT.keys}",
