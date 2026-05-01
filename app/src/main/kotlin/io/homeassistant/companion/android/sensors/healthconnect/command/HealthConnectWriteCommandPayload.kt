@@ -32,6 +32,7 @@ sealed class HealthConnectWriteCommandPayload {
         override val clientRecordId: String?,
         val time: Instant,
         val value: Double,
+        val unit: String?,
     ) : HealthConnectWriteCommandPayload()
 
     data class Interval(
@@ -40,6 +41,7 @@ sealed class HealthConnectWriteCommandPayload {
         val startTime: Instant,
         val endTime: Instant,
         val value: Double,
+        val unit: String?,
     ) : HealthConnectWriteCommandPayload()
 
     data class BloodPressure(
@@ -83,6 +85,7 @@ sealed class HealthConnectWriteCommandPayload {
         const val FIELD_STAGES = "stages"
         const val FIELD_TITLE = "title"
         const val FIELD_NOTES = "notes"
+        const val FIELD_UNIT = "unit"
 
         /**
          * Sleep-stage string → HC integer constant. Mirrors the (`@RestrictTo`) map that
@@ -160,6 +163,7 @@ sealed class HealthConnectWriteCommandPayload {
                         startTime = parseInstant(data, FIELD_START_TIME, default = end),
                         endTime = end,
                         value = parseDouble(data, FIELD_VALUE),
+                        unit = data[FIELD_UNIT]?.takeIf { it.isNotBlank() },
                     )
                 } else {
                     Instantaneous(
@@ -167,6 +171,7 @@ sealed class HealthConnectWriteCommandPayload {
                         clientRecordId = clientRecordId,
                         time = parseInstant(data, FIELD_TIME, default = now),
                         value = parseDouble(data, FIELD_VALUE),
+                        unit = data[FIELD_UNIT]?.takeIf { it.isNotBlank() },
                     )
                 }
             }

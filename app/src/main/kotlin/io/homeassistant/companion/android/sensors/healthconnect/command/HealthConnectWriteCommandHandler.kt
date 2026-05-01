@@ -89,7 +89,11 @@ class HealthConnectWriteCommandHandler @Inject constructor(
     ): HealthConnectWriteResult {
         val time: Instant = payload.time
         val crid = payload.clientRecordId
-        val v = payload.value
+        val v = try {
+            HealthConnectUnitConversion.toCanonical(payload.dataType, payload.value, payload.unit)
+        } catch (e: HealthConnectWriteCommandPayload.InvalidPayloadException) {
+            return HealthConnectWriteResult.InvalidPayload(e.message ?: "Invalid unit")
+        }
         return when (payload.dataType) {
             HealthConnectDataType.BasalBodyTemperature ->
                 repository.writeBasalBodyTemperature(time, v, crid)
@@ -133,7 +137,11 @@ class HealthConnectWriteCommandHandler @Inject constructor(
         val start = payload.startTime
         val end = payload.endTime
         val crid = payload.clientRecordId
-        val v = payload.value
+        val v = try {
+            HealthConnectUnitConversion.toCanonical(payload.dataType, payload.value, payload.unit)
+        } catch (e: HealthConnectWriteCommandPayload.InvalidPayloadException) {
+            return HealthConnectWriteResult.InvalidPayload(e.message ?: "Invalid unit")
+        }
         return when (payload.dataType) {
             HealthConnectDataType.ActiveCaloriesBurned ->
                 repository.writeActiveCaloriesBurned(start, end, v, crid)
