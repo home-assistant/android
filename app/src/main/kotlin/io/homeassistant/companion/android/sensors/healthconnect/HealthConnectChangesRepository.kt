@@ -8,6 +8,8 @@ import androidx.health.connect.client.request.ChangesTokenRequest
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 /**
@@ -42,21 +44,23 @@ class HealthConnectChangesRepository @Inject constructor(
      */
     suspend fun pollChanges(dataTypes: Collection<HealthConnectDataType>): Set<HealthConnectDataType>? {
         val client = clientProvider.get() ?: return null
-        val granted = runCatching { client.permissionController.getGrantedPermissions() }
-            .getOrElse { error ->
-                Timber.w(error, "Failed to read Health Connect permissions during changes poll")
-                return emptySet()
-            }
+        return withContext(Dispatchers.IO) {
+            val granted = runCatching { client.permissionController.getGrantedPermissions() }
+                .getOrElse { error ->
+                    Timber.w(error, "Failed to read Health Connect permissions during changes poll")
+                    return@withContext emptySet()
+                }
 
-        val changed = mutableSetOf<HealthConnectDataType>()
-        for (dataType in dataTypes) {
-            val readPermission = HealthPermission.getReadPermission(dataType.recordClass)
-            if (readPermission !in granted) continue
-            if (pollOne(client, dataType)) {
-                changed += dataType
+            val changed = mutableSetOf<HealthConnectDataType>()
+            for (dataType in dataTypes) {
+                val readPermission = HealthPermission.getReadPermission(dataType.recordClass)
+                if (readPermission !in granted) continue
+                if (pollOne(client, dataType)) {
+                    changed += dataType
+                }
             }
+            changed
         }
-        return changed
     }
 
     private suspend fun pollOne(client: HealthConnectClient, dataType: HealthConnectDataType): Boolean {

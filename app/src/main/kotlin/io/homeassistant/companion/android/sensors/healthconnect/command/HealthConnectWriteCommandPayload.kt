@@ -83,6 +83,23 @@ sealed class HealthConnectWriteCommandPayload {
         const val FIELD_TITLE = "title"
         const val FIELD_NOTES = "notes"
 
+        /**
+         * Sleep-stage string → HC integer constant. Mirrors the (`@RestrictTo`) map that
+         * `androidx.health.connect.client.records.SleepSessionRecord.STAGE_TYPE_STRING_TO_INT_MAP`
+         * exposes for library-internal use only. Kept as a local copy because the SDK
+         * doesn't expose a public alternative.
+         */
+        private val SLEEP_STAGE_NAME_TO_INT: Map<String, Int> = mapOf(
+            "awake" to SleepSessionRecord.STAGE_TYPE_AWAKE,
+            "sleeping" to SleepSessionRecord.STAGE_TYPE_SLEEPING,
+            "out_of_bed" to SleepSessionRecord.STAGE_TYPE_OUT_OF_BED,
+            "light" to SleepSessionRecord.STAGE_TYPE_LIGHT,
+            "deep" to SleepSessionRecord.STAGE_TYPE_DEEP,
+            "rem" to SleepSessionRecord.STAGE_TYPE_REM,
+            "awake_in_bed" to SleepSessionRecord.STAGE_TYPE_AWAKE_IN_BED,
+            "unknown" to SleepSessionRecord.STAGE_TYPE_UNKNOWN,
+        )
+
         @OptIn(ExperimentalSerializationApi::class)
         private val json = Json {
             ignoreUnknownKeys = true
@@ -222,9 +239,9 @@ sealed class HealthConnectWriteCommandPayload {
                 } catch (e: DateTimeParseException) {
                     throw InvalidPayloadException("Sleep stage end_time must be ISO-8601: ${dto.endTime}")
                 }
-                val stageInt = SleepSessionRecord.STAGE_TYPE_STRING_TO_INT_MAP[dto.stage.lowercase()]
+                val stageInt = SLEEP_STAGE_NAME_TO_INT[dto.stage.lowercase()]
                     ?: throw InvalidPayloadException(
-                        "Unknown sleep stage '${dto.stage}'. Expected one of: ${SleepSessionRecord.STAGE_TYPE_STRING_TO_INT_MAP.keys}",
+                        "Unknown sleep stage '${dto.stage}'. Expected one of: ${SLEEP_STAGE_NAME_TO_INT.keys}",
                     )
                 SleepSessionRecord.Stage(startTime = start, endTime = end, stage = stageInt)
             }

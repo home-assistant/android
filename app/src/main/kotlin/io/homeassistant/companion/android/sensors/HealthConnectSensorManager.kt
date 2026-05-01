@@ -45,6 +45,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import io.homeassistant.companion.android.sensors.healthconnect.HealthConnectDataType
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
@@ -365,35 +366,6 @@ class HealthConnectSensorManager : SensorManager {
          */
         @androidx.annotation.VisibleForTesting
         internal val allowWritesCache = ConcurrentHashMap<String, Boolean>()
-
-        private val sensorPermissionMap = mapOf(
-            activeCaloriesBurned.id to ActiveCaloriesBurnedRecord::class,
-            basalBodyTemperature.id to BasalBodyTemperatureRecord::class,
-            basalMetabolicRate.id to BasalMetabolicRateRecord::class,
-            bloodGlucose.id to BloodGlucoseRecord::class,
-            bodyFat.id to BodyFatRecord::class,
-            bodyWaterMass.id to BodyWaterMassRecord::class,
-            bodyTemperature.id to BodyTemperatureRecord::class,
-            boneMass.id to BoneMassRecord::class,
-            diastolicBloodPressure.id to BloodPressureRecord::class,
-            distance.id to DistanceRecord::class,
-            elevationGained.id to ElevationGainedRecord::class,
-            floorsClimbed.id to FloorsClimbedRecord::class,
-            heartRate.id to HeartRateRecord::class,
-            heartRateVariability.id to HeartRateVariabilityRmssdRecord::class,
-            height.id to HeightRecord::class,
-            hydration.id to HydrationRecord::class,
-            leanBodyMass.id to LeanBodyMassRecord::class,
-            oxygenSaturation.id to OxygenSaturationRecord::class,
-            respiratoryRate.id to RespiratoryRateRecord::class,
-            restingHeartRate.id to RestingHeartRateRecord::class,
-            sleepDuration.id to SleepSessionRecord::class,
-            steps.id to StepsRecord::class,
-            systolicBloodPressure.id to BloodPressureRecord::class,
-            totalCaloriesBurned.id to TotalCaloriesBurnedRecord::class,
-            vo2Max.id to Vo2MaxRecord::class,
-            weight.id to WeightRecord::class,
-        )
     }
 
     override val name: Int
@@ -401,18 +373,17 @@ class HealthConnectSensorManager : SensorManager {
 
     override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return FailFast.failOnCatch({ "Unable to get required permissions for $sensorId" }, emptyArray<String>()) {
-            val permissions = sensorPermissionMap[sensorId]?.let { recordClass ->
-                val readPermission = HealthPermission.getReadPermission(recordClass)
+            val permissions = HealthConnectDataType.fromSensorId(sensorId)?.let { dataType ->
                 val base = if (getOrCreateHealthConnectClient(context)?.features
                         ?.getFeatureStatus(HealthConnectFeatures.FEATURE_READ_HEALTH_DATA_IN_BACKGROUND)
                     == HealthConnectFeatures.FEATURE_STATUS_AVAILABLE
                 ) {
-                    arrayOf(readPermission, HealthPermission.PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND)
+                    arrayOf(dataType.readPermission, HealthPermission.PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND)
                 } else {
-                    arrayOf(readPermission)
+                    arrayOf(dataType.readPermission)
                 }
                 if (allowWritesCache[sensorId] == true) {
-                    base + HealthPermission.getWritePermission(recordClass)
+                    base + dataType.writePermission
                 } else {
                     base
                 }

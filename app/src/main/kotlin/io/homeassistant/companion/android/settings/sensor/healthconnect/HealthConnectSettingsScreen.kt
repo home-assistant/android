@@ -77,24 +77,28 @@ internal fun HealthConnectSettingsContent(
 
 @Composable
 private fun RealtimeSyncSection(enabled: Boolean, onToggle: (Boolean) -> Unit) {
-    SectionHeader(text = stringResource(commonR.string.health_connect_realtime_sync_title))
-    SwitchRow(
-        title = stringResource(commonR.string.health_connect_realtime_sync_title),
-        summary = stringResource(commonR.string.health_connect_realtime_sync_summary),
-        checked = enabled,
-        onToggle = onToggle,
-    )
+    Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2)) {
+        SectionHeader(text = stringResource(commonR.string.health_connect_realtime_sync_title))
+        SwitchRow(
+            title = stringResource(commonR.string.health_connect_realtime_sync_title),
+            summary = stringResource(commonR.string.health_connect_realtime_sync_summary),
+            checked = enabled,
+            onToggle = onToggle,
+        )
+    }
 }
 
 @Composable
 private fun WritesSection() {
-    SectionHeader(text = stringResource(commonR.string.health_connect_writes_title))
-    HASettingsCard {
-        Text(
-            text = stringResource(commonR.string.health_connect_writes_summary),
-            style = HATextStyle.Body,
-            color = LocalHAColorScheme.current.colorTextSecondary,
-        )
+    Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2)) {
+        SectionHeader(text = stringResource(commonR.string.health_connect_writes_title))
+        HASettingsCard {
+            Text(
+                text = stringResource(commonR.string.health_connect_writes_summary),
+                style = HATextStyle.Body,
+                color = LocalHAColorScheme.current.colorTextSecondary,
+            )
+        }
     }
 }
 
