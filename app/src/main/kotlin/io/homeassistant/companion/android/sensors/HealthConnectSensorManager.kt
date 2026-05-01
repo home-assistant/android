@@ -52,6 +52,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.temporal.ChronoUnit
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -347,6 +348,24 @@ class HealthConnectSensorManager : SensorManager {
             deviceClass = "weight",
         )
 
+        /**
+         * Toggle setting key for "allow Home Assistant to write to this Health Connect data type".
+         * One row per sensor; when ON, [requiredPermissions] for that sensor includes the
+         * matching `WRITE_*` permission so the existing grant flow asks the user for it.
+         */
+        const val SETTING_ALLOW_WRITES = "sensor_allow_writes"
+
+        /**
+         * Per-sensor cache of the [SETTING_ALLOW_WRITES] toggle, populated during
+         * [requestSensorUpdate] (which runs on the WorkManager IO dispatcher and again
+         * synchronously from `setSetting`). [requiredPermissions] is non-suspend by
+         * interface contract, so it cannot read the DB itself — caching keeps the call
+         * site cheap without forcing every sensor manager in the codebase to become
+         * suspend.
+         */
+        @androidx.annotation.VisibleForTesting
+        internal val allowWritesCache = ConcurrentHashMap<String, Boolean>()
+
         private val sensorPermissionMap = mapOf(
             activeCaloriesBurned.id to ActiveCaloriesBurnedRecord::class,
             basalBodyTemperature.id to BasalBodyTemperatureRecord::class,
@@ -384,13 +403,18 @@ class HealthConnectSensorManager : SensorManager {
         return FailFast.failOnCatch({ "Unable to get required permissions for $sensorId" }, emptyArray<String>()) {
             val permissions = sensorPermissionMap[sensorId]?.let { recordClass ->
                 val readPermission = HealthPermission.getReadPermission(recordClass)
-                if (getOrCreateHealthConnectClient(context)?.features
+                val base = if (getOrCreateHealthConnectClient(context)?.features
                         ?.getFeatureStatus(HealthConnectFeatures.FEATURE_READ_HEALTH_DATA_IN_BACKGROUND)
                     == HealthConnectFeatures.FEATURE_STATUS_AVAILABLE
                 ) {
                     arrayOf(readPermission, HealthPermission.PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND)
                 } else {
                     arrayOf(readPermission)
+                }
+                if (allowWritesCache[sensorId] == true) {
+                    base + HealthPermission.getWritePermission(recordClass)
+                } else {
+                    base
                 }
             }
             FailFast.failWhen(permissions == null) { "Missing sensor mapping for $sensorId" }
@@ -399,6 +423,7 @@ class HealthConnectSensorManager : SensorManager {
     }
 
     override suspend fun requestSensorUpdate(context: Context) {
+        refreshAllowWritesCache(context)
         if (isEnabled(context, activeCaloriesBurned)) {
             updateActiveCaloriesBurnedSensor(context)
         }
@@ -476,6 +501,28 @@ class HealthConnectSensorManager : SensorManager {
         }
         if (isEnabled(context, weight)) {
             updateWeightSensor(context)
+        }
+    }
+
+    /**
+     * Persist a default-OFF [SETTING_ALLOW_WRITES] toggle for every available HC sensor and
+     * mirror the current values into [allowWritesCache]. Called at the top of
+     * [requestSensorUpdate] so that:
+     *  - the row exists in the DB and shows up in the sensor detail screen the first time
+     *    a user opens it after enabling the sensor, and
+     *  - [requiredPermissions] sees the latest user choice within one update cycle of a
+     *    toggle flip (which is fine — `setSetting` triggers a sensor update right after
+     *    writing the row, so the cache is fresh before the user's next interaction).
+     */
+    private suspend fun refreshAllowWritesCache(context: Context) {
+        getAvailableSensors(context).forEach { basicSensor ->
+            val enabled = getToggleSetting(
+                context,
+                basicSensor,
+                SETTING_ALLOW_WRITES,
+                default = false,
+            )
+            allowWritesCache[basicSensor.id] = enabled
         }
     }
 

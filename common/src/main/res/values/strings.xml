@@ -1477,4 +1477,5 @@
     <string name="health_connect_writes_title">Writes from Home Assistant</string>
     <string name="health_connect_writes_summary">Allow Home Assistant to push values into Health Connect using the command_health_connect_write notification command. Grant the matching write permissions in Health Connect settings before sending.</string>
     <string name="health_connect_unavailable">Health Connect is not available on this device.</string>
+    <string name="sensor_setting_sensor_allow_writes_title">Allow writes from Home Assistant</string>
 </resources>

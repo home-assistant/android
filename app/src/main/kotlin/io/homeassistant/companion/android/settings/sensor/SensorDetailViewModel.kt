@@ -330,6 +330,18 @@ class SensorDetailViewModel @Inject constructor(
                 Timber.e(e, "Exception while requesting update for sensor $sensorId")
             }
             refreshSensorData()
+            // A toggle change can grow the sensor's required permission set (e.g. flipping
+            // "Allow writes from HA" on a Health Connect sensor adds the matching WRITE_*).
+            // If the sensor is currently enabled but the new perm union isn't fully
+            // granted, surface the same permission-request dialog the enable flow uses so
+            // the user doesn't have to re-tap "Enable" to get prompted.
+            sensorManager?.let { mgr ->
+                if (sensors.any { it.sensor.enabled } && !mgr.checkPermission(getApplication(), sensorId)) {
+                    val perms = mgr.requiredPermissions(getApplication(), sensorId)
+                    val serverId = sensors.firstOrNull { it.sensor.enabled }?.sensor?.serverId
+                    permissionRequests.value = PermissionsDialog(serverId, perms)
+                }
+            }
         }
     }
 

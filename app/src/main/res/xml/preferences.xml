@@ -36,7 +36,7 @@
             android:summary="@string/sensor_update_frequency_summary" />
         <Preference
             android:key="health_connect_settings"
-            android:icon="@drawable/leak"
+            android:icon="@drawable/ic_heart_pulse"
             android:title="@string/health_connect_settings_title"
             android:summary="@string/health_connect_settings_summary" />
     </PreferenceCategory>
