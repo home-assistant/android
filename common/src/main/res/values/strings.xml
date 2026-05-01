@@ -1469,4 +1469,12 @@
     <string name="fail_to_navigate_to_uri">No app available to open %s</string>
     <string name="experimental">Experimental</string>
     <string name="learn_more">Learn more</string>
+
+    <string name="health_connect_settings_title">Health Connect</string>
+    <string name="health_connect_settings_summary">Two-way sync with Health Connect</string>
+    <string name="health_connect_realtime_sync_title">Real-time sync</string>
+    <string name="health_connect_realtime_sync_summary">Catches writes from other apps (Samsung Health, Google Fit, smart scales) within a few minutes instead of waiting for the 15-minute sensor cycle.</string>
+    <string name="health_connect_writes_title">Writes from Home Assistant</string>
+    <string name="health_connect_writes_summary">Allow Home Assistant to push values into Health Connect using the command_health_connect_write notification command. Grant the matching write permissions in Health Connect settings before sending.</string>
+    <string name="health_connect_unavailable">Health Connect is not available on this device.</string>
 </resources>

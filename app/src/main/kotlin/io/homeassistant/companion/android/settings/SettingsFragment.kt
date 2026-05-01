@@ -46,6 +46,7 @@ import io.homeassistant.companion.android.settings.notification.NotificationHist
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
 import io.homeassistant.companion.android.settings.sensor.SensorSettingsFragment
 import io.homeassistant.companion.android.settings.sensor.SensorUpdateFrequencyFragment
+import io.homeassistant.companion.android.settings.sensor.healthconnect.HealthConnectSettingsFragment
 import io.homeassistant.companion.android.settings.server.ServerSettingsFragment
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment
 import io.homeassistant.companion.android.settings.vehicle.ManageAndroidAutoSettingsFragment
@@ -166,6 +167,13 @@ class SettingsFragment(
                 }
                 return@setOnPreferenceClickListener true
             }
+        }
+        findPreference<Preference>("health_connect_settings")?.setOnPreferenceClickListener {
+            parentFragmentManager.commit {
+                replace(R.id.content, HealthConnectSettingsFragment::class.java, null)
+                addToBackStack(getString(commonR.string.health_connect_settings_title))
+            }
+            return@setOnPreferenceClickListener true
         }
 
         findPreference<Preference>("assist_settings")?.setOnPreferenceClickListener {

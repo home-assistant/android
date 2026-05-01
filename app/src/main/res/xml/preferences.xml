@@ -34,6 +34,11 @@
             android:icon="@drawable/ic_clock_fast"
             android:title="@string/sensor_update_frequency"
             android:summary="@string/sensor_update_frequency_summary" />
+        <Preference
+            android:key="health_connect_settings"
+            android:icon="@drawable/leak"
+            android:title="@string/health_connect_settings_title"
+            android:summary="@string/health_connect_settings_summary" />
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/other_settings">
