@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.sensors.healthconnect
 
 import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -35,4 +36,12 @@ object HealthConnectModule {
             Timber.w(it, "Failed to obtain HealthConnectClient — feature will be disabled")
         }.getOrNull()
     }
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class HealthConnectBindingsModule {
+    @Binds
+    @Singleton
+    abstract fun bindHealthConnectWriteRepository(impl: HealthConnectWriteRepositoryImpl): HealthConnectWriteRepository
 }

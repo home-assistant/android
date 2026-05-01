@@ -46,11 +46,7 @@ import kotlin.reflect.KClass
  * [HealthPermission.getReadPermission] / [HealthPermission.getWritePermission] — there is
  * no need to hard-code them.
  */
-sealed class HealthConnectDataType(
-    val key: String,
-    val recordClass: KClass<out Record>,
-    val sensorIds: List<String>,
-) {
+sealed class HealthConnectDataType(val key: String, val recordClass: KClass<out Record>, val sensorIds: List<String>) {
     /** Permission string required to read this data type from Health Connect. */
     val readPermission: String get() = HealthPermission.getReadPermission(recordClass)
 
@@ -250,7 +246,6 @@ sealed class HealthConnectDataType(
          * Resolve a data type by one of its sensor IDs, or `null` when no sensor maps to
          * this ID. A sensor ID always maps to at most one data type.
          */
-        fun fromSensorId(sensorId: String): HealthConnectDataType? =
-            all.firstOrNull { sensorId in it.sensorIds }
+        fun fromSensorId(sensorId: String): HealthConnectDataType? = all.firstOrNull { sensorId in it.sensorIds }
     }
 }
