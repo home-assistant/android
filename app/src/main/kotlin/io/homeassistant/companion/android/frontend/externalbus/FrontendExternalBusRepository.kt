@@ -1,6 +1,6 @@
 package io.homeassistant.companion.android.frontend.externalbus
 
-import io.homeassistant.companion.android.frontend.EvaluateScriptUsage
+import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import io.homeassistant.companion.android.frontend.WebViewAction
 import io.homeassistant.companion.android.frontend.externalbus.incoming.IncomingExternalBusMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.OutgoingExternalBusMessage
@@ -40,7 +40,7 @@ interface FrontendExternalBusRepository {
      *
      * @return The evaluation result from the WebView, or null if the script returns no value
      */
-    @EvaluateScriptUsage
+    @EvaluateJavascriptUsage
     suspend fun evaluateScript(script: String): String?
 
     /**

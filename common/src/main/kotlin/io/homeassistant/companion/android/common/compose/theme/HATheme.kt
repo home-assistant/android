@@ -31,6 +31,8 @@ fun HATheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () 
                 background = colorScheme.colorSurfaceDefault,
                 // Used by ModalBottomSheetDefaults.containerColor
                 surfaceContainerLow = colorScheme.colorSurfaceDefault,
+                // Used by AlertDialog container (DialogTokens.ContainerColor)
+                surfaceContainerHigh = colorScheme.colorSurfaceDefault,
                 // Used for text selection
                 primary = colorScheme.colorOnPrimaryNormal,
                 // Used by Snackbar container (SnackbarTokens.ContainerColor)

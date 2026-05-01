@@ -1,15 +1,28 @@
 package io.homeassistant.companion.android.frontend
 
 import android.net.Uri
+import android.webkit.JsResult
+import android.webkit.ValueCallback
+import android.webkit.WebChromeClient
 import app.cash.turbine.test
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.data.prefs.ZoomSettings
+import io.homeassistant.companion.android.common.util.GestureDirection
+import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
+import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
+import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
+import io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage
+import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
+import io.homeassistant.companion.android.frontend.gesture.FrontendGestureHandler
+import io.homeassistant.companion.android.frontend.gesture.GestureResult
 import io.homeassistant.companion.android.frontend.handler.FrontendBusObserver
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridgeFactory
@@ -38,7 +51,11 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.JsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -54,11 +71,17 @@ class FrontendViewModelTest {
 
     private val webViewClientFactory: HAWebViewClientFactory = mockk(relaxed = true)
     private val frontendBusObserver: FrontendBusObserver = mockk(relaxed = true)
+    private val externalBusRepository: FrontendExternalBusRepository = mockk(relaxed = true)
     private val urlManager: FrontendUrlManager = mockk(relaxed = true)
     private val connectivityCheckRepository: ConnectivityCheckRepository = mockk(relaxed = true)
     private val permissionManager: PermissionManager = mockk(relaxed = true)
     private val frontendJsBridgeFactory: FrontendJsBridgeFactory = mockk(relaxed = true)
     private val downloadManager: FrontendDownloadManager = mockk(relaxed = true)
+    private val gestureHandler: FrontendGestureHandler = mockk(relaxed = true)
+    private val zoomSettingsFlow = MutableStateFlow(ZoomSettings())
+    private val prefsRepository: PrefsRepository = mockk(relaxed = true) {
+        coEvery { this@mockk.zoomSettingsFlow() } returns this@FrontendViewModelTest.zoomSettingsFlow
+    }
 
     private val serverId = 1
     private val testUrlWithAuth = "https://example.com?external_auth=1"
@@ -68,22 +91,32 @@ class FrontendViewModelTest {
         every { frontendBusObserver.messageResults() } returns emptyFlow()
         every { frontendBusObserver.webViewActions() } returns emptyFlow()
         every { connectivityCheckRepository.runChecks(any()) } returns flowOf(ConnectivityCheckState())
+        // Default: storage permission available so download tests don't bail out at the permission gate.
+        // Tests that exercise the deny path override this explicitly.
+        coEvery { permissionManager.checkStoragePermissionForDownload() } returns true
     }
 
     private fun createViewModel(
         serverId: Int = this.serverId,
         path: String? = null,
+        dialogManager: FrontendDialogManager = FrontendDialogManager(),
+        fileChooserManager: FileChooserManager = FileChooserManager(),
     ): FrontendViewModel {
         return FrontendViewModel(
             initialServerId = serverId,
             initialPath = path,
             webViewClientFactory = webViewClientFactory,
             frontendBusObserver = frontendBusObserver,
+            externalBusRepository = externalBusRepository,
             urlManager = urlManager,
             connectivityCheckRepository = connectivityCheckRepository,
             permissionManager = permissionManager,
             frontendJsBridgeFactory = frontendJsBridgeFactory,
             downloadManager = downloadManager,
+            gestureHandler = gestureHandler,
+            prefsRepository = prefsRepository,
+            dialogManager = dialogManager,
+            fileChooserManager = fileChooserManager,
         )
     }
 
@@ -542,6 +575,66 @@ class FrontendViewModelTest {
         }
 
         @Test
+        fun `Given gesture returns SwitchServer when handled then viewState transitions to new server`() = runTest {
+            every { frontendBusObserver.messageResults() } returns emptyFlow()
+            every { urlManager.serverUrlFlow(1, any()) } returns flowOf(
+                UrlLoadResult.Success(url = "https://server1.com?external_auth=1", serverId = 1),
+            )
+            every { urlManager.serverUrlFlow(2, any()) } returns flowOf(
+                UrlLoadResult.Success(url = "https://server2.com?external_auth=1", serverId = 2),
+            )
+            coEvery {
+                gestureHandler.handleGesture(serverId = any(), direction = any(), pointerCount = any())
+            } returns GestureResult.SwitchServer(2)
+
+            val viewModel = createViewModel(serverId = 1)
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            assertEquals(1, viewModel.viewState.value.serverId)
+
+            viewModel.onGesture(GestureDirection.LEFT, pointerCount = 2)
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            assertEquals(2, viewModel.viewState.value.serverId)
+            assertTrue(viewModel.viewState.value.url.contains("server2.com"))
+        }
+
+        @Test
+        fun `Given gesture returns PerformWebViewActionThen when handled then action is emitted and then is executed`() = runTest {
+            every { frontendBusObserver.messageResults() } returns emptyFlow()
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val clearHistory = WebViewAction.ClearHistory()
+            coEvery {
+                gestureHandler.handleGesture(serverId = any(), direction = any(), pointerCount = any())
+            } returns GestureResult.PerformWebViewActionThen(
+                action = clearHistory,
+                then = {
+                    GestureResult.PerformWebViewAction(WebViewAction.Reload())
+                },
+            )
+
+            val viewModel = createViewModel()
+            val actions = mutableListOf<WebViewAction>()
+            val job = backgroundScope.launch { viewModel.webViewActions.collect { actions.add(it) } }
+
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            viewModel.onGesture(GestureDirection.UP, pointerCount = 2)
+
+            // Simulate Screen completing the ClearHistory action
+            clearHistory.result.complete(Unit)
+            advanceUntilIdle()
+
+            assertEquals(2, actions.size)
+            assertInstanceOf(WebViewAction.ClearHistory::class.java, actions[0])
+            assertInstanceOf(WebViewAction.Reload::class.java, actions[1])
+            job.cancel()
+        }
+
+        @Test
         fun `Given open assist settings message result when collected then NavigateToAssistSettings event is emitted`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
@@ -562,6 +655,44 @@ class FrontendViewModelTest {
 
             assertTrue(events.any { it is FrontendEvent.NavigateToAssistSettings })
             job.cancel()
+        }
+
+        @Test
+        fun `Given WriteNfcTag handler event when collected then NavigateToNfcWrite is emitted`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+
+            viewModel.events.test {
+                advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+                messageFlow.emit(FrontendHandlerEvent.WriteNfcTag(messageId = 42, tagId = "tag-abc"))
+
+                assertEquals(FrontendEvent.NavigateToNfcWrite(messageId = 42, tagId = "tag-abc"), awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given onNfcWriteCompleted when called then sends empty-result ResultMessage back to frontend`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+
+            viewModel.onNfcWriteCompleted(messageId = 42)
+            advanceUntilIdle()
+
+            coVerify {
+                externalBusRepository.send(
+                    ResultMessage(id = 42, success = true, result = JsonObject(emptyMap())),
+                )
+            }
         }
     }
 
@@ -732,20 +863,6 @@ class FrontendViewModelTest {
 
             coVerify { permissionManager.checkNotificationPermission(serverId) }
         }
-
-        @Test
-        fun `Given permission dismissed then delegates to permission manager`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
-                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
-            )
-
-            val viewModel = createViewModel()
-            advanceUntilIdle()
-
-            viewModel.clearPendingPermissionRequest()
-
-            verify { permissionManager.clearPendingPermissionRequest() }
-        }
     }
 
     @Nested
@@ -761,6 +878,271 @@ class FrontendViewModelTest {
             advanceUntilIdle()
 
             assertEquals(permissionManager.pendingPermissionRequest, viewModel.pendingPermissionRequest)
+        }
+    }
+
+    @Nested
+    inner class Zoom {
+
+        private fun createViewModelWithPageFinishedCapture(): Pair<FrontendViewModel, () -> Unit> {
+            var capturedPageFinished: (() -> Unit)? = null
+            every {
+                webViewClientFactory.create(
+                    currentUrlFlow = any(),
+                    onFrontendError = any(),
+                    onCrash = any(),
+                    onUrlIntercepted = any(),
+                    onPageFinished = any(),
+                )
+            } answers {
+                // onPageFinished is the 5th of the 6 named arguments (zero-based index 4)
+                capturedPageFinished = arg(4)
+                mockk(relaxed = true)
+            }
+
+            val viewModel = createViewModel()
+            return viewModel to { capturedPageFinished!!.invoke() }
+        }
+
+        @Test
+        fun `Given page finishes then ApplyZoom action is emitted with current settings`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            zoomSettingsFlow.value = ZoomSettings(zoomLevel = 150, pinchToZoomEnabled = true)
+
+            val (viewModel, triggerPageFinished) = createViewModelWithPageFinishedCapture()
+
+            viewModel.webViewActions.test {
+                triggerPageFinished()
+
+                val action = awaitItem() as WebViewAction.ApplyZoom
+                assertEquals(150, action.zoomLevel)
+                assertEquals(true, action.pinchToZoomEnabled)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given page loaded when settings change then ApplyZoom action is emitted without page finish`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val (viewModel, triggerPageFinished) = createViewModelWithPageFinishedCapture()
+
+            viewModel.webViewActions.test {
+                triggerPageFinished()
+                awaitItem() // consume initial emission
+
+                zoomSettingsFlow.value = ZoomSettings(zoomLevel = 150, pinchToZoomEnabled = true)
+
+                val action = awaitItem() as WebViewAction.ApplyZoom
+                assertEquals(150, action.zoomLevel)
+                assertEquals(true, action.pinchToZoomEnabled)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given page finishes again then observer restarts with fresh values`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            zoomSettingsFlow.value = ZoomSettings(zoomLevel = 100, pinchToZoomEnabled = false)
+
+            val (viewModel, triggerPageFinished) = createViewModelWithPageFinishedCapture()
+
+            viewModel.webViewActions.test {
+                triggerPageFinished()
+                val first = awaitItem() as WebViewAction.ApplyZoom
+                assertEquals(100, first.zoomLevel)
+
+                // Settings changed between page loads
+                zoomSettingsFlow.value = ZoomSettings(zoomLevel = 200, pinchToZoomEnabled = true)
+
+                triggerPageFinished()
+                val second = awaitItem() as WebViewAction.ApplyZoom
+                assertEquals(200, second.zoomLevel)
+                assertEquals(true, second.pinchToZoomEnabled)
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+    }
+
+    @Nested
+    inner class JsConfirm {
+
+        private fun captureJsConfirmCallback(): Pair<FrontendViewModel, (String, JsResult) -> Boolean> {
+            val viewModel = createViewModel()
+            val client = viewModel.webChromeClient
+            val callback: (String, JsResult) -> Boolean = { message, result ->
+                // view and url are unused by HAWebChromeClient when message and result are non-null
+                client.onJsConfirm(null, null, message, result)
+            }
+            return viewModel to callback
+        }
+
+        @Test
+        fun `Given JS confirm received then dialog is exposed via pendingDialog`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val (viewModel, triggerJsConfirm) = captureJsConfirmCallback()
+            advanceUntilIdle()
+
+            triggerJsConfirm("Are you sure?", mockk(relaxed = true))
+            advanceUntilIdle()
+
+            val dialog = viewModel.pendingDialog.value
+            assertInstanceOf(FrontendDialog.Confirm::class.java, dialog)
+            assertEquals("Are you sure?", (dialog as FrontendDialog.Confirm).message)
+        }
+
+        @Test
+        fun `Given dialog confirmed then JsResult is confirmed and slot clears`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val (viewModel, triggerJsConfirm) = captureJsConfirmCallback()
+            advanceUntilIdle()
+            val jsResult: JsResult = mockk(relaxed = true)
+
+            triggerJsConfirm("Are you sure?", jsResult)
+            advanceUntilIdle()
+            (viewModel.pendingDialog.value as FrontendDialog.Confirm).onConfirm()
+            advanceUntilIdle()
+
+            verify { jsResult.confirm() }
+            assertEquals(null, viewModel.pendingDialog.value)
+        }
+
+        @Test
+        fun `Given dialog cancelled then JsResult is cancelled and slot clears`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val (viewModel, triggerJsConfirm) = captureJsConfirmCallback()
+            advanceUntilIdle()
+            val jsResult: JsResult = mockk(relaxed = true)
+
+            triggerJsConfirm("Are you sure?", jsResult)
+            advanceUntilIdle()
+            (viewModel.pendingDialog.value as FrontendDialog.Confirm).onCancel()
+            advanceUntilIdle()
+
+            verify { jsResult.cancel() }
+            assertEquals(null, viewModel.pendingDialog.value)
+        }
+
+        @Test
+        fun `Given a dialog already shown when second JS confirm arrives then it queues until first is resolved`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val (viewModel, triggerJsConfirm) = captureJsConfirmCallback()
+            advanceUntilIdle()
+            val firstResult: JsResult = mockk(relaxed = true)
+            val secondResult: JsResult = mockk(relaxed = true)
+
+            triggerJsConfirm("first", firstResult)
+            advanceUntilIdle()
+            triggerJsConfirm("second", secondResult)
+            advanceUntilIdle()
+
+            // Slot is still holding the first dialog; the second has not overwritten it.
+            assertEquals("first", (viewModel.pendingDialog.value as FrontendDialog.Confirm).message)
+
+            (viewModel.pendingDialog.value as FrontendDialog.Confirm).onConfirm()
+            advanceUntilIdle()
+            verify { firstResult.confirm() }
+
+            assertEquals("second", (viewModel.pendingDialog.value as FrontendDialog.Confirm).message)
+            verify(exactly = 0) { secondResult.confirm() }
+            verify(exactly = 0) { secondResult.cancel() }
+        }
+    }
+
+    @Nested
+    inner class FileChooser {
+
+        @Test
+        fun `Given file chooser triggered then pendingFileChooser exposes the params`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+
+            val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
+            val fileChooserParams = mockk<WebChromeClient.FileChooserParams>(relaxed = true)
+
+            val handled = viewModel.webChromeClient.onShowFileChooser(
+                mockk(relaxed = true),
+                filePathCallback,
+                fileChooserParams,
+            )
+            advanceUntilIdle()
+
+            assertTrue(handled)
+            val pending = viewModel.pendingFileChooser.value
+            assertNotNull(pending)
+            assertTrue(pending!!.fileChooserParams === fileChooserParams)
+        }
+
+        @Test
+        fun `Given pending file chooser when result delivered then filePathCallback receives uris and slot clears`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
+
+            viewModel.webChromeClient.onShowFileChooser(
+                mockk(relaxed = true),
+                filePathCallback,
+                mockk(relaxed = true),
+            )
+            advanceUntilIdle()
+
+            val pending = viewModel.pendingFileChooser.value
+            assertNotNull(pending)
+
+            val uris = arrayOf(mockk<Uri>())
+            pending!!.onResult(uris)
+            advanceUntilIdle()
+
+            verify { filePathCallback.onReceiveValue(uris) }
+            assertNull(viewModel.pendingFileChooser.value)
+        }
+
+        @Test
+        fun `Given pending file chooser when user cancels then filePathCallback receives null and slot clears`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
+
+            viewModel.webChromeClient.onShowFileChooser(
+                mockk(relaxed = true),
+                filePathCallback,
+                mockk(relaxed = true),
+            )
+            advanceUntilIdle()
+
+            viewModel.pendingFileChooser.value!!.onResult(null)
+            advanceUntilIdle()
+
+            verify { filePathCallback.onReceiveValue(null) }
+            assertNull(viewModel.pendingFileChooser.value)
         }
     }
 
@@ -931,13 +1313,11 @@ class FrontendViewModelTest {
         }
 
         @Test
-        fun `Given storage permission required when download requested then does not call downloadManager`() = runTest {
+        fun `Given storage permission denied when download requested then does not call downloadManager`() = runTest {
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
-            coEvery {
-                permissionManager.checkStoragePermissionForDownload(any())
-            } returns true
+            coEvery { permissionManager.checkStoragePermissionForDownload() } returns false
 
             val viewModel = createViewModel()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
@@ -953,17 +1333,12 @@ class FrontendViewModelTest {
         }
 
         @Test
-        fun `Given storage permission required when onGranted called then retries download`() = runTest {
+        fun `Given storage permission granted when download requested then proceeds with download`() = runTest {
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
-            val onGrantedSlot = mutableListOf<() -> Unit>()
-            coEvery {
-                permissionManager.checkStoragePermissionForDownload(capture(onGrantedSlot))
-            } returns true
-            coEvery {
-                downloadManager.downloadFile(any(), any(), any(), any())
-            } returns DownloadResult.Forwarded
+            coEvery { permissionManager.checkStoragePermissionForDownload() } returns true
+            coEvery { downloadManager.downloadFile(any(), any(), any(), any()) } returns DownloadResult.Forwarded
 
             val viewModel = createViewModel()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
@@ -973,14 +1348,6 @@ class FrontendViewModelTest {
                 contentDisposition = "attachment",
                 mimetype = "application/pdf",
             )
-
-            coVerify(exactly = 0) { downloadManager.downloadFile(any(), any(), any(), any()) }
-
-            // Simulate permission granted: onGranted retries the download
-            coEvery {
-                permissionManager.checkStoragePermissionForDownload(any())
-            } returns false
-            onGrantedSlot.last().invoke()
             advanceUntilIdle()
 
             coVerify {

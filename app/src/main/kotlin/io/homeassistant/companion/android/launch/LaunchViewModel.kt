@@ -13,6 +13,7 @@ import io.homeassistant.companion.android.automotive.navigation.AutomotiveRoute
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.network.NetworkState
 import io.homeassistant.companion.android.common.data.network.NetworkStatusMonitor
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.ResyncRegistrationWorker.Companion.enqueueResyncRegistration
 import io.homeassistant.companion.android.database.server.Server
@@ -22,8 +23,13 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.onboarding.OnboardingRoute
 import io.homeassistant.companion.android.onboarding.WearOnboardingRoute
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -67,6 +73,7 @@ internal class LaunchViewModel @VisibleForTesting constructor(
     private val workManager: WorkManager,
     private val serverManager: ServerManager,
     private val networkStatusMonitor: NetworkStatusMonitor,
+    private val prefsRepository: PrefsRepository,
     private val hasLocationTrackingSupport: Boolean,
     isAutomotive: Boolean,
     isFullFlavor: Boolean,
@@ -78,6 +85,7 @@ internal class LaunchViewModel @VisibleForTesting constructor(
         workManager: WorkManager,
         serverManager: ServerManager,
         networkStatusMonitor: NetworkStatusMonitor,
+        prefsRepository: PrefsRepository,
         @LocationTrackingSupport hasLocationTrackingSupport: Boolean,
         @IsAutomotive isAutomotive: Boolean,
     ) : this(
@@ -85,6 +93,7 @@ internal class LaunchViewModel @VisibleForTesting constructor(
         workManager,
         serverManager,
         networkStatusMonitor,
+        prefsRepository,
         hasLocationTrackingSupport,
         isAutomotive = isAutomotive,
         isFullFlavor = BuildConfig.FLAVOR == "full",
@@ -101,6 +110,11 @@ internal class LaunchViewModel @VisibleForTesting constructor(
 
     private val _uiState = MutableStateFlow<LaunchUiState>(LaunchUiState.Loading)
     val uiState = _uiState.asStateFlow()
+
+    /** Emits the current fullscreen preference, reacting to changes in real-time. */
+    val isFullScreen: StateFlow<Boolean> = flow {
+        emitAll(prefsRepository.fullScreenEnabledFlow())
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = false)
 
     init {
         viewModelScope.launch {

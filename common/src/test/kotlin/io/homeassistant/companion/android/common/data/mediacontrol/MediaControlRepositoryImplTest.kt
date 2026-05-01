@@ -316,7 +316,6 @@ class MediaControlRepositoryImplTest {
                 awaitComplete()
             }
         }
-
     }
 
     @Nested

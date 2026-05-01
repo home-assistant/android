@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.onboarding.connection
 
 import android.net.Uri
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -9,9 +9,9 @@ import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.onboarding.connection.navigation.HandleConnectionNavigationEvents
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
+import io.homeassistant.companion.android.testing.unit.TestSharedFlow
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
@@ -38,7 +38,7 @@ class ConnectionNavigationTest {
 
     @Test
     fun `Given HandleConnectionNavigationEvents when viewModel emits Authenticated then invoke onAuthenticated`() = runTest {
-        val sharedFlow = MutableSharedFlow<ConnectionNavigationEvent>()
+        val sharedFlow = TestSharedFlow<ConnectionNavigationEvent>()
 
         val viewModel = mockk<ConnectionViewModel> {
             every { navigationEventsFlow } returns sharedFlow
@@ -65,6 +65,8 @@ class ConnectionNavigationTest {
                 sharedFlow.emit(this)
             }
 
+        composeTestRule.awaitIdle()
+
         assertEquals(event.url, onAuthenticatedUrl)
         assertEquals(event.authCode, onAuthenticatedCode)
         assertEquals(event.requiredMTLS, onRequiredMTLS)
@@ -72,7 +74,7 @@ class ConnectionNavigationTest {
 
     @Test
     fun `Given HandleConnectionNavigationEvents when viewModel emits OpenExternalLink then invoke onOpenExternalLink`() = runTest {
-        val sharedFlow = MutableSharedFlow<ConnectionNavigationEvent>()
+        val sharedFlow = TestSharedFlow<ConnectionNavigationEvent>()
 
         val viewModel = mockk<ConnectionViewModel> {
             every { navigationEventsFlow } returns sharedFlow
@@ -96,6 +98,8 @@ class ConnectionNavigationTest {
             .apply {
                 sharedFlow.emit(this)
             }
+
+        composeTestRule.awaitIdle()
 
         assertEquals(event.url, onOpenExternalLink)
     }

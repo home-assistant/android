@@ -40,6 +40,18 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                 with(defaultConfig) {
                     minSdk = libs.versions.androidSdk.min.get().toInt()
                     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+                    val requestedAbis = project.findProperty("abis")
+                        ?.toString()
+                        ?.split(",")
+                        ?.map { it.trim() }
+                        ?.filter { it.isNotEmpty() }
+                        .orEmpty()
+                    if (requestedAbis.isNotEmpty()) {
+                        ndk {
+                            abiFilters.clear()
+                            abiFilters.addAll(requestedAbis)
+                        }
+                    }
                 }
 
                 buildFeatures.buildConfig = true

@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.common.util
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -29,7 +28,7 @@ object DisabledLocationHandler {
     }
 
     fun isLocationEnabled(context: Context): Boolean {
-        val lm: LocationManager = context.getSystemService()!!
+        val lm: LocationManager = context.getSystemService() ?: return false
 
         return if (VERSION.SDK_INT >= VERSION_CODES.P) {
             lm.isLocationEnabled
@@ -56,18 +55,96 @@ object DisabledLocationHandler {
         }
     }
 
-    fun removeLocationDisabledWarning(activity: Activity) {
-        NotificationManagerCompat.from(activity)
+    fun removeLocationDisabledWarning(context: Context) {
+        NotificationManagerCompat.from(context)
             .cancel(DISABLED_LOCATION_WARN_ID, DISABLED_LOCATION_WARN_ID.hashCode())
     }
 
-    // Suppressing QueryPermissionsNeeded: System Settings intents are always visible per Android's
-    // package visibility documentation, and the app has QUERY_ALL_PACKAGES permission.
+    /**
+     * Creates an [Intent] that opens the system location settings screen.
+     *
+     * Falls back to general settings if the location settings activity is not available.
+     */
     @SuppressLint("QueryPermissionsNeeded")
+    fun locationSettingsIntent(context: Context): Intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS).apply {
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
+        addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+        if (resolveActivity(context.packageManager) == null) {
+            action = Settings.ACTION_SETTINGS
+        }
+    }
+
+    /**
+     * Shows a persistent notification warning the user that location is disabled,
+     * listing the [settings] that require it. Tapping the notification opens location settings.
+     *
+     * No-ops if the notification is already visible.
+     */
+    @SuppressLint("MissingPermission")
+    fun showLocationDisabledNotification(context: Context, settings: Array<String>) {
+        val notificationManager = NotificationManagerCompat.from(context)
+        if (notificationManager.getActiveNotification(
+                DISABLED_LOCATION_WARN_ID,
+                DISABLED_LOCATION_WARN_ID.hashCode(),
+            ) != null
+        ) {
+            return
+        }
+
+        val parameters = settings.joinToString(separator = "\n") { "- $it" }
+
+        if (VERSION.SDK_INT >= VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_LOCATION_DISABLED,
+                context.applicationContext.getString(commonR.string.location_warn_channel),
+                NotificationManager.IMPORTANCE_DEFAULT,
+            )
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            locationSettingsIntent(context),
+            PendingIntent.FLAG_IMMUTABLE,
+        )
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_LOCATION_DISABLED)
+            .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
+            .setColor(Color.RED)
+            .setOngoing(true)
+            .setContentTitle(context.applicationContext.getString(commonR.string.location_disabled_title))
+            .setContentText(
+                context.applicationContext.getString(
+                    commonR.string.location_disabled_notification_short_message,
+                ),
+            )
+            .setStyle(
+                NotificationCompat.BigTextStyle()
+                    .bigText(
+                        context.applicationContext.getString(
+                            commonR.string.location_disabled_notification_message,
+                            parameters,
+                        ),
+                    ),
+            )
+            .setContentIntent(pendingIntent)
+            .build()
+
+        notificationManager.notify(DISABLED_LOCATION_WARN_ID, DISABLED_LOCATION_WARN_ID.hashCode(), notification)
+    }
+
+    /**
+     * Shows a dialog warning the user that location is disabled, listing the [settings] that
+     * require it. The positive button opens location settings.
+     *
+     * @param withDisableOption when true and [callback] is provided, the negative button label
+     *   becomes a "disable" option that triggers [callback] instead of simply dismissing.
+     */
     fun showLocationDisabledWarnDialog(
         context: Context,
         settings: Array<String>,
-        showAsNotification: Boolean = false,
         withDisableOption: Boolean = false,
         callback: (() -> Unit)? = null,
     ) {
@@ -78,92 +155,26 @@ object DisabledLocationHandler {
             commonR.string.confirm_negative
         }
 
-        val intent = Intent(
-            Settings.ACTION_LOCATION_SOURCE_SETTINGS,
-        )
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
-        intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+        val parameters = settings.joinToString(separator = "\n") { "- $it" }
 
-        if (intent.resolveActivity(context.packageManager) == null) {
-            intent.action = Settings.ACTION_SETTINGS
-        }
-
-        var parameters = ""
-        for (setting in settings) {
-            parameters += "- $setting\n"
-        }
-
-        if ((!withDisableOption || callback == null) && showAsNotification) {
-            val notificationManager = NotificationManagerCompat.from(context)
-            if (notificationManager.getActiveNotification(
-                    DISABLED_LOCATION_WARN_ID,
-                    DISABLED_LOCATION_WARN_ID.hashCode(),
-                ) ==
-                null
-            ) {
-                if (VERSION.SDK_INT >= VERSION_CODES.O) {
-                    val channel =
-                        NotificationChannel(
-                            CHANNEL_LOCATION_DISABLED,
-                            context.applicationContext.getString(commonR.string.location_warn_channel),
-                            NotificationManager.IMPORTANCE_DEFAULT,
-                        )
-                    notificationManager.createNotificationChannel(channel)
-                }
-
-                val pendingIntent = PendingIntent.getActivity(
-                    context,
-                    0,
-                    intent,
-                    PendingIntent.FLAG_IMMUTABLE,
-                )
-
-                val notificationBuilder = NotificationCompat.Builder(context, CHANNEL_LOCATION_DISABLED)
-                    .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
-                    .setColor(Color.RED)
-                    .setOngoing(true)
-                    .setContentTitle(context.applicationContext.getString(commonR.string.location_disabled_title))
-                    .setContentText(
-                        context.applicationContext.getString(
-                            commonR.string.location_disabled_notification_short_message,
-                        ),
-                    )
-                    .setStyle(
-                        NotificationCompat.BigTextStyle()
-                            .bigText(
-                                context.applicationContext.getString(
-                                    commonR.string.location_disabled_notification_message,
-                                    parameters,
-                                ),
-                            ),
-                    )
-                    .setContentIntent(pendingIntent)
-
-                NotificationManagerCompat.from(
-                    context,
-                ).notify(DISABLED_LOCATION_WARN_ID, DISABLED_LOCATION_WARN_ID.hashCode(), notificationBuilder.build())
-            }
-        } else {
-            AlertDialog.Builder(context)
-                .setTitle(commonR.string.location_disabled_title)
-                .setMessage(
+        AlertDialog.Builder(context)
+            .setTitle(commonR.string.location_disabled_title)
+            .setMessage(
+                context.applicationContext.getString(
+                    commonR.string.location_disabled_dialog_message,
                     context.applicationContext.getString(
-                        commonR.string.location_disabled_dialog_message,
-                        context.applicationContext.getString(
-                            commonR.string.location_disabled_notification_message,
-                            parameters,
-                        ),
+                        commonR.string.location_disabled_notification_message,
+                        parameters,
                     ),
-                )
-                .setPositiveButton(positionTextId) { _, _ ->
-                    context.applicationContext.startActivity(intent)
+                ),
+            )
+            .setPositiveButton(positionTextId) { _, _ ->
+                context.applicationContext.startActivity(locationSettingsIntent(context))
+            }
+            .setNegativeButton(negativeTextId) { _, _ ->
+                if (withDisableOption && callback != null) {
+                    callback()
                 }
-                .setNegativeButton(negativeTextId) { _, _ ->
-                    if (withDisableOption && callback != null) {
-                        callback()
-                    }
-                }.show()
-        }
+            }.show()
     }
 }
