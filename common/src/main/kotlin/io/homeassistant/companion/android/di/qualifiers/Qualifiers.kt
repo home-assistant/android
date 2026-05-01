@@ -31,6 +31,15 @@ annotation class NamedThemesStorage
 annotation class NamedWearStorage
 
 /**
+ * Qualifier for [LocalStorage] dependencies that persist Health Connect Changes API tokens
+ * (one per data type) so the changes worker can resume from a known position across process
+ * restarts without redoing a full sensor sweep.
+ */
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class NamedHealthConnectStorage
+
+/**
  * Qualifier for a [String] dependency providing device manufacturer information.
  */
 @Qualifier

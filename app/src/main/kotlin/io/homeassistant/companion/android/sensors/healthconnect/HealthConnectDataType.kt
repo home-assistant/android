@@ -207,34 +207,44 @@ sealed class HealthConnectDataType(val key: String, val recordClass: KClass<out 
     )
 
     companion object {
-        /** All known data types. Order is not significant. */
-        val all: List<HealthConnectDataType> = listOf(
-            ActiveCaloriesBurned,
-            BasalBodyTemperature,
-            BasalMetabolicRate,
-            BloodGlucose,
-            BloodPressure,
-            BodyFat,
-            BodyTemperature,
-            BodyWaterMass,
-            BoneMass,
-            Distance,
-            ElevationGained,
-            FloorsClimbed,
-            HeartRate,
-            HeartRateVariability,
-            Height,
-            Hydration,
-            LeanBodyMass,
-            OxygenSaturation,
-            RespiratoryRate,
-            RestingHeartRate,
-            Sleep,
-            Steps,
-            TotalCaloriesBurned,
-            Vo2Max,
-            Weight,
-        )
+        /**
+         * All known data types. Order is not significant.
+         *
+         * Wrapped in [lazy] because the sealed-class objects above initialize as the outer
+         * class loads, and a non-lazy `listOf(...)` here can race that ordering on the JVM
+         * — leaving null entries in the list when the companion is touched first (e.g. from
+         * a unit test that imports a single nested object). Deferring the reads until first
+         * access lets every nested object finish construction before we capture references.
+         */
+        val all: List<HealthConnectDataType> by lazy {
+            listOf(
+                ActiveCaloriesBurned,
+                BasalBodyTemperature,
+                BasalMetabolicRate,
+                BloodGlucose,
+                BloodPressure,
+                BodyFat,
+                BodyTemperature,
+                BodyWaterMass,
+                BoneMass,
+                Distance,
+                ElevationGained,
+                FloorsClimbed,
+                HeartRate,
+                HeartRateVariability,
+                Height,
+                Hydration,
+                LeanBodyMass,
+                OxygenSaturation,
+                RespiratoryRate,
+                RestingHeartRate,
+                Sleep,
+                Steps,
+                TotalCaloriesBurned,
+                Vo2Max,
+                Weight,
+            )
+        }
 
         /**
          * Resolve a data type by its FCM payload key, or `null` when the key is unknown.

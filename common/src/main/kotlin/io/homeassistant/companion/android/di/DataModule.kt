@@ -33,6 +33,7 @@ import io.homeassistant.companion.android.common.util.getSharedPreferencesSuspen
 import io.homeassistant.companion.android.common.util.tts.AndroidTextToSpeechEngine
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
 import io.homeassistant.companion.android.di.qualifiers.NamedDeviceId
+import io.homeassistant.companion.android.di.qualifiers.NamedHealthConnectStorage
 import io.homeassistant.companion.android.di.qualifiers.NamedInstallId
 import io.homeassistant.companion.android.di.qualifiers.NamedIntegrationStorage
 import io.homeassistant.companion.android.di.qualifiers.NamedManufacturer
@@ -111,6 +112,13 @@ internal abstract class DataModule {
         @Singleton
         fun provideWearPrefsLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl {
             appContext.getSharedPreferencesSuspend("wear_0")
+        }
+
+        @Provides
+        @NamedHealthConnectStorage
+        @Singleton
+        fun provideHealthConnectLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl {
+            appContext.getSharedPreferencesSuspend("health_connect_0")
         }
 
         @Provides
