@@ -6,7 +6,6 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,8 +31,6 @@ import androidx.compose.material.Checkbox
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Divider
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.RadioButton
@@ -46,12 +43,7 @@ import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.contentColorFor
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.rememberScaffoldState
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -65,12 +57,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.colorResource
@@ -80,20 +67,15 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.composable.HAHint
-import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
-import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
-import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.sensor.SensorSetting
@@ -105,7 +87,6 @@ import io.homeassistant.companion.android.settings.sensor.SensorDetailViewModel
 import io.homeassistant.companion.android.settings.views.SettingsSubheader
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 import io.homeassistant.companion.android.util.compose.TransparentChip
-import io.homeassistant.companion.android.util.compose.safeScreenHeight
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import kotlinx.coroutines.flow.launchIn
@@ -189,7 +170,7 @@ fun SensorDetailView(
                     SensorSettingType.LIST_ZONES,
                     SensorSettingType.LIST_BEACONS,
                 )
-                if (isMultiSelectList && !dialogState.loading) {
+                if (isMultiSelectList) {
                     SensorDetailSettingSheet(
                         title = viewModel.getSettingTranslatedTitle(dialogState.setting.name),
                         state = dialogState,
@@ -660,7 +641,7 @@ fun SensorDetailSettingDialog(
                             onClick = { isChecked ->
                                 if (state.setting.valueType == SensorSettingType.LIST) {
                                     inputValue.value = id
-                                    onSubmit(state.copy().apply { setting.value = inputValue.value })
+                                    onSubmit(state.copy(setting = state.setting.copy(value = inputValue.value)))
                                 } else {
                                     if (checkedValue.contains(id) && !isChecked) {
                                         checkedValue.remove(id)
@@ -696,9 +677,9 @@ fun SensorDetailSettingDialog(
         } else if (state.setting.valueType != SensorSettingType.LIST) {
             {
                 if (listSettingDialog) {
-                    inputValue.value = checkedValue.joinToString().replace("[", "").replace("]", "")
+                    inputValue.value = joinSelectedValues(checkedValue)
                 }
-                onSubmit(state.copy().apply { setting.value = inputValue.value })
+                onSubmit(state.copy(setting = state.setting.copy(value = inputValue.value)))
             }
         } else { // list is saved when selecting a value
             null
@@ -771,146 +752,6 @@ fun SensorDetailUpdateInfoDialog(
     )
 }
 
-/**
- * Bottom sheet for multi-select allow list sensor settings (apps, bluetooth, zones, beacons).
- * Uses [HAModalBottomSheet] following the Entity picker pattern with search, checkboxes,
- * and cancel/save actions.
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SensorDetailSettingSheet(
-    title: String,
-    state: SensorDetailViewModel.Companion.SettingDialogState,
-    onDismiss: () -> Unit,
-    onSave: (SensorDetailViewModel.Companion.SettingDialogState) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val checkedValue = remember {
-        mutableStateListOf<String>().also { it.addAll(state.entriesSelected) }
-    }
-    var searchQuery by remember { mutableStateOf("") }
-    val filteredEntries = remember(state.entries, searchQuery) {
-        filterSettingEntries(state.entries, searchQuery)
-    }
-    val showSearch = state.entries.size > 10
-
-    val bottomSheetState = rememberStandardBottomSheetState(skipHiddenState = false)
-    val screenHeight = safeScreenHeight() - HADimens.SPACE16
-
-    val consumeFlingNestedScrollConnection = remember {
-        object : NestedScrollConnection {
-            override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset =
-                available
-
-            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity = available
-        }
-    }
-
-    HAModalBottomSheet(
-        bottomSheetState = bottomSheetState,
-        modifier = modifier,
-        onDismissRequest = onDismiss,
-    ) {
-        Column(
-            modifier = Modifier
-                .height(screenHeight)
-                .nestedScroll(consumeFlingNestedScrollConnection)
-                .pointerInput(Unit) {
-                    detectVerticalDragGestures { _, _ -> }
-                },
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.h6,
-                modifier = Modifier.padding(
-                    horizontal = HADimens.SPACE4,
-                    vertical = HADimens.SPACE3,
-                ),
-            )
-            if (showSearch) {
-                SettingSearchField(
-                    query = searchQuery,
-                    onQueryChange = { searchQuery = it },
-                )
-            }
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                items(filteredEntries, key = { (id) -> id }) { (id, entry) ->
-                    SensorDetailSettingRow(
-                        label = entry,
-                        checked = checkedValue.contains(id),
-                        multiple = true,
-                        onClick = { isChecked ->
-                            if (checkedValue.contains(id) && !isChecked) {
-                                checkedValue.remove(id)
-                            } else if (!checkedValue.contains(id) && isChecked) {
-                                checkedValue.add(id)
-                            }
-                        },
-                    )
-                }
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = HADimens.SPACE4, vertical = HADimens.SPACE3),
-                horizontalArrangement = Arrangement.End,
-            ) {
-                HAPlainButton(
-                    text = stringResource(android.R.string.cancel),
-                    onClick = onDismiss,
-                )
-                Spacer(modifier = Modifier.width(HADimens.SPACE2))
-                HAFilledButton(
-                    text = stringResource(commonR.string.save),
-                    onClick = {
-                        val joinedValue = checkedValue.joinToString().replace("[", "").replace("]", "")
-                        onSave(state.copy().apply { setting.value = joinedValue })
-                    },
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun SettingSearchField(query: String, onQueryChange: (String) -> Unit, modifier: Modifier = Modifier) {
-    TextField(
-        value = query,
-        onValueChange = onQueryChange,
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        singleLine = true,
-        label = { Text(stringResource(commonR.string.search)) },
-        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-        trailingIcon = if (query.isNotBlank()) {
-            {
-                IconButton(onClick = { onQueryChange("") }) {
-                    Icon(
-                        Icons.Filled.Clear,
-                        contentDescription = stringResource(commonR.string.clear_search),
-                    )
-                }
-            }
-        } else {
-            null
-        },
-    )
-}
-
-/**
- * Filters setting entries by matching the query against entry labels (case-insensitive).
- * Returns all entries when the query is blank.
- */
-internal fun filterSettingEntries(entries: List<Pair<String, String>>, query: String): List<Pair<String, String>> {
-    val trimmed = query.trim()
-    return if (trimmed.isBlank()) {
-        entries
-    } else {
-        entries.filter { (_, label) -> label.contains(trimmed, ignoreCase = true) }
-    }
-}
-
 @Composable
 fun SensorDetailSettingRow(
     label: String,
@@ -945,13 +786,7 @@ fun SensorDetailSettingRow(
             )
         }
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = primaryText,
-                style = HATextStyle.Body.copy(
-                    textAlign = TextAlign.Start,
-                    color = LocalHAColorScheme.current.colorTextPrimary,
-                ),
-            )
+            Text(text = primaryText)
             if (secondaryText != null) {
                 Spacer(Modifier.height(HADimens.SPACE1))
                 Text(
