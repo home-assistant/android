@@ -1,8 +1,12 @@
 package io.homeassistant.companion.android.sensors.healthconnect
 
+import androidx.health.connect.client.records.CyclingPedalingCadenceRecord
+import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
+import androidx.health.connect.client.records.PowerRecord
 import androidx.health.connect.client.records.Record
 import androidx.health.connect.client.records.SleepSessionRecord
+import androidx.health.connect.client.records.SpeedRecord
 import java.time.Instant
 
 /**
@@ -106,6 +110,15 @@ interface HealthConnectWriteRepository {
         clientRecordId: String? = null,
     ): HealthConnectWriteResult
 
+    suspend fun writeExerciseSession(
+        startTime: Instant,
+        endTime: Instant,
+        exerciseType: Int = ExerciseSessionRecord.EXERCISE_TYPE_OTHER_WORKOUT,
+        title: String? = null,
+        notes: String? = null,
+        clientRecordId: String? = null,
+    ): HealthConnectWriteResult
+
     suspend fun writeFloorsClimbed(
         startTime: Instant,
         endTime: Instant,
@@ -189,4 +202,25 @@ interface HealthConnectWriteRepository {
     ): HealthConnectWriteResult
 
     suspend fun writeWeight(time: Instant, kilograms: Double, clientRecordId: String? = null): HealthConnectWriteResult
+
+    suspend fun writeSpeed(
+        startTime: Instant,
+        endTime: Instant,
+        samples: List<SpeedRecord.Sample>,
+        clientRecordId: String? = null,
+    ): HealthConnectWriteResult
+
+    suspend fun writePower(
+        startTime: Instant,
+        endTime: Instant,
+        samples: List<PowerRecord.Sample>,
+        clientRecordId: String? = null,
+    ): HealthConnectWriteResult
+
+    suspend fun writeCyclingPedalingCadence(
+        startTime: Instant,
+        endTime: Instant,
+        samples: List<CyclingPedalingCadenceRecord.Sample>,
+        clientRecordId: String? = null,
+    ): HealthConnectWriteResult
 }

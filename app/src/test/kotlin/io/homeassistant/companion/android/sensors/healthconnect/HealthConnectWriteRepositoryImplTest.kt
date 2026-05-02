@@ -5,13 +5,19 @@ import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
 import androidx.health.connect.client.records.BloodPressureRecord
+import androidx.health.connect.client.records.CyclingPedalingCadenceRecord
+import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.HydrationRecord
+import androidx.health.connect.client.records.PowerRecord
 import androidx.health.connect.client.records.Record
 import androidx.health.connect.client.records.SleepSessionRecord
+import androidx.health.connect.client.records.SpeedRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.WeightRecord
 import androidx.health.connect.client.response.InsertRecordsResponse
+import androidx.health.connect.client.units.Power
+import androidx.health.connect.client.units.Velocity
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -169,6 +175,29 @@ class HealthConnectWriteRepositoryImplTest {
     }
 
     @Test
+    fun `writeExerciseSession builds ExerciseSessionRecord with type and metadata`() = runTest {
+        val captured = slot<List<Record>>()
+        coEvery { client.insertRecords(capture(captured)) } returns InsertRecordsResponse(listOf("id-ex"))
+
+        repository.writeExerciseSession(
+            startTime = now,
+            endTime = later,
+            exerciseType = ExerciseSessionRecord.EXERCISE_TYPE_RUNNING,
+            title = "Evening run",
+            notes = "felt great",
+            clientRecordId = "ha-run-1",
+        )
+
+        val record = captured.captured.single() as ExerciseSessionRecord
+        assertEquals(now, record.startTime)
+        assertEquals(later, record.endTime)
+        assertEquals(ExerciseSessionRecord.EXERCISE_TYPE_RUNNING, record.exerciseType)
+        assertEquals("Evening run", record.title)
+        assertEquals("felt great", record.notes)
+        assertEquals("ha-run-1", record.metadata.clientRecordId)
+    }
+
+    @Test
     fun `writeSleep forwards stages and metadata`() = runTest {
         val captured = slot<List<Record>>()
         coEvery { client.insertRecords(capture(captured)) } returns InsertRecordsResponse(listOf("id-sleep"))
@@ -194,6 +223,66 @@ class HealthConnectWriteRepositoryImplTest {
         assertEquals("felt rested", record.notes)
         assertEquals(stages, record.stages)
         assertEquals("sleep-1", record.metadata.clientRecordId)
+    }
+
+    @Test
+    fun `writeSpeed builds SpeedRecord with samples`() = runTest {
+        val captured = slot<List<Record>>()
+        coEvery { client.insertRecords(capture(captured)) } returns InsertRecordsResponse(listOf("id-sp"))
+
+        val samples = listOf(
+            SpeedRecord.Sample(now, Velocity.metersPerSecond(3.0)),
+            SpeedRecord.Sample(now.plusSeconds(60), Velocity.metersPerSecond(4.5)),
+        )
+        repository.writeSpeed(now, later, samples)
+
+        val record = captured.captured.single() as SpeedRecord
+        assertEquals(samples, record.samples)
+    }
+
+    @Test
+    fun `writeSpeed rejects empty sample list`() = runTest {
+        val result = repository.writeSpeed(now, later, samples = emptyList())
+        assertTrue(result is HealthConnectWriteResult.InvalidPayload)
+    }
+
+    @Test
+    fun `writePower builds PowerRecord with samples`() = runTest {
+        val captured = slot<List<Record>>()
+        coEvery { client.insertRecords(capture(captured)) } returns InsertRecordsResponse(listOf("id-pw"))
+
+        val samples = listOf(PowerRecord.Sample(now, Power.watts(220.0)))
+        repository.writePower(now, later, samples)
+
+        val record = captured.captured.single() as PowerRecord
+        assertEquals(samples, record.samples)
+    }
+
+    @Test
+    fun `writePower rejects empty sample list`() = runTest {
+        val result = repository.writePower(now, later, samples = emptyList())
+        assertTrue(result is HealthConnectWriteResult.InvalidPayload)
+    }
+
+    @Test
+    fun `writeCyclingPedalingCadence builds the record with rpm samples`() = runTest {
+        val captured = slot<List<Record>>()
+        coEvery { client.insertRecords(capture(captured)) } returns InsertRecordsResponse(listOf("id-rpm"))
+
+        val samples = listOf(
+            CyclingPedalingCadenceRecord.Sample(now, 88.0),
+            CyclingPedalingCadenceRecord.Sample(now.plusSeconds(30), 92.0),
+        )
+        repository.writeCyclingPedalingCadence(now, later, samples)
+
+        val record = captured.captured.single() as CyclingPedalingCadenceRecord
+        assertEquals(samples, record.samples)
+    }
+
+    @Test
+    fun `writeCyclingPedalingCadence rejects empty sample list`() = runTest {
+        val result = repository.writeCyclingPedalingCadence(now, later, samples = emptyList())
+        assertTrue(result is HealthConnectWriteResult.InvalidPayload)
     }
 
     @Test

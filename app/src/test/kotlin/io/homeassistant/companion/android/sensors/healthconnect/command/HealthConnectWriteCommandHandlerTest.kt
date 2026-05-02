@@ -161,6 +161,199 @@ class HealthConnectWriteCommandHandlerTest {
     }
 
     @Test
+    fun `exercise_session payload dispatches with type slug parsed to int`() = runTest {
+        coEvery {
+            repository.writeExerciseSession(any(), any(), any(), any(), any(), any())
+        } returns HealthConnectWriteResult.Success(listOf("id-ex"))
+
+        handler.handle(
+            mapOf(
+                "data_type" to "exercise_session",
+                "exercise_type" to "running",
+                "start_time" to "2026-05-02T11:00:00Z",
+                "end_time" to "2026-05-02T11:30:00Z",
+                "title" to "Evening run",
+            ),
+        )
+
+        coVerify {
+            repository.writeExerciseSession(
+                startTime = Instant.parse("2026-05-02T11:00:00Z"),
+                endTime = Instant.parse("2026-05-02T11:30:00Z"),
+                exerciseType = androidx.health.connect.client.records.ExerciseSessionRecord.EXERCISE_TYPE_RUNNING,
+                title = "Evening run",
+                notes = null,
+                clientRecordId = null,
+            )
+        }
+    }
+
+    @Test
+    fun `exercise_session payload defaults exercise_type to other workout`() = runTest {
+        coEvery {
+            repository.writeExerciseSession(any(), any(), any(), any(), any(), any())
+        } returns HealthConnectWriteResult.Success(listOf("id-ex"))
+
+        handler.handle(
+            mapOf(
+                "data_type" to "exercise_session",
+                "start_time" to "2026-05-02T11:00:00Z",
+                "end_time" to "2026-05-02T11:30:00Z",
+            ),
+        )
+
+        coVerify {
+            repository.writeExerciseSession(
+                startTime = any(),
+                endTime = any(),
+                exerciseType = androidx.health.connect.client.records.ExerciseSessionRecord.EXERCISE_TYPE_OTHER_WORKOUT,
+                title = null,
+                notes = null,
+                clientRecordId = null,
+            )
+        }
+    }
+
+    @Test
+    fun `unknown exercise_type slug returns InvalidPayload`() = runTest {
+        val result = handler.handle(
+            mapOf(
+                "data_type" to "exercise_session",
+                "exercise_type" to "underwater_basket_weaving",
+            ),
+        )
+        assertTrue(result is HealthConnectWriteResult.InvalidPayload)
+    }
+
+    @Test
+    fun `speed payload dispatches with m_per_s default unit`() = runTest {
+        coEvery { repository.writeSpeed(any(), any(), any(), any()) } returns
+            HealthConnectWriteResult.Success(listOf("id-sp"))
+
+        handler.handle(
+            mapOf(
+                "data_type" to "speed",
+                "start_time" to "2026-05-02T11:00:00Z",
+                "end_time" to "2026-05-02T11:30:00Z",
+                "samples" to """[{"time":"2026-05-02T11:00:00Z","value":3.0}]""",
+            ),
+        )
+
+        coVerify {
+            repository.writeSpeed(
+                startTime = Instant.parse("2026-05-02T11:00:00Z"),
+                endTime = Instant.parse("2026-05-02T11:30:00Z"),
+                samples = match { it.size == 1 && it.single().speed.inMetersPerSecond == 3.0 },
+                clientRecordId = null,
+            )
+        }
+    }
+
+    @Test
+    fun `speed payload converts km_per_h to m_per_s via HC factory`() = runTest {
+        coEvery { repository.writeSpeed(any(), any(), any(), any()) } returns
+            HealthConnectWriteResult.Success(listOf("id-sp"))
+
+        handler.handle(
+            mapOf(
+                "data_type" to "speed",
+                "unit" to "km/h",
+                "samples" to """[{"time":"2026-05-02T11:00:00Z","value":36.0}]""",
+            ),
+        )
+
+        coVerify {
+            repository.writeSpeed(
+                startTime = any(),
+                endTime = any(),
+                // 36 km/h = 10 m/s
+                samples = match { it.single().speed.inMetersPerSecond in 9.99..10.01 },
+                clientRecordId = null,
+            )
+        }
+    }
+
+    @Test
+    fun `unknown speed unit returns InvalidPayload`() = runTest {
+        val result = handler.handle(
+            mapOf(
+                "data_type" to "speed",
+                "unit" to "knots",
+                "samples" to """[{"time":"2026-05-02T11:00:00Z","value":1.0}]""",
+            ),
+        )
+        assertTrue(result is HealthConnectWriteResult.InvalidPayload)
+    }
+
+    @Test
+    fun `power payload dispatches with watts default unit`() = runTest {
+        coEvery { repository.writePower(any(), any(), any(), any()) } returns
+            HealthConnectWriteResult.Success(listOf("id-pw"))
+
+        handler.handle(
+            mapOf(
+                "data_type" to "power",
+                "samples" to """[{"time":"2026-05-02T11:00:00Z","value":220.0}]""",
+            ),
+        )
+
+        coVerify {
+            repository.writePower(
+                startTime = any(),
+                endTime = any(),
+                samples = match { it.single().power.inWatts == 220.0 },
+                clientRecordId = null,
+            )
+        }
+    }
+
+    @Test
+    fun `cycling_pedaling_cadence payload dispatches with raw rpm`() = runTest {
+        coEvery { repository.writeCyclingPedalingCadence(any(), any(), any(), any()) } returns
+            HealthConnectWriteResult.Success(listOf("id-rpm"))
+
+        handler.handle(
+            mapOf(
+                "data_type" to "cycling_pedaling_cadence",
+                "unit" to "rpm",
+                "samples" to """[{"time":"2026-05-02T11:00:00Z","value":92.0}]""",
+            ),
+        )
+
+        coVerify {
+            repository.writeCyclingPedalingCadence(
+                startTime = any(),
+                endTime = any(),
+                samples = match { it.single().revolutionsPerMinute == 92.0 },
+                clientRecordId = null,
+            )
+        }
+    }
+
+    @Test
+    fun `cycling_pedaling_cadence rejects unknown unit`() = runTest {
+        val result = handler.handle(
+            mapOf(
+                "data_type" to "cycling_pedaling_cadence",
+                "unit" to "rps",
+                "samples" to """[{"time":"2026-05-02T11:00:00Z","value":1.0}]""",
+            ),
+        )
+        assertTrue(result is HealthConnectWriteResult.InvalidPayload)
+    }
+
+    @Test
+    fun `series payload requires at least one sample`() = runTest {
+        val result = handler.handle(
+            mapOf(
+                "data_type" to "speed",
+                "samples" to "[]",
+            ),
+        )
+        assertTrue(result is HealthConnectWriteResult.InvalidPayload)
+    }
+
+    @Test
     fun `permission denial from repository propagates to caller`() = runTest {
         coEvery { repository.writeWeight(any(), any(), any()) } returns
             HealthConnectWriteResult.MissingPermission("perm.WRITE_WEIGHT")

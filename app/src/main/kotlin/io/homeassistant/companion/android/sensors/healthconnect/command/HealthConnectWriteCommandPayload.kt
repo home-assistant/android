@@ -1,8 +1,10 @@
 package io.homeassistant.companion.android.sensors.healthconnect.command
 
+import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import io.homeassistant.companion.android.sensors.healthconnect.HealthConnectDataType
+import io.homeassistant.companion.android.sensors.healthconnect.HealthConnectExerciseTypes
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.format.DateTimeParseException
@@ -70,6 +72,35 @@ sealed class HealthConnectWriteCommandPayload {
         val stages: List<SleepSessionRecord.Stage>,
     ) : HealthConnectWriteCommandPayload()
 
+    data class ExerciseSession(
+        override val dataType: HealthConnectDataType,
+        override val clientRecordId: String?,
+        val startTime: Instant,
+        val endTime: Instant,
+        val exerciseType: Int,
+        val title: String?,
+        val notes: String?,
+    ) : HealthConnectWriteCommandPayload()
+
+    /**
+     * Series record carrying numeric samples over a window. Backs writes for [HealthConnectDataType.Speed],
+     * [HealthConnectDataType.Power], and [HealthConnectDataType.CyclingPedalingCadence] —
+     * the parser produces this for any of those three data types so the handler can switch
+     * on `dataType` and pick the right typed unit at dispatch time. The `value` units the
+     * payload's `unit` field nominates (m_per_s for speed, watts for power, rpm for
+     * cadence) get converted to canonical form there.
+     */
+    data class Series(
+        override val dataType: HealthConnectDataType,
+        override val clientRecordId: String?,
+        val startTime: Instant,
+        val endTime: Instant,
+        val samples: List<Sample>,
+        val unit: String?,
+    ) : HealthConnectWriteCommandPayload() {
+        data class Sample(val time: Instant, val value: Double)
+    }
+
     class InvalidPayloadException(message: String) : IllegalArgumentException(message)
 
     companion object {
@@ -86,6 +117,7 @@ sealed class HealthConnectWriteCommandPayload {
         const val FIELD_TITLE = "title"
         const val FIELD_NOTES = "notes"
         const val FIELD_UNIT = "unit"
+        const val FIELD_EXERCISE_TYPE = "exercise_type"
 
         /**
          * Sleep-stage string → HC integer constant. Mirrors the (`@RestrictTo`) map that
@@ -155,6 +187,32 @@ sealed class HealthConnectWriteCommandPayload {
                         stages = parseSleepStages(data),
                     )
                 }
+                HealthConnectDataType.Speed,
+                HealthConnectDataType.Power,
+                HealthConnectDataType.CyclingPedalingCadence,
+                -> {
+                    val end = parseInstant(data, FIELD_END_TIME, default = now)
+                    Series(
+                        dataType = dataType,
+                        clientRecordId = clientRecordId,
+                        startTime = parseInstant(data, FIELD_START_TIME, default = end),
+                        endTime = end,
+                        samples = parseSeriesSamples(data),
+                        unit = data[FIELD_UNIT]?.takeIf { it.isNotBlank() },
+                    )
+                }
+                HealthConnectDataType.ExerciseSession -> {
+                    val end = parseInstant(data, FIELD_END_TIME, default = now)
+                    ExerciseSession(
+                        dataType = dataType,
+                        clientRecordId = clientRecordId,
+                        startTime = parseInstant(data, FIELD_START_TIME, default = end),
+                        endTime = end,
+                        exerciseType = parseExerciseType(data),
+                        title = data[FIELD_TITLE]?.takeIf { it.isNotBlank() },
+                        notes = data[FIELD_NOTES]?.takeIf { it.isNotBlank() },
+                    )
+                }
                 else -> if (dataType in INTERVAL_TYPES) {
                     val end = parseInstant(data, FIELD_END_TIME, default = now)
                     Interval(
@@ -217,6 +275,50 @@ sealed class HealthConnectWriteCommandPayload {
             }
         }
 
+        /**
+         * Parse the `exercise_type` field. Accepts either an int (the raw HC
+         * `EXERCISE_TYPE_*` constant) or a string slug like "running" / "biking" — the
+         * SDK already exposes the slug ↔ int map publicly via
+         * [ExerciseSessionRecord.EXERCISE_TYPE_STRING_TO_INT_MAP], so we just route through
+         * it. Defaults to `EXERCISE_TYPE_OTHER_WORKOUT` when missing, since "we did
+         * something" is more accurate than rejecting the whole payload for a typo.
+         */
+        private fun parseExerciseType(data: Map<String, String>): Int {
+            val raw = data[FIELD_EXERCISE_TYPE]?.takeIf { it.isNotBlank() }
+                ?: return ExerciseSessionRecord.EXERCISE_TYPE_OTHER_WORKOUT
+            raw.toIntOrNull()?.let { return it }
+            return HealthConnectExerciseTypes.SLUG_TO_INT[raw.lowercase()]
+                ?: throw InvalidPayloadException(
+                    "Unknown exercise_type '$raw'. Expected an int constant or one of: " +
+                        HealthConnectExerciseTypes.SLUG_TO_INT.keys.sorted(),
+                )
+        }
+
+        /**
+         * Parse a generic numeric series payload: `samples = "[{time, value}, ...]"`.
+         * Reused for Speed / Power / CyclingPedalingCadence — each gets its unit
+         * conversion applied at dispatch time once the canonical type is known.
+         */
+        private fun parseSeriesSamples(data: Map<String, String>): List<Series.Sample> {
+            val raw = data[FIELD_SAMPLES]
+                ?: throw InvalidPayloadException("Missing required field: $FIELD_SAMPLES")
+            val parsed = try {
+                json.decodeFromString<List<NumericSampleDto>>(raw)
+            } catch (e: Exception) {
+                throw InvalidPayloadException(
+                    "Field $FIELD_SAMPLES must be a JSON array of {time, value}: ${e.message}",
+                )
+            }
+            if (parsed.isEmpty()) {
+                throw InvalidPayloadException("Field $FIELD_SAMPLES must contain at least one sample")
+            }
+            return parsed.map { dto ->
+                val time = parseIsoInstant(dto.time)
+                    ?: throw InvalidPayloadException("Series sample time must be ISO-8601: ${dto.time}")
+                Series.Sample(time = time, value = dto.value)
+            }
+        }
+
         private fun parseHeartRateSamples(data: Map<String, String>): List<HeartRateRecord.Sample> {
             val raw = data[FIELD_SAMPLES]
                 ?: throw InvalidPayloadException("Missing required field: $FIELD_SAMPLES")
@@ -262,6 +364,9 @@ sealed class HealthConnectWriteCommandPayload {
 
     @Serializable
     private data class HeartRateSampleDto(val time: String, val beatsPerMinute: Long)
+
+    @Serializable
+    private data class NumericSampleDto(val time: String, val value: Double)
 
     @Serializable
     private data class SleepStageDto(val startTime: String, val endTime: String, val stage: String)

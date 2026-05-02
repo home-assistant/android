@@ -10,8 +10,10 @@ import androidx.health.connect.client.records.BodyFatRecord
 import androidx.health.connect.client.records.BodyTemperatureRecord
 import androidx.health.connect.client.records.BodyWaterMassRecord
 import androidx.health.connect.client.records.BoneMassRecord
+import androidx.health.connect.client.records.CyclingPedalingCadenceRecord
 import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.ElevationGainedRecord
+import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.FloorsClimbedRecord
 import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.HeartRateVariabilityRmssdRecord
@@ -19,10 +21,12 @@ import androidx.health.connect.client.records.HeightRecord
 import androidx.health.connect.client.records.HydrationRecord
 import androidx.health.connect.client.records.LeanBodyMassRecord
 import androidx.health.connect.client.records.OxygenSaturationRecord
+import androidx.health.connect.client.records.PowerRecord
 import androidx.health.connect.client.records.Record
 import androidx.health.connect.client.records.RespiratoryRateRecord
 import androidx.health.connect.client.records.RestingHeartRateRecord
 import androidx.health.connect.client.records.SleepSessionRecord
+import androidx.health.connect.client.records.SpeedRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
 import androidx.health.connect.client.records.Vo2MaxRecord
@@ -110,6 +114,17 @@ sealed class HealthConnectDataType(val key: String, val recordClass: KClass<out 
         sensorIds = listOf("health_connect_bone_mass"),
     )
 
+    /**
+     * Cycling pedal cadence (revolutions per minute). Series record without a standalone
+     * companion sensor — values surface as `avg_cadence_rpm` / `max_cadence_rpm` attributes
+     * on [ExerciseSession] when the session window overlaps recorded cadence samples.
+     */
+    object CyclingPedalingCadence : HealthConnectDataType(
+        key = "cycling_pedaling_cadence",
+        recordClass = CyclingPedalingCadenceRecord::class,
+        sensorIds = emptyList(),
+    )
+
     object Distance : HealthConnectDataType(
         key = "distance",
         recordClass = DistanceRecord::class,
@@ -120,6 +135,12 @@ sealed class HealthConnectDataType(val key: String, val recordClass: KClass<out 
         key = "elevation_gained",
         recordClass = ElevationGainedRecord::class,
         sensorIds = listOf("health_connect_elevation_gained"),
+    )
+
+    object ExerciseSession : HealthConnectDataType(
+        key = "exercise_session",
+        recordClass = ExerciseSessionRecord::class,
+        sensorIds = listOf("health_connect_exercise_session"),
     )
 
     object FloorsClimbed : HealthConnectDataType(
@@ -164,6 +185,16 @@ sealed class HealthConnectDataType(val key: String, val recordClass: KClass<out 
         sensorIds = listOf("health_connect_oxygen_saturation"),
     )
 
+    /**
+     * Cycling / movement power output. Series record. Surfaces as `avg_power_watts` /
+     * `max_power_watts` attributes on [ExerciseSession]; no standalone sensor.
+     */
+    object Power : HealthConnectDataType(
+        key = "power",
+        recordClass = PowerRecord::class,
+        sensorIds = emptyList(),
+    )
+
     object RespiratoryRate : HealthConnectDataType(
         key = "respiratory_rate",
         recordClass = RespiratoryRateRecord::class,
@@ -180,6 +211,16 @@ sealed class HealthConnectDataType(val key: String, val recordClass: KClass<out 
         key = "sleep",
         recordClass = SleepSessionRecord::class,
         sensorIds = listOf("health_connect_sleep_duration"),
+    )
+
+    /**
+     * Linear speed / velocity. Series record. Surfaces as `avg_speed_m_s` /
+     * `max_speed_m_s` attributes on [ExerciseSession]; no standalone sensor.
+     */
+    object Speed : HealthConnectDataType(
+        key = "speed",
+        recordClass = SpeedRecord::class,
+        sensorIds = emptyList(),
     )
 
     object Steps : HealthConnectDataType(
@@ -227,8 +268,10 @@ sealed class HealthConnectDataType(val key: String, val recordClass: KClass<out 
                 BodyTemperature,
                 BodyWaterMass,
                 BoneMass,
+                CyclingPedalingCadence,
                 Distance,
                 ElevationGained,
+                ExerciseSession,
                 FloorsClimbed,
                 HeartRate,
                 HeartRateVariability,
@@ -236,9 +279,11 @@ sealed class HealthConnectDataType(val key: String, val recordClass: KClass<out 
                 Hydration,
                 LeanBodyMass,
                 OxygenSaturation,
+                Power,
                 RespiratoryRate,
                 RestingHeartRate,
                 Sleep,
+                Speed,
                 Steps,
                 TotalCaloriesBurned,
                 Vo2Max,

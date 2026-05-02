@@ -1,5 +1,10 @@
 package io.homeassistant.companion.android.sensors.healthconnect.command
 
+import androidx.health.connect.client.records.CyclingPedalingCadenceRecord
+import androidx.health.connect.client.records.PowerRecord
+import androidx.health.connect.client.records.SpeedRecord
+import androidx.health.connect.client.units.Power as HcPower
+import androidx.health.connect.client.units.Velocity
 import io.homeassistant.companion.android.sensors.healthconnect.HealthConnectDataType
 import io.homeassistant.companion.android.sensors.healthconnect.HealthConnectWriteRepository
 import io.homeassistant.companion.android.sensors.healthconnect.HealthConnectWriteResult
@@ -82,6 +87,75 @@ class HealthConnectWriteCommandHandler @Inject constructor(
             stages = payload.stages,
             clientRecordId = payload.clientRecordId,
         )
+        is HealthConnectWriteCommandPayload.ExerciseSession -> repository.writeExerciseSession(
+            startTime = payload.startTime,
+            endTime = payload.endTime,
+            exerciseType = payload.exerciseType,
+            title = payload.title,
+            notes = payload.notes,
+            clientRecordId = payload.clientRecordId,
+        )
+        is HealthConnectWriteCommandPayload.Series -> dispatchSeries(payload)
+    }
+
+    /**
+     * Translate the generic numeric series payload into the right HC typed series record.
+     * Each branch picks the matching unit factory so HC stores in its canonical unit
+     * (m/s for Velocity, watts for Power, raw double for cadence rpm).
+     */
+    private suspend fun dispatchSeries(payload: HealthConnectWriteCommandPayload.Series): HealthConnectWriteResult {
+        val unit = payload.unit?.lowercase()?.trim()
+        return when (payload.dataType) {
+            HealthConnectDataType.Speed -> {
+                val factory: (Double) -> Velocity = when (unit) {
+                    null, "m_per_s", "m/s", "mps" -> Velocity::metersPerSecond
+                    "km_per_h", "km/h", "kph" -> Velocity::kilometersPerHour
+                    "mi_per_h", "mph", "mi/h" -> Velocity::milesPerHour
+                    else -> return HealthConnectWriteResult.InvalidPayload(
+                        "Unknown speed unit '${payload.unit}'. Accepted: m/s, km/h, mph",
+                    )
+                }
+                repository.writeSpeed(
+                    startTime = payload.startTime,
+                    endTime = payload.endTime,
+                    samples = payload.samples.map { SpeedRecord.Sample(it.time, factory(it.value)) },
+                    clientRecordId = payload.clientRecordId,
+                )
+            }
+            HealthConnectDataType.Power -> {
+                val factory: (Double) -> HcPower = when (unit) {
+                    null, "w", "watts", "watt" -> HcPower::watts
+                    "kcal_per_day", "kilocalories_per_day" -> HcPower::kilocaloriesPerDay
+                    else -> return HealthConnectWriteResult.InvalidPayload(
+                        "Unknown power unit '${payload.unit}'. Accepted: W, kcal/day",
+                    )
+                }
+                repository.writePower(
+                    startTime = payload.startTime,
+                    endTime = payload.endTime,
+                    samples = payload.samples.map { PowerRecord.Sample(it.time, factory(it.value)) },
+                    clientRecordId = payload.clientRecordId,
+                )
+            }
+            HealthConnectDataType.CyclingPedalingCadence -> {
+                if (unit != null && unit !in setOf("rpm", "revolutions_per_minute", "revs_per_minute")) {
+                    return HealthConnectWriteResult.InvalidPayload(
+                        "Unknown cadence unit '${payload.unit}'. Accepted: rpm",
+                    )
+                }
+                repository.writeCyclingPedalingCadence(
+                    startTime = payload.startTime,
+                    endTime = payload.endTime,
+                    samples = payload.samples.map {
+                        CyclingPedalingCadenceRecord.Sample(it.time, it.value)
+                    },
+                    clientRecordId = payload.clientRecordId,
+                )
+            }
+            else -> HealthConnectWriteResult.InvalidPayload(
+                "Series payload not supported for ${payload.dataType.key}",
+            )
+        }
     }
 
     private suspend fun dispatchInstantaneous(

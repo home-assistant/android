@@ -12,8 +12,10 @@ import androidx.health.connect.client.records.BodyTemperatureMeasurementLocation
 import androidx.health.connect.client.records.BodyTemperatureRecord
 import androidx.health.connect.client.records.BodyWaterMassRecord
 import androidx.health.connect.client.records.BoneMassRecord
+import androidx.health.connect.client.records.CyclingPedalingCadenceRecord
 import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.ElevationGainedRecord
+import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.FloorsClimbedRecord
 import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.HeartRateVariabilityRmssdRecord
@@ -22,10 +24,12 @@ import androidx.health.connect.client.records.HydrationRecord
 import androidx.health.connect.client.records.LeanBodyMassRecord
 import androidx.health.connect.client.records.MealType
 import androidx.health.connect.client.records.OxygenSaturationRecord
+import androidx.health.connect.client.records.PowerRecord
 import androidx.health.connect.client.records.Record
 import androidx.health.connect.client.records.RespiratoryRateRecord
 import androidx.health.connect.client.records.RestingHeartRateRecord
 import androidx.health.connect.client.records.SleepSessionRecord
+import androidx.health.connect.client.records.SpeedRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
 import androidx.health.connect.client.records.Vo2MaxRecord
@@ -260,6 +264,29 @@ class HealthConnectWriteRepositoryImpl @Inject constructor(
                 endZoneOffset = null,
                 elevation = Length.meters(meters),
                 metadata = metadata(clientRecordId),
+            ),
+        ),
+    )
+
+    override suspend fun writeExerciseSession(
+        startTime: Instant,
+        endTime: Instant,
+        exerciseType: Int,
+        title: String?,
+        notes: String?,
+        clientRecordId: String?,
+    ): HealthConnectWriteResult = insert(
+        HealthConnectDataType.ExerciseSession,
+        listOf(
+            ExerciseSessionRecord(
+                startTime = startTime,
+                startZoneOffset = null,
+                endTime = endTime,
+                endZoneOffset = null,
+                metadata = metadata(clientRecordId),
+                exerciseType = exerciseType,
+                title = title,
+                notes = notes,
             ),
         ),
     )
@@ -515,6 +542,80 @@ class HealthConnectWriteRepositoryImpl @Inject constructor(
             ),
         ),
     )
+
+    override suspend fun writeSpeed(
+        startTime: Instant,
+        endTime: Instant,
+        samples: List<SpeedRecord.Sample>,
+        clientRecordId: String?,
+    ): HealthConnectWriteResult {
+        if (samples.isEmpty()) {
+            return HealthConnectWriteResult.InvalidPayload("speed requires at least one sample")
+        }
+        return insert(
+            HealthConnectDataType.Speed,
+            listOf(
+                SpeedRecord(
+                    startTime = startTime,
+                    startZoneOffset = null,
+                    endTime = endTime,
+                    endZoneOffset = null,
+                    samples = samples,
+                    metadata = metadata(clientRecordId),
+                ),
+            ),
+        )
+    }
+
+    override suspend fun writePower(
+        startTime: Instant,
+        endTime: Instant,
+        samples: List<PowerRecord.Sample>,
+        clientRecordId: String?,
+    ): HealthConnectWriteResult {
+        if (samples.isEmpty()) {
+            return HealthConnectWriteResult.InvalidPayload("power requires at least one sample")
+        }
+        return insert(
+            HealthConnectDataType.Power,
+            listOf(
+                PowerRecord(
+                    startTime = startTime,
+                    startZoneOffset = null,
+                    endTime = endTime,
+                    endZoneOffset = null,
+                    samples = samples,
+                    metadata = metadata(clientRecordId),
+                ),
+            ),
+        )
+    }
+
+    override suspend fun writeCyclingPedalingCadence(
+        startTime: Instant,
+        endTime: Instant,
+        samples: List<CyclingPedalingCadenceRecord.Sample>,
+        clientRecordId: String?,
+    ): HealthConnectWriteResult {
+        if (samples.isEmpty()) {
+            return HealthConnectWriteResult.InvalidPayload(
+                "cycling_pedaling_cadence requires at least one sample",
+            )
+        }
+        return insert(
+            HealthConnectDataType.CyclingPedalingCadence,
+            listOf(
+                CyclingPedalingCadenceRecord(
+                    startTime = startTime,
+                    startZoneOffset = null,
+                    endTime = endTime,
+                    endZoneOffset = null,
+                    samples = samples,
+                    metadata = metadata(clientRecordId),
+                ),
+            ),
+        )
+    }
 
     private suspend fun insert(dataType: HealthConnectDataType, records: List<Record>): HealthConnectWriteResult {
         val client = clientProvider.get()
