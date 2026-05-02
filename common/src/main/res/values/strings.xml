@@ -1322,6 +1322,8 @@
     <string name="sensor_description_floors_climbed">Total floors climbed since midnight from Health Connect</string>
     <string name="basic_sensor_name_sleep_duration">Sleep duration</string>
     <string name="sensor_description_sleep_duration">Last recorded sleep duration in minutes from Health Connect</string>
+    <string name="basic_sensor_name_exercise_session">Last exercise session</string>
+    <string name="sensor_description_exercise_session">Most recent exercise session from Health Connect, with type, duration, and timing as attributes</string>
     <string name="sensor_description_steps">Total steps taken since midnight from Health Connect</string>
     <string name="basic_sensor_name_blood_glucose">Blood glucose</string>
     <string name="sensor_description_blood_glucose">Last recorded blood glucose reading in milligrams per deciliter from Health Connect</string>
@@ -1474,8 +1476,13 @@
     <string name="health_connect_settings_summary">Two-way sync with Health Connect</string>
     <string name="health_connect_realtime_sync_title">Real-time sync</string>
     <string name="health_connect_realtime_sync_summary">Catches writes from other apps (Samsung Health, Google Fit, smart scales) within a few minutes instead of waiting for the 15-minute sensor cycle.</string>
-    <string name="health_connect_writes_title">Writes from Home Assistant</string>
-    <string name="health_connect_writes_summary">Allow Home Assistant to push values into Health Connect using the command_health_connect_write notification command. Grant the matching write permissions in Health Connect settings before sending.</string>
     <string name="health_connect_unavailable">Health Connect is not available on this device.</string>
     <string name="sensor_setting_sensor_allow_writes_title">Allow writes from Home Assistant</string>
+    <string name="health_connect_enable_all_title">Bulk enable</string>
+    <string name="health_connect_enable_all_summary">Turn on every Health Connect sensor and request both read and write permissions for every supported data type. For users who already know they want the full surface — you can still revoke individual permissions afterwards in the Health Connect app.</string>
+    <string name="health_connect_enable_all_button">Enable everything</string>
+    <string name="health_connect_enable_all_status">%1$d / %2$d sensors enabled</string>
+    <string name="health_connect_enable_all_confirm_title">Enable all Health Connect sensors?</string>
+    <string name="health_connect_enable_all_confirm_message">This enables every Health Connect sensor across every server and asks Health Connect for read and write access to all supported data types. You can revoke individual permissions later from the Health Connect app.</string>
+    <string name="confirm">Confirm</string>
 </resources>

@@ -12,9 +12,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,6 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAHint
 import io.homeassistant.companion.android.common.compose.composable.HALoading
+import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.composable.HASettingsCard
 import io.homeassistant.companion.android.common.compose.composable.HASwitch
 import io.homeassistant.companion.android.common.compose.theme.HADimens
@@ -40,6 +45,7 @@ fun HealthConnectSettingsScreen(viewModel: HealthConnectSettingsViewModel, modif
     HealthConnectSettingsContent(
         uiState = uiState,
         onToggleRealtimeSync = viewModel::setRealtimeSyncEnabled,
+        onEnableAll = viewModel::enableAll,
         modifier = modifier,
     )
 }
@@ -49,8 +55,10 @@ fun HealthConnectSettingsScreen(viewModel: HealthConnectSettingsViewModel, modif
 internal fun HealthConnectSettingsContent(
     uiState: HealthConnectSettingsUiState,
     onToggleRealtimeSync: (Boolean) -> Unit,
+    onEnableAll: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var showEnableAllConfirm by remember { mutableStateOf(false) }
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -69,7 +77,93 @@ internal fun HealthConnectSettingsContent(
                     enabled = uiState.realtimeSyncEnabled,
                     onToggle = onToggleRealtimeSync,
                 )
-                WritesSection()
+                EnableAllSection(
+                    inProgress = uiState.enableAllInProgress,
+                    enabledCount = uiState.enabledSensorCount,
+                    totalCount = uiState.totalSensorCount,
+                    onClick = { showEnableAllConfirm = true },
+                )
+            }
+        }
+    }
+
+    if (showEnableAllConfirm) {
+        val haColors = LocalHAColorScheme.current
+        AlertDialog(
+            onDismissRequest = { showEnableAllConfirm = false },
+            // Use HATextStyle for title / body — both pull their color from
+            // LocalHAColorScheme.current.colorTextPrimary/Secondary, so dark mode
+            // contrast comes out right. M3 AlertDialog's default styling pulls from
+            // MaterialTheme.colorScheme which the HA theme doesn't override completely.
+            title = {
+                Text(
+                    text = stringResource(commonR.string.health_connect_enable_all_confirm_title),
+                    style = HATextStyle.HeadlineMedium,
+                    color = haColors.colorTextPrimary,
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(commonR.string.health_connect_enable_all_confirm_message),
+                    style = HATextStyle.Body,
+                    color = haColors.colorTextSecondary,
+                )
+            },
+            confirmButton = {
+                HAPlainButton(
+                    text = stringResource(commonR.string.confirm),
+                    onClick = {
+                        showEnableAllConfirm = false
+                        onEnableAll()
+                    },
+                )
+            },
+            dismissButton = {
+                HAPlainButton(
+                    text = stringResource(commonR.string.cancel),
+                    onClick = { showEnableAllConfirm = false },
+                )
+            },
+        )
+    }
+}
+
+@Composable
+private fun EnableAllSection(inProgress: Boolean, enabledCount: Int, totalCount: Int, onClick: () -> Unit) {
+    val colorScheme = LocalHAColorScheme.current
+    Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2)) {
+        SectionHeader(text = stringResource(commonR.string.health_connect_enable_all_title))
+        HASettingsCard(
+            modifier = Modifier
+                .clip(RoundedCornerShape(HARadius.XL))
+                .clickable(role = Role.Button, enabled = !inProgress, onClick = onClick),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(HADimens.SPACE1),
+                ) {
+                    Text(
+                        text = stringResource(commonR.string.health_connect_enable_all_button),
+                        style = HATextStyle.Body,
+                        textAlign = TextAlign.Start,
+                        color = colorScheme.colorTextPrimary,
+                    )
+                    Text(
+                        text = stringResource(
+                            commonR.string.health_connect_enable_all_status,
+                            enabledCount,
+                            totalCount,
+                        ),
+                        style = HATextStyle.BodyMedium,
+                        textAlign = TextAlign.Start,
+                        color = colorScheme.colorTextSecondary,
+                    )
+                }
             }
         }
     }
@@ -85,20 +179,6 @@ private fun RealtimeSyncSection(enabled: Boolean, onToggle: (Boolean) -> Unit) {
             checked = enabled,
             onToggle = onToggle,
         )
-    }
-}
-
-@Composable
-private fun WritesSection() {
-    Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2)) {
-        SectionHeader(text = stringResource(commonR.string.health_connect_writes_title))
-        HASettingsCard {
-            Text(
-                text = stringResource(commonR.string.health_connect_writes_summary),
-                style = HATextStyle.Body,
-                color = LocalHAColorScheme.current.colorTextSecondary,
-            )
-        }
     }
 }
 
