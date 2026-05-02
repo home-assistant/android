@@ -37,6 +37,12 @@ class HealthConnectUnitConversionTest {
     }
 
     @Test
+    fun `centimeters convert to meters for Height`() {
+        val v = HealthConnectUnitConversion.toCanonical(HealthConnectDataType.Height, 180.0, "cm")
+        assertEquals(1.80, v, 0.0001)
+    }
+
+    @Test
     fun `kilometers convert to meters for Distance`() {
         val v = HealthConnectUnitConversion.toCanonical(HealthConnectDataType.Distance, 5.0, "km")
         assertEquals(5000.0, v, 0.0001)

@@ -194,7 +194,11 @@ class HealthConnectWriteCommandHandler @Inject constructor(
             HealthConnectDataType.RespiratoryRate ->
                 repository.writeRespiratoryRate(time, v, crid)
             HealthConnectDataType.RestingHeartRate ->
-                repository.writeRestingHeartRate(time, v.toLong(), crid)
+                requireIntegral(v)?.let { bpm ->
+                    repository.writeRestingHeartRate(time, bpm, crid)
+                } ?: HealthConnectWriteResult.InvalidPayload(
+                    "resting_heart_rate must be an integer BPM (got $v)",
+                )
             HealthConnectDataType.Vo2Max ->
                 repository.writeVo2Max(time, v, crid)
             HealthConnectDataType.Weight ->
@@ -228,12 +232,27 @@ class HealthConnectWriteCommandHandler @Inject constructor(
             HealthConnectDataType.Hydration ->
                 repository.writeHydration(start, end, v, crid)
             HealthConnectDataType.Steps ->
-                repository.writeSteps(start, end, v.toLong(), crid)
+                requireIntegral(v)?.let { count ->
+                    repository.writeSteps(start, end, count, crid)
+                } ?: HealthConnectWriteResult.InvalidPayload(
+                    "steps must be an integer count (got $v)",
+                )
             HealthConnectDataType.TotalCaloriesBurned ->
                 repository.writeTotalCaloriesBurned(start, end, v, crid)
             else -> HealthConnectWriteResult.InvalidPayload(
                 "Data type ${payload.dataType.key} is not interval",
             )
         }
+    }
+
+    /**
+     * Returns [value] as a Long if it has no fractional component, otherwise null.
+     * Used to keep silent truncation out of integer-typed HC fields (steps, BPM, etc.) —
+     * a payload like `1234.9` should be rejected, not stored as `1234`.
+     */
+    private fun requireIntegral(value: Double): Long? {
+        if (value.isNaN() || value.isInfinite()) return null
+        val rounded = value.toLong()
+        return if (rounded.toDouble() == value) rounded else null
     }
 }

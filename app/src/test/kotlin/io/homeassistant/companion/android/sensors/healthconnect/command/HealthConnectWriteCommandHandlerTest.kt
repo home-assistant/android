@@ -107,6 +107,33 @@ class HealthConnectWriteCommandHandlerTest {
     }
 
     @Test
+    fun `fractional steps payload is rejected instead of truncated`() = runTest {
+        val result = handler.handle(
+            mapOf(
+                "data_type" to "steps",
+                "value" to "1234.9",
+                "start_time" to "2026-05-01T11:00:00Z",
+                "end_time" to "2026-05-01T11:30:00Z",
+            ),
+        )
+        assertTrue(result is HealthConnectWriteResult.InvalidPayload)
+        coVerify(exactly = 0) { repository.writeSteps(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `fractional resting heart rate payload is rejected instead of truncated`() = runTest {
+        val result = handler.handle(
+            mapOf(
+                "data_type" to "resting_heart_rate",
+                "value" to "72.9",
+                "time" to "2026-05-01T11:00:00Z",
+            ),
+        )
+        assertTrue(result is HealthConnectWriteResult.InvalidPayload)
+        coVerify(exactly = 0) { repository.writeRestingHeartRate(any(), any(), any()) }
+    }
+
+    @Test
     fun `unknown data_type returns InvalidPayload`() = runTest {
         val result = handler.handle(mapOf("data_type" to "telepathy", "value" to "1"))
         assertTrue(result is HealthConnectWriteResult.InvalidPayload)

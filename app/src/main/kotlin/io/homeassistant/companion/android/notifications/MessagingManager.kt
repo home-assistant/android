@@ -662,18 +662,30 @@ class MessagingManager @Inject constructor(
      * to the user as a notification would be noise. Permission and validation
      * errors do produce notifications because they almost always require user
      * action (granting a WRITE permission, fixing the FCM payload).
+     *
+     * The fallback notification rewrites `title`/`message` so the user sees the
+     * actual failure reason (missing permission, invalid payload, …) instead of the
+     * literal `command_health_connect_write` string from the inbound FCM data.
      */
     private suspend fun handleHealthConnectWriteCommand(data: Map<String, String>) {
         val result = healthConnectWriteCommandHandler.handle(data)
-        when (result) {
+        val (title, body) = when (result) {
             is HealthConnectWriteResult.Success,
             is HealthConnectWriteResult.Unavailable,
-            -> Unit
-            is HealthConnectWriteResult.MissingPermission,
-            is HealthConnectWriteResult.InvalidPayload,
-            is HealthConnectWriteResult.Failure,
-            -> sendNotification(data)
+            -> return
+            is HealthConnectWriteResult.MissingPermission ->
+                "Health Connect write blocked" to
+                    "Missing permission: ${result.permission}. Grant it from Settings → Sensors → Health Connect."
+            is HealthConnectWriteResult.InvalidPayload ->
+                "Health Connect write rejected" to result.reason
+            is HealthConnectWriteResult.Failure ->
+                "Health Connect write failed" to (result.cause.message ?: result.cause.javaClass.simpleName)
         }
+        val rewritten = data.toMutableMap().apply {
+            put(NotificationData.TITLE, title)
+            put(NotificationData.MESSAGE, body)
+        }
+        sendNotification(rewritten)
     }
 
     private suspend fun handleDeviceCommands(data: Map<String, String>) {
