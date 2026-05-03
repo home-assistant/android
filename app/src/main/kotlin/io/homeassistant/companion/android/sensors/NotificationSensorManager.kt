@@ -257,7 +257,7 @@ class NotificationSensorManager :
                         applicationContext,
                         activeNotificationCount,
                         SETTING_INCLUDE_CONTENTS_AS_ATTRS,
-                        default = true,
+                        default = false,
                     )
                 val attrs = if (includeContentsAsAttrsSetting) {
                     buildMap {

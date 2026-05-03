@@ -74,7 +74,7 @@ import io.homeassistant.companion.android.database.widget.WidgetTapActionConvert
         Server::class,
         Setting::class,
     ],
-    version = 51,
+    version = 52,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
