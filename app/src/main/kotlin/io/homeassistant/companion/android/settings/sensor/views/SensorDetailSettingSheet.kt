@@ -17,15 +17,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberStandardBottomSheetState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -47,23 +45,18 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
-import io.homeassistant.companion.android.common.compose.composable.HATextField
+import io.homeassistant.companion.android.common.compose.composable.HASearchField
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.settings.sensor.SensorDetailViewModel
 import io.homeassistant.companion.android.util.compose.safeScreenHeight
 import kotlin.coroutines.CoroutineContext
-import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 /** Threshold above which the search field becomes visible to help users navigate long lists. */
 private const val SEARCH_VISIBILITY_THRESHOLD = 10
-
-/** Debounce duration applied to the search field before propagating the query to the parent. */
-private val SEARCH_DEBOUNCE = 300.milliseconds
 
 /**
  * Bottom sheet for multi-select allow list sensor settings (apps, bluetooth, zones, beacons).
@@ -103,15 +96,10 @@ internal fun SensorDetailSettingSheet(
     )
     val showSearch = state.entries.size > SEARCH_VISIBILITY_THRESHOLD
 
-    // Skip the partially expanded state so the sheet animates straight to fully expanded,
-    // ensuring the action footer is always reachable on first composition.
-    val bottomSheetState = rememberStandardBottomSheetState(skipHiddenState = false)
-    LaunchedEffect(Unit) {
-        bottomSheetState.expand()
-    }
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val screenHeight = safeScreenHeight() - HADimens.SPACE16
 
-    val consumeFlingNestedScrollConnection = remember { consumeFlingNestedScrollConnection() }
+    val nestedScrollFlingGuard = remember { nestedScrollFlingGuard() }
 
     HAModalBottomSheet(
         bottomSheetState = bottomSheetState,
@@ -121,7 +109,7 @@ internal fun SensorDetailSettingSheet(
         Column(
             modifier = Modifier
                 .height(screenHeight)
-                .nestedScroll(consumeFlingNestedScrollConnection)
+                .nestedScroll(nestedScrollFlingGuard)
                 .pointerInput(Unit) {
                     // Consume vertical drag gestures to prevent BottomSheet from interpreting them
                     // as collapse gestures while the user scrolls the entry list.
@@ -137,9 +125,19 @@ internal fun SensorDetailSettingSheet(
                 ),
             )
             if (showSearch) {
-                SettingSearchField(
+                HASearchField(
                     query = searchQuery,
                     onQueryChange = { searchQuery = it },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = null,
+                            tint = LocalHAColorScheme.current.colorOnNeutralNormal,
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = HADimens.SPACE4),
                 )
             }
             Box(
@@ -157,10 +155,10 @@ internal fun SensorDetailSettingSheet(
                                 label = entry,
                                 checked = checkedValue.contains(id),
                                 onClick = { isChecked ->
-                                    if (checkedValue.contains(id) && !isChecked) {
+                                    if (isChecked) {
+                                        if (id !in checkedValue) checkedValue.add(id)
+                                    } else {
                                         checkedValue.remove(id)
-                                    } else if (!checkedValue.contains(id) && isChecked) {
-                                        checkedValue.add(id)
                                     }
                                 },
                             )
@@ -193,68 +191,13 @@ internal fun SensorDetailSettingSheet(
 }
 
 /**
- * Search input field used by [SensorDetailSettingSheet]. Holds the raw text locally and propagates
- * changes to [onQueryChange] with a [SEARCH_DEBOUNCE] debounce, except for empty queries which are
- * forwarded immediately to provide instant clear feedback.
- */
-@Composable
-private fun SettingSearchField(query: String, onQueryChange: (String) -> Unit, modifier: Modifier = Modifier) {
-    val colorScheme = LocalHAColorScheme.current
-    var searchQueryRaw by remember { mutableStateOf(query) }
-
-    // Sync local state when parent state changes (e.g., when cleared externally).
-    LaunchedEffect(query) {
-        if (query != searchQueryRaw) {
-            searchQueryRaw = query
-        }
-    }
-
-    // Debounced update to parent.
-    LaunchedEffect(searchQueryRaw) {
-        if (searchQueryRaw.isEmpty()) {
-            onQueryChange(searchQueryRaw)
-        } else {
-            delay(SEARCH_DEBOUNCE)
-            onQueryChange(searchQueryRaw)
-        }
-    }
-
-    HATextField(
-        value = searchQueryRaw,
-        onValueChange = { searchQueryRaw = it },
-        label = { Text(stringResource(commonR.string.search)) },
-        leadingIcon = {
-            Icon(
-                imageVector = Icons.Default.Search,
-                contentDescription = null,
-                tint = colorScheme.colorOnNeutralNormal,
-            )
-        },
-        trailingIcon = {
-            if (searchQueryRaw.isNotEmpty()) {
-                IconButton(onClick = { searchQueryRaw = "" }) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(commonR.string.clear_search),
-                        tint = colorScheme.colorOnNeutralNormal,
-                    )
-                }
-            }
-        },
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = HADimens.SPACE4),
-    )
-}
-
-/**
  * Computes the filtered entries off the UI thread.
  *
  * Re-runs whenever [entries] or [searchQuery] change, dispatching the filter work onto
  * [dispatcher] so long lists do not freeze the sheet.
  */
 @Composable
-internal fun rememberFilteredSettingEntries(
+private fun rememberFilteredSettingEntries(
     entries: List<Pair<String, String>>,
     searchQuery: String,
     dispatcher: CoroutineContext = Dispatchers.Default,
@@ -295,10 +238,29 @@ internal fun joinSelectedValues(values: List<String>): String {
 }
 
 /**
+ * Splits a sensor setting label into a primary line and an optional secondary line.
+ *
+ * Sensor allow-list entries are formatted as `"<primary>\n(<secondary>)"` where the secondary
+ * line is wrapped in parentheses (for example `"Chrome\n(com.google.chrome)"`). Only the first
+ * newline is used to separate the two parts; any further newlines remain inside the secondary
+ * value. Surrounding parentheses are stripped from the secondary value when, and only when, both
+ * the leading `(` and trailing `)` are present, matching [String.removeSurrounding] semantics.
+ *
+ * @return a pair of `(primary, secondary)` where `secondary` is `null` for single-line labels.
+ */
+@VisibleForTesting
+internal fun parseSettingLabel(label: String): Pair<String, String?> {
+    val parts = label.split("\n", limit = 2)
+    val primaryText = parts[0]
+    val secondaryText = parts.getOrNull(1)?.removeSurrounding("(", ")")
+    return primaryText to secondaryText
+}
+
+/**
  * Returns a [NestedScrollConnection] that absorbs fling velocity and post-scroll offsets to prevent
  * the bottom sheet from collapsing while the user scrolls or flings the entry list.
  */
-private fun consumeFlingNestedScrollConnection(): NestedScrollConnection {
+private fun nestedScrollFlingGuard(): NestedScrollConnection {
     return object : NestedScrollConnection {
         override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset = available
 
@@ -318,9 +280,7 @@ private fun BottomSheetSettingRow(
     onClick: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val parts = label.split("\n", limit = 2)
-    val primaryText = parts[0]
-    val secondaryText = parts.getOrNull(1)?.removeSurrounding("(", ")")
+    val (primaryText, secondaryText) = parseSettingLabel(label)
     val colorScheme = LocalHAColorScheme.current
 
     Row(

@@ -753,9 +753,7 @@ fun SensorDetailSettingRow(
     onClick: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val parts = label.split("\n", limit = 2)
-    val primaryText = parts[0]
-    val secondaryText = parts.getOrNull(1)?.removeSurrounding("(", ")")
+    val (primaryText, secondaryText) = parseSettingLabel(label)
 
     Row(
         modifier = modifier

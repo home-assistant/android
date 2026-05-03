@@ -65,6 +65,7 @@ import io.homeassistant.companion.android.common.compose.composable.ButtonSize
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.composable.HAHorizontalDivider
 import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
+import io.homeassistant.companion.android.common.compose.composable.HASearchField
 import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.composable.rememberHAModalBottomSheetState
 import io.homeassistant.companion.android.common.compose.theme.HABorderWidth
@@ -85,9 +86,7 @@ import io.homeassistant.companion.android.util.RegistriesDataHandler
 import io.homeassistant.companion.android.util.compose.safeScreenHeight
 import io.homeassistant.companion.android.util.compose.screenWidth
 import kotlin.coroutines.CoroutineContext
-import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -247,6 +246,7 @@ internal fun EntityPicker(
     var isExpanded by remember { mutableStateOf(isExpanded) }
     var searchQuery by remember { mutableStateOf("") }
 
+<<<<<<< HEAD
     val bottomSheetState = rememberHAModalBottomSheetState()
     val scope = rememberCoroutineScope()
 
@@ -488,7 +488,13 @@ private fun EntityPickerContent(
     )
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(HADimens.SPACE3)) {
-        SearchField(searchQuery, onSearchQueryChange)
+        HASearchField(
+            query = searchQuery,
+            onQueryChange = onSearchQueryChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = HADimens.SPACE3),
+        )
 
         if (filteredEntities.isNotEmpty()) {
             LazyColumn(
@@ -512,50 +518,6 @@ private fun EntityPickerContent(
             EmptyResultPlaceholder(searchQuery)
         }
     }
-}
-
-@Composable
-private fun SearchField(searchQuery: String, onSearchQueryChange: (String) -> Unit) {
-    val colorScheme = LocalHAColorScheme.current
-    var searchQueryRaw by remember { mutableStateOf(searchQuery) }
-
-    // Sync local state when parent state changes (e.g., when cleared externally)
-    LaunchedEffect(searchQuery) {
-        if (searchQuery != searchQueryRaw) {
-            searchQueryRaw = searchQuery
-        }
-    }
-
-    // Debounced update to parent
-    LaunchedEffect(searchQueryRaw) {
-        // Skip debounce for empty strings to provide instant clear feedback
-        if (searchQueryRaw.isEmpty()) {
-            onSearchQueryChange(searchQueryRaw)
-        } else {
-            delay(300.milliseconds)
-            onSearchQueryChange(searchQueryRaw)
-        }
-    }
-
-    HATextField(
-        value = searchQueryRaw,
-        onValueChange = { searchQueryRaw = it },
-        label = { Text(stringResource(commonR.string.search)) },
-        trailingIcon = {
-            if (searchQueryRaw.isNotEmpty()) {
-                IconButton(onClick = { searchQueryRaw = "" }) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(commonR.string.clear_search),
-                        tint = colorScheme.colorOnNeutralNormal,
-                    )
-                }
-            }
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = HADimens.SPACE3),
-    )
 }
 
 @Composable
