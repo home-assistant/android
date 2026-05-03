@@ -40,6 +40,7 @@ internal fun migrationPath(context: Context): Array<Migration> = arrayOf(
     MIGRATION_23_24,
     Migration37to38(context),
     Migration40to41(context),
+    MIGRATION_51_52,
 )
 
 private val MIGRATION_1_2 = object : Migration(1, 2) {
