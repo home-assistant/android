@@ -30,7 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberStandardBottomSheetState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -66,7 +66,7 @@ import io.homeassistant.companion.android.common.compose.composable.ButtonSize
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.composable.HAHorizontalDivider
 import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
-import io.homeassistant.companion.android.common.compose.composable.HATextField
+import io.homeassistant.companion.android.common.compose.composable.HASearchField
 import io.homeassistant.companion.android.common.compose.theme.HABorderWidth
 import io.homeassistant.companion.android.common.compose.theme.HAColorScheme
 import io.homeassistant.companion.android.common.compose.theme.HADimens
@@ -85,9 +85,7 @@ import io.homeassistant.companion.android.util.RegistriesDataHandler
 import io.homeassistant.companion.android.util.compose.safeScreenHeight
 import io.homeassistant.companion.android.util.compose.screenWidth
 import kotlin.coroutines.CoroutineContext
-import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -247,7 +245,7 @@ internal fun EntityPicker(
     var isExpanded by remember { mutableStateOf(isExpanded) }
     var searchQuery by remember { mutableStateOf("") }
 
-    val bottomSheetState = rememberStandardBottomSheetState(skipHiddenState = false)
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
 
     Column(modifier = modifier) {
@@ -488,7 +486,13 @@ private fun EntityPickerContent(
     )
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(HADimens.SPACE3)) {
-        SearchField(searchQuery, onSearchQueryChange)
+        HASearchField(
+            query = searchQuery,
+            onQueryChange = onSearchQueryChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = HADimens.SPACE3),
+        )
 
         if (filteredEntities.isNotEmpty()) {
             LazyColumn(
@@ -512,50 +516,6 @@ private fun EntityPickerContent(
             EmptyResultPlaceholder(searchQuery)
         }
     }
-}
-
-@Composable
-private fun SearchField(searchQuery: String, onSearchQueryChange: (String) -> Unit) {
-    val colorScheme = LocalHAColorScheme.current
-    var searchQueryRaw by remember { mutableStateOf(searchQuery) }
-
-    // Sync local state when parent state changes (e.g., when cleared externally)
-    LaunchedEffect(searchQuery) {
-        if (searchQuery != searchQueryRaw) {
-            searchQueryRaw = searchQuery
-        }
-    }
-
-    // Debounced update to parent
-    LaunchedEffect(searchQueryRaw) {
-        // Skip debounce for empty strings to provide instant clear feedback
-        if (searchQueryRaw.isEmpty()) {
-            onSearchQueryChange(searchQueryRaw)
-        } else {
-            delay(300.milliseconds)
-            onSearchQueryChange(searchQueryRaw)
-        }
-    }
-
-    HATextField(
-        value = searchQueryRaw,
-        onValueChange = { searchQueryRaw = it },
-        label = { Text(stringResource(commonR.string.search)) },
-        trailingIcon = {
-            if (searchQueryRaw.isNotEmpty()) {
-                IconButton(onClick = { searchQueryRaw = "" }) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(commonR.string.clear_search),
-                        tint = colorScheme.colorOnNeutralNormal,
-                    )
-                }
-            }
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = HADimens.SPACE3),
-    )
 }
 
 @Composable
