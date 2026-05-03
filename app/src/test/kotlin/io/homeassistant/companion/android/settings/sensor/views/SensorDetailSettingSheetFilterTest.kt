@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.settings.sensor.views
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
-class SensorDetailSettingDialogFilterTest {
+class SensorDetailSettingSheetFilterTest {
 
     private val entries = listOf(
         "com.google.chrome" to "Chrome\n(com.google.chrome)",
