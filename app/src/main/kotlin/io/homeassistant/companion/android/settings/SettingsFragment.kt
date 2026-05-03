@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.NotificationManagerCompat
@@ -54,6 +55,7 @@ import io.homeassistant.companion.android.settings.wear.SettingsWearDetection
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
 import io.homeassistant.companion.android.util.QuestUtil
 import io.homeassistant.companion.android.util.applyBottomSafeDrawingInsets
+import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebViewActivity
 import java.time.Instant
 import java.time.ZoneId
@@ -63,6 +65,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 class SettingsFragment(
@@ -253,6 +256,7 @@ class SettingsFragment(
         }
 
         updateNotificationChannelPrefs()
+        updatePushProviderPrefs()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             findPreference<Preference>("notification_permission")?.let {
@@ -541,6 +545,52 @@ class SettingsFragment(
                 notificationsEnabled &&
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
                 uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
+        }
+    }
+
+    private fun updatePushProviderPrefs() {
+        findPreference<ListPreference>("notification_push_provider")?.let { pref ->
+            // Detach from the presenter data store because the push provider preference is
+            // persisted via PrefsRepository (not the generic PreferenceDataStore) and change
+            // handling requires a coroutine for server-side registration.
+            pref.preferenceDataStore = null
+            pref.setOnPreferenceChangeListener { _, newValue ->
+                val value = newValue as? String
+                lifecycleScope.launch(Dispatchers.IO) {
+                    presenter.handlePushProviderChange(value)
+                }
+                if (value == "WebSocket") {
+                    Toast.makeText(
+                        requireContext(),
+                        commonR.string.push_provider_websocket_enabled,
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                    WebsocketManager.restart(requireContext())
+                }
+                true
+            }
+
+            lifecycleScope.launch(Dispatchers.IO) {
+                val providerNames = presenter.getAvailablePushProviders()
+                val values = providerNames.toMutableList()
+                val entries = providerNames.map { name ->
+                    when (name) {
+                        "FCM" -> getString(commonR.string.push_provider_fcm)
+                        "WebSocket" -> getString(commonR.string.push_provider_websocket)
+                        else -> name
+                    }
+                }.toMutableList()
+
+                val activeValue = presenter.getActivePushProviderValue()
+
+                withContext(Dispatchers.Main) {
+                    pref.entries = entries.toTypedArray()
+                    pref.entryValues = values.toTypedArray()
+                    if (pref.value == null || pref.value !in values) {
+                        pref.value = activeValue
+                    }
+                }
+            }
         }
     }
 

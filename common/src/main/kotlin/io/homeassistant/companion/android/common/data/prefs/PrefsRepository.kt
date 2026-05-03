@@ -157,4 +157,8 @@ interface PrefsRepository {
     suspend fun getSelectedWakeWord(): String?
 
     suspend fun setSelectedWakeWord(wakeWord: String)
+
+    suspend fun getSelectedPushProvider(): String?
+
+    suspend fun setSelectedPushProvider(provider: String)
 }

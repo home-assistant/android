@@ -538,6 +538,10 @@
     <string name="prioritize_internal_on_expanded">Use internal connection URL (use this if you typically turn location access off)</string>
     <string name="prioritize_internal_off">Use Home Assistant URL (recommended)</string>
     <string name="privacy_policy">Privacy policy</string>
+    <string name="push_provider">Push provider</string>
+    <string name="push_provider_fcm">Firebase Cloud Messaging</string>
+    <string name="push_provider_websocket">WebSocket</string>
+    <string name="push_provider_websocket_enabled">WebSocket push enabled</string>
     <string name="privacy_url">https://www.home-assistant.io/privacy</string>
     <string name="qrcode_processing_tag_error">Error while processing QR code tag</string>
     <string name="quick_settings">Quick settings</string>
