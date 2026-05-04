@@ -103,6 +103,8 @@ import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.common.util.getBooleanOrElse
 import io.homeassistant.companion.android.common.util.getBooleanOrNull
+import io.homeassistant.companion.android.common.util.getDoubleOrElse
+import io.homeassistant.companion.android.common.util.getDoubleOrNull
 import io.homeassistant.companion.android.common.util.getIntOrElse
 import io.homeassistant.companion.android.common.util.getIntOrNull
 import io.homeassistant.companion.android.common.util.getStringOrElse
@@ -1459,22 +1461,22 @@ class WebViewActivity :
         // The values are already scaled to the screen.
         // We only need to store the top left corner for the offset and the player size
 
-        val left = payload.getIntOrElse("left", 0)
-        val top = payload.getIntOrElse("top", 0)
-        val right = payload.getIntOrElse("right", 0)
+        val left = payload.getDoubleOrElse("left", 0.0)
+        val top = payload.getDoubleOrElse("top", 0.0)
+        val right = payload.getDoubleOrElse("right", 0.0)
         // if the bottom value is not 0 we should take it it is a constraint from the frontend, otherwise we try to compute the
         // height based on the video's aspect ratio if available.
         val bottom =
-            payload.getIntOrNull("bottom")?.takeIf { it > 0 } ?: exoPlayer.value?.videoFormat?.let { videoFormat ->
+            payload.getDoubleOrNull("bottom")?.takeIf { it > 0 } ?: exoPlayer.value?.videoFormat?.let { videoFormat ->
                 if (videoFormat.width > 0) {
                     // Calculate height of the video based on aspect ratio
                     val width = right - left
                     val videoHeight = width * videoFormat.height / videoFormat.width
                     (top + videoHeight)
                 } else {
-                    payload.getIntOrNull("bottom")
+                    payload.getDoubleOrNull("bottom")
                 }
-            } ?: payload.getIntOrElse("bottom", 0)
+            } ?: payload.getDoubleOrElse("bottom", 0.0)
 
         playerTop.value = top.dp
         playerLeft.value = left.dp

@@ -2,6 +2,8 @@ package io.homeassistant.companion.android.launch
 
 import android.os.Build
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import io.homeassistant.companion.android.common.util.DefaultFailFastHandler
+import io.homeassistant.companion.android.common.util.FailFast
 import leakcanary.DetectLeaksAfterTestSuccess
 import leakcanary.LeakCanary
 import org.junit.Rule
@@ -12,6 +14,19 @@ import org.junit.rules.TestRule
 import shark.AndroidReferenceMatchers
 
 class LaunchActivityTest {
+
+    private val failFastRule = object : ExternalResource() {
+        override fun before() {
+            FailFast.setHandler { throwable, message ->
+                throw AssertionError("FailFast triggered: ${message.orEmpty()}", throwable)
+            }
+        }
+
+        override fun after() {
+            FailFast.setHandler(DefaultFailFastHandler)
+        }
+    }
+
     private val composeTestRule = createAndroidComposeRule<LaunchActivity>()
 
     private val detectLeaksRule = DetectLeaksAfterTestSuccess()
@@ -41,7 +56,8 @@ class LaunchActivityTest {
 
     @get:Rule
     val ruleChain: TestRule = RuleChain
-        .outerRule(jobServiceLibraryLeakRule)
+        .outerRule(failFastRule)
+        .around(jobServiceLibraryLeakRule)
         .around(detectLeaksRule)
         .around(composeTestRule)
 

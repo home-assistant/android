@@ -5,7 +5,6 @@ import android.os.Build
 import android.webkit.PermissionRequest as WebViewPermissionRequest
 import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.NotificationStatusProvider
 import io.homeassistant.companion.android.common.util.PermissionChecker
 import io.homeassistant.companion.android.common.util.SingleSlotQueue
@@ -18,23 +17,26 @@ import kotlinx.coroutines.flow.StateFlow
 import timber.log.Timber
 
 /**
- * Centralizes all Android runtime permission request/result for the frontend screen.
+ * Snapshot of the WebView's requested resources: which can be auto-granted now, which still
+ * need user approval, and how to map back from each Android permission to the WebView resource
+ * string it originated from.
+ */
+private data class WebViewPermissionStatus(
+    val alreadyGranted: List<String>,
+    val toBeGranted: List<String>,
+    val resourcesByPermission: Map<String, String>,
+)
+
+/**
+ * Centralises all Android runtime permission request/result for the frontend screen.
  *
- * ## How it works
+ * Each `check*` / `on*` method runs the full request/response cycle: build a [PermissionRequest],
+ * suspend until the user responds via the request's callback, then react to the result inline.
+ * The slot is freed automatically including on coroutine cancellation by the underlying
+ * [SingleSlotQueue.awaitResult].
  *
- * All permission requests flow through a single [pendingPermissionRequest] state.
- * The UI observes this flow and decides what to do with it.
- *
- * Requests are queued: if a request is already in-flight, new requests suspend until the
- * current one is resolved or dismissed via [clearPendingPermissionRequest].
- *
- * ## Typical flow
- *
- * 1. A trigger (WebView callback, frontend connect, download) calls one of the `check*` / `on*` methods
- * 2. The method creates a [PermissionRequest] and emits it (suspending if one is already active)
- * 3. The observer reacts to the new request
- * 4. Once the user has responded, [clearPendingPermissionRequest] is called (freeing the slot
- *    for the next queued request) followed by [PermissionRequest.onResult] to let the request handle its result
+ * Concurrent triggers are waiting in FIFO order: a second method call suspends until the
+ * current request is resolved.
  */
 internal class PermissionManager @VisibleForTesting constructor(
     private val serverManager: ServerManager,
@@ -62,10 +64,10 @@ internal class PermissionManager @VisibleForTesting constructor(
         sdkInt = Build.VERSION.SDK_INT,
     )
 
-    private val _pendingPermissionRequest = SingleSlotQueue<PermissionRequest<*>>()
+    private val queue = SingleSlotQueue<PermissionRequest>()
 
     /** The current pending permission request that needs user approval, or null if none. */
-    val pendingPermissionRequest: StateFlow<PermissionRequest<*>?> = _pendingPermissionRequest
+    val pendingPermissionRequest: StateFlow<PermissionRequest?> = queue
 
     /**
      * Checks whether the notification permission request should be made and, if so,
@@ -73,14 +75,13 @@ internal class PermissionManager @VisibleForTesting constructor(
      *
      * Does nothing on pre-TIRAMISU devices (POST_NOTIFICATIONS does not exist).
      *
-     * Suspends if another permission request is already in-flight, and resumes once
-     * the slot is free.
-     *
-     * Whether to request depends on the flavor:
-     * - **Full** (FCM available): skips if notification permission is already granted system-wide,
-     *   since FCM handles push delivery without websocket configuration.
+     * Whether to ask depends on the flavor:
+     * - **Full** (FCM available): skips if notifications are already enabled system-wide, since
+     *   FCM handles push delivery without websocket configuration.
      * - **Minimal** (no FCM): always respects the per-server stored preference, allowing the user
      *   to configure websocket-based notification fallback.
+     *
+     * If the user dismisses the request without explicitly answering, no preference is persisted.
      *
      * @param serverId The server to check notification preferences for
      */
@@ -89,54 +90,68 @@ internal class PermissionManager @VisibleForTesting constructor(
         if (sdkInt < Build.VERSION_CODES.TIRAMISU) return
         if (!shouldAskNotificationPermission(serverId)) return
 
-        _pendingPermissionRequest.emit(
+        val granted: Boolean? = queue.awaitResult { resolve ->
             PermissionRequest.Notification(
                 serverId = serverId,
-                persistResult = { granted -> onNotificationPermissionResult(serverId = serverId, granted = granted) },
-            ),
-        )
+                onResult = { granted -> resolve(granted) },
+                onDismiss = { resolve(null) },
+            )
+        }
+        if (granted != null) {
+            onNotificationPermissionResult(serverId = serverId, granted = granted)
+        }
     }
 
     /**
-     * Checks whether the storage permission request should be made for a download and, if so,
-     * enqueues a [PermissionRequest.ExternalStorage].
+     * Ensures the app has permission to write to external storage for a download.
      *
-     * Does nothing on API 29+ (scoped storage) or when the permission is already granted.
+     * Returns `true` immediately on API 29+ (scoped storage no permission needed) and when the
+     * permission is already granted. Otherwise enqueues a [PermissionRequest.ExternalStorage],
+     * suspends until the user responds, and returns whether they granted it. The caller can then
+     * decide whether to proceed with the download.
      *
-     * Suspends if another permission request is already in-flight, and resumes once
-     * the slot is free.
-     *
-     * @param onGranted Callback invoked after the user grants the permission, typically
-     *        used to retry the download that was blocked
-     * @return `true` if the download must wait for permission; `false` if it can proceed now
+     * @return `true` if the download can proceed (permission available or not needed); `false` if
+     *         the user declined the permission
      */
-    suspend fun checkStoragePermissionForDownload(onGranted: () -> Unit): Boolean {
-        if (sdkInt >= Build.VERSION_CODES.Q) return false
-        if (permissionChecker.hasPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)) return false
+    suspend fun checkStoragePermissionForDownload(): Boolean {
+        if (sdkInt >= Build.VERSION_CODES.Q) return true
+        if (permissionChecker.hasPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)) return true
 
-        Timber.d("Storage permission required for download, deferring until granted")
-        _pendingPermissionRequest.emit(
-            PermissionRequest.ExternalStorage(onGranted = onGranted),
-        )
-        return true
+        Timber.d("Storage permission required for download, awaiting user response")
+        return queue.awaitResult { onResult ->
+            PermissionRequest.ExternalStorage(onResult = onResult)
+        }
     }
 
     /**
      * Processes a WebView permission request (camera, microphone).
      *
-     * Resources for which the app already holds Android runtime permissions are collected
-     * and deferred so they can be granted together with any newly-approved resources in a
-     * single [WebViewPermissionRequest.grant] call.
+     * Resources whose Android permissions are already granted are deferred so they can be granted
+     * together with any newly-approved resources in a single [WebViewPermissionRequest.grant] call.
      *
-     * If permissions still need to be requested, a [PermissionRequest.WebView] is enqueued.
-     * Suspends if another permission request is already in-flight, and resumes once
-     * the slot is free.
-     *
-     * @param request The [WebViewPermissionRequest] from the WebView's `onPermissionRequest` callback
+     * If any permissions still need to be requested, suspends until the user responds and then
+     * grants/denies the original WebView request accordingly. Otherwise, auto-grants the
+     * already-granted resources without showing UI.
      */
     suspend fun onWebViewPermissionRequest(request: WebViewPermissionRequest?) {
         if (request == null) return
 
+        val status = assessWebViewPermissions(request)
+        if (status.toBeGranted.isEmpty()) {
+            autoGrantWebViewResources(request, status.alreadyGranted)
+            return
+        }
+        val grantedPermissions = queue.awaitResult { onResult ->
+            PermissionRequest.WebView(androidPermissions = status.toBeGranted, onResult = onResult)
+        }
+        resolveWebViewRequest(request, status, grantedPermissions)
+    }
+
+    /**
+     * Splits the WebView request's resources into those whose Android permissions are already
+     * granted (and can be auto-granted in one batch) and those that still need to be requested.
+     */
+    private fun assessWebViewPermissions(request: WebViewPermissionRequest): WebViewPermissionStatus {
         val alreadyGranted = mutableListOf<String>()
         val toBeGranted = mutableListOf<String>()
         val resourcesByPermission = mutableMapOf<String, String>()
@@ -151,38 +166,44 @@ internal class PermissionManager @VisibleForTesting constructor(
                 resourcesByPermission[androidPermission] = resource
             }
         }
-
-        if (toBeGranted.isNotEmpty()) {
-            Timber.d("Requesting Android permissions for WebView: $toBeGranted (already granted: $alreadyGranted)")
-            _pendingPermissionRequest.emit(
-                PermissionRequest.WebView(
-                    webViewRequest = request,
-                    androidPermissions = toBeGranted,
-                    webViewResourcesByPermission = resourcesByPermission,
-                    alreadyGrantedResources = alreadyGranted,
-                ),
-            )
-        } else if (alreadyGranted.isNotEmpty()) {
-            Timber.d("Auto-granting WebView resources: $alreadyGranted")
-            request.grant(alreadyGranted.toTypedArray())
-        }
+        return WebViewPermissionStatus(
+            alreadyGranted = alreadyGranted,
+            toBeGranted = toBeGranted,
+            resourcesByPermission = resourcesByPermission,
+        )
     }
 
     /**
-     * Clears the current pending permission request.
-     *
-     * Called by the observer in two scenarios:
-     * - Before delivering a result via [PermissionRequest.onResult] (freeing the slot for queued requests)
-     * - When the user dismisses the request without making an explicit choice, in which case
-     *   the request may reappear on the next trigger
-     *
-     * Must only be called when a request is in-flight; triggers [FailFast] otherwise.
+     * Grants [alreadyGranted] resources without showing UI, or returns silently when there is
+     * nothing to grant.
      */
-    fun clearPendingPermissionRequest() {
-        FailFast.failWhen(_pendingPermissionRequest.value == null) {
-            "Should have in-flight permission while calling clearPendingPermissionRequest"
+    private fun autoGrantWebViewResources(request: WebViewPermissionRequest, alreadyGranted: List<String>) {
+        if (alreadyGranted.isEmpty()) return
+        Timber.d("Auto-granting WebView resources: $alreadyGranted")
+        request.grant(alreadyGranted.toTypedArray())
+    }
+
+    /**
+     * Combines previously-granted resources from [status] with the resources the user has just
+     * approved and resolves the original [request] in a single grant/deny call.
+     */
+    private fun resolveWebViewRequest(
+        request: WebViewPermissionRequest,
+        status: WebViewPermissionStatus,
+        grantedPermissions: Map<String, Boolean>,
+    ) {
+        val newlyGrantedResources = grantedPermissions
+            .filter { (_, granted) -> granted }
+            .mapNotNull { (permission, _) -> status.resourcesByPermission[permission] }
+        val allGrantedResources = status.alreadyGranted + newlyGrantedResources
+
+        if (allGrantedResources.isNotEmpty()) {
+            Timber.d("Granting WebView resources: $allGrantedResources")
+            request.grant(allGrantedResources.toTypedArray())
+        } else {
+            Timber.d("User denied all requested permissions, denying WebView request")
+            request.deny()
         }
-        _pendingPermissionRequest.clear()
     }
 
     /**

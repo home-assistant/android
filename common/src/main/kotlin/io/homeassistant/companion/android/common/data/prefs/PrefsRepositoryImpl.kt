@@ -207,6 +207,17 @@ internal class PrefsRepositoryImpl @Inject constructor(
         localStorage().putBoolean(PREF_FULLSCREEN_ENABLED, enabled)
     }
 
+    override suspend fun fullScreenEnabledFlow(): Flow<Boolean> {
+        val localStorage = localStorage()
+        return merge(
+            localStorage.observeChanges(PREF_FULLSCREEN_ENABLED),
+            // Seed an initial emission so collectors read the current value immediately
+            flowOf(""),
+        ).map {
+            isFullScreenEnabled()
+        }
+    }
+
     override suspend fun isKeepScreenOnEnabled(): Boolean {
         return localStorage().getBoolean(PREF_KEEP_SCREEN_ON_ENABLED)
     }

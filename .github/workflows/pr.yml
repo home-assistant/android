@@ -319,6 +319,62 @@ jobs:
         with:
           test-name: Unit test
 
+  instrumentation_test_app:
+    name: "Instrumentation Test app"
+    needs: [lint, lockfiles, ktlint]
+    environment: ui-test
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-build-env
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+          mock-google-services: "true"
+
+      - name: Build x86 APKs
+        run: ./gradlew :app:assembleDebug :app:assembleAndroidTest -Pabis=x86,x86_64
+
+      - name: Build device list
+        id: devices
+        run: |
+          MIN=$(grep '^androidSdk-min' gradle/libs.versions.toml | cut -d'"' -f2)
+          MAX=$(grep '^androidSdk-target' gradle/libs.versions.toml | cut -d'"' -f2)
+          {
+            echo 'list<<DEVICES_EOF'
+            for v in $(seq "$MIN" "$MAX"); do
+              echo "model=Pixel7,version=$v"
+            done
+            echo 'DEVICES_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Run tests full
+        uses: emulator-wtf/run-tests@01944281be70008e1b97d9f8458039c18cd3d779 # v0.9.11
+        with:
+          api-token: ${{ secrets.EMULATOR_WTF_TOKEN }}
+          devices: ${{ steps.devices.outputs.list }}
+          app: app/build/outputs/apk/full/debug/app-full-debug.apk
+          test: app/build/outputs/apk/androidTest/full/debug/app-full-debug-androidTest.apk
+          outputs-dir: build/test-results/full
+
+      - name: Run tests minimal
+        uses: emulator-wtf/run-tests@01944281be70008e1b97d9f8458039c18cd3d779 # v0.9.11
+        with:
+          api-token: ${{ secrets.EMULATOR_WTF_TOKEN }}
+          devices: ${{ steps.devices.outputs.list }}
+          app: app/build/outputs/apk/minimal/debug/app-minimal-debug.apk
+          test: app/build/outputs/apk/androidTest/minimal/debug/app-minimal-debug-androidTest.apk
+          outputs-dir: build/test-results/minimal
+
+      - uses: ./.github/actions/upload-test-results
+        if: always()
+        with:
+          test-name: Instrumentation Test app
+
   instrumentation_test:
     name: "Instrumentation Tests"
     needs: [lint, lockfiles, ktlint]
@@ -328,16 +384,6 @@ jobs:
       fail-fast: false
       matrix:
         configuration:
-          - api-level: 23
-            arch: x86_64
-            profile: "Nexus 5"
-            target: "google_apis"
-            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest :microwakeword:connectedDebugAndroidTest"
-          - api-level: 36
-            arch: x86_64
-            profile: "pixel_7"
-            target: "google_apis"
-            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest :microwakeword:connectedDebugAndroidTest"
           - api-level: 33
             arch: x86_64
             profile: "automotive_1024p_landscape"
@@ -406,7 +452,7 @@ jobs:
 
   publish_test_results:
     name: "Publish Tests Results"
-    needs: [instrumentation_test, unit_tests, screenshot_test]
+    needs: [instrumentation_test, unit_tests, screenshot_test, instrumentation_test_app]
     runs-on: ubuntu-latest
     permissions:
       checks: write
@@ -427,3 +473,4 @@ jobs:
           files: |
             **/androidTest-results/**/TEST-*.xml
             **/build/test-results/**/TEST-*.xml
+            **/build/test-results/**/results.xml

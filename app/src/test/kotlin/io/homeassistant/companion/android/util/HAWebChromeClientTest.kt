@@ -1,7 +1,10 @@
 package io.homeassistant.companion.android.util
 
+import android.net.Uri
 import android.webkit.JsResult
 import android.webkit.PermissionRequest
+import android.webkit.ValueCallback
+import android.webkit.WebChromeClient
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.mockk.mockk
 import io.mockk.verify
@@ -95,5 +98,52 @@ class HAWebChromeClientTest {
         assertFalse(handled)
         verify(exactly = 0) { jsResult.confirm() }
         verify(exactly = 0) { jsResult.cancel() }
+    }
+
+    @Test
+    fun `Given onShowFileChooser callback when file chooser triggered then callback receives params`() {
+        var capturedCallback: ValueCallback<Array<Uri>>? = null
+        var capturedParams: WebChromeClient.FileChooserParams? = null
+        val client = HAWebChromeClient(
+            onShowFileChooser = { filePathCallback, fileChooserParams ->
+                capturedCallback = filePathCallback
+                capturedParams = fileChooserParams
+                true
+            },
+        )
+        val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
+        val fileChooserParams = mockk<WebChromeClient.FileChooserParams>(relaxed = true)
+
+        val handled = client.onShowFileChooser(mockk(relaxed = true), filePathCallback, fileChooserParams)
+
+        assertTrue(handled)
+        assertTrue(capturedCallback === filePathCallback)
+        assertTrue(capturedParams === fileChooserParams)
+    }
+
+    @Test
+    fun `Given onShowFileChooser with null callback then handler is not invoked`() {
+        var invoked = false
+        val client = HAWebChromeClient(
+            onShowFileChooser = { _, _ ->
+                invoked = true
+                true
+            },
+        )
+
+        client.onShowFileChooser(mockk(relaxed = true), null, mockk(relaxed = true))
+
+        assertFalse(invoked)
+    }
+
+    @Test
+    fun `Given no onShowFileChooser callback when file chooser triggered then returns false`() {
+        val client = HAWebChromeClient()
+        val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
+
+        val handled = client.onShowFileChooser(mockk(relaxed = true), filePathCallback, mockk(relaxed = true))
+
+        assertFalse(handled)
+        verify(exactly = 0) { filePathCallback.onReceiveValue(any()) }
     }
 }

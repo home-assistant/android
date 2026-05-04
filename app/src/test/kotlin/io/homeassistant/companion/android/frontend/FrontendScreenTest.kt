@@ -41,6 +41,8 @@ import io.mockk.verify
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
@@ -298,7 +300,8 @@ class FrontendScreenTest {
                 viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
                 pendingPermissionRequest = PermissionRequest.Notification(
                     serverId = 1,
-                    persistResult = { persistedResult = it },
+                    onResult = { granted -> persistedResult = granted },
+                    onDismiss = {},
                 ),
                 registry = registry,
             )
@@ -323,7 +326,10 @@ class FrontendScreenTest {
             every { resources } returns arrayOf(WebViewPermissionRequest.RESOURCE_VIDEO_CAPTURE)
         }
         val permissionManager = createPermissionManager()
-        permissionManager.onWebViewPermissionRequest(permissionRequest)
+        // onWebViewPermissionRequest now suspends until the user responds via pending.onResult,
+        // so we launch it; the registry below will resume it with the simulated grant result.
+        val managerJob = launch { permissionManager.onWebViewPermissionRequest(permissionRequest) }
+        advanceUntilIdle()
 
         composeTestRule.apply {
             setFrontendScreen(
@@ -334,8 +340,11 @@ class FrontendScreenTest {
             waitForIdle()
 
             registry.assertPermissionsRequested(Manifest.permission.CAMERA)
-            verify { permissionRequest.grant(arrayOf(WebViewPermissionRequest.RESOURCE_VIDEO_CAPTURE)) }
         }
+        // Wait for the manager's post-result logic (grant/deny on the WebView request) to run
+        // before asserting on the mocked WebView request.
+        managerJob.join()
+        verify { permissionRequest.grant(arrayOf(WebViewPermissionRequest.RESOURCE_VIDEO_CAPTURE)) }
     }
 
     @Test
@@ -345,7 +354,8 @@ class FrontendScreenTest {
             every { resources } returns arrayOf(WebViewPermissionRequest.RESOURCE_AUDIO_CAPTURE)
         }
         val permissionManager = createPermissionManager()
-        permissionManager.onWebViewPermissionRequest(permissionRequest)
+        val managerJob = launch { permissionManager.onWebViewPermissionRequest(permissionRequest) }
+        advanceUntilIdle()
 
         composeTestRule.apply {
             setFrontendScreen(
@@ -356,8 +366,9 @@ class FrontendScreenTest {
             waitForIdle()
 
             registry.assertPermissionsRequested(Manifest.permission.RECORD_AUDIO)
-            verify { permissionRequest.deny() }
         }
+        managerJob.join()
+        verify { permissionRequest.deny() }
     }
 
     private fun createPermissionManager(): PermissionManager = PermissionManager(
@@ -371,7 +382,7 @@ class FrontendScreenTest {
     private fun AndroidComposeTestRule<ActivityScenarioRule<HiltComponentActivity>, HiltComponentActivity>.setFrontendScreen(
         viewState: FrontendViewState,
         errorStateProvider: FrontendConnectionErrorStateProvider = FrontendConnectionErrorStateProvider.noOp,
-        pendingPermissionRequest: PermissionRequest<*>? = null,
+        pendingPermissionRequest: PermissionRequest? = null,
         onBlockInsecureRetry: () -> Unit = {},
         onBlockInsecureHelpClick: suspend () -> Unit = {},
         onOpenSettings: () -> Unit = {},
@@ -380,7 +391,6 @@ class FrontendScreenTest {
         onConfigureHomeNetwork: (serverId: Int) -> Unit = { _ -> },
         onSecurityLevelHelpClick: suspend () -> Unit = {},
         onSecurityLevelDone: () -> Unit = {},
-        onClearPendingPermissionRequest: () -> Unit = {},
         registry: ActivityResultRegistry? = null,
     ) {
         setContent {
@@ -402,7 +412,6 @@ class FrontendScreenTest {
                     onConfigureHomeNetwork = onConfigureHomeNetwork,
                     onSecurityLevelHelpClick = onSecurityLevelHelpClick,
                     onSecurityLevelDone = onSecurityLevelDone,
-                    onClearPendingPermissionRequest = onClearPendingPermissionRequest,
                     onShowSnackbar = { _, _ -> true },
                     onWebViewCreationFailed = {},
                 )

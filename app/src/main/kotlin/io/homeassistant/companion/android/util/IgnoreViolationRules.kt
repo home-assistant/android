@@ -25,6 +25,7 @@ val threadPolicyIgnoredViolationRules = listOf(
     IgnoreMiuiFontSettingsDiskRead,
     IgnoreMiuiTurboSchedMonitorDiskRead,
     IgnoreChromiumKeyStoreDiskWrite,
+    IgnoreAppCompatPersistLocalesDiskReadWrite,
 )
 
 /**
@@ -229,6 +230,38 @@ private data object IgnoreMiuiTurboSchedMonitorDiskRead : IgnoreViolationRule {
         return violation.stackTrace.any {
             it.className == "android.os.TurboSchedMonitorImpl"
         }
+    }
+}
+
+/**
+ * Ignore a [DiskWriteViolation] and [DiskReadViolation] from AppCompat's locale auto-storage sync.
+ *
+ * On every cold activity start, [androidx.appcompat.app.AppCompatDelegateImpl.attachBaseContext2]
+ * synchronously calls [androidx.appcompat.app.AppCompatDelegate.syncRequestedAndStoredLocales],
+ * which deletes (or writes) the persisted locales file via
+ * [androidx.core.app.AppLocalesStorageHelper.persistLocales] on the main thread. The delete itself
+ * is the [DiskWriteViolation]; the [DiskReadViolation] comes from the framework's
+ * `Context.deleteFile` first probing `filesDir` to ensure it exists. The app opts in to this
+ * storage via the `AppLocalesMetadataHolderService` manifest entry, so both violations are
+ * intrinsic to the library and beyond application control.
+ */
+private data object IgnoreAppCompatPersistLocalesDiskReadWrite : IgnoreViolationRule {
+    @RequiresApi(Build.VERSION_CODES.P)
+    override fun shouldIgnore(violation: Violation): Boolean {
+        if (violation !is DiskWriteViolation && violation !is DiskReadViolation) return false
+
+        return violation.stackTrace.any {
+            it.className == "androidx.core.app.AppLocalesStorageHelper" &&
+                it.methodName == "persistLocales"
+        } &&
+            violation.stackTrace.any {
+                it.className == "androidx.appcompat.app.AppCompatDelegate" &&
+                    it.methodName == "syncRequestedAndStoredLocales"
+            } &&
+            violation.stackTrace.any {
+                it.className == "androidx.appcompat.app.AppCompatDelegateImpl" &&
+                    it.methodName == "attachBaseContext2"
+            }
     }
 }
 

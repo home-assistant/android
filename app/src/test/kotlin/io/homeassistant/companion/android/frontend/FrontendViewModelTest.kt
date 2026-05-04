@@ -3,6 +3,8 @@ package io.homeassistant.companion.android.frontend
 import android.net.Uri
 import android.webkit.HttpAuthHandler
 import android.webkit.JsResult
+import android.webkit.ValueCallback
+import android.webkit.WebChromeClient
 import app.cash.turbine.test
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
@@ -22,6 +24,7 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage
+import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
 import io.homeassistant.companion.android.frontend.gesture.FrontendGestureHandler
 import io.homeassistant.companion.android.frontend.gesture.GestureResult
 import io.homeassistant.companion.android.frontend.handler.FrontendBusObserver
@@ -56,6 +59,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -91,12 +96,16 @@ class FrontendViewModelTest {
         every { frontendBusObserver.messageResults() } returns emptyFlow()
         every { frontendBusObserver.webViewActions() } returns emptyFlow()
         every { connectivityCheckRepository.runChecks(any()) } returns flowOf(ConnectivityCheckState())
+        // Default: storage permission available so download tests don't bail out at the permission gate.
+        // Tests that exercise the deny path override this explicitly.
+        coEvery { permissionManager.checkStoragePermissionForDownload() } returns true
     }
 
     private fun createViewModel(
         serverId: Int = this.serverId,
         path: String? = null,
         dialogManager: FrontendDialogManager = FrontendDialogManager(),
+        fileChooserManager: FileChooserManager = FileChooserManager(),
         httpAuthManager: HttpAuthManager = HttpAuthManager(
             authenticationDao = mockk(relaxed = true),
             clock = FakeClock(),
@@ -117,6 +126,7 @@ class FrontendViewModelTest {
             gestureHandler = gestureHandler,
             prefsRepository = prefsRepository,
             dialogManager = dialogManager,
+            fileChooserManager = fileChooserManager,
             httpAuthManager = httpAuthManager,
         )
     }
@@ -864,20 +874,6 @@ class FrontendViewModelTest {
 
             coVerify { permissionManager.checkNotificationPermission(serverId) }
         }
-
-        @Test
-        fun `Given permission dismissed then delegates to permission manager`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
-                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
-            )
-
-            val viewModel = createViewModel()
-            advanceUntilIdle()
-
-            viewModel.clearPendingPermissionRequest()
-
-            verify { permissionManager.clearPendingPermissionRequest() }
-        }
     }
 
     @Nested
@@ -1193,6 +1189,84 @@ class FrontendViewModelTest {
     }
 
     @Nested
+    inner class FileChooser {
+
+        @Test
+        fun `Given file chooser triggered then pendingFileChooser exposes the params`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+
+            val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
+            val fileChooserParams = mockk<WebChromeClient.FileChooserParams>(relaxed = true)
+
+            val handled = viewModel.webChromeClient.onShowFileChooser(
+                mockk(relaxed = true),
+                filePathCallback,
+                fileChooserParams,
+            )
+            advanceUntilIdle()
+
+            assertTrue(handled)
+            val pending = viewModel.pendingFileChooser.value
+            assertNotNull(pending)
+            assertTrue(pending!!.fileChooserParams === fileChooserParams)
+        }
+
+        @Test
+        fun `Given pending file chooser when result delivered then filePathCallback receives uris and slot clears`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
+
+            viewModel.webChromeClient.onShowFileChooser(
+                mockk(relaxed = true),
+                filePathCallback,
+                mockk(relaxed = true),
+            )
+            advanceUntilIdle()
+
+            val pending = viewModel.pendingFileChooser.value
+            assertNotNull(pending)
+
+            val uris = arrayOf(mockk<Uri>())
+            pending!!.onResult(uris)
+            advanceUntilIdle()
+
+            verify { filePathCallback.onReceiveValue(uris) }
+            assertNull(viewModel.pendingFileChooser.value)
+        }
+
+        @Test
+        fun `Given pending file chooser when user cancels then filePathCallback receives null and slot clears`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
+
+            viewModel.webChromeClient.onShowFileChooser(
+                mockk(relaxed = true),
+                filePathCallback,
+                mockk(relaxed = true),
+            )
+            advanceUntilIdle()
+
+            viewModel.pendingFileChooser.value!!.onResult(null)
+            advanceUntilIdle()
+
+            verify { filePathCallback.onReceiveValue(null) }
+            assertNull(viewModel.pendingFileChooser.value)
+        }
+    }
+
+    @Nested
     inner class ConnectionTimeout {
 
         @Test
@@ -1359,13 +1433,11 @@ class FrontendViewModelTest {
         }
 
         @Test
-        fun `Given storage permission required when download requested then does not call downloadManager`() = runTest {
+        fun `Given storage permission denied when download requested then does not call downloadManager`() = runTest {
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
-            coEvery {
-                permissionManager.checkStoragePermissionForDownload(any())
-            } returns true
+            coEvery { permissionManager.checkStoragePermissionForDownload() } returns false
 
             val viewModel = createViewModel()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
@@ -1381,17 +1453,12 @@ class FrontendViewModelTest {
         }
 
         @Test
-        fun `Given storage permission required when onGranted called then retries download`() = runTest {
+        fun `Given storage permission granted when download requested then proceeds with download`() = runTest {
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
-            val onGrantedSlot = mutableListOf<() -> Unit>()
-            coEvery {
-                permissionManager.checkStoragePermissionForDownload(capture(onGrantedSlot))
-            } returns true
-            coEvery {
-                downloadManager.downloadFile(any(), any(), any(), any())
-            } returns DownloadResult.Forwarded
+            coEvery { permissionManager.checkStoragePermissionForDownload() } returns true
+            coEvery { downloadManager.downloadFile(any(), any(), any(), any()) } returns DownloadResult.Forwarded
 
             val viewModel = createViewModel()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
@@ -1401,14 +1468,6 @@ class FrontendViewModelTest {
                 contentDisposition = "attachment",
                 mimetype = "application/pdf",
             )
-
-            coVerify(exactly = 0) { downloadManager.downloadFile(any(), any(), any(), any()) }
-
-            // Simulate permission granted: onGranted retries the download
-            coEvery {
-                permissionManager.checkStoragePermissionForDownload(any())
-            } returns false
-            onGrantedSlot.last().invoke()
             advanceUntilIdle()
 
             coVerify {

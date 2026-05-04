@@ -110,4 +110,97 @@ class SingleSlotQueueTest {
             cancelAndIgnoreRemainingEvents()
         }
     }
+
+    @Test
+    fun `Given awaitResult when resolve is called then suspend returns the value and slot is cleared`() = runTest {
+        val queue = SingleSlotQueue<Request>()
+        var capturedResolve: ((String) -> Unit)? = null
+
+        val outcome = async {
+            queue.awaitResult { resolve ->
+                capturedResolve = resolve
+                Request("payload")
+            }
+        }
+        advanceUntilIdle()
+
+        assertEquals(Request("payload"), queue.value)
+        assertFalse(outcome.isCompleted)
+
+        capturedResolve!!.invoke("done")
+        advanceUntilIdle()
+
+        assertEquals("done", outcome.await())
+        assertNull(queue.value)
+    }
+
+    @Test
+    fun `Given awaitResult when caller is cancelled before resolve then slot is cleared`() = runTest {
+        val queue = SingleSlotQueue<Request>()
+
+        val outcome = async {
+            queue.awaitResult<String> { _ -> Request("first") }
+        }
+        advanceUntilIdle()
+        assertEquals(Request("first"), queue.value)
+
+        outcome.cancel()
+        advanceUntilIdle()
+
+        assertNull(queue.value)
+    }
+
+    @Test
+    fun `Given awaitResult when resolve is called twice then only the first invocation is used`() = runTest {
+        val queue = SingleSlotQueue<Request>()
+        var capturedResolve: ((String) -> Unit)? = null
+
+        val outcome = async {
+            queue.awaitResult { resolve ->
+                capturedResolve = resolve
+                Request("payload")
+            }
+        }
+        advanceUntilIdle()
+
+        capturedResolve!!.invoke("first")
+        capturedResolve!!.invoke("second")
+        advanceUntilIdle()
+
+        assertEquals("first", outcome.await())
+        assertNull(queue.value)
+    }
+
+    @Test
+    fun `Given pending emit when awaitResult called then it suspends until the slot is free`() = runTest {
+        val queue = SingleSlotQueue<Request>()
+        queue.emit(Request("blocking"))
+        var capturedResolve: ((String) -> Unit)? = null
+
+        val outcome = async {
+            queue.awaitResult { resolve ->
+                capturedResolve = resolve
+                Request("queued")
+            }
+        }
+        advanceUntilIdle()
+
+        // First emit is still in the slot; awaitResult is queued behind it.
+        assertEquals(Request("blocking"), queue.value)
+        assertFalse(outcome.isCompleted)
+
+        queue.clear()
+        advanceUntilIdle()
+
+        // Slot now holds the awaitResult's request.
+        assertEquals(Request("queued"), queue.value)
+
+        capturedResolve!!.invoke("ok")
+        advanceUntilIdle()
+
+        assertEquals("ok", outcome.await())
+        assertNull(queue.value)
+    }
+
+    private data class Request(val payload: String)
 }

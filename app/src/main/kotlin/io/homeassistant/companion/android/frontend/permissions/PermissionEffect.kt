@@ -19,7 +19,7 @@ import io.homeassistant.companion.android.common.util.FailFast
  */
 @Composable
 internal fun MultiplePermissionsEffect(
-    pendingRequest: PermissionRequest<*>?,
+    pendingRequest: PermissionRequest.MultiplePermissions?,
     onPermissionResult: (Map<String, Boolean>) -> Unit,
 ) {
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -47,7 +47,10 @@ internal fun MultiplePermissionsEffect(
  * @param onPermissionResult Callback with whether the permission was granted
  */
 @Composable
-internal fun SinglePermissionEffect(pendingRequest: PermissionRequest<*>?, onPermissionResult: (Boolean) -> Unit) {
+internal fun SinglePermissionEffect(
+    pendingRequest: PermissionRequest.SinglePermission?,
+    onPermissionResult: (Boolean) -> Unit,
+) {
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = onPermissionResult,

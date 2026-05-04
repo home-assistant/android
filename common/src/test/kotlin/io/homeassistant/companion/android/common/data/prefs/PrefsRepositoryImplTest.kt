@@ -183,4 +183,33 @@ class PrefsRepositoryImplTest {
             }
         }
     }
+
+    @Nested
+    inner class FullScreenEnabledFlow {
+
+        @Test
+        fun `Given collecting flow when subscribing then current full screen enabled is emitted immediately`() = runTest {
+            coEvery { localStorage.getBoolean("fullscreen_enabled") } returns true
+
+            repository.fullScreenEnabledFlow().test {
+                assertTrue(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given collecting flow when full screen changes then updated full screen enabled is emitted`() = runTest {
+            coEvery { localStorage.getBoolean("fullscreen_enabled") } returns true
+
+            repository.fullScreenEnabledFlow().test {
+                awaitItem() // consume initial emission
+
+                coEvery { localStorage.getBoolean("fullscreen_enabled") } returns false
+                keyChangesFlow.emit("fullscreen_enabled")
+
+                assertFalse(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+    }
 }
