@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.onboarding.connection
 import android.webkit.WebViewClient
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -44,6 +44,7 @@ class ConnectionScreenTest {
                     isError = false,
                     url = null,
                     webViewClient = WebViewClient(),
+                    onWebViewCreationFailed = {},
                 )
             }
             onNodeWithTag(HA_WEBVIEW_TAG).assertIsNotDisplayed()
@@ -60,6 +61,7 @@ class ConnectionScreenTest {
                     isError = false,
                     url = "",
                     webViewClient = WebViewClient(),
+                    onWebViewCreationFailed = {},
                 )
             }
             onNodeWithTag(HA_WEBVIEW_TAG).assertIsDisplayed()
@@ -77,6 +79,7 @@ class ConnectionScreenTest {
                     isError = false,
                     url = "",
                     webViewClient = WebViewClient(),
+                    onWebViewCreationFailed = {},
                 )
             }
             onNodeWithTag(HA_WEBVIEW_TAG).assertIsDisplayed()
@@ -94,6 +97,7 @@ class ConnectionScreenTest {
                     isError = true,
                     url = "",
                     webViewClient = WebViewClient(),
+                    onWebViewCreationFailed = {},
                 )
             }
             onNodeWithTag(HA_WEBVIEW_TAG).assertIsNotDisplayed()
@@ -115,6 +119,7 @@ class ConnectionScreenTest {
                     isError = false,
                     url = "",
                     webViewClient = WebViewClient(),
+                    onWebViewCreationFailed = {},
                 )
             }
 

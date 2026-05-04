@@ -6,6 +6,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.common.util.MessagingToken
 import io.homeassistant.companion.android.common.util.MessagingTokenProvider
+import io.homeassistant.companion.android.util.PlayServicesAvailability
 import javax.inject.Singleton
 
 @Module
@@ -17,5 +18,11 @@ object MinimalApplicationModule {
         return MessagingTokenProvider {
             return@MessagingTokenProvider MessagingToken("")
         }
+    }
+
+    @Provides
+    @Singleton
+    internal fun providesPlayServicesAvailability(): PlayServicesAvailability {
+        return PlayServicesAvailability { false }
     }
 }

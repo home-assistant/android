@@ -30,9 +30,9 @@ jobs:
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
-      - uses: ruby/setup-ruby@09a7688d3b55cf0e976497ff046b70949eeaccfd # v1.288.0
+      - uses: ruby/setup-ruby@c4e5b1316158f92e3d49443a9d58b31d25ac0f8f # v1.306.0
         with:
-          ruby-version: "4.0.1"
+          ruby-version: "4.0.3"
           bundler-cache: false
 
       - uses: ./.github/actions/create-release-number
@@ -70,7 +70,7 @@ jobs:
           ./gradlew :common:assemble :app:assembleRelease :wear:assembleRelease :automotive:assembleRelease
 
       - name: Archive Build
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: release-apks
           path: ./**/*.apk
@@ -83,13 +83,13 @@ jobs:
         run: |
           echo $VERSION_CODE > ./app/build/outputs/version_code.txt
 
-      - name: Create Github Pre-Release
+      - name: Create draft Github Pre-Release
         if: github.event.inputs.beta == 'true'
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
           tag_name: ${{ steps.rel_number.outputs.version }}
           body_path: ./app/build/outputs/changelogGithub
-          draft: false
+          draft: true
           prerelease: true
           files: |
             ./app/build/outputs/apk/full/release/app-full-release.apk
@@ -100,6 +100,12 @@ jobs:
             ./automotive/build/outputs/apk/minimal/release/automotive-minimal-release.apk
             ./strings.zip
             ./app/src/main/res/xml/locales_config.xml
+
+      - name: Publish Pre-Release
+        if: github.event.inputs.beta == 'true'
+        run: gh release edit ${{ steps.rel_number.outputs.version }} --draft=false
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy to Firebase
         env:
@@ -123,7 +129,7 @@ jobs:
           AMAZON_APPSTORE_APP_ID: ${{ secrets.AMAZON_APPSTORE_APP_ID }}
 
       - name: Upload Github Dependencies
-        uses: gradle/actions/dependency-submission@f29f5a9d7b09a7c6b29859002d29d24e1674c884 # v5.0.1
+        uses: gradle/actions/dependency-submission@0723195856401067f7a2779048b490ace7a47d7c # v5.0.2
 
       - name: Print `git status`
         run: git status
@@ -145,9 +151,9 @@ jobs:
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
-      - uses: ruby/setup-ruby@09a7688d3b55cf0e976497ff046b70949eeaccfd # v1.288.0
+      - uses: ruby/setup-ruby@c4e5b1316158f92e3d49443a9d58b31d25ac0f8f # v1.306.0
         with:
-          ruby-version: "4.0.1"
+          ruby-version: "4.0.3"
           bundler-cache: false
 
       - uses: ./.github/actions/create-release-number
@@ -185,7 +191,7 @@ jobs:
           ./gradlew :common:assemble :app:bundleFullRelease :wear:bundleRelease :automotive:bundleFullRelease
 
       - name: Archive Build
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: release-aabs
           path: ./**/*.aab

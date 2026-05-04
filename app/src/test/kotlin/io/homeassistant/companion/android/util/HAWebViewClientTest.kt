@@ -45,7 +45,6 @@ class HAWebViewClientTest {
             keyChainRepository = keyChainRepository,
             currentUrlFlow = currentUrlFlow,
             onFrontendError = { capturedError = it },
-            frontendJsCallback = null,
             onCrash = null,
             onUrlIntercepted = null,
             onPageFinished = null,

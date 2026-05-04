@@ -7,7 +7,7 @@ import androidx.activity.result.ActivityResultRegistryOwner
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.compose.ComposeNavigator
@@ -16,7 +16,7 @@ import androidx.navigation.testing.TestNavHostController
 import dagger.hilt.android.testing.HiltAndroidRule
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
-import io.homeassistant.companion.android.util.LocationPermissionActivityResultRegistry
+import io.homeassistant.companion.android.util.FakePermissionResultRegistry
 import io.homeassistant.companion.android.util.compose.navigateToUri
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -67,7 +67,7 @@ internal abstract class BaseOnboardingNavigationTest {
             CompositionLocalProvider(
                 LocalActivityResultRegistryOwner provides object : ActivityResultRegistryOwner {
                     override val activityResultRegistry: ActivityResultRegistry =
-                        LocationPermissionActivityResultRegistry(true)
+                        FakePermissionResultRegistry(true)
                 },
             ) {
                 NavHost(
@@ -90,7 +90,7 @@ internal abstract class BaseOnboardingNavigationTest {
         }
     }
 
-    protected fun testNavigation(
+    protected open fun testNavigation(
         urlToOnboard: String? = null,
         hideExistingServers: Boolean = false,
         skipWelcome: Boolean = false,

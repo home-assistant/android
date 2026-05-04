@@ -6,6 +6,7 @@ import io.homeassistant.companion.android.automotive.navigation.AutomotiveRoute
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.network.NetworkState
 import io.homeassistant.companion.android.common.data.network.NetworkStatusMonitor
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
@@ -39,6 +40,10 @@ import org.junit.jupiter.params.provider.EnumSource
 class LaunchViewModelTest {
     private val serverManager: ServerManager = mockk(relaxed = true)
     private val networkStatusMonitor: NetworkStatusMonitor = mockk(relaxed = true)
+    private val fullScreenEnabledFlow = MutableStateFlow(false)
+    private val prefsRepository: PrefsRepository = mockk(relaxed = true) {
+        coEvery { this@mockk.fullScreenEnabledFlow() } returns this@LaunchViewModelTest.fullScreenEnabledFlow
+    }
 
     private val workManager: WorkManager = mockk()
 
@@ -55,6 +60,7 @@ class LaunchViewModelTest {
             workManager,
             serverManager,
             networkStatusMonitor,
+            prefsRepository,
             hasLocationTrackingSupport,
             isAutomotive,
             isFullFlavor,
@@ -543,5 +549,37 @@ class LaunchViewModelTest {
             LaunchUiState.Ready(WearOnboardingRoute(wearName = "Pixel Watch", urlToOnboard = null)),
             viewModel.uiState.value,
         )
+    }
+
+    @Test
+    fun `Given fullscreen enabled when observed then isFullScreen is true`() = runTest {
+        fullScreenEnabledFlow.value = true
+        createViewModel()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.isFullScreen.value)
+    }
+
+    @Test
+    fun `Given fullscreen disabled when observed then isFullScreen is false`() = runTest {
+        fullScreenEnabledFlow.value = false
+        createViewModel()
+        advanceUntilIdle()
+
+        assertFalse(viewModel.isFullScreen.value)
+    }
+
+    @Test
+    fun `Given fullscreen preference changes then isFullScreen updates reactively`() = runTest {
+        fullScreenEnabledFlow.value = false
+        createViewModel()
+        advanceUntilIdle()
+
+        assertFalse(viewModel.isFullScreen.value)
+
+        fullScreenEnabledFlow.value = true
+        advanceUntilIdle()
+
+        assertTrue(viewModel.isFullScreen.value)
     }
 }

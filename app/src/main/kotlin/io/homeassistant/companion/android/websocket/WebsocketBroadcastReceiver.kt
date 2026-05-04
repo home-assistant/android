@@ -6,13 +6,13 @@ import android.content.Intent
 import io.homeassistant.companion.android.common.util.launchAsync
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 
 class WebsocketBroadcastReceiver : BroadcastReceiver() {
-    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
+    private val receiverScope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     override fun onReceive(context: Context, intent: Intent) {
-        launchAsync(ioScope) {
+        launchAsync(receiverScope) {
             WebsocketManager.start(context)
         }
     }

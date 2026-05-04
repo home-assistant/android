@@ -3,39 +3,21 @@ package io.homeassistant.companion.android.assist.wakeword
 import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.microwakeword.MicroWakeWord
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.nio.channels.FileChannel
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
-import timber.log.Timber
 
 @RunWith(AndroidJUnit4::class)
 class MicroWakeWordModelTest {
 
     private val appContext: Context
         get() = InstrumentationRegistry.getInstrumentation().targetContext
-
-    /**
-     * Initializes TfLite and returns true if successful.
-     * Returns false if initialization fails (e.g., full flavor without GMS).
-     */
-    private suspend fun tryInitializeTfLite(): Boolean {
-        return try {
-            TfLiteInitializerImpl().initialize(appContext)
-            true
-        } catch (e: Exception) {
-            Timber.w(e, "TfLite initialization failed, skipping test")
-            if (BuildConfig.FLAVOR == "full") {
-                false
-            } else {
-                // In minimal the test should run since we use the embedded version of TfLite
-                throw e
-            }
-        }
-    }
 
     @Test
     fun loadsModelsFromAppAssets_verify_models_config_files() = runTest {
@@ -59,13 +41,18 @@ class MicroWakeWordModelTest {
 
     @Test
     fun microWakeWord_loadsAndProcessesAudio_withAllModels() = runTest {
-        assumeTrue("TfLite not available", tryInitializeTfLite())
         val models = MicroWakeWordModelConfig.loadAvailableModels(appContext)
 
         for (model in models) {
-            val detector = MicroWakeWord.create(appContext, model)
+            val modelBuffer = loadModelFile(appContext, model.modelAssetPath)
+            val detector = MicroWakeWord(
+                modelBuffer = modelBuffer,
+                featureStepSizeMs = model.micro.featureStepSize,
+                probabilityCutoff = model.micro.probabilityCutoff,
+                slidingWindowSize = model.micro.slidingWindowSize,
+            )
 
-            try {
+            detector.use { detector ->
                 // Process silent audio (160 samples = 10ms at 16kHz)
                 val silentAudio = ShortArray(160)
                 val detected = detector.processAudio(silentAudio)
@@ -75,20 +62,23 @@ class MicroWakeWordModelTest {
                     "Silent audio should not trigger '${model.wakeWord}' detection",
                     detected,
                 )
-            } finally {
-                detector.close()
             }
         }
     }
 
     @Test
     fun microWakeWord_canResetState_withoutCrashing() = runTest {
-        assumeTrue("TfLite not available", tryInitializeTfLite())
         val models = MicroWakeWordModelConfig.loadAvailableModels(appContext)
         val model = models.first()
 
-        val detector = MicroWakeWord.create(appContext, model)
-        try {
+        val modelBuffer = loadModelFile(appContext, model.modelAssetPath)
+        val detector = MicroWakeWord(
+            modelBuffer = modelBuffer,
+            featureStepSizeMs = model.micro.featureStepSize,
+            probabilityCutoff = model.micro.probabilityCutoff,
+            slidingWindowSize = model.micro.slidingWindowSize,
+        )
+        detector.use { detector ->
             // Process some audio
             detector.processAudio(ShortArray(160))
             detector.processAudio(ShortArray(160))
@@ -99,8 +89,15 @@ class MicroWakeWordModelTest {
             // Should be able to process more audio after reset
             val detected = detector.processAudio(ShortArray(160))
             assertFalse(detected)
-        } finally {
-            detector.close()
         }
+    }
+
+    private fun loadModelFile(context: Context, assetPath: String): ByteBuffer {
+        val assetFd = context.assets.openFd(assetPath)
+        val inputStream = assetFd.createInputStream()
+        val fileChannel = inputStream.channel
+        val mapped = fileChannel.map(FileChannel.MapMode.READ_ONLY, assetFd.startOffset, assetFd.declaredLength)
+        mapped.order(ByteOrder.nativeOrder())
+        return mapped
     }
 }

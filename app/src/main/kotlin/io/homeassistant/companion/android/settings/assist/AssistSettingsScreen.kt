@@ -11,7 +11,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -24,12 +23,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -39,14 +37,14 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -57,6 +55,8 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
+import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.composable.HAHint
 import io.homeassistant.companion.android.common.compose.composable.HALabel
@@ -65,6 +65,7 @@ import io.homeassistant.companion.android.common.compose.composable.HASettingsCa
 import io.homeassistant.companion.android.common.compose.composable.HASwitch
 import io.homeassistant.companion.android.common.compose.composable.LabelVariant
 import io.homeassistant.companion.android.common.compose.theme.HADimens
+import io.homeassistant.companion.android.common.compose.theme.HARadius
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
@@ -116,10 +117,6 @@ fun AssistSettingsScreen(viewModel: AssistSettingsViewModel, modifier: Modifier 
         viewModel.onToggleWakeWord(true)
     }
 
-    val testPermissionState = rememberRecordAudioPermissionState(snackbarHostState) {
-        viewModel.startTestWakeWord()
-    }
-
     val roleRequestLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult(),
     ) {
@@ -150,14 +147,8 @@ fun AssistSettingsScreen(viewModel: AssistSettingsViewModel, modifier: Modifier 
                 }
             },
             onSelectWakeWord = viewModel::onSelectWakeWordModel,
-            onStartTestWakeWord = {
-                if (testPermissionState.status.isGranted) {
-                    viewModel.startTestWakeWord()
-                } else {
-                    testPermissionState.launchPermissionRequest()
-                }
-            },
-            onStopTestWakeWord = viewModel::stopTestWakeWord,
+            onStartTestWakeWord = { viewModel.setTestingWakeWord(true) },
+            onStopTestWakeWord = { viewModel.setTestingWakeWord(false) },
             modifier = Modifier.padding(contentPadding),
         )
     }
@@ -183,7 +174,7 @@ internal fun AssistSettingsContent(
         verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
     ) {
         if (uiState.isLoading) {
-            HALoading()
+            HALoading(modifier = Modifier.align(Alignment.CenterHorizontally))
         } else {
             // Default Assistant Section
             SectionHeader(
@@ -248,10 +239,12 @@ private fun ColumnScope.WakeWordSection(
 
     AnimatedVisibility(visible = isWakeWordEnabled) {
         Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4)) {
+            val selectedModel = uiState.selectedWakeWordModel
             WakeWordModelSelector(
-                selectedModel = uiState.selectedWakeWordModel,
+                selectedModel = selectedModel,
                 availableModels = uiState.availableModels,
                 onSelectModel = onSelectWakeWord,
+                modifier = Modifier.fillMaxWidth(),
             )
 
             HAHint(
@@ -318,7 +311,9 @@ private fun WakeWordEnableRow(enabled: Boolean, canEnable: Boolean, onToggle: (B
     val colorScheme = LocalHAColorScheme.current
 
     HASettingsCard(
-        modifier = Modifier.clickable { onToggle(!enabled) }.takeIf { canEnable } ?: Modifier,
+        modifier = Modifier.clip(RoundedCornerShape(HARadius.XL))
+            .clickable(role = Role.Switch) { onToggle(!enabled) }.takeIf { canEnable }
+            ?: Modifier,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -346,46 +341,25 @@ private fun WakeWordModelSelector(
     selectedModel: MicroWakeWordModelConfig?,
     availableModels: List<MicroWakeWordModelConfig>,
     onSelectModel: (MicroWakeWordModelConfig) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val colorScheme = LocalHAColorScheme.current
-    var expanded by remember { mutableStateOf(false) }
-
-    HASettingsCard(modifier = Modifier.clickable { expanded = true }) {
-        Column {
-            Text(
-                text = stringResource(commonR.string.assist_wake_word_model),
-                style = HATextStyle.Body,
-                color = colorScheme.colorTextPrimary,
-            )
-            Text(
-                text = selectedModel?.wakeWord ?: "",
-                style = HATextStyle.BodyMedium,
-                color = colorScheme.colorTextSecondary,
-                modifier = Modifier.padding(top = HADimens.SPACE1),
-            )
-
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-                containerColor = colorScheme.colorSurfaceDefault,
-            ) {
-                availableModels.forEach { model ->
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                text = model.wakeWord,
-                                style = HATextStyle.BodyMedium,
-                            )
-                        },
-                        onClick = {
-                            onSelectModel(model)
-                            expanded = false
-                        },
-                    )
-                }
-            }
+    val modelsByKey = remember(availableModels) {
+        availableModels.associateBy { it.model }
+    }
+    val items = remember(modelsByKey) {
+        modelsByKey.map { (key, config) ->
+            HADropdownItem(key = key, label = config.wakeWord)
         }
     }
+
+    HADropdownMenu(
+        items = items,
+        selectedKey = selectedModel?.model,
+        onItemSelected = { key -> modelsByKey[key]?.let(onSelectModel) },
+        modifier = modifier,
+        label = stringResource(commonR.string.assist_wake_word_model),
+        placeholder = null,
+    )
 }
 
 @Composable
@@ -489,6 +463,28 @@ private fun AssistSettingsContentNotDefaultPreview() {
                 availableModels = emptyList(),
             ),
             hasAudioPermission = false,
+            onSetDefaultAssistant = {},
+            onToggleWakeWord = {},
+            onSelectWakeWord = {},
+            onStartTestWakeWord = {},
+            onStopTestWakeWord = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun AssistSettingsContentUnsupportedDevicePreview() {
+    HAThemeForPreview {
+        AssistSettingsContent(
+            uiState = AssistSettingsUiState(
+                isLoading = false,
+                isDefaultAssistant = true,
+                isWakeWordEnabled = false,
+                selectedWakeWordModel = null,
+                availableModels = emptyList(),
+            ),
+            hasAudioPermission = true,
             onSetDefaultAssistant = {},
             onToggleWakeWord = {},
             onSelectWakeWord = {},

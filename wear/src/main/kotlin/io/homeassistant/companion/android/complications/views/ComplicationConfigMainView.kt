@@ -6,12 +6,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.FilledIconButton
 import androidx.wear.compose.material3.Icon
@@ -42,6 +44,7 @@ private const val SCREEN_CHOOSE_ENTITY = "choose_entity"
 
 @Composable
 fun LoadConfigView(complicationConfigViewModel: ComplicationConfigViewModel, onAcceptClicked: () -> Unit) {
+    val state by complicationConfigViewModel.viewState.collectAsStateWithLifecycle()
     WearAppTheme {
         val swipeDismissableNavController = rememberSwipeDismissableNavController()
         SwipeDismissableNavHost(
@@ -50,10 +53,10 @@ fun LoadConfigView(complicationConfigViewModel: ComplicationConfigViewModel, onA
         ) {
             composable(SCREEN_MAIN) {
                 MainConfigView(
-                    entity = complicationConfigViewModel.selectedEntity,
-                    showTitle = complicationConfigViewModel.entityShowTitle,
-                    showUnit = complicationConfigViewModel.entityShowUnit,
-                    loadingState = complicationConfigViewModel.loadingState,
+                    entity = state.selectedEntity,
+                    showTitle = state.entityShowTitle,
+                    showUnit = state.entityShowUnit,
+                    loadingState = state.loadingState,
                     onChooseEntityClicked = {
                         swipeDismissableNavController.navigate(SCREEN_CHOOSE_ENTITY)
                     },
@@ -64,9 +67,9 @@ fun LoadConfigView(complicationConfigViewModel: ComplicationConfigViewModel, onA
             }
             composable(SCREEN_CHOOSE_ENTITY) {
                 ChooseEntityView(
-                    entitiesByDomainOrder = complicationConfigViewModel.entitiesByDomainOrder,
-                    entitiesByDomain = complicationConfigViewModel.entitiesByDomain,
-                    favoriteEntityIds = complicationConfigViewModel.favoriteEntityIds,
+                    entitiesByDomainOrder = state.entitiesByDomainOrder,
+                    entitiesByDomain = state.entitiesByDomain,
+                    favoriteEntityIds = state.favoriteEntityIds,
                     onNoneClicked = {},
                     onEntitySelected = { entity ->
                         complicationConfigViewModel.setEntity(entity)

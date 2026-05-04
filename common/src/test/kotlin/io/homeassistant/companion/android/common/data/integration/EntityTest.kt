@@ -1,18 +1,28 @@
 package io.homeassistant.companion.android.common.data.integration
 
+import android.content.Context
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedEntityRemoved
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedEntityState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateDiff
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
+import io.mockk.mockk
 import java.time.LocalDateTime
 import java.time.ZoneOffset
+import kotlinx.serialization.json.JsonPrimitive
+import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
+import org.junit.jupiter.params.provider.ValueSource
 
+@ExtendWith(ConsoleLogExtension::class)
 class EntityTest {
 
     private val baseDateTime = LocalDateTime.of(2024, 1, 1, 12, 0, 0)
@@ -53,6 +63,98 @@ class EntityTest {
     }
 
     @Nested
+    inner class Deserialization {
+        private fun entityJson(stateValue: String) = """
+            {
+                "entity_id": "sensor.temperature",
+                "state": $stateValue,
+                "attributes": {"friendly_name": "Temperature"},
+                "last_changed": "2024-01-01T12:00:00",
+                "last_updated": "2024-01-01T12:00:00"
+            }
+        """.trimIndent()
+
+        @Test
+        fun `Given string state when deserializing then returns state value`() {
+            val entity = kotlinJsonMapper.decodeFromString<Entity>(entityJson("\"on\""))
+            assertEquals("on", entity.state)
+        }
+
+        @Test
+        fun `Given empty string state when deserializing then returns empty state`() {
+            val entity = kotlinJsonMapper.decodeFromString<Entity>(entityJson("\"\""))
+            assertEquals("", entity.state)
+        }
+
+        @Test
+        fun `Given numeric state when deserializing then returns empty state`() {
+            val entity = kotlinJsonMapper.decodeFromString<Entity>(entityJson("42"))
+            assertEquals("", entity.state)
+            assertEquals("sensor.temperature", entity.entityId)
+        }
+
+        @Test
+        fun `Given boolean state when deserializing then returns empty state`() {
+            val entity = kotlinJsonMapper.decodeFromString<Entity>(entityJson("true"))
+            assertEquals("", entity.state)
+        }
+
+        @Test
+        fun `Given null state when deserializing then returns empty state`() {
+            val entity = kotlinJsonMapper.decodeFromString<Entity>(entityJson("null"))
+            assertEquals("", entity.state)
+        }
+
+        @Test
+        fun `Given string state when serializing round-trip then preserves state`() {
+            val entity = createEntity(state = "unavailable")
+            val json = kotlinJsonMapper.encodeToString(entity)
+            val deserialized = kotlinJsonMapper.decodeFromString<Entity>(json)
+            assertEquals("unavailable", deserialized.state)
+        }
+    }
+
+    @Nested
+    inner class GetIcon {
+        @Test
+        fun `Given blank state and non-string state attribute when getting icon then does not throw`() {
+            val context = mockk<Context>()
+            val entity = createEntity(
+                entityId = "sensor.test",
+                state = "",
+                attributes = mapOf("state" to 42),
+            )
+            assertDoesNotThrow { entity.getIcon(context) }
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = ["mdi:", "mdi:abcdefgh"])
+        fun `Given invalid mdi icon attribute when getting icon then returns fallback`(iconAttr: String) {
+            val context = mockk<Context>(relaxed = true)
+            val entity = createEntity(
+                entityId = "sensor.test",
+                state = "42",
+                attributes = mapOf("icon" to iconAttr),
+            )
+            val icon = entity.getIcon(context)
+            assertEquals(Icon.cmd_bookmark, icon)
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = ["mdicustom:abcdefgh", "hue:bulb-filament"])
+        fun `Given custom non-mdi icon attribute when getting icon then returns domain default`(iconAttr: String) {
+            val context = mockk<Context>()
+            val entity = createEntity(
+                entityId = "sensor.test",
+                state = "42",
+                attributes = mapOf("icon" to iconAttr),
+            )
+            val icon = entity.getIcon(context)
+            assertEquals(Icon.cmd_eye, icon)
+        }
+    }
+
+    @Nested
     inner class ApplyCompressedStateDiff {
         @Test
         fun `Given empty diff when applying then returns entity with same values`() {
@@ -69,7 +171,7 @@ class EntityTest {
         @Test
         fun `Given diff with state change when applying then updates state`() {
             val entity = createEntity(state = "on")
-            val diff = CompressedStateDiff(plus = CompressedEntityState(state = "off"))
+            val diff = CompressedStateDiff(plus = CompressedEntityState(state = JsonPrimitive("off")))
 
             val result = entity.applyCompressedStateDiff(diff)
 

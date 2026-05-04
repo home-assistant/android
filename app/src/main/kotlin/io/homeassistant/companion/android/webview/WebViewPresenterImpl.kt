@@ -531,7 +531,7 @@ class WebViewPresenterImpl @Inject constructor(
             },
             { e ->
                 Timber.e(e, "Matter commissioning couldn't be prepared")
-                mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_MATTER)
+                mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_MATTER_OTHER)
             },
         )
     }
@@ -614,11 +614,13 @@ class WebViewPresenterImpl @Inject constructor(
             }
 
             else -> {
-                // Any errors will have been shown in the UI provided by Play Services
+                // Errors will have been shown in the UI provided by Play Services, but may not help
+                // the user so indicate to the activity if result was not OK so we can link to docs.
                 if (result.resultCode == Activity.RESULT_OK) {
                     Timber.d("Matter commissioning returned success")
                 } else {
                     Timber.d("Matter commissioning returned with non-OK code ${result.resultCode}")
+                    mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_MATTER_CANCELLED)
                 }
             }
         }

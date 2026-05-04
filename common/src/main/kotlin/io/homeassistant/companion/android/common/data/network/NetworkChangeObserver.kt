@@ -40,7 +40,7 @@ interface NetworkChangeObserver {
 @Singleton
 internal class NetworkChangeObserverImpl @VisibleForTesting constructor(
     private val connectivityManager: ConnectivityManager,
-    private val scope: CoroutineScope
+    private val scope: CoroutineScope,
 ) : NetworkChangeObserver {
 
     @Inject

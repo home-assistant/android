@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 9.0.0" type="baseline" client="gradle" dependencies="false" name="AGP (9.0.0)" variant="all" version="9.0.0">
+<issues format="6" by="lint 9.1.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.1.1)" variant="all" version="9.1.1">
 
     <issue
         id="MissingPermission"
@@ -59,44 +59,11 @@
     <issue
         id="MissingPermission"
         message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
-        errorLine1="        viewModel.startTestWakeWord()"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/assist/AssistSettingsScreen.kt"
-            line="122"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="MissingPermission"
-        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
-        errorLine1="                    viewModel.startTestWakeWord()"
-        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/assist/AssistSettingsScreen.kt"
-            line="148"
-            column="21"/>
-    </issue>
-
-    <issue
-        id="MissingPermission"
-        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
-        errorLine1="                assistConfigManager.setWakeWordEnabled(false)"
-        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/assist/AssistSettingsViewModel.kt"
-            line="68"
-            column="17"/>
-    </issue>
-
-    <issue
-        id="MissingPermission"
-        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
         errorLine1="        NotificationManagerCompat.from(context)"
         errorLine2="        ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/util/DataUriDownloadManager.kt"
-            line="64"
+            line="78"
             column="9"/>
     </issue>
 
@@ -118,7 +85,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1055"
+            line="1097"
             column="17"/>
     </issue>
 
@@ -173,7 +140,7 @@
         errorLine2="                             ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/controls/HaControlsProviderService.kt"
-            line="46"
+            line="47"
             column="30"/>
     </issue>
 
@@ -426,8 +393,30 @@
         errorLine2="      ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/launch/LaunchActivity.kt"
-            line="29"
+            line="58"
             column="7"/>
+    </issue>
+
+    <issue
+        id="NonObservableLocale"
+        message="Reading locale in a non-observable way in a composable function"
+        errorLine1="                String.format(Locale.getDefault(), &quot;%02d:%02d:%02d&quot;, hours, minutes, seconds)"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/media/player/HAMediaPlayer.kt"
+            line="306"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="NonObservableLocale"
+        message="Reading locale in a non-observable way in a composable function"
+        errorLine1="                String.format(Locale.getDefault(), &quot;%02d:%02d&quot;, minutes, seconds)"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/media/player/HAMediaPlayer.kt"
+            line="308"
+            column="31"/>
     </issue>
 
     <issue
@@ -437,7 +426,7 @@
         errorLine2="     ~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="88"
+            line="89"
             column="6"/>
     </issue>
 
@@ -679,7 +668,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="539"
+            line="542"
             column="17"/>
     </issue>
 
@@ -690,7 +679,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="539"
+            line="542"
             column="17"/>
     </issue>
 
@@ -1216,12 +1205,12 @@
     <issue
         id="AvoidAnySerializer"
         message="Prefer polymorphic serializer over AnySerializer."
-        errorLine1="                        MapAnySerializer,"
-        errorLine2="                        ~~~~~~~~~~~~~~~~">
+        errorLine1="                    MapAnySerializer,"
+        errorLine2="                    ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/button/ButtonWidget.kt"
-            line="317"
-            column="25"/>
+            line="318"
+            column="21"/>
     </issue>
 
     <issue
@@ -1374,7 +1363,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/assist/AssistSettingsScreen.kt"
-            line="341"
+            line="342"
             column="22"/>
     </issue>
 

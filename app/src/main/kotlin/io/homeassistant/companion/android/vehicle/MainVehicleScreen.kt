@@ -163,7 +163,7 @@ class MainVehicleScreen(
                 domains,
                 flowOf(),
                 allEntities,
-            ) { onChangeServer(it) }.getEntityGridItems(favoritesEntities)
+            ).getEntityGridItems(favoritesEntities, canSwitchServers)
         } else {
             var builder = ItemList.Builder()
             if (domains.isNotEmpty() && domainsAdded) {
@@ -189,19 +189,18 @@ class MainVehicleScreen(
                     entityRegistry,
                 ).build(),
             )
-
-            if (canSwitchServers) {
-                builder.addItem(
-                    getChangeServerGridItem(
-                        carContext,
-                        lifecycleScope,
-                        screenManager,
-                        serverManager,
-                        serverId,
-                    ) { onChangeServer(it) }.build(),
-                )
-            }
             builder
+        }
+        if (canSwitchServers) {
+            listBuilder.addItem(
+                getChangeServerGridItem(
+                    carContext,
+                    lifecycleScope,
+                    screenManager,
+                    serverManager,
+                    serverId,
+                ) { onChangeServer(it) }.build(),
+            )
         }
         val refreshAction = Action.Builder()
             .setIcon(

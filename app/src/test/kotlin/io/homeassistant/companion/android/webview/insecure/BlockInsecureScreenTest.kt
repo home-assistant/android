@@ -7,7 +7,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -20,7 +20,7 @@ import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
-import io.homeassistant.companion.android.util.LocationPermissionActivityResultRegistry
+import io.homeassistant.companion.android.util.FakePermissionResultRegistry
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -141,7 +141,7 @@ class BlockInsecureScreenTest {
         var openLocationSettingsClicked = false
         var configureHomeNetworkClicked = false
 
-        val registry = LocationPermissionActivityResultRegistry(locationPermissionGranted)
+        val registry = FakePermissionResultRegistry(locationPermissionGranted)
     }
 
     @OptIn(ExperimentalPermissionsApi::class)

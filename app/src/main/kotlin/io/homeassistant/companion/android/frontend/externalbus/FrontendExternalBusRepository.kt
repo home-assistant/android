@@ -1,18 +1,11 @@
 package io.homeassistant.companion.android.frontend.externalbus
 
+import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
+import io.homeassistant.companion.android.frontend.WebViewAction
 import io.homeassistant.companion.android.frontend.externalbus.incoming.IncomingExternalBusMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.OutgoingExternalBusMessage
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
-
-/**
- * Represents a JavaScript script to be evaluated in the WebView.
- *
- * @property script The JavaScript code to evaluate
- * @property result Deferred that will be completed with the evaluation result.
- *                  The WebView consumer should call [result.complete] with the result.
- */
-data class WebViewScript(val script: String, val result: CompletableDeferred<String?> = CompletableDeferred())
+import kotlinx.serialization.json.JsonElement
 
 /**
  * Repository for typed communication with the Home Assistant frontend via the external bus.
@@ -27,15 +20,18 @@ interface FrontendExternalBusRepository {
 
     /**
      * Sends a typed message to the frontend via the external bus.
+     *
+     * The message is serialized to JSON and emitted as a [WebViewAction.EvaluateScript].
+     * This is fire-and-forget — the evaluation result is not awaited.
      */
     suspend fun send(message: OutgoingExternalBusMessage)
 
     /**
-     * Returns a flow of scripts to evaluate in the WebView.
+     * Returns a flow of [WebViewAction] to be executed by the WebView.
      *
-     * The WebView should collect this flow and call `evaluateJavascript` for each script.
+     * The WebView should collect this flow and execute each action accordingly.
      */
-    fun scriptsToEvaluate(): Flow<WebViewScript>
+    fun webViewActions(): Flow<WebViewAction>
 
     /**
      * Evaluates a raw JavaScript script in the WebView and returns the result.
@@ -44,6 +40,7 @@ interface FrontendExternalBusRepository {
      *
      * @return The evaluation result from the WebView, or null if the script returns no value
      */
+    @EvaluateJavascriptUsage
     suspend fun evaluateScript(script: String): String?
 
     /**
@@ -59,7 +56,7 @@ interface FrontendExternalBusRepository {
      *
      * The message is deserialized and emitted to subscribers of [incomingMessages].
      *
-     * @param messageJson The raw JSON string from the frontend
+     * @param messageJson The JSON message from the frontend
      */
-    suspend fun onMessageReceived(messageJson: String)
+    suspend fun onMessageReceived(messageJson: JsonElement)
 }

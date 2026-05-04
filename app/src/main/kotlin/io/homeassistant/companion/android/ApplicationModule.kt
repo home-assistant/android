@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android
 
+import android.app.DownloadManager
 import android.content.Context
+import androidx.core.content.getSystemService
 import androidx.work.WorkManager
 import dagger.Module
 import dagger.Provides
@@ -13,6 +15,7 @@ import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
 import io.homeassistant.companion.android.di.qualifiers.LocationTrackingSupport
+import io.homeassistant.companion.android.frontend.permissions.FcmSupport
 import javax.inject.Singleton
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -54,8 +57,21 @@ object ApplicationModule {
 
     @Provides
     @Singleton
+    @FcmSupport
+    fun providesFcmSupport(): Boolean {
+        return BuildConfig.FLAVOR == "full"
+    }
+
+    @Provides
+    @Singleton
     @IsAutomotive
     fun providesIsAutomotive(@ApplicationContext context: Context): Boolean {
         return context.isAutomotive()
+    }
+
+    @Provides
+    @Singleton
+    fun providesDownloadManager(@ApplicationContext context: Context): DownloadManager? {
+        return context.getSystemService<DownloadManager>()
     }
 }

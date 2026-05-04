@@ -44,6 +44,7 @@ import androidx.core.graphics.scale
 import androidx.core.net.toUri
 import androidx.core.text.isDigitsOnly
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.R as commonR
@@ -67,6 +68,7 @@ import io.homeassistant.companion.android.common.notifications.parseVibrationPat
 import io.homeassistant.companion.android.common.notifications.prepareText
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.getActiveNotification
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.common.util.toJsonObject
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
@@ -146,6 +148,8 @@ class MessagingManager @Inject constructor(
         const val PROGRESS = "progress"
         const val PROGRESS_MAX = "progress_max"
         const val PROGRESS_INDETERMINATE = "progress_indeterminate"
+        const val LIVE_UPDATE = "live_update"
+        const val CRITICAL_TEXT = "critical_text"
         const val CAR_UI = "car_ui"
         const val KEY_TEXT_REPLY = "key_text_reply"
         const val INTENT_CLASS_NAME = "intent_class_name"
@@ -1073,6 +1077,8 @@ class MessagingManager @Inject constructor(
 
         handleProgress(notificationBuilder, data)
 
+        handleLive(notificationBuilder, data)
+
         val useCarNotification = handleCarUiVisible(context, notificationBuilder, data)
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
@@ -1147,27 +1153,43 @@ class MessagingManager @Inject constructor(
         }
     }
 
+    private fun handleLive(builder: NotificationCompat.Builder, data: Map<String, String>) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+            val liveUpdate = data[LIVE_UPDATE]?.toBoolean() ?: false
+            val criticalText = data[CRITICAL_TEXT]
+
+            if (liveUpdate) {
+                builder.setOngoing(true)
+                builder.setRequestPromotedOngoing(true)
+
+                if (criticalText != null) {
+                    builder.setShortCriticalText(criticalText)
+                }
+            }
+        }
+    }
+
     private fun handleCarUiVisible(
         context: Context,
         builder: NotificationCompat.Builder,
         data: Map<String, String>,
     ): Boolean {
         if (data[CAR_UI]?.toBoolean() == true && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val carIntent = Intent(Intent.ACTION_VIEW).apply {
-                component = ComponentName(context, HaCarAppService::class.java)
+            val carExtender = CarAppExtender.Builder()
+            if (context.isAutomotive() || BuildConfig.FLAVOR == "full") {
+                val carIntent = Intent(Intent.ACTION_VIEW).apply {
+                    component = ComponentName(context, HaCarAppService::class.java)
+                }
+                carExtender.setContentIntent(
+                    CarPendingIntent.getCarApp(
+                        context,
+                        carIntent.hashCode(),
+                        carIntent,
+                        PendingIntent.FLAG_IMMUTABLE,
+                    ),
+                )
             }
-            builder.extend(
-                CarAppExtender.Builder()
-                    .setContentIntent(
-                        CarPendingIntent.getCarApp(
-                            context,
-                            carIntent.hashCode(),
-                            carIntent,
-                            PendingIntent.FLAG_IMMUTABLE,
-                        ),
-                    )
-                    .build(),
-            )
+            builder.extend(carExtender.build())
             return true
         }
         return false
@@ -1608,12 +1630,13 @@ class MessagingManager @Inject constructor(
                             eventIntent,
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
                         )
-                        val action: NotificationCompat.Action = NotificationCompat.Action.Builder(
+                        val action = NotificationCompat.Action.Builder(
                             R.drawable.ic_baseline_reply_24,
                             notificationAction.title,
                             replyPendingIntent,
                         )
                             .addRemoteInput(remoteInput)
+                            .setShowsUserInterface(false)
                             .build()
                         builder.addAction(action)
                     }
@@ -1625,11 +1648,14 @@ class MessagingManager @Inject constructor(
                             eventIntent,
                             PendingIntent.FLAG_IMMUTABLE,
                         )
-                        builder.addAction(
+                        val action = NotificationCompat.Action.Builder(
                             commonR.drawable.ic_stat_ic_notification,
                             notificationAction.title,
                             actionPendingIntent,
                         )
+                            .setShowsUserInterface(false)
+                            .build()
+                        builder.addAction(action)
                     }
                 }
             }

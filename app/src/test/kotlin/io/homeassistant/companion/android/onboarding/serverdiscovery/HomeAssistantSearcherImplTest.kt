@@ -9,6 +9,7 @@ import app.cash.turbine.turbineScope
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
+import io.homeassistant.companion.android.util.FailFastExtension
 import io.mockk.CapturingSlot
 import io.mockk.Ordering
 import io.mockk.Runs
@@ -29,7 +30,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import timber.log.Timber
 
-@ExtendWith(ConsoleLogExtension::class)
+@ExtendWith(ConsoleLogExtension::class, FailFastExtension::class)
 class HomeAssistantSearcherImplTest {
 
     private lateinit var nsdManager: NsdManager

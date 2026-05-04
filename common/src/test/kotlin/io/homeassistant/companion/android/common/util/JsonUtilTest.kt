@@ -638,6 +638,128 @@ class JsonUtilTest {
     }
 
     @Test
+    fun `Given a non existing key when getFloatOrNull on JsonObject then returns null`() {
+        val jsonObject = buildJsonObject {
+            put("key1", JsonPrimitive("value1"))
+            put("key2", JsonPrimitive("value2"))
+            put("key3", JsonPrimitive("value3"))
+        }
+        val value4 = jsonObject.getFloatOrNull("key4")
+        assertNull(value4)
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    @Test
+    fun `Given an existing key with value null when getFloatOrNull on JsonObject then returns null`() {
+        val jsonObject = buildJsonObject {
+            put("key1", JsonPrimitive("value1"))
+            put("key2", JsonPrimitive("value2"))
+            put("key3", JsonPrimitive("value3"))
+            put("key4", JsonPrimitive(null))
+        }
+        val value4 = jsonObject.getFloatOrNull("key4")
+        assertNull(value4)
+    }
+
+    @Test
+    fun `Given an existing key with float value when getFloatOrNull on JsonObject then returns the value`() {
+        val jsonObject = buildJsonObject {
+            put("key1", JsonPrimitive("value1"))
+            put("key2", JsonPrimitive("value2"))
+            put("key3", JsonPrimitive("value3"))
+            put("key4", JsonPrimitive(1.5f))
+        }
+        val value4 = jsonObject.getFloatOrNull("key4")
+        assertNotNull(value4)
+        assertEquals(1.5f, value4)
+    }
+
+    @Test
+    fun `Given a non existing key when getFloatOrElse on JsonObject then returns fallback`() {
+        val jsonObject = buildJsonObject {
+            put("key1", JsonPrimitive("value1"))
+            put("key2", JsonPrimitive("value2"))
+            put("key3", JsonPrimitive("value3"))
+        }
+        val value4 = jsonObject.getFloatOrElse("key4", -1f)
+        assertNotNull(value4)
+        assertEquals(-1f, value4)
+    }
+
+    @Test
+    fun `Given an existing key with float value when getFloatOrElse on JsonObject then returns value`() {
+        val jsonObject = buildJsonObject {
+            put("key1", JsonPrimitive("value1"))
+            put("key2", JsonPrimitive("value2"))
+            put("key3", JsonPrimitive("value3"))
+            put("key4", JsonPrimitive(1.5f))
+        }
+        val value4 = jsonObject.getFloatOrElse("key4", -1f)
+        assertEquals(1.5f, value4)
+    }
+
+    @Test
+    fun `Given a non existing key when getDoubleOrNull on JsonObject then returns null`() {
+        val jsonObject = buildJsonObject {
+            put("key1", JsonPrimitive("value1"))
+            put("key2", JsonPrimitive("value2"))
+            put("key3", JsonPrimitive("value3"))
+        }
+        val value4 = jsonObject.getDoubleOrNull("key4")
+        assertNull(value4)
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    @Test
+    fun `Given an existing key with value null when getDoubleOrNull on JsonObject then returns null`() {
+        val jsonObject = buildJsonObject {
+            put("key1", JsonPrimitive("value1"))
+            put("key2", JsonPrimitive("value2"))
+            put("key3", JsonPrimitive("value3"))
+            put("key4", JsonPrimitive(null))
+        }
+        val value4 = jsonObject.getDoubleOrNull("key4")
+        assertNull(value4)
+    }
+
+    @Test
+    fun `Given an existing key with double value when getDoubleOrNull on JsonObject then returns the value`() {
+        val jsonObject = buildJsonObject {
+            put("key1", JsonPrimitive("value1"))
+            put("key2", JsonPrimitive("value2"))
+            put("key3", JsonPrimitive("value3"))
+            put("key4", JsonPrimitive(1.5))
+        }
+        val value4 = jsonObject.getDoubleOrNull("key4")
+        assertNotNull(value4)
+        assertEquals(1.5, value4)
+    }
+
+    @Test
+    fun `Given a non existing key when getDoubleOrElse on JsonObject then returns fallback`() {
+        val jsonObject = buildJsonObject {
+            put("key1", JsonPrimitive("value1"))
+            put("key2", JsonPrimitive("value2"))
+            put("key3", JsonPrimitive("value3"))
+        }
+        val value4 = jsonObject.getDoubleOrElse("key4", -1.0)
+        assertNotNull(value4)
+        assertEquals(-1.0, value4)
+    }
+
+    @Test
+    fun `Given an existing key with double value when getDoubleOrElse on JsonObject then returns value`() {
+        val jsonObject = buildJsonObject {
+            put("key1", JsonPrimitive("value1"))
+            put("key2", JsonPrimitive("value2"))
+            put("key3", JsonPrimitive("value3"))
+            put("key4", JsonPrimitive(1.5))
+        }
+        val value4 = jsonObject.getDoubleOrElse("key4", -1.0)
+        assertEquals(1.5, value4)
+    }
+
+    @Test
     fun `Given a JsonObject when jsonObjectOrNull is called then returns current element as JsonObject`() {
         val jsonObject = buildJsonObject {
             put(

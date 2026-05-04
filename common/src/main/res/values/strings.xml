@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="aa_launch_native">Native mode</string>
     <string name="aa_driving_optimized_change">Use Home Assistant in drive mode?</string>
     <string name="aa_navigation">Navigation</string>
@@ -36,6 +36,7 @@
     <string name="always_show_first_view_on_app_start">Always show first view when opening app</string>
     <string name="always_show_first_view_on_app_start_summary">The first view of the default dashboard is shown as soon as the app is opened</string>
     <string name="app_name">Home Assistant</string>
+    <string name="play_services_unavailable_full_flavor">Google Play services are unavailable. This version of the app may crash. Use the minimal version instead.</string>
     <string name="app_version_info">App version info</string>
     <string name="application_version">Application version</string>
     <string name="attempting_authentication">Authenticating…</string>
@@ -449,6 +450,7 @@
     <string name="manage_widgets">Manage widgets</string>
     <string name="manual_setup">Enter address manually</string>
     <string name="manual_title">What is your Home Assistant address?</string>
+    <string name="matter_commissioning_cancelled">Unable to add Matter device?</string>
     <string name="matter_commissioning_unavailable">Matter is currently unavailable</string>
     <string name="matter_shared_title">Add Matter device</string>
     <string name="matter_shared_status_not_registered">Please connect to your Home Assistant server before adding a Matter device.</string>
@@ -837,8 +839,8 @@
     <string name="state_jammed">Jammed</string>
     <string name="state_locked">Locked</string>
     <string name="state_locking">Locking</string>
-    <string name="state_off">Off</string>
-    <string name="state_on">On</string>
+    <string name="state_off" tools:override="true">Off</string>
+    <string name="state_on" tools:override="true">On</string>
     <string name="state_open">Open</string>
     <string name="state_opening">Opening</string>
     <string name="state_paused">Paused</string>
@@ -977,6 +979,8 @@
     <string name="webview_error_SSL_NOTYETVALID">The Home Assistant certificate is not yet valid, please review the Home Assistant certificate or the connection settings and try again.</string>
     <string name="webview_error_SSL_UNTRUSTED">The Home Assistant certificate authority is not trusted, please review the Home Assistant certificate or the connection settings and try again.</string>
     <string name="webview_error">There was an error loading Home Assistant, please review the connection settings and try again. We will attempt to try another provided URL when you select Refresh.</string>
+    <string name="webview_creation_error_title">WebView unavailable</string>
+    <string name="webview_creation_failed">WebView failed to initialize, please check and update your system WebView.</string>
     <string name="welcome_hass">Welcome to Home Assistant Companion!</string>
     <string name="widget_attribute_separator_label">Separator between attributes:</string>
     <string name="widget_background_type_title">Select widget theme</string>
@@ -1403,7 +1407,8 @@
     <string name="location_sharing_share">Share my location</string>
     <string name="location_sharing_no_share">Do not share my location</string>
     <string name="location_secure_connection_title">Let us help secure your remote connection</string>
-    <string name="location_secure_connection_content">It appears that your connection is not encrypted (using HTTP). If the app knows when you\'re away from home, it can choose a more secure way to connect to your Home Assistant system if available. This requires location services to be enabled.</string>
+    <string name="location_secure_connection_content_http">It appears that your connection is not encrypted (currently using HTTP in your configuration).</string>
+    <string name="location_secure_connection_content_location">If the app knows when you\'re away from home, it can choose a more secure way to connect to your Home Assistant system if available. This requires location services to be enabled.</string>
     <string name="location_secure_connection_hint">This data will never be shared with the Home Assistant project or third parties.</string>
     <string name="location_secure_connection_next">Next</string>
     <string name="location_secure_connection_save">Save</string>
@@ -1463,4 +1468,5 @@
     <string name="entity_picker_no_entity_found_for">No entity found for %s</string>
     <string name="fail_to_navigate_to_uri">No app available to open %s</string>
     <string name="experimental">Experimental</string>
+    <string name="learn_more">Learn more</string>
 </resources>

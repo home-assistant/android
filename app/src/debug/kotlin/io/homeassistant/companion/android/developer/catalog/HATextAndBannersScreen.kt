@@ -20,14 +20,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Devices.TABLET
 import androidx.compose.ui.tooling.preview.Preview
 import io.homeassistant.companion.android.common.compose.composable.HABanner
-import io.homeassistant.companion.android.common.compose.composable.HALabel
-import io.homeassistant.companion.android.common.compose.composable.LabelSize
-import io.homeassistant.companion.android.common.compose.composable.LabelVariant
 import io.homeassistant.companion.android.common.compose.composable.HADetails
 import io.homeassistant.companion.android.common.compose.composable.HAHint
 import io.homeassistant.companion.android.common.compose.composable.HAHorizontalDivider
+import io.homeassistant.companion.android.common.compose.composable.HALabel
 import io.homeassistant.companion.android.common.compose.composable.HALoading
 import io.homeassistant.companion.android.common.compose.composable.HAProgress
+import io.homeassistant.companion.android.common.compose.composable.LabelSize
+import io.homeassistant.companion.android.common.compose.composable.LabelVariant
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HASize
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle

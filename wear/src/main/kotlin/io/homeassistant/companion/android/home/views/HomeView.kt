@@ -5,12 +5,9 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
@@ -19,6 +16,7 @@ import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import androidx.wear.tiles.TileService
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
 import io.homeassistant.companion.android.common.sensors.id
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
@@ -70,6 +68,8 @@ const val DEEPLINK_PREFIX_SET_TEMPLATE_TILE = "ha_wear://$SCREEN_SET_TILE_TEMPLA
 @Composable
 fun LoadHomePage(mainViewModel: MainViewModel) {
     val context = LocalContext.current
+    val uiState by mainViewModel.mainViewUiState.collectAsStateWithLifecycle()
+    val entityClassification by mainViewModel.entityClassification.collectAsStateWithLifecycle()
 
     WearAppTheme {
         val swipeDismissableNavController = rememberSwipeDismissableNavController()
@@ -79,8 +79,8 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
         ) {
             composable(SCREEN_LANDING) {
                 MainView(
-                    mainViewModel = mainViewModel,
-                    favoriteEntityIds = mainViewModel.favoriteEntityIds.value,
+                    uiState = uiState,
+                    entityClassification = entityClassification,
                     onEntityClicked = { id, state -> mainViewModel.toggleEntity(id, state) },
                     onEntityLongClicked = { entityId ->
                         swipeDismissableNavController.navigate("$SCREEN_ENTITY_DETAIL/$entityId")
@@ -88,19 +88,15 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                     onRetryLoadEntitiesClicked = mainViewModel::loadEntities,
                     onSettingsClicked = { swipeDismissableNavController.navigate(SCREEN_SETTINGS) },
                     onNavigationClicked = { entityIdLists, order, filter ->
-                        mainViewModel.entityListIds.clear()
-                        mainViewModel.entityListIds.putAll(entityIdLists)
-                        mainViewModel.entityListsOrder.clear()
-                        mainViewModel.entityListsOrder.addAll(order)
-                        mainViewModel.entityListFilter = filter
+                        mainViewModel.setEntityListNavigation(entityIdLists, order, filter)
                         swipeDismissableNavController.navigate(SCREEN_ENTITY_LIST)
                     },
-                    isHapticEnabled = mainViewModel.isHapticEnabled.value,
-                    isToastEnabled = mainViewModel.isToastEnabled.value,
+                    isHapticEnabled = uiState.isHapticEnabled,
+                    isToastEnabled = uiState.isToastEnabled,
                 )
             }
             composable("$SCREEN_ENTITY_DETAIL/{entityId}") {
-                val entity = mainViewModel.entities[it.arguments?.getString("entityId")]
+                val entity = uiState.entities[it.arguments?.getString("entityId")]
                 if (entity != null) {
                     DetailsPanelView(
                         entity = entity,
@@ -126,34 +122,24 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                                 isKelvin,
                             )
                         },
-                        isToastEnabled = mainViewModel.isToastEnabled.value,
-                        isHapticEnabled = mainViewModel.isHapticEnabled.value,
+                        isToastEnabled = uiState.isToastEnabled,
+                        isHapticEnabled = uiState.isHapticEnabled,
                     )
                 }
             }
             composable(SCREEN_ENTITY_LIST) {
-                // Build entity lists by looking up entities from the live entities map
-                // This ensures real-time state updates when entities change
-                // Using derivedStateOf to only recompute when entityListIds or entities change
-                val entityLists by remember {
-                    derivedStateOf {
-                        mainViewModel.entityListIds.mapValues { (_, entityIds) ->
-                            entityIds.mapNotNull { entityId -> mainViewModel.entities[entityId] }
-                        }
-                    }
-                }
                 EntityViewList(
-                    entityLists = entityLists,
-                    entityListsOrder = mainViewModel.entityListsOrder,
-                    entityListFilter = mainViewModel.entityListFilter,
+                    entityLists = uiState.entityListNavigation.entityLists,
+                    entityListsOrder = uiState.entityListNavigation.entityListsOrder,
+                    entityListFilter = uiState.entityListNavigation.entityListFilter,
                     onEntityClicked = { entityId, state ->
                         mainViewModel.toggleEntity(entityId, state)
                     },
                     onEntityLongClicked = { entityId ->
                         swipeDismissableNavController.navigate("$SCREEN_ENTITY_DETAIL/$entityId")
                     },
-                    isHapticEnabled = mainViewModel.isHapticEnabled.value,
-                    isToastEnabled = mainViewModel.isToastEnabled.value,
+                    isHapticEnabled = uiState.isHapticEnabled,
+                    isToastEnabled = uiState.isToastEnabled,
                 )
             }
             composable(SCREEN_SETTINGS) {
@@ -162,8 +148,8 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                         mainViewModel.refreshNotificationPermission()
                     }
                 SettingsView(
-                    loadingState = mainViewModel.loadingState,
-                    favorites = mainViewModel.favoriteEntityIds.value,
+                    loadingState = uiState.loadingState,
+                    favorites = uiState.favoriteEntityIds,
                     onClickSetFavorites = {
                         swipeDismissableNavController.navigate(
                             SCREEN_SET_FAVORITES,
@@ -182,11 +168,11 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                         )
                     },
                     onClickLogout = { mainViewModel.logout() },
-                    isHapticEnabled = mainViewModel.isHapticEnabled.value,
-                    isToastEnabled = mainViewModel.isToastEnabled.value,
-                    isFavoritesOnly = mainViewModel.isFavoritesOnly,
-                    isAssistantAppAllowed = mainViewModel.isAssistantAppAllowed,
-                    areNotificationsAllowed = mainViewModel.areNotificationsAllowed,
+                    isHapticEnabled = uiState.isHapticEnabled,
+                    isToastEnabled = uiState.isToastEnabled,
+                    isFavoritesOnly = uiState.isFavoritesOnly,
+                    isAssistantAppAllowed = uiState.isAssistantAppAllowed,
+                    areNotificationsAllowed = uiState.areNotificationsAllowed,
                     onHapticEnabled = { mainViewModel.setHapticEnabled(it) },
                     onToastEnabled = { mainViewModel.setToastEnabled(it) },
                     setFavoritesOnly = { mainViewModel.setWearFavoritesOnly(it) },
@@ -212,15 +198,17 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
             }
             composable(SCREEN_SET_FAVORITES) {
                 SetFavoritesView(
-                    mainViewModel,
-                    mainViewModel.favoriteEntityIds.value,
-                ) { entityId, isSelected ->
-                    if (isSelected) {
-                        mainViewModel.addFavoriteEntity(entityId)
-                    } else {
-                        mainViewModel.removeFavoriteEntity(entityId)
-                    }
-                }
+                    entitiesByDomain = uiState.allEntitiesByDomain,
+                    domainNames = uiState.domainNames,
+                    favoriteEntityIds = uiState.favoriteEntityIds,
+                    onFavoriteSelected = { entityId, isSelected ->
+                        if (isSelected) {
+                            mainViewModel.addFavoriteEntity(entityId)
+                        } else {
+                            mainViewModel.removeFavoriteEntity(entityId)
+                        }
+                    },
+                )
             }
             composable("$ROUTE_CAMERA_TILE/$SCREEN_SELECT_CAMERA_TILE") {
                 SelectCameraTileView(
@@ -244,7 +232,7 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                 val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_CAMERA_TILE_ID)
                 SetCameraTileView(
                     tile = mainViewModel.cameraTiles.value.firstOrNull { it.id == tileId },
-                    entities = mainViewModel.cameraEntitiesMap[CAMERA_DOMAIN],
+                    entities = uiState.cameraEntities,
                     onSelectEntity = {
                         swipeDismissableNavController.navigate(
                             "$ROUTE_CAMERA_TILE/$tileId/$SCREEN_SET_CAMERA_TILE_ENTITY",
@@ -266,12 +254,10 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                 ),
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_CAMERA_TILE_ID)
-                val cameraDomains = remember { mutableStateListOf(CAMERA_DOMAIN) }
-                val cameraFavorites = remember { mutableStateOf(emptyList<String>()) } // There are no camera favorites
                 ChooseEntityView(
-                    entitiesByDomainOrder = cameraDomains,
-                    entitiesByDomain = mainViewModel.cameraEntitiesMap,
-                    favoriteEntityIds = cameraFavorites,
+                    entitiesByDomainOrder = listOf(CAMERA_DOMAIN),
+                    entitiesByDomain = mapOf(CAMERA_DOMAIN to uiState.cameraEntities),
+                    favoriteEntityIds = emptyList(),
                     onNoneClicked = {},
                     onEntitySelected = { entity ->
                         tileId?.let {
@@ -331,7 +317,7 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                 val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_THERMOSTAT_TILE_ID)
                 SetThermostatTileView(
                     tile = mainViewModel.thermostatTiles.value.firstOrNull { it.id == tileId },
-                    entities = mainViewModel.climateEntitiesMap["climate"],
+                    entities = uiState.climateEntities,
                     onSelectEntity = {
                         swipeDismissableNavController.navigate(
                             "$ROUTE_THERMOSTAT_TILE/$tileId/$SCREEN_SET_THERMOSTAT_TILE_ENTITY",
@@ -356,13 +342,10 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                 ),
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_THERMOSTAT_TILE_ID)
-                val climateDomains = remember { mutableStateListOf("climate") }
-                // There are no climate favorites
-                val climateFavorites = remember { mutableStateOf(emptyList<String>()) }
                 ChooseEntityView(
-                    entitiesByDomainOrder = climateDomains,
-                    entitiesByDomain = mainViewModel.climateEntitiesMap,
-                    favoriteEntityIds = climateFavorites,
+                    entitiesByDomainOrder = listOf(CLIMATE_DOMAIN),
+                    entitiesByDomain = mapOf(CLIMATE_DOMAIN to uiState.climateEntities),
+                    favoriteEntityIds = emptyList(),
                     onNoneClicked = {},
                     onEntitySelected = { entity ->
                         tileId?.let {
@@ -399,7 +382,7 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
             }
             composable("$ROUTE_SHORTCUTS_TILE/$SCREEN_SELECT_SHORTCUTS_TILE") {
                 SelectShortcutsTileView(
-                    shortcutTileEntitiesCountById = mainViewModel.shortcutEntitiesMap.mapValues { (_, entities) ->
+                    shortcutTileEntitiesCountById = uiState.shortcutEntitiesMap.mapValues { (_, entities) ->
                         entities.size
                     },
                     onSelectShortcutsTile = { tileId ->
@@ -407,7 +390,7 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                             "$ROUTE_SHORTCUTS_TILE/$tileId/$SCREEN_SET_SHORTCUTS_TILE",
                         )
                     },
-                    isShowShortcutTextEnabled = mainViewModel.isShowShortcutTextEnabled.value,
+                    isShowShortcutTextEnabled = uiState.isShowShortcutTextEnabled,
                     onShowShortcutTextEnabled = {
                         mainViewModel.setShowShortcutTextEnabled(it)
                         ShortcutsTile.requestUpdate(context)
@@ -427,7 +410,7 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments!!.getString(ARG_SCREEN_SHORTCUTS_TILE_ID)!!.toIntOrNull()
                 SetShortcutsTileView(
-                    shortcutEntities = mainViewModel.shortcutEntitiesMap[tileId] ?: emptyList(),
+                    shortcutEntities = uiState.shortcutEntitiesMap[tileId] ?: emptyList(),
                     onShortcutEntitySelectionChange = { entityIndex ->
                         swipeDismissableNavController.navigate(
                             "$ROUTE_SHORTCUTS_TILE/$tileId/$SCREEN_SHORTCUTS_TILE_CHOOSE_ENTITY/$entityIndex",
@@ -450,9 +433,9 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                 val entityIndex = backStackEntry.arguments!!.getInt(ARG_SCREEN_SHORTCUTS_TILE_ENTITY_INDEX)
                 val tileId = backStackEntry.arguments!!.getString(ARG_SCREEN_SHORTCUTS_TILE_ID)!!.toIntOrNull()
                 ChooseEntityView(
-                    entitiesByDomainOrder = mainViewModel.entitiesByDomainOrder,
-                    entitiesByDomain = mainViewModel.entitiesByDomain,
-                    favoriteEntityIds = mainViewModel.favoriteEntityIds,
+                    entitiesByDomainOrder = uiState.allEntitiesByDomain.keys.toList(),
+                    entitiesByDomain = uiState.allEntitiesByDomain,
+                    favoriteEntityIds = uiState.favoriteEntityIds,
                     onNoneClicked = {
                         mainViewModel.clearTileShortcut(tileId, entityIndex)
                         ShortcutsTile.requestUpdate(context)
@@ -467,7 +450,7 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
             }
             composable("$ROUTE_TEMPLATE_TILE/$SCREEN_SELECT_TEMPLATE_TILE") {
                 SelectTemplateTileView(
-                    templateTiles = mainViewModel.templateTiles,
+                    templateTiles = uiState.templateTiles,
                     onSelectTemplateTile = { tileId ->
                         swipeDismissableNavController.navigate("$ROUTE_TEMPLATE_TILE/$tileId/$SCREEN_SET_TILE_TEMPLATE")
                     },
@@ -487,8 +470,8 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                 val tileId = backStackEntry.arguments!!.getString(ARG_SCREEN_TEMPLATE_TILE_ID)!!.toIntOrNull()
 
                 TemplateTileSettingsView(
-                    templateContent = mainViewModel.templateTiles[tileId]?.template ?: "",
-                    refreshInterval = mainViewModel.templateTiles[tileId]?.refreshInterval ?: 0,
+                    templateContent = uiState.templateTiles[tileId]?.template ?: "",
+                    refreshInterval = uiState.templateTiles[tileId]?.refreshInterval ?: 0,
                 ) {
                     swipeDismissableNavController.navigate(
                         "$ROUTE_TEMPLATE_TILE/$tileId/$SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL",
@@ -506,7 +489,7 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments!!.getString(ARG_SCREEN_TEMPLATE_TILE_ID)!!.toInt()
                 RefreshIntervalPickerView(
-                    currentInterval = mainViewModel.templateTiles[tileId]?.refreshInterval ?: 0,
+                    currentInterval = uiState.templateTiles[tileId]?.refreshInterval ?: 0,
                 ) {
                     mainViewModel.setTemplateTileRefreshInterval(tileId, it)
                     TileService.getUpdater(context).requestUpdate(TemplateTile::class.java)

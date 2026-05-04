@@ -36,7 +36,6 @@ import io.homeassistant.companion.android.common.notifications.DeviceCommandData
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
-import io.homeassistant.companion.android.common.util.launchAsync
 import io.homeassistant.companion.android.database.DatabaseEntryPoint
 import io.homeassistant.companion.android.database.location.LocationHistoryDao
 import io.homeassistant.companion.android.database.location.LocationHistoryItem
@@ -226,7 +225,7 @@ class LocationSensorManager :
     override fun onReceive(context: Context, intent: Intent) {
         latestContext = context
 
-        launchAsync(sensorWorkerScope) {
+        sensorWorkerScope.launch {
             when (intent.action) {
                 Intent.ACTION_BOOT_COMPLETED,
                 ACTION_REQUEST_LOCATION_UPDATES,

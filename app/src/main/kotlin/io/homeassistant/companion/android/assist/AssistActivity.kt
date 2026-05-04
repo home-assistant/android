@@ -6,31 +6,44 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
-import android.graphics.Color
 import android.os.Bundle
 import android.view.WindowManager
-import androidx.core.graphics.drawable.toDrawable
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.runtime.LaunchedEffect
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.lifecycle.withCreationCallback
 import io.homeassistant.companion.android.BaseActivity
+import io.homeassistant.companion.android.assist.service.AssistVoiceInteractionService
 import io.homeassistant.companion.android.assist.ui.AssistSheetView
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.webview.WebViewActivity
+import javax.inject.Inject
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class AssistActivity : BaseActivity() {
 
-    private val viewModel: AssistViewModel by viewModels()
+    @Inject
+    lateinit var audioStrategyFactory: AssistAudioStrategyFactory
+
+    private val wakeWordPhrase: String? by lazy {
+        intent.getStringExtra(EXTRA_FROM_WAKE_WORD_PHRASE)
+    }
+
+    private val viewModel: AssistViewModel by viewModels(
+        extrasProducer = {
+            defaultViewModelCreationExtras.withCreationCallback<AssistViewModel.Factory> { factory ->
+                factory.create(audioStrategyFactory.create(applicationContext, wakeWordPhrase))
+            }
+        },
+    )
 
     private var contextIsLocked = true
 
@@ -159,6 +172,9 @@ class AssistActivity : BaseActivity() {
     override fun onDestroy() {
         super.onDestroy()
         viewModel.onDestroy()
+        // This is a safety net: if the listener did not properly start, we still want to
+        // resume.
+        AssistVoiceInteractionService.resumeListening(this)
     }
 
     override fun onNewIntent(intent: Intent) {

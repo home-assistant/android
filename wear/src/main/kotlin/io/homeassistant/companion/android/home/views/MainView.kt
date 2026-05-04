@@ -24,7 +24,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.wear.compose.material.CircularProgressIndicator
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.ButtonDefaults
@@ -48,8 +47,8 @@ import io.homeassistant.companion.android.views.ThemeLazyColumn
 
 @Composable
 fun MainView(
-    mainViewModel: MainViewModel,
-    favoriteEntityIds: List<String>,
+    uiState: MainViewModel.MainViewUiState,
+    entityClassification: MainViewModel.EntityClassification,
     onEntityClicked: (String, String) -> Unit,
     onEntityLongClicked: (String) -> Unit,
     onRetryLoadEntitiesClicked: () -> Unit,
@@ -67,9 +66,7 @@ fun MainView(
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
 
-    // Collect UI state from ViewModel - single source of truth with thread-safe snapshots
-    val uiState by mainViewModel.mainViewUiState.collectAsStateWithLifecycle()
-    val entityClassification by mainViewModel.entityClassification.collectAsStateWithLifecycle()
+    val favoriteEntityIds = uiState.favoriteEntityIds
     val entitiesWithCategory = entityClassification.entitiesWithCategory
     val entitiesHidden = entityClassification.entitiesHidden
     val hasAreasToShow = entityClassification.hasAreasToShow
@@ -215,31 +212,28 @@ fun MainView(
                             item {
                                 ListHeader(id = commonR.string.areas)
                             }
-                            for (id in uiState.entitiesByAreaOrder) {
-                                val areaEntityIds = uiState.entitiesByArea[id]
+                            for (area in uiState.areas) {
+                                val areaEntityIds = uiState.entitiesByArea[area.areaId]
                                 val entitiesToShow = areaEntityIds?.filter { entityId ->
                                     entityId !in entitiesWithCategory &&
                                         entityId !in entitiesHidden
                                 }
                                 if (!entitiesToShow.isNullOrEmpty()) {
-                                    val area = uiState.areas.firstOrNull { it.areaId == id }
-                                    if (area != null) {
-                                        item {
-                                            Button(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                label = { Text(area.name) },
-                                                onClick = {
-                                                    onNavigationClicked(
-                                                        mapOf(area.name to areaEntityIds),
-                                                        listOf(area.name),
-                                                    ) {
-                                                        it.entityId !in entitiesWithCategory &&
-                                                            it.entityId !in entitiesHidden
-                                                    }
-                                                },
-                                                colors = getPrimaryButtonColors(),
-                                            )
-                                        }
+                                    item {
+                                        Button(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            label = { Text(area.name) },
+                                            onClick = {
+                                                onNavigationClicked(
+                                                    mapOf(area.name to areaEntityIds),
+                                                    listOf(area.name),
+                                                ) {
+                                                    it.entityId !in entitiesWithCategory &&
+                                                        it.entityId !in entitiesHidden
+                                                }
+                                            },
+                                            colors = getPrimaryButtonColors(),
+                                        )
                                     }
                                 }
                             }
@@ -254,7 +248,7 @@ fun MainView(
                         // Buttons for each domain with filtered entities
                         for (domain in uiState.entitiesByDomainFilteredOrder) {
                             val domainEntityIds = uiState.entitiesByDomainFiltered[domain]
-                            val domainName = mainViewModel.stringForDomain(domain)
+                            val domainName = uiState.domainNames[domain]
                             if (domainEntityIds != null && domainName != null) {
                                 item {
                                     Button(
@@ -299,15 +293,11 @@ fun MainView(
                                     },
                                     onClick = {
                                         onNavigationClicked(
-                                            uiState.entitiesByDomain.mapKeys {
-                                                mainViewModel.stringForDomain(
-                                                    it.key,
-                                                )!!
+                                            uiState.entitiesByDomain.mapKeys { (key, _) ->
+                                                uiState.domainNames[key] ?: key
                                             },
-                                            uiState.entitiesByDomain.keys.map {
-                                                mainViewModel.stringForDomain(
-                                                    it,
-                                                )!!
+                                            uiState.entitiesByDomain.keys.map { key ->
+                                                uiState.domainNames[key] ?: key
                                             }.sorted(),
                                         ) { true }
                                     },

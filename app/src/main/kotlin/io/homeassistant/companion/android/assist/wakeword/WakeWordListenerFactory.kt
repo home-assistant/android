@@ -2,14 +2,20 @@ package io.homeassistant.companion.android.assist.wakeword
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.homeassistant.companion.android.common.util.VoiceAudioRecorder
 import javax.inject.Inject
 
 /**
  * Factory for creating [WakeWordListener] instances.
  *
- * This allows components to create listeners without holding a Context reference directly.
+ * [WakeWordListener] requires an [android.content.Context] and a [VoiceAudioRecorder].
+ * This factory holds both dependencies via Hilt, so callers only need
+ * to supply the event callbacks relevant to their use case.
  */
-class WakeWordListenerFactory @Inject constructor(@ApplicationContext private val context: Context) {
+class WakeWordListenerFactory @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val voiceAudioRecorder: VoiceAudioRecorder,
+) {
     /**
      * Creates a new [WakeWordListener] with the given callbacks.
      *
@@ -24,6 +30,7 @@ class WakeWordListenerFactory @Inject constructor(@ApplicationContext private va
     ): WakeWordListener {
         return WakeWordListener(
             context = context,
+            voiceAudioRecorder = voiceAudioRecorder,
             onWakeWordDetected = onWakeWordDetected,
             onListenerReady = onListenerReady,
             onListenerStopped = onListenerStopped,

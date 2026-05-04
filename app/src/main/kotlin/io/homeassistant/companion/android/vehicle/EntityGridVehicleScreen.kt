@@ -37,7 +37,6 @@ import io.homeassistant.companion.android.util.vehicle.NOT_ACTIONABLE_DOMAINS
 import io.homeassistant.companion.android.util.vehicle.SUPPORTED_DOMAINS
 import io.homeassistant.companion.android.util.vehicle.alarmHasNoCode
 import io.homeassistant.companion.android.util.vehicle.canNavigate
-import io.homeassistant.companion.android.util.vehicle.getChangeServerGridItem
 import io.homeassistant.companion.android.util.vehicle.getDomainList
 import io.homeassistant.companion.android.util.vehicle.getDomainsGridItem
 import io.homeassistant.companion.android.util.vehicle.getHeaderBuilder
@@ -60,22 +59,15 @@ class EntityGridVehicleScreen(
     private val domains: MutableSet<String>,
     private val entitiesFlow: Flow<List<Entity>>,
     private val allEntities: Flow<Map<String, Entity>>,
-    private val onChangeServer: (Int) -> Unit,
 ) : Screen(carContext) {
 
     private var loading = true
     var entities: List<Entity> = listOf()
     private val isFavorites = title == carContext.getString(R.string.favorites)
-    private var shouldSwitchServers = false
 
     init {
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                if (serverManager.servers().size > 1 && !shouldSwitchServers) {
-                    shouldSwitchServers = true
-                    invalidate()
-                }
-
                 entitiesFlow.collect {
                     loading = false
                     val hasChanged = entities.size != it.size || entities.toSet() != it.toSet()
@@ -86,9 +78,19 @@ class EntityGridVehicleScreen(
         }
     }
 
-    fun getEntityGridItems(entities: List<Entity>): ItemList.Builder {
+    /**
+     * Get an [ItemList.Builder] for a grid of entities.
+     *
+     * If this function is called for favorites (outside of this screen's lifecycle), items are added for:
+     * - Navigation
+     * - All domains
+     *
+     * @param canSwitchServers If `true` and the function is called for favorites, the item limit is adjusted to keep
+     * space for a 'Switch server' item
+     */
+    fun getEntityGridItems(entities: List<Entity>, canSwitchServers: Boolean): ItemList.Builder {
         val listBuilder = if (entities.isNotEmpty()) {
-            createEntityGrid(entities)
+            createEntityGrid(entities, canSwitchServers)
         } else {
             getDomainList(
                 domains,
@@ -125,23 +127,12 @@ class EntityGridVehicleScreen(
                     ).build(),
                 )
             }
-            if (shouldSwitchServers) {
-                listBuilder.addItem(
-                    getChangeServerGridItem(
-                        carContext,
-                        lifecycleScope,
-                        screenManager,
-                        serverManager,
-                        serverId,
-                    ) { onChangeServer(it) }.build(),
-                )
-            }
         }
         return listBuilder
     }
 
     override fun onGetTemplate(): Template {
-        val entityGrid = getEntityGridItems(entities)
+        val entityGrid = getEntityGridItems(entities, false)
 
         return GridTemplate.Builder().apply {
             setHeader(getHeaderBuilder(title).build())
@@ -154,11 +145,11 @@ class EntityGridVehicleScreen(
         }.build()
     }
 
-    private fun createEntityGrid(entities: List<Entity>): ItemList.Builder {
+    private fun createEntityGrid(entities: List<Entity>, canSwitchServers: Boolean): ItemList.Builder {
         val listBuilder = ItemList.Builder()
         val manager = carContext.getCarService(ConstraintManager::class.java)
         val gridLimit = manager.getContentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_GRID)
-        val extraGrid = if (shouldSwitchServers) 3 else 2
+        val extraGrid = if (canSwitchServers) 3 else 2
         entities.forEachIndexed { index, entity ->
             if (index >= (gridLimit - if (isFavorites) extraGrid else 0)) {
                 Timber.i("Grid limit ($gridLimit) reached, not adding more entities (${entities.size}) for $title ")

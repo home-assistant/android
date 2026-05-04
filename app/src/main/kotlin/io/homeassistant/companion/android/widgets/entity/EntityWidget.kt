@@ -27,7 +27,9 @@ import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.util.getAttribute
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -37,7 +39,7 @@ class EntityWidget : BaseWidgetProvider<StaticWidgetEntity, StaticWidgetDao>() {
         internal const val TOGGLE_ENTITY =
             "io.homeassistant.companion.android.widgets.entity.EntityWidget.TOGGLE_ENTITY"
 
-        private data class ResolvedText(val text: CharSequence?, val exception: Boolean = false)
+        private data class ResolvedText(val text: CharSequence?, val error: Boolean = false)
     }
 
     override fun getWidgetProvider(context: Context): ComponentName = ComponentName(context, EntityWidget::class.java)
@@ -120,7 +122,7 @@ class EntityWidget : BaseWidgetProvider<StaticWidgetEntity, StaticWidgetDao>() {
                 )
                 setViewVisibility(
                     R.id.widgetStaticError,
-                    if (resolvedText.exception) View.VISIBLE else View.GONE,
+                    if (resolvedText.error) View.VISIBLE else View.GONE,
                 )
                 setOnClickPendingIntent(
                     R.id.widgetTextLayout,
@@ -154,7 +156,6 @@ class EntityWidget : BaseWidgetProvider<StaticWidgetEntity, StaticWidgetDao>() {
         appWidgetId: Int,
     ): ResolvedText {
         var entity: Entity? = null
-        var entityCaughtException = false
         try {
             entity = if (suggestedEntity != null && suggestedEntity.entityId == entityId) {
                 suggestedEntity
@@ -165,7 +166,6 @@ class EntityWidget : BaseWidgetProvider<StaticWidgetEntity, StaticWidgetDao>() {
             throw e
         } catch (e: Exception) {
             Timber.e(e, "Unable to fetch entity")
-            entityCaughtException = true
         }
         val entityOptions = if (
             entity?.canSupportPrecision() == true &&
@@ -182,20 +182,26 @@ class EntityWidget : BaseWidgetProvider<StaticWidgetEntity, StaticWidgetDao>() {
         } else {
             null
         }
+
+        if (entity == null) {
+            return ResolvedText(dao.get(appWidgetId)?.lastUpdate, true)
+        }
+
         if (attributeIds == null) {
+            val lastUpdate = entity.friendlyState(context, entityOptions)
             dao.updateWidgetLastUpdate(
                 appWidgetId,
-                entity?.friendlyState(context, entityOptions) ?: dao.get(appWidgetId)?.lastUpdate ?: "",
+                lastUpdate,
             )
-            return ResolvedText(dao.get(appWidgetId)?.lastUpdate, entityCaughtException)
+            return ResolvedText(lastUpdate)
         }
 
         try {
-            val fetchedAttributes = entity?.attributes as? Map<*, *> ?: mapOf<String, String>()
+            val fetchedAttributes = entity.attributes as? Map<*, *> ?: mapOf<String, String>()
             val attributeValues =
-                attributeIds.split(",").map { id -> fetchedAttributes[id]?.toString() }
+                attributeIds.split(",").mapNotNull { id -> fetchedAttributes[id]?.toString() }
             val lastUpdate =
-                entity?.friendlyState(
+                entity.friendlyState(
                     context,
                     entityOptions,
                 ).plus(if (attributeValues.isNotEmpty()) stateSeparator else "")
@@ -209,53 +215,49 @@ class EntityWidget : BaseWidgetProvider<StaticWidgetEntity, StaticWidgetDao>() {
     }
 
     override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity) {
-        widgetScope?.launch {
-            val views = getWidgetRemoteViews(context, appWidgetId, entity as Entity)
-            AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, views)
-        }
+        val views = getWidgetRemoteViews(context, appWidgetId, entity)
+        AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, views)
     }
 
-    private fun toggleEntity(context: Context, appWidgetId: Int) {
-        widgetScope?.launch {
-            // Show progress bar as feedback
-            val appWidgetManager = AppWidgetManager.getInstance(context)
-            val loadingViews = RemoteViews(context.packageName, R.layout.widget_static)
-            loadingViews.setViewVisibility(R.id.widgetProgressBar, View.VISIBLE)
-            loadingViews.setViewVisibility(R.id.widgetTextLayout, View.GONE)
-            appWidgetManager.partiallyUpdateAppWidget(appWidgetId, loadingViews)
+    private suspend fun toggleEntity(context: Context, appWidgetId: Int) {
+        // Show progress bar as feedback
+        val appWidgetManager = AppWidgetManager.getInstance(context)
+        val loadingViews = RemoteViews(context.packageName, R.layout.widget_static)
+        loadingViews.setViewVisibility(R.id.widgetProgressBar, View.VISIBLE)
+        loadingViews.setViewVisibility(R.id.widgetTextLayout, View.GONE)
+        appWidgetManager.partiallyUpdateAppWidget(appWidgetId, loadingViews)
 
-            var success = false
-            dao.get(appWidgetId)?.let {
-                try {
-                    onEntityPressedWithoutState(
-                        it.entityId,
-                        serverManager.integrationRepository(it.serverId),
-                    )
-                    success = true
-                } catch (e: Exception) {
-                    Timber.e(e, "Unable to send toggle service call")
-                }
+        var success = false
+        dao.get(appWidgetId)?.let {
+            try {
+                onEntityPressedWithoutState(
+                    it.entityId,
+                    serverManager.integrationRepository(it.serverId),
+                )
+                success = true
+            } catch (e: Exception) {
+                Timber.e(e, "Unable to send toggle service call")
+            }
+        }
+
+        if (!success) {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, commonR.string.action_failure, Toast.LENGTH_LONG).show()
             }
 
-            if (!success) {
-                Toast.makeText(context, commonR.string.action_failure, Toast.LENGTH_LONG).show()
-
-                val views = getWidgetRemoteViews(context, appWidgetId)
-                appWidgetManager.updateAppWidget(appWidgetId, views)
-            } // else update will be triggered by websocket subscription
-        }
+            val views = getWidgetRemoteViews(context, appWidgetId)
+            appWidgetManager.updateAppWidget(appWidgetId, views)
+        } // else update will be triggered by websocket subscription
     }
 
-    override fun onReceive(context: Context, intent: Intent) {
-        val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
-        super.onReceive(context, intent)
-        when (lastIntent) {
+    override suspend fun onReceiveIntentNotHandled(context: Context, intent: Intent, appWidgetId: Int) {
+        when (intent.action.toString()) {
             TOGGLE_ENTITY -> toggleEntity(context, appWidgetId)
         }
     }
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        widgetScope?.launch {
+        widgetScope.launch {
             dao.deleteAll(appWidgetIds)
             appWidgetIds.forEach { removeSubscription(it) }
         }

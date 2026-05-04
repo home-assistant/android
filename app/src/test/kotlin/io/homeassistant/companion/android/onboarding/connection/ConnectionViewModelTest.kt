@@ -58,7 +58,6 @@ class ConnectionViewModelTest {
             create(
                 currentUrlFlow = any<StateFlow<String?>>(),
                 onFrontendError = any(),
-                frontendJsCallback = any(),
                 onCrash = any(),
                 onUrlIntercepted = any(),
                 onPageFinished = any(),
@@ -68,10 +67,9 @@ class ConnectionViewModelTest {
                 keyChainRepository = keyChainRepository,
                 currentUrlFlow = firstArg(),
                 onFrontendError = secondArg(),
-                frontendJsCallback = thirdArg(),
-                onCrash = arg(3),
-                onUrlIntercepted = arg(4),
-                onPageFinished = arg(5),
+                onCrash = thirdArg(),
+                onUrlIntercepted = arg(3),
+                onPageFinished = arg(4),
             )
         }
     }
@@ -212,6 +210,34 @@ class ConnectionViewModelTest {
     }
 
     @Test
+    fun `Given opaque auth callback uri when shouldRedirect then no event and returns false`() = runTest {
+        val stringUri = mockAuthCodeUri(
+            scheme = "homeassistant",
+            host = "auth-callback",
+            authCode = "test_auth_code",
+            isOpaque = true,
+        )
+
+        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository)
+
+        turbineScope {
+            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
+            val errorFlow = viewModel.errorFlow.testIn(backgroundScope)
+
+            assertNull(errorFlow.awaitItem())
+
+            val result = viewModel.webViewClient.shouldOverrideUrlLoading(
+                null,
+                stringUri,
+            )
+
+            assertFalse(result)
+            navigationEventsFlow.expectNoEvents()
+            errorFlow.expectNoEvents()
+        }
+    }
+
+    @Test
     fun `Given unmatching uri and webview not null when shouldRedirect is invoked then open in external browser and return true`() = runTest {
         val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository)
 
@@ -254,7 +280,7 @@ class ConnectionViewModelTest {
         assertEquals(errorClass.toString(), error.rawErrorType)
     }
 
-    private fun mockAuthCodeUri(scheme: String, host: String, authCode: String?): String {
+    private fun mockAuthCodeUri(scheme: String, host: String, authCode: String?, isOpaque: Boolean = false): String {
         val stringUri = "$scheme://$host${authCode?.let { "?code=$authCode" } ?: ""}"
         every { Uri.parse(stringUri) } answers {
             val uriString = firstArg<String>()
@@ -262,6 +288,7 @@ class ConnectionViewModelTest {
                 every { this@mockk.toString() } returns uriString
                 every { this@mockk.scheme } returns scheme
                 every { this@mockk.host } returns host
+                every { this@mockk.isOpaque } returns isOpaque
                 every { getQueryParameter("code") } returns authCode
             }
         }
@@ -360,5 +387,32 @@ class ConnectionViewModelTest {
 
         // Then: repository method was called for each click
         verify(exactly = 2) { connectivityCheckRepository.runChecks(rawUrl) }
+    }
+
+    @Test
+    fun `Given a working state when onWebViewCreationFailed is called then errorFlow emits WebViewCreationError and connectivity checks run`() = runTest {
+        // Given
+        val rawUrl = "http://homeassistant.local:8123"
+        val connectivityFlow = MutableSharedFlow<ConnectivityCheckState>()
+        every { connectivityCheckRepository.runChecks(rawUrl) } returns connectivityFlow
+
+        val viewModel = ConnectionViewModel(rawUrl, webViewClientFactory, connectivityCheckRepository)
+        advanceUntilIdle()
+
+        assertNull(viewModel.errorFlow.value)
+
+        // When
+        val exception = UnsatisfiedLinkError("dlopen failed: libwebviewchromium.so is 32-bit")
+        viewModel.onWebViewCreationFailed(exception)
+        advanceUntilIdle()
+
+        // Then
+        val error = viewModel.errorFlow.value
+        assertNotNull(error)
+        assertTrue(error is FrontendConnectionError.UnrecoverableError.WebViewCreationError)
+        assertEquals(commonR.string.webview_creation_failed, error.message)
+        assertEquals("dlopen failed: libwebviewchromium.so is 32-bit", error.errorDetails)
+        assertEquals("class java.lang.UnsatisfiedLinkError", error.rawErrorType)
+        verify(exactly = 1) { connectivityCheckRepository.runChecks(rawUrl) }
     }
 }

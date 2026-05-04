@@ -5,6 +5,10 @@ import androidx.core.content.edit
 import io.homeassistant.companion.android.common.data.LocalStorage
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -104,5 +108,18 @@ class LocalStorageImpl(sharedPreferences: suspend () -> SharedPreferences) : Loc
 
     override suspend fun remove(key: String) {
         withContext(Dispatchers.IO) { sharedPreferences().edit { remove(key) } }
+    }
+
+    override fun observeChanges(key: String): Flow<String> = callbackFlow {
+        val prefs = sharedPreferences()
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, changedKey ->
+            if (changedKey == key) {
+                launch { send(key) }
+            }
+        }
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        awaitClose {
+            prefs.unregisterOnSharedPreferenceChangeListener(listener)
+        }
     }
 }

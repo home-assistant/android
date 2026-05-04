@@ -19,7 +19,6 @@ import io.homeassistant.companion.android.common.data.integration.SensorRegistra
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.util.CHANNEL_SENSOR_SYNC
-import io.homeassistant.companion.android.common.util.launchAsync
 import io.homeassistant.companion.android.database.DatabaseEntryPoint
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
@@ -36,7 +35,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
@@ -70,7 +68,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         }
     }
 
-    private val sensorScope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
     protected abstract val currentAppVersion: String
     protected abstract val managers: List<SensorManager>
@@ -99,7 +97,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         Timber.d("Received intent: ${intent.action}")
-        launchAsync(sensorScope) {
+        ioScope.launch {
             skippableActions[intent.action]?.let { sensors ->
                 val noSensorsEnabled = sensors.none {
                     isSensorEnabled(it)
@@ -112,13 +110,13 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                             intent.action,
                         ),
                     )
-                    return@launchAsync
+                    return@launch
                 }
             }
 
             if (intent.action == ACTION_STOP_BEACON_SCANNING) {
                 BluetoothSensorManager.enableDisableBeaconMonitor(context, false)
-                return@launchAsync
+                return@launch
             }
 
             @Suppress("DEPRECATION")
@@ -150,7 +148,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
             if (intent.action == Intent.ACTION_TIME_TICK && !shouldDoFastUpdates(context)) {
                 Timber.i("Skipping faster update because not charging/different preference")
-                return@launchAsync
+                return@launch
             }
             if (intent.action == ACTION_UPDATE_SENSOR) {
                 val sensorId = intent.getStringExtra(EXTRA_SENSOR_ID)
@@ -192,7 +190,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
         try {
             serverManager.servers().map { server ->
-                sensorScope.async { syncSensorsWithServer(context, serverManager, server, sensorDao) }
+                ioScope.async { syncSensorsWithServer(context, serverManager, server, sensorDao) }
             }.awaitAll()
             Timber.i("Sensor updates and sync completed")
         } catch (e: Exception) {
@@ -423,7 +421,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                 it.sensor.registered == true &&
                 (it.sensor.state != it.sensor.lastSentState || it.sensor.icon != it.sensor.lastSentIcon)
         }.forEach { fullSensor ->
-            sensorScope.launch {
+            ioScope.launch {
                 try {
                     serverManager.integrationRepository(
                         fullSensor.sensor.serverId,

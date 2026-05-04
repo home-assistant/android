@@ -43,7 +43,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -74,6 +73,7 @@ import io.homeassistant.companion.android.common.compose.composable.HAModalBotto
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.composable.HATopBar
 import io.homeassistant.companion.android.common.compose.composable.alpha
+import io.homeassistant.companion.android.common.compose.composable.rememberHAModalBottomSheetState
 import io.homeassistant.companion.android.common.compose.theme.HABorderWidth
 import io.homeassistant.companion.android.common.compose.theme.HABrandColors
 import io.homeassistant.companion.android.common.compose.theme.HADimens
@@ -153,7 +153,7 @@ private fun OneServerFound(
     onDismiss: () -> Unit,
     discoveryState: DiscoveryState,
 ) {
-    val bottomSheetState = rememberStandardBottomSheetState(skipHiddenState = false)
+    val bottomSheetState = rememberHAModalBottomSheetState()
     // Use a cached state to be able to use the animation from the modal otherwise if we simply use if(visible)
     // the animation is not played correctly.
     var serverDiscoveredCached by remember { mutableStateOf(discoveryState as? ServerDiscovered) }

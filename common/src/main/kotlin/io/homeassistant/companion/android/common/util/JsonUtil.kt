@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.common.util
 
-import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
+import io.homeassistant.companion.android.util.sensitive
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlinx.serialization.DeserializationStrategy
@@ -65,7 +65,7 @@ val kotlinJsonMapper = Json {
     encodeDefaults = true
     prettyPrint = false
     // explicitNulls = true // default is to print null values in the JSON send if you don't want this behavior you need a custom serializer
-    serializersModule += SocketResponse.socketResponseSerializerModuler
+    serializersModule += SocketResponse.socketResponseSerializerModule
 }
 
 /**
@@ -99,9 +99,13 @@ class LocalDateTimeSerializer : KSerializer<LocalDateTime> {
  * where some types are well-known and explicitly handled, while others are unknown
  * and need to be captured as raw JSON content.
  *
+ * @property discriminator The unrecognized type discriminator value,
+ *           or `null` if the discriminator was missing from the JSON input.
+ *           Useful for logging which unknown type was received.
  * @property content The raw JSON content of the object.
  */
 interface UnknownJsonContent {
+    val discriminator: String?
     val content: JsonElement
 }
 
@@ -139,14 +143,17 @@ fun interface UnknownJsonContentBuilder<T : UnknownJsonContent> {
  *     data class KnownType(val data: String) : MyResponse
  *
  *     @Serializable
- *     data class UnknownType(override val content: JsonElement) : MyResponse, UnknownJsonContent
+ *     data class UnknownType(
+ *         override val discriminator: String?,
+ *         override val content: JsonElement,
+ *     ) : MyResponse, UnknownJsonContent
  * }
  *
  * val module = SerializersModule {
- *     polymorphicDefaultDeserializer(MyResponse::class) {
+ *     polymorphicDefaultDeserializer(MyResponse::class) { className ->
  *         object : UnknownJsonContentDeserializer<MyResponse.UnknownType>() {
  *             override val builder = UnknownJsonContentBuilder { content ->
- *                 MyResponse.UnknownType(content)
+ *                 MyResponse.UnknownType(discriminator = className, content = content)
  *             }
  *         }
  *     }
@@ -348,7 +355,7 @@ fun String.toJsonObjectOrNull(): JsonObject? {
     return runCatching {
         Json.parseToJsonElement(this) as? JsonObject
     }.onFailure {
-        Timber.w("Failed to convert to a json object: ${if (BuildConfig.DEBUG) this else "HIDDEN"}")
+        Timber.w("Failed to convert to a json object: ${sensitive(this)}")
     }.getOrNull()
 }
 
@@ -381,7 +388,7 @@ fun JsonObject.getStringOrNull(key: String): String? {
         val value = this[key]
         if (value is JsonNull) null else value?.jsonPrimitive?.content
     }.onFailure {
-        Timber.w("Failed to get string value for $key in jsonObject: ${if (BuildConfig.DEBUG) this else "HIDDEN"}")
+        Timber.w("Failed to get string value for $key in jsonObject: ${sensitive(this.toString())}")
     }.getOrNull()
 }
 
@@ -436,7 +443,7 @@ fun JsonObject.getBooleanOrNull(key: String): Boolean? {
         val value = this[key]
         if (value is JsonNull) null else value?.jsonPrimitive?.booleanOrNull
     }.onFailure {
-        Timber.w("Failed to get boolean value for $key in jsonObject: ${if (BuildConfig.DEBUG) this else "HIDDEN"}")
+        Timber.w("Failed to get boolean value for $key in jsonObject: ${sensitive(this.toString())}")
     }.getOrNull()
 }
 
@@ -493,7 +500,73 @@ fun JsonObject.getIntOrNull(key: String): Int? {
         val value = this[key]
         if (value is JsonNull) null else value?.jsonPrimitive?.intOrNull
     }.onFailure {
-        Timber.w("Failed to get integer value for $key in jsonObject: ${if (BuildConfig.DEBUG) this else "HIDDEN"}")
+        Timber.w("Failed to get integer value for $key in jsonObject: ${sensitive(this.toString())}")
+    }.getOrNull()
+}
+
+/**
+ * Retrieves a float value from this JsonObject, returning null if the value cannot be accessed.
+ *
+ * This function safely handles various scenarios including missing keys, null values, and
+ * type mismatches. It will return null if:
+ * - The key does not exist in the JsonObject
+ * - The value for the key is JsonNull
+ * - The value is not a JsonPrimitive (for example, it's a JsonObject or JsonArray)
+ * - The primitive value is not a float (for example, it's a string or boolean, or a number too large for Float)
+ *
+ * Example:
+ * ```kotlin
+ * val json = buildJsonObject {
+ *     put("age", JsonPrimitive(30.0))
+ *     put("name", JsonPrimitive("Alice"))
+ * }
+ * json.getFloatOrNull("age")   // Returns 30.0
+ * json.getFloatOrNull("name")  // Returns null (it's a string, not a float)
+ * json.getFloatOrNull("score") // Returns null (key doesn't exist)
+ * ```
+ *
+ * @param key The key to look up in the JsonObject
+ * @return The float value if present and valid, null otherwise
+ */
+fun JsonObject.getFloatOrNull(key: String): Float? {
+    return runCatching {
+        val value = this[key]
+        if (value is JsonNull) null else value?.jsonPrimitive?.floatOrNull
+    }.onFailure {
+        Timber.w("Failed to get float value for $key in jsonObject: ${sensitive(this.toString())}")
+    }.getOrNull()
+}
+
+/**
+ * Retrieves a double value from this JsonObject, returning null if the value cannot be accessed.
+ *
+ * This function safely handles various scenarios including missing keys, null values, and
+ * type mismatches. It will return null if:
+ * - The key does not exist in the JsonObject
+ * - The value for the key is JsonNull
+ * - The value is not a JsonPrimitive (for example, it's a JsonObject or JsonArray)
+ * - The primitive value is not a double (for example, it's a string or boolean, or a number too large for Double)
+ *
+ * Example:
+ * ```kotlin
+ * val json = buildJsonObject {
+ *     put("age", JsonPrimitive(30.0))
+ *     put("name", JsonPrimitive("Alice"))
+ * }
+ * json.getDoubleOrNull("age")   // Returns 30.0
+ * json.getDoubleOrNull("name")  // Returns null (it's a string, not a double)
+ * json.getDoubleOrNull("score") // Returns null (key doesn't exist)
+ * ```
+ *
+ * @param key The key to look up in the JsonObject
+ * @return The double value if present and valid, null otherwise
+ */
+fun JsonObject.getDoubleOrNull(key: String): Double? {
+    return runCatching {
+        val value = this[key]
+        if (value is JsonNull) null else value?.jsonPrimitive?.doubleOrNull
+    }.onFailure {
+        Timber.w("Failed to get double value for $key in jsonObject: ${sensitive(this.toString())}")
     }.getOrNull()
 }
 
@@ -518,3 +591,47 @@ fun JsonObject.getIntOrNull(key: String): Int? {
  * @return The integer value if present and valid, the fallback value otherwise
  */
 fun JsonObject.getIntOrElse(key: String, fallback: Int): Int = this.getIntOrNull(key) ?: fallback
+
+/**
+ * Retrieves a float value from this JsonObject, returning a fallback value if the value cannot be accessed.
+ *
+ * This is a convenience function that combines [getFloatOrNull] with a default value. It will
+ * return the fallback if the key doesn't exist, the value is null, or the value cannot be
+ * converted to a float.
+ *
+ * Example:
+ * ```kotlin
+ * val json = buildJsonObject {
+ *     put("age", JsonPrimitive(30.0))
+ * }
+ * json.getFloatOrElse("age", 0f)   // Returns 30.0
+ * json.getFloatOrElse("score", 0f) // Returns 0.0
+ * ```
+ *
+ * @param key The key to look up in the JsonObject
+ * @param fallback The default value to return if the key is missing or invalid
+ * @return The float value if present and valid, the fallback value otherwise
+ */
+fun JsonObject.getFloatOrElse(key: String, fallback: Float): Float = this.getFloatOrNull(key) ?: fallback
+
+/**
+ * Retrieves a double value from this JsonObject, returning a fallback value if the value cannot be accessed.
+ *
+ * This is a convenience function that combines [getDoubleOrNull] with a default value. It will
+ * return the fallback if the key doesn't exist, the value is null, or the value cannot be
+ * converted to a double.
+ *
+ * Example:
+ * ```kotlin
+ * val json = buildJsonObject {
+ *     put("age", JsonPrimitive(30.0))
+ * }
+ * json.getDoubleOrElse("age", 0.O)   // Returns 30.0
+ * json.getDoubleOrElse("score", 0.0) // Returns 0.0
+ * ```
+ *
+ * @param key The key to look up in the JsonObject
+ * @param fallback The default value to return if the key is missing or invalid
+ * @return The double value if present and valid, the fallback value otherwise
+ */
+fun JsonObject.getDoubleOrElse(key: String, fallback: Double): Double = this.getDoubleOrNull(key) ?: fallback

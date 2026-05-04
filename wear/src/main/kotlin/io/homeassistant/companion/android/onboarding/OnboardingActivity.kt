@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.onboarding
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -13,7 +12,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.wear.activity.ConfirmationActivity
 import androidx.wear.remote.interactions.RemoteActivityHelper
 import androidx.wear.widget.WearableRecyclerView
-import com.google.android.gms.tasks.Tasks
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.CapabilityInfo
 import com.google.android.gms.wearable.DataMapItem
@@ -26,12 +24,16 @@ import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegr
 import io.homeassistant.companion.android.onboarding.phoneinstall.PhoneInstallActivity
 import io.homeassistant.companion.android.util.LoadingView
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.asDeferred
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 @AndroidEntryPoint
-@SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
 class OnboardingActivity :
     AppCompatActivity(),
     OnboardingView {
@@ -95,14 +97,16 @@ class OnboardingActivity :
         // Add listener to exchange authentication tokens
         Wearable.getDataClient(this).addListener(presenter)
 
-        // Check for current instances
-        Thread { findExistingInstances() }.start()
-
-        // Request authentication token in separate task
-        Thread { requestInstances() }.start()
-
-        // Check if there is a phone connected that supports sign in
-        Thread { requestPhoneSignIn() }.start()
+        lifecycleScope.launch {
+            findExistingInstances()
+        }
+        lifecycleScope.launch {
+            // Request authentication token in separate task
+            requestInstances()
+        }
+        lifecycleScope.launch {
+            requestPhoneSignIn()
+        }
     }
 
     override fun onPause() {
@@ -128,6 +132,8 @@ class OnboardingActivity :
                     null,
                 ).await()
                 showContinueOnPhone()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 if (e is RemoteActivityHelper.RemoteIntentException) {
                     Timber.e(e, "Unable to open sign in activity on phone with app, falling back to OAuth")
@@ -191,69 +197,89 @@ class OnboardingActivity :
         }
     }
 
-    private fun findExistingInstances() {
+    private suspend fun findExistingInstances() = withContext(Dispatchers.IO) {
         Timber.d("findExistingInstances")
-        Tasks.await(Wearable.getDataClient(this).getDataItems("wear://*/home_assistant_instance".toUri())).apply {
-            Timber.d("findExistingInstances: success, found ${this.count}")
-            this.forEach { item ->
-                val instance = presenter.getInstance(DataMapItem.fromDataItem(item).dataMap)
-                this@OnboardingActivity.runOnUiThread {
-                    onInstanceFound(instance)
+        try {
+            Wearable.getDataClient(this@OnboardingActivity)
+                .getDataItems("wear://*/home_assistant_instance".toUri())
+                .await().use { dataItemBuffer ->
+                    Timber.d("findExistingInstances: success, found ${dataItemBuffer.count}")
+                    dataItemBuffer.forEach { item ->
+                        val instance = presenter.getInstance(DataMapItem.fromDataItem(item).dataMap)
+                        withContext(Dispatchers.Main) {
+                            onInstanceFound(instance)
+                        }
+                    }
                 }
-            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Unable to get existing instances")
         }
     }
 
-    private fun requestInstances() {
+    private suspend fun requestInstances() = withContext(Dispatchers.IO) {
         Timber.d("requestInstances")
 
-        // Find all nodes that are capable
-        val capabilityInfo: CapabilityInfo = Tasks.await(
-            capabilityClient.getCapability(
+        try {
+            // Find all nodes that are capable
+            val capabilityInfo: CapabilityInfo = capabilityClient.getCapability(
                 "request_home_assistant_instance",
                 CapabilityClient.FILTER_REACHABLE,
-            ),
-        )
+            ).await()
 
-        if (capabilityInfo.nodes.size == 0) {
-            Timber.d("requestInstances: No nodes found")
-        }
+            if (capabilityInfo.nodes.isEmpty()) {
+                Timber.d("requestInstances: No nodes found")
+            }
 
-        capabilityInfo.nodes.forEach { node ->
-            Wearable.getMessageClient(this).sendMessage(
-                node.id,
-                "/request_home_assistant_instance",
-                ByteArray(0),
-            ).apply {
-                addOnSuccessListener {
-                    Timber.d("requestInstances: request home assistant instances from $node.id: ${node.displayName}")
-                }
-                addOnFailureListener {
-                    Timber.w(
-                        "requestInstances: failed to request home assistant instances from $node.id: ${node.displayName}",
-                    )
+            capabilityInfo.nodes.forEach { node ->
+                Wearable.getMessageClient(this@OnboardingActivity).sendMessage(
+                    node.id,
+                    "/request_home_assistant_instance",
+                    ByteArray(0),
+                ).asDeferred().invokeOnCompletion { t ->
+                    if (t == null) {
+                        Timber.d(
+                            "requestInstances: request home assistant instances from ${node.id}: ${node.displayName}",
+                        )
+                    } else {
+                        Timber.w(
+                            t,
+                            "requestInstances: failed to request home assistant instances from ${node.id}: ${node.displayName}",
+                        )
+                    }
                 }
             }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.w(e, "Failed to request instances from phone")
         }
     }
 
-    private fun requestPhoneSignIn() {
+    private suspend fun requestPhoneSignIn() = withContext(Dispatchers.IO) {
         Timber.d("requestPhoneSignIn")
 
-        // Find all nodes that are capable
-        val capabilityInfo: CapabilityInfo = Tasks.await(
-            capabilityClient.getCapability(
+        try {
+            // Find all nodes that are capable
+            val capabilityInfo: CapabilityInfo = capabilityClient.getCapability(
                 "sign_in_to_home_assistant_instance",
                 CapabilityClient.FILTER_REACHABLE,
-            ),
-        )
+            ).await()
+            withContext(Dispatchers.Main) {
+                Timber.d("requestPhoneSignIn: found ${capabilityInfo.nodes.size} nodes")
+                phoneSignInAvailable = capabilityInfo.nodes.isNotEmpty()
 
-        Timber.d("requestPhoneSignIn: found ${capabilityInfo.nodes.size} nodes")
-        phoneSignInAvailable = capabilityInfo.nodes.size > 0
+                if (!phoneSignInAvailable && !phoneInstallOpened) {
+                    phoneInstallOpened = true
 
-        if (!phoneSignInAvailable && !phoneInstallOpened) {
-            phoneInstallOpened = true
-            requestPhoneAppInstall()
+                    requestPhoneAppInstall()
+                }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.w(e, "Failed to check for phone sign-in capability")
         }
     }
 

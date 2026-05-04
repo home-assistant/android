@@ -9,7 +9,7 @@ import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.util.IgnoreViolationRule
 
 val vmPolicyIgnoredViolationRules = listOf(
-    IgnoreChromiumTrichomeWrongContextUsage,
+    IgnoreChromiumWebViewWrongContextUsage,
     IgnoreBarcodeScannerRotationListenerWrongContextUsage,
 )
 
@@ -24,24 +24,29 @@ val threadPolicyIgnoredViolationRules = listOf(
     IgnoreAndroidAutoRendererServiceDiskRead,
     IgnoreMiuiFontSettingsDiskRead,
     IgnoreMiuiTurboSchedMonitorDiskRead,
+    IgnoreChromiumKeyStoreDiskWrite,
+    IgnoreAppCompatPersistLocalesDiskReadWrite,
 )
 
 /**
- * Ignore an [IncorrectContextUseViolation] that can occur
- * in the Chromium WebView client (specifically involving `chromium-TrichromeWebViewGoogle`).
+ * Ignore an [IncorrectContextUseViolation] that can occur in the Chromium WebView client
+ * during configuration changes.
  *
  * This issue typically arises when the application context is incorrectly used during
  * configuration changes (e.g., screen rotation) within the WebView's internal mechanisms.
+ * It reproduces across multiple WebView packaging variants, whose stack frames have different
+ * file name prefixes (e.g. `chromium-TrichromeWebViewGoogle*`, `chromium-SystemWebViewGoogle*`),
+ * so the match is kept broad on the `chromium-` prefix paired with `onConfigurationChanged`.
  *
  * It doesn't seem to be tracked anywhere.
  */
-private data object IgnoreChromiumTrichomeWrongContextUsage : IgnoreViolationRule {
+private data object IgnoreChromiumWebViewWrongContextUsage : IgnoreViolationRule {
     @RequiresApi(Build.VERSION_CODES.S)
     override fun shouldIgnore(violation: Violation): Boolean {
         if (violation !is IncorrectContextUseViolation) return false
 
         return violation.stackTrace.any {
-            it.fileName?.startsWith("chromium-TrichromeWebViewGoogle") == true &&
+            it.fileName?.startsWith("chromium-") == true &&
                 it.methodName == "onConfigurationChanged"
         }
     }
@@ -225,5 +230,58 @@ private data object IgnoreMiuiTurboSchedMonitorDiskRead : IgnoreViolationRule {
         return violation.stackTrace.any {
             it.className == "android.os.TurboSchedMonitorImpl"
         }
+    }
+}
+
+/**
+ * Ignore a [DiskWriteViolation] and [DiskReadViolation] from AppCompat's locale auto-storage sync.
+ *
+ * On every cold activity start, [androidx.appcompat.app.AppCompatDelegateImpl.attachBaseContext2]
+ * synchronously calls [androidx.appcompat.app.AppCompatDelegate.syncRequestedAndStoredLocales],
+ * which deletes (or writes) the persisted locales file via
+ * [androidx.core.app.AppLocalesStorageHelper.persistLocales] on the main thread. The delete itself
+ * is the [DiskWriteViolation]; the [DiskReadViolation] comes from the framework's
+ * `Context.deleteFile` first probing `filesDir` to ensure it exists. The app opts in to this
+ * storage via the `AppLocalesMetadataHolderService` manifest entry, so both violations are
+ * intrinsic to the library and beyond application control.
+ */
+private data object IgnoreAppCompatPersistLocalesDiskReadWrite : IgnoreViolationRule {
+    @RequiresApi(Build.VERSION_CODES.P)
+    override fun shouldIgnore(violation: Violation): Boolean {
+        if (violation !is DiskWriteViolation && violation !is DiskReadViolation) return false
+
+        return violation.stackTrace.any {
+            it.className == "androidx.core.app.AppLocalesStorageHelper" &&
+                it.methodName == "persistLocales"
+        } &&
+            violation.stackTrace.any {
+                it.className == "androidx.appcompat.app.AppCompatDelegate" &&
+                    it.methodName == "syncRequestedAndStoredLocales"
+            } &&
+            violation.stackTrace.any {
+                it.className == "androidx.appcompat.app.AppCompatDelegateImpl" &&
+                    it.methodName == "attachBaseContext2"
+            }
+    }
+}
+
+/**
+ * Ignore a [DiskWriteViolation] in Chromium's WebView when the Android KeyStore
+ * performs a signing operation during a client certificate TLS handshake.
+ * The disk write happens inside `KeyStoreSecurityLevel.createOperation` which is
+ * beyond application control.
+ */
+private data object IgnoreChromiumKeyStoreDiskWrite : IgnoreViolationRule {
+    @RequiresApi(Build.VERSION_CODES.P)
+    override fun shouldIgnore(violation: Violation): Boolean {
+        if (violation !is DiskWriteViolation) return false
+
+        return violation.stackTrace.any {
+            it.className == "android.security.KeyStoreSecurityLevel" &&
+                it.methodName == "createOperation"
+        } &&
+            violation.stackTrace.any {
+                it.fileName?.startsWith("chromium-") == true
+            }
     }
 }

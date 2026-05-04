@@ -23,7 +23,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -46,6 +45,7 @@ import io.homeassistant.companion.android.common.compose.composable.HAFilledButt
 import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.composable.HASearchField
+import io.homeassistant.companion.android.common.compose.composable.rememberHAModalBottomSheetState
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
@@ -96,7 +96,7 @@ internal fun SensorDetailSettingSheet(
     )
     val showSearch = state.entries.size > SEARCH_VISIBILITY_THRESHOLD
 
-    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val bottomSheetState = rememberHAModalBottomSheetState(skipPartiallyExpanded = true)
     val screenHeight = safeScreenHeight() - HADimens.SPACE16
 
     val nestedScrollFlingGuard = remember { nestedScrollFlingGuard() }

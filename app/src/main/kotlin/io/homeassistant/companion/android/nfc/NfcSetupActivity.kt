@@ -35,8 +35,8 @@ class NfcSetupActivity : BaseActivity() {
     }
 
     companion object {
-        const val EXTRA_TAG_VALUE = "tag_value"
-        const val EXTRA_MESSAGE_ID = "message_id"
+        private const val EXTRA_TAG_VALUE = "tag_value"
+        private const val EXTRA_MESSAGE_ID = "message_id"
 
         const val NAV_WELCOME = "nfc_welcome"
         const val NAV_READ = "nfc_read"

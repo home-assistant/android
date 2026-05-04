@@ -6,30 +6,35 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.service.voice.VoiceInteractionService
 import androidx.annotation.RequiresPermission
+import androidx.annotation.VisibleForTesting
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.assist.service.AssistVoiceInteractionService.Companion.isActiveService
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
 import io.homeassistant.companion.android.assist.wakeword.WakeWordListener
 import io.homeassistant.companion.android.assist.wakeword.WakeWordListenerFactory
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.settings.assist.AssistConfigManager
 import io.homeassistant.companion.android.common.util.CHANNEL_ASSIST_LISTENING
+import io.homeassistant.companion.android.settings.assist.AssistConfigManager
 import javax.inject.Inject
-import kotlin.time.Clock
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -48,9 +53,6 @@ import timber.log.Timber
 @AndroidEntryPoint
 class AssistVoiceInteractionService : VoiceInteractionService() {
     @Inject
-    lateinit var clock: Clock
-
-    @Inject
     lateinit var assistConfigManager: AssistConfigManager
 
     @Inject
@@ -64,11 +66,30 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
             onListenerStopped = ::onListenerStopped,
         )
     }
-    private var lastTriggerTime: Instant? = null
+    private var isServiceReady = false
+
+    /** Non-null only while the receiver is registered (between [onReady] and [onShutdown]). */
+    private var actionReceiver: BroadcastReceiver? = null
 
     override fun onReady() {
         super.onReady()
+        isServiceReady = true
         Timber.d("VoiceInteractionService is ready")
+        actionReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                handleAction(intent.action)
+            }
+        }
+        ContextCompat.registerReceiver(
+            this,
+            actionReceiver,
+            IntentFilter().apply {
+                addAction(ACTION_START_LISTENING)
+                addAction(ACTION_STOP_LISTENING)
+                addAction(ACTION_RESUME_LISTENING)
+            },
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
         serviceScope.launch {
             if (assistConfigManager.isWakeWordEnabled()) {
                 Timber.d("Wake word detection is enabled, starting listener")
@@ -81,9 +102,18 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
 
     override fun onShutdown() {
         super.onShutdown()
+        isServiceReady = false
         Timber.d("VoiceInteractionService is shutting down")
+        actionReceiver?.let(::unregisterReceiver)
+        actionReceiver = null
         // Don't use stopListening() as it launches a coroutine that may not complete before cancel
         serviceScope.cancel()
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Fallback for commands delivered via startService() when the service is already running
+        handleAction(intent?.action)
+        return super.onStartCommand(intent, flags, startId)
     }
 
     override fun onLaunchVoiceAssistFromKeyguard() {
@@ -91,12 +121,12 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         launchAssist()
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        when (intent?.action) {
+    private fun handleAction(action: String?) {
+        when (action) {
             ACTION_START_LISTENING -> startListening()
             ACTION_STOP_LISTENING -> stopListening()
+            ACTION_RESUME_LISTENING -> resumeListening()
         }
-        return super.onStartCommand(intent, flags, startId)
     }
 
     /**
@@ -160,19 +190,31 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         }
     }
 
-    private fun onWakeWordDetected(model: MicroWakeWordModelConfig) {
-        val now = clock.now()
-        val lastTrigger = lastTriggerTime
-
-        // Debounce: only trigger if enough time has passed since last detection
-        if (lastTrigger != null && (now - lastTrigger) <= DEBOUNCE_DURATION) {
-            Timber.d("Wake word detected but within debounce period, ignoring")
-            return
+    /**
+     * Resume wake word listening if it is still enabled in settings.
+     */
+    private fun resumeListening() {
+        serviceScope.launch {
+            if (assistConfigManager.isWakeWordEnabled()) {
+                startListening()
+            }
         }
+    }
 
-        lastTriggerTime = now
+    private fun onWakeWordDetected(model: MicroWakeWordModelConfig) {
+        sendBroadcast(
+            Intent(ACTION_WAKE_WORD_DETECTED).setPackage(packageName),
+        )
+
         Timber.i("Wake word '${model.wakeWord}' detected, launching Assist")
-        launchAssist(wakeWord = model.wakeWord)
+
+        // Stop the listener before launching Assist to release the microphone.
+        // Before Android 10 (API 29), only one component can hold an AudioRecord at a time.
+        // See https://developer.android.com/media/platform/sharing-audio-input
+        serviceScope.launch {
+            wakeWordListener.stop()
+            launchAssist(wakeWord = model.wakeWord)
+        }
     }
 
     private fun hasRecordAudioPermission(): Boolean =
@@ -201,6 +243,10 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     }
 
     private fun launchAssist(wakeWord: String? = null) {
+        if (!isServiceReady) {
+            Timber.w("Cannot launch Assist: VoiceInteractionService is not ready yet")
+            return
+        }
         val args = Bundle().apply {
             wakeWord?.let { putString(EXTRA_WAKE_WORD, it) }
         }
@@ -253,19 +299,25 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     companion object {
         private const val NOTIFICATION_ID = 9001
 
-        private const val ACTION_START_LISTENING = "io.homeassistant.companion.android.START_LISTENING"
-        private const val ACTION_STOP_LISTENING = "io.homeassistant.companion.android.STOP_LISTENING"
+        @VisibleForTesting
+        const val ACTION_START_LISTENING = "io.homeassistant.companion.android.START_LISTENING"
+
+        @VisibleForTesting
+        const val ACTION_STOP_LISTENING = "io.homeassistant.companion.android.STOP_LISTENING"
+
+        @VisibleForTesting
+        const val ACTION_RESUME_LISTENING = "io.homeassistant.companion.android.RESUME_LISTENING"
 
         /** Bundle key for passing the detected wake word phrase to the session. */
         const val EXTRA_WAKE_WORD = "wake_word"
 
-        private val DEBOUNCE_DURATION = 3.seconds
+        private const val ACTION_WAKE_WORD_DETECTED = "io.homeassistant.companion.android.WAKE_WORD_DETECTED"
 
         /**
          * Check if this VoiceInteractionService is currently the active system assistant.
          */
         fun isActiveService(context: Context): Boolean {
-            val componentName = android.content.ComponentName(
+            val componentName = ComponentName(
                 context,
                 AssistVoiceInteractionService::class.java,
             )
@@ -275,7 +327,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         /**
          * Start listening for wake words.
          *
-         * Sends an intent to start the service and begin wake word detection.
+         * Sends a package-scoped broadcast to the service to begin wake word detection.
          * If already listening, the current listener is stopped and restarted with the
          * currently selected wake word model. Call this method after changing the wake word
          * selection to apply the new model.
@@ -284,21 +336,66 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
          */
         @RequiresPermission(Manifest.permission.RECORD_AUDIO)
         fun startListening(context: Context) {
-            Timber.e("Send start listening is service started ${isActiveService(context)}")
-            val intent = Intent(context, AssistVoiceInteractionService::class.java).apply {
-                action = ACTION_START_LISTENING
-            }
-            context.startService(intent)
+            broadcastAction(context, ACTION_START_LISTENING)
         }
 
         /**
          * Stop listening for wake word.
          */
         fun stopListening(context: Context) {
-            val intent = Intent(context, AssistVoiceInteractionService::class.java).apply {
-                action = ACTION_STOP_LISTENING
+            broadcastAction(context, ACTION_STOP_LISTENING)
+        }
+
+        /**
+         * Resume wake word listening if it is still enabled in settings.
+         */
+        fun resumeListening(context: Context) {
+            broadcastAction(context, ACTION_RESUME_LISTENING)
+        }
+
+        /**
+         * Sends a package-scoped broadcast to communicate with the service.
+         *
+         * Unlike [Context.startService], broadcasts are not subject to background
+         * execution restrictions on Android 8+, making them safe to send from anywhere
+         * including FCM/WebSocket callbacks and [android.app.Activity.onDestroy].
+         *
+         * Note: The broadcast is only delivered to [AssistVoiceInteractionService] while it is
+         * running and its internal broadcast receiver is registered (after the service is ready).
+         * If the service is not running or not yet ready when this is called, the broadcast will
+         * be silently dropped. Callers that require guaranteed delivery should ensure the service
+         * is active before invoking this method using [isActiveService].
+         */
+        private fun broadcastAction(context: Context, action: String) {
+            context.sendBroadcast(
+                Intent(action).setPackage(context.packageName),
+            )
+        }
+
+        /**
+         * Returns a [Flow] that emits each time a wake word is detected by the service.
+         *
+         * Internally registers a package-scoped [BroadcastReceiver] for the detection
+         * broadcast and unregisters it when the flow collection is cancelled.
+         */
+        @SuppressLint("WrongConstant")
+        fun wakeWordDetections(context: Context): Flow<Unit> = callbackFlow {
+            val receiver = object : BroadcastReceiver() {
+                override fun onReceive(ctx: Context, intent: Intent) {
+                    trySend(Unit)
+                }
             }
-            context.startService(intent)
+
+            ContextCompat.registerReceiver(
+                context,
+                receiver,
+                IntentFilter(ACTION_WAKE_WORD_DETECTED),
+                ContextCompat.RECEIVER_NOT_EXPORTED,
+            )
+
+            awaitClose {
+                context.unregisterReceiver(receiver)
+            }
         }
     }
 }
