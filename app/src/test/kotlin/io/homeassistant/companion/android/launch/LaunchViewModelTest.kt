@@ -35,6 +35,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.EnumSource
+import org.junit.jupiter.params.provider.ValueSource
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @ExtendWith(MainDispatcherJUnit5Extension::class, ConsoleLogExtension::class)
@@ -587,7 +588,7 @@ class LaunchViewModelTest {
     }
 
     @ParameterizedTest
-    @org.junit.jupiter.params.provider.ValueSource(booleans = [true, false])
+    @ValueSource(booleans = [true, false])
     fun `Given refreshAppLockState when manager reports lock state then isAppLocked reflects it`(
         locked: Boolean,
     ) = runTest {
