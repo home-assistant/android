@@ -108,6 +108,7 @@ internal fun FrontendScreen(
     val pendingPermissionRequest by viewModel.pendingPermissionRequest.collectAsStateWithLifecycle()
     val pendingDialog by viewModel.pendingDialog.collectAsStateWithLifecycle()
     val pendingFileChooser by viewModel.pendingFileChooser.collectAsStateWithLifecycle()
+    val autoPlayVideoEnabled by viewModel.autoPlayVideoEnabled.collectAsStateWithLifecycle()
 
     // Create SecurityLevel ViewModel only when needed
     val securityLevelViewModel: LocationForSecureConnectionViewModel? =
@@ -144,6 +145,7 @@ internal fun FrontendScreen(
         onDownloadRequested = viewModel::onDownloadRequested,
         webViewActions = viewModel.webViewActions,
         onGesture = viewModel::onGesture,
+        autoPlayVideoEnabled = autoPlayVideoEnabled,
         modifier = modifier,
     )
 }
@@ -166,6 +168,7 @@ internal fun FrontendScreenContent(
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onWebViewCreationFailed: (Throwable) -> Unit,
     modifier: Modifier = Modifier,
+    autoPlayVideoEnabled: Boolean = false,
     pendingPermissionRequest: PermissionRequest? = null,
     pendingDialog: FrontendDialog? = null,
     pendingFileChooser: FileChooserRequest? = null,
@@ -183,7 +186,7 @@ internal fun FrontendScreenContent(
         url = viewState.url,
         frontendJsCallback = frontendJsCallback,
         webViewActions = webViewActions,
-        autoPlayVideoEnabled = (viewState as? FrontendViewState.Content)?.autoPlayVideoEnabled,
+        autoPlayVideoEnabled = autoPlayVideoEnabled,
     )
 
     PendingPermissionHandler(
@@ -209,6 +212,7 @@ internal fun FrontendScreenContent(
             onWebViewCreationFailed = onWebViewCreationFailed,
             onDownloadRequested = onDownloadRequested,
             onGesture = onGesture,
+            autoPlayVideoEnabled = autoPlayVideoEnabled,
         )
 
         StateOverlay(
@@ -389,6 +393,7 @@ private fun SafeHAWebView(
     webViewClient: WebViewClient,
     contentState: FrontendViewState.Content?,
     onWebViewCreationFailed: (Throwable) -> Unit,
+    autoPlayVideoEnabled: Boolean,
     webChromeClient: WebChromeClient? = null,
     onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit = { _, _, _ -> },
     onGesture: (GestureDirection, Int) -> Unit = { _, _ -> },
@@ -433,7 +438,7 @@ private fun SafeHAWebView(
                         onWebViewCreated = onWebViewCreated,
                         onDownloadRequested = onDownloadRequested,
                         onGesture = onGesture,
-                        autoPlayVideoEnabled = contentState?.autoPlayVideoEnabled ?: false,
+                        autoPlayVideoEnabled = autoPlayVideoEnabled,
                     )
                 },
                 onBackPressed = onBackClick,
@@ -563,10 +568,6 @@ private fun PendingPermissionHandler(pendingRequest: PermissionRequest?) {
 /**
  * Handles WebView side effects: URL loading, [WebViewAction] dispatch, and reapplying the
  * "Autoplay video" preference (which requires a [WebView.reload] to take effect on the loaded page).
- *
- * @param autoPlayVideoEnabled Latest value from `FrontendViewState.Content`, or `null` when the
- *  current state is not Content. The last non-null value is remembered across non-Content
- *  transitions so the WebView only reloads on actual preference changes.
  */
 @Composable
 private fun WebViewEffects(
@@ -574,17 +575,8 @@ private fun WebViewEffects(
     url: String,
     frontendJsCallback: FrontendJsCallback,
     webViewActions: Flow<WebViewAction>,
-    autoPlayVideoEnabled: Boolean?,
+    autoPlayVideoEnabled: Boolean,
 ) {
-    // Track the "Autoplay video" preference across state transitions so we only react
-    // to actual preference changes (and not to transient state churn like Loading → Content).
-    var lastAutoPlayVideoEnabled by remember { mutableStateOf(false) }
-    LaunchedEffect(autoPlayVideoEnabled) {
-        if (autoPlayVideoEnabled != null) {
-            lastAutoPlayVideoEnabled = autoPlayVideoEnabled
-        }
-    }
-
     if (webView != null) {
         LaunchedEffect(webView, url) {
             frontendJsCallback.attachToWebView(webView)
@@ -596,8 +588,8 @@ private fun WebViewEffects(
                 action.run(webView)
             }
         }
-        LaunchedEffect(lastAutoPlayVideoEnabled, webView) {
-            val target = !lastAutoPlayVideoEnabled
+        LaunchedEffect(autoPlayVideoEnabled, webView) {
+            val target = !autoPlayVideoEnabled
             if (webView.settings.mediaPlaybackRequiresUserGesture == target) return@LaunchedEffect
             webView.settings.mediaPlaybackRequiresUserGesture = target
             webView.reload()

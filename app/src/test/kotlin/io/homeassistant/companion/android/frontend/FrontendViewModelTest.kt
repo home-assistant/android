@@ -1489,51 +1489,29 @@ class FrontendViewModelTest {
     inner class AutoPlayVideoSetting {
 
         @Test
-        fun `Given Content state when pref flow emits new value then Content reflects it`() = runTest {
-            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
-            every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
-                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
-            )
-
+        fun `Given pref flow emits new value when collected then exposed StateFlow reflects it`() = runTest {
             val viewModel = createViewModel()
-            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-
-            messageFlow.emit(FrontendHandlerEvent.Connected)
             advanceUntilIdle()
 
-            val initial = viewModel.viewState.value
-            assertTrue(initial is FrontendViewState.Content)
-            assertEquals(false, (initial as FrontendViewState.Content).autoPlayVideoEnabled)
+            assertEquals(false, viewModel.autoPlayVideoEnabled.value)
 
             autoPlayVideoFlow.value = true
             advanceUntilIdle()
 
-            val updated = viewModel.viewState.value
-            assertTrue(updated is FrontendViewState.Content)
-            assertEquals(true, (updated as FrontendViewState.Content).autoPlayVideoEnabled)
+            assertEquals(true, viewModel.autoPlayVideoEnabled.value)
         }
 
         @ParameterizedTest
         @ValueSource(booleans = [true, false])
-        fun `Given autoplay pref value before Content when transitioning to Content then Content has autoplay reflect this`(value: Boolean) = runTest {
-            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
-            every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
-                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
-            )
-
-            coEvery { prefsRepository.isAutoPlayVideoEnabled() } returns value
+        fun `Given pref flow seeded with value when ViewModel constructed then exposed StateFlow has that value`(
+            value: Boolean,
+        ) = runTest {
+            autoPlayVideoFlow.value = value
 
             val viewModel = createViewModel()
-            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-
-            messageFlow.emit(FrontendHandlerEvent.Connected)
             advanceUntilIdle()
 
-            val state = viewModel.viewState.value
-            assertTrue(state is FrontendViewState.Content)
-            assertEquals(value, (state as FrontendViewState.Content).autoPlayVideoEnabled)
+            assertEquals(value, viewModel.autoPlayVideoEnabled.value)
         }
     }
 }

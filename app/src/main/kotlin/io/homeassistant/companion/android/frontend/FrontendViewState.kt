@@ -54,7 +54,6 @@ sealed interface FrontendViewState {
         val nightModeTheme: NightModeTheme? = null,
         val statusBarColor: Color? = null,
         val backgroundColor: Color? = null,
-        val autoPlayVideoEnabled: Boolean = false,
     ) : FrontendViewState
 
     /**
