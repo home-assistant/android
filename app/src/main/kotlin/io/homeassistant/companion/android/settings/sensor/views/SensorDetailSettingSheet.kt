@@ -24,6 +24,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -89,8 +90,12 @@ internal fun SensorDetailSettingSheet(
         mutableStateListOf<String>().also { it.addAll(state.entriesSelected) }
     }
     var searchQuery by remember { mutableStateOf("") }
+    // Wrap the entries once at the composable boundary so the Compose Compiler can infer
+    // stability for the `rememberFilteredSettingEntries` parameter (a raw
+    // `List<Pair<String, String>>` is treated as unstable).
+    val settingEntries = remember(state.entries) { SettingEntries(state.entries) }
     val filteredEntries = rememberFilteredSettingEntries(
-        entries = state.entries,
+        entries = settingEntries,
         searchQuery = searchQuery,
         dispatcher = dispatcher,
     )
@@ -191,6 +196,15 @@ internal fun SensorDetailSettingSheet(
 }
 
 /**
+ * Immutable wrapper around the raw `List<Pair<String, String>>` setting entries so that
+ * Composable parameters can be marked stable by the Compose Compiler. The Compose Compiler
+ * cannot infer stability for `List<Pair<String, String>>` directly, which forces unnecessary
+ * recompositions.
+ */
+@Immutable
+internal data class SettingEntries(val items: List<Pair<String, String>>)
+
+/**
  * Computes the filtered entries off the UI thread.
  *
  * Re-runs whenever [entries] or [searchQuery] change, dispatching the filter work onto
@@ -198,15 +212,15 @@ internal fun SensorDetailSettingSheet(
  */
 @Composable
 private fun rememberFilteredSettingEntries(
-    entries: List<Pair<String, String>>,
+    entries: SettingEntries,
     searchQuery: String,
     dispatcher: CoroutineContext = Dispatchers.Default,
 ): List<Pair<String, String>> {
-    var filtered by remember(entries) { mutableStateOf(entries) }
+    var filtered by remember(entries) { mutableStateOf(entries.items) }
 
     LaunchedEffect(entries, searchQuery) {
         filtered = withContext(dispatcher) {
-            filterSettingEntries(entries, searchQuery)
+            filterSettingEntries(entries.items, searchQuery)
         }
     }
 
@@ -246,9 +260,11 @@ internal fun joinSelectedValues(values: List<String>): String {
  * value. Surrounding parentheses are stripped from the secondary value when, and only when, both
  * the leading `(` and trailing `)` are present, matching [String.removeSurrounding] semantics.
  *
+ * Shared between [SensorDetailSettingSheet] (the new bottom sheet) and the legacy Material 2
+ * dialog row in `SensorDetailView` so both render identical primary/secondary text.
+ *
  * @return a pair of `(primary, secondary)` where `secondary` is `null` for single-line labels.
  */
-@VisibleForTesting
 internal fun parseSettingLabel(label: String): Pair<String, String?> {
     val parts = label.split("\n", limit = 2)
     val primaryText = parts[0]
