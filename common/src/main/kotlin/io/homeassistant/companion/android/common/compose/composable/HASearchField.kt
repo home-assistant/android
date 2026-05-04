@@ -35,11 +35,7 @@ private val DEFAULT_DEBOUNCE = 300.milliseconds
  * Compose host.
  */
 @VisibleForTesting
-internal suspend fun debouncedSearchUpdate(
-    rawQuery: String,
-    debounce: Duration,
-    emit: (String) -> Unit,
-) {
+internal suspend fun debouncedSearchUpdate(rawQuery: String, debounce: Duration, emit: (String) -> Unit) {
     if (rawQuery.isEmpty()) {
         emit(rawQuery)
     } else {
