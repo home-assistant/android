@@ -223,9 +223,8 @@ private fun AppLockEffect(isAppLocked: Boolean, onAuthSucceeded: () -> Unit) {
     val authenticator = remember {
         Authenticator(activity) { result ->
             when (result) {
-                AuthenticationResult.ERROR -> activity.finishAffinity()
+                AuthenticationResult.ERROR, AuthenticationResult.CANCELED -> activity.finishAffinity()
                 AuthenticationResult.SUCCESS -> onAuthSucceeded()
-                AuthenticationResult.CANCELED -> {}
             }
         }
     }
