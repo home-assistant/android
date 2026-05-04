@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -570,6 +571,11 @@ private fun WebViewEffects(
             frontendJsCallback.attachToWebView(webView)
             Timber.v("Load url ${sensitive(url)}")
             webView.loadUrl(url)
+        }
+        DisposableEffect(webView) {
+            onDispose {
+                frontendJsCallback.detachFromWebView(webView)
+            }
         }
         LaunchedEffect(webView) {
             webViewActions.collect { action ->

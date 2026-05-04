@@ -1755,7 +1755,14 @@ class WebViewActivity :
         }
     }
 
+    @SuppressLint("RequiresFeature")
     override fun onDestroy() {
+        val webMessageListenerSupported = WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)
+        webView.removeJavascriptInterface(EXTERNAL_APP_V1)
+        if (webMessageListenerSupported) {
+            WebViewCompat.removeWebMessageListener(webView, EXTERNAL_APP_V2_LISTENER)
+        }
+
         presenter.onFinish()
         super.onDestroy()
     }
