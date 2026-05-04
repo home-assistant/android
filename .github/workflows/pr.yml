@@ -321,7 +321,7 @@ jobs:
 
   instrumentation_test_app:
     name: "Instrumentation Test app"
-    # needs: [lint, lockfiles, ktlint]
+    needs: [lint, lockfiles, ktlint]
     runs-on: ubuntu-latest
     environment: ui-test
     permissions:
