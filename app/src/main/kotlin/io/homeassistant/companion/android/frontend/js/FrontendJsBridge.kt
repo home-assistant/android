@@ -145,9 +145,6 @@ class FrontendJsBridge @AssistedInject constructor(
 
     /**
      * Removes both V1 and V2 native bridges from [webView].
-     *
-     * Removes both V1 and V2 unconditionally regardless of which one was registered:
-     * the underlying calls are no-ops if nothing is registered.
      */
     @SuppressLint("RequiresFeature")
     override fun detachFromWebView(webView: WebView) {
