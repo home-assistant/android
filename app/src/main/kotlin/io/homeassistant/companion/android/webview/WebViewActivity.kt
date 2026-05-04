@@ -1996,11 +1996,6 @@ class WebViewActivity :
             Timber.i("Fragments ${supportFragmentManager.fragments} displayed, skipping connection wait")
         } else {
             Timber.d("Waiting for loadedUrl ${sensitive(loadedUrl.toString())}")
-            // Use lifecycleScope so the delayed check is automatically cancelled when the
-            // activity is destroyed. Previously this used Handler(Looper.getMainLooper())
-            // .postDelayed { ... } with a lambda capturing `this`, which kept the destroyed
-            // WebViewActivity retained in the main MessageQueue for up to CONNECTION_DELAY ms
-            // (e.g. when the activity was recreated due to a theme change). See issue #5453.
             lifecycleScope.launch {
                 delay(CONNECTION_DELAY)
                 val firstSegment = loadedUrl?.pathSegments?.firstOrNull().orEmpty()
