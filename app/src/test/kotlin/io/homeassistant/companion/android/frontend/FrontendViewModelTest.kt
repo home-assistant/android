@@ -67,6 +67,8 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @ExtendWith(ConsoleLogExtension::class)
@@ -84,8 +86,10 @@ class FrontendViewModelTest {
     private val downloadManager: FrontendDownloadManager = mockk(relaxed = true)
     private val gestureHandler: FrontendGestureHandler = mockk(relaxed = true)
     private val zoomSettingsFlow = MutableStateFlow(ZoomSettings())
+    private val autoPlayVideoFlow = MutableStateFlow(false)
     private val prefsRepository: PrefsRepository = mockk(relaxed = true) {
         coEvery { this@mockk.zoomSettingsFlow() } returns this@FrontendViewModelTest.zoomSettingsFlow
+        coEvery { this@mockk.autoPlayVideoFlow() } returns this@FrontendViewModelTest.autoPlayVideoFlow
     }
 
     private val serverId = 1
@@ -1478,6 +1482,58 @@ class FrontendViewModelTest {
                     serverId = serverId,
                 )
             }
+        }
+    }
+
+    @Nested
+    inner class AutoPlayVideoSetting {
+
+        @Test
+        fun `Given Content state when pref flow emits new value then Content reflects it`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+
+            val initial = viewModel.viewState.value
+            assertTrue(initial is FrontendViewState.Content)
+            assertEquals(false, (initial as FrontendViewState.Content).autoPlayVideoEnabled)
+
+            autoPlayVideoFlow.value = true
+            advanceUntilIdle()
+
+            val updated = viewModel.viewState.value
+            assertTrue(updated is FrontendViewState.Content)
+            assertEquals(true, (updated as FrontendViewState.Content).autoPlayVideoEnabled)
+        }
+
+        @ParameterizedTest
+        @ValueSource(booleans = [true, false])
+        fun `Given autoplay pref value before Content when transitioning to Content then Content has autoplay reflect this`(value: Boolean) = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            coEvery { prefsRepository.isAutoPlayVideoEnabled() } returns value
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+
+            val state = viewModel.viewState.value
+            assertTrue(state is FrontendViewState.Content)
+            assertEquals(value, (state as FrontendViewState.Content).autoPlayVideoEnabled)
         }
     }
 }

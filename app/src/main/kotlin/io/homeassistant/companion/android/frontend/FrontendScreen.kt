@@ -183,6 +183,7 @@ internal fun FrontendScreenContent(
         url = viewState.url,
         frontendJsCallback = frontendJsCallback,
         webViewActions = webViewActions,
+        autoPlayVideoEnabled = (viewState as? FrontendViewState.Content)?.autoPlayVideoEnabled,
     )
 
     PendingPermissionHandler(
@@ -432,6 +433,7 @@ private fun SafeHAWebView(
                         onWebViewCreated = onWebViewCreated,
                         onDownloadRequested = onDownloadRequested,
                         onGesture = onGesture,
+                        autoPlayVideoEnabled = contentState?.autoPlayVideoEnabled ?: false,
                     )
                 },
                 onBackPressed = onBackClick,
@@ -479,12 +481,15 @@ private fun WebView.configureForFrontend(
     onWebViewCreated: (WebView) -> Unit,
     onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit,
     onGesture: (GestureDirection, Int) -> Unit,
+    autoPlayVideoEnabled: Boolean,
 ) {
     onWebViewCreated(this)
 
     this.webViewClient = webViewClient
 
     webChromeClient?.let { this.webChromeClient = it }
+
+    settings.mediaPlaybackRequiresUserGesture = !autoPlayVideoEnabled
 
     // Enable first-party cookies globally and third-party cookies for this WebView.
     // The Home Assistant frontend relies on third-party cookies for some integrations
@@ -556,7 +561,12 @@ private fun PendingPermissionHandler(pendingRequest: PermissionRequest?) {
 }
 
 /**
- * Handles WebView side effects: URL loading and [WebViewAction] dispatch.
+ * Handles WebView side effects: URL loading, [WebViewAction] dispatch, and reapplying the
+ * "Autoplay video" preference (which requires a [WebView.reload] to take effect on the loaded page).
+ *
+ * @param autoPlayVideoEnabled Latest value from `FrontendViewState.Content`, or `null` when the
+ *  current state is not Content. The last non-null value is remembered across non-Content
+ *  transitions so the WebView only reloads on actual preference changes.
  */
 @Composable
 private fun WebViewEffects(
@@ -564,7 +574,17 @@ private fun WebViewEffects(
     url: String,
     frontendJsCallback: FrontendJsCallback,
     webViewActions: Flow<WebViewAction>,
+    autoPlayVideoEnabled: Boolean?,
 ) {
+    // Track the "Autoplay video" preference across state transitions so we only react
+    // to actual preference changes (and not to transient state churn like Loading → Content).
+    var lastAutoPlayVideoEnabled by remember { mutableStateOf(false) }
+    LaunchedEffect(autoPlayVideoEnabled) {
+        if (autoPlayVideoEnabled != null) {
+            lastAutoPlayVideoEnabled = autoPlayVideoEnabled
+        }
+    }
+
     if (webView != null) {
         LaunchedEffect(webView, url) {
             frontendJsCallback.attachToWebView(webView)
@@ -575,6 +595,12 @@ private fun WebViewEffects(
             webViewActions.collect { action ->
                 action.run(webView)
             }
+        }
+        LaunchedEffect(lastAutoPlayVideoEnabled, webView) {
+            val target = !lastAutoPlayVideoEnabled
+            if (webView.settings.mediaPlaybackRequiresUserGesture == target) return@LaunchedEffect
+            webView.settings.mediaPlaybackRequiresUserGesture = target
+            webView.reload()
         }
     }
 }

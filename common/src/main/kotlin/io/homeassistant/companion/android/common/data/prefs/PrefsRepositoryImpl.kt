@@ -207,15 +207,8 @@ internal class PrefsRepositoryImpl @Inject constructor(
         localStorage().putBoolean(PREF_FULLSCREEN_ENABLED, enabled)
     }
 
-    override suspend fun fullScreenEnabledFlow(): Flow<Boolean> {
-        val localStorage = localStorage()
-        return merge(
-            localStorage.observeChanges(PREF_FULLSCREEN_ENABLED),
-            // Seed an initial emission so collectors read the current value immediately
-            flowOf(""),
-        ).map {
-            isFullScreenEnabled()
-        }
+    override suspend fun fullScreenEnabledFlow(): Flow<Boolean> = observeChanges(PREF_FULLSCREEN_ENABLED) {
+        isFullScreenEnabled()
     }
 
     override suspend fun isKeepScreenOnEnabled(): Boolean {
@@ -242,23 +235,22 @@ internal class PrefsRepositoryImpl @Inject constructor(
         localStorage().putBoolean(PREF_PINCH_TO_ZOOM_ENABLED, enabled)
     }
 
-    override suspend fun zoomSettingsFlow(): Flow<ZoomSettings> {
-        val localStorage = localStorage()
-        return merge(
-            localStorage.observeChanges(PREF_PAGE_ZOOM_LEVEL),
-            localStorage.observeChanges(PREF_PINCH_TO_ZOOM_ENABLED),
-            // Seed an initial emission so collectors read the current values immediately
-            flowOf(""),
-        ).map {
+    override suspend fun zoomSettingsFlow(): Flow<ZoomSettings> =
+        observeChanges(PREF_PAGE_ZOOM_LEVEL, PREF_PINCH_TO_ZOOM_ENABLED) {
             ZoomSettings(
                 zoomLevel = getPageZoomLevel(),
                 pinchToZoomEnabled = isPinchToZoomEnabled(),
             )
         }
-    }
 
     override suspend fun isAutoPlayVideoEnabled(): Boolean {
         return localStorage().getBoolean(PREF_AUTOPLAY_VIDEO)
+    }
+
+    override suspend fun autoPlayVideoFlow(): Flow<Boolean> {
+        return observeChanges(PREF_AUTOPLAY_VIDEO) {
+            isAutoPlayVideoEnabled()
+        }
     }
 
     override suspend fun setAutoPlayVideo(enabled: Boolean) {
@@ -410,5 +402,13 @@ internal class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setSelectedWakeWord(wakeWord: String) {
         localStorage().putString(PREF_SELECTED_WAKE_WORD, wakeWord)
+    }
+
+    private suspend fun <T> observeChanges(vararg keys: String, mapper: suspend () -> T): Flow<T> {
+        val localStorage = localStorage()
+        // Seed an initial emission so collectors read the current value immediately
+        return (keys.map { localStorage.observeChanges(it) } + flowOf(""))
+            .merge()
+            .map { mapper() }
     }
 }

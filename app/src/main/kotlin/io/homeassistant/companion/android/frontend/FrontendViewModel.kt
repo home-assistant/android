@@ -274,6 +274,18 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             }
         }
 
+        viewModelScope.launch {
+            prefsRepository.autoPlayVideoFlow().collect { enabled ->
+                _viewState.update { state ->
+                    if (state is FrontendViewState.Content) {
+                        state.copy(autoPlayVideoEnabled = enabled)
+                    } else {
+                        state
+                    }
+                }
+            }
+        }
+
         loadServer()
     }
 
@@ -435,11 +447,13 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private suspend fun handleMessageResult(result: FrontendHandlerEvent) {
         when (result) {
             is FrontendHandlerEvent.Connected -> {
+                val isAutoPlayVideoEnabled = prefsRepository.isAutoPlayVideoEnabled()
                 _viewState.update { currentState ->
                     if (currentState is FrontendViewState.Loading) {
                         FrontendViewState.Content(
                             serverId = currentState.serverId,
                             url = currentState.url,
+                            autoPlayVideoEnabled = isAutoPlayVideoEnabled,
                         )
                     } else {
                         currentState

@@ -185,6 +185,35 @@ class PrefsRepositoryImplTest {
     }
 
     @Nested
+    inner class AutoPlayVideoFlow {
+
+        @Test
+        fun `Given collecting flow then current autoplay value is emitted immediately`() = runTest {
+            coEvery { localStorage.getBoolean("autoplay_video") } returns true
+
+            repository.autoPlayVideoFlow().test {
+                assertTrue(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given collecting flow when autoplay key changes then updated value is emitted`() = runTest {
+            coEvery { localStorage.getBoolean("autoplay_video") } returns false
+
+            repository.autoPlayVideoFlow().test {
+                assertFalse(awaitItem())
+
+                coEvery { localStorage.getBoolean("autoplay_video") } returns true
+                keyChangesFlow.emit("autoplay_video")
+
+                assertTrue(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+    }
+
+    @Nested
     inner class FullScreenEnabledFlow {
 
         @Test
