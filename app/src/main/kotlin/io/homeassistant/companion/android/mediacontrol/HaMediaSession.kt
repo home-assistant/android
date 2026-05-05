@@ -33,7 +33,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.util.sensitive
-import io.homeassistant.companion.android.webview.WebViewActivity
+import io.homeassistant.companion.android.launch.LaunchActivity
 import java.io.ByteArrayOutputStream
 import java.net.URL
 import kotlinx.coroutines.CancellationException
@@ -272,10 +272,12 @@ class HaMediaSession @AssistedInject constructor(
              * FLAG_ACTIVITY_SINGLE_TOP prevents stacking a redundant WebViewActivity if one is
              * already at the top; onNewIntent delivers the path to the existing instance instead.
              */
-            val tapIntent = WebViewActivity.newInstance(
+            val tapIntent = LaunchActivity.newInstance(
                 context = context,
-                path = "entityId:${config.entityId}",
-                serverId = config.serverId,
+                deepLink = LaunchActivity.DeepLink.NavigateTo(
+                    path = "entityId:${config.entityId}",
+                    serverId = config.serverId,
+                ),
             ).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
             }
