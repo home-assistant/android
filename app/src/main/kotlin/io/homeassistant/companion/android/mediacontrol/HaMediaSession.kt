@@ -31,6 +31,7 @@ import io.homeassistant.companion.android.common.data.mediacontrol.MediaPlayback
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaRepeatMode
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.webview.WebViewActivity
 import java.io.ByteArrayOutputStream
@@ -203,6 +204,9 @@ class HaMediaSession @AssistedInject constructor(
      * regardless of how the coroutine ends (cancellation or normal flow completion).
      */
     suspend fun observe(onSessionReady: suspend (HaMediaSession) -> Unit) = coroutineScope {
+        FailFast.failWhen(mediaSession != null) {
+            "observe() called while a session is already active for ${config.entityId}"
+        }
         Timber.d("observe: starting for ${config.entityId}")
         val player = HaRemoteMediaPlayer(Looper.getMainLooper(), getCommandCallback(this))
         val session = buildMediaSession(player)
