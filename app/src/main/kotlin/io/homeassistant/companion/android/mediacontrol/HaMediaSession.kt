@@ -339,7 +339,7 @@ class HaMediaSession @AssistedInject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.e(e, "Failed to resolve artwork URL for server ${state.serverId}")
+            Timber.e(e, "Failed to resolve artwork base URL for server ${state.serverId}")
             null
         } ?: return null
 
