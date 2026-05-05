@@ -3,10 +3,14 @@ package io.homeassistant.companion.android.frontend.exoplayer
 import android.net.Uri
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.media3.common.Player
+import androidx.media3.common.VideoSize
 import androidx.media3.exoplayer.ExoPlayer
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent.ExoPlayerAction
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
@@ -154,6 +158,49 @@ class FrontendExoPlayerManagerTest {
             manager.handle(ExoPlayerAction.Resize(left = 10.0, top = 20.0, right = 310.0, bottom = 220.0))
 
             assertNull(manager.state.value)
+        }
+
+        @Test
+        fun `Given zero-height resize without known aspect ratio when handled then state size has zero height`() = runTest {
+            manager.handle(ExoPlayerAction.PlayHls(messageId = 1, url = TEST_URI, muted = false))
+
+            manager.handle(ExoPlayerAction.Resize(left = 0.0, top = 126.5, right = 486.25, bottom = 126.5))
+
+            val state = manager.state.value
+            assertNotNull(state)
+            assertEquals(0.dp, state!!.left)
+            assertEquals(126.5.dp, state.top)
+            assertEquals(DpSize(486.25.dp, 0.dp), state.size)
+        }
+
+        @Test
+        fun `Given aspect ratio known when zero-height resize then height computed from aspect ratio`() = runTest {
+            val listenerSlot = slot<Player.Listener>()
+            every { mockPlayer.addListener(capture(listenerSlot)) } answers { }
+            manager.handle(ExoPlayerAction.PlayHls(messageId = 1, url = TEST_URI, muted = false))
+            // 1000x500 video → ratio 0.5
+            listenerSlot.captured.onVideoSizeChanged(VideoSize(1000, 500))
+
+            manager.handle(ExoPlayerAction.Resize(left = 0.0, top = 100.0, right = 400.0, bottom = 100.0))
+
+            val state = manager.state.value
+            assertNotNull(state)
+            assertEquals(DpSize(400.dp, 200.dp), state!!.size)
+        }
+
+        @Test
+        fun `Given prior zero-height resize when video size changed then size is auto-computed from ratio`() = runTest {
+            val listenerSlot = slot<Player.Listener>()
+            every { mockPlayer.addListener(capture(listenerSlot)) } answers { }
+            manager.handle(ExoPlayerAction.PlayHls(messageId = 1, url = TEST_URI, muted = false))
+            manager.handle(ExoPlayerAction.Resize(left = 0.0, top = 100.0, right = 400.0, bottom = 100.0))
+
+            // 1000x500 video → ratio 0.5
+            listenerSlot.captured.onVideoSizeChanged(VideoSize(1000, 500))
+
+            val state = manager.state.value
+            assertNotNull(state)
+            assertEquals(DpSize(400.dp, 200.dp), state!!.size)
         }
     }
 

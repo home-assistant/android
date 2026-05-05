@@ -204,19 +204,6 @@ class IncomingExternalBusMessageTest {
     }
 
     @Test
-    fun `Given exoplayer resize JSON with zero-height DOMRect then parses payload with top equal to bottom`() {
-        // Mirrors the real-world case where the frontend sends resize before the video element
-        // is laid out: top == bottom, so the manager must fall back to the video aspect ratio.
-        val json = """{"type":"exoplayer/resize","id":26,""" +
-            """"payload":{"left":0,"top":126.5,"right":486.25,"bottom":126.5}}"""
-
-        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
-
-        val resize = message as ExoPlayerResizeMessage
-        assertEquals(resize.payload.top, resize.payload.bottom)
-    }
-
-    @Test
     fun `Given exoplayer resize JSON without payload then parses with zero defaults`() {
         val json = """{"type":"exoplayer/resize","id":25}"""
 

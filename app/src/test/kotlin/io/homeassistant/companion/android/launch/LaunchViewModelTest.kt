@@ -627,7 +627,7 @@ class LaunchViewModelTest {
     }
 
     @Test
-    fun `Given preference off when fullscreen is requested then isFullScreen is true`() = runTest {
+    fun `Given fullscreen preference off when fullscreen is requested then isFullScreen is true`() = runTest {
         fullScreenEnabledFlow.value = false
         createViewModel()
         advanceUntilIdle()
@@ -639,7 +639,7 @@ class LaunchViewModelTest {
     }
 
     @Test
-    fun `Given preference off when fullscreen request is cleared then isFullScreen is false`() = runTest {
+    fun `Given fullscreen preference off when fullscreen request is cleared then isFullScreen is false`() = runTest {
         fullScreenEnabledFlow.value = false
         createViewModel()
         viewModel.onFullscreenRequested(fullscreen = true)
@@ -652,7 +652,7 @@ class LaunchViewModelTest {
     }
 
     @Test
-    fun `Given preference on when fullscreen request is cleared then isFullScreen stays true`() = runTest {
+    fun `Given fullscreen preference on when fullscreen request is cleared then isFullScreen stays true`() = runTest {
         fullScreenEnabledFlow.value = true
         createViewModel()
         viewModel.onFullscreenRequested(fullscreen = true)
