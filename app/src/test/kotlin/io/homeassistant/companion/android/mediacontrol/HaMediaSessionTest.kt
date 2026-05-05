@@ -30,6 +30,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -482,13 +483,13 @@ class HaMediaSessionTest {
         coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
 
         val session = buildSession()
-        var capturedSession: androidx.media3.session.MediaSession? = null
+        var onSessionReadyInvoked = false
         val job = testScope.launch {
-            session.observe { capturedSession = it }
+            session.observe { onSessionReadyInvoked = true }
         }
         idleMainLooper()
 
-        assertNotNull(capturedSession)
+        assertTrue(onSessionReadyInvoked)
 
         job.cancel()
     }
