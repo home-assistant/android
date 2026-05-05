@@ -32,5 +32,5 @@ interface LocalStorage {
      * Returns a [Flow] that emits the [key] each time the value associated with it changes
      * and only emits for the specified [key].
      */
-    fun observeChanges(key: String): Flow<String>
+    fun observeChanges(vararg keys: String): Flow<String>
 }

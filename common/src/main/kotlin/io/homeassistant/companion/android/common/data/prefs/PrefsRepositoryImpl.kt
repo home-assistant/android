@@ -407,8 +407,7 @@ internal class PrefsRepositoryImpl @Inject constructor(
     private suspend fun <T> observeChanges(vararg keys: String, mapper: suspend () -> T): Flow<T> {
         val localStorage = localStorage()
         // Seed an initial emission so collectors read the current value immediately
-        return (keys.map { localStorage.observeChanges(it) } + flowOf(""))
-            .merge()
+        return merge(localStorage.observeChanges(*keys), flowOf(""))
             .map { mapper() }
     }
 }

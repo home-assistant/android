@@ -110,16 +110,18 @@ class LocalStorageImpl(sharedPreferences: suspend () -> SharedPreferences) : Loc
         withContext(Dispatchers.IO) { sharedPreferences().edit { remove(key) } }
     }
 
-    override fun observeChanges(key: String): Flow<String> = callbackFlow {
+    override fun observeChanges(vararg keys: String): Flow<String> = callbackFlow {
         val prefs = sharedPreferences()
-        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, changedKey ->
-            if (changedKey == key) {
-                launch { send(key) }
+        keys.forEach { key ->
+            val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, changedKey ->
+                if (changedKey == key) {
+                    launch { send(key) }
+                }
             }
-        }
-        prefs.registerOnSharedPreferenceChangeListener(listener)
-        awaitClose {
-            prefs.unregisterOnSharedPreferenceChangeListener(listener)
+            prefs.registerOnSharedPreferenceChangeListener(listener)
+            awaitClose {
+                prefs.unregisterOnSharedPreferenceChangeListener(listener)
+            }
         }
     }
 }

@@ -26,7 +26,7 @@ import org.junit.jupiter.params.provider.ValueSource
 class PrefsRepositoryImplTest {
     private val keyChangesFlow = MutableSharedFlow<String>()
     private val localStorage = mockk<LocalStorage> {
-        every { observeChanges(any()) } returns keyChangesFlow
+        every { observeChanges(*anyVararg<String>()) } returns keyChangesFlow
     }
     private val integrationStorage = mockk<LocalStorage>()
 
