@@ -214,9 +214,6 @@ class HaMediaSession @AssistedInject constructor(
         try {
             onSessionReady(this@HaMediaSession)
             startObservingState()
-            Timber.d(
-                "observe: startObservingState returned normally for ${config.entityId} (flow completed or WebSocket returned null)",
-            )
         } catch (e: CancellationException) {
             Timber.d("observe: cancelled for ${config.entityId}")
             throw e
@@ -237,7 +234,7 @@ class HaMediaSession @AssistedInject constructor(
      * In both cases the session is not restarted here; reconnection happens when the user opens
      * the app, which recreates active sessions via [HaMediaSessionService].
      */
-    internal suspend fun startObservingState() {
+    private suspend fun startObservingState() {
         Timber.d("startObservingState: starting for ${config.entityId}")
         var artworkCache = ArtworkCache()
         mediaControlRepository.observeEntityState(config).collect { state ->
