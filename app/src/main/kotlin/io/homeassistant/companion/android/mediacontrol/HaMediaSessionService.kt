@@ -80,11 +80,6 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
     // multi-session behavior where each entity has its own independent media control card.
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = null
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Timber.d("HaMediaSessionService onStartCommand, ${activeSessions.size} active sessions")
-        return super.onStartCommand(intent, flags, startId)
-    }
-
     override fun onTaskRemoved(rootIntent: Intent?) {
         val anyPlaying = activeSessions.values.any { (session, _) -> session.isPlaying }
         // Keep the service alive while playback is active so the media notification remains
