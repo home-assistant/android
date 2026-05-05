@@ -94,46 +94,48 @@ class HaMediaSession @AssistedInject constructor(
     val hasMediaContent: Boolean
         get() = mediaSession?.player?.mediaItemCount?.let { it > 0 } == true
 
-    /**
-     * The coroutine scope active during [observe], used to fire-and-forget media action calls.
-     * Null when no observation is running.
-     */
-    private var actionScope: CoroutineScope? = null
+    private fun getCommandCallback(scope: CoroutineScope) = object : HaRemoteMediaPlayer.CommandCallback {
+        override fun onPlayRequested() = scope.launch { callMediaAction(ACTION_MEDIA_PLAY) }
 
-    private val commandCallback = object : HaRemoteMediaPlayer.CommandCallback {
-        override fun onPlayRequested() = callMediaAction(ACTION_MEDIA_PLAY)
+        override fun onPauseRequested() = scope.launch { callMediaAction(ACTION_MEDIA_PAUSE) }
 
-        override fun onPauseRequested() = callMediaAction(ACTION_MEDIA_PAUSE)
+        override fun onSeekRequested(positionMs: Long) = scope.launch {
+            callMediaAction(
+                action = ACTION_MEDIA_SEEK,
+                extraData = mapOf("seek_position" to positionMs / 1000.0),
+            )
+        }
 
-        override fun onSeekRequested(positionMs: Long) = callMediaAction(
-            action = ACTION_MEDIA_SEEK,
-            extraData = mapOf("seek_position" to positionMs / 1000.0),
-        )
+        override fun onNextRequested() = scope.launch { callMediaAction(ACTION_MEDIA_NEXT_TRACK) }
 
-        override fun onNextRequested() = callMediaAction(ACTION_MEDIA_NEXT_TRACK)
+        override fun onPreviousRequested() = scope.launch { callMediaAction(ACTION_MEDIA_PREVIOUS_TRACK) }
 
-        override fun onPreviousRequested() = callMediaAction(ACTION_MEDIA_PREVIOUS_TRACK)
+        override fun onSetVolumeRequested(volume: Float) = scope.launch {
+            callMediaAction(
+                action = ACTION_VOLUME_SET,
+                extraData = mapOf("volume_level" to volume),
+            )
+        }
 
-        override fun onSetVolumeRequested(volume: Float) = callMediaAction(
-            action = ACTION_VOLUME_SET,
-            extraData = mapOf("volume_level" to volume),
-        )
+        override fun onIncreaseVolumeRequested() = scope.launch { callMediaAction(ACTION_VOLUME_UP) }
 
-        override fun onIncreaseVolumeRequested() = callMediaAction(ACTION_VOLUME_UP)
+        override fun onDecreaseVolumeRequested() = scope.launch { callMediaAction(ACTION_VOLUME_DOWN) }
 
-        override fun onDecreaseVolumeRequested() = callMediaAction(ACTION_VOLUME_DOWN)
+        override fun onMuteRequested(muted: Boolean) = scope.launch {
+            callMediaAction(
+                action = ACTION_VOLUME_MUTE,
+                extraData = mapOf("is_volume_muted" to muted),
+            )
+        }
 
-        override fun onMuteRequested(muted: Boolean) = callMediaAction(
-            action = ACTION_VOLUME_MUTE,
-            extraData = mapOf("is_volume_muted" to muted),
-        )
+        override fun onStopRequested() = scope.launch { callMediaAction(ACTION_MEDIA_STOP) }
 
-        override fun onStopRequested() = callMediaAction(ACTION_MEDIA_STOP)
-
-        override fun onShuffleRequested(shuffle: Boolean) = callMediaAction(
-            action = ACTION_SHUFFLE_SET,
-            extraData = mapOf("shuffle" to shuffle),
-        )
+        override fun onShuffleRequested(shuffle: Boolean) = scope.launch {
+            callMediaAction(
+                action = ACTION_SHUFFLE_SET,
+                extraData = mapOf("shuffle" to shuffle),
+            )
+        }
 
         override fun onRepeatRequested(repeatMode: MediaRepeatMode): Job {
             val haRepeatValue = when (repeatMode) {
@@ -141,10 +143,12 @@ class HaMediaSession @AssistedInject constructor(
                 is MediaRepeatMode.One -> "one"
                 is MediaRepeatMode.All -> "all"
             }
-            return callMediaAction(
-                action = ACTION_REPEAT_SET,
-                extraData = mapOf("repeat" to haRepeatValue),
-            )
+            return scope.launch {
+                callMediaAction(
+                    action = ACTION_REPEAT_SET,
+                    extraData = mapOf("repeat" to haRepeatValue),
+                )
+            }
         }
     }
 
@@ -200,8 +204,7 @@ class HaMediaSession @AssistedInject constructor(
      */
     suspend fun observe(onSessionReady: suspend (HaMediaSession) -> Unit) = coroutineScope {
         Timber.d("observe: starting for ${config.entityId}")
-        actionScope = this
-        val player = HaRemoteMediaPlayer(Looper.getMainLooper(), commandCallback)
+        val player = HaRemoteMediaPlayer(Looper.getMainLooper(), getCommandCallback(this))
         val session = buildMediaSession(player)
         mediaSession = session
         try {
@@ -215,7 +218,6 @@ class HaMediaSession @AssistedInject constructor(
             throw e
         } finally {
             Timber.d("observe: finally block running for ${config.entityId}, releasing player and session")
-            actionScope = null
             mediaSession = null
             withContext(NonCancellable + Dispatchers.Main) {
                 player.release()
@@ -284,24 +286,18 @@ class HaMediaSession @AssistedInject constructor(
             )
         }
 
-    private fun callMediaAction(action: String, extraData: Map<String, Any> = emptyMap()): Job {
-        val scope = actionScope
-        if (scope == null) {
-            Timber.w("callMediaAction called when not observing, ignoring action=$action")
-            return Job().also { it.complete() }
-        }
-        return scope.launch {
-            val actionData = hashMapOf<String, Any>("entity_id" to config.entityId)
-            actionData.putAll(extraData)
-
-            try {
+    private suspend fun callMediaAction(action: String, extraData: Map<String, Any> = emptyMap()) {
+        val actionData = hashMapOf<String, Any>("entity_id" to config.entityId)
+        actionData.putAll(extraData)
+        try {
+            withContext(Dispatchers.IO) {
                 serverManager.integrationRepository(config.serverId)
                     .callAction(MEDIA_PLAYER_DOMAIN, action, actionData)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to call media action $action on ${config.entityId}")
             }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to call media action $action on ${config.entityId}")
         }
     }
 
