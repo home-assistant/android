@@ -310,26 +310,19 @@ class HaMediaSession @AssistedInject constructor(
      * @return An updated [ArtworkCache] reflecting the outcome of the load attempt.
      */
     private suspend fun loadArtworkAndUpdatePlayer(state: MediaControlState, cache: ArtworkCache): ArtworkCache {
-        val rawPictureUrl = state.entityPictureUrl
-        val (updatedCache, pngBytes) = when {
-            rawPictureUrl != null && rawPictureUrl != cache.url -> {
-                val resolvedUrl = resolveArtworkUrl(state)
-                val bytes = resolvedUrl?.let { loadBitmapAsPng(it) }
-                if (bytes != null) {
-                    ArtworkCache(url = rawPictureUrl, bytes = bytes) to bytes
-                } else {
-                    cache to cache.bytes
-                }
+        val pictureUrl = state.entityPictureUrl
+        val updatedCache = when {
+            pictureUrl == null -> ArtworkCache()
+            pictureUrl == cache.url -> cache
+            else -> {
+                val bytes = resolveArtworkUrl(state)?.let { loadBitmapAsPng(it) }
+                if (bytes != null) ArtworkCache(url = pictureUrl, bytes = bytes) else cache
             }
-            rawPictureUrl == null -> {
-                ArtworkCache() to null
-            }
-            else -> cache to cache.bytes
         }
 
         withContext(Dispatchers.Main) {
             mediaSession?.player?.let { player ->
-                (player as? HaRemoteMediaPlayer)?.updateState(state = state, artworkPngBytes = pngBytes)
+                (player as? HaRemoteMediaPlayer)?.updateState(state = state, artworkPngBytes = updatedCache.bytes)
             }
         }
         return updatedCache
