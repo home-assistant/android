@@ -1,7 +1,10 @@
 package io.homeassistant.companion.android.launch
 
+import android.app.PictureInPictureParams
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
 import androidx.activity.compose.LocalActivity
@@ -159,6 +162,7 @@ class LaunchActivity : AppCompatActivity() {
                     startDestination = (uiState as? LaunchUiState.Ready)?.startDestination,
                     snackbarHostState = snackbarHostState,
                     onRequestFullscreen = viewModel::onFullscreenRequested,
+                    onPipReadinessChanged = viewModel::onPipReadinessChanged,
                     modifier = Modifier.hazeSource(hazeState),
                 )
 
@@ -201,6 +205,22 @@ class LaunchActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         if (!isFinishing && WIPFeature.USE_FRONTEND_V2) SensorReceiver.updateAllSensors(this)
+    }
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (WIPFeature.USE_FRONTEND_V2) {
+            viewModel.onAppPaused()
+
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+            if (!packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) return
+            val readiness = viewModel.pipReadiness.value ?: return
+            val params = PictureInPictureParams.Builder()
+                .setAspectRatio(readiness.aspectRatio)
+                .apply { readiness.sourceRect?.let(::setSourceRectHint) }
+                .build()
+            enterPictureInPictureMode(params)
+        }
     }
 
     override fun onStop() {

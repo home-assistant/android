@@ -134,6 +134,17 @@ internal class LaunchViewModel @VisibleForTesting constructor(
     private val _isAppLocked = MutableStateFlow(false)
     val isAppLocked: StateFlow<Boolean> = _isAppLocked.asStateFlow()
 
+    private val _pipReadiness = MutableStateFlow<PipReadiness?>(null)
+
+    /**
+     * Latest [PipReadiness] reported by the active screen, or `null` if no screen is currently
+     * displaying PiP-eligible content.
+     *
+     * Read by [LaunchActivity] to build [android.app.PictureInPictureParams] when the user
+     * backgrounds the app or when `setAutoEnterEnabled` is honored by the OS (API 31+).
+     */
+    val pipReadiness: StateFlow<PipReadiness?> = _pipReadiness.asStateFlow()
+
     init {
         viewModelScope.launch {
             cleanupServers()
@@ -183,6 +194,13 @@ internal class LaunchViewModel @VisibleForTesting constructor(
      */
     fun onFullscreenRequested(fullscreen: Boolean) {
         fullscreenRequested.value = fullscreen
+    }
+
+    /**
+     * Updates [pipReadiness] from the screen layer. `null` indicates no PiP-eligible content.
+     */
+    fun onPipReadinessChanged(readiness: PipReadiness?) {
+        _pipReadiness.value = readiness
     }
 
     private suspend fun handleInitialState(initialDeepLink: LaunchActivity.DeepLink?) {

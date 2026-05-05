@@ -1,6 +1,11 @@
 package io.homeassistant.companion.android.launch
 
+import android.app.Activity
+import android.content.Context
+import android.content.pm.PackageManager
+import android.util.Rational
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.work.testing.WorkManagerTestInitHelper
@@ -29,11 +34,14 @@ import io.mockk.unmockkConstructor
 import io.mockk.unmockkObject
 import io.mockk.verify
 import org.junit.After
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
@@ -94,5 +102,68 @@ class LaunchActivityTest {
             scenario.moveToState(Lifecycle.State.STARTED) // triggers onPause
             verify { SensorReceiver.updateAllSensors(any()) }
         }
+    }
+
+    @Test
+    fun `Given PIP feature available and readiness reported when user leaves then PIP is entered`() {
+        setPipFeatureAvailable(available = true)
+
+        ActivityScenario.launch(LaunchActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                pipViewModelOf(activity).onPipReadinessChanged(
+                    PipReadiness(aspectRatio = Rational(16, 9)),
+                )
+
+                invokeOnUserLeaveHint(activity)
+
+                assertTrue(activity.isInPictureInPictureMode)
+            }
+        }
+    }
+
+    @Test
+    fun `Given PIP feature available but no readiness when user leaves then PIP is not entered`() {
+        setPipFeatureAvailable(available = true)
+
+        ActivityScenario.launch(LaunchActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                invokeOnUserLeaveHint(activity)
+
+                assertFalse(activity.isInPictureInPictureMode)
+            }
+        }
+    }
+
+    @Test
+    fun `Given device without PIP feature when user leaves then PIP is not entered`() {
+        setPipFeatureAvailable(available = false)
+
+        ActivityScenario.launch(LaunchActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                pipViewModelOf(activity).onPipReadinessChanged(
+                    PipReadiness(aspectRatio = Rational(16, 9)),
+                )
+
+                invokeOnUserLeaveHint(activity)
+
+                assertFalse(activity.isInPictureInPictureMode)
+            }
+        }
+    }
+
+    private fun setPipFeatureAvailable(available: Boolean) {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        shadowOf(context.packageManager)
+            .setSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE, available)
+    }
+
+    private fun pipViewModelOf(activity: LaunchActivity): LaunchViewModel = ViewModelProvider(activity)[LaunchViewModel::class.java]
+
+    // `Activity.onUserLeaveHint` is `protected`, so reflect into Activity to dispatch through
+    // the override. ActivityScenario does not expose a "user leaving" lifecycle helper.
+    private fun invokeOnUserLeaveHint(activity: Activity) {
+        val method = Activity::class.java.getDeclaredMethod("onUserLeaveHint")
+        method.isAccessible = true
+        method.invoke(activity)
     }
 }
