@@ -1214,7 +1214,9 @@ class FrontendViewModelTest {
             val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
             val fileChooserParams = mockk<WebChromeClient.FileChooserParams>(relaxed = true)
 
-            val handled = viewModel.webChromeClient.onShowFileChooser(
+            val client = viewModel.createWebChromeClient(onShowCustomView = {}, onHideCustomView = {})
+
+            val handled = client.onShowFileChooser(
                 mockk(relaxed = true),
                 filePathCallback,
                 fileChooserParams,
@@ -1236,7 +1238,9 @@ class FrontendViewModelTest {
             val viewModel = createViewModel()
             val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
 
-            viewModel.webChromeClient.onShowFileChooser(
+            val client = viewModel.createWebChromeClient(onShowCustomView = {}, onHideCustomView = {})
+
+            val handled = client.onShowFileChooser(
                 mockk(relaxed = true),
                 filePathCallback,
                 mockk(relaxed = true),
@@ -1263,7 +1267,9 @@ class FrontendViewModelTest {
             val viewModel = createViewModel()
             val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
 
-            viewModel.webChromeClient.onShowFileChooser(
+            val client = viewModel.createWebChromeClient(onShowCustomView = {}, onHideCustomView = {})
+
+            val handled = client.onShowFileChooser(
                 mockk(relaxed = true),
                 filePathCallback,
                 mockk(relaxed = true),
