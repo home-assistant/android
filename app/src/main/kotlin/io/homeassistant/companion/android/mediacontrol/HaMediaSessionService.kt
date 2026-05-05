@@ -189,38 +189,48 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
         }
         val toAdd = (desiredKeys - currentKeys).map { key ->
             val entityConfig = configuredEntities.first { it.sessionKey() == key }
-            val session = haMediaSessionFactory.create(
-                config = entityConfig,
-            )
-            key to session
+            key to haMediaSessionFactory.create(config = entityConfig)
         }
 
         Timber.d("reconcileSessions: toRemove=${toRemove.map { it.first }}, toAdd=${toAdd.map { it.first }}")
 
         // Execute all Android/Media3 API calls that require Main in a single dispatcher hop.
         withContext(Dispatchers.Main) {
-            toRemove.forEach { (key, pair) ->
-                val (haSession, job) = pair
-                val notificationId = haSession.id.hashCode()
-                notificationManager.cancel(notificationId)
-                if (foregroundNotificationId == notificationId) {
-                    promoteForegroundOrStop(excludeId = notificationId)
-                }
-                haSession.removeFromService(this@HaMediaSessionService)
-                job.cancelAndJoin()
-                Timber.d("Removed media session for $key")
-            }
-
-            toAdd.forEach { (key, session) ->
-                val job = serviceScope.launch {
-                    session.observe { haSession -> haSession.addToService(this@HaMediaSessionService) }
-                }
-                activeSessions[key] = session to job
-                Timber.d("Added media session for $key")
-            }
+            toRemove.forEach { (key, pair) -> tearDownSession(key, pair) }
+            toAdd.forEach { (key, session) -> launchSession(key, session) }
         }
 
         Timber.d("reconcileSessions: done, activeSessions=${activeSessions.keys.toList()}")
+    }
+
+    /**
+     * Cancels the notification for a session, unregisters it from the service, and joins the
+     * observation coroutine so all Media3 resources are released before returning.
+     * Must be called from the Main dispatcher.
+     */
+    private suspend fun tearDownSession(key: String, pair: Pair<HaMediaSession, Job>) {
+        val (haSession, job) = pair
+        val notificationId = haSession.id.hashCode()
+        notificationManager.cancel(notificationId)
+        if (foregroundNotificationId == notificationId) {
+            promoteForegroundOrStop(excludeId = notificationId)
+        }
+        haSession.removeFromService(this)
+        job.cancelAndJoin()
+        Timber.d("Removed media session for $key")
+    }
+
+    /**
+     * Launches the observation coroutine for a new session, registers it with the service, and
+     * stores it in [activeSessions].
+     * Must be called from the Main dispatcher (required by [MediaSessionService.addSession]).
+     */
+    private fun launchSession(key: String, session: HaMediaSession) {
+        val job = serviceScope.launch {
+            session.observe { haSession -> haSession.addToService(this@HaMediaSessionService) }
+        }
+        activeSessions[key] = session to job
+        Timber.d("Added media session for $key")
     }
 
     /**
