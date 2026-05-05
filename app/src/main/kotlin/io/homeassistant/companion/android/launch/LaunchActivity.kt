@@ -39,6 +39,7 @@ import io.homeassistant.companion.android.util.PlayServicesAvailability
 import io.homeassistant.companion.android.util.compose.HAApp
 import io.homeassistant.companion.android.util.compose.navigateToUri
 import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
+import io.homeassistant.companion.android.mediacontrol.HaMediaSessionService
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import javax.inject.Inject
 import kotlinx.coroutines.launch
@@ -166,6 +167,7 @@ class LaunchActivity : AppCompatActivity() {
             SensorWorker.start(this)
             lifecycleScope.launch {
                 WebsocketManager.start(this@LaunchActivity)
+                HaMediaSessionService.start(this@LaunchActivity)
                 checkLocationDisabled()
                 changeLog.showChangeLog(this@LaunchActivity, forceShow = false)
             }
