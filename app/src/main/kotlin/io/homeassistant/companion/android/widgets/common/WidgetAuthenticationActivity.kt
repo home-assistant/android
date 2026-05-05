@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import io.homeassistant.companion.android.authenticator.Authenticator
+import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.widgets.button.ButtonWidget
 import timber.log.Timber
@@ -22,15 +23,15 @@ class WidgetAuthenticationActivity : AppCompatActivity() {
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus && !isFinishing && !authenticating) {
-            val authenticator = Authenticator(this, this, ::authenticationResult)
+            val authenticator = Authenticator(this, ::authenticationResult)
             authenticator.authenticate(getString(R.string.biometric_set_title))
             authenticating = true
         }
     }
 
-    private fun authenticationResult(result: Int) {
+    private fun authenticationResult(result: AuthenticationResult) {
         when (result) {
-            Authenticator.SUCCESS -> {
+            AuthenticationResult.SUCCESS -> {
                 Timber.d("Authentication successful, calling requested service")
                 val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
                 if (appWidgetId > -1) {
@@ -42,11 +43,13 @@ class WidgetAuthenticationActivity : AppCompatActivity() {
                 }
                 finishAffinity()
             }
-            Authenticator.CANCELED -> {
+
+            AuthenticationResult.CANCELED -> {
                 Timber.d("Authentication canceled by user, closing activity")
                 finishAffinity()
             }
-            else -> {
+
+            AuthenticationResult.ERROR -> {
                 Timber.d("Authentication failed, retry attempts allowed")
                 Toast.makeText(
                     applicationContext,

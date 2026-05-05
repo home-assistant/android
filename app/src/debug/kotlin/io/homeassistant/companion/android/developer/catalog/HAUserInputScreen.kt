@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Devices.TABLET
 import androidx.compose.ui.tooling.preview.Preview
+import io.homeassistant.companion.android.common.compose.composable.HACheckbox
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
 import io.homeassistant.companion.android.common.compose.composable.HARadioGroup
@@ -42,6 +43,7 @@ fun LazyListScope.catalogUserInputSection() {
     dropdownMenu()
     entityPicker()
     switches()
+    checkboxes()
     radioGroupSection()
 }
 
@@ -226,6 +228,32 @@ private fun LazyListScope.switches() {
                 onCheckedChange = {
                     isChecked = !it
                 },
+            )
+        }
+    }
+}
+
+private fun LazyListScope.checkboxes() {
+    catalogSection(title = "Checkboxes") {
+        CatalogRow {
+            var isChecked by remember { mutableStateOf(false) }
+            HACheckbox(
+                checked = isChecked,
+                onCheckedChange = { isChecked = it },
+            )
+            HACheckbox(
+                checked = !isChecked,
+                onCheckedChange = { isChecked = !it },
+            )
+            HACheckbox(
+                checked = true,
+                onCheckedChange = null,
+                enabled = false,
+            )
+            HACheckbox(
+                checked = false,
+                onCheckedChange = null,
+                enabled = false,
             )
         }
     }

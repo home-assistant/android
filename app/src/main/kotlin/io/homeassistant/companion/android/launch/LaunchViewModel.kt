@@ -9,6 +9,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.applock.AppLockStateManager
 import io.homeassistant.companion.android.automotive.navigation.AutomotiveRoute
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.network.NetworkState
@@ -74,6 +75,7 @@ internal class LaunchViewModel @VisibleForTesting constructor(
     private val serverManager: ServerManager,
     private val networkStatusMonitor: NetworkStatusMonitor,
     private val prefsRepository: PrefsRepository,
+    private val appLockStateManager: AppLockStateManager,
     private val hasLocationTrackingSupport: Boolean,
     isAutomotive: Boolean,
     isFullFlavor: Boolean,
@@ -86,6 +88,7 @@ internal class LaunchViewModel @VisibleForTesting constructor(
         serverManager: ServerManager,
         networkStatusMonitor: NetworkStatusMonitor,
         prefsRepository: PrefsRepository,
+        appLockStateManager: AppLockStateManager,
         @LocationTrackingSupport hasLocationTrackingSupport: Boolean,
         @IsAutomotive isAutomotive: Boolean,
     ) : this(
@@ -94,6 +97,7 @@ internal class LaunchViewModel @VisibleForTesting constructor(
         serverManager,
         networkStatusMonitor,
         prefsRepository,
+        appLockStateManager,
         hasLocationTrackingSupport,
         isAutomotive = isAutomotive,
         isFullFlavor = BuildConfig.FLAVOR == "full",
@@ -116,6 +120,9 @@ internal class LaunchViewModel @VisibleForTesting constructor(
         emitAll(prefsRepository.fullScreenEnabledFlow())
     }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = false)
 
+    private val _isAppLocked = MutableStateFlow(false)
+    val isAppLocked: StateFlow<Boolean> = _isAppLocked.asStateFlow()
+
     init {
         viewModelScope.launch {
             cleanupServers()
@@ -127,6 +134,35 @@ internal class LaunchViewModel @VisibleForTesting constructor(
      * Determine when to hide the application's splash screen.
      */
     fun shouldShowSplashScreen(): Boolean = _uiState.value is LaunchUiState.Loading
+
+    /**
+     * Refresh the [isAppLocked] state.
+     */
+    fun refreshAppLockState() {
+        viewModelScope.launch {
+            _isAppLocked.value = appLockStateManager.isAppLocked()
+        }
+    }
+
+    /**
+     * Mark the app as inactive for the active server.
+     */
+    fun onAppPaused() {
+        viewModelScope.launch {
+            appLockStateManager.setAppActive(active = false)
+        }
+    }
+
+    /**
+     * Mark the app as active for the active server and unlock the UI after a successful
+     * authentication.
+     */
+    fun onAuthenticated() {
+        viewModelScope.launch {
+            appLockStateManager.setAppActive(active = true)
+            _isAppLocked.value = false
+        }
+    }
 
     private suspend fun handleInitialState(initialDeepLink: LaunchActivity.DeepLink?) {
         when (initialDeepLink) {

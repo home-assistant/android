@@ -15,21 +15,28 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.IntentCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 import io.homeassistant.companion.android.WIPFeature
+import io.homeassistant.companion.android.authenticator.Authenticator
+import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.launch.applock.HazeLockOverlay
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.util.ChangeLog
@@ -135,6 +142,8 @@ class LaunchActivity : AppCompatActivity() {
                 val navController = rememberNavController()
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                 val isFullScreen by viewModel.isFullScreen.collectAsStateWithLifecycle()
+                val isAppLocked by viewModel.isAppLocked.collectAsStateWithLifecycle()
+                val hazeState = rememberHazeState(blurEnabled = isAppLocked)
                 val snackbarHostState = remember { SnackbarHostState() }
 
                 FullscreenEffect(isFullScreen = isFullScreen)
@@ -149,14 +158,30 @@ class LaunchActivity : AppCompatActivity() {
                     navController = navController,
                     startDestination = (uiState as? LaunchUiState.Ready)?.startDestination,
                     snackbarHostState = snackbarHostState,
+                    modifier = Modifier.hazeSource(hazeState),
                 )
+
+                // We don't apply the overlay on top of the dialogs
+                HazeLockOverlay(hazeState)
 
                 when (uiState) {
                     LaunchUiState.NetworkUnavailable -> NetworkUnavailableDialog(onBackClick = ::finish)
                     LaunchUiState.WearUnsupported -> WearUnsupportedDialog(onBackClick = ::finish)
-                    LaunchUiState.Loading, is LaunchUiState.Ready -> Unit
+                    LaunchUiState.Loading, is LaunchUiState.Ready -> {
+                        AppLockEffect(
+                            isAppLocked = isAppLocked,
+                            onAuthSucceeded = viewModel::onAuthenticated,
+                        )
+                    }
                 }
             }
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if (WIPFeature.USE_FRONTEND_V2) {
+            viewModel.refreshAppLockState()
         }
     }
 
@@ -175,6 +200,39 @@ class LaunchActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         if (!isFinishing && WIPFeature.USE_FRONTEND_V2) SensorReceiver.updateAllSensors(this)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (WIPFeature.USE_FRONTEND_V2) {
+            viewModel.onAppPaused()
+        }
+    }
+}
+
+/**
+ * Triggers biometric authentication when the app is locked.
+ *
+ * Launches the system biometric prompt when [isAppLocked] becomes `true`.
+ * On success, calls [onAuthSucceeded] to unlock. On user cancel, closes the app.
+ */
+@Composable
+private fun AppLockEffect(isAppLocked: Boolean, onAuthSucceeded: () -> Unit) {
+    val activity = LocalActivity.current as? FragmentActivity ?: return
+    val biometricTitle = stringResource(commonR.string.biometric_title)
+    val authenticator = remember {
+        Authenticator(activity) { result ->
+            when (result) {
+                AuthenticationResult.ERROR, AuthenticationResult.CANCELED -> activity.finishAffinity()
+                AuthenticationResult.SUCCESS -> onAuthSucceeded()
+            }
+        }
+    }
+
+    LaunchedEffect(isAppLocked) {
+        if (isAppLocked) {
+            authenticator.authenticate(biometricTitle)
+        }
     }
 }
 

@@ -11,6 +11,8 @@ import io.homeassistant.companion.android.common.data.connectivity.ConnectivityC
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.util.GestureDirection
+import io.homeassistant.companion.android.frontend.auth.HttpAuthManager
+import io.homeassistant.companion.android.frontend.auth.HttpAuthResult
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
@@ -85,6 +87,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val prefsRepository: PrefsRepository,
     private val dialogManager: FrontendDialogManager,
     private val fileChooserManager: FileChooserManager,
+    private val httpAuthManager: HttpAuthManager,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -103,6 +106,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         prefsRepository: PrefsRepository,
         dialogManager: FrontendDialogManager,
         fileChooserManager: FileChooserManager,
+        httpAuthManager: HttpAuthManager,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
         initialPath = savedStateHandle.toRoute<FrontendRoute>().path,
@@ -118,6 +122,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         prefsRepository = prefsRepository,
         dialogManager = dialogManager,
         fileChooserManager = fileChooserManager,
+        httpAuthManager = httpAuthManager,
     )
 
     /**
@@ -195,6 +200,15 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         onFrontendError = ::onError,
         onCrash = ::onRetry,
         onPageFinished = ::onPageFinished,
+        onReceivedHttpAuthRequest = { handler, host, resource, realm ->
+            viewModelScope.launch {
+                if (httpAuthManager.handleAuthRequest(handler, host = host, resource = resource, realm = realm) ==
+                    HttpAuthResult.Cancelled
+                ) {
+                    _events.tryEmit(FrontendEvent.ShowSnackbar(commonR.string.auth_cancel))
+                }
+            }
+        },
     )
 
     /** The current pending file chooser request from the WebView, or null if none. */

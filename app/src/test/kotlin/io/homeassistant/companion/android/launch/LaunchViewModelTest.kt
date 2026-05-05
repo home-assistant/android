@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.launch
 
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
+import io.homeassistant.companion.android.applock.AppLockStateManager
 import io.homeassistant.companion.android.automotive.navigation.AutomotiveRoute
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.network.NetworkState
@@ -34,6 +35,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.EnumSource
+import org.junit.jupiter.params.provider.ValueSource
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @ExtendWith(MainDispatcherJUnit5Extension::class, ConsoleLogExtension::class)
@@ -46,6 +48,7 @@ class LaunchViewModelTest {
     }
 
     private val workManager: WorkManager = mockk()
+    private val appLockStateManager: AppLockStateManager = mockk(relaxed = true)
 
     private lateinit var viewModel: LaunchViewModel
 
@@ -61,6 +64,7 @@ class LaunchViewModelTest {
             serverManager,
             networkStatusMonitor,
             prefsRepository,
+            appLockStateManager,
             hasLocationTrackingSupport,
             isAutomotive,
             isFullFlavor,
@@ -581,5 +585,44 @@ class LaunchViewModelTest {
         advanceUntilIdle()
 
         assertTrue(viewModel.isFullScreen.value)
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = [true, false])
+    fun `Given refreshAppLockState when manager reports lock state then isAppLocked reflects it`(
+        locked: Boolean,
+    ) = runTest {
+        coEvery { appLockStateManager.isAppLocked() } returns locked
+        createViewModel()
+
+        viewModel.refreshAppLockState()
+        advanceUntilIdle()
+
+        assertEquals(locked, viewModel.isAppLocked.value)
+    }
+
+    @Test
+    fun `Given onAppPaused when invoked then manager is told app is inactive`() = runTest {
+        createViewModel()
+
+        viewModel.onAppPaused()
+        advanceUntilIdle()
+
+        coVerify { appLockStateManager.setAppActive(active = false) }
+    }
+
+    @Test
+    fun `Given onAuthenticated when invoked then manager is told app is active and isAppLocked is false`() = runTest {
+        coEvery { appLockStateManager.isAppLocked() } returns true
+        createViewModel()
+        viewModel.refreshAppLockState()
+        advanceUntilIdle()
+        assertTrue(viewModel.isAppLocked.value)
+
+        viewModel.onAuthenticated()
+        advanceUntilIdle()
+
+        coVerify { appLockStateManager.setAppActive(active = true) }
+        assertFalse(viewModel.isAppLocked.value)
     }
 }

@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.util
 import android.content.Context
 import android.net.Uri
 import android.net.http.SslError
+import android.webkit.HttpAuthHandler
 import android.webkit.RenderProcessGoneDetail
 import android.webkit.SslErrorHandler
 import android.webkit.WebResourceError
@@ -36,6 +37,8 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
      *        Receives the URI and whether TLS client auth was required.
      *        Return `true` to prevent WebView from loading the URL.
      * @param onPageFinished Optional callback when a page finishes loading.
+     * @param onReceivedHttpAuthRequest Optional callback when the server requests HTTP Basic Auth.
+     *        Receives the handler, host, the resource URL that triggered the request, and the realm.
      */
     fun create(
         currentUrlFlow: StateFlow<String?>,
@@ -43,6 +46,14 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
         onCrash: (() -> Unit)? = null,
         onUrlIntercepted: ((uri: Uri, isTLSClientAuthNeeded: Boolean) -> Boolean)? = null,
         onPageFinished: (() -> Unit)? = null,
+        onReceivedHttpAuthRequest: (
+            (
+                handler: HttpAuthHandler,
+                host: String,
+                resource: String,
+                realm: String,
+            ) -> Unit
+        )? = null,
     ): HAWebViewClient {
         return HAWebViewClient(
             keyChainRepository = keyChainRepository,
@@ -51,6 +62,7 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
             onCrash = onCrash,
             onUrlIntercepted = onUrlIntercepted,
             onPageFinished = onPageFinished,
+            onReceivedHttpAuthRequest = onReceivedHttpAuthRequest,
         )
     }
 }
@@ -68,11 +80,36 @@ class HAWebViewClient internal constructor(
     private val onCrash: (() -> Unit)?,
     private val onUrlIntercepted: ((uri: Uri, isTLSClientAuthNeeded: Boolean) -> Boolean)?,
     private val onPageFinished: (() -> Unit)?,
+    private val onReceivedHttpAuthRequest: (
+        (handler: HttpAuthHandler, host: String, resource: String, realm: String) -> Unit
+    )?,
 ) : TLSWebViewClient(keyChainRepository) {
+
+    /** Last resource URL loaded by the WebView, used to identify the resource requesting auth. */
+    private var lastResourceUrl: String? = null
+
+    override fun onLoadResource(view: WebView?, url: String?) {
+        super.onLoadResource(view, url)
+        lastResourceUrl = url
+    }
 
     override fun onPageFinished(view: WebView?, url: String?) {
         super.onPageFinished(view, url)
         onPageFinished?.invoke()
+    }
+
+    override fun onReceivedHttpAuthRequest(view: WebView?, handler: HttpAuthHandler?, host: String?, realm: String?) {
+        val lastResourceUrl = lastResourceUrl
+        if (handler != null &&
+            host != null &&
+            realm != null &&
+            onReceivedHttpAuthRequest != null &&
+            lastResourceUrl != null
+        ) {
+            onReceivedHttpAuthRequest.invoke(handler, host, lastResourceUrl, realm)
+        } else {
+            super.onReceivedHttpAuthRequest(view, handler, host, realm)
+        }
     }
 
     override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
