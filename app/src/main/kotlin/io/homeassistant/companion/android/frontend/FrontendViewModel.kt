@@ -253,11 +253,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     /**
      * The user's "Autoplay video" preference.
      *
-     * Lives outside [FrontendViewState] because autoplay is orthogonal to the screen state
-     * machine the WebView is rendered during `Loading`, `Content`, and `Error`, and all three
-     * need the value. Exposed as a [StateFlow] so the screen can read the current value
-     * synchronously when configuring the WebView at creation time (avoiding a one-shot reload
-     * once the persisted value lands) and react to subsequent changes via collection.
+     * Lives outside [FrontendViewState] because the WebView is rendered during `Loading`,
+     * `Content`, and `Error`states , and all three states need the value. Exposed as a [StateFlow]
+     * so the screen can read the current value synchronously when configuring the WebView at
+     * creation time (avoiding a one-shot reload once the persisted value lands) and react to
+     * subsequent changes via collection.
      */
     val autoPlayVideoEnabled: StateFlow<Boolean> = flow {
         emitAll(prefsRepository.autoPlayVideoFlow())
