@@ -15,6 +15,8 @@ import com.google.common.util.concurrent.SettableFuture
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlState
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaPlaybackState
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaRepeatMode
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 
 /**
  * A [SimpleBasePlayer] that acts as a remote control proxy for a Home Assistant media_player entity.
@@ -27,32 +29,35 @@ import io.homeassistant.companion.android.common.data.mediacontrol.MediaRepeatMo
 internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCallback) :
     SimpleBasePlayer(looper) {
 
-    /** Callback interface for translating player commands into HA service calls. */
+    /**
+     * Callback interface for translating player commands into HA service calls.
+     * Each method returns the [Job] for the launched coroutine so that [handleCommand] can
+     * tie the [ListenableFuture] lifetime to the coroutine's completion.
+     */
     interface CommandCallback {
-        fun onPlayRequested()
-        fun onPauseRequested()
-        fun onStopRequested()
-        fun onSeekRequested(positionMs: Long)
-        fun onNextRequested()
-        fun onPreviousRequested()
+        fun onPlayRequested(): Job
+        fun onPauseRequested(): Job
+        fun onStopRequested(): Job
+        fun onSeekRequested(positionMs: Long): Job
+        fun onNextRequested(): Job
+        fun onPreviousRequested(): Job
 
         /**
          * Called when the OS requests an exact volume level.
          * @param volume the requested volume in the range [0.0, 1.0]
          */
-        fun onSetVolumeRequested(volume: Float)
-        fun onIncreaseVolumeRequested()
-        fun onDecreaseVolumeRequested()
-        fun onMuteRequested(muted: Boolean)
+        fun onSetVolumeRequested(volume: Float): Job
+        fun onIncreaseVolumeRequested(): Job
+        fun onDecreaseVolumeRequested(): Job
+        fun onMuteRequested(muted: Boolean): Job
 
-        fun onShuffleRequested(shuffle: Boolean)
-        fun onRepeatRequested(repeatMode: MediaRepeatMode)
+        fun onShuffleRequested(shuffle: Boolean): Job
+        fun onRepeatRequested(repeatMode: MediaRepeatMode): Job
     }
 
     private var mediaState: MediaControlState? = null
     private var artworkBytes: ByteArray? = null
     private var isConnecting: Boolean = false
-    private var pendingCommandFuture: SettableFuture<Void>? = null
 
     /**
      * Updates the internal state from a new [MediaControlState] and triggers a state refresh.
@@ -64,8 +69,6 @@ internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: 
         isConnecting = false
         mediaState = state
         artworkBytes = artworkPngBytes
-        pendingCommandFuture?.set(null)
-        pendingCommandFuture = null
         invalidateState()
     }
 
@@ -79,8 +82,6 @@ internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: 
     @MainThread
     fun setConnecting() {
         isConnecting = true
-        pendingCommandFuture?.set(null)
-        pendingCommandFuture = null
         invalidateState()
     }
 
@@ -169,6 +170,8 @@ internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: 
                 else -> {
                     if (mediaState?.supportsSeek == true) {
                         commandCallback.onSeekRequested(positionMs)
+                    } else {
+                        null
                     }
                 }
             }
@@ -186,6 +189,8 @@ internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: 
     override fun handleSetDeviceMuted(muted: Boolean, flags: Int): ListenableFuture<*> = handleCommand {
         if (mediaState?.supportsMute == true) {
             commandCallback.onMuteRequested(muted = muted)
+        } else {
+            null
         }
     }
 
@@ -204,24 +209,30 @@ internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: 
     }
 
     /**
-     * Executes [block] and returns a pending [SettableFuture] that will be completed by the next
-     * [updateState] or [setConnecting] call. Keeping the future pending prevents
-     * [SimpleBasePlayer] from calling [getState] until the server responds, which preserves the
-     * position extrapolation anchor and avoids a seek bar jump on every button press.
+     * Executes [block] to launch a command coroutine and returns a [ListenableFuture] tied to
+     * that coroutine's [Job]. The future completes when the coroutine finishes (success or
+     * cancellation) and fails if the coroutine throws. Keeping the future pending until the
+     * network call finishes prevents [SimpleBasePlayer] from calling [getState] prematurely,
+     * which preserves the position extrapolation anchor and avoids a seek bar jump.
      *
-     * If [block] throws, returns an immediate failed future instead so the exception is captured
-     * in the [ListenableFuture] rather than propagating into [SimpleBasePlayer].
+     * [CancellationException] from the [Job] is treated as success (the command was sent; the
+     * scope was cancelled). If [block] itself throws before returning a [Job], returns an
+     * immediate failed future.
      */
-    private inline fun handleCommand(block: () -> Unit): ListenableFuture<Void> {
-        try {
+    private inline fun handleCommand(block: () -> Job?): ListenableFuture<Void> {
+        val job = try {
             block()
         } catch (e: Exception) {
             return Futures.immediateFailedFuture(e)
+        } ?: return Futures.immediateFuture(null)
+        val future = SettableFuture.create<Void>()
+        job.invokeOnCompletion { cause ->
+            when (cause) {
+                null, is CancellationException -> future.set(null)
+                else -> future.setException(cause)
+            }
         }
-        // Complete any in-flight future before creating a new one — orphaned futures stay in
-        // SimpleBasePlayer's pendingOperations set permanently, blocking all future getState calls.
-        pendingCommandFuture?.set(null)
-        return SettableFuture.create<Void>().also { pendingCommandFuture = it }
+        return future
     }
 
     private fun buildIdleState(): State = State.Builder()

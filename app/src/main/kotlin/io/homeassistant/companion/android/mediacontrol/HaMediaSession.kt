@@ -38,6 +38,7 @@ import java.net.URL
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -100,69 +101,47 @@ class HaMediaSession @AssistedInject constructor(
     private var actionScope: CoroutineScope? = null
 
     private val commandCallback = object : HaRemoteMediaPlayer.CommandCallback {
-        override fun onPlayRequested() {
-            callMediaAction(ACTION_MEDIA_PLAY)
-        }
+        override fun onPlayRequested() = callMediaAction(ACTION_MEDIA_PLAY)
 
-        override fun onPauseRequested() {
-            callMediaAction(ACTION_MEDIA_PAUSE)
-        }
+        override fun onPauseRequested() = callMediaAction(ACTION_MEDIA_PAUSE)
 
-        override fun onSeekRequested(positionMs: Long) {
-            callMediaAction(
-                action = ACTION_MEDIA_SEEK,
-                extraData = mapOf("seek_position" to positionMs / 1000.0),
-            )
-        }
+        override fun onSeekRequested(positionMs: Long) = callMediaAction(
+            action = ACTION_MEDIA_SEEK,
+            extraData = mapOf("seek_position" to positionMs / 1000.0),
+        )
 
-        override fun onNextRequested() {
-            callMediaAction(ACTION_MEDIA_NEXT_TRACK)
-        }
+        override fun onNextRequested() = callMediaAction(ACTION_MEDIA_NEXT_TRACK)
 
-        override fun onPreviousRequested() {
-            callMediaAction(ACTION_MEDIA_PREVIOUS_TRACK)
-        }
+        override fun onPreviousRequested() = callMediaAction(ACTION_MEDIA_PREVIOUS_TRACK)
 
-        override fun onSetVolumeRequested(volume: Float) {
-            callMediaAction(
-                action = ACTION_VOLUME_SET,
-                extraData = mapOf("volume_level" to volume),
-            )
-        }
+        override fun onSetVolumeRequested(volume: Float) = callMediaAction(
+            action = ACTION_VOLUME_SET,
+            extraData = mapOf("volume_level" to volume),
+        )
 
-        override fun onIncreaseVolumeRequested() {
-            callMediaAction(ACTION_VOLUME_UP)
-        }
+        override fun onIncreaseVolumeRequested() = callMediaAction(ACTION_VOLUME_UP)
 
-        override fun onDecreaseVolumeRequested() {
-            callMediaAction(ACTION_VOLUME_DOWN)
-        }
+        override fun onDecreaseVolumeRequested() = callMediaAction(ACTION_VOLUME_DOWN)
 
-        override fun onMuteRequested(muted: Boolean) {
-            callMediaAction(
-                action = ACTION_VOLUME_MUTE,
-                extraData = mapOf("is_volume_muted" to muted),
-            )
-        }
+        override fun onMuteRequested(muted: Boolean) = callMediaAction(
+            action = ACTION_VOLUME_MUTE,
+            extraData = mapOf("is_volume_muted" to muted),
+        )
 
-        override fun onStopRequested() {
-            callMediaAction(ACTION_MEDIA_STOP)
-        }
+        override fun onStopRequested() = callMediaAction(ACTION_MEDIA_STOP)
 
-        override fun onShuffleRequested(shuffle: Boolean) {
-            callMediaAction(
-                action = ACTION_SHUFFLE_SET,
-                extraData = mapOf("shuffle" to shuffle),
-            )
-        }
+        override fun onShuffleRequested(shuffle: Boolean) = callMediaAction(
+            action = ACTION_SHUFFLE_SET,
+            extraData = mapOf("shuffle" to shuffle),
+        )
 
-        override fun onRepeatRequested(repeatMode: MediaRepeatMode) {
+        override fun onRepeatRequested(repeatMode: MediaRepeatMode): Job {
             val haRepeatValue = when (repeatMode) {
                 is MediaRepeatMode.Off -> "off"
                 is MediaRepeatMode.One -> "one"
                 is MediaRepeatMode.All -> "all"
             }
-            callMediaAction(
+            return callMediaAction(
                 action = ACTION_REPEAT_SET,
                 extraData = mapOf("repeat" to haRepeatValue),
             )
@@ -305,13 +284,13 @@ class HaMediaSession @AssistedInject constructor(
             )
         }
 
-    private fun callMediaAction(action: String, extraData: Map<String, Any> = emptyMap()) {
+    private fun callMediaAction(action: String, extraData: Map<String, Any> = emptyMap()): Job {
         val scope = actionScope
         if (scope == null) {
             Timber.w("callMediaAction called when not observing, ignoring action=$action")
-            return
+            return Job().also { it.complete() }
         }
-        scope.launch {
+        return scope.launch {
             val actionData = hashMapOf<String, Any>("entity_id" to config.entityId)
             actionData.putAll(extraData)
 
