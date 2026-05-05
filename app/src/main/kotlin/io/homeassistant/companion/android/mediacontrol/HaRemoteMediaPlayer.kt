@@ -42,10 +42,6 @@ internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: 
         fun onNextRequested(): Job
         fun onPreviousRequested(): Job
 
-        /**
-         * Called when the OS requests an exact volume level.
-         * @param volume the requested volume in the range [0.0, 1.0]
-         */
         fun onSetVolumeRequested(volume: Float): Job
         fun onIncreaseVolumeRequested(): Job
         fun onDecreaseVolumeRequested(): Job

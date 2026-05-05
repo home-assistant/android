@@ -352,6 +352,7 @@ class HaMediaSession @AssistedInject constructor(
             val request = ImageRequest.Builder(context)
                 .data(url)
                 .allowHardware(false)
+                .size(NOTIFICATION_ICON_SIZE_PX, NOTIFICATION_ICON_SIZE_PX)
                 .build()
             val result = context.imageLoader.execute(request)
             result.image?.toBitmap()?.let { bitmap ->
@@ -392,6 +393,10 @@ class HaMediaSession @AssistedInject constructor(
     private data class ArtworkCache(val url: String? = null, val bytes: ByteArray? = null)
 
     private companion object {
+        /** Target pixel size for notification large icon artwork. Pre-scaling in Coil avoids
+         * main-thread downscaling by Android's Icon class (StrictMode CustomViolation). */
+        const val NOTIFICATION_ICON_SIZE_PX = 256
+
         const val ACTION_MEDIA_PLAY = "media_play"
         const val ACTION_MEDIA_PAUSE = "media_pause"
         const val ACTION_MEDIA_STOP = "media_stop"
