@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.mediacontrol
 
-import android.content.Context
 import android.os.Looper
+import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlRepository
@@ -94,10 +94,10 @@ class HaMediaSessionServiceTest {
 
         // Each session is created without a scope — HaMediaSession.observe() derives its scope
         // from the coroutine that calls it (observationScope with UnconfinedTestDispatcher).
-        every { haMediaSessionFactory.create(any<Context>(), any()) } answers {
+        every { haMediaSessionFactory.create(any()) } answers {
             HaMediaSession(
-                context = firstArg(),
-                config = secondArg(),
+                context = ApplicationProvider.getApplicationContext(),
+                config = firstArg(),
                 mediaControlRepository = mediaControlRepository,
                 serverManager = serverManager,
             )

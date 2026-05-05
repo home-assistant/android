@@ -15,6 +15,7 @@ import coil3.toBitmap
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlRepository
@@ -45,14 +46,14 @@ import timber.log.Timber
  * Call [observe] to start the session. The session and its Media3 resources are created when
  * [observe] is called and released automatically when the calling coroutine is cancelled.
  *
- * @param context Used for Coil image loading and [MediaSession] construction.
+ * @param context Application context used for Coil image loading and [MediaSession] construction.
  * @param config Identifies the media_player entity this session represents.
  * @param mediaControlRepository Provides the per-entity state flow.
  * @param serverManager Used to resolve artwork base URLs and call HA integration actions.
  */
 @OptIn(UnstableApi::class)
 class HaMediaSession @AssistedInject constructor(
-    @Assisted private val context: Context,
+    @ApplicationContext private val context: Context,
     @Assisted private val config: MediaControlEntityConfig,
     private val mediaControlRepository: MediaControlRepository,
     private val serverManager: ServerManager,
@@ -366,9 +367,9 @@ class HaMediaSession @AssistedInject constructor(
         const val ACTION_REPEAT_SET = "repeat_set"
     }
 
-    /** Creates [HaMediaSession] instances with runtime-provided [context] and [config]. */
+    /** Creates [HaMediaSession] instances with the runtime-provided [config]. */
     @AssistedFactory
     interface Factory {
-        fun create(context: Context, config: MediaControlEntityConfig): HaMediaSession
+        fun create(config: MediaControlEntityConfig): HaMediaSession
     }
 }

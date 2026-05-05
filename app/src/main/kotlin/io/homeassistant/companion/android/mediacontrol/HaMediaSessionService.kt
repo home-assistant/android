@@ -197,7 +197,6 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
         val toAdd = (desiredKeys - currentKeys).map { key ->
             val entityConfig = configuredEntities.first { it.sessionKey() == key }
             val session = haMediaSessionFactory.create(
-                context = this@HaMediaSessionService,
                 config = entityConfig,
             )
             key to session
