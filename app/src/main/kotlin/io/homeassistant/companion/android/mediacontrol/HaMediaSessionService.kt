@@ -162,8 +162,7 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
         Timber.d(
             "reconcileSessions: received ${configuredEntities.size} entities=${configuredEntities.map {
                 it.entityId
-            }}, " +
-                "activeSessions=${activeSessions.keys.toList()}",
+            }}",
         )
 
         if (configuredEntities.isEmpty()) {
@@ -172,30 +171,31 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
             return
         }
 
-        val desiredKeys = configuredEntities.map { it.sessionKey() }.toSet()
-        val currentKeys = activeSessions.keys.toSet()
-
-        Timber.d("reconcileSessions: desiredKeys=$desiredKeys, currentKeys=$currentKeys")
-
-        // Precompute the diff and prepare new sessions on Default before touching Main.
-        val toRemove = (currentKeys - desiredKeys).mapNotNull { key ->
-            val pair = activeSessions.remove(key) ?: return@mapNotNull null
-            key to pair
-        }
-        val toAdd = (desiredKeys - currentKeys).map { key ->
-            val entityConfig = configuredEntities.first { it.sessionKey() == key }
-            key to haMediaSessionFactory.create(config = entityConfig)
-        }
-
-        Timber.d("reconcileSessions: toRemove=${toRemove.map { it.first }}, toAdd=${toAdd.map { it.first }}")
-
-        // Execute all Android/Media3 API calls that require Main in a single dispatcher hop.
+        // All activeSessions reads and writes are confined to the Main thread to avoid data races
+        // with onUpdateNotification and onTaskRemoved, which are always called on Main by the OS
+        // and Media3. The diff is computed here on Main as well since it operates on small sets.
         withContext(Dispatchers.Main) {
+            val desiredKeys = configuredEntities.map { it.sessionKey() }.toSet()
+            val currentKeys = activeSessions.keys.toSet()
+
+            Timber.d("reconcileSessions: desiredKeys=$desiredKeys, currentKeys=$currentKeys")
+
+            val toRemove = (currentKeys - desiredKeys).mapNotNull { key ->
+                val pair = activeSessions.remove(key) ?: return@mapNotNull null
+                key to pair
+            }
+            val toAdd = (desiredKeys - currentKeys).map { key ->
+                val entityConfig = configuredEntities.first { it.sessionKey() == key }
+                key to haMediaSessionFactory.create(config = entityConfig)
+            }
+
+            Timber.d("reconcileSessions: toRemove=${toRemove.map { it.first }}, toAdd=${toAdd.map { it.first }}")
+
             toRemove.forEach { (key, pair) -> tearDownSession(key, pair) }
             toAdd.forEach { (key, session) -> launchSession(key, session) }
-        }
 
-        Timber.d("reconcileSessions: done, activeSessions=${activeSessions.keys.toList()}")
+            Timber.d("reconcileSessions: done, activeSessions=${activeSessions.keys.toList()}")
+        }
     }
 
     /**
