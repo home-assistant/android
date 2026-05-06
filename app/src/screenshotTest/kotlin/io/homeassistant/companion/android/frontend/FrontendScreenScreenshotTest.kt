@@ -245,4 +245,74 @@ class FrontendScreenScreenshotTest {
             )
         }
     }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `FrontendScreen Content with HTTP auth dialog`() {
+        HAThemeForPreview {
+            FrontendScreenContent(
+                onBackClick = {},
+                viewState = FrontendViewState.Content(
+                    serverId = 1,
+                    url = "https://example.com",
+                ),
+                pendingDialog = FrontendDialog.HttpAuth(
+                    host = "example.com",
+                    message = { "https://example.com requires a username and password." },
+                    isAuthError = false,
+                    onProceed = { _, _, _ -> },
+                    onCancel = {},
+                ),
+                webViewClient = WebViewClient(),
+                webChromeClient = WebChromeClient(),
+                frontendJsCallback = FrontendJsBridge.noOp,
+                onBlockInsecureRetry = {},
+                onOpenExternalLink = {},
+                onBlockInsecureHelpClick = {},
+                onOpenSettings = {},
+                onChangeSecurityLevel = {},
+                onOpenLocationSettings = {},
+                onConfigureHomeNetwork = { _ -> },
+                onSecurityLevelHelpClick = {},
+                onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
+            )
+        }
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `FrontendScreen Content with HTTP auth dialog in error state`() {
+        HAThemeForPreview {
+            FrontendScreenContent(
+                onBackClick = {},
+                viewState = FrontendViewState.Content(
+                    serverId = 1,
+                    url = "https://example.com",
+                ),
+                pendingDialog = FrontendDialog.HttpAuth(
+                    host = "example.com",
+                    message = { "https://example.com requires a username and password." },
+                    isAuthError = true,
+                    onProceed = { _, _, _ -> },
+                    onCancel = {},
+                ),
+                webViewClient = WebViewClient(),
+                webChromeClient = WebChromeClient(),
+                frontendJsCallback = FrontendJsBridge.noOp,
+                onBlockInsecureRetry = {},
+                onOpenExternalLink = {},
+                onBlockInsecureHelpClick = {},
+                onOpenSettings = {},
+                onChangeSecurityLevel = {},
+                onOpenLocationSettings = {},
+                onConfigureHomeNetwork = { _ -> },
+                onSecurityLevelHelpClick = {},
+                onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
+            )
+        }
+    }
 }

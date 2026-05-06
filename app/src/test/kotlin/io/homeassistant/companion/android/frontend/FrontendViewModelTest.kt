@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.frontend
 
 import android.net.Uri
+import android.webkit.HttpAuthHandler
 import android.webkit.JsResult
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
@@ -12,6 +13,9 @@ import io.homeassistant.companion.android.common.data.connectivity.ConnectivityC
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.ZoomSettings
 import io.homeassistant.companion.android.common.util.GestureDirection
+import io.homeassistant.companion.android.database.authentication.Authentication
+import io.homeassistant.companion.android.database.authentication.AuthenticationDao
+import io.homeassistant.companion.android.frontend.auth.HttpAuthManager
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.frontend.download.DownloadResult
@@ -31,6 +35,7 @@ import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
+import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import io.mockk.coEvery
@@ -101,6 +106,11 @@ class FrontendViewModelTest {
         path: String? = null,
         dialogManager: FrontendDialogManager = FrontendDialogManager(),
         fileChooserManager: FileChooserManager = FileChooserManager(),
+        httpAuthManager: HttpAuthManager = HttpAuthManager(
+            authenticationDao = mockk(relaxed = true),
+            clock = FakeClock(),
+            dialogManager = dialogManager,
+        ),
     ): FrontendViewModel {
         return FrontendViewModel(
             initialServerId = serverId,
@@ -117,6 +127,7 @@ class FrontendViewModelTest {
             prefsRepository = prefsRepository,
             dialogManager = dialogManager,
             fileChooserManager = fileChooserManager,
+            httpAuthManager = httpAuthManager,
         )
     }
 
@@ -893,6 +904,7 @@ class FrontendViewModelTest {
                     onCrash = any(),
                     onUrlIntercepted = any(),
                     onPageFinished = any(),
+                    onReceivedHttpAuthRequest = any(),
                 )
             } answers {
                 // onPageFinished is the 5th of the 6 named arguments (zero-based index 4)
@@ -966,6 +978,114 @@ class FrontendViewModelTest {
                 assertEquals(200, second.zoomLevel)
                 assertEquals(true, second.pinchToZoomEnabled)
 
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+    }
+
+    @Nested
+    inner class HttpAuth {
+
+        private val authenticationDao: AuthenticationDao = mockk(relaxed = true)
+        private val dialogManager = FrontendDialogManager()
+        private val httpAuthManager = HttpAuthManager(
+            authenticationDao = authenticationDao,
+            clock = FakeClock(),
+            dialogManager = dialogManager,
+        )
+
+        private fun createViewModelWithAuthCapture(): Pair<FrontendViewModel, (HttpAuthHandler, String, String, String) -> Unit> {
+            var capturedCallback: ((HttpAuthHandler, String, String, String) -> Unit)? = null
+            every {
+                webViewClientFactory.create(
+                    currentUrlFlow = any(),
+                    onFrontendError = any(),
+                    onCrash = any(),
+                    onUrlIntercepted = any(),
+                    onPageFinished = any(),
+                    onReceivedHttpAuthRequest = any(),
+                )
+            } answers {
+                capturedCallback = lastArg()
+                mockk(relaxed = true)
+            }
+
+            val viewModel = createViewModel(httpAuthManager = httpAuthManager, dialogManager = dialogManager)
+            return viewModel to capturedCallback!!
+        }
+
+        @Test
+        fun `Given stored credentials when auth requested then auto-proceeds without dialog`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery { authenticationDao.get(any()) } returns Authentication("key", "user", "pass")
+
+            val (viewModel, triggerAuth) = createViewModelWithAuthCapture()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            // Transition to Content
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+
+            val handler = mockk<HttpAuthHandler>(relaxed = true)
+            triggerAuth(handler, "example.com", "https://example.com/", "realm")
+            advanceUntilIdle()
+
+            verify { handler.proceed("user", "pass") }
+            assertEquals(null, viewModel.pendingDialog.value)
+        }
+
+        @Test
+        fun `Given no stored credentials when auth requested then dialog is shown`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery { authenticationDao.get(any()) } returns null
+
+            val (viewModel, triggerAuth) = createViewModelWithAuthCapture()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+
+            triggerAuth(mockk(relaxed = true), "example.com", "https://example.com/", "realm")
+            advanceUntilIdle()
+
+            assertInstanceOf(FrontendDialog.HttpAuth::class.java, viewModel.pendingDialog.value)
+        }
+
+        @Test
+        fun `Given auth dialog shown when cancel then snackbar event emitted`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery { authenticationDao.get(any()) } returns null
+
+            val (viewModel, triggerAuth) = createViewModelWithAuthCapture()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+
+            val handler = mockk<HttpAuthHandler>(relaxed = true)
+            triggerAuth(handler, "example.com", "https://example.com/", "realm")
+            advanceUntilIdle()
+
+            viewModel.events.test {
+                val dialog = viewModel.pendingDialog.value as FrontendDialog.HttpAuth
+                dialog.onCancel()
+                advanceUntilIdle()
+
+                verify { handler.cancel() }
+                val event = awaitItem()
+                assertTrue(event is FrontendEvent.ShowSnackbar)
                 cancelAndIgnoreRemainingEvents()
             }
         }

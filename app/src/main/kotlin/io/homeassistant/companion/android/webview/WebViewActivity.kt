@@ -14,8 +14,6 @@ import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
-import android.os.Handler
-import android.os.Looper
 import android.text.method.HideReturnsTransformationMethod
 import android.text.method.PasswordTransformationMethod
 import android.util.DisplayMetrics
@@ -91,6 +89,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.assist.AssistActivity
 import io.homeassistant.companion.android.authenticator.Authenticator
+import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
 import io.homeassistant.companion.android.barcode.BarcodeScannerActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
@@ -452,7 +451,7 @@ class WebViewActivity :
             )
         }
 
-        authenticator = Authenticator(this, this, ::authenticationResult)
+        authenticator = Authenticator(this, ::authenticationResult)
 
         decor = window.decorView as FrameLayout
 
@@ -1502,9 +1501,9 @@ class WebViewActivity :
         )
     }
 
-    private fun authenticationResult(result: Int) {
+    private fun authenticationResult(result: AuthenticationResult) {
         when (result) {
-            Authenticator.SUCCESS -> {
+            AuthenticationResult.SUCCESS -> {
                 Timber.d("Authentication successful, unlocking app")
                 appLocked.value = false
                 lifecycleScope.launch {
@@ -1512,12 +1511,12 @@ class WebViewActivity :
                 }
             }
 
-            Authenticator.CANCELED -> {
+            AuthenticationResult.CANCELED -> {
                 Timber.d("Authentication canceled by user, closing activity")
                 finishAffinity()
             }
 
-            else -> Timber.d("Authentication failed, retry attempts allowed")
+            AuthenticationResult.ERROR -> Timber.d("Authentication failed, retry attempts allowed")
         }
         unlockingApp = false
     }
@@ -1759,7 +1758,14 @@ class WebViewActivity :
         }
     }
 
+    @SuppressLint("RequiresFeature")
     override fun onDestroy() {
+        val webMessageListenerSupported = WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)
+        webView.removeJavascriptInterface(EXTERNAL_APP_V1)
+        if (webMessageListenerSupported) {
+            WebViewCompat.removeWebMessageListener(webView, EXTERNAL_APP_V2_LISTENER)
+        }
+
         presenter.onFinish()
         super.onDestroy()
     }
@@ -2000,19 +2006,17 @@ class WebViewActivity :
             Timber.i("Fragments ${supportFragmentManager.fragments} displayed, skipping connection wait")
         } else {
             Timber.d("Waiting for loadedUrl ${sensitive(loadedUrl.toString())}")
-            Handler(Looper.getMainLooper()).postDelayed(
-                {
-                    val firstSegment = loadedUrl?.pathSegments?.firstOrNull().orEmpty()
-                    if (
-                        !isConnected &&
-                        !firstSegment.contains("api") &&
-                        !firstSegment.contains("local")
-                    ) {
-                        showError(errorType = ErrorType.TIMEOUT_EXTERNAL_BUS)
-                    }
-                },
-                CONNECTION_DELAY,
-            )
+            lifecycleScope.launch {
+                delay(CONNECTION_DELAY)
+                val firstSegment = loadedUrl?.pathSegments?.firstOrNull().orEmpty()
+                if (
+                    !isConnected &&
+                    !firstSegment.contains("api") &&
+                    !firstSegment.contains("local")
+                ) {
+                    showError(errorType = ErrorType.TIMEOUT_EXTERNAL_BUS)
+                }
+            }
         }
     }
 
