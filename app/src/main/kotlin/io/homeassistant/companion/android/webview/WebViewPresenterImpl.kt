@@ -396,10 +396,6 @@ class WebViewPresenterImpl @Inject constructor(
         return prefsRepository.isPinchToZoomEnabled()
     }
 
-    override suspend fun isWebViewDebugEnabled(): Boolean {
-        return prefsRepository.isWebViewDebugEnabled()
-    }
-
     override suspend fun isAppLocked(): Boolean = if (serverManager.isRegistered()) {
         try {
             serverManager.integrationRepository(serverId).isAppLocked()

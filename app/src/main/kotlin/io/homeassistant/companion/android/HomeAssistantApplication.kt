@@ -11,6 +11,7 @@ import android.nfc.NfcAdapter
 import android.os.Build
 import android.os.PowerManager
 import android.telephony.TelephonyManager
+import android.webkit.WebView
 import androidx.core.content.ContextCompat
 import coil3.ImageLoader
 import coil3.PlatformContext
@@ -99,6 +100,7 @@ open class HomeAssistantApplication :
         registerActivityLifecycleCallbacks(LifecycleHandler)
 
         ioScope.launch {
+            WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG || prefsRepository.isWebViewDebugEnabled())
             initCrashReporting(
                 applicationContext,
                 prefsRepository.isCrashReporting(),
