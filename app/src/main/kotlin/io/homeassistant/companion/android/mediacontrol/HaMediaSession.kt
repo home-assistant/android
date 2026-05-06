@@ -34,6 +34,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -68,47 +69,54 @@ class HaMediaSession @AssistedInject constructor(
     var mediaSession: MediaSession? = null
         private set
 
-    private fun getCommandCallback(scope: CoroutineScope) = object : HaRemoteMediaPlayer.CommandCallback {
-        override fun onPlayRequested() = scope.launch { callMediaAction(ACTION_MEDIA_PLAY) }
+    private fun getCommandCallback(
+        scope: CoroutineScope,
+        onCommandComplete: () -> Unit,
+    ) = object : HaRemoteMediaPlayer.CommandCallback {
+        override fun onPlayRequested() = scope.launch { callMediaAction(ACTION_MEDIA_PLAY); onCommandComplete() }
 
-        override fun onPauseRequested() = scope.launch { callMediaAction(ACTION_MEDIA_PAUSE) }
+        override fun onPauseRequested() = scope.launch { callMediaAction(ACTION_MEDIA_PAUSE); onCommandComplete() }
 
         override fun onSeekRequested(positionMs: Long) = scope.launch {
             callMediaAction(
                 action = ACTION_MEDIA_SEEK,
                 extraData = mapOf("seek_position" to positionMs / 1000.0),
             )
+            onCommandComplete()
         }
 
-        override fun onNextRequested() = scope.launch { callMediaAction(ACTION_MEDIA_NEXT_TRACK) }
+        override fun onNextRequested() = scope.launch { callMediaAction(ACTION_MEDIA_NEXT_TRACK); onCommandComplete() }
 
-        override fun onPreviousRequested() = scope.launch { callMediaAction(ACTION_MEDIA_PREVIOUS_TRACK) }
+        override fun onPreviousRequested() = scope.launch { callMediaAction(ACTION_MEDIA_PREVIOUS_TRACK); onCommandComplete() }
 
         override fun onSetVolumeRequested(volume: Float) = scope.launch {
             callMediaAction(
                 action = ACTION_VOLUME_SET,
                 extraData = mapOf("volume_level" to volume),
             )
+            onCommandComplete()
         }
 
-        override fun onIncreaseVolumeRequested() = scope.launch { callMediaAction(ACTION_VOLUME_UP) }
+        override fun onIncreaseVolumeRequested() = scope.launch { callMediaAction(ACTION_VOLUME_UP); onCommandComplete() }
 
-        override fun onDecreaseVolumeRequested() = scope.launch { callMediaAction(ACTION_VOLUME_DOWN) }
+        override fun onDecreaseVolumeRequested() = scope.launch { callMediaAction(ACTION_VOLUME_DOWN); onCommandComplete() }
 
         override fun onMuteRequested(muted: Boolean) = scope.launch {
             callMediaAction(
                 action = ACTION_VOLUME_MUTE,
                 extraData = mapOf("is_volume_muted" to muted),
             )
+            onCommandComplete()
         }
 
-        override fun onStopRequested() = scope.launch { callMediaAction(ACTION_MEDIA_STOP) }
+        override fun onStopRequested() = scope.launch { callMediaAction(ACTION_MEDIA_STOP); onCommandComplete() }
 
         override fun onShuffleRequested(shuffle: Boolean) = scope.launch {
             callMediaAction(
                 action = ACTION_SHUFFLE_SET,
                 extraData = mapOf("shuffle" to shuffle),
             )
+            onCommandComplete()
         }
 
         override fun onRepeatRequested(repeatMode: MediaRepeatMode): Job {
@@ -122,6 +130,7 @@ class HaMediaSession @AssistedInject constructor(
                     action = ACTION_REPEAT_SET,
                     extraData = mapOf("repeat" to haRepeatValue),
                 )
+                onCommandComplete()
             }
         }
     }
@@ -135,17 +144,31 @@ class HaMediaSession @AssistedInject constructor(
      * All Media3 resources are released in a `finally` block, so they are always cleaned up
      * regardless of how the coroutine ends (cancellation or normal flow completion).
      */
-    suspend fun observe(onSessionReady: suspend (MediaSession) -> Unit) = coroutineScope {
+    suspend fun observe(onSessionReady: suspend (MediaSession) -> Unit) {
+        coroutineScope {
         FailFast.failWhen(mediaSession != null) {
             "observe() called while a session is already active for ${config.entityId}"
         }
         Timber.d("observe: starting for ${config.entityId}")
-        val player = HaRemoteMediaPlayer(Looper.getMainLooper(), getCommandCallback(this))
+
+        var observationJob = launch { startObservingState() }
+
+        // After each command, restart observation if the WebSocket flow has completed (e.g.
+        // after a transient disconnect). This lets the user resume control without reopening
+        // the app.
+        fun restartObservationIfNeeded() {
+            if (!observationJob.isActive) {
+                Timber.d("observe: restarting observation after command for ${config.entityId}")
+                observationJob = launch { startObservingState() }
+            }
+        }
+
+        val player = HaRemoteMediaPlayer(Looper.getMainLooper(), getCommandCallback(this, ::restartObservationIfNeeded))
         val session = buildMediaSession(player)
         mediaSession = session
         try {
             onSessionReady(session)
-            startObservingState()
+            awaitCancellation()
         } catch (e: CancellationException) {
             Timber.d("observe: cancelled for ${config.entityId}")
             throw e
@@ -156,6 +179,7 @@ class HaMediaSession @AssistedInject constructor(
                 player.release()
                 session.release()
             }
+        }
         }
     }
 
@@ -225,10 +249,8 @@ class HaMediaSession @AssistedInject constructor(
         val actionData = hashMapOf<String, Any>("entity_id" to config.entityId)
         actionData.putAll(extraData)
         try {
-            withContext(Dispatchers.IO) {
-                serverManager.integrationRepository(config.serverId)
-                    .callAction(MEDIA_PLAYER_DOMAIN, action, actionData)
-            }
+            serverManager.integrationRepository(config.serverId)
+                .callAction(MEDIA_PLAYER_DOMAIN, action, actionData)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
