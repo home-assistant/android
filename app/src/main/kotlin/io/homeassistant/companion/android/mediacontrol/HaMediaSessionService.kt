@@ -1,22 +1,17 @@
 package io.homeassistant.companion.android.mediacontrol
 
 import android.annotation.SuppressLint
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
-import android.graphics.BitmapFactory
-import android.os.Build
 import androidx.annotation.OptIn
 import androidx.annotation.VisibleForTesting
-import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
-import androidx.media3.session.MediaStyleNotificationHelper
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
@@ -86,9 +81,7 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = null
 
     override fun onTaskRemoved(rootIntent: Intent?) {
-        val anyPlaying = activeSessions.values.any { (session, _) ->
-            session.mediaSession?.player?.let { it.playWhenReady && it.mediaItemCount > 0 } == true
-        }
+        val anyPlaying = activeSessions.values.any { (session, _) -> session.isPlaying }
         // Keep the service alive while playback is active so the media notification remains
         // visible and controllable from the notification shade after the app is dismissed.
         // If nothing is playing there is no reason to keep the service alive.
@@ -116,9 +109,9 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
         // A session not in activeSessions is being torn down. removeSession() and player.release()
         // both trigger onUpdateNotification, so without this guard we would re-post a notification
         // we just cancelled, leaving a zombie media control card after removal.
-        val isActive = activeSessions.values.any { (haSession, _) -> haSession.mediaSession?.id == session.id }
+        val haSession = activeSessions.values.firstOrNull { (haSession, _) -> haSession.id == session.id }?.first
 
-        if (!isActive || session.player.mediaItemCount == 0) {
+        if (haSession == null || session.player.mediaItemCount == 0) {
             // Entity is off, no state has arrived yet, or the session is being torn down.
             notificationManager.cancel(notificationId)
             if (foregroundNotificationId == notificationId) {
@@ -127,7 +120,7 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
             return
         }
 
-        val notification = buildNotification(session)
+        val notification = haSession.buildNotification() ?: return
         if (foregroundNotificationId == null && startInForegroundRequired) {
             // Service is not yet in the foreground and playback requires it — start foreground
             // with this session's notification. All subsequent sessions (and updates to this one)
@@ -155,10 +148,8 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
         val sessionsToClean = activeSessions.values.toList()
         activeSessions.clear()
         sessionsToClean.forEach { (session, job) ->
-            session.mediaSession?.let { ms ->
-                notificationManager.cancel(ms.id.hashCode())
-                removeSession(ms)
-            }
+            notificationManager.cancel(session.id.hashCode())
+            session.unregisterFrom(this)
             job.cancel()
         }
         serviceScope.cancel()
@@ -217,7 +208,7 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
         if (foregroundNotificationId == notificationId) {
             promoteForegroundOrStop(excludeId = notificationId)
         }
-        haSession.mediaSession?.let { removeSession(it) }
+        haSession.unregisterFrom(this)
         job.cancelAndJoin()
         Timber.d("Removed media session for $key")
     }
@@ -243,15 +234,15 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
      * @param excludeId The notification ID of the session being removed, to skip it when searching
      * for a replacement.
      */
-    @OptIn(UnstableApi::class)
     private fun promoteForegroundOrStop(excludeId: Int) {
         val nextSession = activeSessions.values
-            .mapNotNull { (haSession, _) -> haSession.mediaSession }
-            .firstOrNull { it.id.hashCode() != excludeId && it.player.mediaItemCount > 0 }
+            .map { (haSession, _) -> haSession }
+            .firstOrNull { it.id.hashCode() != excludeId && it.hasActiveMedia }
 
         if (nextSession != null) {
             val nextId = nextSession.id.hashCode()
-            startForeground(nextId, buildNotification(nextSession))
+            val notification = nextSession.buildNotification() ?: return
+            startForeground(nextId, notification)
             foregroundNotificationId = nextId
             Timber.d("promoteForegroundOrStop: promoted session ${nextSession.id}")
         } else {
@@ -261,31 +252,9 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
         }
     }
 
-    /**
-     * Builds a [MediaStyleNotificationHelper.MediaStyle] notification for [session]
-     * using the player's current metadata (title, artist, artwork).
-     */
-    @OptIn(UnstableApi::class)
-    private fun buildNotification(session: MediaSession): Notification {
-        val metadata = session.player.mediaMetadata
-        val artworkBitmap = metadata.artworkData?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
-
-        return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-            .setStyle(MediaStyleNotificationHelper.MediaStyle(session))
-            .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
-            .setContentTitle(metadata.title ?: session.id)
-            .setContentText(metadata.artist)
-            .setLargeIcon(artworkBitmap)
-            .setOngoing(session.player.isPlaying)
-            .setContentIntent(session.sessionActivity)
-            .build()
-    }
-
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
-            NOTIFICATION_CHANNEL_ID,
+            HaMediaSession.NOTIFICATION_CHANNEL_ID,
             getString(commonR.string.media_controls),
             NotificationManager.IMPORTANCE_LOW,
         ).apply {
@@ -295,8 +264,6 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
     }
 
     companion object {
-        private const val NOTIFICATION_CHANNEL_ID = "media_session"
-
         /**
          * Starts the service. Should be called from a foreground context (e.g. Activity) to avoid
          * Android 15+ restrictions on starting mediaPlayback foreground services from background.

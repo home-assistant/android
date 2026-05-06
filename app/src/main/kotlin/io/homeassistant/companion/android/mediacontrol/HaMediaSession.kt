@@ -1,13 +1,18 @@
 package io.homeassistant.companion.android.mediacontrol
 
+import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap.CompressFormat
+import android.graphics.BitmapFactory
 import android.os.Looper
 import androidx.annotation.OptIn
+import androidx.core.app.NotificationCompat
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaSession
+import androidx.media3.session.MediaSessionService
+import androidx.media3.session.MediaStyleNotificationHelper
 import coil3.imageLoader
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
@@ -16,6 +21,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlRepository
@@ -25,8 +31,8 @@ import io.homeassistant.companion.android.common.data.mediacontrol.MediaRepeatMo
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.common.util.FailFast
-import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.launch.LaunchActivity
+import io.homeassistant.companion.android.util.sensitive
 import java.io.ByteArrayOutputStream
 import java.net.URL
 import kotlinx.coroutines.CancellationException
@@ -61,79 +67,135 @@ class HaMediaSession @AssistedInject constructor(
     private val mediaControlRepository: MediaControlRepository,
     private val serverManager: ServerManager,
 ) {
+    /** Stable identifier for this session, derived from the entity config. */
+    val id: String = "${config.serverId}_${config.entityId}"
+
+    private var mediaSession: MediaSession? = null
+
+    /** True if the player is currently playing and has at least one media item. */
+    val isPlaying: Boolean
+        get() = mediaSession?.player?.let { it.playWhenReady && it.mediaItemCount > 0 } == true
+
+    /** True if the player has at least one media item (playing or paused). */
+    val hasActiveMedia: Boolean
+        get() = mediaSession?.player?.let { it.mediaItemCount > 0 } == true
+
     /**
-     * The active [MediaSession] while [observe] is running, null otherwise.
-     * The service uses this to call [androidx.media3.session.MediaSessionService.removeSession]
-     * and to check playback state in [androidx.media3.session.MediaSessionService.onTaskRemoved].
+     * Unregisters this session from [service] by calling
+     * [MediaSessionService.removeSession]. Has no effect if the session is not currently active.
      */
-    var mediaSession: MediaSession? = null
-        private set
+    fun unregisterFrom(service: MediaSessionService) {
+        mediaSession?.let { service.removeSession(it) }
+    }
 
-    private fun getCommandCallback(
-        scope: CoroutineScope,
-        onCommandComplete: () -> Unit,
-    ) = object : HaRemoteMediaPlayer.CommandCallback {
-        override fun onPlayRequested() = scope.launch { callMediaAction(ACTION_MEDIA_PLAY); onCommandComplete() }
+    /**
+     * Builds a [MediaStyle][MediaStyleNotificationHelper.MediaStyle] notification for this session
+     * using the player's current metadata (title, artist, artwork).
+     *
+     * @return The notification, or null if the session is not currently active.
+     */
+    @OptIn(UnstableApi::class)
+    fun buildNotification(): Notification? {
+        val session = mediaSession ?: return null
+        val metadata = session.player.mediaMetadata
+        val artworkBitmap = metadata.artworkData?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
+        return NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
+            .setStyle(MediaStyleNotificationHelper.MediaStyle(session))
+            .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
+            .setContentTitle(metadata.title ?: id)
+            .setContentText(metadata.artist)
+            .setLargeIcon(artworkBitmap)
+            .setOngoing(session.player.isPlaying)
+            .setContentIntent(session.sessionActivity)
+            .build()
+    }
 
-        override fun onPauseRequested() = scope.launch { callMediaAction(ACTION_MEDIA_PAUSE); onCommandComplete() }
-
-        override fun onSeekRequested(positionMs: Long) = scope.launch {
-            callMediaAction(
-                action = ACTION_MEDIA_SEEK,
-                extraData = mapOf("seek_position" to positionMs / 1000.0),
-            )
-            onCommandComplete()
-        }
-
-        override fun onNextRequested() = scope.launch { callMediaAction(ACTION_MEDIA_NEXT_TRACK); onCommandComplete() }
-
-        override fun onPreviousRequested() = scope.launch { callMediaAction(ACTION_MEDIA_PREVIOUS_TRACK); onCommandComplete() }
-
-        override fun onSetVolumeRequested(volume: Float) = scope.launch {
-            callMediaAction(
-                action = ACTION_VOLUME_SET,
-                extraData = mapOf("volume_level" to volume),
-            )
-            onCommandComplete()
-        }
-
-        override fun onIncreaseVolumeRequested() = scope.launch { callMediaAction(ACTION_VOLUME_UP); onCommandComplete() }
-
-        override fun onDecreaseVolumeRequested() = scope.launch { callMediaAction(ACTION_VOLUME_DOWN); onCommandComplete() }
-
-        override fun onMuteRequested(muted: Boolean) = scope.launch {
-            callMediaAction(
-                action = ACTION_VOLUME_MUTE,
-                extraData = mapOf("is_volume_muted" to muted),
-            )
-            onCommandComplete()
-        }
-
-        override fun onStopRequested() = scope.launch { callMediaAction(ACTION_MEDIA_STOP); onCommandComplete() }
-
-        override fun onShuffleRequested(shuffle: Boolean) = scope.launch {
-            callMediaAction(
-                action = ACTION_SHUFFLE_SET,
-                extraData = mapOf("shuffle" to shuffle),
-            )
-            onCommandComplete()
-        }
-
-        override fun onRepeatRequested(repeatMode: MediaRepeatMode): Job {
-            val haRepeatValue = when (repeatMode) {
-                is MediaRepeatMode.Off -> "off"
-                is MediaRepeatMode.One -> "one"
-                is MediaRepeatMode.All -> "all"
+    private fun getCommandCallback(scope: CoroutineScope, onCommandComplete: () -> Unit) =
+        object : HaRemoteMediaPlayer.CommandCallback {
+            override fun onPlayRequested() = scope.launch {
+                callMediaAction(ACTION_MEDIA_PLAY)
+                onCommandComplete()
             }
-            return scope.launch {
+
+            override fun onPauseRequested() = scope.launch {
+                callMediaAction(ACTION_MEDIA_PAUSE)
+                onCommandComplete()
+            }
+
+            override fun onSeekRequested(positionMs: Long) = scope.launch {
                 callMediaAction(
-                    action = ACTION_REPEAT_SET,
-                    extraData = mapOf("repeat" to haRepeatValue),
+                    action = ACTION_MEDIA_SEEK,
+                    extraData = mapOf("seek_position" to positionMs / 1000.0),
                 )
                 onCommandComplete()
             }
+
+            override fun onNextRequested() = scope.launch {
+                callMediaAction(ACTION_MEDIA_NEXT_TRACK)
+                onCommandComplete()
+            }
+
+            override fun onPreviousRequested() = scope.launch {
+                callMediaAction(ACTION_MEDIA_PREVIOUS_TRACK)
+                onCommandComplete()
+            }
+
+            override fun onSetVolumeRequested(volume: Float) = scope.launch {
+                callMediaAction(
+                    action = ACTION_VOLUME_SET,
+                    extraData = mapOf("volume_level" to volume),
+                )
+                onCommandComplete()
+            }
+
+            override fun onIncreaseVolumeRequested() = scope.launch {
+                callMediaAction(ACTION_VOLUME_UP)
+                onCommandComplete()
+            }
+
+            override fun onDecreaseVolumeRequested() = scope.launch {
+                callMediaAction(ACTION_VOLUME_DOWN)
+                onCommandComplete()
+            }
+
+            override fun onMuteRequested(muted: Boolean) = scope.launch {
+                callMediaAction(
+                    action = ACTION_VOLUME_MUTE,
+                    extraData = mapOf("is_volume_muted" to muted),
+                )
+                onCommandComplete()
+            }
+
+            override fun onStopRequested() = scope.launch {
+                callMediaAction(ACTION_MEDIA_STOP)
+                onCommandComplete()
+            }
+
+            override fun onShuffleRequested(shuffle: Boolean) = scope.launch {
+                callMediaAction(
+                    action = ACTION_SHUFFLE_SET,
+                    extraData = mapOf("shuffle" to shuffle),
+                )
+                onCommandComplete()
+            }
+
+            override fun onRepeatRequested(repeatMode: MediaRepeatMode): Job {
+                val haRepeatValue = when (repeatMode) {
+                    is MediaRepeatMode.Off -> "off"
+                    is MediaRepeatMode.One -> "one"
+                    is MediaRepeatMode.All -> "all"
+                }
+                return scope.launch {
+                    callMediaAction(
+                        action = ACTION_REPEAT_SET,
+                        extraData = mapOf("repeat" to haRepeatValue),
+                    )
+                    onCommandComplete()
+                }
+            }
         }
-    }
 
     /**
      * Creates the [MediaSession] and player, starts observing entity state, and suspends until
@@ -146,40 +208,41 @@ class HaMediaSession @AssistedInject constructor(
      */
     suspend fun observe(onSessionReady: suspend (MediaSession) -> Unit) {
         coroutineScope {
-        FailFast.failWhen(mediaSession != null) {
-            "observe() called while a session is already active for ${config.entityId}"
-        }
-        Timber.d("observe: starting for ${config.entityId}")
-
-        var observationJob = launch { startObservingState() }
-
-        // After each command, restart observation if the WebSocket flow has completed (e.g.
-        // after a transient disconnect). This lets the user resume control without reopening
-        // the app.
-        fun restartObservationIfNeeded() {
-            if (!observationJob.isActive) {
-                Timber.d("observe: restarting observation after command for ${config.entityId}")
-                observationJob = launch { startObservingState() }
+            FailFast.failWhen(mediaSession != null) {
+                "observe() called while a session is already active for ${config.entityId}"
             }
-        }
+            Timber.d("observe: starting for ${config.entityId}")
 
-        val player = HaRemoteMediaPlayer(Looper.getMainLooper(), getCommandCallback(this, ::restartObservationIfNeeded))
-        val session = buildMediaSession(player)
-        mediaSession = session
-        try {
-            onSessionReady(session)
-            awaitCancellation()
-        } catch (e: CancellationException) {
-            Timber.d("observe: cancelled for ${config.entityId}")
-            throw e
-        } finally {
-            Timber.d("observe: finally block running for ${config.entityId}, releasing player and session")
-            mediaSession = null
-            withContext(NonCancellable + Dispatchers.Main) {
-                player.release()
-                session.release()
+            var observationJob = launch { startObservingState() }
+
+            // After each command, restart observation if the WebSocket flow has completed (e.g.
+            // after a transient disconnect). This lets the user resume control without reopening
+            // the app.
+            fun restartObservationIfNeeded() {
+                if (!observationJob.isActive) {
+                    Timber.d("observe: restarting observation after command for ${config.entityId}")
+                    observationJob = launch { startObservingState() }
+                }
             }
-        }
+
+            val player =
+                HaRemoteMediaPlayer(Looper.getMainLooper(), getCommandCallback(this, ::restartObservationIfNeeded))
+            val session = buildMediaSession(player)
+            mediaSession = session
+            try {
+                onSessionReady(session)
+                awaitCancellation()
+            } catch (e: CancellationException) {
+                Timber.d("observe: cancelled for ${config.entityId}")
+                throw e
+            } finally {
+                Timber.d("observe: finally block running for ${config.entityId}, releasing player and session")
+                mediaSession = null
+                withContext(NonCancellable + Dispatchers.Main) {
+                    player.release()
+                    session.release()
+                }
+            }
         }
     }
 
@@ -346,23 +409,26 @@ class HaMediaSession @AssistedInject constructor(
     /** Immutable cache of the last successfully loaded artwork. */
     private data class ArtworkCache(val url: String? = null, val bytes: ByteArray? = null)
 
-    private companion object {
+    companion object {
+        /** Notification channel ID used for all media control notifications. */
+        const val NOTIFICATION_CHANNEL_ID = "media_session"
+
         /** Target pixel size for notification large icon artwork. Pre-scaling in Coil avoids
          * main-thread downscaling by Android's Icon class (StrictMode CustomViolation). */
-        const val NOTIFICATION_ICON_SIZE_PX = 256
+        private const val NOTIFICATION_ICON_SIZE_PX = 256
 
-        const val ACTION_MEDIA_PLAY = "media_play"
-        const val ACTION_MEDIA_PAUSE = "media_pause"
-        const val ACTION_MEDIA_STOP = "media_stop"
-        const val ACTION_MEDIA_SEEK = "media_seek"
-        const val ACTION_MEDIA_NEXT_TRACK = "media_next_track"
-        const val ACTION_MEDIA_PREVIOUS_TRACK = "media_previous_track"
-        const val ACTION_VOLUME_SET = "volume_set"
-        const val ACTION_VOLUME_UP = "volume_up"
-        const val ACTION_VOLUME_DOWN = "volume_down"
-        const val ACTION_VOLUME_MUTE = "volume_mute"
-        const val ACTION_SHUFFLE_SET = "shuffle_set"
-        const val ACTION_REPEAT_SET = "repeat_set"
+        private const val ACTION_MEDIA_PLAY = "media_play"
+        private const val ACTION_MEDIA_PAUSE = "media_pause"
+        private const val ACTION_MEDIA_STOP = "media_stop"
+        private const val ACTION_MEDIA_SEEK = "media_seek"
+        private const val ACTION_MEDIA_NEXT_TRACK = "media_next_track"
+        private const val ACTION_MEDIA_PREVIOUS_TRACK = "media_previous_track"
+        private const val ACTION_VOLUME_SET = "volume_set"
+        private const val ACTION_VOLUME_UP = "volume_up"
+        private const val ACTION_VOLUME_DOWN = "volume_down"
+        private const val ACTION_VOLUME_MUTE = "volume_mute"
+        private const val ACTION_SHUFFLE_SET = "shuffle_set"
+        private const val ACTION_REPEAT_SET = "repeat_set"
     }
 
     /** Creates [HaMediaSession] instances with the runtime-provided [config]. */
