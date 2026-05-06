@@ -321,6 +321,42 @@ class FrontendEventHandlerTest {
         assertEquals(false, runRequestFullscreenTest(fullscreen = false))
     }
 
+    @Test
+    fun `Given LaunchWidgetConfig event then onLaunchWidgetConfig is called with entityId and widgetType`() {
+        var capturedEntityId: String? = null
+        var capturedWidgetType: WidgetType? = null
+        val events = TestSharedFlow<FrontendEvent>()
+
+        composeTestRule.setContent {
+            FrontendEventHandler(
+                events = events,
+                onShowSnackbar = { _, _ -> false },
+                onNavigateToSettings = {},
+                onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = {},
+                onShowServerSwitcher = {},
+                onNavigateToNfcWrite = { _, _ -> },
+                onRequestFullscreen = {},
+                onLaunchWidgetConfig = { entityId, widgetType ->
+                    capturedEntityId = entityId
+                    capturedWidgetType = widgetType
+                },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        events.emit(
+            FrontendEvent.LaunchWidgetConfig(
+                entityId = "light.kitchen",
+                widgetType = WidgetType.MediaPlayer,
+            ),
+        )
+        composeTestRule.waitForIdle()
+
+        assertEquals("light.kitchen", capturedEntityId)
+        assertEquals(WidgetType.MediaPlayer, capturedWidgetType)
+    }
+
     private fun runRequestFullscreenTest(fullscreen: Boolean): Boolean? {
         var captured: Boolean? = null
         val events = TestSharedFlow<FrontendEvent>()
@@ -335,6 +371,7 @@ class FrontendEventHandlerTest {
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
                 onRequestFullscreen = { captured = it },
+                onLaunchWidgetConfig = { _, _ -> },
             )
         }
 

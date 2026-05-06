@@ -28,6 +28,7 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.ThemeUpd
 import io.homeassistant.companion.android.frontend.externalbus.incoming.UnknownIncomingMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResultMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.EntityAddToActionsResultMessage
+import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
 import io.homeassistant.companion.android.frontend.js.FrontendJsHandler
 import io.homeassistant.companion.android.frontend.session.AuthPayload
 import io.homeassistant.companion.android.frontend.session.ExternalAuthResult
@@ -199,7 +200,7 @@ class FrontendMessageHandler @Inject constructor(
                     FrontendHandlerEvent.UnknownMessage
                 } else {
                     Timber.d("exoplayer/play_hls url=${sensitive(url)} muted=${message.payload.muted}")
-                    externalBusRepository.send(ResultMessage(id = message.id, success = true))
+                    externalBusRepository.send(SuccessResultMessage(id = message.id))
                     FrontendHandlerEvent.ExoPlayerAction.PlayHls(
                         messageId = message.id,
                         url = url.toUri(),
