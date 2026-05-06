@@ -1,19 +1,13 @@
 package io.homeassistant.companion.android.mediacontrol
 
-import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap.CompressFormat
-import android.graphics.BitmapFactory
 import android.os.Looper
 import androidx.annotation.OptIn
-import androidx.annotation.VisibleForTesting
-import androidx.core.app.NotificationCompat
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaSession
-import androidx.media3.session.MediaSessionService
-import androidx.media3.session.MediaStyleNotificationHelper
 import coil3.imageLoader
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
@@ -22,7 +16,6 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
-import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlRepository
@@ -68,32 +61,12 @@ class HaMediaSession @AssistedInject constructor(
     private val serverManager: ServerManager,
 ) {
     /**
-     * Stable identifier for this session, derived from [config]. Matches the [MediaSession.id]
-     * assigned in [buildMediaSession].
-     */
-    val id: String get() = "${config.serverId}_${config.entityId}"
-
-    /**
      * The active [MediaSession] while [observe] is running, null otherwise.
-     * Internal so that unit tests can access the player to trigger commands and assert state.
+     * The service uses this to call [androidx.media3.session.MediaSessionService.removeSession]
+     * and to check playback state in [androidx.media3.session.MediaSessionService.onTaskRemoved].
      */
-    @VisibleForTesting
-    internal var mediaSession: MediaSession? = null
+    var mediaSession: MediaSession? = null
         private set
-
-    /**
-     * Whether the session is currently playing media. Returns false when [observe] is not running
-     * or the player has no media content loaded.
-     */
-    val isPlaying: Boolean
-        get() = mediaSession?.player?.let { it.playWhenReady && it.mediaItemCount > 0 } == true
-
-    /**
-     * Whether the session has media content loaded (i.e. the player's media item count is > 0).
-     * Returns false when [observe] is not running.
-     */
-    val hasMediaContent: Boolean
-        get() = mediaSession?.player?.mediaItemCount?.let { it > 0 } == true
 
     private fun getCommandCallback(scope: CoroutineScope) = object : HaRemoteMediaPlayer.CommandCallback {
         override fun onPlayRequested() = scope.launch { callMediaAction(ACTION_MEDIA_PLAY) }
@@ -154,56 +127,15 @@ class HaMediaSession @AssistedInject constructor(
     }
 
     /**
-     * Registers this session with [service] so that Media3's internal notification manager
-     * can monitor player state and call [MediaSessionService.onUpdateNotification]. Has no effect
-     * if [observe] is not currently running.
-     */
-    fun addToService(service: MediaSessionService) {
-        mediaSession?.let { service.addSession(it) }
-    }
-
-    /**
-     * Removes this session from [service]. Has no effect if [observe] is not currently running.
-     */
-    fun removeFromService(service: MediaSessionService) {
-        mediaSession?.let { service.removeSession(it) }
-    }
-
-    /**
-     * Builds a [MediaStyleNotificationHelper.MediaStyle] notification for this session using the
-     * player's current metadata (title, artist, artwork). Returns null when [observe] is not
-     * running or the session has no media content.
-     *
-     * @param channelId The notification channel ID to assign to the notification.
-     */
-    @OptIn(UnstableApi::class)
-    fun buildNotification(channelId: String): Notification? {
-        val session = mediaSession ?: return null
-        val metadata = session.player.mediaMetadata
-        val artworkBitmap = metadata.artworkData?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
-        return NotificationCompat.Builder(context, channelId)
-            .setStyle(MediaStyleNotificationHelper.MediaStyle(session))
-            .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
-            .setContentTitle(metadata.title ?: session.id)
-            .setContentText(metadata.artist)
-            .setLargeIcon(artworkBitmap)
-            .setOngoing(session.player.isPlaying)
-            .setContentIntent(session.sessionActivity)
-            .build()
-    }
-
-    /**
      * Creates the [MediaSession] and player, starts observing entity state, and suspends until
-     * the calling coroutine is cancelled. Calls [onSessionReady] with this [HaMediaSession]
-     * immediately after the [MediaSession] is created so the caller can register it with
-     * [addToService].
+     * the calling coroutine is cancelled. Calls [onSessionReady] with the new session immediately
+     * after creation so the caller can register it with
+     * [androidx.media3.session.MediaSessionService.addSession].
      *
      * All Media3 resources are released in a `finally` block, so they are always cleaned up
      * regardless of how the coroutine ends (cancellation or normal flow completion).
      */
-    suspend fun observe(onSessionReady: suspend (HaMediaSession) -> Unit) = coroutineScope {
+    suspend fun observe(onSessionReady: suspend (MediaSession) -> Unit) = coroutineScope {
         FailFast.failWhen(mediaSession != null) {
             "observe() called while a session is already active for ${config.entityId}"
         }
@@ -212,7 +144,7 @@ class HaMediaSession @AssistedInject constructor(
         val session = buildMediaSession(player)
         mediaSession = session
         try {
-            onSessionReady(this@HaMediaSession)
+            onSessionReady(session)
             startObservingState()
         } catch (e: CancellationException) {
             Timber.d("observe: cancelled for ${config.entityId}")

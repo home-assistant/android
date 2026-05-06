@@ -30,7 +30,6 @@ import dagger.hilt.android.lifecycle.withCreationCallback
 import io.homeassistant.companion.android.WIPFeature
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
-import io.homeassistant.companion.android.mediacontrol.HaMediaSessionService
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.util.ChangeLog
@@ -40,6 +39,7 @@ import io.homeassistant.companion.android.util.PlayServicesAvailability
 import io.homeassistant.companion.android.util.compose.HAApp
 import io.homeassistant.companion.android.util.compose.navigateToUri
 import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
+import io.homeassistant.companion.android.mediacontrol.HaMediaSessionService
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import javax.inject.Inject
 import kotlinx.coroutines.launch

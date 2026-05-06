@@ -1,17 +1,22 @@
 package io.homeassistant.companion.android.mediacontrol
 
 import android.annotation.SuppressLint
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.graphics.BitmapFactory
+import android.os.Build
 import androidx.annotation.OptIn
 import androidx.annotation.VisibleForTesting
+import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import androidx.media3.session.MediaStyleNotificationHelper
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
@@ -81,7 +86,9 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = null
 
     override fun onTaskRemoved(rootIntent: Intent?) {
-        val anyPlaying = activeSessions.values.any { (session, _) -> session.isPlaying }
+        val anyPlaying = activeSessions.values.any { (session, _) ->
+            session.mediaSession?.player?.let { it.playWhenReady && it.mediaItemCount > 0 } == true
+        }
         // Keep the service alive while playback is active so the media notification remains
         // visible and controllable from the notification shade after the app is dismissed.
         // If nothing is playing there is no reason to keep the service alive.
@@ -109,11 +116,9 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
         // A session not in activeSessions is being torn down. removeSession() and player.release()
         // both trigger onUpdateNotification, so without this guard we would re-post a notification
         // we just cancelled, leaving a zombie media control card after removal.
-        val activeHaSession = activeSessions.values
-            .map { (haSession, _) -> haSession }
-            .firstOrNull { it.id == session.id }
+        val isActive = activeSessions.values.any { (haSession, _) -> haSession.mediaSession?.id == session.id }
 
-        if (activeHaSession == null || session.player.mediaItemCount == 0) {
+        if (!isActive || session.player.mediaItemCount == 0) {
             // Entity is off, no state has arrived yet, or the session is being torn down.
             notificationManager.cancel(notificationId)
             if (foregroundNotificationId == notificationId) {
@@ -122,7 +127,7 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
             return
         }
 
-        val notification = activeHaSession.buildNotification(channelId = NOTIFICATION_CHANNEL_ID) ?: return
+        val notification = buildNotification(session)
         if (foregroundNotificationId == null && startInForegroundRequired) {
             // Service is not yet in the foreground and playback requires it — start foreground
             // with this session's notification. All subsequent sessions (and updates to this one)
@@ -149,9 +154,11 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
         // cancels rather than re-posts their notifications during teardown.
         val sessionsToClean = activeSessions.values.toList()
         activeSessions.clear()
-        sessionsToClean.forEach { (haSession, job) ->
-            notificationManager.cancel(haSession.id.hashCode())
-            haSession.removeFromService(this)
+        sessionsToClean.forEach { (session, job) ->
+            session.mediaSession?.let { ms ->
+                notificationManager.cancel(ms.id.hashCode())
+                removeSession(ms)
+            }
             job.cancel()
         }
         serviceScope.cancel()
@@ -205,12 +212,12 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
      */
     private suspend fun tearDownSession(key: String, pair: Pair<HaMediaSession, Job>) {
         val (haSession, job) = pair
-        val notificationId = haSession.id.hashCode()
+        val notificationId = key.hashCode()
         notificationManager.cancel(notificationId)
         if (foregroundNotificationId == notificationId) {
             promoteForegroundOrStop(excludeId = notificationId)
         }
-        haSession.removeFromService(this)
+        haSession.mediaSession?.let { removeSession(it) }
         job.cancelAndJoin()
         Timber.d("Removed media session for $key")
     }
@@ -222,7 +229,7 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
      */
     private fun launchSession(key: String, session: HaMediaSession) {
         val job = serviceScope.launch {
-            session.observe { haSession -> haSession.addToService(this@HaMediaSessionService) }
+            session.observe { mediaSession -> addSession(mediaSession) }
         }
         activeSessions[key] = session to job
         Timber.d("Added media session for $key")
@@ -238,27 +245,42 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
      */
     @OptIn(UnstableApi::class)
     private fun promoteForegroundOrStop(excludeId: Int) {
-        val nextHaSession = activeSessions.values
-            .map { (haSession, _) -> haSession }
-            .firstOrNull { it.id.hashCode() != excludeId && it.hasMediaContent }
+        val nextSession = activeSessions.values
+            .mapNotNull { (haSession, _) -> haSession.mediaSession }
+            .firstOrNull { it.id.hashCode() != excludeId && it.player.mediaItemCount > 0 }
 
-        if (nextHaSession != null) {
-            val nextId = nextHaSession.id.hashCode()
-            val notification = nextHaSession.buildNotification(channelId = NOTIFICATION_CHANNEL_ID)
-            if (notification != null) {
-                startForeground(nextId, notification)
-                foregroundNotificationId = nextId
-                Timber.d("promoteForegroundOrStop: promoted session ${nextHaSession.id}")
-            } else {
-                ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
-                foregroundNotificationId = null
-                Timber.d("promoteForegroundOrStop: notification was null for candidate session, stopped foreground")
-            }
+        if (nextSession != null) {
+            val nextId = nextSession.id.hashCode()
+            startForeground(nextId, buildNotification(nextSession))
+            foregroundNotificationId = nextId
+            Timber.d("promoteForegroundOrStop: promoted session ${nextSession.id}")
         } else {
             ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
             foregroundNotificationId = null
             Timber.d("promoteForegroundOrStop: no active sessions, stopped foreground")
         }
+    }
+
+    /**
+     * Builds a [MediaStyleNotificationHelper.MediaStyle] notification for [session]
+     * using the player's current metadata (title, artist, artwork).
+     */
+    @OptIn(UnstableApi::class)
+    private fun buildNotification(session: MediaSession): Notification {
+        val metadata = session.player.mediaMetadata
+        val artworkBitmap = metadata.artworkData?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
+
+        return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+            .setStyle(MediaStyleNotificationHelper.MediaStyle(session))
+            .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
+            .setContentTitle(metadata.title ?: session.id)
+            .setContentText(metadata.artist)
+            .setLargeIcon(artworkBitmap)
+            .setOngoing(session.player.isPlaying)
+            .setContentIntent(session.sessionActivity)
+            .build()
     }
 
     private fun createNotificationChannel() {
