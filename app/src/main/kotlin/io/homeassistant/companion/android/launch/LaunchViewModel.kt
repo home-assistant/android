@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
@@ -115,10 +116,20 @@ internal class LaunchViewModel @VisibleForTesting constructor(
     private val _uiState = MutableStateFlow<LaunchUiState>(LaunchUiState.Loading)
     val uiState = _uiState.asStateFlow()
 
-    /** Emits the current fullscreen preference, reacting to changes in real-time. */
-    val isFullScreen: StateFlow<Boolean> = flow {
-        emitAll(prefsRepository.fullScreenEnabledFlow())
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = false)
+    private val fullscreenRequested = MutableStateFlow(false)
+
+    /**
+     * Emits whether the app should currently be in fullscreen mode.
+     *
+     * Combines the user's fullscreen preference with temporary fullscreen requests from the
+     * frontend (e.g. ExoPlayer entering fullscreen) via a logical OR. The preference therefore
+     * takes priority: while it is enabled, a `false` request cannot leave fullscreen.
+     */
+    val isFullScreen: StateFlow<Boolean> = combine(
+        flow { emitAll(prefsRepository.fullScreenEnabledFlow()) },
+        fullscreenRequested,
+    ) { preference, requested -> preference || requested }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = false)
 
     private val _isAppLocked = MutableStateFlow(false)
     val isAppLocked: StateFlow<Boolean> = _isAppLocked.asStateFlow()
@@ -162,6 +173,16 @@ internal class LaunchViewModel @VisibleForTesting constructor(
             appLockStateManager.setAppActive(active = true)
             _isAppLocked.value = false
         }
+    }
+
+    /**
+     * Request a temporary fullscreen state from the frontend.
+     *
+     * A `true` request makes the app enter fullscreen regardless of the user preference.
+     * A `false` request only leaves fullscreen when the user preference is also disabled.
+     */
+    fun onFullscreenRequested(fullscreen: Boolean) {
+        fullscreenRequested.value = fullscreen
     }
 
     private suspend fun handleInitialState(initialDeepLink: LaunchActivity.DeepLink?) {

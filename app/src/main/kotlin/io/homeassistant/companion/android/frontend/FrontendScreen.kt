@@ -8,6 +8,7 @@ import android.webkit.CookieManager
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,11 +22,14 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,8 +38,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.common.R as commonR
@@ -64,6 +71,7 @@ import io.homeassistant.companion.android.onboarding.locationforsecureconnection
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModelFactory
 import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.compose.HAPreviews
+import io.homeassistant.companion.android.util.compose.media.player.HAMediaPlayer
 import io.homeassistant.companion.android.util.compose.webview.HAWebView
 import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.webview.insecure.BlockInsecureScreen
@@ -73,6 +81,10 @@ import timber.log.Timber
 
 /** Minimum swipe velocity (pixels/second) to trigger a gesture action. */
 private const val MINIMUM_GESTURE_VELOCITY = 75f
+
+/** Test tag applied to the WebView custom view fullscreen overlay. */
+@VisibleForTesting
+internal const val CUSTOM_VIEW_OVERLAY_TAG = "custom_view_overlay"
 
 /**
  * Frontend screen that renders based on the ViewModel's current view state.
@@ -110,6 +122,16 @@ internal fun FrontendScreen(
     val pendingFileChooser by viewModel.pendingFileChooser.collectAsStateWithLifecycle()
     val autoPlayVideoEnabled by viewModel.autoPlayVideoEnabled.collectAsStateWithLifecycle()
 
+    // The fullscreen View handed over by the WebView is Activity-scoped. Keep it in screen
+    // state so it does not leak across configuration changes via the ViewModel.
+    var customView by remember { mutableStateOf<View?>(null) }
+    val webChromeClient = remember(viewModel) {
+        viewModel.createWebChromeClient(
+            onShowCustomView = { customView = it },
+            onHideCustomView = { customView = null },
+        )
+    }
+
     // Create SecurityLevel ViewModel only when needed
     val securityLevelViewModel: LocationForSecureConnectionViewModel? =
         if (viewState is FrontendViewState.SecurityLevelRequired) {
@@ -125,7 +147,8 @@ internal fun FrontendScreen(
         viewState = viewState,
         errorStateProvider = viewModel as FrontendConnectionErrorStateProvider,
         webViewClient = viewModel.webViewClient,
-        webChromeClient = viewModel.webChromeClient,
+        webChromeClient = webChromeClient,
+        customView = customView,
         frontendJsCallback = viewModel.frontendJsCallback,
         pendingPermissionRequest = pendingPermissionRequest,
         pendingDialog = pendingDialog,
@@ -145,6 +168,7 @@ internal fun FrontendScreen(
         onDownloadRequested = viewModel::onDownloadRequested,
         webViewActions = viewModel.webViewActions,
         onGesture = viewModel::onGesture,
+        onExoPlayerFullscreenChanged = viewModel::onExoPlayerFullscreenChanged,
         autoPlayVideoEnabled = autoPlayVideoEnabled,
         modifier = modifier,
     )
@@ -168,6 +192,7 @@ internal fun FrontendScreenContent(
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onWebViewCreationFailed: (Throwable) -> Unit,
     modifier: Modifier = Modifier,
+    customView: View? = null,
     autoPlayVideoEnabled: Boolean = false,
     pendingPermissionRequest: PermissionRequest? = null,
     pendingDialog: FrontendDialog? = null,
@@ -178,6 +203,7 @@ internal fun FrontendScreenContent(
     onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit = { _, _, _ -> },
     webViewActions: Flow<WebViewAction> = emptyFlow(),
     onGesture: (GestureDirection, Int) -> Unit = { _, _ -> },
+    onExoPlayerFullscreenChanged: (Boolean) -> Unit = {},
 ) {
     var webView by remember { mutableStateOf<WebView?>(null) }
 
@@ -214,6 +240,13 @@ internal fun FrontendScreenContent(
             onGesture = onGesture,
             autoPlayVideoEnabled = autoPlayVideoEnabled,
         )
+
+        ExoPlayerOverlay(
+            contentState = viewState as? FrontendViewState.Content,
+            onFullscreenChanged = onExoPlayerFullscreenChanged,
+        )
+
+        CustomViewOverlay(customView = customView)
 
         StateOverlay(
             viewState = viewState,
@@ -583,6 +616,11 @@ private fun WebViewEffects(
             Timber.v("Load url ${sensitive(url)}")
             webView.loadUrl(url)
         }
+        DisposableEffect(webView) {
+            onDispose {
+                frontendJsCallback.detachFromWebView(webView)
+            }
+        }
         LaunchedEffect(webView) {
             webViewActions.collect { action ->
                 action.run(webView)
@@ -595,6 +633,34 @@ private fun WebViewEffects(
             webView.reload()
         }
     }
+}
+
+@Composable
+private fun CustomViewOverlay(customView: View?) {
+    val view: View = customView ?: return
+    AndroidView(
+        factory = { view },
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag(CUSTOM_VIEW_OVERLAY_TAG),
+    )
+}
+
+@Composable
+private fun ExoPlayerOverlay(contentState: FrontendViewState.Content?, onFullscreenChanged: (Boolean) -> Unit) {
+    val exoState = contentState?.exoPlayerState ?: return
+    val size = exoState.size ?: return
+    HAMediaPlayer(
+        player = exoState.player,
+        contentScale = ContentScale.Inside,
+        modifier = Modifier
+            .offset(exoState.left, exoState.top)
+            .size(size),
+        fullscreenModifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black),
+        onFullscreenClicked = onFullscreenChanged,
+    )
 }
 
 @HAPreviews

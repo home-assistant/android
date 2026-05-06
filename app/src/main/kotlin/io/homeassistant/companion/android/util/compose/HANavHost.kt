@@ -50,6 +50,7 @@ internal fun HANavHost(
     navController: NavHostController,
     startDestination: HAStartDestinationRoute?,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
+    onRequestFullscreen: (Boolean) -> Unit = {},
 ) {
     val activity = LocalActivity.current
     val isAutomotive = activity?.isAutomotive() == true
@@ -121,6 +122,7 @@ internal fun HANavHost(
                 },
                 onShowSnackbar = onShowSnackbar,
                 onShowServerSwitcher = { onServerSelected -> showServerSwitcher(activity, onServerSelected) },
+                onRequestFullscreen = onRequestFullscreen,
             )
             setHomeNetworkScreen(
                 onGotoNextScreen = {

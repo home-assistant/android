@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.frontend.handler
 
 import android.content.pm.PackageManager
+import androidx.core.net.toUri
 import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
@@ -10,6 +11,9 @@ import io.homeassistant.companion.android.frontend.download.FrontendDownloadMana
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConfigGetMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConnectionStatusMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerPlayHlsMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerResizeMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerStopMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HandleBlobMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.IncomingExternalBusMessage
@@ -180,6 +184,37 @@ class FrontendMessageHandler @Inject constructor(
                 FrontendHandlerEvent.WriteNfcTag(
                     messageId = message.id ?: -1,
                     tagId = message.payload.tag,
+                )
+            }
+
+            is ExoPlayerPlayHlsMessage -> {
+                val url = message.payload.url
+                if (url == null) {
+                    Timber.w("exoplayer/play_hls received without URL")
+                    FrontendHandlerEvent.UnknownMessage
+                } else {
+                    Timber.d("exoplayer/play_hls url=${sensitive(url)} muted=${message.payload.muted}")
+                    externalBusRepository.send(ResultMessage(id = message.id, success = true))
+                    FrontendHandlerEvent.ExoPlayerAction.PlayHls(
+                        messageId = message.id,
+                        url = url.toUri(),
+                        muted = message.payload.muted,
+                    )
+                }
+            }
+
+            is ExoPlayerStopMessage -> {
+                Timber.d("exoplayer/stop received")
+                FrontendHandlerEvent.ExoPlayerAction.Stop
+            }
+
+            is ExoPlayerResizeMessage -> {
+                Timber.d("exoplayer/resize received")
+                FrontendHandlerEvent.ExoPlayerAction.Resize(
+                    left = message.payload.left,
+                    top = message.payload.top,
+                    right = message.payload.right,
+                    bottom = message.payload.bottom,
                 )
             }
 

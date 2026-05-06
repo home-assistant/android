@@ -42,6 +42,7 @@ internal fun HAApp(
     startDestination: HAStartDestinationRoute?,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
+    onRequestFullscreen: (Boolean) -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier,
@@ -69,6 +70,7 @@ internal fun HAApp(
             HANavHost(
                 navController = navController,
                 startDestination = startDestination,
+                onRequestFullscreen = onRequestFullscreen,
                 onShowSnackbar = { message, action ->
                     snackbarHostState.showSnackbar(
                         message,

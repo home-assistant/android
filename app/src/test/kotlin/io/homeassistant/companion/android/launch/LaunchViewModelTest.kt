@@ -625,4 +625,55 @@ class LaunchViewModelTest {
         coVerify { appLockStateManager.setAppActive(active = true) }
         assertFalse(viewModel.isAppLocked.value)
     }
+
+    @Test
+    fun `Given fullscreen preference off when fullscreen is requested then isFullScreen is true`() = runTest {
+        fullScreenEnabledFlow.value = false
+        createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onFullscreenRequested(fullscreen = true)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.isFullScreen.value)
+    }
+
+    @Test
+    fun `Given fullscreen preference off when fullscreen request is cleared then isFullScreen is false`() = runTest {
+        fullScreenEnabledFlow.value = false
+        createViewModel()
+        viewModel.onFullscreenRequested(fullscreen = true)
+        advanceUntilIdle()
+
+        viewModel.onFullscreenRequested(fullscreen = false)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.isFullScreen.value)
+    }
+
+    @Test
+    fun `Given fullscreen preference on when fullscreen request is cleared then isFullScreen stays true`() = runTest {
+        fullScreenEnabledFlow.value = true
+        createViewModel()
+        viewModel.onFullscreenRequested(fullscreen = true)
+        advanceUntilIdle()
+
+        viewModel.onFullscreenRequested(fullscreen = false)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.isFullScreen.value)
+    }
+
+    @Test
+    fun `Given fullscreen request is active when preference turns off then isFullScreen stays true`() = runTest {
+        fullScreenEnabledFlow.value = true
+        createViewModel()
+        viewModel.onFullscreenRequested(fullscreen = true)
+        advanceUntilIdle()
+
+        fullScreenEnabledFlow.value = false
+        advanceUntilIdle()
+
+        assertTrue(viewModel.isFullScreen.value)
+    }
 }

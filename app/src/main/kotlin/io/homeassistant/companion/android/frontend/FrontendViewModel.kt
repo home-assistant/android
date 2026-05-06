@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend
 
+import android.view.View
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -18,6 +19,7 @@ import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
+import io.homeassistant.companion.android.frontend.exoplayer.FrontendExoPlayerManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
@@ -90,6 +92,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val dialogManager: FrontendDialogManager,
     private val fileChooserManager: FileChooserManager,
     private val httpAuthManager: HttpAuthManager,
+    private val exoPlayerManager: FrontendExoPlayerManager,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -109,6 +112,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         dialogManager: FrontendDialogManager,
         fileChooserManager: FileChooserManager,
         httpAuthManager: HttpAuthManager,
+        exoPlayerManager: FrontendExoPlayerManager,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
         initialPath = savedStateHandle.toRoute<FrontendRoute>().path,
@@ -125,6 +129,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         dialogManager = dialogManager,
         fileChooserManager = fileChooserManager,
         httpAuthManager = httpAuthManager,
+        exoPlayerManager = exoPlayerManager,
     )
 
     /**
@@ -216,26 +221,6 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     /** The current pending file chooser request from the WebView, or null if none. */
     val pendingFileChooser: StateFlow<FileChooserRequest?> = fileChooserManager.pendingFileChooser
 
-    val webChromeClient: HAWebChromeClient = HAWebChromeClient(
-        onPermissionRequest = { request ->
-            viewModelScope.launch {
-                permissionManager.onWebViewPermissionRequest(request)
-            }
-        },
-        onJsConfirm = { message, jsResult ->
-            viewModelScope.launch {
-                if (dialogManager.showJsConfirm(message)) jsResult.confirm() else jsResult.cancel()
-            }
-            true
-        },
-        onShowFileChooser = { filePathCallback, fileChooserParams ->
-            viewModelScope.launch {
-                filePathCallback.onReceiveValue(fileChooserManager.pickFiles(fileChooserParams))
-            }
-            true
-        },
-    )
-
     /** The current pending permission request that needs user approval, or null if none. */
     val pendingPermissionRequest = permissionManager.pendingPermissionRequest
 
@@ -264,22 +249,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = false)
 
     init {
-        // Timeout watcher - cancels automatically when state changes from Loading
         viewModelScope.launch {
             _viewState.collectLatest { state ->
-                if (state is FrontendViewState.Loading) {
-                    delay(CONNECTION_TIMEOUT)
-                    // Only trigger timeout if still in Loading state
-                    if (_viewState.value is FrontendViewState.Loading) {
-                        onError(
-                            FrontendConnectionError.UnreachableError(
-                                message = commonR.string.webview_error_TIMEOUT,
-                                errorDetails = "",
-                                rawErrorType = "ConnectionTimeout",
-                            ),
-                        )
-                    }
-                }
+                releaseExoPlayerIfLeavingContent(state)
+                // Timeout watcher - cancels automatically when state changes from Loading
+                watchLoadingTimeout(state)
             }
         }
 
@@ -289,7 +263,29 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             }
         }
 
+        viewModelScope.launch {
+            var wasFullScreen = false
+            exoPlayerManager.state.collect { exoState ->
+                if (wasFullScreen && exoState == null) {
+                    _events.tryEmit(FrontendEvent.RequestFullscreen(fullscreen = false))
+                }
+                wasFullScreen = exoState?.isFullScreen == true
+                _viewState.update { currentState ->
+                    if (currentState is FrontendViewState.Content) {
+                        currentState.copy(exoPlayerState = exoState)
+                    } else {
+                        currentState
+                    }
+                }
+            }
+        }
+
         loadServer()
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        exoPlayerManager.close()
     }
 
     /**
@@ -305,6 +301,46 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             }
         }
     }
+
+    /**
+     * Builds an [HAWebChromeClient] wired to this ViewModel for permission/JS handling, while
+     * delegating WebView fullscreen view ownership to the caller.
+     *
+     * The fullscreen [android.view.View] handed over by `onShowCustomView` is bound to the
+     * WebView's Activity context. Holding it in ViewModel state would leak that Activity across
+     * configuration changes, so the caller (a Composable) keeps the View in screen-scoped state
+     * and supplies setters via [onShowCustomView] and [onHideCustomView]. The ViewModel still
+     * owns the system-fullscreen request and emits [FrontendEvent.RequestFullscreen] on the
+     * caller's behalf.
+     */
+    fun createWebChromeClient(onShowCustomView: (View) -> Unit, onHideCustomView: () -> Unit): HAWebChromeClient =
+        HAWebChromeClient(
+            onPermissionRequest = { request ->
+                viewModelScope.launch {
+                    permissionManager.onWebViewPermissionRequest(request)
+                }
+            },
+            onJsConfirm = { message, jsResult ->
+                viewModelScope.launch {
+                    if (dialogManager.showJsConfirm(message)) jsResult.confirm() else jsResult.cancel()
+                }
+                true
+            },
+            onShowFileChooser = { filePathCallback, fileChooserParams ->
+                viewModelScope.launch {
+                    filePathCallback.onReceiveValue(fileChooserManager.pickFiles(fileChooserParams))
+                }
+                true
+            },
+            onShowCustomView = { view ->
+                onShowCustomView(view)
+                _events.tryEmit(FrontendEvent.RequestFullscreen(fullscreen = true))
+            },
+            onHideCustomView = {
+                onHideCustomView()
+                _events.tryEmit(FrontendEvent.RequestFullscreen(fullscreen = false))
+            },
+        )
 
     fun onRetry() {
         _viewState.update {
@@ -416,6 +452,17 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         }
     }
 
+    /**
+     * Called when the ExoPlayer fullscreen state changes.
+     *
+     * Updates the player UI state and emits a [FrontendEvent.RequestFullscreen] so the
+     * host activity can decide the actual system bar visibility.
+     */
+    fun onExoPlayerFullscreenChanged(isFullScreen: Boolean) {
+        exoPlayerManager.onFullscreenChanged(isFullScreen)
+        _events.tryEmit(FrontendEvent.RequestFullscreen(isFullScreen))
+    }
+
     private suspend fun handleGestureResult(result: GestureResult) {
         when (result) {
             is GestureResult.Navigate -> _events.emit(result.event)
@@ -429,6 +476,38 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             is GestureResult.Forwarded, is GestureResult.Ignored -> { /* no-op */ }
         }
     }
+
+    /**
+     * Releases the ExoPlayer whenever the view state is anything other than [FrontendViewState.Content].
+     *
+     * The overlay only makes sense while the frontend WebView is interactive, so leaving
+     * Content (server switch, error, retry) must tear the player down to avoid stale audio
+     * or network usage.
+     */
+    private fun releaseExoPlayerIfLeavingContent(state: FrontendViewState) {
+        if (state !is FrontendViewState.Content) {
+            exoPlayerManager.close()
+        }
+    }
+
+    /**
+     * Waits the [CONNECTION_TIMEOUT] in [FrontendViewState.Loading] and emits an
+     * [FrontendConnectionError.UnreachableError] if the WebView has not finished loading by then.
+     */
+    private suspend fun watchLoadingTimeout(state: FrontendViewState) {
+        if (state !is FrontendViewState.Loading) return
+        delay(CONNECTION_TIMEOUT)
+        if (_viewState.value is FrontendViewState.Loading) {
+            onError(
+                FrontendConnectionError.UnreachableError(
+                    message = commonR.string.webview_error_TIMEOUT,
+                    errorDetails = "",
+                    rawErrorType = "ConnectionTimeout",
+                ),
+            )
+        }
+    }
+
     private fun loadServer() {
         urlFlowJob?.cancel()
         urlFlowJob = viewModelScope.launch {
@@ -503,6 +582,10 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
             is FrontendHandlerEvent.WriteNfcTag -> {
                 _events.tryEmit(FrontendEvent.NavigateToNfcWrite(messageId = result.messageId, tagId = result.tagId))
+            }
+
+            is FrontendHandlerEvent.ExoPlayerAction -> {
+                exoPlayerManager.handle(result)
             }
 
             is FrontendHandlerEvent.ConfigSent,

@@ -55,4 +55,13 @@ sealed interface FrontendEvent {
      * @param tagId Optional pre-filled tag identifier.
      */
     data class NavigateToNfcWrite(val messageId: Int, val tagId: String?) : FrontendEvent
+
+    /**
+     * Request the host activity to enter or leave fullscreen (hide/show system bars).
+     *
+     * This is a request, not a command: the LaunchViewModel decides the actual system bar
+     * visibility by combining this with the user's fullscreen preference. For instance, if
+     * the preference already enables fullscreen, a `false` request won't leave fullscreen.
+     */
+    data class RequestFullscreen(val fullscreen: Boolean) : FrontendEvent
 }

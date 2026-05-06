@@ -158,6 +158,7 @@ class LaunchActivity : AppCompatActivity() {
                     navController = navController,
                     startDestination = (uiState as? LaunchUiState.Ready)?.startDestination,
                     snackbarHostState = snackbarHostState,
+                    onRequestFullscreen = viewModel::onFullscreenRequested,
                     modifier = Modifier.hazeSource(hazeState),
                 )
 
