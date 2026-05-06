@@ -68,7 +68,7 @@ class HaMediaSession @AssistedInject constructor(
     private val serverManager: ServerManager,
 ) {
     /** Stable identifier for this session, derived from the entity config. */
-    val id: String = "${config.serverId}_${config.entityId}"
+    val id: String = "${config.serverId}:${config.entityId}"
 
     private var mediaSession: MediaSession? = null
 
@@ -281,7 +281,7 @@ class HaMediaSession @AssistedInject constructor(
     }
 
     private fun buildMediaSession(player: HaRemoteMediaPlayer): MediaSession = MediaSession.Builder(context, player)
-        .setId("${config.serverId}_${config.entityId}")
+        .setId("${config.serverId}:${config.entityId}")
         .setCallback(MediaSessionCallback())
         .build()
         .also { session ->

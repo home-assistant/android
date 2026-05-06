@@ -115,7 +115,7 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
             // Entity is off, no state has arrived yet, or the session is being torn down.
             notificationManager.cancel(notificationId)
             if (foregroundNotificationId == notificationId) {
-                promoteForegroundOrStop(excludeId = notificationId)
+                promoteForegroundOrStop(excludeKey = session.id)
             }
             return
         }
@@ -206,7 +206,7 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
         val notificationId = key.hashCode()
         notificationManager.cancel(notificationId)
         if (foregroundNotificationId == notificationId) {
-            promoteForegroundOrStop(excludeId = notificationId)
+            promoteForegroundOrStop(excludeKey = key)
         }
         haSession.unregisterFrom(this)
         job.cancelAndJoin()
@@ -231,13 +231,13 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
      * foreground session is removed or goes idle. If no active session has media content,
      * stops the foreground state.
      *
-     * @param excludeId The notification ID of the session being removed, to skip it when searching
+     * @param excludeKey The map key of the session being removed, to skip it when searching
      * for a replacement.
      */
-    private fun promoteForegroundOrStop(excludeId: Int) {
-        val nextSession = activeSessions.values
-            .map { (haSession, _) -> haSession }
-            .firstOrNull { it.id.hashCode() != excludeId && it.hasActiveMedia }
+    private fun promoteForegroundOrStop(excludeKey: String) {
+        val nextSession = activeSessions.entries
+            .firstOrNull { (key, pair) -> key != excludeKey && pair.first.hasActiveMedia }
+            ?.value?.first
 
         if (nextSession != null) {
             val nextId = nextSession.id.hashCode()
