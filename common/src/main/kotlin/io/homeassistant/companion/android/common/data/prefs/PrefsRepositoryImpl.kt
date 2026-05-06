@@ -10,9 +10,6 @@ import io.homeassistant.companion.android.di.qualifiers.NamedThemesStorage
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -207,8 +204,10 @@ internal class PrefsRepositoryImpl @Inject constructor(
         localStorage().putBoolean(PREF_FULLSCREEN_ENABLED, enabled)
     }
 
-    override suspend fun fullScreenEnabledFlow(): Flow<Boolean> = observeChanges(PREF_FULLSCREEN_ENABLED) {
-        isFullScreenEnabled()
+    override suspend fun fullScreenEnabledFlow(): Flow<Boolean> {
+        return localStorage().observeChanges(PREF_FULLSCREEN_ENABLED) {
+            isFullScreenEnabled()
+        }
     }
 
     override suspend fun isKeepScreenOnEnabled(): Boolean {
@@ -236,7 +235,7 @@ internal class PrefsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun zoomSettingsFlow(): Flow<ZoomSettings> =
-        observeChanges(PREF_PAGE_ZOOM_LEVEL, PREF_PINCH_TO_ZOOM_ENABLED) {
+        localStorage().observeChanges(PREF_PAGE_ZOOM_LEVEL, PREF_PINCH_TO_ZOOM_ENABLED) {
             ZoomSettings(
                 zoomLevel = getPageZoomLevel(),
                 pinchToZoomEnabled = isPinchToZoomEnabled(),
@@ -248,7 +247,7 @@ internal class PrefsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun autoPlayVideoFlow(): Flow<Boolean> {
-        return observeChanges(PREF_AUTOPLAY_VIDEO) {
+        return localStorage().observeChanges(PREF_AUTOPLAY_VIDEO) {
             isAutoPlayVideoEnabled()
         }
     }
@@ -402,12 +401,5 @@ internal class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setSelectedWakeWord(wakeWord: String) {
         localStorage().putString(PREF_SELECTED_WAKE_WORD, wakeWord)
-    }
-
-    private suspend fun <T> observeChanges(vararg keys: String, mapper: suspend () -> T): Flow<T> {
-        val localStorage = localStorage()
-        // Seed an initial emission so collectors read the current value immediately
-        return merge(localStorage.observeChanges(*keys), flowOf(""))
-            .map { mapper() }
     }
 }
