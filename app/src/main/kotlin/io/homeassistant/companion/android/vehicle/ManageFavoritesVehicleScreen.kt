@@ -141,7 +141,7 @@ class ManageFavoritesVehicleScreen(
         val isFavorite = favoritesList.any {
             it.serverId == serverId.value && it.entityId == entity.entityId
         }
-        val friendlyName = entity.attributes["friendly_name"]?.toString() ?: entity.entityId
+        val friendlyName = entity.friendlyName
         val domainLabel = SUPPORTED_DOMAINS_WITH_STRING[entity.domain]
             ?.let { carContext.getString(it) }
             ?: entity.domain
