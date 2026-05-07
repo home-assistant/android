@@ -59,7 +59,7 @@ class ManageFavoritesVehicleScreen(
                         .sortedWith(
                             compareByDescending<Entity> { entity ->
                                 favoriteEntityIds.contains(entity.entityId)
-                            }.thenBy { it.attributes["friendly_name"]?.toString() ?: it.entityId },
+                            }.thenBy { it.friendlyName },
                         )
                     val listChanged = newEntities.map { it.entityId } != entities.map { it.entityId }
                     if (listChanged) page = 0
