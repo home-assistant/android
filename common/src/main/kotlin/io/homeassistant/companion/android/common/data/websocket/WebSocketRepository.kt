@@ -83,9 +83,20 @@ interface WebSocketRepository {
 
     /**
      * Add a new set of Thread network credentials to the server.
+     *
+     * Note: this command is idempotent for an already-stored TLV and never promotes the dataset
+     * to the server's preferred one. Use [setThreadPreferredDataset] to explicitly promote.
+     *
      * @return `true` if the server indicated success
      */
     suspend fun addThreadDataset(tlv: ByteArray): Boolean
+
+    /**
+     * Set the server's preferred Thread dataset.
+     * @param datasetId The dataset ID as provided by the server
+     * @return `true` if the server indicated success
+     */
+    suspend fun setThreadPreferredDataset(datasetId: String): Boolean
 
     /**
      * Get an Assist response for the given text input. For core >= 2023.5, use [runAssistPipelineForText]
