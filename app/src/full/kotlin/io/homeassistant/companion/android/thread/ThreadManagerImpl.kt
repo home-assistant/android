@@ -135,6 +135,7 @@ class ThreadManagerImpl @Inject constructor(
 
                 var exportFromDevice = false
                 var updated: Boolean? = null
+                var deviceNowPrefersCore: Boolean? = null
                 if (!coreIsDevicePreferred) {
                     if (appIsDevicePreferred) {
                         // Update or remove the device preferred credential to match core state.
@@ -169,6 +170,24 @@ class ThreadManagerImpl @Inject constructor(
                                     )
                                 }
                                 Timber.d("Thread update device completed: deleted ${localIds.size} datasets, updated 1")
+                                // ThreadNetworkClient.addCredentials does not promote the new
+                                // credential to preferred. Verify what Play Services chose so the
+                                // caller can report honestly instead of assuming success.
+                                deviceNowPrefersCore = try {
+                                    isPreferredDatasetByDevice(context, coreThreadDataset.datasetId, serverId)
+                                } catch (e: Exception) {
+                                    Timber.w(e, "Unable to verify preferred dataset after import")
+                                    null
+                                }
+                                Timber.d(
+                                    "Thread: after import device ${
+                                        when (deviceNowPrefersCore) {
+                                            true -> "now prefers"
+                                            false -> "still doesn't prefer"
+                                            null -> "preference state unknown for"
+                                        }
+                                    } core preferred dataset",
+                                )
                                 true
                             } else { // Core prefers imported from other app, this shouldn't be managed by HA
                                 localIds.forEach { baId ->
@@ -197,6 +216,7 @@ class ThreadManagerImpl @Inject constructor(
                     matches = coreIsDevicePreferred,
                     fromApp = appIsDevicePreferred,
                     updated = updated,
+                    deviceNowPrefersCore = deviceNowPrefersCore,
                     exportIntent = if (exportFromDevice) deviceThreadIntent else null,
                 )
             } catch (e: Exception) {
@@ -205,6 +225,7 @@ class ThreadManagerImpl @Inject constructor(
                     matches = null,
                     fromApp = null,
                     updated = null,
+                    deviceNowPrefersCore = null,
                     exportIntent = null,
                 )
             }
@@ -262,6 +283,7 @@ class ThreadManagerImpl @Inject constructor(
         }
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
     private suspend fun appAddedIsPreferredCredentials(context: Context): Boolean {
         val appCredentials = suspendCoroutine { cont ->
             ThreadNetwork.getNetworkClient(context)
@@ -274,9 +296,10 @@ class ThreadManagerImpl @Inject constructor(
                 val isPreferred = isPreferredCredentials(context, it)
                 if (isPreferred) {
                     Timber.d(
-                        "Thread device prefers app added dataset: ${it.networkName} (PAN ${it.panId}, EXTPAN ${String(
-                            it.extendedPanId,
-                        )})",
+                        "Thread device prefers app added dataset: %s (PAN %s, EXTPAN %s)",
+                        it.networkName,
+                        it.panId,
+                        it.extendedPanId.toHexString(HexFormat.UpperCase),
                     )
                 }
                 isPreferred

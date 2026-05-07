@@ -100,10 +100,12 @@ class DeveloperSettingsPresenterImpl @Inject constructor(
                         } else if (syncResult.matches == true) {
                             view.onThreadDebugResult(context.getString(commonR.string.thread_debug_result_match), true)
                         } else if (syncResult.fromApp == true && syncResult.updated == true) {
-                            view.onThreadDebugResult(
-                                context.getString(commonR.string.thread_debug_result_updated),
-                                true,
-                            )
+                            val message = if (syncResult.deviceNowPrefersCore == false) {
+                                context.getString(commonR.string.thread_debug_result_updated_not_preferred)
+                            } else {
+                                context.getString(commonR.string.thread_debug_result_updated)
+                            }
+                            view.onThreadDebugResult(message, syncResult.deviceNowPrefersCore != false)
                         } else if (syncResult.fromApp == true && syncResult.updated == false) {
                             view.onThreadDebugResult(
                                 context.getString(commonR.string.thread_debug_result_removed),
