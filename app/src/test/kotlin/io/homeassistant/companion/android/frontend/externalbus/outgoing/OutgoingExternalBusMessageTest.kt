@@ -4,6 +4,7 @@ import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.frontend.externalbus.frontendExternalBusJson
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -21,6 +22,7 @@ class OutgoingExternalBusMessageTest {
                     canCommissionMatter = true,
                     canExportThread = true,
                     hasBarCodeScanner = 0,
+                    canSetupImprov = true,
                     appVersion = AppVersion.from("1.0.0 (1)"),
                 ),
             ),
@@ -32,12 +34,31 @@ class OutgoingExternalBusMessageTest {
     }
 
     @Test
+    fun `Given device without BLE when serializing config then canSetupImprov is false`() {
+        val json = frontendExternalBusJson.encodeToString<OutgoingExternalBusMessage>(
+            ResultMessage.config(
+                id = 2,
+                config = ConfigResult.create(
+                    hasNfc = false,
+                    canCommissionMatter = false,
+                    canExportThread = false,
+                    hasBarCodeScanner = 0,
+                    canSetupImprov = false,
+                    appVersion = AppVersion.from("1.0.0 (1)"),
+                ),
+            ),
+        )
+        assertTrue(json.contains(""""canSetupImprov":false"""))
+    }
+
+    @Test
     fun `Given ConfigResult then default values are correct`() {
         val config = ConfigResult.create(
             hasNfc = false,
             canCommissionMatter = false,
             canExportThread = false,
             hasBarCodeScanner = 0,
+            canSetupImprov = true,
             appVersion = AppVersion.from("1.0.0 (1)"),
         )
 
@@ -48,5 +69,19 @@ class OutgoingExternalBusMessageTest {
         assertTrue(config.downloadFileSupported)
         assertTrue(config.hasEntityAddTo)
         assertTrue(config.hasAssistSettings)
+    }
+
+    @Test
+    fun `Given canSetupImprov passed false to create then ConfigResult exposes canSetupImprov false`() {
+        val config = ConfigResult.create(
+            hasNfc = false,
+            canCommissionMatter = false,
+            canExportThread = false,
+            hasBarCodeScanner = 0,
+            canSetupImprov = false,
+            appVersion = AppVersion.from("1.0.0 (1)"),
+        )
+
+        assertFalse(config.canSetupImprov)
     }
 }

@@ -88,12 +88,14 @@ data class ConfigResult(
             canCommissionMatter: Boolean,
             canExportThread: Boolean,
             hasBarCodeScanner: Int,
+            canSetupImprov: Boolean,
             appVersion: AppVersion,
         ) = ConfigResult(
             canWriteTag = hasNfc,
             canCommissionMatter = canCommissionMatter,
             canImportThreadCredentials = canExportThread,
             hasBarCodeScanner = hasBarCodeScanner,
+            canSetupImprov = canSetupImprov,
             appVersion = appVersion.value,
         )
     }

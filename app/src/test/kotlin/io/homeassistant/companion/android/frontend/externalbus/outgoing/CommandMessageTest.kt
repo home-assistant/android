@@ -42,4 +42,26 @@ class CommandMessageTest {
             json,
         )
     }
+
+    @Test
+    fun `Given ImprovDiscoveredDeviceMessage when serializing then produces command with name payload`() {
+        val message = ImprovDiscoveredDeviceMessage(name = "Smart Plug")
+
+        val json = frontendExternalBusJson.encodeToString<OutgoingExternalBusMessage>(message)
+
+        assertEquals(
+            """{"type":"command","id":null,"command":"improv/discovered_device","payload":{"name":"Smart Plug"}}""",
+            json,
+        )
+    }
+
+    @Test
+    fun `Given ImprovDeviceSetupDoneMessage when serializing then produces command without payload`() {
+        val json = frontendExternalBusJson.encodeToString<OutgoingExternalBusMessage>(ImprovDeviceSetupDoneMessage)
+
+        assertEquals(
+            """{"type":"command","id":null,"command":"improv/device_setup_done","payload":null}""",
+            json,
+        )
+    }
 }
