@@ -1183,6 +1183,7 @@
     <string name="thread_export_success">Imported credential</string>
     <string name="thread_export_none">You don\'t have any credentials to import.</string>
     <string name="thread_export_not_connected">You are not connected to a local network. Connect to Wi-Fi or ethernet to import Thread credentials.</string>
+    <string name="thread_export_user_not_admin">Managing Thread credentials requires an administrator account on the Home Assistant server.</string>
     <string name="thread_export_unavailable">Thread is currently unavailable</string>
     <string name="tile_vibrate">Vibrate when selected</string>
     <string name="tile_auth_required">Requires unlocked device</string>
