@@ -34,8 +34,8 @@ internal val MIN_SCANNING_DURATION = 1.5.seconds
  * Drives the NFC / QR tag reader flow.
  *
  * Reads the tag id from the incoming URL, decides whether it can be auto-scanned
- * (canonical UUID) or requires manual user approval (any other id), and exposes
- * the result as [uiState].
+ * based on whether it is already present in the allowed tags preference, or requires
+ * manual user approval when it is not yet allowed, and exposes the result as [uiState].
  */
 @HiltViewModel
 class TagReaderViewModel @Inject constructor(
