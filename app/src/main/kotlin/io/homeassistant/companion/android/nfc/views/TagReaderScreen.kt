@@ -55,8 +55,11 @@ import io.homeassistant.companion.android.util.safeBottomWindowInsets
 
 private val SCANNING_CONTENT_HEIGHT = 160.dp
 
-/** Visible diameter of the sheet close button. Larger than the icon, smaller than a 48dp tap target. */
-private val CLOSE_BUTTON_SIZE = 40.dp
+/** Visible diameter of the sheet close button (background + clip). */
+private val CLOSE_BUTTON_VISIBLE_SIZE = 40.dp
+
+/** Tap target size of the sheet close button — meets Material's 48dp minimum for accessibility. */
+private val CLOSE_BUTTON_TAP_SIZE = 48.dp
 
 /**
  * Renders the tag reader UI for a given [state].
@@ -184,9 +187,7 @@ private fun TagApprovalSheetHeader(onClose: () -> Unit, modifier: Modifier = Mod
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(HADimens.SPACE2)
-                .size(CLOSE_BUTTON_SIZE)
-                .clip(CircleShape)
-                .background(LocalHAColorScheme.current.colorSurfaceLow)
+                .size(CLOSE_BUTTON_TAP_SIZE)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -194,11 +195,19 @@ private fun TagApprovalSheetHeader(onClose: () -> Unit, modifier: Modifier = Mod
                 ),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = stringResource(commonR.string.cancel),
-                tint = LocalHAColorScheme.current.colorOnNeutralQuiet,
-            )
+            Box(
+                modifier = Modifier
+                    .size(CLOSE_BUTTON_VISIBLE_SIZE)
+                    .clip(CircleShape)
+                    .background(LocalHAColorScheme.current.colorSurfaceLow),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = stringResource(commonR.string.cancel),
+                    tint = LocalHAColorScheme.current.colorOnNeutralQuiet,
+                )
+            }
         }
     }
 }

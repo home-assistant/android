@@ -371,6 +371,10 @@
         <activity
             android:name=".nfc.TagReaderActivity"
             android:label="@string/tag_reader_title"
+            android:launchMode="singleTask"
+            android:taskAffinity="io.homeassistant.companion.android.tag.reader"
+            android:autoRemoveFromRecents="true"
+            android:showWhenLocked="true"
             android:exported="true"
             android:theme="@style/Theme.HomeAssistant.TranslucentOverlay">
             <tools:validation testUrl="https://www.home-assistant.io/tag/123e4567-e89b-12d3-a456-426614174000" />

@@ -4,6 +4,7 @@ import android.graphics.drawable.AdaptiveIconDrawable
 import android.os.Build
 import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
@@ -33,20 +34,15 @@ import androidx.core.graphics.drawable.toBitmap
  */
 @Composable
 fun adaptiveIconPainterResource(@DrawableRes id: Int): Painter {
-    val res = LocalResources.current
+    val resources = LocalResources.current
     val theme = LocalContext.current.theme
 
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        // Android O supports adaptive icons, try loading this first (even though this is least likely to be the format).
-        val adaptiveIcon = ResourcesCompat.getDrawable(res, id, theme) as? AdaptiveIconDrawable
-        if (adaptiveIcon != null) {
-            BitmapPainter(adaptiveIcon.toBitmap().asImageBitmap())
-        } else {
-            // We couldn't load the drawable as an Adaptive Icon, just use painterResource
-            painterResource(id)
-        }
-    } else {
-        // We're not on Android O or later, just use painterResource
-        painterResource(id)
+    val adaptivePainter: Painter? = remember(id, resources, theme) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return@remember null
+        val drawable = ResourcesCompat.getDrawable(resources, id, theme) as? AdaptiveIconDrawable
+            ?: return@remember null
+        BitmapPainter(drawable.toBitmap().asImageBitmap())
     }
+
+    return adaptivePainter ?: painterResource(id)
 }
