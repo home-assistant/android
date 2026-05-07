@@ -10,9 +10,6 @@ import io.homeassistant.companion.android.di.qualifiers.NamedThemesStorage
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -208,12 +205,7 @@ internal class PrefsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun fullScreenEnabledFlow(): Flow<Boolean> {
-        val localStorage = localStorage()
-        return merge(
-            localStorage.observeChanges(PREF_FULLSCREEN_ENABLED),
-            // Seed an initial emission so collectors read the current value immediately
-            flowOf(""),
-        ).map {
+        return localStorage().observeChanges(PREF_FULLSCREEN_ENABLED) {
             isFullScreenEnabled()
         }
     }
@@ -242,23 +234,22 @@ internal class PrefsRepositoryImpl @Inject constructor(
         localStorage().putBoolean(PREF_PINCH_TO_ZOOM_ENABLED, enabled)
     }
 
-    override suspend fun zoomSettingsFlow(): Flow<ZoomSettings> {
-        val localStorage = localStorage()
-        return merge(
-            localStorage.observeChanges(PREF_PAGE_ZOOM_LEVEL),
-            localStorage.observeChanges(PREF_PINCH_TO_ZOOM_ENABLED),
-            // Seed an initial emission so collectors read the current values immediately
-            flowOf(""),
-        ).map {
+    override suspend fun zoomSettingsFlow(): Flow<ZoomSettings> =
+        localStorage().observeChanges(PREF_PAGE_ZOOM_LEVEL, PREF_PINCH_TO_ZOOM_ENABLED) {
             ZoomSettings(
                 zoomLevel = getPageZoomLevel(),
                 pinchToZoomEnabled = isPinchToZoomEnabled(),
             )
         }
-    }
 
     override suspend fun isAutoPlayVideoEnabled(): Boolean {
         return localStorage().getBoolean(PREF_AUTOPLAY_VIDEO)
+    }
+
+    override suspend fun autoPlayVideoFlow(): Flow<Boolean> {
+        return localStorage().observeChanges(PREF_AUTOPLAY_VIDEO) {
+            isAutoPlayVideoEnabled()
+        }
     }
 
     override suspend fun setAutoPlayVideo(enabled: Boolean) {

@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.frontend
 
 import android.net.Uri
+import android.view.View
 import android.webkit.HttpAuthHandler
 import android.webkit.JsResult
 import android.webkit.ValueCallback
@@ -66,12 +67,15 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @ExtendWith(ConsoleLogExtension::class)
@@ -89,8 +93,10 @@ class FrontendViewModelTest {
     private val downloadManager: FrontendDownloadManager = mockk(relaxed = true)
     private val gestureHandler: FrontendGestureHandler = mockk(relaxed = true)
     private val zoomSettingsFlow = MutableStateFlow(ZoomSettings())
+    private val autoPlayVideoFlow = MutableStateFlow(false)
     private val prefsRepository: PrefsRepository = mockk(relaxed = true) {
         coEvery { this@mockk.zoomSettingsFlow() } returns this@FrontendViewModelTest.zoomSettingsFlow
+        coEvery { this@mockk.autoPlayVideoFlow() } returns this@FrontendViewModelTest.autoPlayVideoFlow
     }
 
     private val serverId = 1
@@ -1106,7 +1112,7 @@ class FrontendViewModelTest {
 
         private fun captureJsConfirmCallback(): Pair<FrontendViewModel, (String, JsResult) -> Boolean> {
             val viewModel = createViewModel()
-            val client = viewModel.webChromeClient
+            val client = viewModel.createWebChromeClient(onShowCustomView = {}, onHideCustomView = {})
             val callback: (String, JsResult) -> Boolean = { message, result ->
                 // view and url are unused by HAWebChromeClient when message and result are non-null
                 client.onJsConfirm(null, null, message, result)
@@ -1212,7 +1218,9 @@ class FrontendViewModelTest {
             val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
             val fileChooserParams = mockk<WebChromeClient.FileChooserParams>(relaxed = true)
 
-            val handled = viewModel.webChromeClient.onShowFileChooser(
+            val client = viewModel.createWebChromeClient(onShowCustomView = {}, onHideCustomView = {})
+
+            val handled = client.onShowFileChooser(
                 mockk(relaxed = true),
                 filePathCallback,
                 fileChooserParams,
@@ -1234,7 +1242,9 @@ class FrontendViewModelTest {
             val viewModel = createViewModel()
             val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
 
-            viewModel.webChromeClient.onShowFileChooser(
+            val client = viewModel.createWebChromeClient(onShowCustomView = {}, onHideCustomView = {})
+
+            val handled = client.onShowFileChooser(
                 mockk(relaxed = true),
                 filePathCallback,
                 mockk(relaxed = true),
@@ -1261,7 +1271,9 @@ class FrontendViewModelTest {
             val viewModel = createViewModel()
             val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
 
-            viewModel.webChromeClient.onShowFileChooser(
+            val client = viewModel.createWebChromeClient(onShowCustomView = {}, onHideCustomView = {})
+
+            val handled = client.onShowFileChooser(
                 mockk(relaxed = true),
                 filePathCallback,
                 mockk(relaxed = true),
@@ -1624,6 +1636,107 @@ class FrontendViewModelTest {
             onCleared.invoke(viewModel)
 
             verify { exoPlayerManager.close() }
+        }
+    }
+
+    @Nested
+    inner class CustomView {
+
+        @Test
+        fun `Given factory client when onShowCustomView then provided show callback receives the View`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val viewModel = createViewModel()
+            var capturedView: View? = null
+            val client = viewModel.createWebChromeClient(
+                onShowCustomView = { capturedView = it },
+                onHideCustomView = {},
+            )
+            val customView = mockk<View>(relaxed = true)
+
+            client.onShowCustomView(customView, mockk(relaxed = true))
+
+            assertSame(customView, capturedView)
+        }
+
+        @Test
+        fun `Given factory client when onHideCustomView then provided hide callback is invoked`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val viewModel = createViewModel()
+            var hideInvoked = false
+            val client = viewModel.createWebChromeClient(
+                onShowCustomView = {},
+                onHideCustomView = { hideInvoked = true },
+            )
+
+            client.onHideCustomView()
+
+            assertTrue(hideInvoked)
+        }
+
+        @Test
+        fun `Given factory client when onShowCustomView then RequestFullscreen true emitted`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val viewModel = createViewModel()
+            val client = viewModel.createWebChromeClient(onShowCustomView = {}, onHideCustomView = {})
+
+            viewModel.events.test {
+                client.onShowCustomView(mockk<View>(relaxed = true), mockk(relaxed = true))
+                assertEquals(FrontendEvent.RequestFullscreen(fullscreen = true), awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given factory client when onHideCustomView then RequestFullscreen false emitted`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val viewModel = createViewModel()
+            val client = viewModel.createWebChromeClient(onShowCustomView = {}, onHideCustomView = {})
+
+            viewModel.events.test {
+                client.onShowCustomView(mockk<View>(relaxed = true), mockk(relaxed = true))
+                assertEquals(FrontendEvent.RequestFullscreen(fullscreen = true), awaitItem())
+                client.onHideCustomView()
+                assertEquals(FrontendEvent.RequestFullscreen(fullscreen = false), awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+    }
+
+    @Nested
+    inner class AutoPlayVideoSetting {
+
+        @Test
+        fun `Given pref flow emits new value when collected then exposed StateFlow reflects it`() = runTest {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            assertEquals(false, viewModel.autoPlayVideoEnabled.value)
+
+            autoPlayVideoFlow.value = true
+            advanceUntilIdle()
+
+            assertEquals(true, viewModel.autoPlayVideoEnabled.value)
+        }
+
+        @ParameterizedTest
+        @ValueSource(booleans = [true, false])
+        fun `Given pref flow seeded with value when ViewModel constructed then exposed StateFlow has that value`(
+            value: Boolean,
+        ) = runTest {
+            autoPlayVideoFlow.value = value
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            assertEquals(value, viewModel.autoPlayVideoEnabled.value)
         }
     }
 }
