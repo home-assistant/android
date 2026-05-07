@@ -101,7 +101,16 @@ class DeveloperSettingsPresenterImpl @Inject constructor(
                             view.onThreadDebugResult(context.getString(commonR.string.thread_debug_result_match), true)
                         } else if (syncResult.fromApp == true && syncResult.updated == true) {
                             val message = if (syncResult.deviceNowPrefersCore == false) {
-                                context.getString(commonR.string.thread_debug_result_updated_not_preferred)
+                                val base = context.getString(commonR.string.thread_debug_result_updated_not_preferred)
+                                val name = syncResult.devicePreferredNetworkName
+                                if (name != null) {
+                                    "$base ${context.getString(
+                                        commonR.string.thread_debug_result_mismatch_detail,
+                                        name,
+                                    )}"
+                                } else {
+                                    base
+                                }
                             } else {
                                 context.getString(commonR.string.thread_debug_result_updated)
                             }

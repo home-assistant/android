@@ -78,7 +78,7 @@ class ThreadManagerImpl @Inject constructor(
         return if (getDeviceDataset == null) {
             ThreadManager.SyncResult.NoneHaveCredentials
         } else {
-            val appIsDevicePreferred = appAddedIsPreferredCredentials(context)
+            val appIsDevicePreferred = appAddedPreferredCredential(context) != null
             Timber.d("Thread: device ${if (appIsDevicePreferred) "prefers" else "doesn't prefer" } dataset from app")
 
             return if (appIsDevicePreferred) {
@@ -128,7 +128,8 @@ class ThreadManagerImpl @Inject constructor(
                 Timber.d(
                     "Thread: device ${if (coreIsDevicePreferred) "prefers" else "doesn't prefer" } core preferred dataset",
                 )
-                val appIsDevicePreferred = coreIsDevicePreferred || appAddedIsPreferredCredentials(context)
+                val appPreferredCredential = if (coreIsDevicePreferred) null else appAddedPreferredCredential(context)
+                val appIsDevicePreferred = coreIsDevicePreferred || appPreferredCredential != null
                 Timber.d(
                     "Thread: device ${if (appIsDevicePreferred) "prefers" else "doesn't prefer" } dataset from app",
                 )
@@ -136,6 +137,7 @@ class ThreadManagerImpl @Inject constructor(
                 var exportFromDevice = false
                 var updated: Boolean? = null
                 var deviceNowPrefersCore: Boolean? = null
+                var devicePreferredNetworkName: String? = null
                 if (!coreIsDevicePreferred) {
                     if (appIsDevicePreferred) {
                         // Update or remove the device preferred credential to match core state.
@@ -188,6 +190,9 @@ class ThreadManagerImpl @Inject constructor(
                                         }
                                     } core preferred dataset",
                                 )
+                                if (deviceNowPrefersCore == false) {
+                                    devicePreferredNetworkName = appAddedPreferredCredential(context)?.networkName
+                                }
                                 true
                             } else { // Core prefers imported from other app, this shouldn't be managed by HA
                                 localIds.forEach { baId ->
@@ -217,6 +222,7 @@ class ThreadManagerImpl @Inject constructor(
                     fromApp = appIsDevicePreferred,
                     updated = updated,
                     deviceNowPrefersCore = deviceNowPrefersCore,
+                    devicePreferredNetworkName = devicePreferredNetworkName,
                     exportIntent = if (exportFromDevice) deviceThreadIntent else null,
                 )
             } catch (e: Exception) {
@@ -226,6 +232,7 @@ class ThreadManagerImpl @Inject constructor(
                     fromApp = null,
                     updated = null,
                     deviceNowPrefersCore = null,
+                    devicePreferredNetworkName = null,
                     exportIntent = null,
                 )
             }
@@ -284,7 +291,7 @@ class ThreadManagerImpl @Inject constructor(
     }
 
     @OptIn(ExperimentalStdlibApi::class)
-    private suspend fun appAddedIsPreferredCredentials(context: Context): Boolean {
+    private suspend fun appAddedPreferredCredential(context: Context): ThreadNetworkCredentials? {
         val appCredentials = suspendCoroutine { cont ->
             ThreadNetwork.getNetworkClient(context)
                 .allCredentials
@@ -292,21 +299,17 @@ class ThreadManagerImpl @Inject constructor(
                 .addOnFailureListener { cont.resume(null) }
         }
         return try {
-            appCredentials?.any {
-                val isPreferred = isPreferredCredentials(context, it)
-                if (isPreferred) {
-                    Timber.d(
-                        "Thread device prefers app added dataset: %s (PAN %s, EXTPAN %s)",
-                        it.networkName,
-                        it.panId,
-                        it.extendedPanId.toHexString(HexFormat.UpperCase),
-                    )
-                }
-                isPreferred
-            } ?: false
+            appCredentials?.firstOrNull { isPreferredCredentials(context, it) }?.also {
+                Timber.d(
+                    "Thread device prefers app added dataset: %s (PAN %s, EXTPAN %s)",
+                    it.networkName,
+                    it.panId,
+                    it.extendedPanId.toHexString(HexFormat.UpperCase),
+                )
+            }
         } catch (e: Exception) {
             Timber.e(e, "Thread app added credentials preferred check failed")
-            false
+            null
         }
     }
 
