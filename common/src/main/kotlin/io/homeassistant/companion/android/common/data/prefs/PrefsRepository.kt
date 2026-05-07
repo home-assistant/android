@@ -160,4 +160,10 @@ interface PrefsRepository {
     suspend fun getSelectedWakeWord(): String?
 
     suspend fun setSelectedWakeWord(wakeWord: String)
+
+    suspend fun addAllowedTag(tag: String)
+
+    suspend fun allowedTags(): Set<String>
+
+    suspend fun clearAllowedTags()
 }

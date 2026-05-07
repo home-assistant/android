@@ -168,4 +168,10 @@ class DeveloperSettingsPresenterImpl @Inject constructor(
             view.onWebViewClearCacheResult(success = false)
         }
     }
+
+    override fun clearAllowedTags() {
+        mainScope.launch {
+            prefsRepository.clearAllowedTags()
+        }
+    }
 }

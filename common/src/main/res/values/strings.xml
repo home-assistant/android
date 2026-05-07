@@ -151,6 +151,8 @@
     <string name="changelog">View full change log</string>
     <string name="choose_entity">Choose entity</string>
     <string name="clear_favorites">Clear favorites</string>
+    <string name="clear_allowed_tags">Clear approved tags</string>
+    <string name="clear_allowed_tags_complete">Tags cleared</string>
     <string name="clear_search">Clear search</string>
     <string name="clear_webview_cache">Reset frontend cache</string>
     <string name="clear_webview_cache_active">Resetting…</string>
