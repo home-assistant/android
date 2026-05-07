@@ -11,6 +11,7 @@ interface ThreadManager {
     sealed class SyncResult {
         object AppUnsupported : SyncResult()
         object ServerUnsupported : SyncResult()
+        object ServerUserNotAdmin : SyncResult()
         object NotConnected : SyncResult()
         class OnlyOnServer(val imported: Boolean) : SyncResult()
         class OnlyOnDevice(val exportIntent: IntentSender?) : SyncResult()

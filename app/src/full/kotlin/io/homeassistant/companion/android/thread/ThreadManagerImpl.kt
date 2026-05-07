@@ -38,6 +38,11 @@ class ThreadManagerImpl @Inject constructor(
 
     override suspend fun coreSupportsThread(serverId: Int): Boolean {
         if (!serverManager.isRegistered() || serverManager.getServer(serverId)?.user?.isAdmin != true) return false
+        return serverHasThreadComponent(serverId)
+    }
+
+    private suspend fun serverHasThreadComponent(serverId: Int): Boolean {
+        if (!serverManager.isRegistered() || serverManager.getServer(serverId) == null) return false
         val config = serverManager.webSocketRepository(serverId).getConfig()
         return config != null &&
             config.components.contains("thread") &&
@@ -54,7 +59,10 @@ class ThreadManagerImpl @Inject constructor(
         scope: CoroutineScope,
     ): ThreadManager.SyncResult {
         if (!appSupportsThread()) return ThreadManager.SyncResult.AppUnsupported
-        if (!coreSupportsThread(serverId)) return ThreadManager.SyncResult.ServerUnsupported
+        if (!serverHasThreadComponent(serverId)) return ThreadManager.SyncResult.ServerUnsupported
+        if (serverManager.getServer(serverId)?.user?.isAdmin != true) {
+            return ThreadManager.SyncResult.ServerUserNotAdmin
+        }
 
         return if (exportOnly) { // Limited sync, only export non-app dataset
             exportSyncPreferredDataset(context)
