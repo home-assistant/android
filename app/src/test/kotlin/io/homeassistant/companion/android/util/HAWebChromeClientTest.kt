@@ -146,4 +146,35 @@ class HAWebChromeClientTest {
         assertFalse(handled)
         verify(exactly = 0) { filePathCallback.onReceiveValue(any()) }
     }
+
+    @Test
+    fun `Given onShowCustomView callback when triggered then view is forwarded`() {
+        var capturedView: android.view.View? = null
+        val client = HAWebChromeClient(onShowCustomView = { view -> capturedView = view })
+        val view = mockk<android.view.View>(relaxed = true)
+
+        client.onShowCustomView(view, mockk(relaxed = true))
+
+        assertTrue(capturedView === view)
+    }
+
+    @Test
+    fun `Given onShowCustomView with null view then callback is not invoked`() {
+        var invoked = false
+        val client = HAWebChromeClient(onShowCustomView = { invoked = true })
+
+        client.onShowCustomView(null, mockk(relaxed = true))
+
+        assertFalse(invoked)
+    }
+
+    @Test
+    fun `Given onHideCustomView callback when triggered then callback is invoked`() {
+        var invoked = false
+        val client = HAWebChromeClient(onHideCustomView = { invoked = true })
+
+        client.onHideCustomView()
+
+        assertTrue(invoked)
+    }
 }

@@ -8,6 +8,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -110,16 +113,24 @@ class LocalStorageImpl(sharedPreferences: suspend () -> SharedPreferences) : Loc
         withContext(Dispatchers.IO) { sharedPreferences().edit { remove(key) } }
     }
 
-    override fun observeChanges(key: String): Flow<String> = callbackFlow {
+    override fun observeChanges(vararg keys: String): Flow<String> = callbackFlow {
         val prefs = sharedPreferences()
-        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, changedKey ->
-            if (changedKey == key) {
-                launch { send(key) }
+        keys.forEach { key ->
+            val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, changedKey ->
+                if (changedKey == key) {
+                    launch { send(key) }
+                }
+            }
+            prefs.registerOnSharedPreferenceChangeListener(listener)
+            awaitClose {
+                prefs.unregisterOnSharedPreferenceChangeListener(listener)
             }
         }
-        prefs.registerOnSharedPreferenceChangeListener(listener)
-        awaitClose {
-            prefs.unregisterOnSharedPreferenceChangeListener(listener)
-        }
+    }
+
+    override suspend fun <T> observeChanges(vararg keys: String, mapper: suspend () -> T): Flow<T> {
+        // Seed an initial emission so collectors read the current value immediately
+        return merge(observeChanges(*keys), flowOf(""))
+            .map { mapper() }
     }
 }

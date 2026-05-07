@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend
 
+import android.view.View
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -53,6 +54,8 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
@@ -218,26 +221,6 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     /** The current pending file chooser request from the WebView, or null if none. */
     val pendingFileChooser: StateFlow<FileChooserRequest?> = fileChooserManager.pendingFileChooser
 
-    val webChromeClient: HAWebChromeClient = HAWebChromeClient(
-        onPermissionRequest = { request ->
-            viewModelScope.launch {
-                permissionManager.onWebViewPermissionRequest(request)
-            }
-        },
-        onJsConfirm = { message, jsResult ->
-            viewModelScope.launch {
-                if (dialogManager.showJsConfirm(message)) jsResult.confirm() else jsResult.cancel()
-            }
-            true
-        },
-        onShowFileChooser = { filePathCallback, fileChooserParams ->
-            viewModelScope.launch {
-                filePathCallback.onReceiveValue(fileChooserManager.pickFiles(fileChooserParams))
-            }
-            true
-        },
-    )
-
     /** The current pending permission request that needs user approval, or null if none. */
     val pendingPermissionRequest = permissionManager.pendingPermissionRequest
 
@@ -251,6 +234,19 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
     /** Job tracking the zoom settings flow collection - restarted on each page load. */
     private var zoomObserverJob: Job? = null
+
+    /**
+     * The user's "Autoplay video" preference.
+     *
+     * Lives outside [FrontendViewState] because the WebView is rendered during `Loading`,
+     * `Content`, and `Error`states , and all three states need the value. Exposed as a [StateFlow]
+     * so the screen can read the current value synchronously when configuring the WebView at
+     * creation time (avoiding a one-shot reload once the persisted value lands) and react to
+     * subsequent changes via collection.
+     */
+    val autoPlayVideoEnabled: StateFlow<Boolean> = flow {
+        emitAll(prefsRepository.autoPlayVideoFlow())
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = false)
 
     init {
         viewModelScope.launch {
@@ -305,6 +301,46 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             }
         }
     }
+
+    /**
+     * Builds an [HAWebChromeClient] wired to this ViewModel for permission/JS handling, while
+     * delegating WebView fullscreen view ownership to the caller.
+     *
+     * The fullscreen [android.view.View] handed over by `onShowCustomView` is bound to the
+     * WebView's Activity context. Holding it in ViewModel state would leak that Activity across
+     * configuration changes, so the caller (a Composable) keeps the View in screen-scoped state
+     * and supplies setters via [onShowCustomView] and [onHideCustomView]. The ViewModel still
+     * owns the system-fullscreen request and emits [FrontendEvent.RequestFullscreen] on the
+     * caller's behalf.
+     */
+    fun createWebChromeClient(onShowCustomView: (View) -> Unit, onHideCustomView: () -> Unit): HAWebChromeClient =
+        HAWebChromeClient(
+            onPermissionRequest = { request ->
+                viewModelScope.launch {
+                    permissionManager.onWebViewPermissionRequest(request)
+                }
+            },
+            onJsConfirm = { message, jsResult ->
+                viewModelScope.launch {
+                    if (dialogManager.showJsConfirm(message)) jsResult.confirm() else jsResult.cancel()
+                }
+                true
+            },
+            onShowFileChooser = { filePathCallback, fileChooserParams ->
+                viewModelScope.launch {
+                    filePathCallback.onReceiveValue(fileChooserManager.pickFiles(fileChooserParams))
+                }
+                true
+            },
+            onShowCustomView = { view ->
+                onShowCustomView(view)
+                _events.tryEmit(FrontendEvent.RequestFullscreen(fullscreen = true))
+            },
+            onHideCustomView = {
+                onHideCustomView()
+                _events.tryEmit(FrontendEvent.RequestFullscreen(fullscreen = false))
+            },
+        )
 
     fun onRetry() {
         _viewState.update {

@@ -9,7 +9,11 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -25,8 +29,14 @@ import org.junit.jupiter.params.provider.ValueSource
 @ExtendWith(ConsoleLogExtension::class)
 class PrefsRepositoryImplTest {
     private val keyChangesFlow = MutableSharedFlow<String>()
+    private val mapperSlot = slot<suspend () -> Any>()
     private val localStorage = mockk<LocalStorage> {
-        every { observeChanges(any()) } returns keyChangesFlow
+        every { observeChanges(*anyVararg<String>()) } returns keyChangesFlow
+        coEvery {
+            observeChanges(*anyVararg<String>(), mapper = capture(mapperSlot))
+        } answers {
+            merge(keyChangesFlow, flowOf("")).map { mapperSlot.captured.invoke() }
+        }
     }
     private val integrationStorage = mockk<LocalStorage>()
 
@@ -131,21 +141,38 @@ class PrefsRepositoryImplTest {
         coVerify(exactly = 0) { integrationStorage.getString(any()) }
     }
 
+    @Test
+    fun `Given collecting flow when autoplay key changes then updated value is emitted`() = runTest {
+        coEvery { localStorage.getBoolean("autoplay_video") } returns false
+
+        repository.autoPlayVideoFlow().test {
+            assertFalse(awaitItem())
+
+            coEvery { localStorage.getBoolean("autoplay_video") } returns true
+            keyChangesFlow.emit("autoplay_video")
+
+            assertTrue(awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `Given collecting flow when full screen changes then updated full screen enabled is emitted`() = runTest {
+        coEvery { localStorage.getBoolean("fullscreen_enabled") } returns true
+
+        repository.fullScreenEnabledFlow().test {
+            assertTrue(awaitItem())
+
+            coEvery { localStorage.getBoolean("fullscreen_enabled") } returns false
+            keyChangesFlow.emit("fullscreen_enabled")
+
+            assertFalse(awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
     @Nested
     inner class ZoomSettingsFlow {
-
-        @Test
-        fun `Given collecting flow then current zoom settings are emitted immediately`() = runTest {
-            coEvery { localStorage.getInt("page_zoom_level") } returns 150
-            coEvery { localStorage.getBoolean("pinch_to_zoom_enabled") } returns true
-
-            repository.zoomSettingsFlow().test {
-                val settings = awaitItem()
-                assertEquals(150, settings.zoomLevel)
-                assertTrue(settings.pinchToZoomEnabled)
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
 
         @Test
         fun `Given collecting flow when zoom key changes then updated settings are emitted`() = runTest {
@@ -179,35 +206,6 @@ class PrefsRepositoryImplTest {
                 val updated = awaitItem()
                 assertEquals(100, updated.zoomLevel)
                 assertTrue(updated.pinchToZoomEnabled)
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
-    }
-
-    @Nested
-    inner class FullScreenEnabledFlow {
-
-        @Test
-        fun `Given collecting flow when subscribing then current full screen enabled is emitted immediately`() = runTest {
-            coEvery { localStorage.getBoolean("fullscreen_enabled") } returns true
-
-            repository.fullScreenEnabledFlow().test {
-                assertTrue(awaitItem())
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
-
-        @Test
-        fun `Given collecting flow when full screen changes then updated full screen enabled is emitted`() = runTest {
-            coEvery { localStorage.getBoolean("fullscreen_enabled") } returns true
-
-            repository.fullScreenEnabledFlow().test {
-                awaitItem() // consume initial emission
-
-                coEvery { localStorage.getBoolean("fullscreen_enabled") } returns false
-                keyChangesFlow.emit("fullscreen_enabled")
-
-                assertFalse(awaitItem())
                 cancelAndIgnoreRemainingEvents()
             }
         }

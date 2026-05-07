@@ -47,4 +47,12 @@ class LocalStorageImplTest {
         }
         verify { sharedPreferences.unregisterOnSharedPreferenceChangeListener(any()) }
     }
+
+    @Test
+    fun `Given observing keys with mapper when subscribing then mapper result is emitted immediately`() = runTest {
+        localStorage.observeChanges("my_key") { "mapped_value" }.test {
+            assertEquals("mapped_value", awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
 }
