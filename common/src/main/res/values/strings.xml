@@ -1170,6 +1170,7 @@
     <string name="thread_debug_active">Syncing…</string>
     <string name="thread_debug_result_error">An unexpected error occurred while syncing</string>
     <string name="thread_debug_result_exported">Added network from this device to Home Assistant</string>
+    <string name="thread_debug_result_exported_not_preferred">Added network from this device to Home Assistant, but Home Assistant still prefers a different network</string>
     <string name="thread_debug_result_imported">Added network from Home Assistant to this device</string>
     <string name="thread_debug_result_match">Home Assistant and this device use the same network</string>
     <string name="thread_debug_result_mismatch">Home Assistant and this device prefer different networks</string>

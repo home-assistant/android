@@ -36,5 +36,8 @@ class ThreadManagerImpl @Inject constructor() : ThreadManager {
         throw IllegalStateException("Thread is not supported with the minimal flavor")
     }
 
-    override suspend fun sendThreadDatasetExportResult(result: ActivityResult, serverId: Int): String? = null
+    override suspend fun sendThreadDatasetExportResult(
+        result: ActivityResult,
+        serverId: Int,
+    ): ThreadManager.ExportResult = ThreadManager.ExportResult.NotSent
 }
