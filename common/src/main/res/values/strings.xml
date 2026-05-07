@@ -1240,6 +1240,8 @@
     <string name="aa_manage_favorites">Manage favorites</string>
     <string name="aa_previous_page">Previous page</string>
     <string name="aa_next_page">Next page</string>
+    <string name="aa_search_entities">Search entities</string>
+    <string name="aa_search_no_results">No matching entities</string>
     <string name="alarm_control_panels">Alarm Control Panels</string>
     <string name="state_triggered">Triggered</string>
     <string name="state_disarmed">Disarmed</string>
