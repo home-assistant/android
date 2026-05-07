@@ -44,7 +44,7 @@ class ManageFavoritesVehicleScreen(
     private val toggleMutex = Mutex()
 
     init {
-        lifecycleScope.launch {
+        lifecycleScope.launch(Dispatcher.Default) {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 favoritesList = prefsRepository.getAutoFavorites()
                 allEntities.collect { entityMap ->
