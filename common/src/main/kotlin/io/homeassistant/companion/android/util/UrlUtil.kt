@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.util
 
 import android.net.Uri
+import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.MalformedHttpUrlException
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import java.net.InetAddress
@@ -121,11 +122,19 @@ object UrlUtil {
             userInfo == other.userInfo
     }
 
+    /**
+     * Matches `https://www.home-assistant.io/tag/<id>` URLs in production. Debug builds also
+     * accept `next.home-assistant.io` so the tag flow can be exercised against the next branch
+     * of the documentation site.
+     */
+    private val nfcTagUrlRegex: Regex = if (BuildConfig.DEBUG) {
+        Regex("^https?://(?:www|next)\\.home-assistant\\.io/tag/(.*)")
+    } else {
+        Regex("^https?://www\\.home-assistant\\.io/tag/(.*)")
+    }
+
     fun splitNfcTagId(it: Uri?): String? {
-        val matches =
-            Regex("^https?://www\\.home-assistant\\.io/tag/(.*)").find(
-                it.toString(),
-            )
+        val matches = nfcTagUrlRegex.find(it.toString())
         return matches?.groups?.get(1)?.value
     }
 }
