@@ -211,7 +211,7 @@ class TagReaderScreenTest {
             // showSnackbar() which suspends until the snackbar is dismissed and then invokes
             // onErrorAcknowledged.
             mainClock.advanceTimeUntil(
-                4000L, // This is SnackbarDuration.Short.toMilis but it is not public
+                4000L, // This is SnackbarDuration.Short.toMillis but it is not public
             ) { acknowledgedCalled }
 
             assertTrue("onErrorAcknowledged should be invoked once the snackbar is dismissed", acknowledgedCalled)
