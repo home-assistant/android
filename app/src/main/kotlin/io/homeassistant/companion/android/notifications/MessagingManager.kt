@@ -1649,7 +1649,7 @@ class MessagingManager @Inject constructor(
                             PendingIntent.FLAG_IMMUTABLE,
                         )
                         val action = NotificationCompat.Action.Builder(
-                            null,
+                            null, // Intentionally use no icon so Android Auto / heads-up notifications show the action title instead of replacing it with an icon
                             notificationAction.title,
                             actionPendingIntent,
                         )
