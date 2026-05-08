@@ -1649,7 +1649,7 @@ class MessagingManager @Inject constructor(
                             PendingIntent.FLAG_IMMUTABLE,
                         )
                         val action = NotificationCompat.Action.Builder(
-                            commonR.drawable.ic_stat_ic_notification,
+                            null,
                             notificationAction.title,
                             actionPendingIntent,
                         )
