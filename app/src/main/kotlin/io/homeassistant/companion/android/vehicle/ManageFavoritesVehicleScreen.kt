@@ -24,6 +24,7 @@ import com.mikepenz.iconics.utils.sizeDp
 import com.mikepenz.iconics.utils.toAndroidIconCompat
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.prefs.AutoFavorite
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.util.vehicle.SUPPORTED_DOMAINS_WITH_STRING
@@ -373,7 +374,7 @@ private fun buildFavoriteEntityRow(
     isFavorite: Boolean,
     onCheckedChange: (Boolean) -> Unit,
 ): Row {
-    val friendlyName = entity.attributes["friendly_name"]?.toString() ?: entity.entityId
+    val friendlyName = entity.friendlyName
     val domainLabel = SUPPORTED_DOMAINS_WITH_STRING[entity.domain]
         ?.let { carContext.getString(it) }
         ?: entity.domain
@@ -413,14 +414,14 @@ private fun favoriteEntityIdsForServer(favorites: List<AutoFavorite>, serverId: 
 
 private fun compareByFavoriteThenName(favoriteEntityIds: Set<String>): Comparator<Entity> =
     compareByDescending<Entity> { it.entityId in favoriteEntityIds }
-        .thenBy { it.attributes["friendly_name"]?.toString() ?: it.entityId }
+        .thenBy { it.friendlyName }
 
 private fun filterEntitiesByQuery(entities: List<Entity>, query: String): List<Entity> {
     if (query.isBlank()) return entities
     val needle = query.trim().lowercase()
     return entities.filter { entity ->
-        val friendlyName = entity.attributes["friendly_name"]?.toString()?.lowercase()
-        friendlyName?.contains(needle) == true || entity.entityId.lowercase().contains(needle)
+        entity.friendlyName.lowercase().contains(needle) ||
+            entity.entityId.lowercase().contains(needle)
     }
 }
 
