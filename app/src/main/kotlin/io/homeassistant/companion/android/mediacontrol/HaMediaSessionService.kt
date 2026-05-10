@@ -142,7 +142,7 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
         activeSessions.clear()
         sessionsToClean.forEach { (session, job) ->
             notificationManager.cancel(session.id.hashCode())
-            session.unregisterFrom(this)
+            session.mediaSession?.let { removeSession(it) }
             job.cancel()
         }
         serviceScope.cancel()
@@ -207,7 +207,7 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
         if (foregroundNotificationId == notificationId) {
             promoteForegroundOrStop(excludeKey = key)
         }
-        haSession.unregisterFrom(this)
+        haSession.mediaSession?.let { removeSession(it) }
         job.cancelAndJoin()
         Timber.d("Removed media session for $key")
     }

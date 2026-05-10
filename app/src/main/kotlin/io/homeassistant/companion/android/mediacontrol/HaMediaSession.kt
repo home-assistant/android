@@ -11,7 +11,6 @@ import androidx.annotation.OptIn
 import androidx.core.app.NotificationCompat
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaSession
-import androidx.media3.session.MediaSessionService
 import androidx.media3.session.MediaStyleNotificationHelper
 import coil3.imageLoader
 import coil3.request.ImageRequest
@@ -72,7 +71,8 @@ class HaMediaSession @AssistedInject constructor(
     /** Stable identifier for this session, derived from the entity config. */
     val id: String = "${config.serverId}:${config.entityId}"
 
-    private var mediaSession: MediaSession? = null
+    internal var mediaSession: MediaSession? = null
+        private set
 
     /** True if the player is currently playing and has at least one media item. */
     val isPlaying: Boolean
@@ -81,14 +81,6 @@ class HaMediaSession @AssistedInject constructor(
     /** True if the player has at least one media item (playing or paused). */
     val hasActiveMedia: Boolean
         get() = mediaSession?.player?.let { it.mediaItemCount > 0 } == true
-
-    /**
-     * Unregisters this session from [service] by calling
-     * [MediaSessionService.removeSession]. Has no effect if the session is not currently active.
-     */
-    fun unregisterFrom(service: MediaSessionService) {
-        mediaSession?.let { service.removeSession(it) }
-    }
 
     /**
      * Builds a [MediaStyle][MediaStyleNotificationHelper.MediaStyle] notification for this session
@@ -114,7 +106,7 @@ class HaMediaSession @AssistedInject constructor(
             .build()
     }
 
-    private fun getCommandCallback(scope: CoroutineScope, onCommandComplete: () -> Unit) =
+    private fun getCommandCallback(scope: CoroutineScope) =
         object : HaRemoteMediaPlayer.CommandCallback {
             // SupervisorJob: a failed command doesn't cancel the observation scope.
             // CoroutineExceptionHandler: prevents the unhandled exception from crashing the
@@ -130,12 +122,10 @@ class HaMediaSession @AssistedInject constructor(
 
             override fun onPlayRequested() = commandScope.launch {
                 callMediaAction(ACTION_MEDIA_PLAY)
-                onCommandComplete()
             }
 
             override fun onPauseRequested() = commandScope.launch {
                 callMediaAction(ACTION_MEDIA_PAUSE)
-                onCommandComplete()
             }
 
             override fun onSeekRequested(positionMs: Long) = commandScope.launch {
@@ -143,17 +133,14 @@ class HaMediaSession @AssistedInject constructor(
                     action = ACTION_MEDIA_SEEK,
                     extraData = mapOf("seek_position" to positionMs / 1000.0),
                 )
-                onCommandComplete()
             }
 
             override fun onNextRequested() = commandScope.launch {
                 callMediaAction(ACTION_MEDIA_NEXT_TRACK)
-                onCommandComplete()
             }
 
             override fun onPreviousRequested() = commandScope.launch {
                 callMediaAction(ACTION_MEDIA_PREVIOUS_TRACK)
-                onCommandComplete()
             }
 
             override fun onSetVolumeRequested(volume: Float) = commandScope.launch {
@@ -161,17 +148,14 @@ class HaMediaSession @AssistedInject constructor(
                     action = ACTION_VOLUME_SET,
                     extraData = mapOf("volume_level" to volume),
                 )
-                onCommandComplete()
             }
 
             override fun onIncreaseVolumeRequested() = commandScope.launch {
                 callMediaAction(ACTION_VOLUME_UP)
-                onCommandComplete()
             }
 
             override fun onDecreaseVolumeRequested() = commandScope.launch {
                 callMediaAction(ACTION_VOLUME_DOWN)
-                onCommandComplete()
             }
 
             override fun onMuteRequested(muted: Boolean) = commandScope.launch {
@@ -179,12 +163,10 @@ class HaMediaSession @AssistedInject constructor(
                     action = ACTION_VOLUME_MUTE,
                     extraData = mapOf("is_volume_muted" to muted),
                 )
-                onCommandComplete()
             }
 
             override fun onStopRequested() = commandScope.launch {
                 callMediaAction(ACTION_MEDIA_STOP)
-                onCommandComplete()
             }
 
             override fun onShuffleRequested(shuffle: Boolean) = commandScope.launch {
@@ -192,7 +174,6 @@ class HaMediaSession @AssistedInject constructor(
                     action = ACTION_SHUFFLE_SET,
                     extraData = mapOf("shuffle" to shuffle),
                 )
-                onCommandComplete()
             }
 
             override fun onRepeatRequested(repeatMode: MediaRepeatMode): Job {
@@ -206,7 +187,6 @@ class HaMediaSession @AssistedInject constructor(
                         action = ACTION_REPEAT_SET,
                         extraData = mapOf("repeat" to haRepeatValue),
                     )
-                    onCommandComplete()
                 }
             }
         }
@@ -227,20 +207,10 @@ class HaMediaSession @AssistedInject constructor(
             }
             Timber.d("observe: starting for ${config.entityId}")
 
-            var observationJob = launch { startObservingState() }
-
-            // After each command, restart observation if the WebSocket flow has completed (e.g.
-            // after a transient disconnect). This lets the user resume control without reopening
-            // the app.
-            fun restartObservationIfNeeded() {
-                if (!observationJob.isActive) {
-                    Timber.d("observe: restarting observation after command for ${config.entityId}")
-                    observationJob = launch { startObservingState() }
-                }
-            }
+            launch { startObservingState() }
 
             val player =
-                HaRemoteMediaPlayer(Looper.getMainLooper(), getCommandCallback(this, ::restartObservationIfNeeded))
+                HaRemoteMediaPlayer(Looper.getMainLooper(), getCommandCallback(this))
             val session = buildMediaSession(player)
             mediaSession = session
             try {
@@ -262,10 +232,6 @@ class HaMediaSession @AssistedInject constructor(
 
     /**
      * Observes entity state for [config] until the flow completes or the coroutine is cancelled.
-     * The flow completes when the WebSocket subscription returns null (not yet connected), and
-     * is cancelled when the WebSocket disconnects (the backing SharedFlow's scope is cancelled).
-     * In both cases the session is not restarted here; reconnection happens when the user opens
-     * the app, which recreates active sessions via [HaMediaSessionService].
      */
     private suspend fun startObservingState() {
         Timber.d("startObservingState: starting for ${config.entityId}")
