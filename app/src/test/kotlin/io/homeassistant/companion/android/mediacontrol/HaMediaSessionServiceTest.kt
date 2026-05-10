@@ -42,19 +42,17 @@ private val sessionCounter = AtomicInteger(0)
  * Tests for [HaMediaSessionService] session reconciliation and lifecycle behavior.
  *
  * Session management is driven through [MediaControlRepository.observeConfiguredEntities] flow
- * emissions, rather than through [onCreate], which is intentionally not called in tests: [onCreate]
- * triggers Hilt's component injection, which requires a fully-initialized Hilt application
- * component that is not available in this test setup. Instead, all constructor-injected dependencies
- * ([MediaControlRepository], [HaMediaSession.Factory], and [serviceScope]) are replaced via
- * reflection after construction, and the private [startObservingEntities] method is invoked via
- * reflection through [startObserving].
+ * emissions via [HaMediaSessionService.startObservingEntities], rather than through [onCreate],
+ * which is intentionally not called in tests: [onCreate] triggers Hilt's field injection, which
+ * requires a fully-initialized Hilt application component that is not available in this test setup.
+ * Instead, dependencies are injected manually into the service's [Inject]-annotated fields after
+ * construction, and observation is started via [HaMediaSessionService.startObservingEntities].
  *
  * The service is created via [Robolectric.buildService] (using [get] rather than [create]) so that
- * the service is properly attached to an Android context without triggering [onCreate]. The three
- * constructor val fields are then replaced via reflection with test doubles: [mediaControlRepository]
- * and [haMediaSessionFactory] receive MockK mocks, and [serviceScope] receives [observationScope]
- * (backed by [UnconfinedTestDispatcher]) so that flow collection and session coroutines run eagerly
- * and synchronously on the test dispatcher.
+ * the service is properly attached to an Android context without triggering [onCreate]. The private
+ * [serviceScope] field is then replaced via reflection with [observationScope] (backed by
+ * [UnconfinedTestDispatcher]) before observation starts, so that flow collection and session
+ * coroutines run eagerly and synchronously on the test dispatcher.
  *
  * Each test pre-populates [configuredEntitiesFlow] (replay=1) before starting observation, so
  * the subscriber receives the value immediately upon subscribing. Subsequent emissions are
@@ -106,19 +104,14 @@ class HaMediaSessionServiceTest {
         }
 
         service = Robolectric.buildService(HaMediaSessionService::class.java).get()
+        service.mediaControlRepository = mediaControlRepository
+        service.haMediaSessionFactory = haMediaSessionFactory
 
-        // mediaControlRepository, haMediaSessionFactory, and serviceScope are constructor val
-        // parameters (private final fields). Reflection is required to inject test doubles because
-        // the service is built without calling onCreate() (which would trigger Hilt injection) and
-        // the fields are immutable from Kotlin's perspective.
-        fun setField(name: String, value: Any) {
-            val field = HaMediaSessionService::class.java.getDeclaredField(name)
-            field.isAccessible = true
-            field.set(service, value)
-        }
-        setField("mediaControlRepository", mediaControlRepository)
-        setField("haMediaSessionFactory", haMediaSessionFactory)
-        setField("serviceScope", observationScope)
+        // Replace the private serviceScope field with the test-controlled scope so that
+        // startObservingEntities() and all session coroutines run on the UnconfinedTestDispatcher.
+        val scopeField = HaMediaSessionService::class.java.getDeclaredField("serviceScope")
+        scopeField.isAccessible = true
+        scopeField.set(service, observationScope)
     }
 
     @After

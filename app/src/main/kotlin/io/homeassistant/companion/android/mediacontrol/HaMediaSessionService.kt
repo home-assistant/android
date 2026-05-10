@@ -42,11 +42,16 @@ import timber.log.Timber
  * All per-entity session logic is delegated to [HaMediaSession].
  */
 @AndroidEntryPoint
-class HaMediaSessionService @VisibleForTesting constructor(private val serviceScope: CoroutineScope,
-                                                           val mediaControlRepository: MediaControlRepository, val haMediaSessionFactory: HaMediaSession.Factory) :
+class HaMediaSessionService @VisibleForTesting constructor(private val serviceScope: CoroutineScope) :
     MediaSessionService() {
 
-    @Inject constructor(mediaControlRepository: MediaControlRepository, haMediaSessionFactory: HaMediaSession.Factory) : this(CoroutineScope(SupervisorJob() + Dispatchers.Default), mediaControlRepository, haMediaSessionFactory)
+    @Inject constructor() : this(CoroutineScope(SupervisorJob() + Dispatchers.Default))
+
+    @Inject
+    lateinit var mediaControlRepository: MediaControlRepository
+
+    @Inject
+    lateinit var haMediaSessionFactory: HaMediaSession.Factory
 
     // Keyed by "$serverId:$entityId". Each entry pairs the session with the job running observe().
     private val activeSessions = mutableMapOf<String, Pair<HaMediaSession, Job>>()

@@ -36,10 +36,12 @@ import io.homeassistant.companion.android.util.sensitive
 import java.io.ByteArrayOutputStream
 import java.net.URL
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -114,17 +116,29 @@ class HaMediaSession @AssistedInject constructor(
 
     private fun getCommandCallback(scope: CoroutineScope, onCommandComplete: () -> Unit) =
         object : HaRemoteMediaPlayer.CommandCallback {
-            override fun onPlayRequested() = scope.launch {
+            // SupervisorJob: a failed command doesn't cancel the observation scope.
+            // CoroutineExceptionHandler: prevents the unhandled exception from crashing the
+            // process. The error is already delivered to SimpleBasePlayer via
+            // future.setException() in handleCommand's invokeOnCompletion handler.
+            private val commandScope = CoroutineScope(
+                scope.coroutineContext +
+                    SupervisorJob(scope.coroutineContext[Job]) +
+                    CoroutineExceptionHandler { _, e ->
+                        Timber.e(e, "Command failed for ${config.entityId}")
+                    },
+            )
+
+            override fun onPlayRequested() = commandScope.launch {
                 callMediaAction(ACTION_MEDIA_PLAY)
                 onCommandComplete()
             }
 
-            override fun onPauseRequested() = scope.launch {
+            override fun onPauseRequested() = commandScope.launch {
                 callMediaAction(ACTION_MEDIA_PAUSE)
                 onCommandComplete()
             }
 
-            override fun onSeekRequested(positionMs: Long) = scope.launch {
+            override fun onSeekRequested(positionMs: Long) = commandScope.launch {
                 callMediaAction(
                     action = ACTION_MEDIA_SEEK,
                     extraData = mapOf("seek_position" to positionMs / 1000.0),
@@ -132,17 +146,17 @@ class HaMediaSession @AssistedInject constructor(
                 onCommandComplete()
             }
 
-            override fun onNextRequested() = scope.launch {
+            override fun onNextRequested() = commandScope.launch {
                 callMediaAction(ACTION_MEDIA_NEXT_TRACK)
                 onCommandComplete()
             }
 
-            override fun onPreviousRequested() = scope.launch {
+            override fun onPreviousRequested() = commandScope.launch {
                 callMediaAction(ACTION_MEDIA_PREVIOUS_TRACK)
                 onCommandComplete()
             }
 
-            override fun onSetVolumeRequested(volume: Float) = scope.launch {
+            override fun onSetVolumeRequested(volume: Float) = commandScope.launch {
                 callMediaAction(
                     action = ACTION_VOLUME_SET,
                     extraData = mapOf("volume_level" to volume),
@@ -150,17 +164,17 @@ class HaMediaSession @AssistedInject constructor(
                 onCommandComplete()
             }
 
-            override fun onIncreaseVolumeRequested() = scope.launch {
+            override fun onIncreaseVolumeRequested() = commandScope.launch {
                 callMediaAction(ACTION_VOLUME_UP)
                 onCommandComplete()
             }
 
-            override fun onDecreaseVolumeRequested() = scope.launch {
+            override fun onDecreaseVolumeRequested() = commandScope.launch {
                 callMediaAction(ACTION_VOLUME_DOWN)
                 onCommandComplete()
             }
 
-            override fun onMuteRequested(muted: Boolean) = scope.launch {
+            override fun onMuteRequested(muted: Boolean) = commandScope.launch {
                 callMediaAction(
                     action = ACTION_VOLUME_MUTE,
                     extraData = mapOf("is_volume_muted" to muted),
@@ -168,12 +182,12 @@ class HaMediaSession @AssistedInject constructor(
                 onCommandComplete()
             }
 
-            override fun onStopRequested() = scope.launch {
+            override fun onStopRequested() = commandScope.launch {
                 callMediaAction(ACTION_MEDIA_STOP)
                 onCommandComplete()
             }
 
-            override fun onShuffleRequested(shuffle: Boolean) = scope.launch {
+            override fun onShuffleRequested(shuffle: Boolean) = commandScope.launch {
                 callMediaAction(
                     action = ACTION_SHUFFLE_SET,
                     extraData = mapOf("shuffle" to shuffle),
@@ -187,7 +201,7 @@ class HaMediaSession @AssistedInject constructor(
                     is MediaRepeatMode.One -> "one"
                     is MediaRepeatMode.All -> "all"
                 }
-                return scope.launch {
+                return commandScope.launch {
                     callMediaAction(
                         action = ACTION_REPEAT_SET,
                         extraData = mapOf("repeat" to haRepeatValue),
