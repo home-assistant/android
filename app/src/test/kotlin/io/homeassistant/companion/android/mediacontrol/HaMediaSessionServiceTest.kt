@@ -42,17 +42,19 @@ private val sessionCounter = AtomicInteger(0)
  * Tests for [HaMediaSessionService] session reconciliation and lifecycle behavior.
  *
  * Session management is driven through [MediaControlRepository.observeConfiguredEntities] flow
- * emissions via [HaMediaSessionService.startObservingEntities], rather than through [onCreate],
- * which is intentionally not called in tests: [onCreate] triggers Hilt's field injection, which
- * requires a fully-initialized Hilt application component that is not available in this test setup.
- * Instead, dependencies are injected manually into the service's [Inject]-annotated fields after
- * construction, and observation is started via [HaMediaSessionService.startObservingEntities].
+ * emissions, rather than through [onCreate], which is intentionally not called in tests: [onCreate]
+ * triggers Hilt's component injection, which requires a fully-initialized Hilt application
+ * component that is not available in this test setup. Instead, all constructor-injected dependencies
+ * ([MediaControlRepository], [HaMediaSession.Factory], and [serviceScope]) are replaced via
+ * reflection after construction, and the private [startObservingEntities] method is invoked via
+ * reflection through [startObserving].
  *
  * The service is created via [Robolectric.buildService] (using [get] rather than [create]) so that
- * the service is properly attached to an Android context without triggering [onCreate]. The private
- * [serviceScope] field is then replaced via reflection with [observationScope] (backed by
- * [UnconfinedTestDispatcher]) before observation starts, so that flow collection and session
- * coroutines run eagerly and synchronously on the test dispatcher.
+ * the service is properly attached to an Android context without triggering [onCreate]. The three
+ * constructor val fields are then replaced via reflection with test doubles: [mediaControlRepository]
+ * and [haMediaSessionFactory] receive MockK mocks, and [serviceScope] receives [observationScope]
+ * (backed by [UnconfinedTestDispatcher]) so that flow collection and session coroutines run eagerly
+ * and synchronously on the test dispatcher.
  *
  * Each test pre-populates [configuredEntitiesFlow] (replay=1) before starting observation, so
  * the subscriber receives the value immediately upon subscribing. Subsequent emissions are
@@ -104,14 +106,19 @@ class HaMediaSessionServiceTest {
         }
 
         service = Robolectric.buildService(HaMediaSessionService::class.java).get()
-        service.mediaControlRepository = mediaControlRepository
-        service.haMediaSessionFactory = haMediaSessionFactory
 
-        // Replace the private serviceScope field with the test-controlled scope so that
-        // startObservingEntities() and all session coroutines run on the UnconfinedTestDispatcher.
-        val scopeField = HaMediaSessionService::class.java.getDeclaredField("serviceScope")
-        scopeField.isAccessible = true
-        scopeField.set(service, observationScope)
+        // mediaControlRepository, haMediaSessionFactory, and serviceScope are constructor val
+        // parameters (private final fields). Reflection is required to inject test doubles because
+        // the service is built without calling onCreate() (which would trigger Hilt injection) and
+        // the fields are immutable from Kotlin's perspective.
+        fun setField(name: String, value: Any) {
+            val field = HaMediaSessionService::class.java.getDeclaredField(name)
+            field.isAccessible = true
+            field.set(service, value)
+        }
+        setField("mediaControlRepository", mediaControlRepository)
+        setField("haMediaSessionFactory", haMediaSessionFactory)
+        setField("serviceScope", observationScope)
     }
 
     @After
@@ -129,15 +136,20 @@ class HaMediaSessionServiceTest {
     }
 
     /**
-     * Starts [HaMediaSessionService.startObservingEntities] with the test-controlled
-     * [observationScope] (already set via reflection in [setUp]) as the service scope. Because
-     * [configuredEntitiesFlow] uses replay=1 and [observationScope] uses [UnconfinedTestDispatcher],
-     * the subscriber receives any pre-emitted value immediately and reconciliation runs synchronously.
+     * Starts entity observation on the service using the test-controlled [observationScope]
+     * (already set via reflection in [setUp]) as the service scope. Because [configuredEntitiesFlow]
+     * uses replay=1 and [observationScope] uses [UnconfinedTestDispatcher], the subscriber receives
+     * any pre-emitted value immediately and reconciliation runs synchronously.
      * Call [idleMainLooper] after this to flush any Main-thread tasks posted by [HaMediaSession]
      * (e.g. [HaRemoteMediaPlayer.updateState]).
+     *
+     * Invoked via reflection because [HaMediaSessionService.startObservingEntities] is private —
+     * this avoids calling [onCreate], which triggers Hilt field injection unavailable in this setup.
      */
     private fun startObserving() {
-        service.startObservingEntities()
+        val m = HaMediaSessionService::class.java.getDeclaredMethod("startObservingEntities")
+        m.isAccessible = true
+        m.invoke(service)
     }
 
     /**
@@ -194,7 +206,7 @@ class HaMediaSessionServiceTest {
         idleMainLooper()
 
         assertEquals(1, service.getSessions().size)
-        assertTrue(service.getSessions().any { it.id == "1_${config.entityId}" })
+        assertTrue(service.getSessions().any { it.id == "1:${config.entityId}" })
     }
 
     @Test
@@ -206,8 +218,8 @@ class HaMediaSessionServiceTest {
         idleMainLooper()
 
         assertEquals(2, service.getSessions().size)
-        assertTrue(service.getSessions().any { it.id == "1_${configA.entityId}" })
-        assertTrue(service.getSessions().any { it.id == "1_${configB.entityId}" })
+        assertTrue(service.getSessions().any { it.id == "1:${configA.entityId}" })
+        assertTrue(service.getSessions().any { it.id == "1:${configB.entityId}" })
     }
 
     @Test
@@ -222,7 +234,7 @@ class HaMediaSessionServiceTest {
         idleMainLooper()
 
         assertEquals(1, service.getSessions().size)
-        assertTrue(service.getSessions().any { it.id == "1_${configB.entityId}" })
+        assertTrue(service.getSessions().any { it.id == "1:${configB.entityId}" })
     }
 
     @Test

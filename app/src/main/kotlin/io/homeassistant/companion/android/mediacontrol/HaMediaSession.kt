@@ -302,7 +302,7 @@ class HaMediaSession @AssistedInject constructor(
             }
             session.sessionActivity = PendingIntent.getActivity(
                 context,
-                "${config.serverId}:${config.entityId}".hashCode(),
+                id.hashCode(),
                 tapIntent,
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             )

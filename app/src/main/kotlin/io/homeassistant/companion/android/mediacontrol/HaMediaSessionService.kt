@@ -42,16 +42,11 @@ import timber.log.Timber
  * All per-entity session logic is delegated to [HaMediaSession].
  */
 @AndroidEntryPoint
-class HaMediaSessionService @VisibleForTesting constructor(private val serviceScope: CoroutineScope) :
+class HaMediaSessionService @VisibleForTesting constructor(private val serviceScope: CoroutineScope,
+                                                           val mediaControlRepository: MediaControlRepository, val haMediaSessionFactory: HaMediaSession.Factory) :
     MediaSessionService() {
 
-    @Inject constructor() : this(CoroutineScope(SupervisorJob() + Dispatchers.Default))
-
-    @Inject
-    lateinit var mediaControlRepository: MediaControlRepository
-
-    @Inject
-    lateinit var haMediaSessionFactory: HaMediaSession.Factory
+    @Inject constructor(mediaControlRepository: MediaControlRepository, haMediaSessionFactory: HaMediaSession.Factory) : this(CoroutineScope(SupervisorJob() + Dispatchers.Default), mediaControlRepository, haMediaSessionFactory)
 
     // Keyed by "$serverId:$entityId". Each entry pairs the session with the job running observe().
     private val activeSessions = mutableMapOf<String, Pair<HaMediaSession, Job>>()
@@ -65,13 +60,6 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
         createNotificationChannel()
         Timber.d("HaMediaSessionService created")
         startObservingEntities()
-    }
-
-    @VisibleForTesting
-    internal fun startObservingEntities() {
-        mediaControlRepository.observeConfiguredEntities()
-            .onEach { entities -> reconcileSessions(entities) }
-            .launchIn(serviceScope)
     }
 
     // Returns null intentionally: Media3 routes each controller to the session whose ID matches
@@ -154,6 +142,12 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
         }
         serviceScope.cancel()
         super.onDestroy()
+    }
+
+    private fun startObservingEntities() {
+        mediaControlRepository.observeConfiguredEntities()
+            .onEach { entities -> reconcileSessions(entities) }
+            .launchIn(serviceScope)
     }
 
     private suspend fun reconcileSessions(configuredEntities: List<MediaControlEntityConfig>) {
