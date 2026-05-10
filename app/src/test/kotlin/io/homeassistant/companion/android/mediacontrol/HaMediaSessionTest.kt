@@ -242,49 +242,6 @@ class HaMediaSessionTest {
         job.cancel()
     }
 
-    /**
-     * Verifies that after the observation flow ends (simulating a WebSocket disconnect),
-     * a successful media command restarts state observation so future state updates are received.
-     *
-     * This covers the reconnection path: user taps play → REST call succeeds → `callMediaAction`
-     * sees `observationJob.isActive == false` and re-launches `startObservingState()`.
-     */
-    @Test
-    fun `Given observation ended when play requested and action succeeds then observation is restarted`() {
-        // First call: immediately-completing flow (simulates WebSocket disconnect).
-        // Second call: open flow that stays alive so we can verify it was subscribed to.
-        val reopenedFlow = MutableSharedFlow<MediaControlState?>(replay = 1)
-        reopenedFlow.tryEmit(createState(playbackState = MediaPlaybackState.Paused))
-        var callCount = 0
-        coEvery { mediaControlRepository.observeEntityState(config) } answers {
-            callCount++
-            if (callCount == 1) {
-                flowOf(createState(playbackState = MediaPlaybackState.Playing))
-            } else {
-                reopenedFlow
-            }
-        }
-
-        val session = buildSession()
-        var capturedSession: androidx.media3.session.MediaSession? = null
-        val job = testScope.launch {
-            session.observe { capturedSession = it }
-        }
-        idleMainLooper()
-
-        // After the first flow completes, observation is inactive but observe() is still alive.
-        assertNotNull(session.buildNotification())
-
-        // Trigger a play command; the action succeeds (integrationRepository is relaxed).
-        capturedSession?.player?.play()
-        shadowOf(Looper.getMainLooper()).idle()
-
-        // observeEntityState should have been called a second time (observation restarted).
-        assertEquals(2, callCount)
-
-        job.cancel()
-    }
-
     // -- Artwork caching tests --
 
     /**

@@ -12,6 +12,7 @@ import dagger.hilt.android.testing.UninstallModules
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.di.ServerManagerModule
+import io.homeassistant.companion.android.mediacontrol.HaMediaSessionService
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
@@ -61,9 +62,11 @@ class LaunchActivityTest {
         mockkObject(WebsocketManager.Companion)
         mockkObject(SensorReceiver.Companion)
         mockkObject(DisabledLocationHandler)
+        mockkObject(HaMediaSessionService.Companion)
         every { SensorWorker.start(any()) } just Runs
         coEvery { WebsocketManager.start(any()) } just Runs
         every { SensorReceiver.updateAllSensors(any()) } just Runs
+        every { HaMediaSessionService.start(any()) } just Runs
         every { DisabledLocationHandler.isLocationEnabled(any()) } returns true
         mockkConstructor(ChangeLog::class)
         coEvery { anyConstructed<ChangeLog>().showChangeLog(any(), any()) } just Runs
@@ -75,14 +78,16 @@ class LaunchActivityTest {
         unmockkObject(WebsocketManager.Companion)
         unmockkObject(SensorReceiver.Companion)
         unmockkObject(DisabledLocationHandler)
+        unmockkObject(HaMediaSessionService.Companion)
         unmockkConstructor(ChangeLog::class)
     }
 
     @Test
-    fun `Given activity resumes then sensor worker and websocket manager are started and changelog is shown`() {
+    fun `Given activity resumes then sensor worker, websocket manager and media session service are started and changelog is shown`() {
         ActivityScenario.launch(LaunchActivity::class.java).use {
             verify { SensorWorker.start(any()) }
             coVerify { WebsocketManager.start(any()) }
+            verify { HaMediaSessionService.start(any()) }
             verify { DisabledLocationHandler.isLocationEnabled(any()) }
             coVerify { anyConstructed<ChangeLog>().showChangeLog(any(), eq(false)) }
         }
