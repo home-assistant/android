@@ -7,6 +7,7 @@ import android.os.Parcelable
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.biometric.BiometricManager
 import androidx.core.content.IntentCompat
@@ -24,6 +25,7 @@ import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.settings.assist.AssistSettingsFragment
 import io.homeassistant.companion.android.settings.developer.DeveloperSettingsFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
@@ -94,6 +96,29 @@ class SettingsActivity : BaseActivity() {
             .setBlurEnabled(false)
 
         authenticator = Authenticator(this, ::settingsActivityAuthenticationResult)
+
+        // On Automotive, SettingsActivity is launched from the Car App in its own task
+        // (taskAffinity override + FLAG_ACTIVITY_NEW_TASK). Without this interception, pressing
+        // back/up would finish the activity and leave the user on the system home screen instead
+        // of returning to CarAppActivity.
+        if (isAutomotive()) {
+            onBackPressedDispatcher.addCallback(
+                this,
+                object : OnBackPressedCallback(true) {
+                    override fun handleOnBackPressed() {
+                        if (supportFragmentManager.backStackEntryCount > 0) {
+                            supportFragmentManager.popBackStack()
+                        } else {
+                            startActivity(
+                                Intent(this@SettingsActivity, Class.forName("androidx.car.app.activity.CarAppActivity"))
+                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                            )
+                            finish()
+                        }
+                    }
+                },
+            )
+        }
 
         if (savedInstanceState == null) {
             val settingsNavigation = IntentCompat.getParcelableExtra(intent, EXTRA_FRAGMENT, Deeplink::class.java)
