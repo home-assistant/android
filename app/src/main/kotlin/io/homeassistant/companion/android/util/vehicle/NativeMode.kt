@@ -9,6 +9,7 @@ import androidx.car.app.model.Action
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.launch.LaunchActivity
+import io.homeassistant.companion.android.settings.SettingsActivity
 import timber.log.Timber
 
 fun nativeModeAction(carContext: CarContext): Action {
@@ -22,6 +23,11 @@ fun nativeModeAction(carContext: CarContext): Action {
 /**
  * Start the main native (non-vehicle UI) Home Assistant activity on the connected phone (Auto) or default vehicle
  * display (Automotive). This will allow onboarding or using dashboards, depending on the logged in state.
+ *
+ * On Automotive OS we open [SettingsActivity] directly: routing through [LaunchActivity] would loop us back to
+ * `androidx.car.app.activity.CarAppActivity` because [io.homeassistant.companion.android.launch.LaunchViewModel]
+ * forces `AutomotiveRoute` whenever the device is automotive and a server is already registered (Play Store
+ * requirement: no WebView on automotive).
  *
  * Sets any values that may be required for compatibility.
  */
@@ -37,11 +43,13 @@ fun startNativeActivity(carContext: CarContext) {
         } else {
             null
         }
+        val targetIntent = if (isAutomotive()) {
+            Intent(carContext, SettingsActivity::class.java)
+        } else {
+            Intent(carContext, LaunchActivity::class.java)
+        }
         startActivity(
-            Intent(
-                carContext,
-                LaunchActivity::class.java,
-            ).apply {
+            targetIntent.apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             },
             options,
