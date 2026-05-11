@@ -29,7 +29,6 @@ import androidx.wear.tiles.TileService
 import com.google.common.util.concurrent.ListenableFuture
 import com.mikepenz.iconics.IconicsColor
 import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon3
 import com.mikepenz.iconics.utils.backgroundColor
 import com.mikepenz.iconics.utils.colorInt
 import com.mikepenz.iconics.utils.sizeDp
@@ -65,9 +64,6 @@ private const val ICON_SIZE_SMALL = 40f * 0.7071f // square that fits in 48dp ci
 private const val SPACING = 8f
 private const val TEXT_SIZE = 8f
 private const val TEXT_PADDING = 2f
-private const val LOADING_RESOURCE_SUFFIX = "_loading"
-private const val LOADING_VERSION_PREFIX = "|loading:"
-private const val LOADING_SAFETY_TIMEOUT_MS = 45_000L
 
 @AndroidEntryPoint
 class ShortcutsTile : TileService() {
@@ -82,10 +78,6 @@ class ShortcutsTile : TileService() {
 
     override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> = serviceScope.future {
         val state = requestParams.currentState
-        android.util.Log.e(
-            TAG,
-            "onTileRequest click=${state.lastClickableId} loading=$loadingEntityIds cache=${entityStates.size}",
-        )
         if (state.lastClickableId.isNotEmpty()) {
             Intent().also { intent ->
                 intent.action = "io.homeassistant.companion.android.TILE_ACTION"
@@ -93,23 +85,10 @@ class ShortcutsTile : TileService() {
                 intent.setPackage(packageName)
                 sendBroadcast(intent)
             }
-            loadingEntityIds[state.lastClickableId] = System.currentTimeMillis()
         }
-
-        // Clear stale loading entries (safety net for missed WebSocket events)
-        val now = System.currentTimeMillis()
-        loadingEntityIds.entries.removeAll { now - it.value > LOADING_SAFETY_TIMEOUT_MS }
 
         val tileId = requestParams.tileId
-        val entities = getEntities(tileId)
-
-        // Encode loading state in version string so onTileResourcesRequest can read it
-        val loadingPart = if (loadingEntityIds.isNotEmpty()) {
-            LOADING_VERSION_PREFIX + loadingEntityIds.keys.sorted().joinToString(",")
-        } else {
-            ""
-        }
-        val resourcesVersion = "$TAG$tileId.${now}$loadingPart"
+        val resourcesVersion = "$TAG$tileId.${System.currentTimeMillis()}"
 
         Tile.Builder()
             .setResourcesVersion(resourcesVersion)
@@ -129,17 +108,6 @@ class ShortcutsTile : TileService() {
 
     override fun onTileResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> =
         serviceScope.future {
-            // Parse loading entity IDs from version string (survives service recreation)
-            val loadingIds = requestParams.version
-                .substringAfter(LOADING_VERSION_PREFIX, "")
-                .split(",")
-                .filter { it.isNotEmpty() }
-                .toSet()
-            android.util.Log.e(
-                TAG,
-                "onTileResourcesRequest loading=$loadingIds states=${entityStates.mapValues { it.value.state }}",
-            )
-
             val showLabels = wearPrefsRepository.getShowShortcutText()
             val iconSize = if (showLabels) ICON_SIZE_SMALL else ICON_SIZE_FULL
             val density = requestParams.deviceConfiguration.screenDensity
@@ -150,7 +118,6 @@ class ShortcutsTile : TileService() {
                 .setVersion(requestParams.version)
                 .apply {
                     entities.forEach { entity ->
-                        // Use cached entity for state-aware icon, fall back to domain icon
                         val cachedEntity = entityStates[entity.entityId]
                         val iconIIcon = if (cachedEntity != null) {
                             cachedEntity.getIcon(this@ShortcutsTile)
@@ -162,28 +129,16 @@ class ShortcutsTile : TileService() {
                             buildIconResource(iconIIcon, iconSize, iconSizePx),
                         )
                     }
-
-                    // Generate loading icons for tapped entities
-                    loadingIds.forEach { loadingId ->
-                        addIdToImageMapping(
-                            loadingId + LOADING_RESOURCE_SUFFIX,
-                            buildIconResource(Icon3.cmd_progress_clock, iconSize, iconSizePx),
-                        )
-                    }
                 }
                 .build()
         }
 
     override fun onTileEnterEvent(requestParams: EventBuilders.TileEnterEvent) {
         serviceScope.launch {
-            // Clear loading — we're about to fetch fresh state
-            loadingEntityIds.clear()
-
             val tileId = requestParams.tileId
             val entities = getEntities(tileId)
             val entityIds = entities.map { it.entityId }
 
-            // Initial state fetch via batch WebSocket call
             if (serverManager.isRegistered()) {
                 try {
                     val allEntities = serverManager.integrationRepository().getEntities()
@@ -197,14 +152,14 @@ class ShortcutsTile : TileService() {
                 }
             }
 
-            // Render with fresh cache
             try {
                 requestUpdate(this@ShortcutsTile)
             } catch (e: Exception) {
                 Timber.w(e, "Unable to request tile update on enter")
             }
 
-            // Start WebSocket subscription for real-time updates
+            // Always restart subscription with current entity list (handles entity list changes)
+            stopEntitySubscription()
             startEntitySubscription(
                 serverManager = serverManager,
                 entityIds = entityIds,
@@ -302,11 +257,6 @@ class ShortcutsTile : TileService() {
 
     private fun iconLayout(entity: SimplifiedEntity, showLabels: Boolean): LayoutElement = Box.Builder().apply {
         val iconSize = if (showLabels) ICON_SIZE_SMALL else ICON_SIZE_FULL
-        val resourceId = if (loadingEntityIds.containsKey(entity.entityId)) {
-            entity.entityId + LOADING_RESOURCE_SUFFIX
-        } else {
-            entity.entityId
-        }
         setWidth(dp(CIRCLE_SIZE))
         setHeight(dp(CIRCLE_SIZE))
         setHorizontalAlignment(HORIZONTAL_ALIGN_CENTER)
@@ -334,7 +284,7 @@ class ShortcutsTile : TileService() {
         )
         addContent(
             LayoutElementBuilders.Image.Builder()
-                .setResourceId(resourceId)
+                .setResourceId(entity.entityId)
                 .setWidth(dp(iconSize))
                 .setHeight(dp(iconSize))
                 .build(),
@@ -372,9 +322,6 @@ class ShortcutsTile : TileService() {
         /** Entity cache — populated by WebSocket, read by tile rendering (zero network). */
         private val entityStates = ConcurrentHashMap<String, Entity>()
 
-        /** Entities currently in loading state. Maps entityId → timestamp when loading started. */
-        private val loadingEntityIds = ConcurrentHashMap<String, Long>()
-
         /** WebSocket subscription for entity state changes. Outlives service instances. */
         private var subscriptionJob: Job? = null
         private val subscriptionScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -392,7 +339,6 @@ class ShortcutsTile : TileService() {
                         .getEntityUpdates(entityIds)
                     flow?.collect { entity ->
                         entityStates[entity.entityId] = entity
-                        loadingEntityIds.remove(entity.entityId)
                         requestUpdate(appContext)
                     }
                 } catch (e: CancellationException) {
