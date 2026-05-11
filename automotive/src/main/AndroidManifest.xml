@@ -369,8 +369,6 @@
             android:configChanges="orientation|screenSize"
             android:taskAffinity="${applicationId}.settings"
             android:theme="@style/Theme.HomeAssistant.Config"/>
-        <!-- Distinct taskAffinity so SettingsActivity doesn't get stacked under CarAppActivity
-             (singleTask + MAIN/LAUNCHER) when launched from the Car App via "Launch native". -->
 
         <activity
             android:name=".nfc.TagReaderActivity"

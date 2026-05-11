@@ -34,6 +34,7 @@ fun nativeModeAction(carContext: CarContext): Action {
 fun startNativeActivity(carContext: CarContext) {
     Timber.d("Starting native activity")
     with(carContext) {
+        val isAutomotive = isAutomotive()
         // The app must indicate the default display to be used to avoid a SecurityException on newer
         // Android versions. See: https://developer.android.com/training/cars/platforms/releases#android-14
         val options = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -43,18 +44,14 @@ fun startNativeActivity(carContext: CarContext) {
         } else {
             null
         }
-        val targetIntent = if (isAutomotive()) {
-            Intent(carContext, SettingsActivity::class.java)
-        } else {
-            Intent(carContext, LaunchActivity::class.java)
-        }
+        val targetActivity = if (isAutomotive) SettingsActivity::class.java else LaunchActivity::class.java
         startActivity(
-            targetIntent.apply {
+            Intent(carContext, targetActivity).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             },
             options,
         )
-        if (isAutomotive()) {
+        if (isAutomotive) {
             finishCarApp()
         }
     }

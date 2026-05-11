@@ -7,7 +7,7 @@ import android.os.Parcelable
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.OnBackPressedCallback
+import androidx.activity.addCallback
 import androidx.activity.viewModels
 import androidx.biometric.BiometricManager
 import androidx.core.content.IntentCompat
@@ -102,22 +102,17 @@ class SettingsActivity : BaseActivity() {
         // back/up would finish the activity and leave the user on the system home screen instead
         // of returning to CarAppActivity.
         if (isAutomotive()) {
-            onBackPressedDispatcher.addCallback(
-                this,
-                object : OnBackPressedCallback(true) {
-                    override fun handleOnBackPressed() {
-                        if (supportFragmentManager.backStackEntryCount > 0) {
-                            supportFragmentManager.popBackStack()
-                        } else {
-                            startActivity(
-                                Intent(this@SettingsActivity, Class.forName("androidx.car.app.activity.CarAppActivity"))
-                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                            )
-                            finish()
-                        }
-                    }
-                },
-            )
+            onBackPressedDispatcher.addCallback(this) {
+                if (supportFragmentManager.backStackEntryCount > 0) {
+                    supportFragmentManager.popBackStack()
+                } else {
+                    startActivity(
+                        Intent(this@SettingsActivity, Class.forName("androidx.car.app.activity.CarAppActivity"))
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                    )
+                    finish()
+                }
+            }
         }
 
         if (savedInstanceState == null) {
