@@ -6,7 +6,6 @@ import androidx.car.app.CarContext
 import androidx.car.app.model.GridTemplate
 import androidx.car.app.model.Template
 import androidx.lifecycle.lifecycleScope
-import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
@@ -71,7 +70,7 @@ class DomainListScreen(
 
         return GridTemplate.Builder().apply {
             val headerBuilder = carContext.getHeaderBuilder(R.string.all_entities)
-            if (isAutomotive && !isDrivingOptimized && BuildConfig.FLAVOR != "full") {
+            if (isAutomotive && !isDrivingOptimized) {
                 headerBuilder.addEndHeaderAction(nativeModeAction(carContext))
             }
             setHeader(headerBuilder.build())

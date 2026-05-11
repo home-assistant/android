@@ -16,7 +16,6 @@ import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import com.mikepenz.iconics.utils.sizeDp
 import com.mikepenz.iconics.utils.toAndroidIconCompat
-import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -217,7 +216,7 @@ class MainVehicleScreen(
             }.build()
 
         val headerBuilder = carContext.getHeaderBuilder(commonR.string.app_name, Action.APP_ICON)
-        if (isAutomotive && !isDrivingOptimized && BuildConfig.FLAVOR != "full") {
+        if (isAutomotive && !isDrivingOptimized) {
             headerBuilder.addEndHeaderAction(nativeModeAction(carContext))
         }
         headerBuilder.addEndHeaderAction(refreshAction)
