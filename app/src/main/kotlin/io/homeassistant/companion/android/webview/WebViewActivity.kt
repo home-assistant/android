@@ -27,7 +27,6 @@ import android.webkit.JavascriptInterface
 import android.webkit.JsResult
 import android.webkit.PermissionRequest
 import android.webkit.RenderProcessGoneDetail
-import android.webkit.SslErrorHandler
 import android.webkit.URLUtil
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
@@ -161,6 +160,7 @@ import io.homeassistant.companion.android.webview.externalbus.NavigateTo
 import io.homeassistant.companion.android.webview.externalbus.ShowSidebar
 import io.homeassistant.companion.android.webview.insecure.BlockInsecureFragment
 import javax.inject.Inject
+import javax.net.ssl.X509TrustManager
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -170,6 +170,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import okhttp3.OkHttpClient
 import org.json.JSONObject
 import timber.log.Timber
 
@@ -283,6 +284,12 @@ class WebViewActivity :
 
     @Inject
     lateinit var dataSourceFactory: DataSource.Factory
+
+    @Inject
+    lateinit var okHttpClient: OkHttpClient
+
+    @Inject
+    lateinit var trustManager: X509TrustManager
 
     private lateinit var webView: WebView
     private var loadedUrl: Uri? = null
@@ -510,7 +517,7 @@ class WebViewActivity :
                 }
             }
 
-            webViewClient = object : TLSWebViewClient(keyChainRepository) {
+            webViewClient = object : TLSWebViewClient(keyChainRepository, lifecycleScope, trustManager, okHttpClient) {
                 @Deprecated("Deprecated in Java for SDK >= 23")
                 override fun onReceivedError(
                     view: WebView?,
@@ -586,8 +593,17 @@ class WebViewActivity :
                     authenticationDialog(handler, host, resourceURL, realm, authError)
                 }
 
-                override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
-                    Timber.e("onReceivedSslError: $error")
+                override fun onTlsValidationNetworkError(error: SslError?) {
+                    Timber.w("TLS validation network error on ${sensitive { error?.url.orEmpty() }}")
+                    showError(ErrorType.TIMEOUT_GENERAL, error, null)
+                }
+
+                override fun onSslErrorRejected(error: SslError?) {
+                    Timber.e(
+                        "onSslErrorRejected: primary error ${error?.primaryError} on ${sensitive {
+                            error?.url.orEmpty()
+                        }}",
+                    )
                     showError(
                         ErrorType.SSL,
                         error,
@@ -1869,7 +1885,9 @@ class WebViewActivity :
             } else if (errorType == ErrorType.SSL) {
                 if (description != null) {
                     alert.setMessage(getString(commonR.string.webview_error_description) + " " + description)
-                } else if (error!!.primaryError == SslError.SSL_DATE_INVALID) {
+                } else if (error == null) {
+                    alert.setMessage(commonR.string.error_ssl)
+                } else if (error.primaryError == SslError.SSL_DATE_INVALID) {
                     alert.setMessage(commonR.string.webview_error_SSL_DATE_INVALID)
                 } else if (error.primaryError == SslError.SSL_EXPIRED) {
                     alert.setMessage(commonR.string.webview_error_SSL_EXPIRED)

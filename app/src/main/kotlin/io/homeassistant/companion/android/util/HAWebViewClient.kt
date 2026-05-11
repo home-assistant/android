@@ -5,7 +5,6 @@ import android.net.Uri
 import android.net.http.SslError
 import android.webkit.HttpAuthHandler
 import android.webkit.RenderProcessGoneDetail
-import android.webkit.SslErrorHandler
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -15,8 +14,14 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
+import java.io.IOException
 import javax.inject.Inject
+import javax.net.ssl.X509TrustManager
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
+import okhttp3.OkHttpClient
 import timber.log.Timber
 
 /**
@@ -25,10 +30,17 @@ import timber.log.Timber
  * The created clients handle Home Assistant-specific concerns such as TLS client authentication,
  * error mapping to [FrontendConnectionError], and JavaScript injection into the WebView.
  */
-class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyChainRepository: KeyChainRepository) {
+class HAWebViewClientFactory @Inject constructor(
+    @NamedKeyChain private val keyChainRepository: KeyChainRepository,
+    private val trustManager: X509TrustManager,
+    private val okHttpClient: OkHttpClient,
+) {
     /**
      * Creates a new [HAWebViewClient] with the specified configuration.
      *
+     * @param validationScope Scope used for async TLS validation coroutines. Should be tied to the
+     *        caller's lifecycle (e.g., `viewModelScope`) so in-flight validations are cancelled on
+     *        destruction.
      * @param currentUrlFlow StateFlow providing the current URL being loaded.
      *        Used to filter errors - only errors for this URL trigger [onFrontendError].
      * @param onFrontendError Callback when a WebView error is mapped to a [FrontendConnectionError].
@@ -41,6 +53,7 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
      *        Receives the handler, host, the resource URL that triggered the request, and the realm.
      */
     fun create(
+        validationScope: CoroutineScope,
         currentUrlFlow: StateFlow<String?>,
         onFrontendError: (FrontendConnectionError) -> Unit,
         onCrash: (() -> Unit)? = null,
@@ -57,6 +70,9 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
     ): HAWebViewClient {
         return HAWebViewClient(
             keyChainRepository = keyChainRepository,
+            validationScope = validationScope,
+            trustManager = trustManager,
+            okHttpClient = okHttpClient,
             currentUrlFlow = currentUrlFlow,
             onFrontendError = onFrontendError,
             onCrash = onCrash,
@@ -75,6 +91,11 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
  */
 class HAWebViewClient internal constructor(
     keyChainRepository: KeyChainRepository,
+    validationScope: CoroutineScope,
+    trustManager: X509TrustManager,
+    /** Used as a fallback for API < 29, where [android.net.http.SslCertificate.x509Certificate] is unavailable. */
+    okHttpClient: OkHttpClient,
+    ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val currentUrlFlow: StateFlow<String?>,
     private val onFrontendError: (FrontendConnectionError) -> Unit,
     private val onCrash: (() -> Unit)?,
@@ -83,7 +104,7 @@ class HAWebViewClient internal constructor(
     private val onReceivedHttpAuthRequest: (
         (handler: HttpAuthHandler, host: String, resource: String, realm: String) -> Unit
     )?,
-) : TLSWebViewClient(keyChainRepository) {
+) : TLSWebViewClient(keyChainRepository, validationScope, trustManager, okHttpClient, ioDispatcher) {
 
     /** Last resource URL loaded by the WebView, used to identify the resource requesting auth. */
     private var lastResourceUrl: String? = null
@@ -216,10 +237,23 @@ class HAWebViewClient internal constructor(
         onFrontendError(frontendConnectionError)
     }
 
-    override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
-        super.onReceivedSslError(view, handler, error)
-        Timber.e("onReceivedSslError: $error")
+    override fun onTlsValidationNetworkError(error: SslError?) {
+        Timber.w("TLS validation network error on ${sensitive { error?.url.orEmpty() }}")
+        onFrontendError(
+            FrontendConnectionError.UnreachableError(
+                message = commonR.string.webview_error_CONNECT,
+                errorDetails = error.toString(),
+                rawErrorType = IOException::class.toString(),
+            ),
+        )
+    }
 
+    override fun onSslErrorRejected(error: SslError?) {
+        Timber.e(
+            "SSL connection rejected: primary error ${error?.primaryError} on ${sensitive {
+                error?.url.orEmpty()
+            }}",
+        )
         val messageRes = when (error?.primaryError) {
             SslError.SSL_DATE_INVALID -> commonR.string.webview_error_SSL_DATE_INVALID
             SslError.SSL_EXPIRED -> commonR.string.webview_error_SSL_EXPIRED

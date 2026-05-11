@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.util
 
 import android.net.http.SslError
 import android.webkit.HttpAuthHandler
+import android.webkit.SslErrorHandler
 import android.webkit.WebResourceError
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -20,19 +21,41 @@ import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Exten
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import io.mockk.verify
+import java.io.IOException
+import javax.net.ssl.X509TrustManager
 import kotlin.reflect.KClass
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
+import okhttp3.Call
+import okhttp3.OkHttpClient
+import okhttp3.Response
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.extension.RegisterExtension
 
 @ExtendWith(MainDispatcherJUnit5Extension::class)
+@OptIn(ExperimentalCoroutinesApi::class)
+@ExtendWith(ConsoleLogExtension::class)
 class HAWebViewClientTest {
 
+    @JvmField
+    @RegisterExtension
+    val mainDispatcherExtension = MainDispatcherJUnit5Extension(UnconfinedTestDispatcher())
+
     private val keyChainRepository: KeyChainRepository = mockk(relaxed = true)
+    private val trustManager: X509TrustManager = mockk(relaxed = true)
+    private val okHttpClient: OkHttpClient = makeTrustedOkHttpClient()
     private val currentUrlFlow = MutableStateFlow<String?>(null)
     private var capturedError: FrontendConnectionError? = null
 
@@ -43,6 +66,9 @@ class HAWebViewClientTest {
         capturedError = null
         webViewClient = HAWebViewClient(
             keyChainRepository = keyChainRepository,
+            validationScope = TestScope(UnconfinedTestDispatcher()),
+            trustManager = trustManager,
+            okHttpClient = okHttpClient,
             currentUrlFlow = currentUrlFlow,
             onFrontendError = { capturedError = it },
             onCrash = null,
@@ -78,8 +104,97 @@ class HAWebViewClientTest {
     }
 
     @Test
-    fun `Given SSL_UNTRUSTED error when onReceivedSslError then emits AuthenticationError`() {
+    fun `Given SSL_UNTRUSTED error with null URL when onReceivedSslError then emits AuthenticationError`() {
         testSslError(SslError.SSL_UNTRUSTED, commonR.string.webview_error_SSL_UNTRUSTED)
+    }
+
+    @Test
+    fun `Given SSL_UNTRUSTED with non-null URL when isTlsTrusted succeeds then handler proceeds and no error emitted`() = runTest(mainDispatcherExtension.testDispatcher) {
+        val client = HAWebViewClient(
+            keyChainRepository = keyChainRepository,
+            validationScope = this,
+            trustManager = trustManager,
+            okHttpClient = okHttpClient,
+            currentUrlFlow = currentUrlFlow,
+            onFrontendError = { capturedError = it },
+            onCrash = null,
+            onUrlIntercepted = null,
+            onPageFinished = null,
+            onReceivedHttpAuthRequest = null,
+        )
+        val handler = mockk<SslErrorHandler>(relaxed = true)
+        val sslError = mockk<SslError> {
+            every { primaryError } returns SslError.SSL_UNTRUSTED
+            every { url } returns "https://homeassistant.local"
+            every { certificate } returns mockk(relaxed = true)
+            every { toString() } returns "SSL_UNTRUSTED"
+        }
+
+        client.onReceivedSslError(null, handler, sslError)
+        advanceUntilIdle()
+
+        verify { handler.proceed() }
+        verify(exactly = 0) { handler.cancel() }
+        assertNull(capturedError)
+    }
+
+    @Test
+    fun `Given SSL_UNTRUSTED when TLS validation network error then emits UnreachableError`() = runTest(mainDispatcherExtension.testDispatcher) {
+        val client = HAWebViewClient(
+            keyChainRepository = keyChainRepository,
+            validationScope = this,
+            trustManager = trustManager,
+            okHttpClient = makeNetworkErrorOkHttpClient(),
+            currentUrlFlow = currentUrlFlow,
+            onFrontendError = { capturedError = it },
+            onCrash = null,
+            onUrlIntercepted = null,
+            onPageFinished = null,
+            onReceivedHttpAuthRequest = null,
+        )
+        val handler = mockk<SslErrorHandler>(relaxed = true)
+        val sslError = mockk<SslError> {
+            every { primaryError } returns SslError.SSL_UNTRUSTED
+            every { url } returns "https://homeassistant.local"
+            every { certificate } returns mockk(relaxed = true)
+            every { toString() } returns "SSL_UNTRUSTED"
+        }
+
+        client.onReceivedSslError(null, handler, sslError)
+        advanceUntilIdle()
+
+        verify(exactly = 0) { handler.proceed() }
+        verify { handler.cancel() }
+        assertNotNull(capturedError)
+        assertTrue(capturedError is FrontendConnectionError.UnreachableError)
+        assertEquals(commonR.string.webview_error_CONNECT, capturedError?.message)
+        assertEquals(IOException::class.toString(), capturedError?.rawErrorType)
+    }
+
+    @Test
+    fun `Given SSL_UNTRUSTED when onSslErrorRejected then emits AuthenticationError`() {
+        val errorDetails = "SSL_UNTRUSTED details"
+        val sslError = mockk<SslError> {
+            every { primaryError } returns SslError.SSL_UNTRUSTED
+            every { toString() } returns errorDetails
+        }
+
+        webViewClient.onSslErrorRejected(sslError)
+
+        assertFrontendError<FrontendConnectionError.AuthenticationError>(
+            commonR.string.webview_error_SSL_UNTRUSTED,
+            errorDetails,
+            SslError::class,
+        )
+    }
+
+    @Test
+    fun `Given null error when onSslErrorRejected then emits generic SSL error`() {
+        webViewClient.onSslErrorRejected(null)
+
+        assertNotNull(capturedError)
+        assertTrue(capturedError is FrontendConnectionError.AuthenticationError)
+        assertEquals(commonR.string.error_ssl, capturedError?.message)
     }
 
     @Test
@@ -95,6 +210,7 @@ class HAWebViewClientTest {
         val details = "SSL Error: $primaryError"
         val sslError = mockk<SslError> {
             every { this@mockk.primaryError } returns primaryError
+            every { this@mockk.url } returns null
             every { this@mockk.toString() } returns details
         }
 
@@ -372,6 +488,9 @@ class HAWebViewClientTest {
         var capturedRealm: String? = null
         val client = HAWebViewClient(
             keyChainRepository = keyChainRepository,
+            validationScope = TestScope(UnconfinedTestDispatcher()),
+            trustManager = trustManager,
+            okHttpClient = okHttpClient,
             currentUrlFlow = currentUrlFlow,
             onFrontendError = { capturedError = it },
             onCrash = null,
@@ -400,6 +519,40 @@ class HAWebViewClientTest {
     fun `Given no onReceivedHttpAuthRequest callback when auth requested then does not crash`() {
         webViewClient.onReceivedHttpAuthRequest(mockk(relaxed = true), mockk(relaxed = true), "example.com", "realm")
         // No exception thrown
+    }
+
+    /**
+     * JVM unit tests run with Build.VERSION.SDK_INT = 0 (< Q), so the OkHttp fallback
+     * path is used for TLS validation. A relaxed mock returning normally means "trusted".
+     */
+    private fun makeTrustedOkHttpClient(): OkHttpClient {
+        val call = mockk<Call>(relaxed = true) {
+            every { execute() } returns mockk<Response>(relaxed = true)
+        }
+        val builtClient = mockk<OkHttpClient> {
+            every { newCall(any()) } returns call
+        }
+        val builder = mockk<OkHttpClient.Builder>()
+        every { builder.callTimeout(any<java.time.Duration>()) } returns builder
+        every { builder.build() } returns builtClient
+        return mockk {
+            every { newBuilder() } returns builder
+        }
+    }
+
+    private fun makeNetworkErrorOkHttpClient(): OkHttpClient {
+        val call = mockk<Call>(relaxed = true) {
+            every { execute() } throws IOException("Connection refused")
+        }
+        val builtClient = mockk<OkHttpClient> {
+            every { newCall(any()) } returns call
+        }
+        val builder = mockk<OkHttpClient.Builder>()
+        every { builder.callTimeout(any<java.time.Duration>()) } returns builder
+        every { builder.build() } returns builtClient
+        return mockk {
+            every { newBuilder() } returns builder
+        }
     }
 
     private fun mockRequest(url: String) = mockk<android.webkit.WebResourceRequest> {

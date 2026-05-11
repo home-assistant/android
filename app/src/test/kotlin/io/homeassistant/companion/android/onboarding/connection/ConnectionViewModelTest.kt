@@ -25,14 +25,19 @@ import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.verify
 import java.net.URL
+import javax.net.ssl.X509TrustManager
 import kotlin.reflect.KClass
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import okhttp3.OkHttpClient
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -55,24 +60,31 @@ import org.junit.jupiter.params.provider.ValueSource
 class ConnectionViewModelTest {
 
     private val keyChainRepository: KeyChainRepository = mockk(relaxed = true)
+    private val trustManager: X509TrustManager = mockk(relaxed = true)
+    private val okHttpClient: OkHttpClient = mockk(relaxed = true)
     private val webViewClientFactory: HAWebViewClientFactory = mockk {
         every {
             create(
+                validationScope = any<CoroutineScope>(),
                 currentUrlFlow = any<StateFlow<String?>>(),
                 onFrontendError = any(),
                 onCrash = any(),
                 onUrlIntercepted = any(),
                 onPageFinished = any(),
+                onReceivedHttpAuthRequest = any(),
             )
         } answers {
             HAWebViewClient(
                 keyChainRepository = keyChainRepository,
-                currentUrlFlow = firstArg(),
-                onFrontendError = secondArg(),
-                onCrash = thirdArg(),
-                onUrlIntercepted = arg(3),
-                onPageFinished = arg(4),
-                onReceivedHttpAuthRequest = arg(5),
+                validationScope = TestScope(UnconfinedTestDispatcher()),
+                trustManager = trustManager,
+                okHttpClient = okHttpClient,
+                currentUrlFlow = secondArg(),
+                onFrontendError = thirdArg(),
+                onCrash = arg(3),
+                onUrlIntercepted = arg(4),
+                onPageFinished = arg(5),
+                onReceivedHttpAuthRequest = arg(6),
             )
         }
     }

@@ -986,6 +986,7 @@ class FrontendViewModelTest {
             var capturedPageFinished: (() -> Unit)? = null
             every {
                 webViewClientFactory.create(
+                    validationScope = any(),
                     currentUrlFlow = any(),
                     onFrontendError = any(),
                     onCrash = any(),
@@ -994,8 +995,8 @@ class FrontendViewModelTest {
                     onReceivedHttpAuthRequest = any(),
                 )
             } answers {
-                // onPageFinished is the 5th of the 6 named arguments (zero-based index 4)
-                capturedPageFinished = arg(4)
+                // onPageFinished is the 6th of the 7 named arguments (zero-based index 5)
+                capturedPageFinished = arg(5)
                 mockk(relaxed = true)
             }
 
@@ -1085,6 +1086,7 @@ class FrontendViewModelTest {
             var capturedCallback: ((HttpAuthHandler, String, String, String) -> Unit)? = null
             every {
                 webViewClientFactory.create(
+                    validationScope = any(),
                     currentUrlFlow = any(),
                     onFrontendError = any(),
                     onCrash = any(),

@@ -42,8 +42,10 @@ import io.homeassistant.companion.android.di.qualifiers.NamedOsVersion
 import io.homeassistant.companion.android.di.qualifiers.NamedSessionStorage
 import io.homeassistant.companion.android.di.qualifiers.NamedThemesStorage
 import io.homeassistant.companion.android.di.qualifiers.NamedWearStorage
+import io.homeassistant.companion.android.common.data.TLSHelper
 import java.util.UUID
 import javax.inject.Singleton
+import javax.net.ssl.X509TrustManager
 import okhttp3.OkHttpClient
 
 @Module
@@ -64,6 +66,10 @@ internal abstract class DataModule {
         @Provides
         @Singleton
         fun providesOkHttpClient(homeAssistantApis: HomeAssistantApis): OkHttpClient = homeAssistantApis.okHttpClient
+
+        @Provides
+        @Singleton
+        fun providesTrustManager(tlsHelper: TLSHelper): X509TrustManager = tlsHelper.trustManager
 
         @Provides
         @Singleton

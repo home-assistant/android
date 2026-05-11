@@ -4,21 +4,35 @@ import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.ContextWrapper
+import android.net.http.SslCertificate
+import android.net.http.SslError
+import android.os.Build
 import android.security.KeyChain
 import android.security.KeyChainAliasCallback
 import android.webkit.ClientCertRequest
+import android.webkit.SslErrorHandler
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
+import io.homeassistant.companion.android.util.sensitive
+import java.io.IOException
 import java.lang.ref.WeakReference
 import java.security.PrivateKey
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
+import javax.net.ssl.SSLException
+import javax.net.ssl.X509TrustManager
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toJavaDuration
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import timber.log.Timber
 
 /*
@@ -27,7 +41,25 @@ import timber.log.Timber
  * we don't want the webview code in the wear app.
  */
 
-open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) : WebViewClient() {
+// The server is already reachable (WebView obtained the certificate), so the call is
+// mostly a TLS handshake. 3 seconds gives enough margin for slow connections
+// without blocking the WebView handler indefinitely.
+private val tlsValidationTimeout = 3.seconds
+
+private sealed interface TlsValidationResult {
+    data object Trusted : TlsValidationResult
+    data object Untrusted : TlsValidationResult
+    data object NetworkError : TlsValidationResult
+}
+
+open class TLSWebViewClient(
+    private var keyChainRepository: KeyChainRepository,
+    private val validationScope: CoroutineScope,
+    private val trustManager: X509TrustManager,
+    /** Used as a fallback for API < 29, where [SslCertificate.x509Certificate] is unavailable. */
+    okHttpClient: OkHttpClient,
+    @VisibleForTesting internal val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+) : WebViewClient() {
     var isTLSClientAuthNeeded = false
         @VisibleForTesting set
 
@@ -36,6 +68,102 @@ open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) 
 
     var isCertificateChainValid = false
         @VisibleForTesting set
+
+    // Used as fallback on API < 29 where SslCertificate.x509Certificate is unavailable
+    private val tlsValidationClient: OkHttpClient = okHttpClient.newBuilder()
+        .callTimeout(tlsValidationTimeout.toJavaDuration())
+        .build()
+
+    /**
+     * Called when an SSL error has been rejected and the WebView will not load the resource.
+     *
+     * Subclasses can override this to surface the error to the user. Not called when the
+     * server certificate is trusted and the connection proceeds.
+     */
+    open fun onSslErrorRejected(error: SslError?) {}
+
+    /**
+     * Called when TLS validation could not be completed due to a network error (e.g. timeout,
+     * DNS failure) rather than a genuine certificate rejection.
+     *
+     * The default implementation delegates to [onSslErrorRejected]. Subclasses can override to
+     * surface a connectivity error instead of an SSL error to the user.
+     */
+    open fun onTlsValidationNetworkError(error: SslError?) {
+        onSslErrorRejected(error)
+    }
+
+    override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
+        Timber.w("onReceivedSslError: primary error ${error?.primaryError} on ${sensitive { error?.url.orEmpty() }}")
+        if (error == null) {
+            handler?.cancel()
+            onSslErrorRejected(null)
+            return
+        }
+        if (error.primaryError == SslError.SSL_UNTRUSTED && error.url != null) {
+            val url = error.url!!
+            val handlerRef = handler?.let { WeakReference(it) }
+            validationScope.launch {
+                val result = isTlsTrusted(error.certificate, url)
+                withContext(Dispatchers.Main) {
+                    val handler = handlerRef?.get()
+                    if (handler == null) {
+                        Timber.w("SSL handler was collected before TLS validation completed")
+                        return@withContext
+                    }
+                    when (result) {
+                        TlsValidationResult.Trusted -> handler.proceed()
+                        TlsValidationResult.Untrusted -> {
+                            handler.cancel()
+                            onSslErrorRejected(error)
+                        }
+                        TlsValidationResult.NetworkError -> {
+                            handler.cancel()
+                            onTlsValidationNetworkError(error)
+                        }
+                    }
+                }
+            }
+        } else {
+            handler?.cancel()
+            onSslErrorRejected(error)
+        }
+    }
+
+    private suspend fun isTlsTrusted(sslCertificate: SslCertificate?, url: String): TlsValidationResult {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val cert = sslCertificate?.x509Certificate ?: return TlsValidationResult.Untrusted
+            return withContext(ioDispatcher) {
+                try {
+                    // SslCertificate.x509Certificate only exposes the leaf certificate, not the full
+                    // chain. Use "UNKNOWN" for the auth type since the cipher suite is unavailable.
+                    trustManager.checkServerTrusted(arrayOf(cert), "UNKNOWN")
+                    TlsValidationResult.Trusted
+                } catch (e: CertificateException) {
+                    // The leaf-only array is not enough when the server uses intermediate CAs.
+                    // Fall through to OkHttp which performs a full TLS handshake and receives the
+                    // complete chain from the server.
+                    Timber.d(e, "Direct trust manager check failed, falling back to OkHttp for ${sensitive(url)}")
+                    isTlsTrustedViaOkHttp(url)
+                }
+            }
+        }
+        return isTlsTrustedViaOkHttp(url)
+    }
+
+    private suspend fun isTlsTrustedViaOkHttp(url: String): TlsValidationResult = withContext(ioDispatcher) {
+        try {
+            val request = Request.Builder().url(url).head().build()
+            tlsValidationClient.newCall(request).execute().use { }
+            TlsValidationResult.Trusted
+        } catch (e: SSLException) {
+            Timber.w(e, "TLS validation failed for ${sensitive(url)}")
+            TlsValidationResult.Untrusted
+        } catch (e: IOException) {
+            Timber.w(e, "Connection failed during TLS validation for ${sensitive(url)}")
+            TlsValidationResult.NetworkError
+        }
+    }
 
     private var key: PrivateKey? = null
     private var chain: Array<X509Certificate>? = null

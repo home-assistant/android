@@ -119,6 +119,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     }
 
     val webViewClient: HAWebViewClient = webViewClientFactory.create(
+        validationScope = viewModelScope,
         currentUrlFlow = urlFlow,
         onFrontendError = ::onError,
         onUrlIntercepted = ::interceptRedirectIfRequired,

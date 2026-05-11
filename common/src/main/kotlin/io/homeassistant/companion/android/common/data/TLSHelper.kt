@@ -21,7 +21,12 @@ class TLSHelper @Inject constructor(
     @NamedKeyStore private val keyStore: KeyChainRepository,
 ) {
 
-    fun setupOkHttpClientSSLSocketFactory(builder: OkHttpClient.Builder) {
+    /**
+     * The X509TrustManager used by this app's OkHttpClient, initialized with AndroidCAStore to
+     * include both system and user-installed CAs. Use this to validate server certificates without
+     * making a network call.
+     */
+    val trustManager: X509TrustManager by lazy {
         val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
         // Load AndroidCAStore explicitly to include user-installed CAs alongside
         // system CAs. On some Android builds, passing null may load only the
@@ -34,12 +39,14 @@ class TLSHelper @Inject constructor(
             null
         }
         trustManagerFactory.init(androidCaStore)
-        val trustManagers = trustManagerFactory.trustManagers
+        trustManagerFactory.trustManagers[0] as X509TrustManager
+    }
 
+    fun setupOkHttpClientSSLSocketFactory(builder: OkHttpClient.Builder) {
         val sslContext = SSLContext.getInstance("TLS")
-        sslContext.init(arrayOf(getMTLSKeyManagerForOKHTTP()), trustManagers, null)
+        sslContext.init(arrayOf(getMTLSKeyManagerForOKHTTP()), arrayOf(trustManager), null)
 
-        builder.sslSocketFactory(sslContext.socketFactory, trustManagers[0] as X509TrustManager)
+        builder.sslSocketFactory(sslContext.socketFactory, trustManager)
     }
 
     private fun getMTLSKeyManagerForOKHTTP(): X509ExtendedKeyManager {

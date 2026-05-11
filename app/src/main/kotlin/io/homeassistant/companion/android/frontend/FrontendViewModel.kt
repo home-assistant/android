@@ -204,6 +204,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     )
 
     val webViewClient: HAWebViewClient = webViewClientFactory.create(
+        validationScope = viewModelScope,
         currentUrlFlow = urlFlow,
         onFrontendError = ::onError,
         onCrash = ::onRetry,
