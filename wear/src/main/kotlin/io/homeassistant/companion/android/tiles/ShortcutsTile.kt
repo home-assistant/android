@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class)
-
 package io.homeassistant.companion.android.tiles
 
 import android.content.Context
@@ -38,25 +36,22 @@ import com.mikepenz.iconics.utils.sizeDp
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.util.getIcon
 import java.nio.ByteBuffer
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
-import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.min
 import kotlin.math.roundToInt
-import kotlin.time.Clock
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -70,8 +65,9 @@ private const val ICON_SIZE_SMALL = 40f * 0.7071f // square that fits in 48dp ci
 private const val SPACING = 8f
 private const val TEXT_SIZE = 8f
 private const val TEXT_PADDING = 2f
-private val LOADING_TIMEOUT = 5.seconds
 private const val LOADING_RESOURCE_SUFFIX = "_loading"
+private const val LOADING_VERSION_PREFIX = "|loading:"
+private const val LOADING_SAFETY_TIMEOUT_MS = 45_000L
 
 @AndroidEntryPoint
 class ShortcutsTile : TileService() {
@@ -84,15 +80,12 @@ class ShortcutsTile : TileService() {
     @Inject
     lateinit var wearPrefsRepository: WearPrefsRepository
 
-    @Inject
-    lateinit var clock: Clock
-
-    private var pendingEntityId: String? = null
-    private var pendingOriginalState: String? = null
-    private var pendingTimestamp: Instant = Instant.DISTANT_PAST
-
     override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> = serviceScope.future {
         val state = requestParams.currentState
+        android.util.Log.e(
+            TAG,
+            "onTileRequest click=${state.lastClickableId} loading=$loadingEntityIds cache=${entityStates.size}",
+        )
         if (state.lastClickableId.isNotEmpty()) {
             Intent().also { intent ->
                 intent.action = "io.homeassistant.companion.android.TILE_ACTION"
@@ -100,71 +93,23 @@ class ShortcutsTile : TileService() {
                 intent.setPackage(packageName)
                 sendBroadcast(intent)
             }
-
-            // Enter loading state: store original state so we detect when it changes
-            pendingEntityId = state.lastClickableId
-            pendingTimestamp = clock.now()
-            pendingOriginalState = if (serverManager.isRegistered()) {
-                try {
-                    serverManager.integrationRepository().getEntity(state.lastClickableId)?.state
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    Timber.w(e, "Failed to fetch original state for ${state.lastClickableId}")
-                    null
-                }
-            } else {
-                null
-            }
-
-            // Schedule polling re-renders to pick up state change
-            serviceScope.launch {
-                delay(1.seconds)
-                requestUpdate(this@ShortcutsTile)
-                delay(3.seconds)
-                requestUpdate(this@ShortcutsTile)
-            }
+            loadingEntityIds[state.lastClickableId] = System.currentTimeMillis()
         }
+
+        // Clear stale loading entries (safety net for missed WebSocket events)
+        val now = System.currentTimeMillis()
+        loadingEntityIds.entries.removeAll { now - it.value > LOADING_SAFETY_TIMEOUT_MS }
 
         val tileId = requestParams.tileId
         val entities = getEntities(tileId)
 
-        // Fetch entity states for resource version — ensures cache invalidation on state change
-        val entityStatesMap = if (serverManager.isRegistered()) {
-            entities.map { entity ->
-                async {
-                    try {
-                        val e = serverManager.integrationRepository().getEntity(entity.entityId)
-                        entity.entityId to (e?.state ?: "unknown")
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        Timber.w(e, "Failed to fetch entity ${entity.entityId} state for tile version")
-                        entity.entityId to "unknown"
-                    }
-                }
-            }.map { it.await() }.toMap()
+        // Encode loading state in version string so onTileResourcesRequest can read it
+        val loadingPart = if (loadingEntityIds.isNotEmpty()) {
+            LOADING_VERSION_PREFIX + loadingEntityIds.keys.sorted().joinToString(",")
         } else {
-            emptyMap()
+            ""
         }
-
-        // Clear loading state if entity state has changed or timeout exceeded
-        if (pendingEntityId != null) {
-            val elapsed = clock.now() - pendingTimestamp
-            val currentState = entityStatesMap[pendingEntityId]
-            if (elapsed > LOADING_TIMEOUT ||
-                (pendingOriginalState != null && currentState != null && currentState != pendingOriginalState)
-            ) {
-                pendingEntityId = null
-                pendingOriginalState = null
-            }
-        }
-
-        val entityStatesVersion = entityStatesMap.entries
-            .sortedBy { it.key }
-            .joinToString(",") { "${it.key}=${it.value}" }
-        val loadingSuffix = pendingEntityId?.let { "|loading:$it" }.orEmpty()
-        val resourcesVersion = "$entities|$entityStatesVersion$loadingSuffix"
+        val resourcesVersion = "$TAG$tileId.${now}$loadingPart"
 
         Tile.Builder()
             .setResourcesVersion(resourcesVersion)
@@ -184,115 +129,96 @@ class ShortcutsTile : TileService() {
 
     override fun onTileResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> =
         serviceScope.future {
+            // Parse loading entity IDs from version string (survives service recreation)
+            val loadingIds = requestParams.version
+                .substringAfter(LOADING_VERSION_PREFIX, "")
+                .split(",")
+                .filter { it.isNotEmpty() }
+                .toSet()
+            android.util.Log.e(
+                TAG,
+                "onTileResourcesRequest loading=$loadingIds states=${entityStates.mapValues { it.value.state }}",
+            )
+
             val showLabels = wearPrefsRepository.getShowShortcutText()
             val iconSize = if (showLabels) ICON_SIZE_SMALL else ICON_SIZE_FULL
             val density = requestParams.deviceConfiguration.screenDensity
             val iconSizePx = (iconSize * density).roundToInt()
             val entities = getEntities(requestParams.tileId)
 
-            val entityMap = if (serverManager.isRegistered()) {
-                val fullEntities = entities.map { entity ->
-                    async {
-                        try {
-                            serverManager.integrationRepository().getEntity(entity.entityId)
-                        } catch (e: CancellationException) {
-                            throw e
-                        } catch (e: Exception) {
-                            Timber.w(e, "Failed to fetch entity ${entity.entityId} for tile")
-                            null
-                        }
-                    }
-                }.map { it.await() }
-                fullEntities.filterNotNull().associateBy { it.entityId }
-            } else {
-                emptyMap()
-            }
-
             Resources.Builder()
                 .setVersion(requestParams.version)
                 .apply {
-                    entities.map { entity ->
-                        // Find icon: try state-aware icon from full entity, fall back to domain icon
-                        val fullEntity = entityMap[entity.entityId]
-                        val iconIIcon = if (fullEntity != null) {
-                            fullEntity.getIcon(this@ShortcutsTile)
+                    entities.forEach { entity ->
+                        // Use cached entity for state-aware icon, fall back to domain icon
+                        val cachedEntity = entityStates[entity.entityId]
+                        val iconIIcon = if (cachedEntity != null) {
+                            cachedEntity.getIcon(this@ShortcutsTile)
                         } else {
-                            getIcon(
-                                entity.icon,
-                                entity.domain,
-                                this@ShortcutsTile,
-                            )
+                            getIcon(entity.icon, entity.domain, this@ShortcutsTile)
                         }
-                        val iconBitmap = IconicsDrawable(this@ShortcutsTile, iconIIcon).apply {
-                            colorInt = Color.WHITE
-                            sizeDp = iconSize.roundToInt()
-                            backgroundColor = IconicsColor.colorRes(R.color.colorOverlay)
-                        }.toBitmap(iconSizePx, iconSizePx, Bitmap.Config.RGB_565)
-
-                        // Make array of bitmap
-                        val bitmapData = ByteBuffer.allocate(iconBitmap.byteCount).apply {
-                            iconBitmap.copyPixelsToBuffer(this)
-                        }.array()
-
-                        // link the entity id to the bitmap data array
-                        entity.entityId to ResourceBuilders.ImageResource.Builder()
-                            .setInlineResource(
-                                ResourceBuilders.InlineImageResource.Builder()
-                                    .setData(bitmapData)
-                                    .setWidthPx(iconSizePx)
-                                    .setHeightPx(iconSizePx)
-                                    .setFormat(ResourceBuilders.IMAGE_FORMAT_RGB_565)
-                                    .build(),
-                            )
-                            .build()
-                    }.forEach { (id, imageResource) ->
-                        addIdToImageMapping(id, imageResource)
+                        addIdToImageMapping(
+                            entity.entityId,
+                            buildIconResource(iconIIcon, iconSize, iconSizePx),
+                        )
                     }
 
-                    // Generate loading icon for the pending entity
-                    pendingEntityId?.let { loadingId ->
-                        val loadingBitmap = IconicsDrawable(this@ShortcutsTile, Icon3.cmd_progress_clock).apply {
-                            colorInt = Color.WHITE
-                            sizeDp = iconSize.roundToInt()
-                            backgroundColor = IconicsColor.colorRes(R.color.colorOverlay)
-                        }.toBitmap(iconSizePx, iconSizePx, Bitmap.Config.RGB_565)
-                        val loadingData = ByteBuffer.allocate(loadingBitmap.byteCount).apply {
-                            loadingBitmap.copyPixelsToBuffer(this)
-                        }.array()
+                    // Generate loading icons for tapped entities
+                    loadingIds.forEach { loadingId ->
                         addIdToImageMapping(
                             loadingId + LOADING_RESOURCE_SUFFIX,
-                            ResourceBuilders.ImageResource.Builder()
-                                .setInlineResource(
-                                    ResourceBuilders.InlineImageResource.Builder()
-                                        .setData(loadingData)
-                                        .setWidthPx(iconSizePx)
-                                        .setHeightPx(iconSizePx)
-                                        .setFormat(ResourceBuilders.IMAGE_FORMAT_RGB_565)
-                                        .build(),
-                                ).build(),
+                            buildIconResource(Icon3.cmd_progress_clock, iconSize, iconSizePx),
                         )
                     }
                 }
                 .build()
         }
 
+    override fun onTileEnterEvent(requestParams: EventBuilders.TileEnterEvent) {
+        serviceScope.launch {
+            // Clear loading — we're about to fetch fresh state
+            loadingEntityIds.clear()
+
+            val tileId = requestParams.tileId
+            val entities = getEntities(tileId)
+            val entityIds = entities.map { it.entityId }
+
+            // Initial state fetch via batch WebSocket call
+            if (serverManager.isRegistered()) {
+                try {
+                    val allEntities = serverManager.integrationRepository().getEntities()
+                    allEntities?.filter { it.entityId in entityIds }?.forEach { entity ->
+                        entityStates[entity.entityId] = entity
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.w(e, "Failed to fetch initial entity states for tile")
+                }
+            }
+
+            // Render with fresh cache
+            try {
+                requestUpdate(this@ShortcutsTile)
+            } catch (e: Exception) {
+                Timber.w(e, "Unable to request tile update on enter")
+            }
+
+            // Start WebSocket subscription for real-time updates
+            startEntitySubscription(
+                serverManager = serverManager,
+                entityIds = entityIds,
+                context = this@ShortcutsTile,
+            )
+        }
+    }
+
+    override fun onTileLeaveEvent(requestParams: EventBuilders.TileLeaveEvent) {
+        stopEntitySubscription()
+    }
+
     override fun onTileAddEvent(requestParams: EventBuilders.TileAddEvent): Unit = runBlocking {
         withContext(Dispatchers.IO) {
-            /**
-             * When the app is updated from an older version (which only supported a single Shortcut Tile),
-             * and the user is adding a new Shortcuts Tile, we can't tell for sure if it's the 1st or 2nd Tile.
-             * Even though we may have the shortcut list stored in the prefs, it doesn't guarantee that
-             *   the tile was actually added to the Tiles carousel.
-             * The [WearPrefsRepositoryImpl::getTileShortcutsAndSaveTileId] method will handle both of the following cases:
-             * 1. There was no Tile added, but there were shortcuts stored in the prefs.
-             *    In this case, the stored shortcuts will be associated to the new tileId.
-             * 2. There was a single Tile added, and there were shortcuts stored in the prefs.
-             *    If there was a Tile update since updating the app, the tileId will be already
-             *    associated to the shortcuts, because it also calls [getTileShortcutsAndSaveTileId].
-             *    If there was no Tile update yet, the new Tile will "steal" the shortcuts from the existing Tile,
-             *    and the old Tile will behave as it is the new Tile. This is needed because
-             *    we don't know if it's the 1st or 2nd Tile.
-             */
             wearPrefsRepository.getTileShortcutsAndSaveTileId(requestParams.tileId)
         }
     }
@@ -301,11 +227,12 @@ class ShortcutsTile : TileService() {
         withContext(Dispatchers.IO) {
             wearPrefsRepository.removeTileShortcuts(requestParams.tileId)
         }
+        stopEntitySubscription()
+        entityStates.clear()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        // Cleans up the coroutine
         serviceJob.cancel()
     }
 
@@ -316,8 +243,31 @@ class ShortcutsTile : TileService() {
     private suspend fun timeline(tileId: Int): Timeline {
         val entities = getEntities(tileId)
         val showLabels = wearPrefsRepository.getShowShortcutText()
-
         return Timeline.fromLayoutElement(layout(entities, showLabels))
+    }
+
+    private fun buildIconResource(
+        icon: com.mikepenz.iconics.typeface.IIcon,
+        iconSizeDp: Float,
+        iconSizePx: Int,
+    ): ResourceBuilders.ImageResource {
+        val bitmap = IconicsDrawable(this, icon).apply {
+            colorInt = Color.WHITE
+            sizeDp = iconSizeDp.roundToInt()
+            backgroundColor = IconicsColor.colorRes(R.color.colorOverlay)
+        }.toBitmap(iconSizePx, iconSizePx, Bitmap.Config.RGB_565)
+        val data = ByteBuffer.allocate(bitmap.byteCount).apply {
+            bitmap.copyPixelsToBuffer(this)
+        }.array()
+        return ResourceBuilders.ImageResource.Builder()
+            .setInlineResource(
+                ResourceBuilders.InlineImageResource.Builder()
+                    .setData(data)
+                    .setWidthPx(iconSizePx)
+                    .setHeightPx(iconSizePx)
+                    .setFormat(ResourceBuilders.IMAGE_FORMAT_RGB_565)
+                    .build(),
+            ).build()
     }
 
     fun layout(entities: List<SimplifiedEntity>, showLabels: Boolean): LayoutElement = Column.Builder().apply {
@@ -352,7 +302,7 @@ class ShortcutsTile : TileService() {
 
     private fun iconLayout(entity: SimplifiedEntity, showLabels: Boolean): LayoutElement = Box.Builder().apply {
         val iconSize = if (showLabels) ICON_SIZE_SMALL else ICON_SIZE_FULL
-        val resourceId = if (entity.entityId == pendingEntityId) {
+        val resourceId = if (loadingEntityIds.containsKey(entity.entityId)) {
             entity.entityId + LOADING_RESOURCE_SUFFIX
         } else {
             entity.entityId
@@ -362,7 +312,6 @@ class ShortcutsTile : TileService() {
         setHorizontalAlignment(HORIZONTAL_ALIGN_CENTER)
         setModifiers(
             ModifiersBuilders.Modifiers.Builder()
-                // Set circular background
                 .setBackground(
                     ModifiersBuilders.Background.Builder()
                         .setColor(argb(ContextCompat.getColor(baseContext, R.color.colorOverlay)))
@@ -373,7 +322,6 @@ class ShortcutsTile : TileService() {
                         )
                         .build(),
                 )
-                // Make clickable and call activity
                 .setClickable(
                     ModifiersBuilders.Clickable.Builder()
                         .setId(entity.entityId)
@@ -385,7 +333,6 @@ class ShortcutsTile : TileService() {
                 .build(),
         )
         addContent(
-            // Add icon
             LayoutElementBuilders.Image.Builder()
                 .setResourceId(resourceId)
                 .setWidth(dp(iconSize))
@@ -420,8 +367,45 @@ class ShortcutsTile : TileService() {
         .build()
 
     companion object {
+        private const val TAG = "ShortcutsTile"
+
+        /** Entity cache — populated by WebSocket, read by tile rendering (zero network). */
+        private val entityStates = ConcurrentHashMap<String, Entity>()
+
+        /** Entities currently in loading state. Maps entityId → timestamp when loading started. */
+        private val loadingEntityIds = ConcurrentHashMap<String, Long>()
+
+        /** WebSocket subscription for entity state changes. Outlives service instances. */
+        private var subscriptionJob: Job? = null
+        private val subscriptionScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
         fun requestUpdate(context: Context) {
             getUpdater(context).requestUpdate(ShortcutsTile::class.java)
+        }
+
+        private fun startEntitySubscription(serverManager: ServerManager, entityIds: List<String>, context: Context) {
+            if (subscriptionJob?.isActive == true) return
+            val appContext = context.applicationContext
+            subscriptionJob = subscriptionScope.launch {
+                try {
+                    val flow = serverManager.integrationRepository()
+                        .getEntityUpdates(entityIds)
+                    flow?.collect { entity ->
+                        entityStates[entity.entityId] = entity
+                        loadingEntityIds.remove(entity.entityId)
+                        requestUpdate(appContext)
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.w(e, "Entity subscription failed")
+                }
+            }
+        }
+
+        private fun stopEntitySubscription() {
+            subscriptionJob?.cancel()
+            subscriptionJob = null
         }
     }
 }
