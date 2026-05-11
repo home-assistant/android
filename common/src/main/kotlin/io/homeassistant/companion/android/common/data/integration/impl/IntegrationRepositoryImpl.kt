@@ -52,6 +52,7 @@ import io.homeassistant.companion.android.di.qualifiers.NamedManufacturer
 import io.homeassistant.companion.android.di.qualifiers.NamedModel
 import io.homeassistant.companion.android.di.qualifiers.NamedOsVersion
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
@@ -191,6 +192,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             Timber.w("Device registration broken and reregistration allowed, reregistering")
             try {
                 registerDevice(deviceRegistration)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 throw IntegrationException("Device registration broken and reregistration failed", e)
             }
