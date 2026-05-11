@@ -32,6 +32,7 @@ abstract class BaseVehicleScreen(carContext: CarContext) : Screen(carContext) {
 
             override fun onPause(owner: LifecycleOwner) {
                 carRestrictionManager?.unregisterListener()
+                carRestrictionManager = null
                 car?.disconnect()
                 car = null
             }
