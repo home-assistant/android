@@ -268,7 +268,6 @@
         <activity android:name=".launch.LaunchActivity"
             android:exported="true"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|uiMode"
-            android:taskAffinity="${applicationId}.launch"
             android:theme="@style/Theme.LaunchScreen">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -367,7 +366,6 @@
             android:parentActivityName=".webview.WebViewActivity"
             android:exported="false"
             android:configChanges="orientation|screenSize"
-            android:taskAffinity="${applicationId}.settings"
             android:theme="@style/Theme.HomeAssistant.Config"/>
 
         <activity

@@ -17,7 +17,7 @@ import io.homeassistant.companion.android.util.vehicle.SUPPORTED_DOMAINS
 import io.homeassistant.companion.android.util.vehicle.getDomainList
 import io.homeassistant.companion.android.util.vehicle.getHeaderBuilder
 import io.homeassistant.companion.android.util.vehicle.nativeModeAction
-import io.homeassistant.companion.android.util.vehicle.settingsModeAction
+import io.homeassistant.companion.android.util.vehicle.settingsAction
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -76,7 +76,7 @@ class DomainListScreen(
                 if (BuildConfig.FLAVOR != "full") {
                     headerBuilder.addEndHeaderAction(nativeModeAction(carContext))
                 }
-                headerBuilder.addEndHeaderAction(settingsModeAction(carContext))
+                headerBuilder.addEndHeaderAction(settingsAction(carContext))
             }
             setHeader(headerBuilder.build())
             val domainBuild = domainList.build()

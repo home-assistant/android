@@ -32,7 +32,7 @@ import io.homeassistant.companion.android.util.vehicle.getDomainList
 import io.homeassistant.companion.android.util.vehicle.getHeaderBuilder
 import io.homeassistant.companion.android.util.vehicle.getNavigationGridItem
 import io.homeassistant.companion.android.util.vehicle.nativeModeAction
-import io.homeassistant.companion.android.util.vehicle.settingsModeAction
+import io.homeassistant.companion.android.util.vehicle.settingsAction
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -222,7 +222,7 @@ class MainVehicleScreen(
             if (BuildConfig.FLAVOR != "full") {
                 headerBuilder.addEndHeaderAction(nativeModeAction(carContext))
             }
-            headerBuilder.addEndHeaderAction(settingsModeAction(carContext))
+            headerBuilder.addEndHeaderAction(settingsAction(carContext))
         }
         headerBuilder.addEndHeaderAction(refreshAction)
 
