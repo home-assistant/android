@@ -6,14 +6,27 @@ import android.os.Build
 import android.view.Display
 import androidx.car.app.CarContext
 import androidx.car.app.model.Action
-import io.homeassistant.companion.android.common.R
+import androidx.car.app.model.CarColor
+import androidx.car.app.model.CarIcon
+import com.mikepenz.iconics.IconicsDrawable
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import com.mikepenz.iconics.utils.sizeDp
+import com.mikepenz.iconics.utils.toAndroidIconCompat
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.settings.SettingsActivity
 import timber.log.Timber
 
 fun settingsModeAction(carContext: CarContext): Action {
     return Action.Builder()
-        .setTitle(carContext.getString(R.string.settings))
+        .setIcon(
+            CarIcon.Builder(
+                IconicsDrawable(carContext, CommunityMaterial.Icon.cmd_cog).apply {
+                    sizeDp = 64
+                }.toAndroidIconCompat(),
+            )
+                .setTint(CarColor.DEFAULT)
+                .build(),
+        )
         .setOnClickListener {
             startSettingsActivity(carContext)
         }.build()

@@ -219,11 +219,10 @@ class MainVehicleScreen(
 
         val headerBuilder = carContext.getHeaderBuilder(commonR.string.app_name, Action.APP_ICON)
         if (isAutomotive && !isDrivingOptimized) {
-            if (BuildConfig.FLAVOR == "full") {
-                headerBuilder.addEndHeaderAction(settingsModeAction(carContext))
-            } else {
+            if (BuildConfig.FLAVOR != "full") {
                 headerBuilder.addEndHeaderAction(nativeModeAction(carContext))
             }
+            headerBuilder.addEndHeaderAction(settingsModeAction(carContext))
         }
         headerBuilder.addEndHeaderAction(refreshAction)
 
