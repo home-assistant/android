@@ -50,7 +50,7 @@ class FrontendEventHandlerTest {
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
                 onRequestFullscreen = {},
-                onLaunchWidgetConfig = { _, _ -> },
+                onNavigateToWidgetConfig = { _, _ -> },
             )
         }
 
@@ -81,7 +81,7 @@ class FrontendEventHandlerTest {
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
                 onRequestFullscreen = {},
-                onLaunchWidgetConfig = { _, _ -> },
+                onNavigateToWidgetConfig = { _, _ -> },
             )
         }
 
@@ -114,7 +114,7 @@ class FrontendEventHandlerTest {
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
                 onRequestFullscreen = {},
-                onLaunchWidgetConfig = { _, _ -> },
+                onNavigateToWidgetConfig = { _, _ -> },
             )
         }
 
@@ -153,7 +153,7 @@ class FrontendEventHandlerTest {
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
                 onRequestFullscreen = {},
-                onLaunchWidgetConfig = { _, _ -> },
+                onNavigateToWidgetConfig = { _, _ -> },
             )
         }
 
@@ -180,7 +180,7 @@ class FrontendEventHandlerTest {
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
                 onRequestFullscreen = {},
-                onLaunchWidgetConfig = { _, _ -> },
+                onNavigateToWidgetConfig = { _, _ -> },
             )
         }
 
@@ -207,7 +207,7 @@ class FrontendEventHandlerTest {
                 onShowServerSwitcher = { serverSwitcherShown = true },
                 onNavigateToNfcWrite = { _, _ -> },
                 onRequestFullscreen = {},
-                onLaunchWidgetConfig = { _, _ -> },
+                onNavigateToWidgetConfig = { _, _ -> },
             )
         }
 
@@ -237,7 +237,7 @@ class FrontendEventHandlerTest {
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
                 onRequestFullscreen = {},
-                onLaunchWidgetConfig = { _, _ -> },
+                onNavigateToWidgetConfig = { _, _ -> },
             )
         }
 
@@ -268,7 +268,7 @@ class FrontendEventHandlerTest {
                     capturedTagId = tagId
                 },
                 onRequestFullscreen = {},
-                onLaunchWidgetConfig = { _, _ -> },
+                onNavigateToWidgetConfig = { _, _ -> },
             )
         }
 
@@ -299,7 +299,7 @@ class FrontendEventHandlerTest {
                     capturedTagId = tagId
                 },
                 onRequestFullscreen = {},
-                onLaunchWidgetConfig = { _, _ -> },
+                onNavigateToWidgetConfig = { _, _ -> },
             )
         }
 
@@ -322,7 +322,7 @@ class FrontendEventHandlerTest {
     }
 
     @Test
-    fun `Given LaunchWidgetConfig event then onLaunchWidgetConfig is called with entityId and widgetType`() {
+    fun `Given NavigateToWidgetConfig event then onNavigateToWidgetConfig is called with entityId and widgetType`() {
         var capturedEntityId: String? = null
         var capturedWidgetType: WidgetType? = null
         val events = TestSharedFlow<FrontendEvent>()
@@ -337,7 +337,7 @@ class FrontendEventHandlerTest {
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
                 onRequestFullscreen = {},
-                onLaunchWidgetConfig = { entityId, widgetType ->
+                onNavigateToWidgetConfig = { entityId, widgetType ->
                     capturedEntityId = entityId
                     capturedWidgetType = widgetType
                 },
@@ -346,7 +346,7 @@ class FrontendEventHandlerTest {
 
         composeTestRule.waitForIdle()
         events.emit(
-            FrontendEvent.LaunchWidgetConfig(
+            FrontendEvent.NavigateToWidgetConfig(
                 entityId = "light.kitchen",
                 widgetType = WidgetType.MediaPlayer,
             ),
@@ -371,7 +371,7 @@ class FrontendEventHandlerTest {
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
                 onRequestFullscreen = { captured = it },
-                onLaunchWidgetConfig = { _, _ -> },
+                onNavigateToWidgetConfig = { _, _ -> },
             )
         }
 

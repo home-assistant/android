@@ -718,7 +718,7 @@ class FrontendViewModelTest {
 
                 messageFlow.emit(
                     FrontendHandlerEvent.EntityAddToExecuted(
-                        FrontendEvent.LaunchWidgetConfig(
+                        FrontendEvent.NavigateToWidgetConfig(
                             entityId = "light.test",
                             widgetType = io.homeassistant.companion.android.frontend.navigation.WidgetType.Entity,
                         ),
@@ -726,8 +726,8 @@ class FrontendViewModelTest {
                 )
 
                 val event = awaitItem()
-                assertTrue(event is FrontendEvent.LaunchWidgetConfig)
-                assertEquals("light.test", (event as FrontendEvent.LaunchWidgetConfig).entityId)
+                assertTrue(event is FrontendEvent.NavigateToWidgetConfig)
+                assertEquals("light.test", (event as FrontendEvent.NavigateToWidgetConfig).entityId)
                 cancelAndIgnoreRemainingEvents()
             }
         }

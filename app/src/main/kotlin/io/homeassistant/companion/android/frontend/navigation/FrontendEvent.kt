@@ -66,10 +66,10 @@ sealed interface FrontendEvent {
     data class RequestFullscreen(val fullscreen: Boolean) : FrontendEvent
 
     /**
-     * Launch a widget configuration screen for the given entity.
+     * Navigate to a widget configuration screen for the given entity.
      *
      * @param entityId The entity to pre-fill in the widget configuration
      * @param widgetType The type of widget to configure
      */
-    data class LaunchWidgetConfig(val entityId: String, val widgetType: WidgetType) : FrontendEvent
+    data class NavigateToWidgetConfig(val entityId: String, val widgetType: WidgetType) : FrontendEvent
 }

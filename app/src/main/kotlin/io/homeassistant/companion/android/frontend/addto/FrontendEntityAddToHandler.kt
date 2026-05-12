@@ -112,7 +112,7 @@ class FrontendEntityAddToHandler @VisibleForTesting constructor(
      * Executes an EntityAddTo action and returns the corresponding [FrontendEvent].
      *
      * For [EntityAddToAction.AndroidAutoFavorite], persists the favorite and returns a snackbar event.
-     * For widget actions, returns a [FrontendEvent.LaunchWidgetConfig].
+     * For widget actions, returns a [FrontendEvent.NavigateToWidgetConfig].
      * For unimplemented actions (Shortcut, Tile, Watch), returns null.
      */
     suspend fun execute(entityId: String, action: EntityAddToAction): FrontendEvent? {
@@ -122,13 +122,13 @@ class FrontendEntityAddToHandler @VisibleForTesting constructor(
                 FrontendEvent.ShowSnackbar(commonR.string.add_to_android_auto_success)
             }
             is EntityAddToAction.EntityWidget ->
-                FrontendEvent.LaunchWidgetConfig(entityId, WidgetType.Entity)
+                FrontendEvent.NavigateToWidgetConfig(entityId, WidgetType.Entity)
             is EntityAddToAction.MediaPlayerWidget ->
-                FrontendEvent.LaunchWidgetConfig(entityId, WidgetType.MediaPlayer)
+                FrontendEvent.NavigateToWidgetConfig(entityId, WidgetType.MediaPlayer)
             is EntityAddToAction.CameraWidget ->
-                FrontendEvent.LaunchWidgetConfig(entityId, WidgetType.Camera)
+                FrontendEvent.NavigateToWidgetConfig(entityId, WidgetType.Camera)
             is EntityAddToAction.TodoWidget ->
-                FrontendEvent.LaunchWidgetConfig(entityId, WidgetType.Todo)
+                FrontendEvent.NavigateToWidgetConfig(entityId, WidgetType.Todo)
             is EntityAddToAction.Shortcut,
             is EntityAddToAction.Tile,
             is EntityAddToAction.Watch,

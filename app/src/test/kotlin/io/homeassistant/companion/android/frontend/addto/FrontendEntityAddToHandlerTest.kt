@@ -191,31 +191,31 @@ class FrontendEntityAddToHandlerTest {
     }
 
     @Test
-    fun `Given EntityWidget action when executing then returns LaunchWidgetConfig with Entity type`() = runTest {
+    fun `Given EntityWidget action when executing then returns NavigateToWidgetConfig with Entity type`() = runTest {
         val event = createHandler().execute("light.test", EntityAddToAction.EntityWidget)
 
-        assertEquals(FrontendEvent.LaunchWidgetConfig("light.test", WidgetType.Entity), event)
+        assertEquals(FrontendEvent.NavigateToWidgetConfig("light.test", WidgetType.Entity), event)
     }
 
     @Test
-    fun `Given MediaPlayerWidget action when executing then returns LaunchWidgetConfig with MediaPlayer type`() = runTest {
+    fun `Given MediaPlayerWidget action when executing then returns NavigateToWidgetConfig with MediaPlayer type`() = runTest {
         val event = createHandler().execute("media_player.tv", EntityAddToAction.MediaPlayerWidget)
 
-        assertEquals(FrontendEvent.LaunchWidgetConfig("media_player.tv", WidgetType.MediaPlayer), event)
+        assertEquals(FrontendEvent.NavigateToWidgetConfig("media_player.tv", WidgetType.MediaPlayer), event)
     }
 
     @Test
-    fun `Given CameraWidget action when executing then returns LaunchWidgetConfig with Camera type`() = runTest {
+    fun `Given CameraWidget action when executing then returns NavigateToWidgetConfig with Camera type`() = runTest {
         val event = createHandler().execute("camera.front", EntityAddToAction.CameraWidget)
 
-        assertEquals(FrontendEvent.LaunchWidgetConfig("camera.front", WidgetType.Camera), event)
+        assertEquals(FrontendEvent.NavigateToWidgetConfig("camera.front", WidgetType.Camera), event)
     }
 
     @Test
-    fun `Given TodoWidget action when executing then returns LaunchWidgetConfig with Todo type`() = runTest {
+    fun `Given TodoWidget action when executing then returns NavigateToWidgetConfig with Todo type`() = runTest {
         val event = createHandler().execute("todo.shopping", EntityAddToAction.TodoWidget)
 
-        assertEquals(FrontendEvent.LaunchWidgetConfig("todo.shopping", WidgetType.Todo), event)
+        assertEquals(FrontendEvent.NavigateToWidgetConfig("todo.shopping", WidgetType.Todo), event)
     }
 
     @Test

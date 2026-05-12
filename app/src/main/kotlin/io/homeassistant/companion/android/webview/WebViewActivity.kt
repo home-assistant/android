@@ -1184,7 +1184,7 @@ class WebViewActivity :
             val action = ExternalEntityAddToAction.appPayloadToAction(appPayload)
             lifecycleScope.launch {
                 when (val event = entityAddToHandler.execute(entityId, action)) {
-                    is FrontendEvent.LaunchWidgetConfig -> {
+                    is FrontendEvent.NavigateToWidgetConfig -> {
                         startActivity(event.widgetType.toConfigureIntent(this@WebViewActivity, event.entityId))
                     }
                     is FrontendEvent.ShowSnackbar -> {
