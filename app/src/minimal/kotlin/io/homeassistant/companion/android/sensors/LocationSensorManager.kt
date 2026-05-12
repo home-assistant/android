@@ -51,6 +51,18 @@ class LocationSensorManager :
 
         fun setHighAccuracyModeSetting(context: Context, enabled: Boolean) {}
         fun setHighAccuracyModeIntervalSetting(context: Context, updateInterval: Int) {}
+
+        /**
+         * Builds an explicit-component [Intent] addressed to this receiver that triggers a single
+         * accurate location update via [ACTION_REQUEST_ACCURATE_LOCATION_UPDATE]. No-op in the
+         * minimal flavor since [LocationSensorManager.onReceive] does nothing.
+         */
+        fun createRequestAccurateLocationUpdateIntent(context: Context): Intent = Intent(
+            context,
+            LocationSensorManager::class.java,
+        ).apply {
+            action = ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
+        }
     }
 
     override fun onReceive(context: Context, intent: Intent) {
