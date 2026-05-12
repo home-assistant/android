@@ -405,13 +405,13 @@ internal class PrefsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun addAllowedTag(tag: String) {
-        val approved = allowedTags().toMutableSet()
+        val approved = getAllowedTags().toMutableSet()
         if (approved.add(tag)) {
             localStorage().putStringSet(PREF_ALLOWED_TAGS, approved)
         }
     }
 
-    override suspend fun allowedTags(): Set<String> {
+    override suspend fun getAllowedTags(): Set<String> {
         return localStorage().getStringSet(PREF_ALLOWED_TAGS) ?: emptySet()
     }
 

@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.nfc.views
 
+import android.content.ClipData
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,9 +21,11 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -31,16 +34,22 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.composable.HABanner
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
@@ -52,6 +61,7 @@ import io.homeassistant.companion.android.common.compose.theme.LocalHAColorSchem
 import io.homeassistant.companion.android.common.compose.util.adaptiveIconPainterResource
 import io.homeassistant.companion.android.nfc.TagReaderUiState
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
+import kotlinx.coroutines.launch
 
 private val SCANNING_CONTENT_HEIGHT = 160.dp
 
@@ -167,7 +177,7 @@ private fun TagApprovalSheetHeader(onClose: () -> Unit, modifier: Modifier = Mod
         Column(modifier = Modifier.align(Alignment.TopCenter)) {
             Image(
                 painter = adaptiveIconPainterResource(R.mipmap.ic_launcher_round),
-                contentDescription = stringResource(commonR.string.home_assistant_branding_icon_content_description),
+                contentDescription = null,
                 modifier = Modifier
                     .padding(top = HADimens.SPACE5)
                     .size(36.dp)
@@ -182,6 +192,7 @@ private fun TagApprovalSheetHeader(onClose: () -> Unit, modifier: Modifier = Mod
                     .align(Alignment.CenterHorizontally),
             )
         }
+        val cancelContentDescription = stringResource(commonR.string.cancel)
         // Replicates Close button of the Android 17 biometrics bottom sheet
         Box(
             modifier = Modifier
@@ -192,7 +203,10 @@ private fun TagApprovalSheetHeader(onClose: () -> Unit, modifier: Modifier = Mod
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                     onClick = onClose,
-                ),
+                )
+                .semantics {
+                    contentDescription = cancelContentDescription
+                },
             contentAlignment = Alignment.Center,
         ) {
             Box(
@@ -204,7 +218,7 @@ private fun TagApprovalSheetHeader(onClose: () -> Unit, modifier: Modifier = Mod
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = stringResource(commonR.string.cancel),
+                    contentDescription = null,
                     tint = LocalHAColorScheme.current.colorOnNeutralQuiet,
                 )
             }
@@ -227,23 +241,66 @@ private fun ApprovingContent(tagId: String, onAllowOnce: () -> Unit, onAllowAlwa
             modifier = Modifier.fillMaxWidth(),
         )
         Text(
-            text = stringResource(commonR.string.tag_approval_description, tagId),
+            text = stringResource(commonR.string.tag_approval_description),
             style = HATextStyle.Body,
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = HADimens.SPACE4),
+                .fillMaxWidth(),
         )
 
+        TagBanner(tagId, modifier = Modifier.padding(bottom = HADimens.SPACE4))
+
         HAFilledButton(
-            text = stringResource(commonR.string.tag_allow_always),
-            onClick = onAllowAlways,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        HAPlainButton(
             text = stringResource(commonR.string.tag_allow_once),
             onClick = onAllowOnce,
             modifier = Modifier.fillMaxWidth(),
         )
+
+        HAPlainButton(
+            text = stringResource(commonR.string.tag_allow_always),
+            onClick = onAllowAlways,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+@Composable
+private fun TagBanner(tagId: String, modifier: Modifier = Modifier) {
+    val copyContentDescription = stringResource(commonR.string.tag_copy_id)
+    val clipboard = LocalClipboard.current
+    val coroutineScope = rememberCoroutineScope()
+
+    HABanner(modifier) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(commonR.string.tag_id),
+                style = HATextStyle.BodyMedium.copy(textAlign = TextAlign.Start),
+                modifier = Modifier.padding(bottom = HADimens.SPACE1),
+            )
+            Text(
+                text = tagId,
+                style = HATextStyle.Body.copy(
+                    textAlign = TextAlign.Start,
+                    color = LocalHAColorScheme.current.colorTextPrimary,
+                ),
+                maxLines = 1,
+            )
+        }
+        IconButton(
+            onClick = {
+                coroutineScope.launch {
+                    clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(tagId, tagId)))
+                }
+            },
+            modifier = Modifier.semantics {
+                contentDescription = copyContentDescription
+            },
+        ) {
+            Icon(
+                imageVector = Icons.Default.ContentCopy,
+                contentDescription = null,
+                tint = LocalHAColorScheme.current.colorOnNeutralQuiet,
+            )
+        }
     }
 }
 

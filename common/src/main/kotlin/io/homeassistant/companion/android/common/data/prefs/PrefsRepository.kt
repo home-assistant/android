@@ -163,7 +163,7 @@ interface PrefsRepository {
 
     suspend fun addAllowedTag(tag: String)
 
-    suspend fun allowedTags(): Set<String>
+    suspend fun getAllowedTags(): Set<String>
 
     suspend fun clearAllowedTags()
 }

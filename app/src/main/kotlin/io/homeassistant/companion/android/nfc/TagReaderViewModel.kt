@@ -63,7 +63,7 @@ class TagReaderViewModel @Inject constructor(
                 _uiState.value = TagReaderUiState.Error(errorMessageRes(isNfcTag))
                 return@launch
             }
-            if (prefsRepository.allowedTags().contains(tagId)) {
+            if (prefsRepository.getAllowedTags().contains(tagId)) {
                 scanAndFinish(tagId)
             } else {
                 _uiState.value = TagReaderUiState.ApprovingTag(tagId)

@@ -77,7 +77,7 @@ class TagReaderViewModelTest {
         coEvery { serverManager.isRegistered() } returns true
         coEvery { serverManager.servers() } returns listOf(server1)
         coEvery { serverManager.integrationRepository(1) } returns repo1
-        coEvery { prefsRepository.allowedTags() } returns emptySet()
+        coEvery { prefsRepository.getAllowedTags() } returns emptySet()
 
         val viewModel = createViewModel()
         viewModel.uiState.test {
@@ -100,7 +100,7 @@ class TagReaderViewModelTest {
         coEvery { serverManager.isRegistered() } returns true
         coEvery { serverManager.servers() } returns listOf(server1)
         coEvery { serverManager.integrationRepository(1) } returns repo1
-        coEvery { prefsRepository.allowedTags() } returns setOf("custom-tag-foo")
+        coEvery { prefsRepository.getAllowedTags() } returns setOf("custom-tag-foo")
 
         val viewModel = createViewModel()
         viewModel.uiState.test {
