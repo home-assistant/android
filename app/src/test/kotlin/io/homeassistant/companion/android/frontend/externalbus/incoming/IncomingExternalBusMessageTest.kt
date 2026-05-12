@@ -204,6 +204,38 @@ class IncomingExternalBusMessageTest {
     }
 
     @Test
+    fun `Given improv scan JSON then parses to ImprovScanMessage`() {
+        val json = """{"type":"improv/scan","id":50}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(ImprovScanMessage::class.java, message)
+        assertEquals(50, (message as ImprovScanMessage).id)
+    }
+
+    @Test
+    fun `Given improv scan JSON without id then parses to ImprovScanMessage with null id`() {
+        val json = """{"type":"improv/scan"}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(ImprovScanMessage::class.java, message)
+        assertNull((message as ImprovScanMessage).id)
+    }
+
+    @Test
+    fun `Given improv configure_device JSON then parses to ImprovConfigureDeviceMessage with name`() {
+        val json = """{"type":"improv/configure_device","id":51,"payload":{"name":"Smart Plug"}}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(ImprovConfigureDeviceMessage::class.java, message)
+        val configureMessage = message as ImprovConfigureDeviceMessage
+        assertEquals(51, configureMessage.id)
+        assertEquals("Smart Plug", configureMessage.payload.name)
+    }
+
+    @Test
     fun `Given exoplayer resize JSON without payload then parses with zero defaults`() {
         val json = """{"type":"exoplayer/resize","id":25}"""
 

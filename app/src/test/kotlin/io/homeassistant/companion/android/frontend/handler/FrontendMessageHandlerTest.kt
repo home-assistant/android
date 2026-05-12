@@ -29,6 +29,9 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlaye
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HandleBlobMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
+import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovConfigureDeviceMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovConfigureDevicePayload
+import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovScanMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistPayload
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistSettingsMessage
@@ -39,6 +42,7 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.ThemeUpd
 import io.homeassistant.companion.android.frontend.externalbus.incoming.UnknownIncomingMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.OutgoingExternalBusMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage
+import io.homeassistant.companion.android.frontend.improv.BluetoothCapabilities
 import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.frontend.session.AuthPayload
 import io.homeassistant.companion.android.frontend.session.ExternalAuthResult
@@ -87,6 +91,7 @@ class FrontendMessageHandlerTest {
     private val appVersionProvider: AppVersionProvider = mockk()
     private val sessionManager: ServerSessionManager = mockk(relaxed = true)
     private val downloadManager: FrontendDownloadManager = mockk(relaxed = true)
+    private val bluetoothCapabilities: BluetoothCapabilities = BluetoothCapabilities { true }
     private val entityAddToHandler: FrontendEntityAddToHandler =
         mockk(relaxed = true)
     private lateinit var handler: FrontendMessageHandler
@@ -108,6 +113,7 @@ class FrontendMessageHandlerTest {
             appVersionProvider = appVersionProvider,
             sessionManager = sessionManager,
             downloadManager = downloadManager,
+            bluetoothCapabilities = bluetoothCapabilities,
             entityAddToHandler = entityAddToHandler,
             isAutomotive = false,
         )
@@ -184,6 +190,7 @@ class FrontendMessageHandlerTest {
             appVersionProvider = appVersionProvider,
             sessionManager = sessionManager,
             downloadManager = downloadManager,
+            bluetoothCapabilities = BluetoothCapabilities { true },
             entityAddToHandler = entityAddToHandler,
             isAutomotive = false,
         )
@@ -205,6 +212,7 @@ class FrontendMessageHandlerTest {
         assertEquals(true, configResult["canCommissionMatter"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(true, configResult["canImportThreadCredentials"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(1, configResult["hasBarCodeScanner"]?.jsonPrimitive?.int)
+        assertEquals(true, configResult["canSetupImprov"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals("2.0.0 (200)", configResult["appVersion"]?.jsonPrimitive?.content)
     }
 
@@ -223,6 +231,7 @@ class FrontendMessageHandlerTest {
             appVersionProvider = appVersionProvider,
             sessionManager = sessionManager,
             downloadManager = downloadManager,
+            bluetoothCapabilities = BluetoothCapabilities { false },
             entityAddToHandler = entityAddToHandler,
             isAutomotive = false,
         )
@@ -244,6 +253,7 @@ class FrontendMessageHandlerTest {
         assertEquals(false, configResult["canCommissionMatter"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(false, configResult["canImportThreadCredentials"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(0, configResult["hasBarCodeScanner"]?.jsonPrimitive?.int)
+        assertEquals(false, configResult["canSetupImprov"]?.jsonPrimitive?.content?.toBoolean())
     }
 
     @Test
@@ -344,6 +354,34 @@ class FrontendMessageHandlerTest {
     }
 
     @Test
+    fun `Given improv scan message when messageResults then emits StartImprovScan`() = runTest {
+        val message = ImprovScanMessage(id = 50)
+        every { externalBusRepository.incomingMessages() } returns flowOf(message)
+
+        handler.messageResults().test {
+            val result = awaitItem()
+            assertTrue(result is FrontendHandlerEvent.StartImprovScan)
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given improv configure_device message when messageResults then emits ConfigureImprovDevice with name`() = runTest {
+        val message = ImprovConfigureDeviceMessage(
+            id = 51,
+            payload = ImprovConfigureDevicePayload(name = "Smart Plug"),
+        )
+        every { externalBusRepository.incomingMessages() } returns flowOf(message)
+
+        handler.messageResults().test {
+            val result = awaitItem()
+            assertTrue(result is FrontendHandlerEvent.ConfigureImprovDevice)
+            assertEquals("Smart Plug", (result as FrontendHandlerEvent.ConfigureImprovDevice).deviceName)
+            expectNoEvents()
+        }
+    }
+
+    @Test
     fun `Given unknown message when messageResults then emits UnknownMessage`() = runTest {
         val message = UnknownIncomingMessage(discriminator = "unknown-type", content = JsonPrimitive("unknown-type"))
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
@@ -378,6 +416,7 @@ class FrontendMessageHandlerTest {
             appVersionProvider = appVersionProvider,
             sessionManager = sessionManager,
             downloadManager = downloadManager,
+            bluetoothCapabilities = bluetoothCapabilities,
             entityAddToHandler = entityAddToHandler,
             isAutomotive = true,
         )
@@ -411,6 +450,7 @@ class FrontendMessageHandlerTest {
             appVersionProvider = appVersionProvider,
             sessionManager = sessionManager,
             downloadManager = downloadManager,
+            bluetoothCapabilities = bluetoothCapabilities,
             entityAddToHandler = entityAddToHandler,
             isAutomotive = false,
         )

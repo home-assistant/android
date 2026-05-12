@@ -19,6 +19,8 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlaye
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerStopMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HandleBlobMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovConfigureDeviceMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovScanMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.IncomingExternalBusMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistSettingsMessage
@@ -29,6 +31,7 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.UnknownI
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResultMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.EntityAddToActionsResultMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
+import io.homeassistant.companion.android.frontend.improv.BluetoothCapabilities
 import io.homeassistant.companion.android.frontend.js.FrontendJsHandler
 import io.homeassistant.companion.android.frontend.session.AuthPayload
 import io.homeassistant.companion.android.frontend.session.ExternalAuthResult
@@ -69,6 +72,7 @@ class FrontendMessageHandler @Inject constructor(
     private val appVersionProvider: AppVersionProvider,
     private val sessionManager: ServerSessionManager,
     private val downloadManager: FrontendDownloadManager,
+    private val bluetoothCapabilities: BluetoothCapabilities,
     private val entityAddToHandler: FrontendEntityAddToHandler,
     @param:IsAutomotive private val isAutomotive: Boolean,
 ) : FrontendJsHandler,
@@ -230,6 +234,16 @@ class FrontendMessageHandler @Inject constructor(
                 FrontendHandlerEvent.DownloadCompleted(result)
             }
 
+            is ImprovScanMessage -> {
+                Timber.d("improv/scan received with id: ${message.id}")
+                FrontendHandlerEvent.StartImprovScan
+            }
+
+            is ImprovConfigureDeviceMessage -> {
+                Timber.d("improv/configure_device received with id: ${message.id}")
+                FrontendHandlerEvent.ConfigureImprovDevice(deviceName = message.payload.name)
+            }
+
             is EntityAddToGetActionsMessage -> {
                 Timber.d("Entity add_to get_actions request received for: ${message.payload.entityId}")
                 val actions = entityAddToHandler.getActionsForEntity(message.payload.entityId)
@@ -269,6 +283,7 @@ class FrontendMessageHandler @Inject constructor(
             canCommissionMatter = canCommissionMatter,
             canExportThread = canExportThread,
             hasBarCodeScanner = hasBarCodeScanner,
+            canSetupImprov = bluetoothCapabilities.hasBluetoothLe(),
             appVersion = appVersionProvider(),
         )
         externalBusRepository.send(response)

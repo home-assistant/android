@@ -85,7 +85,6 @@ import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
-import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.assist.AssistActivity
 import io.homeassistant.companion.android.authenticator.Authenticator
@@ -1359,8 +1358,6 @@ class WebViewActivity :
         lifecycleScope.launch {
             SensorWorker.start(this@WebViewActivity)
             WebsocketManager.start(this@WebViewActivity)
-
-            WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG || presenter.isWebViewDebugEnabled())
 
             requestedOrientation = when (presenter.getScreenOrientation()) {
                 getString(

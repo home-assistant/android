@@ -217,6 +217,39 @@ data class ExoPlayerResizePayload(
     val bottom: Double = 0.0,
 )
 
+/**
+ * Message requesting the app to start scanning for nearby BLE devices that advertise the
+ * Improv Wi-Fi service.
+ *
+ * The frontend sends this once when the user opens its "Add device" flow. The app responds
+ * out-of-band with a stream of [io.homeassistant.companion.android.frontend.externalbus.outgoing.ImprovDiscoveredDeviceMessage]
+ * commands as devices are discovered. No `result`-shaped response is expected.
+ *
+ * Will not be sent by the frontend when the device reports
+ * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResultMessage.ConfigResult.canSetupImprov] = `false`.
+ */
+@Serializable
+@SerialName("improv/scan")
+data class ImprovScanMessage(override val id: Int? = null) : IncomingExternalBusMessage
+
+/**
+ * Message requesting the app to begin Wi-Fi onboarding for the named improv device the user
+ * picked from the discovery list.
+ *
+ * The app should open the credentials dialog for [ImprovConfigureDevicePayload.name], submit
+ * the entered Wi-Fi credentials over BLE, and finally — once the device reports it has been
+ * provisioned — emit
+ * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ImprovDeviceSetupDoneMessage]
+ * and navigate the frontend to the matching `config_flow_start` URL.
+ */
+@Serializable
+@SerialName("improv/configure_device")
+data class ImprovConfigureDeviceMessage(override val id: Int? = null, val payload: ImprovConfigureDevicePayload) :
+    IncomingExternalBusMessage
+
+@Serializable
+data class ImprovConfigureDevicePayload(val name: String)
+
 @Serializable
 @SerialName("entity/add_to/get_actions")
 data class EntityAddToGetActionsMessage(override val id: Int? = null, val payload: EntityAddToGetActionsPayload) :

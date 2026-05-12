@@ -61,6 +61,7 @@ object ConfigResultMessage {
         canCommissionMatter: Boolean,
         canExportThread: Boolean,
         hasBarCodeScanner: Int,
+        canSetupImprov: Boolean,
         appVersion: AppVersion,
     ): OutgoingExternalBusMessage {
         return ResultMessage(
@@ -71,6 +72,7 @@ object ConfigResultMessage {
                     canCommissionMatter,
                     canExportThread,
                     hasBarCodeScanner,
+                    canSetupImprov,
                     appVersion,
                 ),
             ),
@@ -92,7 +94,7 @@ object ConfigResultMessage {
         val canImportThreadCredentials: Boolean,
         val hasAssist: Boolean = true,
         val hasBarCodeScanner: Int,
-        val canSetupImprov: Boolean = true,
+        val canSetupImprov: Boolean,
         val downloadFileSupported: Boolean = true,
         val appVersion: String,
         val hasEntityAddTo: Boolean = true,
@@ -104,18 +106,58 @@ object ConfigResultMessage {
                 canCommissionMatter: Boolean,
                 canExportThread: Boolean,
                 hasBarCodeScanner: Int,
+                canSetupImprov: Boolean,
                 appVersion: AppVersion,
             ) = ConfigResult(
                 canWriteTag = hasNfc,
                 canCommissionMatter = canCommissionMatter,
                 canImportThreadCredentials = canExportThread,
                 hasBarCodeScanner = hasBarCodeScanner,
+                canSetupImprov = canSetupImprov,
                 appVersion = appVersion.value,
             )
         }
     }
 }
 
+/**
+ * Configuration result payload for config/get requests.
+ *
+ * Contains the app's capabilities that the frontend needs to know about.
+ */
+@Serializable
+data class ConfigResult(
+    val hasSettingsScreen: Boolean = true,
+    val canWriteTag: Boolean,
+    val hasExoPlayer: Boolean = true,
+    val canCommissionMatter: Boolean,
+    val canImportThreadCredentials: Boolean,
+    val hasAssist: Boolean = true,
+    val hasBarCodeScanner: Int,
+    val canSetupImprov: Boolean = true,
+    val downloadFileSupported: Boolean = true,
+    val appVersion: String,
+    val hasEntityAddTo: Boolean = true,
+    val hasAssistSettings: Boolean = true,
+) {
+    companion object {
+        fun create(
+            hasNfc: Boolean,
+            canCommissionMatter: Boolean,
+            canExportThread: Boolean,
+            hasBarCodeScanner: Int,
+            canSetupImprov: Boolean,
+            appVersion: AppVersion,
+        ) = ConfigResult(
+            canWriteTag = hasNfc,
+            canCommissionMatter = canCommissionMatter,
+            canImportThreadCredentials = canExportThread,
+            hasBarCodeScanner = hasBarCodeScanner,
+            canSetupImprov = canSetupImprov,
+            appVersion = appVersion.value,
+        )
+    }
+}
 object EntityAddToActionsResultMessage {
     /**
      * Creates a response with available EntityAddTo actions.

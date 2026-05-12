@@ -21,6 +21,7 @@ class OutgoingExternalBusMessageTest {
                 canCommissionMatter = true,
                 canExportThread = true,
                 hasBarCodeScanner = 0,
+                canSetupImprov = true,
                 appVersion = AppVersion.from("1.0.0 (1)"),
             ),
         )
@@ -31,12 +32,29 @@ class OutgoingExternalBusMessageTest {
     }
 
     @Test
+    fun `Given device without BLE when serializing config then canSetupImprov is false`() {
+        val json = frontendExternalBusJson.encodeToString<OutgoingExternalBusMessage>(
+            ConfigResultMessage(
+                id = 2,
+                hasNfc = false,
+                canCommissionMatter = false,
+                canExportThread = false,
+                hasBarCodeScanner = 0,
+                canSetupImprov = false,
+                appVersion = AppVersion.from("1.0.0 (1)"),
+            ),
+        )
+        assertTrue(json.contains(""""canSetupImprov":false"""))
+    }
+
+    @Test
     fun `Given ConfigResult then default values are correct`() {
         val config = ConfigResultMessage.ConfigResult.create(
             hasNfc = false,
             canCommissionMatter = false,
             canExportThread = false,
             hasBarCodeScanner = 0,
+            canSetupImprov = true,
             appVersion = AppVersion.from("1.0.0 (1)"),
         )
 
