@@ -48,6 +48,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import timber.log.Timber
 
@@ -100,14 +101,18 @@ open class HomeAssistantApplication :
         registerActivityLifecycleCallbacks(LifecycleHandler)
 
         ioScope.launch {
+            val crashReporting = prefsRepository.isCrashReporting()
+            val webViewDebug = prefsRepository.isWebViewDebugEnabled()
             initCrashReporting(
                 applicationContext,
-                prefsRepository.isCrashReporting(),
+                crashReporting,
             )
             initCrashSaving(applicationContext)
-            WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG || prefsRepository.isWebViewDebugEnabled())
-            languagesManager.applyCurrentLang()
-            nightModeManager.applyCurrentNightMode()
+            withContext(Dispatchers.Main) {
+                WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG || webViewDebug)
+                languagesManager.applyCurrentLang()
+                nightModeManager.applyCurrentNightMode()
+            }
         }
 
         configureComposeDiagnosticStackTrace(isDebug = BuildConfig.DEBUG)

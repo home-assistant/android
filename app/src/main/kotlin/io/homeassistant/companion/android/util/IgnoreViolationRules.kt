@@ -26,6 +26,7 @@ val threadPolicyIgnoredViolationRules = listOf(
     IgnoreMiuiTurboSchedMonitorDiskRead,
     IgnoreChromiumKeyStoreDiskWrite,
     IgnoreAppCompatPersistLocalesDiskReadWrite,
+    IgnoreTranssionSurfaceFactoryDiskRead,
 )
 
 /**
@@ -283,5 +284,20 @@ private data object IgnoreChromiumKeyStoreDiskWrite : IgnoreViolationRule {
             violation.stackTrace.any {
                 it.fileName?.startsWith("chromium-") == true
             }
+    }
+}
+
+/**
+ * Ignore a [DiskReadViolation] in Transsion's SurfaceFactory component.
+ * This occurs on some Transsion devices (Infinix, Tecno, Itel) during window creation
+ * and is beyond application control.
+ */
+private data object IgnoreTranssionSurfaceFactoryDiskRead : IgnoreViolationRule {
+    @RequiresApi(Build.VERSION_CODES.P)
+    override fun shouldIgnore(violation: Violation): Boolean {
+        if (violation !is DiskReadViolation) return false
+        return violation.stackTrace.any {
+            it.className == "com.transsion.scaler.view.SurfaceFactory"
+        }
     }
 }
