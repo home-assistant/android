@@ -183,6 +183,17 @@ class LocationSensorManager :
             SINGLE_ACCURATE_LOCATION,
         }
 
+        /**
+         * Builds an explicit-component [Intent] addressed to this receiver that triggers a single
+         * accurate location update via [ACTION_REQUEST_ACCURATE_LOCATION_UPDATE].
+         */
+        fun createRequestAccurateLocationUpdateIntent(context: Context): Intent = Intent(
+            context,
+            LocationSensorManager::class.java,
+        ).apply {
+            action = ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
+        }
+
         suspend fun setHighAccuracyModeSetting(context: Context, enabled: Boolean) {
             DatabaseEntryPoint.resolve(context).sensorDao().add(
                 SensorSetting(
@@ -1379,11 +1390,7 @@ class LocationSensorManager :
             sensorSetting.firstOrNull { it.name == SETTING_INCLUDE_SENSOR_UPDATE }?.value ?: "false"
         if (includeSensorUpdate == "true") {
             if (isEnabled(context, singleAccurateLocation)) {
-                context.sendBroadcast(
-                    Intent(context, this.javaClass).apply {
-                        action = ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
-                    },
-                )
+                context.sendBroadcast(createRequestAccurateLocationUpdateIntent(context))
             }
         } else {
             sensorDao.add(
