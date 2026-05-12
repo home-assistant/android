@@ -16,6 +16,7 @@ import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import com.mikepenz.iconics.utils.sizeDp
 import com.mikepenz.iconics.utils.toAndroidIconCompat
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -31,6 +32,7 @@ import io.homeassistant.companion.android.util.vehicle.getDomainList
 import io.homeassistant.companion.android.util.vehicle.getHeaderBuilder
 import io.homeassistant.companion.android.util.vehicle.getNavigationGridItem
 import io.homeassistant.companion.android.util.vehicle.nativeModeAction
+import io.homeassistant.companion.android.util.vehicle.settingsModeAction
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -217,7 +219,11 @@ class MainVehicleScreen(
 
         val headerBuilder = carContext.getHeaderBuilder(commonR.string.app_name, Action.APP_ICON)
         if (isAutomotive && !isDrivingOptimized) {
-            headerBuilder.addEndHeaderAction(nativeModeAction(carContext))
+            if (BuildConfig.FLAVOR == "full") {
+                headerBuilder.addEndHeaderAction(settingsModeAction(carContext))
+            } else {
+                headerBuilder.addEndHeaderAction(nativeModeAction(carContext))
+            }
         }
         headerBuilder.addEndHeaderAction(refreshAction)
 
