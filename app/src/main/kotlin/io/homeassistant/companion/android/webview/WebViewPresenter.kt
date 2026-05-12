@@ -41,8 +41,6 @@ interface WebViewPresenter {
 
     suspend fun getPageZoomLevel(): Int
     suspend fun isPinchToZoomEnabled(): Boolean
-    suspend fun isWebViewDebugEnabled(): Boolean
-
     suspend fun isAppLocked(): Boolean
     suspend fun setAppActive(active: Boolean)
 

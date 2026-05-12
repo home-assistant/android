@@ -2,10 +2,12 @@ package io.homeassistant.companion.android.settings.developer
 
 import android.content.Context
 import android.webkit.WebStorage
+import android.webkit.WebView
 import androidx.activity.result.ActivityResult
 import androidx.preference.PreferenceDataStore
 import androidx.webkit.WebStorageCompat
 import androidx.webkit.WebViewFeature
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -51,7 +53,10 @@ class DeveloperSettingsPresenterImpl @Inject constructor(
     override fun putBoolean(key: String?, value: Boolean) {
         mainScope.launch {
             when (key) {
-                "webview_debug" -> prefsRepository.setWebViewDebugEnabled(value)
+                "webview_debug" -> {
+                    prefsRepository.setWebViewDebugEnabled(value)
+                    WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG || value)
+                }
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
