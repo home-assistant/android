@@ -56,11 +56,8 @@ internal class MediaControlRepositoryImpl @Inject constructor(
     override fun observeEntityState(config: MediaControlEntityConfig): Flow<MediaControlState?> = flow {
         Timber.d("observeEntityState: starting for ${config.entityId}")
 
-        // Emit current state via REST so the caller has something to show immediately.
-        // The WebSocket added event delivers the same state again; distinctUntilChanged()
-        // at the end suppresses the duplicate.
+        // Emit current state immediately so the caller has something to show right away.
         getEntityState(config)?.let {
-            Timber.d("observeEntityState: emitting REST state for ${config.entityId}")
             emit(it)
         }
 
@@ -79,16 +76,13 @@ internal class MediaControlRepositoryImpl @Inject constructor(
             var currentEntity: Entity? = null
             stateFlow.collect { event ->
                 event.added?.get(config.entityId)?.let {
-                    Timber.d("observeEntityState: 'added' event for ${config.entityId}")
                     currentEntity = it.toEntity(config.entityId)
                 }
                 event.changed?.get(config.entityId)?.let { diff ->
-                    Timber.d("observeEntityState: 'changed' event for ${config.entityId}")
                     currentEntity = currentEntity?.applyCompressedStateDiff(diff)
                 }
                 event.removed?.let { removed ->
                     if (config.entityId in removed) {
-                        Timber.d("observeEntityState: 'removed' event for ${config.entityId}")
                         currentEntity = null
                     }
                 }

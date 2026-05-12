@@ -94,6 +94,7 @@ internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: 
             is MediaPlaybackState.Playing -> STATE_READY
             is MediaPlaybackState.Paused -> STATE_READY
             is MediaPlaybackState.Buffering -> STATE_BUFFERING
+            // STATE_IDLE would clear the media item; STATE_ENDED keeps the last track visible in the notification
             is MediaPlaybackState.Idle -> STATE_ENDED
             is MediaPlaybackState.Off -> STATE_IDLE
         }

@@ -156,11 +156,8 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
     }
 
     private suspend fun reconcileSessions(configuredEntities: List<MediaControlEntityConfig>) {
-        Timber.d(
-            "reconcileSessions: received ${configuredEntities.size} entities=${configuredEntities.map {
-                it.entityId
-            }}",
-        )
+        val desiredKeys = configuredEntities.map { it.sessionKey() }.toSet()
+        Timber.d("reconcileSessions: received ${configuredEntities.size} entities=$desiredKeys")
 
         if (configuredEntities.isEmpty()) {
             Timber.d("No media control entities configured, stopping service")
@@ -172,7 +169,6 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
         // with onUpdateNotification and onTaskRemoved, which are always called on Main by the OS
         // and Media3. The diff is computed here on Main as well since it operates on small sets.
         withContext(Dispatchers.Main) {
-            val desiredKeys = configuredEntities.map { it.sessionKey() }.toSet()
             val currentKeys = activeSessions.keys.toSet()
 
             Timber.d("reconcileSessions: desiredKeys=$desiredKeys, currentKeys=$currentKeys")
@@ -215,7 +211,7 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
     /**
      * Launches the observation coroutine for a new session, registers it with the service, and
      * stores it in [activeSessions].
-     * Must be called from the Main dispatcher (required by [MediaSessionService.addSession]).
+     * Must be called from the Main thread to safely mutate [activeSessions].
      */
     private fun launchSession(key: String, session: HaMediaSession) {
         val job = serviceScope.launch {

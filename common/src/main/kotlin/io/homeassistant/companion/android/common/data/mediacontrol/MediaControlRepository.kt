@@ -9,16 +9,16 @@ import kotlinx.coroutines.flow.Flow
 interface MediaControlRepository {
 
     /**
-     * Emits the current [MediaControlState] for a single entity on subscription (via REST),
-     * then continues emitting whenever its state changes via WebSocket.
-     * Emits null when the entity is unavailable or the WebSocket subscription fails.
+     * Emits the current [MediaControlState] for a single entity,
+     * then continues emitting whenever its state changes.
+     * Emits null when the entity is unavailable.
      */
     fun observeEntityState(config: MediaControlEntityConfig): Flow<MediaControlState?>
 
     /** Returns the list of all configured media_player entities. */
     suspend fun getConfiguredEntities(): List<MediaControlEntityConfig>
 
-    /** Emits the list of configured entities whenever it changes in the database. */
+    /** Emits the list of configured entities whenever it changes. */
     fun observeConfiguredEntities(): Flow<List<MediaControlEntityConfig>>
 
     /** Replaces the full list of configured media_player entities. */

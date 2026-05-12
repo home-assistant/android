@@ -106,90 +106,89 @@ class HaMediaSession @AssistedInject constructor(
             .build()
     }
 
-    private fun getCommandCallback(scope: CoroutineScope) =
-        object : HaRemoteMediaPlayer.CommandCallback {
-            // SupervisorJob: a failed command doesn't cancel the observation scope.
-            // CoroutineExceptionHandler: prevents the unhandled exception from crashing the
-            // process. The error is already delivered to SimpleBasePlayer via
-            // future.setException() in handleCommand's invokeOnCompletion handler.
-            private val commandScope = CoroutineScope(
-                scope.coroutineContext +
-                    SupervisorJob(scope.coroutineContext[Job]) +
-                    CoroutineExceptionHandler { _, e ->
-                        Timber.e(e, "Command failed for ${config.entityId}")
-                    },
+    private fun getCommandCallback(scope: CoroutineScope) = object : HaRemoteMediaPlayer.CommandCallback {
+        // SupervisorJob: a failed command doesn't cancel the observation scope.
+        // CoroutineExceptionHandler: prevents the unhandled exception from crashing the
+        // process. The error is already delivered to SimpleBasePlayer via
+        // future.setException() in handleCommand's invokeOnCompletion handler.
+        private val commandScope = CoroutineScope(
+            scope.coroutineContext +
+                SupervisorJob(scope.coroutineContext[Job]) +
+                CoroutineExceptionHandler { _, e ->
+                    Timber.e(e, "Command failed for ${config.entityId}")
+                },
+        )
+
+        override fun onPlayRequested() = commandScope.launch {
+            callMediaAction(ACTION_MEDIA_PLAY)
+        }
+
+        override fun onPauseRequested() = commandScope.launch {
+            callMediaAction(ACTION_MEDIA_PAUSE)
+        }
+
+        override fun onSeekRequested(positionMs: Long) = commandScope.launch {
+            callMediaAction(
+                action = ACTION_MEDIA_SEEK,
+                extraData = mapOf("seek_position" to positionMs / 1000.0),
             )
+        }
 
-            override fun onPlayRequested() = commandScope.launch {
-                callMediaAction(ACTION_MEDIA_PLAY)
+        override fun onNextRequested() = commandScope.launch {
+            callMediaAction(ACTION_MEDIA_NEXT_TRACK)
+        }
+
+        override fun onPreviousRequested() = commandScope.launch {
+            callMediaAction(ACTION_MEDIA_PREVIOUS_TRACK)
+        }
+
+        override fun onSetVolumeRequested(volume: Float) = commandScope.launch {
+            callMediaAction(
+                action = ACTION_VOLUME_SET,
+                extraData = mapOf("volume_level" to volume),
+            )
+        }
+
+        override fun onIncreaseVolumeRequested() = commandScope.launch {
+            callMediaAction(ACTION_VOLUME_UP)
+        }
+
+        override fun onDecreaseVolumeRequested() = commandScope.launch {
+            callMediaAction(ACTION_VOLUME_DOWN)
+        }
+
+        override fun onMuteRequested(muted: Boolean) = commandScope.launch {
+            callMediaAction(
+                action = ACTION_VOLUME_MUTE,
+                extraData = mapOf("is_volume_muted" to muted),
+            )
+        }
+
+        override fun onStopRequested() = commandScope.launch {
+            callMediaAction(ACTION_MEDIA_STOP)
+        }
+
+        override fun onShuffleRequested(shuffle: Boolean) = commandScope.launch {
+            callMediaAction(
+                action = ACTION_SHUFFLE_SET,
+                extraData = mapOf("shuffle" to shuffle),
+            )
+        }
+
+        override fun onRepeatRequested(repeatMode: MediaRepeatMode): Job {
+            val haRepeatValue = when (repeatMode) {
+                is MediaRepeatMode.Off -> "off"
+                is MediaRepeatMode.One -> "one"
+                is MediaRepeatMode.All -> "all"
             }
-
-            override fun onPauseRequested() = commandScope.launch {
-                callMediaAction(ACTION_MEDIA_PAUSE)
-            }
-
-            override fun onSeekRequested(positionMs: Long) = commandScope.launch {
+            return commandScope.launch {
                 callMediaAction(
-                    action = ACTION_MEDIA_SEEK,
-                    extraData = mapOf("seek_position" to positionMs / 1000.0),
+                    action = ACTION_REPEAT_SET,
+                    extraData = mapOf("repeat" to haRepeatValue),
                 )
-            }
-
-            override fun onNextRequested() = commandScope.launch {
-                callMediaAction(ACTION_MEDIA_NEXT_TRACK)
-            }
-
-            override fun onPreviousRequested() = commandScope.launch {
-                callMediaAction(ACTION_MEDIA_PREVIOUS_TRACK)
-            }
-
-            override fun onSetVolumeRequested(volume: Float) = commandScope.launch {
-                callMediaAction(
-                    action = ACTION_VOLUME_SET,
-                    extraData = mapOf("volume_level" to volume),
-                )
-            }
-
-            override fun onIncreaseVolumeRequested() = commandScope.launch {
-                callMediaAction(ACTION_VOLUME_UP)
-            }
-
-            override fun onDecreaseVolumeRequested() = commandScope.launch {
-                callMediaAction(ACTION_VOLUME_DOWN)
-            }
-
-            override fun onMuteRequested(muted: Boolean) = commandScope.launch {
-                callMediaAction(
-                    action = ACTION_VOLUME_MUTE,
-                    extraData = mapOf("is_volume_muted" to muted),
-                )
-            }
-
-            override fun onStopRequested() = commandScope.launch {
-                callMediaAction(ACTION_MEDIA_STOP)
-            }
-
-            override fun onShuffleRequested(shuffle: Boolean) = commandScope.launch {
-                callMediaAction(
-                    action = ACTION_SHUFFLE_SET,
-                    extraData = mapOf("shuffle" to shuffle),
-                )
-            }
-
-            override fun onRepeatRequested(repeatMode: MediaRepeatMode): Job {
-                val haRepeatValue = when (repeatMode) {
-                    is MediaRepeatMode.Off -> "off"
-                    is MediaRepeatMode.One -> "one"
-                    is MediaRepeatMode.All -> "all"
-                }
-                return commandScope.launch {
-                    callMediaAction(
-                        action = ACTION_REPEAT_SET,
-                        extraData = mapOf("repeat" to haRepeatValue),
-                    )
-                }
             }
         }
+    }
 
     /**
      * Creates the [MediaSession] and player, starts observing entity state, and suspends until
@@ -205,7 +204,6 @@ class HaMediaSession @AssistedInject constructor(
             FailFast.failWhen(mediaSession != null) {
                 "observe() called while a session is already active for ${config.entityId}"
             }
-            Timber.d("observe: starting for ${config.entityId}")
 
             launch { startObservingState() }
 
@@ -216,9 +214,6 @@ class HaMediaSession @AssistedInject constructor(
             try {
                 onSessionReady(session)
                 awaitCancellation()
-            } catch (e: CancellationException) {
-                Timber.d("observe: cancelled for ${config.entityId}")
-                throw e
             } finally {
                 Timber.d("observe: finally block running for ${config.entityId}, releasing player and session")
                 mediaSession = null
@@ -261,7 +256,7 @@ class HaMediaSession @AssistedInject constructor(
     }
 
     private fun buildMediaSession(player: HaRemoteMediaPlayer): MediaSession = MediaSession.Builder(context, player)
-        .setId("${config.serverId}:${config.entityId}")
+        .setId(id)
         .setCallback(MediaSessionCallback())
         .build()
         .also { session ->
@@ -289,8 +284,10 @@ class HaMediaSession @AssistedInject constructor(
         }
 
     private suspend fun callMediaAction(action: String, extraData: Map<String, Any> = emptyMap()) {
-        val actionData = hashMapOf<String, Any>("entity_id" to config.entityId)
-        actionData.putAll(extraData)
+        val actionData = buildMap<String, Any> {
+            put("entity_id", config.entityId)
+            putAll(extraData)
+        }
         try {
             serverManager.integrationRepository(config.serverId)
                 .callAction(MEDIA_PLAYER_DOMAIN, action, actionData)
@@ -307,10 +304,9 @@ class HaMediaSession @AssistedInject constructor(
      * @return An updated [ArtworkCache] reflecting the outcome of the load attempt.
      */
     private suspend fun loadArtworkAndUpdatePlayer(state: MediaControlState, cache: ArtworkCache): ArtworkCache {
-        val pictureUrl = state.entityPictureUrl
-        val updatedCache = when {
-            pictureUrl == null -> ArtworkCache()
-            pictureUrl == cache.url -> cache
+        val updatedCache = when (val pictureUrl = state.entityPictureUrl) {
+            null -> ArtworkCache()
+            cache.url -> cache
             else -> {
                 val bytes = resolveArtworkUrl(state)?.let { loadBitmapAsPng(it) }
                 if (bytes != null) ArtworkCache(url = pictureUrl, bytes = bytes) else cache
