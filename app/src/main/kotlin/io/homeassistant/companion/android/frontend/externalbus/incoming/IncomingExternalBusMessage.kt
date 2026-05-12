@@ -170,3 +170,49 @@ data class TagWritePayload(val tag: String? = null)
 @SerialName("handleBlob")
 data class HandleBlobMessage(override val id: Int? = null, val data: String, val filename: String) :
     IncomingExternalBusMessage
+
+/**
+ * Message requesting to start playing an HLS stream via ExoPlayer.
+ *
+ * The frontend provides the stream URL and an optional muted flag.
+ * The app should respond with a result message on success.
+ */
+@Serializable
+@SerialName("exoplayer/play_hls")
+data class ExoPlayerPlayHlsMessage(
+    override val id: Int? = null,
+    val payload: ExoPlayerPlayHlsPayload = ExoPlayerPlayHlsPayload(),
+) : IncomingExternalBusMessage
+
+@Serializable
+data class ExoPlayerPlayHlsPayload(val url: String? = null, val muted: Boolean = false)
+
+/**
+ * Message requesting to stop ExoPlayer playback and release the player.
+ *
+ * This is a fire-and-forget message.
+ */
+@Serializable
+@SerialName("exoplayer/stop")
+data class ExoPlayerStopMessage(override val id: Int? = null) : IncomingExternalBusMessage
+
+/**
+ * Message requesting to resize and reposition the ExoPlayer overlay.
+ *
+ * Payload values come from `Element.getBoundingClientRect()` and are already scaled
+ * to screen coordinates.
+ */
+@Serializable
+@SerialName("exoplayer/resize")
+data class ExoPlayerResizeMessage(
+    override val id: Int? = null,
+    val payload: ExoPlayerResizePayload = ExoPlayerResizePayload(),
+) : IncomingExternalBusMessage
+
+@Serializable
+data class ExoPlayerResizePayload(
+    val left: Double = 0.0,
+    val top: Double = 0.0,
+    val right: Double = 0.0,
+    val bottom: Double = 0.0,
+)

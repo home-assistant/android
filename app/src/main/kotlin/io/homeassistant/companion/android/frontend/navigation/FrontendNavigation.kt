@@ -71,6 +71,7 @@ internal fun NavGraphBuilder.frontendScreen(
     onConfigureHomeNetwork: (serverId: Int) -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onShowServerSwitcher: (onServerSelected: (Int) -> Unit) -> Unit,
+    onRequestFullscreen: (Boolean) -> Unit = {},
 ) {
     if (WIPFeature.USE_FRONTEND_V2) {
         composable<FrontendRoute> {
@@ -99,6 +100,7 @@ internal fun NavGraphBuilder.frontendScreen(
                 onNavigateToNfcWrite = { messageId, tagId ->
                     nfcWriteLauncher.launch(WriteNfcTag.Input(tagId = tagId, messageId = messageId))
                 },
+                onRequestFullscreen = onRequestFullscreen,
             )
 
             FrontendScreen(
@@ -141,6 +143,7 @@ internal fun FrontendEventHandler(
     onOpenExternalLink: suspend (Uri) -> Unit,
     onShowServerSwitcher: () -> Unit,
     onNavigateToNfcWrite: (messageId: Int, tagId: String?) -> Unit,
+    onRequestFullscreen: (Boolean) -> Unit,
 ) {
     val resources = LocalResources.current
     LaunchedEffect(Unit) {
@@ -176,6 +179,10 @@ internal fun FrontendEventHandler(
 
                 is FrontendEvent.NavigateToNfcWrite -> {
                     onNavigateToNfcWrite(event.messageId, event.tagId)
+                }
+
+                is FrontendEvent.RequestFullscreen -> {
+                    onRequestFullscreen(event.fullscreen)
                 }
             }
         }

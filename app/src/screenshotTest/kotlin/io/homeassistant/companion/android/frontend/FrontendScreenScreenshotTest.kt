@@ -1,9 +1,12 @@
 package io.homeassistant.companion.android.frontend
 
 import android.annotation.SuppressLint
+import android.graphics.Color as AndroidColor
+import android.view.View
 import android.webkit.WebChromeClient
 import android.webkit.WebViewClient
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import com.android.tools.screenshot.PreviewTest
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
@@ -241,6 +244,107 @@ class FrontendScreenScreenshotTest {
                 onConfigureHomeNetwork = { _ -> },
                 onSecurityLevelHelpClick = {},
                 onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
+            )
+        }
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `FrontendScreen Content with HTTP auth dialog`() {
+        HAThemeForPreview {
+            FrontendScreenContent(
+                onBackClick = {},
+                viewState = FrontendViewState.Content(
+                    serverId = 1,
+                    url = "https://example.com",
+                ),
+                pendingDialog = FrontendDialog.HttpAuth(
+                    host = "example.com",
+                    message = { "https://example.com requires a username and password." },
+                    isAuthError = false,
+                    onProceed = { _, _, _ -> },
+                    onCancel = {},
+                ),
+                webViewClient = WebViewClient(),
+                webChromeClient = WebChromeClient(),
+                frontendJsCallback = FrontendJsBridge.noOp,
+                onBlockInsecureRetry = {},
+                onOpenExternalLink = {},
+                onBlockInsecureHelpClick = {},
+                onOpenSettings = {},
+                onChangeSecurityLevel = {},
+                onOpenLocationSettings = {},
+                onConfigureHomeNetwork = { _ -> },
+                onSecurityLevelHelpClick = {},
+                onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
+            )
+        }
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `FrontendScreen Content with HTTP auth dialog in error state`() {
+        HAThemeForPreview {
+            FrontendScreenContent(
+                onBackClick = {},
+                viewState = FrontendViewState.Content(
+                    serverId = 1,
+                    url = "https://example.com",
+                ),
+                pendingDialog = FrontendDialog.HttpAuth(
+                    host = "example.com",
+                    message = { "https://example.com requires a username and password." },
+                    isAuthError = true,
+                    onProceed = { _, _, _ -> },
+                    onCancel = {},
+                ),
+                webViewClient = WebViewClient(),
+                webChromeClient = WebChromeClient(),
+                frontendJsCallback = FrontendJsBridge.noOp,
+                onBlockInsecureRetry = {},
+                onOpenExternalLink = {},
+                onBlockInsecureHelpClick = {},
+                onOpenSettings = {},
+                onChangeSecurityLevel = {},
+                onOpenLocationSettings = {},
+                onConfigureHomeNetwork = { _ -> },
+                onSecurityLevelHelpClick = {},
+                onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
+            )
+        }
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `FrontendScreen Content state with custom view overlay`() {
+        HAThemeForPreview {
+            val context = LocalContext.current
+            val view = View(context).apply { setBackgroundColor(AndroidColor.RED) }
+            FrontendScreenContent(
+                onBackClick = {},
+                viewState = FrontendViewState.Content(
+                    serverId = 1,
+                    url = "https://example.com",
+                ),
+                customView = view,
+                webViewClient = WebViewClient(),
+                webChromeClient = WebChromeClient(),
+                frontendJsCallback = FrontendJsBridge.noOp,
+                onBlockInsecureRetry = {},
+                onOpenExternalLink = {},
+                onBlockInsecureHelpClick = {},
+                onOpenSettings = {},
+                onChangeSecurityLevel = {},
+                onOpenLocationSettings = {},
+                onConfigureHomeNetwork = { _ -> },
+                onSecurityLevelHelpClick = {},
+                onShowSnackbar = { _, _ -> false },
                 onWebViewCreationFailed = {},
             )
         }

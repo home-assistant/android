@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend.handler
 
+import android.net.Uri
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
@@ -79,4 +80,32 @@ sealed interface FrontendHandlerEvent {
      * @param tagId Optional pre-filled tag identifier. When null, the user is prompted to enter one.
      */
     data class WriteNfcTag(val messageId: Int, val tagId: String?) : FrontendHandlerEvent
+
+    sealed interface ExoPlayerAction : FrontendHandlerEvent {
+
+        /**
+         * Start playing an HLS stream.
+         *
+         * @param messageId The external bus message ID for the result callback
+         * @param url The HLS stream URL
+         * @param muted Whether playback should start muted
+         */
+        data class PlayHls(val messageId: Int?, val url: Uri, val muted: Boolean) : ExoPlayerAction
+
+        /** Stop playback and release the player. */
+        data object Stop : ExoPlayerAction
+
+        /**
+         * Resize and reposition the player overlay.
+         *
+         * Values come from the frontend's `Element.getBoundingClientRect()` and are already
+         * scaled to screen pixels (expressed as dp for Compose).
+         *
+         * @param left Left offset in dp
+         * @param top Top offset in dp
+         * @param right Right edge in dp
+         * @param bottom Bottom edge in dp, or 0 if the frontend does not impose a height constraint
+         */
+        data class Resize(val left: Double, val top: Double, val right: Double, val bottom: Double) : ExoPlayerAction
+    }
 }

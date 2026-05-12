@@ -52,6 +52,7 @@ import io.homeassistant.companion.android.di.qualifiers.NamedManufacturer
 import io.homeassistant.companion.android.di.qualifiers.NamedModel
 import io.homeassistant.companion.android.di.qualifiers.NamedOsVersion
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
@@ -164,23 +165,41 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             onSuccess = { response ->
                 // The server should return a body with the registration, but might return:
                 // 200 with empty body for broken direct webhook
+                // 404 for broken cloudhook
+                // 410 for missing config entry
                 if (response.code() == 200 && response.body()?.contentLength() == 0L) {
                     Timber.w("update_registration returned empty body")
-                    if (allowReregistration) {
-                        Timber.w("Device registration broken and reregistration allowed, reregistering")
-                        try {
-                            registerDevice(deviceRegistration)
-                        } catch (e: Exception) {
-                            throw IntegrationException("Device registration broken and reregistration failed", e)
-                        }
-                    } else {
-                        throw IntegrationException("Device registration broken and reregistration not allowed.")
-                    }
+                    maybeReregisterDeviceOnFailedUpdate(deviceRegistration, allowReregistration)
+                } else if (response.code() == 404 || response.code() == 410) {
+                    Timber.w("update_registration returned HTTP ${response.code()}")
+                    maybeReregisterDeviceOnFailedUpdate(deviceRegistration, allowReregistration)
                 } else {
                     persistDeviceRegistration(deviceRegistration)
                 }
             },
+            isValidResponse = { response ->
+                // when registration was successful or encountered an expected error
+                response.isSuccessful || response.code() == 404 || response.code() == 410
+            },
         )
+    }
+
+    private suspend fun maybeReregisterDeviceOnFailedUpdate(
+        deviceRegistration: DeviceRegistration,
+        allowReregistration: Boolean,
+    ) {
+        if (allowReregistration) {
+            Timber.w("Device registration broken and reregistration allowed, reregistering")
+            try {
+                registerDevice(deviceRegistration)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                throw IntegrationException("Device registration broken and reregistration failed", e)
+            }
+        } else {
+            throw IntegrationException("Device registration broken and reregistration not allowed.")
+        }
     }
 
     override suspend fun getRegistration(): DeviceRegistration {

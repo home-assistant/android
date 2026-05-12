@@ -206,6 +206,36 @@ class FrontendJsBridgeTest {
     }
 
     @Nested
+    inner class DetachFromWebView {
+
+        @Test
+        fun `Given WebMessageListener supported then removes both V1 interface and V2 listener`() = runTest {
+            mockWebViewFeatureSupported(supported = true)
+            mockWebViewCompat()
+            val webView: WebView = mockk(relaxed = true)
+            val bridge = createBridge(scope = this)
+
+            bridge.detachFromWebView(webView)
+
+            verify { webView.removeJavascriptInterface(FrontendJsBridge.EXTERNAL_APP_V1) }
+            verify { WebViewCompat.removeWebMessageListener(webView, FrontendJsBridge.EXTERNAL_APP_V2_LISTENER) }
+        }
+
+        @Test
+        fun `Given WebMessageListener not supported then removes only V1 interface`() = runTest {
+            mockWebViewFeatureSupported(supported = false)
+            mockWebViewCompat()
+            val webView: WebView = mockk(relaxed = true)
+            val bridge = createBridge(scope = this)
+
+            bridge.detachFromWebView(webView)
+
+            verify { webView.removeJavascriptInterface(FrontendJsBridge.EXTERNAL_APP_V1) }
+            verify(exactly = 0) { WebViewCompat.removeWebMessageListener(any(), any()) }
+        }
+    }
+
+    @Nested
     inner class Dispatching {
 
         @ParameterizedTest

@@ -99,6 +99,9 @@ interface PrefsRepository {
 
     suspend fun isAutoPlayVideoEnabled(): Boolean
 
+    /** Emits the current "Autoplay video" preference immediately on collection, then on every change. */
+    suspend fun autoPlayVideoFlow(): Flow<Boolean>
+
     suspend fun setAutoPlayVideo(enabled: Boolean)
 
     suspend fun isAlwaysShowFirstViewOnAppStartEnabled(): Boolean

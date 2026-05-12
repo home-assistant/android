@@ -26,7 +26,7 @@ import androidx.preference.SwitchPreference
 import com.google.android.material.snackbar.Snackbar
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.authenticator.Authenticator
+import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.isIgnoringBatteryOptimizations
@@ -72,7 +72,7 @@ class SettingsFragment(
 ) : PreferenceFragmentCompat(),
     SettingsView {
 
-    private val activityViewModel: AppLockViewModel by activityViewModels()
+    private val activityViewModel: SettingsViewModel by activityViewModels()
 
     private val requestNotificationPermissionResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -510,14 +510,14 @@ class SettingsFragment(
                 lifecycleScope.launch {
                     val needsAuth = activityViewModel.isAppLocked(server.id)
                     if (!needsAuth) {
-                        onServerLockResult(Authenticator.SUCCESS)
+                        onServerLockResult(AuthenticationResult.SUCCESS)
                     } else {
                         val canAuth = settingsActivity.requestAuthentication(
                             getString(commonR.string.biometric_set_title),
                             ::onServerLockResult,
                         )
                         if (!canAuth) {
-                            onServerLockResult(Authenticator.SUCCESS)
+                            onServerLockResult(AuthenticationResult.SUCCESS)
                         }
                     }
                 }
@@ -544,8 +544,8 @@ class SettingsFragment(
         }
     }
 
-    private fun onServerLockResult(result: Int): Boolean {
-        if (result == Authenticator.SUCCESS && serverAuth != null) {
+    private fun onServerLockResult(result: AuthenticationResult): Boolean {
+        if (result == AuthenticationResult.SUCCESS && serverAuth != null) {
             activityViewModel.setAppActive(serverAuth, true)
             parentFragmentManager.commit {
                 replace(

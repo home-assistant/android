@@ -21,6 +21,7 @@ import eightbitlab.com.blurview.BlurView
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
+import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.settings.assist.AssistSettingsFragment
@@ -45,13 +46,13 @@ class SettingsActivity : BaseActivity() {
     @Inject
     lateinit var serverManager: ServerManager
 
-    private val viewModel: AppLockViewModel by viewModels()
+    private val viewModel: SettingsViewModel by viewModels()
 
     private lateinit var authenticator: Authenticator
     private lateinit var blurView: BlurView
 
     private var authenticating = false
-    private var externalAuthCallback: ((Int) -> Boolean)? = null
+    private var externalAuthCallback: ((AuthenticationResult) -> Boolean)? = null
 
     companion object {
         fun newInstance(context: Context, screen: Deeplink? = null): Intent {
@@ -92,7 +93,7 @@ class SettingsActivity : BaseActivity() {
             .setBlurRadius(8f)
             .setBlurEnabled(false)
 
-        authenticator = Authenticator(this, this, ::settingsActivityAuthenticationResult)
+        authenticator = Authenticator(this, ::settingsActivityAuthenticationResult)
 
         if (savedInstanceState == null) {
             val settingsNavigation = IntentCompat.getParcelableExtra(intent, EXTRA_FRAGMENT, Deeplink::class.java)
@@ -180,7 +181,7 @@ class SettingsActivity : BaseActivity() {
         }
     }
 
-    private fun settingsActivityAuthenticationResult(result: Int) {
+    private fun settingsActivityAuthenticationResult(result: AuthenticationResult) {
         val isExtAuth = (externalAuthCallback != null)
         Timber.d("settingsActivityAuthenticationResult(): authenticating: $authenticating, externalAuth: $isExtAuth")
 
@@ -193,16 +194,16 @@ class SettingsActivity : BaseActivity() {
         if (authenticating) {
             authenticating = false
             when (result) {
-                Authenticator.SUCCESS -> {
+                AuthenticationResult.SUCCESS -> {
                     Timber.d("Authentication successful, unlocking app")
                     blurView.setBlurEnabled(false)
                     setAppActive(true)
                 }
-                Authenticator.CANCELED -> {
+                AuthenticationResult.CANCELED -> {
                     Timber.d("Authentication canceled by user, closing activity")
                     finishAffinity()
                 }
-                else -> Timber.d("Authentication failed, retry attempts allowed")
+                AuthenticationResult.ERROR -> Timber.d("Authentication failed, retry attempts allowed")
             }
         }
     }
@@ -238,7 +239,7 @@ class SettingsActivity : BaseActivity() {
         }
     }
 
-    fun requestAuthentication(title: String, callback: (Int) -> Boolean): Boolean {
+    fun requestAuthentication(title: String, callback: (AuthenticationResult) -> Boolean): Boolean {
         return if (BiometricManager.from(this).canAuthenticate(Authenticator.AUTH_TYPES) !=
             BiometricManager.BIOMETRIC_SUCCESS
         ) {

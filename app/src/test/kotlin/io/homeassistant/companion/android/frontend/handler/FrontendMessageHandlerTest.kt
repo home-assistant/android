@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.frontend.handler
 
 import android.content.pm.PackageManager
+import android.net.Uri
 import app.cash.turbine.test
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.AppVersion
@@ -14,6 +15,11 @@ import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalB
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConfigGetMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConnectionStatusMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConnectionStatusPayload
+import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerPlayHlsMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerPlayHlsPayload
+import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerResizeMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerResizePayload
+import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerStopMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HandleBlobMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
@@ -38,7 +44,9 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
 import io.mockk.slot
+import io.mockk.unmockkAll
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
@@ -49,6 +57,7 @@ import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -89,6 +98,11 @@ class FrontendMessageHandlerTest {
             downloadManager = downloadManager,
             isAutomotive = false,
         )
+    }
+
+    @AfterEach
+    fun tearDown() {
+        unmockkAll()
     }
 
     @Test
@@ -542,5 +556,80 @@ class FrontendMessageHandlerTest {
         }
 
         coVerify { downloadManager.handleBlob(data = testData, filename = testFilename) }
+    }
+
+    @Test
+    fun `Given exoplayer play_hls message with URL when messageResults then emits PlayHls and sends success result`() = runTest {
+        mockkStatic(Uri::class)
+        val mockUri = mockk<Uri>(relaxed = true)
+        every { Uri.parse("https://example.com/stream.m3u8") } returns mockUri
+
+        val message = ExoPlayerPlayHlsMessage(
+            id = 9,
+            payload = ExoPlayerPlayHlsPayload(url = "https://example.com/stream.m3u8", muted = true),
+        )
+        every { externalBusRepository.incomingMessages() } returns flowOf(message)
+
+        val responseSlot = slot<OutgoingExternalBusMessage>()
+        coEvery { externalBusRepository.send(capture(responseSlot)) } returns Unit
+
+        handler.messageResults().test {
+            val event = awaitItem()
+            assertTrue(event is FrontendHandlerEvent.ExoPlayerAction.PlayHls)
+            val playHls = event as FrontendHandlerEvent.ExoPlayerAction.PlayHls
+            assertEquals(9, playHls.messageId)
+            assertEquals(mockUri, playHls.url)
+            assertEquals(true, playHls.muted)
+            expectNoEvents()
+        }
+
+        coVerify { externalBusRepository.send(any()) }
+        val result = responseSlot.captured as ResultMessage
+        assertEquals(9, result.id)
+        assertEquals(true, result.success)
+    }
+
+    @Test
+    fun `Given exoplayer play_hls message without URL when messageResults then emits UnknownMessage and sends nothing`() = runTest {
+        val message = ExoPlayerPlayHlsMessage(id = 9, payload = ExoPlayerPlayHlsPayload(url = null, muted = false))
+        every { externalBusRepository.incomingMessages() } returns flowOf(message)
+
+        handler.messageResults().test {
+            val event = awaitItem()
+            assertTrue(event is FrontendHandlerEvent.UnknownMessage)
+            expectNoEvents()
+        }
+
+        coVerify(exactly = 0) { externalBusRepository.send(any()) }
+    }
+
+    @Test
+    fun `Given exoplayer stop message when messageResults then emits Stop`() = runTest {
+        every { externalBusRepository.incomingMessages() } returns flowOf(ExoPlayerStopMessage())
+
+        handler.messageResults().test {
+            val event = awaitItem()
+            assertEquals(FrontendHandlerEvent.ExoPlayerAction.Stop, event)
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given exoplayer resize message when messageResults then emits Resize with payload values`() = runTest {
+        val message = ExoPlayerResizeMessage(
+            payload = ExoPlayerResizePayload(left = 1.5, top = 2.5, right = 100.5, bottom = 50.5),
+        )
+        every { externalBusRepository.incomingMessages() } returns flowOf(message)
+
+        handler.messageResults().test {
+            val event = awaitItem()
+            assertTrue(event is FrontendHandlerEvent.ExoPlayerAction.Resize)
+            val resize = event as FrontendHandlerEvent.ExoPlayerAction.Resize
+            assertEquals(1.5, resize.left)
+            assertEquals(2.5, resize.top)
+            assertEquals(100.5, resize.right)
+            assertEquals(50.5, resize.bottom)
+            expectNoEvents()
+        }
     }
 }

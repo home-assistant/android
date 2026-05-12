@@ -46,6 +46,7 @@
     <string name="auth_cancel">Authentication cancelled</string>
     <string name="auth_error_message">The \'Username\' and \'Password\' fields must be completed</string>
     <string name="auth_request">Authentication requested</string>
+    <string name="auth_request_rejected">The credentials were rejected. Please try again.</string>
     <string name="automation">Automation</string>
     <string name="autoplay_video_summary">Autoplay videos when dashboard is active. Enabling this setting may increase data usage unexpectedly, proceed with caution.</string>
     <string name="autoplay_video">Autoplay videos</string>
@@ -314,6 +315,7 @@
     <string name="get_help">Get help</string>
     <string name="help">Help</string>
     <string name="hide_password">Hide password</string>
+    <string name="show_password">Show password</string>
     <string name="high_accuracy_mode_channel_name">High accuracy location</string>
     <string name="high_accuracy_mode_notification_title">High accuracy (GPS) mode enabled</string>
     <string name="hold_to_reorder">Hold to reorder</string>
