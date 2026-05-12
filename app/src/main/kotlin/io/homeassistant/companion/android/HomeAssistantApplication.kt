@@ -100,12 +100,12 @@ open class HomeAssistantApplication :
         registerActivityLifecycleCallbacks(LifecycleHandler)
 
         ioScope.launch {
-            WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG || prefsRepository.isWebViewDebugEnabled())
             initCrashReporting(
                 applicationContext,
                 prefsRepository.isCrashReporting(),
             )
             initCrashSaving(applicationContext)
+            WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG || prefsRepository.isWebViewDebugEnabled())
             languagesManager.applyCurrentLang()
             nightModeManager.applyCurrentNightMode()
         }
