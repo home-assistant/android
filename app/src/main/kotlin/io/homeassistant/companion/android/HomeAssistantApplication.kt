@@ -48,6 +48,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import timber.log.Timber
 
@@ -105,7 +106,13 @@ open class HomeAssistantApplication :
                 prefsRepository.isCrashReporting(),
             )
             initCrashSaving(applicationContext)
-            WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG || prefsRepository.isWebViewDebugEnabled())
+
+            val webViewDebug = BuildConfig.DEBUG || prefsRepository.isWebViewDebugEnabled()
+            withContext(Dispatchers.Main) {
+                // Release builds require calling this on the main thread
+                WebView.setWebContentsDebuggingEnabled(webViewDebug)
+            }
+
             languagesManager.applyCurrentLang()
             nightModeManager.applyCurrentNightMode()
         }
