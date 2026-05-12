@@ -27,10 +27,10 @@ import androidx.core.graphics.drawable.toBitmap
  * Typical use: rendering the app launcher icon (e.g. `R.mipmap.ic_launcher_round`) inside Compose.
  *
  * Note: callers that want a circular icon (matching launcher behaviour on API 26+) should clip
- * the resulting [androidx.compose.foundation.Image] with `Modifier.clip(CircleShape)` this
+ * the resulting [androidx.compose.foundation.Image] with `Modifier.clip(CircleShape)`; this
  * helper returns the unmasked bitmap.
  *
- * Got from https://gist.github.com/tkuenneth/ddf598663f041dc79960cda503d14448.
+ * Based on https://gist.github.com/tkuenneth/ddf598663f041dc79960cda503d14448.
  */
 @Composable
 fun adaptiveIconPainterResource(@DrawableRes id: Int): Painter {

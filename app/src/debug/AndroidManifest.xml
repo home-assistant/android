@@ -29,6 +29,9 @@
             android:name="io.homeassistant.companion.android.HiltComponentActivity"
             />
 
+        <!--
+        Support for next.home-assistant.io links when developing (merged with non-next links in main manifest).
+        -->
         <activity
             android:name=".nfc.TagReaderActivity"
             android:exported="true">
