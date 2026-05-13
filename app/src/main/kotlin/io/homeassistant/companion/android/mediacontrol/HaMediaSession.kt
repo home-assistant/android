@@ -43,6 +43,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -117,68 +118,56 @@ class HaMediaSession @AssistedInject constructor(
     }
 
     private fun getCommandCallback(scope: CoroutineScope) = object : HaRemoteMediaPlayer.CommandCallback {
-        // SupervisorJob: a failed command doesn't cancel the observation scope.
-        // CoroutineExceptionHandler: prevents the unhandled exception from crashing the
-        // process. The error is already delivered to SimpleBasePlayer via
-        // future.setException() in handleCommand's invokeOnCompletion handler.
-        private val commandScope = CoroutineScope(
-            scope.coroutineContext +
-                SupervisorJob(scope.coroutineContext[Job]) +
-                CoroutineExceptionHandler { _, e ->
-                    Timber.e(e, "Command failed for ${config.entityId}")
-                },
-        )
-
-        override fun onPlayRequested() = commandScope.launch {
+        override fun onPlayRequested() = scope.launch {
             callMediaAction(ACTION_MEDIA_PLAY)
         }
 
-        override fun onPauseRequested() = commandScope.launch {
+        override fun onPauseRequested() = scope.launch {
             callMediaAction(ACTION_MEDIA_PAUSE)
         }
 
-        override fun onSeekRequested(positionMs: Long) = commandScope.launch {
+        override fun onSeekRequested(positionMs: Long) = scope.launch {
             callMediaAction(
                 action = ACTION_MEDIA_SEEK,
                 extraData = mapOf("seek_position" to positionMs / 1000.0),
             )
         }
 
-        override fun onNextRequested() = commandScope.launch {
+        override fun onNextRequested() = scope.launch {
             callMediaAction(ACTION_MEDIA_NEXT_TRACK)
         }
 
-        override fun onPreviousRequested() = commandScope.launch {
+        override fun onPreviousRequested() = scope.launch {
             callMediaAction(ACTION_MEDIA_PREVIOUS_TRACK)
         }
 
-        override fun onSetVolumeRequested(volume: Float) = commandScope.launch {
+        override fun onSetVolumeRequested(volume: Float) = scope.launch {
             callMediaAction(
                 action = ACTION_VOLUME_SET,
                 extraData = mapOf("volume_level" to volume),
             )
         }
 
-        override fun onIncreaseVolumeRequested() = commandScope.launch {
+        override fun onIncreaseVolumeRequested() = scope.launch {
             callMediaAction(ACTION_VOLUME_UP)
         }
 
-        override fun onDecreaseVolumeRequested() = commandScope.launch {
+        override fun onDecreaseVolumeRequested() = scope.launch {
             callMediaAction(ACTION_VOLUME_DOWN)
         }
 
-        override fun onMuteRequested(muted: Boolean) = commandScope.launch {
+        override fun onMuteRequested(muted: Boolean) = scope.launch {
             callMediaAction(
                 action = ACTION_VOLUME_MUTE,
                 extraData = mapOf("is_volume_muted" to muted),
             )
         }
 
-        override fun onStopRequested() = commandScope.launch {
+        override fun onStopRequested() = scope.launch {
             callMediaAction(ACTION_MEDIA_STOP)
         }
 
-        override fun onShuffleRequested(shuffle: Boolean) = commandScope.launch {
+        override fun onShuffleRequested(shuffle: Boolean) = scope.launch {
             callMediaAction(
                 action = ACTION_SHUFFLE_SET,
                 extraData = mapOf("shuffle" to shuffle),
@@ -191,7 +180,7 @@ class HaMediaSession @AssistedInject constructor(
                 is MediaRepeatMode.One -> "one"
                 is MediaRepeatMode.All -> "all"
             }
-            return commandScope.launch {
+            return scope.launch {
                 callMediaAction(
                     action = ACTION_REPEAT_SET,
                     extraData = mapOf("repeat" to haRepeatValue),
@@ -215,13 +204,22 @@ class HaMediaSession @AssistedInject constructor(
                 "observe() called while a session is already active for ${config.entityId}"
             }
 
-            val player = HaRemoteMediaPlayer(Looper.getMainLooper(), getCommandCallback(this))
+            // SupervisorJob without a parent: command failures don't propagate to the
+            // observation scope, and this scope does not block coroutineScope from completing
+            // when the entity state flow ends naturally. Cancelled explicitly in the finally block.
+            val commandScope = CoroutineScope(
+                coroutineContext + SupervisorJob() + CoroutineExceptionHandler { _, e ->
+                    Timber.e(e, "Command failed for ${config.entityId}")
+                },
+            )
+            val player = HaRemoteMediaPlayer(Looper.getMainLooper(), getCommandCallback(commandScope))
             val session = buildMediaSession(player)
             withContext(Dispatchers.Main) { mediaSession = session }
             try {
                 onSessionReady(session)
                 startObservingState(player)
             } finally {
+                commandScope.cancel()
                 Timber.d("observe: finally block running for ${config.entityId}, releasing player and session")
                 withContext(NonCancellable + Dispatchers.Main) {
                     mediaSession = null
