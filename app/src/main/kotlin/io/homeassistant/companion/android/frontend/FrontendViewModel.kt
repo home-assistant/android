@@ -588,6 +588,15 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 exoPlayerManager.handle(result)
             }
 
+            is FrontendHandlerEvent.StartImprovScan,
+            is FrontendHandlerEvent.ConfigureImprovDevice,
+            -> {
+                // Improv handling lands in a follow-up PR; the messages are already typed and
+                // canSetupImprov will be `false` on devices without BLE so the frontend should
+                // not be sending these yet on hardware that lacks Bluetooth LE.
+                Timber.d("Improv event received but not yet handled: $result")
+            }
+
             is FrontendHandlerEvent.ConfigSent,
             is FrontendHandlerEvent.UnknownMessage,
             -> {
