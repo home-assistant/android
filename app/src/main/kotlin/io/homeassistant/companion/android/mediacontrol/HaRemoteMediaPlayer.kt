@@ -78,7 +78,11 @@ internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: 
             is MediaPlaybackState.Playing -> STATE_READY
             is MediaPlaybackState.Paused -> STATE_READY
             is MediaPlaybackState.Buffering -> STATE_BUFFERING
-            // STATE_IDLE would clear the media item; STATE_ENDED keeps the last track visible in the notification
+            // HA "Idle" (on, nothing playing) and Media3 STATE_IDLE share a name but mean different
+            // things: STATE_IDLE means "not prepared", which suppresses the notification until the
+            // player plays something. STATE_ENDED keeps the notification visible so the entity
+            // remains controllable. HA "Off" maps to STATE_IDLE for the opposite reason: the device
+            // is unavailable, so letting the notification disappear is the right behavior.
             is MediaPlaybackState.Idle -> STATE_ENDED
             is MediaPlaybackState.Off -> STATE_IDLE
         }
