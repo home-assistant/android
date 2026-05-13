@@ -198,14 +198,15 @@ internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: 
      *
      * [CancellationException] from the [Job] is treated as success (the command was sent; the
      * scope was cancelled). If [block] itself throws before returning a [Job], returns an
-     * immediate failed future.
+     * immediate failed future. If [block] returns null (command not supported), returns an
+     * immediate failed future with [UnsupportedOperationException].
      */
     private inline fun handleCommand(block: () -> Job?): ListenableFuture<Void> {
         val job = try {
             block()
         } catch (e: Exception) {
             return Futures.immediateFailedFuture(e)
-        } ?: return Futures.immediateFuture(null)
+        } ?: return Futures.immediateFailedFuture(UnsupportedOperationException("Command not supported"))
         val future = SettableFuture.create<Void>()
         job.invokeOnCompletion { cause ->
             when (cause) {
