@@ -218,12 +218,12 @@ class HaMediaSessionTest {
     }
 
     /**
-     * Verifies that when `observeEntityState` flow completes naturally (e.g. WebSocket disconnected),
-     * the session stays alive — `observe()` keeps running via `awaitCancellation()` and
-     * `mediaSession` remains non-null so the notification is not removed.
+     * Verifies that when `observeEntityState` flow completes naturally (e.g. WebSocket subscription
+     * ended), `observe()` returns normally and tears down the session. `mediaSession` becomes null
+     * and `buildNotification()` returns null, preventing a stale notification from remaining.
      */
     @Test
-    fun `Given observeEntityState flow completes when startObservingState then session stays alive`() {
+    fun `Given observeEntityState flow completes when startObservingState then session is torn down`() {
         coEvery { mediaControlRepository.observeEntityState(config) } returns flowOf(
             createState(playbackState = MediaPlaybackState.Playing),
         )
@@ -234,12 +234,9 @@ class HaMediaSessionTest {
         }
         idleMainLooper()
 
-        // The observation job completed naturally but observe() is still suspended in
-        // awaitCancellation(), so the session and its notification remain active.
-        assertNotNull(session.buildNotification())
-        org.junit.Assert.assertTrue(job.isActive)
-
-        job.cancel()
+        // The flow completed, so observe() exited via its finally block — session is torn down.
+        assertNull(session.buildNotification())
+        org.junit.Assert.assertFalse(job.isActive)
     }
 
     // -- Artwork caching tests --

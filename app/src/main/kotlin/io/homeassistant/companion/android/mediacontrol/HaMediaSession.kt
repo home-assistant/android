@@ -43,7 +43,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -216,15 +215,12 @@ class HaMediaSession @AssistedInject constructor(
                 "observe() called while a session is already active for ${config.entityId}"
             }
 
-            launch { startObservingState() }
-
-            val player =
-                HaRemoteMediaPlayer(Looper.getMainLooper(), getCommandCallback(this))
+            val player = HaRemoteMediaPlayer(Looper.getMainLooper(), getCommandCallback(this))
             val session = buildMediaSession(player)
             withContext(Dispatchers.Main) { mediaSession = session }
             try {
                 onSessionReady(session)
-                awaitCancellation()
+                startObservingState(player)
             } finally {
                 Timber.d("observe: finally block running for ${config.entityId}, releasing player and session")
                 withContext(NonCancellable + Dispatchers.Main) {
@@ -240,7 +236,7 @@ class HaMediaSession @AssistedInject constructor(
     /**
      * Observes entity state for [config] until the flow completes or the coroutine is cancelled.
      */
-    private suspend fun startObservingState() {
+    private suspend fun startObservingState(player: HaRemoteMediaPlayer) {
         Timber.d("startObservingState: starting for ${config.entityId}")
         var artworkCache = ArtworkCache()
         mediaControlRepository.observeEntityState(config).collect { state ->
@@ -257,12 +253,10 @@ class HaMediaSession @AssistedInject constructor(
                 artworkCache = ArtworkCache()
                 withContext(Dispatchers.Main) {
                     notificationArtwork = null
-                    mediaSession?.player?.let {
-                        (it as? HaRemoteMediaPlayer)?.updateState(state = null, artworkPngBytes = null)
-                    }
+                    player.updateState(state = null, artworkPngBytes = null)
                 }
             } else {
-                artworkCache = loadArtworkAndUpdatePlayer(state, artworkCache)
+                artworkCache = loadArtworkAndUpdatePlayer(state, artworkCache, player)
             }
         }
         Timber.d("startObservingState: flow collection ended for ${config.entityId}")
@@ -316,15 +310,17 @@ class HaMediaSession @AssistedInject constructor(
      *
      * @return An updated [ArtworkCache] reflecting the outcome of the load attempt.
      */
-    private suspend fun loadArtworkAndUpdatePlayer(state: MediaControlState, cache: ArtworkCache): ArtworkCache {
+    private suspend fun loadArtworkAndUpdatePlayer(
+        state: MediaControlState,
+        cache: ArtworkCache,
+        player: HaRemoteMediaPlayer,
+    ): ArtworkCache {
         val updatedCache = when (val pictureUrl = state.entityPictureUrl) {
             null -> ArtworkCache()
             cache.url -> cache
             else -> {
                 val artworkData = resolveArtworkUrl(state)?.let { loadArtworkData(it) }
-                if (artworkData !=
-                    null
-                ) {
+                if (artworkData != null) {
                     ArtworkCache(url = pictureUrl, bytes = artworkData.first, bitmap = artworkData.second)
                 } else {
                     cache
@@ -334,9 +330,7 @@ class HaMediaSession @AssistedInject constructor(
 
         withContext(Dispatchers.Main) {
             notificationArtwork = updatedCache.bitmap
-            mediaSession?.player?.let { player ->
-                (player as? HaRemoteMediaPlayer)?.updateState(state = state, artworkPngBytes = updatedCache.bytes)
-            }
+            player.updateState(state = state, artworkPngBytes = updatedCache.bytes)
         }
         return updatedCache
     }

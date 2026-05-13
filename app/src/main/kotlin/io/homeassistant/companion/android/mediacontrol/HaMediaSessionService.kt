@@ -217,6 +217,16 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
     private fun launchSession(key: String, session: HaMediaSession) {
         val job = serviceScope.launch {
             session.observe { mediaSession -> addSession(mediaSession) }
+            // observe() returned normally (the entity state flow completed rather than suspending
+            // indefinitely). The finally block in observe() has already released Media3 resources.
+            // Remove the stale map entry so a subsequent reconcileSessions emission can restart
+            // the session if the entity is still configured. This path is not taken on cancellation
+            // (tearDownSession calls job.cancelAndJoin()), because CancellationException propagates
+            // past the line above and skips this cleanup.
+            withContext(Dispatchers.Main) {
+                activeSessions.remove(key)
+                Timber.d("Session $key observation ended normally, removed stale entry")
+            }
         }
         activeSessions[key] = session to job
         Timber.d("Added media session for $key")
