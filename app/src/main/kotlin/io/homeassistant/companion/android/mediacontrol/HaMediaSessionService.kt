@@ -16,6 +16,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlRepository
+import io.homeassistant.companion.android.common.util.CHANNEL_MEDIA_SESSION
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -102,7 +103,7 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
         // A session not in activeSessions is being torn down. removeSession() and player.release()
         // both trigger onUpdateNotification, so without this guard we would re-post a notification
         // we just cancelled, leaving a zombie media control card after removal.
-        val haSession = activeSessions.values.firstOrNull { (haSession, _) -> haSession.id == session.id }?.first
+        val haSession = activeSessions[session.id]?.first
 
         if (haSession == null || session.player.mediaItemCount == 0) {
             // Entity is off, no state has arrived yet, or the session is being torn down.
@@ -249,7 +250,7 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
 
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
-            HaMediaSession.NOTIFICATION_CHANNEL_ID,
+            CHANNEL_MEDIA_SESSION,
             getString(commonR.string.media_controls),
             NotificationManager.IMPORTANCE_LOW,
         ).apply {

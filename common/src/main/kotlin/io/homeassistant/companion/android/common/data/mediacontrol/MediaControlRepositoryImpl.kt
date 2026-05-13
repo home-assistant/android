@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.common.data.mediacontrol
 
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.applyCompressedStateDiff
+import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.getAppName
 import io.homeassistant.companion.android.common.data.integration.getEntityPictureUrl
 import io.homeassistant.companion.android.common.data.integration.getMediaAlbumArtist
@@ -169,7 +170,7 @@ private fun Entity.toMediaControlState(serverId: Int): MediaControlState {
         isVolumeMuted = getVolumeMuted(),
         shuffle = getShuffle(),
         repeatMode = repeatMode,
-        entityFriendlyName = attributes["friendly_name"] as? String,
+        entityFriendlyName = friendlyName,
         albumArtist = getMediaAlbumArtist(),
         mediaContentType = getMediaContentType(),
         mediaTrack = getMediaTrack(),

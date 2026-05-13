@@ -105,7 +105,7 @@ class HaMediaSessionTest {
         isVolumeMuted = false,
         shuffle = false,
         repeatMode = MediaRepeatMode.Off,
-        entityFriendlyName = null,
+        entityFriendlyName = "media_player.test",
     )
 
     private fun buildSession(): HaMediaSession = HaMediaSession(

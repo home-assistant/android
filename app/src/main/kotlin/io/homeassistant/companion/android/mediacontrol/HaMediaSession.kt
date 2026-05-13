@@ -29,6 +29,7 @@ import io.homeassistant.companion.android.common.data.mediacontrol.MediaPlayback
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaRepeatMode
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
+import io.homeassistant.companion.android.common.util.CHANNEL_MEDIA_SESSION
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.util.sensitive
@@ -93,7 +94,7 @@ class HaMediaSession @AssistedInject constructor(
         val session = mediaSession ?: return null
         val metadata = session.player.mediaMetadata
         val artworkBitmap = metadata.artworkData?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
-        return NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
+        return NotificationCompat.Builder(context, CHANNEL_MEDIA_SESSION)
             .setStyle(MediaStyleNotificationHelper.MediaStyle(session))
             .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
@@ -386,9 +387,6 @@ class HaMediaSession @AssistedInject constructor(
     private data class ArtworkCache(val url: String? = null, val bytes: ByteArray? = null)
 
     companion object {
-        /** Notification channel ID used for all media control notifications. */
-        const val NOTIFICATION_CHANNEL_ID = "media_session"
-
         /** Target pixel size for notification large icon artwork. Pre-scaling in Coil avoids
          * main-thread downscaling by Android's Icon class (StrictMode CustomViolation). */
         private const val NOTIFICATION_ICON_SIZE_PX = 256

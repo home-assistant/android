@@ -186,7 +186,7 @@ class HaMediaSessionServiceTest {
         isVolumeMuted = false,
         shuffle = false,
         repeatMode = MediaRepeatMode.Off,
-        entityFriendlyName = null,
+        entityFriendlyName = "media_player.test",
     )
 
     // -- Reconciliation via flow emissions --

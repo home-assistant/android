@@ -51,7 +51,7 @@ data class MediaControlState(
     val isVolumeMuted: Boolean,
     val shuffle: Boolean,
     val repeatMode: MediaRepeatMode,
-    val entityFriendlyName: String?,
+    val entityFriendlyName: String,
     val albumArtist: String? = null,
     val mediaContentType: String? = null,
     val mediaTrack: Int? = null,

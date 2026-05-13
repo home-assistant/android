@@ -61,7 +61,7 @@ class HaRemoteMediaPlayerTest {
         isVolumeMuted: Boolean = false,
         shuffle: Boolean = false,
         repeatMode: MediaRepeatMode = MediaRepeatMode.Off,
-        entityFriendlyName: String? = null,
+        entityFriendlyName: String = "media_player.test",
         albumArtist: String? = null,
         mediaContentType: String? = null,
         mediaTrack: Int? = null,
