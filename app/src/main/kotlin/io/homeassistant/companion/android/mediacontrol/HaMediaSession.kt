@@ -4,9 +4,10 @@ import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.Bitmap.CompressFormat
-import android.graphics.BitmapFactory
 import android.os.Looper
+import androidx.annotation.MainThread
 import androidx.annotation.OptIn
 import androidx.core.app.NotificationCompat
 import androidx.media3.common.util.UnstableApi
@@ -72,14 +73,23 @@ class HaMediaSession @AssistedInject constructor(
     /** Stable identifier for this session, derived from the entity config. */
     val id: String = "${config.serverId}:${config.entityId}"
 
+    /** Must be accessed from the Main thread. Non-null while [observe] is running. */
+    @get:MainThread
+    @set:MainThread
     internal var mediaSession: MediaSession? = null
         private set
 
-    /** True if the player is currently playing and has at least one media item. */
+    @get:MainThread
+    @set:MainThread
+    private var notificationArtwork: Bitmap? = null
+
+    /** True if the player is currently playing and has at least one media item. Must be called from the Main thread. */
+    @get:MainThread
     val isPlaying: Boolean
         get() = mediaSession?.player?.let { it.playWhenReady && it.mediaItemCount > 0 } == true
 
-    /** True if the player has at least one media item (playing or paused). */
+    /** True if the player has at least one media item (playing or paused). Must be called from the Main thread. */
+    @get:MainThread
     val hasActiveMedia: Boolean
         get() = mediaSession?.player?.let { it.mediaItemCount > 0 } == true
 
@@ -89,11 +99,11 @@ class HaMediaSession @AssistedInject constructor(
      *
      * @return The notification, or null if the session is not currently active.
      */
+    @MainThread
     @OptIn(UnstableApi::class)
     fun buildNotification(): Notification? {
         val session = mediaSession ?: return null
         val metadata = session.player.mediaMetadata
-        val artworkBitmap = metadata.artworkData?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
         return NotificationCompat.Builder(context, CHANNEL_MEDIA_SESSION)
             .setStyle(MediaStyleNotificationHelper.MediaStyle(session))
             .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
@@ -101,7 +111,7 @@ class HaMediaSession @AssistedInject constructor(
             .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
             .setContentTitle(metadata.title ?: id)
             .setContentText(metadata.artist)
-            .setLargeIcon(artworkBitmap)
+            .setLargeIcon(notificationArtwork)
             .setOngoing(session.player.isPlaying)
             .setContentIntent(session.sessionActivity)
             .build()
@@ -211,14 +221,15 @@ class HaMediaSession @AssistedInject constructor(
             val player =
                 HaRemoteMediaPlayer(Looper.getMainLooper(), getCommandCallback(this))
             val session = buildMediaSession(player)
-            mediaSession = session
+            withContext(Dispatchers.Main) { mediaSession = session }
             try {
                 onSessionReady(session)
                 awaitCancellation()
             } finally {
                 Timber.d("observe: finally block running for ${config.entityId}, releasing player and session")
-                mediaSession = null
                 withContext(NonCancellable + Dispatchers.Main) {
+                    mediaSession = null
+                    notificationArtwork = null
                     player.release()
                     session.release()
                 }
@@ -245,6 +256,7 @@ class HaMediaSession @AssistedInject constructor(
                 // currently-playing session (e.g. another configured entity), hiding its control.
                 artworkCache = ArtworkCache()
                 withContext(Dispatchers.Main) {
+                    notificationArtwork = null
                     mediaSession?.player?.let {
                         (it as? HaRemoteMediaPlayer)?.updateState(state = null, artworkPngBytes = null)
                     }
@@ -309,12 +321,19 @@ class HaMediaSession @AssistedInject constructor(
             null -> ArtworkCache()
             cache.url -> cache
             else -> {
-                val bytes = resolveArtworkUrl(state)?.let { loadBitmapAsPng(it) }
-                if (bytes != null) ArtworkCache(url = pictureUrl, bytes = bytes) else cache
+                val artworkData = resolveArtworkUrl(state)?.let { loadArtworkData(it) }
+                if (artworkData !=
+                    null
+                ) {
+                    ArtworkCache(url = pictureUrl, bytes = artworkData.first, bitmap = artworkData.second)
+                } else {
+                    cache
+                }
             }
         }
 
         withContext(Dispatchers.Main) {
+            notificationArtwork = updatedCache.bitmap
             mediaSession?.player?.let { player ->
                 (player as? HaRemoteMediaPlayer)?.updateState(state = state, artworkPngBytes = updatedCache.bytes)
             }
@@ -340,8 +359,8 @@ class HaMediaSession @AssistedInject constructor(
         return URL(baseUrl, entityPictureUrl).toString()
     }
 
-    /** Loads album art and compresses to PNG bytes on the IO dispatcher. */
-    private suspend fun loadBitmapAsPng(url: String): ByteArray? = withContext(Dispatchers.IO) {
+    /** Loads album art and compresses to PNG bytes on the IO dispatcher, also returning the decoded bitmap. */
+    private suspend fun loadArtworkData(url: String): Pair<ByteArray, Bitmap>? = withContext(Dispatchers.IO) {
         try {
             val request = ImageRequest.Builder(context)
                 .data(url)
@@ -352,7 +371,7 @@ class HaMediaSession @AssistedInject constructor(
             result.image?.toBitmap()?.let { bitmap ->
                 val stream = ByteArrayOutputStream()
                 bitmap.compress(CompressFormat.PNG, 100, stream)
-                stream.toByteArray()
+                stream.toByteArray() to bitmap
             }
         } catch (e: CancellationException) {
             throw e
@@ -384,7 +403,7 @@ class HaMediaSession @AssistedInject constructor(
     }
 
     /** Immutable cache of the last successfully loaded artwork. */
-    private data class ArtworkCache(val url: String? = null, val bytes: ByteArray? = null)
+    private data class ArtworkCache(val url: String? = null, val bytes: ByteArray? = null, val bitmap: Bitmap? = null)
 
     companion object {
         /** Target pixel size for notification large icon artwork. Pre-scaling in Coil avoids
