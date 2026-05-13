@@ -8,6 +8,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
@@ -45,6 +46,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.R
@@ -60,6 +62,7 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.compose.util.adaptiveIconPainterResource
 import io.homeassistant.companion.android.nfc.TagReaderUiState
+import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import kotlinx.coroutines.launch
 
@@ -269,7 +272,10 @@ private fun TagBanner(tagId: String, modifier: Modifier = Modifier) {
     val clipboard = LocalClipboard.current
     val coroutineScope = rememberCoroutineScope()
 
-    HABanner(modifier) {
+    HABanner(
+        modifier = modifier,
+        contentPadding = PaddingValues(start = HADimens.SPACE3) + PaddingValues(vertical = HADimens.SPACE3),
+    ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = stringResource(commonR.string.tag_id),
@@ -283,6 +289,7 @@ private fun TagBanner(tagId: String, modifier: Modifier = Modifier) {
                     color = LocalHAColorScheme.current.colorTextPrimary,
                 ),
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
         IconButton(

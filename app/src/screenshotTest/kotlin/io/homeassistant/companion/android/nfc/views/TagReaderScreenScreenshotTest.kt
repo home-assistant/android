@@ -14,7 +14,7 @@ class TagReaderScreenScreenshotTest {
     fun `TagReaderScreen approving`() {
         HAThemeForPreview {
             TagReaderScreen(
-                state = TagReaderUiState.ApprovingTag("custom-tag-foo"),
+                state = TagReaderUiState.ApprovingTag("51f64799-2f18-4c6f-be65-48abcd5ea683"),
                 onAllowOnce = {},
                 onAllowAlways = {},
                 onDismissed = {},
