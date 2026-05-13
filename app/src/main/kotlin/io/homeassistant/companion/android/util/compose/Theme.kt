@@ -52,10 +52,6 @@ private val haDarkColors = darkColors(
  */
 @Deprecated(
     "Uses Material Design 2. Use HATheme (Material Design 3) instead. Kept until remaining call sites are migrated.",
-    replaceWith = ReplaceWith(
-        "HATheme { content() }",
-        "io.homeassistant.companion.android.common.compose.theme.HATheme",
-    ),
 )
 @Composable
 fun HomeAssistantAppTheme(content: @Composable () -> Unit) {
