@@ -12,6 +12,7 @@ import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -65,6 +66,7 @@ import io.homeassistant.companion.android.frontend.permissions.MultiplePermissio
 import io.homeassistant.companion.android.frontend.permissions.NotificationPermissionPrompt
 import io.homeassistant.companion.android.frontend.permissions.PermissionRequest
 import io.homeassistant.companion.android.frontend.permissions.SinglePermissionEffect
+import io.homeassistant.companion.android.launch.PipReadiness
 import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModel
@@ -115,6 +117,7 @@ internal fun FrontendScreen(
     onSecurityLevelHelpClick: suspend () -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     modifier: Modifier = Modifier,
+    onPipReadinessChanged: (PipReadiness?) -> Unit = {},
 ) {
     val viewState by viewModel.viewState.collectAsStateWithLifecycle()
     val pendingPermissionRequest by viewModel.pendingPermissionRequest.collectAsStateWithLifecycle()
@@ -170,6 +173,7 @@ internal fun FrontendScreen(
         onGesture = viewModel::onGesture,
         onExoPlayerFullscreenChanged = viewModel::onExoPlayerFullscreenChanged,
         autoPlayVideoEnabled = autoPlayVideoEnabled,
+        onPipReadinessChanged = onPipReadinessChanged,
         modifier = modifier,
     )
 }
@@ -204,6 +208,7 @@ internal fun FrontendScreenContent(
     webViewActions: Flow<WebViewAction> = emptyFlow(),
     onGesture: (GestureDirection, Int) -> Unit = { _, _ -> },
     onExoPlayerFullscreenChanged: (Boolean) -> Unit = {},
+    onPipReadinessChanged: (PipReadiness?) -> Unit = {},
 ) {
     var webView by remember { mutableStateOf<WebView?>(null) }
 
@@ -241,12 +246,12 @@ internal fun FrontendScreenContent(
             autoPlayVideoEnabled = autoPlayVideoEnabled,
         )
 
-        ExoPlayerOverlay(
+        PipEligibleOverlays(
             contentState = viewState as? FrontendViewState.Content,
-            onFullscreenChanged = onExoPlayerFullscreenChanged,
+            customView = customView,
+            onExoPlayerFullscreenChanged = onExoPlayerFullscreenChanged,
+            onPipReadinessChanged = onPipReadinessChanged,
         )
-
-        CustomViewOverlay(customView = customView)
 
         StateOverlay(
             viewState = viewState,
@@ -582,19 +587,24 @@ private fun PendingPermissionHandler(pendingRequest: PermissionRequest?) {
                 onDismiss = pendingRequest.onDismiss,
             )
         }
+
         is PermissionRequest.MultiplePermissions -> {
             MultiplePermissionsEffect(
                 pendingRequest = pendingRequest,
                 onPermissionResult = pendingRequest.onResult,
             )
         }
+
         is PermissionRequest.SinglePermission -> {
             SinglePermissionEffect(
                 pendingRequest = pendingRequest,
                 onPermissionResult = pendingRequest.onResult,
             )
         }
-        null -> { /* No pending permission */ }
+
+        null -> {
+            /* No pending permission */
+        }
     }
 }
 
@@ -633,6 +643,33 @@ private fun WebViewEffects(
             webView.reload()
         }
     }
+}
+
+/**
+ * Renders PiP-eligible overlays and reports their combined [PipReadiness] to the host.
+ */
+@Composable
+private fun BoxScope.PipEligibleOverlays(
+    contentState: FrontendViewState.Content?,
+    customView: View?,
+    onExoPlayerFullscreenChanged: (Boolean) -> Unit,
+    onPipReadinessChanged: (PipReadiness?) -> Unit,
+) {
+    val exoState = contentState?.exoPlayerState
+    val readiness = remember(customView, exoState?.isFullScreen, exoState?.videoAspectRatio) {
+        PipReadiness.from(customViewShown = customView != null, exoState = exoState)
+    }
+
+    LaunchedEffect(readiness) { onPipReadinessChanged(readiness) }
+    DisposableEffect(Unit) {
+        onDispose { onPipReadinessChanged(null) }
+    }
+
+    ExoPlayerOverlay(
+        contentState = contentState,
+        onFullscreenChanged = onExoPlayerFullscreenChanged,
+    )
+    CustomViewOverlay(customView = customView)
 }
 
 @Composable

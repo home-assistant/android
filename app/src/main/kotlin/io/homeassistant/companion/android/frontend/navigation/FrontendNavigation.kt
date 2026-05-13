@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager.Comp
 import io.homeassistant.companion.android.frontend.FrontendScreen
 import io.homeassistant.companion.android.frontend.FrontendViewModel
 import io.homeassistant.companion.android.launch.HAStartDestinationRoute
+import io.homeassistant.companion.android.launch.PipReadiness
 import io.homeassistant.companion.android.nfc.WriteNfcTag
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.getActivity
@@ -72,6 +73,7 @@ internal fun NavGraphBuilder.frontendScreen(
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onShowServerSwitcher: (onServerSelected: (Int) -> Unit) -> Unit,
     onRequestFullscreen: (Boolean) -> Unit = {},
+    onPipReadinessChanged: (PipReadiness?) -> Unit = {},
 ) {
     if (WIPFeature.USE_FRONTEND_V2) {
         composable<FrontendRoute> {
@@ -113,6 +115,7 @@ internal fun NavGraphBuilder.frontendScreen(
                 onConfigureHomeNetwork = onConfigureHomeNetwork,
                 onSecurityLevelHelpClick = onSecurityLevelHelpClick,
                 onShowSnackbar = onShowSnackbar,
+                onPipReadinessChanged = onPipReadinessChanged,
             )
         }
     } else {

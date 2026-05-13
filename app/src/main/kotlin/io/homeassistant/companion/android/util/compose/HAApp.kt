@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.launch.HAStartDestinationRoute
+import io.homeassistant.companion.android.launch.PipReadiness
 import io.homeassistant.companion.android.loading.LoadingScreen
 
 /**
@@ -43,6 +44,7 @@ internal fun HAApp(
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
     onRequestFullscreen: (Boolean) -> Unit = {},
+    onPipReadinessChanged: (PipReadiness?) -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier,
@@ -71,6 +73,7 @@ internal fun HAApp(
                 navController = navController,
                 startDestination = startDestination,
                 onRequestFullscreen = onRequestFullscreen,
+                onPipReadinessChanged = onPipReadinessChanged,
                 onShowSnackbar = { message, action ->
                     snackbarHostState.showSnackbar(
                         message,
