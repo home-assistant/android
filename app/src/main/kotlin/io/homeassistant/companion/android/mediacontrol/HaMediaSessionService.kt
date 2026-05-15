@@ -54,7 +54,7 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
     @Inject
     lateinit var haMediaSessionFactory: HaMediaSession.Factory
 
-    // Keyed by "$serverId:$entityId". Each entry pairs the session with the job running observe().
+    // Keyed by MediaControlEntityConfig.id. Each entry pairs the session with the job running observe().
     private val activeSessions = mutableMapOf<String, Pair<HaMediaSession, Job>>()
 
     /** The notification ID last passed to [startForeground], or null if not in the foreground. */
@@ -150,14 +150,15 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
         super.onDestroy()
     }
 
-    private fun startObservingEntities() {
+    @VisibleForTesting
+    internal fun startObservingEntities() {
         mediaControlRepository.observeConfiguredEntities()
             .onEach { entities -> reconcileSessions(entities) }
             .launchIn(serviceScope)
     }
 
     private suspend fun reconcileSessions(configuredEntities: List<MediaControlEntityConfig>) {
-        val desiredKeys = configuredEntities.map { it.sessionKey() }.toSet()
+        val desiredKeys = configuredEntities.map { it.id }.toSet()
         Timber.d("reconcileSessions: received ${configuredEntities.size} entities=$desiredKeys")
 
         if (configuredEntities.isEmpty()) {
@@ -179,7 +180,7 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
                 key to pair
             }
             val toAdd = (desiredKeys - currentKeys).map { key ->
-                val entityConfig = configuredEntities.first { it.sessionKey() == key }
+                val entityConfig = configuredEntities.first { it.id == key }
                 key to haMediaSessionFactory.create(config = entityConfig)
             }
 
@@ -286,5 +287,3 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
         }
     }
 }
-
-private fun MediaControlEntityConfig.sessionKey(): String = "$serverId:$entityId"

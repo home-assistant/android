@@ -29,10 +29,10 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows
 import org.robolectric.Shadows.shadowOf
+import org.robolectric.android.controller.ServiceController
 import org.robolectric.annotation.Config
 
 /** Module-level counter for unique MediaSession IDs across tests within the same JVM process. */
@@ -48,11 +48,11 @@ private val sessionCounter = AtomicInteger(0)
  * Instead, dependencies are injected manually into the service's [Inject]-annotated fields after
  * construction, and observation is started via [HaMediaSessionService.startObservingEntities].
  *
- * The service is created via [Robolectric.buildService] (using [get] rather than [create]) so that
- * the service is properly attached to an Android context without triggering [onCreate]. The private
- * [serviceScope] field is then replaced via reflection with [observationScope] (backed by
- * [UnconfinedTestDispatcher]) before observation starts, so that flow collection and session
- * coroutines run eagerly and synchronously on the test dispatcher.
+ * The service is created via [ServiceController.of] (using [get] rather than [create]) so that
+ * the service is properly attached to an Android context without triggering [onCreate]. The
+ * [observationScope] (backed by [UnconfinedTestDispatcher]) is passed directly to the
+ * [HaMediaSessionService] constructor before observation starts, so that flow collection and
+ * session coroutines run eagerly and synchronously on the test dispatcher.
  *
  * Each test pre-populates [configuredEntitiesFlow] (replay=1) before starting observation, so
  * the subscriber receives the value immediately upon subscribing. Subsequent emissions are
@@ -103,15 +103,10 @@ class HaMediaSessionServiceTest {
             )
         }
 
-        service = Robolectric.buildService(HaMediaSessionService::class.java).get()
+        val instance = HaMediaSessionService(observationScope)
+        service = ServiceController.of(instance, null).get()
         service.mediaControlRepository = mediaControlRepository
         service.haMediaSessionFactory = haMediaSessionFactory
-
-        // Replace the private serviceScope field with the test-controlled scope so that
-        // startObservingEntities() and all session coroutines run on the UnconfinedTestDispatcher.
-        val scopeField = HaMediaSessionService::class.java.getDeclaredField("serviceScope")
-        scopeField.isAccessible = true
-        scopeField.set(service, observationScope)
     }
 
     @After
@@ -130,19 +125,17 @@ class HaMediaSessionServiceTest {
 
     /**
      * Starts entity observation on the service using the test-controlled [observationScope]
-     * (already set via reflection in [setUp]) as the service scope. Because [configuredEntitiesFlow]
+     * (passed to the constructor in [setUp]) as the service scope. Because [configuredEntitiesFlow]
      * uses replay=1 and [observationScope] uses [UnconfinedTestDispatcher], the subscriber receives
      * any pre-emitted value immediately and reconciliation runs synchronously.
      * Call [idleMainLooper] after this to flush any Main-thread tasks posted by [HaMediaSession]
      * (e.g. [HaRemoteMediaPlayer.updateState]).
      *
-     * Invoked via reflection because [HaMediaSessionService.startObservingEntities] is private —
-     * this avoids calling [onCreate], which triggers Hilt field injection unavailable in this setup.
+     * Called directly (not via [onCreate]) to avoid triggering Hilt field injection, which requires
+     * a fully-initialized Hilt component unavailable in this test setup.
      */
     private fun startObserving() {
-        val m = HaMediaSessionService::class.java.getDeclaredMethod("startObservingEntities")
-        m.isAccessible = true
-        m.invoke(service)
+        service.startObservingEntities()
     }
 
     /**

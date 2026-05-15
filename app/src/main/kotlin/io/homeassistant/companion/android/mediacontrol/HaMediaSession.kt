@@ -70,8 +70,8 @@ class HaMediaSession @AssistedInject constructor(
     private val mediaControlRepository: MediaControlRepository,
     private val serverManager: ServerManager,
 ) {
-    /** Stable identifier for this session, derived from the entity config. */
-    val id: String = "${config.serverId}:${config.entityId}"
+    /** Stable identifier for this session. Delegates to [MediaControlEntityConfig.id]. */
+    val id: String get() = config.id
 
     /** Must be accessed from the Main thread. Non-null while [observe] is running. */
     @get:MainThread
@@ -82,6 +82,10 @@ class HaMediaSession @AssistedInject constructor(
     @get:MainThread
     @set:MainThread
     private var notificationArtwork: Bitmap? = null
+
+    @get:MainThread
+    @set:MainThread
+    private var notificationEntityName: String? = null
 
     /** True if the player is currently playing and has at least one media item. Must be called from the Main thread. */
     @get:MainThread
@@ -109,7 +113,7 @@ class HaMediaSession @AssistedInject constructor(
             .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
-            .setContentTitle(metadata.title ?: id)
+            .setContentTitle(metadata.title ?: notificationEntityName ?: id)
             .setContentText(metadata.artist)
             .setLargeIcon(notificationArtwork)
             .setOngoing(session.player.isPlaying)
@@ -224,6 +228,7 @@ class HaMediaSession @AssistedInject constructor(
                 withContext(NonCancellable + Dispatchers.Main) {
                     mediaSession = null
                     notificationArtwork = null
+                    notificationEntityName = null
                     player.release()
                     session.release()
                 }
@@ -251,6 +256,7 @@ class HaMediaSession @AssistedInject constructor(
                 artworkCache = ArtworkCache()
                 withContext(Dispatchers.Main) {
                     notificationArtwork = null
+                    notificationEntityName = null
                     player.updateState(state = null, artworkPngBytes = null)
                 }
             } else {
@@ -328,6 +334,7 @@ class HaMediaSession @AssistedInject constructor(
 
         withContext(Dispatchers.Main) {
             notificationArtwork = updatedCache.bitmap
+            notificationEntityName = state.entityFriendlyName
             player.updateState(state = state, artworkPngBytes = updatedCache.bytes)
         }
         return updatedCache

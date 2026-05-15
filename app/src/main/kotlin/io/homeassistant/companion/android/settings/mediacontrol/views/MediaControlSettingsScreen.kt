@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.settings.mediacontrol.views
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,7 +14,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -122,7 +122,7 @@ internal fun MediaControlSettingsContent(
 
             itemsIndexed(
                 items = uiState.configuredEntities,
-                key = { _, config -> config.listKey() },
+                key = { _, config -> config.id },
             ) { index, config ->
                 ConfiguredEntityRow(
                     config = config,
@@ -149,49 +149,48 @@ private fun ConfiguredEntityRow(
     val colorScheme = LocalHAColorScheme.current
     val displayName = entityName ?: config.entityId
 
-    Surface(modifier = modifier, color = colorScheme.colorSurfaceLow, shadowElevation = HADimens.SPACE0) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = HADimens.SPACE18)
-                .padding(vertical = HADimens.SPACE1),
-        ) {
-            if (entityIcon != null) {
-                Image(
-                    asset = entityIcon,
-                    colorFilter = ColorFilter.tint(colorScheme.colorTextSecondary),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .padding(start = HADimens.SPACE4)
-                        .size(HADimens.SPACE6),
-                )
-            }
-            Column(
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .fillMaxWidth()
+            .background(colorScheme.colorSurfaceLow)
+            .heightIn(min = HADimens.SPACE18)
+            .padding(vertical = HADimens.SPACE1),
+    ) {
+        if (entityIcon != null) {
+            Image(
+                asset = entityIcon,
+                colorFilter = ColorFilter.tint(colorScheme.colorTextSecondary),
+                contentDescription = null,
                 modifier = Modifier
-                    .weight(1f)
-                    .padding(start = if (entityIcon != null) HADimens.SPACE2 else HADimens.SPACE4),
-            ) {
-                Text(
-                    text = displayName,
-                    style = HATextStyle.Body,
-                    color = colorScheme.colorTextPrimary,
-                    textAlign = TextAlign.Start,
-                )
-                Text(
-                    text = subtitle,
-                    style = HATextStyle.BodyMedium,
-                    color = colorScheme.colorTextSecondary,
-                    textAlign = TextAlign.Start,
-                )
-            }
-            HAIconButton(
-                icon = Icons.Default.Clear,
-                onClick = onRemove,
-                contentDescription = stringResource(R.string.media_control_remove_entity),
-                variant = ButtonVariant.NEUTRAL,
+                    .padding(start = HADimens.SPACE4)
+                    .size(HADimens.SPACE6),
             )
         }
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = if (entityIcon != null) HADimens.SPACE2 else HADimens.SPACE4),
+        ) {
+            Text(
+                text = displayName,
+                style = HATextStyle.Body,
+                color = colorScheme.colorTextPrimary,
+                textAlign = TextAlign.Start,
+            )
+            Text(
+                text = subtitle,
+                style = HATextStyle.BodyMedium,
+                color = colorScheme.colorTextSecondary,
+                textAlign = TextAlign.Start,
+            )
+        }
+        HAIconButton(
+            icon = Icons.Default.Clear,
+            onClick = onRemove,
+            contentDescription = stringResource(R.string.media_control_remove_entity),
+            variant = ButtonVariant.NEUTRAL,
+        )
     }
 }
 
