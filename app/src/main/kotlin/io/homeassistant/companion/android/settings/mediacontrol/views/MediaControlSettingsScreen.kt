@@ -43,7 +43,7 @@ import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
-/** Outer composable that extracts state from the ViewModel and delegates to the stateless content. */
+/** Displays the media controls settings screen, backed by [MediaControlSettingsViewModel]. */
 @Composable
 fun MediaControlSettingsScreen(viewModel: MediaControlSettingsViewModel, modifier: Modifier = Modifier) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -140,7 +140,7 @@ internal fun MediaControlSettingsContent(
 @Composable
 private fun ConfiguredEntityRow(
     config: MediaControlEntityConfig,
-    subtitle: String?,
+    subtitle: String,
     entityName: String?,
     entityIcon: IIcon?,
     onRemove: () -> Unit,
@@ -178,14 +178,12 @@ private fun ConfiguredEntityRow(
                     color = colorScheme.colorTextPrimary,
                     textAlign = TextAlign.Start,
                 )
-                if (subtitle != null) {
-                    Text(
-                        text = subtitle,
-                        style = HATextStyle.BodyMedium,
-                        color = colorScheme.colorTextSecondary,
-                        textAlign = TextAlign.Start,
-                    )
-                }
+                Text(
+                    text = subtitle,
+                    style = HATextStyle.BodyMedium,
+                    color = colorScheme.colorTextSecondary,
+                    textAlign = TextAlign.Start,
+                )
             }
             HAIconButton(
                 icon = Icons.Default.Clear,

@@ -254,7 +254,7 @@ class MediaControlSettingsViewModel @VisibleForTesting constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.e(e, "Couldn't load $name for server")
+            Timber.e(e, "Couldn't load $name for server $serverId")
             emptyList()
         }
 }

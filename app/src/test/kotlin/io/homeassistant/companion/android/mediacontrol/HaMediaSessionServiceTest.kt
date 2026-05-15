@@ -198,8 +198,8 @@ class HaMediaSessionServiceTest {
         startObserving()
         idleMainLooper()
 
-        assertEquals(1, service.getSessions().size)
-        assertTrue(service.getSessions().any { it.id == "1:${config.entityId}" })
+        assertEquals(1, service.sessions.size)
+        assertTrue(service.sessions.any { it.id == "1:${config.entityId}" })
     }
 
     @Test
@@ -210,9 +210,9 @@ class HaMediaSessionServiceTest {
         startObserving()
         idleMainLooper()
 
-        assertEquals(2, service.getSessions().size)
-        assertTrue(service.getSessions().any { it.id == "1:${configA.entityId}" })
-        assertTrue(service.getSessions().any { it.id == "1:${configB.entityId}" })
+        assertEquals(2, service.sessions.size)
+        assertTrue(service.sessions.any { it.id == "1:${configA.entityId}" })
+        assertTrue(service.sessions.any { it.id == "1:${configB.entityId}" })
     }
 
     @Test
@@ -226,8 +226,8 @@ class HaMediaSessionServiceTest {
         configuredEntitiesFlow.tryEmit(listOf(configB))
         idleMainLooper()
 
-        assertEquals(1, service.getSessions().size)
-        assertTrue(service.getSessions().any { it.id == "1:${configB.entityId}" })
+        assertEquals(1, service.sessions.size)
+        assertTrue(service.sessions.any { it.id == "1:${configB.entityId}" })
     }
 
     @Test
@@ -236,13 +236,13 @@ class HaMediaSessionServiceTest {
         configuredEntitiesFlow.tryEmit(listOf(config))
         startObserving()
         idleMainLooper()
-        val sessionBefore = service.getSessions().first()
+        val sessionBefore = service.sessions.first()
 
         configuredEntitiesFlow.tryEmit(listOf(config))
         idleMainLooper()
 
-        assertEquals(1, service.getSessions().size)
-        assertSame(sessionBefore, service.getSessions().first())
+        assertEquals(1, service.sessions.size)
+        assertSame(sessionBefore, service.sessions.first())
     }
 
     @Test
@@ -305,13 +305,13 @@ class HaMediaSessionServiceTest {
         configuredEntitiesFlow.tryEmit(listOf(config))
         startObserving()
         idleMainLooper()
-        assertEquals(1, service.getSessions().size)
+        assertEquals(1, service.sessions.size)
 
         // onDestroy() calls removeSession() explicitly for each active session before cancelling
         // the observation jobs, so getSessions() is empty immediately after the call.
         service.onDestroy()
         idleMainLooper()
 
-        assertTrue(service.getSessions().isEmpty())
+        assertTrue(service.sessions.isEmpty())
     }
 }
