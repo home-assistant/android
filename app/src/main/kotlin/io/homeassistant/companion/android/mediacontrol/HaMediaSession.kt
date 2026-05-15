@@ -358,19 +358,27 @@ class HaMediaSession @AssistedInject constructor(
         return URL(baseUrl, entityPictureUrl).toString()
     }
 
-    /** Loads album art and compresses to PNG bytes on the IO dispatcher, also returning the decoded bitmap. */
+    /**
+     * Loads album art at its native resolution and returns full-resolution PNG bytes for media
+     * metadata alongside a notification-icon-sized bitmap for [setLargeIcon][android.app.Notification.Builder.setLargeIcon].
+     *
+     * The bitmap is explicitly scaled to [android.R.dimen.notification_large_icon_width] on IO so
+     * that [android.graphics.drawable.Icon.scaleDownIfNecessary] has nothing to do on the Main
+     * thread, preventing a StrictMode CustomViolation on API 36+.
+     */
     private suspend fun loadArtworkData(url: String): Pair<ByteArray, Bitmap>? = withContext(Dispatchers.IO) {
         try {
             val request = ImageRequest.Builder(context)
                 .data(url)
                 .allowHardware(false)
-                .size(NOTIFICATION_ICON_SIZE_PX, NOTIFICATION_ICON_SIZE_PX)
                 .build()
             val result = context.imageLoader.execute(request)
             result.image?.toBitmap()?.let { bitmap ->
                 val stream = ByteArrayOutputStream()
                 bitmap.compress(CompressFormat.PNG, 100, stream)
-                stream.toByteArray() to bitmap
+                val iconSize = context.resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width)
+                val notificationBitmap = Bitmap.createScaledBitmap(bitmap, iconSize, iconSize, /* filter= */ true)
+                stream.toByteArray() to notificationBitmap
             }
         } catch (e: CancellationException) {
             throw e
@@ -405,10 +413,6 @@ class HaMediaSession @AssistedInject constructor(
     private data class ArtworkCache(val url: String? = null, val bytes: ByteArray? = null, val bitmap: Bitmap? = null)
 
     companion object {
-        /** Target pixel size for notification large icon artwork. Pre-scaling in Coil avoids
-         * main-thread downscaling by Android's Icon class (StrictMode CustomViolation). */
-        private const val NOTIFICATION_ICON_SIZE_PX = 256
-
         private const val ACTION_MEDIA_PLAY = "media_play"
         private const val ACTION_MEDIA_PAUSE = "media_pause"
         private const val ACTION_MEDIA_STOP = "media_stop"
