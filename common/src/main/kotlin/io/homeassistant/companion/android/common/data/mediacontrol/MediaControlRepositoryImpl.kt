@@ -115,11 +115,10 @@ internal class MediaControlRepositoryImpl @Inject constructor(
 
     override suspend fun setConfiguredEntities(entities: List<MediaControlEntityConfig>) {
         dao.replaceAll(
-            entities.mapIndexed { index, config ->
+            entities.map { config ->
                 MediaControlConfig(
                     serverId = config.serverId,
                     entityId = config.entityId,
-                    index = index,
                 )
             },
         )

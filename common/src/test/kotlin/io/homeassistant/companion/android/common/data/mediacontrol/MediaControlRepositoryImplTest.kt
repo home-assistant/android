@@ -548,7 +548,7 @@ class MediaControlRepositoryImplTest {
         @Test
         fun `Given entities in database when getConfiguredEntities then returns mapped list`() = runTest {
             coEvery { dao.getAll() } returns listOf(
-                MediaControlConfig(id = 1, serverId = 1, entityId = "media_player.tv", index = 0),
+                MediaControlConfig(id = 1, serverId = 1, entityId = "media_player.tv"),
             )
 
             assertEquals(
@@ -558,7 +558,7 @@ class MediaControlRepositoryImplTest {
         }
 
         @Test
-        fun `Given entities when setConfiguredEntities then replaces all in database with positions`() = runTest {
+        fun `Given entities when setConfiguredEntities then replaces all in database`() = runTest {
             val entities = listOf(
                 MediaControlEntityConfig(serverId = 1, entityId = "media_player.tv"),
                 MediaControlEntityConfig(serverId = 2, entityId = "media_player.office"),
@@ -569,8 +569,8 @@ class MediaControlRepositoryImplTest {
             coVerify {
                 dao.replaceAll(
                     listOf(
-                        MediaControlConfig(serverId = 1, entityId = "media_player.tv", index = 0),
-                        MediaControlConfig(serverId = 2, entityId = "media_player.office", index = 1),
+                        MediaControlConfig(serverId = 1, entityId = "media_player.tv"),
+                        MediaControlConfig(serverId = 2, entityId = "media_player.office"),
                     ),
                 )
             }

@@ -14,6 +14,4 @@ data class MediaControlConfig(
     val serverId: Int,
     @ColumnInfo(name = "entity_id")
     val entityId: String,
-    @ColumnInfo(name = "index")
-    val index: Int,
 )

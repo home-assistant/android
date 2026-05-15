@@ -10,10 +10,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface MediaControlDao {
 
-    @Query("SELECT * FROM media_control_entity_config ORDER BY `index` ASC")
+    @Query("SELECT * FROM media_control_entity_config")
     fun getAllFlow(): Flow<List<MediaControlConfig>>
 
-    @Query("SELECT * FROM media_control_entity_config ORDER BY `index` ASC")
+    @Query("SELECT * FROM media_control_entity_config")
     suspend fun getAll(): List<MediaControlConfig>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
