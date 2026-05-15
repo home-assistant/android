@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.settings.mediacontrol.views
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -64,22 +65,11 @@ internal fun MediaControlSettingsContent(
     onRemoveEntity: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colorScheme = LocalHAColorScheme.current
-
     LazyColumn(
         contentPadding = PaddingValues(vertical = HADimens.SPACE4) + safeBottomPaddingValues(applyHorizontal = false),
         modifier = modifier,
     ) {
-        item {
-            Text(
-                text = stringResource(R.string.media_control_description),
-                style = HATextStyle.Body,
-                color = colorScheme.colorTextPrimary,
-                textAlign = TextAlign.Start,
-                modifier = Modifier.padding(horizontal = HADimens.SPACE4),
-            )
-            Spacer(modifier = Modifier.size(HADimens.SPACE4))
-        }
+        item { DescriptionSection() }
 
         if (uiState.isLoading) {
             item {
@@ -93,30 +83,19 @@ internal fun MediaControlSettingsContent(
         } else {
             if (uiState.servers.size > 1) {
                 item(key = "server_dropdown") {
-                    Column(modifier = Modifier.animateItem()) {
-                        HADropdownMenu(
-                            items = uiState.servers.map { HADropdownItem(key = it.id, label = it.friendlyName) },
-                            selectedKey = uiState.selectedServerId,
-                            onItemSelected = onServerSelected,
-                            label = stringResource(R.string.server),
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = HADimens.SPACE4),
-                        )
-                        Spacer(modifier = Modifier.size(HADimens.SPACE2))
-                    }
+                    ServerDropdownSection(
+                        uiState = uiState,
+                        onServerSelected = onServerSelected,
+                        modifier = Modifier.animateItem(),
+                    )
                 }
             }
 
             item(key = "entity_picker") {
-                EntityPicker(
-                    entities = uiState.availableEntities,
-                    selectedEntityId = null,
-                    onEntitySelectedId = onEntitySelected,
-                    onEntityCleared = {},
-                    addButtonText = stringResource(R.string.media_control_select_entity),
-                    entityRegistry = uiState.entityRegistryForServer(uiState.selectedServerId),
-                    deviceRegistry = uiState.deviceRegistryForServer(uiState.selectedServerId),
-                    areaRegistry = uiState.areaRegistryForServer(uiState.selectedServerId),
-                    modifier = Modifier.padding(horizontal = HADimens.SPACE4).animateItem(),
+                EntityPickerSection(
+                    uiState = uiState,
+                    onEntitySelected = onEntitySelected,
+                    modifier = Modifier.animateItem(),
                 )
             }
 
@@ -138,6 +117,56 @@ internal fun MediaControlSettingsContent(
 }
 
 @Composable
+private fun DescriptionSection() {
+    val colorScheme = LocalHAColorScheme.current
+    Text(
+        text = stringResource(R.string.media_control_description),
+        style = HATextStyle.Body,
+        color = colorScheme.colorTextPrimary,
+        textAlign = TextAlign.Start,
+        modifier = Modifier.padding(horizontal = HADimens.SPACE4),
+    )
+    Spacer(modifier = Modifier.size(HADimens.SPACE4))
+}
+
+@Composable
+private fun ServerDropdownSection(
+    uiState: MediaControlSettingsUiState,
+    onServerSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier) {
+        HADropdownMenu(
+            items = uiState.servers.map { HADropdownItem(key = it.id, label = it.friendlyName) },
+            selectedKey = uiState.selectedServerId,
+            onItemSelected = onServerSelected,
+            label = stringResource(R.string.server),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = HADimens.SPACE4),
+        )
+        Spacer(modifier = Modifier.size(HADimens.SPACE2))
+    }
+}
+
+@Composable
+private fun EntityPickerSection(
+    uiState: MediaControlSettingsUiState,
+    onEntitySelected: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    EntityPicker(
+        entities = uiState.availableEntities,
+        selectedEntityId = null,
+        onEntitySelectedId = onEntitySelected,
+        onEntityCleared = {},
+        addButtonText = stringResource(R.string.media_control_select_entity),
+        entityRegistry = uiState.entityRegistryForServer(uiState.selectedServerId),
+        deviceRegistry = uiState.deviceRegistryForServer(uiState.selectedServerId),
+        areaRegistry = uiState.areaRegistryForServer(uiState.selectedServerId),
+        modifier = modifier.padding(horizontal = HADimens.SPACE4),
+    )
+}
+
+@Composable
 private fun ConfiguredEntityRow(
     config: MediaControlEntityConfig,
     subtitle: String,
@@ -151,27 +180,24 @@ private fun ConfiguredEntityRow(
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE3),
         modifier = modifier
             .fillMaxWidth()
             .background(colorScheme.colorSurfaceLow)
             .heightIn(min = HADimens.SPACE18)
-            .padding(vertical = HADimens.SPACE1),
+            .padding(vertical = HADimens.SPACE1, horizontal = HADimens.SPACE4),
     ) {
         if (entityIcon != null) {
             Image(
                 asset = entityIcon,
                 colorFilter = ColorFilter.tint(colorScheme.colorTextSecondary),
                 contentDescription = null,
-                modifier = Modifier
-                    .padding(start = HADimens.SPACE4)
-                    .size(HADimens.SPACE6),
+                modifier = Modifier.size(HADimens.SPACE6),
             )
+        } else {
+            Spacer(modifier = Modifier.size(HADimens.SPACE6))
         }
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = if (entityIcon != null) HADimens.SPACE2 else HADimens.SPACE4),
-        ) {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = displayName,
                 style = HATextStyle.Body,
