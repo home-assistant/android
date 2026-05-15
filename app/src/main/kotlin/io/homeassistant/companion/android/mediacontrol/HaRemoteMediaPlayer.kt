@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.mediacontrol
 import android.os.Looper
 import androidx.annotation.MainThread
 import androidx.annotation.OptIn
+import androidx.annotation.VisibleForTesting
 import androidx.media3.common.DeviceInfo
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackParameters
@@ -55,7 +56,16 @@ internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: 
     private var artworkBytes: ByteArray? = null
 
     /**
+     * The pending future from the most recent [handleCommand] call, if any. Completed by
+     * [updateState] when the server confirms the new state via WebSocket. Exposed for testing only.
+     */
+    @VisibleForTesting
+    internal var pendingCommandFuture: SettableFuture<Void>? = null
+
+    /**
      * Updates the internal state from a new [MediaControlState] and triggers a state refresh.
+     * Completes any in-flight [pendingCommandFuture] so SimpleBasePlayer calls [getState] with
+     * the fresh data rather than the stale pre-command state.
      * Must be called on the looper thread passed to the constructor.
      * @param artworkPngBytes Pre-compressed PNG bytes for album art (compress off main thread).
      */
@@ -63,6 +73,8 @@ internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: 
     fun updateState(state: MediaControlState?, artworkPngBytes: ByteArray?) {
         mediaState = state
         artworkBytes = artworkPngBytes
+        pendingCommandFuture?.set(null)
+        pendingCommandFuture = null
         invalidateState()
     }
 
@@ -194,16 +206,18 @@ internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: 
     }
 
     /**
-     * Executes [block] to launch a command coroutine and returns a [ListenableFuture] tied to
-     * that coroutine's [Job]. The future completes when the coroutine finishes (success or
-     * cancellation) and fails if the coroutine throws. Keeping the future pending until the
-     * network call finishes prevents [SimpleBasePlayer] from calling [getState] prematurely,
-     * which preserves the position extrapolation anchor and avoids a seek bar jump.
+     * Executes [block] to launch a command coroutine and returns a [ListenableFuture] that stays
+     * pending until [updateState] is called with the server-confirmed state. This prevents
+     * [SimpleBasePlayer] from calling [getState] with the stale pre-command [mediaState] during
+     * the window between the HTTP response and the WebSocket confirmation, which would cause a
+     * visible seek-bar regression.
      *
-     * [CancellationException] from the [Job] is treated as success (the command was sent; the
-     * scope was cancelled). If [block] itself throws before returning a [Job], returns an
-     * immediate failed future. If [block] returns null (command not supported), returns an
-     * immediate failed future with [UnsupportedOperationException].
+     * Any previously in-flight future is completed immediately to avoid leaking pending operations
+     * when commands arrive faster than the server confirms them.
+     *
+     * If [block] returns null (command not supported) or throws, returns an immediate failed future.
+     * If the [Job] completes with a non-[CancellationException] error, the future is failed as a
+     * safety fallback (though [callMediaAction] already catches all non-cancellation exceptions).
      */
     private inline fun handleCommand(block: () -> Job?): ListenableFuture<Void> {
         val job = try {
@@ -211,11 +225,16 @@ internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: 
         } catch (e: Exception) {
             return Futures.immediateFailedFuture(e)
         } ?: return Futures.immediateFailedFuture(UnsupportedOperationException("Command not supported"))
+        // Complete any in-flight future so it doesn't stay in SimpleBasePlayer's pendingOperations.
+        pendingCommandFuture?.set(null)
         val future = SettableFuture.create<Void>()
+        pendingCommandFuture = future
         job.invokeOnCompletion { cause ->
-            when (cause) {
-                null, is CancellationException -> future.set(null)
-                else -> future.setException(cause)
+            // Do NOT complete the future on normal success or cancellation: updateState() is the
+            // primary completion path and runs with fresh server state from the WebSocket.
+            // Only fail the future on an unrecoverable error so the UI doesn't freeze.
+            if (cause != null && cause !is CancellationException) {
+                future.setException(cause)
             }
         }
         return future

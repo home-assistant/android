@@ -5,10 +5,13 @@ import androidx.media3.common.Player
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlState
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaPlaybackState
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaRepeatMode
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CompletableJob
+import kotlinx.coroutines.Job
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -613,5 +616,74 @@ class HaRemoteMediaPlayerTest {
     @Test
     fun `Given repeat mode All when getState then maps to REPEAT_MODE_ALL and set triggers callback`() {
         assertRepeatModeRoundTrip(mediaRepeatMode = MediaRepeatMode.All, media3RepeatMode = Player.REPEAT_MODE_ALL)
+    }
+
+    // -- Pending command future tests --
+
+    @Test
+    fun `Given command in progress when coroutine completes normally then future is still pending`() {
+        val commandJob: CompletableJob = Job()
+        every { commandCallback.onPauseRequested() } returns commandJob
+
+        player.updateState(state = createState(playbackState = MediaPlaybackState.Playing), artworkPngBytes = null)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        player.pause()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        // Simulate the HTTP call returning successfully (before WebSocket update arrives)
+        commandJob.complete()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        // Future must still be pending — updateState() hasn't been called yet
+        assertFalse(player.pendingCommandFuture?.isDone ?: true)
+    }
+
+    @Test
+    fun `Given command in progress when updateState called then future is resolved and state is updated`() {
+        val commandJob: CompletableJob = Job()
+        every { commandCallback.onPauseRequested() } returns commandJob
+
+        player.updateState(state = createState(playbackState = MediaPlaybackState.Playing), artworkPngBytes = null)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        player.pause()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        // WebSocket state confirmation arrives
+        player.updateState(state = createState(playbackState = MediaPlaybackState.Paused), artworkPngBytes = null)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        // Future is cleared after completion
+        assertNull(player.pendingCommandFuture)
+        // Player reflects the server-confirmed paused state
+        assertEquals(Player.STATE_READY, player.playbackState)
+        assertFalse(player.playWhenReady)
+    }
+
+    @Test
+    fun `Given command in progress when second command arrives then first future is immediately completed`() {
+        val firstJob: CompletableJob = Job()
+        val secondJob: CompletableJob = Job()
+        val jobs = listOf(firstJob, secondJob)
+        var callIndex = 0
+        every { commandCallback.onPauseRequested() } answers { jobs[callIndex++] }
+
+        player.updateState(state = createState(playbackState = MediaPlaybackState.Playing), artworkPngBytes = null)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        player.pause()
+        shadowOf(Looper.getMainLooper()).idle()
+        val firstFuture = player.pendingCommandFuture
+        assertFalse(firstFuture?.isDone ?: true)
+
+        // Second command arrives before server confirms the first
+        player.pause()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        // First future is completed so it doesn't stay in SimpleBasePlayer's pendingOperations
+        assertTrue(firstFuture?.isDone ?: false)
+        // Second future is still pending
+        assertFalse(player.pendingCommandFuture?.isDone ?: true)
     }
 }
