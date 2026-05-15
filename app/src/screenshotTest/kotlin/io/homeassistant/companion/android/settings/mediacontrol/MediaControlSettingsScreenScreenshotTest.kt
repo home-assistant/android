@@ -2,9 +2,12 @@ package io.homeassistant.companion.android.settings.mediacontrol
 
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon3
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
+import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.database.server.ServerConnectionInfo
+import io.homeassistant.companion.android.database.server.ServerSessionInfo
+import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.settings.mediacontrol.views.MediaControlSettingsContent
 import io.homeassistant.companion.android.util.compose.HAPreviews
 
@@ -49,10 +52,17 @@ class MediaControlSettingsScreenScreenshotTest {
             MediaControlSettingsContent(
                 uiState = MediaControlSettingsUiState(
                     isLoading = false,
-                    configuredEntities = listOf(livingRoomConfig, bedroomConfig),
-                    entityNamesByConfig = mapOf(
-                        livingRoomConfig to "Living Room TV",
-                        bedroomConfig to "Bedroom Speaker",
+                    configuredEntityItems = listOf(
+                        ConfiguredEntityItem(
+                            config = livingRoomConfig,
+                            name = "Living Room TV",
+                            entity = null,
+                        ),
+                        ConfiguredEntityItem(
+                            config = bedroomConfig,
+                            name = "Bedroom Speaker",
+                            entity = null,
+                        ),
                     ),
                 ),
                 onServerSelected = {},
@@ -65,19 +75,22 @@ class MediaControlSettingsScreenScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `Media control settings with configured entities and icons`() {
+    fun `Media control settings with multiple servers`() {
         HAThemeForPreview {
             MediaControlSettingsContent(
                 uiState = MediaControlSettingsUiState(
                     isLoading = false,
-                    configuredEntities = listOf(livingRoomConfig, bedroomConfig),
-                    entityNamesByConfig = mapOf(
-                        livingRoomConfig to "Living Room TV",
-                        bedroomConfig to "Bedroom Speaker",
+                    servers = listOf(
+                        Server(id = 1, _name = "Home", connection = ServerConnectionInfo(externalUrl = "http://home.local"), session = ServerSessionInfo(), user = ServerUserInfo()),
+                        Server(id = 2, _name = "Office", connection = ServerConnectionInfo(externalUrl = "http://office.local"), session = ServerSessionInfo(), user = ServerUserInfo()),
                     ),
-                    entityIconsByConfig = mapOf(
-                        livingRoomConfig to Icon3.cmd_television,
-                        bedroomConfig to Icon3.cmd_speaker,
+                    selectedServerId = 1,
+                    configuredEntityItems = listOf(
+                        ConfiguredEntityItem(
+                            config = livingRoomConfig,
+                            name = "Living Room TV",
+                            entity = null,
+                        ),
                     ),
                 ),
                 onServerSelected = {},

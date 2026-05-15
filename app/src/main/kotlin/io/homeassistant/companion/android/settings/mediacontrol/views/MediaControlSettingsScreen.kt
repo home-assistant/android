@@ -18,15 +18,16 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.IIcon
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
@@ -37,7 +38,9 @@ import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
+import io.homeassistant.companion.android.settings.mediacontrol.ConfiguredEntityItem
 import io.homeassistant.companion.android.settings.mediacontrol.MediaControlSettingsUiState
 import io.homeassistant.companion.android.settings.mediacontrol.MediaControlSettingsViewModel
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
@@ -100,14 +103,11 @@ internal fun MediaControlSettingsContent(
             }
 
             itemsIndexed(
-                items = uiState.configuredEntities,
-                key = { _, config -> config.id },
-            ) { index, config ->
+                items = uiState.configuredEntityItems,
+                key = { _, item -> item.config.id },
+            ) { index, item ->
                 ConfiguredEntityRow(
-                    config = config,
-                    subtitle = config.entityId,
-                    entityName = uiState.entityNamesByConfig[config],
-                    entityIcon = uiState.entityIconsByConfig[config],
+                    item = item,
                     onRemove = { onRemoveEntity(index) },
                     modifier = Modifier.animateItem(),
                 )
@@ -168,15 +168,13 @@ private fun EntityPickerSection(
 
 @Composable
 private fun ConfiguredEntityRow(
-    config: MediaControlEntityConfig,
-    subtitle: String,
-    entityName: String?,
-    entityIcon: IIcon?,
+    item: ConfiguredEntityItem,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colorScheme = LocalHAColorScheme.current
-    val displayName = entityName ?: config.entityId
+    val context = LocalContext.current
+    val entityIcon = remember(item.entity) { item.entity?.getIcon(context) }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -199,13 +197,13 @@ private fun ConfiguredEntityRow(
         }
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = displayName,
+                text = item.name,
                 style = HATextStyle.Body,
                 color = colorScheme.colorTextPrimary,
                 textAlign = TextAlign.Start,
             )
             Text(
-                text = subtitle,
+                text = item.config.entityId,
                 style = HATextStyle.BodyMedium,
                 color = colorScheme.colorTextSecondary,
                 textAlign = TextAlign.Start,
@@ -252,9 +250,18 @@ private fun MediaControlSettingsContentWithEntitiesPreview() {
     HAThemeForPreview {
         MediaControlSettingsContent(
             uiState = MediaControlSettingsUiState(
-                configuredEntities = listOf(
-                    MediaControlEntityConfig(serverId = 1, entityId = "media_player.living_room"),
-                    MediaControlEntityConfig(serverId = 1, entityId = "media_player.bedroom"),
+                isLoading = false,
+                configuredEntityItems = listOf(
+                    ConfiguredEntityItem(
+                        config = MediaControlEntityConfig(serverId = 1, entityId = "media_player.living_room"),
+                        name = "Living Room",
+                        entity = null,
+                    ),
+                    ConfiguredEntityItem(
+                        config = MediaControlEntityConfig(serverId = 1, entityId = "media_player.bedroom"),
+                        name = "Bedroom",
+                        entity = null,
+                    ),
                 ),
             ),
             onServerSelected = {},

@@ -1,16 +1,13 @@
 package io.homeassistant.companion.android.settings.mediacontrol
 
-import android.app.Application
 import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.Stable
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.mikepenz.iconics.typeface.IIcon
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.friendlyName
-import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -39,6 +36,18 @@ sealed interface MediaControlServiceEvent {
     data object Start : MediaControlServiceEvent
 }
 
+/**
+ * A configured media player entity paired with its resolved display name and entity data.
+ * [name] always has a value — it falls back to [MediaControlEntityConfig.entityId] if [entity]
+ * has not yet been loaded from the server. [entity] is null until server data is available;
+ * the Compose layer uses it to resolve the entity icon via [LocalContext].
+ */
+data class ConfiguredEntityItem(
+    val config: MediaControlEntityConfig,
+    val name: String,
+    val entity: Entity?,
+)
+
 @Stable
 data class MediaControlSettingsUiState(
     val servers: List<Server> = emptyList(),
@@ -47,19 +56,23 @@ data class MediaControlSettingsUiState(
     val entityRegistryPerServer: Map<Int, List<EntityRegistryResponse>> = emptyMap(),
     val deviceRegistryPerServer: Map<Int, List<DeviceRegistryResponse>> = emptyMap(),
     val areaRegistryPerServer: Map<Int, List<AreaRegistryResponse>> = emptyMap(),
-    // The in-memory list of entities being configured
-    val configuredEntities: List<MediaControlEntityConfig> = emptyList(),
-    // Precomputed friendly names for each configured entity; absent means not yet loaded
-    val entityNamesByConfig: Map<MediaControlEntityConfig, String> = emptyMap(),
-    // Precomputed icons for each configured entity; absent means not yet loaded
-    val entityIconsByConfig: Map<MediaControlEntityConfig, IIcon> = emptyMap(),
-    // Entities for the selected server that are not yet configured, ready for the picker
-    val availableEntities: List<Entity> = emptyList(),
+    // The configured entities, with names and entity data resolved from server data
+    val configuredEntityItems: List<ConfiguredEntityItem> = emptyList(),
     // Server selection for the entity picker
     val selectedServerId: Int = ServerManager.SERVER_ID_ACTIVE,
     // True while entities and registries are being loaded from the server
     val isLoading: Boolean = true,
 ) {
+    /** Entities for the selected server that are not yet configured, ready for the entity picker. */
+    val availableEntities: List<Entity>
+        get() {
+            val configuredForServer = configuredEntityItems
+                .filter { it.config.serverId == selectedServerId }
+                .mapTo(HashSet()) { it.config.entityId }
+            return (entitiesPerServer[selectedServerId] ?: emptyList())
+                .filter { it.entityId !in configuredForServer }
+        }
+
     fun entityRegistryForServer(serverId: Int): List<EntityRegistryResponse> =
         entityRegistryPerServer[serverId] ?: emptyList()
     fun deviceRegistryForServer(serverId: Int): List<DeviceRegistryResponse> =
@@ -70,18 +83,16 @@ data class MediaControlSettingsUiState(
 
 @HiltViewModel
 class MediaControlSettingsViewModel @VisibleForTesting constructor(
-    application: Application,
     private val serverManager: ServerManager,
     private val mediaControlRepository: MediaControlRepository,
     private val backgroundDispatcher: CoroutineDispatcher,
-) : AndroidViewModel(application) {
+) : ViewModel() {
 
     @Inject
     constructor(
-        application: Application,
         serverManager: ServerManager,
         mediaControlRepository: MediaControlRepository,
-    ) : this(application, serverManager, mediaControlRepository, Dispatchers.Default)
+    ) : this(serverManager, mediaControlRepository, Dispatchers.Default)
 
     private val _uiState = MutableStateFlow(MediaControlSettingsUiState())
     val uiState: StateFlow<MediaControlSettingsUiState> = _uiState.asStateFlow()
@@ -90,13 +101,12 @@ class MediaControlSettingsViewModel @VisibleForTesting constructor(
     val serviceEvents: SharedFlow<MediaControlServiceEvent> = _serviceEvents.asSharedFlow()
 
     init {
+        // Coroutine 1: load server data (entities + registries) from the network
         viewModelScope.launch(backgroundDispatcher) {
             val loadedServers = serverManager.servers()
             val defaultServerId = serverManager.getServer()?.id ?: ServerManager.SERVER_ID_ACTIVE
+            _uiState.update { it.copy(servers = loadedServers, selectedServerId = defaultServerId) }
 
-            // Load configured entities (local DB) and server registries (network) concurrently.
-            // Emit the configured list as soon as the DB read completes so the list appears immediately.
-            val configuredEntitiesDeferred = async { mediaControlRepository.getConfiguredEntities() }
             val entitiesDeferred = loadedServers.map { server ->
                 async { server.id to loadMediaPlayerEntities(server.id) }
             }
@@ -122,15 +132,6 @@ class MediaControlSettingsViewModel @VisibleForTesting constructor(
                 }
             }
 
-            val configuredEntities = configuredEntitiesDeferred.await()
-            _uiState.update {
-                it.copy(
-                    servers = loadedServers,
-                    selectedServerId = defaultServerId,
-                    configuredEntities = configuredEntities,
-                )
-            }
-
             val entitiesPerServer = entitiesDeferred.awaitAll().toMap()
             _uiState.update { state ->
                 state.copy(
@@ -138,19 +139,34 @@ class MediaControlSettingsViewModel @VisibleForTesting constructor(
                     entityRegistryPerServer = entityRegistryDeferred.awaitAll().toMap(),
                     deviceRegistryPerServer = deviceRegistryDeferred.awaitAll().toMap(),
                     areaRegistryPerServer = areaRegistryDeferred.awaitAll().toMap(),
-                    entityNamesByConfig = buildEntityNamesByConfig(entitiesPerServer, state.configuredEntities),
-                    entityIconsByConfig = buildEntityIconsByConfig(entitiesPerServer, state.configuredEntities),
+                    // Re-resolve items now that entity names and data are available
+                    configuredEntityItems = buildConfiguredItems(
+                        entitiesPerServer,
+                        state.configuredEntityItems.map { it.config },
+                    ),
                     isLoading = false,
                 )
             }
-            updateAvailableEntities()
+        }
+
+        // Coroutine 2: observe the DB-backed configured list; drives configuredEntityItems reactively
+        viewModelScope.launch {
+            mediaControlRepository.observeConfiguredEntities().collect { dbConfigs ->
+                _uiState.update { state ->
+                    state.copy(
+                        configuredEntityItems = buildConfiguredItems(state.entitiesPerServer, dbConfigs),
+                    )
+                }
+                if (dbConfigs.isNotEmpty()) {
+                    _serviceEvents.emit(MediaControlServiceEvent.Start)
+                }
+            }
         }
     }
 
     /** Updates the selected server in the entity picker. */
     fun selectServerId(serverId: Int) {
         _uiState.update { it.copy(selectedServerId = serverId) }
-        updateAvailableEntities()
     }
 
     /**
@@ -158,85 +174,41 @@ class MediaControlSettingsViewModel @VisibleForTesting constructor(
      * list, then persists the change immediately. Has no effect if the entity is already in the list.
      */
     fun addEntity(entityId: String) {
-        _uiState.update { state ->
+        viewModelScope.launch {
+            val state = _uiState.value
             val config = MediaControlEntityConfig(
                 serverId = state.selectedServerId,
                 entityId = entityId,
             )
-            if (state.configuredEntities.contains(config)) {
-                state
-            } else {
-                val newConfiguredEntities = state.configuredEntities + config
-                state.copy(
-                    configuredEntities = newConfiguredEntities,
-                    entityNamesByConfig = buildEntityNamesByConfig(state.entitiesPerServer, newConfiguredEntities),
-                    entityIconsByConfig = buildEntityIconsByConfig(state.entitiesPerServer, newConfiguredEntities),
-                )
+            if (state.configuredEntityItems.none { it.config == config }) {
+                val newConfigs = state.configuredEntityItems.map { it.config } + config
+                mediaControlRepository.setConfiguredEntities(newConfigs)
             }
         }
-        updateAvailableEntities()
-        persistAndNotifyService()
     }
 
     /** Removes the configured entity at [index] from the list, then persists the change immediately. */
     fun removeEntity(index: Int) {
-        _uiState.update { state ->
-            val newConfiguredEntities = state.configuredEntities.toMutableList().also { it.removeAt(index) }
-            state.copy(
-                configuredEntities = newConfiguredEntities,
-                entityNamesByConfig = buildEntityNamesByConfig(state.entitiesPerServer, newConfiguredEntities),
-                entityIconsByConfig = buildEntityIconsByConfig(state.entitiesPerServer, newConfiguredEntities),
-            )
-        }
-        updateAvailableEntities()
-        persistAndNotifyService()
-    }
-
-    private fun persistAndNotifyService() {
         viewModelScope.launch {
-            val entities = _uiState.value.configuredEntities
-            mediaControlRepository.setConfiguredEntities(entities)
-            if (entities.isNotEmpty()) {
-                _serviceEvents.emit(MediaControlServiceEvent.Start)
-            }
+            val newConfigs = _uiState.value.configuredEntityItems
+                .map { it.config }
+                .toMutableList()
+                .also { it.removeAt(index) }
+            mediaControlRepository.setConfiguredEntities(newConfigs)
         }
     }
 
-    private fun updateAvailableEntities() {
-        viewModelScope.launch(backgroundDispatcher) {
-            _uiState.update { state ->
-                val configuredForServer = state.configuredEntities
-                    .filter { it.serverId == state.selectedServerId }
-                    .mapTo(HashSet()) { it.entityId }
-                state.copy(
-                    availableEntities = (state.entitiesPerServer[state.selectedServerId] ?: emptyList())
-                        .filter { it.entityId !in configuredForServer },
-                )
-            }
-        }
+    private fun buildConfiguredItems(
+        entitiesPerServer: Map<Int, List<Entity>>,
+        configs: List<MediaControlEntityConfig>,
+    ): List<ConfiguredEntityItem> = configs.map { config ->
+        val entity = entitiesPerServer[config.serverId]?.firstOrNull { it.entityId == config.entityId }
+        ConfiguredEntityItem(
+            config = config,
+            name = entity?.friendlyName ?: config.entityId,
+            entity = entity,
+        )
     }
-
-    private fun buildEntityIconsByConfig(
-        entitiesPerServer: Map<Int, List<Entity>>,
-        configuredEntities: List<MediaControlEntityConfig>,
-    ): Map<MediaControlEntityConfig, IIcon> = configuredEntities.mapNotNull { config ->
-        val icon = entitiesPerServer[config.serverId]
-            ?.firstOrNull { it.entityId == config.entityId }
-            ?.getIcon(getApplication())
-            ?: return@mapNotNull null
-        config to icon
-    }.toMap()
-
-    private fun buildEntityNamesByConfig(
-        entitiesPerServer: Map<Int, List<Entity>>,
-        configuredEntities: List<MediaControlEntityConfig>,
-    ): Map<MediaControlEntityConfig, String> = configuredEntities.mapNotNull { config ->
-        val name = entitiesPerServer[config.serverId]
-            ?.firstOrNull { it.entityId == config.entityId }
-            ?.friendlyName
-            ?: return@mapNotNull null
-        config to name
-    }.toMap()
 
     private suspend fun loadMediaPlayerEntities(serverId: Int): List<Entity> = try {
         serverManager.integrationRepository(serverId).getEntities().orEmpty()
