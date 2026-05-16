@@ -1,0 +1,317 @@
+package io.homeassistant.companion.android.mediacontrol
+
+import android.os.Looper
+import androidx.annotation.MainThread
+import androidx.annotation.OptIn
+import androidx.annotation.VisibleForTesting
+import androidx.media3.common.DeviceInfo
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.PlaybackParameters
+import androidx.media3.common.Player
+import androidx.media3.common.SimpleBasePlayer
+import androidx.media3.common.util.UnstableApi
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.SettableFuture
+import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlState
+import io.homeassistant.companion.android.common.data.mediacontrol.MediaPlaybackState
+import io.homeassistant.companion.android.common.data.mediacontrol.MediaRepeatMode
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+
+/**
+ * A [SimpleBasePlayer] that acts as a remote control proxy for a Home Assistant media_player entity.
+ * It does not play audio itself — it reports state and translates playback commands into callbacks.
+ *
+ * This class is not thread-safe. All public methods must be called on the looper thread passed to
+ * the constructor, which is enforced by [SimpleBasePlayer].
+ */
+@OptIn(UnstableApi::class)
+internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCallback) :
+    SimpleBasePlayer(looper) {
+
+    /**
+     * Callback interface for translating player commands into HA service calls.
+     * Each method returns the [Job] for the launched coroutine so that [handleCommand] can
+     * tie the [ListenableFuture] lifetime to the coroutine's completion.
+     */
+    interface CommandCallback {
+        fun onPlayRequested(): Job
+        fun onPauseRequested(): Job
+        fun onStopRequested(): Job
+        fun onSeekRequested(positionMs: Long): Job
+        fun onNextRequested(): Job
+        fun onPreviousRequested(): Job
+
+        fun onSetVolumeRequested(volume: Float): Job
+        fun onIncreaseVolumeRequested(): Job
+        fun onDecreaseVolumeRequested(): Job
+        fun onMuteRequested(muted: Boolean): Job
+
+        fun onShuffleRequested(shuffle: Boolean): Job
+        fun onRepeatRequested(repeatMode: MediaRepeatMode): Job
+    }
+
+    private var mediaState: MediaControlState? = null
+    private var artworkBytes: ByteArray? = null
+
+    /**
+     * The pending future from the most recent [handleCommand] call, if any. Completed by
+     * [updateState] when the server confirms the new state via WebSocket. Exposed for testing only.
+     */
+    @VisibleForTesting
+    internal var pendingCommandFuture: SettableFuture<Void>? = null
+
+    /**
+     * Updates the internal state from a new [MediaControlState] and triggers a state refresh.
+     * Completes any in-flight [pendingCommandFuture] so SimpleBasePlayer calls [getState] with
+     * the fresh data rather than the stale pre-command state.
+     * Must be called on the looper thread passed to the constructor.
+     * @param artworkPngBytes Pre-compressed PNG bytes for album art (compress off main thread).
+     */
+    @MainThread
+    fun updateState(state: MediaControlState?, artworkPngBytes: ByteArray?) {
+        mediaState = state
+        artworkBytes = artworkPngBytes
+        pendingCommandFuture?.set(null)
+        pendingCommandFuture = null
+        invalidateState()
+    }
+
+    override fun getState(): State {
+        val state = mediaState ?: return buildIdleState()
+        return buildConnectedState(state, artworkBytes)
+    }
+
+    private fun buildConnectedState(state: MediaControlState, artwork: ByteArray?): State {
+        val availableCommands = buildAvailableCommands(state)
+
+        val playbackState = when (state.playbackState) {
+            is MediaPlaybackState.Playing -> STATE_READY
+            is MediaPlaybackState.Paused -> STATE_READY
+            is MediaPlaybackState.Buffering -> STATE_BUFFERING
+            // HA "Idle" (on, nothing playing) and Media3 STATE_IDLE share a name but mean different
+            // things: STATE_IDLE means "not prepared", which suppresses the notification until the
+            // player plays something. STATE_ENDED keeps the notification visible so the entity
+            // remains controllable. HA "Off" maps to STATE_IDLE for the opposite reason: the device
+            // is unavailable, so letting the notification disappear is the right behavior.
+            is MediaPlaybackState.Idle -> STATE_ENDED
+            is MediaPlaybackState.Off -> STATE_IDLE
+        }
+
+        val isPlaying = state.playbackState is MediaPlaybackState.Playing
+
+        val durationUs = state.mediaDuration?.inWholeMicroseconds ?: DURATION_UNSET_US
+        val positionMs = state.mediaPosition?.inWholeMilliseconds ?: 0L
+
+        val currentItem = MediaItemData.Builder(state.entityId)
+            .setMediaMetadata(buildMetadata(state, artwork))
+            .setDurationUs(durationUs)
+            .build()
+
+        val deviceVolume = state.volumeLevel?.let { (it * VOLUME_SCALE).toInt() } ?: 0
+
+        val media3RepeatMode = when (state.repeatMode) {
+            is MediaRepeatMode.Off -> Player.REPEAT_MODE_OFF
+            is MediaRepeatMode.One -> Player.REPEAT_MODE_ONE
+            is MediaRepeatMode.All -> Player.REPEAT_MODE_ALL
+        }
+
+        return State.Builder()
+            .setAvailableCommands(availableCommands)
+            .setPlaybackState(playbackState)
+            .setPlayWhenReady(isPlaying, PLAY_WHEN_READY_CHANGE_REASON_REMOTE)
+            .setPlaybackParameters(PlaybackParameters(PLAYBACK_SPEED))
+            .setCurrentMediaItemIndex(CURRENT_ITEM_INDEX)
+            .setContentPositionMs(positionMs)
+            .setPlaylist(buildPlaylist(currentItem))
+            .setDeviceInfo(REMOTE_DEVICE_INFO)
+            .setDeviceVolume(deviceVolume)
+            .setIsDeviceMuted(state.isVolumeMuted)
+            .setShuffleModeEnabled(state.shuffle)
+            .setRepeatMode(media3RepeatMode)
+            .build()
+    }
+
+    private fun buildMetadata(state: MediaControlState, artwork: ByteArray?): MediaMetadata {
+        val builder = MediaMetadata.Builder()
+            .setTitle(state.title)
+            .setArtist(state.artist)
+            .setAlbumTitle(state.albumName)
+            .setAlbumArtist(state.albumArtist)
+            .setTrackNumber(state.mediaTrack)
+            .setStation(state.mediaChannel)
+            .setSubtitle(state.mediaSeriesTitle ?: state.appName)
+            .setMediaType(state.mediaContentType?.toMedia3MediaType())
+        artwork?.let { builder.setArtworkData(it, MediaMetadata.PICTURE_TYPE_FRONT_COVER) }
+        return builder.build()
+    }
+
+    private fun buildPlaylist(currentItem: MediaItemData): List<MediaItemData> = listOf(currentItem)
+
+    override fun handleSetPlayWhenReady(playWhenReady: Boolean): ListenableFuture<*> = handleCommand {
+        if (playWhenReady) commandCallback.onPlayRequested() else commandCallback.onPauseRequested()
+    }
+
+    override fun handleSeek(mediaItemIndex: Int, positionMs: Long, seekCommand: Int): ListenableFuture<*> =
+        handleCommand {
+            when (seekCommand) {
+                Player.COMMAND_SEEK_TO_NEXT,
+                Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM,
+                -> commandCallback.onNextRequested()
+
+                Player.COMMAND_SEEK_TO_PREVIOUS,
+                Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM,
+                -> commandCallback.onPreviousRequested()
+
+                else -> {
+                    if (mediaState?.supportsSeek == true) {
+                        commandCallback.onSeekRequested(positionMs)
+                    } else {
+                        null
+                    }
+                }
+            }
+        }
+
+    override fun handleSetDeviceVolume(deviceVolume: Int, flags: Int): ListenableFuture<*> =
+        handleCommand { commandCallback.onSetVolumeRequested(volume = deviceVolume / VOLUME_SCALE.toFloat()) }
+
+    override fun handleIncreaseDeviceVolume(flags: Int): ListenableFuture<*> =
+        handleCommand { commandCallback.onIncreaseVolumeRequested() }
+
+    override fun handleDecreaseDeviceVolume(flags: Int): ListenableFuture<*> =
+        handleCommand { commandCallback.onDecreaseVolumeRequested() }
+
+    override fun handleSetDeviceMuted(muted: Boolean, flags: Int): ListenableFuture<*> = handleCommand {
+        if (mediaState?.supportsMute == true) {
+            commandCallback.onMuteRequested(muted = muted)
+        } else {
+            null
+        }
+    }
+
+    override fun handleStop(): ListenableFuture<*> = handleCommand { commandCallback.onStopRequested() }
+
+    override fun handleSetShuffleModeEnabled(shuffleModeEnabled: Boolean): ListenableFuture<*> =
+        handleCommand { commandCallback.onShuffleRequested(shuffle = shuffleModeEnabled) }
+
+    override fun handleSetRepeatMode(repeatMode: Int): ListenableFuture<*> = handleCommand {
+        val haRepeatMode = when (repeatMode) {
+            Player.REPEAT_MODE_ONE -> MediaRepeatMode.One
+            Player.REPEAT_MODE_ALL -> MediaRepeatMode.All
+            else -> MediaRepeatMode.Off
+        }
+        commandCallback.onRepeatRequested(repeatMode = haRepeatMode)
+    }
+
+    /**
+     * Executes [block] to launch a command coroutine and returns a [ListenableFuture] that stays
+     * pending until [updateState] is called with the server-confirmed state. This prevents
+     * [SimpleBasePlayer] from calling [getState] with the stale pre-command [mediaState] during
+     * the window between the HTTP response and the WebSocket confirmation, which would cause a
+     * visible seek-bar regression.
+     *
+     * Any previously in-flight future is completed immediately to avoid leaking pending operations
+     * when commands arrive faster than the server confirms them.
+     *
+     * If [block] returns null (command not supported) or throws, returns an immediate failed future.
+     * If the [Job] completes with a non-[CancellationException] error, the future is failed as a
+     * safety fallback (though [callMediaAction] already catches all non-cancellation exceptions).
+     */
+    private inline fun handleCommand(block: () -> Job?): ListenableFuture<Void> {
+        val job = try {
+            block()
+        } catch (e: Exception) {
+            return Futures.immediateFailedFuture(e)
+        } ?: return Futures.immediateFailedFuture(UnsupportedOperationException("Command not supported"))
+        // Complete any in-flight future so it doesn't stay in SimpleBasePlayer's pendingOperations.
+        pendingCommandFuture?.set(null)
+        val future = SettableFuture.create<Void>()
+        pendingCommandFuture = future
+        job.invokeOnCompletion { cause ->
+            // Do NOT complete the future on normal success or cancellation: updateState() is the
+            // primary completion path and runs with fresh server state from the WebSocket.
+            // Only fail the future on an unrecoverable error so the UI doesn't freeze.
+            if (cause != null && cause !is CancellationException) {
+                future.setException(cause)
+            }
+        }
+        return future
+    }
+
+    private fun buildIdleState(): State = State.Builder()
+        .setAvailableCommands(Player.Commands.EMPTY)
+        .setPlaybackState(STATE_IDLE)
+        .setPlayWhenReady(false, PLAY_WHEN_READY_CHANGE_REASON_REMOTE)
+        .setDeviceInfo(REMOTE_DEVICE_INFO)
+        .build()
+
+    private fun buildAvailableCommands(state: MediaControlState): Player.Commands {
+        val builder = Player.Commands.Builder()
+        if (state.supportsPlay || state.supportsPause) builder.add(Player.COMMAND_PLAY_PAUSE)
+        if (state.supportsStop) builder.add(Player.COMMAND_STOP)
+        if (state.supportsSeek) {
+            builder.add(Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM)
+            builder.add(Player.COMMAND_SEEK_TO_DEFAULT_POSITION)
+            builder.add(Player.COMMAND_SEEK_BACK)
+            builder.add(Player.COMMAND_SEEK_FORWARD)
+        }
+        builder.add(Player.COMMAND_GET_CURRENT_MEDIA_ITEM)
+        if (state.supportsPreviousTrack) {
+            builder.add(Player.COMMAND_SEEK_TO_PREVIOUS)
+            builder.add(Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
+        }
+        if (state.supportsNextTrack) {
+            builder.add(Player.COMMAND_SEEK_TO_NEXT)
+            builder.add(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
+        }
+        if (state.supportsVolumeSet) {
+            builder.add(Player.COMMAND_GET_DEVICE_VOLUME)
+            // Both the deprecated and _WITH_FLAGS variants are required: the deprecated ones are
+            // checked by Media3's MediaSessionLegacyStub when setting up VolumeProviderCompat
+            // (which drives the SystemUI device-chip volume slider), while the _WITH_FLAGS variants
+            // are used by newer clients and the volume button key-event path.
+            @Suppress("DEPRECATION")
+            builder.add(Player.COMMAND_SET_DEVICE_VOLUME)
+            builder.add(Player.COMMAND_SET_DEVICE_VOLUME_WITH_FLAGS)
+            @Suppress("DEPRECATION")
+            builder.add(Player.COMMAND_ADJUST_DEVICE_VOLUME)
+            builder.add(Player.COMMAND_ADJUST_DEVICE_VOLUME_WITH_FLAGS)
+        }
+        if (state.supportsShuffleSet) builder.add(Player.COMMAND_SET_SHUFFLE_MODE)
+        if (state.supportsRepeatSet) builder.add(Player.COMMAND_SET_REPEAT_MODE)
+        builder.add(Player.COMMAND_GET_METADATA)
+        builder.add(Player.COMMAND_GET_TIMELINE)
+        return builder.build()
+    }
+
+    /**
+     * Maps a Home Assistant media_content_type string to the corresponding Media3 media type
+     * constant, or null if there is no suitable mapping.
+     */
+    private fun String.toMedia3MediaType(): Int? = when (this) {
+        "music" -> MediaMetadata.MEDIA_TYPE_MUSIC
+        "tvshow", "episode" -> MediaMetadata.MEDIA_TYPE_TV_SHOW
+        "movie" -> MediaMetadata.MEDIA_TYPE_MOVIE
+        "video" -> MediaMetadata.MEDIA_TYPE_VIDEO
+        "channel" -> MediaMetadata.MEDIA_TYPE_TV_CHANNEL
+        "playlist" -> MediaMetadata.MEDIA_TYPE_PLAYLIST
+        else -> null
+    }
+
+    private companion object {
+        const val DURATION_UNSET_US = androidx.media3.common.C.TIME_UNSET
+        const val CURRENT_ITEM_INDEX = 0
+        const val PLAYBACK_SPEED = 1.0f
+
+        // HA uses 0.0–1.0; we tell Media3 our volume range is 0–VOLUME_SCALE via
+        // REMOTE_DEVICE_INFO, so Media3 will call handleSetDeviceVolume with values in that range.
+        const val VOLUME_SCALE = 100
+
+        val REMOTE_DEVICE_INFO: DeviceInfo = DeviceInfo.Builder(DeviceInfo.PLAYBACK_TYPE_REMOTE)
+            .setMinVolume(0)
+            .setMaxVolume(VOLUME_SCALE)
+            .build()
+    }
+}

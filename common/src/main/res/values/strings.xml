@@ -455,6 +455,13 @@
     <string name="manual_setup">Enter address manually</string>
     <string name="manual_title">What is your Home Assistant address?</string>
     <string name="matter_commissioning_cancelled">Unable to add Matter device?</string>
+    <string name="media_controls">Media controls</string>
+    <string name="media_controls_summary">Control media players from the notification shade</string>
+    <string name="media_control_description">Select one or more media player entities to show as native media controls in the notification shade. You can control playback without opening the app.</string>
+    <string name="media_control_select_entity">Add media player</string>
+    <string name="media_control_add_entity">Add entity</string>
+    <string name="media_control_remove_entity">Remove entity</string>
+    <string name="media_control_clear">Clear all</string>
     <string name="matter_commissioning_unavailable">Matter is currently unavailable</string>
     <string name="matter_shared_title">Add Matter device</string>
     <string name="matter_shared_status_not_registered">Please connect to your Home Assistant server before adding a Matter device.</string>

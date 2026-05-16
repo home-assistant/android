@@ -40,6 +40,7 @@ import io.homeassistant.companion.android.authenticator.Authenticator.Companion.
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.launch.applock.HazeLockOverlay
+import io.homeassistant.companion.android.mediacontrol.HaMediaSessionService
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.util.ChangeLog
@@ -196,6 +197,7 @@ class LaunchActivity : AppCompatActivity() {
             SensorWorker.start(this)
             lifecycleScope.launch {
                 WebsocketManager.start(this@LaunchActivity)
+                HaMediaSessionService.start(this@LaunchActivity)
                 checkLocationDisabled()
                 changeLog.showChangeLog(this@LaunchActivity, forceShow = false)
             }

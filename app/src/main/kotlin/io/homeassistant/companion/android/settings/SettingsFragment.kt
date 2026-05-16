@@ -41,6 +41,7 @@ import io.homeassistant.companion.android.settings.developer.DeveloperSettingsFr
 import io.homeassistant.companion.android.settings.gestures.GesturesFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
 import io.homeassistant.companion.android.settings.license.LicensesFragment
+import io.homeassistant.companion.android.settings.mediacontrol.MediaControlSettingsFragment
 import io.homeassistant.companion.android.settings.notification.NotificationChannelFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
@@ -232,6 +233,21 @@ class SettingsFragment(
                     }
                     return@setOnPreferenceClickListener true
                 }
+            }
+
+            findPreference<PreferenceCategory>("media_controls")?.let {
+                it.isVisible = !isAutomotive && !QuestUtil.isQuest
+            }
+            findPreference<Preference>("manage_media_controls")?.setOnPreferenceClickListener {
+                parentFragmentManager.commit {
+                    replace(
+                        R.id.content,
+                        MediaControlSettingsFragment::class.java,
+                        null,
+                    )
+                    addToBackStack(getString(commonR.string.media_controls))
+                }
+                return@setOnPreferenceClickListener true
             }
 
             if (!isAutomotive && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
