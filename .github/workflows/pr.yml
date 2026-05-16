@@ -352,12 +352,12 @@ jobs:
             echo 'DEVICES_EOF'
           } >> "$GITHUB_OUTPUT"
 
-      - uses: emulator-wtf/configure-credentials@d0d840f8d9e2920e284788fcfa32f0a1eed95bf0 # v1.0.0
+      - uses: emulator-wtf/actions/configure-credentials@42753a2a6bda2e657741a7385131bf61db464899 # v1.0.0
         with:
           oidc-configuration-id: ${{ vars.EMULATOR_WTF_OIDC_CONFIGURATION_ID }} # This is retrieved from the emulator.wtf console
 
       - name: Run tests full
-        uses: emulator-wtf/run-tests@01944281be70008e1b97d9f8458039c18cd3d779 # v0.9.11
+        uses: emulator-wtf/actions/run-tests@42753a2a6bda2e657741a7385131bf61db464899 # v1.0.0
         with:
           devices: ${{ steps.devices.outputs.list }}
           app: app/build/outputs/apk/full/debug/app-full-debug.apk
@@ -365,7 +365,7 @@ jobs:
           outputs-dir: build/test-results/full
 
       - name: Run tests minimal
-        uses: emulator-wtf/run-tests@01944281be70008e1b97d9f8458039c18cd3d779 # v0.9.11
+        uses: emulator-wtf/actions/run-tests@42753a2a6bda2e657741a7385131bf61db464899 # v1.0.0
         with:
           devices: ${{ steps.devices.outputs.list }}
           app: app/build/outputs/apk/minimal/debug/app-minimal-debug.apk

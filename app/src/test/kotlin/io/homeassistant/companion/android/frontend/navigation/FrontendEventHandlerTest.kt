@@ -49,6 +49,7 @@ class FrontendEventHandlerTest {
                 onOpenExternalLink = {},
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
+                onRequestFullscreen = {},
             )
         }
 
@@ -78,6 +79,7 @@ class FrontendEventHandlerTest {
                 onOpenExternalLink = {},
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
+                onRequestFullscreen = {},
             )
         }
 
@@ -109,6 +111,7 @@ class FrontendEventHandlerTest {
                 onOpenExternalLink = {},
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
+                onRequestFullscreen = {},
             )
         }
 
@@ -146,6 +149,7 @@ class FrontendEventHandlerTest {
                 onOpenExternalLink = {},
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
+                onRequestFullscreen = {},
             )
         }
 
@@ -171,6 +175,7 @@ class FrontendEventHandlerTest {
                 onOpenExternalLink = { uri -> capturedUri = uri },
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
+                onRequestFullscreen = {},
             )
         }
 
@@ -196,6 +201,7 @@ class FrontendEventHandlerTest {
                 onOpenExternalLink = {},
                 onShowServerSwitcher = { serverSwitcherShown = true },
                 onNavigateToNfcWrite = { _, _ -> },
+                onRequestFullscreen = {},
             )
         }
 
@@ -224,6 +230,7 @@ class FrontendEventHandlerTest {
                 onOpenExternalLink = {},
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
+                onRequestFullscreen = {},
             )
         }
 
@@ -253,6 +260,7 @@ class FrontendEventHandlerTest {
                     capturedMessageId = messageId
                     capturedTagId = tagId
                 },
+                onRequestFullscreen = {},
             )
         }
 
@@ -282,6 +290,7 @@ class FrontendEventHandlerTest {
                     capturedMessageId = messageId
                     capturedTagId = tagId
                 },
+                onRequestFullscreen = {},
             )
         }
 
@@ -291,5 +300,39 @@ class FrontendEventHandlerTest {
 
         assertEquals(7, capturedMessageId)
         assertEquals(null, capturedTagId)
+    }
+
+    @Test
+    fun `Given RequestFullscreen true event then onRequestFullscreen is called with true`() {
+        assertEquals(true, runRequestFullscreenTest(fullscreen = true))
+    }
+
+    @Test
+    fun `Given RequestFullscreen false event then onRequestFullscreen is called with false`() {
+        assertEquals(false, runRequestFullscreenTest(fullscreen = false))
+    }
+
+    private fun runRequestFullscreenTest(fullscreen: Boolean): Boolean? {
+        var captured: Boolean? = null
+        val events = TestSharedFlow<FrontendEvent>()
+
+        composeTestRule.setContent {
+            FrontendEventHandler(
+                events = events,
+                onShowSnackbar = { _, _ -> false },
+                onNavigateToSettings = {},
+                onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = {},
+                onShowServerSwitcher = {},
+                onNavigateToNfcWrite = { _, _ -> },
+                onRequestFullscreen = { captured = it },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        events.emit(FrontendEvent.RequestFullscreen(fullscreen = fullscreen))
+        composeTestRule.waitForIdle()
+
+        return captured
     }
 }

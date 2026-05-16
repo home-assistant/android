@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.frontend.handler
 
 import android.content.pm.PackageManager
+import androidx.core.net.toUri
 import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
@@ -10,8 +11,13 @@ import io.homeassistant.companion.android.frontend.download.FrontendDownloadMana
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConfigGetMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConnectionStatusMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerPlayHlsMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerResizeMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerStopMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HandleBlobMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovConfigureDeviceMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovScanMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.IncomingExternalBusMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistSettingsMessage
@@ -21,6 +27,7 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.ThemeUpd
 import io.homeassistant.companion.android.frontend.externalbus.incoming.UnknownIncomingMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResult
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage
+import io.homeassistant.companion.android.frontend.improv.BluetoothCapabilities
 import io.homeassistant.companion.android.frontend.js.FrontendJsHandler
 import io.homeassistant.companion.android.frontend.session.AuthPayload
 import io.homeassistant.companion.android.frontend.session.ExternalAuthResult
@@ -60,6 +67,7 @@ class FrontendMessageHandler @Inject constructor(
     private val appVersionProvider: AppVersionProvider,
     private val sessionManager: ServerSessionManager,
     private val downloadManager: FrontendDownloadManager,
+    private val bluetoothCapabilities: BluetoothCapabilities,
     @param:IsAutomotive private val isAutomotive: Boolean,
 ) : FrontendJsHandler,
     FrontendBusObserver {
@@ -183,10 +191,51 @@ class FrontendMessageHandler @Inject constructor(
                 )
             }
 
+            is ExoPlayerPlayHlsMessage -> {
+                val url = message.payload.url
+                if (url == null) {
+                    Timber.w("exoplayer/play_hls received without URL")
+                    FrontendHandlerEvent.UnknownMessage
+                } else {
+                    Timber.d("exoplayer/play_hls url=${sensitive(url)} muted=${message.payload.muted}")
+                    externalBusRepository.send(ResultMessage(id = message.id, success = true))
+                    FrontendHandlerEvent.ExoPlayerAction.PlayHls(
+                        messageId = message.id,
+                        url = url.toUri(),
+                        muted = message.payload.muted,
+                    )
+                }
+            }
+
+            is ExoPlayerStopMessage -> {
+                Timber.d("exoplayer/stop received")
+                FrontendHandlerEvent.ExoPlayerAction.Stop
+            }
+
+            is ExoPlayerResizeMessage -> {
+                Timber.d("exoplayer/resize received")
+                FrontendHandlerEvent.ExoPlayerAction.Resize(
+                    left = message.payload.left,
+                    top = message.payload.top,
+                    right = message.payload.right,
+                    bottom = message.payload.bottom,
+                )
+            }
+
             is HandleBlobMessage -> {
                 Timber.d("handleBlob called with filename=${message.filename}")
                 val result = downloadManager.handleBlob(data = message.data, filename = message.filename)
                 FrontendHandlerEvent.DownloadCompleted(result)
+            }
+
+            is ImprovScanMessage -> {
+                Timber.d("improv/scan received with id: ${message.id}")
+                FrontendHandlerEvent.StartImprovScan
+            }
+
+            is ImprovConfigureDeviceMessage -> {
+                Timber.d("improv/configure_device received with id: ${message.id}")
+                FrontendHandlerEvent.ConfigureImprovDevice(deviceName = message.payload.name)
             }
 
             is UnknownIncomingMessage -> {
@@ -215,6 +264,7 @@ class FrontendMessageHandler @Inject constructor(
                 canCommissionMatter = canCommissionMatter,
                 canExportThread = canExportThread,
                 hasBarCodeScanner = hasBarCodeScanner,
+                canSetupImprov = bluetoothCapabilities.hasBluetoothLe(),
                 appVersion = appVersionProvider(),
             ),
         )

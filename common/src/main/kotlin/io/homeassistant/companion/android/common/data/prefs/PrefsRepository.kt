@@ -99,6 +99,9 @@ interface PrefsRepository {
 
     suspend fun isAutoPlayVideoEnabled(): Boolean
 
+    /** Emits the current "Autoplay video" preference immediately on collection, then on every change. */
+    suspend fun autoPlayVideoFlow(): Flow<Boolean>
+
     suspend fun setAutoPlayVideo(enabled: Boolean)
 
     suspend fun isAlwaysShowFirstViewOnAppStartEnabled(): Boolean
@@ -157,4 +160,10 @@ interface PrefsRepository {
     suspend fun getSelectedWakeWord(): String?
 
     suspend fun setSelectedWakeWord(wakeWord: String)
+
+    suspend fun addAllowedTag(tag: String)
+
+    suspend fun getAllowedTags(): Set<String>
+
+    suspend fun clearAllowedTags()
 }

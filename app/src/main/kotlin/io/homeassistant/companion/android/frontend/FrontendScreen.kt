@@ -8,9 +8,11 @@ import android.webkit.CookieManager
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,9 +23,11 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -35,8 +39,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.common.R as commonR
@@ -59,12 +66,14 @@ import io.homeassistant.companion.android.frontend.permissions.MultiplePermissio
 import io.homeassistant.companion.android.frontend.permissions.NotificationPermissionPrompt
 import io.homeassistant.companion.android.frontend.permissions.PermissionRequest
 import io.homeassistant.companion.android.frontend.permissions.SinglePermissionEffect
+import io.homeassistant.companion.android.launch.PipReadiness
 import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModel
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModelFactory
 import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.compose.HAPreviews
+import io.homeassistant.companion.android.util.compose.media.player.HAMediaPlayer
 import io.homeassistant.companion.android.util.compose.webview.HAWebView
 import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.webview.insecure.BlockInsecureScreen
@@ -74,6 +83,10 @@ import timber.log.Timber
 
 /** Minimum swipe velocity (pixels/second) to trigger a gesture action. */
 private const val MINIMUM_GESTURE_VELOCITY = 75f
+
+/** Test tag applied to the WebView custom view fullscreen overlay. */
+@VisibleForTesting
+internal const val CUSTOM_VIEW_OVERLAY_TAG = "custom_view_overlay"
 
 /**
  * Frontend screen that renders based on the ViewModel's current view state.
@@ -104,11 +117,23 @@ internal fun FrontendScreen(
     onSecurityLevelHelpClick: suspend () -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     modifier: Modifier = Modifier,
+    onPipReadinessChanged: (PipReadiness?) -> Unit = {},
 ) {
     val viewState by viewModel.viewState.collectAsStateWithLifecycle()
     val pendingPermissionRequest by viewModel.pendingPermissionRequest.collectAsStateWithLifecycle()
     val pendingDialog by viewModel.pendingDialog.collectAsStateWithLifecycle()
     val pendingFileChooser by viewModel.pendingFileChooser.collectAsStateWithLifecycle()
+    val autoPlayVideoEnabled by viewModel.autoPlayVideoEnabled.collectAsStateWithLifecycle()
+
+    // The fullscreen View handed over by the WebView is Activity-scoped. Keep it in screen
+    // state so it does not leak across configuration changes via the ViewModel.
+    var customView by remember { mutableStateOf<View?>(null) }
+    val webChromeClient = remember(viewModel) {
+        viewModel.createWebChromeClient(
+            onShowCustomView = { customView = it },
+            onHideCustomView = { customView = null },
+        )
+    }
 
     // Create SecurityLevel ViewModel only when needed
     val securityLevelViewModel: LocationForSecureConnectionViewModel? =
@@ -125,7 +150,8 @@ internal fun FrontendScreen(
         viewState = viewState,
         errorStateProvider = viewModel as FrontendConnectionErrorStateProvider,
         webViewClient = viewModel.webViewClient,
-        webChromeClient = viewModel.webChromeClient,
+        webChromeClient = webChromeClient,
+        customView = customView,
         frontendJsCallback = viewModel.frontendJsCallback,
         pendingPermissionRequest = pendingPermissionRequest,
         pendingDialog = pendingDialog,
@@ -145,6 +171,9 @@ internal fun FrontendScreen(
         onDownloadRequested = viewModel::onDownloadRequested,
         webViewActions = viewModel.webViewActions,
         onGesture = viewModel::onGesture,
+        onExoPlayerFullscreenChanged = viewModel::onExoPlayerFullscreenChanged,
+        autoPlayVideoEnabled = autoPlayVideoEnabled,
+        onPipReadinessChanged = onPipReadinessChanged,
         modifier = modifier,
     )
 }
@@ -167,6 +196,8 @@ internal fun FrontendScreenContent(
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onWebViewCreationFailed: (Throwable) -> Unit,
     modifier: Modifier = Modifier,
+    customView: View? = null,
+    autoPlayVideoEnabled: Boolean = false,
     pendingPermissionRequest: PermissionRequest? = null,
     pendingDialog: FrontendDialog? = null,
     pendingFileChooser: FileChooserRequest? = null,
@@ -176,6 +207,8 @@ internal fun FrontendScreenContent(
     onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit = { _, _, _ -> },
     webViewActions: Flow<WebViewAction> = emptyFlow(),
     onGesture: (GestureDirection, Int) -> Unit = { _, _ -> },
+    onExoPlayerFullscreenChanged: (Boolean) -> Unit = {},
+    onPipReadinessChanged: (PipReadiness?) -> Unit = {},
 ) {
     var webView by remember { mutableStateOf<WebView?>(null) }
 
@@ -184,6 +217,7 @@ internal fun FrontendScreenContent(
         url = viewState.url,
         frontendJsCallback = frontendJsCallback,
         webViewActions = webViewActions,
+        autoPlayVideoEnabled = autoPlayVideoEnabled,
     )
 
     PendingPermissionHandler(
@@ -209,6 +243,14 @@ internal fun FrontendScreenContent(
             onWebViewCreationFailed = onWebViewCreationFailed,
             onDownloadRequested = onDownloadRequested,
             onGesture = onGesture,
+            autoPlayVideoEnabled = autoPlayVideoEnabled,
+        )
+
+        PipEligibleOverlays(
+            contentState = viewState as? FrontendViewState.Content,
+            customView = customView,
+            onExoPlayerFullscreenChanged = onExoPlayerFullscreenChanged,
+            onPipReadinessChanged = onPipReadinessChanged,
         )
 
         StateOverlay(
@@ -389,6 +431,7 @@ private fun SafeHAWebView(
     webViewClient: WebViewClient,
     contentState: FrontendViewState.Content?,
     onWebViewCreationFailed: (Throwable) -> Unit,
+    autoPlayVideoEnabled: Boolean,
     webChromeClient: WebChromeClient? = null,
     onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit = { _, _, _ -> },
     onGesture: (GestureDirection, Int) -> Unit = { _, _ -> },
@@ -433,6 +476,7 @@ private fun SafeHAWebView(
                         onWebViewCreated = onWebViewCreated,
                         onDownloadRequested = onDownloadRequested,
                         onGesture = onGesture,
+                        autoPlayVideoEnabled = autoPlayVideoEnabled,
                     )
                 },
                 onBackPressed = onBackClick,
@@ -480,12 +524,15 @@ private fun WebView.configureForFrontend(
     onWebViewCreated: (WebView) -> Unit,
     onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit,
     onGesture: (GestureDirection, Int) -> Unit,
+    autoPlayVideoEnabled: Boolean,
 ) {
     onWebViewCreated(this)
 
     this.webViewClient = webViewClient
 
     webChromeClient?.let { this.webChromeClient = it }
+
+    settings.mediaPlaybackRequiresUserGesture = !autoPlayVideoEnabled
 
     // Enable first-party cookies globally and third-party cookies for this WebView.
     // The Home Assistant frontend relies on third-party cookies for some integrations
@@ -540,24 +587,30 @@ private fun PendingPermissionHandler(pendingRequest: PermissionRequest?) {
                 onDismiss = pendingRequest.onDismiss,
             )
         }
+
         is PermissionRequest.MultiplePermissions -> {
             MultiplePermissionsEffect(
                 pendingRequest = pendingRequest,
                 onPermissionResult = pendingRequest.onResult,
             )
         }
+
         is PermissionRequest.SinglePermission -> {
             SinglePermissionEffect(
                 pendingRequest = pendingRequest,
                 onPermissionResult = pendingRequest.onResult,
             )
         }
-        null -> { /* No pending permission */ }
+
+        null -> {
+            /* No pending permission */
+        }
     }
 }
 
 /**
- * Handles WebView side effects: URL loading and [WebViewAction] dispatch.
+ * Handles WebView side effects: URL loading, [WebViewAction] dispatch, and reapplying the
+ * "Autoplay video" preference (which requires a [WebView.reload] to take effect on the loaded page).
  */
 @Composable
 private fun WebViewEffects(
@@ -565,6 +618,7 @@ private fun WebViewEffects(
     url: String,
     frontendJsCallback: FrontendJsCallback,
     webViewActions: Flow<WebViewAction>,
+    autoPlayVideoEnabled: Boolean,
 ) {
     if (webView != null) {
         LaunchedEffect(webView, url) {
@@ -582,7 +636,68 @@ private fun WebViewEffects(
                 action.run(webView)
             }
         }
+        LaunchedEffect(autoPlayVideoEnabled, webView) {
+            val target = !autoPlayVideoEnabled
+            if (webView.settings.mediaPlaybackRequiresUserGesture == target) return@LaunchedEffect
+            webView.settings.mediaPlaybackRequiresUserGesture = target
+            webView.reload()
+        }
     }
+}
+
+/**
+ * Renders PiP-eligible overlays and reports their combined [PipReadiness] to the host.
+ */
+@Composable
+private fun BoxScope.PipEligibleOverlays(
+    contentState: FrontendViewState.Content?,
+    customView: View?,
+    onExoPlayerFullscreenChanged: (Boolean) -> Unit,
+    onPipReadinessChanged: (PipReadiness?) -> Unit,
+) {
+    val exoState = contentState?.exoPlayerState
+    val readiness = remember(customView, exoState?.isFullScreen, exoState?.videoAspectRatio) {
+        PipReadiness.from(customViewShown = customView != null, exoState = exoState)
+    }
+
+    LaunchedEffect(readiness) { onPipReadinessChanged(readiness) }
+    DisposableEffect(Unit) {
+        onDispose { onPipReadinessChanged(null) }
+    }
+
+    ExoPlayerOverlay(
+        contentState = contentState,
+        onFullscreenChanged = onExoPlayerFullscreenChanged,
+    )
+    CustomViewOverlay(customView = customView)
+}
+
+@Composable
+private fun CustomViewOverlay(customView: View?) {
+    val view: View = customView ?: return
+    AndroidView(
+        factory = { view },
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag(CUSTOM_VIEW_OVERLAY_TAG),
+    )
+}
+
+@Composable
+private fun ExoPlayerOverlay(contentState: FrontendViewState.Content?, onFullscreenChanged: (Boolean) -> Unit) {
+    val exoState = contentState?.exoPlayerState ?: return
+    val size = exoState.size ?: return
+    HAMediaPlayer(
+        player = exoState.player,
+        contentScale = ContentScale.Inside,
+        modifier = Modifier
+            .offset(exoState.left, exoState.top)
+            .size(size),
+        fullscreenModifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black),
+        onFullscreenClicked = onFullscreenChanged,
+    )
 }
 
 @HAPreviews

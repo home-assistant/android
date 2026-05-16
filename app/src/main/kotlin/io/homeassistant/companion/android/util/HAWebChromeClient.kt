@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.util
 
 import android.net.Uri
+import android.view.View
 import android.webkit.JsResult
 import android.webkit.PermissionRequest
 import android.webkit.ValueCallback
@@ -15,6 +16,9 @@ import android.webkit.WebView
  *        Return `true` to indicate the dialog is handled.
  * @param onShowFileChooser Callback when the page requests a file upload.
  *        Return `true` to indicate the file chooser is handled.
+ * @param onShowCustomView Callback when the page enters fullscreen (e.g. HTML5 video).
+ *        Receives the fullscreen [View] handed over by the WebView.
+ * @param onHideCustomView Callback when the page leaves fullscreen.
  */
 class HAWebChromeClient(
     private val onPermissionRequest: (PermissionRequest) -> Unit = {},
@@ -23,6 +27,8 @@ class HAWebChromeClient(
         filePathCallback: ValueCallback<Array<Uri>>,
         fileChooserParams: FileChooserParams,
     ) -> Boolean = { _, _ -> false },
+    private val onShowCustomView: (View) -> Unit = {},
+    private val onHideCustomView: () -> Unit = {},
 ) : WebChromeClient() {
 
     override fun onPermissionRequest(request: PermissionRequest?) {
@@ -45,5 +51,14 @@ class HAWebChromeClient(
             return onShowFileChooser.invoke(filePathCallback, fileChooserParams)
         }
         return super.onShowFileChooser(webView, filePathCallback, fileChooserParams)
+    }
+
+    override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
+        view?.let { onShowCustomView.invoke(it) }
+    }
+
+    override fun onHideCustomView() {
+        onHideCustomView.invoke()
+        super.onHideCustomView()
     }
 }

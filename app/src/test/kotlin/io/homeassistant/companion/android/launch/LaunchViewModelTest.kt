@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.launch
 
+import android.graphics.Rect
+import android.util.Rational
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import io.homeassistant.companion.android.applock.AppLockStateManager
@@ -29,6 +31,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -624,5 +627,91 @@ class LaunchViewModelTest {
 
         coVerify { appLockStateManager.setAppActive(active = true) }
         assertFalse(viewModel.isAppLocked.value)
+    }
+
+    @Test
+    fun `Given fullscreen preference off when fullscreen is requested then isFullScreen is true`() = runTest {
+        fullScreenEnabledFlow.value = false
+        createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onFullscreenRequested(fullscreen = true)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.isFullScreen.value)
+    }
+
+    @Test
+    fun `Given fullscreen preference off when fullscreen request is cleared then isFullScreen is false`() = runTest {
+        fullScreenEnabledFlow.value = false
+        createViewModel()
+        viewModel.onFullscreenRequested(fullscreen = true)
+        advanceUntilIdle()
+
+        viewModel.onFullscreenRequested(fullscreen = false)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.isFullScreen.value)
+    }
+
+    @Test
+    fun `Given fullscreen preference on when fullscreen request is cleared then isFullScreen stays true`() = runTest {
+        fullScreenEnabledFlow.value = true
+        createViewModel()
+        viewModel.onFullscreenRequested(fullscreen = true)
+        advanceUntilIdle()
+
+        viewModel.onFullscreenRequested(fullscreen = false)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.isFullScreen.value)
+    }
+
+    @Test
+    fun `Given fullscreen request is active when preference turns off then isFullScreen stays true`() = runTest {
+        fullScreenEnabledFlow.value = true
+        createViewModel()
+        viewModel.onFullscreenRequested(fullscreen = true)
+        advanceUntilIdle()
+
+        fullScreenEnabledFlow.value = false
+        advanceUntilIdle()
+
+        assertTrue(viewModel.isFullScreen.value)
+    }
+
+    @Test
+    fun `Given no pip readiness reported when initialized then pipReadiness is null`() = runTest {
+        createViewModel()
+        advanceUntilIdle()
+
+        assertNull(viewModel.pipReadiness.value)
+    }
+
+    @Test
+    fun `Given onPipReadinessChanged with non-null when called then pipReadiness reflects it`() = runTest {
+        createViewModel()
+        advanceUntilIdle()
+
+        val readiness = PipReadiness(
+            aspectRatio = Rational(16, 9),
+            sourceRect = Rect(0, 0, 1920, 1080),
+        )
+        viewModel.onPipReadinessChanged(readiness)
+        advanceUntilIdle()
+
+        assertEquals(readiness, viewModel.pipReadiness.value)
+    }
+
+    @Test
+    fun `Given non-null then null when reported then pipReadiness round-trips`() = runTest {
+        createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onPipReadinessChanged(PipReadiness(aspectRatio = Rational(16, 9)))
+        viewModel.onPipReadinessChanged(null)
+        advanceUntilIdle()
+
+        assertNull(viewModel.pipReadiness.value)
     }
 }

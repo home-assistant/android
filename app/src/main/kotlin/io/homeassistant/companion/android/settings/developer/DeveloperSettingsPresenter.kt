@@ -17,4 +17,5 @@ interface DeveloperSettingsPresenter {
 
     fun webViewSupportsClearCache(): Boolean
     fun clearWebViewCache()
+    fun clearAllowedTags()
 }

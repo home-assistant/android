@@ -10,9 +10,6 @@ import io.homeassistant.companion.android.di.qualifiers.NamedThemesStorage
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -50,6 +47,7 @@ private const val PREF_CHANGE_LOG_POPUP_ENABLED = "change_log_popup_enabled"
 private const val PREF_SHOW_PRIVACY_HINT = "show_privacy_hint"
 private const val PREF_WAKE_WORD_ENABLED = "wake_word_enabled"
 private const val PREF_SELECTED_WAKE_WORD = "selected_wake_word"
+private const val PREF_ALLOWED_TAGS = "allowed_tags"
 
 /**
  * This class ensure that when we use the local storage in [PrefsRepositoryImpl] the migrations has been made
@@ -208,12 +206,7 @@ internal class PrefsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun fullScreenEnabledFlow(): Flow<Boolean> {
-        val localStorage = localStorage()
-        return merge(
-            localStorage.observeChanges(PREF_FULLSCREEN_ENABLED),
-            // Seed an initial emission so collectors read the current value immediately
-            flowOf(""),
-        ).map {
+        return localStorage().observeChanges(PREF_FULLSCREEN_ENABLED) {
             isFullScreenEnabled()
         }
     }
@@ -242,23 +235,22 @@ internal class PrefsRepositoryImpl @Inject constructor(
         localStorage().putBoolean(PREF_PINCH_TO_ZOOM_ENABLED, enabled)
     }
 
-    override suspend fun zoomSettingsFlow(): Flow<ZoomSettings> {
-        val localStorage = localStorage()
-        return merge(
-            localStorage.observeChanges(PREF_PAGE_ZOOM_LEVEL),
-            localStorage.observeChanges(PREF_PINCH_TO_ZOOM_ENABLED),
-            // Seed an initial emission so collectors read the current values immediately
-            flowOf(""),
-        ).map {
+    override suspend fun zoomSettingsFlow(): Flow<ZoomSettings> =
+        localStorage().observeChanges(PREF_PAGE_ZOOM_LEVEL, PREF_PINCH_TO_ZOOM_ENABLED) {
             ZoomSettings(
                 zoomLevel = getPageZoomLevel(),
                 pinchToZoomEnabled = isPinchToZoomEnabled(),
             )
         }
-    }
 
     override suspend fun isAutoPlayVideoEnabled(): Boolean {
         return localStorage().getBoolean(PREF_AUTOPLAY_VIDEO)
+    }
+
+    override suspend fun autoPlayVideoFlow(): Flow<Boolean> {
+        return localStorage().observeChanges(PREF_AUTOPLAY_VIDEO) {
+            isAutoPlayVideoEnabled()
+        }
     }
 
     override suspend fun setAutoPlayVideo(enabled: Boolean) {
@@ -410,5 +402,20 @@ internal class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setSelectedWakeWord(wakeWord: String) {
         localStorage().putString(PREF_SELECTED_WAKE_WORD, wakeWord)
+    }
+
+    override suspend fun addAllowedTag(tag: String) {
+        val approved = getAllowedTags().toMutableSet()
+        if (approved.add(tag)) {
+            localStorage().putStringSet(PREF_ALLOWED_TAGS, approved)
+        }
+    }
+
+    override suspend fun getAllowedTags(): Set<String> {
+        return localStorage().getStringSet(PREF_ALLOWED_TAGS) ?: emptySet()
+    }
+
+    override suspend fun clearAllowedTags() {
+        localStorage().remove(PREF_ALLOWED_TAGS)
     }
 }
