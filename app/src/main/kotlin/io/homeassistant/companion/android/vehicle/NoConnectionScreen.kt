@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.vehicle
 
+import androidx.activity.addCallback
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.model.Action
@@ -15,6 +16,10 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.util.vehicle.getHeaderBuilder
 
 class NoConnectionScreen(context: CarContext) : Screen(context) {
+
+    init {
+        carContext.onBackPressedDispatcher.addCallback(this) {}
+    }
 
     override fun onGetTemplate(): Template {
         val icon = CarIcon.Builder(
