@@ -24,13 +24,13 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -52,7 +52,6 @@ import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.settings.sensor.SensorDetailViewModel
 import io.homeassistant.companion.android.util.compose.safeScreenHeight
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -66,15 +65,14 @@ private const val SEARCH_VISIBILITY_THRESHOLD = 10
  * list of selectable rows, and a fixed footer with cancel and save actions. While the selection
  * state is loading, a centered progress indicator is shown instead of the list.
  *
- * Filtering is performed off the UI thread on [dispatcher] to keep the sheet responsive on long
- * lists. The search field debounces the query so the list does not re-filter on every keystroke.
+ * Filtering is performed off the UI thread on [Dispatchers.Default] to keep the sheet responsive on
+ * long lists. The search field debounces the query so the list does not re-filter on every keystroke.
  *
  * @param title Heading displayed at the top of the sheet.
  * @param state Current dialog state holding the entries, selection and loading flag.
  * @param onDismiss Invoked when the sheet is dismissed without saving.
  * @param onSave Invoked with the updated state when the user confirms the selection.
  * @param modifier Optional [Modifier] applied to the sheet container.
- * @param dispatcher Coroutine context used to compute the filtered entries; injectable for tests.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,22 +82,14 @@ internal fun SensorDetailSettingSheet(
     onDismiss: () -> Unit,
     onSave: (SensorDetailViewModel.Companion.SettingDialogState) -> Unit,
     modifier: Modifier = Modifier,
-    dispatcher: CoroutineContext = Dispatchers.Default,
 ) {
-    val checkedValue = remember {
-        mutableStateListOf<String>().also { it.addAll(state.entriesSelected) }
+    val entries = remember(state.entries) {
+        state.entries.map { (id, label) -> SettingEntry(id, label) }
     }
+    val checkedValue = remember { state.entriesSelected.toMutableStateList() }
     var searchQuery by remember { mutableStateOf("") }
-    // Wrap the entries once at the composable boundary so the Compose Compiler can infer
-    // stability for the `rememberFilteredSettingEntries` parameter (a raw
-    // `List<Pair<String, String>>` is treated as unstable).
-    val settingEntries = remember(state.entries) { SettingEntries(state.entries) }
-    val filteredEntries = rememberFilteredSettingEntries(
-        entries = settingEntries,
-        searchQuery = searchQuery,
-        dispatcher = dispatcher,
-    )
-    val showSearch = state.entries.size > SEARCH_VISIBILITY_THRESHOLD
+    val filteredEntries = rememberFilteredSettingEntries(entries, searchQuery)
+    val showSearch = entries.size > SEARCH_VISIBILITY_THRESHOLD
 
     val bottomSheetState = rememberHAModalBottomSheetState(skipPartiallyExpanded = true)
     val screenHeight = safeScreenHeight() - HADimens.SPACE16
@@ -114,6 +104,7 @@ internal fun SensorDetailSettingSheet(
         Column(
             modifier = Modifier
                 .height(screenHeight)
+                .padding(horizontal = HADimens.SPACE4)
                 .nestedScroll(nestedScrollFlingGuard)
                 .pointerInput(Unit) {
                     // Consume vertical drag gestures to prevent BottomSheet from interpreting them
@@ -121,106 +112,136 @@ internal fun SensorDetailSettingSheet(
                     detectVerticalDragGestures { _, _ -> }
                 },
         ) {
-            Text(
-                text = title,
-                style = HATextStyle.HeadlineMedium.copy(textAlign = TextAlign.Start),
-                modifier = Modifier.padding(
-                    horizontal = HADimens.SPACE4,
-                    vertical = HADimens.SPACE3,
-                ),
+            SheetHeader(
+                title = title,
+                showSearch = showSearch,
+                searchQuery = searchQuery,
+                onQueryChange = { searchQuery = it },
             )
-            if (showSearch) {
-                HASearchField(
-                    query = searchQuery,
-                    onQueryChange = { searchQuery = it },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = null,
-                            tint = LocalHAColorScheme.current.colorOnNeutralNormal,
-                        )
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = HADimens.SPACE4),
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (state.loading) {
-                    CircularProgressIndicator()
-                } else {
-                    LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                        items(filteredEntries, key = { (id) -> id }) { (id, entry) ->
-                            BottomSheetSettingRow(
-                                label = entry,
-                                checked = checkedValue.contains(id),
-                                onClick = { isChecked ->
-                                    if (isChecked) {
-                                        if (id !in checkedValue) checkedValue.add(id)
-                                    } else {
-                                        checkedValue.remove(id)
-                                    }
-                                },
-                            )
-                        }
-                    }
+            SheetEntryList(
+                loading = state.loading,
+                entries = filteredEntries,
+                checkedValue = checkedValue,
+                modifier = Modifier.weight(1f),
+            )
+            SheetFooter(
+                saveEnabled = !state.loading,
+                onCancel = onDismiss,
+                onSave = {
+                    val joinedValue = joinSelectedValues(checkedValue)
+                    onSave(state.copy(setting = state.setting.copy(value = joinedValue)))
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun SheetHeader(
+    title: String,
+    showSearch: Boolean,
+    searchQuery: String,
+    onQueryChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = title,
+            style = HATextStyle.HeadlineMedium.copy(textAlign = TextAlign.Start),
+            modifier = Modifier.padding(vertical = HADimens.SPACE3),
+        )
+        if (showSearch) {
+            HASearchField(
+                query = searchQuery,
+                onQueryChange = onQueryChange,
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = null,
+                        tint = LocalHAColorScheme.current.colorOnNeutralNormal,
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun SheetEntryList(
+    loading: Boolean,
+    entries: List<SettingEntry>,
+    checkedValue: SnapshotStateList<String>,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (loading) {
+            CircularProgressIndicator()
+        } else {
+            LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                items(entries, key = { it.id }) { entry ->
+                    BottomSheetSettingRow(
+                        label = entry.label,
+                        checked = checkedValue.contains(entry.id),
+                        onClick = { isChecked ->
+                            if (isChecked) {
+                                if (entry.id !in checkedValue) checkedValue.add(entry.id)
+                            } else {
+                                checkedValue.remove(entry.id)
+                            }
+                        },
+                    )
                 }
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = HADimens.SPACE4, vertical = HADimens.SPACE3),
-                horizontalArrangement = Arrangement.End,
-            ) {
-                HAPlainButton(
-                    text = stringResource(commonR.string.cancel),
-                    onClick = onDismiss,
-                )
-                Spacer(modifier = Modifier.width(HADimens.SPACE2))
-                HAFilledButton(
-                    text = stringResource(commonR.string.save),
-                    enabled = !state.loading,
-                    onClick = {
-                        val joinedValue = joinSelectedValues(checkedValue)
-                        onSave(state.copy(setting = state.setting.copy(value = joinedValue)))
-                    },
-                )
             }
         }
     }
 }
 
-/**
- * Immutable wrapper around the raw `List<Pair<String, String>>` setting entries so that
- * Composable parameters can be marked stable by the Compose Compiler. The Compose Compiler
- * cannot infer stability for `List<Pair<String, String>>` directly, which forces unnecessary
- * recompositions.
- */
-@Immutable
-internal data class SettingEntries(val items: List<Pair<String, String>>)
+@Composable
+private fun SheetFooter(
+    saveEnabled: Boolean,
+    onCancel: () -> Unit,
+    onSave: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = HADimens.SPACE3),
+        horizontalArrangement = Arrangement.End,
+    ) {
+        HAPlainButton(
+            text = stringResource(commonR.string.cancel),
+            onClick = onCancel,
+        )
+        Spacer(modifier = Modifier.width(HADimens.SPACE2))
+        HAFilledButton(
+            text = stringResource(commonR.string.save),
+            enabled = saveEnabled,
+            onClick = onSave,
+        )
+    }
+}
+
+/** Identifier-and-label pair displayed inside the allow-list sheet. */
+internal data class SettingEntry(val id: String, val label: String)
 
 /**
  * Computes the filtered entries off the UI thread.
  *
  * Re-runs whenever [entries] or [searchQuery] change, dispatching the filter work onto
- * [dispatcher] so long lists do not freeze the sheet.
+ * [Dispatchers.Default] so long lists do not freeze the sheet.
  */
 @Composable
-private fun rememberFilteredSettingEntries(
-    entries: SettingEntries,
-    searchQuery: String,
-    dispatcher: CoroutineContext = Dispatchers.Default,
-): List<Pair<String, String>> {
-    var filtered by remember(entries) { mutableStateOf(entries.items) }
+private fun rememberFilteredSettingEntries(entries: List<SettingEntry>, searchQuery: String): List<SettingEntry> {
+    var filtered by remember(entries) { mutableStateOf(entries) }
 
     LaunchedEffect(entries, searchQuery) {
-        filtered = withContext(dispatcher) {
-            filterSettingEntries(entries.items, searchQuery)
+        filtered = withContext(Dispatchers.Default) {
+            filterSettingEntries(entries, searchQuery)
         }
     }
 
@@ -232,12 +253,12 @@ private fun rememberFilteredSettingEntries(
  * Returns all entries when the query is blank.
  */
 @VisibleForTesting
-internal fun filterSettingEntries(entries: List<Pair<String, String>>, query: String): List<Pair<String, String>> {
+internal fun filterSettingEntries(entries: List<SettingEntry>, query: String): List<SettingEntry> {
     val trimmed = query.trim()
     return if (trimmed.isBlank()) {
         entries
     } else {
-        entries.filter { (_, label) -> label.contains(trimmed, ignoreCase = true) }
+        entries.filter { it.label.contains(trimmed, ignoreCase = true) }
     }
 }
 
@@ -303,7 +324,6 @@ private fun BottomSheetSettingRow(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onClick(!checked) }
-            .padding(horizontal = HADimens.SPACE3)
             .heightIn(min = HADimens.SPACE16),
         verticalAlignment = Alignment.CenterVertically,
     ) {

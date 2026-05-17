@@ -6,9 +6,9 @@ import org.junit.jupiter.api.Test
 class SensorDetailSettingSheetFilterTest {
 
     private val entries = listOf(
-        "com.google.chrome" to "Chrome\n(com.google.chrome)",
-        "org.mozilla.firefox" to "Firefox\n(org.mozilla.firefox)",
-        "com.example.app" to "Example App\n(com.example.app)",
+        SettingEntry(id = "com.google.chrome", label = "Chrome\n(com.google.chrome)"),
+        SettingEntry(id = "org.mozilla.firefox", label = "Firefox\n(org.mozilla.firefox)"),
+        SettingEntry(id = "com.example.app", label = "Example App\n(com.example.app)"),
     )
 
     @Test
@@ -50,7 +50,7 @@ class SensorDetailSettingSheetFilterTest {
     fun `Given query matching no entries when filtering then return empty list`() {
         val result = filterSettingEntries(entries, query = "nonexistent")
 
-        assertEquals(emptyList<Pair<String, String>>(), result)
+        assertEquals(emptyList<SettingEntry>(), result)
     }
 
     @Test
