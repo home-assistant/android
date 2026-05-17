@@ -25,7 +25,11 @@ class ConnectionAvailabilityMonitorTest {
 
     private fun stubPings(vararg results: Boolean) {
         val webSocketRepository = mockk<WebSocketRepository>()
-        coEvery { webSocketRepository.sendPing() } returnsMany results.toList()
+        val iterator = results.iterator()
+        var last = results.last()
+        coEvery { webSocketRepository.sendPing() } answers {
+            if (iterator.hasNext()) iterator.next().also { last = it } else last
+        }
         coEvery { serverManager.webSocketRepository() } returns webSocketRepository
     }
 
