@@ -10,6 +10,7 @@ import javax.inject.Singleton
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -28,16 +29,17 @@ interface ConnectionAvailabilityMonitor {
     fun observeAvailability(): Flow<ConnectionAvailability>
 }
 
-private val GRACE_PERIOD: Duration = 10.seconds
+internal val GRACE_PERIOD: Duration = 10.seconds
 
-private val HEALTHY_POLL_INTERVAL: Duration = 15.seconds
+internal val HEALTHY_POLL_INTERVAL: Duration = 15.seconds
 
-private val DEGRADED_POLL_INTERVAL: Duration = 1.seconds
+internal val DEGRADED_POLL_INTERVAL: Duration = 1.seconds
 
 @Singleton
 internal class ConnectionAvailabilityMonitorImpl @Inject constructor(private val serverManager: ServerManager) :
     ConnectionAvailabilityMonitor {
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun observeAvailability(): Flow<ConnectionAvailability> {
         return haReachableFlow()
             .transformLatest { reachable ->

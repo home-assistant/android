@@ -56,9 +56,9 @@ class ConnectionAvailabilityMonitorTest {
         stubPings(false)
 
         createMonitor().observeAvailability().test {
-            advanceTimeBy(5.seconds)
+            advanceTimeBy(GRACE_PERIOD - 1.seconds)
             expectNoEvents()
-            advanceTimeBy(6.seconds)
+            advanceTimeBy(2.seconds)
             assertEquals(ConnectionAvailability.Unavailable, awaitItem())
             cancelAndConsumeRemainingEvents()
         }
@@ -67,11 +67,13 @@ class ConnectionAvailabilityMonitorTest {
     @Test
     fun `Given ping recovers during grace period when polling then emits Available without Unavailable`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
-        stubPings(false, true, true)
+        stubPings(false, true)
 
         createMonitor().observeAvailability().test {
-            advanceTimeBy(2.seconds)
+            advanceTimeBy(DEGRADED_POLL_INTERVAL + 1.seconds)
             assertEquals(ConnectionAvailability.Available, awaitItem())
+            advanceTimeBy(GRACE_PERIOD)
+            expectNoEvents()
             cancelAndConsumeRemainingEvents()
         }
     }
@@ -83,8 +85,26 @@ class ConnectionAvailabilityMonitorTest {
 
         createMonitor().observeAvailability().test {
             assertEquals(ConnectionAvailability.Available, awaitItem())
-            advanceTimeBy(30.seconds)
+            advanceTimeBy(HEALTHY_POLL_INTERVAL + GRACE_PERIOD + 1.seconds)
             assertEquals(ConnectionAvailability.Unavailable, awaitItem())
+            cancelAndConsumeRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `Given monitor is Unavailable when ping recovers then emits Available`() = runTest {
+        coEvery { serverManager.isRegistered() } returns true
+        val webSocketRepository = mockk<WebSocketRepository>()
+        coEvery { webSocketRepository.sendPing() } returns false
+        coEvery { serverManager.webSocketRepository() } returns webSocketRepository
+
+        createMonitor().observeAvailability().test {
+            advanceTimeBy(GRACE_PERIOD + 1.seconds)
+            assertEquals(ConnectionAvailability.Unavailable, awaitItem())
+
+            coEvery { webSocketRepository.sendPing() } returns true
+            advanceTimeBy(DEGRADED_POLL_INTERVAL + 1.seconds)
+            assertEquals(ConnectionAvailability.Available, awaitItem())
             cancelAndConsumeRemainingEvents()
         }
     }
