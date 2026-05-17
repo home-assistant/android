@@ -76,6 +76,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAHint
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
+import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.sensor.SensorSetting
@@ -171,12 +172,16 @@ fun SensorDetailView(
                     SensorSettingType.LIST_BEACONS,
                 )
                 if (isMultiSelectList) {
-                    SensorDetailSettingSheet(
-                        title = viewModel.getSettingTranslatedTitle(dialogState.setting.name),
-                        state = dialogState,
-                        onDismiss = { viewModel.cancelSettingWithDialog() },
-                        onSave = { updatedState -> onDialogSettingSubmitted(updatedState) },
-                    )
+                    // TODO Drop the explicit HATheme once SensorDetailView is migrated to the
+                    //   shared design system (linked issue #6839).
+                    HATheme {
+                        SensorDetailSettingSheet(
+                            title = viewModel.getSettingTranslatedTitle(dialogState.setting.name),
+                            state = dialogState,
+                            onDismiss = { viewModel.cancelSettingWithDialog() },
+                            onSave = { updatedState -> onDialogSettingSubmitted(updatedState) },
+                        )
+                    }
                 } else {
                     SensorDetailSettingDialog(
                         viewModel = viewModel,
