@@ -25,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -84,12 +85,12 @@ internal fun SensorDetailSettingSheet(
     modifier: Modifier = Modifier,
 ) {
     val entries = remember(state.entries) {
-        state.entries.map { (id, label) -> SettingEntry(id, label) }
+        SettingEntryList(state.entries.map { (id, label) -> SettingEntry(id, label) })
     }
     val checkedValue = remember { state.entriesSelected.toMutableStateList() }
     var searchQuery by remember { mutableStateOf("") }
     val filteredEntries = rememberFilteredSettingEntries(entries, searchQuery)
-    val showSearch = entries.size > SEARCH_VISIBILITY_THRESHOLD
+    val showSearch = entries.items.size > SEARCH_VISIBILITY_THRESHOLD
 
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val screenHeight = safeScreenHeight() - HADimens.SPACE16
@@ -170,7 +171,7 @@ private fun SheetHeader(
 @Composable
 private fun SheetEntryList(
     loading: Boolean,
-    entries: List<SettingEntry>,
+    entries: SettingEntryList,
     checkedValue: SnapshotStateList<String>,
     modifier: Modifier = Modifier,
 ) {
@@ -182,7 +183,7 @@ private fun SheetEntryList(
             CircularProgressIndicator()
         } else {
             LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                items(entries, key = { it.id }) { entry ->
+                items(entries.items, key = { it.id }) { entry ->
                     BottomSheetSettingRow(
                         label = entry.label,
                         checked = checkedValue.contains(entry.id),
@@ -230,18 +231,26 @@ private fun SheetFooter(
 internal data class SettingEntry(val id: String, val label: String)
 
 /**
+ * Immutable wrapper around a [List] of [SettingEntry] so the Compose Compiler can treat the
+ * collection as stable when passed to composables. The underlying [List] is shared by reference
+ * and is expected to be effectively immutable (constructed once per allow-list snapshot).
+ */
+@Immutable
+internal data class SettingEntryList(val items: List<SettingEntry>)
+
+/**
  * Computes the filtered entries off the UI thread.
  *
  * Re-runs whenever [entries] or [searchQuery] change, dispatching the filter work onto
  * [Dispatchers.Default] so long lists do not freeze the sheet.
  */
 @Composable
-private fun rememberFilteredSettingEntries(entries: List<SettingEntry>, searchQuery: String): List<SettingEntry> {
+private fun rememberFilteredSettingEntries(entries: SettingEntryList, searchQuery: String): SettingEntryList {
     var filtered by remember(entries) { mutableStateOf(entries) }
 
     LaunchedEffect(entries, searchQuery) {
         filtered = withContext(Dispatchers.Default) {
-            filterSettingEntries(entries, searchQuery)
+            SettingEntryList(filterSettingEntries(entries.items, searchQuery))
         }
     }
 
