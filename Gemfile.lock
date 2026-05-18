@@ -8,8 +8,8 @@ GEM
     artifactory (3.0.17)
     atomos (0.1.3)
     aws-eventstream (1.4.0)
-    aws-partitions (1.1246.0)
-    aws-sdk-core (3.246.0)
+    aws-partitions (1.1249.0)
+    aws-sdk-core (3.247.0)
       aws-eventstream (~> 1, >= 1.3.0)
       aws-partitions (~> 1, >= 1.992.0)
       aws-sigv4 (~> 1.9)
@@ -17,11 +17,11 @@ GEM
       bigdecimal
       jmespath (~> 1, >= 1.6.1)
       logger
-    aws-sdk-kms (1.124.0)
-      aws-sdk-core (~> 3, >= 3.244.0)
+    aws-sdk-kms (1.125.0)
+      aws-sdk-core (~> 3, >= 3.247.0)
       aws-sigv4 (~> 1.5)
-    aws-sdk-s3 (1.221.0)
-      aws-sdk-core (~> 3, >= 3.244.0)
+    aws-sdk-s3 (1.222.0)
+      aws-sdk-core (~> 3, >= 3.247.0)
       aws-sdk-kms (~> 1)
       aws-sigv4 (~> 1.5)
     aws-sigv4 (1.12.1)
@@ -147,7 +147,7 @@ GEM
     google-cloud-env (2.1.1)
       faraday (>= 1.0, < 3.a)
     google-cloud-errors (1.6.0)
-    google-cloud-storage (1.59.0)
+    google-cloud-storage (1.60.0)
       addressable (~> 2.8)
       digest-crc (~> 0.4)
       google-apis-core (>= 0.18, < 2)
@@ -244,10 +244,10 @@ CHECKSUMS
   artifactory (3.0.17) sha256=3023d5c964c31674090d655a516f38ca75665c15084140c08b7f2841131af263
   atomos (0.1.3) sha256=7d43b22f2454a36bace5532d30785b06de3711399cb1c6bf932573eda536789f
   aws-eventstream (1.4.0) sha256=116bf85c436200d1060811e6f5d2d40c88f65448f2125bc77ffce5121e6e183b
-  aws-partitions (1.1246.0) sha256=809cd7d38b7ba4ea651c9879248ecf9fd0f8289412e76f26478d2b37064faa1d
-  aws-sdk-core (3.246.0) sha256=393864ec8948560e69fcccc2e4d256b40c7028eb98930608dd295279e3c4ddcc
-  aws-sdk-kms (1.124.0) sha256=40d00ab706d7e49fd620270bd0dcb546f266295abdd49b54fec2611e2a41f37c
-  aws-sdk-s3 (1.221.0) sha256=a05488eab2083a1e90b02e18479d8f65e401081d671b2d138992a2c5fef85491
+  aws-partitions (1.1249.0) sha256=f0bed070aba353e6ffe439953d6c354b3f51d16770386d2b198e71d34612f2e9
+  aws-sdk-core (3.247.0) sha256=789864594ce8cef05ee3d81fa8ed506099280bda6ea12a7612b8b7c5e5e62851
+  aws-sdk-kms (1.125.0) sha256=23f81bc0838ae6ec2e8de3eae88af521d0e29d3a59b6c9dbb4b21343ba476bc8
+  aws-sdk-s3 (1.222.0) sha256=bae4b06fccf0b81b8d77e7abfc56e5e2146590d43c4ab58db0cee3ff5bbfb7f1
   aws-sigv4 (1.12.1) sha256=6973ff95cb0fd0dc58ba26e90e9510a2219525d07620c8babeb70ef831826c00
   babosa (1.0.4) sha256=18dea450f595462ed7cb80595abd76b2e535db8c91b350f6c4b3d73986c5bc99
   base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
@@ -290,7 +290,7 @@ CHECKSUMS
   google-cloud-core (1.8.0) sha256=e572edcbf189cfcab16590628a516cec3f4f63454b730e59f0b36575120281cf
   google-cloud-env (2.1.1) sha256=cf4bb8c7d517ee1ea692baedf06e0b56ce68007549d8d5a66481aa9f97f46999
   google-cloud-errors (1.6.0) sha256=1da8476dd706ad04b9d32e3c4b90d07d3463b37d6407cb56d41342ea7647d0a1
-  google-cloud-storage (1.59.0) sha256=b8c9a5661d775d65ccb279bb1d6be07fd8152576eb0146c2026bd023c4b186b9
+  google-cloud-storage (1.60.0) sha256=b21b752d37945d678a4533be5ef4303f15d33a964d8bc709c7c41c3600f650db
   googleauth (1.11.2) sha256=7e6bacaeed7aea3dd66dcea985266839816af6633e9f5983c3c2e0e40a44731e
   highline (2.0.3) sha256=2ddd5c127d4692721486f91737307236fe005352d12a4202e26c48614f719479
   http-cookie (1.0.8) sha256=b14fe0445cf24bf9ae098633e9b8d42e4c07c3c1f700672b09fbfe32ffd41aa6
