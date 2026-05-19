@@ -21,7 +21,8 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 
 /** Default debounce applied before propagating non-empty queries to the parent. */
-private val DEFAULT_DEBOUNCE = 300.milliseconds
+@VisibleForTesting
+internal val DEFAULT_DEBOUNCE = 300.milliseconds
 
 /**
  * Forwards [rawQuery] to [emit], debouncing non-empty queries by [debounce].

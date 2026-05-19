@@ -17,8 +17,10 @@ import io.homeassistant.companion.android.common.compose.theme.LocalHAColorSchem
  * Remembers a [SheetState] for use with [HAModalBottomSheet].
  *
  * In inspection mode (previews and screenshot tests), this returns a [rememberStandardBottomSheetState]
- * because [rememberModalBottomSheetState] requires a fully running Compose runtime, and [rememberStandardBottomSheetState]
- * doesn't animate properly.
+ * because [rememberModalBottomSheetState] requires a fully running Compose runtime. The
+ * inspection-mode state is a no-op visually — there is no animation, hide/expand transitions are
+ * not exercised, and any `bottomSheetState.hide()` / `expand()` calls have no effect — but it lets
+ * the surrounding composable render so previews and screenshots can capture the content.
  *
  * @param skipPartiallyExpanded When true, the sheet skips the partially expanded state and goes
  * straight to fully expanded. Useful when the sheet has a fixed footer (cancel/save) that must stay
