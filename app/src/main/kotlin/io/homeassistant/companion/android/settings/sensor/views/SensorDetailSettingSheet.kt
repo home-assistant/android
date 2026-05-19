@@ -175,27 +175,27 @@ private fun SheetEntryList(
     checkedValue: SnapshotStateList<String>,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center,
-    ) {
-        if (loading) {
+    if (loading) {
+        Box(
+            modifier = modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center,
+        ) {
             CircularProgressIndicator()
-        } else {
-            LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                items(entries.items, key = { it.id }) { entry ->
-                    BottomSheetSettingRow(
-                        label = entry.label,
-                        checked = checkedValue.contains(entry.id),
-                        onClick = { isChecked ->
-                            if (isChecked) {
-                                if (entry.id !in checkedValue) checkedValue.add(entry.id)
-                            } else {
-                                checkedValue.remove(entry.id)
-                            }
-                        },
-                    )
-                }
+        }
+    } else {
+        LazyColumn(modifier = modifier.fillMaxWidth()) {
+            items(entries.items, key = { it.id }) { entry ->
+                BottomSheetSettingRow(
+                    label = entry.label,
+                    checked = checkedValue.contains(entry.id),
+                    onClick = { isChecked ->
+                        if (isChecked) {
+                            if (entry.id !in checkedValue) checkedValue.add(entry.id)
+                        } else {
+                            checkedValue.remove(entry.id)
+                        }
+                    },
+                )
             }
         }
     }
