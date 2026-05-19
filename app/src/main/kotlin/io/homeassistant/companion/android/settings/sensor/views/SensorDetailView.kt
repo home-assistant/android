@@ -165,22 +165,22 @@ fun SensorDetailView(
                     SensorSettingType.LIST_BEACONS,
                 )
                 if (isMultiSelectList) {
-                    // TODO Drop the explicit HATheme once SensorDetailView is migrated to the
-                    //   shared design system (linked issue #6839).
+                    // TODO Drop the explicit HATheme once SensorDetailView is migrated
+                    // https://github.com/home-assistant/android/issues/6839
                     HATheme {
                         SensorDetailSettingSheet(
                             title = viewModel.getSettingTranslatedTitle(dialogState.setting.name),
                             state = dialogState,
-                            onDismiss = { viewModel.cancelSettingWithDialog() },
-                            onSave = { updatedState -> onDialogSettingSubmitted(updatedState) },
+                            onDismiss = viewModel::cancelSettingWithDialog,
+                            onSave = onDialogSettingSubmitted,
                         )
                     }
                 } else {
                     SensorDetailSettingDialog(
                         viewModel = viewModel,
                         state = dialogState,
-                        onDismiss = { viewModel.cancelSettingWithDialog() },
-                        onSubmit = { state -> onDialogSettingSubmitted(state) },
+                        onDismiss = viewModel::cancelSettingWithDialog,
+                        onSubmit = onDialogSettingSubmitted,
                     )
                 }
             }
@@ -758,7 +758,7 @@ fun SensorDetailSettingRow(
     onClick: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val (primaryText, secondaryText) = parseSettingLabel(label)
+    val parsed = parseSettingLabel(label)
 
     Row(
         modifier = modifier
@@ -782,11 +782,14 @@ fun SensorDetailSettingRow(
             )
         }
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = primaryText)
-            if (secondaryText != null) {
+            Text(
+                text = parsed.primary,
+                style = HATextStyle.Body.copy(textAlign = TextAlign.Start),
+            )
+            if (parsed.secondary != null) {
                 Spacer(Modifier.height(HADimens.SPACE1))
                 Text(
-                    text = secondaryText,
+                    text = parsed.secondary,
                     style = HATextStyle.BodyMedium.copy(textAlign = TextAlign.Start),
                 )
             }
