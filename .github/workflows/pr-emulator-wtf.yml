@@ -5,6 +5,10 @@ on: # yamllint disable-line rule:truthy
     workflows: ['Pull Request']
     types: [completed]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.workflow_run.head_repository.full_name }}-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
@@ -13,13 +17,24 @@ jobs:
     runs-on: ubuntu-latest
     environment: ui-test
     if: >
-      github.event.workflow_run.event == 'pull_request' &&
-      github.event.workflow_run.conclusion != 'cancelled' &&
-      github.event.workflow_run.conclusion != 'skipped'
+      github.event.workflow_run.event == 'pull_request'
+      && github.event.workflow_run.conclusion != 'cancelled'
+      && github.event.workflow_run.conclusion != 'skipped'
     permissions:
       id-token: write  # Needed for OIDC authentication
       actions: read  # Needed for retrieving artifacts
     steps:
+      # Halt before spending any emulator.wtf credits if the triggering Pull Request
+      # workflow did not succeed (publish_test_results still runs afterward to
+      # aggregate whatever results pr.yml produced).
+      - name: Halt if triggering workflow did not succeed
+        if: github.event.workflow_run.conclusion != 'success'
+        env:
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+        run: |
+          echo "::error::Triggering 'Pull Request' workflow concluded as '$CONCLUSION'; skipping emulator.wtf to save resources"
+          exit 1
+
       - name: Download emulator.wtf inputs
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
