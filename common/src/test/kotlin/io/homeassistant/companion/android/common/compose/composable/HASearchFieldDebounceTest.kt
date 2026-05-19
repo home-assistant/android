@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class HASearchFieldDebounceTest {
 
-    private val debounce = 300.milliseconds
+    private val debounce = DEFAULT_DEBOUNCE
 
     @Test
     fun `Given empty query when debouncing then emit immediately without delay`() = runTest {
