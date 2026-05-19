@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.settings.sensor.views
 
 import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,20 +34,15 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Velocity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.composable.HASearchField
+import io.homeassistant.companion.android.common.compose.composable.consumeSheetScrollFling
 import io.homeassistant.companion.android.common.compose.composable.rememberHAModalBottomSheetState
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
@@ -99,8 +93,6 @@ internal fun SensorDetailSettingSheet(
     val screenHeight = safeScreenHeight() - HADimens.SPACE16
     val coroutineScope = rememberCoroutineScope()
 
-    val nestedScrollFlingGuard = remember { nestedScrollFlingGuard() }
-
     HAModalBottomSheet(
         bottomSheetState = bottomSheetState,
         modifier = modifier,
@@ -110,12 +102,7 @@ internal fun SensorDetailSettingSheet(
             modifier = Modifier
                 .height(screenHeight)
                 .padding(horizontal = HADimens.SPACE4)
-                .nestedScroll(nestedScrollFlingGuard)
-                .pointerInput(Unit) {
-                    // Consume vertical drag gestures to prevent BottomSheet from interpreting them
-                    // as collapse gestures while the user scrolls the entry list.
-                    detectVerticalDragGestures { _, _ -> }
-                },
+                .consumeSheetScrollFling(),
             verticalArrangement = Arrangement.spacedBy(HADimens.SPACE3),
         ) {
             SheetHeader(
@@ -279,18 +266,6 @@ internal fun filterSettingEntries(entries: List<SettingEntry>, query: String): L
  */
 internal fun joinSelectedValues(values: List<String>): String {
     return values.joinToString().replace("[", "").replace("]", "")
-}
-
-/**
- * Returns a [NestedScrollConnection] that absorbs fling velocity and post-scroll offsets to prevent
- * the bottom sheet from collapsing while the user scrolls or flings the entry list.
- */
-private fun nestedScrollFlingGuard(): NestedScrollConnection {
-    return object : NestedScrollConnection {
-        override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset = available
-
-        override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity = available
-    }
 }
 
 /**
