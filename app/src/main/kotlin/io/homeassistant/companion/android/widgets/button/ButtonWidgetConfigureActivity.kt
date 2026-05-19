@@ -60,6 +60,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
+import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.integration.Action
 import io.homeassistant.companion.android.database.server.Server
@@ -191,11 +192,10 @@ private fun ButtonWidgetConfigureScreen(viewModel: ButtonWidgetViewModel, onAddW
         onBackgroundTypeSelected = viewModel::updateSelectedBackgroundType,
         isRequireAuthenticationChecked = state.requiresAuthentication,
         onRequireAuthenticationChecked = viewModel::setRequiresAuthentication,
-        onAddWidgetClicked = onAddWidgetClicked
+        onAddWidgetClicked = onAddWidgetClicked,
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ButtonWidgetConfigureView(
     action: String,
@@ -217,11 +217,10 @@ private fun ButtonWidgetConfigureView(
     onTextColorSelected: (Int) -> Unit,
     isRequireAuthenticationChecked: Boolean,
     onRequireAuthenticationChecked: (Boolean) -> Unit,
-    onAddWidgetClicked: () -> Unit
+    onAddWidgetClicked: () -> Unit,
 ) {
     var showAddFieldDialog by remember { mutableStateOf(false) }
     var showIconDialog by remember { mutableStateOf(false) }
-    var isActionDropdownExpanded by remember { mutableStateOf(false) }
     Timber.i("Selected Server: $selectedServerId")
     Scaffold(
         topBar = {
@@ -282,61 +281,11 @@ private fun ButtonWidgetConfigureView(
                 )
             }
 
-            Box {
-                val actionFieldState = rememberTextFieldState(initialText = "")
-                LaunchedEffect(Unit) {
-                    snapshotFlow { actionFieldState.text.toString() }.collectLatest {
-                        onActionTextUpdated(it)
-                    }
-                }
-                OutlinedTextField(
-                    label = { Text(text = stringResource(commonR.string.label_action)) },
-                    state = actionFieldState,
-                    lineLimits = TextFieldLineLimits.SingleLine,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .onFocusChanged { state ->
-                            isActionDropdownExpanded = state.hasFocus
-                        },
-                )
-                if (serverActions.isNotEmpty()) {
-                    DropdownMenu(
-                        expanded = isActionDropdownExpanded,
-                        onDismissRequest = {
-                            isActionDropdownExpanded = false
-                        },
-                        properties = PopupProperties(focusable = false),
-                    ) {
-                        serverActions.forEach { action ->
-                            val text = "${action.domain}.${action.action}"
-                            DropdownMenuItem(
-                                text = { Text(text = text) },
-                                onClick = {
-                                    actionFieldState.setTextAndPlaceCursorAtEnd(text)
-                                    isActionDropdownExpanded = false
-                                },
-                                contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
-                            )
-                        }
-                    }
-                }
-            }
+            ActionTextFieldInput(action, serverActions, onActionTextUpdated)
 
             if (dynamicFields.isNotEmpty()) {
-                dynamicFields.forEachIndexed { index, field ->
-                    val fieldInputState = rememberTextFieldState()
-                    LaunchedEffect(Unit) {
-                        snapshotFlow { fieldInputState.text.toString() }.collectLatest {
-                            onDynamicFieldUpdated(index, field)
-                        }
-                    }
-                    OutlinedTextField(
-                        label = { Text(text = field.field) },
-                        state = fieldInputState,
-                        lineLimits = TextFieldLineLimits.SingleLine,
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                    )
+                dynamicFields.forEachIndexed { index, fieldBinder ->
+                    DynamicFieldInput(index, fieldBinder, onDynamicFieldUpdated)
                 }
             }
 
@@ -346,30 +295,18 @@ private fun ButtonWidgetConfigureView(
                 modifier = Modifier.align(Alignment.End),
             )
 
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(text = stringResource(commonR.string.label_icon))
-                IconButton(
-                    onClick = {
-                        showIconDialog = true
-                    },
-                    modifier = Modifier.size(24.dp),
-                ) {
-                    com.mikepenz.iconics.compose.Image(
-                        asset = icon,
-                        contentDescription = null,
-                        colorFilter = ColorFilter.tint(colorResource(commonR.color.colorIcon)),
-                    )
-                }
-            }
+            IconSelector(
+                icon,
+                {
+                    showIconDialog = true
+                },
+            )
 
             OutlinedTextField(
                 label = { Text(text = stringResource(commonR.string.label)) },
                 value = label,
                 onValueChange = onLabelUpdated,
+                textStyle = HATextStyle.UserInput,
                 singleLine = true,
                 modifier = Modifier
                     .fillMaxWidth(),
@@ -381,19 +318,120 @@ private fun ButtonWidgetConfigureView(
                 WidgetTextColorSelector(textColorIndex, onTextColorSelected)
             }
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(
-                    checked = isRequireAuthenticationChecked,
-                    onCheckedChange = { onRequireAuthenticationChecked(it) },
-                )
-                Text(text = stringResource(commonR.string.widget_checkbox_require_authentication))
-            }
+            RequireAuthCheckbox(isChecked = isRequireAuthenticationChecked, onChecked = onRequireAuthenticationChecked)
+
             HAAccentButton(
                 text = stringResource(commonR.string.add_widget),
                 onClick = onAddWidgetClicked,
                 modifier = Modifier.align(Alignment.End),
             )
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ActionTextFieldInput(
+    action: String,
+    serverActions: List<Action>,
+    onActionTextUpdated: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var isActionDropdownExpanded by remember { mutableStateOf(false) }
+    val actionFieldState = rememberTextFieldState(initialText = action)
+    Box {
+        LaunchedEffect(Unit) {
+            snapshotFlow { actionFieldState.text.toString() }.collectLatest {
+                onActionTextUpdated(it)
+            }
+        }
+        OutlinedTextField(
+            label = { Text(text = stringResource(commonR.string.label_action)) },
+            state = actionFieldState,
+            lineLimits = TextFieldLineLimits.SingleLine,
+            textStyle = HATextStyle.UserInput,
+            modifier = Modifier
+                .fillMaxWidth()
+                .onFocusChanged { state ->
+                    isActionDropdownExpanded = state.hasFocus
+                },
+        )
+        if (serverActions.isNotEmpty()) {
+            DropdownMenu(
+                expanded = isActionDropdownExpanded,
+                onDismissRequest = {
+                    isActionDropdownExpanded = false
+                },
+                properties = PopupProperties(focusable = false),
+            ) {
+                serverActions.forEach { action ->
+                    val text = "${action.domain}.${action.action}"
+                    DropdownMenuItem(
+                        text = { Text(text = text) },
+                        onClick = {
+                            actionFieldState.setTextAndPlaceCursorAtEnd(text)
+                            isActionDropdownExpanded = false
+                        },
+                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DynamicFieldInput(
+    index: Int,
+    field: ActionFieldBinder,
+    onDynamicFieldUpdated: (Int, ActionFieldBinder) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val fieldInputState = rememberTextFieldState(initialText = field.value as String)
+    LaunchedEffect(Unit) {
+        snapshotFlow { fieldInputState.text.toString() }.collectLatest {
+            onDynamicFieldUpdated(index, field)
+        }
+    }
+    OutlinedTextField(
+        label = { Text(text = field.field) },
+        state = fieldInputState,
+        lineLimits = TextFieldLineLimits.SingleLine,
+        textStyle = HATextStyle.UserInput,
+        modifier = Modifier
+            .fillMaxWidth(),
+    )
+}
+
+@Composable
+fun IconSelector(icon: IIcon, onIconSelectorClicked: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Text(text = stringResource(commonR.string.label_icon))
+        IconButton(
+            onClick = onIconSelectorClicked,
+            modifier = Modifier.size(24.dp),
+        ) {
+            com.mikepenz.iconics.compose.Image(
+                asset = icon,
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(colorResource(commonR.color.colorIcon)),
+            )
+        }
+    }
+}
+
+@Composable
+fun RequireAuthCheckbox(isChecked: Boolean, onChecked: (Boolean) -> Unit, modifier: Modifier = Modifier) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Checkbox(
+            checked = isChecked,
+            onCheckedChange = { onChecked(it) },
+        )
+        Text(text = stringResource(commonR.string.widget_checkbox_require_authentication))
     }
 }
 
@@ -523,7 +561,7 @@ private fun ButtonWidgetConfigureScreenPreview() {
             onBackgroundTypeSelected = {},
             isRequireAuthenticationChecked = false,
             onRequireAuthenticationChecked = {},
-            onAddWidgetClicked = {}
+            onAddWidgetClicked = {},
         )
     }
 }
