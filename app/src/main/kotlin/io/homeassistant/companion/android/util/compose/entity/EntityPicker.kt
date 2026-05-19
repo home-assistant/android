@@ -6,7 +6,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -41,12 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
@@ -55,7 +49,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.IIcon
@@ -67,6 +60,7 @@ import io.homeassistant.companion.android.common.compose.composable.HAHorizontal
 import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
 import io.homeassistant.companion.android.common.compose.composable.HASearchField
 import io.homeassistant.companion.android.common.compose.composable.HATextField
+import io.homeassistant.companion.android.common.compose.composable.consumeSheetScrollFling
 import io.homeassistant.companion.android.common.compose.composable.rememberHAModalBottomSheetState
 import io.homeassistant.companion.android.common.compose.theme.HABorderWidth
 import io.homeassistant.companion.android.common.compose.theme.HAColorScheme
@@ -412,16 +406,6 @@ private fun EntityPickerBottomSheet(
 ) {
     val screenHeight = safeScreenHeight() - HADimens.SPACE16
 
-    // Consume fling velocity at content boundaries to prevent BottomSheet bounce
-    val consumeFlingNestedScrollConnection = remember {
-        object : NestedScrollConnection {
-            override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset =
-                available
-
-            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity = available
-        }
-    }
-
     HAModalBottomSheet(
         bottomSheetState = bottomSheetState,
         onDismissRequest = onDismissRequest,
@@ -433,11 +417,7 @@ private fun EntityPickerBottomSheet(
             onEntitySelected = onEntitySelected,
             modifier = Modifier
                 .height(screenHeight)
-                .nestedScroll(consumeFlingNestedScrollConnection)
-                .pointerInput(Unit) {
-                    // Consume vertical drag gestures to prevent BottomSheet from interpreting them as collapse gestures
-                    detectVerticalDragGestures { _, _ -> }
-                },
+                .consumeSheetScrollFling(),
             dispatcher = dispatcher,
         )
     }
