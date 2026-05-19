@@ -6,6 +6,7 @@ import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,11 +25,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
@@ -40,6 +41,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Velocity
 import io.homeassistant.companion.android.common.R as commonR
@@ -54,6 +56,7 @@ import io.homeassistant.companion.android.common.compose.theme.LocalHAColorSchem
 import io.homeassistant.companion.android.settings.sensor.SensorDetailViewModel
 import io.homeassistant.companion.android.util.compose.safeScreenHeight
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /** Threshold above which the search field becomes visible to help users navigate long lists. */
@@ -85,15 +88,16 @@ internal fun SensorDetailSettingSheet(
     modifier: Modifier = Modifier,
 ) {
     val entries = remember(state.entries) {
-        SettingEntryList(state.entries.map { (id, label) -> SettingEntry(id, label) })
+        state.entries.map { (id, label) -> SettingEntry(id, label) }
     }
     val checkedValue = remember { state.entriesSelected.toMutableStateList() }
     var searchQuery by remember { mutableStateOf("") }
     val filteredEntries = rememberFilteredSettingEntries(entries, searchQuery)
-    val showSearch = entries.items.size > SEARCH_VISIBILITY_THRESHOLD
+    val showSearch = entries.size > SEARCH_VISIBILITY_THRESHOLD
 
     val bottomSheetState = rememberHAModalBottomSheetState(skipPartiallyExpanded = true)
     val screenHeight = safeScreenHeight() - HADimens.SPACE16
+    val coroutineScope = rememberCoroutineScope()
 
     val nestedScrollFlingGuard = remember { nestedScrollFlingGuard() }
 
@@ -112,6 +116,7 @@ internal fun SensorDetailSettingSheet(
                     // as collapse gestures while the user scrolls the entry list.
                     detectVerticalDragGestures { _, _ -> }
                 },
+            verticalArrangement = Arrangement.spacedBy(HADimens.SPACE3),
         ) {
             SheetHeader(
                 title = title,
@@ -127,10 +132,18 @@ internal fun SensorDetailSettingSheet(
             )
             SheetFooter(
                 saveEnabled = !state.loading,
-                onCancel = onDismiss,
+                onCancel = {
+                    coroutineScope.launch {
+                        bottomSheetState.hide()
+                        onDismiss()
+                    }
+                },
                 onSave = {
-                    val joinedValue = joinSelectedValues(checkedValue)
-                    onSave(state.copy(setting = state.setting.copy(value = joinedValue)))
+                    coroutineScope.launch {
+                        bottomSheetState.hide()
+                        val joinedValue = joinSelectedValues(checkedValue)
+                        onSave(state.copy(setting = state.setting.copy(value = joinedValue)))
+                    }
                 },
             )
         }
@@ -138,40 +151,36 @@ internal fun SensorDetailSettingSheet(
 }
 
 @Composable
-private fun SheetHeader(
+private fun ColumnScope.SheetHeader(
     title: String,
     showSearch: Boolean,
     searchQuery: String,
     onQueryChange: (String) -> Unit,
-    modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier) {
-        Text(
-            text = title,
-            style = HATextStyle.HeadlineMedium.copy(textAlign = TextAlign.Start),
-            modifier = Modifier.padding(vertical = HADimens.SPACE3),
+    Text(
+        text = title,
+        style = HATextStyle.HeadlineMedium.copy(textAlign = TextAlign.Start),
+    )
+    if (showSearch) {
+        HASearchField(
+            query = searchQuery,
+            onQueryChange = onQueryChange,
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = null,
+                    tint = LocalHAColorScheme.current.colorOnNeutralNormal,
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
         )
-        if (showSearch) {
-            HASearchField(
-                query = searchQuery,
-                onQueryChange = onQueryChange,
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = null,
-                        tint = LocalHAColorScheme.current.colorOnNeutralNormal,
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
     }
 }
 
 @Composable
 private fun SheetEntryList(
     loading: Boolean,
-    entries: SettingEntryList,
+    entries: List<SettingEntry>,
     checkedValue: SnapshotStateList<String>,
     modifier: Modifier = Modifier,
 ) {
@@ -184,7 +193,7 @@ private fun SheetEntryList(
         }
     } else {
         LazyColumn(modifier = modifier.fillMaxWidth()) {
-            items(entries.items, key = { it.id }) { entry ->
+            items(entries, key = { it.id }) { entry ->
                 BottomSheetSettingRow(
                     label = entry.label,
                     checked = checkedValue.contains(entry.id),
@@ -209,9 +218,7 @@ private fun SheetFooter(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = HADimens.SPACE3),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.End,
     ) {
         HAPlainButton(
@@ -228,15 +235,8 @@ private fun SheetFooter(
 }
 
 /** Identifier-and-label pair displayed inside the allow-list sheet. */
+@VisibleForTesting
 internal data class SettingEntry(val id: String, val label: String)
-
-/**
- * Immutable wrapper around a [List] of [SettingEntry] so the Compose Compiler can treat the
- * collection as stable when passed to composables. The underlying [List] is shared by reference
- * and is expected to be effectively immutable (constructed once per allow-list snapshot).
- */
-@Immutable
-internal data class SettingEntryList(val items: List<SettingEntry>)
 
 /**
  * Computes the filtered entries off the UI thread.
@@ -245,12 +245,12 @@ internal data class SettingEntryList(val items: List<SettingEntry>)
  * [Dispatchers.Default] so long lists do not freeze the sheet.
  */
 @Composable
-private fun rememberFilteredSettingEntries(entries: SettingEntryList, searchQuery: String): SettingEntryList {
+private fun rememberFilteredSettingEntries(entries: List<SettingEntry>, searchQuery: String): List<SettingEntry> {
     var filtered by remember(entries) { mutableStateOf(entries) }
 
     LaunchedEffect(entries, searchQuery) {
         filtered = withContext(Dispatchers.Default) {
-            SettingEntryList(filterSettingEntries(entries.items, searchQuery))
+            filterSettingEntries(entries, searchQuery)
         }
     }
 
@@ -282,27 +282,6 @@ internal fun joinSelectedValues(values: List<String>): String {
 }
 
 /**
- * Splits a sensor setting label into a primary line and an optional secondary line.
- *
- * Sensor allow-list entries are formatted as `"<primary>\n(<secondary>)"` where the secondary
- * line is wrapped in parentheses (for example `"Chrome\n(com.google.chrome)"`). Only the first
- * newline is used to separate the two parts; any further newlines remain inside the secondary
- * value. Surrounding parentheses are stripped from the secondary value when, and only when, both
- * the leading `(` and trailing `)` are present, matching [String.removeSurrounding] semantics.
- *
- * Shared between [SensorDetailSettingSheet] (the new bottom sheet) and the legacy Material 2
- * dialog row in `SensorDetailView` so both render identical primary/secondary text.
- *
- * @return a pair of `(primary, secondary)` where `secondary` is `null` for single-line labels.
- */
-internal fun parseSettingLabel(label: String): Pair<String, String?> {
-    val parts = label.split("\n", limit = 2)
-    val primaryText = parts[0]
-    val secondaryText = parts.getOrNull(1)?.removeSurrounding("(", ")")
-    return primaryText to secondaryText
-}
-
-/**
  * Returns a [NestedScrollConnection] that absorbs fling velocity and post-scroll offsets to prevent
  * the bottom sheet from collapsing while the user scrolls or flings the entry list.
  */
@@ -326,13 +305,13 @@ private fun BottomSheetSettingRow(
     onClick: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val (primaryText, secondaryText) = parseSettingLabel(label)
+    val parsed = parseSettingLabel(label)
     val colorScheme = LocalHAColorScheme.current
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable { onClick(!checked) }
+            .clickable(role = Role.Checkbox) { onClick(!checked) }
             .heightIn(min = HADimens.SPACE16),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -343,16 +322,16 @@ private fun BottomSheetSettingRow(
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = primaryText,
+                text = parsed.primary,
                 style = HATextStyle.Body.copy(
                     textAlign = TextAlign.Start,
                     color = colorScheme.colorTextPrimary,
                 ),
             )
-            if (secondaryText != null) {
+            if (parsed.secondary != null) {
                 Spacer(Modifier.height(HADimens.SPACE1))
                 Text(
-                    text = secondaryText,
+                    text = parsed.secondary,
                     style = HATextStyle.BodyMedium.copy(textAlign = TextAlign.Start),
                 )
             }
