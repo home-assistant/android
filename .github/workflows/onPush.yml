@@ -83,15 +83,16 @@ jobs:
         run: |
           echo $VERSION_CODE > ./app/build/outputs/version_code.txt
 
-      - name: Create draft Github Pre-Release
+      - name: Create or update GitHub Pre-Release
         if: github.event.inputs.beta == 'true'
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
-        with:
-          tag_name: ${{ steps.rel_number.outputs.version }}
-          body_path: ./app/build/outputs/changelogGithub
-          draft: true
-          prerelease: true
-          files: |
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REL_VERSION: ${{ steps.rel_number.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          assets=(
             ./app/build/outputs/apk/full/release/app-full-release.apk
             ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
             ./app/build/outputs/version_code.txt
@@ -100,12 +101,20 @@ jobs:
             ./automotive/build/outputs/apk/minimal/release/automotive-minimal-release.apk
             ./strings.zip
             ./app/src/main/res/xml/locales_config.xml
+          )
 
-      - name: Publish Pre-Release
-        if: github.event.inputs.beta == 'true'
-        run: gh release edit ${{ steps.rel_number.outputs.version }} --draft=false
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # If the prerelease already exists, publish it by updating assets and clearing draft mode.
+          if gh release view "$REL_VERSION" >/dev/null 2>&1; then
+            gh release upload "$REL_VERSION" "${assets[@]}" --clobber
+            gh release edit "$REL_VERSION" \
+              --draft=false \
+              --prerelease \
+              --notes-file ./app/build/outputs/changelogGithub
+          else
+            gh release create "$REL_VERSION" "${assets[@]}" \
+              --prerelease \
+              --notes-file ./app/build/outputs/changelogGithub
+          fi
 
       - name: Deploy to Firebase
         env:
