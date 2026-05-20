@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.launch
 
 import android.app.PictureInPictureParams
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -56,7 +57,16 @@ import kotlinx.parcelize.Parcelize
 
 private const val DEEP_LINK_KEY = "deep_link_key"
 
-private const val EXTRA_SHOW_WHEN_LOCKED = "show_when_locked"
+/**
+ * Fully qualified class name of the non-exported `<activity-alias>` declared in the manifest.
+ *
+ * Trusted in-process callers route through this alias to bring up the dashboard over the
+ * keyguard. [LaunchActivity.onCreate] only calls [android.app.Activity.setShowWhenLocked] when
+ * the inbound intent's component matches it — because the alias is `android:exported="false"`,
+ * external apps cannot use it and therefore cannot force the activity to render over the lock
+ * screen by themselves.
+ */
+private const val LOCK_SCREEN_ALIAS_CLASS = "io.homeassistant.companion.android.launch.LaunchOverLockScreen"
 
 /**
  * Main entry point of the application, responsible for holding the whole navigation graph
@@ -115,13 +125,23 @@ class LaunchActivity : AppCompatActivity() {
     }
 
     companion object {
+        /**
+         * Builds an intent to start [LaunchActivity].
+         *
+         * @param showWhenLocked when `true`, routes through the non-exported
+         *   `LaunchOverLockScreen` activity-alias so the dashboard renders over the keyguard.
+         *   Intended for trusted in-process callers (e.g. the device controls panel) — external
+         *   apps cannot reach the alias and therefore cannot opt into this behavior.
+         */
         fun newInstance(context: Context, deepLink: DeepLink? = null, showWhenLocked: Boolean = false): Intent {
-            return Intent(context, LaunchActivity::class.java).apply {
+            return Intent().apply {
+                component = if (showWhenLocked) {
+                    ComponentName(context, LOCK_SCREEN_ALIAS_CLASS)
+                } else {
+                    ComponentName(context, LaunchActivity::class.java)
+                }
                 if (deepLink != null) {
                     putExtra(DEEP_LINK_KEY, deepLink)
-                }
-                if (showWhenLocked) {
-                    putExtra(EXTRA_SHOW_WHEN_LOCKED, showWhenLocked)
                 }
             }
         }
@@ -137,9 +157,12 @@ class LaunchActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Must run before super.onCreate so the window flag is set before the platform decides
-        // whether to draw over the keyguard. Only applied when the caller opts in explicitly.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 && intent.hasExtra(EXTRA_SHOW_WHEN_LOCKED)) {
-            setShowWhenLocked(intent.getBooleanExtra(EXTRA_SHOW_WHEN_LOCKED, false))
+        // whether to draw over the keyguard. Gated on the non-exported [LOCK_SCREEN_ALIAS_CLASS]
+        // so external apps reaching the public LAUNCHER intent-filter cannot force this on.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 &&
+            intent.component?.className == LOCK_SCREEN_ALIAS_CLASS
+        ) {
+            setShowWhenLocked(true)
         }
 
         super.onCreate(savedInstanceState)
