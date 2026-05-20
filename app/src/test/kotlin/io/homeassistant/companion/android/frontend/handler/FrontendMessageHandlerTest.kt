@@ -32,6 +32,7 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticTy
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovConfigureDeviceMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovConfigureDevicePayload
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovScanMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterCommissionMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistPayload
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistSettingsMessage
@@ -39,6 +40,7 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenSett
 import io.homeassistant.companion.android.frontend.externalbus.incoming.TagWriteMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.TagWritePayload
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ThemeUpdateMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.ThreadImportCredentialsMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.UnknownIncomingMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.OutgoingExternalBusMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage
@@ -374,6 +376,58 @@ class FrontendMessageHandlerTest {
             val result = awaitItem()
             assertTrue(result is FrontendHandlerEvent.ConfigureImprovDevice)
             assertEquals("Smart Plug", (result as FrontendHandlerEvent.ConfigureImprovDevice).deviceName)
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given matter commission message when messageResults then emits StartMatterCommissioning with id`() = runTest {
+        val message = MatterCommissionMessage(id = 60)
+        every { externalBusRepository.incomingMessages() } returns flowOf(message)
+
+        handler.messageResults().test {
+            val result = awaitItem()
+            assertTrue(result is FrontendHandlerEvent.StartMatterCommissioning)
+            assertEquals(60, (result as FrontendHandlerEvent.StartMatterCommissioning).messageId)
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given matter commission message without id when messageResults then emits StartMatterCommissioning with null id`() = runTest {
+        val message = MatterCommissionMessage(id = null)
+        every { externalBusRepository.incomingMessages() } returns flowOf(message)
+
+        handler.messageResults().test {
+            val result = awaitItem()
+            assertTrue(result is FrontendHandlerEvent.StartMatterCommissioning)
+            assertEquals(null, (result as FrontendHandlerEvent.StartMatterCommissioning).messageId)
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given thread import_credentials message when messageResults then emits ImportThreadCredentials with id`() = runTest {
+        val message = ThreadImportCredentialsMessage(id = 61)
+        every { externalBusRepository.incomingMessages() } returns flowOf(message)
+
+        handler.messageResults().test {
+            val result = awaitItem()
+            assertTrue(result is FrontendHandlerEvent.ImportThreadCredentials)
+            assertEquals(61, (result as FrontendHandlerEvent.ImportThreadCredentials).messageId)
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given thread import_credentials message without id when messageResults then emits ImportThreadCredentials with null id`() = runTest {
+        val message = ThreadImportCredentialsMessage(id = null)
+        every { externalBusRepository.incomingMessages() } returns flowOf(message)
+
+        handler.messageResults().test {
+            val result = awaitItem()
+            assertTrue(result is FrontendHandlerEvent.ImportThreadCredentials)
+            assertEquals(null, (result as FrontendHandlerEvent.ImportThreadCredentials).messageId)
             expectNoEvents()
         }
     }

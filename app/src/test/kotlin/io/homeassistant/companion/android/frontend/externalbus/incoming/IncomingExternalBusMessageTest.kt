@@ -273,4 +273,44 @@ class IncomingExternalBusMessageTest {
         assertEquals("light.living_room", addToMessage.payload.entityId)
         assertEquals("dGVzdA==", addToMessage.payload.appPayload)
     }
+
+    @Test
+    fun `Given matter commission JSON then parses to MatterCommissionMessage`() {
+        val json = """{"type":"matter/commission","id":60}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(MatterCommissionMessage::class.java, message)
+        assertEquals(60, (message as MatterCommissionMessage).id)
+    }
+
+    @Test
+    fun `Given matter commission JSON without id then parses to MatterCommissionMessage with null id`() {
+        val json = """{"type":"matter/commission"}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(MatterCommissionMessage::class.java, message)
+        assertNull((message as MatterCommissionMessage).id)
+    }
+
+    @Test
+    fun `Given thread import_credentials JSON then parses to ThreadImportCredentialsMessage`() {
+        val json = """{"type":"thread/import_credentials","id":61}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(ThreadImportCredentialsMessage::class.java, message)
+        assertEquals(61, (message as ThreadImportCredentialsMessage).id)
+    }
+
+    @Test
+    fun `Given thread import_credentials JSON without id then parses to ThreadImportCredentialsMessage with null id`() {
+        val json = """{"type":"thread/import_credentials"}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(ThreadImportCredentialsMessage::class.java, message)
+        assertNull((message as ThreadImportCredentialsMessage).id)
+    }
 }
