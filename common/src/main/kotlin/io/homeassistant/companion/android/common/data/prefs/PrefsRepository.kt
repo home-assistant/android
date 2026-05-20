@@ -82,6 +82,9 @@ interface PrefsRepository {
 
     suspend fun setKeepScreenOnEnabled(enabled: Boolean)
 
+    /** Emits the current "Keep screen on" preference immediately on collection, then on every change. */
+    suspend fun keepScreenOnFlow(): Flow<Boolean>
+
     suspend fun getScreenOrientation(): String?
 
     suspend fun saveScreenOrientation(orientation: String?)

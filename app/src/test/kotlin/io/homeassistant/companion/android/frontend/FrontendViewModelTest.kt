@@ -64,6 +64,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -94,9 +95,11 @@ class FrontendViewModelTest {
     private val gestureHandler: FrontendGestureHandler = mockk(relaxed = true)
     private val zoomSettingsFlow = MutableStateFlow(ZoomSettings())
     private val autoPlayVideoFlow = MutableStateFlow(false)
+    private val keepScreenOnFlow = MutableStateFlow(false)
     private val prefsRepository: PrefsRepository = mockk(relaxed = true) {
         coEvery { this@mockk.zoomSettingsFlow() } returns this@FrontendViewModelTest.zoomSettingsFlow
         coEvery { this@mockk.autoPlayVideoFlow() } returns this@FrontendViewModelTest.autoPlayVideoFlow
+        coEvery { this@mockk.keepScreenOnFlow() } returns this@FrontendViewModelTest.keepScreenOnFlow
     }
 
     private val serverId = 1
@@ -1737,6 +1740,36 @@ class FrontendViewModelTest {
             advanceUntilIdle()
 
             assertEquals(value, viewModel.autoPlayVideoEnabled.value)
+        }
+    }
+
+    @Nested
+    inner class KeepScreenOnSetting {
+
+        @Test
+        fun `Given pref flow emits new value when collected then exposed StateFlow reflects it`() = runTest {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            assertFalse(viewModel.keepScreenOnEnabled.value)
+
+            keepScreenOnFlow.value = true
+            advanceUntilIdle()
+
+            assertTrue(viewModel.keepScreenOnEnabled.value)
+        }
+
+        @ParameterizedTest
+        @ValueSource(booleans = [true, false])
+        fun `Given pref flow seeded with value when ViewModel constructed then exposed StateFlow has that value`(
+            value: Boolean,
+        ) = runTest {
+            keepScreenOnFlow.value = value
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            assertEquals(value, viewModel.keepScreenOnEnabled.value)
         }
     }
 }

@@ -171,6 +171,21 @@ class PrefsRepositoryImplTest {
         }
     }
 
+    @Test
+    fun `Given collecting flow when keep screen on changes then updated keep screen on enabled is emitted`() = runTest {
+        coEvery { localStorage.getBoolean("keep_screen_on_enabled") } returns false
+
+        repository.keepScreenOnFlow().test {
+            assertFalse(awaitItem())
+
+            coEvery { localStorage.getBoolean("keep_screen_on_enabled") } returns true
+            keyChangesFlow.emit("keep_screen_on_enabled")
+
+            assertTrue(awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
     @Nested
     inner class ZoomSettingsFlow {
 
