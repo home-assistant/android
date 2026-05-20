@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend.permissions
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.os.Build
 import android.webkit.PermissionRequest as WebViewPermissionRequest
@@ -99,6 +100,29 @@ internal class PermissionManager @VisibleForTesting constructor(
         }
         if (granted != null) {
             onNotificationPermissionResult(serverId = serverId, granted = granted)
+        }
+    }
+
+    /**
+     * Ensures the app has Android 17+'s local network access permission so the WebView and
+     * websocket layers can reach a Home Assistant instance over the LAN.
+     *
+     * Returns `true` immediately on pre-API 37 devices (local network access is implicit) and when
+     * the permission is already granted. Otherwise enqueues a [PermissionRequest.LocalNetwork],
+     * suspends until the user responds, and returns whether they granted it. Callers should still
+     * attempt the URL load on denial — the cloud fallback or non-LAN setups may continue to work.
+     *
+     * @return `true` if local network access is available (granted or not required); `false` if the
+     *         user declined the permission
+     */
+    @SuppressLint("NewApi")
+    suspend fun checkLocalNetworkPermission(): Boolean {
+        if (sdkInt < Build.VERSION_CODES.CINNAMON_BUN) return true
+        if (permissionChecker.hasPermission(Manifest.permission.ACCESS_LOCAL_NETWORK)) return true
+
+        Timber.d("Local network permission required, awaiting user response")
+        return queue.awaitResult { onResult ->
+            PermissionRequest.LocalNetwork(onResult = onResult)
         }
     }
 

@@ -511,6 +511,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private fun loadServer() {
         urlFlowJob?.cancel()
         urlFlowJob = viewModelScope.launch {
+            permissionManager.checkLocalNetworkPermission()
             val currentState = _viewState.value
             val path = when (currentState) {
                 is FrontendViewState.LoadServer -> currentState.path

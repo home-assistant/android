@@ -533,6 +533,62 @@ class PermissionManagerTest {
 
     // endregion
 
+    // region Local network permission (Android 17+)
+
+    @Nested
+    inner class CheckLocalNetworkPermission {
+
+        @Test
+        fun `Given pre-API 37 then returns true without checking permission`() = runTest {
+            val manager = createManager(sdkInt = Build.VERSION_CODES.CINNAMON_BUN - 1)
+            assertTrue(manager.checkLocalNetworkPermission())
+            assertNull(manager.pendingPermissionRequest.value)
+        }
+
+        @Test
+        fun `Given API 37 when permission already granted then returns true`() = runTest {
+            every { permissionChecker.hasPermission(android.Manifest.permission.ACCESS_LOCAL_NETWORK) } returns true
+
+            val manager = createManager(sdkInt = Build.VERSION_CODES.CINNAMON_BUN)
+            assertTrue(manager.checkLocalNetworkPermission())
+            assertNull(manager.pendingPermissionRequest.value)
+        }
+
+        @Test
+        fun `Given API 37 when permission not granted then emits pending request`() = runTest {
+            every { permissionChecker.hasPermission(android.Manifest.permission.ACCESS_LOCAL_NETWORK) } returns false
+
+            val manager = createManager(sdkInt = Build.VERSION_CODES.CINNAMON_BUN)
+            val result = async { manager.checkLocalNetworkPermission() }
+            advanceUntilIdle()
+
+            val pending = manager.pendingPermissionRequest.value
+            assertInstanceOf(PermissionRequest.LocalNetwork::class.java, pending)
+            assertEquals(listOf(android.Manifest.permission.ACCESS_LOCAL_NETWORK), pending?.permissions)
+
+            (pending as PermissionRequest.LocalNetwork).onResult(true)
+            advanceUntilIdle()
+            assertTrue(result.await())
+            assertNull(manager.pendingPermissionRequest.value)
+        }
+
+        @Test
+        fun `Given API 37 when user denies then returns false`() = runTest {
+            every { permissionChecker.hasPermission(android.Manifest.permission.ACCESS_LOCAL_NETWORK) } returns false
+
+            val manager = createManager(sdkInt = Build.VERSION_CODES.CINNAMON_BUN)
+            val result = async { manager.checkLocalNetworkPermission() }
+            advanceUntilIdle()
+            (manager.pendingPermissionRequest.value as PermissionRequest.LocalNetwork).onResult(false)
+            advanceUntilIdle()
+
+            assertFalse(result.await())
+            assertNull(manager.pendingPermissionRequest.value)
+        }
+    }
+
+    // endregion
+
     // region Guard against concurrent requests
 
     @Nested

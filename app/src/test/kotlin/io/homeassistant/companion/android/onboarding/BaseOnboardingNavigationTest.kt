@@ -59,6 +59,7 @@ internal abstract class BaseOnboardingNavigationTest {
         hideExistingServers: Boolean = false,
         skipWelcome: Boolean = false,
         hasLocationTracking: Boolean = true,
+        permissionResultRegistry: ActivityResultRegistry = FakePermissionResultRegistry(grantAll = true),
     ) {
         composeTestRule.setContent {
             navController = TestNavHostController(LocalContext.current)
@@ -66,8 +67,7 @@ internal abstract class BaseOnboardingNavigationTest {
 
             CompositionLocalProvider(
                 LocalActivityResultRegistryOwner provides object : ActivityResultRegistryOwner {
-                    override val activityResultRegistry: ActivityResultRegistry =
-                        FakePermissionResultRegistry(true)
+                    override val activityResultRegistry: ActivityResultRegistry = permissionResultRegistry
                 },
             ) {
                 NavHost(
