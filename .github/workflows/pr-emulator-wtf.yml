@@ -54,7 +54,7 @@ jobs:
             exit 1
           fi
           while IFS= read -r line; do
-            if [[ ! "$line" =~ ^model=Pixel7,version=[0-9]+$ ]]; then
+            if [[ ! "$line" =~ ^model=Pixel7,version=(2[3-9]|3[0-9]|40)$ ]]; then
               echo "::error::Invalid line in devices.txt"
               exit 1
             fi
