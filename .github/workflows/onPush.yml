@@ -103,7 +103,7 @@ jobs:
             ./app/src/main/res/xml/locales_config.xml
           )
 
-          # If the prerelease already exists, publish it by updating assets and clearing draft mode.
+          # If a release already exists for this tag, update its assets and release metadata.
           if gh release view "$REL_VERSION" >/dev/null 2>&1; then
             gh release upload "$REL_VERSION" "${assets[@]}" --clobber
             gh release edit "$REL_VERSION" \
