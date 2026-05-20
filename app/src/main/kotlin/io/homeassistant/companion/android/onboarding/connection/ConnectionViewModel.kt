@@ -116,6 +116,14 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
 
     init {
         viewModelScope.launch {
+            // Pre-set the mTLS flag before emitting the auth URL to handle TLS session
+            // resumption. See preInitializeTLSClientAuthState for details.
+            try {
+                webViewClient.preInitializeTLSClientAuthState(rawUrl.toHttpUrl().host)
+            } catch (_: IllegalArgumentException) {
+                // Malformed URL: this is a best-effort pre-initialisation;
+                // buildAuthUrl below will surface the error to the user.
+            }
             buildAuthUrl(rawUrl)
         }
     }
