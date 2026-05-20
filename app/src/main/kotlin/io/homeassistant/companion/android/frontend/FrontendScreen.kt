@@ -8,6 +8,7 @@ import android.webkit.CookieManager
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.activity.compose.LocalActivity
 import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -52,6 +53,7 @@ import io.homeassistant.companion.android.common.compose.composable.HAPlainButto
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
 import io.homeassistant.companion.android.frontend.dialog.PendingDialogHandler
@@ -124,6 +126,7 @@ internal fun FrontendScreen(
     val pendingDialog by viewModel.pendingDialog.collectAsStateWithLifecycle()
     val pendingFileChooser by viewModel.pendingFileChooser.collectAsStateWithLifecycle()
     val autoPlayVideoEnabled by viewModel.autoPlayVideoEnabled.collectAsStateWithLifecycle()
+    val screenOrientation by viewModel.screenOrientation.collectAsStateWithLifecycle()
 
     // The fullscreen View handed over by the WebView is Activity-scoped. Keep it in screen
     // state so it does not leak across configuration changes via the ViewModel.
@@ -173,6 +176,7 @@ internal fun FrontendScreen(
         onGesture = viewModel::onGesture,
         onExoPlayerFullscreenChanged = viewModel::onExoPlayerFullscreenChanged,
         autoPlayVideoEnabled = autoPlayVideoEnabled,
+        screenOrientation = screenOrientation,
         onPipReadinessChanged = onPipReadinessChanged,
         modifier = modifier,
     )
@@ -198,6 +202,7 @@ internal fun FrontendScreenContent(
     modifier: Modifier = Modifier,
     customView: View? = null,
     autoPlayVideoEnabled: Boolean = false,
+    screenOrientation: ScreenOrientation = ScreenOrientation.SYSTEM,
     pendingPermissionRequest: PermissionRequest? = null,
     pendingDialog: FrontendDialog? = null,
     pendingFileChooser: FileChooserRequest? = null,
@@ -231,6 +236,8 @@ internal fun FrontendScreenContent(
     FileChooserEffect(
         pendingRequest = pendingFileChooser,
     )
+
+    ScreenOrientationEffect(orientation = screenOrientation)
 
     Box(modifier = modifier.fillMaxSize()) {
         // Always render WebView at base layer
@@ -641,6 +648,25 @@ private fun WebViewEffects(
             if (webView.settings.mediaPlaybackRequiresUserGesture == target) return@LaunchedEffect
             webView.settings.mediaPlaybackRequiresUserGesture = target
             webView.reload()
+        }
+    }
+}
+
+/**
+ * Applies the user's "Screen orientation" preference to the hosting activity's
+ * `requestedOrientation` while the frontend is composed.
+ *
+ * On dispose the previous value is restored so leaving the dashboard (e.g. navigating to
+ * settings) does not leak this preference to other screens that share the same activity.
+ */
+@Composable
+private fun ScreenOrientationEffect(orientation: ScreenOrientation) {
+    val activity = LocalActivity.current ?: return
+    DisposableEffect(activity, orientation) {
+        val previous = activity.requestedOrientation
+        activity.requestedOrientation = orientation.activityInfo
+        onDispose {
+            activity.requestedOrientation = previous
         }
     }
 }

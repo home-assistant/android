@@ -6,7 +6,6 @@ import android.app.PictureInPictureParams
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.graphics.Rect
 import android.net.Uri
@@ -1354,19 +1353,7 @@ class WebViewActivity :
             SensorWorker.start(this@WebViewActivity)
             WebsocketManager.start(this@WebViewActivity)
 
-            requestedOrientation = when (presenter.getScreenOrientation()) {
-                getString(
-                    R.string.screen_orientation_option_array_value_portrait,
-                ),
-                -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-
-                getString(
-                    R.string.screen_orientation_option_array_value_landscape,
-                ),
-                -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-
-                else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-            }
+            requestedOrientation = presenter.getScreenOrientation().activityInfo
 
             if (presenter.isKeepScreenOnEnabled()) {
                 window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)

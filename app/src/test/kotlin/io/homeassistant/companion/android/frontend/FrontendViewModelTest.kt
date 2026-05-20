@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.common.data.connectivity.ConnectivityC
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.data.prefs.ZoomSettings
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.database.authentication.Authentication
@@ -94,9 +95,11 @@ class FrontendViewModelTest {
     private val gestureHandler: FrontendGestureHandler = mockk(relaxed = true)
     private val zoomSettingsFlow = MutableStateFlow(ZoomSettings())
     private val autoPlayVideoFlow = MutableStateFlow(false)
+    private val screenOrientationFlow = MutableStateFlow(ScreenOrientation.SYSTEM)
     private val prefsRepository: PrefsRepository = mockk(relaxed = true) {
         coEvery { this@mockk.zoomSettingsFlow() } returns this@FrontendViewModelTest.zoomSettingsFlow
         coEvery { this@mockk.autoPlayVideoFlow() } returns this@FrontendViewModelTest.autoPlayVideoFlow
+        coEvery { this@mockk.screenOrientationFlow() } returns this@FrontendViewModelTest.screenOrientationFlow
     }
 
     private val serverId = 1
@@ -1737,6 +1740,33 @@ class FrontendViewModelTest {
             advanceUntilIdle()
 
             assertEquals(value, viewModel.autoPlayVideoEnabled.value)
+        }
+    }
+
+    @Nested
+    inner class ScreenOrientationSetting {
+
+        @Test
+        fun `Given pref flow emits new value when collected then exposed StateFlow reflects it`() = runTest {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            assertEquals(ScreenOrientation.SYSTEM, viewModel.screenOrientation.value)
+
+            screenOrientationFlow.value = ScreenOrientation.LANDSCAPE
+            advanceUntilIdle()
+
+            assertEquals(ScreenOrientation.LANDSCAPE, viewModel.screenOrientation.value)
+        }
+
+        @Test
+        fun `Given pref flow seeded with portrait when ViewModel constructed then exposed StateFlow has portrait`() = runTest {
+            screenOrientationFlow.value = ScreenOrientation.PORTRAIT
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            assertEquals(ScreenOrientation.PORTRAIT, viewModel.screenOrientation.value)
         }
     }
 }

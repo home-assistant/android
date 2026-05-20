@@ -12,6 +12,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.settings.SettingsDao
@@ -112,7 +113,7 @@ class SettingsPresenterImpl @Inject constructor(
             "themes" -> nightModeManager.getCurrentNightMode().storageValue
             "languages" -> langsManager.getCurrentLang()
             "page_zoom" -> prefsRepository.getPageZoomLevel().toString()
-            "screen_orientation" -> prefsRepository.getScreenOrientation()
+            "screen_orientation" -> prefsRepository.getScreenOrientation().storageValue
             else -> throw IllegalArgumentException("No string found by this key: $key")
         }
     }
@@ -123,7 +124,7 @@ class SettingsPresenterImpl @Inject constructor(
                 "themes" -> nightModeManager.saveNightMode(NightModeTheme.fromStorageValue(value))
                 "languages" -> langsManager.saveLang(value)
                 "page_zoom" -> prefsRepository.setPageZoomLevel(value?.toIntOrNull())
-                "screen_orientation" -> prefsRepository.saveScreenOrientation(value)
+                "screen_orientation" -> prefsRepository.saveScreenOrientation(ScreenOrientation.fromStorageValue(value))
                 else -> throw IllegalArgumentException("No string found by this key: $key")
             }
         }
