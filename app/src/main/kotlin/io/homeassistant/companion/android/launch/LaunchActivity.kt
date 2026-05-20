@@ -56,6 +56,8 @@ import kotlinx.parcelize.Parcelize
 
 private const val DEEP_LINK_KEY = "deep_link_key"
 
+private const val EXTRA_SHOW_WHEN_LOCKED = "show_when_locked"
+
 /**
  * Main entry point of the application, responsible for holding the whole navigation graph
  * and triggering lifecycle-based refresh of background work.
@@ -113,10 +115,13 @@ class LaunchActivity : AppCompatActivity() {
     }
 
     companion object {
-        fun newInstance(context: Context, deepLink: DeepLink? = null): Intent {
+        fun newInstance(context: Context, deepLink: DeepLink? = null, showWhenLocked: Boolean = false): Intent {
             return Intent(context, LaunchActivity::class.java).apply {
                 if (deepLink != null) {
                     putExtra(DEEP_LINK_KEY, deepLink)
+                }
+                if (showWhenLocked) {
+                    putExtra(EXTRA_SHOW_WHEN_LOCKED, showWhenLocked)
                 }
             }
         }
@@ -131,6 +136,12 @@ class LaunchActivity : AppCompatActivity() {
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Must run before super.onCreate so the window flag is set before the platform decides
+        // whether to draw over the keyguard. Only applied when the caller opts in explicitly.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 && intent.hasExtra(EXTRA_SHOW_WHEN_LOCKED)) {
+            setShowWhenLocked(intent.getBooleanExtra(EXTRA_SHOW_WHEN_LOCKED, false))
+        }
+
         super.onCreate(savedInstanceState)
         val splashScreen = installSplashScreen()
 

@@ -151,6 +151,28 @@ class LaunchActivityTest {
         }
     }
 
+    @Test
+    fun `Given showWhenLocked is true when launched then activity is shown over the lock screen`() {
+        val intent = LaunchActivity.newInstance(ApplicationProvider.getApplicationContext(), showWhenLocked = true)
+
+        ActivityScenario.launch<LaunchActivity>(intent).use { scenario ->
+            scenario.onActivity { activity ->
+                assertTrue(shadowOf(activity).showWhenLocked)
+            }
+        }
+    }
+
+    @Test
+    fun `Given showWhenLocked is false when launched then activity is not shown over the lock screen`() {
+        val intent = LaunchActivity.newInstance(ApplicationProvider.getApplicationContext(), showWhenLocked = false)
+
+        ActivityScenario.launch<LaunchActivity>(intent).use { scenario ->
+            scenario.onActivity { activity ->
+                assertFalse(shadowOf(activity).showWhenLocked)
+            }
+        }
+    }
+
     private fun setPipFeatureAvailable(available: Boolean) {
         val context = ApplicationProvider.getApplicationContext<Context>()
         shadowOf(context.packageManager)
