@@ -11,7 +11,9 @@ import androidx.activity.result.ActivityResultRegistry
 import androidx.activity.result.ActivityResultRegistryOwner
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -49,6 +51,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
@@ -596,6 +599,143 @@ class FrontendScreenTest {
 
         composeTestRule.runOnIdle {
             assertNull(captured.lastOrNull())
+        }
+    }
+
+    @Test
+    fun `Given keepScreenOnEnabled is true then host view keepScreenOn is set`() {
+        var capturedView: View? = null
+        composeTestRule.setContent {
+            capturedView = LocalView.current
+            FrontendScreenContent(
+                onBackClick = {},
+                viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
+                webViewClient = WebViewClient(),
+                webChromeClient = WebChromeClient(),
+                frontendJsCallback = FrontendJsBridge.noOp,
+                onBlockInsecureRetry = {},
+                onOpenExternalLink = {},
+                onBlockInsecureHelpClick = {},
+                onOpenSettings = {},
+                onChangeSecurityLevel = {},
+                onOpenLocationSettings = {},
+                onConfigureHomeNetwork = { _ -> },
+                onSecurityLevelHelpClick = {},
+                onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
+                keepScreenOnEnabled = true,
+            )
+        }
+
+        composeTestRule.runOnIdle {
+            assertTrue("host view should keep the screen on when preference is enabled", capturedView!!.keepScreenOn)
+        }
+    }
+
+    @Test
+    fun `Given keepScreenOnEnabled is false then host view keepScreenOn is cleared`() {
+        var capturedView: View? = null
+        composeTestRule.setContent {
+            capturedView = LocalView.current
+            FrontendScreenContent(
+                onBackClick = {},
+                viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
+                webViewClient = WebViewClient(),
+                webChromeClient = WebChromeClient(),
+                frontendJsCallback = FrontendJsBridge.noOp,
+                onBlockInsecureRetry = {},
+                onOpenExternalLink = {},
+                onBlockInsecureHelpClick = {},
+                onOpenSettings = {},
+                onChangeSecurityLevel = {},
+                onOpenLocationSettings = {},
+                onConfigureHomeNetwork = { _ -> },
+                onSecurityLevelHelpClick = {},
+                onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
+                keepScreenOnEnabled = false,
+            )
+        }
+
+        composeTestRule.runOnIdle {
+            assertFalse(
+                "host view should not keep the screen on when preference is disabled",
+                capturedView!!.keepScreenOn,
+            )
+        }
+    }
+
+    @Test
+    fun `Given keepScreenOnEnabled toggles at runtime then host view keepScreenOn follows`() {
+        val enabledState = mutableStateOf(false)
+        var capturedView: View? = null
+        composeTestRule.setContent {
+            capturedView = LocalView.current
+            FrontendScreenContent(
+                onBackClick = {},
+                viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
+                webViewClient = WebViewClient(),
+                webChromeClient = WebChromeClient(),
+                frontendJsCallback = FrontendJsBridge.noOp,
+                onBlockInsecureRetry = {},
+                onOpenExternalLink = {},
+                onBlockInsecureHelpClick = {},
+                onOpenSettings = {},
+                onChangeSecurityLevel = {},
+                onOpenLocationSettings = {},
+                onConfigureHomeNetwork = { _ -> },
+                onSecurityLevelHelpClick = {},
+                onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
+                keepScreenOnEnabled = enabledState.value,
+            )
+        }
+
+        composeTestRule.runOnIdle { assertFalse(capturedView!!.keepScreenOn) }
+
+        enabledState.value = true
+        composeTestRule.runOnIdle { assertTrue(capturedView!!.keepScreenOn) }
+
+        enabledState.value = false
+        composeTestRule.runOnIdle { assertFalse(capturedView!!.keepScreenOn) }
+    }
+
+    @Test
+    fun `Given keepScreenOnEnabled is true when content leaves composition then keepScreenOn is cleared`() {
+        val visible = mutableStateOf(true)
+        var capturedView: View? = null
+        composeTestRule.setContent {
+            capturedView = LocalView.current
+            if (visible.value) {
+                FrontendScreenContent(
+                    onBackClick = {},
+                    viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
+                    webViewClient = WebViewClient(),
+                    webChromeClient = WebChromeClient(),
+                    frontendJsCallback = FrontendJsBridge.noOp,
+                    onBlockInsecureRetry = {},
+                    onOpenExternalLink = {},
+                    onBlockInsecureHelpClick = {},
+                    onOpenSettings = {},
+                    onChangeSecurityLevel = {},
+                    onOpenLocationSettings = {},
+                    onConfigureHomeNetwork = { _ -> },
+                    onSecurityLevelHelpClick = {},
+                    onShowSnackbar = { _, _ -> true },
+                    onWebViewCreationFailed = {},
+                    keepScreenOnEnabled = true,
+                )
+            }
+        }
+
+        composeTestRule.runOnIdle { assertTrue(capturedView!!.keepScreenOn) }
+
+        visible.value = false
+        composeTestRule.runOnIdle {
+            assertFalse(
+                "keepScreenOn should be cleared once the frontend leaves composition",
+                capturedView!!.keepScreenOn,
+            )
         }
     }
 
