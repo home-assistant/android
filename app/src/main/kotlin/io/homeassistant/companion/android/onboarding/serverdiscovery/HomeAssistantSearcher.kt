@@ -206,9 +206,7 @@ private fun ProducerScope<NsdServiceInfo>.getDiscoveryListener(): NsdManager.Dis
     }
 }
 
-private fun ProducerScope<HomeAssistantInstance>.getResolvedListener(
-    onDone: () -> Unit,
-): NsdManager.ResolveListener {
+private fun ProducerScope<HomeAssistantInstance>.getResolvedListener(onDone: () -> Unit): NsdManager.ResolveListener {
     return object : NsdManager.ResolveListener {
         override fun onResolveFailed(serviceInfo: NsdServiceInfo?, errorCode: Int) {
             Timber.w("Failed to resolve information for service: $serviceInfo, error code $errorCode skipping")
