@@ -35,6 +35,8 @@ import io.homeassistant.companion.android.frontend.gesture.FrontendGestureManage
 import io.homeassistant.companion.android.frontend.gesture.GestureResult
 import io.homeassistant.companion.android.frontend.handler.FrontendBusObserver
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
+import io.homeassistant.companion.android.frontend.improv.FrontendImprovOrchestrator
+import io.homeassistant.companion.android.frontend.improv.ImprovUIState
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridgeFactory
 import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
@@ -118,6 +120,15 @@ class FrontendViewModelTest {
         every { state } returns MutableStateFlow(null)
     }
 
+    private val improvUiStateFlow = MutableStateFlow<ImprovUIState?>(null)
+    private val improvEventsFlow = MutableSharedFlow<FrontendImprovOrchestrator.Event>(extraBufferCapacity = 1)
+    private val improvScanRequestedFlow = MutableStateFlow(false)
+    private val improvOrchestrator: FrontendImprovOrchestrator = mockk(relaxed = true) {
+        every { uiState } returns improvUiStateFlow
+        every { events } returns improvEventsFlow
+        every { scanRequested } returns improvScanRequestedFlow
+    }
+
     private fun createViewModel(
         serverId: Int = this.serverId,
         path: String? = null,
@@ -128,6 +139,7 @@ class FrontendViewModelTest {
             clock = FakeClock(),
             dialogManager = dialogManager,
         ),
+        improvOrchestrator: FrontendImprovOrchestrator = this.improvOrchestrator,
     ): FrontendViewModel {
         return FrontendViewModel(
             initialServerId = serverId,
@@ -146,6 +158,7 @@ class FrontendViewModelTest {
             fileChooserManager = fileChooserManager,
             httpAuthHandler = httpAuthHandler,
             exoPlayerManager = exoPlayerManager,
+            improvOrchestrator = improvOrchestrator,
         )
     }
 
@@ -1865,6 +1878,162 @@ class FrontendViewModelTest {
             advanceUntilIdle()
 
             assertEquals(value, viewModel.keepScreenOnEnabled.value)
+        }
+    }
+
+    @Nested
+    inner class Improv {
+
+        @Test
+        fun `Given StartImprovScan event when received then orchestrator is invoked`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.StartImprovScan)
+            advanceTimeBy(1.seconds)
+
+            coVerify { improvOrchestrator.onStartImprovScan() }
+        }
+
+        @Test
+        fun `Given ConfigureImprovDevice event when received then orchestrator is invoked with name`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.ConfigureImprovDevice(deviceName = "Smart Plug"))
+            advanceTimeBy(1.seconds)
+
+            coVerify { improvOrchestrator.onConfigureImprovDevice("Smart Plug") }
+        }
+
+        @Test
+        fun `Given orchestrator emits uiState when collected then Content improvUiState is updated`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceTimeBy(1.seconds)
+
+            improvUiStateFlow.value = ImprovUIState.SearchingDevice(deviceName = "Smart Plug")
+            advanceTimeBy(1.seconds)
+
+            val state = viewModel.viewState.value
+            assertTrue(state is FrontendViewState.Content)
+            assertNotNull((state as FrontendViewState.Content).improvUiState)
+        }
+
+        @Test
+        fun `Given orchestrator emits ReloadAtPath event when collected then state transitions to LoadServer`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            improvEventsFlow.emit(
+                FrontendImprovOrchestrator.Event.ReloadAtPath(
+                    path = "/_my_redirect/config_flow_start?domain=acme",
+                    serverId = serverId,
+                ),
+            )
+            advanceTimeBy(1.seconds)
+
+            val state = viewModel.viewState.value
+            assertTrue(state is FrontendViewState.LoadServer)
+            assertEquals(
+                "/_my_redirect/config_flow_start?domain=acme",
+                (state as FrontendViewState.LoadServer).path,
+            )
+        }
+
+        @Test
+        fun `Given onImprovSheetDismissed when called then orchestrator onDismissed is invoked`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            viewModel.onImprovSheetDismissed()
+            advanceTimeBy(1.seconds)
+
+            coVerify { improvOrchestrator.onDismissed(serverId = any()) }
+        }
+
+        @Test
+        fun `Given onImprovConnectDevice when called then forwards to orchestrator`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            viewModel.onImprovConnectDevice("wifi", "pwd")
+            advanceTimeBy(1.seconds)
+
+            coVerify { improvOrchestrator.onConnectDevice(any(), "wifi", "pwd") }
+        }
+
+        @Test
+        fun `Given onImprovRestart when called then forwards to orchestrator`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            viewModel.onImprovRestart()
+            advanceTimeBy(1.seconds)
+
+            coVerify { improvOrchestrator.onRestart() }
+        }
+
+        @Test
+        fun `Given improvScanRequested exposed when collected then mirrors orchestrator scanRequested`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            improvScanRequestedFlow.value = true
+            assertEquals(true, viewModel.improvScanRequested.value)
+            improvScanRequestedFlow.value = false
+            assertEquals(false, viewModel.improvScanRequested.value)
+        }
+
+        @Test
+        fun `Given processImprovScanRequests when called then forwards to orchestrator`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            viewModel.processImprovScanRequests()
+
+            coVerify { improvOrchestrator.processImprovScanRequests() }
         }
     }
 }

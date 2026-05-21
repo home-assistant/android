@@ -47,7 +47,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
@@ -63,12 +66,11 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserEffect
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserRequest
+import io.homeassistant.companion.android.frontend.improv.ui.ImprovOverlay
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge
 import io.homeassistant.companion.android.frontend.js.FrontendJsCallback
-import io.homeassistant.companion.android.frontend.permissions.MultiplePermissionsEffect
-import io.homeassistant.companion.android.frontend.permissions.NotificationPermissionPrompt
+import io.homeassistant.companion.android.frontend.permissions.PendingPermissionHandler
 import io.homeassistant.companion.android.frontend.permissions.PermissionRequest
-import io.homeassistant.companion.android.frontend.permissions.SinglePermissionEffect
 import io.homeassistant.companion.android.launch.PipReadiness
 import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionScreen
@@ -129,6 +131,7 @@ internal fun FrontendScreen(
     val autoPlayVideoEnabled by viewModel.autoPlayVideoEnabled.collectAsStateWithLifecycle()
     val screenOrientation by viewModel.screenOrientation.collectAsStateWithLifecycle()
     val keepScreenOnEnabled by viewModel.keepScreenOnEnabled.collectAsStateWithLifecycle()
+    val improvScanRequested by viewModel.improvScanRequested.collectAsStateWithLifecycle()
 
     // The fullscreen View handed over by the WebView is Activity-scoped. Keep it in screen
     // state so it does not leak across configuration changes via the ViewModel.
@@ -177,10 +180,15 @@ internal fun FrontendScreen(
         webViewActions = viewModel.webViewActions,
         onGesture = viewModel::onGesture,
         onExoPlayerFullscreenChanged = viewModel::onExoPlayerFullscreenChanged,
+        onImprovConnectDevice = viewModel::onImprovConnectDevice,
+        onImprovRestart = viewModel::onImprovRestart,
+        onImprovDismiss = viewModel::onImprovSheetDismissed,
         autoPlayVideoEnabled = autoPlayVideoEnabled,
         screenOrientation = screenOrientation,
         keepScreenOnEnabled = keepScreenOnEnabled,
         onPipReadinessChanged = onPipReadinessChanged,
+        improvScanRequested = improvScanRequested,
+        processImprovScanRequests = viewModel::processImprovScanRequests,
         modifier = modifier,
     )
 }
@@ -218,32 +226,28 @@ internal fun FrontendScreenContent(
     onGesture: (GestureDirection, Int) -> Unit = { _, _ -> },
     onExoPlayerFullscreenChanged: (Boolean) -> Unit = {},
     onPipReadinessChanged: (PipReadiness?) -> Unit = {},
+    onImprovConnectDevice: (ssid: String, password: String) -> Unit = { _, _ -> },
+    onImprovRestart: () -> Unit = {},
+    onImprovDismiss: () -> Unit = {},
+    improvScanRequested: Boolean = false,
+    processImprovScanRequests: suspend () -> Unit = {},
 ) {
     var webView by remember { mutableStateOf<WebView?>(null) }
 
-    WebViewEffects(
+    FrontendScreenEffects(
         webView = webView,
         url = viewState.url,
         frontendJsCallback = frontendJsCallback,
         webViewActions = webViewActions,
+        pendingFileChooser = pendingFileChooser,
         autoPlayVideoEnabled = autoPlayVideoEnabled,
+        improvScanRequested = improvScanRequested,
+        processImprovScanRequests = processImprovScanRequests,
+        screenOrientation = screenOrientation,
+        keepScreenOnEnabled = keepScreenOnEnabled,
     )
 
-    PendingPermissionHandler(
-        pendingRequest = pendingPermissionRequest,
-    )
-
-    PendingDialogHandler(
-        pendingDialog = pendingDialog,
-    )
-
-    FileChooserEffect(
-        pendingRequest = pendingFileChooser,
-    )
-
-    ScreenOrientationEffect(orientation = screenOrientation)
-
-    KeepScreenOnEffect(enabled = keepScreenOnEnabled)
+    FrontendScreenHandlers(pendingPermissionRequest = pendingPermissionRequest, pendingDialog = pendingDialog)
 
     Box(modifier = modifier.fillMaxSize()) {
         // Always render WebView at base layer
@@ -266,6 +270,13 @@ internal fun FrontendScreenContent(
             onPipReadinessChanged = onPipReadinessChanged,
         )
 
+        ImprovOverlay(
+            state = (viewState as? FrontendViewState.Content)?.improvUiState,
+            onConnectDevice = onImprovConnectDevice,
+            onRestart = onImprovRestart,
+            onDismiss = onImprovDismiss,
+        )
+
         StateOverlay(
             viewState = viewState,
             errorStateProvider = errorStateProvider,
@@ -282,6 +293,52 @@ internal fun FrontendScreenContent(
             onShowSnackbar = onShowSnackbar,
         )
     }
+}
+
+@Composable
+private fun FrontendScreenHandlers(pendingPermissionRequest: PermissionRequest?, pendingDialog: FrontendDialog?) {
+    PendingPermissionHandler(
+        pendingRequest = pendingPermissionRequest,
+    )
+
+    PendingDialogHandler(
+        pendingDialog = pendingDialog,
+    )
+}
+
+@Composable
+private fun FrontendScreenEffects(
+    webView: WebView?,
+    url: String,
+    frontendJsCallback: FrontendJsCallback,
+    webViewActions: Flow<WebViewAction>,
+    pendingFileChooser: FileChooserRequest?,
+    autoPlayVideoEnabled: Boolean,
+    improvScanRequested: Boolean,
+    processImprovScanRequests: suspend () -> Unit,
+    screenOrientation: ScreenOrientation,
+    keepScreenOnEnabled: Boolean,
+) {
+    ImprovScanLifecycleEffect(
+        scanRequested = improvScanRequested,
+        processImprovScanRequests = processImprovScanRequests,
+    )
+
+    WebViewEffects(
+        webView = webView,
+        url = url,
+        frontendJsCallback = frontendJsCallback,
+        webViewActions = webViewActions,
+        autoPlayVideoEnabled = autoPlayVideoEnabled,
+    )
+
+    FileChooserEffect(
+        pendingRequest = pendingFileChooser,
+    )
+
+    ScreenOrientationEffect(orientation = screenOrientation)
+
+    KeepScreenOnEffect(enabled = keepScreenOnEnabled)
 }
 
 /**
@@ -580,48 +637,6 @@ private fun WebView.configureForFrontend(
 }
 
 /**
- * Routes a [PermissionRequest] to the appropriate UI and delivers the result back through the
- * request's own callback. The slot is freed automatically by the manager once the callback is
- * invoked, so this composable doesn't have to clear anything itself.
- *
- * Types with custom UI (e.g. [PermissionRequest.Notification] bottom sheet) are matched first.
- * Remaining types fall through to the system dialog based on their category:
- * [PermissionRequest.MultiplePermissions] or [PermissionRequest.SinglePermission].
- *
- * Adding a new permission type that uses the system dialog requires no changes here.
- */
-@Composable
-private fun PendingPermissionHandler(pendingRequest: PermissionRequest?) {
-    when (pendingRequest) {
-        is PermissionRequest.Notification -> {
-            @SuppressLint("InlinedApi")
-            NotificationPermissionPrompt(
-                onPermissionResult = pendingRequest.onResult,
-                onDismiss = pendingRequest.onDismiss,
-            )
-        }
-
-        is PermissionRequest.MultiplePermissions -> {
-            MultiplePermissionsEffect(
-                pendingRequest = pendingRequest,
-                onPermissionResult = pendingRequest.onResult,
-            )
-        }
-
-        is PermissionRequest.SinglePermission -> {
-            SinglePermissionEffect(
-                pendingRequest = pendingRequest,
-                onPermissionResult = pendingRequest.onResult,
-            )
-        }
-
-        null -> {
-            /* No pending permission */
-        }
-    }
-}
-
-/**
  * Handles WebView side effects: URL loading, [WebViewAction] dispatch, and reapplying the
  * "Autoplay video" preference (which requires a [WebView.reload] to take effect on the loaded page).
  */
@@ -654,6 +669,18 @@ private fun WebViewEffects(
             if (webView.settings.mediaPlaybackRequiresUserGesture == target) return@LaunchedEffect
             webView.settings.mediaPlaybackRequiresUserGesture = target
             webView.reload()
+        }
+    }
+}
+
+@Composable
+private fun ImprovScanLifecycleEffect(scanRequested: Boolean, processImprovScanRequests: suspend () -> Unit) {
+    if (scanRequested) {
+        val lifecycle = LocalLifecycleOwner.current.lifecycle
+        LaunchedEffect(lifecycle) {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                processImprovScanRequests()
+            }
         }
     }
 }
