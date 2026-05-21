@@ -108,7 +108,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given null state when getState then return idle state`() {
-        player.updateState(state = null, artworkPngBytes = null)
+        player.updateState(state = null, artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertEquals(Player.STATE_IDLE, player.playbackState)
@@ -117,7 +117,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given playing state when getState then return ready with playWhenReady true`() {
-        player.updateState(state = createState(playbackState = MediaPlaybackState.Playing), artworkPngBytes = null)
+        player.updateState(state = createState(playbackState = MediaPlaybackState.Playing), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertEquals(Player.STATE_READY, player.playbackState)
@@ -126,7 +126,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given paused state when getState then return ready with playWhenReady false`() {
-        player.updateState(state = createState(playbackState = MediaPlaybackState.Paused), artworkPngBytes = null)
+        player.updateState(state = createState(playbackState = MediaPlaybackState.Paused), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertEquals(Player.STATE_READY, player.playbackState)
@@ -135,7 +135,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given buffering state when getState then return buffering`() {
-        player.updateState(state = createState(playbackState = MediaPlaybackState.Buffering), artworkPngBytes = null)
+        player.updateState(state = createState(playbackState = MediaPlaybackState.Buffering), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertEquals(Player.STATE_BUFFERING, player.playbackState)
@@ -143,7 +143,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given idle state when getState then return ended`() {
-        player.updateState(state = createState(playbackState = MediaPlaybackState.Idle), artworkPngBytes = null)
+        player.updateState(state = createState(playbackState = MediaPlaybackState.Idle), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertEquals(Player.STATE_ENDED, player.playbackState)
@@ -151,7 +151,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given off state when getState then return idle`() {
-        player.updateState(state = createState(playbackState = MediaPlaybackState.Off), artworkPngBytes = null)
+        player.updateState(state = createState(playbackState = MediaPlaybackState.Off), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertEquals(Player.STATE_IDLE, player.playbackState)
@@ -161,7 +161,7 @@ class HaRemoteMediaPlayerTest {
     fun `Given state with metadata when getState then metadata is populated`() {
         player.updateState(
             state = createState(title = "My Song", artist = "My Artist", albumName = "My Album"),
-            artworkPngBytes = null,
+            artworkBytes = null,
         )
         shadowOf(Looper.getMainLooper()).idle()
 
@@ -175,7 +175,7 @@ class HaRemoteMediaPlayerTest {
     fun `Given state with album artist when getState then albumArtist is populated`() {
         player.updateState(
             state = createState(albumArtist = "Various Artists"),
-            artworkPngBytes = null,
+            artworkBytes = null,
         )
         shadowOf(Looper.getMainLooper()).idle()
 
@@ -186,7 +186,7 @@ class HaRemoteMediaPlayerTest {
     fun `Given state with track number when getState then trackNumber is populated`() {
         player.updateState(
             state = createState(mediaTrack = 5),
-            artworkPngBytes = null,
+            artworkBytes = null,
         )
         shadowOf(Looper.getMainLooper()).idle()
 
@@ -197,7 +197,7 @@ class HaRemoteMediaPlayerTest {
     fun `Given state with channel when getState then station is populated`() {
         player.updateState(
             state = createState(mediaChannel = "BBC Radio 4"),
-            artworkPngBytes = null,
+            artworkBytes = null,
         )
         shadowOf(Looper.getMainLooper()).idle()
 
@@ -208,7 +208,7 @@ class HaRemoteMediaPlayerTest {
     fun `Given state with series title when getState then subtitle is series title`() {
         player.updateState(
             state = createState(mediaSeriesTitle = "Breaking Bad", appName = "Plex"),
-            artworkPngBytes = null,
+            artworkBytes = null,
         )
         shadowOf(Looper.getMainLooper()).idle()
 
@@ -219,7 +219,7 @@ class HaRemoteMediaPlayerTest {
     fun `Given state with app name but no series title when getState then subtitle is app name`() {
         player.updateState(
             state = createState(mediaSeriesTitle = null, appName = "Spotify"),
-            artworkPngBytes = null,
+            artworkBytes = null,
         )
         shadowOf(Looper.getMainLooper()).idle()
 
@@ -230,7 +230,7 @@ class HaRemoteMediaPlayerTest {
     fun `Given state with music content type when getState then mediaType is MEDIA_TYPE_MUSIC`() {
         player.updateState(
             state = createState(mediaContentType = "music"),
-            artworkPngBytes = null,
+            artworkBytes = null,
         )
         shadowOf(Looper.getMainLooper()).idle()
 
@@ -241,7 +241,7 @@ class HaRemoteMediaPlayerTest {
     fun `Given state with tvshow content type when getState then mediaType is MEDIA_TYPE_TV_SHOW`() {
         player.updateState(
             state = createState(mediaContentType = "tvshow"),
-            artworkPngBytes = null,
+            artworkBytes = null,
         )
         shadowOf(Looper.getMainLooper()).idle()
 
@@ -252,7 +252,7 @@ class HaRemoteMediaPlayerTest {
     fun `Given state with episode content type when getState then mediaType is MEDIA_TYPE_TV_SHOW`() {
         player.updateState(
             state = createState(mediaContentType = "episode"),
-            artworkPngBytes = null,
+            artworkBytes = null,
         )
         shadowOf(Looper.getMainLooper()).idle()
 
@@ -263,7 +263,7 @@ class HaRemoteMediaPlayerTest {
     fun `Given state with unknown content type when getState then mediaType is null`() {
         player.updateState(
             state = createState(mediaContentType = "game"),
-            artworkPngBytes = null,
+            artworkBytes = null,
         )
         shadowOf(Looper.getMainLooper()).idle()
 
@@ -274,7 +274,7 @@ class HaRemoteMediaPlayerTest {
     fun `Given state with duration and position when getState then timeline has correct values`() {
         player.updateState(
             state = createState(mediaDuration = 300.0.seconds, mediaPosition = 120.0.seconds),
-            artworkPngBytes = null,
+            artworkBytes = null,
         )
         shadowOf(Looper.getMainLooper()).idle()
 
@@ -286,7 +286,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given play and pause supported when getState then play_pause command available`() {
-        player.updateState(state = createState(supportsPlay = true, supportsPause = true), artworkPngBytes = null)
+        player.updateState(state = createState(supportsPlay = true, supportsPause = true), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertTrue(player.availableCommands.contains(Player.COMMAND_PLAY_PAUSE))
@@ -294,7 +294,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given seek supported when getState then seek commands available`() {
-        player.updateState(state = createState(supportsSeek = true), artworkPngBytes = null)
+        player.updateState(state = createState(supportsSeek = true), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertTrue(player.availableCommands.contains(Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM))
@@ -302,7 +302,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given any state when getState then GET_CURRENT_MEDIA_ITEM always available`() {
-        player.updateState(state = createState(supportsSeek = false, mediaDuration = null), artworkPngBytes = null)
+        player.updateState(state = createState(supportsSeek = false, mediaDuration = null), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertTrue(player.availableCommands.contains(Player.COMMAND_GET_CURRENT_MEDIA_ITEM))
@@ -310,7 +310,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given seek not supported when getState then seek command not available`() {
-        player.updateState(state = createState(supportsSeek = false, mediaDuration = 300.0.seconds), artworkPngBytes = null)
+        player.updateState(state = createState(supportsSeek = false, mediaDuration = 300.0.seconds), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertFalse(player.availableCommands.contains(Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM))
@@ -318,7 +318,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given next track supported when getState then next command available`() {
-        player.updateState(state = createState(supportsNextTrack = true), artworkPngBytes = null)
+        player.updateState(state = createState(supportsNextTrack = true), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertTrue(player.availableCommands.contains(Player.COMMAND_SEEK_TO_NEXT))
@@ -326,7 +326,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given previous track supported when getState then previous command available`() {
-        player.updateState(state = createState(supportsPreviousTrack = true), artworkPngBytes = null)
+        player.updateState(state = createState(supportsPreviousTrack = true), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertTrue(player.availableCommands.contains(Player.COMMAND_SEEK_TO_PREVIOUS))
@@ -336,7 +336,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given player when play requested then callback onPlayRequested called`() {
-        player.updateState(state = createState(playbackState = MediaPlaybackState.Paused), artworkPngBytes = null)
+        player.updateState(state = createState(playbackState = MediaPlaybackState.Paused), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         player.play()
@@ -347,7 +347,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given player when pause requested then callback onPauseRequested called`() {
-        player.updateState(state = createState(playbackState = MediaPlaybackState.Playing), artworkPngBytes = null)
+        player.updateState(state = createState(playbackState = MediaPlaybackState.Playing), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         player.pause()
@@ -358,7 +358,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given player when seek requested then callback onSeekRequested called with position`() {
-        player.updateState(state = createState(), artworkPngBytes = null)
+        player.updateState(state = createState(), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         player.seekTo(60_000L)
@@ -369,7 +369,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given player when next track requested then callback onNextRequested called`() {
-        player.updateState(state = createState(), artworkPngBytes = null)
+        player.updateState(state = createState(), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         player.seekToNext()
@@ -380,7 +380,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given player when previous track requested then callback onPreviousRequested called`() {
-        player.updateState(state = createState(), artworkPngBytes = null)
+        player.updateState(state = createState(), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         player.seekToPrevious()
@@ -391,7 +391,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given active state when getState then playback speed is 1 for seek bar tracking`() {
-        player.updateState(state = createState(playbackState = MediaPlaybackState.Playing), artworkPngBytes = null)
+        player.updateState(state = createState(playbackState = MediaPlaybackState.Playing), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertEquals(1.0f, player.playbackParameters.speed)
@@ -402,7 +402,7 @@ class HaRemoteMediaPlayerTest {
     @Suppress("DEPRECATION")
     @Test
     fun `Given volume supported when getState then volume commands available`() {
-        player.updateState(state = createState(supportsVolumeSet = true, volumeLevel = 0.5f), artworkPngBytes = null)
+        player.updateState(state = createState(supportsVolumeSet = true, volumeLevel = 0.5f), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertTrue(player.availableCommands.contains(Player.COMMAND_GET_DEVICE_VOLUME))
@@ -415,7 +415,7 @@ class HaRemoteMediaPlayerTest {
     @Suppress("DEPRECATION")
     @Test
     fun `Given volume not supported when getState then volume commands not available`() {
-        player.updateState(state = createState(supportsVolumeSet = false), artworkPngBytes = null)
+        player.updateState(state = createState(supportsVolumeSet = false), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertFalse(player.availableCommands.contains(Player.COMMAND_GET_DEVICE_VOLUME))
@@ -427,7 +427,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given volumeLevel 0_5 when getState then deviceVolume is 50`() {
-        player.updateState(state = createState(supportsVolumeSet = true, volumeLevel = 0.5f), artworkPngBytes = null)
+        player.updateState(state = createState(supportsVolumeSet = true, volumeLevel = 0.5f), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertEquals(50, player.deviceVolume)
@@ -437,7 +437,7 @@ class HaRemoteMediaPlayerTest {
     fun `Given isVolumeMuted true when getState then deviceMuted is true`() {
         player.updateState(
             state = createState(supportsVolumeSet = true, volumeLevel = 0.5f, isVolumeMuted = true),
-            artworkPngBytes = null,
+            artworkBytes = null,
         )
         shadowOf(Looper.getMainLooper()).idle()
 
@@ -446,7 +446,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given player when setDeviceVolume 50 then onSetVolumeRequested called with 0_5`() {
-        player.updateState(state = createState(supportsVolumeSet = true, volumeLevel = 0.5f), artworkPngBytes = null)
+        player.updateState(state = createState(supportsVolumeSet = true, volumeLevel = 0.5f), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         player.setDeviceVolume(50, 0)
@@ -457,7 +457,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given player when increaseDeviceVolume then onIncreaseVolumeRequested called`() {
-        player.updateState(state = createState(supportsVolumeSet = true, volumeLevel = 0.5f), artworkPngBytes = null)
+        player.updateState(state = createState(supportsVolumeSet = true, volumeLevel = 0.5f), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         player.increaseDeviceVolume(0)
@@ -468,7 +468,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given player when decreaseDeviceVolume then onDecreaseVolumeRequested called`() {
-        player.updateState(state = createState(supportsVolumeSet = true, volumeLevel = 0.5f), artworkPngBytes = null)
+        player.updateState(state = createState(supportsVolumeSet = true, volumeLevel = 0.5f), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         player.decreaseDeviceVolume(0)
@@ -481,7 +481,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given stop supported when getState then stop command available`() {
-        player.updateState(state = createState(supportsStop = true), artworkPngBytes = null)
+        player.updateState(state = createState(supportsStop = true), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertTrue(player.availableCommands.contains(Player.COMMAND_STOP))
@@ -489,7 +489,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given stop not supported when getState then stop command not available`() {
-        player.updateState(state = createState(supportsStop = false), artworkPngBytes = null)
+        player.updateState(state = createState(supportsStop = false), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertFalse(player.availableCommands.contains(Player.COMMAND_STOP))
@@ -497,7 +497,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given stop supported when stop requested then onStopRequested called`() {
-        player.updateState(state = createState(supportsStop = true), artworkPngBytes = null)
+        player.updateState(state = createState(supportsStop = true), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         player.stop()
@@ -512,7 +512,7 @@ class HaRemoteMediaPlayerTest {
     fun `Given mute supported when mute requested then onMuteRequested called with true`() {
         player.updateState(
             state = createState(supportsVolumeSet = true, supportsMute = true, isVolumeMuted = false),
-            artworkPngBytes = null,
+            artworkBytes = null,
         )
         shadowOf(Looper.getMainLooper()).idle()
 
@@ -526,7 +526,7 @@ class HaRemoteMediaPlayerTest {
     fun `Given mute not supported when mute requested then onMuteRequested not called`() {
         player.updateState(
             state = createState(supportsVolumeSet = true, supportsMute = false),
-            artworkPngBytes = null,
+            artworkBytes = null,
         )
         shadowOf(Looper.getMainLooper()).idle()
 
@@ -540,7 +540,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given shuffle supported when getState then shuffle command available`() {
-        player.updateState(state = createState(supportsShuffleSet = true), artworkPngBytes = null)
+        player.updateState(state = createState(supportsShuffleSet = true), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertTrue(player.availableCommands.contains(Player.COMMAND_SET_SHUFFLE_MODE))
@@ -548,7 +548,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given shuffle not supported when getState then shuffle command not available`() {
-        player.updateState(state = createState(supportsShuffleSet = false), artworkPngBytes = null)
+        player.updateState(state = createState(supportsShuffleSet = false), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertFalse(player.availableCommands.contains(Player.COMMAND_SET_SHUFFLE_MODE))
@@ -556,7 +556,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given shuffle enabled in state when getState then shuffleModeEnabled is true`() {
-        player.updateState(state = createState(shuffle = true), artworkPngBytes = null)
+        player.updateState(state = createState(shuffle = true), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertTrue(player.shuffleModeEnabled)
@@ -564,7 +564,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given shuffle supported when shuffle enabled then onShuffleRequested called with true`() {
-        player.updateState(state = createState(supportsShuffleSet = true, shuffle = false), artworkPngBytes = null)
+        player.updateState(state = createState(supportsShuffleSet = true, shuffle = false), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         player.shuffleModeEnabled = true
@@ -577,7 +577,7 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given repeat supported when getState then repeat command available`() {
-        player.updateState(state = createState(supportsRepeatSet = true), artworkPngBytes = null)
+        player.updateState(state = createState(supportsRepeatSet = true), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertTrue(player.availableCommands.contains(Player.COMMAND_SET_REPEAT_MODE))
@@ -585,14 +585,14 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given repeat not supported when getState then repeat command not available`() {
-        player.updateState(state = createState(supportsRepeatSet = false), artworkPngBytes = null)
+        player.updateState(state = createState(supportsRepeatSet = false), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertFalse(player.availableCommands.contains(Player.COMMAND_SET_REPEAT_MODE))
     }
 
     private fun assertRepeatModeRoundTrip(mediaRepeatMode: MediaRepeatMode, media3RepeatMode: Int) {
-        player.updateState(state = createState(supportsRepeatSet = true, repeatMode = mediaRepeatMode), artworkPngBytes = null)
+        player.updateState(state = createState(supportsRepeatSet = true, repeatMode = mediaRepeatMode), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertEquals(media3RepeatMode, player.repeatMode)
@@ -625,7 +625,7 @@ class HaRemoteMediaPlayerTest {
         val commandJob: CompletableJob = Job()
         every { commandCallback.onPauseRequested() } returns commandJob
 
-        player.updateState(state = createState(playbackState = MediaPlaybackState.Playing), artworkPngBytes = null)
+        player.updateState(state = createState(playbackState = MediaPlaybackState.Playing), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         player.pause()
@@ -644,14 +644,14 @@ class HaRemoteMediaPlayerTest {
         val commandJob: CompletableJob = Job()
         every { commandCallback.onPauseRequested() } returns commandJob
 
-        player.updateState(state = createState(playbackState = MediaPlaybackState.Playing), artworkPngBytes = null)
+        player.updateState(state = createState(playbackState = MediaPlaybackState.Playing), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         player.pause()
         shadowOf(Looper.getMainLooper()).idle()
 
         // WebSocket state confirmation arrives
-        player.updateState(state = createState(playbackState = MediaPlaybackState.Paused), artworkPngBytes = null)
+        player.updateState(state = createState(playbackState = MediaPlaybackState.Paused), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         // Future is cleared after completion
@@ -669,7 +669,7 @@ class HaRemoteMediaPlayerTest {
         var callIndex = 0
         every { commandCallback.onPauseRequested() } answers { jobs[callIndex++] }
 
-        player.updateState(state = createState(playbackState = MediaPlaybackState.Playing), artworkPngBytes = null)
+        player.updateState(state = createState(playbackState = MediaPlaybackState.Playing), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         player.pause()

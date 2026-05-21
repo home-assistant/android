@@ -67,12 +67,12 @@ internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: 
      * Completes any in-flight [pendingCommandFuture] so SimpleBasePlayer calls [getState] with
      * the fresh data rather than the stale pre-command state.
      * Must be called on the looper thread passed to the constructor.
-     * @param artworkPngBytes Pre-compressed PNG bytes for album art (compress off main thread).
+     * @param artworkBytes Pre-compressed JPEG bytes for album art (compress off main thread).
      */
     @MainThread
-    fun updateState(state: MediaControlState?, artworkPngBytes: ByteArray?) {
+    fun updateState(state: MediaControlState?, artworkBytes: ByteArray?) {
         mediaState = state
-        artworkBytes = artworkPngBytes
+        this.artworkBytes = artworkBytes
         pendingCommandFuture?.set(null)
         pendingCommandFuture = null
         invalidateState()

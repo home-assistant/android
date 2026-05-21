@@ -45,6 +45,7 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -238,14 +239,20 @@ class HaMediaSession @AssistedInject constructor(
 
     /**
      * Observes entity state for [config] until the flow completes or the coroutine is cancelled.
+     *
+     * Uses [collectLatest] so that a rapid sequence of state changes cancels any in-flight artwork
+     * load for the previous state before processing the new one, preventing a queue of stale
+     * artwork fetches from building up. Metadata (title, artist, playback state) is applied
+     * immediately on each emission before the IO-bound artwork load begins, so the notification
+     * updates without waiting for artwork.
      */
     private suspend fun startObservingState(player: HaRemoteMediaPlayer) {
         Timber.d("startObservingState: starting for ${config.entityId}")
         var artworkCache = ArtworkCache()
-        mediaControlRepository.observeEntityState(config).collect { state ->
+        mediaControlRepository.observeEntityState(config).collectLatest { state ->
             if (state == null) {
                 Timber.d("startObservingState: received null state for ${config.entityId}, skipping update")
-                return@collect
+                return@collectLatest
             }
             Timber.d("startObservingState: received state for ${config.entityId}, playbackState=${state.playbackState}")
             if (state.playbackState is MediaPlaybackState.Off) {
@@ -257,10 +264,29 @@ class HaMediaSession @AssistedInject constructor(
                 withContext(Dispatchers.Main) {
                     notificationArtwork = null
                     notificationEntityName = null
-                    player.updateState(state = null, artworkPngBytes = null)
+                    player.updateState(state = null, artworkBytes = null)
                 }
-            } else {
-                artworkCache = loadArtworkAndUpdatePlayer(state, artworkCache, player)
+                return@collectLatest
+            }
+
+            // Update the player immediately with cached bytes if the URL is unchanged, or with
+            // no artwork if it changed — so metadata and playback state never wait behind IO.
+            val immediateArtwork = if (state.entityPictureUrl != null && state.entityPictureUrl == artworkCache.url) artworkCache else ArtworkCache()
+            withContext(Dispatchers.Main) {
+                notificationArtwork = immediateArtwork.bitmap
+                notificationEntityName = state.entityFriendlyName
+                player.updateState(state = state, artworkBytes = immediateArtwork.bytes)
+            }
+
+            if (state.entityPictureUrl != null && state.entityPictureUrl != artworkCache.url) {
+                // URL changed: load new artwork then do a second player update with the bytes.
+                artworkCache = loadArtwork(state)
+                withContext(Dispatchers.Main) {
+                    notificationArtwork = artworkCache.bitmap
+                    player.updateState(state = state, artworkBytes = artworkCache.bytes)
+                }
+            } else if (state.entityPictureUrl == null) {
+                artworkCache = ArtworkCache()
             }
         }
         Timber.d("startObservingState: flow collection ended for ${config.entityId}")
@@ -310,34 +336,13 @@ class HaMediaSession @AssistedInject constructor(
     }
 
     /**
-     * Loads artwork for [state] if the URL has changed, then updates the player on the main thread.
-     *
-     * @return An updated [ArtworkCache] reflecting the outcome of the load attempt.
+     * Resolves and loads artwork for [state], returning an [ArtworkCache] for the result.
+     * Returns an empty [ArtworkCache] if the URL cannot be resolved or the load fails.
      */
-    private suspend fun loadArtworkAndUpdatePlayer(
-        state: MediaControlState,
-        cache: ArtworkCache,
-        player: HaRemoteMediaPlayer,
-    ): ArtworkCache {
-        val updatedCache = when (val pictureUrl = state.entityPictureUrl) {
-            null -> ArtworkCache()
-            cache.url -> cache
-            else -> {
-                val artworkData = resolveArtworkUrl(state)?.let { loadArtworkData(it) }
-                if (artworkData != null) {
-                    ArtworkCache(url = pictureUrl, bytes = artworkData.first, bitmap = artworkData.second)
-                } else {
-                    cache
-                }
-            }
-        }
-
-        withContext(Dispatchers.Main) {
-            notificationArtwork = updatedCache.bitmap
-            notificationEntityName = state.entityFriendlyName
-            player.updateState(state = state, artworkPngBytes = updatedCache.bytes)
-        }
-        return updatedCache
+    private suspend fun loadArtwork(state: MediaControlState): ArtworkCache {
+        val url = resolveArtworkUrl(state) ?: return ArtworkCache()
+        val (bytes, bitmap) = loadArtworkData(url) ?: return ArtworkCache()
+        return ArtworkCache(url = state.entityPictureUrl, bytes = bytes, bitmap = bitmap)
     }
 
     private suspend fun resolveArtworkUrl(state: MediaControlState): String? {
@@ -359,7 +364,7 @@ class HaMediaSession @AssistedInject constructor(
     }
 
     /**
-     * Loads album art at its native resolution and returns full-resolution PNG bytes for media
+     * Loads album art at its native resolution and returns JPEG-compressed bytes for media
      * metadata alongside a notification-icon-sized bitmap for [setLargeIcon][android.app.Notification.Builder.setLargeIcon].
      *
      * The bitmap is explicitly scaled to [android.R.dimen.notification_large_icon_width] on IO so
@@ -375,7 +380,7 @@ class HaMediaSession @AssistedInject constructor(
             val result = context.imageLoader.execute(request)
             result.image?.toBitmap()?.let { bitmap ->
                 val stream = ByteArrayOutputStream()
-                bitmap.compress(CompressFormat.PNG, 100, stream)
+                bitmap.compress(CompressFormat.JPEG, 90, stream)
                 val iconSize = context.resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width)
                 val notificationBitmap = Bitmap.createScaledBitmap(bitmap, iconSize, iconSize, /* filter= */ true)
                 stream.toByteArray() to notificationBitmap

@@ -281,8 +281,8 @@ class HaMediaSessionServiceTest {
         configuredEntitiesFlow.tryEmit(listOf(config))
         startObserving()
         // idleMainLooper processes both reconcileSessions (from the entities flow) and
-        // player.updateState (posted back to Main by loadArtworkAndUpdatePlayer inside
-        // startObservingState). Robolectric's idle() drains all queued and nested tasks.
+        // player.updateState (posted back to Main by startObservingState).
+        // Robolectric's idle() drains all queued and nested tasks.
         idleMainLooper()
 
         service.onTaskRemoved(rootIntent = null)
