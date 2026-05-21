@@ -12,6 +12,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.assist.service.AssistVoiceInteractionService
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.isAutomotive
+import io.homeassistant.companion.android.common.util.sdkVersion
 import javax.inject.Inject
 
 /**
@@ -60,7 +61,7 @@ class DefaultAssistantManagerImpl @Inject constructor(
         // Not supported on automotive
         if (context.isAutomotive()) return false
 
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        return if (sdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
             val roleManager = context.getSystemService(RoleManager::class.java)
             roleManager?.isRoleAvailable(RoleManager.ROLE_ASSISTANT) == true &&
                 !roleManager.isRoleHeld(RoleManager.ROLE_ASSISTANT)

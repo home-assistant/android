@@ -30,6 +30,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.util.sdkVersion
 import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.util.LogcatReader
 import io.homeassistant.companion.android.util.applyBottomSafeDrawingInsets
@@ -200,7 +201,7 @@ class LogFragment : Fragment() {
                         // Also no issue template will be used
                         val excludedComponents =
                             getExcludedComponentsForPackageName(sendIntent, arrayOf("com.github.android"))
-                        if (excludedComponents.size > 0 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        if (excludedComponents.size > 0 && sdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
                             putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, excludedComponents.toTypedArray())
                         }
                     }
@@ -237,7 +238,7 @@ class LogFragment : Fragment() {
         packageNames: Array<String>,
     ): ArrayList<ComponentName> {
         val excludedComponents = ArrayList<ComponentName>()
-        val resInfos = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val resInfos = if (sdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
             requireContext().packageManager.queryIntentActivities(sendIntent, PackageManager.ResolveInfoFlags.of(0))
         } else {
             @Suppress("DEPRECATION")

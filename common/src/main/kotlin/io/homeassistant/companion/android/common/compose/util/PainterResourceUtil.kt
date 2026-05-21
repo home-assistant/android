@@ -13,6 +13,7 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.drawable.toBitmap
+import io.homeassistant.companion.android.common.util.sdkVersion
 
 /**
  * Loads a drawable as a Compose [Painter], with fallback support for [AdaptiveIconDrawable].
@@ -38,7 +39,7 @@ fun adaptiveIconPainterResource(@DrawableRes id: Int): Painter {
     val theme = LocalContext.current.theme
 
     val adaptivePainter: Painter? = remember(id, resources, theme) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return@remember null
+        if (!sdkVersion.isAtLeast(Build.VERSION_CODES.O)) return@remember null
         val drawable = ResourcesCompat.getDrawable(resources, id, theme) as? AdaptiveIconDrawable
             ?: return@remember null
         BitmapPainter(drawable.toBitmap().asImageBitmap())

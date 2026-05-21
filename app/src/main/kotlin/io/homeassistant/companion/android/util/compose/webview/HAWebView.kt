@@ -24,6 +24,7 @@ import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewFeature
 import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
+import io.homeassistant.companion.android.common.util.sdkVersion
 import timber.log.Timber
 
 const val BLANK_URL = "about:blank"
@@ -154,7 +155,7 @@ private fun WebView.defaultSettings() {
 
 @Suppress("DEPRECATION")
 private fun WebSettings.setNightModeTheme(nightModeTheme: NightModeTheme, uiMode: Int) {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU &&
+    if (!sdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) &&
         WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK) &&
         WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK_STRATEGY)
     ) {

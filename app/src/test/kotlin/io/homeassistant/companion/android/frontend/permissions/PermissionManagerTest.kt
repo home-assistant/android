@@ -7,6 +7,8 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.NotificationStatusProvider
 import io.homeassistant.companion.android.common.util.PermissionChecker
+import io.homeassistant.companion.android.common.util.SdkVersionProvider
+import io.homeassistant.companion.android.common.util.sdkVersion
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
@@ -22,6 +24,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
@@ -50,17 +53,22 @@ class PermissionManagerTest {
         coEvery { serverManager.integrationRepository(serverId) } returns integrationRepository
     }
 
+    @AfterEach
+    fun tearDown() {
+        sdkVersion = SdkVersionProvider { false }
+    }
+
     private fun createManager(
         hasFcmPushSupport: Boolean = false,
         sdkInt: Int = 0,
     ): PermissionManager {
+        sdkVersion = SdkVersionProvider { api -> sdkInt >= api }
         return PermissionManager(
             serverManager = serverManager,
             settingsDao = settingsDao,
             fcmSupport = hasFcmPushSupport,
             notificationStatusProvider = notificationStatusProvider,
             permissionChecker = permissionChecker,
-            sdkInt = sdkInt,
         )
     }
 

@@ -17,6 +17,7 @@ import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import io.homeassistant.companion.android.common.util.sdkVersion
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -60,7 +61,7 @@ class HeartRateSensorManager :
     }
 
     override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        return if (sdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
             arrayOf(Manifest.permission.BODY_SENSORS, Manifest.permission.BODY_SENSORS_BACKGROUND)
         } else {
             arrayOf(Manifest.permission.BODY_SENSORS)

@@ -26,6 +26,7 @@ import io.homeassistant.companion.android.common.sensors.LastUpdateManager
 import io.homeassistant.companion.android.common.util.HAStrictMode
 import io.homeassistant.companion.android.common.util.configureComposeDiagnosticStackTrace
 import io.homeassistant.companion.android.common.util.isAutomotive
+import io.homeassistant.companion.android.common.util.sdkVersion
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.database.settings.SettingsDao
@@ -86,7 +87,7 @@ open class HomeAssistantApplication :
         Timber.plant(Timber.DebugTree())
         super.onCreate()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+        if (sdkVersion.isAtLeast(Build.VERSION_CODES.S) &&
             BuildConfig.DEBUG &&
             !BuildConfig.NO_STRICT_MODE
         ) {
@@ -96,7 +97,7 @@ open class HomeAssistantApplication :
             )
         }
 
-        Timber.i("Running ${BuildConfig.VERSION_NAME} on SDK ${Build.VERSION.SDK_INT}")
+        Timber.i("Running ${BuildConfig.VERSION_NAME} on SDK $sdkVersion")
 
         registerActivityLifecycleCallbacks(LifecycleHandler)
 
@@ -239,7 +240,7 @@ open class HomeAssistantApplication :
         )
 
         // Listen for microphone mute changes
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        if (sdkVersion.isAtLeast(Build.VERSION_CODES.P)) {
             ContextCompat.registerReceiver(
                 this,
                 sensorReceiver,
@@ -249,7 +250,7 @@ open class HomeAssistantApplication :
         }
 
         // Listen for speakerphone state changes
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (sdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
             ContextCompat.registerReceiver(
                 this,
                 sensorReceiver,
@@ -304,7 +305,7 @@ open class HomeAssistantApplication :
         }
 
         // Register for changes to the managed profile availability
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        if (sdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
             ContextCompat.registerReceiver(
                 this,
                 sensorReceiver,

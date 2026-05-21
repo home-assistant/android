@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.isAutomotive
+import io.homeassistant.companion.android.common.util.sdkVersion
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -160,7 +161,7 @@ class NotificationSensorManager :
                 put("group_id", sbn.notification.group)
                 put("category", sbn.notification.category)
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                if (sdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
                     put("channel_id", sbn.notification.channelId)
                 }
             }
@@ -223,7 +224,7 @@ class NotificationSensorManager :
                 put("group_id", sbn.notification.group)
                 put("category", sbn.notification.category)
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                if (sdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
                     put("channel_id", sbn.notification.channelId)
                 }
             }
@@ -269,7 +270,7 @@ class NotificationSensorManager :
                             put("${item.packageName}_${item.id}_group_id", item.notification.group)
                             put("${item.packageName}_${item.id}_category", item.notification.category)
 
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            if (sdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
                                 put("${item.packageName}_${item.id}_channel_id", item.notification.channelId)
                             }
                         }

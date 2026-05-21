@@ -111,6 +111,7 @@ import io.homeassistant.companion.android.common.util.initializePlayer
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.jsonObjectOrNull
 import io.homeassistant.companion.android.common.util.runFragmentTransactionIfStateSafe
+import io.homeassistant.companion.android.common.util.sdkVersion
 import io.homeassistant.companion.android.common.util.toJsonObject
 import io.homeassistant.companion.android.common.util.toJsonObjectOrNull
 import io.homeassistant.companion.android.database.authentication.Authentication
@@ -365,7 +366,7 @@ class WebViewActivity :
     override fun onCreate(savedInstanceState: Bundle?) {
         if (
             intent.extras?.containsKey(EXTRA_SHOW_WHEN_LOCKED) == true &&
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1
+            sdkVersion.isAtLeast(Build.VERSION_CODES.O_MR1)
         ) {
             // Allow showing this on the lock screen when using device controls panel
             setShowWhenLocked(intent.extras?.getBoolean(EXTRA_SHOW_WHEN_LOCKED) ?: false)
@@ -675,7 +676,7 @@ class WebViewActivity :
             }
 
             setDownloadListener { url, _, contentDisposition, mimetype, _ ->
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
+                if (sdkVersion.isAtLeast(Build.VERSION_CODES.Q) ||
                     ActivityCompat.checkSelfPermission(
                         context,
                         android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -783,7 +784,7 @@ class WebViewActivity :
             }
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (sdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             val webviewPackage = WebViewCompat.getCurrentWebViewPackage(this)
             Timber.d(
                 "Current webview package ${webviewPackage?.packageName} and version ${webviewPackage?.versionName}",
@@ -1364,7 +1365,7 @@ class WebViewActivity :
      * devices the permission does not exist and no action is taken.
      */
     private fun maybeRequestLocalNetworkPermission() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.CINNAMON_BUN) return
+        if (!sdkVersion.isAtLeast(Build.VERSION_CODES.CINNAMON_BUN)) return
         if (ContextCompat.checkSelfPermission(
                 this,
                 android.Manifest.permission.ACCESS_LOCAL_NETWORK,
@@ -1603,7 +1604,7 @@ class WebViewActivity :
         videoHeight = decor.height
         val bounds = Rect(0, 0, 1920, 1080)
         if (isVideoFullScreen or isExoFullScreen) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (sdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
                 val mPictureInPictureParamsBuilder = PictureInPictureParams.Builder()
                 mPictureInPictureParamsBuilder.setAspectRatio(
                     Rational(

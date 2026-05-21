@@ -15,6 +15,7 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.util.sdkVersion
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -146,7 +147,7 @@ class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity<TemplateWidg
 
         binding.addButton.setOnClickListener {
             if (requestLauncherSetup) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                if (sdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
                     lifecycleScope.launch {
                         requestWidgetCreation()
                     }

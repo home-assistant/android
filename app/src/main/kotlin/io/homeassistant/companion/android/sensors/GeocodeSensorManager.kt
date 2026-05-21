@@ -6,12 +6,12 @@ import android.location.Address
 import android.location.Geocoder
 import android.location.Location
 import android.os.Build
-import android.os.Build.VERSION.SDK_INT
 import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.instant
+import io.homeassistant.companion.android.common.util.sdkVersion
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
@@ -73,7 +73,7 @@ class GeocodeSensorManager : SensorManager {
     }
 
     override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
-        return if (SDK_INT >= Build.VERSION_CODES.Q) {
+        return if (sdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
             arrayOf(
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_BACKGROUND_LOCATION,
@@ -168,7 +168,7 @@ class GeocodeSensorManager : SensorManager {
         longitude: Double,
         maxResults: Int,
     ): List<Address> {
-        return if (SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        return if (sdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
             suspendCoroutine { cont ->
                 getFromLocation(
                     latitude,

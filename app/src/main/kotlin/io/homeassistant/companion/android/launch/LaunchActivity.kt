@@ -40,6 +40,7 @@ import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.util.sdkVersion
 import io.homeassistant.companion.android.launch.applock.HazeLockOverlay
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
@@ -246,7 +247,7 @@ class LaunchActivity : AppCompatActivity() {
         if (WIPFeature.USE_FRONTEND_V2) {
             viewModel.onAppPaused()
 
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+            if (!sdkVersion.isAtLeast(Build.VERSION_CODES.O)) return
             if (!packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) return
             val readiness = viewModel.pipReadiness.value ?: return
             val params = PictureInPictureParams.Builder()

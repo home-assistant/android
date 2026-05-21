@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import io.homeassistant.companion.android.common.util.sdkVersion
 import java.math.RoundingMode
 import kotlin.math.floor
 import timber.log.Timber
@@ -146,9 +147,9 @@ class BatterySensorManager : SensorManager {
     )
 
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        return if (sdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
             defaultSensorList.plus(listOf(remainingChargeTime, batteryCycles))
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        } else if (sdkVersion.isAtLeast(Build.VERSION_CODES.P)) {
             defaultSensorList.plus(remainingChargeTime)
         } else {
             defaultSensorList
@@ -184,10 +185,10 @@ class BatterySensorManager : SensorManager {
             updateBatteryHealth(context, intent)
             updateBatteryTemperature(context, intent)
             updateBatteryPower(context, intent)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            if (sdkVersion.isAtLeast(Build.VERSION_CODES.P)) {
                 updateRemainingChargeTime(context)
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            if (sdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
                 updateBatteryCycles(context, intent)
             }
         }
@@ -447,7 +448,7 @@ class BatterySensorManager : SensorManager {
     private suspend fun getBatteryCurrent(context: Context, batteryManager: BatteryManager): Float? {
         val current = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
         return if (
-            (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && current != Int.MIN_VALUE) ||
+            (sdkVersion.isAtLeast(Build.VERSION_CODES.P) && current != Int.MIN_VALUE) ||
             current != 0
         ) {
             val dividerSetting = getNumberSetting(

@@ -59,6 +59,7 @@ import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.network.WifiHelper
+import io.homeassistant.companion.android.common.util.sdkVersion
 import io.homeassistant.companion.android.util.compose.HaAlertInfo
 import io.homeassistant.companion.android.util.compose.HaAlertWarning
 import io.homeassistant.companion.android.util.plus
@@ -118,7 +119,7 @@ fun SsidView(
         if (
             activeSsid?.isNotBlank() == true &&
             wifiSsids.none { it == activeSsid } &&
-            (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || activeSsid !== WifiManager.UNKNOWN_SSID)
+            (!sdkVersion.isAtLeast(Build.VERSION_CODES.R) || activeSsid !== WifiManager.UNKNOWN_SSID)
         ) {
             item("ssid.suggestion") {
                 Chip(

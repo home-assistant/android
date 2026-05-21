@@ -70,6 +70,7 @@ import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.getActiveNotification
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.common.util.sdkVersion
 import io.homeassistant.companion.android.common.util.toJsonObject
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechData
@@ -420,7 +421,7 @@ class MessagingManager @Inject constructor(
                             if (
                                 !jsonData[NotificationData.COMMAND].isNullOrEmpty() &&
                                 jsonData[NotificationData.COMMAND] in DeviceCommandData.ENABLE_COMMANDS &&
-                                Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
+                                !sdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)
                             ) {
                                 handleDeviceCommands(jsonData)
                             } else {
@@ -636,7 +637,7 @@ class MessagingManager @Inject constructor(
 
         val channelID: String = createChannelID(channelName)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && channelID != NotificationChannel.DEFAULT_CHANNEL_ID) {
+        if (sdkVersion.isAtLeast(Build.VERSION_CODES.O) && channelID != NotificationChannel.DEFAULT_CHANNEL_ID) {
             notificationManagerCompat.deleteNotificationChannel(channelID)
         }
     }
@@ -729,7 +730,7 @@ class MessagingManager @Inject constructor(
 
             COMMAND_BLUETOOTH -> {
                 val bluetoothAdapter = context.getSystemService<BluetoothManager>()?.adapter
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (sdkVersion.isAtLeast(Build.VERSION_CODES.S)) {
                     when (PackageManager.PERMISSION_GRANTED) {
                         ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) -> {
                             Timber.d("We have proper bluetooth permissions proceeding with command")
@@ -1021,7 +1022,7 @@ class MessagingManager @Inject constructor(
             group = NotificationData.GROUP_PREFIX + group
             groupId = group.hashCode()
         } else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            if (sdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
                 val notification = notificationManagerCompat.getActiveNotification(tag, messageId)
                 if (notification != null && notification.isGroup) {
                     previousGroup = NotificationData.GROUP_PREFIX + notification.tag
@@ -1078,7 +1079,7 @@ class MessagingManager @Inject constructor(
 
         val useCarNotification = handleCarUiVisible(context, notificationBuilder, data)
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+        if (!sdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             handleLegacyPriority(notificationBuilder, data)
             handleLegacyLedColor(notificationBuilder, data)
             handleLegacyVibrationPattern(notificationBuilder, data)
@@ -1124,7 +1125,7 @@ class MessagingManager @Inject constructor(
                 builder.setWhen(notificationWhen)
                 builder.setUsesChronometer(usesChronometer)
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                if (sdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
                     val countdown = notificationWhen > System.currentTimeMillis()
                     // Without this builder.setChronometerCountDown throws a null reference exception
                     builder.addExtras(Bundle())
@@ -1151,7 +1152,7 @@ class MessagingManager @Inject constructor(
     }
 
     private fun handleLive(builder: NotificationCompat.Builder, data: Map<String, String>) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+        if (sdkVersion.isAtLeast(Build.VERSION_CODES.BAKLAVA)) {
             val liveUpdate = data[LIVE_UPDATE]?.toBoolean() ?: false
             val criticalText = data[CRITICAL_TEXT]
 
@@ -1171,7 +1172,7 @@ class MessagingManager @Inject constructor(
         builder: NotificationCompat.Builder,
         data: Map<String, String>,
     ): Boolean {
-        if (data[CAR_UI]?.toBoolean() == true && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (data[CAR_UI]?.toBoolean() == true && sdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             val carExtender = CarAppExtender.Builder()
             if (context.isAutomotive() || BuildConfig.FLAVOR == "full") {
                 val carIntent = Intent(Intent.ACTION_VIEW).apply {
@@ -1341,7 +1342,7 @@ class MessagingManager @Inject constructor(
                         .setLargeIcon(bitmap)
                         .setStyle(
                             NotificationCompat.BigPictureStyle().also { style ->
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                                if (sdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
                                     saveTempAnimatedImage(
                                         serverId,
                                         url,
@@ -1740,7 +1741,7 @@ class MessagingManager @Inject constructor(
     }
 
     private fun handleReplyHistory(builder: NotificationCompat.Builder, data: Map<String, String>) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        if (sdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
             val replies = data.entries
                 .filter { it.key.startsWith(SOURCE_REPLY_HISTORY) }
                 .sortedBy { it.key.substringAfter(SOURCE_REPLY_HISTORY).toInt() }

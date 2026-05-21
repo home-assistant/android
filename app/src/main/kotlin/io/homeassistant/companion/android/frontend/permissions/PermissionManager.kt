@@ -1,14 +1,13 @@
 package io.homeassistant.companion.android.frontend.permissions
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.os.Build
 import android.webkit.PermissionRequest as WebViewPermissionRequest
-import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.NotificationStatusProvider
 import io.homeassistant.companion.android.common.util.PermissionChecker
 import io.homeassistant.companion.android.common.util.SingleSlotQueue
+import io.homeassistant.companion.android.common.util.sdkVersion
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
@@ -39,31 +38,14 @@ private data class WebViewPermissionStatus(
  * Concurrent triggers are waiting in FIFO order: a second method call suspends until the
  * current request is resolved.
  */
-internal class PermissionManager @VisibleForTesting constructor(
+internal class PermissionManager @Inject constructor(
     private val serverManager: ServerManager,
     private val settingsDao: SettingsDao,
     @FcmSupport private val fcmSupport: Boolean,
     private val notificationStatusProvider: NotificationStatusProvider,
     private val permissionChecker: PermissionChecker,
     // Need for testing to avoid the need of Robolectric
-    private val sdkInt: Int,
 ) {
-
-    @Inject
-    constructor(
-        serverManager: ServerManager,
-        settingsDao: SettingsDao,
-        @FcmSupport fcmSupport: Boolean,
-        notificationStatusProvider: NotificationStatusProvider,
-        permissionChecker: PermissionChecker,
-    ) : this(
-        serverManager = serverManager,
-        settingsDao = settingsDao,
-        fcmSupport = fcmSupport,
-        notificationStatusProvider = notificationStatusProvider,
-        permissionChecker = permissionChecker,
-        sdkInt = Build.VERSION.SDK_INT,
-    )
 
     private val queue = SingleSlotQueue<PermissionRequest>()
 
@@ -86,9 +68,8 @@ internal class PermissionManager @VisibleForTesting constructor(
      *
      * @param serverId The server to check notification preferences for
      */
-    @SuppressLint("NewApi")
     suspend fun checkNotificationPermission(serverId: Int) {
-        if (sdkInt < Build.VERSION_CODES.TIRAMISU) return
+        if (!sdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) return
         if (!shouldAskNotificationPermission(serverId)) return
 
         val granted: Boolean? = queue.awaitResult { resolve ->
@@ -115,9 +96,8 @@ internal class PermissionManager @VisibleForTesting constructor(
      * @return `true` if local network access is available (granted or not required); `false` if the
      *         user declined the permission
      */
-    @SuppressLint("NewApi")
     suspend fun checkLocalNetworkPermission(): Boolean {
-        if (sdkInt < Build.VERSION_CODES.CINNAMON_BUN) return true
+        if (!sdkVersion.isAtLeast(Build.VERSION_CODES.CINNAMON_BUN)) return true
         if (permissionChecker.hasPermission(Manifest.permission.ACCESS_LOCAL_NETWORK)) return true
 
         Timber.d("Local network permission required, awaiting user response")
@@ -138,8 +118,8 @@ internal class PermissionManager @VisibleForTesting constructor(
      *         the user declined the permission
      */
     suspend fun checkStoragePermissionForDownload(): Boolean {
-        if (sdkInt >= Build.VERSION_CODES.Q) return true
-        if (permissionChecker.hasPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)) return true
+        if (sdkVersion.isAtLeast(Build.VERSION_CODES.Q)) return true
+        if (permissionChecker.hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)) return true
 
         Timber.d("Storage permission required for download, awaiting user response")
         return queue.awaitResult { onResult ->

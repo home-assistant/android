@@ -10,6 +10,7 @@ import com.wifi.improv.ErrorState
 import com.wifi.improv.ImprovDevice
 import com.wifi.improv.ImprovManager
 import com.wifi.improv.ImprovManagerCallback
+import io.homeassistant.companion.android.common.util.sdkVersion
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,7 +40,7 @@ class ImprovRepositoryImpl @Inject constructor() :
 
     override fun getRequiredPermissions(): Array<String> {
         var required = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (sdkVersion.isAtLeast(Build.VERSION_CODES.S)) {
             required += Manifest.permission.BLUETOOTH_SCAN
             required += Manifest.permission.BLUETOOTH_CONNECT
         } else {

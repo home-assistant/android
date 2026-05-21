@@ -18,6 +18,7 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.isAutomotive
+import io.homeassistant.companion.android.common.util.sdkVersion
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -211,7 +212,7 @@ class ActivitySensorManager :
     }
 
     override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        return if (sdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
             arrayOf(
                 Manifest.permission.ACTIVITY_RECOGNITION,
             )

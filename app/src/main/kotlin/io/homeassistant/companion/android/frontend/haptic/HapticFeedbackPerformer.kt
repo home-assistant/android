@@ -6,6 +6,7 @@ import android.os.Vibrator
 import android.view.HapticFeedbackConstants
 import android.view.View
 import androidx.core.content.getSystemService
+import io.homeassistant.companion.android.common.util.sdkVersion
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -48,7 +49,7 @@ object HapticFeedbackPerformer {
     }
 
     private fun performSuccess(view: View) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        if (sdkVersion.isAtLeast(Build.VERSION_CODES.R)) {
             view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
         } else {
             vibrate(view, duration = SUCCESS_FALLBACK_DURATION)
@@ -56,7 +57,7 @@ object HapticFeedbackPerformer {
     }
 
     private fun performWarning(view: View) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (sdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
             view.context.getSystemService<Vibrator>()?.vibrate(
                 VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK),
             )
@@ -66,7 +67,7 @@ object HapticFeedbackPerformer {
     }
 
     private fun performFailure(view: View) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        if (sdkVersion.isAtLeast(Build.VERSION_CODES.R)) {
             view.performHapticFeedback(HapticFeedbackConstants.REJECT)
         } else {
             vibrate(view, duration = FAILURE_FALLBACK_DURATION)
@@ -74,7 +75,7 @@ object HapticFeedbackPerformer {
     }
 
     private fun performSelection(view: View) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        if (sdkVersion.isAtLeast(Build.VERSION_CODES.R)) {
             view.performHapticFeedback(HapticFeedbackConstants.GESTURE_START)
         } else {
             vibrate(view, duration = SELECTION_FALLBACK_DURATION)

@@ -8,6 +8,7 @@ import androidx.car.app.CarContext
 import androidx.car.app.model.Action
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.util.isAutomotive
+import io.homeassistant.companion.android.common.util.sdkVersion
 import io.homeassistant.companion.android.launch.LaunchActivity
 import timber.log.Timber
 
@@ -30,7 +31,7 @@ fun startNativeActivity(carContext: CarContext) {
     with(carContext) {
         // The app must indicate the default display to be used to avoid a SecurityException on newer
         // Android versions. See: https://developer.android.com/training/cars/platforms/releases#android-14
-        val options = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        val options = if (sdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
             ActivityOptions.makeBasic()
                 .setLaunchDisplayId(Display.DEFAULT_DISPLAY)
                 .toBundle()
