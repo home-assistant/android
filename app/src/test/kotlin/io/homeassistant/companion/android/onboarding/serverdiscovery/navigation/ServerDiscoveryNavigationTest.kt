@@ -111,6 +111,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
         every { navigationEventsFlow } returns connectionNavigationEventFlow
         every { errorFlow } returns MutableStateFlow(null)
         every { connectivityCheckState } returns MutableStateFlow(ConnectivityCheckState())
+        every { pendingFileChooser } returns MutableStateFlow(null)
     }
 
     @Test
