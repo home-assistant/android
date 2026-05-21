@@ -936,19 +936,23 @@ class LocationSensorManager :
         val updateLocationAs: String = getSendLocationAsSetting(serverId)
         if (updateLocationAs == SEND_LOCATION_AS_ZONE_ONLY) {
             val zones = getZones(serverId)
-            val locationZone = zones
+            val inZones = zones
                 .filter {
                     val passive = it.attributes["passive"] as? Boolean
                     val radius = it.attributes["radius"] as? Number
                     return@filter passive == false && radius != null && it.containsWithAccuracy(location)
                 }
-                .minByOrNull { (it.attributes["radius"] as? Number ?: Int.MAX_VALUE).toFloat() }
+            val locationZone = inZones.minByOrNull { (it.attributes["radius"] as? Number ?: Int.MAX_VALUE).toFloat() }
 
             val locationName = locationZone?.entityId?.split(".")?.getOrNull(1) ?: ZONE_NAME_NOT_HOME
+            // Send both `location_name` (deprecated) and `in_zones` (its replacement, per
+            // https://github.com/home-assistant/architecture/discussions/1387) so the payload works
+            // against both pre- and post-deprecation Core servers during the rollout window.
             updateLocation = UpdateLocation(
                 gps = null,
                 gpsAccuracy = null,
                 locationName = locationName,
+                inZones = inZones.map { it.entityId },
                 speed = null,
                 altitude = null,
                 course = null,
@@ -960,6 +964,7 @@ class LocationSensorManager :
                 gps = listOf(location.latitude, location.longitude),
                 gpsAccuracy = accuracy,
                 locationName = null,
+                inZones = null,
                 speed = location.speed.toInt(),
                 altitude = location.altitude.toInt(),
                 course = location.bearing.toInt(),
@@ -1443,6 +1448,7 @@ class LocationSensorManager :
                     latitude = if (updateLocation != null) updateLocation.gps?.getOrNull(0) else location.latitude,
                     longitude = if (updateLocation != null) updateLocation.gps?.getOrNull(1) else location.longitude,
                     locationName = updateLocation?.locationName,
+                    inZones = updateLocation?.inZones.orEmpty(),
                     accuracy = updateLocation?.gpsAccuracy ?: location.accuracy.toInt(),
                     data = updateLocation?.toString(),
                     serverId = serverId,
