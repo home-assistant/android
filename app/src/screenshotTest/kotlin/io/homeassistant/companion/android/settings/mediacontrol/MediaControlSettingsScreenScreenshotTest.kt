@@ -81,8 +81,20 @@ class MediaControlSettingsScreenScreenshotTest {
                 uiState = MediaControlSettingsUiState(
                     isLoading = false,
                     servers = listOf(
-                        Server(id = 1, _name = "Home", connection = ServerConnectionInfo(externalUrl = "http://home.local"), session = ServerSessionInfo(), user = ServerUserInfo()),
-                        Server(id = 2, _name = "Office", connection = ServerConnectionInfo(externalUrl = "http://office.local"), session = ServerSessionInfo(), user = ServerUserInfo()),
+                        Server(
+                            id = 1,
+                            _name = "Home",
+                            connection = ServerConnectionInfo(externalUrl = "http://home.local"),
+                            session = ServerSessionInfo(),
+                            user = ServerUserInfo(),
+                        ),
+                        Server(
+                            id = 2,
+                            _name = "Office",
+                            connection = ServerConnectionInfo(externalUrl = "http://office.local"),
+                            session = ServerSessionInfo(),
+                            user = ServerUserInfo(),
+                        ),
                     ),
                     selectedServerId = 1,
                     configuredEntityItems = listOf(

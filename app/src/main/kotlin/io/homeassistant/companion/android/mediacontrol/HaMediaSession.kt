@@ -254,12 +254,21 @@ class HaMediaSession @AssistedInject constructor(
                 Timber.d("startObservingState: received null state for ${config.entityId}, skipping update")
                 return@collectLatest
             }
-            Timber.d("startObservingState: received state for ${config.entityId}, playbackState=${state.playbackState}")
+            Timber.d(
+                "startObservingState: received state for ${config.entityId}" +
+                    " playbackState=${state.playbackState}" +
+                    " title=${state.title}" +
+                    " entityPictureUrl=${state.entityPictureUrl}" +
+                    " cacheUrl=${artworkCache.url}" +
+                    " cacheHasBytes=${artworkCache.bytes != null}" +
+                    " cacheHasBitmap=${artworkCache.bitmap != null}",
+            )
             if (state.playbackState is MediaPlaybackState.Off) {
                 // Entity is off: reset the player to idle (no playlist, no commands) so Media3
                 // does not create a notification for this session. A notification for an idle
                 // session with no content would replace the foreground notification of any
                 // currently-playing session (e.g. another configured entity), hiding its control.
+                Timber.d("startObservingState: entity off — clearing cache, artwork, and player state")
                 artworkCache = ArtworkCache()
                 withContext(Dispatchers.Main) {
                     notificationArtwork = null
@@ -269,24 +278,49 @@ class HaMediaSession @AssistedInject constructor(
                 return@collectLatest
             }
 
-            // Update the player immediately with cached bytes if the URL is unchanged, or with
-            // no artwork if it changed — so metadata and playback state never wait behind IO.
-            val immediateArtwork = if (state.entityPictureUrl != null && state.entityPictureUrl == artworkCache.url) artworkCache else ArtworkCache()
+            // Push metadata and playback state immediately, keeping old artwork bytes in the
+            // player until new artwork finishes loading — avoids a blank gap when the URL
+            // changes (HA sends multiple updates per track change with different cache= params).
+            Timber.d(
+                "startObservingState: immediate player update (holding old artwork)" +
+                    " artworkBytes=${artworkCache.bytes?.let { "${it.size}B" } ?: "null"}" +
+                    " entityPictureUrl=${state.entityPictureUrl}" +
+                    " cacheUrl=${artworkCache.url}",
+            )
             withContext(Dispatchers.Main) {
-                notificationArtwork = immediateArtwork.bitmap
                 notificationEntityName = state.entityFriendlyName
-                player.updateState(state = state, artworkBytes = immediateArtwork.bytes)
+                player.updateState(state = state, artworkBytes = artworkCache.bytes)
             }
 
-            if (state.entityPictureUrl != null && state.entityPictureUrl != artworkCache.url) {
-                // URL changed: load new artwork then do a second player update with the bytes.
-                artworkCache = loadArtwork(state)
-                withContext(Dispatchers.Main) {
-                    notificationArtwork = artworkCache.bitmap
-                    player.updateState(state = state, artworkBytes = artworkCache.bytes)
+            when {
+                state.entityPictureUrl == null -> {
+                    Timber.d("startObservingState: no artwork URL — clearing cache and notification")
+                    artworkCache = ArtworkCache()
+                    withContext(Dispatchers.Main) {
+                        notificationArtwork = null
+                        player.updateState(state = state, artworkBytes = null)
+                    }
                 }
-            } else if (state.entityPictureUrl == null) {
-                artworkCache = ArtworkCache()
+                state.entityPictureUrl != artworkCache.url -> {
+                    Timber.d("startObservingState: URL changed — starting artwork load for ${state.entityPictureUrl}")
+                    artworkCache = loadArtwork(state)
+                    Timber.d(
+                        "startObservingState: artwork load complete" +
+                            " hasBytes=${artworkCache.bytes != null}" +
+                            " hasBitmap=${artworkCache.bitmap != null}" +
+                            " cacheUrl=${artworkCache.url}",
+                    )
+                    withContext(Dispatchers.Main) {
+                        Timber.d(
+                            "startObservingState: applying loaded artwork to player and notification" +
+                                " notificationArtwork=${if (artworkCache.bitmap != null) "set" else "null"}" +
+                                " artworkBytes=${artworkCache.bytes?.let { "${it.size}B" } ?: "null"}",
+                        )
+                        notificationArtwork = artworkCache.bitmap
+                        player.updateState(state = state, artworkBytes = artworkCache.bytes)
+                    }
+                }
+                else -> Timber.d("startObservingState: URL unchanged — reusing cached artwork")
             }
         }
         Timber.d("startObservingState: flow collection ended for ${config.entityId}")
@@ -340,15 +374,35 @@ class HaMediaSession @AssistedInject constructor(
      * Returns an empty [ArtworkCache] if the URL cannot be resolved or the load fails.
      */
     private suspend fun loadArtwork(state: MediaControlState): ArtworkCache {
-        val url = resolveArtworkUrl(state) ?: return ArtworkCache()
-        val (bytes, bitmap) = loadArtworkData(url) ?: return ArtworkCache()
+        Timber.d("loadArtwork: resolving URL for entityPictureUrl=${state.entityPictureUrl}")
+        val url = resolveArtworkUrl(state)
+        if (url == null) {
+            Timber.d("loadArtwork: URL resolution returned null — returning empty cache")
+            return ArtworkCache()
+        }
+        Timber.d("loadArtwork: resolved to $url — starting fetch")
+        val data = loadArtworkData(url)
+        if (data == null) {
+            Timber.d("loadArtwork: fetch returned null — returning empty cache")
+            return ArtworkCache()
+        }
+        val (bytes, bitmap) = data
+        Timber.d(
+            "loadArtwork: fetch succeeded" +
+                " bytes=${bytes.size}B" +
+                " bitmap=${bitmap.width}x${bitmap.height}",
+        )
         return ArtworkCache(url = state.entityPictureUrl, bytes = bytes, bitmap = bitmap)
     }
 
     private suspend fun resolveArtworkUrl(state: MediaControlState): String? {
         val entityPictureUrl = state.entityPictureUrl ?: return null
-        if (entityPictureUrl.startsWith("http")) return entityPictureUrl
+        if (entityPictureUrl.startsWith("http")) {
+            Timber.d("resolveArtworkUrl: already absolute — using as-is")
+            return entityPictureUrl
+        }
 
+        Timber.d("resolveArtworkUrl: relative URL — fetching base URL for server ${state.serverId}")
         val baseUrl = try {
             serverManager.connectionStateProvider(state.serverId)
                 .urlFlow()
@@ -358,7 +412,11 @@ class HaMediaSession @AssistedInject constructor(
         } catch (e: Exception) {
             Timber.e(e, "Failed to resolve artwork base URL for server ${state.serverId}")
             null
-        } ?: return null
+        }
+        if (baseUrl == null) {
+            Timber.d("resolveArtworkUrl: no base URL available — cannot resolve")
+            return null
+        }
 
         return URL(baseUrl, entityPictureUrl).toString()
     }
@@ -373,18 +431,31 @@ class HaMediaSession @AssistedInject constructor(
      */
     private suspend fun loadArtworkData(url: String): Pair<ByteArray, Bitmap>? = withContext(Dispatchers.IO) {
         try {
+            Timber.d("loadArtworkData: starting Coil fetch")
             val request = ImageRequest.Builder(context)
                 .data(url)
                 .allowHardware(false)
                 .build()
             val result = context.imageLoader.execute(request)
-            result.image?.toBitmap()?.let { bitmap ->
-                val stream = ByteArrayOutputStream()
-                bitmap.compress(CompressFormat.JPEG, 90, stream)
-                val maxIconSize = context.resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width)
-                val notificationBitmap = scaleDownIfNecessary(bitmap, maxWidth = maxIconSize, maxHeight = maxIconSize)
-                stream.toByteArray() to notificationBitmap
+            val bitmap = result.image?.toBitmap()
+            if (bitmap == null) {
+                Timber.d("loadArtworkData: Coil returned no image")
+                return@withContext null
             }
+            Timber.d("loadArtworkData: Coil fetch complete — raw bitmap ${bitmap.width}x${bitmap.height}")
+            val stream = ByteArrayOutputStream()
+            bitmap.compress(CompressFormat.JPEG, 90, stream)
+            val jpegBytes = stream.toByteArray()
+            Timber.d("loadArtworkData: JPEG compress complete — ${jpegBytes.size}B")
+            val maxIconSize = context.resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width)
+            val notificationBitmap = scaleDownIfNecessary(bitmap, maxWidth = maxIconSize, maxHeight = maxIconSize)
+            Timber.d(
+                "loadArtworkData: notification bitmap ready" +
+                    " maxIconSize=${maxIconSize}px" +
+                    " scaled=${notificationBitmap.width}x${notificationBitmap.height}" +
+                    " wasScaled=${notificationBitmap !== bitmap}",
+            )
+            jpegBytes to notificationBitmap
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -427,7 +498,8 @@ class HaMediaSession @AssistedInject constructor(
             bitmap,
             maxOf(1, (scale * bitmap.width).toInt()),
             maxOf(1, (scale * bitmap.height).toInt()),
-            /* filter= */ true,
+            /* filter= */
+            true,
         )
     }
 

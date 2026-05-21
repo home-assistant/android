@@ -196,11 +196,11 @@ class MediaControlSettingsViewModelTest {
             viewModel.serviceEvents.test {
                 viewModel.addEntity("media_player.tv")
                 advanceUntilIdle()
-                awaitItem()  // Start for tv
+                awaitItem() // Start for tv
 
                 viewModel.addEntity("media_player.radio")
                 advanceUntilIdle()
-                awaitItem()  // Start for radio
+                awaitItem() // Start for radio
 
                 viewModel.removeEntity(0)
                 advanceUntilIdle()

@@ -167,11 +167,7 @@ private fun EntityPickerSection(
 }
 
 @Composable
-private fun ConfiguredEntityRow(
-    item: ConfiguredEntityItem,
-    onRemove: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
+private fun ConfiguredEntityRow(item: ConfiguredEntityItem, onRemove: () -> Unit, modifier: Modifier = Modifier) {
     val colorScheme = LocalHAColorScheme.current
     val context = LocalContext.current
     val entityIcon = remember(item.entity) { item.entity?.getIcon(context) }

@@ -42,11 +42,7 @@ sealed interface MediaControlServiceEvent {
  * has not yet been loaded from the server. [entity] is null until server data is available;
  * the Compose layer uses it to resolve the entity icon via [LocalContext].
  */
-data class ConfiguredEntityItem(
-    val config: MediaControlEntityConfig,
-    val name: String,
-    val entity: Entity?,
-)
+data class ConfiguredEntityItem(val config: MediaControlEntityConfig, val name: String, val entity: Entity?)
 
 @Stable
 data class MediaControlSettingsUiState(
