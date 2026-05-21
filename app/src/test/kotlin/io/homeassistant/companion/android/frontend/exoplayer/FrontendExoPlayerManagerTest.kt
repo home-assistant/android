@@ -7,7 +7,6 @@ import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.exoplayer.ExoPlayer
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent.ExoPlayerAction
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -21,9 +20,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
-import org.junit.jupiter.api.extension.ExtendWith
 
-@ExtendWith(ConsoleLogExtension::class)
 class FrontendExoPlayerManagerTest {
 
     private val mockPlayer: ExoPlayer = mockk(relaxed = true)
