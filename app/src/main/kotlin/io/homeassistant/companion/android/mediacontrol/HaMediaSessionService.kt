@@ -68,10 +68,11 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
         startObservingEntities()
     }
 
-    // Returns null intentionally: Media3 routes each controller to the session whose ID matches
-    // the one it was constructed with. Returning a specific session here would cause all
-    // controllers (including the notification) to connect to that one session, breaking
-    // multi-session behavior where each entity has its own independent media control card.
+    /* Returns null intentionally: Media3 routes each controller to the session whose ID matches
+     * the one it was constructed with. Returning a specific session here would cause all
+     * controllers (including the notification) to connect to that one session, breaking
+     * multi-session behavior where each entity has its own independent media control card.
+     */
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = null
 
     override fun onTaskRemoved(rootIntent: Intent?) {
@@ -92,9 +93,10 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
      * updated. Each session gets a notification with a unique ID derived from the session's ID,
      * so each entity appears as its own card in the media controls carousel.
      */
-    // POST_NOTIFICATIONS is not required for notifications linked to an active MediaSession
-    // (MediaStyle notifications). This is a platform-level guarantee on API 33+; on API < 33
-    // the permission does not exist at all.
+    /* POST_NOTIFICATIONS is not required for notifications linked to an active MediaSession
+     * (MediaStyle notifications). This is a platform-level guarantee on API 33+; on API < 33
+     * the permission does not exist at all.
+     */
     @SuppressLint("MissingPermission")
     @OptIn(UnstableApi::class)
     override fun onUpdateNotification(session: MediaSession, startInForegroundRequired: Boolean) {

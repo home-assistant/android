@@ -305,8 +305,9 @@ internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: 
         const val CURRENT_ITEM_INDEX = 0
         const val PLAYBACK_SPEED = 1.0f
 
-        // HA uses 0.0–1.0; we tell Media3 our volume range is 0–VOLUME_SCALE via
-        // REMOTE_DEVICE_INFO, so Media3 will call handleSetDeviceVolume with values in that range.
+        /* HA uses 0.0–1.0; we tell Media3 our volume range is 0–VOLUME_SCALE via
+         * REMOTE_DEVICE_INFO, so Media3 will call handleSetDeviceVolume with values in that range.
+         */
         const val VOLUME_SCALE = 100
 
         val REMOTE_DEVICE_INFO: DeviceInfo = DeviceInfo.Builder(DeviceInfo.PLAYBACK_TYPE_REMOTE)
