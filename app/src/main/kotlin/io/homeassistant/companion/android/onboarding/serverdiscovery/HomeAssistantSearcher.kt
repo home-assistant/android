@@ -150,14 +150,19 @@ internal class HomeAssistantSearcherImpl @Inject constructor(
         Timber.d("Got service info $serviceInfo")
 
         callbackFlow {
-            val listener = getResolvedListener()
+            // The platform auto-unregisters the resolve listener once it fires
+            // onServiceResolved/onResolveFailed, so stopServiceResolution would
+            // throw "listener not registered" on the happy path. Only call it
+            // if the collector cancelled before resolution completed.
+            var resolutionCompleted = false
+            val listener = getResolvedListener { resolutionCompleted = true }
 
             @Suppress("DEPRECATION")
             // We cannot use registerServiceInfoCallback since it is only available in API 34
             nsdManager.resolveService(serviceInfo, listener)
 
             awaitClose {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                if (!resolutionCompleted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                     try {
                         nsdManager.stopServiceResolution(listener)
                     } catch (e: Exception) {
@@ -201,10 +206,13 @@ private fun ProducerScope<NsdServiceInfo>.getDiscoveryListener(): NsdManager.Dis
     }
 }
 
-private fun ProducerScope<HomeAssistantInstance>.getResolvedListener(): NsdManager.ResolveListener {
+private fun ProducerScope<HomeAssistantInstance>.getResolvedListener(
+    onDone: () -> Unit,
+): NsdManager.ResolveListener {
     return object : NsdManager.ResolveListener {
         override fun onResolveFailed(serviceInfo: NsdServiceInfo?, errorCode: Int) {
             Timber.w("Failed to resolve information for service: $serviceInfo, error code $errorCode skipping")
+            onDone()
             close()
         }
 
@@ -213,6 +221,7 @@ private fun ProducerScope<HomeAssistantInstance>.getResolvedListener(): NsdManag
             serviceInfo?.toHomeAssistantInstance()?.let { instance ->
                 trySend(instance)
             }
+            onDone()
             close()
         }
     }
