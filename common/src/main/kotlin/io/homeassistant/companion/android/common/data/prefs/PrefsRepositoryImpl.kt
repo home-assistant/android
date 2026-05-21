@@ -146,7 +146,7 @@ internal class PrefsRepositoryImpl @Inject constructor(
         return ScreenOrientation.fromStorageValue(localStorage().getString(PREF_SCREEN_ORIENTATION))
     }
 
-    override suspend fun saveScreenOrientation(orientation: ScreenOrientation) {
+    override suspend fun setScreenOrientation(orientation: ScreenOrientation) {
         localStorage().putString(PREF_SCREEN_ORIENTATION, orientation.storageValue)
     }
 

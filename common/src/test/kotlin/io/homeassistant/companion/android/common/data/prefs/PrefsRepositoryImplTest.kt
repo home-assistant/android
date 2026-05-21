@@ -244,7 +244,7 @@ class PrefsRepositoryImplTest {
         ) = runTest {
             coEvery { localStorage.putString(any(), any()) } returns Unit
 
-            repository.saveScreenOrientation(orientation)
+            repository.setScreenOrientation(orientation)
 
             coVerify { localStorage.putString("screen_orientation", expectedStored) }
         }

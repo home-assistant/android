@@ -109,7 +109,7 @@ interface PrefsRepository {
      */
     suspend fun getScreenOrientation(): ScreenOrientation
 
-    suspend fun saveScreenOrientation(orientation: ScreenOrientation)
+    suspend fun setScreenOrientation(orientation: ScreenOrientation)
 
     /** Emits the current [ScreenOrientation] preference immediately on collection, then on every change. */
     suspend fun screenOrientationFlow(): Flow<ScreenOrientation>

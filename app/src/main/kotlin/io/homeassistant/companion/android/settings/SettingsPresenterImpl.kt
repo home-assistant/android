@@ -124,7 +124,7 @@ class SettingsPresenterImpl @Inject constructor(
                 "themes" -> nightModeManager.saveNightMode(NightModeTheme.fromStorageValue(value))
                 "languages" -> langsManager.saveLang(value)
                 "page_zoom" -> prefsRepository.setPageZoomLevel(value?.toIntOrNull())
-                "screen_orientation" -> prefsRepository.saveScreenOrientation(ScreenOrientation.fromStorageValue(value))
+                "screen_orientation" -> prefsRepository.setScreenOrientation(ScreenOrientation.fromStorageValue(value))
                 else -> throw IllegalArgumentException("No string found by this key: $key")
             }
         }
