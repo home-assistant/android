@@ -83,7 +83,7 @@ jobs:
         run: |
           echo $VERSION_CODE > ./app/build/outputs/version_code.txt
 
-      - name: Create or update GitHub Pre-Release
+      - name: Create draft GitHub Pre-Release
         if: github.event.inputs.beta == 'true'
         shell: bash
         env:
@@ -103,18 +103,28 @@ jobs:
             ./app/src/main/res/xml/locales_config.xml
           )
 
-          # If a release already exists for this tag, update its assets and release metadata.
-          if gh release view "$REL_VERSION" >/dev/null 2>&1; then
-            gh release upload "$REL_VERSION" "${assets[@]}" --clobber
-            gh release edit "$REL_VERSION" \
-              --draft=false \
-              --prerelease \
-              --notes-file ./app/build/outputs/changelogGithub
-          else
-            gh release create "$REL_VERSION" "${assets[@]}" \
+          # Immutable releases lock their assets at publish time, so we create the release as a
+          # draft first and attach assets while it is still mutable. The next step publishes it.
+          # On re-runs, --clobber keeps the upload idempotent as long as the previous attempt
+          # did not get past the publish step.
+          if ! gh release view "$REL_VERSION" >/dev/null 2>&1; then
+            gh release create "$REL_VERSION" \
+              --draft \
               --prerelease \
               --notes-file ./app/build/outputs/changelogGithub
           fi
+
+          gh release upload "$REL_VERSION" "${assets[@]}" --clobber
+
+      - name: Publish Pre-Release
+        if: github.event.inputs.beta == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REL_VERSION: ${{ steps.rel_number.outputs.version }}
+        run: |
+          gh release edit "$REL_VERSION" \
+            --draft=false \
+            --notes-file ./app/build/outputs/changelogGithub
 
       - name: Deploy to Firebase
         env:
