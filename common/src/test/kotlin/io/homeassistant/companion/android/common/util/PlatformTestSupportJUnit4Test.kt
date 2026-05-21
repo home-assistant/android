@@ -23,7 +23,7 @@ class PlatformTestSupportJUnit4Test {
     }
 
     @Test
-    fun `2 Given previous test changed handler when next JUnit4 test starts then listener installs test fail-fast handler`() {
+    fun `2 Given previous test changed handler when next Jupiter test starts then listener installs test fail-fast handler`() {
         assertTrue(ConsoleLogPlatformListener.isConsoleLogEnabled())
         val failure = assertThrows(AssertionError::class.java) {
             FailFast.fail { "listener-managed failure" }
