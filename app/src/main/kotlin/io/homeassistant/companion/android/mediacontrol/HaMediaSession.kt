@@ -381,8 +381,8 @@ class HaMediaSession @AssistedInject constructor(
             result.image?.toBitmap()?.let { bitmap ->
                 val stream = ByteArrayOutputStream()
                 bitmap.compress(CompressFormat.JPEG, 90, stream)
-                val iconSize = context.resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width)
-                val notificationBitmap = Bitmap.createScaledBitmap(bitmap, iconSize, iconSize, /* filter= */ true)
+                val maxIconSize = context.resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width)
+                val notificationBitmap = scaleDownIfNecessary(bitmap, maxWidth = maxIconSize, maxHeight = maxIconSize)
                 stream.toByteArray() to notificationBitmap
             }
         } catch (e: CancellationException) {
@@ -412,6 +412,23 @@ class HaMediaSession @AssistedInject constructor(
                 MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS,
             )
         }
+    }
+
+    /**
+     * Mirrors AOSP's `Icon.scaleDownIfNecessary`: proportionally scales [bitmap] to fit within
+     * [maxWidth] × [maxHeight], preserving aspect ratio. Returns [bitmap] unchanged if it already
+     * fits. Run on IO to avoid the StrictMode CustomViolation triggered on API 36+ when the
+     * framework calls the same method on the main thread during notification rendering.
+     */
+    private fun scaleDownIfNecessary(bitmap: Bitmap, maxWidth: Int, maxHeight: Int): Bitmap {
+        if (bitmap.width <= maxWidth && bitmap.height <= maxHeight) return bitmap
+        val scale = minOf(maxWidth.toFloat() / bitmap.width, maxHeight.toFloat() / bitmap.height)
+        return Bitmap.createScaledBitmap(
+            bitmap,
+            maxOf(1, (scale * bitmap.width).toInt()),
+            maxOf(1, (scale * bitmap.height).toInt()),
+            /* filter= */ true,
+        )
     }
 
     /** Immutable cache of the last successfully loaded artwork. */
