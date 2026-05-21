@@ -10,6 +10,7 @@ import io.homeassistant.companion.android.common.util.IgnoreViolationRule
 
 val vmPolicyIgnoredViolationRules = listOf(
     IgnoreChromiumWebViewWrongContextUsage,
+    IgnoreChromiumWebViewSetDebuggingEnabledWrongContextUsage,
     IgnoreBarcodeScannerRotationListenerWrongContextUsage,
 )
 
@@ -48,6 +49,26 @@ private data object IgnoreChromiumWebViewWrongContextUsage : IgnoreViolationRule
         return violation.stackTrace.any {
             it.fileName?.startsWith("chromium-") == true &&
                 it.methodName == "onConfigurationChanged"
+        }
+    }
+}
+
+/**
+ * Ignore an [IncorrectContextUseViolation] triggered by Chromium WebView startup when the app
+ * calls [android.webkit.WebView.setWebContentsDebuggingEnabled].
+ *
+ * The API is a process-wide static toggle with no Context parameter, so Chromium falls back to
+ * the application context when constructing `ViewConfigurationHelper` during native initialization,
+ * which trips `detectIncorrectContextUse()`. There is no way for the app to supply a UI context.
+ */
+private data object IgnoreChromiumWebViewSetDebuggingEnabledWrongContextUsage : IgnoreViolationRule {
+    @RequiresApi(Build.VERSION_CODES.S)
+    override fun shouldIgnore(violation: Violation): Boolean {
+        if (violation !is IncorrectContextUseViolation) return false
+
+        return violation.stackTrace.any {
+            it.className == "android.webkit.WebView" &&
+                it.methodName == "setWebContentsDebuggingEnabled"
         }
     }
 }
