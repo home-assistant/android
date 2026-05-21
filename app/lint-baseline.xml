@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 9.1.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.1.1)" variant="all" version="9.1.1">
+<issues format="6" by="lint 9.2.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.2.1)" variant="all" version="9.2.1">
 
     <issue
         id="MissingPermission"
@@ -8,7 +8,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="232"
+            line="233"
             column="13"/>
     </issue>
 
@@ -19,7 +19,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="237"
+            line="238"
             column="17"/>
     </issue>
 
@@ -30,7 +30,7 @@
         errorLine2="                        ^">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="257"
+            line="258"
             column="25"/>
     </issue>
 
@@ -41,7 +41,7 @@
         errorLine2="                        ^">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="265"
+            line="266"
             column="25"/>
     </issue>
 
@@ -52,7 +52,7 @@
         errorLine2="                        ^">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="273"
+            line="274"
             column="25"/>
     </issue>
 
@@ -63,7 +63,7 @@
         errorLine2="        ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/util/DataUriDownloadManager.kt"
-            line="78"
+            line="79"
             column="9"/>
     </issue>
 
@@ -74,7 +74,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="109"
+            line="110"
             column="17"/>
     </issue>
 
@@ -85,7 +85,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1097"
+            line="1095"
             column="17"/>
     </issue>
 
@@ -107,7 +107,7 @@
         errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="96"
+            line="97"
             column="26"/>
     </issue>
 
@@ -118,7 +118,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="97"
+            line="98"
             column="25"/>
     </issue>
 
@@ -129,7 +129,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/assist/DefaultAssistantManager.kt"
-            line="92"
+            line="93"
             column="20"/>
     </issue>
 
@@ -140,7 +140,7 @@
         errorLine2="                             ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/controls/HaControlsProviderService.kt"
-            line="47"
+            line="48"
             column="30"/>
     </issue>
 
@@ -393,7 +393,7 @@
         errorLine2="      ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/launch/LaunchActivity.kt"
-            line="58"
+            line="73"
             column="7"/>
     </issue>
 
@@ -426,7 +426,7 @@
         errorLine2="     ~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="89"
+            line="90"
             column="6"/>
     </issue>
 
@@ -525,7 +525,7 @@
         errorLine2="                                                             ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/qs/views/ManageTilesView.kt"
-            line="64"
+            line="65"
             column="62"/>
     </issue>
 
@@ -602,7 +602,7 @@
         errorLine2="                                     ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/SensorDetailViewModel.kt"
-            line="368"
+            line="369"
             column="38"/>
     </issue>
 
@@ -662,35 +662,13 @@
     </issue>
 
     <issue
-        id="ObsoleteSdkInt"
-        message="Unnecessary; `Build.VERSION.SDK_INT >= Build.VERSION_CODES.O` is never true here"
-        errorLine1="                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &amp;&amp;"
-        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="542"
-            column="17"/>
-    </issue>
-
-    <issue
-        id="ObsoleteSdkInt"
-        message="Unnecessary; `Build.VERSION.SDK_INT >= Build.VERSION_CODES.O` is never true here"
-        errorLine1="                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &amp;&amp;"
-        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/SettingsFragment.kt"
-            line="542"
-            column="17"/>
-    </issue>
-
-    <issue
         id="StaticFieldLeak"
         message="Do not place Android context classes in static fields (static reference to `Builder` which has field `mContext` pointing to `Context`); this is a memory leak"
         errorLine1="        private lateinit var notificationBuilder: NotificationCompat.Builder"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="34"
+            line="35"
             column="9"/>
     </issue>
 
@@ -701,7 +679,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="36"
+            line="37"
             column="9"/>
     </issue>
 
@@ -1220,7 +1198,7 @@
         errorLine2="                                ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/button/ButtonWidgetConfigureActivity.kt"
-            line="151"
+            line="152"
             column="33"/>
     </issue>
 
@@ -1231,7 +1209,7 @@
         errorLine2="                                                          ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/button/ButtonWidgetConfigureActivity.kt"
-            line="419"
+            line="420"
             column="59"/>
     </issue>
 
@@ -1242,7 +1220,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/ManageShortcutsViewModel.kt"
-            line="216"
+            line="217"
             column="13"/>
     </issue>
 
@@ -1253,7 +1231,7 @@
         errorLine2="^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/util/compose/Theme.kt"
-            line="152"
+            line="155"
             column="1"/>
     </issue>
 
@@ -1264,7 +1242,7 @@
         errorLine2="^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/improv/ui/ImprovSheetView.kt"
-            line="171"
+            line="172"
             column="1"/>
     </issue>
 
@@ -1275,7 +1253,7 @@
         errorLine2="^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/improv/ui/ImprovSheetView.kt"
-            line="244"
+            line="245"
             column="1"/>
     </issue>
 
@@ -1594,7 +1572,7 @@
         errorLine2="                      ~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/controls/views/ManageControlsView.kt"
-            line="72"
+            line="73"
             column="23"/>
     </issue>
 
@@ -1605,7 +1583,7 @@
         errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/controls/views/ManageControlsView.kt"
-            line="74"
+            line="75"
             column="19"/>
     </issue>
 
@@ -1616,7 +1594,7 @@
         errorLine2="                 ~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/controls/views/ManageControlsView.kt"
-            line="76"
+            line="77"
             column="18"/>
     </issue>
 
@@ -1682,7 +1660,7 @@
         errorLine2="               ~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/ssid/views/SsidView.kt"
-            line="70"
+            line="71"
             column="16"/>
     </issue>
 
@@ -1704,7 +1682,7 @@
         errorLine2="             ~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/todo/TodoWidgetConfigureActivity.kt"
-            line="196"
+            line="195"
             column="14"/>
     </issue>
 
@@ -1715,7 +1693,7 @@
         errorLine2="              ~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/todo/TodoWidgetConfigureActivity.kt"
-            line="199"
+            line="198"
             column="15"/>
     </issue>
 
@@ -1726,7 +1704,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/todo/TodoWidgetConfigureActivity.kt"
-            line="210"
+            line="209"
             column="21"/>
     </issue>
 
@@ -1737,7 +1715,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/todo/TodoWidgetConfigureActivity.kt"
-            line="211"
+            line="210"
             column="21"/>
     </issue>
 
@@ -1748,7 +1726,7 @@
         errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/todo/TodoWidgetConfigureActivity.kt"
-            line="212"
+            line="211"
             column="19"/>
     </issue>
 
@@ -1761,17 +1739,6 @@
             file="src/main/kotlin/io/homeassistant/companion/android/controls/HaControlsPanelActivity.kt"
             line="93"
             column="9"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableReceiver"
-        message="Instance composable functions on non-stable classes will always be recomposed. If possible, make the receiver type stable or refactor this function if that isn&apos;t possible. See https://slackhq.github.io/compose-lints/rules/#unstable-receivers for more information."
-        errorLine1="        fun TodoState.getColors(): ColorProviders {"
-        errorLine2="            ~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/widgets/todo/TodoWidgetState.kt"
-            line="46"
-            column="13"/>
     </issue>
 
     <issue
@@ -1803,7 +1770,7 @@
         errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/entity/EntityWidgetConfigureActivity.kt"
-            line="132"
+            line="133"
             column="42"/>
     </issue>
 
@@ -1814,7 +1781,7 @@
         errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/template/TemplateWidgetConfigureActivity.kt"
-            line="96"
+            line="97"
             column="42"/>
     </issue>
 

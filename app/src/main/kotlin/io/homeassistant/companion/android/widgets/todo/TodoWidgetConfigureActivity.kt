@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.widgets.todo
 
-import android.annotation.SuppressLint
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
@@ -115,7 +114,6 @@ class TodoWidgetConfigureActivity : BaseActivity() {
         }
     }
 
-    @SuppressLint("ObsoleteSdkInt")
     private fun onActionClick() {
         lifecycleScope.launch {
             if (intent.extras?.getBoolean(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, false) == true) {
@@ -133,7 +131,6 @@ class TodoWidgetConfigureActivity : BaseActivity() {
         }
     }
 
-    @SuppressLint("ObsoleteSdkInt")
     @RequiresApi(Build.VERSION_CODES.O)
     private fun requestPinWidget() {
         val context = this@TodoWidgetConfigureActivity

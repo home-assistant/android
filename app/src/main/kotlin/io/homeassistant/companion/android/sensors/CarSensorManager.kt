@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.sensors
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import androidx.car.app.hardware.common.CarValue
@@ -219,7 +218,6 @@ class CarSensorManager :
 
     private lateinit var latestContext: Context
 
-    @SuppressLint("ObsoleteSdkInt") // Needed for app module (minSdk 21) but obsolete for automotive (minSdk 29)
     private val areCarSensorApisAvailable = sdkVersion.isAtLeast(Build.VERSION_CODES.O)
 
     private val isAutomotive get() = latestContext.isAutomotive()
