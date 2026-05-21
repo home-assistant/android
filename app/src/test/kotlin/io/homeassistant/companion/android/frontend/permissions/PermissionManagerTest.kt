@@ -5,6 +5,7 @@ import android.webkit.PermissionRequest as WebViewPermissionRequest
 import app.cash.turbine.turbineScope
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissionUseCase
 import io.homeassistant.companion.android.common.util.NotificationStatusProvider
 import io.homeassistant.companion.android.common.util.PermissionChecker
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -44,6 +45,7 @@ class PermissionManagerTest {
     private val integrationRepository: IntegrationRepository = mockk(relaxed = true)
     private val notificationStatusProvider: NotificationStatusProvider = mockk()
     private val permissionChecker: PermissionChecker = mockk()
+    private val checkLocalNetworkPermissionUseCase: CheckLocalNetworkPermissionUseCase = mockk(relaxed = true)
 
     private val serverId = 1
 
@@ -68,6 +70,7 @@ class PermissionManagerTest {
             fcmSupport = hasFcmPushSupport,
             notificationStatusProvider = notificationStatusProvider,
             permissionChecker = permissionChecker,
+            checkLocalNetworkPermissionUseCase = checkLocalNetworkPermissionUseCase,
         )
     }
 
