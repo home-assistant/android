@@ -464,8 +464,10 @@ class ConnectionViewModelTest {
         )
         advanceUntilIdle()
 
+        val pending = viewModel.pendingFileChooser.value
+        assertNotNull(pending)
         val uris = arrayOf(mockk<Uri>())
-        viewModel.pendingFileChooser.value!!.onResult(uris)
+        pending!!.onResult(uris)
         advanceUntilIdle()
 
         verify { filePathCallback.onReceiveValue(uris) }
@@ -490,7 +492,9 @@ class ConnectionViewModelTest {
         )
         advanceUntilIdle()
 
-        viewModel.pendingFileChooser.value!!.onResult(null)
+        val pending = viewModel.pendingFileChooser.value
+        assertNotNull(pending)
+        pending!!.onResult(null)
         advanceUntilIdle()
 
         verify { filePathCallback.onReceiveValue(null) }
