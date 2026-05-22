@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
+import androidx.navigation.navOptions
 import io.homeassistant.companion.android.automotive.navigation.carAppActivity
 import io.homeassistant.companion.android.automotive.navigation.navigateToCarAppActivity
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
@@ -70,7 +71,15 @@ internal fun HANavHost(
                     if (isAutomotive) {
                         navController.navigateToCarAppActivity()
                     } else {
-                        navController.navigateToFrontend()
+                        // Frontend is the new root after onboarding completes — clear
+                        // the entire graph back stack so pressing back exits the app
+                        // (and triggers the Android 14+ predictive-back animation)
+                        // instead of returning to the finished onboarding flow.
+                        navController.navigateToFrontend(
+                            navOptions = navOptions {
+                                popUpTo(0) { inclusive = true }
+                            },
+                        )
                     }
                 },
                 urlToOnboard = (startDestination as? OnboardingRoute)?.urlToOnboard,

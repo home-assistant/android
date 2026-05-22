@@ -36,12 +36,14 @@ class HAWebViewClientTest {
     private val keyChainRepository: KeyChainRepository = mockk(relaxed = true)
     private val currentUrlFlow = MutableStateFlow<String?>(null)
     private var capturedError: FrontendConnectionError? = null
+    private var capturedCanGoBack: Boolean? = null
 
     private lateinit var webViewClient: HAWebViewClient
 
     @BeforeEach
     fun setup() {
         capturedError = null
+        capturedCanGoBack = null
         webViewClient = HAWebViewClient(
             keyChainRepository = keyChainRepository,
             currentUrlFlow = currentUrlFlow,
@@ -49,8 +51,100 @@ class HAWebViewClientTest {
             onCrash = null,
             onUrlIntercepted = null,
             onPageFinished = null,
+            onCanGoBackChanged = { capturedCanGoBack = it },
             onReceivedHttpAuthRequest = null,
         )
+    }
+
+    @Test
+    fun `Given onPageFinished when canGoBack is true then notifies onCanGoBackChanged with true`() {
+        val webView = mockk<WebView> {
+            every { canGoBack() } returns true
+        }
+
+        webViewClient.onPageFinished(webView, "http://homeassistant.local:8123/")
+
+        assertEquals(true, capturedCanGoBack)
+    }
+
+    @Test
+    fun `Given onPageFinished when canGoBack is false then notifies onCanGoBackChanged with false`() {
+        val webView = mockk<WebView> {
+            every { canGoBack() } returns false
+        }
+
+        webViewClient.onPageFinished(webView, "http://homeassistant.local:8123/")
+
+        assertEquals(false, capturedCanGoBack)
+    }
+
+    @Test
+    fun `Given doUpdateVisitedHistory when canGoBack is true then notifies onCanGoBackChanged with true`() {
+        val webView = mockk<WebView> {
+            every { canGoBack() } returns true
+        }
+
+        webViewClient.doUpdateVisitedHistory(webView, "http://homeassistant.local:8123/lovelace/0", false)
+
+        assertEquals(true, capturedCanGoBack)
+    }
+
+    @Test
+    fun `Given null WebView when doUpdateVisitedHistory then notifies onCanGoBackChanged with false`() {
+        webViewClient.doUpdateVisitedHistory(null, "http://homeassistant.local:8123/", false)
+
+        assertEquals(false, capturedCanGoBack)
+    }
+
+    @Test
+    fun `Given transition from blank to content url when onPageFinished then clears webView history`() {
+        val webView = mockk<WebView>(relaxUnitFun = true) {
+            every { canGoBack() } returns true
+        }
+
+        // First load: about:blank
+        webViewClient.onPageFinished(webView, "about:blank")
+        // Then transition to real content URL
+        webViewClient.onPageFinished(webView, "http://homeassistant.local:8123/")
+
+        io.mockk.verify(exactly = 1) { webView.clearHistory() }
+    }
+
+    @Test
+    fun `Given content url to content url when onPageFinished then does not clear history`() {
+        val webView = mockk<WebView>(relaxUnitFun = true) {
+            every { canGoBack() } returns true
+        }
+
+        webViewClient.onPageFinished(webView, "http://homeassistant.local:8123/")
+        webViewClient.onPageFinished(webView, "http://homeassistant.local:8123/history")
+
+        io.mockk.verify(exactly = 0) { webView.clearHistory() }
+    }
+
+    @Test
+    fun `Given content url to blank url when onPageFinished then does not clear history`() {
+        val webView = mockk<WebView>(relaxUnitFun = true) {
+            every { canGoBack() } returns false
+        }
+
+        webViewClient.onPageFinished(webView, "http://homeassistant.local:8123/")
+        webViewClient.onPageFinished(webView, "about:blank")
+
+        io.mockk.verify(exactly = 0) { webView.clearHistory() }
+    }
+
+    @Test
+    fun `Given transition between different origins when onPageFinished then clears webView history`() {
+        val webView = mockk<WebView>(relaxUnitFun = true) {
+            every { canGoBack() } returns true
+        }
+
+        // First load on internal URL, then switch to external (e.g. network change)
+        webViewClient.onPageFinished(webView, "http://192.168.1.10:8123/history?entity_id=foo")
+        webViewClient.onPageFinished(webView, "https://my.duckdns.org:8123/history?entity_id=foo")
+
+        io.mockk.verify(exactly = 1) { webView.clearHistory() }
     }
 
     @Test
@@ -378,6 +472,7 @@ class HAWebViewClientTest {
             onCrash = null,
             onUrlIntercepted = null,
             onPageFinished = null,
+            onCanGoBackChanged = null,
             onReceivedHttpAuthRequest = { handler, host, resource, realm ->
                 capturedHandler = handler
                 capturedHost = host

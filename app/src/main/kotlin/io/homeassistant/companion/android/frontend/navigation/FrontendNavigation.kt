@@ -106,7 +106,6 @@ internal fun NavGraphBuilder.frontendScreen(
             )
 
             FrontendScreen(
-                onBackClick = navController::popBackStack,
                 viewModel = viewModel,
                 onOpenExternalLink = onOpenExternalLink,
                 onBlockInsecureHelpClick = onSecurityLevelHelpClick,

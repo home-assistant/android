@@ -44,12 +44,14 @@ internal fun ConnectionScreen(onBackClick: () -> Unit, viewModel: ConnectionView
     val url by viewModel.urlFlow.collectAsState()
     val isLoading by viewModel.isLoadingFlow.collectAsState()
     val error by viewModel.errorFlow.collectAsState()
+    val canGoBack by viewModel.canGoBack.collectAsState()
     val isError = error != null
 
     ConnectionScreen(
         url = url,
         isLoading = isLoading,
         isError = isError,
+        canGoBack = canGoBack,
         webViewClient = viewModel.webViewClient,
         onBackClick = onBackClick,
         onWebViewCreationFailed = viewModel::onWebViewCreationFailed,
@@ -62,6 +64,7 @@ internal fun ConnectionScreen(
     url: String?,
     isLoading: Boolean,
     isError: Boolean,
+    canGoBack: Boolean,
     webViewClient: WebViewClient,
     onBackClick: () -> Unit,
     onWebViewCreationFailed: (Throwable) -> Unit,
@@ -86,6 +89,7 @@ internal fun ConnectionScreen(
                         this.webViewClient = webViewClient
                         loadUrl(url)
                     },
+                    canGoBack = canGoBack,
                     onBackPressed = onBackClick,
                     onWebViewCreationFailed = onWebViewCreationFailed,
                 )
@@ -126,6 +130,7 @@ private fun ConnectionScreenPreview() {
             url = "https://www.home-assistant.io",
             isLoading = false,
             isError = false,
+            canGoBack = false,
             webViewClient = WebViewClient(),
             onBackClick = {},
             onWebViewCreationFailed = {},

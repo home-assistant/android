@@ -48,10 +48,28 @@ const val BLANK_URL = "about:blank"
  * WebView provider), the [onWebViewCreationFailed] callback is invoked with the exception
  * and a placeholder view is shown instead.
  *
+ * ## Back navigation
+ *
+ * Back navigation follows state-hoisting: the caller tracks [canGoBack] (typically from
+ * its `WebViewClient`'s `doUpdateVisitedHistory`) and passes the current value down. The
+ * internal `BackHandler` is only enabled when [canGoBack] is `true`, so that when the
+ * WebView has no back-stack the gesture falls through to the surrounding `NavHost` /
+ * activity. This lets the system show the Android 14+ predictive-back peek animation
+ * instead of being silently claimed by an always-enabled handler.
+ *
  * @param onWebViewCreationFailed Called when the WebView fails to initialize due to a system-level
  *                                issue such as a broken or incompatible WebView provider.
  * @param modifier The modifier to be applied to this WebView.
  * @param nightModeTheme current [NightModeTheme]
+ * @param canGoBack Whether the WebView currently has back-stack entries. When `true` the
+ *                  back gesture invokes `webView.goBack()`. Hoist from the WebView's
+ *                  `doUpdateVisitedHistory` (see `HAWebViewClient.onCanGoBackChanged`).
+ * @param onBackPressed Optional fallback invoked when the back gesture fires and the
+ *                      WebView has no history (`canGoBack == false`). Provide this when
+ *                      the screen needs to claim the gesture itself (e.g. onboarding where
+ *                      the back button must pop the nav stack); leave it `null` to let the
+ *                      gesture fall through to the surrounding NavHost / activity and
+ *                      enable Android 14+ predictive-back peek animations.
  * @param configure A lambda that allows for customization of the WebView instance.
  * @param factory A lambda that creates the WebView instance. If this returns null, a new
  *                WebView will be created with the current context. This is useful for providing
@@ -63,7 +81,7 @@ fun HAWebView(
     modifier: Modifier = Modifier,
     configure: WebView.() -> Unit = {},
     factory: () -> WebView? = { null },
-    // Only used when the backstack of the webView is empty
+    canGoBack: Boolean = false,
     onBackPressed: (() -> Unit)? = null,
     nightModeTheme: NightModeTheme? = null,
 ) {
@@ -115,11 +133,17 @@ fun HAWebView(
         )
     }
 
-    // To avoid checking doUpdateVisitedHistory from the webViewClient we simply delegate the back button handling
-    // to the webView and when the webview backstack is empty we call the callback given in parameter that should be
-    // handle by the navHost.
-    BackHandler(onBackPressed != null) {
-        webview.takeIf { it?.canGoBack() == true }?.goBack() ?: onBackPressed?.invoke()
+    // Only claim the back gesture when the WebView has somewhere to go, or when the
+    // caller supplied an explicit fallback (e.g. onboarding screens that need to pop
+    // the nav stack themselves). Otherwise the gesture falls through to the
+    // surrounding NavHost / activity, which enables Android 14+ predictive-back
+    // peek animations.
+    BackHandler(enabled = canGoBack || onBackPressed != null) {
+        if (canGoBack) {
+            webview?.goBack()
+        } else {
+            onBackPressed?.invoke()
+        }
     }
 }
 

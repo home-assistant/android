@@ -24,7 +24,7 @@ class FrontendScreenScreenshotTest {
     fun `FrontendScreen LoadServer state`() {
         HAThemeForPreview {
             FrontendScreenContent(
-                onBackClick = {},
+                canGoBack = false,
                 viewState = FrontendViewState.LoadServer(serverId = 1),
                 webViewClient = WebViewClient(),
                 webChromeClient = WebChromeClient(),
@@ -49,7 +49,7 @@ class FrontendScreenScreenshotTest {
     fun `FrontendScreen Loading state`() {
         HAThemeForPreview {
             FrontendScreenContent(
-                onBackClick = {},
+                canGoBack = false,
                 viewState = FrontendViewState.Loading(
                     serverId = 1,
                     url = "https://example.com",
@@ -77,7 +77,7 @@ class FrontendScreenScreenshotTest {
     fun `FrontendScreen SecurityLevelRequired state`() {
         HAThemeForPreview {
             FrontendScreenContent(
-                onBackClick = {},
+                canGoBack = false,
                 viewState = FrontendViewState.SecurityLevelRequired(serverId = 1),
                 webViewClient = WebViewClient(),
                 webChromeClient = WebChromeClient(),
@@ -102,7 +102,7 @@ class FrontendScreenScreenshotTest {
     fun `FrontendScreen Insecure state`() {
         HAThemeForPreview {
             FrontendScreenContent(
-                onBackClick = {},
+                canGoBack = false,
                 viewState = FrontendViewState.Insecure(
                     serverId = 1,
                     missingHomeSetup = true,
@@ -131,7 +131,7 @@ class FrontendScreenScreenshotTest {
     fun `FrontendScreen Content state`() {
         HAThemeForPreview {
             FrontendScreenContent(
-                onBackClick = {},
+                canGoBack = false,
                 viewState = FrontendViewState.Content(
                     serverId = 1,
                     url = "https://example.com",
@@ -160,7 +160,7 @@ class FrontendScreenScreenshotTest {
     fun `FrontendScreen Content with notification permission prompt`() {
         HAThemeForPreview {
             FrontendScreenContent(
-                onBackClick = {},
+                canGoBack = false,
                 viewState = FrontendViewState.Content(
                     serverId = 1,
                     url = "https://example.com",
@@ -222,7 +222,7 @@ class FrontendScreenScreenshotTest {
     fun `FrontendScreen Error`() {
         HAThemeForPreview {
             FrontendScreenContent(
-                onBackClick = {},
+                canGoBack = false,
                 viewState = FrontendViewState.Error(
                     serverId = 1,
                     url = "https://example.com",

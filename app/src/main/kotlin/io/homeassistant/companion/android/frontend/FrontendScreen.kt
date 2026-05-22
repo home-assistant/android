@@ -94,7 +94,10 @@ internal const val CUSTOM_VIEW_OVERLAY_TAG = "custom_view_overlay"
  * The WebView is always rendered at the base layer to prevent it to not load the URL.
  * Loading indicators, error screens, and blocking screens are overlaid on top.
  *
- * @param onBackClick Callback when user navigates back
+ * Back navigation is handled inside [HAWebView] when the WebView has back-stack entries;
+ * otherwise the gesture falls through to the surrounding `NavHost` (predictive-back
+ * compatible).
+ *
  * @param viewModel The ViewModel providing state and handling actions
  * @param onOpenExternalLink Callback to open external links
  * @param onBlockInsecureHelpClick Callback when user taps help on the insecure screen
@@ -107,7 +110,6 @@ internal const val CUSTOM_VIEW_OVERLAY_TAG = "custom_view_overlay"
  */
 @Composable
 internal fun FrontendScreen(
-    onBackClick: () -> Unit,
     viewModel: FrontendViewModel,
     onOpenExternalLink: suspend (Uri) -> Unit,
     onBlockInsecureHelpClick: suspend () -> Unit,
@@ -124,6 +126,7 @@ internal fun FrontendScreen(
     val pendingDialog by viewModel.pendingDialog.collectAsStateWithLifecycle()
     val pendingFileChooser by viewModel.pendingFileChooser.collectAsStateWithLifecycle()
     val autoPlayVideoEnabled by viewModel.autoPlayVideoEnabled.collectAsStateWithLifecycle()
+    val canGoBack by viewModel.canGoBack.collectAsStateWithLifecycle()
 
     // The fullscreen View handed over by the WebView is Activity-scoped. Keep it in screen
     // state so it does not leak across configuration changes via the ViewModel.
@@ -146,8 +149,8 @@ internal fun FrontendScreen(
         }
 
     FrontendScreenContent(
-        onBackClick = onBackClick,
         viewState = viewState,
+        canGoBack = canGoBack,
         errorStateProvider = viewModel as FrontendConnectionErrorStateProvider,
         webViewClient = viewModel.webViewClient,
         webChromeClient = webChromeClient,
@@ -180,11 +183,11 @@ internal fun FrontendScreen(
 
 @Composable
 internal fun FrontendScreenContent(
-    onBackClick: () -> Unit,
     viewState: FrontendViewState,
     webViewClient: WebViewClient,
     webChromeClient: WebChromeClient,
     frontendJsCallback: FrontendJsCallback,
+    canGoBack: Boolean,
     onBlockInsecureRetry: () -> Unit,
     onOpenExternalLink: suspend (Uri) -> Unit,
     onBlockInsecureHelpClick: suspend () -> Unit,
@@ -235,7 +238,7 @@ internal fun FrontendScreenContent(
     Box(modifier = modifier.fillMaxSize()) {
         // Always render WebView at base layer
         SafeHAWebView(
-            onBackClick = onBackClick,
+            canGoBack = canGoBack,
             onWebViewCreated = { webView = it },
             webViewClient = webViewClient,
             webChromeClient = webChromeClient,
@@ -426,7 +429,7 @@ private fun ErrorOverlay(
  */
 @Composable
 private fun SafeHAWebView(
-    onBackClick: () -> Unit,
+    canGoBack: Boolean,
     onWebViewCreated: (WebView) -> Unit,
     webViewClient: WebViewClient,
     contentState: FrontendViewState.Content?,
@@ -479,7 +482,7 @@ private fun SafeHAWebView(
                         autoPlayVideoEnabled = autoPlayVideoEnabled,
                     )
                 },
-                onBackPressed = onBackClick,
+                canGoBack = canGoBack,
                 onWebViewCreationFailed = onWebViewCreationFailed,
             )
 
@@ -705,7 +708,7 @@ private fun ExoPlayerOverlay(contentState: FrontendViewState.Content?, onFullscr
 private fun FrontendScreenLoadingPreview() {
     HAThemeForPreview {
         FrontendScreenContent(
-            onBackClick = {},
+            canGoBack = false,
             viewState = FrontendViewState.Loading(
                 serverId = 1,
                 url = "https://example.com",
@@ -732,7 +735,7 @@ private fun FrontendScreenLoadingPreview() {
 private fun FrontendScreenErrorPreview() {
     HAThemeForPreview {
         FrontendScreenContent(
-            onBackClick = {},
+            canGoBack = false,
             viewState = FrontendViewState.Error(
                 serverId = 1,
                 url = "https://example.com",
@@ -764,7 +767,7 @@ private fun FrontendScreenErrorPreview() {
 private fun FrontendScreenInsecurePreview() {
     HAThemeForPreview {
         FrontendScreenContent(
-            onBackClick = {},
+            canGoBack = false,
             viewState = FrontendViewState.Insecure(
                 serverId = 1,
                 missingHomeSetup = true,
@@ -792,7 +795,7 @@ private fun FrontendScreenInsecurePreview() {
 private fun FrontendScreenSecurityLevelRequiredPreview() {
     HAThemeForPreview {
         FrontendScreenContent(
-            onBackClick = {},
+            canGoBack = false,
             viewState = FrontendViewState.SecurityLevelRequired(
                 serverId = 1,
             ),

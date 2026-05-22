@@ -107,11 +107,21 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         }
     }
 
+    private val _canGoBack = MutableStateFlow(false)
+
+    /**
+     * Whether the WebView has a non-empty back history. Used by the UI layer
+     * to gate its `BackHandler`; when `false`, the system can handle the back
+     * gesture and show the Android 14+ predictive-back peek animation.
+     */
+    val canGoBack = _canGoBack.asStateFlow()
+
     val webViewClient: HAWebViewClient = webViewClientFactory.create(
         currentUrlFlow = urlFlow,
         onFrontendError = ::onError,
         onUrlIntercepted = ::interceptRedirectIfRequired,
         onPageFinished = { _isLoadingFlow.update { false } },
+        onCanGoBackChanged = { _canGoBack.value = it },
     )
 
     init {

@@ -15,6 +15,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
+import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
 import javax.inject.Inject
 import kotlinx.coroutines.flow.StateFlow
 import timber.log.Timber
@@ -37,6 +38,11 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
      *        Receives the URI and whether TLS client auth was required.
      *        Return `true` to prevent WebView from loading the URL.
      * @param onPageFinished Optional callback when a page finishes loading.
+     * @param onCanGoBackChanged Optional callback invoked whenever the WebView's
+     *        back-stack state changes (page navigations, SPA history updates).
+     *        Receives [WebView.canGoBack]. Callers can hoist this into a state
+     *        holder to drive a back handler's enabled-state for Android 14+
+     *        predictive-back support.
      * @param onReceivedHttpAuthRequest Optional callback when the server requests HTTP Basic Auth.
      *        Receives the handler, host, the resource URL that triggered the request, and the realm.
      */
@@ -46,6 +52,7 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
         onCrash: (() -> Unit)? = null,
         onUrlIntercepted: ((uri: Uri, isTLSClientAuthNeeded: Boolean) -> Boolean)? = null,
         onPageFinished: (() -> Unit)? = null,
+        onCanGoBackChanged: ((Boolean) -> Unit)? = null,
         onReceivedHttpAuthRequest: (
             (
                 handler: HttpAuthHandler,
@@ -62,6 +69,7 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
             onCrash = onCrash,
             onUrlIntercepted = onUrlIntercepted,
             onPageFinished = onPageFinished,
+            onCanGoBackChanged = onCanGoBackChanged,
             onReceivedHttpAuthRequest = onReceivedHttpAuthRequest,
         )
     }
@@ -80,6 +88,7 @@ class HAWebViewClient internal constructor(
     private val onCrash: (() -> Unit)?,
     private val onUrlIntercepted: ((uri: Uri, isTLSClientAuthNeeded: Boolean) -> Boolean)?,
     private val onPageFinished: (() -> Unit)?,
+    private val onCanGoBackChanged: ((Boolean) -> Unit)?,
     private val onReceivedHttpAuthRequest: (
         (handler: HttpAuthHandler, host: String, resource: String, realm: String) -> Unit
     )?,
@@ -88,6 +97,12 @@ class HAWebViewClient internal constructor(
     /** Last resource URL loaded by the WebView, used to identify the resource requesting auth. */
     private var lastResourceUrl: String? = null
 
+    /**
+     * Tracks the previously finished page URL so we can detect transitions out
+     * of the [BLANK_URL] placeholder and drop it from the WebView's back-stack.
+     */
+    private var lastFinishedUrl: String? = null
+
     override fun onLoadResource(view: WebView?, url: String?) {
         super.onLoadResource(view, url)
         lastResourceUrl = url
@@ -95,7 +110,45 @@ class HAWebViewClient internal constructor(
 
     override fun onPageFinished(view: WebView?, url: String?) {
         super.onPageFinished(view, url)
+        // Clear the WebView back-stack on transitions to a new origin: out of the
+        // about:blank placeholder (loading / error / security overlays), across
+        // internal <-> external URL switches on the same server, and across server
+        // switches. Without this, back would walk into a stale URL that is no
+        // longer reachable on the current network. Same-origin in-frontend
+        // navigation (full page loads between content URLs and SPA pushState,
+        // which doesn't even fire onPageFinished) is unaffected. Transitions
+        // INTO about:blank are skipped so the back-stack survives an error state
+        // and remains usable after recovery.
+        val previous = lastFinishedUrl
+        if (previous != null && url != null && url != BLANK_URL && originOf(previous) != originOf(url)) {
+            view?.clearHistory()
+        }
+        lastFinishedUrl = url
         onPageFinished?.invoke()
+        notifyCanGoBack(view)
+    }
+
+    /**
+     * Returns the `scheme://authority` prefix of [url], or the full string when the
+     * URL is opaque (e.g. `about:blank`). String-based so it works in plain JUnit
+     * tests without the Android framework or Robolectric.
+     */
+    private fun originOf(url: String): String {
+        val schemeEnd = url.indexOf("://")
+        if (schemeEnd == -1) return url
+        val authorityStart = schemeEnd + 3
+        val pathStart = url.indexOf('/', authorityStart)
+        return if (pathStart == -1) url else url.substring(0, pathStart)
+    }
+
+    override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
+        super.doUpdateVisitedHistory(view, url, isReload)
+        // SPA navigations (history.pushState) only surface here, not in onPageFinished.
+        notifyCanGoBack(view)
+    }
+
+    private fun notifyCanGoBack(view: WebView?) {
+        onCanGoBackChanged?.invoke(view?.canGoBack() == true)
     }
 
     override fun onReceivedHttpAuthRequest(view: WebView?, handler: HttpAuthHandler?, host: String?, realm: String?) {

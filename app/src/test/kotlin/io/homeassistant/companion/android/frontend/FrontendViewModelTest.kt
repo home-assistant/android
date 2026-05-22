@@ -920,10 +920,11 @@ class FrontendViewModelTest {
                     onCrash = any(),
                     onUrlIntercepted = any(),
                     onPageFinished = any(),
+                    onCanGoBackChanged = any(),
                     onReceivedHttpAuthRequest = any(),
                 )
             } answers {
-                // onPageFinished is the 5th of the 6 named arguments (zero-based index 4)
+                // onPageFinished is the 5th of the 7 named arguments (zero-based index 4)
                 capturedPageFinished = arg(4)
                 mockk(relaxed = true)
             }
@@ -1019,6 +1020,7 @@ class FrontendViewModelTest {
                     onCrash = any(),
                     onUrlIntercepted = any(),
                     onPageFinished = any(),
+                    onCanGoBackChanged = any(),
                     onReceivedHttpAuthRequest = any(),
                 )
             } answers {
