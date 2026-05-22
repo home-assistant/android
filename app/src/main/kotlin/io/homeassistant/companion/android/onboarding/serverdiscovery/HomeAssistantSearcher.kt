@@ -150,21 +150,23 @@ internal class HomeAssistantSearcherImpl @Inject constructor(
         Timber.d("Got service info $serviceInfo")
 
         callbackFlow {
-            // The platform auto-unregisters the resolve listener once it fires
-            // onServiceResolved/onResolveFailed, so stopServiceResolution would
-            // throw "listener not registered" on the happy path. Only call it
-            // if the collector cancelled before resolution completed.
-            var resolutionCompleted = false
-            val listener = getResolvedListener { resolutionCompleted = true }
+            val listener = getResolvedListener()
 
             @Suppress("DEPRECATION")
             // We cannot use registerServiceInfoCallback since it is only available in API 34
             nsdManager.resolveService(serviceInfo, listener)
 
             awaitClose {
-                if (!resolutionCompleted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                     try {
                         nsdManager.stopServiceResolution(listener)
+                    } catch (e: IllegalArgumentException) {
+                        // On devices with T SDK extension < 22, NsdManager throws when the
+                        // listener is already unregistered (which happens automatically after
+                        // onServiceResolved/onResolveFailed fires). The call is still needed
+                        // for devices where auto-unregistration is not guaranteed, so we keep
+                        // it and just downgrade the expected case to a warning without a stack.
+                        Timber.w("stopServiceResolution: listener already unregistered: ${e.message}")
                     } catch (e: Exception) {
                         Timber.e(e, "Failed to stop service resolution")
                     }
@@ -206,11 +208,10 @@ private fun ProducerScope<NsdServiceInfo>.getDiscoveryListener(): NsdManager.Dis
     }
 }
 
-private fun ProducerScope<HomeAssistantInstance>.getResolvedListener(onDone: () -> Unit): NsdManager.ResolveListener {
+private fun ProducerScope<HomeAssistantInstance>.getResolvedListener(): NsdManager.ResolveListener {
     return object : NsdManager.ResolveListener {
         override fun onResolveFailed(serviceInfo: NsdServiceInfo?, errorCode: Int) {
             Timber.w("Failed to resolve information for service: $serviceInfo, error code $errorCode skipping")
-            onDone()
             close()
         }
 
@@ -219,7 +220,6 @@ private fun ProducerScope<HomeAssistantInstance>.getResolvedListener(onDone: () 
             serviceInfo?.toHomeAssistantInstance()?.let { instance ->
                 trySend(instance)
             }
-            onDone()
             close()
         }
     }
