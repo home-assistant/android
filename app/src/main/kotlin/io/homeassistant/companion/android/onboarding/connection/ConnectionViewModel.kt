@@ -128,15 +128,22 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     /**
      * [WebChromeClient][android.webkit.WebChromeClient] used by the onboarding WebView.
      *
-     * The Home Assistant onboarding flow (e.g. backup restore) renders `<input type="file">`
-     * elements; without an `onShowFileChooser` override these clicks are silently dropped by
-     * the system WebView. This delegates to [FileChooserManager] so the request survives
-     * configuration changes and reuses the same flow as the main frontend WebView.
+     * The Home Assistant onboarding flow could request a file selection (e.g. backup restore).
      */
     val webChromeClient: HAWebChromeClient = HAWebChromeClient(
         onShowFileChooser = { filePathCallback, fileChooserParams ->
             viewModelScope.launch {
-                filePathCallback.onReceiveValue(fileChooserManager.pickFiles(fileChooserParams))
+                var delivered = false
+                try {
+                    val uris = fileChooserManager.pickFiles(fileChooserParams)
+                    delivered = true
+                    filePathCallback.onReceiveValue(uris)
+                } finally {
+                    // Ensure the WebView's file input is unblocked even if the coroutine is
+                    // cancelled (e.g. ViewModel cleared) or pickFiles throws, otherwise the
+                    // `<input type="file">` element would stay in a stuck pending state.
+                    if (!delivered) filePathCallback.onReceiveValue(null)
+                }
             }
             true
         },
