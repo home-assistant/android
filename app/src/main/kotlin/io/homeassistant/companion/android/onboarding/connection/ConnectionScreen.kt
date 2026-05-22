@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -70,10 +69,10 @@ internal fun ConnectionScreen(
     isLoading: Boolean,
     isError: Boolean,
     webViewClient: WebViewClient,
+    webChromeClient: WebChromeClient,
     onBackClick: () -> Unit,
     onWebViewCreationFailed: (Throwable) -> Unit,
     modifier: Modifier = Modifier,
-    webChromeClient: WebChromeClient = remember { WebChromeClient() },
     pendingFileChooser: FileChooserRequest? = null,
 ) {
     FileChooserEffect(pendingRequest = pendingFileChooser)
@@ -139,6 +138,7 @@ private fun ConnectionScreenPreview() {
             isLoading = false,
             isError = false,
             webViewClient = WebViewClient(),
+            webChromeClient = WebChromeClient(),
             onBackClick = {},
             onWebViewCreationFailed = {},
             modifier = Modifier.fillMaxSize(),
