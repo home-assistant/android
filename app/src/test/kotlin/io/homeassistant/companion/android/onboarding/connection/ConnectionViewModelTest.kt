@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.onboarding.connection
 
 import android.net.Uri
+import android.webkit.ValueCallback
+import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -417,5 +419,81 @@ class ConnectionViewModelTest {
         assertEquals("dlopen failed: libwebviewchromium.so is 32-bit", error.errorDetails)
         assertEquals("class java.lang.UnsatisfiedLinkError", error.rawErrorType)
         verify(exactly = 1) { connectivityCheckRepository.runChecks(rawUrl) }
+    }
+
+    @Test
+    fun `Given webChromeClient when onShowFileChooser is invoked then pendingFileChooser exposes the params`() = runTest {
+        val viewModel = ConnectionViewModel(
+            "http://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserManager,
+        )
+
+        val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
+        val fileChooserParams = mockk<WebChromeClient.FileChooserParams>(relaxed = true)
+
+        val handled = viewModel.webChromeClient.onShowFileChooser(
+            mockk(relaxed = true),
+            filePathCallback,
+            fileChooserParams,
+        )
+        advanceUntilIdle()
+
+        assertTrue(handled)
+        val pending = viewModel.pendingFileChooser.value
+        assertNotNull(pending)
+        assertTrue(pending!!.fileChooserParams === fileChooserParams)
+    }
+
+    @Test
+    fun `Given pending file chooser when result delivered then filePathCallback receives uris and slot clears`() = runTest {
+        val viewModel = ConnectionViewModel(
+            "http://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserManager,
+        )
+
+        val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
+
+        viewModel.webChromeClient.onShowFileChooser(
+            mockk(relaxed = true),
+            filePathCallback,
+            mockk(relaxed = true),
+        )
+        advanceUntilIdle()
+
+        val uris = arrayOf(mockk<Uri>())
+        viewModel.pendingFileChooser.value!!.onResult(uris)
+        advanceUntilIdle()
+
+        verify { filePathCallback.onReceiveValue(uris) }
+        assertNull(viewModel.pendingFileChooser.value)
+    }
+
+    @Test
+    fun `Given pending file chooser when user cancels then filePathCallback receives null and slot clears`() = runTest {
+        val viewModel = ConnectionViewModel(
+            "http://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserManager,
+        )
+
+        val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
+
+        viewModel.webChromeClient.onShowFileChooser(
+            mockk(relaxed = true),
+            filePathCallback,
+            mockk(relaxed = true),
+        )
+        advanceUntilIdle()
+
+        viewModel.pendingFileChooser.value!!.onResult(null)
+        advanceUntilIdle()
+
+        verify { filePathCallback.onReceiveValue(null) }
+        assertNull(viewModel.pendingFileChooser.value)
     }
 }
