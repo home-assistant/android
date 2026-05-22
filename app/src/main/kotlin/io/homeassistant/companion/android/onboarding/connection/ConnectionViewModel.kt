@@ -14,13 +14,17 @@ import io.homeassistant.companion.android.common.data.connectivity.ConnectivityC
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
+import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
+import io.homeassistant.companion.android.frontend.filechooser.FileChooserRequest
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
+import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -65,6 +69,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     private val rawUrl: String,
     private val webViewClientFactory: HAWebViewClientFactory,
     private val connectivityCheckRepository: ConnectivityCheckRepository,
+    private val fileChooserManager: FileChooserManager,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -73,7 +78,13 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         savedStateHandle: SavedStateHandle,
         webViewClientFactory: HAWebViewClientFactory,
         connectivityCheckRepository: ConnectivityCheckRepository,
-    ) : this(savedStateHandle.toRoute<ConnectionRoute>().url, webViewClientFactory, connectivityCheckRepository)
+        fileChooserManager: FileChooserManager,
+    ) : this(
+        savedStateHandle.toRoute<ConnectionRoute>().url,
+        webViewClientFactory,
+        connectivityCheckRepository,
+        fileChooserManager,
+    )
 
     private val rawUri: Uri by lazy { rawUrl.toUri() }
 
@@ -113,6 +124,23 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         onUrlIntercepted = ::interceptRedirectIfRequired,
         onPageFinished = { _isLoadingFlow.update { false } },
     )
+
+    /**
+     * [WebChromeClient][android.webkit.WebChromeClient] used by the onboarding WebView.
+     *
+     * The Home Assistant onboarding flow could request a file selection (e.g. backup restore).
+     */
+    val webChromeClient: HAWebChromeClient = HAWebChromeClient(
+        onShowFileChooser = { filePathCallback, fileChooserParams ->
+            viewModelScope.launch {
+                filePathCallback.onReceiveValue(fileChooserManager.pickFiles(fileChooserParams))
+            }
+            true
+        },
+    )
+
+    /** The current pending file chooser request from the WebView, or `null` if none. */
+    val pendingFileChooser: StateFlow<FileChooserRequest?> = fileChooserManager.pendingFileChooser
 
     init {
         viewModelScope.launch {
