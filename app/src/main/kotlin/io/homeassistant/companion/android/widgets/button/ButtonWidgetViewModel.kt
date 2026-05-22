@@ -4,9 +4,12 @@ import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
+import androidx.annotation.StringRes
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
+import androidx.compose.ui.unit.min
+import androidx.glance.action.action
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.currentState
 import androidx.lifecycle.ViewModel
@@ -54,6 +57,7 @@ class ButtonWidgetViewModel @Inject constructor(
         val servers: List<Server> = emptyList(),
         val serverActions: List<Action> = emptyList(),
         val dynamicFields: List<ActionFieldBinder> = emptyList(),
+        val domainEntities: List<String> = emptyList(),
         val selectedIcon: IIcon = CommunityMaterial.Icon2.cmd_flash,
         val selectedIconId: String? = null,
         val label: String = "",
@@ -64,6 +68,7 @@ class ButtonWidgetViewModel @Inject constructor(
         },
         val textColorIndex: Int = 0,
         val requiresAuthentication: Boolean = false,
+        val isUpdating: Boolean? = false,
     )
 
     val actionFieldState: TextFieldState = TextFieldState()
@@ -158,6 +163,7 @@ class ButtonWidgetViewModel @Inject constructor(
             selectIcon(icon)
             updateTextColorIndex(if (colorIndex == -1) 0 else colorIndex)
             setRequiresAuthentication(widget.requireAuthentication)
+            updateUiState(isUpdating = true)
         }
     }
 
@@ -166,12 +172,14 @@ class ButtonWidgetViewModel @Inject constructor(
         servers: List<Server>? = null,
         serverActions: List<Action>? = null,
         dynamicFields: List<ActionFieldBinder>? = null,
+        domainEntities: List<String>? = null,
         selectedIcon: IIcon? = null,
         selectedIconId: String? = null,
         label: String? = null,
         selectedBackgroundType: WidgetBackgroundType? = null,
         textColorIndex: Int? = null,
         requiresAuthentication: Boolean? = null,
+        isUpdating: Boolean? = null
     ) {
         _uiState.update { currentState ->
             currentState.copy(
@@ -179,12 +187,14 @@ class ButtonWidgetViewModel @Inject constructor(
                 servers = servers ?: currentState.servers,
                 serverActions = serverActions ?: currentState.serverActions,
                 dynamicFields = dynamicFields ?: currentState.dynamicFields,
+                domainEntities = domainEntities ?: currentState.domainEntities,
                 selectedIcon = selectedIcon ?: currentState.selectedIcon,
                 selectedIconId = selectedIconId ?: currentState.selectedIconId,
                 label = label ?: currentState.label,
                 selectedBackgroundType = selectedBackgroundType ?: currentState.selectedBackgroundType,
                 textColorIndex = textColorIndex ?: currentState.textColorIndex,
                 requiresAuthentication = requiresAuthentication ?: currentState.requiresAuthentication,
+                isUpdating = isUpdating ?: currentState.isUpdating
             )
         }
     }
@@ -321,7 +331,8 @@ class ButtonWidgetViewModel @Inject constructor(
                         val value =
                             item.value.toString().replace("[", "").replace("]", "") +
                                 if (item.key == "entity_id") ", " else ""
-                        existingActionData[item.key] = value.ifEmpty { null }
+                        // Ignore if value is just a comma
+                        existingActionData[item.key] = if (value.isEmpty() || value.trim() == ",") { null } else value
                         addedFields.add(item.key)
                     }
                 }
@@ -331,6 +342,7 @@ class ButtonWidgetViewModel @Inject constructor(
                         0,
                         ActionFieldBinder(actionText, "entity_id", existingActionData["entity_id"]),
                     )
+                    setEntitiesForAction()
                 }
 
                 fieldKeys.sorted().forEach { fieldKey ->
@@ -387,6 +399,26 @@ class ButtonWidgetViewModel @Inject constructor(
             }
         }
         setServerActions(validItems)
+    }
+
+    private fun setEntitiesForAction() {
+        val actionText = actionFieldState.text
+        val selectedServerId = _uiState.value.selectedServerId
+        val entityMap = entities[selectedServerId] ?: return
+        val domain = actions[selectedServerId]?.get(actionText)?.domain
+
+        val domainEntities = mutableListOf("all")
+
+        if (domain == ("homeassistant") || domain == null) {
+            domainEntities.addAll(entityMap.keys)
+        } else {
+            entityMap.keys.forEach {
+                if (it.startsWith(domain) || it.startsWith("group")) {
+                    domainEntities.add(it)
+                }
+            }
+        }
+        updateUiState(domainEntities = domainEntities)
     }
 
     suspend fun requestWidgetCreation(context: Context) {

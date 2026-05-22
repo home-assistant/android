@@ -48,8 +48,6 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
@@ -66,6 +64,7 @@ import io.homeassistant.companion.android.common.compose.composable.HADropdownMe
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.integration.Action
+import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
@@ -188,6 +187,7 @@ private fun ButtonWidgetConfigureScreen(viewModel: ButtonWidgetViewModel, onAddW
         serverActions = state.serverActions,
         dynamicFields = state.dynamicFields,
         onDynamicFieldUpdated = viewModel::updateDynamicField,
+        domainEntities = state.domainEntities,
         icon = state.selectedIcon,
         onIconSelected = viewModel::selectIcon,
         onAddFieldDialogOkClicked = viewModel::addDynamicField,
@@ -199,6 +199,7 @@ private fun ButtonWidgetConfigureScreen(viewModel: ButtonWidgetViewModel, onAddW
         onBackgroundTypeSelected = viewModel::updateSelectedBackgroundType,
         isRequireAuthenticationChecked = state.requiresAuthentication,
         onRequireAuthenticationChecked = viewModel::setRequiresAuthentication,
+        isUpdatingWidget = state.isUpdating ?: false,
         onAddWidgetClicked = onAddWidgetClicked,
     )
 }
@@ -212,6 +213,7 @@ private fun ButtonWidgetConfigureView(
     serverActions: List<Action>,
     dynamicFields: List<ActionFieldBinder>,
     onDynamicFieldUpdated: (Int, String) -> Unit,
+    domainEntities: List<String>,
     icon: IIcon,
     onIconSelected: (IIcon) -> Unit,
     onAddFieldDialogOkClicked: (Int, ActionFieldBinder) -> Unit,
@@ -223,6 +225,7 @@ private fun ButtonWidgetConfigureView(
     onTextColorSelected: (Int) -> Unit,
     isRequireAuthenticationChecked: Boolean,
     onRequireAuthenticationChecked: (Boolean) -> Unit,
+    isUpdatingWidget: Boolean,
     onAddWidgetClicked: () -> Unit,
 ) {
     var showAddFieldDialog by remember { mutableStateOf(false) }
@@ -292,7 +295,7 @@ private fun ButtonWidgetConfigureView(
 
             if (dynamicFields.isNotEmpty()) {
                 dynamicFields.forEachIndexed { index, fieldBinder ->
-                    DynamicFieldInput(index, fieldBinder, onDynamicFieldUpdated)
+                    DynamicFieldInput(index, fieldBinder, domainEntities, onDynamicFieldUpdated)
                 }
             }
 
@@ -327,8 +330,10 @@ private fun ButtonWidgetConfigureView(
 
             RequireAuthCheckbox(isChecked = isRequireAuthenticationChecked, onChecked = onRequireAuthenticationChecked)
 
+            val addButtonStringResource =
+                if (isUpdatingWidget) commonR.string.update_widget else commonR.string.add_widget
             HAAccentButton(
-                text = stringResource(commonR.string.add_widget),
+                text = stringResource(addButtonStringResource),
                 onClick = onAddWidgetClicked,
                 modifier = Modifier.align(Alignment.End),
             )
@@ -380,13 +385,16 @@ fun ActionTextFieldInput(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DynamicFieldInput(
     index: Int,
     field: ActionFieldBinder,
+    domainEntities: List<String>,
     onDynamicFieldUpdated: (Int, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var isEntityDropdownExpanded by remember { mutableStateOf(false) }
     val initialText = field.value as? String
     val fieldInputState = rememberTextFieldState(initialText = initialText ?: "")
     LaunchedEffect(fieldInputState) {
@@ -394,14 +402,41 @@ fun DynamicFieldInput(
             onDynamicFieldUpdated(index, it)
         }
     }
-    OutlinedTextField(
-        label = { Text(text = field.field) },
-        state = fieldInputState,
-        lineLimits = TextFieldLineLimits.SingleLine,
-        textStyle = HATextStyle.UserInput,
-        modifier = modifier
-            .fillMaxWidth(),
-    )
+    Box {
+        OutlinedTextField(
+            label = { Text(text = field.field) },
+            state = fieldInputState,
+            lineLimits = TextFieldLineLimits.SingleLine,
+            textStyle = HATextStyle.UserInput,
+            modifier = modifier
+                .fillMaxWidth()
+                .onFocusChanged { state ->
+                    if (field.field == "entity_id") {
+                        isEntityDropdownExpanded = state.hasFocus
+                    }
+                },
+        )
+        if (field.field == "entity_id" && domainEntities.isNotEmpty()) {
+            DropdownMenu(
+                expanded = isEntityDropdownExpanded,
+                onDismissRequest = {
+                    isEntityDropdownExpanded = false
+                },
+                properties = PopupProperties(focusable = false),
+            ) {
+                domainEntities.forEach { entity ->
+                    DropdownMenuItem(
+                        text = { Text(text = entity) },
+                        onClick = {
+                            fieldInputState.setTextAndPlaceCursorAtEnd("${fieldInputState.text} $entity, ")
+                            isEntityDropdownExpanded = false
+                        },
+                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -550,6 +585,7 @@ private fun ButtonWidgetConfigureScreenPreview() {
             serverActions = emptyList(),
             dynamicFields = listOf(ActionFieldBinder("Test Action", "Test", 1)),
             onDynamicFieldUpdated = { i: Int, value: String -> },
+            domainEntities = emptyList(),
             icon = CommunityMaterial.Icon2.cmd_flash,
             onIconSelected = {},
             label = "",
@@ -561,6 +597,7 @@ private fun ButtonWidgetConfigureScreenPreview() {
             onBackgroundTypeSelected = {},
             isRequireAuthenticationChecked = false,
             onRequireAuthenticationChecked = {},
+            isUpdatingWidget = false,
             onAddWidgetClicked = {},
         )
     }
