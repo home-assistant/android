@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.foundation.verticalScroll
@@ -47,6 +48,8 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
@@ -107,13 +110,13 @@ class ButtonWidgetConfigureActivity : BaseActivity() {
             false,
         ) ?: false
 
-        viewModel.onSetup(appWidgetId, requestLauncherSetup, supportedTextColors)
-
         // If this activity was started with an intent without an app widget ID, finish with an error.
         if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID && !requestLauncherSetup) {
             finish()
             return
         }
+
+        viewModel.onSetup(appWidgetId, requestLauncherSetup, supportedTextColors)
 
         setContent {
             HATheme {
@@ -170,11 +173,15 @@ class ButtonWidgetConfigureActivity : BaseActivity() {
 
 @Composable
 private fun ButtonWidgetConfigureScreen(viewModel: ButtonWidgetViewModel, onAddWidgetClicked: () -> Unit) {
+//    val state = remember (viewModel) { viewModel.uiState.value }
     val state by viewModel.uiState.collectAsStateWithLifecycle(ButtonWidgetUiState())
-
+    LaunchedEffect(viewModel.actionFieldState) {
+        snapshotFlow { viewModel.actionFieldState.text.toString() }.collectLatest {
+            viewModel.updateActionText(it)
+        }
+    }
     ButtonWidgetConfigureView(
-        action = state.action,
-        onActionTextUpdated = viewModel::updateActionText,
+        actionFieldState = viewModel.actionFieldState,
         servers = state.servers,
         selectedServerId = state.selectedServerId,
         onServerSelected = viewModel::setServer,
@@ -198,14 +205,13 @@ private fun ButtonWidgetConfigureScreen(viewModel: ButtonWidgetViewModel, onAddW
 
 @Composable
 private fun ButtonWidgetConfigureView(
-    action: String,
-    onActionTextUpdated: (String) -> Unit,
+    actionFieldState: TextFieldState,
     servers: List<Server>,
     selectedServerId: Int?,
     onServerSelected: (Int) -> Unit,
     serverActions: List<Action>,
     dynamicFields: List<ActionFieldBinder>,
-    onDynamicFieldUpdated: (Int, ActionFieldBinder) -> Unit,
+    onDynamicFieldUpdated: (Int, String) -> Unit,
     icon: IIcon,
     onIconSelected: (IIcon) -> Unit,
     onAddFieldDialogOkClicked: (Int, ActionFieldBinder) -> Unit,
@@ -241,14 +247,15 @@ private fun ButtonWidgetConfigureView(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (showAddFieldDialog) {
+                val actionText = actionFieldState.text as String
                 AddFieldDialog(
-                    action = action,
+                    action = actionText,
                     onCancel = {
                         showAddFieldDialog = false
                     },
                     onOk = { actionField ->
                         if (dynamicFields.any {
-                                it.field == action
+                                it.field == actionText
                             }
                         ) {
                             showAddFieldDialog = false
@@ -281,7 +288,7 @@ private fun ButtonWidgetConfigureView(
                 )
             }
 
-            ActionTextFieldInput(action, serverActions, onActionTextUpdated)
+            ActionTextFieldInput(actionFieldState, serverActions)
 
             if (dynamicFields.isNotEmpty()) {
                 dynamicFields.forEachIndexed { index, fieldBinder ->
@@ -332,25 +339,18 @@ private fun ButtonWidgetConfigureView(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActionTextFieldInput(
-    action: String,
+    actionFieldState: TextFieldState,
     serverActions: List<Action>,
-    onActionTextUpdated: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var isActionDropdownExpanded by remember { mutableStateOf(false) }
-    val actionFieldState = rememberTextFieldState(initialText = action)
     Box {
-        LaunchedEffect(Unit) {
-            snapshotFlow { actionFieldState.text.toString() }.collectLatest {
-                onActionTextUpdated(it)
-            }
-        }
         OutlinedTextField(
             label = { Text(text = stringResource(commonR.string.label_action)) },
             state = actionFieldState,
             lineLimits = TextFieldLineLimits.SingleLine,
             textStyle = HATextStyle.UserInput,
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
                 .onFocusChanged { state ->
                     isActionDropdownExpanded = state.hasFocus
@@ -384,13 +384,14 @@ fun ActionTextFieldInput(
 fun DynamicFieldInput(
     index: Int,
     field: ActionFieldBinder,
-    onDynamicFieldUpdated: (Int, ActionFieldBinder) -> Unit,
+    onDynamicFieldUpdated: (Int, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val fieldInputState = rememberTextFieldState(initialText = field.value as String)
-    LaunchedEffect(Unit) {
+    val initialText = field.value as? String
+    val fieldInputState = rememberTextFieldState(initialText = initialText ?: "")
+    LaunchedEffect(fieldInputState) {
         snapshotFlow { fieldInputState.text.toString() }.collectLatest {
-            onDynamicFieldUpdated(index, field)
+            onDynamicFieldUpdated(index, it)
         }
     }
     OutlinedTextField(
@@ -398,7 +399,7 @@ fun DynamicFieldInput(
         state = fieldInputState,
         lineLimits = TextFieldLineLimits.SingleLine,
         textStyle = HATextStyle.UserInput,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth(),
     )
 }
@@ -539,8 +540,7 @@ fun WidgetTextColorSelector(textColorIndex: Int, onTextColorSelected: (Int) -> U
 private fun ButtonWidgetConfigureScreenPreview() {
     HATheme {
         ButtonWidgetConfigureView(
-            action = "",
-            onActionTextUpdated = {},
+            actionFieldState = rememberTextFieldState(),
             servers = listOf(
                 previewServer1,
                 previewServer2,
@@ -549,7 +549,7 @@ private fun ButtonWidgetConfigureScreenPreview() {
             onServerSelected = {},
             serverActions = emptyList(),
             dynamicFields = listOf(ActionFieldBinder("Test Action", "Test", 1)),
-            onDynamicFieldUpdated = { i: Int, binder: ActionFieldBinder -> },
+            onDynamicFieldUpdated = { i: Int, value: String -> },
             icon = CommunityMaterial.Icon2.cmd_flash,
             onIconSelected = {},
             label = "",

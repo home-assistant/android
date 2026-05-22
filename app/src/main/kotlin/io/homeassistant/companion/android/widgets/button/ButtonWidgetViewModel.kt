@@ -4,7 +4,11 @@ import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.clearText
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.glance.appwidget.GlanceAppWidgetManager
+import androidx.glance.currentState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.material.color.DynamicColors
@@ -46,7 +50,6 @@ class ButtonWidgetViewModel @Inject constructor(
 ) : ViewModel() {
 
     data class ButtonWidgetUiState(
-        val action: String = "",
         val selectedServerId: Int? = ServerManager.SERVER_ID_ACTIVE,
         val servers: List<Server> = emptyList(),
         val serverActions: List<Action> = emptyList(),
@@ -63,6 +66,8 @@ class ButtonWidgetViewModel @Inject constructor(
         val requiresAuthentication: Boolean = false,
     )
 
+    val actionFieldState: TextFieldState = TextFieldState()
+
     private val _uiState: MutableStateFlow<ButtonWidgetUiState> = MutableStateFlow(ButtonWidgetUiState())
     val uiState: StateFlow<ButtonWidgetUiState> = _uiState.asStateFlow()
 
@@ -78,40 +83,28 @@ class ButtonWidgetViewModel @Inject constructor(
 
     private var ongoingJob: Job? = null
 
-    init {
-        viewModelScope.launch {
-            _uiState.update { currentState ->
-                currentState.copy(
-                    servers = serverManager.servers(),
-                    selectedServerId = serverManager.getServer()?.id,
-                )
-            }
-            for (server in serverManager.servers()) {
-                launch {
-                    getActionsFromServer(server)
-                }
-                launch {
-                    getEntitiesFromServer(server)
-                }
-            }
-        }
-    }
-
     fun onSetup(widgetId: Int, requestLauncherSetup: Boolean, supportedTextColors: List<String>) {
         this.requestLauncherSetup = requestLauncherSetup
         this.supportedTextColors = supportedTextColors
         this.widgetId = widgetId
-        maybeLoadPreviousState(widgetId)
+        viewModelScope.launch {
+            updateUiState(servers = serverManager.servers(), selectedServerId = serverManager.getServer()?.id)
+            for (server in serverManager.servers()) {
+                    getActionsFromServer(server)
+                    getEntitiesFromServer(server)
+            }
+            maybeLoadPreviousState(widgetId)
+        }
     }
 
     /**
      * Return a [ButtonWidgetEntity] with the current selection, but without pushing this to the [buttonWidgetDao]
      */
-    private suspend fun getPendingDaoEntity(): ButtonWidgetEntity {
+    private fun getPendingDaoEntity(): ButtonWidgetEntity {
         val state = _uiState.value
-        with (state) {
+        with(state) {
             val serverId = checkNotNull(selectedServerId) { "Selected server ID is null" }
-            val actionText = action
+            val actionText = actionFieldState.text
             val actions = actions[serverId].orEmpty()
             val actionTextParts = actionText.split(".", limit = 2)
             val domain = actions[actionText]?.domain ?: actionTextParts.getOrElse(0) { "" }
@@ -153,24 +146,46 @@ class ButtonWidgetViewModel @Inject constructor(
         }
     }
 
-    private fun maybeLoadPreviousState(widgetId: Int) {
-        viewModelScope.launch {
-            buttonWidgetDao.get(widgetId)?.let { widget ->
-                _uiState.update { currentState ->
-                    val icon = CommunityMaterial.getIconByMdiName(widget.iconName)
-                    val colorIndex = supportedTextColors.indexOf(widget.textColor)
-                    currentState.copy(
-                        action = "${widget.domain}.${widget.service}",
-                        selectedServerId = widget.serverId,
-                        label = widget.label ?: "",
-                        selectedBackgroundType = widget.backgroundType,
-                        selectedIcon = icon ?: CommunityMaterial.Icon2.cmd_flash,
-                        selectedIconId = widget.iconName,
-                        textColorIndex = if (colorIndex == -1) 0 else colorIndex,
-                        requiresAuthentication = widget.requireAuthentication,
-                    )
-                }
-            }
+    private suspend fun maybeLoadPreviousState(widgetId: Int) {
+        buttonWidgetDao.get(widgetId)?.let { widget ->
+            val icon = CommunityMaterial.getIconByMdiName(widget.iconName)
+            val colorIndex = supportedTextColors.indexOf(widget.textColor)
+            val action = "${widget.domain}.${widget.service}"
+            updateActionText(action)
+            setServer(widget.serverId)
+            updateLabel(widget.label)
+            updateSelectedBackgroundType(widget.backgroundType)
+            selectIcon(icon)
+            updateTextColorIndex(if (colorIndex == -1) 0 else colorIndex)
+            setRequiresAuthentication(widget.requireAuthentication)
+        }
+    }
+
+    private fun updateUiState(
+        selectedServerId: Int? = null,
+        servers: List<Server>? = null,
+        serverActions: List<Action>? = null,
+        dynamicFields: List<ActionFieldBinder>? = null,
+        selectedIcon: IIcon? = null,
+        selectedIconId: String? = null,
+        label: String? = null,
+        selectedBackgroundType: WidgetBackgroundType? = null,
+        textColorIndex: Int? = null,
+        requiresAuthentication: Boolean? = null,
+    ) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                selectedServerId = selectedServerId ?: currentState.selectedServerId,
+                servers = servers ?: currentState.servers,
+                serverActions = serverActions ?: currentState.serverActions,
+                dynamicFields = dynamicFields ?: currentState.dynamicFields,
+                selectedIcon = selectedIcon ?: currentState.selectedIcon,
+                selectedIconId = selectedIconId ?: currentState.selectedIconId,
+                label = label ?: currentState.label,
+                selectedBackgroundType = selectedBackgroundType ?: currentState.selectedBackgroundType,
+                textColorIndex = textColorIndex ?: currentState.textColorIndex,
+                requiresAuthentication = requiresAuthentication ?: currentState.requiresAuthentication,
+            )
         }
     }
 
@@ -204,11 +219,7 @@ class ButtonWidgetViewModel @Inject constructor(
     }
 
     fun updateActionText(newAction: String) {
-        _uiState.update { currentState ->
-            currentState.copy(
-                action = newAction,
-            )
-        }
+        actionFieldState.setTextAndPlaceCursorAtEnd(newAction)
         updateActionFields(newAction)
         filterAdapterActions(newAction)
     }
@@ -217,23 +228,15 @@ class ButtonWidgetViewModel @Inject constructor(
         return "${action.domain}.${action.action}"
     }
 
-    fun updateLabel(newLabel: String) {
-        _uiState.update { currentState ->
-            currentState.copy(
-                label = newLabel,
-            )
-        }
+    fun updateLabel(newLabel: String?) {
+        updateUiState(label = newLabel ?: "")
     }
 
     fun setServer(serverId: Int) {
         val selectedServerId = _uiState.value.selectedServerId
         if (selectedServerId == serverId) return
-        _uiState.update { currentState ->
-            currentState.copy(
-                action = "",
-                selectedServerId = serverId,
-            )
-        }
+        actionFieldState.clearText()
+        updateUiState(selectedServerId = serverId)
         viewModelScope.launch {
             selectedServerMutex.withLock {
                 setAdapterActions(serverId)
@@ -242,72 +245,41 @@ class ButtonWidgetViewModel @Inject constructor(
     }
 
     fun addDynamicField(position: Int, field: ActionFieldBinder) {
-        _uiState.update { currentState ->
-            val dynamicFields = currentState.dynamicFields.toMutableList()
-            dynamicFields.add(position, field)
-            currentState.copy(
-                dynamicFields = dynamicFields,
-            )
-        }
+        val dynamicFields = _uiState.value.dynamicFields.toMutableList()
+        dynamicFields.add(position, field)
+        updateDynamicFields(dynamicFields = dynamicFields)
     }
 
     private fun updateDynamicFields(dynamicFields: List<ActionFieldBinder>) {
-        _uiState.update { currentState ->
-            currentState.copy(
-                dynamicFields = dynamicFields,
-            )
-        }
+        updateUiState(dynamicFields = dynamicFields)
     }
 
-    fun updateDynamicField(index: Int, field: ActionFieldBinder) {
-        _uiState.update { currentState ->
-            val dynamicFields = currentState.dynamicFields.toMutableList()
-            dynamicFields[index] = field
-            currentState.copy(
-                dynamicFields = dynamicFields,
-            )
-        }
+    fun updateDynamicField(index: Int, value: String) {
+        val dynamicFields = _uiState.value.dynamicFields.toMutableList()
+        val field = dynamicFields[index]
+        field.value = value
+        dynamicFields[index] = field
+        updateDynamicFields(dynamicFields = dynamicFields)
     }
 
-    fun selectIcon(icon: IIcon) {
-        _uiState.update { currentState ->
-            currentState.copy(
-                selectedIcon = icon,
-                selectedIconId = icon.mdiName,
-            )
-        }
+    fun selectIcon(icon: IIcon?) {
+        updateUiState(selectedIcon = icon, selectedIconId = icon?.mdiName)
     }
 
     fun updateSelectedBackgroundType(backgroundType: WidgetBackgroundType) {
-        _uiState.update { currentState ->
-            currentState.copy(
-                selectedBackgroundType = backgroundType,
-            )
-        }
+        updateUiState(selectedBackgroundType = backgroundType)
     }
 
     fun updateTextColorIndex(textColorIndex: Int) {
-        _uiState.update { currentState ->
-            currentState.copy(
-                textColorIndex = textColorIndex,
-            )
-        }
+        updateUiState(textColorIndex = textColorIndex)
     }
 
     fun setRequiresAuthentication(authenticationRequired: Boolean) {
-        _uiState.update { currentState ->
-            currentState.copy(
-                requiresAuthentication = authenticationRequired,
-            )
-        }
+        updateUiState(requiresAuthentication = authenticationRequired)
     }
 
     fun setServerActions(actions: List<Action>) {
-        _uiState.update { currentState ->
-            currentState.copy(
-                serverActions = actions,
-            )
-        }
+        updateUiState(serverActions = actions)
     }
 
     fun updateActionFields(actionText: String) {
@@ -387,7 +359,6 @@ class ButtonWidgetViewModel @Inject constructor(
                     dynamicFields.clear()
                 }
             }
-            Timber.i(dynamicFields.toString())
             updateDynamicFields(dynamicFields)
         }
     }
@@ -406,10 +377,12 @@ class ButtonWidgetViewModel @Inject constructor(
     }
 
     private fun filterAdapterActions(constraint: CharSequence) {
+        // Split Domain from String
+        val domain = constraint.split(".")[0]
         val validItems = ArrayList<Action>()
         for (i in 0 until selectedServerActions.size) {
             val item = selectedServerActions[i]
-            if (getActionString(item).contains(constraint)) {
+            if (getActionString(item).contains(domain)) {
                 validItems.add(item)
             }
         }
