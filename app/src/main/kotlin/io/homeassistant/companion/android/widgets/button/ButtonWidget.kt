@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Color
 import android.view.View
 import android.widget.RemoteViews
@@ -60,14 +61,99 @@ class ButtonWidget : BaseGlanceEntityWidgetReceiver<ButtonWidgetEntity, ButtonWi
 
     override val glanceAppWidget: GlanceAppWidget = ButtonGlanceAppWidget()
 
+    override fun onReceive(context: Context, intent: Intent) {
+        val action = intent.action
+        val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
+        Timber.d(
+            "Broadcast received: " + System.lineSeparator() +
+                "Broadcast action: " + action + System.lineSeparator() +
+                "AppWidgetId: " + appWidgetId,
+        )
+
+        super.onReceive(context, intent)
+        when (action) {
+            CALL_SERVICE_AUTH -> authThenCallConfiguredAction(context, appWidgetId)
+            CALL_SERVICE -> widgetScope.launch { callConfiguredAction(context, appWidgetId) }
+        }
+    }
+
+
+    private fun authThenCallConfiguredAction(context: Context, appWidgetId: Int) {
+        Timber.d("Calling authentication, then configured action")
+
+        val intent = Intent(context, WidgetAuthenticationActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NEW_DOCUMENT
+        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+    }
+
+    private suspend fun callConfiguredAction(context: Context, appWidgetId: Int) {
+        Timber.d("Calling widget action")
+        val widget = dao.get(appWidgetId)
+
+        val domain = widget?.domain
+        val action = widget?.service
+        val actionDataJson = widget?.serviceData
+
+
+        Timber.d(
+            "Action Call Data loaded:" + System.lineSeparator() +
+                "domain: " + domain + System.lineSeparator() +
+                "action: " + action + System.lineSeparator() +
+                "action_data: " + actionDataJson,
+        )
+
+        if (domain == null || action == null || actionDataJson == null) {
+            Timber.w("Action Call Data incomplete.  Aborting action call")
+        } else {
+            // If everything loaded correctly, package the action data and attempt the call
+            try {
+                // Convert JSON to HashMap
+                val actionDataMap = kotlinJsonMapper.decodeFromString<Map<String, Any?>>(
+                    MapAnySerializer,
+                    actionDataJson,
+                ).toMutableMap()
+
+                if (actionDataMap["entity_id"] != null) {
+                    val entityIdWithoutBrackets = Pattern.compile("\\[(.*?)\\]")
+                        .matcher(actionDataMap["entity_id"].toString())
+                    if (entityIdWithoutBrackets.find()) {
+                        val value = entityIdWithoutBrackets.group(1)
+                        if (value != null) {
+                            if (value == "all" ||
+                                value.split(",").contains("all")
+                            ) {
+                                actionDataMap["entity_id"] = "all"
+                            }
+                        }
+                    }
+                }
+
+                Timber.d("Sending action call to Home Assistant")
+                serverManager.integrationRepository(widget.serverId).callAction(domain, action, actionDataMap)
+                Timber.d("Action call sent successfully")
+
+                // If action call does not throw an exception, send positive feedback
+//                feedbackColor = R.drawable.widget_button_background_green
+//                feedbackIcon = R.drawable.ic_check_black_24dp
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Could not send action call.")
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, commonR.string.action_failure, Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
     companion object {
         const val CALL_SERVICE =
             "io.homeassistant.companion.android.widgets.button.ButtonWidget.CALL_SERVICE"
-        private const val CALL_SERVICE_AUTH =
+        const val CALL_SERVICE_AUTH =
             "io.homeassistant.companion.android.widgets.button.ButtonWidget.CALL_SERVICE_AUTH"
 
         // Vector icon rendering resolution fallback (if we can't infer via AppWidgetManager for some reason)
-        private const val DEFAULT_MAX_ICON_SIZE = 512
+        const val DEFAULT_MAX_ICON_SIZE = 512
         private var widgetScope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     }
 
