@@ -133,17 +133,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     val webChromeClient: HAWebChromeClient = HAWebChromeClient(
         onShowFileChooser = { filePathCallback, fileChooserParams ->
             viewModelScope.launch {
-                var delivered = false
-                try {
-                    val uris = fileChooserManager.pickFiles(fileChooserParams)
-                    delivered = true
-                    filePathCallback.onReceiveValue(uris)
-                } finally {
-                    // Ensure the WebView's file input is unblocked even if the coroutine is
-                    // cancelled (e.g. ViewModel cleared) or pickFiles throws, otherwise the
-                    // `<input type="file">` element would stay in a stuck pending state.
-                    if (!delivered) filePathCallback.onReceiveValue(null)
-                }
+                filePathCallback.onReceiveValue(fileChooserManager.pickFiles(fileChooserParams))
             }
             true
         },
