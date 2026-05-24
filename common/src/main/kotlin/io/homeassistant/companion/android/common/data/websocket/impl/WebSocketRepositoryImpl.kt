@@ -258,6 +258,8 @@ class WebSocketRepositoryImpl internal constructor(
         pipelineId: String?,
         conversationId: String?,
         wakeWordPhrase: String?,
+        vadSilenceSeconds: Double?,
+        vadTimeoutSeconds: Double?,
     ): Flow<AssistPipelineEvent>? {
         val data = buildMap {
             put("start_stage", "stt")
@@ -267,6 +269,8 @@ class WebSocketRepositoryImpl internal constructor(
                 buildMap<String, Any?> {
                     put("sample_rate", sampleRate)
                     wakeWordPhrase?.let { put("wake_word_phrase", it) }
+                    vadSilenceSeconds?.let { put("vad_silence_seconds", it) }
+                    vadTimeoutSeconds?.let { put("vad_timeout_seconds", it) }
                 },
             )
             put("conversation_id", conversationId)

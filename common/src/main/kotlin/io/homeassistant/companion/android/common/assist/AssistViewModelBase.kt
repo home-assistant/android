@@ -7,6 +7,7 @@ import androidx.annotation.VisibleForTesting.Companion.PROTECTED
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.data.prefs.AssistVadSettings
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineError
@@ -139,6 +140,7 @@ abstract class AssistViewModelBase(
         text: String?,
         pipeline: AssistPipelineResponse?,
         wakeWordPhrase: String? = null,
+        vadSettingsProvider: suspend () -> AssistVadSettings = { AssistVadSettings() },
         onEvent: (AssistEvent) -> Unit,
     ) {
         val isVoice = text == null
@@ -146,12 +148,15 @@ abstract class AssistViewModelBase(
         job = viewModelScope.launch {
             val flow = try {
                 if (isVoice) {
+                    val vadSettings = vadSettingsProvider()
                     serverManager.webSocketRepository(selectedServerId).runAssistPipelineForVoice(
                         sampleRate = VOICE_SAMPLE_RATE,
                         outputTts = pipeline?.ttsEngine?.isNotBlank() == true,
                         pipelineId = pipeline?.id,
                         conversationId = conversationId,
                         wakeWordPhrase = wakeWordPhrase,
+                        vadSilenceSeconds = vadSettings.silenceSeconds,
+                        vadTimeoutSeconds = vadSettings.timeoutSeconds,
                     )
                 } else {
                     serverManager.integrationRepository(selectedServerId).getAssistResponse(

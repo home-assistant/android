@@ -1223,6 +1223,10 @@
     <string name="assist_default_assistant_disabled">Home Assistant is not your default assistant</string>
     <string name="assist_set_default">Set as default</string>
     <string name="assist_summary">Configure Assist for this device</string>
+    <string name="assist_voice_input_title">Voice input</string>
+    <string name="assist_vad_silence_seconds">End-of-speech silence (seconds)</string>
+    <string name="assist_vad_timeout_seconds">Command timeout (seconds)</string>
+    <string name="assist_vad_default_placeholder">Default</string>
     <string name="assist_wake_word_title">Wake word</string>
     <string name="assist_wake_word_enable">Enable wake word detection</string>
     <string name="assist_wake_word_model">Wake word</string>

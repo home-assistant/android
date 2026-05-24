@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.settings.assist
 import android.content.Context
 import io.homeassistant.companion.android.assist.service.AssistVoiceInteractionService
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
+import io.homeassistant.companion.android.common.data.prefs.AssistVadSettings
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.util.FailFastExtension
@@ -235,6 +236,32 @@ class AssistConfigManagerTest {
 
             coVerify { prefsRepository.setSelectedWakeWord("Okay Nabu") }
             coVerify(exactly = 0) { AssistVoiceInteractionService.startListening(any()) }
+        }
+    }
+
+    @Nested
+    inner class VadSettingsTest {
+
+        @Test
+        fun `Given VAD settings when getVadSettings then returns preferences`() = runTest {
+            val settings = AssistVadSettings(silenceSeconds = 1.5, timeoutSeconds = 30.0)
+            coEvery { prefsRepository.getAssistVadSettings() } returns settings
+
+            assertEquals(settings, manager.getVadSettings())
+        }
+
+        @Test
+        fun `Given silence seconds when setVadSilenceSeconds then saves preference`() = runTest {
+            manager.setVadSilenceSeconds(1.5)
+
+            coVerify { prefsRepository.setAssistVadSilenceSeconds(1.5) }
+        }
+
+        @Test
+        fun `Given timeout seconds when setVadTimeoutSeconds then saves preference`() = runTest {
+            manager.setVadTimeoutSeconds(30.0)
+
+            coVerify { prefsRepository.setAssistVadTimeoutSeconds(30.0) }
         }
     }
 }

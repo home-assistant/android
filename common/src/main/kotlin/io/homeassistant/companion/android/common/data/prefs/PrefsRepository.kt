@@ -32,6 +32,8 @@ data class AutoFavorite(val serverId: Int, val entityId: String) : Parcelable
  */
 data class ZoomSettings(val zoomLevel: Int = DEFAULT_ZOOM_LEVEL, val pinchToZoomEnabled: Boolean = false)
 
+data class AssistVadSettings(val silenceSeconds: Double? = null, val timeoutSeconds: Double? = null)
+
 private const val DEFAULT_ZOOM_LEVEL = 100
 
 interface PrefsRepository {
@@ -160,6 +162,12 @@ interface PrefsRepository {
     suspend fun getSelectedWakeWord(): String?
 
     suspend fun setSelectedWakeWord(wakeWord: String)
+
+    suspend fun getAssistVadSettings(): AssistVadSettings
+
+    suspend fun setAssistVadSilenceSeconds(seconds: Double?)
+
+    suspend fun setAssistVadTimeoutSeconds(seconds: Double?)
 
     suspend fun addAllowedTag(tag: String)
 

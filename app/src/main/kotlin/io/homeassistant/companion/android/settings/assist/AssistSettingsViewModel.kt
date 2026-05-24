@@ -28,6 +28,8 @@ data class AssistSettingsUiState(
     val availableModels: List<MicroWakeWordModelConfig> = emptyList(),
     val isTestingWakeWord: Boolean = false,
     val wakeWordDetected: Boolean = false,
+    val vadSilenceSeconds: String = "",
+    val vadTimeoutSeconds: String = "",
 )
 
 @VisibleForTesting
@@ -54,6 +56,7 @@ class AssistSettingsViewModel @Inject internal constructor(
             var isEnabled = assistConfigManager.isWakeWordEnabled()
             val selectedModel = assistConfigManager.getSelectedWakeWordModel() ?: models.firstOrNull()
             val isDefaultAssistant = defaultAssistantManager.isDefaultAssistant()
+            val vadSettings = assistConfigManager.getVadSettings()
 
             if (!isDefaultAssistant && isEnabled) {
                 assistConfigManager.setWakeWordEnabled(false)
@@ -67,6 +70,8 @@ class AssistSettingsViewModel @Inject internal constructor(
                     isWakeWordEnabled = isEnabled,
                     selectedWakeWordModel = selectedModel,
                     availableModels = models,
+                    vadSilenceSeconds = vadSettings.silenceSeconds.toInputText(),
+                    vadTimeoutSeconds = vadSettings.timeoutSeconds.toInputText(),
                 )
             }
         }
@@ -148,4 +153,33 @@ class AssistSettingsViewModel @Inject internal constructor(
         wakeWordResetJob?.cancel()
         _uiState.update { it.copy(isTestingWakeWord = testing, wakeWordDetected = false) }
     }
+
+    fun onVadSilenceSecondsChanged(value: String) {
+        val input = value.sanitizedSecondsInput() ?: return
+        _uiState.update { it.copy(vadSilenceSeconds = input) }
+        viewModelScope.launch {
+            assistConfigManager.setVadSilenceSeconds(input.toPositiveSecondsOrNull())
+        }
+    }
+
+    fun onVadTimeoutSecondsChanged(value: String) {
+        val input = value.sanitizedSecondsInput() ?: return
+        _uiState.update { it.copy(vadTimeoutSeconds = input) }
+        viewModelScope.launch {
+            assistConfigManager.setVadTimeoutSeconds(input.toPositiveSecondsOrNull())
+        }
+    }
+}
+
+private fun String.sanitizedSecondsInput(): String? {
+    if (isEmpty()) return this
+    if (count { it == '.' } > 1) return null
+    return takeIf { it.all { char -> char.isDigit() || char == '.' } }
+}
+
+private fun String.toPositiveSecondsOrNull(): Double? = toDoubleOrNull()?.takeIf { it > 0.0 }
+
+private fun Double?.toInputText(): String {
+    val value = this ?: return ""
+    return if (value == value.toLong().toDouble()) value.toLong().toString() else value.toString()
 }

@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.common.assist
 
 import android.app.Application
 import android.content.pm.PackageManager
+import io.homeassistant.companion.android.common.data.prefs.AssistVadSettings
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineError
@@ -66,7 +67,7 @@ class AssistViewModelBaseTest {
         coEvery { serverManager.webSocketRepository(any()) } returns webSocketRepository
         coEvery { webSocketRepository.sendVoiceData(any(), any()) } returns true
         coEvery {
-            webSocketRepository.runAssistPipelineForVoice(any(), any(), any(), any(), any())
+            webSocketRepository.runAssistPipelineForVoice(any(), any(), any(), any(), any(), any(), any())
         } returns pipelineEventsFlow
 
         viewModel = TestAssistViewModel(
@@ -277,6 +278,8 @@ class AssistViewModelBaseTest {
                 pipelineId = any(),
                 conversationId = any(),
                 wakeWordPhrase = wakePhrase,
+                vadSilenceSeconds = any(),
+                vadTimeoutSeconds = any(),
             )
         }
     }
@@ -294,6 +297,29 @@ class AssistViewModelBaseTest {
                 pipelineId = any(),
                 conversationId = any(),
                 wakeWordPhrase = null,
+                vadSilenceSeconds = any(),
+                vadTimeoutSeconds = any(),
+            )
+        }
+    }
+
+    @Test
+    fun `Given VAD settings When voice pipeline started Then settings are passed to WebSocket`() = runTest {
+        val vadSettings = AssistVadSettings(silenceSeconds = 1.25, timeoutSeconds = 30.0)
+
+        viewModel.setupRecorder()
+        viewModel.runVoicePipeline(vadSettings = vadSettings)
+        advanceUntilIdle()
+
+        coVerify {
+            webSocketRepository.runAssistPipelineForVoice(
+                sampleRate = any(),
+                outputTts = any(),
+                pipelineId = any(),
+                conversationId = any(),
+                wakeWordPhrase = any(),
+                vadSilenceSeconds = 1.25,
+                vadTimeoutSeconds = 30.0,
             )
         }
     }
@@ -459,11 +485,13 @@ class AssistViewModelBaseTest {
         fun runVoicePipeline(
             pipeline: AssistPipelineResponse? = null,
             wakeWordPhrase: String? = null,
+            vadSettings: AssistVadSettings = AssistVadSettings(),
         ) {
             runAssistPipelineInternal(
                 text = null, // null means voice pipeline
                 pipeline = pipeline,
                 wakeWordPhrase = wakeWordPhrase,
+                vadSettingsProvider = { vadSettings },
                 onEvent = { receivedEvents += it },
             )
         }

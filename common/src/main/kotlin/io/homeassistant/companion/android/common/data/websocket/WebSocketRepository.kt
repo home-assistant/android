@@ -127,6 +127,8 @@ interface WebSocketRepository {
         pipelineId: String? = null,
         conversationId: String? = null,
         wakeWordPhrase: String? = null,
+        vadSilenceSeconds: Double? = null,
+        vadTimeoutSeconds: Double? = null,
     ): Flow<AssistPipelineEvent>?
 
     /**

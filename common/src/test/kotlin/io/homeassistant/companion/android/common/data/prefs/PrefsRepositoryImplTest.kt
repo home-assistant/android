@@ -212,6 +212,43 @@ class PrefsRepositoryImplTest {
     }
 
     @Test
+    fun `Given no Assist VAD settings when getting prefs then returns empty settings`() = runTest {
+        coEvery { localStorage.getString("assist_vad_silence_seconds") } returns null
+        coEvery { localStorage.getString("assist_vad_timeout_seconds") } returns null
+
+        assertEquals(AssistVadSettings(), repository.getAssistVadSettings())
+    }
+
+    @Test
+    fun `Given Assist VAD settings when getting prefs then returns parsed settings`() = runTest {
+        coEvery { localStorage.getString("assist_vad_silence_seconds") } returns "1.25"
+        coEvery { localStorage.getString("assist_vad_timeout_seconds") } returns "30"
+
+        assertEquals(
+            AssistVadSettings(silenceSeconds = 1.25, timeoutSeconds = 30.0),
+            repository.getAssistVadSettings(),
+        )
+    }
+
+    @Test
+    fun `Given Assist VAD setting when saving silence seconds then writes string value`() = runTest {
+        coEvery { localStorage.putString(any(), any()) } returns Unit
+
+        repository.setAssistVadSilenceSeconds(1.25)
+
+        coVerify { localStorage.putString("assist_vad_silence_seconds", "1.25") }
+    }
+
+    @Test
+    fun `Given Assist VAD setting when clearing timeout seconds then removes value`() = runTest {
+        coEvery { localStorage.remove(any()) } returns Unit
+
+        repository.setAssistVadTimeoutSeconds(null)
+
+        coVerify { localStorage.remove("assist_vad_timeout_seconds") }
+    }
+
+    @Test
     fun `Given no approved tags when listing then returns empty list`() = runTest {
         coEvery { localStorage.getStringSet("allowed_tags") } returns null
 

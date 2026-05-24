@@ -6,6 +6,7 @@ import androidx.annotation.RequiresPermission
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.assist.service.AssistVoiceInteractionService
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
+import io.homeassistant.companion.android.common.data.prefs.AssistVadSettings
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.SuspendLazy
@@ -51,6 +52,12 @@ interface AssistConfigManager {
      */
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     suspend fun setSelectedWakeWordModel(model: MicroWakeWordModelConfig)
+
+    suspend fun getVadSettings(): AssistVadSettings
+
+    suspend fun setVadSilenceSeconds(seconds: Double?)
+
+    suspend fun setVadTimeoutSeconds(seconds: Double?)
 }
 
 class AssistConfigManagerImpl @Inject constructor(
@@ -100,5 +107,15 @@ class AssistConfigManagerImpl @Inject constructor(
         if (model.wakeWord != previousWakeWord && prefsRepository.isWakeWordEnabled()) {
             AssistVoiceInteractionService.startListening(context)
         }
+    }
+
+    override suspend fun getVadSettings(): AssistVadSettings = prefsRepository.getAssistVadSettings()
+
+    override suspend fun setVadSilenceSeconds(seconds: Double?) {
+        prefsRepository.setAssistVadSilenceSeconds(seconds)
+    }
+
+    override suspend fun setVadTimeoutSeconds(seconds: Double?) {
+        prefsRepository.setAssistVadTimeoutSeconds(seconds)
     }
 }
