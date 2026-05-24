@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.HealthConnectFeatures
 import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.records.NutritionRecord
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.mockk.every
 import io.mockk.mockk
@@ -50,6 +51,29 @@ class HealthConnectSensorManagerTest {
         assertEquals(
             available,
             permissions.contains(HealthPermission.PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND),
+        )
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = [true, false])
+    fun `Given nutrition sensor when getting permissions then includes nutrition read permission`(
+        backgroundReadAvailable: Boolean,
+    ) {
+        mockkObject(healthConnectClient.features)
+        every {
+            healthConnectClient.features.getFeatureStatus(HealthConnectFeatures.FEATURE_READ_HEALTH_DATA_IN_BACKGROUND)
+        } returns
+            if (backgroundReadAvailable) {
+                HealthConnectFeatures.FEATURE_STATUS_AVAILABLE
+            } else {
+                HealthConnectFeatures.FEATURE_STATUS_UNAVAILABLE
+            }
+
+        val permissions = sensorManager.requiredPermissions(context, HealthConnectSensorManager.nutrition.id)
+
+        assertEquals(
+            true,
+            permissions.contains(HealthPermission.getReadPermission(NutritionRecord::class)),
         )
     }
 }
