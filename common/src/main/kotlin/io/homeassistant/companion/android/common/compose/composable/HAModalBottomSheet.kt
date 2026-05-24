@@ -9,9 +9,7 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -82,18 +80,19 @@ fun HAModalBottomSheet(
  * Apply to the root [Modifier] of any scrollable / footer-bearing column hosted inside a modal
  * bottom sheet.
  */
-fun Modifier.consumeSheetScrollFling(): Modifier = composed {
-    val connection = remember {
-        object : NestedScrollConnection {
-            override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset =
-                available
-
-            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity = available
-        }
+fun Modifier.consumeSheetScrollFling(): Modifier = this
+    .nestedScroll(ConsumeSheetScrollFlingConnection)
+    .pointerInput(Unit) {
+        detectVerticalDragGestures { _, _ -> }
     }
-    this
-        .nestedScroll(connection)
-        .pointerInput(Unit) {
-            detectVerticalDragGestures { _, _ -> }
-        }
+
+/**
+ * Stateless [NestedScrollConnection] used by [consumeSheetScrollFling]. Kept as a singleton because
+ * it has no per-call state — every instance behaves identically by returning the available delta
+ * unchanged, marking it as fully consumed at the content boundary.
+ */
+private val ConsumeSheetScrollFlingConnection = object : NestedScrollConnection {
+    override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset = available
+
+    override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity = available
 }
