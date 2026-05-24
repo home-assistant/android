@@ -3296,6 +3296,28 @@
 
     <issue
         id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;SettingEntry> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entries: ImmutableList&lt;SettingEntry>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntriesList(val items: List&lt;SettingEntry>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    entries: List&lt;SettingEntry>,"
+        errorLine2="             ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/sensor/views/SensorDetailSettingSheet.kt"
+            line="170"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;SettingEntry> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entries: ImmutableList&lt;SettingEntry>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntriesList(val items: List&lt;SettingEntry>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun rememberFilteredSettingEntries(entries: List&lt;SettingEntry>, searchQuery: String): List&lt;SettingEntry> {"
+        errorLine2="                                                    ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/sensor/views/SensorDetailSettingSheet.kt"
+            line="235"
+            column="53"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
         message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;SensorWithAttributes> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `dbSensor: ImmutableList&lt;SensorWithAttributes>` or create an `@Immutable` wrapper for this class: `@Immutable data class DbSensorList(val items: List&lt;SensorWithAttributes>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
         errorLine1="    dbSensor: List&lt;SensorWithAttributes>,"
         errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~">
