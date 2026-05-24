@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.data.websocket
 
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
+import io.homeassistant.companion.android.common.data.prefs.AssistVadSettings
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketRepositoryImpl
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
@@ -127,8 +128,7 @@ interface WebSocketRepository {
         pipelineId: String? = null,
         conversationId: String? = null,
         wakeWordPhrase: String? = null,
-        vadSilenceSeconds: Double? = null,
-        vadTimeoutSeconds: Double? = null,
+        vadSettings: AssistVadSettings? = null,
     ): Flow<AssistPipelineEvent>?
 
     /**

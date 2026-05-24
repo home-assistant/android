@@ -67,7 +67,7 @@ class AssistViewModelBaseTest {
         coEvery { serverManager.webSocketRepository(any()) } returns webSocketRepository
         coEvery { webSocketRepository.sendVoiceData(any(), any()) } returns true
         coEvery {
-            webSocketRepository.runAssistPipelineForVoice(any(), any(), any(), any(), any(), any(), any())
+            webSocketRepository.runAssistPipelineForVoice(any(), any(), any(), any(), any(), any())
         } returns pipelineEventsFlow
 
         viewModel = TestAssistViewModel(
@@ -278,8 +278,7 @@ class AssistViewModelBaseTest {
                 pipelineId = any(),
                 conversationId = any(),
                 wakeWordPhrase = wakePhrase,
-                vadSilenceSeconds = any(),
-                vadTimeoutSeconds = any(),
+                vadSettings = any(),
             )
         }
     }
@@ -297,8 +296,7 @@ class AssistViewModelBaseTest {
                 pipelineId = any(),
                 conversationId = any(),
                 wakeWordPhrase = null,
-                vadSilenceSeconds = any(),
-                vadTimeoutSeconds = any(),
+                vadSettings = any(),
             )
         }
     }
@@ -318,8 +316,7 @@ class AssistViewModelBaseTest {
                 pipelineId = any(),
                 conversationId = any(),
                 wakeWordPhrase = any(),
-                vadSilenceSeconds = 1.25,
-                vadTimeoutSeconds = 30.0,
+                vadSettings = vadSettings,
             )
         }
     }

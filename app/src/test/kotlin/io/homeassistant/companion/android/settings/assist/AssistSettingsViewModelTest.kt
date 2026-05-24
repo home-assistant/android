@@ -319,11 +319,11 @@ class AssistSettingsViewModelTest {
     inner class VadSettingsTest {
 
         @Test
-        fun `Given valid silence seconds when changed then update and save`() = runTest {
+        fun `Given comma decimal silence seconds when changed then normalize and save`() = runTest {
             viewModel = createViewModel()
             runCurrent()
 
-            viewModel.onVadSilenceSecondsChanged("1.5")
+            viewModel.onVadSilenceSecondsChanged("1,5")
             runCurrent()
 
             assertEquals("1.5", viewModel.uiState.value.vadSilenceSeconds)

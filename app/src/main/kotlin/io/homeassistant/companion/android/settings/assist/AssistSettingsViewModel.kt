@@ -7,6 +7,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
+import io.homeassistant.companion.android.common.data.prefs.normalizedAssistVadSecondsInputOrNull
+import io.homeassistant.companion.android.common.data.prefs.toAssistVadSecondsInput
+import io.homeassistant.companion.android.common.data.prefs.toAssistVadSecondsOrNull
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Job
@@ -70,8 +73,8 @@ class AssistSettingsViewModel @Inject internal constructor(
                     isWakeWordEnabled = isEnabled,
                     selectedWakeWordModel = selectedModel,
                     availableModels = models,
-                    vadSilenceSeconds = vadSettings.silenceSeconds.toInputText(),
-                    vadTimeoutSeconds = vadSettings.timeoutSeconds.toInputText(),
+                    vadSilenceSeconds = vadSettings.silenceSeconds.toAssistVadSecondsInput(),
+                    vadTimeoutSeconds = vadSettings.timeoutSeconds.toAssistVadSecondsInput(),
                 )
             }
         }
@@ -155,31 +158,18 @@ class AssistSettingsViewModel @Inject internal constructor(
     }
 
     fun onVadSilenceSecondsChanged(value: String) {
-        val input = value.sanitizedSecondsInput() ?: return
+        val input = value.normalizedAssistVadSecondsInputOrNull() ?: return
         _uiState.update { it.copy(vadSilenceSeconds = input) }
         viewModelScope.launch {
-            assistConfigManager.setVadSilenceSeconds(input.toPositiveSecondsOrNull())
+            assistConfigManager.setVadSilenceSeconds(input.toAssistVadSecondsOrNull())
         }
     }
 
     fun onVadTimeoutSecondsChanged(value: String) {
-        val input = value.sanitizedSecondsInput() ?: return
+        val input = value.normalizedAssistVadSecondsInputOrNull() ?: return
         _uiState.update { it.copy(vadTimeoutSeconds = input) }
         viewModelScope.launch {
-            assistConfigManager.setVadTimeoutSeconds(input.toPositiveSecondsOrNull())
+            assistConfigManager.setVadTimeoutSeconds(input.toAssistVadSecondsOrNull())
         }
     }
-}
-
-private fun String.sanitizedSecondsInput(): String? {
-    if (isEmpty()) return this
-    if (count { it == '.' } > 1) return null
-    return takeIf { it.all { char -> char.isDigit() || char == '.' } }
-}
-
-private fun String.toPositiveSecondsOrNull(): Double? = toDoubleOrNull()?.takeIf { it > 0.0 }
-
-private fun Double?.toInputText(): String {
-    val value = this ?: return ""
-    return if (value == value.toLong().toDouble()) value.toLong().toString() else value.toString()
 }

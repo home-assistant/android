@@ -165,7 +165,6 @@ class AssistViewModelTest {
                     anyNullable(),
                     anyNullable(),
                     anyNullable(),
-                    anyNullable(),
                 )
             } returns pipelineEvents
         }
@@ -363,7 +362,6 @@ class AssistViewModelTest {
                     anyNullable(),
                     anyNullable(),
                     anyNullable(),
-                    anyNullable(),
                 )
             } returns flow { awaitCancellation() }
 
@@ -414,7 +412,6 @@ class AssistViewModelTest {
                 webSocketRepository.runAssistPipelineForVoice(
                     any(),
                     any(),
-                    anyNullable(),
                     anyNullable(),
                     anyNullable(),
                     anyNullable(),

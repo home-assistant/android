@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.data.websocket.impl
 
+import io.homeassistant.companion.android.common.data.prefs.AssistVadSettings
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketCore
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN
@@ -117,8 +118,7 @@ class WebSocketRepositoryImplTest {
                 pipelineId = null,
                 conversationId = null,
                 wakeWordPhrase = null,
-                vadSilenceSeconds = 1.25,
-                vadTimeoutSeconds = 30.0,
+                vadSettings = AssistVadSettings(silenceSeconds = 1.25, timeoutSeconds = 30.0),
             )
 
             @Suppress("UNCHECKED_CAST")

@@ -155,8 +155,7 @@ abstract class AssistViewModelBase(
                         pipelineId = pipeline?.id,
                         conversationId = conversationId,
                         wakeWordPhrase = wakeWordPhrase,
-                        vadSilenceSeconds = vadSettings.silenceSeconds,
-                        vadTimeoutSeconds = vadSettings.timeoutSeconds,
+                        vadSettings = vadSettings,
                     )
                 } else {
                     serverManager.integrationRepository(selectedServerId).getAssistResponse(

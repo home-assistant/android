@@ -231,12 +231,12 @@ class PrefsRepositoryImplTest {
     }
 
     @Test
-    fun `Given Assist VAD setting when saving silence seconds then writes string value`() = runTest {
+    fun `Given Assist VAD setting when saving silence seconds then writes normalized value`() = runTest {
         coEvery { localStorage.putString(any(), any()) } returns Unit
 
-        repository.setAssistVadSilenceSeconds(1.25)
+        repository.setAssistVadSilenceSeconds(1.0)
 
-        coVerify { localStorage.putString("assist_vad_silence_seconds", "1.25") }
+        coVerify { localStorage.putString("assist_vad_silence_seconds", "1") }
     }
 
     @Test

@@ -408,8 +408,8 @@ internal class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun getAssistVadSettings(): AssistVadSettings {
         return AssistVadSettings(
-            silenceSeconds = localStorage().getString(PREF_ASSIST_VAD_SILENCE_SECONDS).toPositiveDoubleOrNull(),
-            timeoutSeconds = localStorage().getString(PREF_ASSIST_VAD_TIMEOUT_SECONDS).toPositiveDoubleOrNull(),
+            silenceSeconds = localStorage().getString(PREF_ASSIST_VAD_SILENCE_SECONDS).toAssistVadSecondsOrNull(),
+            timeoutSeconds = localStorage().getString(PREF_ASSIST_VAD_TIMEOUT_SECONDS).toAssistVadSecondsOrNull(),
         )
     }
 
@@ -422,10 +422,10 @@ internal class PrefsRepositoryImpl @Inject constructor(
     }
 
     private suspend fun setAssistVadSeconds(key: String, seconds: Double?) {
-        if (seconds == null || seconds <= 0.0) {
+        if (seconds == null || !seconds.isFinite() || seconds <= 0.0) {
             localStorage().remove(key)
         } else {
-            localStorage().putString(key, seconds.toString())
+            localStorage().putString(key, seconds.toAssistVadSecondsString())
         }
     }
 
@@ -444,5 +444,3 @@ internal class PrefsRepositoryImpl @Inject constructor(
         localStorage().remove(PREF_ALLOWED_TAGS)
     }
 }
-
-private fun String?.toPositiveDoubleOrNull(): Double? = this?.toDoubleOrNull()?.takeIf { it > 0.0 }
