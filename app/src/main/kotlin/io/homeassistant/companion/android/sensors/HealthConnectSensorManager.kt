@@ -28,6 +28,7 @@ import androidx.health.connect.client.records.HeightRecord
 import androidx.health.connect.client.records.HydrationRecord
 import androidx.health.connect.client.records.LeanBodyMassRecord
 import androidx.health.connect.client.records.MealType
+import androidx.health.connect.client.records.NutritionRecord
 import androidx.health.connect.client.records.OxygenSaturationRecord
 import androidx.health.connect.client.records.Record
 import androidx.health.connect.client.records.RespiratoryRateRecord
@@ -251,6 +252,17 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
+        val nutrition = SensorManager.BasicSensor(
+            id = "health_connect_nutrition",
+            type = "sensor",
+            commonR.string.basic_sensor_name_nutrition,
+            commonR.string.sensor_description_nutrition,
+            "mdi:food-apple",
+            deviceClass = "energy",
+            unitOfMeasurement = "kcal",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+        )
+
         val oxygenSaturation = SensorManager.BasicSensor(
             id = "health_connect_oxygen_saturation",
             type = "sensor",
@@ -365,6 +377,7 @@ class HealthConnectSensorManager : SensorManager {
             height.id to HeightRecord::class,
             hydration.id to HydrationRecord::class,
             leanBodyMass.id to LeanBodyMassRecord::class,
+            nutrition.id to NutritionRecord::class,
             oxygenSaturation.id to OxygenSaturationRecord::class,
             respiratoryRate.id to RespiratoryRateRecord::class,
             restingHeartRate.id to RestingHeartRateRecord::class,
@@ -449,6 +462,9 @@ class HealthConnectSensorManager : SensorManager {
         }
         if (isEnabled(context, leanBodyMass)) {
             updateLeanBodyMassSensor(context)
+        }
+        if (isEnabled(context, nutrition)) {
+            updateNutritionSensor(context)
         }
         if (isEnabled(context, oxygenSaturation)) {
             updateOxygenSaturationSensor(context)
@@ -796,6 +812,42 @@ class HealthConnectSensorManager : SensorManager {
         )
     }
 
+    private suspend fun updateNutritionSensor(context: Context) {
+        val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
+        val nutritionRequest = buildReadRecordsRequest(NutritionRecord::class)
+        val response = healthConnectClient.readRecordsOrNull(nutritionRequest)
+        if (response == null || response.records.isEmpty()) {
+            return
+        }
+
+        val record = response.records.last()
+        val energyKcal = record.energy?.inKilocalories ?: 0.0
+        val attributes = mutableMapOf<String, Any>(
+            "endTime" to record.endTime,
+            "mealType" to getMealType(record.mealType),
+            "source" to record.metadata.dataOrigin.packageName,
+        )
+
+        record.energyFromFat?.inKilocalories?.let { attributes["energyFromFat"] = it }
+        record.totalCarbohydrate?.inGrams?.let { attributes["totalCarbohydrate"] = it }
+        record.protein?.inGrams?.let { attributes["protein"] = it }
+        record.totalFat?.inGrams?.let { attributes["totalFat"] = it }
+        record.sugar?.inGrams?.let { attributes["sugar"] = it }
+        record.dietaryFiber?.inGrams?.let { attributes["dietaryFiber"] = it }
+        record.sodium?.inGrams?.let { attributes["sodium"] = it }
+        record.saturatedFat?.inGrams?.let { attributes["saturatedFat"] = it }
+        record.transFat?.inGrams?.let { attributes["transFat"] = it }
+        record.unsaturatedFat?.inGrams?.let { attributes["unsaturatedFat"] = it }
+
+        onSensorUpdated(
+            context,
+            nutrition,
+            BigDecimal(energyKcal).setScale(2, RoundingMode.HALF_EVEN),
+            nutrition.statelessIcon,
+            attributes = attributes,
+        )
+    }
+
     private suspend fun updateOxygenSaturationSensor(context: Context) {
         val healthConnectClient = getOrCreateHealthConnectClient(context) ?: return
         val oxygenSaturationRequest = buildReadRecordsRequest(OxygenSaturationRecord::class)
@@ -968,6 +1020,7 @@ class HealthConnectSensorManager : SensorManager {
                 height,
                 hydration,
                 leanBodyMass,
+                nutrition,
                 oxygenSaturation,
                 respiratoryRate,
                 restingHeartRate,

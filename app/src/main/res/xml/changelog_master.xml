@@ -2,6 +2,7 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2026.5.4 - Main" versioncode="3">
+        <change>Added Health Connect nutrition sensor support with nutrient attributes</change>
         <change>Added support for Android 17's local network permission</change>
         <change>Bug fixes and dependency updates</change>
     </release>
