@@ -6,6 +6,7 @@
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2026.5.4 - Wear" versioncode="2">
+        <change>Shortcut tiles now show state-aware icons (e.g., locked vs unlocked padlock)</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2026.5.4 - Automotive" versioncode="1">
