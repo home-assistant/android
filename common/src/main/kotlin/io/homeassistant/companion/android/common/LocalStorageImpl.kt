@@ -114,9 +114,8 @@ class LocalStorageImpl(sharedPreferences: suspend () -> SharedPreferences) : Loc
 
     override fun observeChanges(vararg keys: String): Flow<String> = callbackFlow {
         val prefs = sharedPreferences()
-        val watched = keys.toSet()
         val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, changedKey ->
-            if (changedKey != null && changedKey in watched) {
+            if (changedKey != null && changedKey in keys) {
                 trySend(changedKey)
             }
         }
