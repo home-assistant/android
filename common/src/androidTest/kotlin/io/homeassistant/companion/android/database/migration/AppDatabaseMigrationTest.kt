@@ -7,6 +7,9 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.homeassistant.companion.android.database.AppDatabase
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -43,10 +46,10 @@ class AppDatabaseMigrationTest {
         // Create database at version 24 - the earliest version with an exported schema
         helper.createDatabase(testDbName, 24).use { db ->
             db.query("SELECT name FROM sqlite_master WHERE type='table' AND name='sensors'").use { cursor ->
-                assert(cursor.count == 1) { "sensors table should exist at version 24" }
+                assertEquals("sensors table should exist at version 24", 1, cursor.count)
             }
             db.query("SELECT name FROM sqlite_master WHERE type='table' AND name='Authentication_List'").use { cursor ->
-                assert(cursor.count == 1) { "Authentication_List table should exist at version 24" }
+                assertEquals("Authentication_List table should exist at version 24", 1, cursor.count)
             }
         }
 
@@ -138,10 +141,12 @@ class AppDatabaseMigrationTest {
                     AND name = 'active_notification_count_content_attrs'
                 """.trimIndent(),
             ).use { cursor ->
-                assert(cursor.moveToFirst()) { "active notification setting should exist" }
-                assert(cursor.getString(0) == "false") {
-                    "active notification content attributes should default to disabled after migration"
-                }
+                assertTrue("active notification setting should exist", cursor.moveToFirst())
+                assertEquals(
+                    "active notification content attributes should default to disabled after migration",
+                    "false",
+                    cursor.getString(0),
+                )
             }
             db.query(
                 """
@@ -150,10 +155,8 @@ class AppDatabaseMigrationTest {
                     AND name = 'active_notification_count_content_attrs'
                 """.trimIndent(),
             ).use { cursor ->
-                assert(cursor.moveToFirst()) { "unrelated sensor setting should exist" }
-                assert(cursor.getString(0) == "true") {
-                    "migration should not change unrelated sensor settings"
-                }
+                assertTrue("unrelated sensor setting should exist", cursor.moveToFirst())
+                assertEquals("migration should not change unrelated sensor settings", "true", cursor.getString(0))
             }
             db.query(
                 """
@@ -161,10 +164,12 @@ class AppDatabaseMigrationTest {
                 WHERE sensor_id = 'active_notification_count'
                 """.trimIndent(),
             ).use { cursor ->
-                assert(cursor.moveToFirst()) { "active notification attribute count should be readable" }
-                assert(cursor.getInt(0) == 0) {
-                    "migration should remove previously cached notification content attributes"
-                }
+                assertTrue("active notification attribute count should be readable", cursor.moveToFirst())
+                assertEquals(
+                    "migration should remove previously cached notification content attributes",
+                    0,
+                    cursor.getInt(0),
+                )
             }
             db.query(
                 """
@@ -173,10 +178,8 @@ class AppDatabaseMigrationTest {
                     AND name = 'kept'
                 """.trimIndent(),
             ).use { cursor ->
-                assert(cursor.moveToFirst()) { "unrelated sensor attribute should exist" }
-                assert(cursor.getString(0) == "value") {
-                    "migration should not remove unrelated sensor attributes"
-                }
+                assertTrue("unrelated sensor attribute should exist", cursor.moveToFirst())
+                assertEquals("migration should not remove unrelated sensor attributes", "value", cursor.getString(0))
             }
             db.query(
                 """
@@ -184,9 +187,9 @@ class AppDatabaseMigrationTest {
                 WHERE id = 'active_notification_count'
                 """.trimIndent(),
             ).use { cursor ->
-                assert(cursor.moveToFirst()) { "active notification sensor should exist" }
-                assert(cursor.isNull(0)) { "migration should force the state to resend" }
-                assert(cursor.isNull(1)) { "migration should force the icon to resend" }
+                assertTrue("active notification sensor should exist", cursor.moveToFirst())
+                assertNull("migration should force the state to resend", cursor.getString(0))
+                assertNull("migration should force the icon to resend", cursor.getString(1))
             }
         } finally {
             database.close()
