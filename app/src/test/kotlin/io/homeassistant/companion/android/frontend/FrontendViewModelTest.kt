@@ -66,13 +66,13 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNotNull
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
@@ -1135,9 +1135,8 @@ class FrontendViewModelTest {
             triggerJsConfirm("Are you sure?", mockk(relaxed = true))
             advanceUntilIdle()
 
-            val dialog = viewModel.pendingDialog.value
-            assertInstanceOf(FrontendDialog.Confirm::class.java, dialog)
-            assertEquals("Are you sure?", (dialog as FrontendDialog.Confirm).message)
+            val dialog = assertInstanceOf(FrontendDialog.Confirm::class.java, viewModel.pendingDialog.value)
+            assertEquals("Are you sure?", dialog.message)
         }
 
         @Test
@@ -1233,7 +1232,7 @@ class FrontendViewModelTest {
             assertTrue(handled)
             val pending = viewModel.pendingFileChooser.value
             assertNotNull(pending)
-            assertTrue(pending!!.fileChooserParams === fileChooserParams)
+            assertTrue(pending.fileChooserParams === fileChooserParams)
         }
 
         @Test
@@ -1247,7 +1246,7 @@ class FrontendViewModelTest {
 
             val client = viewModel.createWebChromeClient(onShowCustomView = {}, onHideCustomView = {})
 
-            val handled = client.onShowFileChooser(
+            client.onShowFileChooser(
                 mockk(relaxed = true),
                 filePathCallback,
                 mockk(relaxed = true),
@@ -1258,7 +1257,7 @@ class FrontendViewModelTest {
             assertNotNull(pending)
 
             val uris = arrayOf(mockk<Uri>())
-            pending!!.onResult(uris)
+            pending.onResult(uris)
             advanceUntilIdle()
 
             verify { filePathCallback.onReceiveValue(uris) }
@@ -1276,14 +1275,15 @@ class FrontendViewModelTest {
 
             val client = viewModel.createWebChromeClient(onShowCustomView = {}, onHideCustomView = {})
 
-            val handled = client.onShowFileChooser(
+            client.onShowFileChooser(
                 mockk(relaxed = true),
                 filePathCallback,
                 mockk(relaxed = true),
             )
             advanceUntilIdle()
-
-            viewModel.pendingFileChooser.value!!.onResult(null)
+            val request = viewModel.pendingFileChooser.value
+            assertNotNull(request)
+            request.onResult(null)
             advanceUntilIdle()
 
             verify { filePathCallback.onReceiveValue(null) }

@@ -15,12 +15,12 @@ import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNotNull
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(ConsoleLogExtension::class)
@@ -54,7 +54,7 @@ class FrontendExoPlayerManagerTest {
 
             val state = manager.state.value
             assertNotNull(state)
-            assertSame(mockPlayer, state!!.player)
+            assertSame(mockPlayer, state.player)
         }
 
         @Test
@@ -148,7 +148,7 @@ class FrontendExoPlayerManagerTest {
 
             val state = manager.state.value
             assertNotNull(state)
-            assertEquals(10.dp, state!!.left)
+            assertEquals(10.dp, state.left)
             assertEquals(20.dp, state.top)
             assertEquals(DpSize(300.dp, 200.dp), state.size)
         }
@@ -168,7 +168,7 @@ class FrontendExoPlayerManagerTest {
 
             val state = manager.state.value
             assertNotNull(state)
-            assertEquals(0.dp, state!!.left)
+            assertEquals(0.dp, state.left)
             assertEquals(126.5.dp, state.top)
             assertEquals(DpSize(486.25.dp, 0.dp), state.size)
         }
@@ -185,7 +185,7 @@ class FrontendExoPlayerManagerTest {
 
             val state = manager.state.value
             assertNotNull(state)
-            assertEquals(DpSize(400.dp, 200.dp), state!!.size)
+            assertEquals(DpSize(400.dp, 200.dp), state.size)
         }
 
         @Test
@@ -200,7 +200,7 @@ class FrontendExoPlayerManagerTest {
 
             val state = manager.state.value
             assertNotNull(state)
-            assertEquals(DpSize(400.dp, 200.dp), state!!.size)
+            assertEquals(DpSize(400.dp, 200.dp), state.size)
         }
     }
 
