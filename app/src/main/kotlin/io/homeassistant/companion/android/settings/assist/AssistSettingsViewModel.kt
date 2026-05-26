@@ -7,6 +7,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
+import io.homeassistant.companion.android.common.data.prefs.normalizedAssistVadSecondsInputOrNull
+import io.homeassistant.companion.android.common.data.prefs.toAssistVadSecondsInput
+import io.homeassistant.companion.android.common.data.prefs.toAssistVadSecondsOrNull
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Job
@@ -28,6 +31,8 @@ data class AssistSettingsUiState(
     val availableModels: List<MicroWakeWordModelConfig> = emptyList(),
     val isTestingWakeWord: Boolean = false,
     val wakeWordDetected: Boolean = false,
+    val vadSilenceSeconds: String = "",
+    val vadTimeoutSeconds: String = "",
 )
 
 @VisibleForTesting
@@ -54,6 +59,7 @@ class AssistSettingsViewModel @Inject internal constructor(
             var isEnabled = assistConfigManager.isWakeWordEnabled()
             val selectedModel = assistConfigManager.getSelectedWakeWordModel() ?: models.firstOrNull()
             val isDefaultAssistant = defaultAssistantManager.isDefaultAssistant()
+            val vadSettings = assistConfigManager.getVadSettings()
 
             if (!isDefaultAssistant && isEnabled) {
                 assistConfigManager.setWakeWordEnabled(false)
@@ -67,6 +73,8 @@ class AssistSettingsViewModel @Inject internal constructor(
                     isWakeWordEnabled = isEnabled,
                     selectedWakeWordModel = selectedModel,
                     availableModels = models,
+                    vadSilenceSeconds = vadSettings.silenceSeconds.toAssistVadSecondsInput(),
+                    vadTimeoutSeconds = vadSettings.timeoutSeconds.toAssistVadSecondsInput(),
                 )
             }
         }
@@ -147,5 +155,21 @@ class AssistSettingsViewModel @Inject internal constructor(
     fun setTestingWakeWord(testing: Boolean) {
         wakeWordResetJob?.cancel()
         _uiState.update { it.copy(isTestingWakeWord = testing, wakeWordDetected = false) }
+    }
+
+    fun onVadSilenceSecondsChanged(value: String) {
+        val input = value.normalizedAssistVadSecondsInputOrNull() ?: return
+        _uiState.update { it.copy(vadSilenceSeconds = input) }
+        viewModelScope.launch {
+            assistConfigManager.setVadSilenceSeconds(input.toAssistVadSecondsOrNull())
+        }
+    }
+
+    fun onVadTimeoutSecondsChanged(value: String) {
+        val input = value.normalizedAssistVadSecondsInputOrNull() ?: return
+        _uiState.update { it.copy(vadTimeoutSeconds = input) }
+        viewModelScope.launch {
+            assistConfigManager.setVadTimeoutSeconds(input.toAssistVadSecondsOrNull())
+        }
     }
 }

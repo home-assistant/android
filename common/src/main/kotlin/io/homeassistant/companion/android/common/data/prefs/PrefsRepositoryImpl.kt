@@ -47,6 +47,8 @@ private const val PREF_CHANGE_LOG_POPUP_ENABLED = "change_log_popup_enabled"
 private const val PREF_SHOW_PRIVACY_HINT = "show_privacy_hint"
 private const val PREF_WAKE_WORD_ENABLED = "wake_word_enabled"
 private const val PREF_SELECTED_WAKE_WORD = "selected_wake_word"
+private const val PREF_ASSIST_VAD_SILENCE_SECONDS = "assist_vad_silence_seconds"
+private const val PREF_ASSIST_VAD_TIMEOUT_SECONDS = "assist_vad_timeout_seconds"
 private const val PREF_ALLOWED_TAGS = "allowed_tags"
 
 /**
@@ -408,6 +410,29 @@ internal class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setSelectedWakeWord(wakeWord: String) {
         localStorage().putString(PREF_SELECTED_WAKE_WORD, wakeWord)
+    }
+
+    override suspend fun getAssistVadSettings(): AssistVadSettings {
+        return AssistVadSettings(
+            silenceSeconds = localStorage().getString(PREF_ASSIST_VAD_SILENCE_SECONDS).toAssistVadSecondsOrNull(),
+            timeoutSeconds = localStorage().getString(PREF_ASSIST_VAD_TIMEOUT_SECONDS).toAssistVadSecondsOrNull(),
+        )
+    }
+
+    override suspend fun setAssistVadSilenceSeconds(seconds: Double?) {
+        setAssistVadSeconds(PREF_ASSIST_VAD_SILENCE_SECONDS, seconds)
+    }
+
+    override suspend fun setAssistVadTimeoutSeconds(seconds: Double?) {
+        setAssistVadSeconds(PREF_ASSIST_VAD_TIMEOUT_SECONDS, seconds)
+    }
+
+    private suspend fun setAssistVadSeconds(key: String, seconds: Double?) {
+        if (seconds == null || !seconds.isFinite() || seconds <= 0.0) {
+            localStorage().remove(key)
+        } else {
+            localStorage().putString(key, seconds.toAssistVadSecondsString())
+        }
     }
 
     override suspend fun addAllowedTag(tag: String) {

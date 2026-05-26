@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.common.data.websocket.impl
 import io.homeassistant.companion.android.common.data.integration.ActionData
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.TODO_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
+import io.homeassistant.companion.android.common.data.prefs.AssistVadSettings
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketCore
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
@@ -258,6 +259,7 @@ class WebSocketRepositoryImpl internal constructor(
         pipelineId: String?,
         conversationId: String?,
         wakeWordPhrase: String?,
+        vadSettings: AssistVadSettings?,
     ): Flow<AssistPipelineEvent>? {
         val data = buildMap {
             put("start_stage", "stt")
@@ -267,6 +269,8 @@ class WebSocketRepositoryImpl internal constructor(
                 buildMap<String, Any?> {
                     put("sample_rate", sampleRate)
                     wakeWordPhrase?.let { put("wake_word_phrase", it) }
+                    vadSettings?.silenceSeconds?.let { put("vad_silence_seconds", it) }
+                    vadSettings?.timeoutSeconds?.let { put("vad_timeout_seconds", it) }
                 },
             )
             put("conversation_id", conversationId)

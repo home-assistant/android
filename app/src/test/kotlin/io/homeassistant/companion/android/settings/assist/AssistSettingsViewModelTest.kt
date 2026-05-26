@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.settings.assist
 
 import android.content.Intent
+import io.homeassistant.companion.android.common.data.prefs.AssistVadSettings
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.util.microWakeWordModelConfigs
@@ -37,6 +38,7 @@ class AssistSettingsViewModelTest {
         coEvery { assistConfigManager.getAvailableModels() } returns microWakeWordModelConfigs
         coEvery { assistConfigManager.isWakeWordEnabled() } returns false
         coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
+        coEvery { assistConfigManager.getVadSettings() } returns AssistVadSettings()
         every { defaultAssistantManager.isDefaultAssistant() } returns true
     }
 
@@ -65,6 +67,22 @@ class AssistSettingsViewModelTest {
             assertTrue(state.isWakeWordEnabled)
             assertEquals(microWakeWordModelConfigs[0], state.selectedWakeWordModel)
             assertEquals(microWakeWordModelConfigs, state.availableModels)
+            assertEquals("", state.vadSilenceSeconds)
+            assertEquals("", state.vadTimeoutSeconds)
+        }
+
+        @Test
+        fun `Given VAD settings when initialized then load values`() = runTest {
+            coEvery { assistConfigManager.getVadSettings() } returns AssistVadSettings(
+                silenceSeconds = 1.25,
+                timeoutSeconds = 30.0,
+            )
+
+            viewModel = createViewModel()
+            runCurrent()
+
+            assertEquals("1.25", viewModel.uiState.value.vadSilenceSeconds)
+            assertEquals("30", viewModel.uiState.value.vadTimeoutSeconds)
         }
 
         @Test
@@ -294,6 +312,45 @@ class AssistSettingsViewModelTest {
             runCurrent()
 
             assertFalse(viewModel.uiState.value.wakeWordDetected)
+        }
+    }
+
+    @Nested
+    inner class VadSettingsTest {
+
+        @Test
+        fun `Given comma decimal silence seconds when changed then normalize and save`() = runTest {
+            viewModel = createViewModel()
+            runCurrent()
+
+            viewModel.onVadSilenceSecondsChanged("1,5")
+            runCurrent()
+
+            assertEquals("1.5", viewModel.uiState.value.vadSilenceSeconds)
+            coVerify { assistConfigManager.setVadSilenceSeconds(1.5) }
+        }
+
+        @Test
+        fun `Given valid timeout seconds when changed then update and save`() = runTest {
+            viewModel = createViewModel()
+            runCurrent()
+
+            viewModel.onVadTimeoutSecondsChanged("45")
+            runCurrent()
+
+            assertEquals("45", viewModel.uiState.value.vadTimeoutSeconds)
+            coVerify { assistConfigManager.setVadTimeoutSeconds(45.0) }
+        }
+
+        @Test
+        fun `Given blank value when changed then clear setting`() = runTest {
+            viewModel = createViewModel()
+            runCurrent()
+
+            viewModel.onVadSilenceSecondsChanged("")
+            runCurrent()
+
+            coVerify { assistConfigManager.setVadSilenceSeconds(null) }
         }
     }
 }

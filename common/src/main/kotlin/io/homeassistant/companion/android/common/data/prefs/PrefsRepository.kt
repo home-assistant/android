@@ -5,6 +5,7 @@ import android.os.Parcelable
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.HAGesture
+import java.math.BigDecimal
 import kotlinx.coroutines.flow.Flow
 import kotlinx.parcelize.Parcelize
 
@@ -52,6 +53,22 @@ data class AutoFavorite(val serverId: Int, val entityId: String) : Parcelable
  * @param pinchToZoomEnabled Whether the user has enabled pinch-to-zoom.
  */
 data class ZoomSettings(val zoomLevel: Int = DEFAULT_ZOOM_LEVEL, val pinchToZoomEnabled: Boolean = false)
+
+data class AssistVadSettings(val silenceSeconds: Double? = null, val timeoutSeconds: Double? = null)
+
+fun String.normalizedAssistVadSecondsInputOrNull(): String? {
+    val normalized = replace(',', '.')
+    if (normalized.isEmpty()) return normalized
+    if (normalized.count { it == '.' } > 1) return null
+    return normalized.takeIf { it.all { char -> char.isDigit() || char == '.' } }
+}
+
+fun String?.toAssistVadSecondsOrNull(): Double? =
+    this?.normalizedAssistVadSecondsInputOrNull()?.toDoubleOrNull()?.takeIf { it.isFinite() && it > 0.0 }
+
+fun Double.toAssistVadSecondsString(): String = BigDecimal.valueOf(this).stripTrailingZeros().toPlainString()
+
+fun Double?.toAssistVadSecondsInput(): String = this?.toAssistVadSecondsString().orEmpty()
 
 private const val DEFAULT_ZOOM_LEVEL = 100
 
@@ -188,6 +205,12 @@ interface PrefsRepository {
     suspend fun getSelectedWakeWord(): String?
 
     suspend fun setSelectedWakeWord(wakeWord: String)
+
+    suspend fun getAssistVadSettings(): AssistVadSettings
+
+    suspend fun setAssistVadSilenceSeconds(seconds: Double?)
+
+    suspend fun setAssistVadTimeoutSeconds(seconds: Double?)
 
     suspend fun addAllowedTag(tag: String)
 

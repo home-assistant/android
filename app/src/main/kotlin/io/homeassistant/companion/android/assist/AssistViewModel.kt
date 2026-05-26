@@ -21,6 +21,7 @@ import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
+import io.homeassistant.companion.android.settings.assist.AssistConfigManager
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -36,6 +37,7 @@ class AssistViewModel @AssistedInject constructor(
     serverManager: ServerManager,
     @Assisted initialAudioStrategy: AssistAudioStrategy,
     audioUrlPlayer: AudioUrlPlayer,
+    private val assistConfigManager: AssistConfigManager,
     application: Application,
 ) : AssistViewModelBase(serverManager, initialAudioStrategy, audioUrlPlayer, application) {
 
@@ -434,6 +436,7 @@ class AssistViewModel @AssistedInject constructor(
             text = text,
             pipeline = selectedPipeline,
             wakeWordPhrase = wakeWord,
+            vadSettingsProvider = assistConfigManager::getVadSettings,
         ) { event ->
             when (event) {
                 is AssistEvent.Message -> {

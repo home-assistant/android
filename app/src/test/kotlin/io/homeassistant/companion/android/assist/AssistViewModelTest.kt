@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.pm.PackageManager
 import io.homeassistant.companion.android.common.assist.AssistAudioStrategy
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.prefs.AssistVadSettings
 import io.homeassistant.companion.android.common.data.servers.ServerConnectionStateProvider
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
@@ -21,6 +22,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ge
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TtsOutputResponse
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
 import io.homeassistant.companion.android.common.util.PlaybackState
+import io.homeassistant.companion.android.settings.assist.AssistConfigManager
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
@@ -56,6 +58,7 @@ class AssistViewModelTest {
     private val application: Application = mockk(relaxed = true)
     private val webSocketRepository: WebSocketRepository = mockk(relaxed = true)
     private val integrationRepository: IntegrationRepository = mockk(relaxed = true)
+    private val assistConfigManager: AssistConfigManager = mockk(relaxed = true)
 
     private lateinit var viewModel: AssistViewModel
 
@@ -98,6 +101,7 @@ class AssistViewModelTest {
         coEvery { integrationRepository.getLastUsedPipelineId() } returns null
         coEvery { integrationRepository.getLastUsedPipelineSttSupport() } returns false
         coEvery { integrationRepository.setLastUsedPipeline(any(), any()) } returns Unit
+        coEvery { assistConfigManager.getVadSettings() } returns AssistVadSettings()
         coEvery { serverManager.getServer(any<Int>()) } returns mockk(relaxed = true)
         coEvery { serverManager.servers() } returns listOf()
     }
@@ -106,6 +110,7 @@ class AssistViewModelTest {
         return AssistViewModel(
             serverManager = serverManager,
             audioUrlPlayer = audioUrlPlayer,
+            assistConfigManager = assistConfigManager,
             application = application,
             initialAudioStrategy = object : AssistAudioStrategy {
                 override suspend fun audioData(): Flow<ShortArray> = emptyFlow()
@@ -153,7 +158,14 @@ class AssistViewModelTest {
          */
         private fun setupVoicePipeline() {
             coEvery {
-                webSocketRepository.runAssistPipelineForVoice(any(), any(), anyNullable(), anyNullable(), anyNullable())
+                webSocketRepository.runAssistPipelineForVoice(
+                    any(),
+                    any(),
+                    anyNullable(),
+                    anyNullable(),
+                    anyNullable(),
+                    anyNullable(),
+                )
             } returns pipelineEvents
         }
 
@@ -343,7 +355,14 @@ class AssistViewModelTest {
         fun `Given voice active mode when CLOSE_INACTIVE elapses then shouldFinish is false`() = runTest {
             setupVoicePipeline()
             coEvery {
-                webSocketRepository.runAssistPipelineForVoice(any(), any(), anyNullable(), anyNullable(), anyNullable())
+                webSocketRepository.runAssistPipelineForVoice(
+                    any(),
+                    any(),
+                    anyNullable(),
+                    anyNullable(),
+                    anyNullable(),
+                    anyNullable(),
+                )
             } returns flow { awaitCancellation() }
 
             viewModel = createAndInitialize(hasPermission = true)
@@ -390,7 +409,14 @@ class AssistViewModelTest {
         fun `Given voice inactive mode with placeholder message when CLOSE_INACTIVE elapses then shouldFinish is false`() = runTest {
             setupVoicePipeline()
             coEvery {
-                webSocketRepository.runAssistPipelineForVoice(any(), any(), anyNullable(), anyNullable(), anyNullable())
+                webSocketRepository.runAssistPipelineForVoice(
+                    any(),
+                    any(),
+                    anyNullable(),
+                    anyNullable(),
+                    anyNullable(),
+                    anyNullable(),
+                )
             } returns flow { awaitCancellation() }
 
             viewModel = createAndInitialize(hasPermission = true)

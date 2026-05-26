@@ -58,6 +58,8 @@ class AssistSettingsScreenScreenshotTest {
                 onSelectWakeWord = {},
                 onStartTestWakeWord = {},
                 onStopTestWakeWord = {},
+                onVadSilenceSecondsChange = {},
+                onVadTimeoutSecondsChange = {},
             )
         }
     }
@@ -83,6 +85,8 @@ class AssistSettingsScreenScreenshotTest {
                 onSelectWakeWord = {},
                 onStartTestWakeWord = {},
                 onStopTestWakeWord = {},
+                onVadSilenceSecondsChange = {},
+                onVadTimeoutSecondsChange = {},
             )
         }
     }
@@ -106,6 +110,8 @@ class AssistSettingsScreenScreenshotTest {
                 onSelectWakeWord = {},
                 onStartTestWakeWord = {},
                 onStopTestWakeWord = {},
+                onVadSilenceSecondsChange = {},
+                onVadTimeoutSecondsChange = {},
             )
         }
     }
@@ -131,6 +137,8 @@ class AssistSettingsScreenScreenshotTest {
                 onSelectWakeWord = {},
                 onStartTestWakeWord = {},
                 onStopTestWakeWord = {},
+                onVadSilenceSecondsChange = {},
+                onVadTimeoutSecondsChange = {},
             )
         }
     }
@@ -156,6 +164,8 @@ class AssistSettingsScreenScreenshotTest {
                 onSelectWakeWord = {},
                 onStartTestWakeWord = {},
                 onStopTestWakeWord = {},
+                onVadSilenceSecondsChange = {},
+                onVadTimeoutSecondsChange = {},
             )
         }
     }

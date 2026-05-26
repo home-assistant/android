@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -45,6 +46,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -63,6 +65,7 @@ import io.homeassistant.companion.android.common.compose.composable.HALabel
 import io.homeassistant.companion.android.common.compose.composable.HALoading
 import io.homeassistant.companion.android.common.compose.composable.HASettingsCard
 import io.homeassistant.companion.android.common.compose.composable.HASwitch
+import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.composable.LabelVariant
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HARadius
@@ -149,6 +152,8 @@ fun AssistSettingsScreen(viewModel: AssistSettingsViewModel, modifier: Modifier 
             onSelectWakeWord = viewModel::onSelectWakeWordModel,
             onStartTestWakeWord = { viewModel.setTestingWakeWord(true) },
             onStopTestWakeWord = { viewModel.setTestingWakeWord(false) },
+            onVadSilenceSecondsChange = viewModel::onVadSilenceSecondsChanged,
+            onVadTimeoutSecondsChange = viewModel::onVadTimeoutSecondsChanged,
             modifier = Modifier.padding(contentPadding),
         )
     }
@@ -164,6 +169,8 @@ internal fun AssistSettingsContent(
     onSelectWakeWord: (MicroWakeWordModelConfig) -> Unit,
     onStartTestWakeWord: () -> Unit,
     onStopTestWakeWord: () -> Unit,
+    onVadSilenceSecondsChange: (String) -> Unit,
+    onVadTimeoutSecondsChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -188,6 +195,19 @@ internal fun AssistSettingsContent(
 
             Spacer(modifier = Modifier.height(HADimens.SPACE2))
 
+            SectionHeader(
+                text = stringResource(commonR.string.assist_voice_input_title),
+                modifier = Modifier.padding(bottom = HADimens.SPACE1),
+            )
+            VoiceInputSection(
+                vadSilenceSeconds = uiState.vadSilenceSeconds,
+                vadTimeoutSeconds = uiState.vadTimeoutSeconds,
+                onVadSilenceSecondsChange = onVadSilenceSecondsChange,
+                onVadTimeoutSecondsChange = onVadTimeoutSecondsChange,
+            )
+
+            Spacer(modifier = Modifier.height(HADimens.SPACE2))
+
             // Wake Word Section
             Row(
                 horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
@@ -205,6 +225,39 @@ internal fun AssistSettingsContent(
                 onSelectWakeWord = onSelectWakeWord,
                 onStartTestWakeWord = onStartTestWakeWord,
                 onStopTestWakeWord = onStopTestWakeWord,
+            )
+        }
+    }
+}
+
+@Composable
+private fun VoiceInputSection(
+    vadSilenceSeconds: String,
+    vadTimeoutSeconds: String,
+    onVadSilenceSecondsChange: (String) -> Unit,
+    onVadTimeoutSecondsChange: (String) -> Unit,
+) {
+    val decimalKeyboard = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+
+    HASettingsCard {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(HADimens.SPACE3),
+        ) {
+            HATextField(
+                value = vadSilenceSeconds,
+                onValueChange = onVadSilenceSecondsChange,
+                label = { Text(stringResource(commonR.string.assist_vad_silence_seconds)) },
+                placeholder = { Text(stringResource(commonR.string.assist_vad_default_placeholder)) },
+                keyboardOptions = decimalKeyboard,
+                maxLines = 1,
+            )
+            HATextField(
+                value = vadTimeoutSeconds,
+                onValueChange = onVadTimeoutSecondsChange,
+                label = { Text(stringResource(commonR.string.assist_vad_timeout_seconds)) },
+                placeholder = { Text(stringResource(commonR.string.assist_vad_default_placeholder)) },
+                keyboardOptions = decimalKeyboard,
+                maxLines = 1,
             )
         }
     }
@@ -446,6 +499,8 @@ private fun AssistSettingsContentPreview() {
             onSelectWakeWord = {},
             onStartTestWakeWord = {},
             onStopTestWakeWord = {},
+            onVadSilenceSecondsChange = {},
+            onVadTimeoutSecondsChange = {},
         )
     }
 }
@@ -468,6 +523,8 @@ private fun AssistSettingsContentNotDefaultPreview() {
             onSelectWakeWord = {},
             onStartTestWakeWord = {},
             onStopTestWakeWord = {},
+            onVadSilenceSecondsChange = {},
+            onVadTimeoutSecondsChange = {},
         )
     }
 }
@@ -490,6 +547,8 @@ private fun AssistSettingsContentUnsupportedDevicePreview() {
             onSelectWakeWord = {},
             onStartTestWakeWord = {},
             onStopTestWakeWord = {},
+            onVadSilenceSecondsChange = {},
+            onVadTimeoutSecondsChange = {},
         )
     }
 }

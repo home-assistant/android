@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.data.websocket.impl
 
+import io.homeassistant.companion.android.common.data.prefs.AssistVadSettings
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketCore
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN
@@ -103,6 +104,27 @@ class WebSocketRepositoryImplTest {
             @Suppress("UNCHECKED_CAST")
             val input = dataSlot.captured["input"] as Map<String, Any?>
             assertFalse(input.containsKey("wake_word_phrase"))
+            assertFalse(input.containsKey("vad_silence_seconds"))
+            assertFalse(input.containsKey("vad_timeout_seconds"))
+        }
+
+        @Test
+        fun `Given VAD settings When running pipeline Then settings are included in input`() = runTest {
+            val dataSlot = captureSubscribeData()
+
+            repository.runAssistPipelineForVoice(
+                sampleRate = VOICE_SAMPLE_RATE,
+                outputTts = true,
+                pipelineId = null,
+                conversationId = null,
+                wakeWordPhrase = null,
+                vadSettings = AssistVadSettings(silenceSeconds = 1.25, timeoutSeconds = 30.0),
+            )
+
+            @Suppress("UNCHECKED_CAST")
+            val input = dataSlot.captured["input"] as Map<String, Any?>
+            assertEquals(1.25, input["vad_silence_seconds"])
+            assertEquals(30.0, input["vad_timeout_seconds"])
         }
 
         @ParameterizedTest(name = "Given outputTts={0} When running pipeline Then end_stage is {1}")
