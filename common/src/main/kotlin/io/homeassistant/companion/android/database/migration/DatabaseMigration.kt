@@ -47,7 +47,6 @@ internal fun migrationPath(context: Context): Array<Migration> = arrayOf(
     MIGRATION_23_24,
     Migration37to38(context),
     Migration40to41(context),
-    MIGRATION_51_52,
 )
 
 private val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -859,33 +858,5 @@ private class Migration40to41(private val context: Context) : Migration(40, 41) 
         if (migrationFailed) {
             notifyMigrationFailed(context)
         }
-    }
-}
-
-private val MIGRATION_51_52 = object : Migration(51, 52) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL(
-            """
-            UPDATE `sensor_settings`
-            SET `value` = 'false'
-            WHERE `sensor_id` = 'active_notification_count'
-                AND `name` = 'active_notification_count_content_attrs'
-                AND `value` = 'true'
-            """.trimIndent(),
-        )
-        db.execSQL(
-            """
-            DELETE FROM `sensor_attributes`
-            WHERE `sensor_id` = 'active_notification_count'
-            """.trimIndent(),
-        )
-        db.execSQL(
-            """
-            UPDATE `sensors`
-            SET `last_sent_state` = NULL,
-                `last_sent_icon` = NULL
-            WHERE `id` = 'active_notification_count'
-            """.trimIndent(),
-        )
     }
 }
