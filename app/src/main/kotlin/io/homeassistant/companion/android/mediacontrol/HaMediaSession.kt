@@ -10,7 +10,9 @@ import android.os.Looper
 import androidx.annotation.MainThread
 import androidx.annotation.OptIn
 import androidx.core.app.NotificationCompat
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.session.CommandButton
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaStyleNotificationHelper
 import coil3.imageLoader
@@ -111,6 +113,7 @@ class HaMediaSession @AssistedInject constructor(
     @OptIn(UnstableApi::class)
     fun buildNotification(): Notification? {
         val session = mediaSession ?: return null
+        session.setMediaButtonPreferences(buildMediaButtonPreferences(session.player))
         val metadata = session.player.mediaMetadata
         return NotificationCompat.Builder(context, CHANNEL_MEDIA_SESSION)
             .setStyle(MediaStyleNotificationHelper.MediaStyle(session))
@@ -123,6 +126,37 @@ class HaMediaSession @AssistedInject constructor(
             .setOngoing(session.player.isPlaying)
             .setContentIntent(session.sessionActivity)
             .build()
+    }
+
+    @OptIn(UnstableApi::class)
+    private fun buildMediaButtonPreferences(player: Player): List<CommandButton> {
+        val buttons = mutableListOf<CommandButton>()
+        if (player.isCommandAvailable(Player.COMMAND_SET_SHUFFLE_MODE)) {
+            val shuffleOn = player.shuffleModeEnabled
+            buttons.add(
+                CommandButton.Builder(if (shuffleOn) CommandButton.ICON_SHUFFLE_ON else CommandButton.ICON_SHUFFLE_OFF)
+                    .setPlayerCommand(Player.COMMAND_SET_SHUFFLE_MODE, !shuffleOn)
+                    .build(),
+            )
+        }
+        if (player.isCommandAvailable(Player.COMMAND_SET_REPEAT_MODE)) {
+            val icon = when (player.repeatMode) {
+                Player.REPEAT_MODE_ONE -> CommandButton.ICON_REPEAT_ONE
+                Player.REPEAT_MODE_ALL -> CommandButton.ICON_REPEAT_ALL
+                else -> CommandButton.ICON_REPEAT_OFF
+            }
+            val nextMode = when (player.repeatMode) {
+                Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
+                Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
+                else -> Player.REPEAT_MODE_OFF
+            }
+            buttons.add(
+                CommandButton.Builder(icon)
+                    .setPlayerCommand(Player.COMMAND_SET_REPEAT_MODE, nextMode)
+                    .build(),
+            )
+        }
+        return buttons
     }
 
     private fun getCommandCallback(scope: CoroutineScope) = object : HaRemoteMediaPlayer.CommandCallback {
