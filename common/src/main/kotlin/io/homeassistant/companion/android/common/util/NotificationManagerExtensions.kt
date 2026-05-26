@@ -49,8 +49,10 @@ fun cancelNotificationGroupIfNeeded(
             // Yes it has a group.
             Timber.d("Notification is in a group ($groupKey). Get all notifications for this group...")
 
-            // Check if the group is the auto group of android ("ranker_group")
-            if (!groupKey.endsWith("|g:ranker_group")) {
+            // Check if the group is one of the auto groups of android
+            if (!groupKey.endsWith("|g:ranker_group") &&
+                !groupKey.endsWith("|g:Aggregate_AlertingSection") &&
+                !groupKey.endsWith("|g:Aggregate_SilentSection")) {
                 // Nope it is a custom group. Get notifications of the group...
                 val groupNotifications =
                     currentActiveNotifications.filter { s -> s.groupKey == groupKey }
