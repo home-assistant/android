@@ -10,14 +10,11 @@ import okhttp3.OkHttpClient
 import timber.log.Timber
 
 /**
- * A DNS resolver that uses Android's [ConnectivityManager.activeNetwork] to resolve
- * hostnames, ensuring both A and AAAA (IPv6) record queries are performed.
+ * A DNS resolver that queries both A and AAAA (IPv6) records when resolving hostnames.
  *
- * Android's default [InetAddress.getAllByName] (used by [Dns.SYSTEM]) may skip AAAA
- * lookups based on a routing-table probe for the `2000::` prefix. This causes
- * connection failures on IPv6-mostly or DNS64 networks, especially during network
- * transitions. This resolver bypasses that heuristic by using the [ConnectivityManager]
- * API which resolves addresses through an independent code path.
+ * Android's default DNS resolver may skip AAAA lookups under certain network conditions,
+ * causing connection failures on IPv6-mostly or DNS64 networks. This resolver uses an
+ * alternative API path ([Network.getAllByName]) that performs both query types reliably.
  *
  * Falls back to [Dns.SYSTEM] when no active network is available.
  *
