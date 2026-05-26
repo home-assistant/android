@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.data.connectivity
 
+import android.net.ConnectivityManager
 import androidx.annotation.StringRes
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
@@ -35,12 +36,15 @@ private val CONNECTIVITY_TIMEOUT = 5.seconds
 /**
  * Default implementation of [ConnectivityChecker] that performs real network operations.
  */
-internal class DefaultConnectivityChecker @Inject constructor() : ConnectivityChecker {
+internal class DefaultConnectivityChecker @Inject constructor(
+    private val connectivityManager: ConnectivityManager
+) : ConnectivityChecker {
 
     override suspend fun dns(hostname: String): ConnectivityCheckResult = withContext(Dispatchers.IO) {
         try {
             withTimeout(CONNECTIVITY_TIMEOUT) {
-                val addresses = InetAddress.getAllByName(hostname)
+                val addresses = connectivityManager.activeNetwork?.getAllByName(hostname)
+                    ?: InetAddress.getAllByName(hostname)
                 val addressList = addresses.joinToString(", ") { it.hostAddress ?: "" }
                 ConnectivityCheckResult.Success(commonR.string.connection_check_dns, addressList)
             }

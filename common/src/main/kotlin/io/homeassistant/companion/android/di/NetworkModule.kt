@@ -10,6 +10,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import dagger.multibindings.IntoSet
 import io.homeassistant.companion.android.common.data.network.NetworkChangeObserver
 import io.homeassistant.companion.android.common.data.network.NetworkChangeObserverImpl
 import io.homeassistant.companion.android.common.data.network.NetworkHelper
@@ -18,6 +19,7 @@ import io.homeassistant.companion.android.common.data.network.NetworkStatusMonit
 import io.homeassistant.companion.android.common.data.network.NetworkStatusMonitorImpl
 import io.homeassistant.companion.android.common.data.network.WifiHelper
 import io.homeassistant.companion.android.common.data.network.WifiHelperImpl
+import io.homeassistant.companion.android.di.OkHttpConfigurator
 import javax.inject.Singleton
 
 @Module
@@ -53,4 +55,9 @@ internal abstract class NetworkModule {
     @Binds
     @Singleton
     abstract fun bindNetworkStatusMonitor(networkStatusMonitor: NetworkStatusMonitorImpl): NetworkStatusMonitor
+
+    @Binds
+    @IntoSet
+    @Singleton
+    abstract fun bindNetworkAwareDns(dns: NetworkAwareDns): OkHttpConfigurator
 }
