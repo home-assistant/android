@@ -61,6 +61,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
         } else {
             WebsocketSetting.ALWAYS
         }
+        private val ACTION_KEY_WHITELIST = listOf("uri", "behavior", "authenticationRequired")
 
         suspend fun start(context: Context) {
             val websocketNotifications =
@@ -204,7 +205,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
                             if (action is Map<*, *>) {
                                 flattened["action_${i + 1}_key"] = action["action"].toString()
                                 flattened["action_${i + 1}_title"] = action["title"].toString()
-                                for (key in listOf("uri", "behavior", "authenticationRequired")) {
+                                for (key in ACTION_KEY_WHITELIST) {
                                     action[key]?.let { value -> flattened["action_${i + 1}_$key"] = value.toString() }
                                 }
                             }
