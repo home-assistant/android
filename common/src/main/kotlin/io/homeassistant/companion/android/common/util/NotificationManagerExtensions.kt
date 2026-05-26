@@ -52,7 +52,8 @@ fun cancelNotificationGroupIfNeeded(
             // Check if the group is one of the auto groups of android
             if (!groupKey.endsWith("|g:ranker_group") &&
                 !groupKey.endsWith("|g:Aggregate_AlertingSection") &&
-                !groupKey.endsWith("|g:Aggregate_SilentSection")) {
+                !groupKey.endsWith("|g:Aggregate_SilentSection")
+            ) {
                 // Nope it is a custom group. Get notifications of the group...
                 val groupNotifications =
                     currentActiveNotifications.filter { s -> s.groupKey == groupKey }
