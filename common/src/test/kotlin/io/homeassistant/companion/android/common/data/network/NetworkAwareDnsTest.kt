@@ -84,6 +84,41 @@ class NetworkAwareDnsTest {
     }
 
     @Test
+    fun `Given hostname resolves only to ULA IPv6 address then ULA is returned correctly`() {
+        val hostname = "ha.internal"
+        val ulaAddress = InetAddress.getByName("fd12:3456:789a::1")
+        val network = mockk<Network> {
+            every { getAllByName(hostname) } returns arrayOf(ulaAddress)
+        }
+        every { connectivityManager.activeNetwork } returns network
+
+        val result = networkAwareDns.lookup(hostname)
+
+        assertEquals(1, result.size)
+        val resultAddr = result[0]
+        assertTrue(resultAddr is InetAddress)
+        assertTrue(resultAddr.hostAddress!!.startsWith("fd12:"))
+        assertEquals(ulaAddress, resultAddr)
+    }
+
+    @Test
+    fun `Given hostname resolves to both ULA and global IPv6 then both are returned`() {
+        val hostname = "dual-v6.internal"
+        val ulaAddress = InetAddress.getByName("fd12:3456:789a::1")
+        val globalV6Address = InetAddress.getByName("2001:db8::2")
+        val network = mockk<Network> {
+            every { getAllByName(hostname) } returns arrayOf(ulaAddress, globalV6Address)
+        }
+        every { connectivityManager.activeNetwork } returns network
+
+        val result = networkAwareDns.lookup(hostname)
+
+        assertEquals(2, result.size)
+        assertTrue(result.contains(ulaAddress))
+        assertTrue(result.contains(globalV6Address))
+    }
+
+    @Test
     fun `Given network resolution fails when looking up hostname then exception propagates`() {
         val hostname = "unknown.example.com"
         val network = mockk<Network> {
