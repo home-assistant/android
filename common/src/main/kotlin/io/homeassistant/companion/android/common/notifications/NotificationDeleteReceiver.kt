@@ -1,48 +1,60 @@
 package io.homeassistant.companion.android.common.notifications
 
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import androidx.core.app.NotificationManagerCompat
-import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
-import io.homeassistant.companion.android.database.notification.NotificationDao
-import javax.inject.Inject
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import timber.log.Timber
 
-@AndroidEntryPoint
 class NotificationDeleteReceiver : BroadcastReceiver() {
     companion object {
-        const val EXTRA_DATA = "EXTRA_DATA"
-        const val EXTRA_NOTIFICATION_GROUP = "EXTRA_NOTIFICATION_GROUP"
-        const val EXTRA_NOTIFICATION_GROUP_ID = "EXTRA_NOTIFICATION_GROUP_ID"
-        const val EXTRA_NOTIFICATION_DB = "EXTRA_NOTIFICATION_DB"
+        private const val EXTRA_DATA_KEYS = "EXTRA_DATA_KEYS"
+        private const val EXTRA_DATA_VALUES = "EXTRA_DATA_VALUES"
+        private const val EXTRA_NOTIFICATION_GROUP = "EXTRA_NOTIFICATION_GROUP"
+        private const val EXTRA_NOTIFICATION_GROUP_ID = "EXTRA_NOTIFICATION_GROUP_ID"
+        private const val EXTRA_NOTIFICATION_DB = "EXTRA_NOTIFICATION_DB"
+
+        /**
+         * Creates a [PendingIntent] that fires a notification cleared event when triggered.
+         *
+         * @param context The context to use for creating the intent.
+         * @param data The event data to send to the Home Assistant server.
+         * @param messageId The unique ID for the PendingIntent request code.
+         * @param group The notification group name, if any.
+         * @param groupId The notification group ID.
+         * @param databaseId The database ID of the notification.
+         */
+        fun createDeletePendingIntent(
+            context: Context,
+            data: Map<String, String>,
+            messageId: Int,
+            group: String?,
+            groupId: Int,
+            databaseId: Long?,
+        ): PendingIntent {
+            val deleteIntent = Intent(context, NotificationDeleteReceiver::class.java).apply {
+                putExtra(EXTRA_DATA_KEYS, data.keys.toTypedArray())
+                putExtra(EXTRA_DATA_VALUES, data.values.toTypedArray())
+                putExtra(EXTRA_NOTIFICATION_GROUP, group)
+                putExtra(EXTRA_NOTIFICATION_GROUP_ID, groupId)
+                putExtra(EXTRA_NOTIFICATION_DB, databaseId)
+            }
+            return PendingIntent.getBroadcast(
+                context,
+                messageId,
+                deleteIntent,
+                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+        }
     }
 
-    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
-
-    @Inject
-    lateinit var serverManager: ServerManager
-
-    @Inject
-    lateinit var notificationDao: NotificationDao
-
-    @Suppress("UNCHECKED_CAST")
     override fun onReceive(context: Context, intent: Intent) {
-        val hashData = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent.getSerializableExtra(EXTRA_DATA, HashMap::class.java)
-        } else {
-            @Suppress("DEPRECATION")
-            intent.getSerializableExtra(EXTRA_DATA)
-        } as HashMap<String, *>
+        val eventDataKeys = intent.getStringArrayExtra(EXTRA_DATA_KEYS) ?: emptyArray()
+        val eventDataValues = intent.getStringArrayExtra(EXTRA_DATA_VALUES) ?: emptyArray()
         val group = intent.getStringExtra(EXTRA_NOTIFICATION_GROUP)
         val groupId = intent.getIntExtra(EXTRA_NOTIFICATION_GROUP_ID, -1)
+        val databaseId = intent.getLongExtra(EXTRA_NOTIFICATION_DB, 0)
 
         val notificationManagerCompat = NotificationManagerCompat.from(context)
 
@@ -51,16 +63,6 @@ class NotificationDeleteReceiver : BroadcastReceiver() {
         // Then only the empty group is left and needs to be cancelled
         notificationManagerCompat.cancelGroupIfNeeded(group, groupId)
 
-        ioScope.launch {
-            try {
-                val databaseId = intent.getLongExtra(EXTRA_NOTIFICATION_DB, 0)
-                val serverId = notificationDao.get(databaseId.toInt())?.serverId ?: ServerManager.SERVER_ID_ACTIVE
-
-                serverManager.integrationRepository(serverId).fireEvent("mobile_app_notification_cleared", hashData)
-                Timber.d("Notification cleared event successful!")
-            } catch (e: Exception) {
-                Timber.e(e, "Issue sending event to Home Assistant")
-            }
-        }
+        NotificationDeleteWorker.enqueue(context, databaseId, eventDataKeys, eventDataValues)
     }
 }
