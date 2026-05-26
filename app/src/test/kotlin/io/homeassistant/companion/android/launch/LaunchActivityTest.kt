@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.launch
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.util.Rational
 import androidx.lifecycle.Lifecycle
@@ -147,6 +148,45 @@ class LaunchActivityTest {
                 invokeOnUserLeaveHint(activity)
 
                 assertFalse(activity.isInPictureInPictureMode)
+            }
+        }
+    }
+
+    @Test
+    fun `Given showWhenLocked is true when launched then activity is shown over the lock screen`() {
+        val intent = LaunchActivity.newInstance(ApplicationProvider.getApplicationContext(), showWhenLocked = true)
+
+        ActivityScenario.launch<LaunchActivity>(intent).use { scenario ->
+            scenario.onActivity { activity ->
+                assertTrue(shadowOf(activity).showWhenLocked)
+            }
+        }
+    }
+
+    @Test
+    fun `Given showWhenLocked is false when launched then activity is not shown over the lock screen`() {
+        val intent = LaunchActivity.newInstance(ApplicationProvider.getApplicationContext(), showWhenLocked = false)
+
+        ActivityScenario.launch<LaunchActivity>(intent).use { scenario ->
+            scenario.onActivity { activity ->
+                assertFalse(shadowOf(activity).showWhenLocked)
+            }
+        }
+    }
+
+    @Test
+    fun `Given intent targets LaunchActivity directly with legacy extra then activity is not shown over the lock screen`() {
+        // Models a hostile or stale caller that targets the exported LaunchActivity component
+        // directly and tries to opt into the lock-screen behavior via the legacy extra. The
+        // gating now lives on the non-exported alias, so direct-component intents must never
+        // flip the window flag — regardless of any extra they carry.
+        val intent = Intent(ApplicationProvider.getApplicationContext(), LaunchActivity::class.java).apply {
+            putExtra("show_when_locked", true)
+        }
+
+        ActivityScenario.launch<LaunchActivity>(intent).use { scenario ->
+            scenario.onActivity { activity ->
+                assertFalse(shadowOf(activity).showWhenLocked)
             }
         }
     }
