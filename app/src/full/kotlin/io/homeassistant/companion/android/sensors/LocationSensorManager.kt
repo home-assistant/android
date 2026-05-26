@@ -941,8 +941,8 @@ class LocationSensorManager :
                     val passive = it.attributes["passive"] as? Boolean
                     val radius = it.attributes["radius"] as? Number
                     return@filter passive == false && radius != null && it.containsWithAccuracy(location)
-                }
-            val locationZone = inZones.minByOrNull { (it.attributes["radius"] as? Number ?: Int.MAX_VALUE).toFloat() }
+                }.sortedBy { (it.attributes["radius"] as? Number ?: Int.MAX_VALUE).toFloat() }
+            val locationZone = inZones.firstOrNull()
 
             val locationName = locationZone?.entityId?.split(".")?.getOrNull(1) ?: ZONE_NAME_NOT_HOME
             // Send both `location_name` (deprecated) and `in_zones` (its replacement, per
@@ -952,7 +952,16 @@ class LocationSensorManager :
                 gps = null,
                 gpsAccuracy = null,
                 locationName = locationName,
-                inZones = inZones.map { it.entityId },
+                inZones = if (serverManager(latestContext).getServer(serverId)?.version?.isAtLeast(
+                        2026,
+                        6,
+                        0,
+                    ) == true
+                ) {
+                    inZones.map { it.entityId }
+                } else {
+                    null
+                },
                 speed = null,
                 altitude = null,
                 course = null,
@@ -1363,6 +1372,7 @@ class LocationSensorManager :
                     Manifest.permission.BLUETOOTH_CONNECT,
                 )
             }
+
             (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) -> {
                 arrayOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
@@ -1372,6 +1382,7 @@ class LocationSensorManager :
                     Manifest.permission.BLUETOOTH,
                 )
             }
+
             else -> {
                 arrayOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
