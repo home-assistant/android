@@ -4,6 +4,7 @@ import android.os.Looper
 import androidx.annotation.MainThread
 import androidx.annotation.OptIn
 import androidx.annotation.VisibleForTesting
+import androidx.media3.common.C
 import androidx.media3.common.DeviceInfo
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackParameters
@@ -120,7 +121,7 @@ internal class HaRemoteMediaPlayer(
 
         val isPlaying = state.playbackState is MediaPlaybackState.Playing
 
-        val durationUs = state.mediaDuration?.inWholeMicroseconds ?: DURATION_UNSET_US
+        val durationUs = state.mediaDuration?.inWholeMicroseconds ?: C.TIME_UNSET
         val positionMs = computeCurrentPositionMs(state)
 
         val currentItem = MediaItemData.Builder(state.entityId)
@@ -131,9 +132,9 @@ internal class HaRemoteMediaPlayer(
         val deviceVolume = state.volumeLevel?.let { (it * VOLUME_SCALE).toInt() } ?: 0
 
         val media3RepeatMode = when (state.repeatMode) {
-            is MediaRepeatMode.Off -> Player.REPEAT_MODE_OFF
-            is MediaRepeatMode.One -> Player.REPEAT_MODE_ONE
-            is MediaRepeatMode.All -> Player.REPEAT_MODE_ALL
+            is MediaRepeatMode.Off -> REPEAT_MODE_OFF
+            is MediaRepeatMode.One -> REPEAT_MODE_ONE
+            is MediaRepeatMode.All -> REPEAT_MODE_ALL
         }
 
         return State.Builder()
@@ -192,12 +193,12 @@ internal class HaRemoteMediaPlayer(
     override fun handleSeek(mediaItemIndex: Int, positionMs: Long, seekCommand: Int): ListenableFuture<*> =
         handleCommand {
             when (seekCommand) {
-                Player.COMMAND_SEEK_TO_NEXT,
-                Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM,
+                COMMAND_SEEK_TO_NEXT,
+                COMMAND_SEEK_TO_NEXT_MEDIA_ITEM,
                 -> commandCallback.onNextRequested()
 
-                Player.COMMAND_SEEK_TO_PREVIOUS,
-                Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM,
+                COMMAND_SEEK_TO_PREVIOUS,
+                COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM,
                 -> commandCallback.onPreviousRequested()
 
                 else -> {
@@ -234,8 +235,8 @@ internal class HaRemoteMediaPlayer(
 
     override fun handleSetRepeatMode(repeatMode: Int): ListenableFuture<*> = handleCommand {
         val haRepeatMode = when (repeatMode) {
-            Player.REPEAT_MODE_ONE -> MediaRepeatMode.One
-            Player.REPEAT_MODE_ALL -> MediaRepeatMode.All
+            REPEAT_MODE_ONE -> MediaRepeatMode.One
+            REPEAT_MODE_ALL -> MediaRepeatMode.All
             else -> MediaRepeatMode.Off
         }
         commandCallback.onRepeatRequested(repeatMode = haRepeatMode)
@@ -251,7 +252,8 @@ internal class HaRemoteMediaPlayer(
      * Any previously in-flight future is completed immediately to avoid leaking pending operations
      * when commands arrive faster than the server confirms them.
      *
-     * If [block] returns null (command not supported) or throws, returns an immediate failed future.
+     * @return A [ListenableFuture] that stays pending until [updateState] is called, or an
+     * immediate failed future if [block] returns null (command not supported) or throws.
      * If the [Job] completes with a non-[CancellationException] error, the future is failed as a
      * safety fallback (though [callMediaAction] already catches all non-cancellation exceptions).
      */
@@ -285,40 +287,40 @@ internal class HaRemoteMediaPlayer(
 
     private fun buildAvailableCommands(state: MediaControlState): Player.Commands {
         val builder = Player.Commands.Builder()
-        if (state.supportsPlay || state.supportsPause) builder.add(Player.COMMAND_PLAY_PAUSE)
-        if (state.supportsStop) builder.add(Player.COMMAND_STOP)
+        if (state.supportsPlay || state.supportsPause) builder.add(COMMAND_PLAY_PAUSE)
+        if (state.supportsStop) builder.add(COMMAND_STOP)
         if (state.supportsSeek) {
-            builder.add(Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM)
-            builder.add(Player.COMMAND_SEEK_TO_DEFAULT_POSITION)
-            builder.add(Player.COMMAND_SEEK_BACK)
-            builder.add(Player.COMMAND_SEEK_FORWARD)
+            builder.add(COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM)
+            builder.add(COMMAND_SEEK_TO_DEFAULT_POSITION)
+            builder.add(COMMAND_SEEK_BACK)
+            builder.add(COMMAND_SEEK_FORWARD)
         }
-        builder.add(Player.COMMAND_GET_CURRENT_MEDIA_ITEM)
+        builder.add(COMMAND_GET_CURRENT_MEDIA_ITEM)
         if (state.supportsPreviousTrack) {
-            builder.add(Player.COMMAND_SEEK_TO_PREVIOUS)
-            builder.add(Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
+            builder.add(COMMAND_SEEK_TO_PREVIOUS)
+            builder.add(COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
         }
         if (state.supportsNextTrack) {
-            builder.add(Player.COMMAND_SEEK_TO_NEXT)
-            builder.add(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
+            builder.add(COMMAND_SEEK_TO_NEXT)
+            builder.add(COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
         }
         if (state.supportsVolumeSet) {
-            builder.add(Player.COMMAND_GET_DEVICE_VOLUME)
+            builder.add(COMMAND_GET_DEVICE_VOLUME)
             // Both the deprecated and _WITH_FLAGS variants are required: the deprecated ones are
             // checked by Media3's MediaSessionLegacyStub when setting up VolumeProviderCompat
             // (which drives the SystemUI device-chip volume slider), while the _WITH_FLAGS variants
             // are used by newer clients and the volume button key-event path.
             @Suppress("DEPRECATION")
-            builder.add(Player.COMMAND_SET_DEVICE_VOLUME)
-            builder.add(Player.COMMAND_SET_DEVICE_VOLUME_WITH_FLAGS)
+            builder.add(COMMAND_SET_DEVICE_VOLUME)
+            builder.add(COMMAND_SET_DEVICE_VOLUME_WITH_FLAGS)
             @Suppress("DEPRECATION")
-            builder.add(Player.COMMAND_ADJUST_DEVICE_VOLUME)
-            builder.add(Player.COMMAND_ADJUST_DEVICE_VOLUME_WITH_FLAGS)
+            builder.add(COMMAND_ADJUST_DEVICE_VOLUME)
+            builder.add(COMMAND_ADJUST_DEVICE_VOLUME_WITH_FLAGS)
         }
-        if (state.supportsShuffleSet) builder.add(Player.COMMAND_SET_SHUFFLE_MODE)
-        if (state.supportsRepeatSet) builder.add(Player.COMMAND_SET_REPEAT_MODE)
-        builder.add(Player.COMMAND_GET_METADATA)
-        builder.add(Player.COMMAND_GET_TIMELINE)
+        if (state.supportsShuffleSet) builder.add(COMMAND_SET_SHUFFLE_MODE)
+        if (state.supportsRepeatSet) builder.add(COMMAND_SET_REPEAT_MODE)
+        builder.add(COMMAND_GET_METADATA)
+        builder.add(COMMAND_GET_TIMELINE)
         return builder.build()
     }
 
@@ -337,11 +339,11 @@ internal class HaRemoteMediaPlayer(
     }
 
     private companion object {
-        const val DURATION_UNSET_US = androidx.media3.common.C.TIME_UNSET
         const val CURRENT_ITEM_INDEX = 0
         const val PLAYBACK_SPEED = 1.0f
 
-        /* HA uses 0.0–1.0; we tell Media3 our volume range is 0–VOLUME_SCALE via
+        /**
+         * HA uses 0.0–1.0; we tell Media3 our volume range is 0–100 via
          * REMOTE_DEVICE_INFO, so Media3 will call handleSetDeviceVolume with values in that range.
          */
         const val VOLUME_SCALE = 100

@@ -81,7 +81,7 @@ data class MediaControlSettingsUiState(
 class MediaControlSettingsViewModel @VisibleForTesting constructor(
     private val serverManager: ServerManager,
     private val mediaControlRepository: MediaControlRepository,
-    private val backgroundDispatcher: CoroutineDispatcher,
+    backgroundDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
     @Inject

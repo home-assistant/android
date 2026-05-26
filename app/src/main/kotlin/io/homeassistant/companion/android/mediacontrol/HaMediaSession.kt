@@ -10,6 +10,7 @@ import android.os.Looper
 import androidx.annotation.MainThread
 import androidx.annotation.OptIn
 import androidx.core.app.NotificationCompat
+import androidx.core.graphics.scale
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.CommandButton
@@ -79,7 +80,7 @@ class HaMediaSession @AssistedInject constructor(
     /** Stable identifier for this session. Delegates to [MediaControlEntityConfig.id]. */
     val id: String get() = config.id
 
-    /** Must be accessed from the Main thread. Non-null while [observe] is running. */
+    /** Non-null while [observe] is running. */
     @get:MainThread
     @set:MainThread
     internal var mediaSession: MediaSession? = null
@@ -93,12 +94,12 @@ class HaMediaSession @AssistedInject constructor(
     @set:MainThread
     private var notificationEntityName: String? = null
 
-    /** True if the player is currently playing and has at least one media item. Must be called from the Main thread. */
+    /** @return `true` if the player is currently playing and has at least one media item. */
     @get:MainThread
     val isPlaying: Boolean
         get() = mediaSession?.player?.let { it.playWhenReady && it.mediaItemCount > 0 } == true
 
-    /** True if the player has at least one media item (playing or paused). Must be called from the Main thread. */
+    /** @return `true` if the player has at least one media item (playing or paused). */
     @get:MainThread
     val hasActiveMedia: Boolean
         get() = mediaSession?.player?.let { it.mediaItemCount > 0 } == true
@@ -110,7 +111,6 @@ class HaMediaSession @AssistedInject constructor(
      * @return The notification, or null if the session is not currently active.
      */
     @MainThread
-    @OptIn(UnstableApi::class)
     fun buildNotification(): Notification? {
         val session = mediaSession ?: return null
         session.setMediaButtonPreferences(buildMediaButtonPreferences(session.player))
@@ -364,7 +364,7 @@ class HaMediaSession @AssistedInject constructor(
         }
 
     private suspend fun callMediaAction(action: String, extraData: Map<String, Any> = emptyMap()) {
-        val actionData = buildMap<String, Any> {
+        val actionData = buildMap {
             put("entity_id", config.entityId)
             putAll(extraData)
         }
@@ -411,7 +411,7 @@ class HaMediaSession @AssistedInject constructor(
      * metadata alongside a notification-icon-sized bitmap for [setLargeIcon][android.app.Notification.Builder.setLargeIcon].
      *
      * The bitmap is explicitly scaled to [android.R.dimen.notification_large_icon_width] on IO so
-     * that [android.graphics.drawable.Icon.scaleDownIfNecessary] has nothing to do on the Main
+     * that [scaleDownIfNecessary] has nothing to do on the Main
      * thread, preventing a StrictMode CustomViolation on API 36+.
      */
     private suspend fun loadArtworkData(url: String): Pair<ByteArray, Bitmap>? = withContext(Dispatchers.IO) {
@@ -466,12 +466,9 @@ class HaMediaSession @AssistedInject constructor(
     private fun scaleDownIfNecessary(bitmap: Bitmap, maxWidth: Int, maxHeight: Int): Bitmap {
         if (bitmap.width <= maxWidth && bitmap.height <= maxHeight) return bitmap
         val scale = minOf(maxWidth.toFloat() / bitmap.width, maxHeight.toFloat() / bitmap.height)
-        return Bitmap.createScaledBitmap(
-            bitmap,
+        return bitmap.scale(
             maxOf(1, (scale * bitmap.width).toInt()),
             maxOf(1, (scale * bitmap.height).toInt()),
-            /* filter= */
-            true,
         )
     }
 

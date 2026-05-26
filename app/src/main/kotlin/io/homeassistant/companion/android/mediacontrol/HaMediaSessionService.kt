@@ -54,7 +54,7 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
     @Inject
     lateinit var haMediaSessionFactory: HaMediaSession.Factory
 
-    // Keyed by MediaControlEntityConfig.id. Each entry pairs the session with the job running observe().
+    /** Keyed by [MediaControlEntityConfig.id]. Each entry pairs the session with the coroutine running [HaMediaSession.observe]. */
     private val activeSessions = mutableMapOf<String, Pair<HaMediaSession, Job>>()
 
     /** The notification ID last passed to [startForeground], or null if not in the foreground. */
@@ -92,8 +92,8 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
      * Called by Media3 whenever a session's player state changes and the notification needs to be
      * updated. Each session gets a notification with a unique ID derived from the session's ID,
      * so each entity appears as its own card in the media controls carousel.
-     */
-    /* POST_NOTIFICATIONS is not required for notifications linked to an active MediaSession
+     *
+     * POST_NOTIFICATIONS is not required for notifications linked to an active MediaSession
      * (MediaStyle notifications). This is a platform-level guarantee on API 33+; on API < 33
      * the permission does not exist at all.
      */
@@ -101,10 +101,6 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
     @OptIn(UnstableApi::class)
     override fun onUpdateNotification(session: MediaSession, startInForegroundRequired: Boolean) {
         val notificationId = session.id.hashCode()
-
-        // A session not in activeSessions is being torn down. removeSession() and player.release()
-        // both trigger onUpdateNotification, so without this guard we would re-post a notification
-        // we just cancelled, leaving a zombie media control card after removal.
         val haSession = activeSessions[session.id]?.first
 
         if (haSession == null || session.player.mediaItemCount == 0) {
@@ -198,7 +194,7 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
     /**
      * Cancels the notification for a session, unregisters it from the service, and joins the
      * observation coroutine so all Media3 resources are released before returning.
-     * Must be called from the Main dispatcher.
+     * Must be called from the Main thread.
      */
     private suspend fun tearDownSession(key: String, pair: Pair<HaMediaSession, Job>) {
         val (haSession, job) = pair
@@ -215,7 +211,7 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
     /**
      * Launches the observation coroutine for a new session, registers it with the service, and
      * stores it in [activeSessions].
-     * Must be called from the Main thread to safely mutate [activeSessions].
+     * Must be called from the Main thread.
      */
     private fun launchSession(key: String, session: HaMediaSession) {
         val job = serviceScope.launch {
