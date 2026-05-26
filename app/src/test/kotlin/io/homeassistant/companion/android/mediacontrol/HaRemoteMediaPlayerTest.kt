@@ -5,11 +5,13 @@ import androidx.media3.common.Player
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlState
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaPlaybackState
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaRepeatMode
+import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.Job
 import org.junit.After
@@ -24,11 +26,13 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
+@OptIn(ExperimentalTime::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = dagger.hilt.android.testing.HiltTestApplication::class)
 class HaRemoteMediaPlayerTest {
 
     private val commandCallback: HaRemoteMediaPlayer.CommandCallback = mockk(relaxed = true)
+    private val fakeClock = FakeClock()
     private lateinit var player: HaRemoteMediaPlayer
 
     @After
@@ -39,7 +43,7 @@ class HaRemoteMediaPlayerTest {
 
     @Before
     fun setUp() {
-        player = HaRemoteMediaPlayer(Looper.getMainLooper(), commandCallback)
+        player = HaRemoteMediaPlayer(Looper.getMainLooper(), commandCallback, fakeClock)
     }
 
     private fun createState(
@@ -616,6 +620,67 @@ class HaRemoteMediaPlayerTest {
     @Test
     fun `Given repeat mode All when getState then maps to REPEAT_MODE_ALL and set triggers callback`() {
         assertRepeatModeRoundTrip(mediaRepeatMode = MediaRepeatMode.All, media3RepeatMode = Player.REPEAT_MODE_ALL)
+    }
+
+    // -- Position compensation tests --
+
+    @Test
+    fun `Given playing state when time advances and volume-only update arrives then position is not reset`() {
+        player.updateState(state = createState(mediaPosition = 120.0.seconds), artworkBytes = null)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        // 2 seconds of playback elapse
+        fakeClock.currentInstant += 2.seconds
+
+        // Volume-only WebSocket update: same position, different volume level
+        player.updateState(
+            state = createState(mediaPosition = 120.0.seconds, volumeLevel = 0.4f),
+            artworkBytes = null,
+        )
+        shadowOf(Looper.getMainLooper()).idle()
+
+        // Position should reflect elapsed time since anchor, not reset to raw HA value
+        assertEquals(122_000L, player.currentPosition)
+    }
+
+    @Test
+    fun `Given paused state when time advances then position is not extrapolated`() {
+        player.updateState(
+            state = createState(playbackState = MediaPlaybackState.Paused, mediaPosition = 120.0.seconds),
+            artworkBytes = null,
+        )
+        shadowOf(Looper.getMainLooper()).idle()
+
+        fakeClock.currentInstant += 5.seconds
+
+        player.updateState(
+            state = createState(playbackState = MediaPlaybackState.Paused, mediaPosition = 120.0.seconds),
+            artworkBytes = null,
+        )
+        shadowOf(Looper.getMainLooper()).idle()
+
+        // Position must stay fixed while paused
+        assertEquals(120_000L, player.currentPosition)
+    }
+
+    @Test
+    fun `Given playing then paused then playing again when resumed then anchor resets to resume position`() {
+        player.updateState(state = createState(playbackState = MediaPlaybackState.Playing, mediaPosition = 100.0.seconds), artworkBytes = null)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        // Pause at 100s
+        player.updateState(state = createState(playbackState = MediaPlaybackState.Paused, mediaPosition = 100.0.seconds), artworkBytes = null)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        // 30 seconds pass while paused
+        fakeClock.currentInstant += 30.seconds
+
+        // Resume at same position
+        player.updateState(state = createState(playbackState = MediaPlaybackState.Playing, mediaPosition = 100.0.seconds), artworkBytes = null)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        // Anchor should be reset at resume time, so position = 100s (not 130s)
+        assertEquals(100_000L, player.currentPosition)
     }
 
     // -- Pending command future tests --

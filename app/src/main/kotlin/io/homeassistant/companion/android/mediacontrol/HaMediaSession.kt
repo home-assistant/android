@@ -36,6 +36,8 @@ import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.util.sensitive
 import java.io.ByteArrayOutputStream
 import java.net.URL
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -64,12 +66,13 @@ import timber.log.Timber
  * @param mediaControlRepository Provides the per-entity state flow.
  * @param serverManager Used to resolve artwork base URLs and call HA integration actions.
  */
-@OptIn(UnstableApi::class)
+@OptIn(UnstableApi::class, ExperimentalTime::class)
 class HaMediaSession @AssistedInject constructor(
     @ApplicationContext private val context: Context,
     @Assisted private val config: MediaControlEntityConfig,
     private val mediaControlRepository: MediaControlRepository,
     private val serverManager: ServerManager,
+    private val clock: Clock,
 ) {
     /** Stable identifier for this session. Delegates to [MediaControlEntityConfig.id]. */
     val id: String get() = config.id
@@ -217,7 +220,7 @@ class HaMediaSession @AssistedInject constructor(
                     Timber.e(e, "Command failed for ${config.entityId}")
                 },
             )
-            val player = HaRemoteMediaPlayer(Looper.getMainLooper(), getCommandCallback(commandScope))
+            val player = HaRemoteMediaPlayer(Looper.getMainLooper(), getCommandCallback(commandScope), clock)
             val session = buildMediaSession(player)
             withContext(Dispatchers.Main) { mediaSession = session }
             try {

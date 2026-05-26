@@ -12,12 +12,14 @@ import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlS
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaPlaybackState
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaRepeatMode
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.slot
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
@@ -42,6 +44,7 @@ private const val SERVER_ID = 1
 /** Counter used to generate unique MediaSession IDs across tests within the same JVM process. */
 private val sessionCounter = AtomicInteger(0)
 
+@OptIn(ExperimentalTime::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
 class HaMediaSessionTest {
@@ -51,6 +54,7 @@ class HaMediaSessionTest {
     private lateinit var serverManager: ServerManager
     private lateinit var integrationRepository: IntegrationRepository
     private lateinit var config: MediaControlEntityConfig
+    private val fakeClock = FakeClock()
 
     @After
     fun tearDown() {
@@ -113,6 +117,7 @@ class HaMediaSessionTest {
         config = config,
         mediaControlRepository = mediaControlRepository,
         serverManager = serverManager,
+        clock = fakeClock,
     )
 
     /**

@@ -10,10 +10,12 @@ import io.homeassistant.companion.android.common.data.mediacontrol.MediaPlayback
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaRepeatMode
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
+import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
@@ -61,7 +63,7 @@ private val sessionCounter = AtomicInteger(0)
  * Main-looper tasks (such as [HaRemoteMediaPlayer.updateState] dispatched by [HaMediaSession])
  * are flushed with [idleMainLooper].
  */
-@OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class, ExperimentalTime::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
 class HaMediaSessionServiceTest {
@@ -72,6 +74,7 @@ class HaMediaSessionServiceTest {
     private val mediaControlRepository: MediaControlRepository = mockk(relaxed = true)
     private val serverManager: ServerManager = mockk(relaxed = true)
     private val haMediaSessionFactory: HaMediaSession.Factory = mockk()
+    private val fakeClock = FakeClock()
 
     // replay=1 ensures tryEmit always succeeds and the value is available to new subscribers.
     private lateinit var configuredEntitiesFlow: MutableSharedFlow<List<MediaControlEntityConfig>>
@@ -100,6 +103,7 @@ class HaMediaSessionServiceTest {
                 config = firstArg(),
                 mediaControlRepository = mediaControlRepository,
                 serverManager = serverManager,
+                clock = fakeClock,
             )
         }
 

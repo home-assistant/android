@@ -16,6 +16,9 @@ import com.google.common.util.concurrent.SettableFuture
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlState
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaPlaybackState
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaRepeatMode
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 
@@ -26,9 +29,12 @@ import kotlinx.coroutines.Job
  * This class is not thread-safe. All public methods must be called on the looper thread passed to
  * the constructor, which is enforced by [SimpleBasePlayer].
  */
-@OptIn(UnstableApi::class)
-internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: CommandCallback) :
-    SimpleBasePlayer(looper) {
+@OptIn(UnstableApi::class, ExperimentalTime::class)
+internal class HaRemoteMediaPlayer(
+    looper: Looper,
+    private val commandCallback: CommandCallback,
+    private val clock: Clock,
+) : SimpleBasePlayer(looper) {
 
     /**
      * Callback interface for translating player commands into HA service calls.
@@ -55,6 +61,9 @@ internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: 
     private var mediaState: MediaControlState? = null
     private var artworkBytes: ByteArray? = null
 
+    private var positionAnchorMs: Long = 0L
+    private var positionAnchorTime: Instant? = null
+
     /**
      * The pending future from the most recent [handleCommand] call, if any. Completed by
      * [updateState] when the server confirms the new state via WebSocket. Exposed for testing only.
@@ -71,8 +80,18 @@ internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: 
      */
     @MainThread
     fun updateState(state: MediaControlState?, artworkBytes: ByteArray?) {
+        val shouldResetAnchor = state != null && (
+            mediaState == null ||
+                state.mediaPosition != mediaState?.mediaPosition ||
+                (state.playbackState is MediaPlaybackState.Playing &&
+                    mediaState?.playbackState !is MediaPlaybackState.Playing)
+        )
         mediaState = state
         this.artworkBytes = artworkBytes
+        if (shouldResetAnchor && state != null) {
+            positionAnchorMs = state.mediaPosition?.inWholeMilliseconds ?: 0L
+            positionAnchorTime = clock.now()
+        }
         pendingCommandFuture?.set(null)
         pendingCommandFuture = null
         invalidateState()
@@ -102,7 +121,7 @@ internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: 
         val isPlaying = state.playbackState is MediaPlaybackState.Playing
 
         val durationUs = state.mediaDuration?.inWholeMicroseconds ?: DURATION_UNSET_US
-        val positionMs = state.mediaPosition?.inWholeMilliseconds ?: 0L
+        val positionMs = computeCurrentPositionMs(state)
 
         val currentItem = MediaItemData.Builder(state.entityId)
             .setMediaMetadata(buildMetadata(state, artwork))
@@ -148,6 +167,23 @@ internal class HaRemoteMediaPlayer(looper: Looper, private val commandCallback: 
     }
 
     private fun buildPlaylist(currentItem: MediaItemData): List<MediaItemData> = listOf(currentItem)
+
+    /**
+     * Returns the estimated current playback position in milliseconds.
+     *
+     * The position anchor is set (in [updateState]) only when [MediaControlState.mediaPosition]
+     * actually changes or when playback resumes, so non-position updates such as volume changes
+     * do not reset the anchor. This prevents the progress bar from jumping backward when the
+     * server sends a volume-only state delta.
+     */
+    private fun computeCurrentPositionMs(state: MediaControlState): Long {
+        val anchorMs = positionAnchorMs
+        val anchorTime = positionAnchorTime ?: return anchorMs
+        if (state.playbackState !is MediaPlaybackState.Playing) return anchorMs
+        val compensatedMs = anchorMs + (clock.now() - anchorTime).inWholeMilliseconds
+        val maxMs = state.mediaDuration?.inWholeMilliseconds
+        return if (maxMs != null) compensatedMs.coerceIn(0L, maxMs) else compensatedMs.coerceAtLeast(0L)
+    }
 
     override fun handleSetPlayWhenReady(playWhenReady: Boolean): ListenableFuture<*> = handleCommand {
         if (playWhenReady) commandCallback.onPlayRequested() else commandCallback.onPauseRequested()
