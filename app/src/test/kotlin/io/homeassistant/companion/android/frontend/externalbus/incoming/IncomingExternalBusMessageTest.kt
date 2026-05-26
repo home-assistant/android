@@ -273,4 +273,63 @@ class IncomingExternalBusMessageTest {
         assertEquals("light.living_room", addToMessage.payload.entityId)
         assertEquals("dGVzdA==", addToMessage.payload.appPayload)
     }
+
+    @Test
+    fun `Given bar_code scan JSON with full payload then parses to BarcodeScanMessage`() {
+        val json =
+            """{"type":"bar_code/scan","id":60,"payload":{"title":"Scan code","description":"Point the camera","alternative_option_label":"Enter manually"}}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        val scanMessage = assertInstanceOf(BarcodeScanMessage::class.java, message)
+        assertEquals(60, scanMessage.id)
+        assertEquals("Scan code", scanMessage.payload.title)
+        assertEquals("Point the camera", scanMessage.payload.description)
+        assertEquals("Enter manually", scanMessage.payload.alternativeOptionLabel)
+    }
+
+    @Test
+    fun `Given bar_code scan JSON without alternative_option_label then parses with null label`() {
+        val json =
+            """{"type":"bar_code/scan","id":61,"payload":{"title":"Scan code","description":"Point the camera"}}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        val scanMessage = assertInstanceOf(BarcodeScanMessage::class.java, message)
+        assertEquals(61, scanMessage.id)
+        assertEquals("Scan code", scanMessage.payload.title)
+        assertEquals("Point the camera", scanMessage.payload.description)
+        assertNull(scanMessage.payload.alternativeOptionLabel)
+    }
+
+    @Test
+    fun `Given bar_code notify JSON then parses to BarcodeNotifyMessage with message`() {
+        val json = """{"type":"bar_code/notify","id":62,"payload":{"message":"Code already paired"}}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        val notifyMessage = assertInstanceOf(BarcodeNotifyMessage::class.java, message)
+        assertEquals(62, notifyMessage.id)
+        assertEquals("Code already paired", notifyMessage.payload.message)
+    }
+
+    @Test
+    fun `Given bar_code close JSON with id then parses to BarcodeCloseMessage`() {
+        val json = """{"type":"bar_code/close","id":63}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(BarcodeCloseMessage::class.java, message)
+        assertEquals(63, message.id)
+    }
+
+    @Test
+    fun `Given bar_code close JSON without id then parses to BarcodeCloseMessage with null id`() {
+        val json = """{"type":"bar_code/close"}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(BarcodeCloseMessage::class.java, message)
+        assertNull(message.id)
+    }
 }

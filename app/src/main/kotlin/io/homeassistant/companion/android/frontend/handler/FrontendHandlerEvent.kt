@@ -102,6 +102,30 @@ sealed interface FrontendHandlerEvent {
      */
     data class ConfigureImprovDevice(val deviceName: String) : FrontendHandlerEvent
 
+    /**
+     * Frontend asked the app to open the barcode scanner overlay.
+     *
+     * Carries the original message [messageId] (required — the frontend correlates the eventual
+     * scan result or cancellation by this id) and the user-facing strings the overlay should display.
+     */
+    data class ShowBarcodeScanner(
+        val messageId: Int,
+        val title: String,
+        val description: String,
+        val alternativeOptionLabel: String?,
+    ) : FrontendHandlerEvent
+
+    /**
+     * Frontend asked the app to surface a notification dialog on top of the active scanner.
+     *
+     * No id is carried — the frontend treats this as fire-and-forget. If no scanner is active
+     * when the event is observed, the consumer should silently drop it.
+     */
+    data class NotifyBarcodeScanner(val message: String) : FrontendHandlerEvent
+
+    /** Frontend asked the app to close the active scanner overlay (fire-and-forget). */
+    data object CloseBarcodeScanner : FrontendHandlerEvent
+
     sealed interface ExoPlayerAction : FrontendHandlerEvent {
 
         /**

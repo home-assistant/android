@@ -10,6 +10,9 @@ import io.homeassistant.companion.android.frontend.WebViewAction
 import io.homeassistant.companion.android.frontend.addto.FrontendEntityAddToHandler
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
+import io.homeassistant.companion.android.frontend.externalbus.incoming.BarcodeCloseMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.BarcodeNotifyMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.BarcodeScanMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConfigGetMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConnectionStatusMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.EntityAddToGetActionsMessage
@@ -232,6 +235,26 @@ class FrontendMessageHandler @Inject constructor(
                 Timber.d("handleBlob called with filename=${message.filename}")
                 val result = downloadManager.handleBlob(data = message.data, filename = message.filename)
                 FrontendHandlerEvent.DownloadCompleted(result)
+            }
+
+            is BarcodeScanMessage -> {
+                Timber.d("Barcode scan request received with id: ${message.id}")
+                FrontendHandlerEvent.ShowBarcodeScanner(
+                    messageId = message.id ?: -1,
+                    title = message.payload.title,
+                    description = message.payload.description,
+                    alternativeOptionLabel = message.payload.alternativeOptionLabel,
+                )
+            }
+
+            is BarcodeNotifyMessage -> {
+                Timber.d("Barcode notify received")
+                FrontendHandlerEvent.NotifyBarcodeScanner(message.payload.message)
+            }
+
+            is BarcodeCloseMessage -> {
+                Timber.d("Barcode close received")
+                FrontendHandlerEvent.CloseBarcodeScanner
             }
 
             is ImprovScanMessage -> {
