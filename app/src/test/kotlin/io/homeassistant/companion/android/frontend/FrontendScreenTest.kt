@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.frontend
 
 import android.Manifest
+import android.content.pm.ActivityInfo
+import android.util.Rational
 import android.view.View
 import android.webkit.PermissionRequest as WebViewPermissionRequest
 import android.webkit.WebChromeClient
@@ -10,6 +12,7 @@ import androidx.activity.result.ActivityResultRegistry
 import androidx.activity.result.ActivityResultRegistryOwner
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
@@ -26,6 +29,7 @@ import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
+import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
@@ -33,6 +37,7 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.permissions.PermissionRequest
+import io.homeassistant.companion.android.launch.PipReadiness
 import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.FakePermissionResultRegistry
@@ -46,6 +51,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -524,6 +531,160 @@ class FrontendScreenTest {
                 ),
             )
             onNodeWithTag(CUSTOM_VIEW_OVERLAY_TAG).assertDoesNotExist()
+        }
+    }
+
+    @Test
+    fun `Given Content with customView when reporter runs then PipReadiness is published with default aspect`() {
+        val captured = mutableListOf<PipReadiness?>()
+
+        composeTestRule.setContent {
+            val context = androidx.compose.ui.platform.LocalContext.current
+            FrontendScreenContent(
+                onBackClick = {},
+                viewState = FrontendViewState.Content(
+                    serverId = 1,
+                    url = "https://example.com",
+                ),
+                customView = View(context),
+                webViewClient = WebViewClient(),
+                webChromeClient = WebChromeClient(),
+                frontendJsCallback = FrontendJsBridge.noOp,
+                onBlockInsecureRetry = {},
+                onOpenExternalLink = {},
+                onBlockInsecureHelpClick = {},
+                onOpenSettings = {},
+                onChangeSecurityLevel = {},
+                onOpenLocationSettings = {},
+                onConfigureHomeNetwork = { _ -> },
+                onSecurityLevelHelpClick = {},
+                onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
+                onPipReadinessChanged = { captured += it },
+            )
+        }
+
+        composeTestRule.runOnIdle {
+            assertEquals(Rational(16, 9), captured.lastOrNull()?.aspectRatio)
+        }
+    }
+
+    @Test
+    fun `Given no customView and no fullscreen player when reporter runs then PipReadiness is null`() {
+        val captured = mutableListOf<PipReadiness?>()
+
+        composeTestRule.setContent {
+            FrontendScreenContent(
+                onBackClick = {},
+                viewState = FrontendViewState.Content(
+                    serverId = 1,
+                    url = "https://example.com",
+                ),
+                webViewClient = WebViewClient(),
+                webChromeClient = WebChromeClient(),
+                frontendJsCallback = FrontendJsBridge.noOp,
+                onBlockInsecureRetry = {},
+                onOpenExternalLink = {},
+                onBlockInsecureHelpClick = {},
+                onOpenSettings = {},
+                onChangeSecurityLevel = {},
+                onOpenLocationSettings = {},
+                onConfigureHomeNetwork = { _ -> },
+                onSecurityLevelHelpClick = {},
+                onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
+                onPipReadinessChanged = { captured += it },
+            )
+        }
+
+        composeTestRule.runOnIdle {
+            assertNull(captured.lastOrNull())
+        }
+    }
+
+    @Test
+    fun `Given screenOrientation toggles at runtime then activity requestedOrientation follows`() {
+        composeTestRule.activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        val orientationState = mutableStateOf(ScreenOrientation.SYSTEM)
+        composeTestRule.setContent {
+            FrontendScreenContent(
+                onBackClick = {},
+                viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
+                webViewClient = WebViewClient(),
+                webChromeClient = WebChromeClient(),
+                frontendJsCallback = FrontendJsBridge.noOp,
+                onBlockInsecureRetry = {},
+                onOpenExternalLink = {},
+                onBlockInsecureHelpClick = {},
+                onOpenSettings = {},
+                onChangeSecurityLevel = {},
+                onOpenLocationSettings = {},
+                onConfigureHomeNetwork = { _ -> },
+                onSecurityLevelHelpClick = {},
+                onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
+                screenOrientation = orientationState.value,
+            )
+        }
+
+        composeTestRule.runOnIdle {
+            assertEquals(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED, composeTestRule.activity.requestedOrientation)
+        }
+
+        orientationState.value = ScreenOrientation.PORTRAIT
+        composeTestRule.runOnIdle {
+            assertEquals(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT, composeTestRule.activity.requestedOrientation)
+        }
+
+        orientationState.value = ScreenOrientation.LANDSCAPE
+        composeTestRule.runOnIdle {
+            assertEquals(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE, composeTestRule.activity.requestedOrientation)
+        }
+
+        orientationState.value = ScreenOrientation.SYSTEM
+        composeTestRule.runOnIdle {
+            assertEquals(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED, composeTestRule.activity.requestedOrientation)
+        }
+    }
+
+    @Test
+    fun `Given screenOrientation is PORTRAIT when content leaves composition then previous orientation is restored`() {
+        composeTestRule.activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        val visible = mutableStateOf(true)
+        composeTestRule.setContent {
+            if (visible.value) {
+                FrontendScreenContent(
+                    onBackClick = {},
+                    viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
+                    webViewClient = WebViewClient(),
+                    webChromeClient = WebChromeClient(),
+                    frontendJsCallback = FrontendJsBridge.noOp,
+                    onBlockInsecureRetry = {},
+                    onOpenExternalLink = {},
+                    onBlockInsecureHelpClick = {},
+                    onOpenSettings = {},
+                    onChangeSecurityLevel = {},
+                    onOpenLocationSettings = {},
+                    onConfigureHomeNetwork = { _ -> },
+                    onSecurityLevelHelpClick = {},
+                    onShowSnackbar = { _, _ -> true },
+                    onWebViewCreationFailed = {},
+                    screenOrientation = ScreenOrientation.PORTRAIT,
+                )
+            }
+        }
+
+        composeTestRule.runOnIdle {
+            assertEquals(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT, composeTestRule.activity.requestedOrientation)
+        }
+
+        visible.value = false
+        composeTestRule.runOnIdle {
+            assertEquals(
+                "requestedOrientation should be restored once the frontend leaves composition",
+                ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED,
+                composeTestRule.activity.requestedOrientation,
+            )
         }
     }
 

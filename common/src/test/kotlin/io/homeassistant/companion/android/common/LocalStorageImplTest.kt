@@ -55,4 +55,15 @@ class LocalStorageImplTest {
             cancelAndIgnoreRemainingEvents()
         }
     }
+
+    @Test
+    fun `Given observing multiple keys when any watched key changes then the changed key is emitted`() = runTest {
+        localStorage.observeChanges("first_key", "second_key").test {
+            listenerSlot.captured.onSharedPreferenceChanged(sharedPreferences, "first_key")
+            assertEquals("first_key", awaitItem())
+            listenerSlot.captured.onSharedPreferenceChanged(sharedPreferences, "second_key")
+            assertEquals("second_key", awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
 }

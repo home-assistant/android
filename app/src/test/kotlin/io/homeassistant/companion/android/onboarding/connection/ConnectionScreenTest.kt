@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding.connection
 
+import android.webkit.WebChromeClient
 import android.webkit.WebViewClient
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
@@ -44,6 +45,7 @@ class ConnectionScreenTest {
                     isError = false,
                     url = null,
                     webViewClient = WebViewClient(),
+                    webChromeClient = WebChromeClient(),
                     onWebViewCreationFailed = {},
                 )
             }
@@ -61,6 +63,7 @@ class ConnectionScreenTest {
                     isError = false,
                     url = "",
                     webViewClient = WebViewClient(),
+                    webChromeClient = WebChromeClient(),
                     onWebViewCreationFailed = {},
                 )
             }
@@ -79,6 +82,7 @@ class ConnectionScreenTest {
                     isError = false,
                     url = "",
                     webViewClient = WebViewClient(),
+                    webChromeClient = WebChromeClient(),
                     onWebViewCreationFailed = {},
                 )
             }
@@ -97,6 +101,7 @@ class ConnectionScreenTest {
                     isError = true,
                     url = "",
                     webViewClient = WebViewClient(),
+                    webChromeClient = WebChromeClient(),
                     onWebViewCreationFailed = {},
                 )
             }
@@ -119,6 +124,7 @@ class ConnectionScreenTest {
                     isError = false,
                     url = "",
                     webViewClient = WebViewClient(),
+                    webChromeClient = WebChromeClient(),
                     onWebViewCreationFailed = {},
                 )
             }

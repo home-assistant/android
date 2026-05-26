@@ -47,6 +47,7 @@ private const val PREF_CHANGE_LOG_POPUP_ENABLED = "change_log_popup_enabled"
 private const val PREF_SHOW_PRIVACY_HINT = "show_privacy_hint"
 private const val PREF_WAKE_WORD_ENABLED = "wake_word_enabled"
 private const val PREF_SELECTED_WAKE_WORD = "selected_wake_word"
+private const val PREF_ALLOWED_TAGS = "allowed_tags"
 
 /**
  * This class ensure that when we use the local storage in [PrefsRepositoryImpl] the migrations has been made
@@ -141,12 +142,18 @@ internal class PrefsRepositoryImpl @Inject constructor(
         localStorage().putString(PREF_LOCALES, lang)
     }
 
-    override suspend fun getScreenOrientation(): String? {
-        return localStorage().getString(PREF_SCREEN_ORIENTATION)
+    override suspend fun getScreenOrientation(): ScreenOrientation {
+        return ScreenOrientation.fromStorageValue(localStorage().getString(PREF_SCREEN_ORIENTATION))
     }
 
-    override suspend fun saveScreenOrientation(orientation: String?) {
-        localStorage().putString(PREF_SCREEN_ORIENTATION, orientation)
+    override suspend fun setScreenOrientation(orientation: ScreenOrientation) {
+        localStorage().putString(PREF_SCREEN_ORIENTATION, orientation.storageValue)
+    }
+
+    override suspend fun screenOrientationFlow(): Flow<ScreenOrientation> {
+        return localStorage().observeChanges(PREF_SCREEN_ORIENTATION) {
+            getScreenOrientation()
+        }
     }
 
     override suspend fun getControlsAuthRequired(): ControlsAuthRequiredSetting {
@@ -401,5 +408,20 @@ internal class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setSelectedWakeWord(wakeWord: String) {
         localStorage().putString(PREF_SELECTED_WAKE_WORD, wakeWord)
+    }
+
+    override suspend fun addAllowedTag(tag: String) {
+        val approved = getAllowedTags().toMutableSet()
+        if (approved.add(tag)) {
+            localStorage().putStringSet(PREF_ALLOWED_TAGS, approved)
+        }
+    }
+
+    override suspend fun getAllowedTags(): Set<String> {
+        return localStorage().getStringSet(PREF_ALLOWED_TAGS) ?: emptySet()
+    }
+
+    override suspend fun clearAllowedTags() {
+        localStorage().remove(PREF_ALLOWED_TAGS)
     }
 }

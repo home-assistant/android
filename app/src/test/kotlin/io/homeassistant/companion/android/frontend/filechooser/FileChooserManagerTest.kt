@@ -10,10 +10,10 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNotNull
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.extension.ExtendWith
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -30,7 +30,7 @@ class FileChooserManagerTest {
 
         val pending = manager.pendingFileChooser.value
         assertNotNull(pending)
-        assertEquals(params, pending!!.fileChooserParams)
+        assertEquals(params, pending.fileChooserParams)
         assertFalse(outcome.isCompleted)
 
         val uris = arrayOf(mockk<Uri>())

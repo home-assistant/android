@@ -190,7 +190,7 @@ class FrontendMessageHandlerTest {
             appVersionProvider = appVersionProvider,
             sessionManager = sessionManager,
             downloadManager = downloadManager,
-            bluetoothCapabilities = BluetoothCapabilities { true },
+            bluetoothCapabilities = { true },
             entityAddToHandler = entityAddToHandler,
             isAutomotive = false,
         )
@@ -231,7 +231,7 @@ class FrontendMessageHandlerTest {
             appVersionProvider = appVersionProvider,
             sessionManager = sessionManager,
             downloadManager = downloadManager,
-            bluetoothCapabilities = BluetoothCapabilities { false },
+            bluetoothCapabilities = { false },
             entityAddToHandler = entityAddToHandler,
             isAutomotive = false,
         )
@@ -399,9 +399,8 @@ class FrontendMessageHandlerTest {
         every { externalBusRepository.webViewActions() } returns flowOf(action)
 
         handler.webViewActions().test {
-            val result = awaitItem()
-            assertInstanceOf(WebViewAction.EvaluateScript::class.java, result)
-            assertEquals("test()", (result as WebViewAction.EvaluateScript).script)
+            val result = assertInstanceOf(WebViewAction.EvaluateScript::class.java, awaitItem())
+            assertEquals("test()", result.script)
             awaitComplete()
         }
     }

@@ -29,7 +29,7 @@
         <item name="android:windowLightStatusBar">@bool/isLightMode</item>
     </style>
 
-    <style name="Theme.HomeAssistant.Assist" parent="Theme.HomeAssistant" >
+    <style name="Theme.HomeAssistant.TranslucentOverlay" parent="Theme.HomeAssistant" >
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowContentOverlay">@null</item>

@@ -6,6 +6,7 @@
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.BLUETOOTH"
         android:maxSdkVersion="30"/>
@@ -112,6 +113,7 @@
         <activity
             android:name="io.homeassistant.companion.android.launch.LaunchActivity"
             android:exported="true"
+            android:supportsPictureInPicture="true"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|uiMode"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.LaunchScreen">
@@ -143,6 +145,18 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity-alias>
+
+        <!--
+        Non-exported entry point that lets internal callers (currently the device controls panel)
+        bring up the dashboard over the keyguard. LaunchActivity only honors
+        setShowWhenLocked when the inbound intent is routed through this alias, so external apps
+        hitting the public LaunchActivity intent-filters cannot force the activity to render over
+        the lock screen.
+        -->
+        <activity-alias
+            android:name="io.homeassistant.companion.android.launch.LaunchOverLockScreen"
+            android:exported="false"
+            android:targetActivity="io.homeassistant.companion.android.launch.LaunchActivity" />
 
         <!-- Start things like SensorWorker on device boot -->
         <receiver android:name=".websocket.WebsocketBroadcastReceiver"
@@ -475,7 +489,11 @@
         <activity
             android:name=".nfc.TagReaderActivity"
             android:label="@string/tag_reader_title"
-            android:exported="true">
+            android:launchMode="singleTask"
+            android:taskAffinity="io.homeassistant.companion.android.tag.reader"
+            android:autoRemoveFromRecents="true"
+            android:exported="true"
+            android:theme="@style/Theme.HomeAssistant.TranslucentOverlay">
             <tools:validation testUrl="https://www.home-assistant.io/tag/123e4567-e89b-12d3-a456-426614174000" />
 
             <intent-filter>
@@ -525,7 +543,7 @@
             android:taskAffinity="io.homeassistant.companion.android.assist"
             android:autoRemoveFromRecents="true"
             android:showWhenLocked="true"
-            android:theme="@style/Theme.HomeAssistant.Assist">
+            android:theme="@style/Theme.HomeAssistant.TranslucentOverlay">
             <intent-filter>
                 <action android:name="android.intent.action.ASSIST" />
                 <category android:name="android.intent.category.DEFAULT" />
