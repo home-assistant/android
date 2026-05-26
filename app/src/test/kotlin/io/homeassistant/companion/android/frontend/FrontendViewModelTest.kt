@@ -43,6 +43,7 @@ import io.homeassistant.companion.android.frontend.url.UrlLoadResult
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
+import io.homeassistant.companion.android.frontend.webview.WebViewConnectProxyManager
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import io.mockk.clearMocks
 import io.mockk.coEvery
@@ -121,6 +122,9 @@ class FrontendViewModelTest {
     private val exoPlayerManager: FrontendExoPlayerManager = mockk(relaxed = true) {
         every { state } returns MutableStateFlow(null)
     }
+    private val webViewConnectProxyManager: WebViewConnectProxyManager = mockk(relaxed = true) {
+        coEvery { ensureConfigured() } returns true
+    }
 
     private fun createViewModel(
         serverId: Int = this.serverId,
@@ -150,6 +154,8 @@ class FrontendViewModelTest {
             fileChooserManager = fileChooserManager,
             httpAuthManager = httpAuthManager,
             exoPlayerManager = exoPlayerManager,
+            webViewConnectProxyManager = webViewConnectProxyManager,
+            ioDispatcher = mainDispatcherExtension.testDispatcher,
         )
     }
 
@@ -922,6 +928,7 @@ class FrontendViewModelTest {
             every {
                 webViewClientFactory.create(
                     currentUrlFlow = any(),
+                    logicalHostnameFlow = any(),
                     onFrontendError = any(),
                     onCrash = any(),
                     onUrlIntercepted = any(),
@@ -929,8 +936,8 @@ class FrontendViewModelTest {
                     onReceivedHttpAuthRequest = any(),
                 )
             } answers {
-                // onPageFinished is the 5th of the 6 named arguments (zero-based index 4)
-                capturedPageFinished = arg(4)
+                // onPageFinished is the 6th argument (zero-based index 5) after logicalHostnameFlow was added
+                capturedPageFinished = arg(5)
                 mockk(relaxed = true)
             }
 
@@ -1021,6 +1028,7 @@ class FrontendViewModelTest {
             every {
                 webViewClientFactory.create(
                     currentUrlFlow = any(),
+                    logicalHostnameFlow = any(),
                     onFrontendError = any(),
                     onCrash = any(),
                     onUrlIntercepted = any(),

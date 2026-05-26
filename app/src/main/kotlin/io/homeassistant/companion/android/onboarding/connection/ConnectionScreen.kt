@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.onboarding.connection
 
 import android.webkit.WebChromeClient
+import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.Image
@@ -16,8 +17,12 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -76,6 +81,7 @@ internal fun ConnectionScreen(
     pendingFileChooser: FileChooserRequest? = null,
 ) {
     FileChooserEffect(pendingRequest = pendingFileChooser)
+    var webView by remember { mutableStateOf<WebView?>(null) }
 
     Box(modifier = modifier.testTag(CONNECTION_SCREEN_TAG)) {
         Spacer(
@@ -87,19 +93,23 @@ internal fun ConnectionScreen(
                 .background(LocalHAColorScheme.current.colorSurfaceDefault),
         )
         if (!isError) {
-            url?.let {
+            url?.let { currentUrl ->
                 HAWebView(
                     modifier = Modifier
                         .fillMaxSize()
                         .windowInsetsPadding(WindowInsets.safeDrawing),
                     configure = {
+                        webView = this
                         this.webViewClient = webViewClient
                         this.webChromeClient = webChromeClient
-                        loadUrl(url)
                     },
                     onBackPressed = onBackClick,
                     onWebViewCreationFailed = onWebViewCreationFailed,
                 )
+                LaunchedEffect(webView, currentUrl) {
+                    val view = webView ?: return@LaunchedEffect
+                    view.loadUrl(currentUrl)
+                }
             } ?: Timber.i("ConnectionScreen: url is null")
         } else {
             ErrorPlaceholder()

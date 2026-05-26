@@ -1,12 +1,15 @@
 package io.homeassistant.companion.android.common.data.network
 
+import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
+import java.net.Inet6Address
 import java.net.InetAddress
 import java.net.UnknownHostException
+import java.util.concurrent.Executors
+import okhttp3.OkHttpClient
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -22,22 +25,29 @@ class NetworkAwareDnsTest {
     @BeforeEach
     fun setup() {
         connectivityManager = mockk()
-        networkAwareDns = NetworkAwareDns(connectivityManager)
+        networkAwareDns = NetworkAwareDns(connectivityManager, mockk<Context>(relaxed = true))
+        networkAwareDns.useDnsResolverForTests = false
+        networkAwareDns.dnsMainExecutorForTests = Executors.newSingleThreadExecutor()
+        networkAwareDns.networkLookupOverride = { network, hostname ->
+            network.getAllByName(hostname).toList()
+        }
+    }
+
+    private fun mockNetworkLookup(hostname: String, vararg addresses: InetAddress) {
+        val network = mockk<Network>()
+        every { connectivityManager.activeNetwork } returns network
+        networkAwareDns.networkLookupOverride = { _, _ -> addresses.toList() }
     }
 
     @Test
     fun `Given active network when looking up hostname then uses network DNS resolution`() {
         val hostname = "homeassistant.local"
         val expectedAddress = InetAddress.getByName("192.168.1.100")
-        val network = mockk<Network> {
-            every { getAllByName(hostname) } returns arrayOf(expectedAddress)
-        }
-        every { connectivityManager.activeNetwork } returns network
+        mockNetworkLookup(hostname, expectedAddress)
 
         val result = networkAwareDns.lookup(hostname)
 
         assertEquals(listOf(expectedAddress), result)
-        verify(exactly = 1) { network.getAllByName(hostname) }
     }
 
     @Test
@@ -56,10 +66,7 @@ class NetworkAwareDnsTest {
         val hostname = "example.com"
         val ipv4 = InetAddress.getByName("192.0.2.1")
         val ipv6 = InetAddress.getByName("2001:db8::1")
-        val network = mockk<Network> {
-            every { getAllByName(hostname) } returns arrayOf(ipv4, ipv6)
-        }
-        every { connectivityManager.activeNetwork } returns network
+        mockNetworkLookup(hostname, ipv4, ipv6)
 
         val result = networkAwareDns.lookup(hostname)
 
@@ -72,10 +79,7 @@ class NetworkAwareDnsTest {
     fun `Given network resolution when hostname has only IPv6 address then only IPv6 is returned`() {
         val hostname = "ipv6-only.example.com"
         val ipv6 = InetAddress.getByName("2001:db8::1")
-        val network = mockk<Network> {
-            every { getAllByName(hostname) } returns arrayOf(ipv6)
-        }
-        every { connectivityManager.activeNetwork } returns network
+        mockNetworkLookup(hostname, ipv6)
 
         val result = networkAwareDns.lookup(hostname)
 
@@ -87,10 +91,7 @@ class NetworkAwareDnsTest {
     fun `Given hostname resolves only to ULA IPv6 address then ULA is returned correctly`() {
         val hostname = "ha.internal"
         val ulaAddress = InetAddress.getByName("fd12:3456:789a::1")
-        val network = mockk<Network> {
-            every { getAllByName(hostname) } returns arrayOf(ulaAddress)
-        }
-        every { connectivityManager.activeNetwork } returns network
+        mockNetworkLookup(hostname, ulaAddress)
 
         val result = networkAwareDns.lookup(hostname)
 
@@ -106,10 +107,7 @@ class NetworkAwareDnsTest {
         val hostname = "dual-v6.internal"
         val ulaAddress = InetAddress.getByName("fd12:3456:789a::1")
         val globalV6Address = InetAddress.getByName("2001:db8::2")
-        val network = mockk<Network> {
-            every { getAllByName(hostname) } returns arrayOf(ulaAddress, globalV6Address)
-        }
-        every { connectivityManager.activeNetwork } returns network
+        mockNetworkLookup(hostname, ulaAddress, globalV6Address)
 
         val result = networkAwareDns.lookup(hostname)
 
@@ -121,12 +119,13 @@ class NetworkAwareDnsTest {
     @Test
     fun `Given network resolution fails when looking up hostname then exception propagates`() {
         val hostname = "unknown.example.com"
-        val network = mockk<Network> {
-            every { getAllByName(hostname) } throws UnknownHostException("No such host")
-        }
+        val network = mockk<Network>()
         every { connectivityManager.activeNetwork } returns network
+        networkAwareDns.networkLookupOverride = { _, _ ->
+            throw UnknownHostException("No such host")
+        }
 
-        assertThrows<UnknownHostException> {
+        assertThrows(UnknownHostException::class.java) {
             networkAwareDns.lookup(hostname)
         }
     }
@@ -136,10 +135,7 @@ class NetworkAwareDnsTest {
         val builder = OkHttpClient.Builder()
         val hostname = "homeassistant.local"
         val expectedAddress = InetAddress.getByName("192.168.1.100")
-        val network = mockk<Network> {
-            every { getAllByName(hostname) } returns arrayOf(expectedAddress)
-        }
-        every { connectivityManager.activeNetwork } returns network
+        mockNetworkLookup(hostname, expectedAddress)
 
         networkAwareDns.invoke(builder)
         val client = builder.build()

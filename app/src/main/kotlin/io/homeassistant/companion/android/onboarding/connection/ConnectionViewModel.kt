@@ -12,15 +12,19 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
+import io.homeassistant.companion.android.common.data.network.toLogicalHostname
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserRequest
+import io.homeassistant.companion.android.frontend.webview.WebViewConnectProxyManager
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
 import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +33,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import timber.log.Timber
@@ -70,6 +75,8 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     private val webViewClientFactory: HAWebViewClientFactory,
     private val connectivityCheckRepository: ConnectivityCheckRepository,
     private val fileChooserManager: FileChooserManager,
+    private val webViewConnectProxyManager: WebViewConnectProxyManager,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -79,11 +86,13 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         webViewClientFactory: HAWebViewClientFactory,
         connectivityCheckRepository: ConnectivityCheckRepository,
         fileChooserManager: FileChooserManager,
+        webViewConnectProxyManager: WebViewConnectProxyManager,
     ) : this(
         savedStateHandle.toRoute<ConnectionRoute>().url,
         webViewClientFactory,
         connectivityCheckRepository,
         fileChooserManager,
+        webViewConnectProxyManager,
     )
 
     private val rawUri: Uri by lazy { rawUrl.toUri() }
@@ -93,6 +102,9 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
 
     private val _urlFlow = MutableStateFlow<String?>(null)
     override val urlFlow = _urlFlow.asStateFlow()
+
+    private val _logicalHostnameFlow = MutableStateFlow<String?>(null)
+    private val logicalHostnameFlow = _logicalHostnameFlow.asStateFlow()
 
     private val _isLoadingFlow = MutableStateFlow(true)
     val isLoadingFlow = _isLoadingFlow.asStateFlow()
@@ -120,6 +132,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
 
     val webViewClient: HAWebViewClient = webViewClientFactory.create(
         currentUrlFlow = urlFlow,
+        logicalHostnameFlow = logicalHostnameFlow,
         onFrontendError = ::onError,
         onUrlIntercepted = ::interceptRedirectIfRequired,
         onPageFinished = { _isLoadingFlow.update { false } },
@@ -164,6 +177,13 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
                     .toString()
             }
             Timber.d("Auth url is: $authUrl")
+            val proxyConfigured = withContext(ioDispatcher) {
+                webViewConnectProxyManager.ensureConfigured()
+            }
+            if (!proxyConfigured) {
+                Timber.w("WebView CONNECT proxy unavailable, using OkHttp request interception fallback")
+            }
+            _logicalHostnameFlow.value = authUrl.toLogicalHostname()
             _urlFlow.emit(authUrl)
         } catch (e: Exception) {
             Timber.e(e, "Unable to build authentication URL")

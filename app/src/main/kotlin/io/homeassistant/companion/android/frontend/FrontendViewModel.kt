@@ -10,6 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
+import io.homeassistant.companion.android.common.data.network.toLogicalHostname
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.util.GestureDirection
@@ -37,6 +38,7 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
+import io.homeassistant.companion.android.frontend.webview.WebViewConnectProxyManager
 import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
@@ -45,6 +47,8 @@ import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -62,6 +66,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 /** Maximum time to wait for the frontend to load before showing a timeout error. */
@@ -94,6 +99,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val fileChooserManager: FileChooserManager,
     private val httpAuthManager: HttpAuthManager,
     private val exoPlayerManager: FrontendExoPlayerManager,
+    private val webViewConnectProxyManager: WebViewConnectProxyManager,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -114,6 +121,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         fileChooserManager: FileChooserManager,
         httpAuthManager: HttpAuthManager,
         exoPlayerManager: FrontendExoPlayerManager,
+        webViewConnectProxyManager: WebViewConnectProxyManager,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
         initialPath = savedStateHandle.toRoute<FrontendRoute>().path,
@@ -131,6 +139,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         fileChooserManager = fileChooserManager,
         httpAuthManager = httpAuthManager,
         exoPlayerManager = exoPlayerManager,
+        webViewConnectProxyManager = webViewConnectProxyManager,
     )
 
     /**
@@ -188,6 +197,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             .distinctUntilChanged()
             .stateIn(viewModelScope, SharingStarted.Eagerly, _viewState.value.url)
 
+    private val logicalHostnameFlow: StateFlow<String?> =
+        _viewState.map { it.logicalHostnameOrNull }
+            .distinctUntilChanged()
+            .stateIn(viewModelScope, SharingStarted.Eagerly, _viewState.value.logicalHostnameOrNull)
+
     override val errorFlow: StateFlow<FrontendConnectionError?> =
         _viewState.map { state -> (state as? FrontendViewState.Error)?.error }
             .distinctUntilChanged()
@@ -205,6 +219,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
     val webViewClient: HAWebViewClient = webViewClientFactory.create(
         currentUrlFlow = urlFlow,
+        logicalHostnameFlow = logicalHostnameFlow,
         onFrontendError = ::onError,
         onCrash = ::onRetry,
         onPageFinished = ::onPageFinished,
@@ -558,6 +573,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                         FrontendViewState.Content(
                             serverId = currentState.serverId,
                             url = currentState.url,
+                            logicalHostname = currentState.logicalHostname,
                         )
                     } else {
                         currentState
@@ -637,12 +653,21 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private fun handleUrlResult(result: UrlLoadResult) {
         when (result) {
             is UrlLoadResult.Success -> {
-                _viewState.update {
-                    FrontendViewState.Loading(
-                        serverId = result.serverId,
-                        url = result.url,
-                        path = null,
-                    )
+                viewModelScope.launch {
+                    val proxyConfigured = withContext(ioDispatcher) {
+                        webViewConnectProxyManager.ensureConfigured()
+                    }
+                    if (!proxyConfigured) {
+                        Timber.w("WebView CONNECT proxy unavailable, using OkHttp request interception fallback")
+                    }
+                    _viewState.update {
+                        FrontendViewState.Loading(
+                            serverId = result.serverId,
+                            url = result.url,
+                            logicalHostname = result.url.toLogicalHostname(),
+                            path = null,
+                        )
+                    }
                 }
             }
 
@@ -715,6 +740,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 serverId = currentState.serverId,
                 url = currentState.url,
                 error = error,
+                logicalHostname = currentState.logicalHostnameOrNull,
             )
         }
         // Automatically run connectivity checks when an error occurs

@@ -45,8 +45,9 @@ Every contribution, big or small, is greatly appreciated. Together, we can make 
 ### Getting started
 
 1. Read the [Developer Guide](https://developers.home-assistant.io/docs/android/).
-2. Fork the repository and create a branch for your changes.
-3. Submit a pull request and join the discussion!
+2. For networking changes (IPv6, WebView DNS, OkHttp), see [`docs/network-ipv6-webview-dns.md`](docs/network-ipv6-webview-dns.md).
+3. Fork the repository and create a branch for your changes.
+4. Submit a pull request and join the discussion!
 
 ## Join the community
 

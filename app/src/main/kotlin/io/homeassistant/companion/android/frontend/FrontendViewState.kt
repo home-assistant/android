@@ -42,8 +42,12 @@ sealed interface FrontendViewState {
      *
      * The connection timeout starts when entering this state.
      */
-    data class Loading(override val serverId: Int, override val url: String, val path: String? = null) :
-        FrontendViewState
+    data class Loading(
+        override val serverId: Int,
+        override val url: String,
+        val path: String? = null,
+        val logicalHostname: String? = null,
+    ) : FrontendViewState
 
     /**
      * Content state when the WebView is displaying the Home Assistant frontend.
@@ -51,6 +55,7 @@ sealed interface FrontendViewState {
     data class Content(
         override val serverId: Int,
         override val url: String,
+        val logicalHostname: String? = null,
         val serverHandleInsets: Boolean = false,
         val nightModeTheme: NightModeTheme? = null,
         val statusBarColor: Color? = null,
@@ -61,7 +66,7 @@ sealed interface FrontendViewState {
     /**
      * Error state when connection to the server fails.
      */
-    data class Error(override val serverId: Int, override val url: String, val error: FrontendConnectionError) :
+    data class Error(override val serverId: Int, override val url: String, val error: FrontendConnectionError, val logicalHostname: String? = null) :
         FrontendViewState
 
     /**
@@ -94,3 +99,12 @@ sealed interface FrontendViewState {
         override val url: String = BLANK_URL
     }
 }
+
+/** Returns the configured Home Assistant hostname when the WebView may still request it by name. */
+val FrontendViewState.logicalHostnameOrNull: String?
+    get() = when (this) {
+        is FrontendViewState.Loading -> logicalHostname
+        is FrontendViewState.Content -> logicalHostname
+        is FrontendViewState.Error -> logicalHostname
+        else -> null
+    }

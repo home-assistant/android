@@ -14,8 +14,11 @@ import androidx.core.net.toUri
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
+import io.homeassistant.companion.android.common.data.network.HostnameWebViewRequestProxy
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
+import io.homeassistant.companion.android.frontend.webview.WebViewConnectProxyManager
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import timber.log.Timber
 
@@ -25,12 +28,18 @@ import timber.log.Timber
  * The created clients handle Home Assistant-specific concerns such as TLS client authentication,
  * error mapping to [FrontendConnectionError], and JavaScript injection into the WebView.
  */
-class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyChainRepository: KeyChainRepository) {
+class HAWebViewClientFactory @Inject constructor(
+    @NamedKeyChain private val keyChainRepository: KeyChainRepository,
+    private val hostnameWebViewRequestProxy: HostnameWebViewRequestProxy,
+    private val webViewConnectProxyManager: WebViewConnectProxyManager,
+) {
     /**
      * Creates a new [HAWebViewClient] with the specified configuration.
      *
      * @param currentUrlFlow StateFlow providing the current URL being loaded.
      *        Used to filter errors - only errors for this URL trigger [onFrontendError].
+     * @param logicalHostnameFlow StateFlow providing the configured Home Assistant hostname.
+     *        Used to match main-frame errors and to proxy requests when the CONNECT proxy is unavailable.
      * @param onFrontendError Callback when a WebView error is mapped to a [FrontendConnectionError].
      * @param onCrash Optional callback invoked after WebView crash recovery.
      * @param onUrlIntercepted Optional callback to intercept URL navigation.
@@ -42,6 +51,7 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
      */
     fun create(
         currentUrlFlow: StateFlow<String?>,
+        logicalHostnameFlow: StateFlow<String?>,
         onFrontendError: (FrontendConnectionError) -> Unit,
         onCrash: (() -> Unit)? = null,
         onUrlIntercepted: ((uri: Uri, isTLSClientAuthNeeded: Boolean) -> Boolean)? = null,
@@ -58,6 +68,9 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
         return HAWebViewClient(
             keyChainRepository = keyChainRepository,
             currentUrlFlow = currentUrlFlow,
+            logicalHostnameFlow = logicalHostnameFlow,
+            hostnameWebViewRequestProxy = hostnameWebViewRequestProxy,
+            webViewConnectProxyManager = webViewConnectProxyManager,
             onFrontendError = onFrontendError,
             onCrash = onCrash,
             onUrlIntercepted = onUrlIntercepted,
@@ -76,6 +89,9 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
 class HAWebViewClient internal constructor(
     keyChainRepository: KeyChainRepository,
     private val currentUrlFlow: StateFlow<String?>,
+    private val logicalHostnameFlow: StateFlow<String?> = MutableStateFlow(null),
+    private val hostnameWebViewRequestProxy: HostnameWebViewRequestProxy? = null,
+    private val webViewConnectProxyManager: WebViewConnectProxyManager? = null,
     private val onFrontendError: (FrontendConnectionError) -> Unit,
     private val onCrash: (() -> Unit)?,
     private val onUrlIntercepted: ((uri: Uri, isTLSClientAuthNeeded: Boolean) -> Boolean)?,
@@ -98,6 +114,15 @@ class HAWebViewClient internal constructor(
         onPageFinished?.invoke()
     }
 
+    override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest): WebResourceResponse? {
+        if (webViewConnectProxyManager?.isActive() == true) {
+            return super.shouldInterceptRequest(view, request)
+        }
+        val proxy = hostnameWebViewRequestProxy ?: return super.shouldInterceptRequest(view, request)
+        return proxy.intercept(logicalHostnameFlow.value, request)
+            ?: super.shouldInterceptRequest(view, request)
+    }
+
     override fun onReceivedHttpAuthRequest(view: WebView?, handler: HttpAuthHandler?, host: String?, realm: String?) {
         val lastResourceUrl = lastResourceUrl
         if (handler != null &&
@@ -115,8 +140,7 @@ class HAWebViewClient internal constructor(
     override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
         super.onReceivedError(view, request, error)
 
-        // Only handle errors for the main URL being loaded
-        if (request?.url?.toString() != currentUrlFlow.value) return
+        if (!isMainFrameErrorForCurrentLoad(request)) return
 
         val errorDetails = formatErrorDetails(
             view?.context,
@@ -184,8 +208,7 @@ class HAWebViewClient internal constructor(
     ) {
         super.onReceivedHttpError(view, request, errorResponse)
 
-        // Only handle errors for the main URL being loaded
-        if (request?.url?.toString() != currentUrlFlow.value) return
+        if (!isMainFrameErrorForCurrentLoad(request)) return
 
         val errorDetails = formatErrorDetails(
             view?.context,
@@ -251,6 +274,23 @@ class HAWebViewClient internal constructor(
     @Deprecated("Deprecated in Java for SDK >= 24", ReplaceWith("shouldOverrideUrlLoading(view, request)"))
     override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
         return url?.toUri()?.let { onUrlIntercepted?.invoke(it, isTLSClientAuthNeeded) } ?: false
+    }
+
+    private fun isMainFrameErrorForCurrentLoad(request: WebResourceRequest?): Boolean {
+        if (request?.isForMainFrame != true) {
+            return false
+        }
+        val requestUri = request.url ?: return false
+        val requestUrl = requestUri.toString()
+        val currentUrl = currentUrlFlow.value
+        if (currentUrl != null && requestUrl == currentUrl) {
+            return true
+        }
+        val logicalHostname = logicalHostnameFlow.value
+        if (logicalHostname != null) {
+            return requestUri.host?.equals(logicalHostname, ignoreCase = true) == true
+        }
+        return false
     }
 
     private fun formatErrorDetails(context: Context?, code: Int?, description: String?): String {

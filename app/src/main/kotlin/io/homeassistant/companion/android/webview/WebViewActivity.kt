@@ -93,6 +93,7 @@ import io.homeassistant.companion.android.barcode.BarcodeScannerActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
+import io.homeassistant.companion.android.frontend.webview.WebViewConnectProxyManager
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.AppVersionProvider
@@ -275,6 +276,9 @@ class WebViewActivity :
 
     @Inject
     lateinit var dataUriDownloadManager: DataUriDownloadManager
+
+    @Inject
+    lateinit var webViewConnectProxyManager: WebViewConnectProxyManager
 
     @Inject
     lateinit var checkLocationDisabled: CheckLocationDisabledUseCase
@@ -1640,13 +1644,16 @@ class WebViewActivity :
             val shouldLoadUrl = !url.hasSameOrigin(oldUrl) || url.hasNonRootPath()
             if (shouldLoadUrl) {
                 clearHistory = !keepHistory
-                loadedUrl = url
 
                 loadUrlJob?.cancel()
                 loadUrlJob = lifecycleScope.launch {
                     // Register the native bridge depending on the server and webview capabilities
                     webViewAddJavascriptInterface()
 
+                    withContext(Dispatchers.IO) {
+                        webViewConnectProxyManager.ensureConfigured()
+                    }
+                    loadedUrl = url
                     webView.loadUrl(url.toString())
                     waitForConnection()
                 }
