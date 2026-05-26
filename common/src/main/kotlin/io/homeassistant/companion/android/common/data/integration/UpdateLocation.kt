@@ -12,6 +12,7 @@ data class UpdateLocation(
     /**
      * Full zone entity IDs (e.g. `zone.home`) the device is currently in. Replaces
      * [locationName] per architecture discussion https://github.com/home-assistant/architecture/discussions/1387.
+     * Should be null before core 2026.6.0
      */
     val inZones: List<String>?,
     val speed: Int?,
