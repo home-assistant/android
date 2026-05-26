@@ -2,14 +2,11 @@ package io.homeassistant.companion.android.frontend.externalbus.outgoing
 
 import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.frontend.externalbus.frontendExternalBusJson
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 
-@ExtendWith(ConsoleLogExtension::class)
 class OutgoingExternalBusMessageTest {
 
     @Test

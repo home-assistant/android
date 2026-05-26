@@ -5,7 +5,6 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -25,10 +24,8 @@ import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 
 @OptIn(ExperimentalTime::class, ExperimentalCoroutinesApi::class)
-@ExtendWith(ConsoleLogExtension::class)
 class HttpAuthManagerTest {
 
     private val authenticationDao: AuthenticationDao = mockk(relaxed = true)
@@ -125,9 +122,8 @@ class HttpAuthManagerTest {
             }
             advanceUntilIdle()
 
-            val pending = dialogManager.pendingDialog.value
-            assertInstanceOf(FrontendDialog.HttpAuth::class.java, pending)
-            assertTrue((pending as FrontendDialog.HttpAuth).isAuthError)
+            val pending = assertInstanceOf(FrontendDialog.HttpAuth::class.java, dialogManager.pendingDialog.value)
+            assertTrue(pending.isAuthError)
 
             pendingHttpAuthDialog().onCancel()
             advanceUntilIdle()

@@ -69,7 +69,7 @@ import org.robolectric.annotation.Config
 @HiltAndroidTest
 internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
 
-    @get:Rule(order = 3)
+    @get:Rule(order = 2)
     val mainDispatcherRule = MainDispatcherJUnit4Rule()
 
     @OptIn(ExperimentalCoroutinesApi::class)
