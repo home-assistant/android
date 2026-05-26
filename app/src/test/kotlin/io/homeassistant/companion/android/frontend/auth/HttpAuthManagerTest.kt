@@ -125,9 +125,8 @@ class HttpAuthManagerTest {
             }
             advanceUntilIdle()
 
-            val pending = dialogManager.pendingDialog.value
-            assertInstanceOf(FrontendDialog.HttpAuth::class.java, pending)
-            assertTrue((pending as FrontendDialog.HttpAuth).isAuthError)
+            val pending = assertInstanceOf(FrontendDialog.HttpAuth::class.java, dialogManager.pendingDialog.value)
+            assertTrue(pending.isAuthError)
 
             pendingHttpAuthDialog().onCancel()
             advanceUntilIdle()
