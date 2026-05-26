@@ -10,10 +10,24 @@ implementation.
 
 ### The Android AAAA problem
 
-On many Android devices, hostname resolution skips **AAAA (IPv6)** lookups unless the device
-has an IPv6 default route (typically a `2000::/3` route). Hostnames that resolve **only** to
-IPv6 (no A record) then fail with `ERR_NAME_NOT_RESOLVED` in WebView or connection errors in
-OkHttp—even when the network is IPv6-capable and other clients resolve the name correctly.
+On many Android devices, hostname resolution skips **AAAA (IPv6)** lookups even on
+IPv6-capable networks. The root cause is a two-step heuristic in Android's libc (bionic)
+that determines whether IPv6 is "available" for use with `AI_ADDRCONFIG` (see Chromium
+issue [#40309810](https://issues.chromium.org/40309810)):
+
+1. `connect()` a UDP socket to the hard-coded global address `2000::` — succeeds if any
+   route to global IPv6 space exists
+2. `getsockname()` — checks whether the **source address** assigned to the socket is a
+   **global IPv6 address** (`2000::/3`)
+
+If the source address is a ULA (`fd00::/8`), link-local (`fe80::/10`), or the socket has
+no global IPv6 address at all, bionic considers IPv6 "not available" and **skips AAAA
+DNS queries entirely**. Having a route to `2000::` is **not sufficient** — the device
+needs a **global IPv6 source address** for the probe to pass.
+
+Hostnames that resolve **only** to IPv6 (no A record) then fail with
+`ERR_NAME_NOT_RESOLVED` in WebView or connection errors in OkHttp — even when the network
+is otherwise IPv6-capable and other clients resolve the name correctly.
 
 `InetAddress.getAllByName()` and `Network.getAllByName()` exhibit this behaviour. It affects
 both the app’s OkHttp stack and Chromium’s built-in resolver inside WebView.
@@ -190,4 +204,10 @@ ConnectionViewModel: WebView CONNECT proxy unavailable, using OkHttp request int
 
 This work addresses connectivity to hostnames that resolve only via AAAA (IPv6-only DNS), e.g.
 Home Assistant instances published as AAAA-only records on IPv6-capable networks where Android
-would otherwise skip AAAA resolution.
+would otherwise skip AAAA resolution because bionic's `AI_ADDRCONFIG` probe does not consider
+ULA (`fd00::/8`) addresses as proof of IPv6 availability.
+
+- Home Assistant Android [#4953](https://github.com/home-assistant/android/issues/4953) — *"Companion app fails to connect to IPv6-only HA instance"*
+- Google Issue Tracker [#36955694](https://issuetracker.google.com/issues/36955694) — *"Android only queries for AAAA records in IPv4 network without default gateway"* (Won't Fix)
+- Chromium [#40309810](https://issues.chromium.org/40309810) — *"Built-in async DNS resolver needs a reliable equivalent to AI_ADDRCONFIG"* (describes bionic's two-step probe)
+- Chromium [#40435291](https://issuetracker.google.com/issues/40435291) — similar problem in Chrome/Chromium on Android
