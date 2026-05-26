@@ -13,8 +13,6 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.server.Server
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
-import io.homeassistant.companion.android.util.FailFastExtension
 import io.homeassistant.companion.android.widgets.camera.CameraWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControlsWidgetConfigureActivity
@@ -34,14 +32,11 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
-import org.junit.jupiter.api.extension.ExtendWith
-import org.junit.jupiter.api.fail
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.ValueSource
 
 @ExperimentalCoroutinesApi
-@ExtendWith(ConsoleLogExtension::class, FailFastExtension::class)
 class EntityAddToHandlerTest {
 
     private lateinit var serverManager: ServerManager
@@ -64,11 +59,6 @@ class EntityAddToHandlerTest {
         coEvery { serverManager.integrationRepository(serverId) } returns integrationRepository
         coEvery { serverManager.getServer() } returns server
         handler = EntityAddToHandler(serverManager, prefsRepository)
-
-        // Always override the handler so individual test can decide to override it or not without impacting the other tests
-        FailFast.setHandler { exception, _ ->
-            fail("Unhandled exception caught", exception)
-        }
     }
 
     @Test

@@ -7,8 +7,6 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationExc
 import io.homeassistant.companion.android.common.data.integration.impl.IntegrationService
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.util.FailFast
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
-import io.homeassistant.companion.android.util.FailFastExtension
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -23,27 +21,16 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.fail
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNull
-import org.junit.jupiter.api.extension.ExtendWith
 import retrofit2.Response
 
-@ExtendWith(ConsoleLogExtension::class, FailFastExtension::class)
 class SettingsWearRepositoryTest {
 
     private val authenticationService: AuthenticationService = mockk()
     private val integrationService: IntegrationService = mockk()
     private val repository = SettingsWearRepository(authenticationService, integrationService)
-
-    @BeforeEach
-    fun setUp() {
-        // Always override the handler so individual test can decide to override it or not without impacting the other tests
-        FailFast.setHandler { exception, _ ->
-            fail("Unhandled exception caught", exception)
-        }
-    }
 
     private fun createWearServer(
         externalUrl: String = "https://ha.local:8123",

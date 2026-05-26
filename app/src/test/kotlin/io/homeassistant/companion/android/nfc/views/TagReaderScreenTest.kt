@@ -10,7 +10,6 @@ import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.nfc.TagReaderUiState
-import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -26,12 +25,9 @@ import org.robolectric.annotation.Config
 class TagReaderScreenTest {
 
     @get:Rule(order = 0)
-    var consoleLog = ConsoleLogRule()
-
-    @get:Rule(order = 1)
     val hiltRule = HiltAndroidRule(this)
 
-    @get:Rule(order = 2)
+    @get:Rule(order = 1)
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
     @Test
