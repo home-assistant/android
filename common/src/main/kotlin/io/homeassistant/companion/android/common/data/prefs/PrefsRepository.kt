@@ -1,11 +1,32 @@
 package io.homeassistant.companion.android.common.data.prefs
 
+import android.content.pm.ActivityInfo
 import android.os.Parcelable
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.HAGesture
 import kotlinx.coroutines.flow.Flow
 import kotlinx.parcelize.Parcelize
+
+/**
+ * Screen orientation preference applied to the dashboard host activity.
+ *
+ * The [storageValue]s match the entries declared in the `pref_screen_orientation_option_values`
+ * string-array used by the settings ListPreference, so values written by the legacy settings UI
+ * still resolve to a typed enum here.
+ */
+enum class ScreenOrientation(val storageValue: String, val activityInfo: Int) {
+    SYSTEM("system", ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED),
+    PORTRAIT("portrait", ActivityInfo.SCREEN_ORIENTATION_PORTRAIT),
+    LANDSCAPE("landscape", ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE),
+    ;
+
+    companion object {
+        /** Returns the matching entry or [SYSTEM] when [value] is null or unknown. */
+        fun fromStorageValue(value: String?): ScreenOrientation =
+            entries.firstOrNull { it.storageValue == value } ?: SYSTEM
+    }
+}
 
 enum class NightModeTheme(val storageValue: String) {
     LIGHT("light"),
@@ -85,9 +106,16 @@ interface PrefsRepository {
     /** Emits the current "Keep screen on" preference immediately on collection, then on every change. */
     suspend fun keepScreenOnFlow(): Flow<Boolean>
 
-    suspend fun getScreenOrientation(): String?
+    /**
+     * Returns the user's current screen orientation preference. Falls back to
+     * [ScreenOrientation.SYSTEM] when no value is stored or the stored value cannot be resolved.
+     */
+    suspend fun getScreenOrientation(): ScreenOrientation
 
-    suspend fun saveScreenOrientation(orientation: String?)
+    suspend fun setScreenOrientation(orientation: ScreenOrientation)
+
+    /** Emits the current [ScreenOrientation] preference immediately on collection, then on every change. */
+    suspend fun screenOrientationFlow(): Flow<ScreenOrientation>
 
     suspend fun getPageZoomLevel(): Int
 

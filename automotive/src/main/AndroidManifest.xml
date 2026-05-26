@@ -6,6 +6,7 @@
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.BLUETOOTH"
         android:maxSdkVersion="30"/>
@@ -270,6 +271,18 @@
                 <action android:name="io.homeassistant.companion.android.background.REQUEST_ACTIVITY_UPDATES" />
             </intent-filter>
         </receiver>
+
+        <!--
+        Non-exported entry point that lets internal callers (currently the device controls panel)
+        bring up the dashboard over the keyguard. LaunchActivity only honors
+        setShowWhenLocked when the inbound intent is routed through this alias, so external apps
+        hitting the public LaunchActivity intent-filters cannot force the activity to render over
+        the lock screen.
+        -->
+        <activity-alias
+            android:name="io.homeassistant.companion.android.launch.LaunchOverLockScreen"
+            android:exported="false"
+            android:targetActivity="io.homeassistant.companion.android.launch.LaunchActivity" />
 
         <activity android:name=".launch.LaunchActivity"
             android:exported="true"

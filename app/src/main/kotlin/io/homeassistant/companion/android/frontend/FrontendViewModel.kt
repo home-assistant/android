@@ -11,6 +11,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.frontend.auth.HttpAuthManager
 import io.homeassistant.companion.android.frontend.auth.HttpAuthResult
@@ -247,6 +248,17 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     val autoPlayVideoEnabled: StateFlow<Boolean> = flow {
         emitAll(prefsRepository.autoPlayVideoFlow())
     }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = false)
+
+    /**
+     * The user's "Screen orientation" preference.
+     *
+     * Applied by the screen to the hosting activity's `requestedOrientation` so the dashboard
+     * obeys the user's portrait/landscape/system preference. Exposed as a [StateFlow] so the
+     * screen can read the current value synchronously when first attaching and react to changes.
+     */
+    val screenOrientation: StateFlow<ScreenOrientation> = flow {
+        emitAll(prefsRepository.screenOrientationFlow())
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = ScreenOrientation.SYSTEM)
 
     /**
      * The user's "Keep screen on" preference.
@@ -522,6 +534,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private fun loadServer() {
         urlFlowJob?.cancel()
         urlFlowJob = viewModelScope.launch {
+            permissionManager.checkLocalNetworkPermission()
             val currentState = _viewState.value
             val path = when (currentState) {
                 is FrontendViewState.LoadServer -> currentState.path

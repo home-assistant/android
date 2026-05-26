@@ -6,7 +6,6 @@ import android.app.PictureInPictureParams
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.graphics.Rect
 import android.net.Uri
@@ -65,6 +64,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.ColorUtils
@@ -213,6 +213,19 @@ class WebViewActivity :
                 presenter.startScanningForImprov()
             }
         }
+
+    /**
+     * Android 17+ requires `ACCESS_LOCAL_NETWORK` for any LAN traffic. Once the user grants it
+     * after the WebView has already attempted to load, reload so the in-flight or failed-LAN
+     * connection is retried with permission. Denial is left to surface through the existing
+     * connection-error UI.
+     */
+    private val requestLocalNetworkPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted && ::webView.isInitialized) {
+                webView.reload()
+            }
+        }
     private val writeNfcTag = registerForActivityResult(WriteNfcTag()) { messageId ->
         sendExternalBusMessage(
             ExternalBusMessage(
@@ -358,6 +371,8 @@ class WebViewActivity :
         }
 
         super.onCreate(savedInstanceState)
+
+        maybeRequestLocalNetworkPermission()
 
         if (intent.extras?.containsKey(EXTRA_SERVER) == true) {
             intent.extras?.getInt(EXTRA_SERVER)?.let {
@@ -1336,6 +1351,25 @@ class WebViewActivity :
         presenter.onStart(this)
     }
 
+    /**
+     * Requests `ACCESS_LOCAL_NETWORK` on Android 17+ if it is not already granted.
+     *
+     * The system permission dialog is asynchronous: the WebView keeps loading in parallel, and
+     * a successful grant triggers a reload via [requestLocalNetworkPermission]. On pre-API 37
+     * devices the permission does not exist and no action is taken.
+     */
+    private fun maybeRequestLocalNetworkPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.CINNAMON_BUN) return
+        if (ContextCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.ACCESS_LOCAL_NETWORK,
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        requestLocalNetworkPermission.launch(android.Manifest.permission.ACCESS_LOCAL_NETWORK)
+    }
+
     override fun onResume() {
         super.onResume()
         lifecycleScope.launch {
@@ -1354,19 +1388,7 @@ class WebViewActivity :
             SensorWorker.start(this@WebViewActivity)
             WebsocketManager.start(this@WebViewActivity)
 
-            requestedOrientation = when (presenter.getScreenOrientation()) {
-                getString(
-                    R.string.screen_orientation_option_array_value_portrait,
-                ),
-                -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-
-                getString(
-                    R.string.screen_orientation_option_array_value_landscape,
-                ),
-                -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-
-                else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-            }
+            requestedOrientation = presenter.getScreenOrientation().activityInfo
 
             if (presenter.isKeepScreenOnEnabled()) {
                 window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
