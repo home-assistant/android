@@ -7,6 +7,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import okhttp3.Dns
 import okhttp3.OkHttpClient
+import timber.log.Timber
 
 /**
  * A DNS resolver that uses Android's [ConnectivityManager.activeNetwork] to resolve
@@ -31,8 +32,11 @@ class NetworkAwareDns @Inject constructor(
     override fun lookup(hostname: String): List<InetAddress> {
         val network = connectivityManager.activeNetwork
         if (network != null) {
-            return network.getAllByName(hostname).toList()
+            val addresses = network.getAllByName(hostname).toList()
+            Timber.d("lookup(%s): using Network.getAllByName() -> %s", hostname, addresses.joinToString { it.hostAddress ?: it.toString() })
+            return addresses
         }
+        Timber.w("lookup(%s): no active network, falling back to Dns.SYSTEM", hostname)
         return Dns.SYSTEM.lookup(hostname)
     }
 
