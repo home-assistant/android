@@ -225,6 +225,12 @@ internal class PrefsRepositoryImpl @Inject constructor(
         localStorage().putBoolean(PREF_KEEP_SCREEN_ON_ENABLED, enabled)
     }
 
+    override suspend fun keepScreenOnFlow(): Flow<Boolean> {
+        return localStorage().observeChanges(PREF_KEEP_SCREEN_ON_ENABLED) {
+            isKeepScreenOnEnabled()
+        }
+    }
+
     override suspend fun getPageZoomLevel(): Int {
         return localStorage().getInt(PREF_PAGE_ZOOM_LEVEL) ?: 100
     }

@@ -41,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
@@ -127,6 +128,7 @@ internal fun FrontendScreen(
     val pendingFileChooser by viewModel.pendingFileChooser.collectAsStateWithLifecycle()
     val autoPlayVideoEnabled by viewModel.autoPlayVideoEnabled.collectAsStateWithLifecycle()
     val screenOrientation by viewModel.screenOrientation.collectAsStateWithLifecycle()
+    val keepScreenOnEnabled by viewModel.keepScreenOnEnabled.collectAsStateWithLifecycle()
 
     // The fullscreen View handed over by the WebView is Activity-scoped. Keep it in screen
     // state so it does not leak across configuration changes via the ViewModel.
@@ -177,6 +179,7 @@ internal fun FrontendScreen(
         onExoPlayerFullscreenChanged = viewModel::onExoPlayerFullscreenChanged,
         autoPlayVideoEnabled = autoPlayVideoEnabled,
         screenOrientation = screenOrientation,
+        keepScreenOnEnabled = keepScreenOnEnabled,
         onPipReadinessChanged = onPipReadinessChanged,
         modifier = modifier,
     )
@@ -203,6 +206,7 @@ internal fun FrontendScreenContent(
     customView: View? = null,
     autoPlayVideoEnabled: Boolean = false,
     screenOrientation: ScreenOrientation = ScreenOrientation.SYSTEM,
+    keepScreenOnEnabled: Boolean = false,
     pendingPermissionRequest: PermissionRequest? = null,
     pendingDialog: FrontendDialog? = null,
     pendingFileChooser: FileChooserRequest? = null,
@@ -238,6 +242,8 @@ internal fun FrontendScreenContent(
     )
 
     ScreenOrientationEffect(orientation = screenOrientation)
+
+    KeepScreenOnEffect(enabled = keepScreenOnEnabled)
 
     Box(modifier = modifier.fillMaxSize()) {
         // Always render WebView at base layer
@@ -667,6 +673,24 @@ private fun ScreenOrientationEffect(orientation: ScreenOrientation) {
         activity.requestedOrientation = orientation.activityInfo
         onDispose {
             activity.requestedOrientation = previous
+        }
+    }
+}
+
+/**
+ * Toggles `View.keepScreenOn` (mapped by the platform to `WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON`)
+ * based on the user's "Keep screen on" preference while the frontend is composed.
+ *
+ * The flag is always cleared on dispose so it does not leak to other screens that share the
+ * hosting activity window.
+ */
+@Composable
+private fun KeepScreenOnEffect(enabled: Boolean) {
+    val view = LocalView.current
+    DisposableEffect(view, enabled) {
+        view.keepScreenOn = enabled
+        onDispose {
+            view.keepScreenOn = false
         }
     }
 }
