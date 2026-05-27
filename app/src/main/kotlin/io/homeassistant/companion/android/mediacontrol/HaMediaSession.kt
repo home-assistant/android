@@ -135,6 +135,9 @@ class HaMediaSession @AssistedInject constructor(
             val shuffleOn = player.shuffleModeEnabled
             buttons.add(
                 CommandButton.Builder(if (shuffleOn) CommandButton.ICON_SHUFFLE_ON else CommandButton.ICON_SHUFFLE_OFF)
+                    .setDisplayName(
+                        context.getString(if (shuffleOn) commonR.string.media_control_shuffle_on else commonR.string.media_control_shuffle_off),
+                    )
                     .setPlayerCommand(Player.COMMAND_SET_SHUFFLE_MODE, !shuffleOn)
                     .build(),
             )
@@ -150,8 +153,14 @@ class HaMediaSession @AssistedInject constructor(
                 Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
                 else -> Player.REPEAT_MODE_OFF
             }
+            val displayName = when (player.repeatMode) {
+                Player.REPEAT_MODE_ONE -> context.getString(commonR.string.media_control_repeat_one)
+                Player.REPEAT_MODE_ALL -> context.getString(commonR.string.media_control_repeat_all)
+                else -> context.getString(commonR.string.media_control_repeat_off)
+            }
             buttons.add(
                 CommandButton.Builder(icon)
+                    .setDisplayName(displayName)
                     .setPlayerCommand(Player.COMMAND_SET_REPEAT_MODE, nextMode)
                     .build(),
             )
