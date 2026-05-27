@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.onboarding.serverdiscovery
 import app.cash.turbine.test
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryMode
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.util.mockServer
 import io.homeassistant.companion.android.util.testHAVersion
@@ -22,11 +21,9 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(ConsoleLogExtension::class)
 private class ServerDiscoveryViewModelTest {
 
     @RegisterExtension
@@ -45,6 +42,37 @@ private class ServerDiscoveryViewModelTest {
 
     private fun createViewModel(discoveryMode: ServerDiscoveryMode = ServerDiscoveryMode.NORMAL) {
         viewModel = ServerDiscoveryViewModel(discoveryMode, searcher, serverManager)
+        // Existing tests assert behavior that depends on discovery having started; mirror the
+        // screen's permission-checked callback so they don't all have to opt in individually.
+        viewModel.onLocalNetworkPermissionChecked()
+    }
+
+    @Test
+    fun `Given local network permission not yet checked then no server discovery is started and NoServerFound is not emitted`() = runTest {
+        viewModel = ServerDiscoveryViewModel(ServerDiscoveryMode.NORMAL, searcher, serverManager)
+
+        viewModel.discoveryFlow.test {
+            assertEquals(Started, awaitItem())
+            advanceTimeBy(TIMEOUT_NO_SERVER_FOUND * 2)
+            runCurrent()
+            // Discovery hasn't started, so the no-server timeout never fires
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given local network permission checked twice then discovery is only started once`() = runTest {
+        viewModel = ServerDiscoveryViewModel(ServerDiscoveryMode.NORMAL, searcher, serverManager)
+        viewModel.onLocalNetworkPermissionChecked()
+        viewModel.onLocalNetworkPermissionChecked()
+
+        viewModel.discoveryFlow.test {
+            assertEquals(Started, awaitItem())
+            advanceTimeBy(TIMEOUT_NO_SERVER_FOUND)
+            // A single NoServerFound — not duplicated — proves discovery wasn't started twice
+            assertEquals(NoServerFound, awaitItem())
+            expectNoEvents()
+        }
     }
 
     @Test

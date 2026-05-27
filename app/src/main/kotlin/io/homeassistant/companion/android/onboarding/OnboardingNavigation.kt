@@ -249,19 +249,38 @@ private fun NavGraphBuilder.commonScreens(
             if (navController.canGoBack()) {
                 navController.popBackStack()
             } else {
-                // This should only happens when we open the onboarding from the settings.
+                // This should only happen when we open the onboarding from the settings.
                 // Once we have a navigation graph for the whole app this could be dropped.
                 // For more context see: https://github.com/home-assistant/android/pull/5897#pullrequestreview-3316313923
                 (navController.context as? Activity)?.finish()
             }
         },
         onManualSetupClick = navController::navigateToManualServer,
+        onLocalNetworkPermissionDenied = {
+            // Replace ServerDiscovery on the back stack so that pressing back from ManualServer
+            // returns to the entry before discovery (e.g. Welcome) instead of bouncing back
+            // through the denied-permission redirect.
+            navController.navigateToManualServer(
+                navOptions = navOptions {
+                    popUpTo<ServerDiscoveryRoute> { inclusive = true }
+                },
+            )
+        },
         onHelpClick = {
             navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, onShowSnackbar)
         },
     )
     manualServerScreen(
-        onBackClick = navController::popBackStack,
+        onBackClick = {
+            if (navController.canGoBack()) {
+                navController.popBackStack()
+            } else {
+                // This should only happen when we open the onboarding from the settings with local network permission rejected.
+                // Once we have a navigation graph for the whole app this could be dropped.
+                // For more context see: https://github.com/home-assistant/android/pull/5897#pullrequestreview-3316313923
+                (navController.context as? Activity)?.finish()
+            }
+        },
         onConnectTo = {
             navController.navigateToConnection(it.toString())
         },
@@ -336,6 +355,7 @@ private fun NavController.navigateAfterDeviceRegistration(
             hasPlainTextAccess = hasPlainTextAccess,
             navOptions = navOptions,
         )
+
         else -> navigateToLocationForSecureConnectionConditionally(
             serverId = serverId,
             hasPlainTextAccess = hasPlainTextAccess,

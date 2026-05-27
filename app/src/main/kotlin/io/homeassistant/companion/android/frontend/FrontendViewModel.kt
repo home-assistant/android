@@ -11,6 +11,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.frontend.auth.HttpAuthManager
 import io.homeassistant.companion.android.frontend.auth.HttpAuthResult
@@ -21,7 +22,7 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.exoplayer.FrontendExoPlayerManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
-import io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage
+import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserRequest
 import io.homeassistant.companion.android.frontend.gesture.FrontendGestureHandler
@@ -248,6 +249,28 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         emitAll(prefsRepository.autoPlayVideoFlow())
     }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = false)
 
+    /**
+     * The user's "Screen orientation" preference.
+     *
+     * Applied by the screen to the hosting activity's `requestedOrientation` so the dashboard
+     * obeys the user's portrait/landscape/system preference. Exposed as a [StateFlow] so the
+     * screen can read the current value synchronously when first attaching and react to changes.
+     */
+    val screenOrientation: StateFlow<ScreenOrientation> = flow {
+        emitAll(prefsRepository.screenOrientationFlow())
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = ScreenOrientation.SYSTEM)
+
+    /**
+     * The user's "Keep screen on" preference.
+     *
+     * Applied by the screen to the hosting window so the device does not lock while the
+     * WebView is active. Exposed as a [StateFlow] so the screen can read the current value
+     * synchronously when first attaching to the window and react to subsequent changes.
+     */
+    val keepScreenOnEnabled: StateFlow<Boolean> = flow {
+        emitAll(prefsRepository.keepScreenOnFlow())
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = false)
+
     init {
         viewModelScope.launch {
             _viewState.collectLatest { state ->
@@ -431,7 +454,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      */
     fun onNfcWriteCompleted(messageId: Int) {
         viewModelScope.launch {
-            externalBusRepository.send(ResultMessage.success(messageId))
+            externalBusRepository.send(SuccessResultMessage(messageId))
         }
     }
 
@@ -511,6 +534,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private fun loadServer() {
         urlFlowJob?.cancel()
         urlFlowJob = viewModelScope.launch {
+            permissionManager.checkLocalNetworkPermission()
             val currentState = _viewState.value
             val path = when (currentState) {
                 is FrontendViewState.LoadServer -> currentState.path
@@ -588,8 +612,22 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 exoPlayerManager.handle(result)
             }
 
+            is FrontendHandlerEvent.StartImprovScan,
+            is FrontendHandlerEvent.ConfigureImprovDevice,
+            -> {
+                // Improv handling lands in a follow-up PR; the messages are already typed and
+                // canSetupImprov will be `false` on devices without BLE so the frontend should
+                // not be sending these yet on hardware that lacks Bluetooth LE.
+                Timber.d("Improv event received but not yet handled: $result")
+            }
+
+            is FrontendHandlerEvent.EntityAddToExecuted -> {
+                result.event?.let { _events.tryEmit(it) }
+            }
+
             is FrontendHandlerEvent.ConfigSent,
             is FrontendHandlerEvent.UnknownMessage,
+            is FrontendHandlerEvent.EntityAddToActionsSent,
             -> {
                 // No-op
             }

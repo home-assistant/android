@@ -6,7 +6,6 @@ import android.app.PictureInPictureParams
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.graphics.Rect
 import android.net.Uri
@@ -65,6 +64,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.ColorUtils
@@ -85,7 +85,6 @@ import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
-import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.assist.AssistActivity
 import io.homeassistant.companion.android.authenticator.Authenticator
@@ -119,6 +118,7 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
 import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
+import io.homeassistant.companion.android.frontend.addto.FrontendEntityAddToHandler
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.EXPECTED_GET_AUTH_CALLBACK
@@ -127,6 +127,7 @@ import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.EXTERNAL_APP_V2_LISTENER
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.externalBusCallback
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.isServerSupportingExternalAppV2
+import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.improv.ui.ImprovPermissionDialog
 import io.homeassistant.companion.android.improv.ui.ImprovSetupDialog
 import io.homeassistant.companion.android.launch.LaunchActivity
@@ -154,7 +155,6 @@ import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.util.toRelativeUrl
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
-import io.homeassistant.companion.android.webview.addto.EntityAddToHandler
 import io.homeassistant.companion.android.webview.externalbus.EntityAddToActionsResponse
 import io.homeassistant.companion.android.webview.externalbus.ExternalBusMessage
 import io.homeassistant.companion.android.webview.externalbus.ExternalConfigResponse
@@ -217,6 +217,19 @@ class WebViewActivity :
                 presenter.startScanningForImprov()
             }
         }
+
+    /**
+     * Android 17+ requires `ACCESS_LOCAL_NETWORK` for any LAN traffic. Once the user grants it
+     * after the WebView has already attempted to load, reload so the in-flight or failed-LAN
+     * connection is retried with permission. Denial is left to surface through the existing
+     * connection-error UI.
+     */
+    private val requestLocalNetworkPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted && ::webView.isInitialized) {
+                webView.reload()
+            }
+        }
     private val writeNfcTag = registerForActivityResult(WriteNfcTag()) { messageId ->
         sendExternalBusMessage(
             ExternalBusMessage(
@@ -262,7 +275,7 @@ class WebViewActivity :
     lateinit var appVersionProvider: AppVersionProvider
 
     @Inject
-    lateinit var entityAddToHandler: EntityAddToHandler
+    lateinit var entityAddToHandler: FrontendEntityAddToHandler
 
     @Inject
     lateinit var dataUriDownloadManager: DataUriDownloadManager
@@ -362,6 +375,8 @@ class WebViewActivity :
         }
 
         super.onCreate(savedInstanceState)
+
+        maybeRequestLocalNetworkPermission()
 
         if (intent.extras?.containsKey(EXTRA_SERVER) == true) {
             intent.extras?.getInt(EXTRA_SERVER)?.let {
@@ -1207,12 +1222,18 @@ class WebViewActivity :
         if (entityId != null && appPayload != null) {
             val action = ExternalEntityAddToAction.appPayloadToAction(appPayload)
             lifecycleScope.launch {
-                entityAddToHandler.execute(this@WebViewActivity, action, entityId) { message, action ->
-                    snackbarHostState.showSnackbar(
-                        message,
-                        action,
-                        duration = SnackbarDuration.Short,
-                    ) == SnackbarResult.ActionPerformed
+                when (val event = entityAddToHandler.execute(entityId, action)) {
+                    is FrontendEvent.NavigateToWidgetConfig -> {
+                        startActivity(event.widgetType.toConfigureIntent(this@WebViewActivity, event.entityId))
+                    }
+                    is FrontendEvent.ShowSnackbar -> {
+                        snackbarHostState.showSnackbar(
+                            getString(event.messageResId),
+                            duration = SnackbarDuration.Short,
+                        )
+                    }
+                    null -> Unit
+                    else -> FailFast.fail { "Unexpected event $event from EntityAddTo execute" }
                 }
             }
         } else {
@@ -1225,13 +1246,11 @@ class WebViewActivity :
         val entityId = payload?.getStringOrNull("entity_id")
         entityId?.let {
             lifecycleScope.launch {
-                val actions = entityAddToHandler.actionsForEntity(this@WebViewActivity, entityId)
+                val actions = entityAddToHandler.getActionsForEntity(entityId)
                 sendExternalBusMessage(
                     EntityAddToActionsResponse(
                         id = json["id"],
-                        actions = actions.map { action ->
-                            ExternalEntityAddToAction.fromAction(this@WebViewActivity, action)
-                        },
+                        actions = actions,
                     ),
                 )
             }
@@ -1362,6 +1381,25 @@ class WebViewActivity :
         presenter.onStart(this)
     }
 
+    /**
+     * Requests `ACCESS_LOCAL_NETWORK` on Android 17+ if it is not already granted.
+     *
+     * The system permission dialog is asynchronous: the WebView keeps loading in parallel, and
+     * a successful grant triggers a reload via [requestLocalNetworkPermission]. On pre-API 37
+     * devices the permission does not exist and no action is taken.
+     */
+    private fun maybeRequestLocalNetworkPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.CINNAMON_BUN) return
+        if (ContextCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.ACCESS_LOCAL_NETWORK,
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        requestLocalNetworkPermission.launch(android.Manifest.permission.ACCESS_LOCAL_NETWORK)
+    }
+
     override fun onResume() {
         super.onResume()
         lifecycleScope.launch {
@@ -1380,21 +1418,7 @@ class WebViewActivity :
             SensorWorker.start(this@WebViewActivity)
             WebsocketManager.start(this@WebViewActivity)
 
-            WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG || presenter.isWebViewDebugEnabled())
-
-            requestedOrientation = when (presenter.getScreenOrientation()) {
-                getString(
-                    R.string.screen_orientation_option_array_value_portrait,
-                ),
-                -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-
-                getString(
-                    R.string.screen_orientation_option_array_value_landscape,
-                ),
-                -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-
-                else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-            }
+            requestedOrientation = presenter.getScreenOrientation().activityInfo
 
             if (presenter.isKeepScreenOnEnabled()) {
                 window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)

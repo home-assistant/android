@@ -160,6 +160,13 @@ internal class HomeAssistantSearcherImpl @Inject constructor(
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                     try {
                         nsdManager.stopServiceResolution(listener)
+                    } catch (e: IllegalArgumentException) {
+                        // On devices with T SDK extension < 22, NsdManager throws when the
+                        // listener is already unregistered (which happens automatically after
+                        // onServiceResolved/onResolveFailed fires). The call is still needed
+                        // for devices where auto-unregistration is not guaranteed, so we keep
+                        // it and just downgrade the expected case to a warning without a stack.
+                        Timber.w("stopServiceResolution: listener already unregistered: ${e.message}")
                     } catch (e: Exception) {
                         Timber.e(e, "Failed to stop service resolution")
                     }

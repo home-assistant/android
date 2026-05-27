@@ -11,6 +11,7 @@ import android.nfc.NfcAdapter
 import android.os.Build
 import android.os.PowerManager
 import android.telephony.TelephonyManager
+import android.webkit.WebView
 import androidx.core.content.ContextCompat
 import coil3.ImageLoader
 import coil3.PlatformContext
@@ -47,6 +48,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import timber.log.Timber
 
@@ -104,6 +106,13 @@ open class HomeAssistantApplication :
                 prefsRepository.isCrashReporting(),
             )
             initCrashSaving(applicationContext)
+
+            val webViewDebug = BuildConfig.DEBUG || prefsRepository.isWebViewDebugEnabled()
+            withContext(Dispatchers.Main) {
+                // Release builds require calling this on the main thread
+                WebView.setWebContentsDebuggingEnabled(webViewDebug)
+            }
+
             languagesManager.applyCurrentLang()
             nightModeManager.applyCurrentNightMode()
         }

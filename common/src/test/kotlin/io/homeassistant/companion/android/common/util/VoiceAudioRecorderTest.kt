@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.common.util
 
 import android.media.AudioRecord
 import app.cash.turbine.turbineScope
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -18,10 +17,8 @@ import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(ConsoleLogExtension::class)
 class VoiceAudioRecorderTest {
 
     @Nested

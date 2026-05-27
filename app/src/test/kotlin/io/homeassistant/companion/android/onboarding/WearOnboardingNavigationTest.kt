@@ -53,7 +53,6 @@ import io.homeassistant.companion.android.onboarding.wearmtls.WearMTLSViewModel
 import io.homeassistant.companion.android.onboarding.wearmtls.navigation.URL_MTLS_DOCUMENTATION
 import io.homeassistant.companion.android.onboarding.wearmtls.navigation.WearMTLSRoute
 import io.homeassistant.companion.android.onboarding.wearmtls.navigation.navigateToWearMTLS
-import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
 import io.homeassistant.companion.android.testing.unit.TestSharedFlow
 import io.homeassistant.companion.android.testing.unit.stringResource
@@ -92,16 +91,14 @@ private const val VALID_PASSWORD = "1234"
 @UninstallModules(ServerDiscoveryModule::class)
 @HiltAndroidTest
 internal class WearOnboardingNavigationTest {
-    @get:Rule(order = 0)
-    var consoleLog = ConsoleLogRule()
 
-    @get:Rule(order = 1)
+    @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
 
-    @get:Rule(order = 2)
+    @get:Rule(order = 1)
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
-    @get:Rule(order = 3)
+    @get:Rule(order = 2)
     val mainDispatcherRule = MainDispatcherJUnit4Rule()
 
     @BindValue
@@ -122,6 +119,7 @@ internal class WearOnboardingNavigationTest {
         every { navigationEventsFlow } returns connectionNavigationEventFlow
         every { errorFlow } returns MutableStateFlow(null)
         every { connectivityCheckState } returns MutableStateFlow(ConnectivityCheckState())
+        every { pendingFileChooser } returns MutableStateFlow(null)
     }
 
     private val selectedUri = mockk<Uri>()

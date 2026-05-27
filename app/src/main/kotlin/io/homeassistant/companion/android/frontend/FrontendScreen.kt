@@ -8,10 +8,12 @@ import android.webkit.CookieManager
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.activity.compose.LocalActivity
 import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -39,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
@@ -51,6 +54,7 @@ import io.homeassistant.companion.android.common.compose.composable.HAPlainButto
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
 import io.homeassistant.companion.android.frontend.dialog.PendingDialogHandler
@@ -65,6 +69,7 @@ import io.homeassistant.companion.android.frontend.permissions.MultiplePermissio
 import io.homeassistant.companion.android.frontend.permissions.NotificationPermissionPrompt
 import io.homeassistant.companion.android.frontend.permissions.PermissionRequest
 import io.homeassistant.companion.android.frontend.permissions.SinglePermissionEffect
+import io.homeassistant.companion.android.launch.PipReadiness
 import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModel
@@ -115,12 +120,15 @@ internal fun FrontendScreen(
     onSecurityLevelHelpClick: suspend () -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     modifier: Modifier = Modifier,
+    onPipReadinessChanged: (PipReadiness?) -> Unit = {},
 ) {
     val viewState by viewModel.viewState.collectAsStateWithLifecycle()
     val pendingPermissionRequest by viewModel.pendingPermissionRequest.collectAsStateWithLifecycle()
     val pendingDialog by viewModel.pendingDialog.collectAsStateWithLifecycle()
     val pendingFileChooser by viewModel.pendingFileChooser.collectAsStateWithLifecycle()
     val autoPlayVideoEnabled by viewModel.autoPlayVideoEnabled.collectAsStateWithLifecycle()
+    val screenOrientation by viewModel.screenOrientation.collectAsStateWithLifecycle()
+    val keepScreenOnEnabled by viewModel.keepScreenOnEnabled.collectAsStateWithLifecycle()
 
     // The fullscreen View handed over by the WebView is Activity-scoped. Keep it in screen
     // state so it does not leak across configuration changes via the ViewModel.
@@ -170,6 +178,9 @@ internal fun FrontendScreen(
         onGesture = viewModel::onGesture,
         onExoPlayerFullscreenChanged = viewModel::onExoPlayerFullscreenChanged,
         autoPlayVideoEnabled = autoPlayVideoEnabled,
+        screenOrientation = screenOrientation,
+        keepScreenOnEnabled = keepScreenOnEnabled,
+        onPipReadinessChanged = onPipReadinessChanged,
         modifier = modifier,
     )
 }
@@ -194,6 +205,8 @@ internal fun FrontendScreenContent(
     modifier: Modifier = Modifier,
     customView: View? = null,
     autoPlayVideoEnabled: Boolean = false,
+    screenOrientation: ScreenOrientation = ScreenOrientation.SYSTEM,
+    keepScreenOnEnabled: Boolean = false,
     pendingPermissionRequest: PermissionRequest? = null,
     pendingDialog: FrontendDialog? = null,
     pendingFileChooser: FileChooserRequest? = null,
@@ -204,6 +217,7 @@ internal fun FrontendScreenContent(
     webViewActions: Flow<WebViewAction> = emptyFlow(),
     onGesture: (GestureDirection, Int) -> Unit = { _, _ -> },
     onExoPlayerFullscreenChanged: (Boolean) -> Unit = {},
+    onPipReadinessChanged: (PipReadiness?) -> Unit = {},
 ) {
     var webView by remember { mutableStateOf<WebView?>(null) }
 
@@ -227,6 +241,10 @@ internal fun FrontendScreenContent(
         pendingRequest = pendingFileChooser,
     )
 
+    ScreenOrientationEffect(orientation = screenOrientation)
+
+    KeepScreenOnEffect(enabled = keepScreenOnEnabled)
+
     Box(modifier = modifier.fillMaxSize()) {
         // Always render WebView at base layer
         SafeHAWebView(
@@ -241,12 +259,12 @@ internal fun FrontendScreenContent(
             autoPlayVideoEnabled = autoPlayVideoEnabled,
         )
 
-        ExoPlayerOverlay(
+        PipEligibleOverlays(
             contentState = viewState as? FrontendViewState.Content,
-            onFullscreenChanged = onExoPlayerFullscreenChanged,
+            customView = customView,
+            onExoPlayerFullscreenChanged = onExoPlayerFullscreenChanged,
+            onPipReadinessChanged = onPipReadinessChanged,
         )
-
-        CustomViewOverlay(customView = customView)
 
         StateOverlay(
             viewState = viewState,
@@ -582,19 +600,24 @@ private fun PendingPermissionHandler(pendingRequest: PermissionRequest?) {
                 onDismiss = pendingRequest.onDismiss,
             )
         }
+
         is PermissionRequest.MultiplePermissions -> {
             MultiplePermissionsEffect(
                 pendingRequest = pendingRequest,
                 onPermissionResult = pendingRequest.onResult,
             )
         }
+
         is PermissionRequest.SinglePermission -> {
             SinglePermissionEffect(
                 pendingRequest = pendingRequest,
                 onPermissionResult = pendingRequest.onResult,
             )
         }
-        null -> { /* No pending permission */ }
+
+        null -> {
+            /* No pending permission */
+        }
     }
 }
 
@@ -633,6 +656,70 @@ private fun WebViewEffects(
             webView.reload()
         }
     }
+}
+
+/**
+ * Applies the user's "Screen orientation" preference to the hosting activity's
+ * `requestedOrientation` while the frontend is composed.
+ *
+ * On dispose the previous value is restored so leaving the dashboard (e.g. navigating to
+ * settings) does not leak this preference to other screens that share the same activity.
+ */
+@Composable
+private fun ScreenOrientationEffect(orientation: ScreenOrientation) {
+    val activity = LocalActivity.current ?: return
+    DisposableEffect(activity, orientation) {
+        val previous = activity.requestedOrientation
+        activity.requestedOrientation = orientation.activityInfo
+        onDispose {
+            activity.requestedOrientation = previous
+        }
+    }
+}
+
+/**
+ * Toggles `View.keepScreenOn` (mapped by the platform to `WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON`)
+ * based on the user's "Keep screen on" preference while the frontend is composed.
+ *
+ * The flag is always cleared on dispose so it does not leak to other screens that share the
+ * hosting activity window.
+ */
+@Composable
+private fun KeepScreenOnEffect(enabled: Boolean) {
+    val view = LocalView.current
+    DisposableEffect(view, enabled) {
+        view.keepScreenOn = enabled
+        onDispose {
+            view.keepScreenOn = false
+        }
+    }
+}
+
+/**
+ * Renders PiP-eligible overlays and reports their combined [PipReadiness] to the host.
+ */
+@Composable
+private fun BoxScope.PipEligibleOverlays(
+    contentState: FrontendViewState.Content?,
+    customView: View?,
+    onExoPlayerFullscreenChanged: (Boolean) -> Unit,
+    onPipReadinessChanged: (PipReadiness?) -> Unit,
+) {
+    val exoState = contentState?.exoPlayerState
+    val readiness = remember(customView, exoState?.isFullScreen, exoState?.videoAspectRatio) {
+        PipReadiness.from(customViewShown = customView != null, exoState = exoState)
+    }
+
+    LaunchedEffect(readiness) { onPipReadinessChanged(readiness) }
+    DisposableEffect(Unit) {
+        onDispose { onPipReadinessChanged(null) }
+    }
+
+    ExoPlayerOverlay(
+        contentState = contentState,
+        onFullscreenChanged = onExoPlayerFullscreenChanged,
+    )
+    CustomViewOverlay(customView = customView)
 }
 
 @Composable

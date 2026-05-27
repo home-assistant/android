@@ -1,14 +1,14 @@
 package io.homeassistant.companion.android.frontend.externalbus
 
 import app.cash.turbine.test
+import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import io.homeassistant.companion.android.frontend.WebViewAction
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConfigGetMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConnectionStatusMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.UnknownIncomingMessage
-import io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResult
+import io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResultMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.OutgoingExternalBusMessage
-import io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage
 import kotlinx.coroutines.async
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
@@ -39,11 +39,9 @@ class FrontendExternalBusRepositoryImplTest {
         repository.incomingMessages().test {
             repository.onMessageReceived(json)
 
-            val message = awaitItem()
-            assertInstanceOf(ConnectionStatusMessage::class.java, message)
-            val statusMessage = message as ConnectionStatusMessage
-            assertEquals(1, statusMessage.id)
-            assertTrue(statusMessage.payload.isConnected)
+            val message = assertInstanceOf(ConnectionStatusMessage::class.java, awaitItem())
+            assertEquals(1, message.id)
+            assertTrue(message.payload.isConnected)
         }
     }
 
@@ -54,9 +52,8 @@ class FrontendExternalBusRepositoryImplTest {
         repository.incomingMessages().test {
             repository.onMessageReceived(json)
 
-            val message = awaitItem()
-            assertInstanceOf(ConfigGetMessage::class.java, message)
-            assertEquals(42, (message as ConfigGetMessage).id)
+            val message = assertInstanceOf(ConfigGetMessage::class.java, awaitItem())
+            assertEquals(42, message.id)
         }
     }
 
@@ -67,10 +64,8 @@ class FrontendExternalBusRepositoryImplTest {
         repository.incomingMessages().test {
             repository.onMessageReceived(json)
 
-            val message = awaitItem()
-            assertInstanceOf(UnknownIncomingMessage::class.java, message)
-            val unknown = message as UnknownIncomingMessage
-            assertTrue(unknown.content.toString().contains("future-feature"))
+            val message = assertInstanceOf(UnknownIncomingMessage::class.java, awaitItem())
+            assertTrue(message.content.toString().contains("future-feature"))
         }
     }
 
@@ -90,8 +85,7 @@ class FrontendExternalBusRepositoryImplTest {
         repository.incomingMessages().test {
             repository.onMessageReceived(json)
 
-            val message = awaitItem()
-            assertInstanceOf(UnknownIncomingMessage::class.java, message)
+            assertInstanceOf(UnknownIncomingMessage::class.java, awaitItem())
         }
     }
 
@@ -109,24 +103,21 @@ class FrontendExternalBusRepositoryImplTest {
 
     @Test
     fun `Given outgoing message when sent then emit as EvaluateScript on webViewActions flow`() = runTest {
-        val configResponse = ResultMessage.config(
+        val configResponse = ConfigResultMessage(
             id = 1,
-            config = ConfigResult(
-                canWriteTag = true,
-                canCommissionMatter = false,
-                canImportThreadCredentials = true,
-                hasBarCodeScanner = 2,
-                appVersion = "1.0.0",
-            ),
+            hasNfc = true,
+            canCommissionMatter = false,
+            canExportThread = true,
+            hasBarCodeScanner = 2,
+            canSetupImprov = false,
+            appVersion = AppVersion.from("1.0.0 (1)"),
         )
 
         repository.webViewActions().test {
             repository.send(configResponse)
 
-            val action = awaitItem()
-            assertInstanceOf(WebViewAction.EvaluateScript::class.java, action)
-            val evaluateScript = action as WebViewAction.EvaluateScript
-            assertEquals("externalBus(${frontendExternalBusJson.encodeToString<OutgoingExternalBusMessage>(configResponse)});", evaluateScript.script)
+            val action = assertInstanceOf(WebViewAction.EvaluateScript::class.java, awaitItem())
+            assertEquals("externalBus(${frontendExternalBusJson.encodeToString<OutgoingExternalBusMessage>(configResponse)});", action.script)
         }
     }
 
@@ -140,14 +131,12 @@ class FrontendExternalBusRepositoryImplTest {
             val resultDeferred = async { repository.evaluateScript(testScript) }
 
             // Collect the emitted action
-            val action = awaitItem()
-            assertInstanceOf(WebViewAction.EvaluateScript::class.java, action)
-            val evaluateScript = action as WebViewAction.EvaluateScript
-            assertEquals(testScript, evaluateScript.script)
-            assertFalse(evaluateScript.result.isCompleted)
+            val action = assertInstanceOf(WebViewAction.EvaluateScript::class.java, awaitItem())
+            assertEquals(testScript, action.script)
+            assertFalse(action.result.isCompleted)
 
             // Simulate WebView completing the result
-            evaluateScript.result.complete(expectedResult)
+            action.result.complete(expectedResult)
 
             // Now evaluateScript should return
             val result = resultDeferred.await()

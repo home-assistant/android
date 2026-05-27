@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.onboarding.serverdiscovery
 
+import android.Manifest
+import android.os.Build
 import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -45,6 +47,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,6 +68,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
@@ -97,10 +103,20 @@ internal fun ServerDiscoveryScreen(
     onConnectClick: (server: URL) -> Unit,
     onHelpClick: suspend () -> Unit,
     onManualSetupClick: () -> Unit,
+    onLocalNetworkPermissionDenied: () -> Unit,
     viewModel: ServerDiscoveryViewModel,
     modifier: Modifier = Modifier,
 ) {
+    val permissionGranted = rememberLocalNetworkPermissionGranted(
+        onDenied = onLocalNetworkPermissionDenied,
+    )
+
+    // Until the permission is granted, render nothing so the user doesn't briefly see the
+    // discovery UI before the denial-handler navigates away or the dialog dismisses.
+    if (!permissionGranted) return
+
     val discoveryState by viewModel.discoveryFlow.collectAsStateWithLifecycle(Started)
+    LaunchedEffect(Unit) { viewModel.onLocalNetworkPermissionChecked() }
 
     ServerDiscoveryScreen(
         discoveryState = discoveryState,
@@ -111,6 +127,32 @@ internal fun ServerDiscoveryScreen(
         onManualSetupClick = onManualSetupClick,
         modifier = modifier,
     )
+}
+
+/**
+ * Manages the Android 17+ `ACCESS_LOCAL_NETWORK` permission for the discovery screen.
+ *
+ * Returns `true` once the screen can render LAN-dependent UI safely — either the permission is
+ * not required on this SDK, was already granted on entry, or has just been granted via the
+ * system dialog. On the first composition where it is not yet granted, the system dialog is
+ * launched. If the user denies, [onDenied] fires and the returned value stays `false` (the
+ * caller is expected to navigate away). Discovery cannot succeed without the permission, so the
+ * screen redirects to manual setup rather than leaving the user on an empty discovery list that
+ * will eventually time out.
+ */
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+private fun rememberLocalNetworkPermissionGranted(onDenied: () -> Unit): Boolean {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.CINNAMON_BUN) return true
+
+    val permissionState = rememberPermissionState(Manifest.permission.ACCESS_LOCAL_NETWORK) { granted ->
+        if (!granted) onDenied()
+    }
+    val granted = permissionState.status.isGranted
+    LaunchedEffect(Unit) {
+        if (!granted) permissionState.launchPermissionRequest()
+    }
+    return granted
 }
 
 @Composable

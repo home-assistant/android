@@ -151,6 +151,8 @@
     <string name="changelog">View full change log</string>
     <string name="choose_entity">Choose entity</string>
     <string name="clear_favorites">Clear favorites</string>
+    <string name="clear_allowed_tags">Clear approved tags</string>
+    <string name="clear_allowed_tags_complete">Tags cleared</string>
     <string name="clear_search">Clear search</string>
     <string name="clear_webview_cache">Reset frontend cache</string>
     <string name="clear_webview_cache_active">Resetting…</string>
@@ -490,6 +492,12 @@
     <string name="nfc_trigger_device">Scanned by this device:</string>
     <string name="nfc_invalid_tag">This tag does not contain Home Assistant data</string>
     <string name="nfc_processing_tag_error">Error while processing NFC tag</string>
+    <string name="tag_approval_title">Allow tag?</string>
+    <string name="tag_approval_description">Send this tag to Home Assistant to trigger linked automations.</string>
+    <string name="tag_allow_once">Allow once</string>
+    <string name="tag_allow_always">Allow always</string>
+    <string name="tag_copy_id">Copy tag identifier</string>
+    <string name="tag_id">Tag identifier</string>
     <string name="nfc_read_tag_instructions">Hold your device near an NFC tag</string>
     <string name="nfc_summary">Set up NFC tags</string>
     <string name="nfc_tag_identifier">Tag ID</string>
