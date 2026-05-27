@@ -136,6 +136,8 @@ class WebViewConnectProxyManager @Inject constructor(
                 }
             }
         } catch (exception: CancellationException) {
+            configureGeneration.incrementAndGet()
+            stopProxyIfUnused(expectedPort = port)
             throw exception
         } catch (exception: Exception) {
             configureGeneration.incrementAndGet()

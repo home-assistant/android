@@ -127,8 +127,8 @@ import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.EXTERNAL_APP_V2_LISTENER
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.externalBusCallback
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.isServerSupportingExternalAppV2
-import io.homeassistant.companion.android.frontend.webview.WebViewConnectProxyManager
 import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
+import io.homeassistant.companion.android.frontend.webview.WebViewConnectProxyManager
 import io.homeassistant.companion.android.improv.ui.ImprovPermissionDialog
 import io.homeassistant.companion.android.improv.ui.ImprovSetupDialog
 import io.homeassistant.companion.android.launch.LaunchActivity

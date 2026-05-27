@@ -42,8 +42,10 @@ import io.homeassistant.companion.android.frontend.webview.WebViewConnectProxyMa
 import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
+import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
@@ -247,6 +249,12 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
     /** Job tracking the urlFlow collection - cancelled when switching servers. */
     private var urlFlowJob: Job? = null
+
+    /** Job configuring the WebView proxy for the latest URL load result. */
+    private var urlLoadHandlingJob: Job? = null
+
+    /** Guards against stale [UrlLoadResult.Success] updates after rapid URL changes. */
+    private val urlLoadGeneration = AtomicInteger(0)
 
     /** Job tracking the zoom settings flow collection - restarted on each page load. */
     private var zoomObserverJob: Job? = null
@@ -664,25 +672,41 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private fun handleUrlResult(result: UrlLoadResult) {
         when (result) {
             is UrlLoadResult.Success -> {
-                viewModelScope.launch {
-                    val proxyConfigured = withContext(ioDispatcher) {
-                        webViewConnectProxyManager.ensureConfigured()
-                    }
-                    if (proxyConfigured) {
-                        if (!webViewProxySessionActive) {
-                            webViewConnectProxyManager.retainSession()
-                            webViewProxySessionActive = true
+                val generation = urlLoadGeneration.incrementAndGet()
+                urlLoadHandlingJob?.cancel()
+                urlLoadHandlingJob = viewModelScope.launch {
+                    val loadedUrl = result.url
+                    val loadedServerId = result.serverId
+                    try {
+                        val proxyConfigured = withContext(ioDispatcher) {
+                            webViewConnectProxyManager.ensureConfigured()
                         }
-                    } else {
-                        Timber.w("WebView CONNECT proxy unavailable, using OkHttp request interception fallback")
-                    }
-                    _viewState.update {
-                        FrontendViewState.Loading(
-                            serverId = result.serverId,
-                            url = result.url,
-                            logicalHostname = result.url.toLogicalHostname(),
-                            path = null,
-                        )
+                        if (urlLoadGeneration.get() != generation) {
+                            return@launch
+                        }
+                        if (proxyConfigured) {
+                            if (!webViewProxySessionActive) {
+                                webViewConnectProxyManager.retainSession()
+                                webViewProxySessionActive = true
+                            }
+                        } else {
+                            Timber.w(
+                                "WebView CONNECT proxy unavailable, using OkHttp request interception fallback",
+                            )
+                        }
+                        if (urlLoadGeneration.get() != generation) {
+                            return@launch
+                        }
+                        _viewState.update {
+                            FrontendViewState.Loading(
+                                serverId = loadedServerId,
+                                url = loadedUrl,
+                                logicalHostname = loadedUrl.toLogicalHostname(),
+                                path = null,
+                            )
+                        }
+                    } catch (exception: CancellationException) {
+                        throw exception
                     }
                 }
             }

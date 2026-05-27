@@ -41,7 +41,6 @@ import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
 import io.homeassistant.companion.android.frontend.webview.WebViewConnectProxyManager
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
@@ -54,6 +53,7 @@ import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.verify
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -63,6 +63,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -158,6 +159,36 @@ class FrontendViewModelTest {
 
     @Nested
     inner class UrlLoading {
+
+        @Test
+        fun `Given rapid url results when earlier proxy setup completes last then latest url wins`() = runTest {
+            val urlFlow = MutableSharedFlow<UrlLoadResult>(extraBufferCapacity = 2)
+            every { urlManager.serverUrlFlow(any(), any()) } returns urlFlow
+
+            val slowFirstCall = CompletableDeferred<Unit>()
+            var ensureConfiguredCalls = 0
+            coEvery { webViewConnectProxyManager.ensureConfigured() } coAnswers {
+                if (ensureConfiguredCalls++ == 0) {
+                    slowFirstCall.await()
+                }
+                true
+            }
+            val oldUrl = "https://old.example.com?external_auth=1"
+            val newUrl = "https://new.example.com?external_auth=1"
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            urlFlow.emit(UrlLoadResult.Success(url = oldUrl, serverId = 1))
+            runCurrent()
+            urlFlow.emit(UrlLoadResult.Success(url = newUrl, serverId = 2))
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            val state = viewModel.viewState.value
+            assertTrue(state is FrontendViewState.Loading, "Expected Loading but got $state")
+            assertEquals(newUrl, state.url)
+            assertEquals(2, state.serverId)
+        }
 
         @Test
         fun `Given url manager returns success when initialized then state is Loading with url`() = runTest {
