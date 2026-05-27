@@ -27,7 +27,12 @@ jobs:
     steps:
       # Surface this job's own success/failure as a check on the PR commit.
       # workflow_run jobs are detached from the PR, so the status is not shown
-      # otherwise. Every input here comes from the trusted workflow_run context
+      # otherwise. A check run created via the API for a PR-head SHA gets grouped
+      # under an arbitrary existing check suite on that commit (here CodeQL's, so
+      # it renders as "CodeQL / Instrumentation Test app (dynamic)"); the suite
+      # cannot be chosen via the API. We accept that prefix to stay consistent
+      # with the publish-unit-test-result-action check below, which has the same
+      # limitation. Every input here comes from the trusted workflow_run context
       # (no fork-controlled data is consumed).
       - name: Create PR check (in progress)
         id: create_check
@@ -156,21 +161,47 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: pr-artifacts
 
+      # If emulator_wtf halted or failed before running tests, it uploads no
+      # results artifact, and downloading it by name errors. Tolerate that so we
+      # still publish the pr.yml results below. We cannot gate on
+      # needs.emulator_wtf.result because a real test failure also fails the job
+      # yet does produce this artifact, which we must still publish.
       - name: Download emulator.wtf results from this run
+        continue-on-error: true
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: Instrumentation Test app results
           path: pr-artifacts/Instrumentation Test app results
+
+      # Build a minimal event payload from the trusted workflow_run context.
+      # Supplying any event_file flips the is_fork check to false in the
+      # publish-unit-test-result-action source
+      # (publish_test_results.py: `is_fork = event_file is None and ...`), so it
+      # publishes the check run instead of disabling it for fork PRs. We build
+      # the payload here from trusted context rather than forwarding the real
+      # pull_request payload, which on a fork PR could be forged.
+      # The PR for the failures comment is resolved from the commit SHA via the
+      # API (the action's publisher.py get_pulls_from_commit), so no PR number
+      # is needed here.
+      #
+      # This payload is intentionally minimal: it was verified sufficient against
+      # publish-unit-test-result-action (the pinned SHA below). Every
+      # other event field the action reads degrades gracefully when absent (it
+      # only drops the cosmetic "vs base"/"vs earlier" deltas). If you bump the
+      # action version, re-check which event fields it reads and update this.
+      - name: Build minimal event payload
+        env:
+          HEAD_REPO: ${{ github.event.workflow_run.head_repository.full_name }}
+        run: |
+          jq -n --arg head "$HEAD_REPO" \
+            '{pull_request: {head: {repo: {full_name: $head}}}}' > event.json
 
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@c950f6fb443cb5af20a377fd0dfaa78838901040 # v2.23.0
         with:
           commit: ${{ github.event.workflow_run.head_sha }}
           event_name: ${{ github.event.workflow_run.event }}
-          # Original pull_request payload uploaded by the "Event File" job in
-          # pr.yml. Required so the action does not treat fork PRs as read-only
-          # and disable check runs (see publish_test_results.py is_fork logic).
-          event_file: "pr-artifacts/event-file/event.json"
+          event_file: "event.json"
           comment_mode: "failures"
           action_fail: true
           files: |
