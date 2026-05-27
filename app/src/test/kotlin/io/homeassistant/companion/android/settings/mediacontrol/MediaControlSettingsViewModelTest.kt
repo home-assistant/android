@@ -161,7 +161,7 @@ class MediaControlSettingsViewModelTest {
             viewModel.addEntity("media_player.radio")
             advanceUntilIdle()
 
-            viewModel.removeEntity(0)
+            viewModel.removeEntity(viewModel.uiState.value.configuredEntityItems.first().config)
             advanceUntilIdle()
 
             assertEquals(1, viewModel.uiState.value.configuredEntityItems.size)
@@ -179,7 +179,7 @@ class MediaControlSettingsViewModelTest {
                 advanceUntilIdle()
                 awaitItem()
 
-                viewModel.removeEntity(0)
+                viewModel.removeEntity(viewModel.uiState.value.configuredEntityItems.first().config)
                 advanceUntilIdle()
 
                 coVerify { mediaControlRepository.setConfiguredEntities(emptyList()) }
@@ -202,7 +202,7 @@ class MediaControlSettingsViewModelTest {
                 advanceUntilIdle()
                 awaitItem() // Start for radio
 
-                viewModel.removeEntity(0)
+                viewModel.removeEntity(viewModel.uiState.value.configuredEntityItems.first().config)
                 advanceUntilIdle()
 
                 coVerify {

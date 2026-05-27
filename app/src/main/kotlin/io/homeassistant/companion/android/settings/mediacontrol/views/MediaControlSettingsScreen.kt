@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Text
@@ -65,7 +65,7 @@ internal fun MediaControlSettingsContent(
     uiState: MediaControlSettingsUiState,
     onServerSelected: (Int) -> Unit,
     onEntitySelected: (String) -> Unit,
-    onRemoveEntity: (Int) -> Unit,
+    onRemoveEntity: (MediaControlEntityConfig) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -102,13 +102,13 @@ internal fun MediaControlSettingsContent(
                 )
             }
 
-            itemsIndexed(
+            items(
                 items = uiState.configuredEntityItems,
-                key = { _, item -> item.config.id },
-            ) { index, item ->
+                key = { item -> item.config.id },
+            ) { item ->
                 ConfiguredEntityRow(
                     item = item,
-                    onRemove = { onRemoveEntity(index) },
+                    onRemove = { onRemoveEntity(item.config) },
                     modifier = Modifier.animateItem(),
                 )
             }

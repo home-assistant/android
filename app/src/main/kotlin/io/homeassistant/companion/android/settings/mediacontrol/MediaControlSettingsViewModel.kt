@@ -183,13 +183,15 @@ class MediaControlSettingsViewModel @VisibleForTesting constructor(
         }
     }
 
-    /** Removes the configured entity at [index] from the list, then persists the change immediately. */
-    fun removeEntity(index: Int) {
+    /**
+     * Removes [config] from the configured list, then persists the change immediately.
+     * Has no effect if [config] is not found in the list.
+     */
+    fun removeEntity(config: MediaControlEntityConfig) {
         viewModelScope.launch {
             val newConfigs = _uiState.value.configuredEntityItems
                 .map { it.config }
-                .toMutableList()
-                .also { it.removeAt(index) }
+                .filter { it != config }
             mediaControlRepository.setConfiguredEntities(newConfigs)
         }
     }
