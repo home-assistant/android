@@ -94,6 +94,20 @@ class LocalConnectProxyTest {
     }
 
     @Test
+    fun `Given headers terminated by blank line when reading CONNECT headers then returns complete`() {
+        val input = ByteArrayInputStream("Host: example.com\r\nProxy-Connection: keep-alive\r\n\r\n".encodeToByteArray())
+
+        assertEquals(ConnectProxyHeaderReadResult.Complete, readConnectProxyHeaders(input))
+    }
+
+    @Test
+    fun `Given EOF before blank line when reading CONNECT headers then returns incomplete`() {
+        val input = ByteArrayInputStream("Host: example.com\r\n".encodeToByteArray())
+
+        assertEquals(ConnectProxyHeaderReadResult.Incomplete, readConnectProxyHeaders(input))
+    }
+
+    @Test
     fun `Given empty stream when reading ASCII line then return null`() {
         val input = ByteArrayInputStream(ByteArray(0))
         assertNull(readConnectProxyAsciiLine(input))

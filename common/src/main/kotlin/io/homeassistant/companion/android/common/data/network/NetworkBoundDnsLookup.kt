@@ -10,6 +10,7 @@ import java.net.IDN
 import java.net.InetAddress
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
+import java.text.ParseException
 import kotlin.random.Random
 import timber.log.Timber
 
@@ -22,6 +23,9 @@ private const val DNS_TYPE_AAAA = 28
 private const val DNS_CLASS_IN = 1
 private const val DNS_OPCODE_QUERY = 0
 private const val DNS_RCODE_NO_ERROR = 0
+private const val DNS_TRANSACTION_ID_RANGE = 0x10000
+private const val MAX_DNS_LABEL_LENGTH = 63
+private const val MAX_DNS_NAME_LENGTH = 255
 
 /**
  * A DNS query packet and its transaction identifier.
@@ -178,7 +182,7 @@ internal object NetworkBoundDnsLookup {
     internal fun buildDnsQuery(hostname: String, recordType: Int): DnsQuery {
         val question = encodeHostnameQuestion(hostname, recordType)
         val packet = ByteArray(DNS_HEADER_SIZE + question.size)
-        val transactionId = Random.nextInt(from = 0, until = Short.MAX_VALUE.toInt())
+        val transactionId = Random.nextInt(from = 0, until = DNS_TRANSACTION_ID_RANGE)
         packet[0] = (transactionId shr 8).toByte()
         packet[1] = transactionId.toByte()
         packet[2] = ((DNS_OPCODE_QUERY shl 3) or 0x01).toByte()
@@ -308,8 +312,26 @@ internal object NetworkBoundDnsLookup {
     }
 
     private fun encodeHostnameQuestion(hostname: String, recordType: Int): ByteArray {
-        val asciiHostname = IDN.toASCII(hostname, IDN.ALLOW_UNASSIGNED)
+        val asciiHostname = try {
+            IDN.toASCII(hostname, IDN.ALLOW_UNASSIGNED)
+        } catch (exception: ParseException) {
+            throw UnknownHostException(hostname).apply { initCause(exception) }
+        } catch (exception: IllegalArgumentException) {
+            throw UnknownHostException(hostname).apply { initCause(exception) }
+        }
         val labels = asciiHostname.split('.').filter { it.isNotEmpty() }
+        var encodedNameLength = 0
+        for (label in labels) {
+            if (label.length > MAX_DNS_LABEL_LENGTH) {
+                throw UnknownHostException(hostname)
+            }
+            encodedNameLength += label.length + 1
+        }
+        encodedNameLength += 1
+        if (encodedNameLength > MAX_DNS_NAME_LENGTH) {
+            throw UnknownHostException(hostname)
+        }
+
         val question = ByteArray(
             labels.sumOf { it.length + 1 } + 1 + 2 + 2,
         )

@@ -109,11 +109,10 @@ class LocalConnectProxy @Inject constructor(private val networkAwareDns: Network
                 .trim()
             val (host, port) = parseConnectTarget(target)
 
-            while (true) {
-                val headerLine = readConnectProxyAsciiLine(input) ?: break
-                if (headerLine.isEmpty()) {
-                    break
-                }
+            if (readConnectProxyHeaders(input) != ConnectProxyHeaderReadResult.Complete) {
+                Timber.tag(TAG).d("CONNECT proxy received incomplete request headers")
+                sendErrorResponse(client, HTTP_BAD_GATEWAY)
+                return
             }
 
             val address = connectToTarget(host = host, port = port)
@@ -177,6 +176,7 @@ class LocalConnectProxy @Inject constructor(private val networkAwareDns: Network
     private fun relay(clientInput: InputStream, clientOutput: java.io.OutputStream, remoteSocket: Socket) {
         val remoteInput = remoteSocket.getInputStream()
         val remoteOutput = remoteSocket.getOutputStream()
+
         val clientToRemote = thread(isDaemon = true) {
             runCatching { clientInput.copyTo(remoteOutput) }
             runCatching { remoteSocket.shutdownOutput() }
@@ -184,6 +184,7 @@ class LocalConnectProxy @Inject constructor(private val networkAwareDns: Network
         val remoteToClient = thread(isDaemon = true) {
             runCatching { remoteInput.copyTo(clientOutput) }
             runCatching { clientOutput.flush() }
+            runCatching { remoteSocket.shutdownInput() }
         }
         clientToRemote.join()
         remoteToClient.join()
@@ -251,6 +252,29 @@ internal fun parseConnectTarget(target: String): Pair<String, Int> {
 private fun String.toValidConnectPortOrNull(): Int? {
     val port = toIntOrNull() ?: return null
     return port.takeIf { it in MIN_CONNECT_PORT..MAX_CONNECT_PORT }
+}
+
+/**
+ * Result of reading CONNECT request headers up to the blank line terminator.
+ */
+internal enum class ConnectProxyHeaderReadResult {
+    /** Headers ended with an empty line. */
+    Complete,
+
+    /** The stream ended before the blank line terminator. */
+    Incomplete,
+}
+
+/**
+ * Reads CONNECT request headers until the blank line that terminates the header block.
+ */
+internal fun readConnectProxyHeaders(input: InputStream): ConnectProxyHeaderReadResult {
+    while (true) {
+        when (val headerLine = readConnectProxyAsciiLine(input)) {
+            null -> return ConnectProxyHeaderReadResult.Incomplete
+            "" -> return ConnectProxyHeaderReadResult.Complete
+        }
+    }
 }
 
 /**

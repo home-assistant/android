@@ -1,7 +1,9 @@
 package io.homeassistant.companion.android.common.data.network
 
 import java.net.InetAddress
+import java.net.UnknownHostException
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -101,6 +103,48 @@ class NetworkBoundDnsLookupTest {
         )
 
         assertEquals(DnsResponseParseResult.Matched(listOf(ipv6)), result)
+    }
+
+    @Test
+    fun `Given DNS query when building then uses full 16-bit transaction id range`() {
+        val transactionIds = buildSet {
+            repeat(200) {
+                add(
+                    NetworkBoundDnsLookup.buildDnsQuery(
+                        hostname = "ha.example.com",
+                        recordType = 1,
+                    ).transactionId,
+                )
+            }
+        }
+
+        assertTrue(transactionIds.any { it >= 0x8000 })
+    }
+
+    @Test
+    fun `Given invalid IDN hostname when building DNS query then throws UnknownHostException`() {
+        assertThrows(UnknownHostException::class.java) {
+            NetworkBoundDnsLookup.buildDnsQuery(hostname = "bad\uD800host", recordType = 1)
+        }
+    }
+
+    @Test
+    fun `Given label longer than 63 bytes when building DNS query then throws`() {
+        val longLabel = "${"a".repeat(64)}.example.com"
+
+        assertThrows(UnknownHostException::class.java) {
+            NetworkBoundDnsLookup.buildDnsQuery(hostname = longLabel, recordType = 1)
+        }
+    }
+
+    @Test
+    fun `Given QNAME longer than 255 bytes when building DNS query then throws`() {
+        val labels = List(5) { "a".repeat(63) }.joinToString(".")
+        assertTrue(labels.length > 255)
+
+        assertThrows(UnknownHostException::class.java) {
+            NetworkBoundDnsLookup.buildDnsQuery(hostname = labels, recordType = 1)
+        }
     }
 
     @Test

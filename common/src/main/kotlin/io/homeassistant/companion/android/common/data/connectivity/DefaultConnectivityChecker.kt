@@ -10,14 +10,20 @@ import io.homeassistant.companion.android.util.UrlUtil
 import io.homeassistant.companion.android.util.sensitive
 import java.io.IOException
 import javax.inject.Inject
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.Serializable
+import okhttp3.Call
+import okhttp3.Callback
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
 import timber.log.Timber
 
 @Serializable
@@ -127,11 +133,11 @@ internal class DefaultConnectivityChecker @Inject constructor(
             withTimeout(CONNECTIVITY_TIMEOUT) {
                 val manifestUrl = "${UrlUtil.extractBaseUrl(url)}manifest.json"
                 val request = Request.Builder().url(manifestUrl).get().build()
-                okHttpClient.newCall(request).execute().use { response ->
+                executeRequest(request) { response ->
                     if (!response.isSuccessful) {
                         throw IOException("HTTP ${response.code}")
                     }
-                    val responseText = response.body.string()
+                    val responseText = response.body?.string()
                         ?: throw IOException("Empty manifest response")
                     val manifest = kotlinJsonMapper.decodeFromString<ManifestResponse>(responseText)
                     if (manifest.isHomeAssistant()) {
@@ -150,13 +156,46 @@ internal class DefaultConnectivityChecker @Inject constructor(
         }
     }
 
-    private fun executeHeadRequest(url: String, @StringRes successMessage: Int): ConnectivityCheckResult {
+    private suspend fun executeHeadRequest(url: String, @StringRes successMessage: Int): ConnectivityCheckResult {
         val request = Request.Builder().url(url).head().build()
-        okHttpClient.newCall(request).execute().use { response ->
+        return executeRequest(request) { response ->
             if (response.isSuccessful || response.code in 400..499) {
-                return ConnectivityCheckResult.Success(successMessage)
+                ConnectivityCheckResult.Success(successMessage)
+            } else {
+                throw IOException("HTTP ${response.code}")
             }
-            throw IOException("HTTP ${response.code}")
         }
+    }
+
+    private suspend fun executeRequest(
+        request: Request,
+        transform: (Response) -> ConnectivityCheckResult,
+    ): ConnectivityCheckResult = suspendCancellableCoroutine { continuation ->
+        val call = okHttpClient.newCall(request)
+        continuation.invokeOnCancellation { call.cancel() }
+        call.enqueue(
+            object : Callback {
+                override fun onFailure(call: Call, exception: IOException) {
+                    if (continuation.isActive) {
+                        continuation.resumeWithException(exception)
+                    }
+                }
+
+                override fun onResponse(call: Call, response: Response) {
+                    response.use {
+                        try {
+                            val result = transform(response)
+                            if (continuation.isActive) {
+                                continuation.resume(result)
+                            }
+                        } catch (exception: Exception) {
+                            if (continuation.isActive) {
+                                continuation.resumeWithException(exception)
+                            }
+                        }
+                    }
+                }
+            },
+        )
     }
 }
