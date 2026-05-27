@@ -22,9 +22,7 @@ data class LocationHistoryItem(
     @ColumnInfo(name = "location_name")
     val locationName: String?,
     /**
-     * Full zone entity IDs the device was in when this row was logged. Mirrors what was sent on
-     * the wire as `in_zones` (see architecture discussion
-     * https://github.com/home-assistant/architecture/discussions/1387). Stored as a JSON string
+     * Full zone entity IDs the device was in when this row was logged. Stored as a JSON string
      * via [LocationHistoryInZonesConverter]; empty list means the device was in no zone.
      */
     @ColumnInfo(name = "in_zones", defaultValue = "[]")
