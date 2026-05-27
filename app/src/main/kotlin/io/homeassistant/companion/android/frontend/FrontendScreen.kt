@@ -43,6 +43,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.common.R as commonR
@@ -72,6 +73,7 @@ import io.homeassistant.companion.android.onboarding.locationforsecureconnection
 import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.compose.media.player.HAMediaPlayer
+import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
 import io.homeassistant.companion.android.util.compose.webview.HAWebView
 import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.webview.insecure.BlockInsecureScreen
@@ -234,6 +236,7 @@ internal fun FrontendScreenContent(
         // Always render WebView at base layer
         SafeHAWebView(
             canGoBack = canGoBack,
+            loadedUrl = viewState.url,
             onWebViewCreated = { webView = it },
             webViewClient = webViewClient,
             webChromeClient = webChromeClient,
@@ -425,6 +428,7 @@ private fun ErrorOverlay(
 @Composable
 private fun SafeHAWebView(
     canGoBack: Boolean,
+    loadedUrl: String?,
     onWebViewCreated: (WebView) -> Unit,
     webViewClient: WebViewClient,
     contentState: FrontendViewState.Content?,
@@ -478,6 +482,7 @@ private fun SafeHAWebView(
                     )
                 },
                 canGoBack = canGoBack,
+                loadedUrl = loadedUrl?.takeIf { it != BLANK_URL }?.toUri(),
                 onWebViewCreationFailed = onWebViewCreationFailed,
             )
 

@@ -135,16 +135,19 @@ class HAWebViewClientTest {
     }
 
     @Test
-    fun `Given transition between different origins when onPageFinished then clears webView history`() {
+    fun `Given transition between different origins when onPageFinished then keeps history for NavigateToRoot`() {
         val webView = mockk<WebView>(relaxUnitFun = true) {
             every { canGoBack() } returns true
         }
 
-        // First load on internal URL, then switch to external (e.g. network change)
+        // First load on internal URL, then switch to external (e.g. network change).
+        // History is intentionally preserved so resolveBackAction can detect the
+        // stale cross-origin previousUrl and route the user to root via
+        // NavigateToRoot on the next back press, instead of exiting the app.
         webViewClient.onPageFinished(webView, "http://192.168.1.10:8123/history?entity_id=foo")
         webViewClient.onPageFinished(webView, "https://my.duckdns.org:8123/history?entity_id=foo")
 
-        io.mockk.verify(exactly = 1) { webView.clearHistory() }
+        io.mockk.verify(exactly = 0) { webView.clearHistory() }
     }
 
     @Test
