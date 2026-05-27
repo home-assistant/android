@@ -20,20 +20,20 @@ object SdkVersionDetector {
     @JvmField
     val ISSUE = Issue.create(
         id = "SdkVersionAccess",
-        briefDescription = "Direct read of Build.VERSION.SDK_INT bypasses the sdkVersion provider",
+        briefDescription = "Direct read of Build.VERSION.SDK_INT bypasses the SdkVersion object",
         explanation = """
-            Production code should call `sdkVersion.isAtLeast(api)` instead of reading
-            `Build.VERSION.SDK_INT` directly for version gates. The provider has a
-            `@VisibleForTesting` setter so tests can simulate other SDK levels, and its
+            Code should call `SdkVersion.isAtLeast(version)` instead of reading
+            `Build.VERSION.SDK_INT` directly for version gates. `SdkVersion` exposes a
+            `@VisibleForTesting` `sdkInt` property so tests can simulate other SDK levels, and its
             `@ChecksSdkIntAtLeast(parameter = 0)` annotation lets Android Lint recognise the
             version gate without `@SuppressLint("NewApi")`.
 
             When you need the raw `SDK_INT` value as a string — typically for diagnostic
-            logging or registration payloads — use `sdkVersion.toString()` (or string
-            interpolation `"... ${"$"}sdkVersion ..."`) instead of `Build.VERSION.SDK_INT.toString()`.
+            logging or registration payloads — use `SdkVersion.toString()` (or string
+            interpolation `"... ${"$"}SdkVersion ..."`) instead of `Build.VERSION.SDK_INT.toString()`.
 
             If a call site genuinely needs to read `Build.VERSION.SDK_INT` directly (typically
-            the single declaration of `sdkVersion` itself), suppress with
+            the `SdkVersion` object itself), suppress with
             `@SuppressLint("SdkVersionAccess")` on the enclosing function, property, or class
             and document why in code review.
         """.trimIndent(),
@@ -61,8 +61,8 @@ object SdkVersionDetector {
                 ISSUE,
                 reference,
                 context.getLocation(reference),
-                "Read of `Build.VERSION.SDK_INT` is forbidden. Use `sdkVersion.isAtLeast(api)` " +
-                    "for version gates, or `sdkVersion.toString()` / `\"... \$sdkVersion ...\"` " +
+                "Read of `Build.VERSION.SDK_INT` is forbidden. Use `SdkVersion.isAtLeast(version)` " +
+                    "for version gates, or `SdkVersion.toString()` / `\"... \$SdkVersion ...\"` " +
                     "when you need the raw value as a string. Suppress with " +
                     "`@SuppressLint(\"SdkVersionAccess\")` only if this site is one of the few " +
                     "legitimate raw accesses.",

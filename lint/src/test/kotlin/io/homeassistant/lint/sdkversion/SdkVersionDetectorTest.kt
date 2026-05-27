@@ -39,7 +39,7 @@ class SdkVersionDetectorTest {
             .run()
             .expect(
                 """
-                src/com/example/test.kt:5: Error: Read of Build.VERSION.SDK_INT is forbidden. Use sdkVersion.isAtLeast(api) for version gates, or sdkVersion.toString() / "... ${"$"}sdkVersion ..." when you need the raw value as a string. Suppress with @SuppressLint("SdkVersionAccess") only if this site is one of the few legitimate raw accesses. [SdkVersionAccess]
+                src/com/example/test.kt:5: Error: Read of Build.VERSION.SDK_INT is forbidden. Use SdkVersion.isAtLeast(version) for version gates, or SdkVersion.toString() / "... ${"$"}SdkVersion ..." when you need the raw value as a string. Suppress with @SuppressLint("SdkVersionAccess") only if this site is one of the few legitimate raw accesses. [SdkVersionAccess]
                 fun checkSdk(): Boolean = Build.VERSION.SDK_INT >= 30
                                                         ~~~~~~~
                 1 error
