@@ -72,11 +72,13 @@ TLS (SNI and certificate validation).
 
 | Component | Module | Role |
 |-----------|--------|------|
-| [`NetworkAwareDns`](../common/src/main/kotlin/io/homeassistant/companion/android/common/data/network/NetworkAwareDns.kt) | `:common` | OkHttp `Dns`; explicit AAAA + A on API 29+ via `DnsResolver`; on API 23–28 via [`NetworkBoundDnsLookup`](../common/src/main/kotlin/io/homeassistant/companion/android/common/data/network/NetworkBoundDnsLookup.kt) |
-| [`NetworkBoundDnsLookup`](../common/src/main/kotlin/io/homeassistant/companion/android/common/data/network/NetworkBoundDnsLookup.kt) | `:common` | Raw DNS queries on the active network’s DNS servers when `DnsResolver` is unavailable |
-| [`LocalConnectProxy`](../common/src/main/kotlin/io/homeassistant/companion/android/common/data/network/LocalConnectProxy.kt) | `:common` | Localhost HTTP CONNECT proxy; resolves targets with `NetworkAwareDns` and connects via `Network.socketFactory` |
-| [`WebViewConnectProxyManager`](../app/src/main/kotlin/io/homeassistant/companion/android/frontend/webview/WebViewConnectProxyManager.kt) | `:app` | Starts proxy and sets `ProxyController` override when `WebViewFeature.PROXY_OVERRIDE` is supported |
-| [`HostnameWebViewRequestProxy`](../common/src/main/kotlin/io/homeassistant/companion/android/common/data/network/HostnameWebViewRequestProxy.kt) | `:common` | Fallback: proxies GET/HEAD for the configured hostname through OkHttp when CONNECT proxy is unavailable |
+| [`NetworkAwareDns`](../common/src/main/kotlin/io/homeassistant/companion/android/common/data/network/NetworkAwareDns.kt) | `:common` | OkHttp `Dns` + [ActiveNetworkSocketFactory](../common/src/main/kotlin/io/homeassistant/companion/android/common/data/network/ActiveNetworkSocketFactory.kt); explicit AAAA + A on API 29+ via `DnsResolver`; on API 23–28 via [`NetworkBoundDnsLookup`](../common/src/main/kotlin/io/homeassistant/companion/android/common/data/network/NetworkBoundDnsLookup.kt) |
+| [`NetworkBoundDnsLookup`](../common/src/main/kotlin/io/homeassistant/companion/android/common/data/network/NetworkBoundDnsLookup.kt) | `:common` | Raw DNS queries on the active network’s DNS servers when `DnsResolver` is unavailable; ignores spurious UDP packets until the matching transaction ID is received |
+| [`NetworkBoundDnsResult`](../common/src/main/kotlin/io/homeassistant/companion/android/common/data/network/NetworkBoundDnsResult.kt) | `:common` | Pairs DNS results with the [Network] snapshot used for resolution; socket connects reuse the same network |
+| [`LiteralIpAddressParser`](../common/src/main/kotlin/io/homeassistant/companion/android/common/data/network/LiteralIpAddressParser.kt) | `:common` | Strict numeric IP literal parsing for `NetworkAwareDns` (rejects `host:port`, zone index, mismatched brackets) |
+| [`LocalConnectProxy`](../common/src/main/kotlin/io/homeassistant/companion/android/common/data/network/LocalConnectProxy.kt) | `:common` | Localhost HTTP CONNECT proxy; uses `lookupBoundToActiveNetwork()` and connects on the same [Network] snapshot |
+| [`WebViewConnectProxyManager`](../app/src/main/kotlin/io/homeassistant/companion/android/frontend/webview/WebViewConnectProxyManager.kt) | `:app` | Starts proxy and sets `ProxyController` override when `WebViewFeature.PROXY_OVERRIDE` is supported; 10 s timeout; session retain/release lifecycle |
+| [`HostnameWebViewRequestProxy`](../common/src/main/kotlin/io/homeassistant/companion/android/common/data/network/HostnameWebViewRequestProxy.kt) | `:common` | Fallback: proxies GET/HEAD for the configured hostname through OkHttp (follows redirects) when CONNECT proxy is unavailable |
 | [`HAWebViewClient`](../app/src/main/kotlin/io/homeassistant/companion/android/util/HAWebViewClient.kt) | `:app` | Uses request interception only when the CONNECT proxy is **not** active; maps errors using `logicalHostname` |
 | [`toLogicalHostname()`](../common/src/main/kotlin/io/homeassistant/companion/android/common/data/network/WebViewHostnameExtensions.kt) | `:common` | Extracts hostname from URL for error matching and intercept fallback |
 
@@ -86,13 +88,17 @@ TLS (SNI and certificate validation).
 
 | API level | Mechanism |
 |-----------|-----------|
-| **29+ (Q)** | `DnsResolver.query()` for TYPE_AAAA, then TYPE_A; fallback to `Network.getAllByName()` |
+| **29+ (Q)** | `DnsResolver.query()` for TYPE_AAAA, then TYPE_A; fallback to `NetworkBoundDnsLookup`, then `Network.getAllByName()` |
 | **23–28** | `NetworkBoundDnsLookup` (UDP DNS on link DNS servers); fallback to `Network.getAllByName()` |
 | **No active network** | `Dns.SYSTEM.lookup()` |
 
 DNS work must not block the main thread. On API 29+, `DnsResolver` delivers I/O events on the
 main looper; lookups started on the UI thread are dispatched to a background worker first
 (see `runOffMainThread` in `NetworkAwareDns`).
+
+OkHttp TCP connections use [ActiveNetworkSocketFactory] on the active network at connect time.
+For strict DNS/TCP binding on the same [Network] snapshot, use [lookupBoundToActiveNetwork] and
+[openSocketOnNetwork] (as in [LocalConnectProxy] and the port connectivity check).
 
 ### WebView
 
@@ -110,7 +116,9 @@ Before loading a URL in WebView, callers invoke:
 
 ```kotlin
 webViewConnectProxyManager.ensureConfigured()
+webViewConnectProxyManager.retainSession()  // keep proxy alive while WebView is active
 webView.loadUrl(url)  // URL unchanged — no IPv6 literal rewrite, no extra headers
+// releaseSession() in ViewModel.onCleared / Activity.onDestroy
 ```
 
 Integration points:
@@ -132,7 +140,8 @@ does not exactly match the loaded URL (e.g. redirects). It is **not** used to re
 
 1. Parse CONNECT request line and headers byte-by-byte (`readConnectProxyAsciiLine`) — **do not**
    use `BufferedReader`, or TLS bytes after the header block will be lost.
-2. Resolve hostname with `NetworkAwareDns.lookup()` and connect with `Network.socketFactory`.
+2. Resolve hostname with `NetworkAwareDns.lookupBoundToActiveNetwork()` and connect with
+   `openSocketOnNetwork()` on the same [Network] snapshot.
 3. Reply `HTTP/1.1 200 Connection Established`, then relay both directions on the **same**
    `InputStream` used for header parsing.
 4. On failure, send `HTTP/1.1 502 Bad Gateway` and log at warning level (`LocalConnectProxy` tag).
@@ -174,8 +183,11 @@ ConnectionViewModel: WebView CONNECT proxy unavailable, using OkHttp request int
 | Test class | Covers |
 |------------|--------|
 | [`NetworkAwareDnsTest`](../common/src/test/kotlin/io/homeassistant/companion/android/common/data/network/NetworkAwareDnsTest.kt) | OkHttp integration, address selection |
-| [`NetworkBoundDnsLookupTest`](../common/src/test/kotlin/io/homeassistant/companion/android/common/data/network/NetworkBoundDnsLookupTest.kt) | DNS packet build/parse |
-| [`LocalConnectProxyTest`](../common/src/test/kotlin/io/homeassistant/companion/android/common/data/network/LocalConnectProxyTest.kt) | CONNECT target parsing, line reading |
+| [`NetworkBoundDnsLookupTest`](../common/src/test/kotlin/io/homeassistant/companion/android/common/data/network/NetworkBoundDnsLookupTest.kt) | DNS packet build/parse; transaction ID mismatch ignored; NXDOMAIN returns matched empty list |
+| [`LiteralIpAddressParserTest`](../common/src/test/kotlin/io/homeassistant/companion/android/common/data/network/LiteralIpAddressParserTest.kt) | IP literal vs hostname; rejects `host:port` and zone index |
+| [`LiteralIpAddressParserIpv6Test`](../common/src/test/kotlin/io/homeassistant/companion/android/common/data/network/LiteralIpAddressParserIpv6Test.kt) | IPv6 literals (Robolectric) |
+| [`NetworkAwareDnsIpv6LiteralTest`](../common/src/test/kotlin/io/homeassistant/companion/android/common/data/network/NetworkAwareDnsIpv6LiteralTest.kt) | Bracketed IPv6 via `NetworkAwareDns.lookup()` (Robolectric) |
+| [`LocalConnectProxyTest`](../common/src/test/kotlin/io/homeassistant/companion/android/common/data/network/LocalConnectProxyTest.kt) | CONNECT target parsing (incl. unbracketed IPv6), address ordering, line length limit |
 | [`HostnameWebViewRequestProxyTest`](../common/src/test/kotlin/io/homeassistant/companion/android/common/data/network/HostnameWebViewRequestProxyTest.kt) | Intercept fallback guards |
 | [`WebViewConnectProxyManagerTest`](../app/src/test/kotlin/io/homeassistant/companion/android/frontend/webview/WebViewConnectProxyManagerTest.kt) | PROXY_OVERRIDE feature detection |
 | [`HAWebViewClientTest`](../app/src/test/kotlin/io/homeassistant/companion/android/util/HAWebViewClientTest.kt) | Error mapping with `logicalHostname` |
@@ -185,8 +197,13 @@ ConnectionViewModel: WebView CONNECT proxy unavailable, using OkHttp request int
 - **API 23 + no PROXY_OVERRIDE:** WebSockets and non-GET/HEAD requests still use Chromium DNS;
   IPv6-only hosts may fail for real-time frontend features even when the initial page loads via
   intercept.
-- **Dual-stack hosts:** Address preference in `LocalConnectProxy` prefers IPv6 when no IPv4 is
-  present; behaviour for mixed stacks follows existing selection logic in `selectAddress`.
+- **Dual-stack hosts:** DNS returns both AAAA and A when present. `LocalConnectProxy` tries IPv6
+  first, then falls back to IPv4 on connect failure.
+- **Noisy UDP environments:** `NetworkBoundDnsLookup` ignores up to eight spurious DNS packets
+  before giving up on a server; extremely chatty networks may still time out and fall back to the
+  next DNS server or `Network.getAllByName()`.
+- **Large WebView intercept responses:** `HostnameWebViewRequestProxy` buffers the full body in
+  memory.
 - **androidx.webkit 1.15+** declares library `minSdk` 24; the **app** remains at minSdk 23.
   Runtime feature checks gate PROXY_OVERRIDE usage.
 

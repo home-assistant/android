@@ -44,11 +44,11 @@ import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -321,7 +321,13 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         loadServer()
     }
 
+    private var webViewProxySessionActive = false
+
     override fun onCleared() {
+        if (webViewProxySessionActive) {
+            webViewConnectProxyManager.releaseSession()
+            webViewProxySessionActive = false
+        }
         super.onCleared()
         exoPlayerManager.close()
     }
@@ -657,7 +663,12 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                     val proxyConfigured = withContext(ioDispatcher) {
                         webViewConnectProxyManager.ensureConfigured()
                     }
-                    if (!proxyConfigured) {
+                    if (proxyConfigured) {
+                        if (!webViewProxySessionActive) {
+                            webViewConnectProxyManager.retainSession()
+                            webViewProxySessionActive = true
+                        }
+                    } else {
                         Timber.w("WebView CONNECT proxy unavailable, using OkHttp request interception fallback")
                     }
                     _viewState.update {

@@ -3,6 +3,7 @@
     tools:ignore="MissingDefaultResource">
     <release version="2026.5.5 - Main" versioncode="3">
         <change>Added support for Android 17's local network permission</change>
+        <change>Fixed connectivity to Home Assistant instances reachable only via IPv6 hostnames</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2026.5.5 - Wear" versioncode="2">

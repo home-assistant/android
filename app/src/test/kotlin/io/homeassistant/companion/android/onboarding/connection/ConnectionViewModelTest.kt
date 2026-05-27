@@ -16,10 +16,10 @@ import io.homeassistant.companion.android.common.data.connectivity.ConnectivityC
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
+import io.homeassistant.companion.android.frontend.webview.WebViewConnectProxyManager
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.util.HAWebViewClient
-import io.homeassistant.companion.android.frontend.webview.WebViewConnectProxyManager
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import io.mockk.coEvery
 import io.mockk.every
@@ -508,5 +508,17 @@ class ConnectionViewModelTest {
 
         verify { filePathCallback.onReceiveValue(null) }
         assertNull(viewModel.pendingFileChooser.value)
+    }
+
+    @Test
+    fun `Given ViewModel is cleared when onCleared then proxy session is released`() = runTest {
+        val viewModel = createViewModel("https://homeassistant.local:8123")
+        advanceUntilIdle()
+
+        val onCleared = androidx.lifecycle.ViewModel::class.java.getDeclaredMethod("onCleared")
+        onCleared.isAccessible = true
+        onCleared.invoke(viewModel)
+
+        verify { webViewConnectProxyManager.releaseSession() }
     }
 }

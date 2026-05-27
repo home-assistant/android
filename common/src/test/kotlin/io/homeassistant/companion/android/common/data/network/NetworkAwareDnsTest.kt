@@ -5,7 +5,6 @@ import android.net.ConnectivityManager
 import android.net.Network
 import io.mockk.every
 import io.mockk.mockk
-import java.net.Inet6Address
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.concurrent.Executors
@@ -43,6 +42,17 @@ class NetworkAwareDnsTest {
     fun `Given active network when looking up hostname then uses network DNS resolution`() {
         val hostname = "homeassistant.local"
         val expectedAddress = InetAddress.getByName("192.168.1.100")
+        mockNetworkLookup(hostname, expectedAddress)
+
+        val result = networkAwareDns.lookup(hostname)
+
+        assertEquals(listOf(expectedAddress), result)
+    }
+
+    @Test
+    fun `Given IPv4 host with port when looking up hostname then uses DNS resolution`() {
+        val hostname = "192.168.1.1:8123"
+        val expectedAddress = InetAddress.getByName("192.0.2.1")
         mockNetworkLookup(hostname, expectedAddress)
 
         val result = networkAwareDns.lookup(hostname)
@@ -114,6 +124,30 @@ class NetworkAwareDnsTest {
         assertEquals(2, result.size)
         assertTrue(result.contains(ulaAddress))
         assertTrue(result.contains(globalV6Address))
+    }
+
+    @Test
+    fun `Given bound lookup when resolving on active network then returns same network snapshot`() {
+        val network = mockk<Network>()
+        every { connectivityManager.activeNetwork } returns network
+        networkAwareDns.networkLookupOverride = { boundNetwork, _ ->
+            assertEquals(network, boundNetwork)
+            listOf(InetAddress.getByName("192.0.2.1"))
+        }
+
+        val result = networkAwareDns.lookupBoundToActiveNetwork("homeassistant.local")
+
+        assertEquals(network, result.network)
+        assertEquals(1, result.addresses.size)
+    }
+
+    @Test
+    fun `Given no active network when bound lookup then throws UnknownHostException`() {
+        every { connectivityManager.activeNetwork } returns null
+
+        assertThrows(UnknownHostException::class.java) {
+            networkAwareDns.lookupBoundToActiveNetwork("homeassistant.local")
+        }
     }
 
     @Test

@@ -11,13 +11,13 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dagger.multibindings.IntoSet
+import io.homeassistant.companion.android.common.data.network.NetworkAwareDns
 import io.homeassistant.companion.android.common.data.network.NetworkChangeObserver
 import io.homeassistant.companion.android.common.data.network.NetworkChangeObserverImpl
 import io.homeassistant.companion.android.common.data.network.NetworkHelper
 import io.homeassistant.companion.android.common.data.network.NetworkHelperImpl
 import io.homeassistant.companion.android.common.data.network.NetworkStatusMonitor
 import io.homeassistant.companion.android.common.data.network.NetworkStatusMonitorImpl
-import io.homeassistant.companion.android.common.data.network.NetworkAwareDns
 import io.homeassistant.companion.android.common.data.network.WifiHelper
 import io.homeassistant.companion.android.common.data.network.WifiHelperImpl
 import io.homeassistant.companion.android.di.OkHttpConfigurator

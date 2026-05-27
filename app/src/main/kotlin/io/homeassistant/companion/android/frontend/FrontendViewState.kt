@@ -66,8 +66,12 @@ sealed interface FrontendViewState {
     /**
      * Error state when connection to the server fails.
      */
-    data class Error(override val serverId: Int, override val url: String, val error: FrontendConnectionError, val logicalHostname: String? = null) :
-        FrontendViewState
+    data class Error(
+        override val serverId: Int,
+        override val url: String,
+        val error: FrontendConnectionError,
+        val logicalHostname: String? = null,
+    ) : FrontendViewState
 
     /**
      * Insecure connection state when HTTP is not allowed.

@@ -1,6 +1,6 @@
 package io.homeassistant.companion.android.common.data.network
 
-import android.net.ConnectivityManager
+import io.homeassistant.companion.android.util.sensitive
 import java.io.InputStream
 import java.net.Inet4Address
 import java.net.Inet6Address
@@ -17,6 +17,7 @@ import kotlin.concurrent.thread
 import timber.log.Timber
 
 private const val CONNECT_READ_TIMEOUT_MS = 30_000
+private const val MAX_CONNECT_PROXY_WORKERS = 32
 
 /**
  * Minimal HTTP CONNECT proxy bound to localhost.
@@ -26,17 +27,18 @@ private const val CONNECT_READ_TIMEOUT_MS = 30_000
  * and certificate validation).
  */
 @Singleton
-class LocalConnectProxy @Inject constructor(
-    private val networkAwareDns: NetworkAwareDns,
-    private val connectivityManager: ConnectivityManager,
-) {
+class LocalConnectProxy @Inject constructor(private val networkAwareDns: NetworkAwareDns) {
+    private val lifecycleLock = Any()
     private val running = AtomicBoolean(false)
     private var serverSocket: ServerSocket? = null
     private var acceptThread: Thread? = null
     private var workerPool: ExecutorService? = null
 
+    /** Returns the local port the proxy listens on, or `null` when stopped. */
+    fun currentPort(): Int? = if (running.get()) serverSocket?.localPort else null
+
     /** Returns the local port the proxy listens on, or `null` if startup failed. */
-    fun start(): Int? {
+    fun start(): Int? = synchronized(lifecycleLock) {
         if (running.get()) {
             return serverSocket?.localPort
         }
@@ -44,7 +46,7 @@ class LocalConnectProxy @Inject constructor(
             val socket = ServerSocket()
             socket.bind(InetSocketAddress(InetAddress.getByName("127.0.0.1"), 0))
             serverSocket = socket
-            workerPool = Executors.newCachedThreadPool { runnable ->
+            workerPool = Executors.newFixedThreadPool(MAX_CONNECT_PROXY_WORKERS) { runnable ->
                 Thread(runnable, "LocalConnectProxy-worker").apply { isDaemon = true }
             }
             running.set(true)
@@ -55,12 +57,16 @@ class LocalConnectProxy @Inject constructor(
             socket.localPort
         } catch (e: Exception) {
             Timber.tag(TAG).e(e, "Failed to start local CONNECT proxy")
-            stop()
+            stopInternal()
             null
         }
     }
 
-    fun stop() {
+    fun stop() = synchronized(lifecycleLock) {
+        stopInternal()
+    }
+
+    private fun stopInternal() {
         running.set(false)
         try {
             serverSocket?.close()
@@ -110,14 +116,13 @@ class LocalConnectProxy @Inject constructor(
                 }
             }
 
-            val address = selectAddress(networkAwareDns.lookup(host))
-            val remote = openNetworkSocket(address, port)
+            val address = connectToTarget(host = host, port = port)
             try {
                 client.getOutputStream().write(CONNECT_ESTABLISHED_RESPONSE)
                 client.getOutputStream().flush()
-                relay(input, client.getOutputStream(), remote)
+                relay(input, client.getOutputStream(), address)
             } finally {
-                remote.close()
+                address.close()
             }
         } catch (e: Exception) {
             Timber.tag(TAG).w(e, "CONNECT proxy session failed")
@@ -134,21 +139,33 @@ class LocalConnectProxy @Inject constructor(
         }
     }
 
-    private fun openNetworkSocket(address: InetAddress, port: Int): Socket {
-        val network = connectivityManager.activeNetwork
-        val socket = network?.socketFactory?.createSocket() ?: Socket()
-        socket.connect(InetSocketAddress(address, port), CONNECT_READ_TIMEOUT_MS)
-        return socket
-    }
-
-    private fun selectAddress(addresses: List<InetAddress>): InetAddress {
-        val ipv6 = addresses.filterIsInstance<Inet6Address>()
-        val ipv4 = addresses.filterIsInstance<Inet4Address>()
-        return when {
-            ipv4.isEmpty() && ipv6.isNotEmpty() -> ipv6.first()
-            ipv6.isEmpty() && ipv4.isNotEmpty() -> ipv4.first()
-            else -> addresses.first()
+    private fun connectToTarget(host: String, port: Int): Socket {
+        val boundLookup = networkAwareDns.lookupBoundToActiveNetwork(host)
+        val addresses = orderConnectAddresses(boundLookup.addresses)
+        if (addresses.isEmpty()) {
+            throw java.net.UnknownHostException(host)
         }
+
+        var lastFailure: Exception? = null
+        for (address in addresses) {
+            try {
+                return openSocketOnNetwork(
+                    network = boundLookup.network,
+                    address = address,
+                    port = port,
+                    connectTimeoutMs = CONNECT_READ_TIMEOUT_MS,
+                )
+            } catch (exception: Exception) {
+                lastFailure = exception
+                Timber.tag(TAG).d(
+                    exception,
+                    "CONNECT to %s via %s failed, trying next address",
+                    sensitive(host),
+                    sensitive(address.hostAddress ?: address.toString()),
+                )
+            }
+        }
+        throw lastFailure ?: java.net.UnknownHostException(host)
     }
 
     /**
@@ -182,21 +199,58 @@ class LocalConnectProxy @Inject constructor(
 }
 
 /**
+ * Orders resolved addresses for CONNECT attempts: IPv6 first, then IPv4 when both exist.
+ */
+internal fun orderConnectAddresses(addresses: List<InetAddress>): List<InetAddress> {
+    if (addresses.isEmpty()) {
+        return emptyList()
+    }
+    val ipv6Addresses = addresses.filterIsInstance<Inet6Address>()
+    val ipv4Addresses = addresses.filterIsInstance<Inet4Address>()
+    return if (ipv6Addresses.isNotEmpty() && ipv4Addresses.isNotEmpty()) {
+        (ipv6Addresses + ipv4Addresses).distinct()
+    } else {
+        addresses.distinct()
+    }
+}
+
+/**
  * Parses a CONNECT target such as `host:443` or `[2001:db8::1]:443`.
  */
 internal fun parseConnectTarget(target: String): Pair<String, Int> {
     if (target.startsWith("[")) {
         val host = target.substringAfter("[").substringBefore("]")
-        val port = target.substringAfter("]:").toIntOrNull() ?: 443
+        val portSuffix = target.substringAfter("]", missingDelimiterValue = "")
+        val port = if (portSuffix.startsWith(":")) {
+            portSuffix.substring(1).toValidConnectPortOrNull()
+        } else {
+            null
+        } ?: DEFAULT_CONNECT_PORT
         return host to port
     }
+
     val portSeparator = target.lastIndexOf(':')
-    if (portSeparator == -1) {
-        return target to 443
+    if (portSeparator > 0) {
+        val host = target.substring(0, portSeparator)
+        val port = target.substring(portSeparator + 1).toValidConnectPortOrNull()
+        if (host.count { it == ':' } >= 3 && port != null) {
+            return host to port
+        }
+        if (host.contains('.') || !host.contains(':')) {
+            return host to (port ?: DEFAULT_CONNECT_PORT)
+        }
     }
-    val host = target.substring(0, portSeparator)
-    val port = target.substring(portSeparator + 1).toIntOrNull() ?: 443
-    return host to port
+
+    LiteralIpAddressParser.parse(target)?.let { _ ->
+        return target to DEFAULT_CONNECT_PORT
+    }
+
+    return target to DEFAULT_CONNECT_PORT
+}
+
+private fun String.toValidConnectPortOrNull(): Int? {
+    val port = toIntOrNull() ?: return null
+    return port.takeIf { it in MIN_CONNECT_PORT..MAX_CONNECT_PORT }
 }
 
 /**
@@ -205,6 +259,9 @@ internal fun parseConnectTarget(target: String): Pair<String, Int> {
 internal fun readConnectProxyAsciiLine(input: InputStream): String? {
     val builder = StringBuilder()
     while (true) {
+        if (builder.length > MAX_CONNECT_PROXY_LINE_LENGTH) {
+            throw ConnectProxyLineTooLongException()
+        }
         val byte = input.read()
         if (byte == -1) {
             return builder.toString().takeIf { it.isNotEmpty() }
@@ -219,3 +276,10 @@ internal fun readConnectProxyAsciiLine(input: InputStream): String? {
         builder.append(byte.toChar())
     }
 }
+
+private class ConnectProxyLineTooLongException : Exception()
+
+private const val DEFAULT_CONNECT_PORT = 443
+private const val MIN_CONNECT_PORT = 1
+private const val MAX_CONNECT_PORT = 65535
+private const val MAX_CONNECT_PROXY_LINE_LENGTH = 8192

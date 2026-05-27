@@ -3,11 +3,12 @@ package io.homeassistant.companion.android.common.data.connectivity
 import androidx.annotation.StringRes
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.network.NetworkAwareDns
+import io.homeassistant.companion.android.common.data.network.openSocketOnNetwork
+import io.homeassistant.companion.android.common.data.network.orderConnectAddresses
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.util.UrlUtil
+import io.homeassistant.companion.android.util.sensitive
 import java.io.IOException
-import java.net.InetSocketAddress
-import java.net.Socket
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
@@ -29,6 +30,7 @@ private data class ManifestResponse(val name: String? = null) {
 }
 
 private val CONNECTIVITY_TIMEOUT = 5.seconds
+private val PORT_ATTEMPT_TIMEOUT = 2.seconds
 
 /**
  * Default implementation of [ConnectivityChecker] that performs real network operations.
@@ -41,14 +43,14 @@ internal class DefaultConnectivityChecker @Inject constructor(
     override suspend fun dns(hostname: String): ConnectivityCheckResult = withContext(Dispatchers.IO) {
         try {
             withTimeout(CONNECTIVITY_TIMEOUT) {
-                val addresses = networkAwareDns.lookup(hostname)
-                val addressList = addresses.joinToString(", ") { it.hostAddress ?: "" }
+                val boundLookup = networkAwareDns.lookupBoundToActiveNetwork(hostname)
+                val addressList = boundLookup.addresses.joinToString(", ") { it.hostAddress ?: "" }
                 ConnectivityCheckResult.Success(commonR.string.connection_check_dns, addressList)
             }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.d(e, "DNS resolution failed for $hostname")
+            Timber.d(e, "DNS resolution failed for ${sensitive(hostname)}")
             ConnectivityCheckResult.Failure(commonR.string.connection_check_error_dns)
         }
     }
@@ -56,15 +58,18 @@ internal class DefaultConnectivityChecker @Inject constructor(
     override suspend fun port(hostname: String, port: Int): ConnectivityCheckResult = withContext(Dispatchers.IO) {
         try {
             withTimeout(CONNECTIVITY_TIMEOUT) {
-                val addresses = networkAwareDns.lookup(hostname)
+                val boundLookup = networkAwareDns.lookupBoundToActiveNetwork(hostname)
+                val addresses = orderConnectAddresses(boundLookup.addresses)
                 var lastException: Exception? = null
                 for (address in addresses) {
                     try {
-                        Socket().use { socket ->
-                            socket.connect(
-                                InetSocketAddress(address, port),
-                                CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt(),
-                            )
+                        withTimeout(PORT_ATTEMPT_TIMEOUT) {
+                            openSocketOnNetwork(
+                                network = boundLookup.network,
+                                address = address,
+                                port = port,
+                                connectTimeoutMs = PORT_ATTEMPT_TIMEOUT.inWholeMilliseconds.toInt(),
+                            ).use { /* connected */ }
                         }
                         return@withTimeout ConnectivityCheckResult.Success(
                             commonR.string.connection_check_port,
@@ -72,14 +77,21 @@ internal class DefaultConnectivityChecker @Inject constructor(
                         )
                     } catch (e: Exception) {
                         lastException = e
+                        Timber.d(
+                            e,
+                            "Port %d not reachable on %s via %s",
+                            port,
+                            sensitive(hostname),
+                            sensitive(address.hostAddress ?: address.toString()),
+                        )
                     }
                 }
-                throw lastException ?: IOException("No addresses resolved for $hostname")
+                throw lastException ?: IOException("No addresses resolved for ${sensitive(hostname)}")
             }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.d(e, "Port $port not reachable on $hostname")
+            Timber.d(e, "Port $port not reachable on ${sensitive(hostname)}")
             ConnectivityCheckResult.Failure(commonR.string.connection_check_error_port)
         }
     }
@@ -92,7 +104,7 @@ internal class DefaultConnectivityChecker @Inject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.d(e, "TLS check failed for $url")
+            Timber.d(e, "TLS check failed for ${sensitive(url)}")
             ConnectivityCheckResult.Failure(commonR.string.connection_check_error_tls)
         }
     }
@@ -105,7 +117,7 @@ internal class DefaultConnectivityChecker @Inject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.d(e, "Server connection failed for $url")
+            Timber.d(e, "Server connection failed for ${sensitive(url)}")
             ConnectivityCheckResult.Failure(commonR.string.connection_check_error_server)
         }
     }
@@ -133,7 +145,7 @@ internal class DefaultConnectivityChecker @Inject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.d(e, "Home Assistant verification failed for $url")
+            Timber.d(e, "Home Assistant verification failed for ${sensitive(url)}")
             ConnectivityCheckResult.Failure(commonR.string.connection_check_error_not_home_assistant)
         }
     }

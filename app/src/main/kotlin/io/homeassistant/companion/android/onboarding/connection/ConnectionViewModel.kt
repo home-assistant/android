@@ -116,6 +116,15 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     override val connectivityCheckState = _connectivityCheckState.asStateFlow()
 
     private var connectivityCheckJob: Job? = null
+    private var webViewProxySessionActive = false
+
+    override fun onCleared() {
+        if (webViewProxySessionActive) {
+            webViewConnectProxyManager.releaseSession()
+            webViewProxySessionActive = false
+        }
+        super.onCleared()
+    }
 
     /**
      * Runs connectivity checks against the server URL.
@@ -180,7 +189,12 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
             val proxyConfigured = withContext(ioDispatcher) {
                 webViewConnectProxyManager.ensureConfigured()
             }
-            if (!proxyConfigured) {
+            if (proxyConfigured) {
+                if (!webViewProxySessionActive) {
+                    webViewConnectProxyManager.retainSession()
+                    webViewProxySessionActive = true
+                }
+            } else {
                 Timber.w("WebView CONNECT proxy unavailable, using OkHttp request interception fallback")
             }
             _logicalHostnameFlow.value = authUrl.toLogicalHostname()

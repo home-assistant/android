@@ -2,6 +2,8 @@ package io.homeassistant.companion.android.common.data.network
 
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
+import io.homeassistant.companion.android.util.sensitive
+import java.io.ByteArrayInputStream
 import javax.inject.Inject
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -14,9 +16,11 @@ import timber.log.Timber
  * example on older Android versions or outdated system WebView packages. Only GET and HEAD
  * requests are supported; WebSockets still rely on the system WebView stack.
  */
-class HostnameWebViewRequestProxy @Inject constructor(
-    private val okHttpClient: OkHttpClient,
-) {
+class HostnameWebViewRequestProxy @Inject constructor(okHttpClient: OkHttpClient) {
+    private val redirectingClient = okHttpClient.newBuilder()
+        .followRedirects(true)
+        .followSslRedirects(true)
+        .build()
 
     /**
      * Returns a [WebResourceResponse] when [request] targets [logicalHostname] and can be fetched
@@ -33,7 +37,11 @@ class HostnameWebViewRequestProxy @Inject constructor(
 
         val method = request.method.uppercase()
         if (method != "GET" && method != "HEAD") {
-            Timber.d("Skipping WebView proxy for unsupported method %s to %s", method, logicalHostname)
+            Timber.d(
+                "Skipping WebView proxy for unsupported method %s to %s",
+                method,
+                sensitive(logicalHostname),
+            )
             return null
         }
 
@@ -48,11 +56,11 @@ class HostnameWebViewRequestProxy @Inject constructor(
                 }
                 .build()
 
-            okHttpClient.newCall(okHttpRequest).execute().use { response ->
+            redirectingClient.newCall(okHttpRequest).execute().use { response ->
                 if (!response.isSuccessful && response.code !in REDIRECT_STATUS_CODES) {
                     Timber.w(
                         "WebView proxy for %s returned HTTP %d",
-                        request.url,
+                        sensitive(request.url.toString()),
                         response.code,
                     )
                 }
@@ -65,6 +73,7 @@ class HostnameWebViewRequestProxy @Inject constructor(
                     ?: DEFAULT_ENCODING
                 val responseHeaders = response.headers.toMultimap()
                     .mapValues { entry -> entry.value.firstOrNull().orEmpty() }
+                val bodyBytes = response.body?.bytes() ?: ByteArray(0)
 
                 WebResourceResponse(
                     mimeType,
@@ -72,11 +81,11 @@ class HostnameWebViewRequestProxy @Inject constructor(
                     response.code,
                     response.message.ifBlank { "OK" },
                     responseHeaders,
-                    response.body.byteStream(),
+                    ByteArrayInputStream(bodyBytes),
                 )
             }
         } catch (e: Exception) {
-            Timber.e(e, "WebView proxy failed for %s", request.url)
+            Timber.e(e, "WebView proxy failed for %s", sensitive(request.url.toString()))
             null
         }
     }

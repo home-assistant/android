@@ -40,10 +40,10 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
+import io.homeassistant.companion.android.frontend.webview.WebViewConnectProxyManager
 import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
-import io.homeassistant.companion.android.frontend.webview.WebViewConnectProxyManager
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import io.mockk.clearMocks
 import io.mockk.coEvery
@@ -1650,6 +1650,7 @@ class FrontendViewModelTest {
             onCleared.invoke(viewModel)
 
             verify { exoPlayerManager.close() }
+            verify { webViewConnectProxyManager.releaseSession() }
         }
     }
 

@@ -10,10 +10,8 @@ import androidx.annotation.VisibleForTesting
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.di.OkHttpConfigurator
-import java.net.Inet4Address
-import java.net.Inet6Address
+import io.homeassistant.companion.android.util.sensitive
 import java.net.InetAddress
-import java.net.URI
 import java.net.UnknownHostException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
@@ -38,14 +36,15 @@ private const val MAIN_THREAD_DISPATCH_TIMEOUT_SECONDS = DNS_QUERY_TIMEOUT_SECON
  * may skip AAAA lookups unless the device has an IPv6 routing-table entry for `2000::`. This
  * causes connection failures for IPv6-only hostnames on otherwise IPv6-capable networks.
  * On API 29+, this resolver uses [DnsResolver] to issue explicit A and AAAA queries, with
- * fallback to [Network.getAllByName] when [DnsResolver] fails. On API 23–28 it uses
+ * fallback to [NetworkBoundDnsLookup] when [DnsResolver] fails. On API 23–28 it uses
  * [NetworkBoundDnsLookup] for the same explicit AAAA behavior.
  *
  * DNS must not block the main thread: [DnsResolver] reports I/O readiness through the main looper,
  * so lookups initiated on the UI thread are dispatched to a background worker first.
  *
  * Also implements [OkHttpConfigurator] so it can be injected into the shared [OkHttpClient]
- * builder via the existing multibinding set.
+ * builder via the existing multibinding set. Configures both [Dns] and a network-bound
+ * [SocketFactory] so TCP connections use the active network after [lookup].
  *
  * WebView traffic does not use this resolver directly. When
  * [androidx.webkit.WebViewFeature.PROXY_OVERRIDE] is available it is routed through
@@ -56,7 +55,8 @@ private const val MAIN_THREAD_DISPATCH_TIMEOUT_SECONDS = DNS_QUERY_TIMEOUT_SECON
 class NetworkAwareDns @Inject constructor(
     private val connectivityManager: ConnectivityManager,
     @ApplicationContext context: Context,
-) : Dns, OkHttpConfigurator {
+) : Dns,
+    OkHttpConfigurator {
 
     private val mainExecutor: Executor = ContextCompat.getMainExecutor(context)
 
@@ -80,27 +80,49 @@ class NetworkAwareDns @Inject constructor(
     @VisibleForTesting
     internal var networkLookupOverride: ((Network, String) -> List<InetAddress>)? = null
 
+    /**
+     * Resolves [hostname] on the current [ConnectivityManager.getActiveNetwork] snapshot.
+     *
+     * The returned [NetworkBoundDnsResult.network] is the network used for DNS and must be
+     * reused for subsequent socket connections to avoid races when the active network changes.
+     *
+     * @throws UnknownHostException when resolution fails or no active network is available.
+     */
+    fun lookupBoundToActiveNetwork(hostname: String): NetworkBoundDnsResult {
+        val network = connectivityManager.activeNetwork
+            ?: throw UnknownHostException(hostname)
+
+        val literalAddress = LiteralIpAddressParser.parse(hostname)
+        if (literalAddress != null) {
+            return NetworkBoundDnsResult(network = network, addresses = listOf(literalAddress))
+        }
+
+        val addresses = resolveOnNetwork(network, hostname)
+        Timber.tag(TAG).d(
+            "lookup(%s): resolved on active network -> %s",
+            sensitive(hostname),
+            sensitive { addresses.joinToString { it.hostAddress ?: it.toString() } },
+        )
+        return NetworkBoundDnsResult(network = network, addresses = addresses)
+    }
+
     override fun lookup(hostname: String): List<InetAddress> {
-        if (isLiteralIpAddress(hostname)) {
-            return listOf(InetAddress.getByName(hostname))
+        val literalAddress = LiteralIpAddressParser.parse(hostname)
+        if (literalAddress != null) {
+            return listOf(literalAddress)
         }
 
         val network = connectivityManager.activeNetwork
         if (network != null) {
-            val addresses = resolveOnNetwork(network, hostname)
-            Timber.tag(TAG).d(
-                "lookup(%s): resolved on active network -> %s",
-                hostname,
-                addresses.joinToString { it.hostAddress ?: it.toString() },
-            )
-            return addresses
+            return lookupBoundToActiveNetwork(hostname).addresses
         }
-        Timber.tag(TAG).w("lookup(%s): no active network, falling back to Dns.SYSTEM", hostname)
+        Timber.tag(TAG).w("lookup(%s): no active network, falling back to Dns.SYSTEM", sensitive(hostname))
         return Dns.SYSTEM.lookup(hostname)
     }
 
     override fun invoke(builder: OkHttpClient.Builder) {
         builder.dns(this)
+        builder.socketFactory(ActiveNetworkSocketFactory(connectivityManager))
     }
 
     private fun resolveOnNetwork(network: Network, hostname: String): List<InetAddress> {
@@ -122,12 +144,16 @@ class NetworkAwareDns @Inject constructor(
         return try {
             queryAllRecordTypes(network, hostname)
         } catch (e: UnknownHostException) {
-            Timber.tag(TAG).w(e, "DnsResolver failed for %s, falling back to Network.getAllByName", hostname)
-            try {
-                network.getAllByName(hostname).toList()
-            } catch (fallback: UnknownHostException) {
-                throw e
-            }
+            Timber.tag(TAG).w(
+                e,
+                "DnsResolver failed for %s, falling back to NetworkBoundDnsLookup",
+                sensitive(hostname),
+            )
+            NetworkBoundDnsLookup.lookup(
+                network = network,
+                connectivityManager = connectivityManager,
+                hostname = hostname,
+            )
         }
     }
 
@@ -139,18 +165,27 @@ class NetworkAwareDns @Inject constructor(
                 recordType = DnsResolver.TYPE_AAAA,
             )
         } catch (e: UnknownHostException) {
-            Timber.tag(TAG).d("AAAA lookup failed for %s: %s", hostname, e.message)
+            Timber.tag(TAG).d(
+                "AAAA lookup failed for %s: %s",
+                sensitive(hostname),
+                e.message,
+            )
             emptyList()
         }
-        if (aaaaAddresses.isNotEmpty()) {
-            return aaaaAddresses.distinct()
+        val aAddresses = try {
+            queryDnsRecord(
+                network = network,
+                hostname = hostname,
+                recordType = DnsResolver.TYPE_A,
+            )
+        } catch (e: UnknownHostException) {
+            Timber.tag(TAG).d(
+                "A lookup failed for %s: %s",
+                sensitive(hostname),
+                e.message,
+            )
+            emptyList()
         }
-
-        val aAddresses = queryDnsRecord(
-            network = network,
-            hostname = hostname,
-            recordType = DnsResolver.TYPE_A,
-        )
         val addresses = (aaaaAddresses + aAddresses).distinct()
         if (addresses.isEmpty()) {
             throw UnknownHostException(hostname)
@@ -158,11 +193,7 @@ class NetworkAwareDns @Inject constructor(
         return addresses
     }
 
-    private fun queryDnsRecord(
-        network: Network,
-        hostname: String,
-        recordType: Int,
-    ): List<InetAddress> {
+    private fun queryDnsRecord(network: Network, hostname: String, recordType: Int): List<InetAddress> {
         val dnsResolver = DnsResolver.getInstance()
         val latch = CountDownLatch(1)
         val result = mutableListOf<InetAddress>()
@@ -183,7 +214,7 @@ class NetworkAwareDns @Inject constructor(
                 override fun onError(error: DnsResolver.DnsException) {
                     Timber.tag(TAG).d(
                         "queryDnsRecord(%s, type=%d): %s",
-                        hostname,
+                        sensitive(hostname),
                         recordType,
                         error.message,
                     )
@@ -193,7 +224,7 @@ class NetworkAwareDns @Inject constructor(
         )
 
         if (!latch.await(DNS_QUERY_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-            throw UnknownHostException("DNS query timed out for $hostname")
+            throw UnknownHostException("DNS query timed out for ${sensitive(hostname)}")
         }
         return result
     }
@@ -233,17 +264,6 @@ class NetworkAwareDns @Inject constructor(
 
     private fun shouldUseDnsResolver(): Boolean {
         return useDnsResolverForTests ?: (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
-    }
-
-    private fun isLiteralIpAddress(host: String): Boolean {
-        val normalized = host.removePrefix("[").removeSuffix("]")
-        if (normalized.contains(':')) {
-            return normalized.all { it.isDigit() || it in 'a'..'f' || it in 'A'..'F' || it == ':' }
-        }
-        if (normalized.count { it == '.' } == 3) {
-            return normalized.all { it.isDigit() || it == '.' }
-        }
-        return false
     }
 
     private companion object {

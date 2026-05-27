@@ -2,9 +2,13 @@ package io.homeassistant.companion.android.common.data.network
 
 import android.net.ConnectivityManager
 import android.net.Network
+import android.os.SystemClock
+import io.homeassistant.companion.android.util.sensitive
 import java.net.DatagramPacket
 import java.net.DatagramSocket
+import java.net.IDN
 import java.net.InetAddress
+import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import kotlin.random.Random
 import timber.log.Timber
@@ -12,11 +16,28 @@ import timber.log.Timber
 private const val TAG = "NetworkBoundDnsLookup"
 private const val DNS_PORT = 53
 private const val DNS_QUERY_TIMEOUT_MS = 5_000
+private const val MAX_SPURIOUS_RESPONSES = 8
 private const val DNS_TYPE_A = 1
 private const val DNS_TYPE_AAAA = 28
 private const val DNS_CLASS_IN = 1
 private const val DNS_OPCODE_QUERY = 0
 private const val DNS_RCODE_NO_ERROR = 0
+
+/**
+ * A DNS query packet and its transaction identifier.
+ */
+internal data class DnsQuery(val packet: ByteArray, val transactionId: Int)
+
+/**
+ * Result of parsing a single DNS UDP response packet.
+ */
+internal sealed interface DnsResponseParseResult {
+    /** Packet is unrelated or malformed and should be ignored while waiting for more responses. */
+    data object Ignored : DnsResponseParseResult
+
+    /** Packet matches the query; [addresses] may be empty when the name exists but has no records. */
+    data class Matched(val addresses: List<InetAddress>) : DnsResponseParseResult
+}
 
 /**
  * Issues explicit AAAA and A DNS queries on [network] for API levels below 29 where
@@ -30,11 +51,7 @@ internal object NetworkBoundDnsLookup {
     /**
      * Resolves [hostname] on [network], preferring AAAA records when present.
      */
-    fun lookup(
-        network: Network,
-        connectivityManager: ConnectivityManager,
-        hostname: String,
-    ): List<InetAddress> {
+    fun lookup(network: Network, connectivityManager: ConnectivityManager, hostname: String): List<InetAddress> {
         val dnsServers = connectivityManager.getLinkProperties(network)?.dnsServers.orEmpty()
         if (dnsServers.isEmpty()) {
             return network.getAllByName(hostname).toList()
@@ -46,18 +63,15 @@ internal object NetworkBoundDnsLookup {
             hostname = hostname,
             recordType = DNS_TYPE_AAAA,
         )
-        if (aaaaAddresses.isNotEmpty()) {
-            return aaaaAddresses.distinct()
-        }
-
         val aAddresses = queryRecordType(
             network = network,
             dnsServers = dnsServers,
             hostname = hostname,
             recordType = DNS_TYPE_A,
         )
-        if (aAddresses.isNotEmpty()) {
-            return aAddresses.distinct()
+        val combinedAddresses = (aaaaAddresses + aAddresses).distinct()
+        if (combinedAddresses.isNotEmpty()) {
+            return combinedAddresses
         }
 
         return try {
@@ -88,9 +102,9 @@ internal object NetworkBoundDnsLookup {
                 Timber.tag(TAG).d(
                     exception,
                     "DNS query failed for %s (type=%d) via %s",
-                    hostname,
+                    sensitive(hostname),
                     recordType,
-                    dnsServer.hostAddress,
+                    sensitive(dnsServer.hostAddress ?: dnsServer.toString()),
                 )
             }
         }
@@ -109,26 +123,59 @@ internal object NetworkBoundDnsLookup {
             network.bindSocket(socket)
             socket.send(
                 DatagramPacket(
-                    query,
-                    query.size,
+                    query.packet,
+                    query.packet.size,
                     dnsServer,
                     DNS_PORT,
                 ),
             )
-            val responseBuffer = ByteArray(MAX_DNS_PACKET_SIZE)
-            val responsePacket = DatagramPacket(responseBuffer, responseBuffer.size)
-            socket.receive(responsePacket)
-            return parseDnsResponse(
-                response = responsePacket.data.copyOf(responsePacket.length),
-                recordType = recordType,
-            )
+
+            val deadlineMs = SystemClock.elapsedRealtime() + DNS_QUERY_TIMEOUT_MS
+            var spuriousResponses = 0
+            while (SystemClock.elapsedRealtime() < deadlineMs && spuriousResponses < MAX_SPURIOUS_RESPONSES) {
+                val remainingMs = (deadlineMs - SystemClock.elapsedRealtime()).coerceAtLeast(1)
+                socket.soTimeout = remainingMs.toInt()
+                val responseBuffer = ByteArray(MAX_DNS_PACKET_SIZE)
+                val responsePacket = DatagramPacket(responseBuffer, responseBuffer.size)
+                try {
+                    socket.receive(responsePacket)
+                } catch (_: SocketTimeoutException) {
+                    break
+                }
+
+                if (!isResponseFromDnsServer(responsePacket, dnsServer)) {
+                    spuriousResponses++
+                    continue
+                }
+
+                when (
+                    val result = parseDnsResponse(
+                        response = responsePacket.data.copyOf(responsePacket.length),
+                        recordType = recordType,
+                        expectedTransactionId = query.transactionId,
+                    )
+                ) {
+                    DnsResponseParseResult.Ignored -> {
+                        spuriousResponses++
+                    }
+
+                    is DnsResponseParseResult.Matched -> {
+                        return result.addresses
+                    }
+                }
+            }
+            return emptyList()
         }
+    }
+
+    private fun isResponseFromDnsServer(responsePacket: DatagramPacket, dnsServer: InetAddress): Boolean {
+        return responsePacket.port == DNS_PORT && responsePacket.address == dnsServer
     }
 
     /**
      * Builds a standard DNS query packet for [hostname] and [recordType].
      */
-    internal fun buildDnsQuery(hostname: String, recordType: Int): ByteArray {
+    internal fun buildDnsQuery(hostname: String, recordType: Int): DnsQuery {
         val question = encodeHostnameQuestion(hostname, recordType)
         val packet = ByteArray(DNS_HEADER_SIZE + question.size)
         val transactionId = Random.nextInt(from = 0, until = Short.MAX_VALUE.toInt())
@@ -139,36 +186,77 @@ internal object NetworkBoundDnsLookup {
         packet[4] = 0
         packet[5] = 1
         System.arraycopy(question, 0, packet, DNS_HEADER_SIZE, question.size)
-        return packet
+        return DnsQuery(packet = packet, transactionId = transactionId)
     }
 
     /**
      * Parses A or AAAA answers from a DNS response packet.
      */
-    internal fun parseDnsResponse(response: ByteArray, recordType: Int): List<InetAddress> {
+    internal fun parseDnsResponse(
+        response: ByteArray,
+        recordType: Int,
+        expectedTransactionId: Int,
+    ): DnsResponseParseResult {
         if (response.size < DNS_HEADER_SIZE) {
-            return emptyList()
+            return DnsResponseParseResult.Ignored
+        }
+        val responseTransactionId = readUInt16(response, offset = 0)
+        if (responseTransactionId != expectedTransactionId) {
+            return DnsResponseParseResult.Ignored
         }
         val rcode = response[3].toInt() and 0x0F
         if (rcode != DNS_RCODE_NO_ERROR) {
-            return emptyList()
+            return DnsResponseParseResult.Matched(emptyList())
         }
 
         val questionEnd = skipDnsName(response, DNS_HEADER_SIZE)
         if (questionEnd + 4 > response.size) {
-            return emptyList()
+            return DnsResponseParseResult.Ignored
         }
-        var offset = questionEnd + 4
 
         val answerCount = ((response[6].toInt() and 0xFF) shl 8) or (response[7].toInt() and 0xFF)
+        val authorityCount = ((response[8].toInt() and 0xFF) shl 8) or (response[9].toInt() and 0xFF)
+        val additionalCount = ((response[10].toInt() and 0xFF) shl 8) or (response[11].toInt() and 0xFF)
+
+        var offset = questionEnd + 4
         val addresses = mutableListOf<InetAddress>()
-        repeat(answerCount) {
+        offset = collectDnsRecords(
+            response = response,
+            startOffset = offset,
+            recordCount = answerCount,
+            recordType = recordType,
+            addresses = addresses,
+        )
+        if (addresses.isNotEmpty()) {
+            return DnsResponseParseResult.Matched(addresses)
+        }
+
+        offset = skipDnsRecords(response, startOffset = offset, recordCount = authorityCount)
+        collectDnsRecords(
+            response = response,
+            startOffset = offset,
+            recordCount = additionalCount,
+            recordType = recordType,
+            addresses = addresses,
+        )
+        return DnsResponseParseResult.Matched(addresses)
+    }
+
+    private fun collectDnsRecords(
+        response: ByteArray,
+        startOffset: Int,
+        recordCount: Int,
+        recordType: Int,
+        addresses: MutableList<InetAddress>,
+    ): Int {
+        var offset = startOffset
+        repeat(recordCount) {
             if (offset >= response.size) {
-                return@repeat
+                return offset
             }
             offset = skipDnsName(response, offset)
             if (offset + 10 > response.size) {
-                return@repeat
+                return offset
             }
             val type = readUInt16(response, offset)
             offset += 2
@@ -177,7 +265,7 @@ internal object NetworkBoundDnsLookup {
             val dataLength = readUInt16(response, offset)
             offset += 2
             if (offset + dataLength > response.size) {
-                return@repeat
+                return offset
             }
             if (type == recordType) {
                 when (recordType) {
@@ -199,11 +287,29 @@ internal object NetworkBoundDnsLookup {
             }
             offset += dataLength
         }
-        return addresses
+        return offset
+    }
+
+    private fun skipDnsRecords(response: ByteArray, startOffset: Int, recordCount: Int): Int {
+        var offset = startOffset
+        repeat(recordCount) {
+            if (offset >= response.size) {
+                return offset
+            }
+            offset = skipDnsName(response, offset)
+            if (offset + 10 > response.size) {
+                return offset
+            }
+            offset += 8 // type, class, ttl
+            val dataLength = readUInt16(response, offset)
+            offset += 2 + dataLength
+        }
+        return offset
     }
 
     private fun encodeHostnameQuestion(hostname: String, recordType: Int): ByteArray {
-        val labels = hostname.split('.').filter { it.isNotEmpty() }
+        val asciiHostname = IDN.toASCII(hostname, IDN.ALLOW_UNASSIGNED)
+        val labels = asciiHostname.split('.').filter { it.isNotEmpty() }
         val question = ByteArray(
             labels.sumOf { it.length + 1 } + 1 + 2 + 2,
         )

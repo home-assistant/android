@@ -15,7 +15,6 @@ import android.webkit.WebViewClient.ERROR_PROXY_AUTHENTICATION
 import android.webkit.WebViewClient.ERROR_TIMEOUT
 import android.webkit.WebViewClient.ERROR_UNSUPPORTED_AUTH_SCHEME
 import androidx.annotation.StringRes
-import androidx.core.net.toUri
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
