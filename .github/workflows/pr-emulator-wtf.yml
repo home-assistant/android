@@ -23,7 +23,29 @@ jobs:
     permissions:
       id-token: write  # Needed for OIDC authentication
       actions: read  # Needed for retrieving artifacts
+      checks: write  # Needed to publish this job's status as a PR check
     steps:
+      # Surface this job's own success/failure as a check on the PR commit.
+      # workflow_run jobs are detached from the PR, so the status is not shown
+      # otherwise. Every input here comes from the trusted workflow_run context
+      # (no fork-controlled data is consumed).
+      - name: Create PR check (in progress)
+        id: create_check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          DETAILS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          check_id=$(gh api --method POST \
+            "repos/$REPO/check-runs" \
+            -f name="Instrumentation Test app" \
+            -f head_sha="$HEAD_SHA" \
+            -f status="in_progress" \
+            -f details_url="$DETAILS_URL" \
+            --jq '.id')
+          echo "check_id=$check_id" >> "$GITHUB_OUTPUT"
+
       # Halt before spending any emulator.wtf credits if the triggering Pull Request
       # workflow did not succeed (publish_test_results still runs afterward to
       # aggregate whatever results pr.yml produced).
@@ -101,6 +123,21 @@ jobs:
           name: Instrumentation Test app reports
           path: build/test-results/**
 
+      # job.status reflects everything above (halt, downloads, test runs) and is
+      # one of success/failure/cancelled, all valid check-run conclusions.
+      - name: Finalize PR check
+        if: always() && steps.create_check.outputs.check_id != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          CHECK_ID: ${{ steps.create_check.outputs.check_id }}
+          CONCLUSION: ${{ job.status }}
+        run: |
+          gh api --method PATCH \
+            "repos/$REPO/check-runs/$CHECK_ID" \
+            -f status="completed" \
+            -f conclusion="$CONCLUSION"
+
   publish_test_results:
     name: "Publish Tests Results"
     needs: [emulator_wtf]
@@ -130,6 +167,10 @@ jobs:
         with:
           commit: ${{ github.event.workflow_run.head_sha }}
           event_name: ${{ github.event.workflow_run.event }}
+          # Original pull_request payload uploaded by the "Event File" job in
+          # pr.yml. Required so the action does not treat fork PRs as read-only
+          # and disable check runs (see publish_test_results.py is_fork logic).
+          event_file: "pr-artifacts/event-file/event.json"
           comment_mode: "failures"
           action_fail: true
           files: |
