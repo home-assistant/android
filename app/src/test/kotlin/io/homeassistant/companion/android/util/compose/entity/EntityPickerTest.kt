@@ -22,7 +22,6 @@ import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
-import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.mockk.mockk
@@ -41,15 +40,12 @@ import org.robolectric.annotation.Config
 class EntityPickerTest {
 
     @get:Rule(order = 0)
-    var consoleLog = ConsoleLogRule()
-
-    @get:Rule(order = 1)
     val hiltRule = HiltAndroidRule(this)
 
-    @get:Rule(order = 2)
+    @get:Rule(order = 1)
     val mainDispatcherRule = MainDispatcherJUnit4Rule()
 
-    @get:Rule(order = 3)
+    @get:Rule(order = 2)
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>(mainDispatcherRule.testDispatcher)
 
     /**

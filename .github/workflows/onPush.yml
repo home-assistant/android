@@ -30,9 +30,9 @@ jobs:
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
-      - uses: ruby/setup-ruby@97ecb7b512899eb71ab1bf2310a624c6f1589ac6 # v1.308.0
+      - uses: ruby/setup-ruby@afeafc3d1ab54a631816aba4c914a0081c12ff2f # v1.310.0
         with:
-          ruby-version: "4.0.4"
+          ruby-version: "4.0.5"
           bundler-cache: false
 
       - uses: ./.github/actions/create-release-number
@@ -83,15 +83,16 @@ jobs:
         run: |
           echo $VERSION_CODE > ./app/build/outputs/version_code.txt
 
-      - name: Create draft Github Pre-Release
+      - name: Create draft GitHub Pre-Release
         if: github.event.inputs.beta == 'true'
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
-        with:
-          tag_name: ${{ steps.rel_number.outputs.version }}
-          body_path: ./app/build/outputs/changelogGithub
-          draft: true
-          prerelease: true
-          files: |
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REL_VERSION: ${{ steps.rel_number.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          assets=(
             ./app/build/outputs/apk/full/release/app-full-release.apk
             ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
             ./app/build/outputs/version_code.txt
@@ -100,12 +101,30 @@ jobs:
             ./automotive/build/outputs/apk/minimal/release/automotive-minimal-release.apk
             ./strings.zip
             ./app/src/main/res/xml/locales_config.xml
+          )
+
+          # Immutable releases lock their assets at publish time, so we create the release as a
+          # draft first and attach assets while it is still mutable. The next step publishes it.
+          # On re-runs, --clobber keeps the upload idempotent as long as the previous attempt
+          # did not get past the publish step.
+          if ! gh release view "$REL_VERSION" >/dev/null 2>&1; then
+            gh release create "$REL_VERSION" \
+              --draft \
+              --prerelease \
+              --notes-file ./app/build/outputs/changelogGithub
+          fi
+
+          gh release upload "$REL_VERSION" "${assets[@]}" --clobber
 
       - name: Publish Pre-Release
         if: github.event.inputs.beta == 'true'
-        run: gh release edit ${{ steps.rel_number.outputs.version }} --draft=false
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REL_VERSION: ${{ steps.rel_number.outputs.version }}
+        run: |
+          gh release edit "$REL_VERSION" \
+            --draft=false \
+            --notes-file ./app/build/outputs/changelogGithub
 
       - name: Deploy to Firebase
         env:
@@ -153,9 +172,9 @@ jobs:
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
-      - uses: ruby/setup-ruby@97ecb7b512899eb71ab1bf2310a624c6f1589ac6 # v1.308.0
+      - uses: ruby/setup-ruby@afeafc3d1ab54a631816aba4c914a0081c12ff2f # v1.310.0
         with:
-          ruby-version: "4.0.4"
+          ruby-version: "4.0.5"
           bundler-cache: false
 
       - uses: ./.github/actions/create-release-number

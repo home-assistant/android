@@ -3,8 +3,8 @@ package io.homeassistant.companion.android.frontend.externalbus.incoming
 import io.homeassistant.companion.android.frontend.externalbus.frontendExternalBusJson
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNull
 
 class HapticMessageTest {
 
@@ -12,24 +12,24 @@ class HapticMessageTest {
     fun `Given haptic JSON with success type then parses to HapticMessage with Success`() {
         val json = """{"type":"haptic","payload":{"hapticType":"success"}}"""
 
-        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
-
-        assertInstanceOf(HapticMessage::class.java, message)
-        val hapticMessage = message as HapticMessage
-        assertEquals(HapticType.Success, hapticMessage.payload)
-        assertNull(hapticMessage.id)
+        val message = assertInstanceOf(
+            HapticMessage::class.java,
+            frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json),
+        )
+        assertEquals(HapticType.Success, message.payload)
+        assertNull(message.id)
     }
 
     @Test
     fun `Given haptic JSON with id then parses id correctly`() {
         val json = """{"type":"haptic","id":5,"payload":{"hapticType":"light"}}"""
 
-        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
-
-        assertInstanceOf(HapticMessage::class.java, message)
-        val hapticMessage = message as HapticMessage
-        assertEquals(5, hapticMessage.id)
-        assertEquals(HapticType.Light, hapticMessage.payload)
+        val message = assertInstanceOf(
+            HapticMessage::class.java,
+            frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json),
+        )
+        assertEquals(5, message.id)
+        assertEquals(HapticType.Light, message.payload)
     }
 
     @Test
@@ -46,10 +46,12 @@ class HapticMessageTest {
 
         expectedMapping.forEach { (typeString, expectedType) ->
             val json = """{"type":"haptic","payload":{"hapticType":"$typeString"}}"""
-            val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
-
-            assertInstanceOf(HapticMessage::class.java, message, "Failed for type: $typeString")
-            assertEquals(expectedType, (message as HapticMessage).payload)
+            val message = assertInstanceOf(
+                HapticMessage::class.java,
+                frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json),
+                "Failed for type: $typeString",
+            )
+            assertEquals(expectedType, message.payload)
         }
     }
 
@@ -57,9 +59,10 @@ class HapticMessageTest {
     fun `Given haptic JSON with unknown type then parses to Unknown`() {
         val json = """{"type":"haptic","payload":{"hapticType":"future_type"}}"""
 
-        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
-
-        assertInstanceOf(HapticMessage::class.java, message)
-        assertEquals(HapticType.Unknown, (message as HapticMessage).payload)
+        val message = assertInstanceOf(
+            HapticMessage::class.java,
+            frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json),
+        )
+        assertEquals(HapticType.Unknown, message.payload)
     }
 }

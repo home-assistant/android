@@ -42,7 +42,6 @@ import io.homeassistant.companion.android.frontend.session.ExternalAuthResult
 import io.homeassistant.companion.android.frontend.session.RevokeAuthResult
 import io.homeassistant.companion.android.frontend.session.ServerSessionManager
 import io.homeassistant.companion.android.matter.MatterManager
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.thread.ThreadManager
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -68,9 +67,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
-import org.junit.jupiter.api.extension.ExtendWith
 
-@ExtendWith(ConsoleLogExtension::class)
 @OptIn(ExperimentalCoroutinesApi::class, EvaluateJavascriptUsage::class)
 class FrontendMessageHandlerTest {
 
@@ -177,7 +174,7 @@ class FrontendMessageHandlerTest {
             appVersionProvider = appVersionProvider,
             sessionManager = sessionManager,
             downloadManager = downloadManager,
-            bluetoothCapabilities = BluetoothCapabilities { true },
+            bluetoothCapabilities = { true },
             isAutomotive = false,
         )
 
@@ -217,7 +214,7 @@ class FrontendMessageHandlerTest {
             appVersionProvider = appVersionProvider,
             sessionManager = sessionManager,
             downloadManager = downloadManager,
-            bluetoothCapabilities = BluetoothCapabilities { false },
+            bluetoothCapabilities = { false },
             isAutomotive = false,
         )
 
@@ -384,9 +381,8 @@ class FrontendMessageHandlerTest {
         every { externalBusRepository.webViewActions() } returns flowOf(action)
 
         handler.webViewActions().test {
-            val result = awaitItem()
-            assertInstanceOf(WebViewAction.EvaluateScript::class.java, result)
-            assertEquals("test()", (result as WebViewAction.EvaluateScript).script)
+            val result = assertInstanceOf(WebViewAction.EvaluateScript::class.java, awaitItem())
+            assertEquals("test()", result.script)
             awaitComplete()
         }
     }
