@@ -938,11 +938,10 @@ class LocationSensorManager :
             val zones = getZones(serverId)
             val inZones = zones
                 .filter {
-                    val passive = it.attributes["passive"] as? Boolean
                     val radius = it.attributes["radius"] as? Number
-                    return@filter passive == false && radius != null && it.containsWithAccuracy(location)
+                    return@filter radius != null && it.containsWithAccuracy(location)
                 }.sortedBy { (it.attributes["radius"] as? Number ?: Int.MAX_VALUE).toFloat() }
-            val locationZone = inZones.firstOrNull()
+            val locationZone = inZones.firstOrNull { it.attributes["passive"] as? Boolean == false }
 
             val locationName = locationZone?.entityId?.split(".")?.getOrNull(1) ?: ZONE_NAME_NOT_HOME
             // Send both `location_name` (deprecated) and `in_zones` (its replacement, per
