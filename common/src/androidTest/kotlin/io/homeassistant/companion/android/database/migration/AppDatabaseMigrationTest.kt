@@ -7,6 +7,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.homeassistant.companion.android.database.AppDatabase
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -43,10 +44,10 @@ class AppDatabaseMigrationTest {
         // Create database at version 24 - the earliest version with an exported schema
         helper.createDatabase(testDbName, 24).use { db ->
             db.query("SELECT name FROM sqlite_master WHERE type='table' AND name='sensors'").use { cursor ->
-                assert(cursor.count == 1) { "sensors table should exist at version 24" }
+                assertEquals("sensors table should exist at version 24", 1, cursor.count)
             }
             db.query("SELECT name FROM sqlite_master WHERE type='table' AND name='Authentication_List'").use { cursor ->
-                assert(cursor.count == 1) { "Authentication_List table should exist at version 24" }
+                assertEquals("Authentication_List table should exist at version 24", 1, cursor.count)
             }
         }
 
