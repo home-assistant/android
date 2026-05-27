@@ -260,6 +260,17 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         emitAll(prefsRepository.screenOrientationFlow())
     }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = ScreenOrientation.SYSTEM)
 
+    /**
+     * The user's "Keep screen on" preference.
+     *
+     * Applied by the screen to the hosting window so the device does not lock while the
+     * WebView is active. Exposed as a [StateFlow] so the screen can read the current value
+     * synchronously when first attaching to the window and react to subsequent changes.
+     */
+    val keepScreenOnEnabled: StateFlow<Boolean> = flow {
+        emitAll(prefsRepository.keepScreenOnFlow())
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = false)
+
     init {
         viewModelScope.launch {
             _viewState.collectLatest { state ->

@@ -4,12 +4,10 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import dagger.hilt.android.testing.HiltTestApplication
-import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
-import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.runner.RunWith
@@ -19,9 +17,6 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
 class RequestAccurateLocationReceiverTest {
-
-    @get:Rule
-    val consoleLogRule = ConsoleLogRule()
 
     @Test
     fun `Given accurate update action when receiving then forward explicit broadcast to LocationSensorManager without extra`() {

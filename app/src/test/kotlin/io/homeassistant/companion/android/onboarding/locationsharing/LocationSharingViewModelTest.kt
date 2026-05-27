@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.onboarding.locationsharing
 
 import io.homeassistant.companion.android.database.sensor.SensorDao
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -16,7 +15,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(MainDispatcherJUnit5Extension::class, ConsoleLogExtension::class)
+@ExtendWith(MainDispatcherJUnit5Extension::class)
 class LocationSharingViewModelTest {
     private val serverId = 42
     private val sensorDao: SensorDao = mockk(relaxUnitFun = true)

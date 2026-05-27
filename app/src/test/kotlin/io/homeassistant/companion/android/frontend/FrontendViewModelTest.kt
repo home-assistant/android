@@ -40,7 +40,6 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
@@ -64,6 +63,7 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -72,13 +72,11 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
-import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(ConsoleLogExtension::class)
 class FrontendViewModelTest {
     @RegisterExtension
     val mainDispatcherExtension = MainDispatcherJUnit5Extension(UnconfinedTestDispatcher())
@@ -95,10 +93,12 @@ class FrontendViewModelTest {
     private val zoomSettingsFlow = MutableStateFlow(ZoomSettings())
     private val autoPlayVideoFlow = MutableStateFlow(false)
     private val screenOrientationFlow = MutableStateFlow(ScreenOrientation.SYSTEM)
+    private val keepScreenOnFlow = MutableStateFlow(false)
     private val prefsRepository: PrefsRepository = mockk(relaxed = true) {
         coEvery { this@mockk.zoomSettingsFlow() } returns this@FrontendViewModelTest.zoomSettingsFlow
         coEvery { this@mockk.autoPlayVideoFlow() } returns this@FrontendViewModelTest.autoPlayVideoFlow
         coEvery { this@mockk.screenOrientationFlow() } returns this@FrontendViewModelTest.screenOrientationFlow
+        coEvery { this@mockk.keepScreenOnFlow() } returns this@FrontendViewModelTest.keepScreenOnFlow
     }
 
     private val serverId = 1
@@ -1835,6 +1835,36 @@ class FrontendViewModelTest {
             advanceUntilIdle()
 
             assertEquals(ScreenOrientation.PORTRAIT, viewModel.screenOrientation.value)
+        }
+    }
+
+    @Nested
+    inner class KeepScreenOnSetting {
+
+        @Test
+        fun `Given pref flow emits new value when collected then exposed StateFlow reflects it`() = runTest {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            assertFalse(viewModel.keepScreenOnEnabled.value)
+
+            keepScreenOnFlow.value = true
+            advanceUntilIdle()
+
+            assertTrue(viewModel.keepScreenOnEnabled.value)
+        }
+
+        @ParameterizedTest
+        @ValueSource(booleans = [true, false])
+        fun `Given pref flow seeded with value when ViewModel constructed then exposed StateFlow has that value`(
+            value: Boolean,
+        ) = runTest {
+            keepScreenOnFlow.value = value
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            assertEquals(value, viewModel.keepScreenOnEnabled.value)
         }
     }
 }

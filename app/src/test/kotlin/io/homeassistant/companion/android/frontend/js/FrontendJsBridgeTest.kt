@@ -14,8 +14,6 @@ import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.frontend.externalbus.frontendExternalBusJson
 import io.homeassistant.companion.android.frontend.session.AuthPayload
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
-import io.homeassistant.companion.android.util.FailFastExtension
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -37,11 +35,9 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 
-@ExtendWith(ConsoleLogExtension::class, FailFastExtension::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class FrontendJsBridgeTest {
 

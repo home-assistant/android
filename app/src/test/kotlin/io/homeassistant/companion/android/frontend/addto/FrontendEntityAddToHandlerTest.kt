@@ -15,8 +15,6 @@ import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.frontend.navigation.WidgetType
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
-import io.homeassistant.companion.android.util.FailFastExtension
 import io.homeassistant.companion.android.webview.addto.EntityAddToAction
 import io.homeassistant.companion.android.webview.externalbus.ExternalEntityAddToAction
 import io.mockk.coEvery
@@ -29,18 +27,16 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.assertNotNull
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.fail
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.ValueSource
 
 @ExperimentalCoroutinesApi
-@ExtendWith(ConsoleLogExtension::class, FailFastExtension::class)
 class FrontendEntityAddToHandlerTest {
 
     private lateinit var serverManager: ServerManager

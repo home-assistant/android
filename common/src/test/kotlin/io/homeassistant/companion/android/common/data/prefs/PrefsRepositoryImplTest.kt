@@ -4,7 +4,6 @@ import app.cash.turbine.test
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.HAGesture
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -21,12 +20,10 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.ValueSource
 
-@ExtendWith(ConsoleLogExtension::class)
 class PrefsRepositoryImplTest {
     private val keyChangesFlow = MutableSharedFlow<String>()
     private val mapperSlot = slot<suspend () -> Any>()
@@ -192,6 +189,21 @@ class PrefsRepositoryImplTest {
             keyChangesFlow.emit("screen_orientation")
             assertEquals(ScreenOrientation.SYSTEM, awaitItem())
 
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `Given collecting flow when keep screen on changes then updated keep screen on enabled is emitted`() = runTest {
+        coEvery { localStorage.getBoolean("keep_screen_on_enabled") } returns false
+
+        repository.keepScreenOnFlow().test {
+            assertFalse(awaitItem())
+
+            coEvery { localStorage.getBoolean("keep_screen_on_enabled") } returns true
+            keyChangesFlow.emit("keep_screen_on_enabled")
+
+            assertTrue(awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
     }
