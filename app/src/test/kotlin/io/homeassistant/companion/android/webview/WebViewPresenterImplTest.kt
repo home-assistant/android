@@ -416,7 +416,7 @@ class WebViewPresenterImplTest {
     }
 
     @Test
-    fun `Given base url changes when collecting then preserves current path and clears history`() = runTest(testDispatcher) {
+    fun `Given base url changes when collecting then preserves current path and keeps history`() = runTest(testDispatcher) {
         val server = mockk<Server>(relaxed = true)
         val urlFlow = MutableStateFlow<UrlState>(UrlState.HasUrl(URL("https://internal.example.com")))
 
@@ -447,11 +447,13 @@ class WebViewPresenterImplTest {
         assertTrue(urlSlot[0].toString().startsWith("https://internal.example.com"))
         assertTrue(keepHistorySlot[0])
 
-        // Second load: external URL with preserved path, history cleared
+        // Second load: external URL with preserved path. History is kept so the
+        // stale cross-origin entry survives long enough for resolveBackAction to
+        // detect it and emit NavigateToRoot before the user exits the app.
         assertTrue(urlSlot[1].toString().startsWith("https://external.example.com"))
         assertTrue(urlSlot[1].toString().contains("/history"))
         assertTrue(urlSlot[1].toString().contains("start_date=2026-01-01"))
-        assertFalse(keepHistorySlot[1])
+        assertTrue(keepHistorySlot[1])
 
         verify { webView.getCurrentWebViewRelativeUrl() }
     }
