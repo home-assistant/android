@@ -160,7 +160,7 @@ class LaunchActivity : AppCompatActivity() {
         // Must run before super.onCreate so the window flag is set before the platform decides
         // whether to draw over the keyguard. Gated on the non-exported [LOCK_SCREEN_ALIAS_CLASS]
         // so external apps reaching the public LAUNCHER intent-filter cannot force this on.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 &&
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O_MR1) &&
             intent.component?.className == LOCK_SCREEN_ALIAS_CLASS
         ) {
             setShowWhenLocked(true)
