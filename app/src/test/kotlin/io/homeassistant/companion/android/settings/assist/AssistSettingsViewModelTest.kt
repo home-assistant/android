@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.settings.assist
 
 import android.content.Intent
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.util.microWakeWordModelConfigs
 import io.mockk.coEvery
@@ -24,7 +23,7 @@ import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.extension.ExtendWith
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(MainDispatcherJUnit5Extension::class, ConsoleLogExtension::class)
+@ExtendWith(MainDispatcherJUnit5Extension::class)
 class AssistSettingsViewModelTest {
 
     private val defaultAssistantManager: DefaultAssistantManager = mockk(relaxed = true)

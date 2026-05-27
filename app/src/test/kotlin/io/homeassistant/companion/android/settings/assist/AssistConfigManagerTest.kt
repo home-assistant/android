@@ -5,7 +5,6 @@ import io.homeassistant.companion.android.assist.service.AssistVoiceInteractionS
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.util.FailFast
-import io.homeassistant.companion.android.util.FailFastExtension
 import io.homeassistant.companion.android.util.microWakeWordModelConfigs
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -24,9 +23,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNull
-import org.junit.jupiter.api.extension.ExtendWith
 
-@ExtendWith(FailFastExtension::class)
 class AssistConfigManagerTest {
 
     private val context: Context = mockk(relaxed = true)
