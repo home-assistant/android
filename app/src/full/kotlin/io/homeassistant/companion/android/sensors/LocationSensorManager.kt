@@ -936,19 +936,31 @@ class LocationSensorManager :
         val updateLocationAs: String = getSendLocationAsSetting(serverId)
         if (updateLocationAs == SEND_LOCATION_AS_ZONE_ONLY) {
             val zones = getZones(serverId)
-            val locationZone = zones
+            val inZones = zones
                 .filter {
-                    val passive = it.attributes["passive"] as? Boolean
                     val radius = it.attributes["radius"] as? Number
-                    return@filter passive == false && radius != null && it.containsWithAccuracy(location)
-                }
-                .minByOrNull { (it.attributes["radius"] as? Number ?: Int.MAX_VALUE).toFloat() }
+                    return@filter radius != null && it.containsWithAccuracy(location)
+                }.sortedBy { (it.attributes["radius"] as? Number ?: Int.MAX_VALUE).toFloat() }
+            val locationZone = inZones.firstOrNull { it.attributes["passive"] as? Boolean == false }
 
             val locationName = locationZone?.entityId?.split(".")?.getOrNull(1) ?: ZONE_NAME_NOT_HOME
+            // Send both `location_name` (deprecated) and `in_zones` (its replacement, per
+            // https://github.com/home-assistant/architecture/discussions/1387) so the payload works
+            // against both pre- and post-deprecation Core servers during the rollout window.
             updateLocation = UpdateLocation(
                 gps = null,
                 gpsAccuracy = null,
                 locationName = locationName,
+                inZones = if (serverManager(latestContext).getServer(serverId)?.version?.isAtLeast(
+                        2026,
+                        6,
+                        0,
+                    ) == true
+                ) {
+                    inZones.map { it.entityId }
+                } else {
+                    null
+                },
                 speed = null,
                 altitude = null,
                 course = null,
@@ -960,6 +972,7 @@ class LocationSensorManager :
                 gps = listOf(location.latitude, location.longitude),
                 gpsAccuracy = accuracy,
                 locationName = null,
+                inZones = null,
                 speed = location.speed.toInt(),
                 altitude = location.altitude.toInt(),
                 course = location.bearing.toInt(),
@@ -1358,6 +1371,7 @@ class LocationSensorManager :
                     Manifest.permission.BLUETOOTH_CONNECT,
                 )
             }
+
             (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) -> {
                 arrayOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
@@ -1367,6 +1381,7 @@ class LocationSensorManager :
                     Manifest.permission.BLUETOOTH,
                 )
             }
+
             else -> {
                 arrayOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
@@ -1443,6 +1458,7 @@ class LocationSensorManager :
                     latitude = if (updateLocation != null) updateLocation.gps?.getOrNull(0) else location.latitude,
                     longitude = if (updateLocation != null) updateLocation.gps?.getOrNull(1) else location.longitude,
                     locationName = updateLocation?.locationName,
+                    inZones = updateLocation?.inZones.orEmpty(),
                     accuracy = updateLocation?.gpsAccuracy ?: location.accuracy.toInt(),
                     data = updateLocation?.toString(),
                     serverId = serverId,
