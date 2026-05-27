@@ -12,7 +12,6 @@ import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalB
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.OutgoingExternalBusMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ShowSidebarMessage
 import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.util.mockServer
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -22,10 +21,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 
 @OptIn(EvaluateJavascriptUsage::class)
-@ExtendWith(ConsoleLogExtension::class)
 class FrontendGestureHandlerTest {
 
     private val prefsRepository: PrefsRepository = mockk()

@@ -55,6 +55,7 @@ import org.junit.jupiter.params.provider.ValueSource
  * in [io.homeassistant.companion.android.util.HAWebViewClientTest] to avoid duplication.
  */
 @ExtendWith(ConsoleLogExtension::class)
+@ExtendWith(MainDispatcherJUnit5Extension::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class ConnectionViewModelTest {
 

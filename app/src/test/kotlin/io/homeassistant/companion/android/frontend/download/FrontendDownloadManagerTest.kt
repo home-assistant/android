@@ -7,7 +7,6 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.session.ServerSessionManager
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.util.DataUriDownloadManager
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -26,9 +25,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 
-@ExtendWith(ConsoleLogExtension::class)
 @OptIn(ExperimentalCoroutinesApi::class, EvaluateJavascriptUsage::class)
 class FrontendDownloadManagerTest {
     private val systemDownloadManager: DownloadManager = mockk(relaxed = true)

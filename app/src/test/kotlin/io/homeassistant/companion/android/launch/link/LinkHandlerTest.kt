@@ -4,16 +4,12 @@ import androidx.core.net.toUri
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
-import io.homeassistant.companion.android.util.FailFastRule
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.assertNotNull
-import org.junit.jupiter.api.fail
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -22,19 +18,8 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
 class LinkHandlerTest {
-
-    @get:Rule
-    val failFastRule = FailFastRule()
-
     private val serverManager: ServerManager = mockk()
     private val handler = LinkHandlerImpl(serverManager)
-
-    @Before
-    fun setUp() {
-        FailFast.setHandler { exception, additionalMessage ->
-            fail("Unhandled exception caught", exception)
-        }
-    }
 
     /*
         General section

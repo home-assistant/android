@@ -13,7 +13,6 @@ import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConf
 import io.homeassistant.companion.android.assist.wakeword.WakeWordListener
 import io.homeassistant.companion.android.assist.wakeword.WakeWordListenerFactory
 import io.homeassistant.companion.android.settings.assist.AssistConfigManager
-import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
 import io.homeassistant.companion.android.util.microWakeWordModelConfigs
 import io.mockk.coEvery
@@ -47,10 +46,7 @@ import org.robolectric.shadows.ShadowVoiceInteractionService
 @Config(application = HiltTestApplication::class)
 class AssistVoiceInteractionServiceTest {
 
-    @get:Rule(order = 0)
-    val consoleLogRule = ConsoleLogRule()
-
-    @get:Rule(order = 1)
+    @get:Rule
     val mainDispatcherRule = MainDispatcherJUnit4Rule()
 
     private val assistConfigManager: AssistConfigManager = mockk(relaxed = true)

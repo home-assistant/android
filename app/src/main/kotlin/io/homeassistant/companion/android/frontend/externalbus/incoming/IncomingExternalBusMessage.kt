@@ -147,7 +147,7 @@ data class HapticMessage(override val id: Int? = null, val payload: HapticType) 
  * Message requesting the app to open the NFC tag-write flow.
  *
  * The optional [TagWritePayload.tag] is a pre-filled tag identifier. When null or missing, the
- * user is prompted to enter/scan a tag manually. Once handled, a [io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage.success]
+ * user is prompted to enter/scan a tag manually. Once handled, a [io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage]
  * should be sent back to the frontend with the [id].
  */
 @Serializable
@@ -226,7 +226,7 @@ data class ExoPlayerResizePayload(
  * commands as devices are discovered. No `result`-shaped response is expected.
  *
  * Will not be sent by the frontend when the device reports
- * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResult.canSetupImprov] = `false`.
+ * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResultMessage.ConfigResult.canSetupImprov] = `false`.
  */
 @Serializable
 @SerialName("improv/scan")
@@ -249,3 +249,22 @@ data class ImprovConfigureDeviceMessage(override val id: Int? = null, val payloa
 
 @Serializable
 data class ImprovConfigureDevicePayload(val name: String)
+
+@Serializable
+@SerialName("entity/add_to/get_actions")
+data class EntityAddToGetActionsMessage(override val id: Int? = null, val payload: EntityAddToGetActionsPayload) :
+    IncomingExternalBusMessage
+
+@Serializable
+data class EntityAddToGetActionsPayload(@SerialName("entity_id") val entityId: String)
+
+@Serializable
+@SerialName("entity/add_to")
+data class EntityAddToMessage(override val id: Int? = null, val payload: EntityAddToPayload) :
+    IncomingExternalBusMessage
+
+@Serializable
+data class EntityAddToPayload(
+    @SerialName("entity_id") val entityId: String,
+    @SerialName("app_payload") val appPayload: String,
+)
