@@ -359,6 +359,22 @@ jobs:
             app/build/outputs/apk/androidTest/minimal/debug/app-minimal-debug-androidTest.apk
             devices.txt
 
+  # The original pull_request event payload must be forwarded to the
+  # PR Emulator.wtf workflow (which runs on workflow_run and only sees the
+  # workflow_run payload). publish-unit-test-result-action needs it to create
+  # check runs for fork PRs instead of disabling them.
+  event_file:
+    name: "Event File"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Upload event file
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: event-file
+          retention-days: 1
+          if-no-files-found: error
+          path: ${{ github.event_path }}
+
   instrumentation_test:
     name: "Instrumentation Tests"
     needs: [lint, lockfiles, ktlint]
