@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import androidx.annotation.OptIn
 import androidx.annotation.VisibleForTesting
 import androidx.core.app.NotificationManagerCompat
@@ -156,28 +157,28 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
     }
 
     private suspend fun reconcileSessions(configuredEntities: List<MediaControlEntityConfig>) {
-        val desiredKeys = configuredEntities.map { it.id }.toSet()
-        Timber.d("reconcileSessions: received ${configuredEntities.size} entities=$desiredKeys")
-
-        if (configuredEntities.isEmpty()) {
-            Timber.d("No media control entities configured, stopping service")
-            withContext(Dispatchers.Main) { stopSelf() }
-            return
-        }
+        val desiredSessionIds = configuredEntities.map { it.id }.toSet()
+        Timber.d("reconcileSessions: received ${configuredEntities.size} entities=$desiredSessionIds")
 
         // All activeSessions reads and writes are confined to the Main thread to avoid data races
         // with onUpdateNotification and onTaskRemoved, which are always called on Main by the OS
         // and Media3. The diff is computed here on Main as well since it operates on small sets.
         withContext(Dispatchers.Main) {
-            val currentKeys = activeSessions.keys.toSet()
+            if (configuredEntities.isEmpty()) {
+                Timber.d("No media control entities configured, stopping service")
+                stopSelf()
+                return@withContext
+            }
 
-            Timber.d("reconcileSessions: desiredKeys=$desiredKeys, currentKeys=$currentKeys")
+            val currentSessionIds = activeSessions.keys.toSet()
 
-            val toRemove = (currentKeys - desiredKeys).mapNotNull { key ->
+            Timber.d("reconcileSessions: desiredSessionIds=$desiredSessionIds, currentSessionIds=$currentSessionIds")
+
+            val toRemove = (currentSessionIds - desiredSessionIds).mapNotNull { key ->
                 val pair = activeSessions.remove(key) ?: return@mapNotNull null
                 key to pair
             }
-            val toAdd = (desiredKeys - currentKeys).map { key ->
+            val toAdd = (desiredSessionIds - currentSessionIds).map { key ->
                 val entityConfig = configuredEntities.first { it.id == key }
                 key to haMediaSessionFactory.create(config = entityConfig)
             }
@@ -258,14 +259,16 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
     }
 
     private fun createNotificationChannel() {
-        val channel = NotificationChannel(
-            CHANNEL_MEDIA_SESSION,
-            getString(commonR.string.media_controls),
-            NotificationManager.IMPORTANCE_LOW,
-        ).apply {
-            setShowBadge(false)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_MEDIA_SESSION,
+                getString(commonR.string.media_controls),
+                NotificationManager.IMPORTANCE_LOW,
+            ).apply {
+                setShowBadge(false)
+            }
+            notificationManager.createNotificationChannel(channel)
         }
-        notificationManager.createNotificationChannel(channel)
     }
 
     companion object {
