@@ -1,0 +1,137 @@
+name: PR Emulator.wtf
+
+on: # yamllint disable-line rule:truthy
+  workflow_run:
+    workflows: ['Pull Request']
+    types: [completed]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.workflow_run.head_repository.full_name }}-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  emulator_wtf:
+    name: "Instrumentation Test app"
+    runs-on: ubuntu-latest
+    environment: ui-test
+    if: >
+      github.event.workflow_run.event == 'pull_request'
+      && github.event.workflow_run.conclusion != 'cancelled'
+      && github.event.workflow_run.conclusion != 'skipped'
+    permissions:
+      id-token: write  # Needed for OIDC authentication
+      actions: read  # Needed for retrieving artifacts
+    steps:
+      # Halt before spending any emulator.wtf credits if the triggering Pull Request
+      # workflow did not succeed (publish_test_results still runs afterward to
+      # aggregate whatever results pr.yml produced).
+      - name: Halt if triggering workflow did not succeed
+        if: github.event.workflow_run.conclusion != 'success'
+        env:
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+        run: |
+          echo "::error::Triggering 'Pull Request' workflow concluded as '$CONCLUSION'; skipping emulator.wtf to save resources"
+          exit 1
+
+      - name: Download emulator.wtf inputs
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: emulator-wtf-inputs
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: emulator-wtf-inputs
+
+      - name: Load device list
+        id: devices
+        # The artifact comes from a PR build that may originate from a fork; validate
+        # every line strictly before piping the contents into GITHUB_OUTPUT to prevent
+        # heredoc-terminator injection.
+        run: |
+          if [ ! -s emulator-wtf-inputs/devices.txt ]; then
+            echo "::error::devices.txt is empty or missing"
+            exit 1
+          fi
+          while IFS= read -r line; do
+            if [[ ! "$line" =~ ^model=Pixel7,version=(2[3-9]|3[0-9]|40)$ ]]; then
+              echo "::error::Invalid line in devices.txt"
+              exit 1
+            fi
+          done < emulator-wtf-inputs/devices.txt
+          {
+            echo 'list<<DEVICES_EOF'
+            cat emulator-wtf-inputs/devices.txt
+            echo 'DEVICES_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: emulator-wtf/actions/configure-credentials@42753a2a6bda2e657741a7385131bf61db464899 # v1.0.0
+        with:
+          oidc-configuration-id: ${{ vars.EMULATOR_WTF_OIDC_CONFIGURATION_ID }}
+
+      - name: Run tests full
+        uses: emulator-wtf/actions/run-tests@42753a2a6bda2e657741a7385131bf61db464899 # v1.0.0
+        with:
+          devices: ${{ steps.devices.outputs.list }}
+          app: emulator-wtf-inputs/app/build/outputs/apk/full/debug/app-full-debug.apk
+          test: emulator-wtf-inputs/app/build/outputs/apk/androidTest/full/debug/app-full-debug-androidTest.apk
+          outputs-dir: build/test-results/full
+
+      - name: Run tests minimal
+        uses: emulator-wtf/actions/run-tests@42753a2a6bda2e657741a7385131bf61db464899 # v1.0.0
+        with:
+          devices: ${{ steps.devices.outputs.list }}
+          app: emulator-wtf-inputs/app/build/outputs/apk/minimal/debug/app-minimal-debug.apk
+          test: emulator-wtf-inputs/app/build/outputs/apk/androidTest/minimal/debug/app-minimal-debug-androidTest.apk
+          outputs-dir: build/test-results/minimal
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: Instrumentation Test app results
+          path: |
+            **/build/test-results/**/TEST-*.xml
+            **/build/test-results/**/results.xml
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: Instrumentation Test app reports
+          path: build/test-results/**
+
+  publish_test_results:
+    name: "Publish Tests Results"
+    needs: [emulator_wtf]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      pull-requests: write
+      actions: read
+      contents: read
+    steps:
+      - name: Download artifacts from pr.yml run
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: pr-artifacts
+
+      - name: Download emulator.wtf results from this run
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: Instrumentation Test app results
+          path: pr-artifacts/Instrumentation Test app results
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@c950f6fb443cb5af20a377fd0dfaa78838901040 # v2.23.0
+        with:
+          commit: ${{ github.event.workflow_run.head_sha }}
+          event_name: ${{ github.event.workflow_run.event }}
+          comment_mode: "failures"
+          action_fail: true
+          files: |
+            pr-artifacts/**/TEST-*.xml
+            pr-artifacts/**/results.xml
