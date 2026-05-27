@@ -20,7 +20,7 @@ import androidx.health.services.client.data.UserActivityState
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
-import io.homeassistant.companion.android.common.util.sdkVersion
+import io.homeassistant.companion.android.common.util.SdkVersion
 import java.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -103,7 +103,7 @@ class HealthServicesSensorManager : SensorManager {
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
-    private val areHealthServicesSensorApisAvailable = sdkVersion.isAtLeast(Build.VERSION_CODES.R)
+    private val areHealthServicesSensorApisAvailable = SdkVersion.isAtLeast(Build.VERSION_CODES.R)
 
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/wear-os/sensors#health-services"

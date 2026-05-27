@@ -32,7 +32,7 @@ fun cancelNotificationGroupIfNeeded(
     id: Int,
     cancel: (String, Int) -> Unit,
 ): Boolean {
-    if (sdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
+    if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
         Timber.d("Cancel notification with tag \"$tag\" and id \"$id\"")
 
         val currentActiveNotifications = notificationManager.activeNotifications

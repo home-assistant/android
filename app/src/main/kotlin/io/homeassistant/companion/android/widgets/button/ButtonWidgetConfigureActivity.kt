@@ -30,8 +30,8 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Action
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.util.MapAnySerializer
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
-import io.homeassistant.companion.android.common.util.sdkVersion
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -359,7 +359,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEn
         binding.addButton.setOnClickListener {
             if (requestLauncherSetup) {
                 val widgetConfigAction = binding.widgetTextConfigService.text.toString()
-                if (sdkVersion.isAtLeast(Build.VERSION_CODES.O) &&
+                if (SdkVersion.isAtLeast(Build.VERSION_CODES.O) &&
                     selectedServerId != null &&
                     (
                         widgetConfigAction in actions[selectedServerId].orEmpty().keys ||

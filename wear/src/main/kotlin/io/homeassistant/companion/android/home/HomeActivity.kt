@@ -16,7 +16,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.wear.protolayout.ActionBuilders
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.common.util.sdkVersion
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_CAMERA_TILE
 import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_SHORTCUT_TILE
 import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_TEMPLATE_TILE
@@ -183,7 +183,7 @@ class HomeActivity :
         }
         if (
             intent.getBooleanExtra(EXTRA_FROM_ONBOARDING, false) &&
-            sdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) &&
+            SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) &&
             !NotificationManagerCompat.from(this@HomeActivity).areNotificationsEnabled()
         ) {
             permissionRequest.launch(Manifest.permission.POST_NOTIFICATIONS)

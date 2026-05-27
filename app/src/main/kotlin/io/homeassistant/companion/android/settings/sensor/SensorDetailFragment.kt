@@ -27,7 +27,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.LocationPermissionInfoHandler
-import io.homeassistant.companion.android.common.util.sdkVersion
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.sensors.HealthConnectSensorManager
 import io.homeassistant.companion.android.settings.sensor.views.SensorDetailView
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
@@ -142,7 +142,7 @@ class SensorDetailFragment : Fragment() {
                     }
                     healthPermissionsRequest?.launch(healthConnectPermissions.toSet())
                 }
-                sdkVersion.isAtLeast(Build.VERSION_CODES.R) ->
+                SdkVersion.isAtLeast(Build.VERSION_CODES.R) ->
                     if (it.permissions.size == 1 &&
                         it.permissions[0] == Manifest.permission.ACCESS_BACKGROUND_LOCATION
                     ) {
@@ -166,7 +166,7 @@ class SensorDetailFragment : Fragment() {
                         continueYesCallback = {
                             requestForServer = it.serverId
                             permissionsRequest.launch(
-                                if (sdkVersion.isAtLeast(Build.VERSION_CODES.R)) {
+                                if (SdkVersion.isAtLeast(Build.VERSION_CODES.R)) {
                                     it.permissions.toSet().minus(
                                         Manifest.permission.ACCESS_BACKGROUND_LOCATION,
                                     ).toTypedArray()

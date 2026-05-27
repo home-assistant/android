@@ -21,7 +21,7 @@ import io.homeassistant.companion.android.assist.service.AssistVoiceInteractionS
 import io.homeassistant.companion.android.assist.ui.AssistSheetView
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.util.sdkVersion
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.webview.WebViewActivity
@@ -193,7 +193,7 @@ class AssistActivity : BaseActivity() {
         contextIsLocked = locked
         if (locked) {
             window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
-            if (!sdkVersion.isAtLeast(Build.VERSION_CODES.O_MR1)) {
+            if (!SdkVersion.isAtLeast(Build.VERSION_CODES.O_MR1)) {
                 @Suppress("DEPRECATION")
                 window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
             } else {
@@ -201,7 +201,7 @@ class AssistActivity : BaseActivity() {
                 setTurnScreenOn(true)
             }
         } else {
-            if (!sdkVersion.isAtLeast(Build.VERSION_CODES.O_MR1)) {
+            if (!SdkVersion.isAtLeast(Build.VERSION_CODES.O_MR1)) {
                 @Suppress("DEPRECATION")
                 window.clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
             } else {

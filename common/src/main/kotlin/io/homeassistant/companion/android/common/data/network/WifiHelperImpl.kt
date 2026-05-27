@@ -4,7 +4,7 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.wifi.WifiManager
 import android.os.Build
-import io.homeassistant.companion.android.common.util.sdkVersion
+import io.homeassistant.companion.android.common.util.SdkVersion
 import javax.inject.Inject
 
 @Suppress("DEPRECATION")
@@ -26,7 +26,7 @@ class WifiHelperImpl @Inject constructor(
         val formattedBssid = getWifiBssid()
         return (
             formattedSsid != null &&
-                (!sdkVersion.isAtLeast(Build.VERSION_CODES.R) || formattedSsid !== WifiManager.UNKNOWN_SSID) &&
+                (!SdkVersion.isAtLeast(Build.VERSION_CODES.R) || formattedSsid !== WifiManager.UNKNOWN_SSID) &&
                 formattedSsid in networks
             ) ||
             (

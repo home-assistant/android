@@ -7,8 +7,8 @@ import android.os.Build
 import androidx.core.app.NotificationManagerCompat
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
-import io.homeassistant.companion.android.common.util.sdkVersion
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -36,7 +36,7 @@ class NotificationDeleteReceiver : BroadcastReceiver() {
 
     @Suppress("UNCHECKED_CAST")
     override fun onReceive(context: Context, intent: Intent) {
-        val hashData = if (sdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+        val hashData = if (SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
             intent.getSerializableExtra(EXTRA_DATA, HashMap::class.java)
         } else {
             @Suppress("DEPRECATION")

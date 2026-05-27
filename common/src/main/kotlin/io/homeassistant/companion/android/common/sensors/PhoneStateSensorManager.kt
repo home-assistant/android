@@ -14,7 +14,7 @@ import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
-import io.homeassistant.companion.android.common.util.sdkVersion
+import io.homeassistant.companion.android.common.util.SdkVersion
 import timber.log.Timber
 
 class PhoneStateSensorManager : SensorManager {
@@ -128,7 +128,7 @@ class PhoneStateSensorManager : SensorManager {
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return when {
             (
-                sdkVersion.isAtLeast(Build.VERSION_CODES.Q) &&
+                SdkVersion.isAtLeast(Build.VERSION_CODES.Q) &&
                     context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS)
                 ) ->
                 listOf(
@@ -142,7 +142,7 @@ class PhoneStateSensorManager : SensorManager {
                 )
 
             (
-                sdkVersion.isAtLeast(Build.VERSION_CODES.N) &&
+                SdkVersion.isAtLeast(Build.VERSION_CODES.N) &&
                     context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS)
                 ) ->
                 listOf(phoneState, sim_1, sim_2, sim1DataNetworkType, sim2DataNetworkType)
@@ -161,11 +161,11 @@ class PhoneStateSensorManager : SensorManager {
         checkPhoneState(context)
         updateSimSensor(context, 0)
         updateSimSensor(context, 1)
-        if (sdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
             updateSignalStrength(context, 0)
             updateSignalStrength(context, 1)
         }
-        if (sdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
             updateDataNetworkType(context, 0)
             updateDataNetworkType(context, 1)
         }
@@ -235,7 +235,7 @@ class PhoneStateSensorManager : SensorManager {
                     displayName = info.displayName?.toString() ?: info.carrierName.toString()
                     attrs["carrier name"] = info.carrierName
                     attrs["iso country code"] = info.countryIso
-                    if (sdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
+                    if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
                         attrs["carrier id"] = info.carrierId
                         attrs["mcc"] = info.mccString.toString()
                         attrs["mnc"] = info.mncString.toString()

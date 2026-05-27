@@ -29,7 +29,7 @@ object DisabledLocationHandler {
     fun isLocationEnabled(context: Context): Boolean {
         val lm: LocationManager = context.getSystemService() ?: return false
 
-        return if (sdkVersion.isAtLeast(VERSION_CODES.P)) {
+        return if (SdkVersion.isAtLeast(VERSION_CODES.P)) {
             lm.isLocationEnabled
         } else {
             lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER) ||
@@ -93,7 +93,7 @@ object DisabledLocationHandler {
 
         val parameters = settings.joinToString(separator = "\n") { "- $it" }
 
-        if (sdkVersion.isAtLeast(VERSION_CODES.O)) {
+        if (SdkVersion.isAtLeast(VERSION_CODES.O)) {
             val channel = NotificationChannel(
                 CHANNEL_LOCATION_DISABLED,
                 context.applicationContext.getString(commonR.string.location_warn_channel),

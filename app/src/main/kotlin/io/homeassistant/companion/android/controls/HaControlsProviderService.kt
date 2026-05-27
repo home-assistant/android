@@ -18,7 +18,7 @@ import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
-import io.homeassistant.companion.android.common.util.sdkVersion
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.util.RegistriesDataHandler
 import java.time.LocalDateTime
 import java.util.concurrent.Flow
@@ -73,7 +73,7 @@ class HaControlsProviderService : ControlsProviderService() {
             .map { it.key }
             .filter {
                 domainToMinimumApi[it] == null ||
-                    sdkVersion.isAtLeast(domainToMinimumApi[it]!!)
+                    SdkVersion.isAtLeast(domainToMinimumApi[it]!!)
             }
     }
 
@@ -150,7 +150,7 @@ class HaControlsProviderService : ControlsProviderService() {
                     allEntities
                         .filter {
                             domainToMinimumApi[it.second.domain] == null ||
-                                sdkVersion.isAtLeast(domainToMinimumApi[it.second.domain]!!)
+                                SdkVersion.isAtLeast(domainToMinimumApi[it.second.domain]!!)
                         }
                         .mapNotNull { (serverId, entity) ->
                             try {
@@ -556,7 +556,7 @@ class HaControlsProviderService : ControlsProviderService() {
     )
 
     private suspend fun entityRequiresAuth(entityId: String, serverId: Int): Boolean {
-        return if (sdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+        return if (SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
             val setting = prefsRepository.getControlsAuthRequired()
             if (setting == ControlsAuthRequiredSetting.SELECTION) {
                 val includeList = prefsRepository.getControlsAuthEntities()

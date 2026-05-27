@@ -31,8 +31,8 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.datasource.DataSource
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.initializePlayer
-import io.homeassistant.companion.android.common.util.sdkVersion
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.compose.media.player.HAMediaPlayer
 import javax.inject.Inject
@@ -99,7 +99,7 @@ private fun HAMediaPlayer(
         player = null
     }
 
-    if (sdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
+    if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
         // Initialize/release in onStart()/onStop() only because in a multi-window environment multiple
         // apps can be visible at the same time. The apps that are out-of-focus are paused, but video
         // playback should continue.

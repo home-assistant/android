@@ -26,7 +26,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
-import io.homeassistant.companion.android.common.util.sdkVersion
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
 import io.homeassistant.companion.android.database.qs.getHighestInUse
@@ -229,7 +229,7 @@ class ManageTilesViewModel @Inject constructor(
                 selectedShouldVibrate = it?.shouldVibrate ?: false
                 tileAuthRequired = it?.authRequired ?: false
                 submitButtonLabel =
-                    if (!sdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) || it?.added == true) {
+                    if (!SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) || it?.added == true) {
                         commonR.string.tile_save
                     } else {
                         commonR.string.tile_add
@@ -297,7 +297,7 @@ class ManageTilesViewModel @Inject constructor(
             val highestInUse = tileDao.getHighestInUse()?.numberedId ?: 0
             updateActiveTileServices(highestInUse, app)
 
-            if (sdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) && !selectedTileAdded) {
+            if (SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) && !selectedTileAdded) {
                 val statusBarManager = app.getSystemService<StatusBarManager>()
                 val service = idToTileService[selectedTile.id] ?: Tile1Service::class.java
                 val icon = selectedIcon?.let {

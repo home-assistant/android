@@ -14,7 +14,7 @@ import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.util.sdkVersion
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.settings.assist.DefaultAssistantManager
@@ -200,7 +200,7 @@ class SettingsPresenterImpl @Inject constructor(
         }
 
         // Notifications
-        if (sdkVersion.isAtLeast(Build.VERSION_CODES.O) &&
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O) &&
             !NotificationManagerCompat.from(context).areNotificationsEnabled()
         ) {
             suggestions += SettingsHomeSuggestion(

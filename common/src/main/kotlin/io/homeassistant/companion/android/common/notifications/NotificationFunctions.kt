@@ -25,8 +25,8 @@ import com.mikepenz.iconics.utils.toAndroidIconCompat
 import com.vdurmont.emoji.EmojiParser
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.util.CHANNEL_GENERAL
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.cancel
-import io.homeassistant.companion.android.common.util.sdkVersion
 import java.util.Locale
 import timber.log.Timber
 
@@ -83,7 +83,7 @@ fun handleChannel(
     }
 
     // Since android Oreo notification channel is needed.
-    if (sdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
+    if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
         val channel = NotificationChannel(
             channelID,
             channelName,
@@ -144,7 +144,7 @@ fun handleChannelSound(context: Context, channel: NotificationChannel) {
 }
 
 fun setChannelLedColor(context: Context, data: Map<String, String>, channel: NotificationChannel) {
-    if (sdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
+    if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
         val ledColor = data[NotificationData.LED_COLOR]
         if (!ledColor.isNullOrBlank()) {
             channel.enableLights(true)
@@ -154,7 +154,7 @@ fun setChannelLedColor(context: Context, data: Map<String, String>, channel: Not
 }
 
 fun setChannelVibrationPattern(data: Map<String, String>, channel: NotificationChannel) {
-    if (sdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
+    if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
         val vibrationPattern = data[NotificationData.VIBRATION_PATTERN]
         val arrVibrationPattern = parseVibrationPattern(vibrationPattern)
         if (arrVibrationPattern.isNotEmpty()) {

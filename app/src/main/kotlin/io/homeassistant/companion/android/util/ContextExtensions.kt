@@ -10,7 +10,7 @@ import androidx.activity.ComponentActivity
 import androidx.annotation.ColorRes
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
-import io.homeassistant.companion.android.common.util.sdkVersion
+import io.homeassistant.companion.android.common.util.SdkVersion
 
 fun Context.getAttribute(attr: Int, fallbackAttr: Int): Int {
     val value = TypedValue()
@@ -26,7 +26,7 @@ fun Context.getHexForColor(@ColorRes attr: Int): String {
 /** @return `true` if the device has an active network configured to reach the internet (not validated) */
 fun Context.hasActiveConnection(): Boolean {
     val cm = getSystemService<ConnectivityManager>() ?: return false
-    return if (sdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
+    return if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
         cm.activeNetwork?.let {
             cm.getNetworkCapabilities(it)?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
         } ?: false

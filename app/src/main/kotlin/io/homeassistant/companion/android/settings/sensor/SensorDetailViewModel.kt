@@ -24,7 +24,7 @@ import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.common.sensors.NetworkSensorManager
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
-import io.homeassistant.companion.android.common.util.sdkVersion
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
@@ -418,7 +418,7 @@ class SensorDetailViewModel @Inject constructor(
         return if (entries?.isNotEmpty() == true) {
             entries.map {
                 try {
-                    if (sdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+                    if (SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
                         packageManager.getApplicationInfo(it, PackageManager.ApplicationInfoFlags.of(0))
                     } else {
                         @Suppress("DEPRECATION")
@@ -429,7 +429,7 @@ class SensorDetailViewModel @Inject constructor(
                 }
             }
         } else {
-            val appInfo = if (sdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+            val appInfo = if (SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
                 packageManager?.getInstalledApplications(
                     PackageManager.ApplicationInfoFlags.of(PackageManager.GET_META_DATA.toLong()),
                 )
@@ -552,7 +552,7 @@ class SensorDetailViewModel @Inject constructor(
         // This is only called when we requested permissions to enable a sensor, so check if we
         // need to do another request, or if we have all permissions and should enable the sensor.
         if (results.keys.contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
-            sdkVersion.isAtLeast(Build.VERSION_CODES.R)
+            SdkVersion.isAtLeast(Build.VERSION_CODES.R)
         ) {
             permissionRequests.value =
                 PermissionsDialog(serverId, arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION))

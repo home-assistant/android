@@ -28,9 +28,9 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepositoryImpl
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepositoryImpl
 import io.homeassistant.companion.android.common.util.MtlsAwareDataSourceFactory
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.getSharedPreferencesSuspend
-import io.homeassistant.companion.android.common.util.sdkVersion
 import io.homeassistant.companion.android.common.util.tts.AndroidTextToSpeechEngine
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
 import io.homeassistant.companion.android.di.qualifiers.NamedDeviceId
@@ -127,7 +127,7 @@ internal abstract class DataModule {
         @Provides
         @NamedOsVersion
         @Singleton
-        fun provideDeviceOsVersion() = sdkVersion.toString()
+        fun provideDeviceOsVersion() = SdkVersion.toString()
 
         @SuppressLint("HardwareIds")
         @Provides

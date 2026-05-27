@@ -21,7 +21,7 @@ import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.util.CHANNEL_WEBSOCKET
-import io.homeassistant.companion.android.common.util.sdkVersion
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.util.compose.HaAlertWarning
 import io.homeassistant.companion.android.util.compose.InfoNotification
@@ -114,7 +114,7 @@ fun WebsocketSettingView(
             )
             val uiManager = context.getSystemService<UiModeManager>()
             if (websocketSetting != WebsocketSetting.NEVER &&
-                sdkVersion.isAtLeast(Build.VERSION_CODES.O) &&
+                SdkVersion.isAtLeast(Build.VERSION_CODES.O) &&
                 uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
             ) {
                 InfoNotification(

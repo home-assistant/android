@@ -9,8 +9,8 @@ import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.isAutomotive
-import io.homeassistant.companion.android.common.util.sdkVersion
 import timber.log.Timber
 
 class LastAppSensorManager : SensorManager {
@@ -63,7 +63,7 @@ class LastAppSensorManager : SensorManager {
 
         try {
             val pm = context.packageManager
-            val appInfo = if (sdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+            val appInfo = if (SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
                 pm.getApplicationInfo(
                     lastApp,
                     PackageManager.ApplicationInfoFlags.of(PackageManager.GET_META_DATA.toLong()),

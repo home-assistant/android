@@ -9,8 +9,8 @@ import android.os.CancellationSignal
 import androidx.annotation.RequiresPermission
 import androidx.core.content.ContextCompat
 import androidx.core.location.LocationManagerCompat
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.instant
-import io.homeassistant.companion.android.common.util.sdkVersion
 import io.homeassistant.companion.android.sensors.GeocodeSensorManager.Companion.LOCATION_OUTDATED_THRESHOLD
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -18,7 +18,7 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import timber.log.Timber
 
-private val provider: String = if (sdkVersion.isAtLeast(Build.VERSION_CODES.S)) {
+private val provider: String = if (SdkVersion.isAtLeast(Build.VERSION_CODES.S)) {
     LocationManager.FUSED_PROVIDER
 } else {
     LocationManager.GPS_PROVIDER

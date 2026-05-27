@@ -6,8 +6,8 @@ import android.webkit.PermissionRequest as WebViewPermissionRequest
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.NotificationStatusProvider
 import io.homeassistant.companion.android.common.util.PermissionChecker
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.SingleSlotQueue
-import io.homeassistant.companion.android.common.util.sdkVersion
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
@@ -44,7 +44,6 @@ internal class PermissionManager @Inject constructor(
     @FcmSupport private val fcmSupport: Boolean,
     private val notificationStatusProvider: NotificationStatusProvider,
     private val permissionChecker: PermissionChecker,
-    // Need for testing to avoid the need of Robolectric
 ) {
 
     private val queue = SingleSlotQueue<PermissionRequest>()
@@ -69,7 +68,7 @@ internal class PermissionManager @Inject constructor(
      * @param serverId The server to check notification preferences for
      */
     suspend fun checkNotificationPermission(serverId: Int) {
-        if (!sdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) return
+        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) return
         if (!shouldAskNotificationPermission(serverId)) return
 
         val granted: Boolean? = queue.awaitResult { resolve ->
@@ -97,7 +96,7 @@ internal class PermissionManager @Inject constructor(
      *         user declined the permission
      */
     suspend fun checkLocalNetworkPermission(): Boolean {
-        if (!sdkVersion.isAtLeast(Build.VERSION_CODES.CINNAMON_BUN)) return true
+        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.CINNAMON_BUN)) return true
         if (permissionChecker.hasPermission(Manifest.permission.ACCESS_LOCAL_NETWORK)) return true
 
         Timber.d("Local network permission required, awaiting user response")
@@ -118,7 +117,7 @@ internal class PermissionManager @Inject constructor(
      *         the user declined the permission
      */
     suspend fun checkStoragePermissionForDownload(): Boolean {
-        if (sdkVersion.isAtLeast(Build.VERSION_CODES.Q)) return true
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) return true
         if (permissionChecker.hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)) return true
 
         Timber.d("Storage permission required for download, awaiting user response")

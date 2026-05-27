@@ -39,7 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.compose.theme.HATheme
-import io.homeassistant.companion.android.common.util.sdkVersion
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.settings.qs.ManageTilesViewModel
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
@@ -123,7 +123,7 @@ fun ManageTilesView(
                         .fillMaxWidth(),
                 )
 
-                if (sdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
+                if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
                     TextField(
                         value = viewModel.tileSubtitle.orEmpty(),
                         onValueChange = { viewModel.tileSubtitle = it },

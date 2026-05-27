@@ -43,7 +43,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
-import io.homeassistant.companion.android.common.util.sdkVersion
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
@@ -118,7 +118,7 @@ class TodoWidgetConfigureActivity : BaseActivity() {
         lifecycleScope.launch {
             if (intent.extras?.getBoolean(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, false) == true) {
                 if (
-                    sdkVersion.isAtLeast(Build.VERSION_CODES.O) &&
+                    SdkVersion.isAtLeast(Build.VERSION_CODES.O) &&
                     viewModel.isValidSelection()
                 ) {
                     requestPinWidget()

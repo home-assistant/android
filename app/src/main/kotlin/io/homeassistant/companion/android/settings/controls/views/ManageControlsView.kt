@@ -58,7 +58,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.friendlyName
-import io.homeassistant.companion.android.common.util.sdkVersion
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.util.compose.HaAlertWarning
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
@@ -94,7 +94,7 @@ fun ManageControlsView(
         modifier = modifier,
         contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
     ) {
-        if (sdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
             item {
                 Text(
                     text = stringResource(commonR.string.controls_setting_panel),
@@ -129,7 +129,7 @@ fun ManageControlsView(
             }
         }
 
-        if (!sdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE) || !panelEnabled) {
+        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE) || !panelEnabled) {
             if (serversList.size > 1) {
                 item {
                     Row(

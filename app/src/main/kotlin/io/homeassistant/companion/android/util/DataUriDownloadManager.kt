@@ -18,7 +18,7 @@ import androidx.core.app.NotificationManagerCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.CHANNEL_DOWNLOADS
-import io.homeassistant.companion.android.common.util.sdkVersion
+import io.homeassistant.companion.android.common.util.SdkVersion
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -104,7 +104,7 @@ class DataUriDownloadManager @Inject constructor(@param:ApplicationContext priva
                     generated
                 }
 
-                if (sdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
+                if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
                     val contentValues = ContentValues().apply {
                         put(MediaStore.Downloads.DISPLAY_NAME, fileName)
                         put(MediaStore.Downloads.MIME_TYPE, mimetype)
@@ -159,7 +159,7 @@ class DataUriDownloadManager @Inject constructor(@param:ApplicationContext priva
     }
 
     private fun createNotificationChannel() {
-        if (sdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             val notificationManager = NotificationManagerCompat.from(context)
             val channel = NotificationChannel(
                 CHANNEL_DOWNLOADS,

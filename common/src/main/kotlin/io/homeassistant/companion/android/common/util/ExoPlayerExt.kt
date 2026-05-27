@@ -126,7 +126,7 @@ private fun createDataSourceFactory(
 private fun buildHttpEngineFactory(context: Context): DataSource.Factory? {
     // https://developer.android.com/reference/android/net/http/HttpEngine
     // Added in API level 34 also in S Extensions 7
-    return if (sdkVersion.isAtLeast(Build.VERSION_CODES.R) &&
+    return if (SdkVersion.isAtLeast(Build.VERSION_CODES.R) &&
         SdkExtensions.getExtensionVersion(Build.VERSION_CODES.S) >= 7
     ) {
         // Use Platform embedded Cronet via android.net.http.HttpEngine

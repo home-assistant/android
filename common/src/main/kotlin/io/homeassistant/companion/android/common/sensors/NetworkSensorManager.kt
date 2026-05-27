@@ -13,8 +13,8 @@ import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.getStringOrElse
-import io.homeassistant.companion.android.common.util.sdkVersion
 import io.homeassistant.companion.android.common.util.toJsonObjectOrNull
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
@@ -177,7 +177,7 @@ class NetworkSensorManager : SensorManager {
                 arrayOf()
             }
 
-            sdkVersion.isAtLeast(Build.VERSION_CODES.Q) -> {
+            SdkVersion.isAtLeast(Build.VERSION_CODES.Q) -> {
                 arrayOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_BACKGROUND_LOCATION,
@@ -339,7 +339,7 @@ class NetworkSensorManager : SensorManager {
             deviceIp = if (conInfo == null || (conInfo.networkId == -1 && conInfo.linkSpeed == -1)) {
                 "<not connected>"
             } else {
-                if (sdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
+                if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
                     val connectivityManager = context.applicationContext.getSystemService<ConnectivityManager>()
                     connectivityManager?.activeNetwork?.let {
                         // Get the IPv4 address without prefix length
@@ -623,7 +623,7 @@ class NetworkSensorManager : SensorManager {
     }
 
     /** Get WiFi connection info (without location data such as (B)SSID on Android >=S) */
-    private fun getWifiConnectionInfo(context: Context): WifiInfo? = if (sdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
+    private fun getWifiConnectionInfo(context: Context): WifiInfo? = if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
         val connectivityManager = context.applicationContext.getSystemService<ConnectivityManager>()
         connectivityManager?.activeNetwork?.let {
             val info = connectivityManager.getNetworkCapabilities(it)?.transportInfo

@@ -17,8 +17,8 @@ import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepositor
 import io.homeassistant.companion.android.common.data.keychain.NamedKeyStore
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.util.HAStrictMode
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.configureComposeDiagnosticStackTrace
-import io.homeassistant.companion.android.common.util.sdkVersion
 import io.homeassistant.companion.android.complications.ComplicationReceiver
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import javax.inject.Inject
@@ -41,14 +41,14 @@ open class HomeAssistantApplication : Application() {
         Timber.plant(Timber.DebugTree())
         super.onCreate()
 
-        if (sdkVersion.isAtLeast(Build.VERSION_CODES.S) &&
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.S) &&
             BuildConfig.DEBUG &&
             !BuildConfig.NO_STRICT_MODE
         ) {
             HAStrictMode.enable()
         }
 
-        Timber.i("Running ${BuildConfig.VERSION_NAME} on SDK $sdkVersion")
+        Timber.i("Running ${BuildConfig.VERSION_NAME} on SDK $SdkVersion")
 
         configureComposeDiagnosticStackTrace(isDebug = BuildConfig.DEBUG)
 
@@ -105,7 +105,7 @@ open class HomeAssistantApplication : Application() {
         )
 
         // Listen for microphone mute changes
-        if (sdkVersion.isAtLeast(Build.VERSION_CODES.P)) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.P)) {
             ContextCompat.registerReceiver(
                 this,
                 sensorReceiver,
@@ -115,7 +115,7 @@ open class HomeAssistantApplication : Application() {
         }
 
         // Listen for speakerphone state changes
-        if (sdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
             ContextCompat.registerReceiver(
                 this,
                 sensorReceiver,

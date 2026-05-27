@@ -17,7 +17,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Co
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryOptions
 import io.homeassistant.companion.android.common.util.LocalDateTimeSerializer
 import io.homeassistant.companion.android.common.util.MapAnySerializer
-import io.homeassistant.companion.android.common.util.sdkVersion
+import io.homeassistant.companion.android.common.util.SdkVersion
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
@@ -1205,7 +1205,7 @@ fun Entity.friendlyState(
             }
         }
     }
-    if (friendlyState == state && sdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
+    if (friendlyState == state && SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
         try {
             val stateInMillis = ZonedDateTime.parse(state, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
                 .toInstant()

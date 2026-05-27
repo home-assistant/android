@@ -10,7 +10,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.CHANNEL_DATABASE
-import io.homeassistant.companion.android.common.util.sdkVersion
+import io.homeassistant.companion.android.common.util.SdkVersion
 
 private const val NOTIFICATION_ID = 45
 private const val TAG = "AppDatabase"
@@ -28,7 +28,7 @@ internal fun <T> Cursor.map(transform: (Cursor) -> T): List<T> {
 }
 
 private fun createNotificationChannel(context: Context) {
-    if (sdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
+    if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
         val notificationManager = context.getSystemService<NotificationManager>()!!
 
         var notificationChannel =
