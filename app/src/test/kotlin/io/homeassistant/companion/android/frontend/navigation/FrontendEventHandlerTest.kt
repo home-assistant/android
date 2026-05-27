@@ -46,6 +46,7 @@ class FrontendEventHandlerTest {
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
                 onRequestFullscreen = {},
+                onNavigateToWidgetConfig = { _, _ -> },
             )
         }
 
@@ -76,6 +77,7 @@ class FrontendEventHandlerTest {
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
                 onRequestFullscreen = {},
+                onNavigateToWidgetConfig = { _, _ -> },
             )
         }
 
@@ -108,6 +110,7 @@ class FrontendEventHandlerTest {
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
                 onRequestFullscreen = {},
+                onNavigateToWidgetConfig = { _, _ -> },
             )
         }
 
@@ -146,6 +149,7 @@ class FrontendEventHandlerTest {
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
                 onRequestFullscreen = {},
+                onNavigateToWidgetConfig = { _, _ -> },
             )
         }
 
@@ -172,6 +176,7 @@ class FrontendEventHandlerTest {
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
                 onRequestFullscreen = {},
+                onNavigateToWidgetConfig = { _, _ -> },
             )
         }
 
@@ -198,6 +203,7 @@ class FrontendEventHandlerTest {
                 onShowServerSwitcher = { serverSwitcherShown = true },
                 onNavigateToNfcWrite = { _, _ -> },
                 onRequestFullscreen = {},
+                onNavigateToWidgetConfig = { _, _ -> },
             )
         }
 
@@ -227,6 +233,7 @@ class FrontendEventHandlerTest {
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
                 onRequestFullscreen = {},
+                onNavigateToWidgetConfig = { _, _ -> },
             )
         }
 
@@ -257,6 +264,7 @@ class FrontendEventHandlerTest {
                     capturedTagId = tagId
                 },
                 onRequestFullscreen = {},
+                onNavigateToWidgetConfig = { _, _ -> },
             )
         }
 
@@ -287,6 +295,7 @@ class FrontendEventHandlerTest {
                     capturedTagId = tagId
                 },
                 onRequestFullscreen = {},
+                onNavigateToWidgetConfig = { _, _ -> },
             )
         }
 
@@ -308,6 +317,42 @@ class FrontendEventHandlerTest {
         assertEquals(false, runRequestFullscreenTest(fullscreen = false))
     }
 
+    @Test
+    fun `Given NavigateToWidgetConfig event then onNavigateToWidgetConfig is called with entityId and widgetType`() {
+        var capturedEntityId: String? = null
+        var capturedWidgetType: WidgetType? = null
+        val events = TestSharedFlow<FrontendEvent>()
+
+        composeTestRule.setContent {
+            FrontendEventHandler(
+                events = events,
+                onShowSnackbar = { _, _ -> false },
+                onNavigateToSettings = {},
+                onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = {},
+                onShowServerSwitcher = {},
+                onNavigateToNfcWrite = { _, _ -> },
+                onRequestFullscreen = {},
+                onNavigateToWidgetConfig = { entityId, widgetType ->
+                    capturedEntityId = entityId
+                    capturedWidgetType = widgetType
+                },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        events.emit(
+            FrontendEvent.NavigateToWidgetConfig(
+                entityId = "light.kitchen",
+                widgetType = WidgetType.MediaPlayer,
+            ),
+        )
+        composeTestRule.waitForIdle()
+
+        assertEquals("light.kitchen", capturedEntityId)
+        assertEquals(WidgetType.MediaPlayer, capturedWidgetType)
+    }
+
     private fun runRequestFullscreenTest(fullscreen: Boolean): Boolean? {
         var captured: Boolean? = null
         val events = TestSharedFlow<FrontendEvent>()
@@ -322,6 +367,7 @@ class FrontendEventHandlerTest {
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
                 onRequestFullscreen = { captured = it },
+                onNavigateToWidgetConfig = { _, _ -> },
             )
         }
 
