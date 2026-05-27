@@ -7,6 +7,12 @@ import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationManagerCompat
 import timber.log.Timber
 
+private val ANDROID_AUTO_GROUP_SUFFIXES = listOf(
+    "|g:ranker_group",
+    "|g:Aggregate_AlertingSection",
+    "|g:Aggregate_SilentSection",
+)
+
 fun NotificationManagerCompat.getNotificationManager(): NotificationManager {
     val field = this.javaClass.declaredFields
         .toList().first { it.name == "mNotificationManager" }
@@ -50,10 +56,7 @@ fun cancelNotificationGroupIfNeeded(
             Timber.d("Notification is in a group ($groupKey). Get all notifications for this group...")
 
             // Check if the group is one of the auto groups of android
-            if (!groupKey.endsWith("|g:ranker_group") &&
-                !groupKey.endsWith("|g:Aggregate_AlertingSection") &&
-                !groupKey.endsWith("|g:Aggregate_SilentSection")
-            ) {
+            if (ANDROID_AUTO_GROUP_SUFFIXES.none { groupKey.endsWith(it) }) {
                 // Nope it is a custom group. Get notifications of the group...
                 val groupNotifications =
                     currentActiveNotifications.filter { s -> s.groupKey == groupKey }
@@ -119,7 +122,7 @@ fun cancelNotificationGroupIfNeeded(
                     }
                 }
             } else {
-                Timber.d("Notification is in a group ($groupKey), but it is in the auto group. Cancel notification")
+                Timber.d("Notification is in a group ($groupKey), but it is in an auto group. Cancel notification")
             }
         } else {
             if (statusBarNotification == null) {
