@@ -7,6 +7,10 @@ import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationManagerCompat
 import timber.log.Timber
 
+// Groups are defined here:
+// https://cs.android.com/android/platform/superproject/+/android-latest-release:frameworks/base/services/core/java/com/android/server/notification/GroupHelper.java;drc=d5d4670d8a245da5468af767b17d1e57ed7c9278;l=2106
+// Section names are defined here:
+// https://cs.android.com/android/platform/superproject/+/android-latest-release:frameworks/base/services/core/java/com/android/server/notification/GroupHelper.java;drc=d5d4670d8a245da5468af767b17d1e57ed7c9278;l=195-199
 private val ANDROID_AUTO_GROUP_SUFFIXES = listOf(
     "|g:ranker_group",
     "|g:Aggregate_AlertingSection",
