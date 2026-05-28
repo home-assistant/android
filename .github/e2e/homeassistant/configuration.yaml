@@ -1,5 +1,13 @@
 default_config:
 
+logger:
+  default: info
+  logs:
+    aiohttp.access: info
+    homeassistant.components.http: debug
+    homeassistant.components.mobile_app: debug
+    homeassistant.components.websocket_api: debug
+
 homeassistant:
   auth_providers:
     - type: command_line

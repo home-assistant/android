@@ -158,7 +158,18 @@ jobs:
 
       - name: Capture Home Assistant logs
         if: always() && steps.homeassistant.outputs.containername != ''
-        run: docker logs ${{ steps.homeassistant.outputs.containername }} > homeassistant.log
+        run: docker logs --timestamps ${{ steps.homeassistant.outputs.containername }} > homeassistant.log 2>&1
+
+      - name: Capture Home Assistant container details
+        if: always() && steps.homeassistant.outputs.containername != ''
+        run: docker inspect ${{ steps.homeassistant.outputs.containername }} > homeassistant-container.json
+
+      - name: Capture Home Assistant file log
+        if: always()
+        run: |
+          if [ -f .github/e2e/homeassistant/home-assistant.log ]; then
+            cp .github/e2e/homeassistant/home-assistant.log homeassistant-file.log
+          fi
 
       - name: Upload E2E artifacts
         if: always()
@@ -169,5 +180,7 @@ jobs:
           path: |
             homeassistant-config.json
             homeassistant.log
+            homeassistant-file.log
+            homeassistant-container.json
             logcat.txt
             maestro-results
