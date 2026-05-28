@@ -88,6 +88,7 @@ import io.homeassistant.companion.android.settings.assist.DefaultAssistantManage
 import io.homeassistant.companion.android.util.FlashlightHelper
 import io.homeassistant.companion.android.util.PermissionRequestMediator
 import io.homeassistant.companion.android.util.UrlUtil
+import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.vehicle.HaCarAppService
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebViewActivity
@@ -329,11 +330,21 @@ class MessagingManager @Inject constructor(
             }
 
             val serverId = jsonData[NotificationData.WEBHOOK_ID]?.let { webhookId ->
-                serverManager.getServer(webhookId = webhookId)?.id
+                val serverForWebhook = serverManager.getServer(webhookId = webhookId)?.id
+                if (serverForWebhook == null) {
+                    Timber.w(
+                        "Received notification with webhook ID ${sensitive(
+                            webhookId,
+                        )} but no matching server, ignoring",
+                    )
+                    return@launch
+                }
+
+                serverForWebhook
             } ?: ServerManager.SERVER_ID_ACTIVE
 
             if (serverManager.getServer(serverId) == null) {
-                Timber.w("Received notification but no server for it, discarding")
+                Timber.w("Received notification but no server available, ignoring")
                 return@launch
             }
 

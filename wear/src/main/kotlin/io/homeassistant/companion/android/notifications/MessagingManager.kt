@@ -25,6 +25,7 @@ import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.sensors.SensorReceiver
+import io.homeassistant.companion.android.util.sensitive
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -47,9 +48,9 @@ class MessagingManager @Inject constructor(
 
             val jsonData = notificationData as Map<String, String>?
             val jsonObject = jsonData?.toJsonObject()
-            val serverId = jsonData?.get(NotificationData.WEBHOOK_ID)?.let {
+            val receivedServer = jsonData?.get(NotificationData.WEBHOOK_ID)?.let {
                 serverManager.getServer(webhookId = it)?.id
-            } ?: ServerManager.SERVER_ID_ACTIVE
+            }
             val notificationRow =
                 NotificationItem(
                     0,
@@ -57,11 +58,26 @@ class MessagingManager @Inject constructor(
                     notificationData[NotificationData.MESSAGE].toString(),
                     jsonObject.toString(),
                     source,
-                    serverId,
+                    receivedServer,
                 )
             notificationDao.add(notificationRow)
+
+            val serverId = jsonData?.get(NotificationData.WEBHOOK_ID)?.let { webhookId ->
+                val serverForWebhook = serverManager.getServer(webhookId = webhookId)?.id
+                if (serverForWebhook == null) {
+                    Timber.w(
+                        "Received notification with webhook ID ${sensitive(
+                            webhookId,
+                        )} but no matching server, ignoring",
+                    )
+                    return@launch
+                }
+
+                serverForWebhook
+            } ?: ServerManager.SERVER_ID_ACTIVE
+
             if (serverManager.getServer(serverId) == null) {
-                Timber.w("Received notification but no server for it, discarding")
+                Timber.w("Received notification but no server available, ignoring")
                 return@launch
             }
 
