@@ -4,9 +4,10 @@ appId: io.homeassistant.companion.android.debug
 - launchApp:
     clearState: true
 
-- assertVisible: "Connect to my Home Assistant server"
+- assertVisible:
+    text: '(?s)Connect to my Home.*Assistant server'
 - tapOn:
-    text: "Connect to my Home Assistant server"
+    text: '(?s)Connect to my Home.*Assistant server'
     retryTapIfNoChange: true
 
 - assertVisible: "Enter address manually"
@@ -14,7 +15,8 @@ appId: io.homeassistant.companion.android.debug
     text: "Enter address manually"
     retryTapIfNoChange: true
 
-- assertVisible: "What is your Home Assistant address?"
+- assertVisible:
+    text: '(?s)What is your Home.*Assistant address.*'
 - tapOn: "http://homeassistant.local:8123"
 - inputText: ${HOME_ASSISTANT_URL}
 - tapOn:
