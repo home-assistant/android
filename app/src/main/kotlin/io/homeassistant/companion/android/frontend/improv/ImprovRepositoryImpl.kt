@@ -10,6 +10,7 @@ import com.wifi.improv.ImprovDevice
 import com.wifi.improv.ImprovManager
 import com.wifi.improv.ImprovManagerCallback
 import io.homeassistant.companion.android.common.util.PermissionChecker
+import io.homeassistant.companion.android.common.util.SdkVersion
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
@@ -45,9 +46,6 @@ internal const val SCAN_IDLE_WINDOW_MS: Long = 500L
 class ImprovRepositoryImpl @VisibleForTesting constructor(
     private val permissionChecker: PermissionChecker,
     improvManagerFactory: ImprovManagerFactory,
-    // Test-only override of [Build.VERSION.SDK_INT] so the SDK-branched [requiredPermissions] can
-    // be exercised without Robolectric.
-    private val sdkInt: Int,
     private val shareInScope: CoroutineScope,
     // Injected so tests can pin BLE start/stop hops onto the test scheduler.
     private val backgroundDispatcher: CoroutineDispatcher,
@@ -58,7 +56,6 @@ class ImprovRepositoryImpl @VisibleForTesting constructor(
     constructor(permissionChecker: PermissionChecker, improvManagerFactory: ImprovManagerFactory) : this(
         permissionChecker = permissionChecker,
         improvManagerFactory = improvManagerFactory,
-        sdkInt = Build.VERSION.SDK_INT,
         shareInScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
         backgroundDispatcher = Dispatchers.IO,
     )
@@ -86,7 +83,7 @@ class ImprovRepositoryImpl @VisibleForTesting constructor(
         @SuppressLint("InlinedApi")
         get() = buildList {
             add(Manifest.permission.ACCESS_FINE_LOCATION)
-            if (sdkInt >= Build.VERSION_CODES.S) {
+            if (SdkVersion.isAtLeast(Build.VERSION_CODES.S)) {
                 add(Manifest.permission.BLUETOOTH_SCAN)
                 add(Manifest.permission.BLUETOOTH_CONNECT)
             } else {

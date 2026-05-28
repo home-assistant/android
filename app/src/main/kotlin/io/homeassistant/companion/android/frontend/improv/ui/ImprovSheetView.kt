@@ -47,6 +47,7 @@ import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.frontend.improv.ImprovUIState
 
 /**
@@ -148,7 +149,7 @@ private fun ColumnScope.ConfiguringDeviceSection(
  * sentinel returned by [WifiManager.getConnectionInfo] when the app lacks the location permission.
  */
 private fun String?.takeIfDisplayable(): String? = takeIf {
-    !it.isNullOrBlank() && (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || it !== WifiManager.UNKNOWN_SSID)
+    !it.isNullOrBlank() && (!SdkVersion.isAtLeast(Build.VERSION_CODES.R) || it !== WifiManager.UNKNOWN_SSID)
 }
 
 @Composable
