@@ -7,6 +7,7 @@ import android.os.Build
 import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.common.util.SdkVersion
 import java.net.MalformedURLException
 import java.net.URL
 import java.util.concurrent.atomic.AtomicBoolean
@@ -157,7 +158,7 @@ internal class HomeAssistantSearcherImpl @Inject constructor(
             nsdManager.resolveService(serviceInfo, listener)
 
             awaitClose {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                if (SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
                     try {
                         nsdManager.stopServiceResolution(listener)
                     } catch (e: IllegalArgumentException) {

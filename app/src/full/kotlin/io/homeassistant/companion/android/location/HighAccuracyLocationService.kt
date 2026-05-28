@@ -22,6 +22,7 @@ import com.google.android.gms.location.Priority
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.CHANNEL_HIGH_ACCURACY
 import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.util.ForegroundServiceLauncher
 import kotlin.math.abs
@@ -111,7 +112,7 @@ class HighAccuracyLocationService : Service() {
         }
 
         private fun createNotificationBuilder(context: Context) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
                 val channel =
                     NotificationChannel(
                         CHANNEL_HIGH_ACCURACY,
@@ -153,7 +154,7 @@ class HighAccuracyLocationService : Service() {
         createNotificationBuilder(this)
         notification = notificationBuilder.build()
 
-        val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) FOREGROUND_SERVICE_TYPE_LOCATION else 0
+        val type = if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) FOREGROUND_SERVICE_TYPE_LOCATION else 0
         FailFast.failOnCatch {
             // Sometimes the service cannot be started as foreground due to the app being in a state where
             // this is not allowed. We haven't identified how to avoid starting the service in this state yet.
