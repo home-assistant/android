@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.thread
 
-import android.content.Context
 import android.content.IntentSender
 import androidx.activity.result.ActivityResult
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetResponse
@@ -8,6 +7,9 @@ import kotlinx.coroutines.CoroutineScope
 
 interface ThreadManager {
 
+    /**
+     * Outcome of a Thread credential sync between the device and the server.
+     */
     sealed class SyncResult {
         object AppUnsupported : SyncResult()
         object ServerUnsupported : SyncResult()
@@ -34,23 +36,30 @@ interface ThreadManager {
     suspend fun coreSupportsThread(serverId: Int): Boolean
 
     /**
-     * Try to sync the preferred Thread dataset.
-     * @param exportOnly Controls the synchronization direction.
-     *  - If set to `true`, only get the device preferred dataset and sync to the server if it
-     *    wasn't added by the app.
-     *  - If set to `false`, try to get the device and server in sync. This will clean up old/stale
-     *    app datasets. If one has a preferred dataset while the other one doesn't, it will sync to
-     *    the other. If both have preferred datasets, it will send updated data to the server if
-     *    needed. If neither has a preferred dataset, skip syncing.
-     * @return [SyncResult] with details of the sync operation, which may include an [IntentSender]
-     * if permission is required to import the device dataset
+     * Prepare the device's preferred Thread dataset for one-way export to the server.
+     *
+     * Returns a [SyncResult]; the export-only path produces a subset of variants:
+     *   - [SyncResult.OnlyOnDevice] with a non-null `exportIntent` — launch it and pass the
+     *     [ActivityResult] back to [sendThreadDatasetExportResult] to complete the export.
+     *   - [SyncResult.NoneHaveCredentials] or [SyncResult.OnlyOnServer] with `imported = false`
+     *     — nothing new on the device to share.
+     *   - [SyncResult.NotConnected] — device is not on the local network.
+     *   - [SyncResult.AppUnsupported] / [SyncResult.ServerUnsupported] — support gates failed.
+     *
+     * [SyncResult.OnlyOnServer] with `imported = true` and [SyncResult.AllHaveCredentials] are
+     * full-sync-only outcomes and won't appear here.
      */
-    suspend fun syncPreferredDataset(
-        context: Context,
-        serverId: Int,
-        exportOnly: Boolean,
-        scope: CoroutineScope,
-    ): SyncResult
+    suspend fun exportThreadCredentials(serverId: Int): SyncResult
+
+    /**
+     * Run a full bidirectional sync of the preferred Thread dataset between the device and the
+     * server: cleans up stale app-added datasets, imports from one side to the other when only
+     * one has a credential, and reconciles when both do.
+     *
+     * @return [SyncResult] with details of the sync operation, which may include an [IntentSender]
+     * if permission is required to import the device dataset.
+     */
+    suspend fun syncPreferredDataset(serverId: Int, scope: CoroutineScope): SyncResult
 
     /**
      * Get the preferred Thread dataset from the server.
@@ -64,12 +73,7 @@ interface ThreadManager {
      * @throws Exception if a preferred dataset exists on the server, but it wasn't possible to
      * import it
      */
-    suspend fun importDatasetFromServer(
-        context: Context,
-        datasetId: String,
-        preferredBorderAgentId: String?,
-        serverId: Int,
-    )
+    suspend fun importDatasetFromServer(datasetId: String, preferredBorderAgentId: String?, serverId: Int)
 
     /**
      * Start a flow to get the preferred Thread dataset from this device to export to the server.
@@ -77,11 +81,11 @@ interface ThreadManager {
      * `null` if there are no datasets to import
      * @throws Exception if it is not possible to get the preferred dataset
      */
-    suspend fun getPreferredDatasetFromDevice(context: Context): IntentSender?
+    suspend fun getPreferredDatasetFromDevice(): IntentSender?
 
     /**
-     * Process the result from [syncPreferredDataset] or [getPreferredDatasetFromDevice]'s intent
-     * and add the Thread dataset, if any, to the server.
+     * Process the result from [exportThreadCredentials] or [getPreferredDatasetFromDevice]'s
+     * intent and add the Thread dataset, if any, to the server.
      * @return Network name that was sent and accepted, or `null` if not sent or accepted
      */
     suspend fun sendThreadDatasetExportResult(result: ActivityResult, serverId: Int): String?

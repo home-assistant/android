@@ -30,6 +30,7 @@ import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.improv.ImprovRepository
+import io.homeassistant.companion.android.matter.MatterCommissioningResult
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
 import io.homeassistant.companion.android.util.UrlUtil
@@ -46,7 +47,6 @@ import javax.net.ssl.SSLHandshakeException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -440,7 +440,7 @@ class WebViewPresenterImpl @Inject constructor(
     }
 
     override fun onStart(context: Context) {
-        matterUseCase.suppressDiscoveryBottomSheet(context)
+        matterUseCase.suppressDiscoveryBottomSheet()
     }
 
     override fun onFinish() {
@@ -506,7 +506,7 @@ class WebViewPresenterImpl @Inject constructor(
 
     override fun appCanCommissionMatterDevice(): Boolean = matterUseCase.appSupportsCommissioning()
 
-    override fun startCommissioningMatterDevice(context: Context) {
+    override fun startCommissioningMatterDevice() {
         if (mutableMatterThreadStep.value != MatterThreadStep.REQUESTED) {
             mutableMatterThreadStep.tryEmit(MatterThreadStep.REQUESTED)
 
@@ -514,67 +514,50 @@ class WebViewPresenterImpl @Inject constructor(
             // (temporarily?) removed due to slowing down the Matter commissioning flow for the user
             // and limited usefulness of the result (because of API limitations)
 
-            startMatterCommissioningFlow(context)
+            startMatterCommissioningFlow()
         } // else already waiting for a result, don't send another request
     }
 
-    private fun startMatterCommissioningFlow(context: Context) {
-        matterUseCase.startNewCommissioningFlow(
-            context,
-            { intentSender ->
-                Timber.d("Matter commissioning is ready")
-                matterThreadIntentSender = intentSender
-                mutableMatterThreadStep.tryEmit(MatterThreadStep.MATTER_IN_PROGRESS)
-            },
-            { e ->
-                Timber.e(e, "Matter commissioning couldn't be prepared")
-                mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_MATTER_OTHER)
-            },
-        )
+    private fun startMatterCommissioningFlow() {
+        mainScope.launch {
+            when (val result = matterUseCase.commissionMatterDevice()) {
+                is MatterCommissioningResult.Ready -> {
+                    Timber.d("Matter commissioning is ready")
+                    matterThreadIntentSender = result.intentSender
+                    mutableMatterThreadStep.tryEmit(MatterThreadStep.MATTER_IN_PROGRESS)
+                }
+                is MatterCommissioningResult.Error -> {
+                    Timber.e(result.cause, "Matter commissioning couldn't be prepared")
+                    mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_MATTER_OTHER)
+                }
+            }
+        }
     }
 
     override fun appCanExportThreadCredentials(): Boolean = threadUseCase.appSupportsThread()
 
-    override fun exportThreadCredentials(context: Context) {
+    override fun exportThreadCredentials() {
         if (mutableMatterThreadStep.value != MatterThreadStep.REQUESTED) {
             mutableMatterThreadStep.tryEmit(MatterThreadStep.REQUESTED)
 
             mainScope.launch {
-                try {
-                    val result = threadUseCase.syncPreferredDataset(
-                        context,
-                        serverId,
-                        true,
-                        CoroutineScope(
-                            coroutineContext + SupervisorJob(),
-                        ),
-                    )
-                    Timber.d("Export preferred Thread dataset returned $result")
-
-                    when (result) {
-                        is ThreadManager.SyncResult.OnlyOnDevice -> {
-                            matterThreadIntentSender = result.exportIntent
-                            mutableMatterThreadStep.tryEmit(MatterThreadStep.THREAD_EXPORT_TO_SERVER_ONLY)
-                        }
-
-                        is ThreadManager.SyncResult.NoneHaveCredentials,
-                        is ThreadManager.SyncResult.OnlyOnServer,
-                        -> {
-                            mutableMatterThreadStep.tryEmit(MatterThreadStep.THREAD_NONE)
-                        }
-
-                        is ThreadManager.SyncResult.NotConnected -> {
-                            mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_THREAD_LOCAL_NETWORK)
-                        }
-
-                        else -> {
-                            mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_THREAD_OTHER)
-                        }
+                val result = threadUseCase.exportThreadCredentials(serverId)
+                Timber.d("Export preferred Thread dataset returned $result")
+                val step = when (result) {
+                    is ThreadManager.SyncResult.OnlyOnDevice -> {
+                        matterThreadIntentSender = result.exportIntent
+                        MatterThreadStep.THREAD_EXPORT_TO_SERVER_ONLY
                     }
-                } catch (e: Exception) {
-                    Timber.w(e, "Unable to export preferred Thread dataset")
-                    mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_THREAD_OTHER)
+                    is ThreadManager.SyncResult.NoneHaveCredentials,
+                    is ThreadManager.SyncResult.OnlyOnServer,
+                    -> MatterThreadStep.THREAD_NONE
+                    is ThreadManager.SyncResult.NotConnected -> MatterThreadStep.ERROR_THREAD_LOCAL_NETWORK
+                    is ThreadManager.SyncResult.AppUnsupported,
+                    is ThreadManager.SyncResult.ServerUnsupported,
+                    is ThreadManager.SyncResult.AllHaveCredentials,
+                    -> MatterThreadStep.ERROR_THREAD_OTHER
                 }
+                mutableMatterThreadStep.tryEmit(step)
             }
         } // else already waiting for a result, don't send another request
     }
@@ -587,12 +570,12 @@ class WebViewPresenterImpl @Inject constructor(
         return intent
     }
 
-    override fun onMatterThreadIntentResult(context: Context, result: ActivityResult) {
+    override fun onMatterThreadIntentResult(result: ActivityResult) {
         when (mutableMatterThreadStep.value) {
             MatterThreadStep.THREAD_EXPORT_TO_SERVER_MATTER -> {
                 mainScope.launch {
                     threadUseCase.sendThreadDatasetExportResult(result, serverId)
-                    startMatterCommissioningFlow(context)
+                    startMatterCommissioningFlow()
                 }
             }
 

@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.webview
 
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.IntentSender
 import android.net.Uri
 import android.net.http.SslError
 import androidx.lifecycle.Lifecycle
@@ -17,6 +18,7 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.improv.ImprovRepository
+import io.homeassistant.companion.android.matter.MatterCommissioningResult
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.thread.ThreadManager
@@ -33,6 +35,7 @@ import java.net.URL
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -656,5 +659,77 @@ class WebViewPresenterImplTest {
 
         verify { webView.loadUrl(any(), any(), any(), any()) }
         verify(exactly = 0) { webView.showConnectionSecurityLevel(serverId = any()) }
+    }
+
+    @Test
+    fun `Given matter Ready result when startCommissioningMatterDevice then step is MATTER_IN_PROGRESS and intent is captured`() = runTest(testDispatcher) {
+        val intentSender = mockk<IntentSender>()
+        coEvery { matterManager.commissionMatterDevice() } returns MatterCommissioningResult.Ready(intentSender)
+        createPresenter()
+
+        presenter.startCommissioningMatterDevice()
+        advanceUntilIdle()
+
+        assertEquals(MatterThreadStep.MATTER_IN_PROGRESS, presenter.getMatterThreadStepFlow().first())
+        assertEquals(intentSender, presenter.getMatterThreadIntent())
+    }
+
+    @Test
+    fun `Given matter Error result when startCommissioningMatterDevice then step is ERROR_MATTER_OTHER`() = runTest(testDispatcher) {
+        coEvery { matterManager.commissionMatterDevice() } returns
+            MatterCommissioningResult.Error(IllegalStateException("nope"))
+        createPresenter()
+
+        presenter.startCommissioningMatterDevice()
+        advanceUntilIdle()
+
+        assertEquals(MatterThreadStep.ERROR_MATTER_OTHER, presenter.getMatterThreadStepFlow().first())
+    }
+
+    @Test
+    fun `Given thread Ready result when exportThreadCredentials then step is THREAD_EXPORT_TO_SERVER_ONLY and intent is captured`() = runTest(testDispatcher) {
+        val intentSender = mockk<IntentSender>()
+        coEvery { threadManager.exportThreadCredentials(any()) } returns
+            ThreadManager.SyncResult.OnlyOnDevice(exportIntent = intentSender)
+        createPresenter()
+
+        presenter.exportThreadCredentials()
+        advanceUntilIdle()
+
+        assertEquals(MatterThreadStep.THREAD_EXPORT_TO_SERVER_ONLY, presenter.getMatterThreadStepFlow().first())
+        assertEquals(intentSender, presenter.getMatterThreadIntent())
+    }
+
+    @Test
+    fun `Given thread NoDataset result when exportThreadCredentials then step is THREAD_NONE`() = runTest(testDispatcher) {
+        coEvery { threadManager.exportThreadCredentials(any()) } returns ThreadManager.SyncResult.NoneHaveCredentials
+        createPresenter()
+
+        presenter.exportThreadCredentials()
+        advanceUntilIdle()
+
+        assertEquals(MatterThreadStep.THREAD_NONE, presenter.getMatterThreadStepFlow().first())
+    }
+
+    @Test
+    fun `Given thread NotConnected result when exportThreadCredentials then step is ERROR_THREAD_LOCAL_NETWORK`() = runTest(testDispatcher) {
+        coEvery { threadManager.exportThreadCredentials(any()) } returns ThreadManager.SyncResult.NotConnected
+        createPresenter()
+
+        presenter.exportThreadCredentials()
+        advanceUntilIdle()
+
+        assertEquals(MatterThreadStep.ERROR_THREAD_LOCAL_NETWORK, presenter.getMatterThreadStepFlow().first())
+    }
+
+    @Test
+    fun `Given thread AppUnsupported result when exportThreadCredentials then step is ERROR_THREAD_OTHER`() = runTest(testDispatcher) {
+        coEvery { threadManager.exportThreadCredentials(any()) } returns ThreadManager.SyncResult.AppUnsupported
+        createPresenter()
+
+        presenter.exportThreadCredentials()
+        advanceUntilIdle()
+
+        assertEquals(MatterThreadStep.ERROR_THREAD_OTHER, presenter.getMatterThreadStepFlow().first())
     }
 }
