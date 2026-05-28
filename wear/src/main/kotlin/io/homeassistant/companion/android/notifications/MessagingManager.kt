@@ -48,7 +48,7 @@ class MessagingManager @Inject constructor(
 
             val jsonData = notificationData as Map<String, String>?
             val jsonObject = jsonData?.toJsonObject()
-            val receivedServer = jsonData?.get(NotificationData.WEBHOOK_ID)?.let {
+            val receivedServerId = jsonData?.get(NotificationData.WEBHOOK_ID)?.let {
                 serverManager.getServer(webhookId = it)?.id
             }
             val notificationRow =
@@ -58,12 +58,12 @@ class MessagingManager @Inject constructor(
                     notificationData[NotificationData.MESSAGE].toString(),
                     jsonObject.toString(),
                     source,
-                    receivedServer,
+                    receivedServerId,
                 )
             notificationDao.add(notificationRow)
 
-            val serverId = jsonData?.get(NotificationData.WEBHOOK_ID)?.let { webhookId ->
-                val serverForWebhook = serverManager.getServer(webhookId = webhookId)?.id
+            val webhookServerId = jsonData?.get(NotificationData.WEBHOOK_ID)?.let { webhookId ->
+                val serverForWebhook = serverManager.getServer(webhookId = webhookId)
                 if (serverForWebhook == null) {
                     Timber.w(
                         "Received notification with webhook ID ${sensitive(
@@ -73,15 +73,15 @@ class MessagingManager @Inject constructor(
                     return@launch
                 }
 
-                serverForWebhook
+                serverForWebhook.id
             } ?: ServerManager.SERVER_ID_ACTIVE
 
-            if (serverManager.getServer(serverId) == null) {
+            if (serverManager.getServer(webhookServerId) == null) {
                 Timber.w("Received notification but no server available, ignoring")
                 return@launch
             }
 
-            val allowCommands = serverManager.integrationRepository(serverId).isTrusted()
+            val allowCommands = serverManager.integrationRepository(webhookServerId).isTrusted()
             val message = notificationData[NotificationData.MESSAGE]
             when {
                 message == NotificationData.CLEAR_NOTIFICATION && !notificationData["tag"].isNullOrBlank() -> {
