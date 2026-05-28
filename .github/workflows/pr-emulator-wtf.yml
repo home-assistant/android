@@ -40,16 +40,52 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
-          DETAILS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        # On PR-context check_suites GitHub absorbs API-created check_runs into
+        # the triggering "Pull Request" workflow's suite and silently rewrites
+        # details_url to the legacy `runs/{check_run_id}` form, which lands on
+        # an empty synthetic-job page in the parent run. We can't prevent that,
+        # but a Markdown link in output.summary renders on whichever page the
+        # Details button ends up showing, so the real emulator.wtf job logs
+        # are always one click away.
         run: |
-          check_id=$(gh api --method POST \
-            "repos/$REPO/check-runs" \
-            -f name="Instrumentation Test app" \
-            -f head_sha="$HEAD_SHA" \
-            -f status="in_progress" \
-            -f details_url="$DETAILS_URL" \
-            --jq '.id')
-          echo "check_id=$check_id" >> "$GITHUB_OUTPUT"
+          # Identify this job by its runner, not by display name. GitHub does
+          # not expose the current job's database id directly (no GITHUB_JOB_ID,
+          # no /actions/jobs/current endpoint — confirmed against the REST API
+          # docs), and $GITHUB_JOB is the YAML key, not the id we need for the
+          # URL. The jobs API returns a `runner_name` field on every job, and
+          # the runner exports its name as $RUNNER_NAME, so matching the two
+          # uniquely identifies this job regardless of how many siblings exist.
+          # `env.RUNNER_NAME` is jq's safe way to read the env var (no shell
+          # interpolation of the value into the filter string).
+          JOB_ID=$(gh api "repos/$REPO/actions/runs/$GITHUB_RUN_ID/jobs?per_page=100" \
+            --jq '[.jobs[] | select(.runner_name == env.RUNNER_NAME) | .id][0]' || true)
+          # Defence-in-depth: only use JOB_ID in a URL if it looks like an id.
+          # gh returns integers here, but validating keeps the URL safe even if
+          # GitHub's response format ever changes, and guards against the
+          # selector ever matching zero or multiple jobs.
+          if [[ "$JOB_ID" =~ ^[0-9]+$ ]]; then
+            JOB_URL="$RUN_URL/job/$JOB_ID"
+          else
+            JOB_URL="$RUN_URL"
+          fi
+          SUMMARY="Full logs: [open this emulator.wtf job →]($JOB_URL)"
+          check_id=$(jq -n \
+              --arg sha "$HEAD_SHA" \
+              --arg url "$JOB_URL" \
+              --arg summary "$SUMMARY" \
+              '{
+                 name: "Instrumentation Test app",
+                 head_sha: $sha,
+                 status: "in_progress",
+                 details_url: $url,
+                 output: {title: "Running on emulator.wtf", summary: $summary}
+               }' \
+            | gh api --method POST "repos/$REPO/check-runs" --input - --jq '.id')
+          {
+            echo "check_id=$check_id"
+            echo "job_url=$JOB_URL"
+          } >> "$GITHUB_OUTPUT"
 
       # Halt before spending any emulator.wtf credits if the triggering Pull Request
       # workflow did not succeed (publish_test_results still runs afterward to
@@ -130,6 +166,9 @@ jobs:
 
       # job.status reflects everything above (halt, downloads, test runs) and is
       # one of success/failure/cancelled, all valid check-run conclusions.
+      # We re-send the same output.summary link so the completed check page
+      # keeps the deep-link to the emulator.wtf job logs (see the Create step
+      # for why this matters on PR-context check_suites).
       - name: Finalize PR check
         if: always() && steps.create_check.outputs.check_id != ''
         env:
@@ -137,11 +176,18 @@ jobs:
           REPO: ${{ github.repository }}
           CHECK_ID: ${{ steps.create_check.outputs.check_id }}
           CONCLUSION: ${{ job.status }}
+          JOB_URL: ${{ steps.create_check.outputs.job_url }}
         run: |
-          gh api --method PATCH \
-            "repos/$REPO/check-runs/$CHECK_ID" \
-            -f status="completed" \
-            -f conclusion="$CONCLUSION"
+          SUMMARY="Full logs: [open this emulator.wtf job →]($JOB_URL)"
+          jq -n \
+              --arg conclusion "$CONCLUSION" \
+              --arg summary "$SUMMARY" \
+              '{
+                 status: "completed",
+                 conclusion: $conclusion,
+                 output: {title: "Completed on emulator.wtf", summary: $summary}
+               }' \
+            | gh api --method PATCH "repos/$REPO/check-runs/$CHECK_ID" --input -
 
   publish_test_results:
     name: "Publish Tests Results"
