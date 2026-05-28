@@ -1,0 +1,173 @@
+name: E2E
+
+on: # yamllint disable-line rule:truthy
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build_full_debug_apk:
+    name: Build fullDebug APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-build-env
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+          mock-google-services: "true"
+
+      - name: Assemble app fullDebug
+        run: ./gradlew :app:assembleFullDebug -PnoStrictMode
+
+      - name: Upload fullDebug APK
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: e2e-full-debug-apk
+          retention-days: 1
+          if-no-files-found: error
+          path: app/build/outputs/apk/full/debug/app-full-debug.apk
+
+  maestro_onboarding:
+    name: Maestro onboarding
+    needs: [build_full_debug_apk]
+    runs-on: ubuntu-latest
+    environment: ui-test
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      E2E_FORWARD_IP: 172.16.0.2
+      E2E_HOME_ASSISTANT_HOST: ha.internal
+      E2E_HOME_ASSISTANT_URL: http://ha.internal:8123
+      E2E_HOME_ASSISTANT_USERNAME: ha
+      E2E_HOME_ASSISTANT_PASSWORD: ha
+      MAESTRO_VERSION: 2.6.0
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Download fullDebug APK
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: e2e-full-debug-apk
+          path: dist
+
+      - name: Start Home Assistant
+        id: homeassistant
+        uses: ludeeus/setup-homeassistant@27c93bb42c944a9973941bd05d32b3a451017073 # main
+        with:
+          tag: stable
+          config-dir: .github/e2e/homeassistant
+
+      - name: Verify Home Assistant setup
+        env:
+          HOME_ASSISTANT_TOKEN: ${{ steps.homeassistant.outputs.token }}
+          HOME_ASSISTANT_URL: ${{ steps.homeassistant.outputs.url }}
+        run: |
+          curl -sSf \
+            -H "Authorization: Bearer $HOME_ASSISTANT_TOKEN" \
+            "$HOME_ASSISTANT_URL/api/config" \
+            > homeassistant-config.json
+
+          jq -e '.components | index("mobile_app") != null' homeassistant-config.json >/dev/null
+
+      - uses: emulator-wtf/actions/configure-credentials@1a96fbe11f971a7f9da7d5e80eda476909224c78 # v1.0.1
+        with:
+          oidc-configuration-id: ${{ vars.EMULATOR_WTF_OIDC_CONFIGURATION_ID }}
+
+      - name: Start emulator
+        id: emulator
+        uses: emulator-wtf/actions/use-emulator@1a96fbe11f971a7f9da7d5e80eda476909224c78 # v1.0.1
+        with:
+          devices: |
+            model=Pixel7,version=34
+          egress-tunnel: true
+          egress-localhost-fwd-ip: ${{ env.E2E_FORWARD_IP }}
+          dns-override: |
+            ${{ env.E2E_HOME_ASSISTANT_HOST }}=${{ env.E2E_FORWARD_IP }}
+          max-time-limit: 30m
+
+      - name: Resolve emulator serial
+        id: device
+        run: |
+          ADB="$ANDROID_HOME/platform-tools/adb"
+          $ADB wait-for-device
+
+          SERIAL=$($ADB devices | awk 'NR > 1 && $2 == "device" { print $1; exit }')
+          if [ -z "$SERIAL" ]; then
+            echo "::error::No emulator connected through adb"
+            $ADB devices
+            exit 1
+          fi
+
+          until [ "$($ADB -s "$SERIAL" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; do
+            sleep 1
+          done
+
+          echo "serial=$SERIAL" >> "$GITHUB_OUTPUT"
+
+      - name: Install APK
+        env:
+          ANDROID_SERIAL: ${{ steps.device.outputs.serial }}
+        run: |
+          "$ANDROID_HOME/platform-tools/adb" -s "$ANDROID_SERIAL" install -r dist/app-full-debug.apk
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          distribution: "temurin"
+          java-version: "21"
+
+      - name: Install Maestro CLI
+        run: |
+          export MAESTRO_VERSION
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Run Maestro onboarding flow
+        env:
+          ANDROID_SERIAL: ${{ steps.device.outputs.serial }}
+          HOME_ASSISTANT_URL: ${{ env.E2E_HOME_ASSISTANT_URL }}
+          HOME_ASSISTANT_USERNAME: ${{ env.E2E_HOME_ASSISTANT_USERNAME }}
+          HOME_ASSISTANT_PASSWORD: ${{ env.E2E_HOME_ASSISTANT_PASSWORD }}
+        run: |
+          export PATH="$PATH:$HOME/.maestro/bin"
+
+          maestro --device "$ANDROID_SERIAL" test \
+            --test-output-dir maestro-results \
+            -e HOME_ASSISTANT_URL="$HOME_ASSISTANT_URL" \
+            -e HOME_ASSISTANT_USERNAME="$HOME_ASSISTANT_USERNAME" \
+            -e HOME_ASSISTANT_PASSWORD="$HOME_ASSISTANT_PASSWORD" \
+            .maestro/onboarding.yaml
+
+      - name: Capture Android logs
+        if: always() && steps.device.outputs.serial != ''
+        env:
+          ANDROID_SERIAL: ${{ steps.device.outputs.serial }}
+        run: |
+          "$ANDROID_HOME/platform-tools/adb" -s "$ANDROID_SERIAL" logcat -d > logcat.txt
+
+      - name: Capture Home Assistant logs
+        if: always() && steps.homeassistant.outputs.containername != ''
+        run: docker logs ${{ steps.homeassistant.outputs.containername }} > homeassistant.log
+
+      - name: Upload E2E artifacts
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: e2e-artifacts
+          if-no-files-found: warn
+          path: |
+            homeassistant-config.json
+            homeassistant.log
+            logcat.txt
+            maestro-results

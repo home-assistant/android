@@ -1,0 +1,76 @@
+# yamllint disable rule:document-start
+appId: io.homeassistant.companion.android.debug
+---
+- launchApp:
+    clearState: true
+
+- assertVisible: "Connect to my Home Assistant server"
+- tapOn:
+    text: "Connect to my Home Assistant server"
+    retryTapIfNoChange: true
+
+- assertVisible: "Enter address manually"
+- tapOn:
+    text: "Enter address manually"
+    retryTapIfNoChange: true
+
+- assertVisible: "What is your Home Assistant address?"
+- tapOn: "http://homeassistant.local:8123"
+- inputText: ${HOME_ASSISTANT_URL}
+- tapOn:
+    text: "Connect"
+    retryTapIfNoChange: true
+
+- extendedWaitUntil:
+    visible: "Log in"
+    timeout: 60000
+
+- tapOn: "Username"
+- inputText: ${HOME_ASSISTANT_USERNAME}
+- tapOn: "Password"
+- inputText: ${HOME_ASSISTANT_PASSWORD}
+- hideKeyboard
+- tapOn:
+    text: "Log in"
+    retryTapIfNoChange: true
+- tapOn:
+    text: "Authorize"
+    optional: true
+
+- extendedWaitUntil:
+    visible: "How would you like to name this device?"
+    timeout: 60000
+
+- tapOn:
+    text: "Save"
+    retryTapIfNoChange: true
+
+- extendedWaitUntil:
+    visible: "Got it"
+    timeout: 60000
+
+- tapOn:
+    text: "Got it"
+    retryTapIfNoChange: true
+
+- extendedWaitUntil:
+    visible: "Use this device's location for automations"
+    timeout: 30000
+
+- tapOn:
+    text: "Do not share my location"
+    retryTapIfNoChange: true
+
+- extendedWaitUntil:
+    visible: "Let us help secure your remote connection"
+    timeout: 30000
+
+- tapOn:
+    text: "Less secure: Do not allow this app to know when you're home"
+    retryTapIfNoChange: true
+- tapOn:
+    text: "Next"
+    retryTapIfNoChange: true
+- extendedWaitUntil:
+    notVisible: "Let us help secure your remote connection"
+    timeout: 30000

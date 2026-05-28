@@ -1,0 +1,9 @@
+default_config:
+
+homeassistant:
+  auth_providers:
+    - type: command_line
+      command: bash
+      args:
+        - /config/maestro-auth.sh
+      meta: true
