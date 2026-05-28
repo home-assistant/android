@@ -19,17 +19,35 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.CHANNEL_HIGH_ACCURACY
+import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissionUseCase
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.util.ForegroundServiceLauncher
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class HighAccuracyLocationService : Service() {
+
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface HighAccuracyLocationServiceEntryPoint {
+        fun checkLocalNetworkPermission(): CheckLocalNetworkPermissionUseCase
+    }
+
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     companion object {
         private lateinit var notificationBuilder: NotificationCompat.Builder
@@ -169,15 +187,28 @@ class HighAccuracyLocationService : Service() {
 
         val intervalInSeconds =
             intent?.getIntExtra("intervalInSeconds", DEFAULT_UPDATE_INTERVAL_SECONDS) ?: DEFAULT_UPDATE_INTERVAL_SECONDS
-        requestLocationUpdates(intervalInSeconds)
 
-        Timber.d("High accuracy location service (Interval: ${intervalInSeconds}s) started -> onStartCommand")
+        val checkLocalNetworkPermission = EntryPointAccessors
+            .fromApplication(applicationContext, HighAccuracyLocationServiceEntryPoint::class.java)
+            .checkLocalNetworkPermission()
+
+        serviceScope.launch {
+            if (!checkLocalNetworkPermission()) {
+                Timber.d("Stopping high-accuracy location service: ACCESS_LOCAL_NETWORK permission missing")
+                stopSelf()
+                return@launch
+            }
+            requestLocationUpdates(intervalInSeconds)
+            Timber.d("High accuracy location service (Interval: ${intervalInSeconds}s) started -> onStartCommand")
+        }
+
         return START_NOT_STICKY
     }
 
     override fun onDestroy() {
         super.onDestroy()
 
+        serviceScope.cancel()
         fusedLocationProviderClient?.removeLocationUpdates(getLocationUpdateIntent())
 
         LAUNCHER.onServiceDestroy(this)
