@@ -32,6 +32,7 @@ appId: io.homeassistant.companion.android.debug
 - tapOn: "Password"
 - inputText: ${HOME_ASSISTANT_PASSWORD}
 - hideKeyboard
+- takeScreenshot: before_login_submit
 - tapOn:
     text: "Log in"
     retryTapIfNoChange: true
@@ -80,8 +81,26 @@ appId: io.homeassistant.companion.android.debug
 
 - extendedWaitUntil:
     visible:
-      text: '(?i)^Overview$'
+      text: '(?i)^(Overview|Retry)$'
     timeout: 60000
+
+- tapOn:
+    text: '(?i)^Retry$'
+    optional: true
+    retryTapIfNoChange: true
+- extendedWaitUntil:
+    visible:
+      text: '(?i)^(Overview|Retry)$'
+    timeout: 30000
+
+- tapOn:
+    text: '(?i)^Retry$'
+    optional: true
+    retryTapIfNoChange: true
+- extendedWaitUntil:
+    visible:
+      text: '(?i)^Overview$'
+    timeout: 30000
 
 - tapOn:
     text: '(?i)^Sidebar toggle$'
