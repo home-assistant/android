@@ -76,3 +76,37 @@ appId: io.homeassistant.companion.android.debug
 - extendedWaitUntil:
     notVisible: "Let us help secure your remote connection"
     timeout: 30000
+- takeScreenshot: onboarding_complete
+
+- extendedWaitUntil:
+    visible:
+      text: '(?i)^Overview$'
+    timeout: 60000
+
+- tapOn:
+    text: '(?i)^Sidebar toggle$'
+    retryTapIfNoChange: true
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- extendedWaitUntil:
+    visible:
+      text: '(?i)^Settings$'
+    timeout: 30000
+- tapOn:
+    text: '(?i)^Settings$'
+    retryTapIfNoChange: true
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- extendedWaitUntil:
+    visible:
+      text: '(?i)^Companion app$'
+    timeout: 30000
+- takeScreenshot: settings_screen
+- tapOn:
+    text: '(?i)^Companion app$'
+    retryTapIfNoChange: true
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: companion_app_screen
