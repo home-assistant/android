@@ -48,7 +48,8 @@ class MessagingManager @Inject constructor(
 
             val jsonData = notificationData as Map<String, String>?
             val jsonObject = jsonData?.toJsonObject()
-            val receivedServerId = jsonData?.get(NotificationData.WEBHOOK_ID)?.let {
+            val receivedWebhookId = jsonData?.get(NotificationData.WEBHOOK_ID)
+            val receivedServerId = receivedWebhookId?.let {
                 serverManager.getServer(webhookId = it)?.id
             }
             val notificationRow =
@@ -62,7 +63,7 @@ class MessagingManager @Inject constructor(
                 )
             notificationDao.add(notificationRow)
 
-            val webhookServerId = jsonData?.get(NotificationData.WEBHOOK_ID)?.let { webhookId ->
+            val webhookServerId = receivedWebhookId?.let { webhookId ->
                 val serverForWebhook = serverManager.getServer(webhookId = webhookId)
                 if (serverForWebhook == null) {
                     Timber.w(

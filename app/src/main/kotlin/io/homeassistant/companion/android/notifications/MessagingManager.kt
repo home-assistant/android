@@ -348,7 +348,8 @@ class MessagingManager @Inject constructor(
                 return@launch
             }
 
-            jsonData = jsonData + mutableMapOf<String, String>().apply { put(THIS_SERVER_ID, webhookServerId.toString()) }
+            jsonData =
+                jsonData + mutableMapOf<String, String>().apply { put(THIS_SERVER_ID, webhookServerId.toString()) }
 
             val allowCommands = serverManager.integrationRepository(webhookServerId).isTrusted()
             when {
