@@ -19,7 +19,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -30,7 +30,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,6 +38,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
+import io.homeassistant.companion.android.common.compose.composable.HALoading
 import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.composable.HASearchField
@@ -98,42 +98,97 @@ internal fun SensorDetailSettingSheet(
         modifier = modifier,
         onDismissRequest = onDismiss,
     ) {
-        Column(
+        SensorDetailSettingSheetContent(
+            title = title,
+            isLoading = state.isLoading,
+            entries = filteredEntries,
+            showSearch = showSearch,
+            searchQuery = searchQuery,
+            onQueryChange = { searchQuery = it },
+            selectedIds = checkedValue.toSet(),
+            onToggle = { id, isChecked ->
+                if (isChecked) {
+                    if (id !in checkedValue) checkedValue.add(id)
+                } else {
+                    checkedValue.remove(id)
+                }
+            },
+            onCancel = {
+                coroutineScope.launch {
+                    bottomSheetState.hide()
+                    onDismiss()
+                }
+            },
+            onSave = {
+                coroutineScope.launch {
+                    bottomSheetState.hide()
+                    val joinedValue = joinSelectedValues(checkedValue)
+                    onSave(state.copy(setting = state.setting.copy(value = joinedValue)))
+                }
+            },
             modifier = Modifier
                 .height(screenHeight)
                 .padding(horizontal = HADimens.SPACE4)
                 .consumeSheetScrollFling(),
-            verticalArrangement = Arrangement.spacedBy(HADimens.SPACE3),
-        ) {
-            SheetHeader(
-                title = title,
-                showSearch = showSearch,
-                searchQuery = searchQuery,
-                onQueryChange = { searchQuery = it },
-            )
-            SheetEntryList(
-                loading = state.loading,
-                entries = filteredEntries,
-                checkedValue = checkedValue,
-                modifier = Modifier.weight(1f),
-            )
-            SheetFooter(
-                saveEnabled = !state.loading,
-                onCancel = {
-                    coroutineScope.launch {
-                        bottomSheetState.hide()
-                        onDismiss()
-                    }
-                },
-                onSave = {
-                    coroutineScope.launch {
-                        bottomSheetState.hide()
-                        val joinedValue = joinSelectedValues(checkedValue)
-                        onSave(state.copy(setting = state.setting.copy(value = joinedValue)))
-                    }
-                },
-            )
-        }
+        )
+    }
+}
+
+/**
+ * Inner content of the sensor setting bottom sheet, extracted for preview and screenshot testing.
+ *
+ * Renders the sheet header (title + optional search field), the entry list or loading indicator,
+ * and the cancel/save footer. The [HAModalBottomSheet] wrapper is intentionally absent so this
+ * composable can be rendered in isolation via [androidx.compose.ui.tooling.preview.Preview].
+ *
+ * @param title Heading displayed at the top of the content area.
+ * @param isLoading When true, a loading indicator is shown in place of the entry list.
+ * @param entries Filtered list of selectable entries to display.
+ * @param showSearch When true, a search field is rendered below the title.
+ * @param searchQuery Current text in the search field.
+ * @param onQueryChange Invoked when the search query changes.
+ * @param selectedIds Set of entry IDs that are currently checked.
+ * @param onToggle Invoked when the user checks or unchecks an entry.
+ * @param onCancel Invoked when the user taps Cancel.
+ * @param onSave Invoked when the user taps Save.
+ * @param modifier Optional [Modifier] applied to the root [Column].
+ */
+@Composable
+internal fun SensorDetailSettingSheetContent(
+    title: String,
+    isLoading: Boolean,
+    entries: List<SettingEntry>,
+    showSearch: Boolean,
+    searchQuery: String,
+    onQueryChange: (String) -> Unit,
+    selectedIds: Set<String>,
+    onToggle: (id: String, isChecked: Boolean) -> Unit,
+    onCancel: () -> Unit,
+    onSave: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(HADimens.SPACE3),
+    ) {
+        SheetHeader(
+            title = title,
+            showSearch = showSearch,
+            searchQuery = searchQuery,
+            onQueryChange = onQueryChange,
+        )
+        SheetEntryList(
+            isLoading = isLoading,
+            entries = entries,
+            selectedIds = selectedIds,
+            onToggle = onToggle,
+            modifier = Modifier.weight(1f),
+        )
+        SheetFooter(
+            saveEnabled = !isLoading,
+            onCancel = onCancel,
+            onSave = onSave,
+        )
     }
 }
 
@@ -166,31 +221,26 @@ private fun ColumnScope.SheetHeader(
 
 @Composable
 private fun SheetEntryList(
-    loading: Boolean,
+    isLoading: Boolean,
     entries: List<SettingEntry>,
-    checkedValue: SnapshotStateList<String>,
+    selectedIds: Set<String>,
+    onToggle: (id: String, isChecked: Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (loading) {
+    if (isLoading) {
         Box(
             modifier = modifier.fillMaxWidth(),
             contentAlignment = Alignment.Center,
         ) {
-            CircularProgressIndicator()
+            HALoading()
         }
     } else {
         LazyColumn(modifier = modifier.fillMaxWidth()) {
             items(entries, key = { it.id }) { entry ->
                 BottomSheetSettingRow(
                     label = entry.label,
-                    checked = checkedValue.contains(entry.id),
-                    onClick = { isChecked ->
-                        if (isChecked) {
-                            if (entry.id !in checkedValue) checkedValue.add(entry.id)
-                        } else {
-                            checkedValue.remove(entry.id)
-                        }
-                    },
+                    checked = entry.id in selectedIds,
+                    onClick = { isChecked -> onToggle(entry.id, isChecked) },
                 )
             }
         }
@@ -293,6 +343,13 @@ private fun BottomSheetSettingRow(
         Checkbox(
             checked = checked,
             onCheckedChange = null,
+            colors = CheckboxDefaults.colors(
+                checkedColor = colorScheme.colorFillPrimaryLoudResting,
+                uncheckedColor = colorScheme.colorBorderNeutralNormal,
+                checkmarkColor = colorScheme.colorSurfaceDefault,
+                disabledCheckedColor = colorScheme.colorFillDisabledLoudResting,
+                disabledUncheckedColor = colorScheme.colorBorderNeutralQuiet,
+            ),
             modifier = Modifier.size(width = HADimens.SPACE12, height = HADimens.SPACE12),
         )
         Column(modifier = Modifier.weight(1f)) {
