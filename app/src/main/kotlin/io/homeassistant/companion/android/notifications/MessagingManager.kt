@@ -88,6 +88,7 @@ import io.homeassistant.companion.android.settings.assist.DefaultAssistantManage
 import io.homeassistant.companion.android.util.FlashlightHelper
 import io.homeassistant.companion.android.util.PermissionRequestMediator
 import io.homeassistant.companion.android.util.UrlUtil
+import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.vehicle.HaCarAppService
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebViewActivity
@@ -303,7 +304,7 @@ class MessagingManager @Inject constructor(
                 } ?: return@launch
             } else {
                 val jsonObject = jsonData.toJsonObject()
-                val receivedServer = jsonData[NotificationData.WEBHOOK_ID]?.let {
+                val receivedServerId = jsonData[NotificationData.WEBHOOK_ID]?.let {
                     serverManager.getServer(webhookId = it)?.id
                 }
                 val notificationRow =
@@ -313,14 +314,14 @@ class MessagingManager @Inject constructor(
                         jsonData[NotificationData.MESSAGE].toString(),
                         jsonObject.toString(),
                         source,
-                        receivedServer,
+                        receivedServerId,
                     )
                 notificationId = notificationDao.add(notificationRow)
 
                 val confirmation = jsonData[CONFIRMATION]?.toBoolean() ?: false
                 if (confirmation) {
                     try {
-                        serverManager.integrationRepository(receivedServer ?: ServerManager.SERVER_ID_ACTIVE)
+                        serverManager.integrationRepository(receivedServerId ?: ServerManager.SERVER_ID_ACTIVE)
                             .fireEvent("mobile_app_notification_received", jsonData)
                     } catch (e: Exception) {
                         Timber.e(e, "Unable to send notification received event")
@@ -328,18 +329,29 @@ class MessagingManager @Inject constructor(
                 }
             }
 
-            val serverId = jsonData[NotificationData.WEBHOOK_ID]?.let { webhookId ->
-                serverManager.getServer(webhookId = webhookId)?.id
+            val webhookServerId = jsonData[NotificationData.WEBHOOK_ID]?.let { webhookId ->
+                val serverForWebhook = serverManager.getServer(webhookId = webhookId)
+                if (serverForWebhook == null) {
+                    Timber.w(
+                        "Received notification with webhook ID ${sensitive(
+                            webhookId,
+                        )} but no matching server, ignoring",
+                    )
+                    return@launch
+                }
+
+                serverForWebhook.id
             } ?: ServerManager.SERVER_ID_ACTIVE
 
-            if (serverManager.getServer(serverId) == null) {
-                Timber.w("Received notification but no server for it, discarding")
+            if (serverManager.getServer(webhookServerId) == null) {
+                Timber.w("Received notification but no server available, ignoring")
                 return@launch
             }
 
-            jsonData = jsonData + mutableMapOf<String, String>().apply { put(THIS_SERVER_ID, serverId.toString()) }
+            jsonData =
+                jsonData + mutableMapOf<String, String>().apply { put(THIS_SERVER_ID, webhookServerId.toString()) }
 
-            val allowCommands = serverManager.integrationRepository(serverId).isTrusted()
+            val allowCommands = serverManager.integrationRepository(webhookServerId).isTrusted()
             when {
                 jsonData[NotificationData.MESSAGE] == REQUEST_LOCATION_UPDATE && allowCommands -> {
                     Timber.d("Request location update")
