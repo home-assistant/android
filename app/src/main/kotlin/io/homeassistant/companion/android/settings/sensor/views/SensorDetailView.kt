@@ -612,16 +612,16 @@ fun SensorDetailSettingDialog(
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val listSettingDialog = state.setting.valueType.listType
-    val inputValue = remember(state.loading) { mutableStateOf(state.setting.value) }
+    val inputValue = remember(state.isLoading) { mutableStateOf(state.setting.value) }
     val checkedValue =
-        remember(state.loading) { mutableStateListOf<String>().also { it.addAll(state.entriesSelected) } }
+        remember(state.isLoading) { mutableStateListOf<String>().also { it.addAll(state.entriesSelected) } }
 
     MdcAlertDialog(
         modifier = modifier,
         onDismissRequest = onDismiss,
         title = { Text(viewModel.getSettingTranslatedTitle(state.setting.name)) },
         content = {
-            if (state.loading) {
+            if (state.isLoading) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -677,7 +677,7 @@ fun SensorDetailSettingDialog(
             }
         },
         onCancel = onDismiss,
-        onSave = if (state.loading) {
+        onSave = if (state.isLoading) {
             null
         } else if (state.setting.valueType != SensorSettingType.LIST) {
             {
