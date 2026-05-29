@@ -1609,11 +1609,14 @@ class MessagingManager @Inject constructor(
                 when {
                     notificationAction.key == URI -> {
                         if (!notificationAction.uri.isNullOrBlank()) {
-                            builder.addAction(
+                            val action = NotificationCompat.Action.Builder(
                                 commonR.drawable.ic_globe,
                                 notificationAction.title,
                                 createOpenUriPendingIntent(notificationAction.uri, data),
                             )
+                                .setAuthenticationRequired(authenticationRequired)
+                                .build()
+                            builder.addAction(action)
                         }
                     }
 
