@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.widgets.todo
 
-import android.annotation.SuppressLint
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
@@ -44,6 +43,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
@@ -114,12 +114,11 @@ class TodoWidgetConfigureActivity : BaseActivity() {
         }
     }
 
-    @SuppressLint("ObsoleteSdkInt")
     private fun onActionClick() {
         lifecycleScope.launch {
             if (intent.extras?.getBoolean(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, false) == true) {
                 if (
-                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                    SdkVersion.isAtLeast(Build.VERSION_CODES.O) &&
                     viewModel.isValidSelection()
                 ) {
                     requestPinWidget()
@@ -132,7 +131,6 @@ class TodoWidgetConfigureActivity : BaseActivity() {
         }
     }
 
-    @SuppressLint("ObsoleteSdkInt")
     @RequiresApi(Build.VERSION_CODES.O)
     private fun requestPinWidget() {
         val context = this@TodoWidgetConfigureActivity

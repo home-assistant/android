@@ -40,6 +40,8 @@ import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissionUseCase
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.launch.applock.HazeLockOverlay
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
@@ -87,6 +89,9 @@ class LaunchActivity : AppCompatActivity() {
 
     @Inject
     internal lateinit var checkLocationDisabled: CheckLocationDisabledUseCase
+
+    @Inject
+    internal lateinit var checkLocalNetworkPermission: CheckLocalNetworkPermissionUseCase
 
     @Inject
     internal lateinit var changeLog: ChangeLog
@@ -159,7 +164,7 @@ class LaunchActivity : AppCompatActivity() {
         // Must run before super.onCreate so the window flag is set before the platform decides
         // whether to draw over the keyguard. Gated on the non-exported [LOCK_SCREEN_ALIAS_CLASS]
         // so external apps reaching the public LAUNCHER intent-filter cannot force this on.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 &&
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O_MR1) &&
             intent.component?.className == LOCK_SCREEN_ALIAS_CLASS
         ) {
             setShowWhenLocked(true)
@@ -231,6 +236,7 @@ class LaunchActivity : AppCompatActivity() {
             lifecycleScope.launch {
                 WebsocketManager.start(this@LaunchActivity)
                 checkLocationDisabled()
+                checkLocalNetworkPermission()
                 changeLog.showChangeLog(this@LaunchActivity, forceShow = false)
             }
         }
@@ -246,7 +252,7 @@ class LaunchActivity : AppCompatActivity() {
         if (WIPFeature.USE_FRONTEND_V2) {
             viewModel.onAppPaused()
 
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+            if (!SdkVersion.isAtLeast(Build.VERSION_CODES.O)) return
             if (!packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) return
             val readiness = viewModel.pipReadiness.value ?: return
             val params = PictureInPictureParams.Builder()

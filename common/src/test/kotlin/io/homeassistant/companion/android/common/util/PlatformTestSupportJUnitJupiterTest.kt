@@ -1,13 +1,13 @@
 package io.homeassistant.companion.android.common.util
 
 import io.homeassistant.companion.android.testing.unit.ConsoleLogPlatformListener
-import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
+import org.junit.jupiter.api.assertNotNull
 
 @TestMethodOrder(OrderAnnotation::class)
 class PlatformTestSupportJUnitJupiterTest {

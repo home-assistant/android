@@ -3,11 +3,13 @@ package io.homeassistant.companion.android.onboarding.serverdiscovery
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.net.wifi.WifiManager
+import android.os.Build
 import app.cash.turbine.TurbineTestContext
 import app.cash.turbine.test
 import app.cash.turbine.turbineScope
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.mockk.CapturingSlot
 import io.mockk.Ordering
 import io.mockk.Runs
@@ -35,6 +37,7 @@ class HomeAssistantSearcherImplTest {
 
     @BeforeEach
     fun setup() {
+        SdkVersion.sdkInt = Build.VERSION_CODES.M
         nsdManager = mockk(relaxed = true)
         wifiManager = mockk(relaxed = true)
         searcher = HomeAssistantSearcherImpl(nsdManager, wifiManager)

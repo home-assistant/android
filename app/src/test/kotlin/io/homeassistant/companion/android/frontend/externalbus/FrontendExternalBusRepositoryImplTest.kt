@@ -1,14 +1,14 @@
 package io.homeassistant.companion.android.frontend.externalbus
 
 import app.cash.turbine.test
+import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import io.homeassistant.companion.android.frontend.WebViewAction
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConfigGetMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConnectionStatusMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.UnknownIncomingMessage
-import io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResult
+import io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResultMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.OutgoingExternalBusMessage
-import io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage
 import kotlinx.coroutines.async
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
@@ -103,15 +103,14 @@ class FrontendExternalBusRepositoryImplTest {
 
     @Test
     fun `Given outgoing message when sent then emit as EvaluateScript on webViewActions flow`() = runTest {
-        val configResponse = ResultMessage.config(
+        val configResponse = ConfigResultMessage(
             id = 1,
-            config = ConfigResult(
-                canWriteTag = true,
-                canCommissionMatter = false,
-                canImportThreadCredentials = true,
-                hasBarCodeScanner = 2,
-                appVersion = "1.0.0",
-            ),
+            hasNfc = true,
+            canCommissionMatter = false,
+            canExportThread = true,
+            hasBarCodeScanner = 2,
+            canSetupImprov = false,
+            appVersion = AppVersion.from("1.0.0 (1)"),
         )
 
         repository.webViewActions().test {

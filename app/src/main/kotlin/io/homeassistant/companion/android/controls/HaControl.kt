@@ -21,6 +21,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.integration.isActive
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.webview.WebViewActivity
 
 @RequiresApi(Build.VERSION_CODES.R)
@@ -57,7 +58,7 @@ interface HaControl {
         }
         control.setStatus(Control.STATUS_OK)
         control.setStatusText(entity.friendlyState(context))
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
             control.setAuthRequired(info.authRequired)
         }
         if (entity.attributes["icon"]?.toString()?.startsWith("mdi:") == true &&

@@ -248,4 +248,29 @@ class IncomingExternalBusMessageTest {
         assertEquals(0.0, resize.payload.right)
         assertEquals(0.0, resize.payload.bottom)
     }
+
+    @Test
+    fun `Given entity add_to get_actions JSON then parses to EntityAddToGetActionsMessage`() {
+        val json = """{"type":"entity/add_to/get_actions","id":20,"payload":{"entity_id":"light.living_room"}}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(EntityAddToGetActionsMessage::class.java, message)
+        val addToMessage = message as EntityAddToGetActionsMessage
+        assertEquals(20, addToMessage.id)
+        assertEquals("light.living_room", addToMessage.payload.entityId)
+    }
+
+    @Test
+    fun `Given entity add_to JSON then parses to EntityAddToMessage`() {
+        val json = """{"type":"entity/add_to","id":21,"payload":{"entity_id":"light.living_room","app_payload":"dGVzdA=="}}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(EntityAddToMessage::class.java, message)
+        val addToMessage = message as EntityAddToMessage
+        assertEquals(21, addToMessage.id)
+        assertEquals("light.living_room", addToMessage.payload.entityId)
+        assertEquals("dGVzdA==", addToMessage.payload.appPayload)
+    }
 }
