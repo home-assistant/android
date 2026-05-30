@@ -86,7 +86,13 @@ internal fun SensorDetailSettingSheet(
     }
     val checkedValue = remember { state.entriesSelected.toMutableStateList() }
     var searchQuery by remember { mutableStateOf("") }
-    val filteredEntries = rememberFilteredSettingEntries(entries, searchQuery)
+    // Filtering runs off the UI thread on Dispatchers.Default to keep the sheet responsive on long lists.
+    var filteredEntries by remember(entries) { mutableStateOf(entries) }
+    LaunchedEffect(entries, searchQuery) {
+        filteredEntries = withContext(Dispatchers.Default) {
+            filterSettingEntries(entries, searchQuery)
+        }
+    }
     val showSearch = entries.size > SEARCH_VISIBILITY_THRESHOLD
 
     val bottomSheetState = rememberHAModalBottomSheetState(skipPartiallyExpanded = true)
@@ -105,7 +111,7 @@ internal fun SensorDetailSettingSheet(
             showSearch = showSearch,
             searchQuery = searchQuery,
             onQueryChange = { searchQuery = it },
-            selectedIds = checkedValue.toSet(),
+            isSelected = { it in checkedValue },
             onToggle = { id, isChecked ->
                 if (isChecked) {
                     if (id !in checkedValue) checkedValue.add(id)
@@ -147,7 +153,7 @@ internal fun SensorDetailSettingSheet(
  * @param showSearch When true, a search field is rendered below the title.
  * @param searchQuery Current text in the search field.
  * @param onQueryChange Invoked when the search query changes.
- * @param selectedIds Set of entry IDs that are currently checked.
+ * @param isSelected Returns whether the entry with the given ID is currently checked.
  * @param onToggle Invoked when the user checks or unchecks an entry.
  * @param onCancel Invoked when the user taps Cancel.
  * @param onSave Invoked when the user taps Save.
@@ -161,7 +167,7 @@ internal fun SensorDetailSettingSheetContent(
     showSearch: Boolean,
     searchQuery: String,
     onQueryChange: (String) -> Unit,
-    selectedIds: Set<String>,
+    isSelected: (id: String) -> Boolean,
     onToggle: (id: String, isChecked: Boolean) -> Unit,
     onCancel: () -> Unit,
     onSave: () -> Unit,
@@ -180,7 +186,7 @@ internal fun SensorDetailSettingSheetContent(
         SheetEntryList(
             isLoading = isLoading,
             entries = entries,
-            selectedIds = selectedIds,
+            isSelected = isSelected,
             onToggle = onToggle,
             modifier = Modifier.weight(1f),
         )
@@ -223,7 +229,7 @@ private fun ColumnScope.SheetHeader(
 private fun SheetEntryList(
     isLoading: Boolean,
     entries: List<SettingEntry>,
-    selectedIds: Set<String>,
+    isSelected: (id: String) -> Boolean,
     onToggle: (id: String, isChecked: Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -239,7 +245,7 @@ private fun SheetEntryList(
             items(entries, key = { it.id }) { entry ->
                 BottomSheetSettingRow(
                     label = entry.label,
-                    checked = entry.id in selectedIds,
+                    checked = isSelected(entry.id),
                     onClick = { isChecked -> onToggle(entry.id, isChecked) },
                 )
             }
@@ -274,25 +280,6 @@ private fun SheetFooter(
 /** Identifier-and-label pair displayed inside the allow-list sheet. */
 @VisibleForTesting
 internal data class SettingEntry(val id: String, val label: String)
-
-/**
- * Computes the filtered entries off the UI thread.
- *
- * Re-runs whenever [entries] or [searchQuery] change, dispatching the filter work onto
- * [Dispatchers.Default] so long lists do not freeze the sheet.
- */
-@Composable
-private fun rememberFilteredSettingEntries(entries: List<SettingEntry>, searchQuery: String): List<SettingEntry> {
-    var filtered by remember(entries) { mutableStateOf(entries) }
-
-    LaunchedEffect(entries, searchQuery) {
-        filtered = withContext(Dispatchers.Default) {
-            filterSettingEntries(entries, searchQuery)
-        }
-    }
-
-    return filtered
-}
 
 /**
  * Filters setting entries by matching the query against entry labels (case-insensitive).
