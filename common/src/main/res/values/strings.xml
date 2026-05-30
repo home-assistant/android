@@ -1483,4 +1483,9 @@
     <string name="fail_to_navigate_to_uri">No app available to open %s</string>
     <string name="experimental">Experimental</string>
     <string name="learn_more">Learn more</string>
+    <string name="wear_dashboard_tile">Dashboard tile</string>
+    <string name="wear_dashboard_tile_desc">Renders a configured Home Assistant dashboard</string>
+    <string name="wear_dashboard_tile_empty">Assign a dashboard in settings</string>
+    <string name="wear_dashboard_tile_log_in">Log in to set up a dashboard tile</string>
+    <string name="wear_dashboard_tile_no_surface">Dashboard has no tile surface configured</string>
 </resources>

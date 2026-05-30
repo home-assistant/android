@@ -21,6 +21,7 @@ import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.configureComposeDiagnosticStackTrace
 import io.homeassistant.companion.android.complications.ComplicationReceiver
 import io.homeassistant.companion.android.sensors.SensorReceiver
+import io.homeassistant.companion.android.tiles.dashboard.WearDashboardTileUpdateWorker
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -35,6 +36,9 @@ open class HomeAssistantApplication : Application() {
     @Inject
     @NamedKeyStore
     lateinit var keyStore: KeyChainRepository
+
+    @Inject
+    lateinit var wearDashboardTileUpdateWorker: WearDashboardTileUpdateWorker
 
     override fun onCreate() {
         // We should initialize the logger as early as possible in the lifecycle of the application

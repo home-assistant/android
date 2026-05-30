@@ -21,6 +21,7 @@ import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_CAMERA_
 import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_SHORTCUT_TILE
 import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_TEMPLATE_TILE
 import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_THERMOSTAT_TILE
+import io.homeassistant.companion.android.home.views.DEEPLINK_WEAR_DASHBOARD_TILE_SETTINGS
 import io.homeassistant.companion.android.home.views.LoadHomePage
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.sensors.SensorReceiver
@@ -61,6 +62,7 @@ class HomeActivity :
         sealed interface LaunchMode {
             object ThermostatTile : LaunchMode
             object CameraTile : LaunchMode
+            object DashboardTile : LaunchMode
         }
 
         fun getLaunchAction(packageName: String, tileId: Int, launchMode: LaunchMode): ActionBuilders.LaunchAction {
@@ -75,6 +77,7 @@ class HomeActivity :
                         when (launchMode) {
                             LaunchMode.ThermostatTile -> OpenTileSettingsActivity.CONFIG_THERMOSTAT_TILE
                             LaunchMode.CameraTile -> OpenTileSettingsActivity.CONFIG_CAMERA_TILE
+                            LaunchMode.DashboardTile -> OpenTileSettingsActivity.CONFIG_WEAR_DASHBOARD_TILE
                         },
                     )
                         .build(),
@@ -119,6 +122,13 @@ class HomeActivity :
             context,
             HomeActivity::class.java,
         )
+
+        fun getWearDashboardTileSettingsIntent(context: Context, tileId: Int) = Intent(
+            Intent.ACTION_VIEW,
+            "$DEEPLINK_WEAR_DASHBOARD_TILE_SETTINGS/$tileId".toUri(),
+            context,
+            HomeActivity::class.java,
+        )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -127,7 +137,8 @@ class HomeActivity :
         presenter.init(this)
         val launchMode = intent.getStringExtra(LAUNCH_MODE)
         if (launchMode == OpenTileSettingsActivity.CONFIG_THERMOSTAT_TILE ||
-            launchMode == OpenTileSettingsActivity.CONFIG_CAMERA_TILE
+            launchMode == OpenTileSettingsActivity.CONFIG_CAMERA_TILE ||
+            launchMode == OpenTileSettingsActivity.CONFIG_WEAR_DASHBOARD_TILE
         ) {
             startActivity(
                 OpenTileSettingsActivity.newInstance(
