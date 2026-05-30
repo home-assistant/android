@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "id": "home",
+  "title": "Home",
+  "surfaces": {
+    "tile": { "page": "compact" },
+    "app": { "startPage": "compact" }
+  },
+  "pages": [
+    {
+      "id": "compact",
+      "title": "Home",
+      "root": {
+        "type": "column",
+        "id": "root",
+        "children": [
+          {
+            "type": "text",
+            "id": "temperature",
+            "text": {
+              "type": "template",
+              "template": "{{ states('sensor.wear_template_home_temperature') }}°"
+            }
+          },
+          {
+            "type": "status_chip",
+            "id": "occupancy",
+            "state": {
+              "type": "entity_state",
+              "entityId": "binary_sensor.wear_template_home_occupancy"
+            },
+            "label": {
+              "type": "constant",
+              "value": "Home"
+            }
+          },
+          {
+            "type": "button",
+            "id": "living_room",
+            "text": {
+              "type": "constant",
+              "value": "Living room"
+            },
+            "icon": {
+              "type": "constant",
+              "value": "mdi:lightbulb"
+            },
+            "tapAction": {
+              "type": "toggle_entity",
+              "entityId": "light.wear_template_home_living_room"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

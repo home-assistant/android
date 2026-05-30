@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "id": "car",
+  "title": "Car",
+  "surfaces": {
+    "tile": { "page": "compact" },
+    "app": { "startPage": "compact" }
+  },
+  "pages": [
+    {
+      "id": "compact",
+      "title": "Car",
+      "root": {
+        "type": "box",
+        "id": "root",
+        "children": [
+          {
+            "type": "progress_ring",
+            "id": "battery_ring",
+            "value": {
+              "type": "entity_state",
+              "entityId": "sensor.wear_template_car_battery"
+            },
+            "min": 0,
+            "max": 100
+          },
+          {
+            "type": "text",
+            "id": "battery_text",
+            "text": {
+              "type": "template",
+              "template": "{{ states('sensor.wear_template_car_battery') }}%"
+            }
+          },
+          {
+            "type": "row",
+            "id": "actions",
+            "children": [
+              {
+                "type": "button",
+                "id": "lock",
+                "icon": {
+                  "type": "constant",
+                  "value": "mdi:lock"
+                },
+                "tapAction": {
+                  "type": "call_service",
+                  "domain": "button",
+                  "service": "press",
+                  "data": {
+                    "entity_id": "button.wear_template_car_lock"
+                  }
+                }
+              },
+              {
+                "type": "button",
+                "id": "climate",
+                "icon": {
+                  "type": "constant",
+                  "value": "mdi:air-conditioner"
+                },
+                "tapAction": {
+                  "type": "call_service",
+                  "domain": "button",
+                  "service": "press",
+                  "data": {
+                    "entity_id": "button.wear_template_car_climate"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

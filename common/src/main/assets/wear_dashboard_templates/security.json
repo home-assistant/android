@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "id": "security",
+  "title": "Security",
+  "surfaces": {
+    "tile": { "page": "compact" },
+    "app": { "startPage": "compact" }
+  },
+  "pages": [
+    {
+      "id": "compact",
+      "title": "Security",
+      "root": {
+        "type": "column",
+        "id": "root",
+        "children": [
+          {
+            "type": "status_chip",
+            "id": "alarm",
+            "state": {
+              "type": "entity_state",
+              "entityId": "alarm_control_panel.wear_template_security_alarm"
+            },
+            "label": {
+              "type": "constant",
+              "value": "Alarm"
+            }
+          },
+          {
+            "type": "status_chip",
+            "id": "front_door",
+            "state": {
+              "type": "entity_state",
+              "entityId": "lock.wear_template_security_front_door"
+            },
+            "label": {
+              "type": "constant",
+              "value": "Front door"
+            }
+          },
+          {
+            "type": "status_chip",
+            "id": "motion",
+            "state": {
+              "type": "entity_state",
+              "entityId": "binary_sensor.wear_template_security_motion"
+            },
+            "label": {
+              "type": "constant",
+              "value": "Motion"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

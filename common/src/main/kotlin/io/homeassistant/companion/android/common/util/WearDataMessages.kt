@@ -21,6 +21,9 @@ object WearDataMessages {
     const val CONFIG_SUPPORTED_DOMAINS = "supportedDomains"
     const val CONFIG_FAVORITES = "favorites"
     const val CONFIG_TEMPLATE_TILES = "templateTiles"
+    const val CONFIG_WEAR_DASHBOARDS = "wearDashboards"
+
+    const val PATH_UPDATE_WEAR_DASHBOARDS = "/updateWearDashboards"
 
     const val LOGIN_RESULT_EXCEPTION = "exception"
 

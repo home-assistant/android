@@ -25,6 +25,10 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationException
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
+import io.homeassistant.companion.android.common.data.wear.dashboard.model.WearDashboardConfig
+import io.homeassistant.companion.android.common.data.wear.dashboard.model.wearDashboardJson
+import io.homeassistant.companion.android.common.data.wear.dashboard.validation.ValidationResult
+import io.homeassistant.companion.android.common.data.wear.dashboard.validation.validate
 import io.homeassistant.companion.android.common.util.WearDataMessages
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import java.util.UUID
@@ -43,6 +47,7 @@ import timber.log.Timber
 @HiltViewModel
 class SettingsWearViewModel @Inject constructor(
     private val settingsWearRepository: SettingsWearRepository,
+    val dashboardTemplates: SettingsWearDashboardTemplates,
     application: Application,
 ) : AndroidViewModel(application),
     DataClient.OnDataChangedListener {
@@ -120,6 +125,8 @@ class SettingsWearViewModel @Inject constructor(
         private set
     var templateTilesRenderedTemplates = mutableStateMapOf<Int, String>()
         private set
+    var wearDashboards = mutableStateMapOf<String, WearDashboardConfig>()
+        private set
 
     private val _resultSnackbar = MutableSharedFlow<String>()
     val resultSnackbar = _resultSnackbar.asSharedFlow()
@@ -155,6 +162,15 @@ class SettingsWearViewModel @Inject constructor(
                 _resultSnackbar.emit(application.getString(commonR.string.failed_watch_connection))
             }
         }
+        viewModelScope.launch {
+            loadDashboards()
+        }
+    }
+
+    private suspend fun loadDashboards() {
+        val dashboards = settingsWearRepository.getAllDashboards()
+        wearDashboards.clear()
+        wearDashboards.putAll(dashboards)
     }
 
     override fun onCleared() {
@@ -321,6 +337,62 @@ class SettingsWearViewModel @Inject constructor(
                 }
         } catch (e: Exception) {
             Timber.e(e, "Unable to send template tile to wear")
+        }
+    }
+
+    /** Persists and syncs all Wear Dashboard configurations to connected watches. */
+    fun saveDashboard(config: WearDashboardConfig) = viewModelScope.launch {
+        settingsWearRepository.saveDashboard(config)
+        wearDashboards[config.id] = config
+        sendWearDashboards()
+    }
+
+    /** Removes a dashboard and syncs the updated list to connected watches. */
+    fun deleteDashboard(id: String) = viewModelScope.launch {
+        settingsWearRepository.deleteDashboard(id)
+        wearDashboards.remove(id)
+        sendWearDashboards()
+    }
+
+    /** Validates a dashboard configuration without persisting it. */
+    fun validateDashboard(config: WearDashboardConfig): ValidationResult = validate(config)
+
+    /** Parses dashboard JSON and returns the config, or `null` when parsing fails. */
+    fun parseDashboardJson(json: String): WearDashboardConfig? {
+        return try {
+            wearDashboardJson.decodeFromString<WearDashboardConfig>(json)
+        } catch (e: SerializationException) {
+            Timber.e(e, "Failed to parse wear dashboard JSON")
+            null
+        } catch (e: IllegalArgumentException) {
+            Timber.e(e, "Failed to parse wear dashboard JSON")
+            null
+        }
+    }
+
+    /** Encodes [config] as canonical dashboard JSON. */
+    fun encodeDashboardJson(config: WearDashboardConfig): String = wearDashboardJson.encodeToString(config)
+
+    fun sendWearDashboards() = viewModelScope.launch {
+        val application = getApplication<HomeAssistantApplication>()
+        val putDataRequest = PutDataMapRequest.create(WearDataMessages.PATH_UPDATE_WEAR_DASHBOARDS).run {
+            dataMap.putLong(WearDataMessages.KEY_UPDATE_TIME, System.nanoTime())
+            dataMap.putString(
+                WearDataMessages.CONFIG_WEAR_DASHBOARDS,
+                wearDashboardJson.encodeToString(wearDashboards.toMap()),
+            )
+            setUrgent()
+            asPutDataRequest()
+        }
+
+        try {
+            Wearable.getDataClient(application).putDataItem(putDataRequest).await()
+            Timber.d("Successfully sent wear dashboards to watch")
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to send wear dashboards to watch")
+            _resultSnackbar.emit(application.getString(commonR.string.failure_send_wear_dashboards))
         }
     }
 

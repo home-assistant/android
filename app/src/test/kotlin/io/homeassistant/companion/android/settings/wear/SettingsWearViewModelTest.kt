@@ -21,7 +21,8 @@ private const val CAPABILITY_WEAR_APP = "verify_wear_app"
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsWearViewModelTest {
 
-    private val settingsWearRepository: SettingsWearRepository = mockk()
+    private val settingsWearRepository: SettingsWearRepository = mockk(relaxed = true)
+    private val dashboardTemplates: io.homeassistant.companion.android.settings.wear.SettingsWearDashboardTemplates = mockk(relaxed = true)
     private lateinit var viewModel: SettingsWearViewModel
 
     private lateinit var nodeClient: FakeNodeClient
@@ -37,7 +38,7 @@ class SettingsWearViewModelTest {
         capabilityClient.capabilities[CAPABILITY_WEAR_APP] = setOf("1234")
         nodeClient = FakeNodeClient(application)
         nodeClient.setNodes(listOf("1234"))
-        viewModel = SettingsWearViewModel(settingsWearRepository, application)
+        viewModel = SettingsWearViewModel(settingsWearRepository, dashboardTemplates, application)
     }
 
     @Test

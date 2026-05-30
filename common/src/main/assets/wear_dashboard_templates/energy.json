@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "id": "energy",
+  "title": "Energy",
+  "surfaces": {
+    "tile": { "page": "compact" },
+    "app": { "startPage": "compact" }
+  },
+  "pages": [
+    {
+      "id": "compact",
+      "title": "Energy",
+      "root": {
+        "type": "column",
+        "id": "root",
+        "children": [
+          {
+            "type": "text",
+            "id": "solar",
+            "text": {
+              "type": "template",
+              "template": "Solar {{ states('sensor.wear_template_energy_solar') }} W"
+            }
+          },
+          {
+            "type": "text",
+            "id": "grid",
+            "text": {
+              "type": "template",
+              "template": "Grid {{ states('sensor.wear_template_energy_grid') }} W"
+            }
+          },
+          {
+            "type": "progress_ring",
+            "id": "battery_ring",
+            "value": {
+              "type": "entity_state",
+              "entityId": "sensor.wear_template_energy_battery"
+            },
+            "min": 0,
+            "max": 100
+          }
+        ]
+      }
+    }
+  ]
+}

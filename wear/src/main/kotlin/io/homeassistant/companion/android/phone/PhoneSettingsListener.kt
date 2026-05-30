@@ -21,6 +21,10 @@ import io.homeassistant.companion.android.common.data.keychain.NamedKeyStore
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.wear.dashboard.WearDashboardRepository
+import io.homeassistant.companion.android.common.data.wear.dashboard.model.WearDashboardConfig
+import io.homeassistant.companion.android.common.data.wear.dashboard.model.wearDashboardJson
+import io.homeassistant.companion.android.common.data.wear.dashboard.state.WearDashboardUpdateCoordinator
 import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.MessagingTokenProvider
 import io.homeassistant.companion.android.common.util.WearDataMessages
@@ -34,6 +38,7 @@ import io.homeassistant.companion.android.tiles.CameraTile
 import io.homeassistant.companion.android.tiles.ConversationTile
 import io.homeassistant.companion.android.tiles.ShortcutsTile
 import io.homeassistant.companion.android.tiles.TemplateTile
+import io.homeassistant.companion.android.tiles.dashboard.WearDashboardTile
 import java.security.KeyStore
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
@@ -77,6 +82,12 @@ class PhoneSettingsListener :
 
     @Inject
     lateinit var messagingTokenProvider: MessagingTokenProvider
+
+    @Inject
+    lateinit var dashboardRepository: WearDashboardRepository
+
+    @Inject
+    lateinit var wearDashboardUpdateCoordinator: WearDashboardUpdateCoordinator
 
     // This scope is never canceled so coroutines survive service destruction, keeping the service
     // in memory until the coroutine completes. A better approach would be to use runBlocking for
@@ -162,6 +173,10 @@ class PhoneSettingsListener :
 
                         "/updateTemplateTiles" -> {
                             saveTemplateTiles(DataMapItem.fromDataItem(item).dataMap)
+                        }
+
+                        WearDataMessages.PATH_UPDATE_WEAR_DASHBOARDS -> {
+                            saveWearDashboards(DataMapItem.fromDataItem(item).dataMap)
                         }
                     }
                 }
@@ -290,6 +305,22 @@ class PhoneSettingsListener :
         wearPrefsRepository.setAllTemplateTiles(templateTilesFromPhone)
     }
 
+    private fun saveWearDashboards(dataMap: DataMap) = serviceScope.launch {
+        val dashboardsFromPhone: Map<String, WearDashboardConfig> = wearDashboardJson.decodeFromString(
+            dataMap.getString(
+                WearDataMessages.CONFIG_WEAR_DASHBOARDS,
+                "{}",
+            ),
+        )
+
+        wearDashboardUpdateCoordinator.stopAll()
+        dashboardRepository.setAllDashboards(dashboardsFromPhone)
+        dashboardsFromPhone.keys.forEach { dashboardId ->
+            wearDashboardUpdateCoordinator.startTracking(dashboardId)
+        }
+        updateTiles()
+    }
+
     private suspend fun updateTiles() = withContext(Dispatchers.Main) {
         try {
             val updater = TileService.getUpdater(applicationContext)
@@ -297,6 +328,7 @@ class PhoneSettingsListener :
             updater.requestUpdate(ConversationTile::class.java)
             updater.requestUpdate(ShortcutsTile::class.java)
             updater.requestUpdate(TemplateTile::class.java)
+            updater.requestUpdate(WearDashboardTile::class.java)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

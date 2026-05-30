@@ -9,6 +9,8 @@ import io.homeassistant.companion.android.common.data.integration.impl.Integrati
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RenderTemplateIntegrationRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.Template
 import io.homeassistant.companion.android.common.data.servers.tryOnUrls
+import io.homeassistant.companion.android.common.data.wear.dashboard.WearDashboardRepository
+import io.homeassistant.companion.android.common.data.wear.dashboard.model.WearDashboardConfig
 import io.homeassistant.companion.android.common.util.FailFast
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -64,6 +66,7 @@ data class WearServer(
 class SettingsWearRepository @Inject constructor(
     private val authenticationService: AuthenticationService,
     private val integrationService: IntegrationService,
+    private val wearDashboardRepository: WearDashboardRepository,
 ) {
 
     /**
@@ -155,5 +158,18 @@ class SettingsWearRepository @Inject constructor(
             Timber.e(e, "Failed to get entities")
             emptyList()
         }
+    }
+
+    /** Returns all stored Wear Dashboard configurations. */
+    suspend fun getAllDashboards(): Map<String, WearDashboardConfig> = wearDashboardRepository.getAllDashboards()
+
+    /** Stores or replaces a single Wear Dashboard configuration. */
+    suspend fun saveDashboard(config: WearDashboardConfig) {
+        wearDashboardRepository.setDashboard(config)
+    }
+
+    /** Removes the Wear Dashboard configuration for [id]. */
+    suspend fun deleteDashboard(id: String) {
+        wearDashboardRepository.removeDashboard(id)
     }
 }
