@@ -1,8 +1,10 @@
 package io.homeassistant.companion.android.frontend.handler
 
+import android.net.Uri
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
+import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 
 /**
  * Events emitted by [FrontendMessageHandler].
@@ -79,4 +81,65 @@ sealed interface FrontendHandlerEvent {
      * @param tagId Optional pre-filled tag identifier. When null, the user is prompted to enter one.
      */
     data class WriteNfcTag(val messageId: Int, val tagId: String?) : FrontendHandlerEvent
+
+    /**
+     * Frontend requested the app to start scanning for improv (Wi-Fi onboarding) BLE devices.
+     *
+     * The ViewModel is responsible for the BLE-feature gate, the runtime permission flow
+     * (Bluetooth + Location), and emitting
+     * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ImprovDiscoveredDeviceMessage]
+     * for each device the scanner reports.
+     */
+    data object StartImprovScan : FrontendHandlerEvent
+
+    /**
+     * User picked an improv device in the frontend's list. The ViewModel should open the
+     * Wi-Fi-credentials dialog seeded with [deviceName], drive the BLE provisioning flow, and
+     * emit [io.homeassistant.companion.android.frontend.externalbus.outgoing.ImprovDeviceSetupDoneMessage]
+     * once provisioning succeeds.
+     *
+     * @param deviceName Advertised name of the BLE device the user selected.
+     */
+    data class ConfigureImprovDevice(val deviceName: String) : FrontendHandlerEvent
+
+    sealed interface ExoPlayerAction : FrontendHandlerEvent {
+
+        /**
+         * Start playing an HLS stream.
+         *
+         * @param messageId The external bus message ID for the result callback
+         * @param url The HLS stream URL
+         * @param muted Whether playback should start muted
+         */
+        data class PlayHls(val messageId: Int?, val url: Uri, val muted: Boolean) : ExoPlayerAction
+
+        /** Stop playback and release the player. */
+        data object Stop : ExoPlayerAction
+
+        /**
+         * Resize and reposition the player overlay.
+         *
+         * Values come from the frontend's `Element.getBoundingClientRect()` and are already
+         * scaled to screen pixels (expressed as dp for Compose).
+         *
+         * @param left Left offset in dp
+         * @param top Top offset in dp
+         * @param right Right edge in dp
+         * @param bottom Bottom edge in dp, or 0 if the frontend does not impose a height constraint
+         */
+        data class Resize(val left: Double, val top: Double, val right: Double, val bottom: Double) : ExoPlayerAction
+    }
+
+    /**
+     * Frontend requested available EntityAddTo actions and the response was sent.
+     */
+    data object EntityAddToActionsSent : FrontendHandlerEvent
+
+    /**
+     * Frontend requested execution of an EntityAddTo action.
+     *
+     * The ViewModel should forward the [event] to the navigation layer.
+     * When null, the action is unimplemented and should be ignored.
+     */
+    data class EntityAddToExecuted(val event: FrontendEvent?) : FrontendHandlerEvent
 }

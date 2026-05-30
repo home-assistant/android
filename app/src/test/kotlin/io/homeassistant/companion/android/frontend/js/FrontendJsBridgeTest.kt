@@ -14,8 +14,6 @@ import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.frontend.externalbus.frontendExternalBusJson
 import io.homeassistant.companion.android.frontend.session.AuthPayload
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
-import io.homeassistant.companion.android.util.FailFastExtension
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -37,11 +35,9 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 
-@ExtendWith(ConsoleLogExtension::class, FailFastExtension::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class FrontendJsBridgeTest {
 
@@ -202,6 +198,36 @@ class FrontendJsBridgeTest {
             bridge.attachToWebView(webView)
 
             verify { webView.addJavascriptInterface(any(), FrontendJsBridge.EXTERNAL_APP_V1) }
+        }
+    }
+
+    @Nested
+    inner class DetachFromWebView {
+
+        @Test
+        fun `Given WebMessageListener supported then removes both V1 interface and V2 listener`() = runTest {
+            mockWebViewFeatureSupported(supported = true)
+            mockWebViewCompat()
+            val webView: WebView = mockk(relaxed = true)
+            val bridge = createBridge(scope = this)
+
+            bridge.detachFromWebView(webView)
+
+            verify { webView.removeJavascriptInterface(FrontendJsBridge.EXTERNAL_APP_V1) }
+            verify { WebViewCompat.removeWebMessageListener(webView, FrontendJsBridge.EXTERNAL_APP_V2_LISTENER) }
+        }
+
+        @Test
+        fun `Given WebMessageListener not supported then removes only V1 interface`() = runTest {
+            mockWebViewFeatureSupported(supported = false)
+            mockWebViewCompat()
+            val webView: WebView = mockk(relaxed = true)
+            val bridge = createBridge(scope = this)
+
+            bridge.detachFromWebView(webView)
+
+            verify { webView.removeJavascriptInterface(FrontendJsBridge.EXTERNAL_APP_V1) }
+            verify(exactly = 0) { WebViewCompat.removeWebMessageListener(any(), any()) }
         }
     }
 

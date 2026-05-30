@@ -144,6 +144,18 @@ class FrontendJsBridge @AssistedInject constructor(
     }
 
     /**
+     * Removes both V1 and V2 native bridges from [webView].
+     */
+    @SuppressLint("RequiresFeature")
+    override fun detachFromWebView(webView: WebView) {
+        val webMessageListenerSupported = WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)
+        webView.removeJavascriptInterface(EXTERNAL_APP_V1)
+        if (webMessageListenerSupported) {
+            WebViewCompat.removeWebMessageListener(webView, EXTERNAL_APP_V2_LISTENER)
+        }
+    }
+
+    /**
      * Dispatches a parsed [BridgeMessage] to the [handler].
      *
      * Validates auth callback names at this layer before forwarding to the handler.
@@ -341,6 +353,7 @@ class FrontendJsBridge @AssistedInject constructor(
         /** A no-op implementation for use in tests and previews. */
         val noOp = object : FrontendJsCallback {
             override suspend fun attachToWebView(webView: WebView) {}
+            override fun detachFromWebView(webView: WebView) {}
         }
     }
 }

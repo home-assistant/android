@@ -9,7 +9,6 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import app.cash.turbine.test
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.Runs
 import io.mockk.confirmVerified
@@ -25,12 +24,13 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
-@ExtendWith(ConsoleLogExtension::class, MainDispatcherJUnit5Extension::class)
+@ExtendWith(MainDispatcherJUnit5Extension::class)
 class AudioUrlPlayerTest {
     private lateinit var audioManager: AudioManager
     private lateinit var exoPlayer: ExoPlayer
@@ -213,10 +213,11 @@ class AudioUrlPlayerTest {
     fun `Given successful playback when flow completes then player is released and focus abandoned with same request`() = runTest {
         val listenerSlot = slot<Player.Listener>()
         val focusRequestSlot = slot<AudioFocusRequestCompat>()
+        val abandonRequestSlot = slot<AudioFocusRequestCompat>()
 
         mockkStatic(AudioManagerCompat::class)
         every { AudioManagerCompat.requestAudioFocus(any(), capture(focusRequestSlot)) } returns AudioManager.AUDIOFOCUS_REQUEST_GRANTED
-        every { AudioManagerCompat.abandonAudioFocusRequest(any(), any()) } returns AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+        every { AudioManagerCompat.abandonAudioFocusRequest(any(), capture(abandonRequestSlot)) } returns AudioManager.AUDIOFOCUS_REQUEST_GRANTED
         every { audioManager.getStreamVolume(any()) } returns 1
         every { exoPlayer.addListener(capture(listenerSlot)) } just Runs
         every { exoPlayer.prepare() } answers {
@@ -233,7 +234,11 @@ class AudioUrlPlayerTest {
 
         verify { exoPlayer.release() }
         verify { AudioManagerCompat.requestAudioFocus(audioManager, any()) }
-        verify { AudioManagerCompat.abandonAudioFocusRequest(audioManager, eq(focusRequestSlot.captured)) }
+        verify { AudioManagerCompat.abandonAudioFocusRequest(audioManager, any()) }
+        // Use reference identity rather than eq(): in androidx.media 1.8.0,
+        // AudioFocusRequestCompat.hashCode() dereferences the platform AudioAttributes,
+        // which is null under plain JUnit and NPEs inside MockK's EqMatcher.
+        assertSame(focusRequestSlot.captured, abandonRequestSlot.captured)
     }
 
     @Test

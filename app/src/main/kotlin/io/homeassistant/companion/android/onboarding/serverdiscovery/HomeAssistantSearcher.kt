@@ -7,6 +7,7 @@ import android.os.Build
 import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.common.util.SdkVersion
 import java.net.MalformedURLException
 import java.net.URL
 import java.util.concurrent.atomic.AtomicBoolean
@@ -157,9 +158,16 @@ internal class HomeAssistantSearcherImpl @Inject constructor(
             nsdManager.resolveService(serviceInfo, listener)
 
             awaitClose {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                if (SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
                     try {
                         nsdManager.stopServiceResolution(listener)
+                    } catch (e: IllegalArgumentException) {
+                        // On devices with T SDK extension < 22, NsdManager throws when the
+                        // listener is already unregistered (which happens automatically after
+                        // onServiceResolved/onResolveFailed fires). The call is still needed
+                        // for devices where auto-unregistration is not guaranteed, so we keep
+                        // it and just downgrade the expected case to a warning without a stack.
+                        Timber.w("stopServiceResolution: listener already unregistered: ${e.message}")
                     } catch (e: Exception) {
                         Timber.e(e, "Failed to stop service resolution")
                     }

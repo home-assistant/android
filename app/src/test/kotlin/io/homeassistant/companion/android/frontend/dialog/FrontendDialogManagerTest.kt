@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.frontend.dialog
 
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -8,13 +7,11 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(ConsoleLogExtension::class)
 class FrontendDialogManagerTest {
 
     @Test
@@ -24,9 +21,8 @@ class FrontendDialogManagerTest {
         val outcome = async { manager.showJsConfirm("Are you sure?") }
         advanceUntilIdle()
 
-        val pending = manager.pendingDialog.value
-        assertInstanceOf(FrontendDialog.Confirm::class.java, pending)
-        assertEquals("Are you sure?", (pending as FrontendDialog.Confirm).message)
+        val pending = assertInstanceOf(FrontendDialog.Confirm::class.java, manager.pendingDialog.value)
+        assertEquals("Are you sure?", pending.message)
         assertFalse(outcome.isCompleted)
 
         pending.onConfirm()
@@ -83,5 +79,57 @@ class FrontendDialogManagerTest {
         (manager.pendingDialog.value as FrontendDialog.Confirm).onCancel()
         advanceUntilIdle()
         assertEquals(false, second.await())
+    }
+
+    @Test
+    fun `Given HTTP auth shown when user proceeds then suspend returns Proceed with credentials`() = runTest {
+        val manager = FrontendDialogManager()
+
+        val outcome = async {
+            manager.showHttpAuth(host = "example.com", message = { "auth required" }, isAuthError = false)
+        }
+        advanceUntilIdle()
+
+        val pending = assertInstanceOf(FrontendDialog.HttpAuth::class.java, manager.pendingDialog.value)
+        pending.onProceed("alice", "s3cret", true)
+        advanceUntilIdle()
+
+        val resolved = assertInstanceOf(HttpAuthOutcome.Proceed::class.java, outcome.await())
+        assertEquals("alice", resolved.username)
+        assertEquals("s3cret", resolved.password)
+        assertEquals(true, resolved.remember)
+        assertNull(manager.pendingDialog.value)
+    }
+
+    @Test
+    fun `Given HTTP auth shown when user cancels then suspend returns Cancel`() = runTest {
+        val manager = FrontendDialogManager()
+
+        val outcome = async {
+            manager.showHttpAuth(host = "example.com", message = { "auth required" }, isAuthError = false)
+        }
+        advanceUntilIdle()
+        (manager.pendingDialog.value as FrontendDialog.HttpAuth).onCancel()
+        advanceUntilIdle()
+
+        assertEquals(HttpAuthOutcome.Cancel, outcome.await())
+        assertNull(manager.pendingDialog.value)
+    }
+
+    @Test
+    fun `Given isAuthError true when HTTP auth shown then dialog carries the flag`() = runTest {
+        val manager = FrontendDialogManager()
+
+        val outcome = async {
+            manager.showHttpAuth(host = "example.com", message = { "auth required" }, isAuthError = true)
+        }
+        advanceUntilIdle()
+
+        val pending = manager.pendingDialog.value as FrontendDialog.HttpAuth
+        assertTrue(pending.isAuthError)
+
+        pending.onCancel()
+        advanceUntilIdle()
+        outcome.await()
     }
 }

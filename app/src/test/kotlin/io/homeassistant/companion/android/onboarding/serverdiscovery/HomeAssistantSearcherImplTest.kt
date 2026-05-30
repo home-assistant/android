@@ -3,13 +3,13 @@ package io.homeassistant.companion.android.onboarding.serverdiscovery
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.net.wifi.WifiManager
+import android.os.Build
 import app.cash.turbine.TurbineTestContext
 import app.cash.turbine.test
 import app.cash.turbine.turbineScope
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.util.FailFast
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
-import io.homeassistant.companion.android.util.FailFastExtension
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.mockk.CapturingSlot
 import io.mockk.Ordering
 import io.mockk.Runs
@@ -25,12 +25,10 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import timber.log.Timber
 
-@ExtendWith(ConsoleLogExtension::class, FailFastExtension::class)
 class HomeAssistantSearcherImplTest {
 
     private lateinit var nsdManager: NsdManager
@@ -39,6 +37,7 @@ class HomeAssistantSearcherImplTest {
 
     @BeforeEach
     fun setup() {
+        SdkVersion.sdkInt = Build.VERSION_CODES.M
         nsdManager = mockk(relaxed = true)
         wifiManager = mockk(relaxed = true)
         searcher = HomeAssistantSearcherImpl(nsdManager, wifiManager)

@@ -11,7 +11,7 @@ runs:
   using: "composite"
   steps:
     - name: Pull from Lokalise
-      uses: lokalise/lokalise-pull-action@70a1a7afde662b154275af1a124f3a21345b3fcf # v5.2.1
+      uses: lokalise/lokalise-pull-action@de75880b91708b78de9b4ef02ac266edd56d5839 # v5.2.2
       with:
         api_token: ${{ inputs.lokalise-token }}
         project_id: ${{ inputs.lokalise-project }}

@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager.Comp
 import io.homeassistant.companion.android.frontend.FrontendScreen
 import io.homeassistant.companion.android.frontend.FrontendViewModel
 import io.homeassistant.companion.android.launch.HAStartDestinationRoute
+import io.homeassistant.companion.android.launch.PipReadiness
 import io.homeassistant.companion.android.nfc.WriteNfcTag
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.getActivity
@@ -71,6 +72,8 @@ internal fun NavGraphBuilder.frontendScreen(
     onConfigureHomeNetwork: (serverId: Int) -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onShowServerSwitcher: (onServerSelected: (Int) -> Unit) -> Unit,
+    onRequestFullscreen: (Boolean) -> Unit = {},
+    onPipReadinessChanged: (PipReadiness?) -> Unit = {},
 ) {
     if (WIPFeature.USE_FRONTEND_V2) {
         composable<FrontendRoute> {
@@ -99,6 +102,11 @@ internal fun NavGraphBuilder.frontendScreen(
                 onNavigateToNfcWrite = { messageId, tagId ->
                     nfcWriteLauncher.launch(WriteNfcTag.Input(tagId = tagId, messageId = messageId))
                 },
+                onRequestFullscreen = onRequestFullscreen,
+                onNavigateToWidgetConfig = { entityId, widgetType ->
+                    val context = navController.context
+                    context.startActivity(widgetType.toConfigureIntent(context, entityId))
+                },
             )
 
             FrontendScreen(
@@ -111,6 +119,7 @@ internal fun NavGraphBuilder.frontendScreen(
                 onConfigureHomeNetwork = onConfigureHomeNetwork,
                 onSecurityLevelHelpClick = onSecurityLevelHelpClick,
                 onShowSnackbar = onShowSnackbar,
+                onPipReadinessChanged = onPipReadinessChanged,
             )
         }
     } else {
@@ -141,6 +150,8 @@ internal fun FrontendEventHandler(
     onOpenExternalLink: suspend (Uri) -> Unit,
     onShowServerSwitcher: () -> Unit,
     onNavigateToNfcWrite: (messageId: Int, tagId: String?) -> Unit,
+    onRequestFullscreen: (Boolean) -> Unit,
+    onNavigateToWidgetConfig: (entityId: String, widgetType: WidgetType) -> Unit,
 ) {
     val resources = LocalResources.current
     LaunchedEffect(Unit) {
@@ -176,6 +187,14 @@ internal fun FrontendEventHandler(
 
                 is FrontendEvent.NavigateToNfcWrite -> {
                     onNavigateToNfcWrite(event.messageId, event.tagId)
+                }
+
+                is FrontendEvent.RequestFullscreen -> {
+                    onRequestFullscreen(event.fullscreen)
+                }
+
+                is FrontendEvent.NavigateToWidgetConfig -> {
+                    onNavigateToWidgetConfig(event.entityId, event.widgetType)
                 }
             }
         }

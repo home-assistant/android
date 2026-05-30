@@ -49,6 +49,19 @@ internal sealed interface PermissionRequest {
         SinglePermission(permission = Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
     /**
+     * A request for the Android 17+ local network access permission
+     * ([Manifest.permission.ACCESS_LOCAL_NETWORK]).
+     *
+     * Required so the WebView and websocket layers can reach a Home Assistant instance over the
+     * LAN once API 37 enforcement is active. The permission shares the `NEARBY_DEVICES` group
+     * with Bluetooth, so users who have already granted any other permission in that group
+     * (e.g. `BLUETOOTH_SCAN`) will see the request auto-grant without UI.
+     */
+    @RequiresApi(Build.VERSION_CODES.CINNAMON_BUN)
+    class LocalNetwork(override val onResult: (Boolean) -> Unit) :
+        SinglePermission(permission = Manifest.permission.ACCESS_LOCAL_NETWORK)
+
+    /**
      * A notification permission request rendered as a bottom sheet (with an explicit allow/deny)
      * before the system dialog, plus a separate dismiss path when the user closes the sheet without
      * answering. Modelled as its own top-level category — not a [SinglePermission] — because

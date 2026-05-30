@@ -11,6 +11,7 @@ import android.nfc.NfcAdapter
 import android.os.Build
 import android.os.PowerManager
 import android.telephony.TelephonyManager
+import android.webkit.WebView
 import androidx.core.content.ContextCompat
 import coil3.ImageLoader
 import coil3.PlatformContext
@@ -23,6 +24,7 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
 import io.homeassistant.companion.android.common.util.HAStrictMode
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.configureComposeDiagnosticStackTrace
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.database.sensor.SensorDao
@@ -47,6 +49,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import timber.log.Timber
 
@@ -84,7 +87,7 @@ open class HomeAssistantApplication :
         Timber.plant(Timber.DebugTree())
         super.onCreate()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.S) &&
             BuildConfig.DEBUG &&
             !BuildConfig.NO_STRICT_MODE
         ) {
@@ -94,7 +97,7 @@ open class HomeAssistantApplication :
             )
         }
 
-        Timber.i("Running ${BuildConfig.VERSION_NAME} on SDK ${Build.VERSION.SDK_INT}")
+        Timber.i("Running ${BuildConfig.VERSION_NAME} on SDK $SdkVersion")
 
         registerActivityLifecycleCallbacks(LifecycleHandler)
 
@@ -104,6 +107,13 @@ open class HomeAssistantApplication :
                 prefsRepository.isCrashReporting(),
             )
             initCrashSaving(applicationContext)
+
+            val webViewDebug = BuildConfig.DEBUG || prefsRepository.isWebViewDebugEnabled()
+            withContext(Dispatchers.Main) {
+                // Release builds require calling this on the main thread
+                WebView.setWebContentsDebuggingEnabled(webViewDebug)
+            }
+
             languagesManager.applyCurrentLang()
             nightModeManager.applyCurrentNightMode()
         }
@@ -230,7 +240,7 @@ open class HomeAssistantApplication :
         )
 
         // Listen for microphone mute changes
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.P)) {
             ContextCompat.registerReceiver(
                 this,
                 sensorReceiver,
@@ -240,7 +250,7 @@ open class HomeAssistantApplication :
         }
 
         // Listen for speakerphone state changes
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
             ContextCompat.registerReceiver(
                 this,
                 sensorReceiver,
@@ -295,7 +305,7 @@ open class HomeAssistantApplication :
         }
 
         // Register for changes to the managed profile availability
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
             ContextCompat.registerReceiver(
                 this,
                 sensorReceiver,

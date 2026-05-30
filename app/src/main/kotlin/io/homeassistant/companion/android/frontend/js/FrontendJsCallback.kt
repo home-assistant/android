@@ -20,4 +20,14 @@ interface FrontendJsCallback {
      * @param webView The WebView to register callbacks into
      */
     suspend fun attachToWebView(webView: WebView)
+
+    /**
+     * Unregisters the JavaScript callbacks from the given [webView].
+     *
+     * Must be called when the [webView] is no longer in use to release resources
+     * retained by the bridge.
+     *
+     * @param webView The WebView to unregister callbacks from
+     */
+    fun detachFromWebView(webView: WebView)
 }

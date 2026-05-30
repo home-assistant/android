@@ -25,6 +25,7 @@ import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.sensors.SensorReceiver
+import io.homeassistant.companion.android.util.sensitive
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -47,9 +48,10 @@ class MessagingManager @Inject constructor(
 
             val jsonData = notificationData as Map<String, String>?
             val jsonObject = jsonData?.toJsonObject()
-            val serverId = jsonData?.get(NotificationData.WEBHOOK_ID)?.let {
+            val receivedWebhookId = jsonData?.get(NotificationData.WEBHOOK_ID)
+            val receivedServerId = receivedWebhookId?.let {
                 serverManager.getServer(webhookId = it)?.id
-            } ?: ServerManager.SERVER_ID_ACTIVE
+            }
             val notificationRow =
                 NotificationItem(
                     0,
@@ -57,15 +59,30 @@ class MessagingManager @Inject constructor(
                     notificationData[NotificationData.MESSAGE].toString(),
                     jsonObject.toString(),
                     source,
-                    serverId,
+                    receivedServerId,
                 )
             notificationDao.add(notificationRow)
-            if (serverManager.getServer(serverId) == null) {
-                Timber.w("Received notification but no server for it, discarding")
+
+            val webhookServerId = receivedWebhookId?.let { webhookId ->
+                val serverForWebhook = serverManager.getServer(webhookId = webhookId)
+                if (serverForWebhook == null) {
+                    Timber.w(
+                        "Received notification with webhook ID ${sensitive(
+                            webhookId,
+                        )} but no matching server, ignoring",
+                    )
+                    return@launch
+                }
+
+                serverForWebhook.id
+            } ?: ServerManager.SERVER_ID_ACTIVE
+
+            if (serverManager.getServer(webhookServerId) == null) {
+                Timber.w("Received notification but no server available, ignoring")
                 return@launch
             }
 
-            val allowCommands = serverManager.integrationRepository(serverId).isTrusted()
+            val allowCommands = serverManager.integrationRepository(webhookServerId).isTrusted()
             val message = notificationData[NotificationData.MESSAGE]
             when {
                 message == NotificationData.CLEAR_NOTIFICATION && !notificationData["tag"].isNullOrBlank() -> {

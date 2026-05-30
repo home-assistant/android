@@ -4,12 +4,15 @@ import app.cash.turbine.test
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.HAGesture
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -17,16 +20,20 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.ValueSource
 
-@ExtendWith(ConsoleLogExtension::class)
 class PrefsRepositoryImplTest {
     private val keyChangesFlow = MutableSharedFlow<String>()
+    private val mapperSlot = slot<suspend () -> Any>()
     private val localStorage = mockk<LocalStorage> {
-        every { observeChanges(any()) } returns keyChangesFlow
+        every { observeChanges(*anyVararg<String>()) } returns keyChangesFlow
+        coEvery {
+            observeChanges(*anyVararg<String>(), mapper = capture(mapperSlot))
+        } answers {
+            merge(keyChangesFlow, flowOf("")).map { mapperSlot.captured.invoke() }
+        }
     }
     private val integrationStorage = mockk<LocalStorage>()
 
@@ -131,21 +138,132 @@ class PrefsRepositoryImplTest {
         coVerify(exactly = 0) { integrationStorage.getString(any()) }
     }
 
+    @Test
+    fun `Given collecting flow when autoplay key changes then updated value is emitted`() = runTest {
+        coEvery { localStorage.getBoolean("autoplay_video") } returns false
+
+        repository.autoPlayVideoFlow().test {
+            assertFalse(awaitItem())
+
+            coEvery { localStorage.getBoolean("autoplay_video") } returns true
+            keyChangesFlow.emit("autoplay_video")
+
+            assertTrue(awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `Given collecting flow when full screen changes then updated full screen enabled is emitted`() = runTest {
+        coEvery { localStorage.getBoolean("fullscreen_enabled") } returns true
+
+        repository.fullScreenEnabledFlow().test {
+            assertTrue(awaitItem())
+
+            coEvery { localStorage.getBoolean("fullscreen_enabled") } returns false
+            keyChangesFlow.emit("fullscreen_enabled")
+
+            assertFalse(awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `Given collecting flow when screen orientation changes then typed value is emitted`() = runTest {
+        coEvery { localStorage.getString("screen_orientation") } returns null
+
+        repository.screenOrientationFlow().test {
+            // Null storage value falls back to SYSTEM
+            assertEquals(ScreenOrientation.SYSTEM, awaitItem())
+
+            coEvery { localStorage.getString("screen_orientation") } returns "portrait"
+            keyChangesFlow.emit("screen_orientation")
+            assertEquals(ScreenOrientation.PORTRAIT, awaitItem())
+
+            coEvery { localStorage.getString("screen_orientation") } returns "landscape"
+            keyChangesFlow.emit("screen_orientation")
+            assertEquals(ScreenOrientation.LANDSCAPE, awaitItem())
+
+            // Unknown value falls back to SYSTEM
+            coEvery { localStorage.getString("screen_orientation") } returns "garbage"
+            keyChangesFlow.emit("screen_orientation")
+            assertEquals(ScreenOrientation.SYSTEM, awaitItem())
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `Given collecting flow when keep screen on changes then updated keep screen on enabled is emitted`() = runTest {
+        coEvery { localStorage.getBoolean("keep_screen_on_enabled") } returns false
+
+        repository.keepScreenOnFlow().test {
+            assertFalse(awaitItem())
+
+            coEvery { localStorage.getBoolean("keep_screen_on_enabled") } returns true
+            keyChangesFlow.emit("keep_screen_on_enabled")
+
+            assertTrue(awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
     @Nested
-    inner class ZoomSettingsFlow {
+    inner class GetScreenOrientation {
 
         @Test
-        fun `Given collecting flow then current zoom settings are emitted immediately`() = runTest {
-            coEvery { localStorage.getInt("page_zoom_level") } returns 150
-            coEvery { localStorage.getBoolean("pinch_to_zoom_enabled") } returns true
+        fun `Given null storage value when get then returns SYSTEM`() = runTest {
+            coEvery { localStorage.getString("screen_orientation") } returns null
 
-            repository.zoomSettingsFlow().test {
-                val settings = awaitItem()
-                assertEquals(150, settings.zoomLevel)
-                assertTrue(settings.pinchToZoomEnabled)
-                cancelAndIgnoreRemainingEvents()
-            }
+            assertEquals(ScreenOrientation.SYSTEM, repository.getScreenOrientation())
         }
+
+        @ParameterizedTest
+        @CsvSource(
+            "system, SYSTEM",
+            "portrait, PORTRAIT",
+            "landscape, LANDSCAPE",
+        )
+        fun `Given storage value when get then returns matching enum`(
+            storedValue: String,
+            expected: ScreenOrientation,
+        ) = runTest {
+            coEvery { localStorage.getString("screen_orientation") } returns storedValue
+
+            assertEquals(expected, repository.getScreenOrientation())
+        }
+
+        @Test
+        fun `Given unknown storage value when get then returns SYSTEM`() = runTest {
+            coEvery { localStorage.getString("screen_orientation") } returns "unknown-value"
+
+            assertEquals(ScreenOrientation.SYSTEM, repository.getScreenOrientation())
+        }
+    }
+
+    @Nested
+    inner class SaveScreenOrientation {
+
+        @ParameterizedTest
+        @CsvSource(
+            "SYSTEM, system",
+            "PORTRAIT, portrait",
+            "LANDSCAPE, landscape",
+        )
+        fun `Given enum when save then storage value is the storageValue string`(
+            orientation: ScreenOrientation,
+            expectedStored: String,
+        ) = runTest {
+            coEvery { localStorage.putString(any(), any()) } returns Unit
+
+            repository.setScreenOrientation(orientation)
+
+            coVerify { localStorage.putString("screen_orientation", expectedStored) }
+        }
+    }
+
+    @Nested
+    inner class ZoomSettingsFlow {
 
         @Test
         fun `Given collecting flow when zoom key changes then updated settings are emitted`() = runTest {
@@ -184,32 +302,55 @@ class PrefsRepositoryImplTest {
         }
     }
 
-    @Nested
-    inner class FullScreenEnabledFlow {
+    @Test
+    fun `Given no approved tags when listing then returns empty list`() = runTest {
+        coEvery { localStorage.getStringSet("allowed_tags") } returns null
 
-        @Test
-        fun `Given collecting flow when subscribing then current full screen enabled is emitted immediately`() = runTest {
-            coEvery { localStorage.getBoolean("fullscreen_enabled") } returns true
+        assertEquals(emptySet<String>(), repository.getAllowedTags())
+    }
 
-            repository.fullScreenEnabledFlow().test {
-                assertTrue(awaitItem())
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
+    @Test
+    fun `Given approved tags stored when listing then returns them`() = runTest {
+        coEvery { localStorage.getStringSet("allowed_tags") } returns setOf("tag-a", "tag-b")
 
-        @Test
-        fun `Given collecting flow when full screen changes then updated full screen enabled is emitted`() = runTest {
-            coEvery { localStorage.getBoolean("fullscreen_enabled") } returns true
+        assertEquals(setOf("tag-a", "tag-b"), repository.getAllowedTags())
+    }
 
-            repository.fullScreenEnabledFlow().test {
-                awaitItem() // consume initial emission
+    @Test
+    fun `Given new tag when approving then it is added to the stored set`() = runTest {
+        coEvery { localStorage.getStringSet("allowed_tags") } returns setOf("tag-a")
+        coEvery { localStorage.putStringSet(any(), any()) } returns Unit
 
-                coEvery { localStorage.getBoolean("fullscreen_enabled") } returns false
-                keyChangesFlow.emit("fullscreen_enabled")
+        repository.addAllowedTag("tag-b")
 
-                assertFalse(awaitItem())
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
+        coVerify(exactly = 1) { localStorage.putStringSet("allowed_tags", setOf("tag-a", "tag-b")) }
+    }
+
+    @Test
+    fun `Given no approved tags when approving then writes a single-entry set`() = runTest {
+        coEvery { localStorage.getStringSet("allowed_tags") } returns null
+        coEvery { localStorage.putStringSet(any(), any()) } returns Unit
+
+        repository.addAllowedTag("tag-a")
+
+        coVerify(exactly = 1) { localStorage.putStringSet("allowed_tags", setOf("tag-a")) }
+    }
+
+    @Test
+    fun `Given tag already approved when approving again then storage is not written`() = runTest {
+        coEvery { localStorage.getStringSet("allowed_tags") } returns setOf("tag-a")
+
+        repository.addAllowedTag("tag-a")
+
+        coVerify(exactly = 0) { localStorage.putStringSet(any(), any()) }
+    }
+
+    @Test
+    fun `Given approved tags when clearing then storage entry is removed`() = runTest {
+        coEvery { localStorage.remove(any()) } returns Unit
+
+        repository.clearAllowedTags()
+
+        coVerify(exactly = 1) { localStorage.remove("allowed_tags") }
     }
 }

@@ -28,7 +28,7 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.authenticator.Authenticator
+import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.settings.ConnectionSecurityLevelFragment
@@ -352,8 +352,8 @@ class ServerSettingsFragment :
         }
     }
 
-    private fun setLockAuthenticationResult(result: Int): Boolean {
-        val success = result == Authenticator.SUCCESS
+    private fun setLockAuthenticationResult(result: AuthenticationResult): Boolean {
+        val success = result == AuthenticationResult.SUCCESS
         val switchLock = findPreference<SwitchPreference>("app_lock")
         switchLock?.isChecked = success
 
@@ -362,7 +362,7 @@ class ServerSettingsFragment :
 
         findPreference<SwitchPreference>("app_lock_home_bypass")?.isVisible = success && presenter.hasWifi()
         findPreference<EditTextPreference>("session_timeout")?.isVisible = success
-        return (result == Authenticator.SUCCESS || result == Authenticator.CANCELED)
+        return (result == AuthenticationResult.SUCCESS || result == AuthenticationResult.CANCELED)
     }
 
     override fun onRemovedServer(success: Boolean, hasAnyRemaining: Boolean) {

@@ -4,9 +4,9 @@ import io.homeassistant.companion.android.frontend.externalbus.frontendExternalB
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNull
 
 class IncomingExternalBusMessageTest {
 
@@ -135,5 +135,142 @@ class IncomingExternalBusMessageTest {
         assertInstanceOf(UnknownIncomingMessage::class.java, message)
         val unknownMessage = message as UnknownIncomingMessage
         assertTrue(unknownMessage.content.toString().contains("future-feature"))
+    }
+
+    @Test
+    fun `Given exoplayer play_hls JSON with full payload then parses to ExoPlayerPlayHlsMessage`() {
+        val json =
+            """{"type":"exoplayer/play_hls","id":20,"payload":{"url":"https://example.com/stream.m3u8","muted":true}}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(ExoPlayerPlayHlsMessage::class.java, message)
+        val playHls = message as ExoPlayerPlayHlsMessage
+        assertEquals(20, playHls.id)
+        assertEquals("https://example.com/stream.m3u8", playHls.payload.url)
+        assertTrue(playHls.payload.muted)
+    }
+
+    @Test
+    fun `Given exoplayer play_hls JSON without muted then parses with muted defaulting to false`() {
+        val json =
+            """{"type":"exoplayer/play_hls","id":21,"payload":{"url":"https://example.com/stream.m3u8"}}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(ExoPlayerPlayHlsMessage::class.java, message)
+        val playHls = message as ExoPlayerPlayHlsMessage
+        assertEquals("https://example.com/stream.m3u8", playHls.payload.url)
+        assertFalse(playHls.payload.muted)
+    }
+
+    @Test
+    fun `Given exoplayer play_hls JSON without payload then parses with default payload`() {
+        val json = """{"type":"exoplayer/play_hls","id":22}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(ExoPlayerPlayHlsMessage::class.java, message)
+        val playHls = message as ExoPlayerPlayHlsMessage
+        assertEquals(22, playHls.id)
+        assertNull(playHls.payload.url)
+        assertFalse(playHls.payload.muted)
+    }
+
+    @Test
+    fun `Given exoplayer stop JSON then parses to ExoPlayerStopMessage`() {
+        val json = """{"type":"exoplayer/stop","id":23}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(ExoPlayerStopMessage::class.java, message)
+        assertEquals(23, (message as ExoPlayerStopMessage).id)
+    }
+
+    @Test
+    fun `Given exoplayer resize JSON with fractional pixels then parses payload as floats`() {
+        val json = """{"type":"exoplayer/resize","id":24,""" +
+            """"payload":{"left":0,"top":10.5,"right":486.25,"bottom":200.5}}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(ExoPlayerResizeMessage::class.java, message)
+        val resize = message as ExoPlayerResizeMessage
+        assertEquals(24, resize.id)
+        assertEquals(0.0, resize.payload.left)
+        assertEquals(10.5, resize.payload.top)
+        assertEquals(486.25, resize.payload.right)
+        assertEquals(200.5, resize.payload.bottom)
+    }
+
+    @Test
+    fun `Given improv scan JSON then parses to ImprovScanMessage`() {
+        val json = """{"type":"improv/scan","id":50}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(ImprovScanMessage::class.java, message)
+        assertEquals(50, (message as ImprovScanMessage).id)
+    }
+
+    @Test
+    fun `Given improv scan JSON without id then parses to ImprovScanMessage with null id`() {
+        val json = """{"type":"improv/scan"}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(ImprovScanMessage::class.java, message)
+        assertNull((message as ImprovScanMessage).id)
+    }
+
+    @Test
+    fun `Given improv configure_device JSON then parses to ImprovConfigureDeviceMessage with name`() {
+        val json = """{"type":"improv/configure_device","id":51,"payload":{"name":"Smart Plug"}}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(ImprovConfigureDeviceMessage::class.java, message)
+        val configureMessage = message as ImprovConfigureDeviceMessage
+        assertEquals(51, configureMessage.id)
+        assertEquals("Smart Plug", configureMessage.payload.name)
+    }
+
+    @Test
+    fun `Given exoplayer resize JSON without payload then parses with zero defaults`() {
+        val json = """{"type":"exoplayer/resize","id":25}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(ExoPlayerResizeMessage::class.java, message)
+        val resize = message as ExoPlayerResizeMessage
+        assertEquals(0.0, resize.payload.left)
+        assertEquals(0.0, resize.payload.top)
+        assertEquals(0.0, resize.payload.right)
+        assertEquals(0.0, resize.payload.bottom)
+    }
+
+    @Test
+    fun `Given entity add_to get_actions JSON then parses to EntityAddToGetActionsMessage`() {
+        val json = """{"type":"entity/add_to/get_actions","id":20,"payload":{"entity_id":"light.living_room"}}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(EntityAddToGetActionsMessage::class.java, message)
+        val addToMessage = message as EntityAddToGetActionsMessage
+        assertEquals(20, addToMessage.id)
+        assertEquals("light.living_room", addToMessage.payload.entityId)
+    }
+
+    @Test
+    fun `Given entity add_to JSON then parses to EntityAddToMessage`() {
+        val json = """{"type":"entity/add_to","id":21,"payload":{"entity_id":"light.living_room","app_payload":"dGVzdA=="}}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(EntityAddToMessage::class.java, message)
+        val addToMessage = message as EntityAddToMessage
+        assertEquals(21, addToMessage.id)
+        assertEquals("light.living_room", addToMessage.payload.entityId)
+        assertEquals("dGVzdA==", addToMessage.payload.appPayload)
     }
 }

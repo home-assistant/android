@@ -147,7 +147,7 @@ data class HapticMessage(override val id: Int? = null, val payload: HapticType) 
  * Message requesting the app to open the NFC tag-write flow.
  *
  * The optional [TagWritePayload.tag] is a pre-filled tag identifier. When null or missing, the
- * user is prompted to enter/scan a tag manually. Once handled, a [io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage.success]
+ * user is prompted to enter/scan a tag manually. Once handled, a [io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage]
  * should be sent back to the frontend with the [id].
  */
 @Serializable
@@ -170,3 +170,101 @@ data class TagWritePayload(val tag: String? = null)
 @SerialName("handleBlob")
 data class HandleBlobMessage(override val id: Int? = null, val data: String, val filename: String) :
     IncomingExternalBusMessage
+
+/**
+ * Message requesting to start playing an HLS stream via ExoPlayer.
+ *
+ * The frontend provides the stream URL and an optional muted flag.
+ * The app should respond with a result message on success.
+ */
+@Serializable
+@SerialName("exoplayer/play_hls")
+data class ExoPlayerPlayHlsMessage(
+    override val id: Int? = null,
+    val payload: ExoPlayerPlayHlsPayload = ExoPlayerPlayHlsPayload(),
+) : IncomingExternalBusMessage
+
+@Serializable
+data class ExoPlayerPlayHlsPayload(val url: String? = null, val muted: Boolean = false)
+
+/**
+ * Message requesting to stop ExoPlayer playback and release the player.
+ *
+ * This is a fire-and-forget message.
+ */
+@Serializable
+@SerialName("exoplayer/stop")
+data class ExoPlayerStopMessage(override val id: Int? = null) : IncomingExternalBusMessage
+
+/**
+ * Message requesting to resize and reposition the ExoPlayer overlay.
+ *
+ * Payload values come from `Element.getBoundingClientRect()` and are already scaled
+ * to screen coordinates.
+ */
+@Serializable
+@SerialName("exoplayer/resize")
+data class ExoPlayerResizeMessage(
+    override val id: Int? = null,
+    val payload: ExoPlayerResizePayload = ExoPlayerResizePayload(),
+) : IncomingExternalBusMessage
+
+@Serializable
+data class ExoPlayerResizePayload(
+    val left: Double = 0.0,
+    val top: Double = 0.0,
+    val right: Double = 0.0,
+    val bottom: Double = 0.0,
+)
+
+/**
+ * Message requesting the app to start scanning for nearby BLE devices that advertise the
+ * Improv Wi-Fi service.
+ *
+ * The frontend sends this once when the user opens its "Add device" flow. The app responds
+ * out-of-band with a stream of [io.homeassistant.companion.android.frontend.externalbus.outgoing.ImprovDiscoveredDeviceMessage]
+ * commands as devices are discovered. No `result`-shaped response is expected.
+ *
+ * Will not be sent by the frontend when the device reports
+ * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResultMessage.ConfigResult.canSetupImprov] = `false`.
+ */
+@Serializable
+@SerialName("improv/scan")
+data class ImprovScanMessage(override val id: Int? = null) : IncomingExternalBusMessage
+
+/**
+ * Message requesting the app to begin Wi-Fi onboarding for the named improv device the user
+ * picked from the discovery list.
+ *
+ * The app should open the credentials dialog for [ImprovConfigureDevicePayload.name], submit
+ * the entered Wi-Fi credentials over BLE, and finally — once the device reports it has been
+ * provisioned — emit
+ * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ImprovDeviceSetupDoneMessage]
+ * and navigate the frontend to the matching `config_flow_start` URL.
+ */
+@Serializable
+@SerialName("improv/configure_device")
+data class ImprovConfigureDeviceMessage(override val id: Int? = null, val payload: ImprovConfigureDevicePayload) :
+    IncomingExternalBusMessage
+
+@Serializable
+data class ImprovConfigureDevicePayload(val name: String)
+
+@Serializable
+@SerialName("entity/add_to/get_actions")
+data class EntityAddToGetActionsMessage(override val id: Int? = null, val payload: EntityAddToGetActionsPayload) :
+    IncomingExternalBusMessage
+
+@Serializable
+data class EntityAddToGetActionsPayload(@SerialName("entity_id") val entityId: String)
+
+@Serializable
+@SerialName("entity/add_to")
+data class EntityAddToMessage(override val id: Int? = null, val payload: EntityAddToPayload) :
+    IncomingExternalBusMessage
+
+@Serializable
+data class EntityAddToPayload(
+    @SerialName("entity_id") val entityId: String,
+    @SerialName("app_payload") val appPayload: String,
+)

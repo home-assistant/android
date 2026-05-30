@@ -14,6 +14,7 @@ import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 import io.homeassistant.companion.android.common.sensors.SensorWorkerBase
+import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissionUseCase
 import java.util.concurrent.TimeUnit
 
 class SensorWorker(appContext: Context, workerParams: WorkerParameters) : SensorWorkerBase(appContext, workerParams) {
@@ -37,19 +38,19 @@ class SensorWorker(appContext: Context, workerParams: WorkerParameters) : Sensor
     @InstallIn(SingletonComponent::class)
     interface SensorWorkerEntryPoint {
         fun serverManager(): ServerManager
+        fun checkLocalNetworkPermission(): CheckLocalNetworkPermissionUseCase
+    }
+
+    private val entryPoint by lazy {
+        EntryPointAccessors.fromApplication(appContext, SensorWorkerEntryPoint::class.java)
     }
 
     override val serverManager: ServerManager
-        get() {
-            return EntryPointAccessors.fromApplication(
-                appContext,
-                SensorWorkerEntryPoint::class.java,
-            )
-                .serverManager()
-        }
+        get() = entryPoint.serverManager()
 
     override val sensorReceiver: SensorReceiverBase
-        get() {
-            return SensorReceiver()
-        }
+        get() = SensorReceiver()
+
+    override val checkLocalNetworkPermission: CheckLocalNetworkPermissionUseCase
+        get() = entryPoint.checkLocalNetworkPermission()
 }
