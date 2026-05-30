@@ -95,7 +95,7 @@ internal fun SensorDetailSettingSheet(
     }
     val showSearch = entries.size > SEARCH_VISIBILITY_THRESHOLD
 
-    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val bottomSheetState = rememberHAModalBottomSheetState()
     val screenHeight = safeScreenHeight() - HADimens.SPACE16
     val coroutineScope = rememberCoroutineScope()
 
