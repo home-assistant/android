@@ -129,6 +129,16 @@ class HomeActivity :
             context,
             HomeActivity::class.java,
         )
+
+        fun getWearDashboardIntent(context: Context, dashboardId: String, pageId: String? = null): Intent {
+            val pageSegment = pageId?.let { "/$it" }.orEmpty()
+            return Intent(
+                Intent.ACTION_VIEW,
+                "homeassistant://wear-dashboard/$dashboardId$pageSegment".toUri(),
+                context,
+                HomeActivity::class.java,
+            )
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -24,6 +24,8 @@ import io.homeassistant.companion.android.tiles.CameraTile
 import io.homeassistant.companion.android.tiles.ShortcutsTile
 import io.homeassistant.companion.android.tiles.TemplateTile
 import io.homeassistant.companion.android.tiles.ThermostatTile
+import io.homeassistant.companion.android.home.views.dashboard.WearDashboardScreen
+import io.homeassistant.companion.android.home.views.dashboard.WearDashboardTileSettingsRoute
 import io.homeassistant.companion.android.views.ChooseEntityView
 
 private const val ARG_SCREEN_SENSOR_MANAGER_ID = "sensorManagerId"
@@ -32,6 +34,8 @@ private const val ARG_SCREEN_THERMOSTAT_TILE_ID = "thermostatTileId"
 private const val ARG_SCREEN_SHORTCUTS_TILE_ID = "shortcutsTileId"
 private const val ARG_SCREEN_SHORTCUTS_TILE_ENTITY_INDEX = "shortcutsTileEntityIndex"
 private const val ARG_SCREEN_TEMPLATE_TILE_ID = "templateTileId"
+private const val ARG_DASHBOARD_ID = "dashboardId"
+private const val ARG_PAGE_ID = "pageId"
 private const val ARG_WEAR_DASHBOARD_TILE_ID = "wearDashboardTileId"
 
 private const val SCREEN_LANDING = "landing"
@@ -59,6 +63,7 @@ private const val SCREEN_SET_SHORTCUTS_TILE = "set_shortcuts_tile"
 private const val SCREEN_SHORTCUTS_TILE_CHOOSE_ENTITY = "shortcuts_tile_choose_entity"
 private const val SCREEN_SET_TILE_TEMPLATE = "set_tile_template"
 private const val SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL = "set_tile_template_refresh_interval"
+private const val ROUTE_WEAR_DASHBOARD = "wear_dashboard"
 private const val ROUTE_WEAR_DASHBOARD_TILE_SETTINGS = "wear_dashboard_tile_settings"
 
 const val DEEPLINK_SENSOR_MANAGER = "ha_wear://$SCREEN_SINGLE_SENSOR_MANAGER"
@@ -66,6 +71,8 @@ const val DEEPLINK_PREFIX_SET_CAMERA_TILE = "ha_wear://$SCREEN_SET_CAMERA_TILE"
 const val DEEPLINK_PREFIX_SET_THERMOSTAT_TILE = "ha_wear://$SCREEN_SET_THERMOSTAT_TILE"
 const val DEEPLINK_PREFIX_SET_SHORTCUT_TILE = "ha_wear://$SCREEN_SET_SHORTCUTS_TILE"
 const val DEEPLINK_PREFIX_SET_TEMPLATE_TILE = "ha_wear://$SCREEN_SET_TILE_TEMPLATE"
+const val DEEPLINK_WEAR_DASHBOARD = "homeassistant://wear-dashboard/{$ARG_DASHBOARD_ID}"
+const val DEEPLINK_WEAR_DASHBOARD_PAGE = "homeassistant://wear-dashboard/{$ARG_DASHBOARD_ID}/{$ARG_PAGE_ID}"
 const val DEEPLINK_WEAR_DASHBOARD_TILE_SETTINGS = "ha_wear://$ROUTE_WEAR_DASHBOARD_TILE_SETTINGS"
 
 @Composable
@@ -528,6 +535,48 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                 ) { sensorId, isEnabled ->
                     mainViewModel.enableDisableSensor(sensorManager, sensorId, isEnabled)
                 }
+            }
+            composable(
+                route = "$ROUTE_WEAR_DASHBOARD/{$ARG_DASHBOARD_ID}",
+                arguments = listOf(
+                    navArgument(name = ARG_DASHBOARD_ID) {
+                        type = NavType.StringType
+                    },
+                ),
+                deepLinks = listOf(
+                    navDeepLink { uriPattern = DEEPLINK_WEAR_DASHBOARD },
+                ),
+            ) {
+                WearDashboardScreen()
+            }
+            composable(
+                route = "$ROUTE_WEAR_DASHBOARD/{$ARG_DASHBOARD_ID}/{$ARG_PAGE_ID}",
+                arguments = listOf(
+                    navArgument(name = ARG_DASHBOARD_ID) {
+                        type = NavType.StringType
+                    },
+                    navArgument(name = ARG_PAGE_ID) {
+                        type = NavType.StringType
+                    },
+                ),
+                deepLinks = listOf(
+                    navDeepLink { uriPattern = DEEPLINK_WEAR_DASHBOARD_PAGE },
+                ),
+            ) {
+                WearDashboardScreen()
+            }
+            composable(
+                route = "$ROUTE_WEAR_DASHBOARD_TILE_SETTINGS/{$ARG_WEAR_DASHBOARD_TILE_ID}",
+                arguments = listOf(
+                    navArgument(name = ARG_WEAR_DASHBOARD_TILE_ID) {
+                        type = NavType.IntType
+                    },
+                ),
+                deepLinks = listOf(
+                    navDeepLink { uriPattern = "$DEEPLINK_WEAR_DASHBOARD_TILE_SETTINGS/{$ARG_WEAR_DASHBOARD_TILE_ID}" },
+                ),
+            ) {
+                WearDashboardTileSettingsRoute()
             }
         }
     }

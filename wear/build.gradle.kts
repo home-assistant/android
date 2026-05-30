@@ -34,6 +34,7 @@ dependencies {
     implementation(libs.core.splashscreen)
     implementation(libs.play.services.wearable)
     implementation(libs.wear.input)
+    implementation(libs.wear.ongoing)
     implementation(libs.wear.remote.interactions)
     implementation(libs.wear.phone.interactions)
 
@@ -53,6 +54,7 @@ dependencies {
     implementation(libs.wear.compose.material)
     implementation(libs.wear.compose.navigation)
     implementation(libs.wear.tooling)
+    implementation(libs.androidx.hilt.navigation.compose)
 
     implementation(libs.guava)
     implementation(libs.bundles.wear.tiles)

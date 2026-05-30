@@ -87,6 +87,7 @@ tools-desugar-jdk-libs = "2.1.5"
 turbine = "1.2.1"
 watchfaceComplicationsDataSourceKtx = "1.3.0"
 wear = "1.4.0"
+wear-ongoing = "1.1.0"
 wear-compose = "1.6.2"
 wear-protolayout = "1.4.0"
 wear-tiles = "1.6.0"
@@ -259,6 +260,7 @@ wear-compose-material = { module = "androidx.wear.compose:compose-material3", ve
 wear-compose-navigation = { module = "androidx.wear.compose:compose-navigation", version.ref = "wear-compose" }
 wear-phone-interactions = { module = "androidx.wear:wear-phone-interactions", version.ref = "wearPhoneInteractions" }
 wear-input = { module = "androidx.wear:wear-input", version.ref = "wearInput" }
+wear-ongoing = { module = "androidx.wear:wear-ongoing", version.ref = "wear-ongoing" }
 wear-protolayout-expression = { module = "androidx.wear.protolayout:protolayout-expression", version.ref = "wear-protolayout" }
 wear-protolayout-main = { module = "androidx.wear.protolayout:protolayout", version.ref = "wear-protolayout" }
 wear-protolayout-material = { module = "androidx.wear.protolayout:protolayout-material", version.ref = "wear-protolayout" }

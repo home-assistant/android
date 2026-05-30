@@ -64,7 +64,17 @@
             android:value="false" />
 
         <activity android:name=".home.HomeActivity"
-            android:exported="true"/>
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="homeassistant"
+                    android:host="wear-dashboard"
+                    android:pathPrefix="/" />
+            </intent-filter>
+        </activity>
         <activity android:name=".splash.SplashActivity"
             android:theme="@style/Theme.HomeAssistant.SplashTheme"
             android:exported="true">
