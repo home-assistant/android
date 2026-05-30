@@ -6,6 +6,7 @@
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2026.5.5 - Wear" versioncode="2">
+        <change>Wear dashboards: declarative tiles and full-screen dashboard UI synced from the phone app</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2026.5.5 - Automotive" versioncode="1">
