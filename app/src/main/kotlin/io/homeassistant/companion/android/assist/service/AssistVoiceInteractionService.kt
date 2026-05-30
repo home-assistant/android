@@ -68,13 +68,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     }
     private var isServiceReady = false
 
-    /**
-     * One-way latch set once the service has begun tearing down (via [onShutdown] or [onDestroy]).
-     *
-     * The platform documents that [onReady] may be delivered after teardown and that no fixed
-     * lifecycle order can be relied upon. Because [serviceScope] is cancelled during teardown and
-     * cannot be reused, the instance can never function again, so any such late [onReady] is ignored.
-     */
+    /** One-way latch set once the service has begun tearing down (via [onShutdown] or [onDestroy]). */
     private var isTornDown = false
 
     /** Non-null only while the receiver is registered (between [onReady] and [onShutdown]). */
