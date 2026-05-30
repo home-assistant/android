@@ -28,6 +28,8 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.CHANNEL_WEBSOCKET
 import io.homeassistant.companion.android.common.util.CHANNEL_WEBSOCKET_ISSUES
+import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissionUseCase
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.notifications.MessagingManager
@@ -101,6 +103,8 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
     private val serverManager: ServerManager = entryPoint.serverManager()
     private val messagingManager: MessagingManager = entryPoint.messagingManager()
     private val settingsDao: SettingsDao = entryPoint.settingsDao()
+    private val checkLocalNetworkPermission: CheckLocalNetworkPermissionUseCase =
+        entryPoint.checkLocalNetworkPermission()
 
     @EntryPoint
     @InstallIn(SingletonComponent::class)
@@ -108,9 +112,14 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
         fun serverManager(): ServerManager
         fun messagingManager(): MessagingManager
         fun settingsDao(): SettingsDao
+        fun checkLocalNetworkPermission(): CheckLocalNetworkPermissionUseCase
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+        if (!checkLocalNetworkPermission()) {
+            Timber.d("Skipping websocket work: ACCESS_LOCAL_NETWORK permission missing")
+            return@withContext Result.success()
+        }
         if (!shouldWeRun()) {
             return@withContext Result.success()
         }
@@ -235,7 +244,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
      * @return `true` if the foreground service was started
      */
     private suspend fun createNotification(): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             val notificationChannel = NotificationChannel(
                 CHANNEL_WEBSOCKET,
                 applicationContext.getString(R.string.websocket_setting_name),
@@ -279,7 +288,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
             )
             .build()
         return try {
-            val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            val type = if (SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING
             } else {
                 0
@@ -290,7 +299,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
             if (e is CancellationException) return false
 
             Timber.e(e, "Unable to setForeground due to restrictions")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
                 if (notificationManager.getNotificationChannel(CHANNEL_WEBSOCKET_ISSUES) == null) {
                     val restrictedNotificationChannel = NotificationChannel(
                         CHANNEL_WEBSOCKET_ISSUES,

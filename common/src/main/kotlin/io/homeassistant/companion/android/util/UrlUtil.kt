@@ -158,6 +158,11 @@ suspend fun URL.isPubliclyAccessible(): Boolean {
     return isPubliclyAccessible(host)
 }
 
+/** [HttpUrl] overload — see [URL.isPubliclyAccessible] for behavior. */
+suspend fun HttpUrl.isPubliclyAccessible(): Boolean {
+    return isPubliclyAccessible(host)
+}
+
 private suspend fun isPubliclyAccessible(fqdn: String): Boolean {
     // Check TLD
     val localTlds = listOf(".local", ".lan", ".home", ".internal", ".localdomain")

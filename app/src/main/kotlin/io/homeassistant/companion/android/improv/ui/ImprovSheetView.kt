@@ -50,6 +50,7 @@ import com.wifi.improv.DeviceState
 import com.wifi.improv.ErrorState
 import com.wifi.improv.ImprovDevice
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.util.compose.ModalBottomSheet
 
 @Composable
@@ -94,7 +95,7 @@ fun ImprovSheetView(
                 ImprovWifiInput(
                     activeSsid = if (screenState.activeSsid?.isNotBlank() == true &&
                         (
-                            Build.VERSION.SDK_INT < Build.VERSION_CODES.R ||
+                            !SdkVersion.isAtLeast(Build.VERSION_CODES.R) ||
                                 screenState.activeSsid !== WifiManager.UNKNOWN_SSID
                             )
                     ) {

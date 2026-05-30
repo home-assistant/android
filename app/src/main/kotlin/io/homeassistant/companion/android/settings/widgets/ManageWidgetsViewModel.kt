@@ -10,6 +10,7 @@ import androidx.core.content.getSystemService
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
@@ -49,7 +50,7 @@ class ManageWidgetsViewModel @Inject constructor(
     }
 
     private fun checkSupportsAddingWidgets(): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             val appWidgetManager = getApplication<Application>().getSystemService<AppWidgetManager>()
             try {
                 return appWidgetManager?.isRequestPinAppWidgetSupported ?: false

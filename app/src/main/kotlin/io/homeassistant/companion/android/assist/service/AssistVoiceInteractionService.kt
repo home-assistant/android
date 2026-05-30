@@ -26,6 +26,7 @@ import io.homeassistant.companion.android.assist.wakeword.WakeWordListener
 import io.homeassistant.companion.android.assist.wakeword.WakeWordListenerFactory
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.CHANNEL_ASSIST_LISTENING
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.settings.assist.AssistConfigManager
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -222,7 +223,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
             PackageManager.PERMISSION_GRANTED
 
     private fun startForegroundWithNotification(model: MicroWakeWordModelConfig) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
             startForeground(
                 NOTIFICATION_ID,
                 createNotification(model),
@@ -234,7 +235,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     }
 
     private fun stopForegroundCompat() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
             stopForeground(STOP_FOREGROUND_REMOVE)
         } else {
             @Suppress("DEPRECATION")
@@ -281,7 +282,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     }
 
     private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             val channel = NotificationChannel(
                 CHANNEL_ASSIST_LISTENING,
                 getString(commonR.string.assist_listening_channel),

@@ -36,6 +36,7 @@ import io.homeassistant.companion.android.common.notifications.DeviceCommandData
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.DatabaseEntryPoint
 import io.homeassistant.companion.android.database.location.LocationHistoryDao
 import io.homeassistant.companion.android.database.location.LocationHistoryItem
@@ -861,9 +862,7 @@ class LocationSensorManager :
                     "provider" to geofencingEvent.triggeringLocation!!.provider,
                     "time" to geofencingEvent.triggeringLocation!!.time,
                     "vertical_accuracy" to
-                        if (Build.VERSION.SDK_INT >=
-                            26
-                        ) {
+                        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
                             geofencingEvent.triggeringLocation!!.verticalAccuracyMeters.toInt()
                         } else {
                             0
@@ -976,7 +975,14 @@ class LocationSensorManager :
                 speed = location.speed.toInt(),
                 altitude = location.altitude.toInt(),
                 course = location.bearing.toInt(),
-                verticalAccuracy = if (Build.VERSION.SDK_INT >= 26) location.verticalAccuracyMeters.toInt() else 0,
+                verticalAccuracy = if (SdkVersion.isAtLeast(
+                        Build.VERSION_CODES.O,
+                    )
+                ) {
+                    location.verticalAccuracyMeters.toInt()
+                } else {
+                    0
+                },
             )
             updateLocationString = updateLocation.gps.toString()
         }
@@ -1362,7 +1368,7 @@ class LocationSensorManager :
 
     override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return when {
-            (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {
+            (SdkVersion.isAtLeast(Build.VERSION_CODES.S)) -> {
                 arrayOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_BACKGROUND_LOCATION,
@@ -1372,7 +1378,7 @@ class LocationSensorManager :
                 )
             }
 
-            (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) -> {
+            (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) -> {
                 arrayOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_BACKGROUND_LOCATION,
