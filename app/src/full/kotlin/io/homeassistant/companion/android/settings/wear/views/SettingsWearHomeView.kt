@@ -59,9 +59,51 @@ fun LoadSettingsHomeView(
                     isAuthed = isAuthenticated,
                     navigateFavorites = { navController.navigate(SettingsWearMainView.FAVORITES) },
                     navigateTemplateTile = { navController.navigate(SettingsWearMainView.TEMPLATES) },
+                    navigateDashboards = { navController.navigate(SettingsWearMainView.DASHBOARDS) },
                     loginWearOs = loginWearOs,
                     onBackClicked = onStartBackClicked,
                     events = settingsWearViewModel.resultSnackbar,
+                )
+            }
+            composable(SettingsWearMainView.DASHBOARDS) {
+                SettingsWearDashboardListView(
+                    settingsWearViewModel = settingsWearViewModel,
+                    dashboardTemplates = settingsWearViewModel.dashboardTemplates,
+                    onDashboardClicked = { dashboardId ->
+                        navController.navigate(SettingsWearMainView.DASHBOARD_EDITOR.format(dashboardId))
+                    },
+                    onAddFromTemplate = { templateId ->
+                        navController.navigate(SettingsWearMainView.DASHBOARD_EDITOR_FROM_TEMPLATE.format(templateId))
+                    },
+                    onBackClicked = { navController.navigateUp() },
+                )
+            }
+            composable(
+                route = SettingsWearMainView.DASHBOARD_EDITOR.format("{dashboardId}"),
+                arguments = listOf(navArgument("dashboardId") { type = NavType.StringType }),
+            ) { backStackEntry ->
+                val dashboardId = backStackEntry.arguments?.getString("dashboardId")
+                SettingsWearDashboardEditorView(
+                    settingsWearViewModel = settingsWearViewModel,
+                    dashboardTemplates = settingsWearViewModel.dashboardTemplates,
+                    dashboardId = dashboardId,
+                    templateId = null,
+                    onSaved = { navController.navigateUp() },
+                    onBackClicked = { navController.navigateUp() },
+                )
+            }
+            composable(
+                route = SettingsWearMainView.DASHBOARD_EDITOR_FROM_TEMPLATE.format("{templateId}"),
+                arguments = listOf(navArgument("templateId") { type = NavType.StringType }),
+            ) { backStackEntry ->
+                val templateId = backStackEntry.arguments?.getString("templateId")
+                SettingsWearDashboardEditorView(
+                    settingsWearViewModel = settingsWearViewModel,
+                    dashboardTemplates = settingsWearViewModel.dashboardTemplates,
+                    dashboardId = null,
+                    templateId = templateId,
+                    onSaved = { navController.navigateUp() },
+                    onBackClicked = { navController.navigateUp() },
                 )
             }
             composable(SettingsWearMainView.TEMPLATES) {

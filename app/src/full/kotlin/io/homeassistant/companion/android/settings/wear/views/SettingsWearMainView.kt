@@ -31,10 +31,13 @@ class SettingsWearMainView : AppCompatActivity() {
         private var registerUrl: String? = null
         const val LANDING = "Landing"
         const val FAVORITES = "Favorites"
-        const val TEMPLATES = "Templates"
-        const val TEMPLATE_TILE = "Template/%s"
+    const val TEMPLATES = "Templates"
+    const val TEMPLATE_TILE = "Template/%s"
+    const val DASHBOARDS = "Dashboards"
+    const val DASHBOARD_EDITOR = "Dashboard/%s"
+    const val DASHBOARD_EDITOR_FROM_TEMPLATE = "Dashboard/new/%s"
 
-        fun newInstance(context: Context, wearNodes: Set<Node>, url: String?): Intent {
+    fun newInstance(context: Context, wearNodes: Set<Node>, url: String?): Intent {
             currentNodes = wearNodes
             registerUrl = url
             return Intent(context, SettingsWearMainView::class.java)

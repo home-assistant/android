@@ -41,6 +41,7 @@ fun SettingWearLandingView(
     isAuthed: Boolean,
     navigateFavorites: () -> Unit,
     navigateTemplateTile: () -> Unit,
+    navigateDashboards: () -> Unit,
     loginWearOs: () -> Unit,
     onBackClicked: () -> Unit,
     events: Flow<String>,
@@ -109,6 +110,13 @@ fun SettingWearLandingView(
                         enabled = true,
                         onClicked = navigateTemplateTile,
                     )
+                    SettingsRow(
+                        primaryText = stringResource(commonR.string.wear_dashboards),
+                        secondaryText = stringResource(commonR.string.wear_dashboards_manage),
+                        mdiIcon = CommunityMaterial.Icon3.cmd_view_dashboard,
+                        enabled = true,
+                        onClicked = navigateDashboards,
+                    )
                 }
                 else -> {
                     Button(
@@ -134,6 +142,7 @@ private fun PreviewSettingWearLandingView() {
         isAuthed = true,
         navigateFavorites = {},
         navigateTemplateTile = {},
+        navigateDashboards = {},
         loginWearOs = {},
         onBackClicked = {},
         events = emptyFlow(),
