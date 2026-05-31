@@ -220,7 +220,6 @@ internal fun FrontendScreenContent(
     onPipReadinessChanged: (PipReadiness?) -> Unit = {},
 ) {
     var webView by remember { mutableStateOf<WebView?>(null) }
-
     WebViewEffects(
         webView = webView,
         url = viewState.url,

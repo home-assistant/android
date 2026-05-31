@@ -1,8 +1,10 @@
 package io.homeassistant.companion.android.util
 
+import android.net.Uri
 import android.net.http.SslError
 import android.webkit.HttpAuthHandler
 import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient.ERROR_AUTHENTICATION
@@ -297,6 +299,31 @@ class HAWebViewClientTest {
     }
 
     @Test
+    fun `Given main frame error for logical hostname when loaded URL differs then emits error`() {
+        val logicalHostnameFlow = MutableStateFlow("home.example.com")
+        webViewClient = HAWebViewClient(
+            keyChainRepository = keyChainRepository,
+            currentUrlFlow = currentUrlFlow,
+            logicalHostnameFlow = logicalHostnameFlow,
+            onFrontendError = { capturedError = it },
+            onCrash = null,
+            onUrlIntercepted = null,
+            onPageFinished = null,
+            onReceivedHttpAuthRequest = null,
+        )
+        currentUrlFlow.value = "https://home.example.com:8123/lovelace/default_view"
+        val request = mockRequest("https://home.example.com:8123/")
+        val error = mockk<WebResourceError> {
+            every { errorCode } returns ERROR_HOST_LOOKUP
+            every { description } returns "Host lookup failed"
+        }
+
+        webViewClient.onReceivedError(mockWebView(), request, error)
+
+        assertTrue(capturedError is FrontendConnectionError.UnreachableError)
+    }
+
+    @Test
     fun `Given error for different URL when onReceivedError then does not emit error`() {
         val webView = mockWebView()
         currentUrlFlow.value = "http://homeassistant.local:8123/auth/authorize"
@@ -402,9 +429,15 @@ class HAWebViewClientTest {
         // No exception thrown
     }
 
-    private fun mockRequest(url: String) = mockk<android.webkit.WebResourceRequest> {
-        every { this@mockk.url } returns mockk {
-            every { this@mockk.toString() } returns url
-        }
+    private fun mockRequest(url: String): WebResourceRequest {
+        val host = url.removePrefix("http://").removePrefix("https://").substringBefore('/').substringBefore(':')
+        val uri = mockk<Uri>(relaxed = true)
+        every { uri.toString() } returns url
+        every { uri.getHost() } returns host
+
+        val request = mockk<WebResourceRequest>(relaxed = true)
+        every { request.url } returns uri
+        every { request.isForMainFrame } returns true
+        return request
     }
 }

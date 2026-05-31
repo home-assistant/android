@@ -129,6 +129,7 @@ import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.externalBusCallback
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.isServerSupportingExternalAppV2
 import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
+import io.homeassistant.companion.android.frontend.webview.WebViewConnectProxyManager
 import io.homeassistant.companion.android.improv.ui.ImprovPermissionDialog
 import io.homeassistant.companion.android.improv.ui.ImprovSetupDialog
 import io.homeassistant.companion.android.launch.LaunchActivity
@@ -279,6 +280,9 @@ class WebViewActivity :
     lateinit var dataUriDownloadManager: DataUriDownloadManager
 
     @Inject
+    lateinit var webViewConnectProxyManager: WebViewConnectProxyManager
+
+    @Inject
     lateinit var checkLocationDisabled: CheckLocationDisabledUseCase
 
     @Inject
@@ -298,6 +302,7 @@ class WebViewActivity :
     private var isRelaunching = false
     private var alertDialog: AlertDialog? = null
     private var loadUrlJob: Job? = null
+    private var webViewProxySessionActive = false
     private var isVideoFullScreen = false
     private var videoHeight = 0
     private var firstAuthTime: Long = 0
@@ -1646,13 +1651,20 @@ class WebViewActivity :
             val shouldLoadUrl = !url.hasSameOrigin(oldUrl) || url.hasNonRootPath()
             if (shouldLoadUrl) {
                 clearHistory = !keepHistory
-                loadedUrl = url
 
                 loadUrlJob?.cancel()
                 loadUrlJob = lifecycleScope.launch {
                     // Register the native bridge depending on the server and webview capabilities
                     webViewAddJavascriptInterface()
 
+                    val proxyConfigured = withContext(Dispatchers.IO) {
+                        webViewConnectProxyManager.ensureConfigured()
+                    }
+                    if (proxyConfigured && !webViewProxySessionActive) {
+                        webViewConnectProxyManager.retainSession()
+                        webViewProxySessionActive = true
+                    }
+                    loadedUrl = url
                     webView.loadUrl(url.toString())
                     waitForConnection()
                 }
@@ -1783,6 +1795,10 @@ class WebViewActivity :
 
     @SuppressLint("RequiresFeature")
     override fun onDestroy() {
+        if (webViewProxySessionActive) {
+            webViewConnectProxyManager.releaseSession()
+            webViewProxySessionActive = false
+        }
         val webMessageListenerSupported = WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)
         webView.removeJavascriptInterface(EXTERNAL_APP_V1)
         if (webMessageListenerSupported) {

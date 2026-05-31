@@ -345,6 +345,7 @@ All the navigation within the app needs to be tested including the back and forw
 - **Retrofit** for REST APIs, **OkHttp** for WebSocket connections
 - All API interfaces should be in `data/` layer within `:common` Gradle module
 - Use `suspend` functions for API calls
+- **Custom DNS (IPv6 / WebView):** OkHttp uses [`NetworkAwareDns`](common/src/main/kotlin/io/homeassistant/companion/android/common/data/network/NetworkAwareDns.kt). WebView does not use OkHttp DNS; traffic is routed through [`LocalConnectProxy`](common/src/main/kotlin/io/homeassistant/companion/android/common/data/network/LocalConnectProxy.kt) when [`WebViewFeature.PROXY_OVERRIDE`](app/src/main/kotlin/io/homeassistant/companion/android/frontend/webview/WebViewConnectProxyManager.kt) is available, with [`HostnameWebViewRequestProxy`](common/src/main/kotlin/io/homeassistant/companion/android/common/data/network/HostnameWebViewRequestProxy.kt) as fallback on API 23+ when it is not. See [`docs/network-ipv6-webview-dns.md`](docs/network-ipv6-webview-dns.md) for the full design, debugging, and constraints (do not rewrite WebView URLs to IPv6 literals).
 
 ### Navigation
 
