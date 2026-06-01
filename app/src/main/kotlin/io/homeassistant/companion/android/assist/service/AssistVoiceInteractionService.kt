@@ -69,11 +69,21 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     }
     private var isServiceReady = false
 
+    /** One-way latch set once the service has begun tearing down (via [onShutdown] or [onDestroy]). */
+    private var isTornDown = false
+
     /** Non-null only while the receiver is registered (between [onReady] and [onShutdown]). */
     private var actionReceiver: BroadcastReceiver? = null
 
     override fun onReady() {
         super.onReady()
+        if (isTornDown) {
+            // The system can deliver onReady even after onShutdown/onDestroy while it is winding the
+            // service down. Registering a receiver on the dying context would later crash in
+            // onShutdown, so ignore this spurious signal
+            Timber.w("Ignoring onReady delivered after shutdown")
+            return
+        }
         isServiceReady = true
         Timber.d("VoiceInteractionService is ready")
         actionReceiver = object : BroadcastReceiver() {
@@ -103,12 +113,30 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
 
     override fun onShutdown() {
         super.onShutdown()
+        isTornDown = true
         isServiceReady = false
         Timber.d("VoiceInteractionService is shutting down")
-        actionReceiver?.let(::unregisterReceiver)
-        actionReceiver = null
+        actionReceiver?.let { receiver ->
+            actionReceiver = null
+            try {
+                unregisterReceiver(receiver)
+            } catch (e: IllegalArgumentException) {
+                // On some devices the framework tears down the receiver registration before
+                // onShutdown() runs while the service instance (and this field) survives. There is
+                // no API to query whether a receiver is still registered, so swallowing this is the
+                // documented way to handle the resulting "Receiver not registered" error
+                Timber.w(e, "Action receiver was already unregistered")
+            }
+        }
         // Don't use stopListening() as it launches a coroutine that may not complete before cancel
         serviceScope.cancel()
+    }
+
+    override fun onDestroy() {
+        // onShutdown is not guaranteed to run before onDestroy, so latch teardown here too to keep
+        // a late onReady from re-initializing an already-destroyed instance
+        isTornDown = true
+        super.onDestroy()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

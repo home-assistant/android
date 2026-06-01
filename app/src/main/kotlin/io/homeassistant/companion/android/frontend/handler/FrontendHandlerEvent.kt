@@ -102,6 +102,57 @@ sealed interface FrontendHandlerEvent {
      */
     data class ConfigureImprovDevice(val deviceName: String) : FrontendHandlerEvent
 
+    /**
+     * Frontend requested the Matter device commissioning flow to be launched.
+     *
+     * The ViewModel drives the Google Play Services Matter intent and, once it resolves, replies
+     * to the frontend with a
+     * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage] correlated
+     * by [messageId].
+     *
+     * @param messageId Correlation id from the incoming `matter/commission` message. Null when the
+     *   frontend omitted it — the response will then carry a null id and the frontend will ignore it.
+     */
+    data class StartMatterCommissioning(val messageId: Int?) : FrontendHandlerEvent
+
+    /**
+     * Frontend requested the app to share its locally-stored Thread credentials with the server.
+     *
+     * The ViewModel reads the preferred Thread dataset via Google Play Services, forwards it to
+     * the server, and replies to the frontend with a
+     * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage] correlated
+     * by [messageId].
+     *
+     * @param messageId Correlation id from the incoming `thread/import_credentials` message. Null
+     *   when the frontend omitted it — the response will then carry a null id and the frontend
+     *   will ignore it.
+     */
+    data class ImportThreadCredentials(val messageId: Int?) : FrontendHandlerEvent
+
+    /**
+     * Frontend requested the app to open the barcode scanner overlay.
+     *
+     * Carries the original message [messageId] (required — the frontend correlates the eventual
+     * scan result or cancellation by this id) and the user-facing strings the overlay should display.
+     */
+    data class ShowBarcodeScanner(
+        val messageId: Int,
+        val title: String,
+        val description: String,
+        val alternativeOptionLabel: String?,
+    ) : FrontendHandlerEvent
+
+    /**
+     * Frontend requested the app to display a notification dialog on top of the active scanner.
+     *
+     * No id is carried — the frontend treats this as fire-and-forget. If no scanner is active
+     * when the event is observed, the consumer should silently drop it.
+     */
+    data class NotifyBarcodeScanner(val message: String) : FrontendHandlerEvent
+
+    /** Frontend asked the app to close the active scanner overlay (fire-and-forget). */
+    data object CloseBarcodeScanner : FrontendHandlerEvent
+
     sealed interface ExoPlayerAction : FrontendHandlerEvent {
 
         /**

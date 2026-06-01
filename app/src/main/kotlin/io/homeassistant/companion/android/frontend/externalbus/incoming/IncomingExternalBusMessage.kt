@@ -268,3 +268,81 @@ data class EntityAddToPayload(
     @SerialName("entity_id") val entityId: String,
     @SerialName("app_payload") val appPayload: String,
 )
+
+/**
+ * Message requesting the app to start the Matter device commissioning flow.
+ *
+ * The frontend sends this when the user picks "Add Matter device" in the integrations UI. The app
+ * is expected to drive the Google Play Services Matter commissioning intent and, once it
+ * resolves, send back a [io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage]
+ * correlated by [id] (success or failure).
+ *
+ * Will not be sent by the frontend when the device reports
+ * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResult.canCommissionMatter] = `false`.
+ */
+@Serializable
+@SerialName("matter/commission")
+data class MatterCommissionMessage(override val id: Int? = null) : IncomingExternalBusMessage
+
+/**
+ * Message requesting the app to share its locally-stored Thread credentials with the Home Assistant
+ * server via Google Play Services' Thread Network APIs.
+ *
+ * The frontend sends this when the user opens the "Share Thread credentials" flow. The app is
+ * expected to retrieve the preferred Thread dataset, push it to the server, and send back a
+ * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage] correlated by
+ * [id] (success or failure).
+ *
+ * Will not be sent by the frontend when the device reports
+ * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResult.canImportThreadCredentials] = `false`.
+ */
+@Serializable
+@SerialName("thread/import_credentials")
+data class ThreadImportCredentialsMessage(override val id: Int? = null) : IncomingExternalBusMessage
+
+/**
+ * Message requesting the app to open the in-app barcode scanner overlay.
+ *
+ * The frontend sends this when an entity card or dialog needs the user to scan a code.
+ * Once scanning completes (or is cancelled), the app responds out-of-band with a
+ * [io.homeassistant.companion.android.frontend.externalbus.outgoing.BarcodeScanResultMessage]
+ * or [io.homeassistant.companion.android.frontend.externalbus.outgoing.BarcodeScanAbortedMessage]
+ * carrying the same [id].
+ */
+@Serializable
+@SerialName("bar_code/scan")
+data class BarcodeScanMessage(override val id: Int? = null, val payload: BarcodeScanPayload) :
+    IncomingExternalBusMessage
+
+@Serializable
+data class BarcodeScanPayload(
+    val title: String,
+    val description: String,
+    @SerialName("alternative_option_label") val alternativeOptionLabel: String? = null,
+)
+
+/**
+ * Message requesting the app to display a notification dialog on top of the active scanner.
+ *
+ * The frontend sends this to surface validation errors or guidance while the scanner is open
+ * (e.g. "Code already paired"). No response is expected — the user dismisses the dialog from the UI.
+ *
+ * Sent only while a scanner is active. If no scanner is open, the app silently ignores it.
+ */
+@Serializable
+@SerialName("bar_code/notify")
+data class BarcodeNotifyMessage(override val id: Int? = null, val payload: BarcodeNotifyPayload) :
+    IncomingExternalBusMessage
+
+@Serializable
+data class BarcodeNotifyPayload(val message: String)
+
+/**
+ * Message requesting the app to close the active scanner overlay (fire-and-forget).
+ *
+ * The frontend sends this once it no longer needs the scanner — for example after the user
+ * picked a result or because the user navigated away from the requesting card.
+ */
+@Serializable
+@SerialName("bar_code/close")
+data class BarcodeCloseMessage(override val id: Int? = null) : IncomingExternalBusMessage
