@@ -25,7 +25,7 @@ appId: io.homeassistant.companion.android.debug
 
 - extendedWaitUntil:
     visible: "Log in"
-    timeout: 60000
+    timeout: 25000
 
 - tapOn: "Username"
 - inputText: ${HOME_ASSISTANT_USERNAME}
@@ -42,7 +42,7 @@ appId: io.homeassistant.companion.android.debug
 
 - extendedWaitUntil:
     visible: "How would you like to name this device?"
-    timeout: 60000
+    timeout: 25000
 
 - tapOn:
     text: "Save"
@@ -50,7 +50,7 @@ appId: io.homeassistant.companion.android.debug
 
 - extendedWaitUntil:
     visible: "Got it"
-    timeout: 60000
+    timeout: 20000
 
 - tapOn:
     text: "Got it"
@@ -58,7 +58,7 @@ appId: io.homeassistant.companion.android.debug
 
 - extendedWaitUntil:
     visible: "Use this device's location for automations"
-    timeout: 30000
+    timeout: 15000
 
 - tapOn:
     text: "Do not share my location"
@@ -66,7 +66,7 @@ appId: io.homeassistant.companion.android.debug
 
 - extendedWaitUntil:
     visible: "Let us help secure your remote connection"
-    timeout: 30000
+    timeout: 15000
 
 - tapOn:
     text: "Less secure: Do not allow this app to know when you're home"
@@ -76,14 +76,13 @@ appId: io.homeassistant.companion.android.debug
     retryTapIfNoChange: true
 - extendedWaitUntil:
     notVisible: "Let us help secure your remote connection"
-    timeout: 30000
+    timeout: 10000
 - takeScreenshot: onboarding_complete
-- takeScreenshot: frontend_loading_start
 
 - extendedWaitUntil:
     visible:
       text: '(?i)^(Overview|More details)$'
-    timeout: 60000
+    timeout: 25000
 
 - tapOn:
     text: '(?i)^More details$'
@@ -99,26 +98,27 @@ appId: io.homeassistant.companion.android.debug
     text: '(?i)^Sidebar toggle$'
     retryTapIfNoChange: true
 - waitForAnimationToEnd:
-    timeout: 5000
+    timeout: 2500
 
 - extendedWaitUntil:
     visible:
       text: '(?i)^Settings$'
-    timeout: 30000
+    timeout: 10000
 - tapOn:
     text: '(?i)^Settings$'
     retryTapIfNoChange: true
 - waitForAnimationToEnd:
-    timeout: 5000
+    timeout: 2500
+- takeScreenshot: settings_navigation_start
 
 - extendedWaitUntil:
     visible:
-      text: '(?i)^Companion app$'
-    timeout: 30000
+      text: '(?is).*Companion app.*'
+    timeout: 10000
 - takeScreenshot: settings_screen
 - tapOn:
-    text: '(?i)^Companion app$'
+    text: '(?is).*Companion app.*'
     retryTapIfNoChange: true
 - waitForAnimationToEnd:
-    timeout: 5000
+    timeout: 2500
 - takeScreenshot: companion_app_screen
