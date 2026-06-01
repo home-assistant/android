@@ -270,6 +270,37 @@ data class EntityAddToPayload(
 )
 
 /**
+ * Message requesting the app to start the Matter device commissioning flow.
+ *
+ * The frontend sends this when the user picks "Add Matter device" in the integrations UI. The app
+ * is expected to drive the Google Play Services Matter commissioning intent and, once it
+ * resolves, send back a [io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage]
+ * correlated by [id] (success or failure).
+ *
+ * Will not be sent by the frontend when the device reports
+ * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResult.canCommissionMatter] = `false`.
+ */
+@Serializable
+@SerialName("matter/commission")
+data class MatterCommissionMessage(override val id: Int? = null) : IncomingExternalBusMessage
+
+/**
+ * Message requesting the app to share its locally-stored Thread credentials with the Home Assistant
+ * server via Google Play Services' Thread Network APIs.
+ *
+ * The frontend sends this when the user opens the "Share Thread credentials" flow. The app is
+ * expected to retrieve the preferred Thread dataset, push it to the server, and send back a
+ * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage] correlated by
+ * [id] (success or failure).
+ *
+ * Will not be sent by the frontend when the device reports
+ * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResult.canImportThreadCredentials] = `false`.
+ */
+@Serializable
+@SerialName("thread/import_credentials")
+data class ThreadImportCredentialsMessage(override val id: Int? = null) : IncomingExternalBusMessage
+
+/**
  * Message requesting the app to open the in-app barcode scanner overlay.
  *
  * The frontend sends this when an entity card or dialog needs the user to scan a code.

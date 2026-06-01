@@ -28,6 +28,7 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.CHANNEL_WEBSOCKET
 import io.homeassistant.companion.android.common.util.CHANNEL_WEBSOCKET_ISSUES
+import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissionUseCase
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
@@ -62,6 +63,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
         } else {
             WebsocketSetting.ALWAYS
         }
+        private val ACTION_EXTRA_KEYS = listOf("uri", "behavior", "authenticationRequired")
 
         suspend fun start(context: Context) {
             val websocketNotifications =
@@ -102,6 +104,8 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
     private val serverManager: ServerManager = entryPoint.serverManager()
     private val messagingManager: MessagingManager = entryPoint.messagingManager()
     private val settingsDao: SettingsDao = entryPoint.settingsDao()
+    private val checkLocalNetworkPermission: CheckLocalNetworkPermissionUseCase =
+        entryPoint.checkLocalNetworkPermission()
 
     @EntryPoint
     @InstallIn(SingletonComponent::class)
@@ -109,9 +113,14 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
         fun serverManager(): ServerManager
         fun messagingManager(): MessagingManager
         fun settingsDao(): SettingsDao
+        fun checkLocalNetworkPermission(): CheckLocalNetworkPermissionUseCase
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+        if (!checkLocalNetworkPermission()) {
+            Timber.d("Skipping websocket work: ACCESS_LOCAL_NETWORK permission missing")
+            return@withContext Result.success()
+        }
         if (!shouldWeRun()) {
             return@withContext Result.success()
         }
@@ -205,10 +214,8 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
                             if (action is Map<*, *>) {
                                 flattened["action_${i + 1}_key"] = action["action"].toString()
                                 flattened["action_${i + 1}_title"] = action["title"].toString()
-                                action["uri"]?.let { uri -> flattened["action_${i + 1}_uri"] = uri.toString() }
-                                action["behavior"]?.let { behavior ->
-                                    flattened["action_${i + 1}_behavior"] =
-                                        behavior.toString()
+                                for (key in ACTION_EXTRA_KEYS) {
+                                    action[key]?.let { value -> flattened["action_${i + 1}_$key"] = value.toString() }
                                 }
                             }
                         }

@@ -74,7 +74,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="110"
+            line="128"
             column="17"/>
     </issue>
 
@@ -107,7 +107,7 @@
         errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="97"
+            line="115"
             column="26"/>
     </issue>
 
@@ -118,7 +118,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="98"
+            line="116"
             column="25"/>
     </issue>
 
@@ -387,13 +387,123 @@
     </issue>
 
     <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="    FrontendScreenContent("
+        errorLine2="    ^">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/frontend/FrontendScreen.kt"
+            line="153"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="        StateOverlay("
+        errorLine2="        ^">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/frontend/FrontendScreen.kt"
+            line="269"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="        is FrontendViewState.SecurityLevelRequired -> SecurityLevelOverlay("
+        errorLine2="                                                      ^">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/frontend/FrontendScreen.kt"
+            line="315"
+            column="55"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="        LocationForSecureConnectionScreen("
+        errorLine2="        ^">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/frontend/FrontendScreen.kt"
+            line="352"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="            CreateShortcutView("
+        errorLine2="            ^">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/views/ManageShortcutsView.kt"
+            line="76"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="        ShortcutRadioButtonRow(viewModel = viewModel, type = &quot;lovelace&quot;, index = i)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/views/ManageShortcutsView.kt"
+            line="251"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="        ShortcutRadioButtonRow(viewModel = viewModel, type = &quot;entityId&quot;, index = i)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/views/ManageShortcutsView.kt"
+            line="252"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="        AddDeleteButton(viewModel = viewModel, shortcutId = shortcutId, i)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/views/ManageShortcutsView.kt"
+            line="347"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="                SensorDetailSettingDialog("
+        errorLine2="                ^">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
+            line="164"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="                LoadWearFavoritesSettings("
+        errorLine2="                ^">
+        <location
+            file="src/full/kotlin/io/homeassistant/companion/android/settings/wear/views/SettingsWearHomeView.kt"
+            line="46"
+            column="17"/>
+    </issue>
+
+    <issue
         id="CustomSplashScreen"
         message="The application should not provide its own launch screen"
         errorLine1="class LaunchActivity : AppCompatActivity() {"
         errorLine2="      ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/launch/LaunchActivity.kt"
-            line="73"
+            line="86"
             column="7"/>
     </issue>
 
@@ -668,7 +778,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="35"
+            line="53"
             column="9"/>
     </issue>
 
@@ -679,7 +789,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="37"
+            line="55"
             column="9"/>
     </issue>
 
@@ -1231,7 +1341,7 @@
         errorLine2="^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/util/compose/Theme.kt"
-            line="155"
+            line="154"
             column="1"/>
     </issue>
 
@@ -1321,424 +1431,6 @@
             file="src/main/kotlin/io/homeassistant/companion/android/settings/url/views/ExternalUrlView.kt"
             line="113"
             column="1"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Server> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `serversList: ImmutableList&lt;Server>` or create an `@Immutable` wrapper for this class: `@Immutable data class ServersListList(val items: List&lt;Server>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    serversList: List&lt;Server>,"
-        errorLine2="                 ~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/vehicle/views/AndroidAutoFavoritesView.kt"
-            line="47"
-            column="18"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;MicroWakeWordModelConfig> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `availableModels: ImmutableList&lt;MicroWakeWordModelConfig>` or create an `@Immutable` wrapper for this class: `@Immutable data class AvailableModelsList(val items: List&lt;MicroWakeWordModelConfig>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    availableModels: List&lt;MicroWakeWordModelConfig>,"
-        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/assist/AssistSettingsScreen.kt"
-            line="342"
-            column="22"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;AssistMessage> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `conversation: ImmutableList&lt;AssistMessage>` or create an `@Immutable` wrapper for this class: `@Immutable data class ConversationList(val items: List&lt;AssistMessage>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    conversation: List&lt;AssistMessage>,"
-        errorLine2="                  ~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/assist/ui/AssistSheetView.kt"
-            line="89"
-            column="19"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;AssistUiPipeline> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `pipelines: ImmutableList&lt;AssistUiPipeline>` or create an `@Immutable` wrapper for this class: `@Immutable data class PipelinesList(val items: List&lt;AssistUiPipeline>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    pipelines: List&lt;AssistUiPipeline>,"
-        errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/assist/ui/AssistSheetView.kt"
-            line="90"
-            column="16"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;AssistUiPipeline> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `pipelines: ImmutableList&lt;AssistUiPipeline>` or create an `@Immutable` wrapper for this class: `@Immutable data class PipelinesList(val items: List&lt;AssistUiPipeline>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    pipelines: List&lt;AssistUiPipeline>,"
-        errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/assist/ui/AssistSheetView.kt"
-            line="169"
-            column="16"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Server> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `servers: ImmutableList&lt;Server>` or create an `@Immutable` wrapper for this class: `@Immutable data class ServersList(val items: List&lt;Server>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    servers: List&lt;Server>,"
-        errorLine2="             ~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/widgets/assist/AssistShortcutView.kt"
-            line="41"
-            column="14"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Entity> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entities: ImmutableList&lt;Entity>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesList(val items: List&lt;Entity>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    entities: List&lt;Entity>,"
-        errorLine2="              ~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/entity/EntityPicker.kt"
-            line="189"
-            column="15"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;EntityRegistryResponse>? is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entityRegistry: ImmutableList&lt;EntityRegistryResponse>?` or create an `@Immutable` wrapper for this class: `@Immutable data class EntityRegistryList(val items: List&lt;EntityRegistryResponse>?)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    entityRegistry: List&lt;EntityRegistryResponse>? = null,"
-        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/entity/EntityPicker.kt"
-            line="195"
-            column="21"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;DeviceRegistryResponse>? is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `deviceRegistry: ImmutableList&lt;DeviceRegistryResponse>?` or create an `@Immutable` wrapper for this class: `@Immutable data class DeviceRegistryList(val items: List&lt;DeviceRegistryResponse>?)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    deviceRegistry: List&lt;DeviceRegistryResponse>? = null,"
-        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/entity/EntityPicker.kt"
-            line="196"
-            column="21"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;AreaRegistryResponse>? is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `areaRegistry: ImmutableList&lt;AreaRegistryResponse>?` or create an `@Immutable` wrapper for this class: `@Immutable data class AreaRegistryList(val items: List&lt;AreaRegistryResponse>?)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    areaRegistry: List&lt;AreaRegistryResponse>? = null,"
-        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/entity/EntityPicker.kt"
-            line="197"
-            column="19"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;EntityPickerItem> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entities: ImmutableList&lt;EntityPickerItem>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesList(val items: List&lt;EntityPickerItem>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    entities: List&lt;EntityPickerItem>,"
-        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/entity/EntityPicker.kt"
-            line="235"
-            column="15"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;EntityPickerItem> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entities: ImmutableList&lt;EntityPickerItem>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesList(val items: List&lt;EntityPickerItem>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    entities: List&lt;EntityPickerItem>,"
-        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/entity/EntityPicker.kt"
-            line="405"
-            column="15"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;EntityPickerItem> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entities: ImmutableList&lt;EntityPickerItem>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesList(val items: List&lt;EntityPickerItem>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    entities: List&lt;EntityPickerItem>,"
-        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/entity/EntityPicker.kt"
-            line="448"
-            column="15"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;EntityPickerItem> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entities: ImmutableList&lt;EntityPickerItem>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesList(val items: List&lt;EntityPickerItem>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    entities: List&lt;EntityPickerItem>,"
-        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/entity/EntityPicker.kt"
-            line="475"
-            column="15"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;EntityPickerItem> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entities: ImmutableList&lt;EntityPickerItem>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesList(val items: List&lt;EntityPickerItem>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    entities: List&lt;EntityPickerItem>,"
-        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/entity/EntityPickerFilter.kt"
-            line="74"
-            column="15"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;String> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `keys: ImmutableList&lt;String>` or create an `@Immutable` wrapper for this class: `@Immutable data class KeysList(val items: List&lt;String>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    keys: List&lt;String>,"
-        errorLine2="          ~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/ExposedDropdownMenu.kt"
-            line="29"
-            column="11"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Server> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `servers: ImmutableList&lt;Server>` or create an `@Immutable` wrapper for this class: `@Immutable data class ServersList(val items: List&lt;Server>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    servers: List&lt;Server>,"
-        errorLine2="             ~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/util/compose/ExposedDropdownMenu.kt"
-            line="66"
-            column="14"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a Map&lt;HAGesture, GestureAction> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `gestureActions: ImmutableMap&lt;HAGesture, GestureAction>` or create an `@Immutable` wrapper for this class: `@Immutable data class GestureActionsMap(val items: Map&lt;HAGesture, GestureAction>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    gestureActions: Map&lt;HAGesture, GestureAction>,"
-        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/gestures/views/GesturesListView.kt"
-            line="30"
-            column="21"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a Map&lt;HAGesture, GestureAction> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `gestureActions: ImmutableMap&lt;HAGesture, GestureAction>` or create an `@Immutable` wrapper for this class: `@Immutable data class GestureActionsMap(val items: Map&lt;HAGesture, GestureAction>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    gestureActions: Map&lt;HAGesture, GestureAction>,"
-        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/gestures/views/GesturesScreen.kt"
-            line="35"
-            column="21"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;IIcon> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `icons: ImmutableList&lt;IIcon>` or create an `@Immutable` wrapper for this class: `@Immutable data class IconsList(val items: List&lt;IIcon>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    icons: List&lt;IIcon>,"
-        errorLine2="           ~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/util/icondialog/IconDialogGrid.kt"
-            line="38"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Server> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `serversList: ImmutableList&lt;Server>` or create an `@Immutable` wrapper for this class: `@Immutable data class ServersListList(val items: List&lt;Server>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    serversList: List&lt;Server>,"
-        errorLine2="                 ~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/developer/location/views/LocationTrackingView.kt"
-            line="72"
-            column="18"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Server> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `servers: ImmutableList&lt;Server>` or create an `@Immutable` wrapper for this class: `@Immutable data class ServersList(val items: List&lt;Server>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="fun LocationTrackingHistoryRow(item: LocationHistoryItem?, servers: List&lt;Server>, modifier: Modifier = Modifier) {"
-        errorLine2="                                                                    ~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/developer/location/views/LocationTrackingView.kt"
-            line="142"
-            column="69"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;String> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `authRequiredList: ImmutableList&lt;String>` or create an `@Immutable` wrapper for this class: `@Immutable data class AuthRequiredListList(val items: List&lt;String>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    authRequiredList: List&lt;String>,"
-        errorLine2="                      ~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/controls/views/ManageControlsView.kt"
-            line="73"
-            column="23"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a Map&lt;Int, List&lt;Entity>> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entitiesList: ImmutableMap&lt;Int, List&lt;Entity>>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesListMap(val items: Map&lt;Int, List&lt;Entity>>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    entitiesList: Map&lt;Int, List&lt;Entity>>,"
-        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/controls/views/ManageControlsView.kt"
-            line="75"
-            column="19"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Server> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `serversList: ImmutableList&lt;Server>` or create an `@Immutable` wrapper for this class: `@Immutable data class ServersListList(val items: List&lt;Server>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    serversList: List&lt;Server>,"
-        errorLine2="                 ~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/controls/views/ManageControlsView.kt"
-            line="77"
-            column="18"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Server> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `servers: ImmutableList&lt;Server>` or create an `@Immutable` wrapper for this class: `@Immutable data class ServersList(val items: List&lt;Server>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    servers: List&lt;Server>,"
-        errorLine2="             ~~~~~~~~~~~~">
-        <location
-            file="src/full/kotlin/io/homeassistant/companion/android/matter/views/MatterCommissioningView.kt"
-            line="53"
-            column="14"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;SensorWithAttributes> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `dbSensor: ImmutableList&lt;SensorWithAttributes>` or create an `@Immutable` wrapper for this class: `@Immutable data class DbSensorList(val items: List&lt;SensorWithAttributes>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    dbSensor: List&lt;SensorWithAttributes>,"
-        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="356"
-            column="15"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a Map&lt;Int, String> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `serverNames: ImmutableMap&lt;Int, String>` or create an `@Immutable` wrapper for this class: `@Immutable data class ServerNamesMap(val items: Map&lt;Int, String>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    serverNames: Map&lt;Int, String>,"
-        errorLine2="                 ~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="358"
-            column="18"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Server> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `servers: ImmutableList&lt;Server>` or create an `@Immutable` wrapper for this class: `@Immutable data class ServersList(val items: List&lt;Server>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="fun ServerChooserView(servers: List&lt;Server>, onServerSelected: (Int) -> Unit, modifier: Modifier = Modifier) {"
-        errorLine2="                               ~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/server/ServerChooserView.kt"
-            line="27"
-            column="32"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a Map&lt;Int, TemplateTileConfig> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `templateTiles: ImmutableMap&lt;Int, TemplateTileConfig>` or create an `@Immutable` wrapper for this class: `@Immutable data class TemplateTilesMap(val items: Map&lt;Int, TemplateTileConfig>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    templateTiles: Map&lt;Int, TemplateTileConfig>,"
-        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/full/kotlin/io/homeassistant/companion/android/settings/wear/views/SettingsWearTemplateTileList.kt"
-            line="27"
-            column="20"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;String> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `wifiSsids: ImmutableList&lt;String>` or create an `@Immutable` wrapper for this class: `@Immutable data class WifiSsidsList(val items: List&lt;String>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    wifiSsids: List&lt;String>,"
-        errorLine2="               ~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/ssid/views/SsidView.kt"
-            line="71"
-            column="16"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;TodoItemState> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `todoItems: ImmutableList&lt;TodoItemState>` or create an `@Immutable` wrapper for this class: `@Immutable data class TodoItemsList(val items: List&lt;TodoItemState>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="private fun ListContent(todoItems: List&lt;TodoItemState>, displayComplete: Boolean) {"
-        errorLine2="                                   ~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/widgets/todo/TodoGlanceAppWidget.kt"
-            line="181"
-            column="36"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Server> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `servers: ImmutableList&lt;Server>` or create an `@Immutable` wrapper for this class: `@Immutable data class ServersList(val items: List&lt;Server>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    servers: List&lt;Server>,"
-        errorLine2="             ~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/widgets/todo/TodoWidgetConfigureActivity.kt"
-            line="195"
-            column="14"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Entity> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entities: ImmutableList&lt;Entity>` or create an `@Immutable` wrapper for this class: `@Immutable data class EntitiesList(val items: List&lt;Entity>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    entities: List&lt;Entity>,"
-        errorLine2="              ~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/widgets/todo/TodoWidgetConfigureActivity.kt"
-            line="198"
-            column="15"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;EntityRegistryResponse>? is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `entityRegistry: ImmutableList&lt;EntityRegistryResponse>?` or create an `@Immutable` wrapper for this class: `@Immutable data class EntityRegistryList(val items: List&lt;EntityRegistryResponse>?)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    entityRegistry: List&lt;EntityRegistryResponse>? = null,"
-        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/widgets/todo/TodoWidgetConfigureActivity.kt"
-            line="209"
-            column="21"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;DeviceRegistryResponse>? is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `deviceRegistry: ImmutableList&lt;DeviceRegistryResponse>?` or create an `@Immutable` wrapper for this class: `@Immutable data class DeviceRegistryList(val items: List&lt;DeviceRegistryResponse>?)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    deviceRegistry: List&lt;DeviceRegistryResponse>? = null,"
-        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/widgets/todo/TodoWidgetConfigureActivity.kt"
-            line="210"
-            column="21"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableCollections"
-        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;AreaRegistryResponse>? is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `areaRegistry: ImmutableList&lt;AreaRegistryResponse>?` or create an `@Immutable` wrapper for this class: `@Immutable data class AreaRegistryList(val items: List&lt;AreaRegistryResponse>?)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
-        errorLine1="    areaRegistry: List&lt;AreaRegistryResponse>? = null,"
-        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/widgets/todo/TodoWidgetConfigureActivity.kt"
-            line="211"
-            column="19"/>
-    </issue>
-
-    <issue
-        id="ComposeUnstableReceiver"
-        message="Instance composable functions on non-stable classes will always be recomposed. If possible, make the receiver type stable or refactor this function if that isn&apos;t possible. See https://slackhq.github.io/compose-lints/rules/#unstable-receivers for more information."
-        errorLine1="    fun LockedPanelView(modifier: Modifier = Modifier) {"
-        errorLine2="        ~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/controls/HaControlsPanelActivity.kt"
-            line="93"
-            column="9"/>
     </issue>
 
     <issue

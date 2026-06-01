@@ -12,6 +12,7 @@ const val CHANNEL_WEBSOCKET = "Websocket"
 const val CHANNEL_WEBSOCKET_ISSUES = "Websocket Issues"
 const val CHANNEL_HIGH_ACCURACY = "High accuracy location"
 const val CHANNEL_DATABASE = "App Database"
+const val CHANNEL_LOCAL_NETWORK_PERMISSION = "LocalNetworkPermission"
 const val CHANNEL_LOCATION_DISABLED = "Location disabled"
 const val CHANNEL_DOWNLOADS = "downloads"
 const val CHANNEL_GENERAL = "general"
@@ -33,6 +34,7 @@ val appCreatedChannels = listOf(
     CHANNEL_WEBSOCKET_ISSUES,
     CHANNEL_HIGH_ACCURACY,
     CHANNEL_DATABASE,
+    CHANNEL_LOCAL_NETWORK_PERMISSION,
     CHANNEL_LOCATION_DISABLED,
     CHANNEL_DOWNLOADS,
     CHANNEL_GENERAL,
