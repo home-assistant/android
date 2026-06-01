@@ -632,6 +632,16 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 Timber.d("Matter/Thread event received but not yet handled: $result")
             }
 
+            is FrontendHandlerEvent.ShowBarcodeScanner,
+            is FrontendHandlerEvent.NotifyBarcodeScanner,
+            FrontendHandlerEvent.CloseBarcodeScanner,
+            -> {
+                // Barcode scanner handling lands in a follow-up PR; the messages are already typed
+                // and hasBarCodeScanner is gated on FEATURE_CAMERA_ANY && !isAutomotive so the
+                // frontend should not send these on devices without a camera.
+                Timber.d("Barcode event received but not yet handled: $result")
+            }
+
             is FrontendHandlerEvent.ConfigSent,
             is FrontendHandlerEvent.UnknownMessage,
             is FrontendHandlerEvent.EntityAddToActionsSent,

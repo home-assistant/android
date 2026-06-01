@@ -97,3 +97,55 @@ object ImprovDiscoveredDeviceMessage {
  * @see CommandMessage
  */
 val ImprovDeviceSetupDoneMessage: OutgoingExternalBusMessage = CommandMessage(command = "improv/device_setup_done")
+
+/**
+ * Notifies the frontend that the user scanned a code.
+ *
+ * Sent in response to a [io.homeassistant.companion.android.frontend.externalbus.incoming.BarcodeScanMessage]
+ * once the scanner decoded a result. The frontend correlates by [id] back to its original request.
+ *
+ * @param id The id of the originating [io.homeassistant.companion.android.frontend.externalbus.incoming.BarcodeScanMessage]
+ * @param rawValue The decoded barcode contents, verbatim
+ * @param format The decoded format name, lowercased — `qr_code`, `code_128`, `pdf417`, etc., or
+ *   `unknown` for formats the frontend does not recognise.
+ *
+ * @see CommandMessage
+ */
+object BarcodeScanResultMessage {
+    operator fun invoke(id: Int, rawValue: String, format: String): OutgoingExternalBusMessage = CommandMessage(
+        id = id,
+        command = "bar_code/scan_result",
+        payload = frontendExternalBusJson.encodeToJsonElement(
+            ScanResultPayload(rawValue = rawValue, format = format),
+        ),
+    )
+
+    @Serializable
+    private data class ScanResultPayload(val rawValue: String, val format: String)
+}
+
+/**
+ * Notifies the frontend that the user closed the scanner without producing a result.
+ *
+ * Sent in response to a [io.homeassistant.companion.android.frontend.externalbus.incoming.BarcodeScanMessage]
+ * when the user cancels — either by pressing the alternative-options button (`forAction = true`,
+ * reason `alternative_options`) or by dismissing the scanner (`forAction = false`,
+ * reason `canceled`).
+ *
+ * @see CommandMessage
+ */
+object BarcodeScanAbortedMessage {
+    operator fun invoke(id: Int, forAction: Boolean): OutgoingExternalBusMessage = CommandMessage(
+        id = id,
+        command = "bar_code/aborted",
+        payload = frontendExternalBusJson.encodeToJsonElement(
+            ScanAbortedPayload(reason = if (forAction) REASON_ALTERNATIVE_OPTIONS else REASON_CANCELED),
+        ),
+    )
+
+    private const val REASON_ALTERNATIVE_OPTIONS = "alternative_options"
+    private const val REASON_CANCELED = "canceled"
+
+    @Serializable
+    private data class ScanAbortedPayload(val reason: String)
+}

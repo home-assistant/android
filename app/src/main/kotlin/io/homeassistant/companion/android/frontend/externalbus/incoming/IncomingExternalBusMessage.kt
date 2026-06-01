@@ -299,3 +299,50 @@ data class MatterCommissionMessage(override val id: Int? = null) : IncomingExter
 @Serializable
 @SerialName("thread/import_credentials")
 data class ThreadImportCredentialsMessage(override val id: Int? = null) : IncomingExternalBusMessage
+
+/**
+ * Message requesting the app to open the in-app barcode scanner overlay.
+ *
+ * The frontend sends this when an entity card or dialog needs the user to scan a code.
+ * Once scanning completes (or is cancelled), the app responds out-of-band with a
+ * [io.homeassistant.companion.android.frontend.externalbus.outgoing.BarcodeScanResultMessage]
+ * or [io.homeassistant.companion.android.frontend.externalbus.outgoing.BarcodeScanAbortedMessage]
+ * carrying the same [id].
+ */
+@Serializable
+@SerialName("bar_code/scan")
+data class BarcodeScanMessage(override val id: Int? = null, val payload: BarcodeScanPayload) :
+    IncomingExternalBusMessage
+
+@Serializable
+data class BarcodeScanPayload(
+    val title: String,
+    val description: String,
+    @SerialName("alternative_option_label") val alternativeOptionLabel: String? = null,
+)
+
+/**
+ * Message requesting the app to display a notification dialog on top of the active scanner.
+ *
+ * The frontend sends this to surface validation errors or guidance while the scanner is open
+ * (e.g. "Code already paired"). No response is expected — the user dismisses the dialog from the UI.
+ *
+ * Sent only while a scanner is active. If no scanner is open, the app silently ignores it.
+ */
+@Serializable
+@SerialName("bar_code/notify")
+data class BarcodeNotifyMessage(override val id: Int? = null, val payload: BarcodeNotifyPayload) :
+    IncomingExternalBusMessage
+
+@Serializable
+data class BarcodeNotifyPayload(val message: String)
+
+/**
+ * Message requesting the app to close the active scanner overlay (fire-and-forget).
+ *
+ * The frontend sends this once it no longer needs the scanner — for example after the user
+ * picked a result or because the user navigated away from the requesting card.
+ */
+@Serializable
+@SerialName("bar_code/close")
+data class BarcodeCloseMessage(override val id: Int? = null) : IncomingExternalBusMessage
