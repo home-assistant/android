@@ -364,6 +364,20 @@ internal class WebSocketCoreImpl(
     }
 
     /**
+     * Closes the WebSocket connection with the given code and reason.
+     *
+     * New connection attempts can be made after this call.
+     */
+    suspend fun close(code: Int, reason: String?) = connectedMutex.withLock {
+        // Cancel this so new connection attempts will create a new deferred and not await this one
+        pendingConnectDeferred?.cancel()
+        pendingConnectDeferred = null
+
+        connectionHolder.get()?.webSocket?.close(code, reason)
+        connectionHolder.set(null)
+    }
+
+    /**
      * Handles a new connection attempt when not yet connected.
      * This is called when the URL flow emits before [connectDeferred] is completed.
      */
@@ -760,12 +774,12 @@ internal class WebSocketCoreImpl(
                                 channel.close()
                                 activeMessages.remove(subscription)
                             }
-                    }
-                    if (activeMessages.isEmpty()) {
-                        Timber.i("No more subscriptions, closing connection.")
-                        connectionHolder.get()?.webSocket?.close(1001, "Done listening to subscriptions.")
-                    } else {
-                        Timber.i("Still ${activeMessages.size} messages in the queue, not closing connection.")
+                        if (activeMessages.isEmpty()) {
+                            Timber.i("No more subscriptions, closing connection.")
+                            connectionHolder.get()?.webSocket?.close(1001, "Done listening to subscriptions.")
+                        } else {
+                            Timber.i("Still ${activeMessages.size} messages in the queue, not closing connection.")
+                        }
                     }
                 }
             }
