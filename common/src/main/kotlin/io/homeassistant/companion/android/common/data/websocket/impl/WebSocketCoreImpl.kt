@@ -774,12 +774,12 @@ internal class WebSocketCoreImpl(
                                 channel.close()
                                 activeMessages.remove(subscription)
                             }
-                        if (activeMessages.isEmpty()) {
-                            Timber.i("No more subscriptions, closing connection.")
-                            connectionHolder.get()?.webSocket?.close(1001, "Done listening to subscriptions.")
-                        } else {
-                            Timber.i("Still ${activeMessages.size} messages in the queue, not closing connection.")
-                        }
+                    }
+                    if (activeMessages.isEmpty()) {
+                        Timber.i("No more subscriptions, closing connection.")
+                        close(1001, "Done listening to subscriptions.")
+                    } else {
+                        Timber.i("Still ${activeMessages.size} messages in the queue, not closing connection.")
                     }
                 }
             }
