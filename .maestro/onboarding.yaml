@@ -78,29 +78,22 @@ appId: io.homeassistant.companion.android.debug
     notVisible: "Let us help secure your remote connection"
     timeout: 30000
 - takeScreenshot: onboarding_complete
+- takeScreenshot: frontend_loading_start
 
 - extendedWaitUntil:
     visible:
-      text: '(?i)^(Overview|Retry)$'
+      text: '(?i)^(Overview|More details)$'
     timeout: 60000
 
 - tapOn:
-    text: '(?i)^Retry$'
+    text: '(?i)^More details$'
     optional: true
     retryTapIfNoChange: true
-- extendedWaitUntil:
-    visible:
-      text: '(?i)^(Overview|Retry)$'
-    timeout: 30000
-
-- tapOn:
-    text: '(?i)^Retry$'
-    optional: true
-    retryTapIfNoChange: true
+- takeScreenshot: frontend_loaded_or_error_details
 - extendedWaitUntil:
     visible:
       text: '(?i)^Overview$'
-    timeout: 30000
+    timeout: 3000
 
 - tapOn:
     text: '(?i)^Sidebar toggle$'

@@ -7,11 +7,3 @@ logger:
     homeassistant.components.http: debug
     homeassistant.components.mobile_app: debug
     homeassistant.components.websocket_api: debug
-
-homeassistant:
-  auth_providers:
-    - type: command_line
-      command: bash
-      args:
-        - /config/maestro-auth.sh
-      meta: true
