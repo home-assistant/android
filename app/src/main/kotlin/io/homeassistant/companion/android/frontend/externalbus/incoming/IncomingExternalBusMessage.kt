@@ -277,10 +277,6 @@ data class EntityAddToPayload(
  * [io.homeassistant.companion.android.frontend.externalbus.outgoing.BarcodeScanResultMessage]
  * or [io.homeassistant.companion.android.frontend.externalbus.outgoing.BarcodeScanAbortedMessage]
  * carrying the same [id].
- *
- * Will not be sent by the frontend when the device reports
- * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResult.hasBarCodeScanner] = `0`
- * (Automotive or no camera).
  */
 @Serializable
 @SerialName("bar_code/scan")
