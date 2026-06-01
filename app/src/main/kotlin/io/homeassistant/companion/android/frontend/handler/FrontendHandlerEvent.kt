@@ -85,8 +85,7 @@ sealed interface FrontendHandlerEvent {
     /**
      * Frontend requested the app to start scanning for improv (Wi-Fi onboarding) BLE devices.
      *
-     * The ViewModel is responsible for the BLE-feature gate, the runtime permission flow
-     * (Bluetooth + Location), and emitting
+     * The ViewModel starts the scan and emits
      * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ImprovDiscoveredDeviceMessage]
      * for each device the scanner reports.
      */
