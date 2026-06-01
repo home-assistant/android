@@ -17,6 +17,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.common.util.GestureAction
@@ -380,7 +381,7 @@ class WebViewPresenterImpl @Inject constructor(
         return prefsRepository.isFullScreenEnabled()
     }
 
-    override suspend fun getScreenOrientation(): String? {
+    override suspend fun getScreenOrientation(): ScreenOrientation {
         return prefsRepository.getScreenOrientation()
     }
 
@@ -394,10 +395,6 @@ class WebViewPresenterImpl @Inject constructor(
 
     override suspend fun isPinchToZoomEnabled(): Boolean {
         return prefsRepository.isPinchToZoomEnabled()
-    }
-
-    override suspend fun isWebViewDebugEnabled(): Boolean {
-        return prefsRepository.isWebViewDebugEnabled()
     }
 
     override suspend fun isAppLocked(): Boolean = if (serverManager.isRegistered()) {

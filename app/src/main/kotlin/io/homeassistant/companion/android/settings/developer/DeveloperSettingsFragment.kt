@@ -105,6 +105,17 @@ class DeveloperSettingsFragment :
                 return@setOnPreferenceClickListener true
             }
         }
+        findPreference<Preference>("tag_clear_allowed")?.let {
+            it.setOnPreferenceClickListener {
+                presenter.clearAllowedTags()
+                Toast.makeText(
+                    requireContext(),
+                    commonR.string.clear_allowed_tags_complete,
+                    Toast.LENGTH_SHORT,
+                ).show()
+                return@setOnPreferenceClickListener true
+            }
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

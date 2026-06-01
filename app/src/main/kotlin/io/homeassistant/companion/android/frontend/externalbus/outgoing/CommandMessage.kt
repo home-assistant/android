@@ -68,3 +68,32 @@ object NavigateToMessage {
  * @see CommandMessage
  */
 val ShowSidebarMessage: OutgoingExternalBusMessage = CommandMessage(command = "sidebar/show")
+
+/**
+ * Notifies the frontend that an improv-capable BLE device has been discovered while scanning.
+ *
+ * Emitted once per device — the frontend deduplicates by [name] when adding the entry to its
+ * "Add device" list. This is a one-way command; the frontend does not respond.
+ *
+ * @see CommandMessage
+ */
+object ImprovDiscoveredDeviceMessage {
+    operator fun invoke(name: String): OutgoingExternalBusMessage = CommandMessage(
+        command = "improv/discovered_device",
+        payload = frontendExternalBusJson.encodeToJsonElement(DiscoveredDevicePayload(name = name)),
+    )
+
+    @Serializable
+    private data class DiscoveredDevicePayload(val name: String)
+}
+
+/**
+ * Notifies the frontend that the user-selected improv device has finished its Wi-Fi onboarding
+ * (BLE state moved to provisioned). The frontend uses this to dismiss its progress UI before
+ * the app navigates the WebView to the `config_flow_start` URL for the device's domain.
+ *
+ * One-way command; no response is expected.
+ *
+ * @see CommandMessage
+ */
+val ImprovDeviceSetupDoneMessage: OutgoingExternalBusMessage = CommandMessage(command = "improv/device_setup_done")

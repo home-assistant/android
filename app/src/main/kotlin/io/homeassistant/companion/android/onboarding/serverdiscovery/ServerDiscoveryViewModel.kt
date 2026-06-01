@@ -92,9 +92,25 @@ internal class ServerDiscoveryViewModel @VisibleForTesting constructor(
      */
     val discoveryFlow = _discoveryFlow.delayFirstThrottle(DELAY_BEFORE_DISPLAY_DISCOVERY)
 
-    init {
-        discoverInstances()
+    /**
+     * Guards [onLocalNetworkPermissionChecked] against starting discovery more than once across
+     * recompositions or repeated permission-result callbacks from the screen.
+     */
+    private var discoveryStarted = false
 
+    /**
+     * Notifies the ViewModel that the screen has finished the Android 17+ local network
+     * permission flow (either granted, denied, or skipped on pre-API 37 devices) and discovery
+     * can now begin. Subsequent calls are no-ops.
+     *
+     * Discovery is gated on this signal because NSD can't reach LAN-served Home Assistant
+     * instances on Android 17+ without `ACCESS_LOCAL_NETWORK`; starting earlier would risk a
+     * silent failure followed by a [NoServerFound] timeout that hides the real cause.
+     */
+    fun onLocalNetworkPermissionChecked() {
+        if (discoveryStarted) return
+        discoveryStarted = true
+        discoverInstances()
         watchForNoServerFound()
     }
 

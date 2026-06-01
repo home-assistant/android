@@ -18,7 +18,6 @@ import io.homeassistant.companion.android.common.data.connectivity.ConnectivityC
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.onboarding.connection.ConnectionErrorScreen
 import io.homeassistant.companion.android.onboarding.connection.ConnectionViewModel
-import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
 import io.mockk.Runs
@@ -38,13 +37,11 @@ import org.robolectric.annotation.Config
 @Config(application = HiltTestApplication::class)
 @HiltAndroidTest
 class FrontendConnectionErrorScreenTest {
-    @get:Rule(order = 0)
-    var consoleLog = ConsoleLogRule()
 
-    @get:Rule(order = 1)
+    @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
 
-    @get:Rule(order = 2)
+    @get:Rule(order = 1)
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
     @Test

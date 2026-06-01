@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.launch
 
+import android.graphics.Rect
+import android.util.Rational
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import io.homeassistant.companion.android.applock.AppLockStateManager
@@ -16,7 +18,6 @@ import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.onboarding.OnboardingRoute
 import io.homeassistant.companion.android.onboarding.WearOnboardingRoute
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
@@ -38,7 +40,7 @@ import org.junit.jupiter.params.provider.EnumSource
 import org.junit.jupiter.params.provider.ValueSource
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(MainDispatcherJUnit5Extension::class, ConsoleLogExtension::class)
+@ExtendWith(MainDispatcherJUnit5Extension::class)
 class LaunchViewModelTest {
     private val serverManager: ServerManager = mockk(relaxed = true)
     private val networkStatusMonitor: NetworkStatusMonitor = mockk(relaxed = true)
@@ -675,5 +677,40 @@ class LaunchViewModelTest {
         advanceUntilIdle()
 
         assertTrue(viewModel.isFullScreen.value)
+    }
+
+    @Test
+    fun `Given no pip readiness reported when initialized then pipReadiness is null`() = runTest {
+        createViewModel()
+        advanceUntilIdle()
+
+        assertNull(viewModel.pipReadiness.value)
+    }
+
+    @Test
+    fun `Given onPipReadinessChanged with non-null when called then pipReadiness reflects it`() = runTest {
+        createViewModel()
+        advanceUntilIdle()
+
+        val readiness = PipReadiness(
+            aspectRatio = Rational(16, 9),
+            sourceRect = Rect(0, 0, 1920, 1080),
+        )
+        viewModel.onPipReadinessChanged(readiness)
+        advanceUntilIdle()
+
+        assertEquals(readiness, viewModel.pipReadiness.value)
+    }
+
+    @Test
+    fun `Given non-null then null when reported then pipReadiness round-trips`() = runTest {
+        createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onPipReadinessChanged(PipReadiness(aspectRatio = Rational(16, 9)))
+        viewModel.onPipReadinessChanged(null)
+        advanceUntilIdle()
+
+        assertNull(viewModel.pipReadiness.value)
     }
 }

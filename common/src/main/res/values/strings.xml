@@ -151,6 +151,8 @@
     <string name="changelog">View full change log</string>
     <string name="choose_entity">Choose entity</string>
     <string name="clear_favorites">Clear favorites</string>
+    <string name="clear_allowed_tags">Clear approved tags</string>
+    <string name="clear_allowed_tags_complete">Tags cleared</string>
     <string name="clear_search">Clear search</string>
     <string name="clear_webview_cache">Reset frontend cache</string>
     <string name="clear_webview_cache_active">Resetting…</string>
@@ -390,6 +392,10 @@
     <string name="template_widgets">Template widgets</string>
     <string name="loading_entities">Please wait while we load your entities</string>
     <string name="loading">Loading…</string>
+    <string name="local_network_permission_message">Home Assistant needs permission to access your local network to reach %1$s. Background updates have been paused. Tap to grant access.</string>
+    <string name="local_network_permission_short_message">Home Assistant needs local network access for background updates</string>
+    <string name="local_network_permission_title">Local network access required</string>
+    <string name="local_network_permission_warn_channel">Local network access warning</string>
     <string name="location_disabled_dialog_message">%1$s\nDo you want to enable location?</string>
     <string name="location_disabled_notification_message">Location is required for the following enabled option(s). If you do not enable location, the sensor(s)/setting(s) will not work!\n\n%1$s</string>
     <string name="location_disabled_notification_short_message">Some options require location to work</string>
@@ -490,6 +496,12 @@
     <string name="nfc_trigger_device">Scanned by this device:</string>
     <string name="nfc_invalid_tag">This tag does not contain Home Assistant data</string>
     <string name="nfc_processing_tag_error">Error while processing NFC tag</string>
+    <string name="tag_approval_title">Allow tag?</string>
+    <string name="tag_approval_description">Send this tag to Home Assistant to trigger linked automations.</string>
+    <string name="tag_allow_once">Allow once</string>
+    <string name="tag_allow_always">Allow always</string>
+    <string name="tag_copy_id">Copy tag identifier</string>
+    <string name="tag_id">Tag identifier</string>
     <string name="nfc_read_tag_instructions">Hold your device near an NFC tag</string>
     <string name="nfc_summary">Set up NFC tags</string>
     <string name="nfc_tag_identifier">Tag ID</string>

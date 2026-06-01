@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.common.data.integration.SensorRegistra
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.util.CHANNEL_SENSOR_SYNC
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.DatabaseEntryPoint
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
@@ -440,7 +441,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
     }
 
     private fun createNotificationChannel(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             val notificationManager = context.getSystemService<NotificationManager>() ?: return
             var notificationChannel =
                 notificationManager.getNotificationChannel(CHANNEL_SENSOR_SYNC)

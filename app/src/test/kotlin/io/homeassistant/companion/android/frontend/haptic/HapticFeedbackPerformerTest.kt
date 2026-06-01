@@ -32,7 +32,7 @@ class HapticFeedbackPerformerTest {
 
     @Test
     fun `Given success type on API 30 when perform then calls CONFIRM`() {
-        every { view.performHapticFeedback(any()) } returns true
+        every { view.performHapticFeedback(any<Int>()) } returns true
 
         HapticFeedbackPerformer.perform(view, HapticType.Success)
 
@@ -41,7 +41,7 @@ class HapticFeedbackPerformerTest {
 
     @Test
     fun `Given failure type on API 30 when perform then calls REJECT`() {
-        every { view.performHapticFeedback(any()) } returns true
+        every { view.performHapticFeedback(any<Int>()) } returns true
 
         HapticFeedbackPerformer.perform(view, HapticType.Failure)
 
@@ -50,7 +50,7 @@ class HapticFeedbackPerformerTest {
 
     @Test
     fun `Given light type when perform then calls KEYBOARD_TAP`() {
-        every { view.performHapticFeedback(any()) } returns true
+        every { view.performHapticFeedback(any<Int>()) } returns true
 
         HapticFeedbackPerformer.perform(view, HapticType.Light)
 
@@ -59,7 +59,7 @@ class HapticFeedbackPerformerTest {
 
     @Test
     fun `Given medium type when perform then calls VIRTUAL_KEY`() {
-        every { view.performHapticFeedback(any()) } returns true
+        every { view.performHapticFeedback(any<Int>()) } returns true
 
         HapticFeedbackPerformer.perform(view, HapticType.Medium)
 
@@ -68,7 +68,7 @@ class HapticFeedbackPerformerTest {
 
     @Test
     fun `Given heavy type when perform then calls LONG_PRESS`() {
-        every { view.performHapticFeedback(any()) } returns true
+        every { view.performHapticFeedback(any<Int>()) } returns true
 
         HapticFeedbackPerformer.perform(view, HapticType.Heavy)
 
@@ -77,7 +77,7 @@ class HapticFeedbackPerformerTest {
 
     @Test
     fun `Given selection type on API 30 when perform then calls GESTURE_START`() {
-        every { view.performHapticFeedback(any()) } returns true
+        every { view.performHapticFeedback(any<Int>()) } returns true
 
         HapticFeedbackPerformer.perform(view, HapticType.Selection)
 
@@ -90,7 +90,7 @@ class HapticFeedbackPerformerTest {
 
         HapticFeedbackPerformer.perform(view, HapticType.Warning)
 
-        verify(exactly = 0) { view.performHapticFeedback(any()) }
+        verify(exactly = 0) { view.performHapticFeedback(any<Int>()) }
         verify { vibrator.vibrate(capture(effectSlot)) }
         assertEquals(
             VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK),

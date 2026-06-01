@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.frontend.navigation.frontendScreen
 import io.homeassistant.companion.android.frontend.navigation.navigateToFrontend
 import io.homeassistant.companion.android.launch.HAStartDestinationRoute
+import io.homeassistant.companion.android.launch.PipReadiness
 import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.loading.navigation.LoadingRoute
 import io.homeassistant.companion.android.loading.navigation.loadingScreen
@@ -51,6 +52,7 @@ internal fun HANavHost(
     startDestination: HAStartDestinationRoute?,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onRequestFullscreen: (Boolean) -> Unit = {},
+    onPipReadinessChanged: (PipReadiness?) -> Unit = {},
 ) {
     val activity = LocalActivity.current
     val isAutomotive = activity?.isAutomotive() == true
@@ -123,6 +125,7 @@ internal fun HANavHost(
                 onShowSnackbar = onShowSnackbar,
                 onShowServerSwitcher = { onServerSelected -> showServerSwitcher(activity, onServerSelected) },
                 onRequestFullscreen = onRequestFullscreen,
+                onPipReadinessChanged = onPipReadinessChanged,
             )
             setHomeNetworkScreen(
                 onGotoNextScreen = {

@@ -14,6 +14,8 @@ android {
         manifestPlaceholders["sentryRelease"] = "$applicationId@$versionName"
         manifestPlaceholders["sentryDsn"] = System.getenv("SENTRY_DSN") ?: ""
 
+        testInstrumentationRunner = "io.homeassistant.companion.android.util.HAAndroidJUnitRunner"
+
         bundle {
             language {
                 // We want to keep the translations in the final AAB for all the language

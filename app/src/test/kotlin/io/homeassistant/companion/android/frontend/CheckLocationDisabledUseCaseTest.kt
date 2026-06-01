@@ -2,15 +2,16 @@ package io.homeassistant.companion.android.frontend
 
 import android.Manifest
 import android.content.Context
+import android.os.Build
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.sensors.SensorReceiver
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.util.CheckLocationDisabledUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -24,9 +25,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 
-@ExtendWith(ConsoleLogExtension::class)
 class CheckLocationDisabledUseCaseTest {
 
     private val context: Context = mockk(relaxed = true)
@@ -36,6 +35,7 @@ class CheckLocationDisabledUseCaseTest {
 
     @BeforeEach
     fun setUp() {
+        SdkVersion.sdkInt = Build.VERSION_CODES.M
         mockkObject(DisabledLocationHandler)
         mockkObject(SensorReceiver)
         every { SensorReceiver.MANAGERS } returns emptyList()

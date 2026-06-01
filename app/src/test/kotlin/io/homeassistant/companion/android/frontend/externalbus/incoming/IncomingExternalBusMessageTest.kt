@@ -4,9 +4,9 @@ import io.homeassistant.companion.android.frontend.externalbus.frontendExternalB
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNull
 
 class IncomingExternalBusMessageTest {
 
@@ -204,6 +204,38 @@ class IncomingExternalBusMessageTest {
     }
 
     @Test
+    fun `Given improv scan JSON then parses to ImprovScanMessage`() {
+        val json = """{"type":"improv/scan","id":50}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(ImprovScanMessage::class.java, message)
+        assertEquals(50, (message as ImprovScanMessage).id)
+    }
+
+    @Test
+    fun `Given improv scan JSON without id then parses to ImprovScanMessage with null id`() {
+        val json = """{"type":"improv/scan"}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(ImprovScanMessage::class.java, message)
+        assertNull((message as ImprovScanMessage).id)
+    }
+
+    @Test
+    fun `Given improv configure_device JSON then parses to ImprovConfigureDeviceMessage with name`() {
+        val json = """{"type":"improv/configure_device","id":51,"payload":{"name":"Smart Plug"}}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(ImprovConfigureDeviceMessage::class.java, message)
+        val configureMessage = message as ImprovConfigureDeviceMessage
+        assertEquals(51, configureMessage.id)
+        assertEquals("Smart Plug", configureMessage.payload.name)
+    }
+
+    @Test
     fun `Given exoplayer resize JSON without payload then parses with zero defaults`() {
         val json = """{"type":"exoplayer/resize","id":25}"""
 
@@ -215,5 +247,30 @@ class IncomingExternalBusMessageTest {
         assertEquals(0.0, resize.payload.top)
         assertEquals(0.0, resize.payload.right)
         assertEquals(0.0, resize.payload.bottom)
+    }
+
+    @Test
+    fun `Given entity add_to get_actions JSON then parses to EntityAddToGetActionsMessage`() {
+        val json = """{"type":"entity/add_to/get_actions","id":20,"payload":{"entity_id":"light.living_room"}}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(EntityAddToGetActionsMessage::class.java, message)
+        val addToMessage = message as EntityAddToGetActionsMessage
+        assertEquals(20, addToMessage.id)
+        assertEquals("light.living_room", addToMessage.payload.entityId)
+    }
+
+    @Test
+    fun `Given entity add_to JSON then parses to EntityAddToMessage`() {
+        val json = """{"type":"entity/add_to","id":21,"payload":{"entity_id":"light.living_room","app_payload":"dGVzdA=="}}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(EntityAddToMessage::class.java, message)
+        val addToMessage = message as EntityAddToMessage
+        assertEquals(21, addToMessage.id)
+        assertEquals("light.living_room", addToMessage.payload.entityId)
+        assertEquals("dGVzdA==", addToMessage.payload.appPayload)
     }
 }

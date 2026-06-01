@@ -5,6 +5,7 @@ import android.os.Build
 import android.provider.Settings
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.util.SdkVersion
 import timber.log.Timber
 
 class BedtimeModeSensorManager : SensorManager {
@@ -39,7 +40,7 @@ class BedtimeModeSensorManager : SensorManager {
     }
 
     override fun hasSensor(context: Context): Boolean {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+        return SdkVersion.isAtLeast(Build.VERSION_CODES.R)
     }
 
     private suspend fun updateBedtimeMode(context: Context) {

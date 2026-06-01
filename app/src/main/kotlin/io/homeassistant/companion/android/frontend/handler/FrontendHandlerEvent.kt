@@ -4,6 +4,7 @@ import android.net.Uri
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
+import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 
 /**
  * Events emitted by [FrontendMessageHandler].
@@ -81,6 +82,26 @@ sealed interface FrontendHandlerEvent {
      */
     data class WriteNfcTag(val messageId: Int, val tagId: String?) : FrontendHandlerEvent
 
+    /**
+     * Frontend requested the app to start scanning for improv (Wi-Fi onboarding) BLE devices.
+     *
+     * The ViewModel is responsible for the BLE-feature gate, the runtime permission flow
+     * (Bluetooth + Location), and emitting
+     * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ImprovDiscoveredDeviceMessage]
+     * for each device the scanner reports.
+     */
+    data object StartImprovScan : FrontendHandlerEvent
+
+    /**
+     * User picked an improv device in the frontend's list. The ViewModel should open the
+     * Wi-Fi-credentials dialog seeded with [deviceName], drive the BLE provisioning flow, and
+     * emit [io.homeassistant.companion.android.frontend.externalbus.outgoing.ImprovDeviceSetupDoneMessage]
+     * once provisioning succeeds.
+     *
+     * @param deviceName Advertised name of the BLE device the user selected.
+     */
+    data class ConfigureImprovDevice(val deviceName: String) : FrontendHandlerEvent
+
     sealed interface ExoPlayerAction : FrontendHandlerEvent {
 
         /**
@@ -108,4 +129,17 @@ sealed interface FrontendHandlerEvent {
          */
         data class Resize(val left: Double, val top: Double, val right: Double, val bottom: Double) : ExoPlayerAction
     }
+
+    /**
+     * Frontend requested available EntityAddTo actions and the response was sent.
+     */
+    data object EntityAddToActionsSent : FrontendHandlerEvent
+
+    /**
+     * Frontend requested execution of an EntityAddTo action.
+     *
+     * The ViewModel should forward the [event] to the navigation layer.
+     * When null, the action is unimplemented and should be ignored.
+     */
+    data class EntityAddToExecuted(val event: FrontendEvent?) : FrontendHandlerEvent
 }

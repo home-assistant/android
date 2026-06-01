@@ -1,7 +1,11 @@
 package io.homeassistant.companion.android.launch
 
+import android.app.PictureInPictureParams
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
 import androidx.activity.compose.LocalActivity
@@ -36,6 +40,8 @@ import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissionUseCase
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.launch.applock.HazeLockOverlay
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
@@ -52,6 +58,17 @@ import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 
 private const val DEEP_LINK_KEY = "deep_link_key"
+
+/**
+ * Fully qualified class name of the non-exported `<activity-alias>` declared in the manifest.
+ *
+ * Trusted in-process callers route through this alias to bring up the dashboard over the
+ * keyguard. [LaunchActivity.onCreate] only calls [android.app.Activity.setShowWhenLocked] when
+ * the inbound intent's component matches it — because the alias is `android:exported="false"`,
+ * external apps cannot use it and therefore cannot force the activity to render over the lock
+ * screen by themselves.
+ */
+private const val LOCK_SCREEN_ALIAS_CLASS = "io.homeassistant.companion.android.launch.LaunchOverLockScreen"
 
 /**
  * Main entry point of the application, responsible for holding the whole navigation graph
@@ -72,6 +89,9 @@ class LaunchActivity : AppCompatActivity() {
 
     @Inject
     internal lateinit var checkLocationDisabled: CheckLocationDisabledUseCase
+
+    @Inject
+    internal lateinit var checkLocalNetworkPermission: CheckLocalNetworkPermissionUseCase
 
     @Inject
     internal lateinit var changeLog: ChangeLog
@@ -110,8 +130,21 @@ class LaunchActivity : AppCompatActivity() {
     }
 
     companion object {
-        fun newInstance(context: Context, deepLink: DeepLink? = null): Intent {
-            return Intent(context, LaunchActivity::class.java).apply {
+        /**
+         * Builds an intent to start [LaunchActivity].
+         *
+         * @param showWhenLocked when `true`, routes through the non-exported
+         *   `LaunchOverLockScreen` activity-alias so the dashboard renders over the keyguard.
+         *   Intended for trusted in-process callers (e.g. the device controls panel) — external
+         *   apps cannot reach the alias and therefore cannot opt into this behavior.
+         */
+        fun newInstance(context: Context, deepLink: DeepLink? = null, showWhenLocked: Boolean = false): Intent {
+            return Intent().apply {
+                component = if (showWhenLocked) {
+                    ComponentName(context, LOCK_SCREEN_ALIAS_CLASS)
+                } else {
+                    ComponentName(context, LaunchActivity::class.java)
+                }
                 if (deepLink != null) {
                     putExtra(DEEP_LINK_KEY, deepLink)
                 }
@@ -128,6 +161,15 @@ class LaunchActivity : AppCompatActivity() {
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Must run before super.onCreate so the window flag is set before the platform decides
+        // whether to draw over the keyguard. Gated on the non-exported [LOCK_SCREEN_ALIAS_CLASS]
+        // so external apps reaching the public LAUNCHER intent-filter cannot force this on.
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O_MR1) &&
+            intent.component?.className == LOCK_SCREEN_ALIAS_CLASS
+        ) {
+            setShowWhenLocked(true)
+        }
+
         super.onCreate(savedInstanceState)
         val splashScreen = installSplashScreen()
 
@@ -159,6 +201,7 @@ class LaunchActivity : AppCompatActivity() {
                     startDestination = (uiState as? LaunchUiState.Ready)?.startDestination,
                     snackbarHostState = snackbarHostState,
                     onRequestFullscreen = viewModel::onFullscreenRequested,
+                    onPipReadinessChanged = viewModel::onPipReadinessChanged,
                     modifier = Modifier.hazeSource(hazeState),
                 )
 
@@ -193,6 +236,7 @@ class LaunchActivity : AppCompatActivity() {
             lifecycleScope.launch {
                 WebsocketManager.start(this@LaunchActivity)
                 checkLocationDisabled()
+                checkLocalNetworkPermission()
                 changeLog.showChangeLog(this@LaunchActivity, forceShow = false)
             }
         }
@@ -201,6 +245,22 @@ class LaunchActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         if (!isFinishing && WIPFeature.USE_FRONTEND_V2) SensorReceiver.updateAllSensors(this)
+    }
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (WIPFeature.USE_FRONTEND_V2) {
+            viewModel.onAppPaused()
+
+            if (!SdkVersion.isAtLeast(Build.VERSION_CODES.O)) return
+            if (!packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) return
+            val readiness = viewModel.pipReadiness.value ?: return
+            val params = PictureInPictureParams.Builder()
+                .setAspectRatio(readiness.aspectRatio)
+                .apply { readiness.sourceRect?.let(::setSourceRectHint) }
+                .build()
+            enterPictureInPictureMode(params)
+        }
     }
 
     override fun onStop() {

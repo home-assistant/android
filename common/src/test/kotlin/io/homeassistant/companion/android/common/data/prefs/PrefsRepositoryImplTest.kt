@@ -4,7 +4,6 @@ import app.cash.turbine.test
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.HAGesture
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -21,12 +20,10 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.ValueSource
 
-@ExtendWith(ConsoleLogExtension::class)
 class PrefsRepositoryImplTest {
     private val keyChangesFlow = MutableSharedFlow<String>()
     private val mapperSlot = slot<suspend () -> Any>()
@@ -171,6 +168,100 @@ class PrefsRepositoryImplTest {
         }
     }
 
+    @Test
+    fun `Given collecting flow when screen orientation changes then typed value is emitted`() = runTest {
+        coEvery { localStorage.getString("screen_orientation") } returns null
+
+        repository.screenOrientationFlow().test {
+            // Null storage value falls back to SYSTEM
+            assertEquals(ScreenOrientation.SYSTEM, awaitItem())
+
+            coEvery { localStorage.getString("screen_orientation") } returns "portrait"
+            keyChangesFlow.emit("screen_orientation")
+            assertEquals(ScreenOrientation.PORTRAIT, awaitItem())
+
+            coEvery { localStorage.getString("screen_orientation") } returns "landscape"
+            keyChangesFlow.emit("screen_orientation")
+            assertEquals(ScreenOrientation.LANDSCAPE, awaitItem())
+
+            // Unknown value falls back to SYSTEM
+            coEvery { localStorage.getString("screen_orientation") } returns "garbage"
+            keyChangesFlow.emit("screen_orientation")
+            assertEquals(ScreenOrientation.SYSTEM, awaitItem())
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `Given collecting flow when keep screen on changes then updated keep screen on enabled is emitted`() = runTest {
+        coEvery { localStorage.getBoolean("keep_screen_on_enabled") } returns false
+
+        repository.keepScreenOnFlow().test {
+            assertFalse(awaitItem())
+
+            coEvery { localStorage.getBoolean("keep_screen_on_enabled") } returns true
+            keyChangesFlow.emit("keep_screen_on_enabled")
+
+            assertTrue(awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Nested
+    inner class GetScreenOrientation {
+
+        @Test
+        fun `Given null storage value when get then returns SYSTEM`() = runTest {
+            coEvery { localStorage.getString("screen_orientation") } returns null
+
+            assertEquals(ScreenOrientation.SYSTEM, repository.getScreenOrientation())
+        }
+
+        @ParameterizedTest
+        @CsvSource(
+            "system, SYSTEM",
+            "portrait, PORTRAIT",
+            "landscape, LANDSCAPE",
+        )
+        fun `Given storage value when get then returns matching enum`(
+            storedValue: String,
+            expected: ScreenOrientation,
+        ) = runTest {
+            coEvery { localStorage.getString("screen_orientation") } returns storedValue
+
+            assertEquals(expected, repository.getScreenOrientation())
+        }
+
+        @Test
+        fun `Given unknown storage value when get then returns SYSTEM`() = runTest {
+            coEvery { localStorage.getString("screen_orientation") } returns "unknown-value"
+
+            assertEquals(ScreenOrientation.SYSTEM, repository.getScreenOrientation())
+        }
+    }
+
+    @Nested
+    inner class SaveScreenOrientation {
+
+        @ParameterizedTest
+        @CsvSource(
+            "SYSTEM, system",
+            "PORTRAIT, portrait",
+            "LANDSCAPE, landscape",
+        )
+        fun `Given enum when save then storage value is the storageValue string`(
+            orientation: ScreenOrientation,
+            expectedStored: String,
+        ) = runTest {
+            coEvery { localStorage.putString(any(), any()) } returns Unit
+
+            repository.setScreenOrientation(orientation)
+
+            coVerify { localStorage.putString("screen_orientation", expectedStored) }
+        }
+    }
+
     @Nested
     inner class ZoomSettingsFlow {
 
@@ -209,5 +300,57 @@ class PrefsRepositoryImplTest {
                 cancelAndIgnoreRemainingEvents()
             }
         }
+    }
+
+    @Test
+    fun `Given no approved tags when listing then returns empty list`() = runTest {
+        coEvery { localStorage.getStringSet("allowed_tags") } returns null
+
+        assertEquals(emptySet<String>(), repository.getAllowedTags())
+    }
+
+    @Test
+    fun `Given approved tags stored when listing then returns them`() = runTest {
+        coEvery { localStorage.getStringSet("allowed_tags") } returns setOf("tag-a", "tag-b")
+
+        assertEquals(setOf("tag-a", "tag-b"), repository.getAllowedTags())
+    }
+
+    @Test
+    fun `Given new tag when approving then it is added to the stored set`() = runTest {
+        coEvery { localStorage.getStringSet("allowed_tags") } returns setOf("tag-a")
+        coEvery { localStorage.putStringSet(any(), any()) } returns Unit
+
+        repository.addAllowedTag("tag-b")
+
+        coVerify(exactly = 1) { localStorage.putStringSet("allowed_tags", setOf("tag-a", "tag-b")) }
+    }
+
+    @Test
+    fun `Given no approved tags when approving then writes a single-entry set`() = runTest {
+        coEvery { localStorage.getStringSet("allowed_tags") } returns null
+        coEvery { localStorage.putStringSet(any(), any()) } returns Unit
+
+        repository.addAllowedTag("tag-a")
+
+        coVerify(exactly = 1) { localStorage.putStringSet("allowed_tags", setOf("tag-a")) }
+    }
+
+    @Test
+    fun `Given tag already approved when approving again then storage is not written`() = runTest {
+        coEvery { localStorage.getStringSet("allowed_tags") } returns setOf("tag-a")
+
+        repository.addAllowedTag("tag-a")
+
+        coVerify(exactly = 0) { localStorage.putStringSet(any(), any()) }
+    }
+
+    @Test
+    fun `Given approved tags when clearing then storage entry is removed`() = runTest {
+        coEvery { localStorage.remove(any()) } returns Unit
+
+        repository.clearAllowedTags()
+
+        coVerify(exactly = 1) { localStorage.remove("allowed_tags") }
     }
 }

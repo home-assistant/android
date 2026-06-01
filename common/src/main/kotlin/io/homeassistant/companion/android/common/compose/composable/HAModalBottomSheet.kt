@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.common.compose.composable
 
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
@@ -42,6 +43,7 @@ fun HAModalBottomSheet(
     bottomSheetState: SheetState,
     modifier: Modifier = Modifier,
     onDismissRequest: () -> Unit = {},
+    dragHandle: @Composable (() -> Unit)? = { BottomSheetDefaults.DragHandle() },
     content: @Composable ColumnScope.() -> Unit,
 ) {
     ModalBottomSheet(
@@ -50,6 +52,7 @@ fun HAModalBottomSheet(
         scrimColor = LocalHAColorScheme.current.colorOverlayModal,
         onDismissRequest = onDismissRequest,
         shape = RoundedCornerShape(topStart = HARadius.X3L, topEnd = HARadius.X3L),
+        dragHandle = dragHandle,
         content = content,
     )
 }
