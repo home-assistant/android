@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.frontend.barcode.BarcodeScannerUiState
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge
+import io.homeassistant.companion.android.frontend.matterthread.MatterThreadTerminal
 import io.homeassistant.companion.android.frontend.permissions.PermissionRequest
 import io.homeassistant.companion.android.util.compose.HAPreviews
 
@@ -302,6 +303,99 @@ class FrontendScreenScreenshotTest {
                     isAuthError = true,
                     onProceed = { _, _, _ -> },
                     onCancel = {},
+                ),
+                webViewClient = WebViewClient(),
+                webChromeClient = WebChromeClient(),
+                frontendJsCallback = FrontendJsBridge.noOp,
+                onBlockInsecureRetry = {},
+                onOpenExternalLink = {},
+                onBlockInsecureHelpClick = {},
+                onOpenSettings = {},
+                onChangeSecurityLevel = {},
+                onOpenLocationSettings = {},
+                onConfigureHomeNetwork = { _ -> },
+                onSecurityLevelHelpClick = {},
+                onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
+            )
+        }
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `FrontendScreen Content with Matter Thread progress dialog`() {
+        HAThemeForPreview {
+            FrontendScreenContent(
+                onBackClick = {},
+                viewState = FrontendViewState.Content(
+                    serverId = 1,
+                    url = "https://example.com",
+                ),
+                pendingDialog = FrontendDialog.MatterThreadProgressDialog,
+                webViewClient = WebViewClient(),
+                webChromeClient = WebChromeClient(),
+                frontendJsCallback = FrontendJsBridge.noOp,
+                onBlockInsecureRetry = {},
+                onOpenExternalLink = {},
+                onBlockInsecureHelpClick = {},
+                onOpenSettings = {},
+                onChangeSecurityLevel = {},
+                onOpenLocationSettings = {},
+                onConfigureHomeNetwork = { _ -> },
+                onSecurityLevelHelpClick = {},
+                onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
+            )
+        }
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `FrontendScreen Content with Matter Thread no dataset dialog`() {
+        HAThemeForPreview {
+            FrontendScreenContent(
+                onBackClick = {},
+                viewState = FrontendViewState.Content(
+                    serverId = 1,
+                    url = "https://example.com",
+                ),
+                pendingDialog = FrontendDialog.MatterThreadTerminalDialog(
+                    terminal = MatterThreadTerminal.Dialog.ThreadNoDataset,
+                    onDismiss = {},
+                ),
+                webViewClient = WebViewClient(),
+                webChromeClient = WebChromeClient(),
+                frontendJsCallback = FrontendJsBridge.noOp,
+                onBlockInsecureRetry = {},
+                onOpenExternalLink = {},
+                onBlockInsecureHelpClick = {},
+                onOpenSettings = {},
+                onChangeSecurityLevel = {},
+                onOpenLocationSettings = {},
+                onConfigureHomeNetwork = { _ -> },
+                onSecurityLevelHelpClick = {},
+                onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
+            )
+        }
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `FrontendScreen Content with Matter Thread not connected dialog`() {
+        HAThemeForPreview {
+            FrontendScreenContent(
+                onBackClick = {},
+                viewState = FrontendViewState.Content(
+                    serverId = 1,
+                    url = "https://example.com",
+                ),
+                pendingDialog = FrontendDialog.MatterThreadTerminalDialog(
+                    terminal = MatterThreadTerminal.Dialog.ThreadNotConnected,
+                    onDismiss = {},
                 ),
                 webViewClient = WebViewClient(),
                 webChromeClient = WebChromeClient(),
