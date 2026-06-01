@@ -14,6 +14,10 @@ import timber.log.Timber
 private val ANDROID_AUTO_GROUP_SUFFIXES = listOf(
     "|g:ranker_group",
     "|g:Aggregate_AlertingSection",
+    "|g:Aggregate_NewsSection",
+    "|g:Aggregate_PromotionsSection",
+    "|g:Aggregate_RecsSection",
+    "|g:Aggregate_SocialSection",
     "|g:Aggregate_SilentSection",
 )
 
