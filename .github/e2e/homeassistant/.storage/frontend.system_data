@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "frontend.system_data",
+  "data": {
+    "core": {
+      "onboarded_version": "2026.5.4",
+      "onboarded_date": "2026-06-01T12:31:36.288Z"
+    }
+  }
+}

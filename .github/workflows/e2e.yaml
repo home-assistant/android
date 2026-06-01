@@ -45,10 +45,11 @@ jobs:
       id-token: write
     env:
       E2E_FORWARD_IP: 172.16.0.2
+      E2E_HOME_ASSISTANT_VERSION: 2026.5.4
       E2E_HOME_ASSISTANT_HOST: ha.internal
       E2E_HOME_ASSISTANT_URL: http://ha.internal:8123
-      E2E_HOME_ASSISTANT_USERNAME: ha
-      E2E_HOME_ASSISTANT_PASSWORD: ha
+      E2E_HOME_ASSISTANT_USERNAME: citest
+      E2E_HOME_ASSISTANT_PASSWORD: "h7jk99&U"
       MAESTRO_VERSION: 2.6.0
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -65,7 +66,7 @@ jobs:
         id: homeassistant
         uses: ludeeus/setup-homeassistant@27c93bb42c944a9973941bd05d32b3a451017073 # main
         with:
-          tag: stable
+          tag: ${{ env.E2E_HOME_ASSISTANT_VERSION }}
           config-dir: .github/e2e/homeassistant
 
       - name: Verify Home Assistant setup
