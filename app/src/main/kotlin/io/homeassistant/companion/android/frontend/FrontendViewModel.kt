@@ -2,7 +2,9 @@ package io.homeassistant.companion.android.frontend
 
 import android.net.Uri
 import android.view.View
+import androidx.activity.result.ActivityResult
 import androidx.annotation.VisibleForTesting
+import androidx.core.net.toUri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -36,6 +38,7 @@ import io.homeassistant.companion.android.frontend.improv.FrontendImprovHandler
 import io.homeassistant.companion.android.frontend.js.BridgeState
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridgeFactory
 import io.homeassistant.companion.android.frontend.js.FrontendJsCallback
+import io.homeassistant.companion.android.frontend.matterthread.FrontendMatterThreadOrchestrator
 import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
@@ -104,6 +107,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val exoPlayerManager: FrontendExoPlayerManager,
     private val improvHandler: FrontendImprovHandler,
     private val barcodeScannerHandler: FrontendBarcodeScannerHandler,
+    private val matterThreadOrchestrator: FrontendMatterThreadOrchestrator,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -126,6 +130,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         exoPlayerManager: FrontendExoPlayerManager,
         improvHandler: FrontendImprovHandler,
         barcodeScannerHandler: FrontendBarcodeScannerHandler,
+        matterThreadOrchestrator: FrontendMatterThreadOrchestrator,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
         initialPath = savedStateHandle.toRoute<FrontendRoute>().path,
@@ -145,6 +150,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         exoPlayerManager = exoPlayerManager,
         improvHandler = improvHandler,
         barcodeScannerHandler = barcodeScannerHandler,
+        matterThreadOrchestrator = matterThreadOrchestrator,
     )
 
     /**
@@ -362,6 +368,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             }
         }
 
+        collectMatterThreadEvents()
+
         loadServer()
     }
 
@@ -558,6 +566,14 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         viewModelScope.launch { barcodeScannerHandler.onCancelled(forAction) }
     }
 
+    /**
+     * Forwarded ActivityResult after a Matter/Thread Play Services
+     * intent completes.
+     */
+    fun onMatterThreadIntentResult(result: ActivityResult) {
+        viewModelScope.launch { matterThreadOrchestrator.onMatterThreadIntentResult(result) }
+    }
+
     private suspend fun handleGestureResult(result: GestureResult) {
         when (result) {
             is GestureResult.Navigate -> _events.emit(result.event)
@@ -618,6 +634,33 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 path = path,
             ).collect { result ->
                 handleUrlResult(result)
+            }
+        }
+    }
+
+    /**
+     * Bridges [matterThreadOrchestrator] events onto the ViewModel's [FrontendEvent] stream so
+     * the screen only has one event flow to collect.
+     */
+    private fun collectMatterThreadEvents() {
+        viewModelScope.launch {
+            matterThreadOrchestrator.events.collect { event ->
+                _events.emit(
+                    when (event) {
+                        is FrontendMatterThreadOrchestrator.Event.LaunchIntent ->
+                            FrontendEvent.LaunchMatterThreadIntent(event.intentSender)
+                        is FrontendMatterThreadOrchestrator.Event.ShowSnackbar ->
+                            FrontendEvent.ShowSnackbar(
+                                messageResId = event.snackbar.messageRes,
+                                action = event.snackbar.helpUrl?.let { url ->
+                                    FrontendEvent.ShowSnackbar.Action(
+                                        labelResId = commonR.string.get_help,
+                                        event = FrontendEvent.OpenExternalLink(url.toUri()),
+                                    )
+                                },
+                            )
+                    },
+                )
             }
         }
     }
@@ -693,11 +736,14 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 result.event?.let { _events.tryEmit(it) }
             }
 
-            is FrontendHandlerEvent.StartMatterCommissioning,
-            is FrontendHandlerEvent.ImportThreadCredentials,
-            -> {
-                // Matter/Thread handling lands in a follow-up PR
-                Timber.d("Matter/Thread event received but not yet handled: $result")
+            is FrontendHandlerEvent.StartMatterCommissioning -> {
+                viewModelScope.launch { matterThreadOrchestrator.onStartMatterCommissioning() }
+            }
+
+            is FrontendHandlerEvent.ImportThreadCredentials -> {
+                viewModelScope.launch {
+                    matterThreadOrchestrator.onImportThreadCredentials(serverId = _viewState.value.serverId)
+                }
             }
 
             is FrontendHandlerEvent.ShowBarcodeScanner -> barcodeScannerHandler.show(
