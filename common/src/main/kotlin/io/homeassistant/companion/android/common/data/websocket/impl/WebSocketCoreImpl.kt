@@ -368,7 +368,7 @@ internal class WebSocketCoreImpl(
      *
      * New connection attempts can be made after this call.
      */
-    suspend fun close(code: Int, reason: String?) = connectedMutex.withLock {
+    private suspend fun close(code: Int, reason: String?) = connectedMutex.withLock {
         // Cancel this so new connection attempts will create a new deferred and not await this one
         pendingConnectDeferred?.cancel()
         pendingConnectDeferred = null
