@@ -1618,14 +1618,18 @@ class MessagingManager @Inject constructor(
                     )
                 }
 
+                val authenticationRequired = data["action_${i}_authenticationRequired"]?.toBoolean() == true
                 when {
                     notificationAction.key == URI -> {
                         if (!notificationAction.uri.isNullOrBlank()) {
-                            builder.addAction(
+                            val action = NotificationCompat.Action.Builder(
                                 commonR.drawable.ic_globe,
                                 notificationAction.title,
                                 createOpenUriPendingIntent(notificationAction.uri, data),
                             )
+                                .setAuthenticationRequired(authenticationRequired)
+                                .build()
+                            builder.addAction(action)
                         }
                     }
 
@@ -1647,6 +1651,7 @@ class MessagingManager @Inject constructor(
                         )
                             .addRemoteInput(remoteInput)
                             .setShowsUserInterface(false)
+                            .setAuthenticationRequired(authenticationRequired)
                             .build()
                         builder.addAction(action)
                     }
@@ -1664,6 +1669,7 @@ class MessagingManager @Inject constructor(
                             actionPendingIntent,
                         )
                             .setShowsUserInterface(false)
+                            .setAuthenticationRequired(authenticationRequired)
                             .build()
                         builder.addAction(action)
                     }

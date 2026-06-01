@@ -3,6 +3,7 @@
     tools:ignore="MissingDefaultResource">
     <release version="2026.6.1 - Main" versioncode="3">
         <change>Added support for Android 17's local network permission</change>
+        <change>Added support for the authenticationRequired flag of notification actions</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2026.6.1 - Wear" versioncode="2">
