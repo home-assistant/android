@@ -625,6 +625,13 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 result.event?.let { _events.tryEmit(it) }
             }
 
+            is FrontendHandlerEvent.StartMatterCommissioning,
+            is FrontendHandlerEvent.ImportThreadCredentials,
+            -> {
+                // Matter/Thread handling lands in a follow-up PR
+                Timber.d("Matter/Thread event received but not yet handled: $result")
+            }
+
             is FrontendHandlerEvent.ConfigSent,
             is FrontendHandlerEvent.UnknownMessage,
             is FrontendHandlerEvent.EntityAddToActionsSent,
