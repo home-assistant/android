@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.onboarding.welcome
 import android.content.ClipboardManager
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -36,6 +37,7 @@ class WelcomeInvitationScreenTest {
     @Test
     fun `Given WelcomeInvitationScreen when click on buttons then triggers callbacks`() {
         var acceptClicked = false
+        var rejectClicked = false
         var learnMoreClicked = false
 
         composeTestRule.apply {
@@ -43,6 +45,7 @@ class WelcomeInvitationScreenTest {
                 WelcomeInvitationScreen(
                     serverUrl = TEST_SERVER_URL,
                     onAcceptClick = { acceptClicked = true },
+                    onRejectClick = { rejectClicked = true },
                     onLearnMoreClick = { learnMoreClicked = true },
                 )
             }
@@ -53,10 +56,17 @@ class WelcomeInvitationScreenTest {
                 .performClick()
             assertTrue(acceptClicked)
 
-            onNodeWithText(stringResource(commonR.string.welcome_learn_more))
+            onNodeWithText(stringResource(commonR.string.welcome_invitation_reject))
                 .performScrollTo()
                 .assertIsDisplayed()
                 .performClick()
+            assertTrue(rejectClicked)
+
+            // Learn more lives in the top bar as a help action.
+            onNodeWithContentDescription(stringResource(commonR.string.get_help))
+                .assertIsDisplayed()
+                .performClick()
+            waitForIdle()
             assertTrue(learnMoreClicked)
         }
     }
@@ -68,6 +78,7 @@ class WelcomeInvitationScreenTest {
                 WelcomeInvitationScreen(
                     serverUrl = TEST_SERVER_URL,
                     onAcceptClick = {},
+                    onRejectClick = {},
                     onLearnMoreClick = {},
                 )
             }
@@ -86,6 +97,7 @@ class WelcomeInvitationScreenTest {
                 WelcomeInvitationScreen(
                     serverUrl = TEST_SERVER_URL,
                     onAcceptClick = {},
+                    onRejectClick = {},
                     onLearnMoreClick = {},
                 )
             }

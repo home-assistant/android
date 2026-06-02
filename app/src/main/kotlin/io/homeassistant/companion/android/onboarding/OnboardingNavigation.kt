@@ -146,6 +146,15 @@ internal fun NavGraphBuilder.onboarding(
             onAcceptClick = { serverUrl ->
                 navController.navigateToConnection(serverUrl)
             },
+            onRejectClick = {
+                if (navController.canGoBack()) {
+                    navController.popBackStack()
+                } else {
+                    // The invitation is the start destination when launched from a link, so there is
+                    // nothing to go back to. Rejecting then closes the onboarding activity.
+                    (navController.context as? Activity)?.finish()
+                }
+            },
             onLearnMoreClick = {
                 navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, onShowSnackbar)
             },

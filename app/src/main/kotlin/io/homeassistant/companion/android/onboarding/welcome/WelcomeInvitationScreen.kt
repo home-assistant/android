@@ -26,6 +26,7 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HABanner
+import io.homeassistant.companion.android.common.compose.composable.HATopBar
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
@@ -39,6 +40,7 @@ private val INFO_ICON_SIZE = 16.dp
 internal fun WelcomeInvitationScreen(
     serverUrl: String,
     onAcceptClick: () -> Unit,
+    onRejectClick: () -> Unit,
     onLearnMoreClick: suspend () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -47,8 +49,10 @@ internal fun WelcomeInvitationScreen(
         details = stringResource(commonR.string.welcome_details),
         primaryButtonText = stringResource(commonR.string.welcome_invitation_accept),
         onPrimaryClick = onAcceptClick,
-        onLearnMoreClick = onLearnMoreClick,
+        secondaryButtonText = stringResource(commonR.string.welcome_invitation_reject),
+        onSecondaryClick = onRejectClick,
         modifier = modifier,
+        topBar = { HATopBar(onHelpClick = onLearnMoreClick) },
     ) {
         InvitationWarning(serverUrl = serverUrl)
     }
@@ -125,6 +129,7 @@ private fun WelcomeInvitationScreenPreview() {
         WelcomeInvitationScreen(
             serverUrl = "http://homeassistant.local:8123",
             onAcceptClick = {},
+            onRejectClick = {},
             onLearnMoreClick = {},
         )
     }

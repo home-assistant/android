@@ -1407,8 +1407,9 @@
     <string name="welcome_learn_more">Learn more</string>
     <string name="welcome_invitation_title">You\'ve been invited</string>
     <string name="welcome_invitation_server_label">Home\u00A0Assistant address</string>
-    <string name="welcome_invitation_warning_detail">Only continue if you trust the person who shared it. Connecting to an unknown server could give it access to data the app sends, such as your location and device information.</string>
+    <string name="welcome_invitation_warning_detail">Only accept this invite if you trust the person who shared it. Connecting to an unknown server could give it access to data you enter or sent by the app, such as your location and device information.</string>
     <string name="welcome_invitation_accept">Accept</string>
+    <string name="welcome_invitation_reject">Reject</string>
     <string name="name_your_device_title">How would you like to name this device?</string>
     <string name="name_your_device_content">This is used to identify your device.</string>
     <string name="name_your_device_save">Save</string>

@@ -11,6 +11,7 @@ internal data class WelcomeInvitationRoute(val serverUrl: String)
 
 internal fun NavGraphBuilder.welcomeInvitationScreen(
     onAcceptClick: (serverUrl: String) -> Unit,
+    onRejectClick: () -> Unit,
     onLearnMoreClick: suspend () -> Unit,
 ) {
     composable<WelcomeInvitationRoute> { backStackEntry ->
@@ -18,6 +19,7 @@ internal fun NavGraphBuilder.welcomeInvitationScreen(
         WelcomeInvitationScreen(
             serverUrl = route.serverUrl,
             onAcceptClick = { onAcceptClick(route.serverUrl) },
+            onRejectClick = onRejectClick,
             onLearnMoreClick = onLearnMoreClick,
         )
     }

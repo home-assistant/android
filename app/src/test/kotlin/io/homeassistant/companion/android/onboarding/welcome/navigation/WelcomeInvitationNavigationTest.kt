@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.onboarding.welcome.navigation
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -57,8 +58,8 @@ internal class WelcomeInvitationNavigationTest : BaseOnboardingNavigationTest() 
     @Test
     fun `Given WelcomeInvitation when click Learn more then open docs`() {
         testNavigation(urlToOnboard = INVITATION_URL, fromInvitation = true) {
-            onNodeWithText(stringResource(commonR.string.welcome_learn_more))
-                .performScrollTo()
+            // Learn more lives in the top bar as a help action.
+            onNodeWithContentDescription(stringResource(commonR.string.get_help))
                 .assertIsDisplayed()
                 .performClick()
             coVerify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, any()) }
