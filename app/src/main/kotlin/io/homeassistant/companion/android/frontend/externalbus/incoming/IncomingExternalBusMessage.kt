@@ -108,7 +108,8 @@ data class OpenAssistSettingsMessage(override val id: Int? = null) : IncomingExt
 /**
  * Message indicating that the frontend theme has changed.
  *
- * Sent when the user changes the theme in the frontend.
+ * Sent when the user changes the theme in the frontend, allowing the app
+ * to update the status bar and navigation bar colors to match.
  * No response is expected for this message.
  */
 @Serializable
@@ -260,8 +261,8 @@ data class EntityAddToGetActionsPayload(@SerialName("entity_id") val entityId: S
 /**
  * Message requesting the app to run one of the "add to" actions previously offered for an entity.
  *
- * [EntityAddToPayload.appPayload] is the opaque identifier the app
- * returned for the chosen action, echoed back verbatim to select it. No response is expected.
+ * [EntityAddToPayload.appPayload] is the opaque identifier the app returned for the
+ * chosen action, echoed back verbatim to select it. No response is expected for this message.
  */
 @Serializable
 @SerialName("entity/add_to")

@@ -70,7 +70,7 @@ object NavigateToMessage {
 val ShowSidebarMessage: OutgoingExternalBusMessage = CommandMessage(command = "sidebar/show")
 
 /**
- * Reports an improv-capable BLE device to the frontend by its advertised [name].
+ * Reports an Improv-capable BLE device to the frontend by its advertised [name].
  *
  * This is a one-way command; the frontend does not respond.
  *
@@ -87,7 +87,7 @@ object ImprovDiscoveredDeviceMessage {
 }
 
 /**
- * Notifies the frontend that the user-selected improv device has finished its Wi-Fi onboarding.
+ * Notifies the frontend that the user-selected Improv device has finished its Wi-Fi onboarding.
  *
  * This is a one-way command; the frontend does not respond.
  *
