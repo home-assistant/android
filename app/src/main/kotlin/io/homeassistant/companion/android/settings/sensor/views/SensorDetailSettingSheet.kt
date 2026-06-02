@@ -233,21 +233,38 @@ private fun SheetEntryList(
     onToggle: (id: String, isChecked: Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (isLoading) {
-        Box(
-            modifier = modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center,
-        ) {
-            HALoading()
+    when {
+        isLoading -> {
+            Box(
+                modifier = modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                HALoading()
+            }
         }
-    } else {
-        LazyColumn(modifier = modifier.fillMaxWidth()) {
-            items(entries, key = { it.id }) { entry ->
-                BottomSheetSettingRow(
-                    label = entry.label,
-                    checked = isSelected(entry.id),
-                    onClick = { isChecked -> onToggle(entry.id, isChecked) },
+        entries.isEmpty() -> {
+            Box(
+                modifier = modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = stringResource(commonR.string.sensor_setting_allow_list_no_results),
+                    style = HATextStyle.Body.copy(
+                        textAlign = TextAlign.Center,
+                        color = LocalHAColorScheme.current.colorOnNeutralQuiet,
+                    ),
                 )
+            }
+        }
+        else -> {
+            LazyColumn(modifier = modifier.fillMaxWidth()) {
+                items(entries, key = { it.id }) { entry ->
+                    BottomSheetSettingRow(
+                        label = entry.label,
+                        checked = isSelected(entry.id),
+                        onClick = { isChecked -> onToggle(entry.id, isChecked) },
+                    )
+                }
             }
         }
     }
@@ -305,11 +322,6 @@ internal fun joinSelectedValues(values: List<String>): String {
     return values.joinToString().replace("[", "").replace("]", "")
 }
 
-/**
- * Single selectable row used inside [SensorDetailSettingSheet]. Built with Material 3 components and
- * the project's design tokens; intentionally separate from [SensorDetailSettingRow] used by the
- * legacy Material 2 dialog.
- */
 @Composable
 private fun BottomSheetSettingRow(
     label: String,
