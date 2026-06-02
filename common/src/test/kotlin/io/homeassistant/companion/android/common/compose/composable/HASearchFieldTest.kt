@@ -10,7 +10,6 @@ import androidx.compose.ui.test.performTextInput
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
-import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -28,12 +27,9 @@ import org.robolectric.annotation.Config
 class HASearchFieldTest {
 
     @get:Rule(order = 0)
-    val consoleLogRule = ConsoleLogRule()
-
-    @get:Rule(order = 1)
     val mainDispatcherRule = MainDispatcherJUnit4Rule()
 
-    @get:Rule(order = 2)
+    @get:Rule(order = 1)
     val composeTestRule = createAndroidComposeRule<ComponentActivity>(mainDispatcherRule.testDispatcher)
 
     private fun subject(
@@ -58,18 +54,7 @@ class HASearchFieldTest {
     }
 
     @Test
-    fun `Given empty field when rendered then clear icon is not shown`() {
-        subject(query = "")
-
-        composeTestRule.waitForIdle()
-
-        composeTestRule
-            .onNodeWithContentDescription(composeTestRule.stringResource(commonR.string.clear_search))
-            .assertDoesNotExist()
-    }
-
-    @Test
-    fun `Given empty field when rendered then search label is shown`() {
+    fun `Given empty field when rendered then search label is shown and clear icon is hidden`() {
         subject(query = "")
 
         composeTestRule.waitForIdle()
@@ -77,6 +62,10 @@ class HASearchFieldTest {
         composeTestRule
             .onNodeWithText(composeTestRule.stringResource(commonR.string.search))
             .assertIsDisplayed()
+
+        composeTestRule
+            .onNodeWithContentDescription(composeTestRule.stringResource(commonR.string.clear_search))
+            .assertDoesNotExist()
     }
 
     @Test
@@ -94,7 +83,7 @@ class HASearchFieldTest {
     }
 
     @Test
-    fun `Given text in field when clear icon clicked then field is cleared and onQueryChange receives empty string`() {
+    fun `Given text in field when clear icon clicked then field clears, search label reappears and empty string emitted`() {
         val emitted = mutableListOf<String>()
 
         subject(onQueryChange = { emitted += it })
@@ -108,40 +97,30 @@ class HASearchFieldTest {
             .onNodeWithContentDescription(composeTestRule.stringResource(commonR.string.clear_search))
             .performClick()
 
-        composeTestRule.waitForIdle()
+        advancePastDebounce()
 
+        // The clear icon only shows for non-empty text, so it disappears once the field is cleared.
         composeTestRule
             .onNodeWithContentDescription(composeTestRule.stringResource(commonR.string.clear_search))
             .assertDoesNotExist()
 
+        composeTestRule
+            .onNodeWithText(composeTestRule.stringResource(commonR.string.search))
+            .assertIsDisplayed()
+
         assertTrue(
+            "Expected 'chrome' emitted before clear, got: $emitted",
+            emitted.contains("chrome"),
+        )
+        assertEquals(
             "Expected empty string emitted after clear, got: $emitted",
-            emitted.last() == "",
+            "",
+            emitted.last(),
         )
     }
 
     @Test
-    fun `Given text in field when clear icon clicked then search label reappears`() {
-        subject()
-
-        composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.search))
-            .performTextInput("chrome")
-
-        composeTestRule.waitForIdle()
-
-        composeTestRule
-            .onNodeWithContentDescription(composeTestRule.stringResource(commonR.string.clear_search))
-            .performClick()
-
-        composeTestRule.waitForIdle()
-
-        composeTestRule
-            .onNodeWithText(composeTestRule.stringResource(commonR.string.search))
-            .assertIsDisplayed()
-    }
-
-    @Test
-    fun `Given non-empty text when debounce not yet elapsed then onQueryChange has not received it`() {
+    fun `Given non-empty text when typed then onQueryChange emits only after the debounce elapses`() {
         val emitted = mutableListOf<String>()
 
         subject(onQueryChange = { emitted += it })
@@ -169,21 +148,8 @@ class HASearchFieldTest {
             emitted,
         )
 
+        // Cross the debounce boundary: the typed value is now propagated.
         composeTestRule.mainClock.autoAdvance = true
-    }
-
-    @Test
-    fun `Given non-empty text when debounce elapses then onQueryChange receives typed value`() {
-        val emitted = mutableListOf<String>()
-
-        subject(onQueryChange = { emitted += it })
-
-        composeTestRule.waitForIdle()
-        mainDispatcherRule.testDispatcher.scheduler.runCurrent()
-
-        composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.search))
-            .performTextInput("chrome")
-
         advancePastDebounce()
 
         assertTrue(
