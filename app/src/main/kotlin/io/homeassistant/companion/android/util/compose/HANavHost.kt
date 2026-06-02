@@ -77,6 +77,7 @@ internal fun HANavHost(
                 hideExistingServers = (startDestination as? OnboardingRoute)?.hideExistingServers == true,
                 skipWelcome = (startDestination as? OnboardingRoute)?.skipWelcome == true,
                 hasLocationTracking = (startDestination as? OnboardingRoute)?.hasLocationTracking == true,
+                fromInvitation = (startDestination as? OnboardingRoute)?.fromInvitation == true,
             )
             if (startDestination is WearOnboardingRoute) {
                 wearOnboarding(

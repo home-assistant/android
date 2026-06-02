@@ -78,6 +78,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
         hideExistingServers: Boolean,
         skipWelcome: Boolean,
         hasLocationTracking: Boolean,
+        fromInvitation: Boolean,
         testContent: suspend AndroidComposeTestRule<*, *>.() -> Unit,
     ) {
         setContent(
@@ -85,6 +86,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
             hideExistingServers = hideExistingServers,
             skipWelcome = skipWelcome,
             hasLocationTracking = hasLocationTracking,
+            fromInvitation = fromInvitation,
         )
         runTest(mainDispatcherRule.testDispatcher) {
             composeTestRule.testContent()

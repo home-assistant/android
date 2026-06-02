@@ -115,6 +115,13 @@ class LaunchActivity : AppCompatActivity() {
         ) : DeepLink
 
         /**
+         * Opens the onboarding flow from an invitation link.
+         *
+         * @property serverUrl The Home Assistant server URL the invitation wants to connect to.
+         */
+        data class OpenInvitation(val serverUrl: String) : DeepLink
+
+        /**
          * Navigates to a specific path within the webview.
          * @property path The path to navigate to within the Home Assistant interface.
          * @property serverId The ID of the server to use for navigation.
