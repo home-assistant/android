@@ -1618,14 +1618,18 @@ class MessagingManager @Inject constructor(
                     )
                 }
 
+                val authenticationRequired = data["action_${i}_authenticationRequired"]?.toBoolean() == true
                 when {
                     notificationAction.key == URI -> {
                         if (!notificationAction.uri.isNullOrBlank()) {
-                            builder.addAction(
+                            val action = NotificationCompat.Action.Builder(
                                 commonR.drawable.ic_globe,
                                 notificationAction.title,
                                 createOpenUriPendingIntent(notificationAction.uri, data),
                             )
+                                .setAuthenticationRequired(authenticationRequired)
+                                .build()
+                            builder.addAction(action)
                         }
                     }
 
@@ -1647,6 +1651,7 @@ class MessagingManager @Inject constructor(
                         )
                             .addRemoteInput(remoteInput)
                             .setShowsUserInterface(false)
+                            .setAuthenticationRequired(authenticationRequired)
                             .build()
                         builder.addAction(action)
                     }
@@ -1659,11 +1664,14 @@ class MessagingManager @Inject constructor(
                             PendingIntent.FLAG_IMMUTABLE,
                         )
                         val action = NotificationCompat.Action.Builder(
-                            commonR.drawable.ic_stat_ic_notification,
+                            // Intentionally use no icon so Android Auto / heads-up notifications show the action
+                            // title instead of replacing it with an icon
+                            null,
                             notificationAction.title,
                             actionPendingIntent,
                         )
                             .setShowsUserInterface(false)
+                            .setAuthenticationRequired(authenticationRequired)
                             .build()
                         builder.addAction(action)
                     }

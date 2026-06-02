@@ -74,7 +74,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="110"
+            line="128"
             column="17"/>
     </issue>
 
@@ -96,7 +96,7 @@
         errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="328"
+            line="340"
             column="27"/>
     </issue>
 
@@ -107,7 +107,7 @@
         errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="930"
+            line="942"
             column="27"/>
     </issue>
 
@@ -129,7 +129,7 @@
         errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="97"
+            line="115"
             column="26"/>
     </issue>
 
@@ -140,7 +140,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="98"
+            line="116"
             column="25"/>
     </issue>
 
@@ -332,13 +332,123 @@
     </issue>
 
     <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="    FrontendScreenContent("
+        errorLine2="    ^">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/frontend/FrontendScreen.kt"
+            line="153"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="        StateOverlay("
+        errorLine2="        ^">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/frontend/FrontendScreen.kt"
+            line="269"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="        is FrontendViewState.SecurityLevelRequired -> SecurityLevelOverlay("
+        errorLine2="                                                      ^">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/frontend/FrontendScreen.kt"
+            line="315"
+            column="55"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="        LocationForSecureConnectionScreen("
+        errorLine2="        ^">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/frontend/FrontendScreen.kt"
+            line="352"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="            CreateShortcutView("
+        errorLine2="            ^">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/views/ManageShortcutsView.kt"
+            line="76"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="        ShortcutRadioButtonRow(viewModel = viewModel, type = &quot;lovelace&quot;, index = i)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/views/ManageShortcutsView.kt"
+            line="251"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="        ShortcutRadioButtonRow(viewModel = viewModel, type = &quot;entityId&quot;, index = i)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/views/ManageShortcutsView.kt"
+            line="252"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="        AddDeleteButton(viewModel = viewModel, shortcutId = shortcutId, i)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/views/ManageShortcutsView.kt"
+            line="347"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="                SensorDetailSettingDialog("
+        errorLine2="                ^">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
+            line="164"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="                LoadWearFavoritesSettings("
+        errorLine2="                ^">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/settings/wear/views/SettingsWearHomeView.kt"
+            line="46"
+            column="17"/>
+    </issue>
+
+    <issue
         id="CustomSplashScreen"
         message="The application should not provide its own launch screen"
         errorLine1="class LaunchActivity : AppCompatActivity() {"
         errorLine2="      ~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/launch/LaunchActivity.kt"
-            line="73"
+            line="86"
             column="7"/>
     </issue>
 
@@ -382,7 +492,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="447"
+            line="459"
             column="13"/>
     </issue>
 
@@ -690,7 +800,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="82"
+            line="103"
             column="5"/>
     </issue>
 
@@ -701,7 +811,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="96"
+            line="117"
             column="5"/>
     </issue>
 
@@ -712,7 +822,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="111"
+            line="132"
             column="5"/>
     </issue>
 
@@ -723,7 +833,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="127"
+            line="148"
             column="5"/>
     </issue>
 
@@ -734,7 +844,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="144"
+            line="165"
             column="5"/>
     </issue>
 
@@ -745,7 +855,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="159"
+            line="180"
             column="5"/>
     </issue>
 
@@ -756,7 +866,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="176"
+            line="197"
             column="5"/>
     </issue>
 
@@ -767,7 +877,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="193"
+            line="214"
             column="5"/>
     </issue>
 
@@ -778,7 +888,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="210"
+            line="231"
             column="5"/>
     </issue>
 
@@ -789,7 +899,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="226"
+            line="247"
             column="5"/>
     </issue>
 
@@ -800,7 +910,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="249"
+            line="270"
             column="5"/>
     </issue>
 
@@ -811,7 +921,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="275"
+            line="296"
             column="5"/>
     </issue>
 
@@ -1471,7 +1581,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/todo/TodoWidgetConfigureActivity.kt"
-            line="135"
+            line="134"
             column="5"/>
     </issue>
 
@@ -1517,7 +1627,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="35"
+            line="53"
             column="9"/>
     </issue>
 
@@ -1528,7 +1638,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="37"
+            line="55"
             column="9"/>
     </issue>
 
@@ -2102,7 +2212,7 @@
         errorLine2="^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/compose/Theme.kt"
-            line="155"
+            line="154"
             column="1"/>
     </issue>
 
