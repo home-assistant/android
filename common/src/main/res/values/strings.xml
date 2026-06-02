@@ -1406,7 +1406,7 @@
     <string name="welcome_connect_to_ha">Connect to my Home\u00A0Assistant server</string>
     <string name="welcome_learn_more">Learn more</string>
     <string name="welcome_invitation_title">You\'ve been invited</string>
-    <string name="welcome_invitation_server_label">HomeOpen editorAssistant address</string>
+    <string name="welcome_invitation_server_label">Home\u00A0Assistant address</string>
     <string name="welcome_invitation_warning_detail">Only continue if you trust the person who shared it. Connecting to an unknown server could give it access to data the app sends, such as your location and device information.</string>
     <string name="welcome_invitation_accept">Accept</string>
     <string name="name_your_device_title">How would you like to name this device?</string>
