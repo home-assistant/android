@@ -22,7 +22,7 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.exoplayer.FrontendExoPlayerManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
-import io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage
+import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserRequest
 import io.homeassistant.companion.android.frontend.gesture.FrontendGestureHandler
@@ -454,7 +454,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      */
     fun onNfcWriteCompleted(messageId: Int) {
         viewModelScope.launch {
-            externalBusRepository.send(ResultMessage.success(messageId))
+            externalBusRepository.send(SuccessResultMessage(messageId))
         }
     }
 
@@ -621,8 +621,30 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 Timber.d("Improv event received but not yet handled: $result")
             }
 
+            is FrontendHandlerEvent.EntityAddToExecuted -> {
+                result.event?.let { _events.tryEmit(it) }
+            }
+
+            is FrontendHandlerEvent.StartMatterCommissioning,
+            is FrontendHandlerEvent.ImportThreadCredentials,
+            -> {
+                // Matter/Thread handling lands in a follow-up PR
+                Timber.d("Matter/Thread event received but not yet handled: $result")
+            }
+
+            is FrontendHandlerEvent.ShowBarcodeScanner,
+            is FrontendHandlerEvent.NotifyBarcodeScanner,
+            FrontendHandlerEvent.CloseBarcodeScanner,
+            -> {
+                // Barcode scanner handling lands in a follow-up PR; the messages are already typed
+                // and hasBarCodeScanner is gated on FEATURE_CAMERA_ANY && !isAutomotive so the
+                // frontend should not send these on devices without a camera.
+                Timber.d("Barcode event received but not yet handled: $result")
+            }
+
             is FrontendHandlerEvent.ConfigSent,
             is FrontendHandlerEvent.UnknownMessage,
+            is FrontendHandlerEvent.EntityAddToActionsSent,
             -> {
                 // No-op
             }

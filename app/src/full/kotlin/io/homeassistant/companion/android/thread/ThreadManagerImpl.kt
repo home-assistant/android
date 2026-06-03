@@ -15,6 +15,7 @@ import com.google.android.gms.threadnetwork.ThreadNetworkStatusCodes
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetResponse
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.isAutomotive
 import javax.inject.Inject
 import kotlin.coroutines.resume
@@ -33,7 +34,7 @@ class ThreadManagerImpl @Inject constructor(
         private const val BORDER_AGENT_ID = "0000000000000001"
     }
 
-    override fun appSupportsThread(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 &&
+    override fun appSupportsThread(): Boolean = SdkVersion.isAtLeast(Build.VERSION_CODES.O_MR1) &&
         !packageManager.isAutomotive()
 
     override suspend fun coreSupportsThread(serverId: Int): Boolean {

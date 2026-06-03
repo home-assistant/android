@@ -384,6 +384,7 @@ class FrontendScreenTest {
         fcmSupport = false,
         notificationStatusProvider = mockk(relaxed = true),
         permissionChecker = { false },
+        checkLocalNetworkPermissionUseCase = mockk(relaxed = true),
     )
 
     private fun AndroidComposeTestRule<ActivityScenarioRule<HiltComponentActivity>, HiltComponentActivity>.setFrontendScreen(

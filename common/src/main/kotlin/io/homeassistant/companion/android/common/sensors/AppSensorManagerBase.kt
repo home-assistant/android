@@ -9,6 +9,7 @@ import android.os.Process
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.util.SdkVersion
 import java.math.RoundingMode
 import timber.log.Timber
 
@@ -100,7 +101,7 @@ abstract class AppSensorManagerBase : SensorManager {
 
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return when {
-            (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) ->
+            (SdkVersion.isAtLeast(Build.VERSION_CODES.P)) ->
                 listOf(
                     currentVersion,
                     app_rx_gb,
@@ -135,7 +136,7 @@ abstract class AppSensorManagerBase : SensorManager {
         updateImportanceCheck(context)
         val usageStatsManager = context.getSystemService<UsageStatsManager>()!!
         updateAppInactive(context, usageStatsManager)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.P)) {
             updateAppStandbyBucket(context, usageStatsManager)
         }
     }

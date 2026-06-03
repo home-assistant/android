@@ -90,6 +90,7 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import java.net.URL
 import kotlinx.coroutines.launch
@@ -143,7 +144,7 @@ internal fun ServerDiscoveryScreen(
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 private fun rememberLocalNetworkPermissionGranted(onDenied: () -> Unit): Boolean {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.CINNAMON_BUN) return true
+    if (!SdkVersion.isAtLeast(Build.VERSION_CODES.CINNAMON_BUN)) return true
 
     val permissionState = rememberPermissionState(Manifest.permission.ACCESS_LOCAL_NETWORK) { granted ->
         if (!granted) onDenied()

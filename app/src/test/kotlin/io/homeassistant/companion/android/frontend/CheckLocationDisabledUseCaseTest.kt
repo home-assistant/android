@@ -2,9 +2,11 @@ package io.homeassistant.companion.android.frontend
 
 import android.Manifest
 import android.content.Context
+import android.os.Build
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
@@ -33,6 +35,7 @@ class CheckLocationDisabledUseCaseTest {
 
     @BeforeEach
     fun setUp() {
+        SdkVersion.sdkInt = Build.VERSION_CODES.M
         mockkObject(DisabledLocationHandler)
         mockkObject(SensorReceiver)
         every { SensorReceiver.MANAGERS } returns emptyList()

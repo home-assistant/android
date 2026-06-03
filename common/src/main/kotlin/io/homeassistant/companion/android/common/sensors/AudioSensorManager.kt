@@ -8,6 +8,7 @@ import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.sensor.toSensorsWithAttributes
 import java.util.concurrent.ConcurrentHashMap
 
@@ -51,7 +52,7 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_description_mic_muted,
             "mdi:microphone-off",
             updateType =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            if (SdkVersion.isAtLeast(Build.VERSION_CODES.P)) {
                 SensorManager.BasicSensor.UpdateType.INTENT
             } else {
                 SensorManager.BasicSensor.UpdateType.WORKER
@@ -71,7 +72,7 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_description_speakerphone,
             "mdi:volume-high",
             updateType =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
                 SensorManager.BasicSensor.UpdateType.INTENT
             } else {
                 SensorManager.BasicSensor.UpdateType.WORKER
@@ -164,7 +165,7 @@ class AudioSensorManager : SensorManager {
             musicActive, volAlarm, volCall, volMusic, volRing, volNotification, volSystem,
             volDTMF,
         )
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        return if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             allSupportedSensors.plus(volAccessibility)
         } else {
             allSupportedSensors
@@ -190,7 +191,7 @@ class AudioSensorManager : SensorManager {
         updateVolumeNotification(context, audioManager)
         updateVolumeSystem(context, audioManager)
         updateVolumeDTMF(context, audioManager)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             updateVolumeAccessibility(context, audioManager)
         }
     }
@@ -397,7 +398,7 @@ class AudioSensorManager : SensorManager {
         }
 
         val current = audioManager.getStreamVolume(streamType)
-        val min = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        val min = if (SdkVersion.isAtLeast(Build.VERSION_CODES.P)) {
             audioManager.getStreamMinVolume(streamType)
         } else {
             0

@@ -24,6 +24,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.friendlyName
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -86,7 +87,7 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity<StaticWidgetEn
             lifecycleScope.launch {
                 if (requestLauncherSetup) {
                     if (
-                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                        SdkVersion.isAtLeast(Build.VERSION_CODES.O) &&
                         isValidServerId()
                     ) {
                         requestWidgetCreation()

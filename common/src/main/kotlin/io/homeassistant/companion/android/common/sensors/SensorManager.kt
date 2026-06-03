@@ -15,6 +15,7 @@ import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.AnySerializer
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.SensorDao
@@ -90,14 +91,14 @@ interface SensorManager {
 
     fun checkUsageStatsPermission(context: Context): Boolean {
         val pm = context.packageManager
-        val appInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val appInfo = if (SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
             pm.getApplicationInfo(context.packageName, PackageManager.ApplicationInfoFlags.of(0))
         } else {
             @Suppress("DEPRECATION")
             pm.getApplicationInfo(context.packageName, 0)
         }
         val appOpsManager = context.getSystemService<AppOpsManager>()
-        val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        val mode = if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
             appOpsManager?.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, appInfo.uid, appInfo.packageName)
         } else {
             @Suppress("DEPRECATION")

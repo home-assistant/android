@@ -7,10 +7,16 @@ import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
 import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import io.homeassistant.companion.android.frontend.WebViewAction
+import io.homeassistant.companion.android.frontend.addto.FrontendEntityAddToHandler
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
+import io.homeassistant.companion.android.frontend.externalbus.incoming.BarcodeCloseMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.BarcodeNotifyMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.BarcodeScanMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConfigGetMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ConnectionStatusMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.EntityAddToGetActionsMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.EntityAddToMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerPlayHlsMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerResizeMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerStopMessage
@@ -19,14 +25,17 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticMe
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovConfigureDeviceMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovScanMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.IncomingExternalBusMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterCommissionMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistSettingsMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenSettingsMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.TagWriteMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ThemeUpdateMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.ThreadImportCredentialsMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.UnknownIncomingMessage
-import io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResult
-import io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage
+import io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResultMessage
+import io.homeassistant.companion.android.frontend.externalbus.outgoing.EntityAddToActionsResultMessage
+import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
 import io.homeassistant.companion.android.frontend.improv.BluetoothCapabilities
 import io.homeassistant.companion.android.frontend.js.FrontendJsHandler
 import io.homeassistant.companion.android.frontend.session.AuthPayload
@@ -36,6 +45,7 @@ import io.homeassistant.companion.android.frontend.session.ServerSessionManager
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
 import io.homeassistant.companion.android.util.sensitive
+import io.homeassistant.companion.android.webview.externalbus.ExternalEntityAddToAction
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -68,6 +78,7 @@ class FrontendMessageHandler @Inject constructor(
     private val sessionManager: ServerSessionManager,
     private val downloadManager: FrontendDownloadManager,
     private val bluetoothCapabilities: BluetoothCapabilities,
+    private val entityAddToHandler: FrontendEntityAddToHandler,
     @param:IsAutomotive private val isAutomotive: Boolean,
 ) : FrontendJsHandler,
     FrontendBusObserver {
@@ -198,7 +209,7 @@ class FrontendMessageHandler @Inject constructor(
                     FrontendHandlerEvent.UnknownMessage
                 } else {
                     Timber.d("exoplayer/play_hls url=${sensitive(url)} muted=${message.payload.muted}")
-                    externalBusRepository.send(ResultMessage(id = message.id, success = true))
+                    externalBusRepository.send(SuccessResultMessage(id = message.id))
                     FrontendHandlerEvent.ExoPlayerAction.PlayHls(
                         messageId = message.id,
                         url = url.toUri(),
@@ -228,6 +239,26 @@ class FrontendMessageHandler @Inject constructor(
                 FrontendHandlerEvent.DownloadCompleted(result)
             }
 
+            is BarcodeScanMessage -> {
+                Timber.d("Barcode scan request received with id: ${message.id}")
+                FrontendHandlerEvent.ShowBarcodeScanner(
+                    messageId = message.id ?: -1,
+                    title = message.payload.title,
+                    description = message.payload.description,
+                    alternativeOptionLabel = message.payload.alternativeOptionLabel,
+                )
+            }
+
+            is BarcodeNotifyMessage -> {
+                Timber.d("Barcode notify received")
+                FrontendHandlerEvent.NotifyBarcodeScanner(message.payload.message)
+            }
+
+            is BarcodeCloseMessage -> {
+                Timber.d("Barcode close received")
+                FrontendHandlerEvent.CloseBarcodeScanner
+            }
+
             is ImprovScanMessage -> {
                 Timber.d("improv/scan received with id: ${message.id}")
                 FrontendHandlerEvent.StartImprovScan
@@ -236,6 +267,30 @@ class FrontendMessageHandler @Inject constructor(
             is ImprovConfigureDeviceMessage -> {
                 Timber.d("improv/configure_device received with id: ${message.id}")
                 FrontendHandlerEvent.ConfigureImprovDevice(deviceName = message.payload.name)
+            }
+
+            is EntityAddToGetActionsMessage -> {
+                Timber.d("Entity add_to get_actions request received for: ${message.payload.entityId}")
+                val actions = entityAddToHandler.getActionsForEntity(message.payload.entityId)
+                externalBusRepository.send(EntityAddToActionsResultMessage(id = message.id, actions = actions))
+                FrontendHandlerEvent.EntityAddToActionsSent
+            }
+
+            is EntityAddToMessage -> {
+                Timber.d("Entity add_to request received for: ${message.payload.entityId}")
+                val action = ExternalEntityAddToAction.appPayloadToAction(message.payload.appPayload)
+                val event = entityAddToHandler.execute(message.payload.entityId, action)
+                FrontendHandlerEvent.EntityAddToExecuted(event)
+            }
+
+            is MatterCommissionMessage -> {
+                Timber.d("matter/commission received with id: ${message.id}")
+                FrontendHandlerEvent.StartMatterCommissioning(messageId = message.id)
+            }
+
+            is ThreadImportCredentialsMessage -> {
+                Timber.d("thread/import_credentials received with id: ${message.id}")
+                FrontendHandlerEvent.ImportThreadCredentials(messageId = message.id)
             }
 
             is UnknownIncomingMessage -> {
@@ -257,16 +312,14 @@ class FrontendMessageHandler @Inject constructor(
             0
         }
 
-        val response = ResultMessage.config(
+        val response = ConfigResultMessage(
             id = messageId,
-            config = ConfigResult.create(
-                hasNfc = hasNfc,
-                canCommissionMatter = canCommissionMatter,
-                canExportThread = canExportThread,
-                hasBarCodeScanner = hasBarCodeScanner,
-                canSetupImprov = bluetoothCapabilities.hasBluetoothLe(),
-                appVersion = appVersionProvider(),
-            ),
+            hasNfc = hasNfc,
+            canCommissionMatter = canCommissionMatter,
+            canExportThread = canExportThread,
+            hasBarCodeScanner = hasBarCodeScanner,
+            canSetupImprov = bluetoothCapabilities.hasBluetoothLe(),
+            appVersion = appVersionProvider(),
         )
         externalBusRepository.send(response)
     }

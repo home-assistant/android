@@ -714,13 +714,14 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     private fun createUpdateLocation(updateLocation: UpdateLocation): UpdateLocationIntegrationRequest {
         return UpdateLocationIntegrationRequest(
             UpdateLocationRequest(
-                updateLocation.gps,
-                updateLocation.gpsAccuracy,
-                updateLocation.locationName,
-                updateLocation.speed,
-                updateLocation.altitude,
-                updateLocation.course,
-                updateLocation.verticalAccuracy,
+                gps = updateLocation.gps,
+                gpsAccuracy = updateLocation.gpsAccuracy,
+                locationName = updateLocation.locationName,
+                inZones = updateLocation.inZones,
+                speed = updateLocation.speed,
+                altitude = updateLocation.altitude,
+                course = updateLocation.course,
+                verticalAccuracy = updateLocation.verticalAccuracy,
             ),
         )
     }
