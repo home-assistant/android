@@ -3,15 +3,11 @@ package io.homeassistant.companion.android.launch
 import android.content.Context
 import android.content.Intent
 
-internal fun Context.startLaunchOnboarding(urlToOnboard: String, hideExistingServers: Boolean, skipWelcome: Boolean) {
+internal fun Context.startLaunchInvitation(serverUrl: String) {
     startActivity(
         LaunchActivity.newInstance(
             this,
-            LaunchActivity.DeepLink.OpenOnboarding(
-                urlToOnboard,
-                hideExistingServers = hideExistingServers,
-                skipWelcome = skipWelcome,
-            ),
+            LaunchActivity.DeepLink.OpenInvitation(serverUrl),
         ),
     )
 }
