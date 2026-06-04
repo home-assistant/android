@@ -37,7 +37,7 @@ import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.ValueSource
 
 @ExperimentalCoroutinesApi
-class FrontendEntityAddToHandlerTest {
+class FrontendEntityAddToManagerTest {
 
     private lateinit var serverManager: ServerManager
     private lateinit var prefsRepository: PrefsRepository
@@ -69,7 +69,7 @@ class FrontendEntityAddToHandlerTest {
         val entityId = "vehicle.test"
         coJustRun { prefsRepository.addAutoFavorite(any()) }
 
-        val event = createHandler().execute(entityId, EntityAddToAction.AndroidAutoFavorite)
+        val event = createManager().execute(entityId, EntityAddToAction.AndroidAutoFavorite)
 
         coVerify { prefsRepository.addAutoFavorite(AutoFavorite(serverId, entityId)) }
         assertEquals(FrontendEvent.ShowSnackbar(commonR.string.add_to_android_auto_success), event)
@@ -81,7 +81,7 @@ class FrontendEntityAddToHandlerTest {
         FailFast.setHandler { throwable, _ -> throwableCaptured = throwable }
         coEvery { serverManager.getServer() } returns null
 
-        val event = createHandler().execute("vehicle.test", EntityAddToAction.AndroidAutoFavorite)
+        val event = createManager().execute("vehicle.test", EntityAddToAction.AndroidAutoFavorite)
 
         assertNotNull(throwableCaptured)
         coVerify(exactly = 0) { prefsRepository.addAutoFavorite(any()) }
@@ -93,7 +93,7 @@ class FrontendEntityAddToHandlerTest {
     fun `Given null server when getting actionsForEntity then return empty list`() = runTest {
         coEvery { serverManager.getServer() } returns null
 
-        val actions = createHandler().getActionsForEntity("light.test")
+        val actions = createManager().getActionsForEntity("light.test")
 
         assertEquals(emptyList<ExternalEntityAddToAction>(), actions)
     }
@@ -102,7 +102,7 @@ class FrontendEntityAddToHandlerTest {
     fun `Given entity returns null when getting actionsForEntity then return empty list`() = runTest {
         coEvery { integrationRepository.getEntity("light.nonexistent") } returns null
 
-        val actions = createHandler().getActionsForEntity("light.nonexistent")
+        val actions = createManager().getActionsForEntity("light.nonexistent")
 
         assertEquals(emptyList<ExternalEntityAddToAction>(), actions)
     }
@@ -111,7 +111,7 @@ class FrontendEntityAddToHandlerTest {
     fun `Given entity throws when getting actionsForEntity then return empty list`() = runTest {
         coEvery { integrationRepository.getEntity(any()) } throws RuntimeException("Not found")
 
-        val actions = createHandler().getActionsForEntity("light.nonexistent")
+        val actions = createManager().getActionsForEntity("light.nonexistent")
 
         assertEquals(emptyList<ExternalEntityAddToAction>(), actions)
     }
@@ -121,7 +121,7 @@ class FrontendEntityAddToHandlerTest {
         val entityId = "automation.test"
         mockGetEntity(entityId)
 
-        val actions = createHandler().getActionsForEntity(entityId)
+        val actions = createManager().getActionsForEntity(entityId)
 
         assertEquals(listOf(EntityAddToAction.EntityWidget), actions.unwrap())
     }
@@ -131,7 +131,7 @@ class FrontendEntityAddToHandlerTest {
         val entityId = "alarm_control_panel.test"
         mockGetEntity(entityId)
 
-        val actions = createHandler(isFullFlavor = true).getActionsForEntity(entityId)
+        val actions = createManager(isFullFlavor = true).getActionsForEntity(entityId)
 
         assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.AndroidAutoFavorite), actions.unwrap())
     }
@@ -141,7 +141,7 @@ class FrontendEntityAddToHandlerTest {
         val entityId = "alarm_control_panel.test"
         mockGetEntity(entityId)
 
-        val actions = createHandler(isFullFlavor = false).getActionsForEntity(entityId)
+        val actions = createManager(isFullFlavor = false).getActionsForEntity(entityId)
 
         assertEquals(listOf(EntityAddToAction.EntityWidget), actions.unwrap())
     }
@@ -151,7 +151,7 @@ class FrontendEntityAddToHandlerTest {
         val entityId = "$MEDIA_PLAYER_DOMAIN.test"
         mockGetEntity(entityId)
 
-        val actions = createHandler().getActionsForEntity(entityId)
+        val actions = createManager().getActionsForEntity(entityId)
 
         assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.MediaPlayerWidget), actions.unwrap())
     }
@@ -161,7 +161,7 @@ class FrontendEntityAddToHandlerTest {
         val entityId = "$TODO_DOMAIN.test"
         mockGetEntity(entityId)
 
-        val actions = createHandler().getActionsForEntity(entityId)
+        val actions = createManager().getActionsForEntity(entityId)
 
         assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.TodoWidget), actions.unwrap())
     }
@@ -171,7 +171,7 @@ class FrontendEntityAddToHandlerTest {
         val entityId = "$CAMERA_DOMAIN.test"
         mockGetEntity(entityId)
 
-        val actions = createHandler().getActionsForEntity(entityId)
+        val actions = createManager().getActionsForEntity(entityId)
 
         assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.CameraWidget), actions.unwrap())
     }
@@ -181,52 +181,52 @@ class FrontendEntityAddToHandlerTest {
         val entityId = "$IMAGE_DOMAIN.test"
         mockGetEntity(entityId)
 
-        val actions = createHandler().getActionsForEntity(entityId)
+        val actions = createManager().getActionsForEntity(entityId)
 
         assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.CameraWidget), actions.unwrap())
     }
 
     @Test
     fun `Given EntityWidget action when executing then returns NavigateToWidgetConfig with Entity type`() = runTest {
-        val event = createHandler().execute("light.test", EntityAddToAction.EntityWidget)
+        val event = createManager().execute("light.test", EntityAddToAction.EntityWidget)
 
         assertEquals(FrontendEvent.NavigateToWidgetConfig("light.test", WidgetType.Entity), event)
     }
 
     @Test
     fun `Given MediaPlayerWidget action when executing then returns NavigateToWidgetConfig with MediaPlayer type`() = runTest {
-        val event = createHandler().execute("media_player.tv", EntityAddToAction.MediaPlayerWidget)
+        val event = createManager().execute("media_player.tv", EntityAddToAction.MediaPlayerWidget)
 
         assertEquals(FrontendEvent.NavigateToWidgetConfig("media_player.tv", WidgetType.MediaPlayer), event)
     }
 
     @Test
     fun `Given CameraWidget action when executing then returns NavigateToWidgetConfig with Camera type`() = runTest {
-        val event = createHandler().execute("camera.front", EntityAddToAction.CameraWidget)
+        val event = createManager().execute("camera.front", EntityAddToAction.CameraWidget)
 
         assertEquals(FrontendEvent.NavigateToWidgetConfig("camera.front", WidgetType.Camera), event)
     }
 
     @Test
     fun `Given TodoWidget action when executing then returns NavigateToWidgetConfig with Todo type`() = runTest {
-        val event = createHandler().execute("todo.shopping", EntityAddToAction.TodoWidget)
+        val event = createManager().execute("todo.shopping", EntityAddToAction.TodoWidget)
 
         assertEquals(FrontendEvent.NavigateToWidgetConfig("todo.shopping", WidgetType.Todo), event)
     }
 
     @Test
     fun `Given Tile action when executing then returns null`() = runTest {
-        assertNull(createHandler().execute("light.test", EntityAddToAction.Tile))
+        assertNull(createManager().execute("light.test", EntityAddToAction.Tile))
     }
 
     @Test
     fun `Given Shortcut action when executing then returns null`() = runTest {
-        assertNull(createHandler().execute("light.test", EntityAddToAction.Shortcut(enabled = true)))
+        assertNull(createManager().execute("light.test", EntityAddToAction.Shortcut(enabled = true)))
     }
 
     @Test
     fun `Given Watch action when executing then returns null`() = runTest {
-        assertNull(createHandler().execute("light.test", EntityAddToAction.Watch(name = "Pixel Watch", enabled = true)))
+        assertNull(createManager().execute("light.test", EntityAddToAction.Watch(name = "Pixel Watch", enabled = true)))
     }
 
     @ParameterizedTest
@@ -241,7 +241,7 @@ class FrontendEntityAddToHandlerTest {
     fun `Given standard entity on automotive when getting actionsForEntity then returns auto favorite`(isFullFlavor: Boolean, entityId: String) = runTest {
         mockGetEntity(entityId)
 
-        val actions = createHandler(isAutomotive = true, isFullFlavor = isFullFlavor).getActionsForEntity(entityId)
+        val actions = createManager(isAutomotive = true, isFullFlavor = isFullFlavor).getActionsForEntity(entityId)
 
         assertEquals(listOf(EntityAddToAction.AndroidAutoFavorite), actions.unwrap())
     }
@@ -258,7 +258,7 @@ class FrontendEntityAddToHandlerTest {
     fun `Given entity on automotive not vehicle domain when getting actionsForEntity then returns empty list`(entityId: String) = runTest {
         mockGetEntity(entityId)
 
-        val actions = createHandler(isAutomotive = true).getActionsForEntity(entityId)
+        val actions = createManager(isAutomotive = true).getActionsForEntity(entityId)
 
         assertEquals(emptyList<ExternalEntityAddToAction>(), actions)
     }
@@ -277,16 +277,16 @@ class FrontendEntityAddToHandlerTest {
     fun `Given entity on Quest when getting actionsForEntity then returns empty list`(entityId: String) = runTest {
         mockGetEntity(entityId)
 
-        val actions = createHandler(isQuest = true, isFullFlavor = false).getActionsForEntity(entityId)
+        val actions = createManager(isQuest = true, isFullFlavor = false).getActionsForEntity(entityId)
 
         assertEquals(emptyList<ExternalEntityAddToAction>(), actions)
     }
 
-    private fun createHandler(
+    private fun createManager(
         isAutomotive: Boolean = false,
         isQuest: Boolean = false,
         isFullFlavor: Boolean = true,
-    ) = FrontendEntityAddToHandler(
+    ) = FrontendEntityAddToManager(
         context = context,
         serverManager = serverManager,
         prefsRepository = prefsRepository,

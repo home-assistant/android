@@ -27,7 +27,7 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 /**
- * Handles the "Add To" functionality for Home Assistant entities, allowing users to add entities
+ * Manages the "Add To" functionality for Home Assistant entities, allowing users to add entities
  * to various Android platform features and connected devices.
  *
  * This class provides two main capabilities:
@@ -37,7 +37,7 @@ import timber.log.Timber
  * The available actions depend on the entity's domain and current system state (for example, watch connectivity,
  * shortcut limits).
  */
-class FrontendEntityAddToHandler @VisibleForTesting constructor(
+class FrontendEntityAddToManager @VisibleForTesting constructor(
     private val context: Context,
     private val serverManager: ServerManager,
     private val prefsRepository: PrefsRepository,

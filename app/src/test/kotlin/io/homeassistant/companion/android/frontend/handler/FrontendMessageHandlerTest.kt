@@ -9,7 +9,7 @@ import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import io.homeassistant.companion.android.frontend.WebViewAction
-import io.homeassistant.companion.android.frontend.addto.FrontendEntityAddToHandler
+import io.homeassistant.companion.android.frontend.addto.FrontendEntityAddToManager
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
@@ -97,7 +97,7 @@ class FrontendMessageHandlerTest {
     private val sessionManager: ServerSessionManager = mockk(relaxed = true)
     private val downloadManager: FrontendDownloadManager = mockk(relaxed = true)
     private val bluetoothCapabilities: BluetoothCapabilities = BluetoothCapabilities { true }
-    private val entityAddToHandler: FrontendEntityAddToHandler =
+    private val entityAddToManager: FrontendEntityAddToManager =
         mockk(relaxed = true)
     private lateinit var handler: FrontendMessageHandler
 
@@ -119,7 +119,7 @@ class FrontendMessageHandlerTest {
             sessionManager = sessionManager,
             downloadManager = downloadManager,
             bluetoothCapabilities = bluetoothCapabilities,
-            entityAddToHandler = entityAddToHandler,
+            entityAddToManager = entityAddToManager,
             isAutomotive = false,
         )
     }
@@ -196,7 +196,7 @@ class FrontendMessageHandlerTest {
             sessionManager = sessionManager,
             downloadManager = downloadManager,
             bluetoothCapabilities = { true },
-            entityAddToHandler = entityAddToHandler,
+            entityAddToManager = entityAddToManager,
             isAutomotive = false,
         )
 
@@ -237,7 +237,7 @@ class FrontendMessageHandlerTest {
             sessionManager = sessionManager,
             downloadManager = downloadManager,
             bluetoothCapabilities = { false },
-            entityAddToHandler = entityAddToHandler,
+            entityAddToManager = entityAddToManager,
             isAutomotive = false,
         )
 
@@ -555,7 +555,7 @@ class FrontendMessageHandlerTest {
             sessionManager = sessionManager,
             downloadManager = downloadManager,
             bluetoothCapabilities = bluetoothCapabilities,
-            entityAddToHandler = entityAddToHandler,
+            entityAddToManager = entityAddToManager,
             isAutomotive = true,
         )
 
@@ -589,7 +589,7 @@ class FrontendMessageHandlerTest {
             sessionManager = sessionManager,
             downloadManager = downloadManager,
             bluetoothCapabilities = bluetoothCapabilities,
-            entityAddToHandler = entityAddToHandler,
+            entityAddToManager = entityAddToManager,
             isAutomotive = false,
         )
 
@@ -839,7 +839,7 @@ class FrontendMessageHandlerTest {
                 mdiIcon = "mdi:shape",
             ),
         )
-        coEvery { entityAddToHandler.getActionsForEntity("light.living_room") } returns actions
+        coEvery { entityAddToManager.getActionsForEntity("light.living_room") } returns actions
 
         val message = EntityAddToGetActionsMessage(
             id = 20,
@@ -866,7 +866,7 @@ class FrontendMessageHandlerTest {
     fun `Given entity add_to message when messageResults then emits EntityAddToExecuted with event from handler`() = runTest {
         val entityWidgetPayload = Base64.UrlSafe.encode(kotlinJsonMapper.encodeToString<EntityAddToAction>(EntityAddToAction.EntityWidget).encodeToByteArray())
         coEvery {
-            entityAddToHandler.execute("light.living_room", any())
+            entityAddToManager.execute("light.living_room", any())
         } returns FrontendEvent.ShowSnackbar(
             io.homeassistant.companion.android.common.R.string.add_to_android_auto_success,
         )
