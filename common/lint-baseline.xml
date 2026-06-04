@@ -157,7 +157,7 @@
 
     <issue
         id="ComposeRedundantComposable"
-        message="This declaration is annotated with @Composable but doesn&apos;t call any other @Composable functions or read any @Composable properties (like a CompositionLocal&apos;s current), so it doesn&apos;t use the composition and the @Composable annotation can be removed. See https://slackhq.github.io/compose-lints/rules/#remove-unnecessary-composable-annotations for more information."
+        message="This declaration is annotated with @Composable but doesn&apos;t call any other @Composable functions or read any @Composable properties (like a CompositionLocal&apos;s current), so it doesn&apos;t use the composition and the @Composable annotation can be removed.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#remove-unnecessary-composable-annotations for more information."
         errorLine1="        @Composable"
         errorLine2="        ~~~~~~~~~~~">
         <location
