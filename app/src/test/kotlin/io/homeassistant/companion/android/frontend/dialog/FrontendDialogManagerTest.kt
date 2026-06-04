@@ -15,10 +15,10 @@ import org.junit.jupiter.api.assertNull
 class FrontendDialogManagerTest {
 
     @Test
-    fun `Given JS confirm shown when user confirms then suspend returns true and slot clears`() = runTest {
+    fun `Given confirm shown when user confirms then suspend returns true and slot clears`() = runTest {
         val manager = FrontendDialogManager()
 
-        val outcome = async { manager.showJsConfirm("Are you sure?") }
+        val outcome = async { manager.showConfirm("Are you sure?") }
         advanceUntilIdle()
 
         val pending = assertInstanceOf(FrontendDialog.Confirm::class.java, manager.pendingDialog.value)
@@ -33,10 +33,10 @@ class FrontendDialogManagerTest {
     }
 
     @Test
-    fun `Given JS confirm shown when user cancels then suspend returns false and slot clears`() = runTest {
+    fun `Given confirm shown when user cancels then suspend returns false and slot clears`() = runTest {
         val manager = FrontendDialogManager()
 
-        val outcome = async { manager.showJsConfirm("Discard?") }
+        val outcome = async { manager.showConfirm("Discard?") }
         advanceUntilIdle()
         (manager.pendingDialog.value as FrontendDialog.Confirm).onCancel()
         advanceUntilIdle()
@@ -46,10 +46,10 @@ class FrontendDialogManagerTest {
     }
 
     @Test
-    fun `Given JS confirm in flight when scope cancels then slot is cleared`() = runTest {
+    fun `Given confirm in flight when scope cancels then slot is cleared`() = runTest {
         val manager = FrontendDialogManager()
 
-        val outcome = async { manager.showJsConfirm("Confirm?") }
+        val outcome = async { manager.showConfirm("Confirm?") }
         advanceUntilIdle()
         assertInstanceOf(FrontendDialog.Confirm::class.java, manager.pendingDialog.value)
 
@@ -63,9 +63,9 @@ class FrontendDialogManagerTest {
     fun `Given dialog shown when second show then it queues until first completes`() = runTest {
         val manager = FrontendDialogManager()
 
-        val first = async { manager.showJsConfirm("first") }
+        val first = async { manager.showConfirm("first") }
         advanceUntilIdle()
-        val second = async { manager.showJsConfirm("second") }
+        val second = async { manager.showConfirm("second") }
         advanceUntilIdle()
 
         assertEquals("first", (manager.pendingDialog.value as FrontendDialog.Confirm).message)
