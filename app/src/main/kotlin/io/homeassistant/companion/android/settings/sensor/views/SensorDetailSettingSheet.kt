@@ -86,7 +86,6 @@ internal fun SensorDetailSettingSheet(
     }
     val checkedValue = remember { state.entriesSelected.toMutableStateList() }
     var searchQuery by remember { mutableStateOf("") }
-    // Filtering runs off the UI thread on Dispatchers.Default to keep the sheet responsive on long lists.
     var filteredEntries by remember(entries) { mutableStateOf(entries) }
     LaunchedEffect(entries, searchQuery) {
         filteredEntries = withContext(Dispatchers.Default) {
@@ -141,11 +140,10 @@ internal fun SensorDetailSettingSheet(
 }
 
 /**
- * Inner content of the sensor setting bottom sheet, extracted for preview and screenshot testing.
+ * Inner content of the sensor setting bottom sheet.
  *
  * Renders the sheet header (title + optional search field), the entry list or loading indicator,
- * and the cancel/save footer. The [HAModalBottomSheet] wrapper is intentionally absent so this
- * composable can be rendered in isolation via [androidx.compose.ui.tooling.preview.Preview].
+ * and the cancel/save footer.
  *
  * @param title Heading displayed at the top of the content area.
  * @param isLoading When true, a loading indicator is shown in place of the entry list.
