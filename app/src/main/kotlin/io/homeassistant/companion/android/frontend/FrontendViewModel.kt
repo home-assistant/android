@@ -25,7 +25,7 @@ import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalB
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserRequest
-import io.homeassistant.companion.android.frontend.gesture.FrontendGestureHandler
+import io.homeassistant.companion.android.frontend.gesture.FrontendGestureManager
 import io.homeassistant.companion.android.frontend.gesture.GestureResult
 import io.homeassistant.companion.android.frontend.handler.FrontendBusObserver
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
@@ -88,7 +88,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val permissionManager: PermissionManager,
     private val frontendJsBridgeFactory: FrontendJsBridgeFactory,
     private val downloadManager: FrontendDownloadManager,
-    private val gestureHandler: FrontendGestureHandler,
+    private val gestureManager: FrontendGestureManager,
     private val prefsRepository: PrefsRepository,
     private val dialogManager: FrontendDialogManager,
     private val fileChooserManager: FileChooserManager,
@@ -108,7 +108,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         permissionManager: PermissionManager,
         frontendJsBridgeFactory: FrontendJsBridgeFactory,
         downloadManager: FrontendDownloadManager,
-        gestureHandler: FrontendGestureHandler,
+        gestureManager: FrontendGestureManager,
         prefsRepository: PrefsRepository,
         dialogManager: FrontendDialogManager,
         fileChooserManager: FileChooserManager,
@@ -125,7 +125,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         permissionManager = permissionManager,
         frontendJsBridgeFactory = frontendJsBridgeFactory,
         downloadManager = downloadManager,
-        gestureHandler = gestureHandler,
+        gestureManager = gestureManager,
         prefsRepository = prefsRepository,
         dialogManager = dialogManager,
         fileChooserManager = fileChooserManager,
@@ -466,7 +466,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      */
     fun onGesture(direction: GestureDirection, pointerCount: Int) {
         viewModelScope.launch {
-            val result = gestureHandler.handleGesture(
+            val result = gestureManager.handleGesture(
                 serverId = _viewState.value.serverId,
                 direction = direction,
                 pointerCount = pointerCount,

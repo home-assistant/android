@@ -31,7 +31,7 @@ import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalB
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
-import io.homeassistant.companion.android.frontend.gesture.FrontendGestureHandler
+import io.homeassistant.companion.android.frontend.gesture.FrontendGestureManager
 import io.homeassistant.companion.android.frontend.gesture.GestureResult
 import io.homeassistant.companion.android.frontend.handler.FrontendBusObserver
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
@@ -89,7 +89,7 @@ class FrontendViewModelTest {
     private val permissionManager: PermissionManager = mockk(relaxed = true)
     private val frontendJsBridgeFactory: FrontendJsBridgeFactory = mockk(relaxed = true)
     private val downloadManager: FrontendDownloadManager = mockk(relaxed = true)
-    private val gestureHandler: FrontendGestureHandler = mockk(relaxed = true)
+    private val gestureManager: FrontendGestureManager = mockk(relaxed = true)
     private val zoomSettingsFlow = MutableStateFlow(ZoomSettings())
     private val autoPlayVideoFlow = MutableStateFlow(false)
     private val screenOrientationFlow = MutableStateFlow(ScreenOrientation.SYSTEM)
@@ -140,7 +140,7 @@ class FrontendViewModelTest {
             permissionManager = permissionManager,
             frontendJsBridgeFactory = frontendJsBridgeFactory,
             downloadManager = downloadManager,
-            gestureHandler = gestureHandler,
+            gestureManager = gestureManager,
             prefsRepository = prefsRepository,
             dialogManager = dialogManager,
             fileChooserManager = fileChooserManager,
@@ -613,7 +613,7 @@ class FrontendViewModelTest {
                 UrlLoadResult.Success(url = "https://server2.com?external_auth=1", serverId = 2),
             )
             coEvery {
-                gestureHandler.handleGesture(serverId = any(), direction = any(), pointerCount = any())
+                gestureManager.handleGesture(serverId = any(), direction = any(), pointerCount = any())
             } returns GestureResult.SwitchServer(2)
 
             val viewModel = createViewModel(serverId = 1)
@@ -637,7 +637,7 @@ class FrontendViewModelTest {
 
             val clearHistory = WebViewAction.ClearHistory()
             coEvery {
-                gestureHandler.handleGesture(serverId = any(), direction = any(), pointerCount = any())
+                gestureManager.handleGesture(serverId = any(), direction = any(), pointerCount = any())
             } returns GestureResult.PerformWebViewActionThen(
                 action = clearHistory,
                 then = {
