@@ -83,17 +83,16 @@ sealed interface FrontendHandlerEvent {
     data class WriteNfcTag(val messageId: Int, val tagId: String?) : FrontendHandlerEvent
 
     /**
-     * Frontend requested the app to start scanning for improv (Wi-Fi onboarding) BLE devices.
+     * Frontend requested the app to start scanning for Improv (Wi-Fi onboarding) BLE devices.
      *
-     * The ViewModel is responsible for the BLE-feature gate, the runtime permission flow
-     * (Bluetooth + Location), and emitting
+     * The ViewModel starts the scan and emits
      * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ImprovDiscoveredDeviceMessage]
      * for each device the scanner reports.
      */
     data object StartImprovScan : FrontendHandlerEvent
 
     /**
-     * User picked an improv device in the frontend's list. The ViewModel should open the
+     * User picked an Improv device in the frontend's list. The ViewModel should open the
      * Wi-Fi-credentials dialog seeded with [deviceName], drive the BLE provisioning flow, and
      * emit [io.homeassistant.companion.android.frontend.externalbus.outgoing.ImprovDeviceSetupDoneMessage]
      * once provisioning succeeds.

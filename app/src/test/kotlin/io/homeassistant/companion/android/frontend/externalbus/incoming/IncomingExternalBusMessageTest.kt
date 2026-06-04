@@ -204,7 +204,7 @@ class IncomingExternalBusMessageTest {
     }
 
     @Test
-    fun `Given improv scan JSON then parses to ImprovScanMessage`() {
+    fun `Given Improv scan JSON then parses to ImprovScanMessage`() {
         val json = """{"type":"improv/scan","id":50}"""
 
         val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
@@ -214,7 +214,7 @@ class IncomingExternalBusMessageTest {
     }
 
     @Test
-    fun `Given improv scan JSON without id then parses to ImprovScanMessage with null id`() {
+    fun `Given Improv scan JSON without id then parses to ImprovScanMessage with null id`() {
         val json = """{"type":"improv/scan"}"""
 
         val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
@@ -224,7 +224,7 @@ class IncomingExternalBusMessageTest {
     }
 
     @Test
-    fun `Given improv configure_device JSON then parses to ImprovConfigureDeviceMessage with name`() {
+    fun `Given Improv configure_device JSON then parses to ImprovConfigureDeviceMessage with name`() {
         val json = """{"type":"improv/configure_device","id":51,"payload":{"name":"Smart Plug"}}"""
 
         val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)

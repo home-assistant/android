@@ -110,6 +110,7 @@ data class OpenAssistSettingsMessage(override val id: Int? = null) : IncomingExt
  *
  * Sent when the user changes the theme in the frontend, allowing the app
  * to update the status bar and navigation bar colors to match.
+ * No response is expected for this message.
  */
 @Serializable
 @SerialName("theme-update")
@@ -117,8 +118,6 @@ data class ThemeUpdateMessage(override val id: Int? = null) : IncomingExternalBu
 
 /**
  * Message requesting the app to open the voice assistant (Assist).
- *
- * Sent when the user triggers the voice assistant from the frontend UI.
  * No response is expected for this message.
  */
 @Serializable
@@ -134,10 +133,7 @@ data class OpenAssistPayload(
 
 /**
  * Message requesting haptic feedback from the Home Assistant frontend.
- *
- * Sent when the user interacts with UI elements in the frontend that provide
- * tactile feedback (e.g., toggling a switch, long-pressing an entity).
- * This is a fire-and-forget message — no response is expected.
+ * No response is expected for this message.
  */
 @Serializable
 @SerialName("haptic")
@@ -175,7 +171,7 @@ data class HandleBlobMessage(override val id: Int? = null, val data: String, val
  * Message requesting to start playing an HLS stream via ExoPlayer.
  *
  * The frontend provides the stream URL and an optional muted flag.
- * The app should respond with a result message on success.
+ * The app should respond with a result message on success using the [id].
  */
 @Serializable
 @SerialName("exoplayer/play_hls")
@@ -189,8 +185,7 @@ data class ExoPlayerPlayHlsPayload(val url: String? = null, val muted: Boolean =
 
 /**
  * Message requesting to stop ExoPlayer playback and release the player.
- *
- * This is a fire-and-forget message.
+ * No response is expected for this message.
  */
 @Serializable
 @SerialName("exoplayer/stop")
@@ -201,6 +196,7 @@ data class ExoPlayerStopMessage(override val id: Int? = null) : IncomingExternal
  *
  * Payload values come from `Element.getBoundingClientRect()` and are already scaled
  * to screen coordinates.
+ * No response is expected for this message.
  */
 @Serializable
 @SerialName("exoplayer/resize")
@@ -221,9 +217,8 @@ data class ExoPlayerResizePayload(
  * Message requesting the app to start scanning for nearby BLE devices that advertise the
  * Improv Wi-Fi service.
  *
- * The frontend sends this once when the user opens its "Add device" flow. The app responds
- * out-of-band with a stream of [io.homeassistant.companion.android.frontend.externalbus.outgoing.ImprovDiscoveredDeviceMessage]
- * commands as devices are discovered. No `result`-shaped response is expected.
+ * The app responds out-of-band with a stream of [io.homeassistant.companion.android.frontend.externalbus.outgoing.ImprovDiscoveredDeviceMessage]
+ * commands as devices are discovered.
  *
  * Will not be sent by the frontend when the device reports
  * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResultMessage.ConfigResult.canSetupImprov] = `false`.
@@ -236,11 +231,9 @@ data class ImprovScanMessage(override val id: Int? = null) : IncomingExternalBus
  * Message requesting the app to begin Wi-Fi onboarding for the named improv device the user
  * picked from the discovery list.
  *
- * The app should open the credentials dialog for [ImprovConfigureDevicePayload.name], submit
- * the entered Wi-Fi credentials over BLE, and finally — once the device reports it has been
- * provisioned — emit
- * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ImprovDeviceSetupDoneMessage]
- * and navigate the frontend to the matching `config_flow_start` URL.
+ * The app should onboard [ImprovConfigureDevicePayload.name] and, once the device has been
+ * provisioned, emit
+ * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ImprovDeviceSetupDoneMessage].
  */
 @Serializable
 @SerialName("improv/configure_device")
@@ -250,6 +243,13 @@ data class ImprovConfigureDeviceMessage(override val id: Int? = null, val payloa
 @Serializable
 data class ImprovConfigureDevicePayload(val name: String)
 
+/**
+ * Message requesting the list of "add to" actions the app offers for a given entity.
+ *
+ * The app should respond with an
+ * [io.homeassistant.companion.android.frontend.externalbus.outgoing.EntityAddToActionsResultMessage]
+ * listing the actions available for [EntityAddToGetActionsPayload.entityId], correlated by [id].
+ */
 @Serializable
 @SerialName("entity/add_to/get_actions")
 data class EntityAddToGetActionsMessage(override val id: Int? = null, val payload: EntityAddToGetActionsPayload) :
@@ -258,6 +258,12 @@ data class EntityAddToGetActionsMessage(override val id: Int? = null, val payloa
 @Serializable
 data class EntityAddToGetActionsPayload(@SerialName("entity_id") val entityId: String)
 
+/**
+ * Message requesting the app to run one of the "add to" actions previously offered for an entity.
+ *
+ * [EntityAddToPayload.appPayload] is the opaque identifier the app returned for the
+ * chosen action, echoed back verbatim to select it. No response is expected for this message.
+ */
 @Serializable
 @SerialName("entity/add_to")
 data class EntityAddToMessage(override val id: Int? = null, val payload: EntityAddToPayload) :
@@ -272,9 +278,8 @@ data class EntityAddToPayload(
 /**
  * Message requesting the app to start the Matter device commissioning flow.
  *
- * The frontend sends this when the user picks "Add Matter device" in the integrations UI. The app
- * is expected to drive the Google Play Services Matter commissioning intent and, once it
- * resolves, send back a [io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage]
+ * The app is expected to run the commissioning flow and, once it resolves, send back a
+ * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage]
  * correlated by [id] (success or failure).
  *
  * Will not be sent by the frontend when the device reports
@@ -286,10 +291,9 @@ data class MatterCommissionMessage(override val id: Int? = null) : IncomingExter
 
 /**
  * Message requesting the app to share its locally-stored Thread credentials with the Home Assistant
- * server via Google Play Services' Thread Network APIs.
+ * server.
  *
- * The frontend sends this when the user opens the "Share Thread credentials" flow. The app is
- * expected to retrieve the preferred Thread dataset, push it to the server, and send back a
+ * The app is expected to push the credentials to the server and send back a
  * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage] correlated by
  * [id] (success or failure).
  *
@@ -303,7 +307,6 @@ data class ThreadImportCredentialsMessage(override val id: Int? = null) : Incomi
 /**
  * Message requesting the app to open the in-app barcode scanner overlay.
  *
- * The frontend sends this when an entity card or dialog needs the user to scan a code.
  * Once scanning completes (or is cancelled), the app responds out-of-band with a
  * [io.homeassistant.companion.android.frontend.externalbus.outgoing.BarcodeScanResultMessage]
  * or [io.homeassistant.companion.android.frontend.externalbus.outgoing.BarcodeScanAbortedMessage]
@@ -323,11 +326,7 @@ data class BarcodeScanPayload(
 
 /**
  * Message requesting the app to display a notification dialog on top of the active scanner.
- *
- * The frontend sends this to surface validation errors or guidance while the scanner is open
- * (e.g. "Code already paired"). No response is expected — the user dismisses the dialog from the UI.
- *
- * Sent only while a scanner is active. If no scanner is open, the app silently ignores it.
+ * No response is expected for this message.
  */
 @Serializable
 @SerialName("bar_code/notify")
@@ -338,10 +337,8 @@ data class BarcodeNotifyMessage(override val id: Int? = null, val payload: Barco
 data class BarcodeNotifyPayload(val message: String)
 
 /**
- * Message requesting the app to close the active scanner overlay (fire-and-forget).
- *
- * The frontend sends this once it no longer needs the scanner — for example after the user
- * picked a result or because the user navigated away from the requesting card.
+ * Message requesting the app to close the active scanner overlay.
+ * No response is expected for this message.
  */
 @Serializable
 @SerialName("bar_code/close")

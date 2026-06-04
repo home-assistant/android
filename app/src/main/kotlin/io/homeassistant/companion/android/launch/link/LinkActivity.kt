@@ -23,7 +23,7 @@ import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
-import io.homeassistant.companion.android.launch.startLaunchOnboarding
+import io.homeassistant.companion.android.launch.startLaunchInvitation
 import io.homeassistant.companion.android.launch.startLaunchWithNavigateTo
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
@@ -67,11 +67,7 @@ class LinkActivity : BaseActivity() {
                 when (val destination = linkHandler.handleLink(dataUri)) {
                     LinkDestination.NoDestination -> finish()
                     is LinkDestination.Onboarding -> {
-                        startLaunchOnboarding(
-                            destination.serverUrl,
-                            hideExistingServers = false,
-                            skipWelcome = false,
-                        )
+                        startLaunchInvitation(destination.serverUrl)
                         finish()
                     }
 

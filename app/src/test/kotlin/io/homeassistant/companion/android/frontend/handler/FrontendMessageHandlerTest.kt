@@ -359,7 +359,7 @@ class FrontendMessageHandlerTest {
     }
 
     @Test
-    fun `Given improv scan message when messageResults then emits StartImprovScan`() = runTest {
+    fun `Given Improv scan message when messageResults then emits StartImprovScan`() = runTest {
         val message = ImprovScanMessage(id = 50)
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
@@ -371,7 +371,7 @@ class FrontendMessageHandlerTest {
     }
 
     @Test
-    fun `Given improv configure_device message when messageResults then emits ConfigureImprovDevice with name`() = runTest {
+    fun `Given Improv configure_device message when messageResults then emits ConfigureImprovDevice with name`() = runTest {
         val message = ImprovConfigureDeviceMessage(
             id = 51,
             payload = ImprovConfigureDevicePayload(name = "Smart Plug"),

@@ -55,6 +55,7 @@ internal abstract class BaseOnboardingNavigationTest {
         hideExistingServers: Boolean = false,
         skipWelcome: Boolean = false,
         hasLocationTracking: Boolean = true,
+        fromInvitation: Boolean = false,
         permissionResultRegistry: ActivityResultRegistry = FakePermissionResultRegistry(grantAll = true),
     ) {
         composeTestRule.setContent {
@@ -80,6 +81,7 @@ internal abstract class BaseOnboardingNavigationTest {
                         hideExistingServers = hideExistingServers,
                         skipWelcome = skipWelcome,
                         hasLocationTracking = hasLocationTracking,
+                        fromInvitation = fromInvitation,
                     )
                 }
             }
@@ -91,6 +93,7 @@ internal abstract class BaseOnboardingNavigationTest {
         hideExistingServers: Boolean = false,
         skipWelcome: Boolean = false,
         hasLocationTracking: Boolean = true,
+        fromInvitation: Boolean = false,
         testContent: suspend AndroidComposeTestRule<*, *>.() -> Unit,
     ) {
         setContent(
@@ -98,6 +101,7 @@ internal abstract class BaseOnboardingNavigationTest {
             hideExistingServers = hideExistingServers,
             skipWelcome = skipWelcome,
             hasLocationTracking = hasLocationTracking,
+            fromInvitation = fromInvitation,
         )
         runTest {
             composeTestRule.testContent()
