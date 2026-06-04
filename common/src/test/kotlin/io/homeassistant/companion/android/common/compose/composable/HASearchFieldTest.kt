@@ -47,9 +47,9 @@ class HASearchFieldTest {
     }
 
     private fun advancePastDebounce() {
-        mainDispatcherRule.testDispatcher.scheduler.advanceTimeBy(DEFAULT_DEBOUNCE.inWholeMilliseconds + 50)
+        mainDispatcherRule.testDispatcher.scheduler.advanceTimeBy(SEARCH_FIELD_DEFAULT_DEBOUNCE.inWholeMilliseconds + 50)
         mainDispatcherRule.testDispatcher.scheduler.runCurrent()
-        composeTestRule.mainClock.advanceTimeBy(DEFAULT_DEBOUNCE.inWholeMilliseconds + 50)
+        composeTestRule.mainClock.advanceTimeBy(SEARCH_FIELD_DEFAULT_DEBOUNCE.inWholeMilliseconds + 50)
         composeTestRule.waitForIdle()
     }
 
@@ -139,7 +139,7 @@ class HASearchFieldTest {
         composeTestRule.mainClock.advanceTimeByFrame()
 
         // Advance to just before the debounce boundary — only via the scheduler.
-        mainDispatcherRule.testDispatcher.scheduler.advanceTimeBy(DEFAULT_DEBOUNCE.inWholeMilliseconds - 50)
+        mainDispatcherRule.testDispatcher.scheduler.advanceTimeBy(SEARCH_FIELD_DEFAULT_DEBOUNCE.inWholeMilliseconds - 50)
         mainDispatcherRule.testDispatcher.scheduler.runCurrent()
 
         assertEquals(

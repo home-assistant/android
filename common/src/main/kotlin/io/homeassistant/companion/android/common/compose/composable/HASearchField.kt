@@ -22,31 +22,10 @@ import kotlinx.coroutines.delay
 
 /** Default debounce applied before propagating non-empty queries to the parent. */
 @VisibleForTesting
-internal val DEFAULT_DEBOUNCE = 300.milliseconds
+internal val SEARCH_FIELD_DEFAULT_DEBOUNCE = 300.milliseconds
 
 /**
- * Forwards [rawQuery] to [emit], debouncing non-empty queries by [debounce].
- *
- * Empty strings bypass the delay so clearing the field reflects instantly to the parent. For
- * non-empty queries the function suspends for [debounce] before emitting; if the surrounding
- * coroutine is cancelled (e.g. because the raw query changed again) the pending emit is dropped,
- * which is exactly the coalescing behaviour expected from a search debounce.
- *
- * Extracted from [HASearchField]'s [LaunchedEffect] so the timing rules can be tested without a
- * Compose host.
- */
-@VisibleForTesting
-internal suspend fun debouncedSearchUpdate(rawQuery: String, debounce: Duration, emit: (String) -> Unit) {
-    if (rawQuery.isEmpty()) {
-        emit(rawQuery)
-    } else {
-        delay(debounce)
-        emit(rawQuery)
-    }
-}
-
-/**
- * Reusable search input field for filtering lists.
+ * Reusable search input field.
  *
  * Holds the raw text locally and propagates changes to [onQueryChange] with a [debounce] delay,
  * except for empty queries which are forwarded immediately to provide instant clear feedback when
@@ -69,7 +48,7 @@ fun HASearchField(
     onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     leadingIcon: @Composable (() -> Unit)? = null,
-    debounce: Duration = DEFAULT_DEBOUNCE,
+    debounce: Duration = SEARCH_FIELD_DEFAULT_DEBOUNCE,
 ) {
     val colorScheme = LocalHAColorScheme.current
     var searchQueryRaw by remember { mutableStateOf(query) }
@@ -104,4 +83,21 @@ fun HASearchField(
         },
         modifier = modifier,
     )
+}
+
+/**
+ * Forwards [rawQuery] to [emit], debouncing non-empty queries by [debounce].
+ *
+ * Empty strings bypass the delay so clearing the field reflects instantly to the parent. For
+ * non-empty queries the function suspends for [debounce] before emitting; if the surrounding
+ * coroutine is cancelled (e.g. because the raw query changed again) the pending emit is dropped,
+ * which is exactly the coalescing behaviour expected from a search debounce.
+ */
+private suspend fun debouncedSearchUpdate(rawQuery: String, debounce: Duration, emit: (String) -> Unit) {
+    if (rawQuery.isEmpty()) {
+        emit(rawQuery)
+    } else {
+        delay(debounce)
+        emit(rawQuery)
+    }
 }

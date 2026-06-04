@@ -25,14 +25,11 @@ import io.homeassistant.companion.android.common.compose.theme.LocalHAColorSchem
  * Remembers a [SheetState] for use with [HAModalBottomSheet].
  *
  * In inspection mode (previews and screenshot tests), this returns a [rememberStandardBottomSheetState]
- * because [rememberModalBottomSheetState] requires a fully running Compose runtime. The
- * inspection-mode state is a no-op visually — there is no animation, hide/expand transitions are
- * not exercised, and any `bottomSheetState.hide()` / `expand()` calls have no effect — but it lets
- * the surrounding composable render so previews and screenshots can capture the content.
+ * because [rememberModalBottomSheetState] requires a fully running Compose runtime, and [rememberStandardBottomSheetState]
+ * doesn't animate properly.
  *
  * @param skipPartiallyExpanded When true, the sheet skips the partially expanded state and goes
- * straight to fully expanded. Useful when the sheet has a fixed footer (cancel/save) that must stay
- * reachable.
+ * straight to fully expanded. No effect in inspection mode.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,9 +87,7 @@ fun Modifier.consumeSheetScrollFling(): Modifier = this
     }
 
 /**
- * Stateless [NestedScrollConnection] used by [consumeSheetScrollFling]. Kept as a singleton because
- * it has no per-call state — every instance behaves identically by returning the available delta
- * unchanged, marking it as fully consumed at the content boundary.
+ * Stateless [NestedScrollConnection] used by [consumeSheetScrollFling].
  */
 private val ConsumeSheetScrollFlingConnection = object : NestedScrollConnection {
     override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset = available
