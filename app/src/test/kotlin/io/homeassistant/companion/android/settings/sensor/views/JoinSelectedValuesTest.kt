@@ -29,13 +29,10 @@ class JoinSelectedValuesTest {
     }
 
     @Test
-    fun `Given values containing brackets when joining then strip all bracket characters (bug-for-bug parity)`() {
-        // Documents current behaviour: the implementation removes any '[' or ']' that appear
-        // anywhere in the values (including inside the values themselves), preserving the
-        // legacy behaviour. A future intentional change should update this test.
+    fun `Given values containing brackets when joining then brackets pass through unchanged`() {
         val result = joinSelectedValues(listOf("foo[bar]", "baz[qux"))
 
-        assertEquals("foobar, bazqux", result)
+        assertEquals("foo[bar], baz[qux", result)
     }
 
     @Test
