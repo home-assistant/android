@@ -8,6 +8,7 @@ import android.webkit.CookieManager
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
@@ -48,6 +49,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.google.zxing.BarcodeFormat
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
@@ -56,6 +58,8 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.util.GestureDirection
+import io.homeassistant.companion.android.frontend.barcode.BarcodeScannerUiState
+import io.homeassistant.companion.android.frontend.barcode.ui.BarcodeScanner
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
 import io.homeassistant.companion.android.frontend.dialog.PendingDialogHandler
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
@@ -177,6 +181,8 @@ internal fun FrontendScreen(
         webViewActions = viewModel.webViewActions,
         onGesture = viewModel::onGesture,
         onExoPlayerFullscreenChanged = viewModel::onExoPlayerFullscreenChanged,
+        onBarcodeScanned = viewModel::onBarcodeScanned,
+        onBarcodeCancelled = viewModel::onBarcodeCancelled,
         autoPlayVideoEnabled = autoPlayVideoEnabled,
         screenOrientation = screenOrientation,
         keepScreenOnEnabled = keepScreenOnEnabled,
@@ -217,6 +223,8 @@ internal fun FrontendScreenContent(
     webViewActions: Flow<WebViewAction> = emptyFlow(),
     onGesture: (GestureDirection, Int) -> Unit = { _, _ -> },
     onExoPlayerFullscreenChanged: (Boolean) -> Unit = {},
+    onBarcodeScanned: (rawValue: String, format: BarcodeFormat) -> Unit = { _, _ -> },
+    onBarcodeCancelled: (forAction: Boolean) -> Unit = {},
     onPipReadinessChanged: (PipReadiness?) -> Unit = {},
 ) {
     var webView by remember { mutableStateOf<WebView?>(null) }
@@ -280,6 +288,12 @@ internal fun FrontendScreenContent(
             onConfigureHomeNetwork = onConfigureHomeNetwork,
             onOpenExternalLink = onOpenExternalLink,
             onShowSnackbar = onShowSnackbar,
+        )
+
+        FrontendBarcodeOverlay(
+            barcodeScanner = (viewState as? FrontendViewState.Content)?.barcodeScanner,
+            onScanned = onBarcodeScanned,
+            onCancelled = onBarcodeCancelled,
         )
     }
 }
@@ -747,6 +761,34 @@ private fun ExoPlayerOverlay(contentState: FrontendViewState.Content?, onFullscr
             .fillMaxSize()
             .background(Color.Black),
         onFullscreenClicked = onFullscreenChanged,
+    )
+}
+
+/**
+ * Renders the barcode scanner over the WebView while [barcodeScanner] is non-null.
+ *
+ * The scanner owns the camera and its permission (see
+ * [io.homeassistant.companion.android.frontend.barcode.ui.BarcodeScanner]); this overlay only adds
+ * the back-press-to-cancel behaviour. The [BackHandler] is composed only while the overlay is shown,
+ * so it takes priority over the WebView's own back handling and a back press cancels the scan.
+ */
+@Composable
+private fun FrontendBarcodeOverlay(
+    barcodeScanner: BarcodeScannerUiState?,
+    onScanned: (rawValue: String, format: BarcodeFormat) -> Unit,
+    onCancelled: (forAction: Boolean) -> Unit,
+) {
+    val state = barcodeScanner ?: return
+
+    BackHandler { onCancelled(false) }
+
+    BarcodeScanner(
+        title = state.title,
+        description = state.description,
+        alternativeOptionLabel = state.alternativeOptionLabel,
+        onResult = onScanned,
+        onCancel = onCancelled,
+        modifier = Modifier.fillMaxSize(),
     )
 }
 

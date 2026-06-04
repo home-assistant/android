@@ -9,6 +9,7 @@ import android.webkit.WebChromeClient
 import androidx.lifecycle.ViewModel
 import androidx.media3.common.Player
 import app.cash.turbine.test
+import com.google.zxing.BarcodeFormat
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
@@ -20,6 +21,7 @@ import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.frontend.auth.FrontendHttpAuthHandler
+import io.homeassistant.companion.android.frontend.barcode.FrontendBarcodeScannerHandler
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.frontend.download.DownloadResult
@@ -146,6 +148,7 @@ class FrontendViewModelTest {
             fileChooserManager = fileChooserManager,
             httpAuthHandler = httpAuthHandler,
             exoPlayerManager = exoPlayerManager,
+            barcodeScannerHandler = FrontendBarcodeScannerHandler(externalBusRepository, dialogManager),
         )
     }
 
@@ -499,6 +502,98 @@ class FrontendViewModelTest {
             val state = viewModel.viewState.value
             assertTrue(state is FrontendViewState.Content)
             assertEquals(serverId, state.serverId)
+        }
+
+        @Test
+        fun `Given content when ShowBarcodeScanner then Content barcodeScanner is set`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+
+            messageFlow.emit(
+                FrontendHandlerEvent.ShowBarcodeScanner(
+                    messageId = 7,
+                    title = "Scan",
+                    description = "Point camera",
+                    alternativeOptionLabel = "Manual",
+                ),
+            )
+            advanceUntilIdle()
+
+            val barcode = (viewModel.viewState.value as FrontendViewState.Content).barcodeScanner
+            assertEquals(7, barcode?.messageId)
+            assertEquals("Scan", barcode?.title)
+            assertEquals("Point camera", barcode?.description)
+            assertEquals("Manual", barcode?.alternativeOptionLabel)
+        }
+
+        @Test
+        fun `Given an active barcode scan when NotifyBarcodeScanner then an information dialog is shown`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emit(
+                FrontendHandlerEvent.ShowBarcodeScanner(1, "Scan", "Point", alternativeOptionLabel = null),
+            )
+            messageFlow.emit(FrontendHandlerEvent.NotifyBarcodeScanner("Already paired"))
+            advanceUntilIdle()
+
+            val dialog = assertInstanceOf(FrontendDialog.Information::class.java, viewModel.pendingDialog.value)
+            assertEquals("Already paired", dialog.message)
+        }
+
+        @Test
+        fun `Given an active barcode scan when CloseBarcodeScanner then barcodeScanner is cleared`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emit(
+                FrontendHandlerEvent.ShowBarcodeScanner(1, "Scan", "Point", alternativeOptionLabel = null),
+            )
+            messageFlow.emit(FrontendHandlerEvent.CloseBarcodeScanner)
+            advanceUntilIdle()
+
+            assertNull((viewModel.viewState.value as FrontendViewState.Content).barcodeScanner)
+        }
+
+        @Test
+        fun `Given an active barcode scan when onBarcodeScanned then result is sent and scanner stays open`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emit(
+                FrontendHandlerEvent.ShowBarcodeScanner(7, "Scan", "Point", alternativeOptionLabel = null),
+            )
+            advanceUntilIdle()
+
+            viewModel.onBarcodeScanned(rawValue = "HA-12345", format = BarcodeFormat.QR_CODE)
+            advanceUntilIdle()
+
+            coVerify { externalBusRepository.send(any()) }
+            // The scanner stays open until the frontend sends bar_code/close.
+            val barcode = (viewModel.viewState.value as FrontendViewState.Content).barcodeScanner
+            assertEquals(7, barcode?.messageId)
         }
 
         @Test

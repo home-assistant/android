@@ -82,6 +82,24 @@ class FrontendDialogManagerTest {
     }
 
     @Test
+    fun `Given information shown when user dismisses then suspend returns and slot clears`() = runTest {
+        val manager = FrontendDialogManager()
+
+        val outcome = async { manager.showInformation("Already paired") }
+        advanceUntilIdle()
+
+        val pending = assertInstanceOf(FrontendDialog.Information::class.java, manager.pendingDialog.value)
+        assertEquals("Already paired", pending.message)
+        assertFalse(outcome.isCompleted)
+
+        pending.onDismiss()
+        advanceUntilIdle()
+
+        assertTrue(outcome.isCompleted)
+        assertNull(manager.pendingDialog.value)
+    }
+
+    @Test
     fun `Given HTTP auth shown when user proceeds then suspend returns Proceed with credentials`() = runTest {
         val manager = FrontendDialogManager()
 
