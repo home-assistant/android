@@ -315,11 +315,10 @@ internal fun filterSettingEntries(entries: List<SettingEntry>, query: String): L
 /**
  * Joins selected entry IDs into the comma-separated string format expected by [SensorDetailViewModel].
  *
- * Mirrors the legacy formatting used elsewhere in the sensor settings code, removing list bracket
- * artifacts that originate from older Java-style toString conversions.
+ * The format mirrors how the value is read back via [String.split] with `", "` as separator.
  */
 internal fun joinSelectedValues(values: List<String>): String {
-    return values.joinToString().replace("[", "").replace("]", "")
+    return values.joinToString()
 }
 
 @Composable
