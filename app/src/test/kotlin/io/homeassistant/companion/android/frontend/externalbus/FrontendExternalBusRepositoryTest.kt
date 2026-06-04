@@ -23,13 +23,13 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 @OptIn(EvaluateJavascriptUsage::class)
-class FrontendExternalBusRepositoryImplTest {
+class FrontendExternalBusRepositoryTest {
 
-    private lateinit var repository: FrontendExternalBusRepositoryImpl
+    private lateinit var repository: FrontendExternalBusRepository
 
     @BeforeEach
     fun setup() {
-        repository = FrontendExternalBusRepositoryImpl()
+        repository = FrontendExternalBusRepository()
     }
 
     @Test

@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend.externalbus
 
+import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import io.homeassistant.companion.android.frontend.WebViewAction
@@ -35,13 +36,16 @@ val frontendExternalBusJson = Json(kotlinJsonMapper) {
 }
 
 /**
- * Implementation of [FrontendExternalBusRepository] that provides typed message handling
- * with polymorphic deserialization support.
+ * Repository for typed communication with the Home Assistant frontend via the external bus.
  *
- * This is a self-contained implementation for the new Compose-based FrontendScreen,
- * using kotlinx.serialization for type-safe message handling.
+ * This repository provides type-safe message handling for the FrontendScreen.
+ * Messages are serialized/deserialized using kotlinx.serialization with polymorphic support,
+ * allowing graceful handling of unknown message types from newer Home Assistant versions.
+ *
+ * @see <a href="https://developers.home-assistant.io/docs/frontend/external-bus">External bus documentation</a>
  */
-class FrontendExternalBusRepositoryImpl @Inject constructor() : FrontendExternalBusRepository {
+@ViewModelScoped
+class FrontendExternalBusRepository @Inject constructor() {
 
     private val actionsFlow = MutableSharedFlow<WebViewAction>(
         // Don't suspend if the WebView is temporarily unavailable
@@ -53,6 +57,11 @@ class FrontendExternalBusRepositoryImpl @Inject constructor() : FrontendExternal
     )
 
     /**
+     * Sends a typed message to the frontend via the external bus.
+     *
+     * The message is serialized to JSON and emitted as a [WebViewAction.EvaluateScript].
+     * This is fire-and-forget — the evaluation result is not awaited.
+     *
      * Opts into [EvaluateJavascriptUsage] because this is the internal mechanism that
      * implements the external bus itself. The frontend installs `window.externalBus`
      * as the entry point for messages from the native app (see `ExternalMessaging.attach`
@@ -66,25 +75,50 @@ class FrontendExternalBusRepositoryImpl @Inject constructor() : FrontendExternal
      * arbitrary scripts and use the typed message API.
      */
     @OptIn(EvaluateJavascriptUsage::class)
-    override suspend fun send(message: OutgoingExternalBusMessage) {
+    suspend fun send(message: OutgoingExternalBusMessage) {
         val json = frontendExternalBusJson.encodeToString(message)
         val script = "externalBus($json);"
         Timber.d("Queuing external bus message: ${sensitive(script)}")
         actionsFlow.emit(WebViewAction.EvaluateScript(script))
     }
 
-    override fun webViewActions(): Flow<WebViewAction> = actionsFlow.asSharedFlow()
+    /**
+     * Returns a flow of [WebViewAction] to be executed by the WebView.
+     *
+     * The WebView should collect this flow and execute each action accordingly.
+     */
+    fun webViewActions(): Flow<WebViewAction> = actionsFlow.asSharedFlow()
 
+    /**
+     * Evaluates a raw JavaScript script in the WebView and returns the result.
+     *
+     * This suspends until the WebView evaluates the script and returns the result.
+     *
+     * @return The evaluation result from the WebView, or null if the script returns no value
+     */
     @EvaluateJavascriptUsage
-    override suspend fun evaluateScript(script: String): String? {
+    suspend fun evaluateScript(script: String): String? {
         val action = WebViewAction.EvaluateScript(script)
         actionsFlow.emit(action)
         return action.result.await()
     }
 
-    override fun incomingMessages(): Flow<IncomingExternalBusMessage> = incomingFlow.asSharedFlow()
+    /**
+     * Returns a flow of typed incoming messages from the frontend.
+     *
+     * Unknown message types are emitted as [io.homeassistant.companion.android.frontend.externalbus.incoming.UnknownIncomingMessage]
+     * instead of throwing exceptions, ensuring forward compatibility with newer frontend versions.
+     */
+    fun incomingMessages(): Flow<IncomingExternalBusMessage> = incomingFlow.asSharedFlow()
 
-    override suspend fun onMessageReceived(messageJson: JsonElement) {
+    /**
+     * Called by the WebView JavaScript interface when a message is received from the frontend.
+     *
+     * The message is deserialized and emitted to subscribers of [incomingMessages].
+     *
+     * @param messageJson The JSON message from the frontend
+     */
+    suspend fun onMessageReceived(messageJson: JsonElement) {
         val message = deserializeMessage(messageJson)
         if (message != null) {
             incomingFlow.emit(message)
