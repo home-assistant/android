@@ -345,7 +345,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             },
             onJsConfirm = { message, jsResult ->
                 viewModelScope.launch {
-                    if (dialogManager.showJsConfirm(message)) jsResult.confirm() else jsResult.cancel()
+                    if (dialogManager.showConfirm(message)) jsResult.confirm() else jsResult.cancel()
                 }
                 true
             },
