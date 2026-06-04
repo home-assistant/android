@@ -1,11 +1,18 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package io.homeassistant.companion.android.settings.sensor.views
 
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.SheetValue.Expanded
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
+import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.util.compose.HAPreviews
 
@@ -41,92 +48,83 @@ class SensorDetailSettingSheetScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `SensorDetailSettingSheetContent with search field and entries`() {
-        HAThemeForPreview {
-            SensorDetailSettingSheetContent(
-                title = "Monitored apps",
-                isLoading = false,
-                entries = manyEntries(),
-                showSearch = true,
-                searchQuery = "",
-                onQueryChange = {},
-                isSelected = { it in setOf("com.spotify.music", "com.netflix.mediaclient") },
-                onToggle = { _, _ -> },
-                onCancel = {},
-                onSave = {},
-                modifier = Modifier
-                    .height(600.dp)
-                    .padding(horizontal = 16.dp),
-            )
-        }
+    fun `SensorDetailSettingSheet with search field and entries`() {
+        PreviewSheet(
+            entries = manyEntries(),
+            showSearch = true,
+            isSelected = { it in setOf("com.spotify.music", "com.netflix.mediaclient") },
+        )
     }
 
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `SensorDetailSettingSheetContent without search field`() {
-        HAThemeForPreview {
-            SensorDetailSettingSheetContent(
-                title = "Monitored apps",
-                isLoading = false,
-                entries = fewEntries(),
-                showSearch = false,
-                searchQuery = "",
-                onQueryChange = {},
-                isSelected = { it == "com.google.android.apps.maps" },
-                onToggle = { _, _ -> },
-                onCancel = {},
-                onSave = {},
-                modifier = Modifier
-                    .height(400.dp)
-                    .padding(horizontal = 16.dp),
-            )
-        }
+    fun `SensorDetailSettingSheet without search field`() {
+        PreviewSheet(
+            entries = fewEntries(),
+            showSearch = false,
+            height = 400.dp,
+            isSelected = { it == "com.google.android.apps.maps" },
+        )
     }
 
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `SensorDetailSettingSheetContent loading state`() {
-        HAThemeForPreview {
-            SensorDetailSettingSheetContent(
-                title = "Monitored apps",
-                isLoading = true,
-                entries = emptyList(),
-                showSearch = false,
-                searchQuery = "",
-                onQueryChange = {},
-                isSelected = { false },
-                onToggle = { _, _ -> },
-                onCancel = {},
-                onSave = {},
-                modifier = Modifier
-                    .height(400.dp)
-                    .padding(horizontal = 16.dp),
-            )
-        }
+    fun `SensorDetailSettingSheet loading state`() {
+        PreviewSheet(
+            entries = emptyList(),
+            showSearch = false,
+            isLoading = true,
+            height = 400.dp,
+        )
     }
 
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `SensorDetailSettingSheetContent empty filtered result`() {
+    fun `SensorDetailSettingSheet empty filtered result`() {
+        PreviewSheet(
+            entries = emptyList(),
+            showSearch = true,
+            searchQuery = "xyz_no_match",
+        )
+    }
+
+    @Composable
+    private fun PreviewSheet(
+        entries: List<SettingEntry>,
+        showSearch: Boolean,
+        searchQuery: String = "",
+        isLoading: Boolean = false,
+        height: Dp = 600.dp,
+        isSelected: (id: String) -> Boolean = { false },
+    ) {
         HAThemeForPreview {
-            SensorDetailSettingSheetContent(
-                title = "Monitored apps",
-                isLoading = false,
-                entries = emptyList(),
-                showSearch = true,
-                searchQuery = "xyz_no_match",
-                onQueryChange = {},
-                isSelected = { false },
-                onToggle = { _, _ -> },
-                onCancel = {},
-                onSave = {},
-                modifier = Modifier
-                    .height(600.dp)
-                    .padding(horizontal = 16.dp),
-            )
+            val density = LocalDensity.current
+            HAModalBottomSheet(
+                bottomSheetState = SheetState(
+                    skipPartiallyExpanded = true,
+                    positionalThreshold = { with(density) { 56.dp.toPx() } },
+                    velocityThreshold = { with(density) { 125.dp.toPx() } },
+                    initialValue = Expanded,
+                ),
+            ) {
+                SensorDetailSettingSheetContent(
+                    title = "Monitored apps",
+                    isLoading = isLoading,
+                    entries = entries,
+                    showSearch = showSearch,
+                    searchQuery = searchQuery,
+                    onQueryChange = {},
+                    isSelected = isSelected,
+                    onToggle = { _, _ -> },
+                    onCancel = {},
+                    onSave = {},
+                    // Bounds the entry list's weight(1f), mirroring the screen height the real sheet applies.
+                    modifier = Modifier.height(height),
+                )
+            }
         }
     }
 }
