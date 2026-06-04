@@ -13,7 +13,7 @@ import io.homeassistant.companion.android.common.data.connectivity.ConnectivityC
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.util.GestureDirection
-import io.homeassistant.companion.android.frontend.auth.HttpAuthManager
+import io.homeassistant.companion.android.frontend.auth.FrontendHttpAuthHandler
 import io.homeassistant.companion.android.frontend.auth.HttpAuthResult
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.frontend.download.DownloadResult
@@ -92,7 +92,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val prefsRepository: PrefsRepository,
     private val dialogManager: FrontendDialogManager,
     private val fileChooserManager: FileChooserManager,
-    private val httpAuthManager: HttpAuthManager,
+    private val httpAuthHandler: FrontendHttpAuthHandler,
     private val exoPlayerManager: FrontendExoPlayerManager,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
@@ -112,7 +112,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         prefsRepository: PrefsRepository,
         dialogManager: FrontendDialogManager,
         fileChooserManager: FileChooserManager,
-        httpAuthManager: HttpAuthManager,
+        httpAuthHandler: FrontendHttpAuthHandler,
         exoPlayerManager: FrontendExoPlayerManager,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
@@ -129,7 +129,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         prefsRepository = prefsRepository,
         dialogManager = dialogManager,
         fileChooserManager = fileChooserManager,
-        httpAuthManager = httpAuthManager,
+        httpAuthHandler = httpAuthHandler,
         exoPlayerManager = exoPlayerManager,
     )
 
@@ -210,7 +210,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         onPageFinished = ::onPageFinished,
         onReceivedHttpAuthRequest = { handler, host, resource, realm ->
             viewModelScope.launch {
-                if (httpAuthManager.handleAuthRequest(handler, host = host, resource = resource, realm = realm) ==
+                if (httpAuthHandler.handleAuthRequest(handler, host = host, resource = resource, realm = realm) ==
                     HttpAuthResult.Cancelled
                 ) {
                     _events.tryEmit(FrontendEvent.ShowSnackbar(commonR.string.auth_cancel))
