@@ -1066,6 +1066,8 @@
 
         <receiver
             android:name=".notifications.ScreenOffAdminReceiver"
+            android:label="@string/app_name"
+            android:description="@string/device_admin_explanation"
             android:permission="android.permission.BIND_DEVICE_ADMIN"
             android:exported="true">
             <meta-data

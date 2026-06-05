@@ -839,10 +839,15 @@ class MessagingManager @Inject constructor(
             COMMAND_SCREEN_OFF -> {
                 val devicePolicyManager = context.getSystemService<DevicePolicyManager>()
                 val adminComponent = ComponentName(context, ScreenOffAdminReceiver::class.java)
-                
+
                 if (devicePolicyManager?.isAdminActive(adminComponent) == true) {
-                    Timber.d("Locking device screen")
-                    devicePolicyManager.lockNow()
+                    try {
+                        Timber.d("Locking device screen")
+                        devicePolicyManager.lockNow()
+                    } catch (e: SecurityException) {
+                        Timber.e(e, "SecurityException while locking screen, admin may have been revoked")
+                        notifyMissingPermission(message, serverId)
+                    }
                 } else {
                     notifyMissingPermission(message, serverId)
                 }
