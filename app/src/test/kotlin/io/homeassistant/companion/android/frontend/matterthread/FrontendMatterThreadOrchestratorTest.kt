@@ -5,7 +5,6 @@ import android.content.IntentSender
 import androidx.activity.result.ActivityResult
 import app.cash.turbine.test
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
-import io.homeassistant.companion.android.matter.MatterCommissioningResult
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
 import io.mockk.coEvery
@@ -37,9 +36,9 @@ class FrontendMatterThreadOrchestratorTest {
     )
 
     @Test
-    fun `Given matter Ready result when onStartMatterCommissioning then emits LaunchIntent`() = runTest {
+    fun `Given Matter Ready result when onStartMatterCommissioning then emits LaunchIntent`() = runTest {
         val intent: IntentSender = mockk()
-        coEvery { matterManager.commissionMatterDevice() } returns MatterCommissioningResult.Ready(intent)
+        coEvery { matterManager.prepareMatterDeviceCommissioning() } returns MatterManager.CommissioningResult.Ready(intent)
         val orchestrator = createOrchestrator()
 
         orchestrator.events.test {
@@ -52,9 +51,9 @@ class FrontendMatterThreadOrchestratorTest {
     }
 
     @Test
-    fun `Given matter Error result when onStartMatterCommissioning then emits MatterError snackbar event`() = runTest {
-        coEvery { matterManager.commissionMatterDevice() } returns
-            MatterCommissioningResult.Error(IllegalStateException("nope"))
+    fun `Given Matter Error result when onStartMatterCommissioning then emits MatterError snackbar event`() = runTest {
+        coEvery { matterManager.prepareMatterDeviceCommissioning() } returns
+            MatterManager.CommissioningResult.Error(IllegalStateException("nope"))
         val orchestrator = createOrchestrator()
 
         orchestrator.events.test {
@@ -71,7 +70,7 @@ class FrontendMatterThreadOrchestratorTest {
 
     @Test
     fun `Given commissionMatterDevice throws when onStartMatterCommissioning then emits MatterError snackbar event`() = runTest {
-        coEvery { matterManager.commissionMatterDevice() } throws IllegalStateException("boom")
+        coEvery { matterManager.prepareMatterDeviceCommissioning() } throws IllegalStateException("boom")
         val orchestrator = createOrchestrator()
 
         orchestrator.events.test {
@@ -87,7 +86,7 @@ class FrontendMatterThreadOrchestratorTest {
 
     @Test
     fun `Given Matter is in-flight and RESULT_OK when onMatterThreadIntentResult then no event is emitted`() = runTest {
-        coEvery { matterManager.commissionMatterDevice() } returns MatterCommissioningResult.Ready(mockk())
+        coEvery { matterManager.prepareMatterDeviceCommissioning() } returns MatterManager.CommissioningResult.Ready(mockk())
         val orchestrator = createOrchestrator()
         // Drive the orchestrator to the awaiting-intent-result state.
         orchestrator.onStartMatterCommissioning()
@@ -101,7 +100,7 @@ class FrontendMatterThreadOrchestratorTest {
 
     @Test
     fun `Given Matter is in-flight and RESULT_CANCELED when onMatterThreadIntentResult then emits MatterCancelled snackbar`() = runTest {
-        coEvery { matterManager.commissionMatterDevice() } returns MatterCommissioningResult.Ready(mockk())
+        coEvery { matterManager.prepareMatterDeviceCommissioning() } returns MatterManager.CommissioningResult.Ready(mockk())
         val orchestrator = createOrchestrator()
         orchestrator.onStartMatterCommissioning()
 
@@ -128,9 +127,9 @@ class FrontendMatterThreadOrchestratorTest {
     }
 
     @Test
-    fun `Given thread Ready result when onImportThreadCredentials then emits LaunchIntent`() = runTest {
+    fun `Given Thread Ready result when onImportThreadCredentials then emits LaunchIntent`() = runTest {
         val intent: IntentSender = mockk()
-        coEvery { threadManager.exportThreadCredentials(any()) } returns ThreadManager.SyncResult.OnlyOnDevice(exportIntent = intent)
+        coEvery { threadManager.exportPreferredDataset(any()) } returns ThreadManager.SyncResult.OnlyOnDevice(exportIntent = intent)
         val orchestrator = createOrchestrator()
 
         orchestrator.events.test {
@@ -142,8 +141,8 @@ class FrontendMatterThreadOrchestratorTest {
     }
 
     @Test
-    fun `Given thread NoDataset result when onImportThreadCredentials then shows ThreadNoDataset dialog`() = runTest {
-        coEvery { threadManager.exportThreadCredentials(any()) } returns ThreadManager.SyncResult.NoneHaveCredentials
+    fun `Given Thread NoDataset result when onImportThreadCredentials then shows ThreadNoDataset dialog`() = runTest {
+        coEvery { threadManager.exportPreferredDataset(any()) } returns ThreadManager.SyncResult.NoneHaveCredentials
         val orchestrator = createOrchestrator()
 
         orchestrator.onImportThreadCredentials(serverId = 1)
@@ -152,8 +151,8 @@ class FrontendMatterThreadOrchestratorTest {
     }
 
     @Test
-    fun `Given thread NotConnected result when onImportThreadCredentials then shows ThreadNotConnected dialog`() = runTest {
-        coEvery { threadManager.exportThreadCredentials(any()) } returns ThreadManager.SyncResult.NotConnected
+    fun `Given Thread NotConnected result when onImportThreadCredentials then shows ThreadNotConnected dialog`() = runTest {
+        coEvery { threadManager.exportPreferredDataset(any()) } returns ThreadManager.SyncResult.NotConnected
         val orchestrator = createOrchestrator()
 
         orchestrator.onImportThreadCredentials(serverId = 1)
@@ -162,8 +161,8 @@ class FrontendMatterThreadOrchestratorTest {
     }
 
     @Test
-    fun `Given thread AppUnsupported result when onImportThreadCredentials then emits ThreadError snackbar event`() = runTest {
-        coEvery { threadManager.exportThreadCredentials(any()) } returns ThreadManager.SyncResult.AppUnsupported
+    fun `Given Thread AppUnsupported result when onImportThreadCredentials then emits ThreadError snackbar event`() = runTest {
+        coEvery { threadManager.exportPreferredDataset(any()) } returns ThreadManager.SyncResult.AppUnsupported
         val orchestrator = createOrchestrator()
 
         orchestrator.events.test {
@@ -179,7 +178,7 @@ class FrontendMatterThreadOrchestratorTest {
 
     @Test
     fun `Given exportThreadCredentials throws when onImportThreadCredentials then emits ThreadError snackbar event`() = runTest {
-        coEvery { threadManager.exportThreadCredentials(any()) } throws IllegalStateException("boom")
+        coEvery { threadManager.exportPreferredDataset(any()) } throws IllegalStateException("boom")
         val orchestrator = createOrchestrator()
 
         orchestrator.events.test {
@@ -196,7 +195,7 @@ class FrontendMatterThreadOrchestratorTest {
     @Test
     fun `Given onImportThreadCredentials when started then shows progress dialog`() = runTest {
         // Hold the call open so we can verify the progress dialog is shown before the result arrives.
-        coEvery { threadManager.exportThreadCredentials(any()) } coAnswers { awaitCancellation() }
+        coEvery { threadManager.exportPreferredDataset(any()) } coAnswers { awaitCancellation() }
         val orchestrator = createOrchestrator()
 
         val job = launch { orchestrator.onImportThreadCredentials(serverId = 1) }
@@ -208,7 +207,7 @@ class FrontendMatterThreadOrchestratorTest {
 
     @Test
     fun `Given Thread is in-flight and sendThreadDatasetExportResult returns name when onMatterThreadIntentResult then emits ThreadSuccess snackbar`() = runTest {
-        coEvery { threadManager.exportThreadCredentials(any()) } returns ThreadManager.SyncResult.OnlyOnDevice(exportIntent = mockk())
+        coEvery { threadManager.exportPreferredDataset(any()) } returns ThreadManager.SyncResult.OnlyOnDevice(exportIntent = mockk())
         coEvery { threadManager.sendThreadDatasetExportResult(any(), any()) } returns "My Thread Network"
         val orchestrator = createOrchestrator()
         orchestrator.onImportThreadCredentials(serverId = 42)
@@ -228,7 +227,7 @@ class FrontendMatterThreadOrchestratorTest {
 
     @Test
     fun `Given Thread is in-flight and sendThreadDatasetExportResult returns null when onMatterThreadIntentResult then shows ThreadNoDataset dialog`() = runTest {
-        coEvery { threadManager.exportThreadCredentials(any()) } returns ThreadManager.SyncResult.OnlyOnDevice(exportIntent = mockk())
+        coEvery { threadManager.exportPreferredDataset(any()) } returns ThreadManager.SyncResult.OnlyOnDevice(exportIntent = mockk())
         coEvery { threadManager.sendThreadDatasetExportResult(any(), any()) } returns null
         val orchestrator = createOrchestrator()
         orchestrator.onImportThreadCredentials(serverId = 1)
@@ -240,7 +239,7 @@ class FrontendMatterThreadOrchestratorTest {
 
     @Test
     fun `Given Thread is in-flight and sendThreadDatasetExportResult throws when onMatterThreadIntentResult then emits ThreadError snackbar`() = runTest {
-        coEvery { threadManager.exportThreadCredentials(any()) } returns ThreadManager.SyncResult.OnlyOnDevice(exportIntent = mockk())
+        coEvery { threadManager.exportPreferredDataset(any()) } returns ThreadManager.SyncResult.OnlyOnDevice(exportIntent = mockk())
         coEvery { threadManager.sendThreadDatasetExportResult(any(), any()) } throws IllegalStateException("boom")
         val orchestrator = createOrchestrator()
         orchestrator.onImportThreadCredentials(serverId = 1)
@@ -258,14 +257,14 @@ class FrontendMatterThreadOrchestratorTest {
 
     @Test
     fun `Given a flow already in-flight when another start request arrives then the second is dropped`() = runTest {
-        coEvery { matterManager.commissionMatterDevice() } coAnswers { awaitCancellation() }
+        coEvery { matterManager.prepareMatterDeviceCommissioning() } coAnswers { awaitCancellation() }
         val orchestrator = createOrchestrator()
 
         val firstJob = launch { orchestrator.onStartMatterCommissioning() }
         advanceUntilIdle()
         orchestrator.onImportThreadCredentials(serverId = 1)
 
-        coVerify(exactly = 0) { threadManager.exportThreadCredentials(any()) }
+        coVerify(exactly = 0) { threadManager.exportPreferredDataset(any()) }
         firstJob.cancel()
     }
 }

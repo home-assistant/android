@@ -3,9 +3,9 @@ package io.homeassistant.companion.android.frontend.matterthread
 import android.app.Activity
 import android.content.IntentSender
 import androidx.activity.result.ActivityResult
+import com.google.android.gms.common.api.ApiException
 import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
-import io.homeassistant.companion.android.matter.MatterCommissioningResult
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
 import java.util.concurrent.atomic.AtomicReference
@@ -63,7 +63,7 @@ internal class FrontendMatterThreadOrchestrator @Inject constructor(
     val events: SharedFlow<Event> = _events.asSharedFlow()
 
     /**
-     * Start the Matter commissioning flow. Drives [MatterManager.commissionMatterDevice], emits
+     * Start the Matter commissioning flow. Drives [MatterManager.prepareMatterDeviceCommissioning], emits
      * [Event.LaunchIntent] when an `IntentSender` is ready, or shows the
      * [MatterThreadTerminal.Snackbar.MatterError] feedback if Play Services cannot prepare the flow.
      *
@@ -76,12 +76,13 @@ internal class FrontendMatterThreadOrchestrator @Inject constructor(
         }
         var awaitingIntentResult = false
         try {
-            when (val result = matterManager.commissionMatterDevice()) {
-                is MatterCommissioningResult.Ready -> {
+            when (val result = matterManager.prepareMatterDeviceCommissioning()) {
+                is MatterManager.CommissioningResult.Ready -> {
                     awaitingIntentResult = true
                     _events.emit(Event.LaunchIntent(result.intentSender))
                 }
-                is MatterCommissioningResult.Error -> {
+
+                is MatterManager.CommissioningResult.Error -> {
                     Timber.e(result.cause, "Matter commissioning couldn't be prepared")
                     showTerminal(MatterThreadTerminal.Snackbar.MatterError)
                 }
@@ -99,7 +100,7 @@ internal class FrontendMatterThreadOrchestrator @Inject constructor(
     }
 
     /**
-     * Start the Thread credential export flow. Drives [ThreadManager.exportThreadCredentials],
+     * Start the Thread credential export flow. Drives [ThreadManager.exportPreferredDataset],
      * shows the progress dialog while reading the dataset, then either emits [Event.LaunchIntent]
      * or shows a terminal dialog/snackbar.
      *
@@ -117,7 +118,12 @@ internal class FrontendMatterThreadOrchestrator @Inject constructor(
                 // programmatically by cancelling the job when the flow advances.
                 val progressJob = launch { dialogManager.showMatterThreadProgress() }
                 try {
-                    val result = threadManager.exportThreadCredentials(serverId)
+                    val result = try {
+                        threadManager.exportPreferredDataset(serverId)
+                    } catch (e: ApiException) {
+                        Timber.e(e, "Error while trying to export preferred dataset")
+                        null
+                    }
                     progressJob.cancel()
                     when (result) {
                         is ThreadManager.SyncResult.OnlyOnDevice -> {
@@ -129,14 +135,17 @@ internal class FrontendMatterThreadOrchestrator @Inject constructor(
                                 showTerminal(MatterThreadTerminal.Dialog.ThreadNoDataset)
                             }
                         }
+
                         is ThreadManager.SyncResult.NoneHaveCredentials,
                         is ThreadManager.SyncResult.OnlyOnServer,
                         -> showTerminal(MatterThreadTerminal.Dialog.ThreadNoDataset)
+
                         is ThreadManager.SyncResult.NotConnected ->
                             showTerminal(MatterThreadTerminal.Dialog.ThreadNotConnected)
+
                         is ThreadManager.SyncResult.AppUnsupported,
                         is ThreadManager.SyncResult.ServerUnsupported,
-                        is ThreadManager.SyncResult.AllHaveCredentials,
+                        null,
                         -> {
                             Timber.w("Thread export returned unsupported variant: $result")
                             showTerminal(MatterThreadTerminal.Snackbar.ThreadError)
