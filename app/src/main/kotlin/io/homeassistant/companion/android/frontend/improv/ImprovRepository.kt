@@ -36,7 +36,7 @@ interface ImprovRepository {
      * 1. Open a GATT connection.
      * 2. Wait for the device to report it's authorized — some hardware requires a physical
      *    button press here.
-     * 3. Send [ssid] / [password] over the improv characteristic.
+     * 3. Send [ssid] / [password] over the Improv characteristic.
      * 4. Forward the device's state machine until it reports it has been provisioned.
      *
      * Emits a [ProvisioningEvent] for every state transition, error report, and the terminal
