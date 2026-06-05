@@ -7,11 +7,10 @@ import com.wifi.improv.ErrorState
 import com.wifi.improv.ImprovDevice
 import com.wifi.improv.ImprovManager
 import io.homeassistant.companion.android.common.util.PermissionChecker
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import kotlin.collections.emptyList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -22,14 +21,12 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(ConsoleLogExtension::class)
 class ImprovRepositoryImplTest {
     private val improvManager: ImprovManager = mockk(relaxed = true)
     private val improvManagerFactory: ImprovManagerFactory = ImprovManagerFactory { improvManager }
@@ -39,13 +36,15 @@ class ImprovRepositoryImplTest {
         sdkInt: Int = Build.VERSION_CODES.S,
         scope: CoroutineScope = backgroundScope,
         ioDispatcher: CoroutineDispatcher = StandardTestDispatcher(testScheduler),
-    ): ImprovRepositoryImpl = ImprovRepositoryImpl(
-        permissionChecker = permissionChecker,
-        improvManagerFactory = improvManagerFactory,
-        sdkInt = sdkInt,
-        shareInScope = scope,
-        backgroundDispatcher = ioDispatcher,
-    )
+    ): ImprovRepositoryImpl {
+        SdkVersion.sdkInt = sdkInt
+        return ImprovRepositoryImpl(
+            permissionChecker = permissionChecker,
+            improvManagerFactory = improvManagerFactory,
+            shareInScope = scope,
+            backgroundDispatcher = ioDispatcher,
+        )
+    }
 
     @Nested
     inner class RequiredPermissions {
