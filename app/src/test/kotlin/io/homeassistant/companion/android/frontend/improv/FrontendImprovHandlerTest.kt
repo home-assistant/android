@@ -36,7 +36,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class FrontendImprovOrchestratorTest {
+class FrontendImprovHandlerTest {
 
     /** Backing flow returned by `scanDevices()` — test drives it by emitting. */
     private val scanFlow = MutableStateFlow<List<ImprovDevice>>(emptyList())
@@ -64,7 +64,7 @@ class FrontendImprovOrchestratorTest {
         every { getWifiSsid() } returns "\"My SSID\""
     }
 
-    private fun createOrchestrator() = FrontendImprovOrchestrator(
+    private fun createHandler() = FrontendImprovHandler(
         improvRepository = improvRepository,
         bluetoothCapabilities = bluetoothCapabilities,
         externalBusRepository = externalBusRepository,
@@ -73,23 +73,15 @@ class FrontendImprovOrchestratorTest {
         wifiHelper = wifiHelper,
     )
 
-    /**
-     * Drives the orchestrator to a ConfiguringDevice variant whose deviceAddress has been
-     * resolved by an in-flight scan, the realistic precondition for [FrontendImprovOrchestrator.onConnectDevice].
-     * Advances the test scheduler at each step so the launched scan collector subscribes before
-     * we emit, and so the emission is processed before the helper returns. Returns the scan
-     * collector [Job] so callers can cancel it at the end of the test — the underlying
-     * `collectLatest` on `_scanRequested` never completes on its own.
-     */
     private suspend fun TestScope.configureWithResolvedAddress(
-        orchestrator: FrontendImprovOrchestrator,
+        handler: FrontendImprovHandler,
         deviceName: String = "Smart Plug",
         deviceAddress: String = "AA:BB",
     ): Job {
-        orchestrator.onStartImprovScan()
-        val scanJob = launch { orchestrator.processImprovScanRequests() }
+        handler.onStartImprovScan()
+        val scanJob = launch { handler.processImprovScanRequests() }
         advanceUntilIdle()
-        orchestrator.onConfigureImprovDevice(deviceName = deviceName)
+        handler.onConfigureImprovDevice(deviceName = deviceName)
         scanFlow.emit(listOf(ImprovDevice(deviceName, deviceAddress)))
         advanceUntilIdle()
         return scanJob
@@ -97,7 +89,7 @@ class FrontendImprovOrchestratorTest {
 
     @Test
     fun `Given device without BLE when onStartImprovScan then scanRequested stays false`() = runTest {
-        val orchestrator = FrontendImprovOrchestrator(
+        val handler = FrontendImprovHandler(
             improvRepository = improvRepository,
             bluetoothCapabilities = { false },
             externalBusRepository = externalBusRepository,
@@ -106,27 +98,27 @@ class FrontendImprovOrchestratorTest {
             wifiHelper = wifiHelper,
         )
 
-        orchestrator.onStartImprovScan()
+        handler.onStartImprovScan()
         advanceUntilIdle()
 
-        assertFalse(orchestrator.scanRequested.value)
+        assertFalse(handler.scanRequested.value)
     }
 
     @Test
     fun `Given permissions granted when onStartImprovScan then scanRequested flips true`() = runTest {
-        val orchestrator = createOrchestrator()
+        val handler = createHandler()
 
-        orchestrator.onStartImprovScan()
+        handler.onStartImprovScan()
 
-        assertTrue(orchestrator.scanRequested.value)
+        assertTrue(handler.scanRequested.value)
     }
 
     @Test
     fun `Given scanRequested true when scan emits then device name is forwarded to frontend`() = runTest {
-        val orchestrator = createOrchestrator()
-        orchestrator.onStartImprovScan()
+        val handler = createHandler()
+        handler.onStartImprovScan()
 
-        val job = launch { orchestrator.processImprovScanRequests() }
+        val job = launch { handler.processImprovScanRequests() }
         advanceUntilIdle()
         scanFlow.emit(listOf(ImprovDevice("Smart Plug", "AA:BB")))
         advanceUntilIdle()
@@ -139,9 +131,9 @@ class FrontendImprovOrchestratorTest {
 
     @Test
     fun `Given scanRequested false when processImprovScanRequests then nothing is sent to frontend`() = runTest {
-        val orchestrator = createOrchestrator()
+        val handler = createHandler()
 
-        val job = launch { orchestrator.processImprovScanRequests() }
+        val job = launch { handler.processImprovScanRequests() }
         advanceUntilIdle()
         // This won't ever happen in reality, but it is the only way to test that we are not subscribing to scanDevices
         scanFlow.emit(listOf(ImprovDevice("Smart Plug", "AA:BB")))
@@ -156,8 +148,8 @@ class FrontendImprovOrchestratorTest {
         every { improvRepository.hasPermissions() } returns false
         val expectedPermissions = improvRepository.requiredPermissions
 
-        val orchestrator = createOrchestrator()
-        orchestrator.onStartImprovScan()
+        val handler = createHandler()
+        handler.onStartImprovScan()
         advanceUntilIdle()
 
         coVerify { permissionManager.checkImprovPermissions(expectedPermissions) }
@@ -168,18 +160,18 @@ class FrontendImprovOrchestratorTest {
         every { improvRepository.hasPermissions() } returns false
         coEvery { permissionManager.checkImprovPermissions(any()) } returns false
 
-        val orchestrator = createOrchestrator()
-        orchestrator.onStartImprovScan()
+        val handler = createHandler()
+        handler.onStartImprovScan()
         advanceUntilIdle()
 
-        assertFalse(orchestrator.scanRequested.value)
+        assertFalse(handler.scanRequested.value)
     }
 
     @Test
     fun `Given scan is running when devices are discovered then forwards each new name once`() = runTest {
-        val orchestrator = createOrchestrator()
-        orchestrator.onStartImprovScan()
-        val job = launch { orchestrator.processImprovScanRequests() }
+        val handler = createHandler()
+        handler.onStartImprovScan()
+        val job = launch { handler.processImprovScanRequests() }
         advanceUntilIdle()
 
         scanFlow.emit(listOf(ImprovDevice("Smart Plug", "AA:BB")))
@@ -193,11 +185,11 @@ class FrontendImprovOrchestratorTest {
 
     @Test
     fun `Given scan collector cancelled and resubscribed while session still active then previously sent device names are not re-sent`() = runTest {
-        val orchestrator = createOrchestrator()
-        orchestrator.onStartImprovScan()
+        val handler = createHandler()
+        handler.onStartImprovScan()
 
         // First lifecycle-bound collect — simulates the foreground RESUMED effect.
-        val firstJob = launch { orchestrator.processImprovScanRequests() }
+        val firstJob = launch { handler.processImprovScanRequests() }
         advanceUntilIdle()
         scanFlow.emit(listOf(ImprovDevice("Smart Plug", "AA:BB")))
         advanceUntilIdle()
@@ -209,8 +201,8 @@ class FrontendImprovOrchestratorTest {
 
         // Foreground again: the lifecycle effect re-runs processImprovScanRequests. The repository's
         // scanFlow still holds the previously discovered device (replay semantics), so without
-        // session-level dedup the orchestrator re-sends it to the frontend.
-        val secondJob = launch { orchestrator.processImprovScanRequests() }
+        // session-level dedup the handler re-sends it to the frontend.
+        val secondJob = launch { handler.processImprovScanRequests() }
         advanceUntilIdle()
 
         coVerify(exactly = 1) { externalBusRepository.send(any<OutgoingExternalBusMessage>()) }
@@ -219,11 +211,11 @@ class FrontendImprovOrchestratorTest {
 
     @Test
     fun `Given onConfigureImprovDevice when handled then uiState is initialised to SearchingDevice`() = runTest {
-        val orchestrator = createOrchestrator()
+        val handler = createHandler()
 
-        orchestrator.uiState.test {
+        handler.uiState.test {
             assertNull(awaitItem())
-            orchestrator.onConfigureImprovDevice(deviceName = "Smart Plug")
+            handler.onConfigureImprovDevice(deviceName = "Smart Plug")
             advanceUntilIdle()
             val state = assertInstanceOf(ImprovUIState.SearchingDevice::class.java, awaitItem())
             assertEquals("Smart Plug", state.deviceName)
@@ -233,16 +225,16 @@ class FrontendImprovOrchestratorTest {
 
     @Test
     fun `Given scan emits matching device when SearchingDevice then state promotes to ConfiguringDevice`() = runTest {
-        val orchestrator = createOrchestrator()
-        orchestrator.onStartImprovScan()
-        val job = launch { orchestrator.processImprovScanRequests() }
+        val handler = createHandler()
+        handler.onStartImprovScan()
+        val job = launch { handler.processImprovScanRequests() }
         advanceUntilIdle()
-        orchestrator.onConfigureImprovDevice(deviceName = "Smart Plug")
+        handler.onConfigureImprovDevice(deviceName = "Smart Plug")
 
         scanFlow.emit(listOf(ImprovDevice("Smart Plug", "AA:BB")))
         advanceUntilIdle()
 
-        val state = orchestrator.uiState.value
+        val state = handler.uiState.value
         assertInstanceOf(ImprovUIState.ConfiguringDevice::class.java, state)
         val configuring = state as ImprovUIState.ConfiguringDevice
         assertEquals("Smart Plug", configuring.deviceName)
@@ -252,16 +244,16 @@ class FrontendImprovOrchestratorTest {
 
     @Test
     fun `Given device already discovered before onConfigureImprovDevice then state initialises directly to ConfiguringDevice`() = runTest {
-        val orchestrator = createOrchestrator()
-        orchestrator.onStartImprovScan()
-        val job = launch { orchestrator.processImprovScanRequests() }
+        val handler = createHandler()
+        handler.onStartImprovScan()
+        val job = launch { handler.processImprovScanRequests() }
         advanceUntilIdle()
         scanFlow.emit(listOf(ImprovDevice("Smart Plug", "AA:BB")))
         advanceUntilIdle()
 
-        orchestrator.onConfigureImprovDevice(deviceName = "Smart Plug")
+        handler.onConfigureImprovDevice(deviceName = "Smart Plug")
 
-        val state = orchestrator.uiState.value
+        val state = handler.uiState.value
         assertInstanceOf(ImprovUIState.ConfiguringDevice::class.java, state)
         val configuring = state as ImprovUIState.ConfiguringDevice
         assertEquals("Smart Plug", configuring.deviceName)
@@ -271,11 +263,11 @@ class FrontendImprovOrchestratorTest {
 
     @Test
     fun `Given onConnectDevice and PROVISIONED event then sends device_setup_done`() = runTest {
-        val orchestrator = createOrchestrator()
-        val scanJob = configureWithResolvedAddress(orchestrator)
+        val handler = createHandler()
+        val scanJob = configureWithResolvedAddress(handler)
         val provisioningScope = CoroutineScope(coroutineContext + Job())
 
-        orchestrator.onConnectDevice(scope = provisioningScope, ssid = "wifi", password = "pwd")
+        handler.onConnectDevice(scope = provisioningScope, ssid = "wifi", password = "pwd")
         advanceUntilIdle()
 
         provisionFlow.emit(ProvisioningEvent.StateChanged(DeviceState.PROVISIONING))
@@ -289,16 +281,16 @@ class FrontendImprovOrchestratorTest {
 
     @Test
     fun `Given Errored state when late Provisioned event arrives then device_setup_done is not sent`() = runTest {
-        val orchestrator = createOrchestrator()
-        val scanJob = configureWithResolvedAddress(orchestrator)
+        val handler = createHandler()
+        val scanJob = configureWithResolvedAddress(handler)
         val provisioningScope = CoroutineScope(coroutineContext + Job())
-        orchestrator.onConnectDevice(scope = provisioningScope, ssid = "wifi", password = "pwd")
+        handler.onConnectDevice(scope = provisioningScope, ssid = "wifi", password = "pwd")
         advanceUntilIdle()
 
         // First an error transitions UI to Errored.
         provisionFlow.emit(ProvisioningEvent.ErrorOccurred(ErrorState.UNABLE_TO_CONNECT))
         advanceUntilIdle()
-        assertInstanceOf(ImprovUIState.Errored::class.java, orchestrator.uiState.value)
+        assertInstanceOf(ImprovUIState.Errored::class.java, handler.uiState.value)
 
         // Then a late Provisioned event from the BLE stack. The UI must stay Errored AND no
         // setup-done message should be forwarded — otherwise the frontend would think setup
@@ -306,7 +298,7 @@ class FrontendImprovOrchestratorTest {
         provisionFlow.emit(ProvisioningEvent.Provisioned(domain = "acme"))
         advanceUntilIdle()
 
-        assertInstanceOf(ImprovUIState.Errored::class.java, orchestrator.uiState.value)
+        assertInstanceOf(ImprovUIState.Errored::class.java, handler.uiState.value)
         coVerify(exactly = 0) { externalBusRepository.send(ImprovDeviceSetupDoneMessage) }
         scanJob.cancel()
         provisioningScope.cancel()
@@ -314,31 +306,31 @@ class FrontendImprovOrchestratorTest {
 
     @Test
     fun `Given onConnectDevice while still SearchingDevice then provisionDevice is not called`() = runTest {
-        val orchestrator = createOrchestrator()
-        orchestrator.onConfigureImprovDevice(deviceName = "Smart Plug")
+        val handler = createHandler()
+        handler.onConfigureImprovDevice(deviceName = "Smart Plug")
 
-        orchestrator.onConnectDevice(scope = backgroundScope, ssid = "wifi", password = "pwd")
+        handler.onConnectDevice(scope = backgroundScope, ssid = "wifi", password = "pwd")
 
         verify(exactly = 0) { improvRepository.provisionDevice(any(), any(), any()) }
     }
 
     @Test
     fun `Given provisioning emits state changes then uiState mirrors them`() = runTest {
-        val orchestrator = createOrchestrator()
-        val scanJob = configureWithResolvedAddress(orchestrator)
+        val handler = createHandler()
+        val scanJob = configureWithResolvedAddress(handler)
         val provisioningScope = CoroutineScope(coroutineContext + Job())
-        orchestrator.onConnectDevice(scope = provisioningScope, ssid = "wifi", password = "pwd")
+        handler.onConnectDevice(scope = provisioningScope, ssid = "wifi", password = "pwd")
         advanceUntilIdle()
 
         provisionFlow.emit(ProvisioningEvent.StateChanged(DeviceState.AUTHORIZATION_REQUIRED))
         advanceUntilIdle()
-        val provisioning = orchestrator.uiState.value
+        val provisioning = handler.uiState.value
         assertInstanceOf(ImprovUIState.Provisioning::class.java, provisioning)
         assertEquals(DeviceState.AUTHORIZATION_REQUIRED, (provisioning as ImprovUIState.Provisioning).state)
 
         provisionFlow.emit(ProvisioningEvent.ErrorOccurred(ErrorState.UNABLE_TO_CONNECT))
         advanceUntilIdle()
-        val errored = orchestrator.uiState.value
+        val errored = handler.uiState.value
         assertInstanceOf(ImprovUIState.Errored::class.java, errored)
         val erroredState = errored as ImprovUIState.Errored
         assertEquals(ErrorState.UNABLE_TO_CONNECT, erroredState.error)
@@ -350,14 +342,14 @@ class FrontendImprovOrchestratorTest {
 
     @Test
     fun `Given onDismissed without provisioned domain then clears uiState`() = runTest {
-        val orchestrator = createOrchestrator()
-        orchestrator.onConfigureImprovDevice(deviceName = "Smart Plug")
+        val handler = createHandler()
+        handler.onConfigureImprovDevice(deviceName = "Smart Plug")
         advanceUntilIdle()
 
-        orchestrator.onDismissed(serverId = 1)
+        handler.onDismissed(serverId = 1)
         advanceUntilIdle()
 
-        assertNull(orchestrator.uiState.value)
+        assertNull(handler.uiState.value)
     }
 
     @Test
@@ -365,10 +357,10 @@ class FrontendImprovOrchestratorTest {
         coEvery { serverManager.getServer(1) } returns mockk(relaxed = true) {
             every { version } returns HomeAssistantVersion(year = 2025, month = 6, release = 0)
         }
-        val orchestrator = createOrchestrator()
-        val scanJob = configureWithResolvedAddress(orchestrator)
+        val handler = createHandler()
+        val scanJob = configureWithResolvedAddress(handler)
         val provisioningScope = CoroutineScope(coroutineContext + Job())
-        orchestrator.onConnectDevice(scope = provisioningScope, ssid = "wifi", password = "pwd")
+        handler.onConnectDevice(scope = provisioningScope, ssid = "wifi", password = "pwd")
         advanceUntilIdle()
         provisionFlow.emit(ProvisioningEvent.Provisioned(domain = "acme"))
         advanceUntilIdle()
@@ -376,7 +368,7 @@ class FrontendImprovOrchestratorTest {
         val captured = slot<OutgoingExternalBusMessage>()
         coEvery { externalBusRepository.send(capture(captured)) } returns Unit
 
-        orchestrator.onDismissed(serverId = 1)
+        handler.onDismissed(serverId = 1)
 
         assertInstanceOf(OutgoingExternalBusMessage::class.java, captured.captured)
         scanJob.cancel()
@@ -388,20 +380,20 @@ class FrontendImprovOrchestratorTest {
         coEvery { serverManager.getServer(1) } returns mockk(relaxed = true) {
             every { version } returns HomeAssistantVersion(year = 2025, month = 5, release = 0)
         }
-        val orchestrator = createOrchestrator()
-        val scanJob = configureWithResolvedAddress(orchestrator)
+        val handler = createHandler()
+        val scanJob = configureWithResolvedAddress(handler)
         val provisioningScope = CoroutineScope(coroutineContext + Job())
-        orchestrator.onConnectDevice(scope = provisioningScope, ssid = "wifi", password = "pwd")
+        handler.onConnectDevice(scope = provisioningScope, ssid = "wifi", password = "pwd")
         advanceUntilIdle()
         provisionFlow.emit(ProvisioningEvent.Provisioned(domain = "acme"))
         advanceUntilIdle()
 
-        orchestrator.events.test {
-            orchestrator.onDismissed(serverId = 1)
+        handler.events.test {
+            handler.onDismissed(serverId = 1)
 
             val event = awaitItem()
-            assertInstanceOf(FrontendImprovOrchestrator.Event.ReloadAtPath::class.java, event)
-            val reload = event as FrontendImprovOrchestrator.Event.ReloadAtPath
+            assertInstanceOf(FrontendImprovHandler.Event.ReloadAtPath::class.java, event)
+            val reload = event as FrontendImprovHandler.Event.ReloadAtPath
             assertEquals("/_my_redirect/config_flow_start?domain=acme", reload.path)
             assertEquals(1, reload.serverId)
             cancelAndIgnoreRemainingEvents()
@@ -412,31 +404,31 @@ class FrontendImprovOrchestratorTest {
 
     @Test
     fun `Given active scan when onDismissed then scanRequested flips false`() = runTest {
-        val orchestrator = createOrchestrator()
-        orchestrator.onStartImprovScan()
-        val job = launch { orchestrator.processImprovScanRequests() }
+        val handler = createHandler()
+        handler.onStartImprovScan()
+        val job = launch { handler.processImprovScanRequests() }
         advanceUntilIdle()
-        assertEquals(true, orchestrator.scanRequested.value)
+        assertEquals(true, handler.scanRequested.value)
 
-        orchestrator.onDismissed(serverId = 1)
+        handler.onDismissed(serverId = 1)
 
-        assertEquals(false, orchestrator.scanRequested.value)
+        assertEquals(false, handler.scanRequested.value)
         job.cancel()
     }
 
     @Test
     fun `Given onRestart from Errored then reverts to ConfiguringDevice with same device`() = runTest {
-        val orchestrator = createOrchestrator()
-        val scanJob = configureWithResolvedAddress(orchestrator)
+        val handler = createHandler()
+        val scanJob = configureWithResolvedAddress(handler)
         val provisioningScope = CoroutineScope(coroutineContext + Job())
-        orchestrator.onConnectDevice(scope = provisioningScope, ssid = "wifi", password = "pwd")
+        handler.onConnectDevice(scope = provisioningScope, ssid = "wifi", password = "pwd")
         advanceUntilIdle()
         provisionFlow.emit(ProvisioningEvent.ErrorOccurred(ErrorState.UNABLE_TO_CONNECT))
         advanceUntilIdle()
 
-        orchestrator.onRestart()
+        handler.onRestart()
 
-        val state = orchestrator.uiState.value
+        val state = handler.uiState.value
         assertInstanceOf(ImprovUIState.ConfiguringDevice::class.java, state)
         val configuring = state as ImprovUIState.ConfiguringDevice
         assertEquals("Smart Plug", configuring.deviceName)
@@ -447,13 +439,13 @@ class FrontendImprovOrchestratorTest {
 
     @Test
     fun `Given onRestart while still SearchingDevice then state is unchanged`() = runTest {
-        val orchestrator = createOrchestrator()
-        orchestrator.onConfigureImprovDevice(deviceName = "Smart Plug")
+        val handler = createHandler()
+        handler.onConfigureImprovDevice(deviceName = "Smart Plug")
 
-        orchestrator.onRestart()
+        handler.onRestart()
 
         // Try-again is only exposed in Errored; from SearchingDevice it's effectively a no-op.
-        val state = orchestrator.uiState.value
+        val state = handler.uiState.value
         assertInstanceOf(ImprovUIState.SearchingDevice::class.java, state)
         assertEquals("Smart Plug", (state as ImprovUIState.SearchingDevice).deviceName)
     }

@@ -29,7 +29,7 @@ import io.homeassistant.companion.android.frontend.gesture.FrontendGestureManage
 import io.homeassistant.companion.android.frontend.gesture.GestureResult
 import io.homeassistant.companion.android.frontend.handler.FrontendBusObserver
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
-import io.homeassistant.companion.android.frontend.improv.FrontendImprovOrchestrator
+import io.homeassistant.companion.android.frontend.improv.FrontendImprovHandler
 import io.homeassistant.companion.android.frontend.js.BridgeState
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridgeFactory
 import io.homeassistant.companion.android.frontend.js.FrontendJsCallback
@@ -95,7 +95,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val fileChooserManager: FileChooserManager,
     private val httpAuthHandler: FrontendHttpAuthHandler,
     private val exoPlayerManager: FrontendExoPlayerManager,
-    private val improvOrchestrator: FrontendImprovOrchestrator,
+    private val improvHandler: FrontendImprovHandler,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -116,7 +116,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         fileChooserManager: FileChooserManager,
         httpAuthHandler: FrontendHttpAuthHandler,
         exoPlayerManager: FrontendExoPlayerManager,
-        improvOrchestrator: FrontendImprovOrchestrator,
+        improvHandler: FrontendImprovHandler,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
         initialPath = savedStateHandle.toRoute<FrontendRoute>().path,
@@ -134,7 +134,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         fileChooserManager = fileChooserManager,
         httpAuthHandler = httpAuthHandler,
         exoPlayerManager = exoPlayerManager,
-        improvOrchestrator = improvOrchestrator,
+        improvHandler = improvHandler,
     )
 
     /**
@@ -281,7 +281,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      * collect that keeps the scan alive while the screen is RESUMED and tears it down on
      * navigation or pause.
      */
-    val improvScanRequested: StateFlow<Boolean> = improvOrchestrator.scanRequested
+    val improvScanRequested: StateFlow<Boolean> = improvHandler.scanRequested
 
     init {
         viewModelScope.launch {
@@ -316,7 +316,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         }
 
         viewModelScope.launch {
-            improvOrchestrator.uiState.collect { improvUiState ->
+            improvHandler.uiState.collect { improvUiState ->
                 _viewState.update { currentState ->
                     if (currentState is FrontendViewState.Content) {
                         currentState.copy(improvUiState = improvUiState)
@@ -328,9 +328,9 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         }
 
         viewModelScope.launch {
-            improvOrchestrator.events.collect { event ->
+            improvHandler.events.collect { event ->
                 when (event) {
-                    is FrontendImprovOrchestrator.Event.ReloadAtPath -> {
+                    is FrontendImprovHandler.Event.ReloadAtPath -> {
                         _viewState.update {
                             FrontendViewState.LoadServer(serverId = event.serverId, path = event.path)
                         }
@@ -648,10 +648,10 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 exoPlayerManager.handle(result)
             }
 
-            is FrontendHandlerEvent.StartImprovScan -> improvOrchestrator.onStartImprovScan()
+            is FrontendHandlerEvent.StartImprovScan -> improvHandler.onStartImprovScan()
 
             is FrontendHandlerEvent.ConfigureImprovDevice ->
-                improvOrchestrator.onConfigureImprovDevice(result.deviceName)
+                improvHandler.onConfigureImprovDevice(result.deviceName)
 
             is FrontendHandlerEvent.EntityAddToExecuted -> {
                 result.event?.let { _events.tryEmit(it) }
@@ -684,24 +684,24 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     }
 
     /**
-     * Forwards user-entered Wi-Fi credentials to the device on the orchestrator's current
+     * Forwards user-entered Wi-Fi credentials to the device on the handler's current
      * [io.homeassistant.companion.android.frontend.improv.ImprovUIState.ConfiguringDevice] —
      * no-ops if no Improv session is active or the BLE address hasn't been resolved yet.
      */
     fun onImprovConnectDevice(ssid: String, password: String) {
         viewModelScope.launch {
-            improvOrchestrator.onConnectDevice(scope = viewModelScope, ssid = ssid, password = password)
+            improvHandler.onConnectDevice(scope = viewModelScope, ssid = ssid, password = password)
         }
     }
 
     /** Re-arms scanning after an Improv error — wired to the sheet's "Try again" button. */
     fun onImprovRestart() {
-        viewModelScope.launch { improvOrchestrator.onRestart() }
+        viewModelScope.launch { improvHandler.onRestart() }
     }
 
     /** Closes the Improv bottom sheet and, if successful, navigates the frontend to the matching config flow. */
     fun onImprovSheetDismissed() {
-        viewModelScope.launch { improvOrchestrator.onDismissed(serverId = _viewState.value.serverId) }
+        viewModelScope.launch { improvHandler.onDismissed(serverId = _viewState.value.serverId) }
     }
 
     /**
@@ -709,7 +709,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      * Intended to be invoked from `FrontendScreen` inside a `repeatOnLifecycle(RESUMED)` block so
      * the BLE scan's lifetime is bound to the route's visibility.
      */
-    suspend fun processImprovScanRequests() = improvOrchestrator.processImprovScanRequests()
+    suspend fun processImprovScanRequests() = improvHandler.processImprovScanRequests()
 
     /**
      * Handles URL load results from the URL manager.

@@ -45,12 +45,12 @@ import timber.log.Timber
  * **Concurrency contract.** Entry points are safe to call from any coroutine. Var-backed internal
  * state ([provisioningJob], [discoveredDevices], [sentDeviceNames]) is guarded by [mutex];
  * StateFlow-backed state ([scanRequested], [uiState]) is atomic by construction and not
- * lock-guarded. The orchestrator does not own a long-lived scope: the caller passes its scope to
+ * lock-guarded. The handler does not own a long-lived scope: the caller passes its scope to
  * [onConnectDevice] for provisioning, and the UI layer hosts the scan collect through
  * [processImprovScanRequests] so navigation away from the frontend route naturally pauses BLE work.
  */
 @ViewModelScoped
-internal class FrontendImprovOrchestrator @Inject constructor(
+internal class FrontendImprovHandler @Inject constructor(
     private val improvRepository: ImprovRepository,
     private val bluetoothCapabilities: BluetoothCapabilities,
     private val externalBusRepository: FrontendExternalBusRepository,
@@ -374,7 +374,7 @@ internal class FrontendImprovOrchestrator @Inject constructor(
     }
 
     /**
-     * Side-effects the orchestrator can't carry out on its own — the VM has to translate them
+     * Side-effects the handler can't carry out on its own — the VM has to translate them
      * into view-state transitions.
      */
     sealed interface Event {
