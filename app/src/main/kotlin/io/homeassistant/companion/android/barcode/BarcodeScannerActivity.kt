@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.provider.Settings
 import androidx.activity.addCallback
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -13,7 +12,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -23,6 +21,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.barcode.view.BarcodeScannerView
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.util.openAppSettings
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import java.util.Locale
 import kotlinx.coroutines.launch
@@ -133,7 +132,7 @@ class BarcodeScannerActivity : BaseActivity() {
         if (inContext) {
             cameraPermission.launch(Manifest.permission.CAMERA)
         } else {
-            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:$packageName".toUri()))
+            openAppSettings()
             requestSilently = true // Reset state to trigger new in context dialog/check when resumed
         }
     }
