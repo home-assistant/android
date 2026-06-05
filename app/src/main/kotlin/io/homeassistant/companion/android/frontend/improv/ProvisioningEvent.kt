@@ -4,7 +4,7 @@ import com.wifi.improv.DeviceState
 import com.wifi.improv.ErrorState
 
 /**
- * Events emitted during a single improv provisioning session.
+ * Events emitted during a single Improv Wi-Fi device provisioning session.
  *
  * Produced by [ImprovRepository.provisionDevice] across the connect → authorize → submit-Wi-Fi →
  * provision sequence. The flow terminates with a [Provisioned] emission once the device reports

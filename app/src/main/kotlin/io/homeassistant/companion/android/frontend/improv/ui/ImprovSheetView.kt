@@ -51,11 +51,12 @@ import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.frontend.improv.ImprovUIState
 
 /**
- * Body of the improv Wi-Fi onboarding sheet. Branches on the [screenState] variant to render the
- * matching phase — searching spinner ([ImprovUIState.SearchingDevice]), Wi-Fi credentials form
- * ([ImprovUIState.ConfiguringDevice]), spinner with a state-dependent caption
- * ([ImprovUIState.Provisioning]), retry button ([ImprovUIState.Errored]), or success button
- * ([ImprovUIState.Provisioned]).
+ * Body of the Improv Wi-Fi onboarding sheet using [screenState] to show a matching phase:
+ *  - searching spinner ([ImprovUIState.SearchingDevice])
+ *  - Wi-Fi credentials form ([ImprovUIState.ConfiguringDevice])
+ *  - provisioning spinner with a state-dependent caption ([ImprovUIState.Provisioning])
+ *  - error with retry button ([ImprovUIState.Errored])
+ *  - success with continue button ([ImprovUIState.Provisioned])
  *
  * Renders content only — embed inside an
  * [io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet] (or the legacy
@@ -145,8 +146,8 @@ private fun ColumnScope.ConfiguringDeviceSection(
 }
 
 /**
- * Returns the SSID if it's safe to prefill into the credentials form. Filters out the Android-R+
- * sentinel returned by [WifiManager.getConnectionInfo] when the app lacks the location permission.
+ * Returns the SSID if it's safe to prefill into the credentials form. Filters out `null`, blank, or dummy
+ * values when the app lacks the location permission.
  */
 private fun String?.takeIfDisplayable(): String? = takeIf {
     !it.isNullOrBlank() && (!SdkVersion.isAtLeast(Build.VERSION_CODES.R) || it !== WifiManager.UNKNOWN_SSID)

@@ -4,7 +4,7 @@ import com.wifi.improv.DeviceState
 import com.wifi.improv.ErrorState
 
 /**
- * UI state of the improv Wi-Fi onboarding flow, modelled as a state machine:
+ * UI state of the Improv Wi-Fi onboarding flow, modelled as a state machine:
  *
  * [SearchingDevice] → [ConfiguringDevice] → [Provisioning] → ([Provisioned] | [Errored])
  *
