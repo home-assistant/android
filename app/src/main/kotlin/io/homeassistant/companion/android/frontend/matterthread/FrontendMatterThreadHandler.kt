@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.frontend.matterthread
 import android.app.Activity
 import android.content.IntentSender
 import androidx.activity.result.ActivityResult
-import com.google.android.gms.common.api.ApiException
 import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.matter.MatterManager
@@ -120,7 +119,9 @@ internal class FrontendMatterThreadHandler @Inject constructor(
                 try {
                     val result = try {
                         threadManager.exportPreferredDataset(serverId)
-                    } catch (e: ApiException) {
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
                         Timber.e(e, "Error while trying to export preferred dataset")
                         null
                     }
