@@ -44,10 +44,10 @@ class MatterManagerImpl @Inject constructor(
         commissioningClient.suppressHalfSheetNotification()
     }
 
-    override suspend fun commissionMatterDevice(): MatterCommissioningResult {
+    override suspend fun prepareMatterDeviceCommissioning(): MatterManager.CommissioningResult {
         if (!appSupportsCommissioning()) {
-            return MatterCommissioningResult.Error(
-                IllegalStateException("Matter commissioning is not supported on SDK <27"),
+            return MatterManager.CommissioningResult.Error(
+                IllegalStateException("Matter commissioning is not supported on this device"),
             )
         }
         return suspendCancellableCoroutine { cont ->
@@ -58,10 +58,10 @@ class MatterManagerImpl @Inject constructor(
                         .build(),
                 )
                 .addOnSuccessListener { intentSender ->
-                    if (cont.isActive) cont.resume(MatterCommissioningResult.Ready(intentSender))
+                    if (cont.isActive) cont.resume(MatterManager.CommissioningResult.Ready(intentSender))
                 }
                 .addOnFailureListener { exception ->
-                    if (cont.isActive) cont.resume(MatterCommissioningResult.Error(exception))
+                    if (cont.isActive) cont.resume(MatterManager.CommissioningResult.Error(exception))
                 }
         }
     }

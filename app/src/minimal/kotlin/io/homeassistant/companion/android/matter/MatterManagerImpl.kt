@@ -16,9 +16,10 @@ class MatterManagerImpl @Inject constructor() : MatterManager {
         // No support, so nothing to suppress
     }
 
-    override suspend fun commissionMatterDevice(): MatterCommissioningResult = MatterCommissioningResult.Error(
-        IllegalStateException("Matter commissioning is not supported with the minimal flavor"),
-    )
+    override suspend fun prepareMatterDeviceCommissioning(): MatterManager.CommissioningResult =
+        MatterManager.CommissioningResult.Error(
+            IllegalStateException("Matter commissioning is not supported with the minimal flavor"),
+        )
 
     override suspend fun commissionDevice(code: String, serverId: Int): MatterCommissionResponse? = null
 

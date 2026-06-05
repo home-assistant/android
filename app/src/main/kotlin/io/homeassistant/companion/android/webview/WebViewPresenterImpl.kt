@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
+import com.google.android.gms.common.api.ApiException
 import dagger.hilt.android.qualifiers.ActivityContext
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
@@ -30,7 +31,6 @@ import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.improv.ImprovRepository
-import io.homeassistant.companion.android.matter.MatterCommissioningResult
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
 import io.homeassistant.companion.android.util.UrlUtil
@@ -62,8 +62,8 @@ class WebViewPresenterImpl @Inject constructor(
     private val externalBusRepository: ExternalBusRepository,
     private val improvRepository: ImprovRepository,
     private val prefsRepository: PrefsRepository,
-    private val matterUseCase: MatterManager,
-    private val threadUseCase: ThreadManager,
+    private val matterManager: MatterManager,
+    private val threadManager: ThreadManager,
     private val settingsDao: SettingsDao,
 ) : WebViewPresenter {
 
@@ -440,7 +440,7 @@ class WebViewPresenterImpl @Inject constructor(
     }
 
     override fun onStart(context: Context) {
-        matterUseCase.suppressDiscoveryBottomSheet()
+        matterManager.suppressDiscoveryBottomSheet()
     }
 
     override fun onFinish() {
@@ -504,7 +504,7 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
-    override fun appCanCommissionMatterDevice(): Boolean = matterUseCase.appSupportsCommissioning()
+    override fun appCanCommissionMatterDevice(): Boolean = matterManager.appSupportsCommissioning()
 
     override fun startCommissioningMatterDevice() {
         if (mutableMatterThreadStep.value != MatterThreadStep.REQUESTED) {
@@ -520,13 +520,13 @@ class WebViewPresenterImpl @Inject constructor(
 
     private fun startMatterCommissioningFlow() {
         mainScope.launch {
-            when (val result = matterUseCase.commissionMatterDevice()) {
-                is MatterCommissioningResult.Ready -> {
+            when (val result = matterManager.prepareMatterDeviceCommissioning()) {
+                is MatterManager.CommissioningResult.Ready -> {
                     Timber.d("Matter commissioning is ready")
                     matterThreadIntentSender = result.intentSender
                     mutableMatterThreadStep.tryEmit(MatterThreadStep.MATTER_IN_PROGRESS)
                 }
-                is MatterCommissioningResult.Error -> {
+                is MatterManager.CommissioningResult.Error -> {
                     Timber.e(result.cause, "Matter commissioning couldn't be prepared")
                     mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_MATTER_OTHER)
                 }
@@ -534,14 +534,20 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
-    override fun appCanExportThreadCredentials(): Boolean = threadUseCase.appSupportsThread()
+    override fun appCanExportThreadCredentials(): Boolean = threadManager.appSupportsThread()
 
     override fun exportThreadCredentials() {
         if (mutableMatterThreadStep.value != MatterThreadStep.REQUESTED) {
             mutableMatterThreadStep.tryEmit(MatterThreadStep.REQUESTED)
 
             mainScope.launch {
-                val result = threadUseCase.exportThreadCredentials(serverId)
+                val result = try {
+                    threadManager.exportPreferredDataset(serverId)
+                } catch (e: ApiException) {
+                    Timber.e(e, "Error while trying to export preferred dataset")
+                    mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_THREAD_OTHER)
+                    return@launch
+                }
                 Timber.d("Export preferred Thread dataset returned $result")
                 val step = when (result) {
                     is ThreadManager.SyncResult.OnlyOnDevice -> {
@@ -554,7 +560,6 @@ class WebViewPresenterImpl @Inject constructor(
                     is ThreadManager.SyncResult.NotConnected -> MatterThreadStep.ERROR_THREAD_LOCAL_NETWORK
                     is ThreadManager.SyncResult.AppUnsupported,
                     is ThreadManager.SyncResult.ServerUnsupported,
-                    is ThreadManager.SyncResult.AllHaveCredentials,
                     -> MatterThreadStep.ERROR_THREAD_OTHER
                 }
                 mutableMatterThreadStep.tryEmit(step)
@@ -574,14 +579,14 @@ class WebViewPresenterImpl @Inject constructor(
         when (mutableMatterThreadStep.value) {
             MatterThreadStep.THREAD_EXPORT_TO_SERVER_MATTER -> {
                 mainScope.launch {
-                    threadUseCase.sendThreadDatasetExportResult(result, serverId)
+                    threadManager.sendThreadDatasetExportResult(result, serverId)
                     startMatterCommissioningFlow()
                 }
             }
 
             MatterThreadStep.THREAD_EXPORT_TO_SERVER_ONLY -> {
                 mainScope.launch {
-                    val sent = threadUseCase.sendThreadDatasetExportResult(result, serverId)
+                    val sent = threadManager.sendThreadDatasetExportResult(result, serverId)
                     Timber.d(
                         "Thread ${if (!sent.isNullOrBlank()) "sent credential for $sent" else "did not send credential"}",
                     )

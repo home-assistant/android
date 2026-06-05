@@ -1,8 +1,31 @@
 package io.homeassistant.companion.android.matter
 
+import android.content.IntentSender
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
 
 interface MatterManager {
+
+    /**
+     * Terminal result of [MatterManager.prepareMatterDeviceCommissioning].
+     *
+     * Callers launch [Ready.intentSender] to continue the Matter commissioning
+     * flow, or display an error message derived from [Error.cause].
+     */
+    sealed interface CommissioningResult {
+
+        /**
+         * The request produced an [IntentSender] for the commissioning flow. Callers must launch it
+         * from an Activity (typically via an `ActivityResultLauncher`) to continue.
+         */
+        data class Ready(val intentSender: IntentSender) : CommissioningResult
+
+        /**
+         * The manager could not prepare the commissioning flow — common causes are an unsupported
+         * device (SDK < O_MR1 or Automotive), Play Services unavailable, or a network failure
+         * resolving the request. The caller should surface a user-facing error.
+         */
+        data class Error(val cause: Throwable) : CommissioningResult
+    }
 
     /**
      * Indicates if the app on this device supports Matter commissioning.
@@ -20,15 +43,15 @@ interface MatterManager {
     fun suppressDiscoveryBottomSheet()
 
     /**
-     * Prepare a Matter device commissioning session via Google Play Services.
+     * Prepare a Matter device commissioning session.
      *
-     * Returns exactly one [MatterCommissioningResult]:
-     *   - [MatterCommissioningResult.Ready] when Play Services produced an `IntentSender` the caller
+     * Returns exactly one [CommissioningResult]:
+     *   - [CommissioningResult.Ready] when Play Services produced an `IntentSender` the caller
      *     must launch from an Activity to continue the flow.
-     *   - [MatterCommissioningResult.Error] when commissioning is unsupported on this device
+     *   - [CommissioningResult.Error] when commissioning is unsupported on this device
      *     (SDK < O_MR1, Automotive, minimal flavor) or Play Services failed to prepare the flow.
      */
-    suspend fun commissionMatterDevice(): MatterCommissioningResult
+    suspend fun prepareMatterDeviceCommissioning(): CommissioningResult
 
     /**
      * Send a request to the server to add a Matter device to the network and commission it.

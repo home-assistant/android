@@ -18,7 +18,6 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.improv.ImprovRepository
-import io.homeassistant.companion.android.matter.MatterCommissioningResult
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.thread.ThreadManager
@@ -143,8 +142,8 @@ class WebViewPresenterImplTest {
             externalBusRepository = externalBusRepository,
             improvRepository = improvRepository,
             prefsRepository = prefsRepository,
-            matterUseCase = matterManager,
-            threadUseCase = threadManager,
+            matterManager = matterManager,
+            threadManager = threadManager,
             settingsDao = settingsDao,
         )
         return presenter
@@ -662,9 +661,10 @@ class WebViewPresenterImplTest {
     }
 
     @Test
-    fun `Given matter Ready result when startCommissioningMatterDevice then step is MATTER_IN_PROGRESS and intent is captured`() = runTest(testDispatcher) {
+    fun `Given Matter Ready result when startCommissioningMatterDevice then step is MATTER_IN_PROGRESS and intent is captured`() = runTest(testDispatcher) {
         val intentSender = mockk<IntentSender>()
-        coEvery { matterManager.commissionMatterDevice() } returns MatterCommissioningResult.Ready(intentSender)
+        coEvery { matterManager.prepareMatterDeviceCommissioning() } returns
+            MatterManager.CommissioningResult.Ready(intentSender)
         createPresenter()
 
         presenter.startCommissioningMatterDevice()
@@ -675,9 +675,9 @@ class WebViewPresenterImplTest {
     }
 
     @Test
-    fun `Given matter Error result when startCommissioningMatterDevice then step is ERROR_MATTER_OTHER`() = runTest(testDispatcher) {
-        coEvery { matterManager.commissionMatterDevice() } returns
-            MatterCommissioningResult.Error(IllegalStateException("nope"))
+    fun `Given Matter Error result when startCommissioningMatterDevice then step is ERROR_MATTER_OTHER`() = runTest(testDispatcher) {
+        coEvery { matterManager.prepareMatterDeviceCommissioning() } returns
+            MatterManager.CommissioningResult.Error(IllegalStateException("nope"))
         createPresenter()
 
         presenter.startCommissioningMatterDevice()
@@ -687,9 +687,9 @@ class WebViewPresenterImplTest {
     }
 
     @Test
-    fun `Given thread Ready result when exportThreadCredentials then step is THREAD_EXPORT_TO_SERVER_ONLY and intent is captured`() = runTest(testDispatcher) {
+    fun `Given Thread Ready result when exportThreadCredentials then step is THREAD_EXPORT_TO_SERVER_ONLY and intent is captured`() = runTest(testDispatcher) {
         val intentSender = mockk<IntentSender>()
-        coEvery { threadManager.exportThreadCredentials(any()) } returns
+        coEvery { threadManager.exportPreferredDataset(any()) } returns
             ThreadManager.SyncResult.OnlyOnDevice(exportIntent = intentSender)
         createPresenter()
 
@@ -701,8 +701,8 @@ class WebViewPresenterImplTest {
     }
 
     @Test
-    fun `Given thread NoDataset result when exportThreadCredentials then step is THREAD_NONE`() = runTest(testDispatcher) {
-        coEvery { threadManager.exportThreadCredentials(any()) } returns ThreadManager.SyncResult.NoneHaveCredentials
+    fun `Given Thread NoneHaveCredentials result when exportThreadCredentials then step is THREAD_NONE`() = runTest(testDispatcher) {
+        coEvery { threadManager.exportPreferredDataset(any()) } returns ThreadManager.SyncResult.NoneHaveCredentials
         createPresenter()
 
         presenter.exportThreadCredentials()
@@ -712,8 +712,8 @@ class WebViewPresenterImplTest {
     }
 
     @Test
-    fun `Given thread NotConnected result when exportThreadCredentials then step is ERROR_THREAD_LOCAL_NETWORK`() = runTest(testDispatcher) {
-        coEvery { threadManager.exportThreadCredentials(any()) } returns ThreadManager.SyncResult.NotConnected
+    fun `Given Thread NotConnected result when exportThreadCredentials then step is ERROR_THREAD_LOCAL_NETWORK`() = runTest(testDispatcher) {
+        coEvery { threadManager.exportPreferredDataset(any()) } returns ThreadManager.SyncResult.NotConnected
         createPresenter()
 
         presenter.exportThreadCredentials()
@@ -723,8 +723,8 @@ class WebViewPresenterImplTest {
     }
 
     @Test
-    fun `Given thread AppUnsupported result when exportThreadCredentials then step is ERROR_THREAD_OTHER`() = runTest(testDispatcher) {
-        coEvery { threadManager.exportThreadCredentials(any()) } returns ThreadManager.SyncResult.AppUnsupported
+    fun `Given Thread AppUnsupported result when exportThreadCredentials then step is ERROR_THREAD_OTHER`() = runTest(testDispatcher) {
+        coEvery { threadManager.exportPreferredDataset(any()) } returns ThreadManager.SyncResult.AppUnsupported
         createPresenter()
 
         presenter.exportThreadCredentials()

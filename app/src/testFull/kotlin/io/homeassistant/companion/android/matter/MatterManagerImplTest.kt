@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.database.server.Server
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
@@ -91,7 +92,7 @@ class MatterManagerImplTest {
     }
 
     @Test
-    fun `Given config without matter component when coreSupportsCommissioning then returns false`() = runTest {
+    fun `Given config without Matter component when coreSupportsCommissioning then returns false`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
         coEvery { serverManager.getServer(1) } returns mockServer(isAdmin = true)
         coEvery { serverManager.webSocketRepository(1) } returns webSocketRepository
@@ -104,7 +105,7 @@ class MatterManagerImplTest {
     }
 
     @Test
-    fun `Given config with matter component when coreSupportsCommissioning then returns true`() = runTest {
+    fun `Given config with Matter component when coreSupportsCommissioning then returns true`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
         coEvery { serverManager.getServer(1) } returns mockServer(isAdmin = true)
         coEvery { serverManager.webSocketRepository(1) } returns webSocketRepository
@@ -131,9 +132,9 @@ class MatterManagerImplTest {
     fun `Given unsupported SDK when commissionMatterDevice then emits Error`() = runTest {
         val manager = createManager(sdkInt = Build.VERSION_CODES.O)
 
-        val event = manager.commissionMatterDevice()
+        val event = manager.prepareMatterDeviceCommissioning()
 
-        assertInstanceOf(MatterCommissioningResult.Error::class.java, event)
+        assertInstanceOf(MatterManager.CommissioningResult.Error::class.java, event)
     }
 
     @Test
@@ -142,10 +143,11 @@ class MatterManagerImplTest {
         every { commissioningClient.commissionDevice(any<CommissioningRequest>()) } returns successTask(intentSender)
         val manager = createManager()
 
-        val event = manager.commissionMatterDevice()
-
-        assertInstanceOf(MatterCommissioningResult.Ready::class.java, event)
-        assertEquals(intentSender, (event as MatterCommissioningResult.Ready).intentSender)
+        val event = assertInstanceOf(
+            MatterManager.CommissioningResult.Ready::class.java,
+            manager.prepareMatterDeviceCommissioning(),
+        )
+        assertEquals(intentSender, event.intentSender)
     }
 
     @Test
@@ -154,10 +156,11 @@ class MatterManagerImplTest {
         every { commissioningClient.commissionDevice(any<CommissioningRequest>()) } returns failureTask(cause)
         val manager = createManager()
 
-        val event = manager.commissionMatterDevice()
-
-        assertInstanceOf(MatterCommissioningResult.Error::class.java, event)
-        assertEquals(cause, (event as MatterCommissioningResult.Error).cause)
+        val event = assertInstanceOf(
+            MatterManager.CommissioningResult.Error::class.java,
+            manager.prepareMatterDeviceCommissioning(),
+        )
+        assertEquals(cause, event.cause)
     }
 
     @Test
@@ -166,7 +169,7 @@ class MatterManagerImplTest {
 
         manager.suppressDiscoveryBottomSheet()
 
-        io.mockk.verify { commissioningClient.suppressHalfSheetNotification() }
+        verify { commissioningClient.suppressHalfSheetNotification() }
     }
 
     @Test
@@ -175,7 +178,7 @@ class MatterManagerImplTest {
 
         manager.suppressDiscoveryBottomSheet()
 
-        io.mockk.verify(exactly = 0) { commissioningClient.suppressHalfSheetNotification() }
+        verify(exactly = 0) { commissioningClient.suppressHalfSheetNotification() }
     }
 
     @Test
@@ -201,10 +204,14 @@ class MatterManagerImplTest {
     fun `Given server accepts pin and ip when commissionOnNetworkDevice then returns response`() = runTest {
         val response: MatterCommissionResponse = mockk()
         coEvery { serverManager.webSocketRepository(1) } returns webSocketRepository
-        coEvery { webSocketRepository.commissionMatterDeviceOnNetwork(1234L, "192.168.1.10") } returns response
+        coEvery { webSocketRepository.commissionMatterDeviceOnNetwork(1234L, "2001:db8:0:85a3::ac1f:8001") } returns
+            response
         val manager = createManager()
 
-        assertEquals(response, manager.commissionOnNetworkDevice(pin = 1234L, ip = "192.168.1.10", serverId = 1))
+        assertEquals(
+            response,
+            manager.commissionOnNetworkDevice(pin = 1234L, ip = "2001:db8:0:85a3::ac1f:8001", serverId = 1),
+        )
     }
 
     @Test
@@ -214,7 +221,7 @@ class MatterManagerImplTest {
             IllegalStateException("boom")
         val manager = createManager()
 
-        assertNull(manager.commissionOnNetworkDevice(pin = 1234L, ip = "192.168.1.10", serverId = 1))
+        assertNull(manager.commissionOnNetworkDevice(pin = 1234L, ip = "2001:db8:0:85a3::ac1f:8001", serverId = 1))
     }
 
     private fun mockServer(isAdmin: Boolean): Server = mockk(relaxed = true) {
