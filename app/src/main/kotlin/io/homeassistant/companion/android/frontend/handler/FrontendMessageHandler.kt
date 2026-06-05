@@ -7,7 +7,7 @@ import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
 import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import io.homeassistant.companion.android.frontend.WebViewAction
-import io.homeassistant.companion.android.frontend.addto.FrontendEntityAddToHandler
+import io.homeassistant.companion.android.frontend.addto.FrontendEntityAddToManager
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.incoming.BarcodeCloseMessage
@@ -78,7 +78,7 @@ class FrontendMessageHandler @Inject constructor(
     private val sessionManager: ServerSessionManager,
     private val downloadManager: FrontendDownloadManager,
     private val bluetoothCapabilities: BluetoothCapabilities,
-    private val entityAddToHandler: FrontendEntityAddToHandler,
+    private val entityAddToManager: FrontendEntityAddToManager,
     @param:IsAutomotive private val isAutomotive: Boolean,
 ) : FrontendJsHandler,
     FrontendBusObserver {
@@ -271,7 +271,7 @@ class FrontendMessageHandler @Inject constructor(
 
             is EntityAddToGetActionsMessage -> {
                 Timber.d("Entity add_to get_actions request received for: ${message.payload.entityId}")
-                val actions = entityAddToHandler.getActionsForEntity(message.payload.entityId)
+                val actions = entityAddToManager.getActionsForEntity(message.payload.entityId)
                 externalBusRepository.send(EntityAddToActionsResultMessage(id = message.id, actions = actions))
                 FrontendHandlerEvent.EntityAddToActionsSent
             }
@@ -279,7 +279,7 @@ class FrontendMessageHandler @Inject constructor(
             is EntityAddToMessage -> {
                 Timber.d("Entity add_to request received for: ${message.payload.entityId}")
                 val action = ExternalEntityAddToAction.appPayloadToAction(message.payload.appPayload)
-                val event = entityAddToHandler.execute(message.payload.entityId, action)
+                val event = entityAddToManager.execute(message.payload.entityId, action)
                 FrontendHandlerEvent.EntityAddToExecuted(event)
             }
 

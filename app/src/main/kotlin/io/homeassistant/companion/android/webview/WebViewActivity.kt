@@ -119,7 +119,7 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
 import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
-import io.homeassistant.companion.android.frontend.addto.FrontendEntityAddToHandler
+import io.homeassistant.companion.android.frontend.addto.FrontendEntityAddToManager
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.EXPECTED_GET_AUTH_CALLBACK
@@ -273,7 +273,7 @@ class WebViewActivity :
     lateinit var appVersionProvider: AppVersionProvider
 
     @Inject
-    lateinit var entityAddToHandler: FrontendEntityAddToHandler
+    lateinit var entityAddToManager: FrontendEntityAddToManager
 
     @Inject
     lateinit var dataUriDownloadManager: DataUriDownloadManager
@@ -1198,7 +1198,7 @@ class WebViewActivity :
         if (entityId != null && appPayload != null) {
             val action = ExternalEntityAddToAction.appPayloadToAction(appPayload)
             lifecycleScope.launch {
-                when (val event = entityAddToHandler.execute(entityId, action)) {
+                when (val event = entityAddToManager.execute(entityId, action)) {
                     is FrontendEvent.NavigateToWidgetConfig -> {
                         startActivity(event.widgetType.toConfigureIntent(this@WebViewActivity, event.entityId))
                     }
@@ -1222,7 +1222,7 @@ class WebViewActivity :
         val entityId = payload?.getStringOrNull("entity_id")
         entityId?.let {
             lifecycleScope.launch {
-                val actions = entityAddToHandler.getActionsForEntity(entityId)
+                val actions = entityAddToManager.getActionsForEntity(entityId)
                 sendExternalBusMessage(
                     EntityAddToActionsResponse(
                         id = json["id"],
