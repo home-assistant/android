@@ -68,6 +68,7 @@ import io.homeassistant.companion.android.common.notifications.parseVibrationPat
 import io.homeassistant.companion.android.common.notifications.prepareText
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
+import io.homeassistant.companion.android.common.util.createSystemAppSettingsIntent
 import io.homeassistant.companion.android.common.util.getActiveNotification
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
@@ -1796,10 +1797,7 @@ class MessagingManager @Inject constructor(
     }
 
     private fun navigateAppDetails() {
-        val intent = Intent(
-            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-            "package:${context.packageName}".toUri(),
-        )
+        val intent = context.createSystemAppSettingsIntent()
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         context.startActivity(intent)
     }
