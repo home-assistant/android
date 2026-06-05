@@ -10,7 +10,7 @@ import io.homeassistant.companion.android.common.R as commonR
  *  - [Dialog] — informational acknowledgement that requires the user to read it. Routed through
  *    [io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager].
  *  - [Snackbar] — transient feedback or recoverable error with an
- *    optional "Get help" action. Emitted as a [FrontendMatterThreadOrchestrator.Event.ShowSnackbar]
+ *    optional "Get help" action. Emitted as a [FrontendMatterThreadHandler.Event.ShowSnackbar]
  *    for the screen's snackbar host to consume.
  */
 sealed interface MatterThreadTerminal {

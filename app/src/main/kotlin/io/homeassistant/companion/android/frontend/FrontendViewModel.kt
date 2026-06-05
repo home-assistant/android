@@ -38,7 +38,7 @@ import io.homeassistant.companion.android.frontend.improv.FrontendImprovHandler
 import io.homeassistant.companion.android.frontend.js.BridgeState
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridgeFactory
 import io.homeassistant.companion.android.frontend.js.FrontendJsCallback
-import io.homeassistant.companion.android.frontend.matterthread.FrontendMatterThreadOrchestrator
+import io.homeassistant.companion.android.frontend.matterthread.FrontendMatterThreadHandler
 import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
@@ -107,7 +107,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val exoPlayerManager: FrontendExoPlayerManager,
     private val improvHandler: FrontendImprovHandler,
     private val barcodeScannerHandler: FrontendBarcodeScannerHandler,
-    private val matterThreadOrchestrator: FrontendMatterThreadOrchestrator,
+    private val matterThreadHandler: FrontendMatterThreadHandler,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -130,7 +130,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         exoPlayerManager: FrontendExoPlayerManager,
         improvHandler: FrontendImprovHandler,
         barcodeScannerHandler: FrontendBarcodeScannerHandler,
-        matterThreadOrchestrator: FrontendMatterThreadOrchestrator,
+        matterThreadHandler: FrontendMatterThreadHandler,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
         initialPath = savedStateHandle.toRoute<FrontendRoute>().path,
@@ -150,7 +150,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         exoPlayerManager = exoPlayerManager,
         improvHandler = improvHandler,
         barcodeScannerHandler = barcodeScannerHandler,
-        matterThreadOrchestrator = matterThreadOrchestrator,
+        matterThreadHandler = matterThreadHandler,
     )
 
     /**
@@ -571,7 +571,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      * intent completes.
      */
     fun onMatterThreadIntentResult(result: ActivityResult) {
-        viewModelScope.launch { matterThreadOrchestrator.onMatterThreadIntentResult(result) }
+        viewModelScope.launch { matterThreadHandler.onMatterThreadIntentResult(result) }
     }
 
     private suspend fun handleGestureResult(result: GestureResult) {
@@ -639,17 +639,17 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     }
 
     /**
-     * Bridges [matterThreadOrchestrator] events onto the ViewModel's [FrontendEvent] stream so
+     * Bridges [matterThreadHandler] events onto the ViewModel's [FrontendEvent] stream so
      * the screen only has one event flow to collect.
      */
     private fun collectMatterThreadEvents() {
         viewModelScope.launch {
-            matterThreadOrchestrator.events.collect { event ->
+            matterThreadHandler.events.collect { event ->
                 _events.emit(
                     when (event) {
-                        is FrontendMatterThreadOrchestrator.Event.LaunchIntent ->
+                        is FrontendMatterThreadHandler.Event.LaunchIntent ->
                             FrontendEvent.LaunchMatterThreadIntent(event.intentSender)
-                        is FrontendMatterThreadOrchestrator.Event.ShowSnackbar ->
+                        is FrontendMatterThreadHandler.Event.ShowSnackbar ->
                             FrontendEvent.ShowSnackbar(
                                 messageResId = event.snackbar.messageRes,
                                 action = event.snackbar.helpUrl?.let { url ->
@@ -737,12 +737,12 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             }
 
             is FrontendHandlerEvent.StartMatterCommissioning -> {
-                viewModelScope.launch { matterThreadOrchestrator.onStartMatterCommissioning() }
+                viewModelScope.launch { matterThreadHandler.onStartMatterCommissioning() }
             }
 
             is FrontendHandlerEvent.ImportThreadCredentials -> {
                 viewModelScope.launch {
-                    matterThreadOrchestrator.onImportThreadCredentials(serverId = _viewState.value.serverId)
+                    matterThreadHandler.onImportThreadCredentials(serverId = _viewState.value.serverId)
                 }
             }
 

@@ -25,10 +25,10 @@ import timber.log.Timber
  * [io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent.ImportThreadCredentials])
  * and the screen.
  *
- * **Stateful**: the orchestrator owns mutable state in [inFlight] that spans the request →
+ * **Stateful**: the handler owns mutable state in [inFlight] that spans the request →
  * Play-Services-intent → result round-trip. Method calls are not independent: callers must
  * invoke them in the natural sequence (start → result, or start → terminal). Calling
- * [onMatterThreadIntentResult] without a preceding start is a no-op (the orchestrator logs and
+ * [onMatterThreadIntentResult] without a preceding start is a no-op (the hanlder logs and
  * ignores); calling a second start while a flow is in-flight is also a no-op. This is why the
  * scope is `@ViewModelScoped`.
  *
@@ -42,10 +42,10 @@ import timber.log.Timber
  *    [onMatterThreadIntentResult].
  *  - [Event.ShowSnackbar] for transient feedback.
  *
- * The orchestrator does not send any external-bus response messages.
+ * The handler does not send any external-bus response messages.
  */
 @ViewModelScoped
-internal class FrontendMatterThreadOrchestrator @Inject constructor(
+internal class FrontendMatterThreadHandler @Inject constructor(
     private val matterManager: MatterManager,
     private val threadManager: ThreadManager,
     private val dialogManager: FrontendDialogManager,
@@ -233,7 +233,7 @@ internal class FrontendMatterThreadOrchestrator @Inject constructor(
     sealed interface Event {
         /**
          * Launch this Play Services `IntentSender` and forward the [ActivityResult] back through
-         * [onMatterThreadIntentResult]. The orchestrator knows internally which flow the result
+         * [onMatterThreadIntentResult]. The handler knows internally which flow the result
          * belongs to.
          */
         data class LaunchIntent(val intentSender: IntentSender) : Event
