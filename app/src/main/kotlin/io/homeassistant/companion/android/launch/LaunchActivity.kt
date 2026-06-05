@@ -40,6 +40,7 @@ import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissionUseCase
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.launch.applock.HazeLockOverlay
 import io.homeassistant.companion.android.sensors.SensorReceiver
@@ -90,6 +91,9 @@ class LaunchActivity : AppCompatActivity() {
     internal lateinit var checkLocationDisabled: CheckLocationDisabledUseCase
 
     @Inject
+    internal lateinit var checkLocalNetworkPermission: CheckLocalNetworkPermissionUseCase
+
+    @Inject
     internal lateinit var changeLog: ChangeLog
 
     /**
@@ -109,6 +113,13 @@ class LaunchActivity : AppCompatActivity() {
             val hideExistingServers: Boolean,
             val skipWelcome: Boolean,
         ) : DeepLink
+
+        /**
+         * Opens the onboarding flow from an invitation link.
+         *
+         * @property serverUrl The Home Assistant server URL the invitation wants to connect to.
+         */
+        data class OpenInvitation(val serverUrl: String) : DeepLink
 
         /**
          * Navigates to a specific path within the webview.
@@ -232,6 +243,7 @@ class LaunchActivity : AppCompatActivity() {
             lifecycleScope.launch {
                 WebsocketManager.start(this@LaunchActivity)
                 checkLocationDisabled()
+                checkLocalNetworkPermission()
                 changeLog.showChangeLog(this@LaunchActivity, forceShow = false)
             }
         }

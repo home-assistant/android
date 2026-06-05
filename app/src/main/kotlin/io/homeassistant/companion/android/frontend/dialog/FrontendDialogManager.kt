@@ -39,7 +39,7 @@ internal class FrontendDialogManager @Inject constructor() {
      * Returns `true` if the user confirmed, `false` if they cancelled. The slot is freed
      * before returning, including on cancellation of the calling coroutine.
      */
-    suspend fun showJsConfirm(message: String): Boolean = queue.awaitResult { onResult ->
+    suspend fun showConfirm(message: String): Boolean = queue.awaitResult { onResult ->
         FrontendDialog.Confirm(
             message = message,
             onConfirm = { onResult(true) },

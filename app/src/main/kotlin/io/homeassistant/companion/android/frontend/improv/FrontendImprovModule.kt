@@ -12,7 +12,7 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 /**
- * Hilt bindings for the frontend's improv (Wi-Fi onboarding for BLE devices) integration.
+ * Hilt bindings for the frontend's Improv (Wi-Fi onboarding for BLE devices) integration.
  */
 @Module
 @InstallIn(SingletonComponent::class)

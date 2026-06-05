@@ -19,7 +19,7 @@ import io.homeassistant.companion.android.common.data.prefs.ZoomSettings
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
-import io.homeassistant.companion.android.frontend.auth.HttpAuthManager
+import io.homeassistant.companion.android.frontend.auth.FrontendHttpAuthHandler
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.frontend.download.DownloadResult
@@ -31,7 +31,7 @@ import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalB
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
-import io.homeassistant.companion.android.frontend.gesture.FrontendGestureHandler
+import io.homeassistant.companion.android.frontend.gesture.FrontendGestureManager
 import io.homeassistant.companion.android.frontend.gesture.GestureResult
 import io.homeassistant.companion.android.frontend.handler.FrontendBusObserver
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
@@ -89,7 +89,7 @@ class FrontendViewModelTest {
     private val permissionManager: PermissionManager = mockk(relaxed = true)
     private val frontendJsBridgeFactory: FrontendJsBridgeFactory = mockk(relaxed = true)
     private val downloadManager: FrontendDownloadManager = mockk(relaxed = true)
-    private val gestureHandler: FrontendGestureHandler = mockk(relaxed = true)
+    private val gestureManager: FrontendGestureManager = mockk(relaxed = true)
     private val zoomSettingsFlow = MutableStateFlow(ZoomSettings())
     private val autoPlayVideoFlow = MutableStateFlow(false)
     private val screenOrientationFlow = MutableStateFlow(ScreenOrientation.SYSTEM)
@@ -123,7 +123,7 @@ class FrontendViewModelTest {
         path: String? = null,
         dialogManager: FrontendDialogManager = FrontendDialogManager(),
         fileChooserManager: FileChooserManager = FileChooserManager(),
-        httpAuthManager: HttpAuthManager = HttpAuthManager(
+        httpAuthHandler: FrontendHttpAuthHandler = FrontendHttpAuthHandler(
             authenticationDao = mockk(relaxed = true),
             clock = FakeClock(),
             dialogManager = dialogManager,
@@ -140,11 +140,11 @@ class FrontendViewModelTest {
             permissionManager = permissionManager,
             frontendJsBridgeFactory = frontendJsBridgeFactory,
             downloadManager = downloadManager,
-            gestureHandler = gestureHandler,
+            gestureManager = gestureManager,
             prefsRepository = prefsRepository,
             dialogManager = dialogManager,
             fileChooserManager = fileChooserManager,
-            httpAuthManager = httpAuthManager,
+            httpAuthHandler = httpAuthHandler,
             exoPlayerManager = exoPlayerManager,
         )
     }
@@ -613,7 +613,7 @@ class FrontendViewModelTest {
                 UrlLoadResult.Success(url = "https://server2.com?external_auth=1", serverId = 2),
             )
             coEvery {
-                gestureHandler.handleGesture(serverId = any(), direction = any(), pointerCount = any())
+                gestureManager.handleGesture(serverId = any(), direction = any(), pointerCount = any())
             } returns GestureResult.SwitchServer(2)
 
             val viewModel = createViewModel(serverId = 1)
@@ -637,7 +637,7 @@ class FrontendViewModelTest {
 
             val clearHistory = WebViewAction.ClearHistory()
             coEvery {
-                gestureHandler.handleGesture(serverId = any(), direction = any(), pointerCount = any())
+                gestureManager.handleGesture(serverId = any(), direction = any(), pointerCount = any())
             } returns GestureResult.PerformWebViewActionThen(
                 action = clearHistory,
                 then = {
@@ -1075,7 +1075,7 @@ class FrontendViewModelTest {
 
         private val authenticationDao: AuthenticationDao = mockk(relaxed = true)
         private val dialogManager = FrontendDialogManager()
-        private val httpAuthManager = HttpAuthManager(
+        private val httpAuthHandler = FrontendHttpAuthHandler(
             authenticationDao = authenticationDao,
             clock = FakeClock(),
             dialogManager = dialogManager,
@@ -1097,7 +1097,7 @@ class FrontendViewModelTest {
                 mockk(relaxed = true)
             }
 
-            val viewModel = createViewModel(httpAuthManager = httpAuthManager, dialogManager = dialogManager)
+            val viewModel = createViewModel(httpAuthHandler = httpAuthHandler, dialogManager = dialogManager)
             return viewModel to capturedCallback!!
         }
 

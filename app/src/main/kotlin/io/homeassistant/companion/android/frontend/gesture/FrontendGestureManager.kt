@@ -24,7 +24,7 @@ import timber.log.Timber
  * go through [FrontendExternalBusRepository].
  */
 @ViewModelScoped
-class FrontendGestureHandler @Inject constructor(
+class FrontendGestureManager @Inject constructor(
     private val prefsRepository: PrefsRepository,
     private val externalBusRepository: FrontendExternalBusRepository,
     private val serverManager: ServerManager,

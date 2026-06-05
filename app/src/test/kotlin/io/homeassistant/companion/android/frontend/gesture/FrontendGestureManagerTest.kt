@@ -23,16 +23,16 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 @OptIn(EvaluateJavascriptUsage::class)
-class FrontendGestureHandlerTest {
+class FrontendGestureManagerTest {
 
     private val prefsRepository: PrefsRepository = mockk()
     private val externalBusRepository: FrontendExternalBusRepository = mockk(relaxed = true)
     private val serverManager: ServerManager = mockk()
-    private lateinit var handler: FrontendGestureHandler
+    private lateinit var manager: FrontendGestureManager
 
     @BeforeEach
     fun setup() {
-        handler = FrontendGestureHandler(
+        manager = FrontendGestureManager(
             prefsRepository = prefsRepository,
             externalBusRepository = externalBusRepository,
             serverManager = serverManager,
@@ -43,7 +43,7 @@ class FrontendGestureHandlerTest {
     fun `Given NONE action when handleGesture then returns Ignored`() = runTest {
         coEvery { prefsRepository.getGestureAction(HAGesture.SWIPE_LEFT_TWO) } returns GestureAction.NONE
 
-        val result = handler.handleGesture(
+        val result = manager.handleGesture(
             serverId = 1,
             direction = GestureDirection.LEFT,
             pointerCount = 2,
@@ -57,7 +57,7 @@ class FrontendGestureHandlerTest {
     fun `Given SHOW_SIDEBAR action when handleGesture then sends ShowSidebarMessage`() = runTest {
         coEvery { prefsRepository.getGestureAction(HAGesture.SWIPE_RIGHT_TWO) } returns GestureAction.SHOW_SIDEBAR
 
-        val result = handler.handleGesture(
+        val result = manager.handleGesture(
             serverId = 1,
             direction = GestureDirection.RIGHT,
             pointerCount = 2,
@@ -78,7 +78,7 @@ class FrontendGestureHandlerTest {
         )
         coEvery { serverManager.getServer(1) } returns server
 
-        val result = handler.handleGesture(
+        val result = manager.handleGesture(
             serverId = 1,
             direction = GestureDirection.UP,
             pointerCount = 2,
@@ -105,7 +105,7 @@ class FrontendGestureHandlerTest {
         )
         coEvery { serverManager.getServer(1) } returns server
 
-        val result = handler.handleGesture(
+        val result = manager.handleGesture(
             serverId = 1,
             direction = GestureDirection.UP,
             pointerCount = 2,
@@ -126,7 +126,7 @@ class FrontendGestureHandlerTest {
         )
         coEvery { serverManager.getServer(1) } returns server
 
-        val result = handler.handleGesture(
+        val result = manager.handleGesture(
             serverId = 1,
             direction = GestureDirection.DOWN,
             pointerCount = 2,
@@ -147,7 +147,7 @@ class FrontendGestureHandlerTest {
         )
         coEvery { serverManager.getServer(1) } returns server
 
-        val result = handler.handleGesture(
+        val result = manager.handleGesture(
             serverId = 1,
             direction = GestureDirection.DOWN,
             pointerCount = 2,
@@ -161,7 +161,7 @@ class FrontendGestureHandlerTest {
     fun `Given QUICKBAR_ENTITIES when handleGesture then dispatches E key`() = runTest {
         coEvery { prefsRepository.getGestureAction(HAGesture.SWIPE_LEFT_TWO) } returns GestureAction.QUICKBAR_ENTITIES
 
-        val result = handler.handleGesture(
+        val result = manager.handleGesture(
             serverId = 1,
             direction = GestureDirection.LEFT,
             pointerCount = 2,
@@ -175,7 +175,7 @@ class FrontendGestureHandlerTest {
     fun `Given QUICKBAR_COMMANDS when handleGesture then dispatches C key`() = runTest {
         coEvery { prefsRepository.getGestureAction(HAGesture.SWIPE_LEFT_TWO) } returns GestureAction.QUICKBAR_COMMANDS
 
-        val result = handler.handleGesture(
+        val result = manager.handleGesture(
             serverId = 1,
             direction = GestureDirection.LEFT,
             pointerCount = 2,
@@ -189,7 +189,7 @@ class FrontendGestureHandlerTest {
     fun `Given OPEN_ASSIST when handleGesture then returns Navigate to Assist`() = runTest {
         coEvery { prefsRepository.getGestureAction(HAGesture.SWIPE_UP_THREE) } returns GestureAction.OPEN_ASSIST
 
-        val result = handler.handleGesture(
+        val result = manager.handleGesture(
             serverId = 42,
             direction = GestureDirection.UP,
             pointerCount = 3,
@@ -207,7 +207,7 @@ class FrontendGestureHandlerTest {
     fun `Given OPEN_APP_SETTINGS when handleGesture then returns Navigate to Settings`() = runTest {
         coEvery { prefsRepository.getGestureAction(HAGesture.SWIPE_DOWN_THREE) } returns GestureAction.OPEN_APP_SETTINGS
 
-        val result = handler.handleGesture(
+        val result = manager.handleGesture(
             serverId = 1,
             direction = GestureDirection.DOWN,
             pointerCount = 3,
@@ -222,7 +222,7 @@ class FrontendGestureHandlerTest {
     fun `Given OPEN_APP_DEVELOPER when handleGesture then returns Navigate to Developer Settings`() = runTest {
         coEvery { prefsRepository.getGestureAction(HAGesture.SWIPE_RIGHT_THREE) } returns GestureAction.OPEN_APP_DEVELOPER
 
-        val result = handler.handleGesture(
+        val result = manager.handleGesture(
             serverId = 1,
             direction = GestureDirection.RIGHT,
             pointerCount = 3,
@@ -237,7 +237,7 @@ class FrontendGestureHandlerTest {
     fun `Given NAVIGATE_FORWARD when handleGesture then returns WebViewAction Forward`() = runTest {
         coEvery { prefsRepository.getGestureAction(HAGesture.SWIPE_RIGHT_TWO) } returns GestureAction.NAVIGATE_FORWARD
 
-        val result = handler.handleGesture(
+        val result = manager.handleGesture(
             serverId = 1,
             direction = GestureDirection.RIGHT,
             pointerCount = 2,
@@ -251,7 +251,7 @@ class FrontendGestureHandlerTest {
     fun `Given NAVIGATE_RELOAD when handleGesture then returns WebViewAction Reload`() = runTest {
         coEvery { prefsRepository.getGestureAction(HAGesture.SWIPE_DOWN_TWO) } returns GestureAction.NAVIGATE_RELOAD
 
-        val result = handler.handleGesture(
+        val result = manager.handleGesture(
             serverId = 1,
             direction = GestureDirection.DOWN,
             pointerCount = 2,
@@ -267,7 +267,7 @@ class FrontendGestureHandlerTest {
         val serverA = mockServer(url = "https://a.test", name = "A", serverId = 1)
         coEvery { serverManager.servers() } returns listOf(serverA)
 
-        val result = handler.handleGesture(
+        val result = manager.handleGesture(
             serverId = 1,
             direction = GestureDirection.LEFT,
             pointerCount = 2,
@@ -284,7 +284,7 @@ class FrontendGestureHandlerTest {
         val serverC = mockServer(url = "https://c.test", name = "C", serverId = 3)
         coEvery { serverManager.servers() } returns listOf(serverA, serverB, serverC)
 
-        val result = handler.handleGesture(
+        val result = manager.handleGesture(
             serverId = 2,
             direction = GestureDirection.LEFT,
             pointerCount = 2,
@@ -300,7 +300,7 @@ class FrontendGestureHandlerTest {
         val serverB = mockServer(url = "https://b.test", name = "B", serverId = 2)
         coEvery { serverManager.servers() } returns listOf(serverA, serverB)
 
-        val result = handler.handleGesture(
+        val result = manager.handleGesture(
             serverId = 2,
             direction = GestureDirection.LEFT,
             pointerCount = 2,
@@ -317,7 +317,7 @@ class FrontendGestureHandlerTest {
         val serverC = mockServer(url = "https://c.test", name = "C", serverId = 3)
         coEvery { serverManager.servers() } returns listOf(serverA, serverB, serverC)
 
-        val result = handler.handleGesture(
+        val result = manager.handleGesture(
             serverId = 2,
             direction = GestureDirection.LEFT,
             pointerCount = 2,
@@ -334,7 +334,7 @@ class FrontendGestureHandlerTest {
         val serverC = mockServer(url = "https://c.test", name = "C", serverId = 3)
         coEvery { serverManager.servers() } returns listOf(serverA, serverB, serverC)
 
-        val result = handler.handleGesture(
+        val result = manager.handleGesture(
             serverId = 1,
             direction = GestureDirection.LEFT,
             pointerCount = 2,
@@ -349,7 +349,7 @@ class FrontendGestureHandlerTest {
         val onlyServer = mockServer(url = "https://a.test", name = "A", serverId = 1)
         coEvery { serverManager.servers() } returns listOf(onlyServer)
 
-        val result = handler.handleGesture(
+        val result = manager.handleGesture(
             serverId = 1,
             direction = GestureDirection.LEFT,
             pointerCount = 2,
@@ -364,7 +364,7 @@ class FrontendGestureHandlerTest {
         val onlyServer = mockServer(url = "https://a.test", name = "A", serverId = 1)
         coEvery { serverManager.servers() } returns listOf(onlyServer)
 
-        val result = handler.handleGesture(
+        val result = manager.handleGesture(
             serverId = 1,
             direction = GestureDirection.LEFT,
             pointerCount = 2,
@@ -380,7 +380,7 @@ class FrontendGestureHandlerTest {
         val serverB = mockServer(url = "https://b.test", name = "B", serverId = 2)
         coEvery { serverManager.servers() } returns listOf(serverA, serverB)
 
-        val result = handler.handleGesture(
+        val result = manager.handleGesture(
             serverId = 99,
             direction = GestureDirection.LEFT,
             pointerCount = 2,
@@ -391,7 +391,7 @@ class FrontendGestureHandlerTest {
 
     @Test
     fun `Given unsupported pointer count when handleGesture then returns Ignored`() = runTest {
-        val result = handler.handleGesture(
+        val result = manager.handleGesture(
             serverId = 1,
             direction = GestureDirection.LEFT,
             pointerCount = 1,
