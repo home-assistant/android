@@ -6,6 +6,7 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.app.admin.DevicePolicyManager
 import android.bluetooth.BluetoothManager
 import android.content.ComponentName
 import android.content.Context
@@ -179,6 +180,7 @@ class MessagingManager @Inject constructor(
         const val COMMAND_VOLUME_LEVEL = "command_volume_level"
         const val COMMAND_BLUETOOTH = "command_bluetooth"
         const val COMMAND_SCREEN_ON = "command_screen_on"
+        const val COMMAND_SCREEN_OFF = "command_screen_off"
         const val COMMAND_MEDIA = "command_media"
         const val COMMAND_HIGH_ACCURACY_MODE = "command_high_accuracy_mode"
         const val COMMAND_ACTIVITY = "command_activity"
@@ -240,6 +242,7 @@ class MessagingManager @Inject constructor(
             COMMAND_ACTIVITY,
             COMMAND_WEBVIEW,
             COMMAND_SCREEN_ON,
+            COMMAND_SCREEN_OFF,
             COMMAND_MEDIA,
             DeviceCommandData.COMMAND_UPDATE_SENSORS,
             COMMAND_LAUNCH_APP,
@@ -537,6 +540,10 @@ class MessagingManager @Inject constructor(
                             handleDeviceCommands(jsonData)
                         }
 
+                        COMMAND_SCREEN_OFF -> {
+                            handleDeviceCommands(jsonData)
+                        }
+
                         COMMAND_MEDIA -> {
                             if (!jsonData[MEDIA_COMMAND].isNullOrEmpty() &&
                                 jsonData[MEDIA_COMMAND] in MEDIA_COMMANDS &&
@@ -827,6 +834,18 @@ class MessagingManager @Inject constructor(
                 )
                 wakeLock?.acquire(1 * 30 * 1000L) // 30 seconds
                 wakeLock?.release()
+            }
+
+            COMMAND_SCREEN_OFF -> {
+                val devicePolicyManager = context.getSystemService<DevicePolicyManager>()
+                val adminComponent = ComponentName(context, ScreenOffAdminReceiver::class.java)
+                
+                if (devicePolicyManager?.isAdminActive(adminComponent) == true) {
+                    Timber.d("Locking device screen")
+                    devicePolicyManager.lockNow()
+                } else {
+                    notifyMissingPermission(message, serverId)
+                }
             }
 
             COMMAND_MEDIA -> {
@@ -1815,6 +1834,15 @@ class MessagingManager @Inject constructor(
 
     private fun requestCameraPermission() = requestRuntimePermission(Manifest.permission.CAMERA)
 
+    private fun requestDeviceAdminPermission() {
+        val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
+            putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, ComponentName(context, ScreenOffAdminReceiver::class.java))
+            putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, context.getString(commonR.string.device_admin_explanation))
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+        context.startActivity(intent)
+    }
+
     private fun requestMicPermission() {
         if (defaultAssistantManager.isDefaultAssistant()) {
             requestRuntimePermission(Manifest.permission.RECORD_AUDIO)
@@ -2135,6 +2163,7 @@ class MessagingManager @Inject constructor(
                             COMMAND_AUTO_SCREEN_BRIGHTNESS,
                             COMMAND_SCREEN_OFF_TIMEOUT,
                             -> requestWriteSystemPermission()
+                            COMMAND_SCREEN_OFF -> requestDeviceAdminPermission()
                             COMMAND_FLASHLIGHT -> requestCameraPermission()
                             COMMAND_WAKE_WORD_DETECTION -> requestMicPermission()
                         }

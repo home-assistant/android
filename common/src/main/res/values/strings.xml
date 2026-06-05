@@ -201,6 +201,7 @@
     <string name="delete_shortcut">Delete shortcut</string>
     <string name="description">Description</string>
     <string name="details">Details</string>
+    <string name="device_admin_explanation">Home Assistant requires device administrator permission to lock your screen remotely using the command_screen_off notification command.</string>
     <string name="device_name">Device name</string>
     <string name="device_registration">Device registration</string>
     <string name="device_tracker">Device tracker</string>
