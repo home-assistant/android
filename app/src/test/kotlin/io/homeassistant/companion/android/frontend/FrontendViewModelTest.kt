@@ -19,7 +19,7 @@ import io.homeassistant.companion.android.common.data.prefs.ZoomSettings
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
-import io.homeassistant.companion.android.frontend.auth.HttpAuthManager
+import io.homeassistant.companion.android.frontend.auth.FrontendHttpAuthHandler
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.frontend.download.DownloadResult
@@ -123,7 +123,7 @@ class FrontendViewModelTest {
         path: String? = null,
         dialogManager: FrontendDialogManager = FrontendDialogManager(),
         fileChooserManager: FileChooserManager = FileChooserManager(),
-        httpAuthManager: HttpAuthManager = HttpAuthManager(
+        httpAuthHandler: FrontendHttpAuthHandler = FrontendHttpAuthHandler(
             authenticationDao = mockk(relaxed = true),
             clock = FakeClock(),
             dialogManager = dialogManager,
@@ -144,7 +144,7 @@ class FrontendViewModelTest {
             prefsRepository = prefsRepository,
             dialogManager = dialogManager,
             fileChooserManager = fileChooserManager,
-            httpAuthManager = httpAuthManager,
+            httpAuthHandler = httpAuthHandler,
             exoPlayerManager = exoPlayerManager,
         )
     }
@@ -1075,7 +1075,7 @@ class FrontendViewModelTest {
 
         private val authenticationDao: AuthenticationDao = mockk(relaxed = true)
         private val dialogManager = FrontendDialogManager()
-        private val httpAuthManager = HttpAuthManager(
+        private val httpAuthHandler = FrontendHttpAuthHandler(
             authenticationDao = authenticationDao,
             clock = FakeClock(),
             dialogManager = dialogManager,
@@ -1097,7 +1097,7 @@ class FrontendViewModelTest {
                 mockk(relaxed = true)
             }
 
-            val viewModel = createViewModel(httpAuthManager = httpAuthManager, dialogManager = dialogManager)
+            val viewModel = createViewModel(httpAuthHandler = httpAuthHandler, dialogManager = dialogManager)
             return viewModel to capturedCallback!!
         }
 

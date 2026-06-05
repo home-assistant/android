@@ -32,7 +32,7 @@ internal sealed interface HttpAuthResult {
 }
 
 /**
- * Handles HTTP Basic Auth requests from the WebView end-to-end.
+ * Manages HTTP Basic Auth requests from the WebView end-to-end.
  *
  * Looks up stored credentials from [AuthenticationDao] and auto-proceeds when possible. Otherwise
  * shows a credential dialog through [FrontendDialogManager], suspends until the user responds,
@@ -52,7 +52,7 @@ internal sealed interface HttpAuthResult {
  */
 @OptIn(ExperimentalTime::class)
 @ViewModelScoped
-internal class HttpAuthManager @Inject constructor(
+internal class FrontendHttpAuthHandler @Inject constructor(
     private val authenticationDao: AuthenticationDao,
     private val clock: Clock,
     private val dialogManager: FrontendDialogManager,

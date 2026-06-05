@@ -26,18 +26,18 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 @OptIn(ExperimentalTime::class, ExperimentalCoroutinesApi::class)
-class HttpAuthManagerTest {
+class FrontendHttpAuthHandlerTest {
 
     private val authenticationDao: AuthenticationDao = mockk(relaxed = true)
     private val clock = FakeClock()
     private val dialogManager = FrontendDialogManager()
-    private val manager = HttpAuthManager(
+    private val handler = FrontendHttpAuthHandler(
         authenticationDao = authenticationDao,
         clock = clock,
         dialogManager = dialogManager,
     )
 
-    private val handler: HttpAuthHandler = mockk(relaxed = true)
+    private val httpAuthHandler: HttpAuthHandler = mockk(relaxed = true)
 
     private fun pendingHttpAuthDialog(): FrontendDialog.HttpAuth {
         return dialogManager.pendingDialog.value as FrontendDialog.HttpAuth
@@ -54,15 +54,15 @@ class HttpAuthManagerTest {
                 password = "pass",
             )
 
-            val result = manager.handleAuthRequest(
-                handler = handler,
+            val result = handler.handleAuthRequest(
+                handler = httpAuthHandler,
                 host = "example.com",
                 resource = "https://example.com/",
                 realm = "testrealm",
             )
 
             assertEquals(HttpAuthResult.AutoProceeded, result)
-            verify { handler.proceed("user", "pass") }
+            verify { httpAuthHandler.proceed("user", "pass") }
         }
 
         @Test
@@ -70,8 +70,8 @@ class HttpAuthManagerTest {
             coEvery { authenticationDao.get(any()) } returns null
 
             val result = async {
-                manager.handleAuthRequest(
-                    handler = handler,
+                handler.handleAuthRequest(
+                    handler = httpAuthHandler,
                     host = "example.com",
                     resource = "https://example.com/",
                     realm = "testrealm",
@@ -80,7 +80,7 @@ class HttpAuthManagerTest {
             advanceUntilIdle()
 
             assertInstanceOf(FrontendDialog.HttpAuth::class.java, dialogManager.pendingDialog.value)
-            verify(exactly = 0) { handler.proceed(any(), any()) }
+            verify(exactly = 0) { httpAuthHandler.proceed(any(), any()) }
 
             // Tidy up so the suspend returns and async doesn't leak
             pendingHttpAuthDialog().onCancel()
@@ -102,8 +102,8 @@ class HttpAuthManagerTest {
             coEvery { authenticationDao.get(any()) } returns storedAuth
 
             // First request: auto-proceeds
-            manager.handleAuthRequest(
-                handler = handler,
+            handler.handleAuthRequest(
+                handler = httpAuthHandler,
                 host = "example.com",
                 resource = "https://example.com/",
                 realm = "testrealm",
@@ -113,8 +113,8 @@ class HttpAuthManagerTest {
             clock.currentInstant += 200.milliseconds
 
             val result = async {
-                manager.handleAuthRequest(
-                    handler = handler,
+                handler.handleAuthRequest(
+                    handler = httpAuthHandler,
                     host = "example.com",
                     resource = "https://example.com/",
                     realm = "testrealm",
@@ -135,8 +135,8 @@ class HttpAuthManagerTest {
             coEvery { authenticationDao.get(any()) } returns null
 
             val result = async {
-                manager.handleAuthRequest(
-                    handler = handler,
+                handler.handleAuthRequest(
+                    handler = httpAuthHandler,
                     host = "example.com",
                     resource = "https://example.com/",
                     realm = "realm",
@@ -157,8 +157,8 @@ class HttpAuthManagerTest {
             coEvery { authenticationDao.get(any()) } returns null
 
             val firstRequest = async {
-                manager.handleAuthRequest(
-                    handler = handler,
+                handler.handleAuthRequest(
+                    handler = httpAuthHandler,
                     host = "example.com",
                     resource = "https://example.com/",
                     realm = "realm",
@@ -175,8 +175,8 @@ class HttpAuthManagerTest {
             clock.currentInstant += 200.milliseconds
 
             val secondRequest = async {
-                manager.handleAuthRequest(
-                    handler = handler,
+                handler.handleAuthRequest(
+                    handler = httpAuthHandler,
                     host = "example.com",
                     resource = "https://example.com/",
                     realm = "realm",
@@ -198,8 +198,8 @@ class HttpAuthManagerTest {
 
             // Resource A: user proceeds with credentials
             val firstRequest = async {
-                manager.handleAuthRequest(
-                    handler = handler,
+                handler.handleAuthRequest(
+                    handler = httpAuthHandler,
                     host = "a.example.com",
                     resource = "https://a.example.com/",
                     realm = "realm",
@@ -214,8 +214,8 @@ class HttpAuthManagerTest {
             clock.currentInstant += 100.milliseconds
 
             val secondRequest = async {
-                manager.handleAuthRequest(
-                    handler = handler,
+                handler.handleAuthRequest(
+                    handler = httpAuthHandler,
                     host = "b.example.com",
                     resource = "https://b.example.com/",
                     realm = "realm",
@@ -240,8 +240,8 @@ class HttpAuthManagerTest {
             coEvery { authenticationDao.get(any()) } returns storedAuth
 
             // First request: auto-proceeds
-            manager.handleAuthRequest(
-                handler = handler,
+            handler.handleAuthRequest(
+                handler = httpAuthHandler,
                 host = "example.com",
                 resource = "https://example.com/",
                 realm = "testrealm",
@@ -250,8 +250,8 @@ class HttpAuthManagerTest {
             // Second request after 500ms: not rapid reauth
             clock.currentInstant += 1.seconds
 
-            val result = manager.handleAuthRequest(
-                handler = handler,
+            val result = handler.handleAuthRequest(
+                handler = httpAuthHandler,
                 host = "example.com",
                 resource = "https://example.com/",
                 realm = "testrealm",
@@ -268,8 +268,8 @@ class HttpAuthManagerTest {
             coEvery { authenticationDao.get(any()) } returns null
 
             val firstRequest = async {
-                manager.handleAuthRequest(
-                    handler = handler,
+                handler.handleAuthRequest(
+                    handler = httpAuthHandler,
                     host = "example.com",
                     resource = "https://example.com/",
                     realm = "realm",
@@ -283,8 +283,8 @@ class HttpAuthManagerTest {
             clock.currentInstant += 10.seconds
 
             val secondRequest = async {
-                manager.handleAuthRequest(
-                    handler = handler,
+                handler.handleAuthRequest(
+                    handler = httpAuthHandler,
                     host = "example.com",
                     resource = "https://example.com/",
                     realm = "realm",
@@ -306,8 +306,8 @@ class HttpAuthManagerTest {
             coEvery { authenticationDao.get(any()) } returns null
 
             val firstRequest = async {
-                manager.handleAuthRequest(
-                    handler = handler,
+                handler.handleAuthRequest(
+                    handler = httpAuthHandler,
                     host = "example.com",
                     resource = "https://example.com/",
                     realm = "realm",
@@ -322,8 +322,8 @@ class HttpAuthManagerTest {
             clock.currentInstant += 100.milliseconds
 
             val secondRequest = async {
-                manager.handleAuthRequest(
-                    handler = handler,
+                handler.handleAuthRequest(
+                    handler = httpAuthHandler,
                     host = "example.com",
                     resource = "https://example.com/",
                     realm = "realm",
@@ -347,8 +347,8 @@ class HttpAuthManagerTest {
             coEvery { authenticationDao.get(any()) } returns null
 
             val result = async {
-                manager.handleAuthRequest(
-                    handler = handler,
+                handler.handleAuthRequest(
+                    handler = httpAuthHandler,
                     host = "example.com",
                     resource = "https://example.com/",
                     realm = "realm",
@@ -359,7 +359,7 @@ class HttpAuthManagerTest {
             advanceUntilIdle()
 
             assertEquals(HttpAuthResult.Proceeded, result.await())
-            verify { handler.proceed("user", "pass") }
+            verify { httpAuthHandler.proceed("user", "pass") }
             coVerify { authenticationDao.insert(Authentication("https://example.com/realm", "user", "pass")) }
             coVerify(exactly = 0) { authenticationDao.update(any()) }
         }
@@ -372,8 +372,8 @@ class HttpAuthManagerTest {
             coEvery { authenticationDao.get(any()) } returns null
 
             val firstRequest = async {
-                manager.handleAuthRequest(
-                    handler = handler,
+                handler.handleAuthRequest(
+                    handler = httpAuthHandler,
                     host = "example.com",
                     resource = "https://example.com/",
                     realm = "realm",
@@ -388,8 +388,8 @@ class HttpAuthManagerTest {
             clock.currentInstant += 20.milliseconds
 
             val secondRequest = async {
-                manager.handleAuthRequest(
-                    handler = handler,
+                handler.handleAuthRequest(
+                    handler = httpAuthHandler,
                     host = "example.com",
                     resource = "https://example.com/",
                     realm = "realm",
@@ -410,14 +410,14 @@ class HttpAuthManagerTest {
             coEvery { authenticationDao.get(any()) } returns storedAuth
 
             // First request: auto-proceeds
-            manager.handleAuthRequest(handler = handler, host = "example.com", resource = "https://example.com/", realm = "realm")
+            handler.handleAuthRequest(handler = httpAuthHandler, host = "example.com", resource = "https://example.com/", realm = "realm")
 
             // Second request within 500ms: rapid reauth
             clock.currentInstant += 200.milliseconds
 
             val result = async {
-                manager.handleAuthRequest(
-                    handler = handler,
+                handler.handleAuthRequest(
+                    handler = httpAuthHandler,
                     host = "example.com",
                     resource = "https://example.com/",
                     realm = "realm",
@@ -437,8 +437,8 @@ class HttpAuthManagerTest {
             coEvery { authenticationDao.get(any()) } returns null
 
             val result = async {
-                manager.handleAuthRequest(
-                    handler = handler,
+                handler.handleAuthRequest(
+                    handler = httpAuthHandler,
                     host = "example.com",
                     resource = "https://example.com/",
                     realm = "realm",
@@ -461,8 +461,8 @@ class HttpAuthManagerTest {
             coEvery { authenticationDao.get(any()) } returns storedAuth
 
             // First request: auto-proceeds with the stored (wrong) credentials.
-            manager.handleAuthRequest(
-                handler = handler,
+            handler.handleAuthRequest(
+                handler = httpAuthHandler,
                 host = "example.com",
                 resource = "https://example.com/",
                 realm = "realm",
@@ -472,8 +472,8 @@ class HttpAuthManagerTest {
             clock.currentInstant += 200.milliseconds
 
             val result = async {
-                manager.handleAuthRequest(
-                    handler = handler,
+                handler.handleAuthRequest(
+                    handler = httpAuthHandler,
                     host = "example.com",
                     resource = "https://example.com/",
                     realm = "realm",
@@ -493,8 +493,8 @@ class HttpAuthManagerTest {
             coEvery { authenticationDao.get(any()) } returns null
 
             val result = async {
-                manager.handleAuthRequest(
-                    handler = handler,
+                handler.handleAuthRequest(
+                    handler = httpAuthHandler,
                     host = "example.com",
                     resource = "https://example.com/",
                     realm = "realm",
@@ -505,7 +505,7 @@ class HttpAuthManagerTest {
             advanceUntilIdle()
 
             assertEquals(HttpAuthResult.Cancelled, result.await())
-            verify { handler.cancel() }
+            verify { httpAuthHandler.cancel() }
         }
     }
 
@@ -527,8 +527,8 @@ class HttpAuthManagerTest {
             coEvery { authenticationDao.get(any()) } returns null
 
             val result = async {
-                manager.handleAuthRequest(
-                    handler = handler,
+                handler.handleAuthRequest(
+                    handler = httpAuthHandler,
                     host = "example.com",
                     resource = "https://example.com/",
                     realm = "realm",
@@ -550,8 +550,8 @@ class HttpAuthManagerTest {
             coEvery { authenticationDao.get(any()) } returns null
 
             val result = async {
-                manager.handleAuthRequest(
-                    handler = handler,
+                handler.handleAuthRequest(
+                    handler = httpAuthHandler,
                     host = "example.com",
                     resource = "http://example.com/",
                     realm = "realm",
