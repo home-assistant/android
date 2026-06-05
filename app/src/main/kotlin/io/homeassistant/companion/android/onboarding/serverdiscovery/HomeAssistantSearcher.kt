@@ -22,9 +22,11 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import timber.log.Timber
 
-@VisibleForTesting const val SERVICE_TYPE = "_home-assistant._tcp"
+@VisibleForTesting
+const val SERVICE_TYPE = "_home-assistant._tcp"
 
-@VisibleForTesting const val LOCK_TAG = "HomeAssistantSearcher_lock"
+@VisibleForTesting
+const val LOCK_TAG = "HomeAssistantSearcher_lock"
 
 internal data class HomeAssistantInstance(val name: String, val url: URL, val version: HomeAssistantVersion)
 
@@ -227,7 +229,7 @@ private fun ProducerScope<HomeAssistantInstance>.getResolvedListener(): NsdManag
 }
 
 private fun NsdServiceInfo.toHomeAssistantInstance(): HomeAssistantInstance? {
-    val baseUrlString = attributes?.get("base_url")?.toString(Charsets.UTF_8)
+    val baseUrlString = (attributes?.get("external_url") ?: attributes?.get("internal_url"))?.toString(Charsets.UTF_8)
     if (baseUrlString.isNullOrBlank()) {
         Timber.w("Base URL is missing or empty in NSD attributes for service: $this")
         return null
