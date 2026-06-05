@@ -12,7 +12,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
-import com.google.android.gms.common.api.ApiException
 import dagger.hilt.android.qualifiers.ActivityContext
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
@@ -44,6 +43,7 @@ import java.util.regex.Pattern
 import javax.inject.Inject
 import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -526,6 +526,7 @@ class WebViewPresenterImpl @Inject constructor(
                     matterThreadIntentSender = result.intentSender
                     mutableMatterThreadStep.tryEmit(MatterThreadStep.MATTER_IN_PROGRESS)
                 }
+
                 is MatterManager.CommissioningResult.Error -> {
                     Timber.e(result.cause, "Matter commissioning couldn't be prepared")
                     mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_MATTER_OTHER)
@@ -543,7 +544,9 @@ class WebViewPresenterImpl @Inject constructor(
             mainScope.launch {
                 val result = try {
                     threadManager.exportPreferredDataset(serverId)
-                } catch (e: ApiException) {
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
                     Timber.e(e, "Error while trying to export preferred dataset")
                     mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_THREAD_OTHER)
                     return@launch
@@ -554,9 +557,11 @@ class WebViewPresenterImpl @Inject constructor(
                         matterThreadIntentSender = result.exportIntent
                         MatterThreadStep.THREAD_EXPORT_TO_SERVER_ONLY
                     }
+
                     is ThreadManager.SyncResult.NoneHaveCredentials,
                     is ThreadManager.SyncResult.OnlyOnServer,
                     -> MatterThreadStep.THREAD_NONE
+
                     is ThreadManager.SyncResult.NotConnected -> MatterThreadStep.ERROR_THREAD_LOCAL_NETWORK
                     is ThreadManager.SyncResult.AppUnsupported,
                     is ThreadManager.SyncResult.ServerUnsupported,
