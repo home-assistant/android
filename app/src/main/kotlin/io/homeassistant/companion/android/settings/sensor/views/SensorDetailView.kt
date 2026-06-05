@@ -72,7 +72,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAHint
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
-import io.homeassistant.companion.android.common.util.openAppSettings
+import io.homeassistant.companion.android.common.util.openSystemAppSettings
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
@@ -125,7 +125,7 @@ fun SensorDetailView(
                                 context.startActivity(intent)
                             }
                         } else {
-                            context.openAppSettings()
+                            context.openSystemAppSettings()
                         }
                     } else {
                         onSetEnabled(true, it.serverId)

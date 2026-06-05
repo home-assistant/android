@@ -66,7 +66,7 @@ import io.homeassistant.companion.android.common.compose.theme.HARadius
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
-import io.homeassistant.companion.android.common.util.openAppSettings
+import io.homeassistant.companion.android.common.util.openSystemAppSettings
 import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import kotlinx.coroutines.launch
@@ -93,7 +93,7 @@ private fun rememberRecordAudioPermissionState(
                     duration = SnackbarDuration.Long,
                 )
                 if (result == SnackbarResult.ActionPerformed) {
-                    context.openAppSettings()
+                    context.openSystemAppSettings()
                 }
             }
         }

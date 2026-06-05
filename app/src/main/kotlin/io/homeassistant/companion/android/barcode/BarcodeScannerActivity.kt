@@ -21,7 +21,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.barcode.view.BarcodeScannerView
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.util.openAppSettings
+import io.homeassistant.companion.android.common.util.openSystemAppSettings
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import java.util.Locale
 import kotlinx.coroutines.launch
@@ -132,7 +132,7 @@ class BarcodeScannerActivity : BaseActivity() {
         if (inContext) {
             cameraPermission.launch(Manifest.permission.CAMERA)
         } else {
-            openAppSettings()
+            openSystemAppSettings()
             requestSilently = true // Reset state to trigger new in context dialog/check when resumed
         }
     }

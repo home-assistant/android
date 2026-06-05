@@ -106,7 +106,7 @@ suspend fun Context.openUri(uri: String, onShowSnackbar: suspend (message: Strin
 /**
  * Builds an [Intent] that opens this app's "App info" page in the system Settings.
  */
-fun Context.createAppSettingsIntent(): Intent {
+fun Context.createSystemAppSettingsIntent(): Intent {
     return Intent(
         Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
         Uri.fromParts("package", packageName, null),
@@ -116,8 +116,8 @@ fun Context.createAppSettingsIntent(): Intent {
 /**
  * Opens this app's "App info" page in the system Settings.
  */
-fun Context.openAppSettings() {
+fun Context.openSystemAppSettings() {
     startActivity(
-        createAppSettingsIntent(),
+        createSystemAppSettingsIntent(),
     )
 }
