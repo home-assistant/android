@@ -67,7 +67,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
-import io.homeassistant.companion.android.common.util.openAppSettings
+import io.homeassistant.companion.android.common.util.openSystemAppSettings
 import io.homeassistant.companion.android.util.compose.safeScreenHeight
 import io.homeassistant.companion.android.util.compose.screenWidth
 import io.homeassistant.companion.android.util.getActivity
@@ -147,7 +147,7 @@ fun BarcodeScanner(
             if (status.shouldShowRationale) {
                 cameraPermission.launchPermissionRequest()
             } else {
-                context.openAppSettings()
+                context.openSystemAppSettings()
             }
         },
         onResult = onResult,
