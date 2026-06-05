@@ -27,7 +27,7 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
 @HiltAndroidTest
-class BarcodeScannerViewTest {
+class BarcodeScannerTest {
 
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
@@ -46,6 +46,9 @@ class BarcodeScannerViewTest {
         title: String = "Scan a code",
         description: String = "Point at the barcode",
         alternativeOptionLabel: String? = null,
+        hasFlashlight: Boolean = true,
+        flashlightOn: Boolean = false,
+        onToggleFlashlight: () -> Unit = {},
         onCancel: (Boolean) -> Unit = {},
     ) {
         setContent(
@@ -54,6 +57,9 @@ class BarcodeScannerViewTest {
             title = title,
             description = description,
             alternativeOptionLabel = alternativeOptionLabel,
+            hasFlashlight = hasFlashlight,
+            flashlightOn = flashlightOn,
+            onToggleFlashlight = onToggleFlashlight,
             onCancel = onCancel,
         )
     }
@@ -62,6 +68,7 @@ class BarcodeScannerViewTest {
     private fun setDeniedContent(onRequestPermission: () -> Unit = {}, onCancel: (Boolean) -> Unit = {}) {
         setContent(
             hasCameraPermission = false,
+            hasFlashlight = true,
             inspection = false,
             onRequestPermission = onRequestPermission,
             onCancel = onCancel,
@@ -74,7 +81,10 @@ class BarcodeScannerViewTest {
         title: String = "Scan a code",
         description: String = "Point at the barcode",
         alternativeOptionLabel: String? = null,
+        hasFlashlight: Boolean = true,
+        flashlightOn: Boolean = false,
         onRequestPermission: () -> Unit = {},
+        onToggleFlashlight: () -> Unit = {},
         onCancel: (Boolean) -> Unit = {},
     ) {
         composeRule.setContent {
@@ -84,8 +94,11 @@ class BarcodeScannerViewTest {
                     description = description,
                     alternativeOptionLabel = alternativeOptionLabel,
                     hasCameraPermission = hasCameraPermission,
+                    hasFlashlight = hasFlashlight,
+                    flashlightOn = flashlightOn,
                     onRequestPermission = onRequestPermission,
                     onResult = { _, _ -> },
+                    onToggleFlashlight = onToggleFlashlight,
                     onCancel = onCancel,
                 )
             }
@@ -130,6 +143,30 @@ class BarcodeScannerViewTest {
         composeRule.onNodeWithText("Enter manually").performClick()
 
         assertEquals(listOf(true), cancelCalls)
+    }
+
+    @Test
+    fun `Given permission granted and device has flashlight then flashlight button is displayed`() {
+        setGrantedContent(hasFlashlight = true)
+
+        composeRule.onNodeWithContentDescription(flashlightDescription).assertIsDisplayed()
+    }
+
+    @Test
+    fun `Given permission granted and device has no flashlight then flashlight button is not displayed`() {
+        setGrantedContent(hasFlashlight = false)
+
+        composeRule.onAllNodesWithContentDescription(flashlightDescription).assertCountEquals(0)
+    }
+
+    @Test
+    fun `Given permission granted when flashlight button tapped then onToggleFlashlight is called`() {
+        var toggleCount = 0
+        setGrantedContent(hasFlashlight = true, onToggleFlashlight = { toggleCount++ })
+
+        composeRule.onNodeWithContentDescription(flashlightDescription).performClick()
+
+        assertEquals(1, toggleCount)
     }
 
     @Test

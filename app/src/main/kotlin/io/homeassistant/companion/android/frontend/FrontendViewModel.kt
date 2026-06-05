@@ -503,7 +503,10 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         _events.tryEmit(FrontendEvent.RequestFullscreen(isFullScreen))
     }
 
-    /** Forwards a scanned code to the manager, which replies to the frontend and dismisses the scanner. */
+    /**
+     * Forwards a scanned code to the manager, which replies to the frontend.
+     * The scanner stays open until the frontend sends bar_code/close.
+     */
     fun onBarcodeScanned(rawValue: String, format: BarcodeFormat) {
         viewModelScope.launch { barcodeScannerHandler.onScanned(rawValue, format) }
     }

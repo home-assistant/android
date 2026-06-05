@@ -31,11 +31,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -73,12 +73,10 @@ import io.homeassistant.companion.android.util.compose.screenWidth
 import io.homeassistant.companion.android.util.getActivity
 import io.homeassistant.companion.android.util.safeTopWindowInsets
 import kotlin.time.ComparableTimeMark
-import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
-private val BarcodeScannerResultDebounce = 1500.milliseconds
-
-// The flashlight FAB and its margin from the cutout edge.
+private val BarcodeScannerResultDebounce = 1.5.seconds
 private val FlashlightButtonSize = 48.dp
 private val FlashlightButtonMargin = HADimens.SPACE2
 
@@ -95,17 +93,13 @@ private val BarcodeScannerScrimColor = Color(0xAA000000)
  * anchored to the cutout's bottom-right. While it is missing, it renders an in-screen rationale with
  * a button to grant access instead of silently showing nothing.
  *
- * The camera preview is backed by the zxing-android-embedded [DecoratedBarcodeView] hosted in an
- * [AndroidView] and lifecycle-driven by [LifecycleResumeEffect]. Decoding runs continuously;
- * duplicate scans within 1.5 seconds are suppressed to avoid flooding the consumer (intrinsic to
- * the scanner UX, not a tunable behaviour).
+ * The camera preview is backed by the zxing-android-embedded [DecoratedBarcodeView].
+ * Decoding runs continuously; duplicate scans within 1.5 seconds are suppressed to avoid flooding
+ * the consumer (intrinsic to the scanner UX, not a tunable behaviour).
  *
- * **Permission:** this Composable owns the `Manifest.permission.CAMERA` flow itself via Accompanist
- * ([rememberCameraPermissionState]). It asks on first appearance; the rationale button re-requests
- * while the system can still show the dialog and falls back to the app's settings page once the user
- * has permanently denied it. Accompanist refreshes the status on resume, so granting from settings
- * (then returning) updates the UI. Under [LocalInspectionMode] (previews) the permission is reported
- * as granted so the scanner chrome renders.
+ * **Permission:** this Composable owns the `Manifest.permission.CAMERA`. It asks on first appearance;
+ * the rationale button re-requests while the system can still show the dialog and falls back
+ * to the app's settings page once the user has permanently denied it.
  *
  * @param title Bold header centered above the cutout
  * @param description Subtitle below [title]
@@ -128,6 +122,10 @@ fun BarcodeScanner(
 ) {
     val context = LocalContext.current
     val cameraPermission = rememberPermissionState(Manifest.permission.CAMERA)
+    val deviceHasFlashlight = remember {
+        context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH)
+    }
+    var flashlightOn by remember { mutableStateOf(false) }
     val status = cameraPermission.status
 
     LaunchedEffect(Unit) {
@@ -141,6 +139,8 @@ fun BarcodeScanner(
         description = description,
         alternativeOptionLabel = alternativeOptionLabel,
         hasCameraPermission = status.isGranted,
+        hasFlashlight = deviceHasFlashlight,
+        flashlightOn = flashlightOn,
         onRequestPermission = {
             // After the initial request, `shouldShowRationale` is false only once the permission is
             // permanently denied — the case where re-launching would silently do nothing.
@@ -151,22 +151,14 @@ fun BarcodeScanner(
             }
         },
         onResult = onResult,
+        onToggleFlashlight = {
+            flashlightOn = !flashlightOn
+        },
         onCancel = onCancel,
         modifier = modifier,
     )
 }
 
-/**
- * Stateless scanner UI, split out of [BarcodeScanner] so both permission states can be exercised in
- * previews and screenshot tests without a real permission grant.
- *
- * When [hasCameraPermission] is true it renders the camera scanner (a black placeholder under
- * [LocalInspectionMode]); otherwise the permission rationale whose action button invokes
- * [onRequestPermission].
- *
- * @param hasCameraPermission Whether `Manifest.permission.CAMERA` is currently granted
- * @param onRequestPermission Invoked when the user taps the rationale's action button
- */
 @VisibleForTesting
 @Composable
 internal fun BarcodeScannerContent(
@@ -174,33 +166,29 @@ internal fun BarcodeScannerContent(
     description: String,
     alternativeOptionLabel: String?,
     hasCameraPermission: Boolean,
+    hasFlashlight: Boolean,
+    flashlightOn: Boolean,
     onRequestPermission: () -> Unit,
     onResult: (rawValue: String, format: BarcodeFormat) -> Unit,
+    onToggleFlashlight: () -> Unit,
     onCancel: (forAction: Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
-    val deviceHasFlashlight = remember {
-        context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH)
-    }
-
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(Color.Black),
     ) {
         if (hasCameraPermission) {
-            val barcodeView = rememberBarcodeScannerView(onResult)
-            BarcodeCameraPreview(barcodeView = barcodeView, modifier = Modifier.fillMaxSize())
+            BarcodeCameraPreview(flashlightOn = flashlightOn, onResult = onResult, modifier = Modifier.fillMaxSize())
             BarcodeScannerControls(
                 title = title,
                 description = description,
                 alternativeOptionLabel = alternativeOptionLabel,
-                hasFlashlight = deviceHasFlashlight && barcodeView != null,
+                hasFlashlight = hasFlashlight,
+                flashlightOn = flashlightOn,
                 onCancel = onCancel,
-                onToggleFlashlight = { turnOn ->
-                    if (turnOn) barcodeView?.setTorchOn() else barcodeView?.setTorchOff()
-                },
+                onToggleFlashlight = onToggleFlashlight,
                 modifier = Modifier.fillMaxSize(),
             )
         } else {
@@ -213,85 +201,80 @@ internal fun BarcodeScannerContent(
     }
 }
 
-/**
- * Creates the zxing [DecoratedBarcodeView] that drives continuous scanning, or `null` in
- * `@Preview`/Robolectric ([LocalInspectionMode]) so callers can render a placeholder instead of a
- * real camera.
- *
- * The decode callback reads [onResult] through [rememberUpdatedState] so the long-lived
- * `decodeContinuous` subscription never pins a stale lambda (and, transitively, a destroyed host).
- * Duplicate scans within [BarcodeScannerResultDebounce] of the previous one are dropped.
- */
+@Composable
+private fun BarcodeCameraPreview(
+    flashlightOn: Boolean,
+    onResult: (rawValue: String, format: BarcodeFormat) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (LocalInspectionMode.current) {
+        Box(modifier = modifier.background(Color.White))
+        return
+    }
+
+    val view = rememberBarcodeScannerView(onResult)
+
+    AndroidView(modifier = modifier, factory = { view })
+
+    LifecycleResumeEffect(view) {
+        view.resume()
+        onPauseOrDispose {
+            view.pause()
+        }
+    }
+
+    SideEffect {
+        if (flashlightOn) {
+            view.setTorchOn()
+        } else {
+            view.setTorchOff()
+        }
+    }
+}
+
 @Composable
 private fun rememberBarcodeScannerView(
     onResult: (rawValue: String, format: BarcodeFormat) -> Unit,
-): DecoratedBarcodeView? {
+): DecoratedBarcodeView {
     val context = LocalContext.current
     val currentOnResult by rememberUpdatedState(onResult)
 
-    return if (LocalInspectionMode.current) {
-        null
-    } else {
-        remember {
-            var lastScan: ComparableTimeMark? = null
+    return remember {
+        var lastScan: ComparableTimeMark? = null
 
-            DecoratedBarcodeView(context).apply {
-                val activity = context.getActivity() ?: return@apply
-                // Hide the library's default UI; the cutout overlay and chrome are drawn above.
-                viewFinder.isVisible = false
-                statusView.isVisible = false
+        DecoratedBarcodeView(context).apply {
+            val activity = context.getActivity() ?: return@apply
+            // Hide the library's default UI; the cutout overlay and chrome are drawn above.
+            viewFinder.isVisible = false
+            statusView.isVisible = false
 
-                val captureManager = CaptureManager(activity, this)
-                captureManager.initializeFromIntent(null, null)
-                captureManager.decode()
-                decodeContinuous { result ->
-                    val now = TimeSource.Monotonic.markNow()
-                    val previous = lastScan
-                    if (previous != null && now - previous < BarcodeScannerResultDebounce) {
-                        return@decodeContinuous
-                    }
-                    result.text.ifBlank { null }?.let {
-                        lastScan = now
-                        currentOnResult(it, result.barcodeFormat)
-                    }
+            val captureManager = CaptureManager(activity, this)
+            captureManager.initializeFromIntent(null, null)
+            captureManager.decode()
+            decodeContinuous { result ->
+                val now = TimeSource.Monotonic.markNow()
+                val previous = lastScan
+                if (previous != null && now - previous < BarcodeScannerResultDebounce) {
+                    return@decodeContinuous
+                }
+                result.text.ifBlank { null }?.let {
+                    lastScan = now
+                    currentOnResult(it, result.barcodeFormat)
                 }
             }
         }
     }
 }
 
-/**
- * Renders the edge-to-edge camera preview for [barcodeView], resuming/pausing it with the
- * composition lifecycle. When [barcodeView] is `null` (preview/test), renders a black placeholder
- * so the chrome drawn above stays deterministic.
- */
-@Composable
-private fun BarcodeCameraPreview(barcodeView: DecoratedBarcodeView?, modifier: Modifier = Modifier) {
-    if (barcodeView == null) {
-        Box(modifier.background(Color.Black))
-        return
-    }
-    AndroidView(modifier = modifier, factory = { barcodeView })
-    LifecycleResumeEffect(barcodeView) {
-        barcodeView.resume()
-        onPauseOrDispose {
-            barcodeView.pause()
-        }
-    }
-}
-
-/**
- * The controls drawn on top of the camera preview: the cutout overlay, the close button and
- * instructions, and (when [hasFlashlight] is true) the flashlight FAB.
- */
 @Composable
 private fun BarcodeScannerControls(
     title: String,
     description: String,
     alternativeOptionLabel: String?,
     hasFlashlight: Boolean,
+    flashlightOn: Boolean,
     onCancel: (forAction: Boolean) -> Unit,
-    onToggleFlashlight: (Boolean) -> Unit,
+    onToggleFlashlight: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     BoxWithConstraints(modifier = modifier) {
@@ -312,6 +295,7 @@ private fun BarcodeScannerControls(
 
         if (hasFlashlight) {
             ScannerFlashlightButton(
+                flashlightOn = flashlightOn,
                 cutoutSize = cutoutSize,
                 screenWidthDp = screenWidthDp,
                 screenHeight = screenHeight,
@@ -369,15 +353,6 @@ private fun BarcodeScannerOverlay(cutout: Dp, modifier: Modifier = Modifier) {
     }
 }
 
-/**
- * The foreground chrome shared by the live scanner ([BarcodeScannerControls]) and the
- * permission-required fallback: a top-left close button and a centered title/description block with
- * an optional alternative-action button. Drawn over whatever sits behind it.
- *
- * @param widthFraction Fraction of the available width the instruction column occupies. Use `0.5f`
- *        in landscape so the text doesn't overlap the right-aligned cutout; `1f` when there is no
- *        cutout behind the chrome.
- */
 @Composable
 private fun BarcodeScannerChrome(
     title: String,
@@ -403,11 +378,6 @@ private fun BarcodeScannerChrome(
     }
 }
 
-/**
- * Camera-free screen shown when the camera permission is missing: the close button plus a centered
- * explanation and an action button that calls [onRequestPermission]. Reused by both the V1 activity
- * and the V2 overlay so a denied permission explains itself instead of leaving a blank scanner.
- */
 @Composable
 private fun BarcodeScannerPermissionRequired(
     onClose: () -> Unit,
@@ -449,7 +419,6 @@ private fun BarcodeScannerPermissionRequired(
     }
 }
 
-/** Top-left close icon that cancels the scan. */
 @Composable
 private fun ScannerCloseButton(onClose: () -> Unit, modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxWidth()) {
@@ -495,18 +464,16 @@ private fun ScannerInstructions(
 }
 
 /**
- * Positions the [FlashlightButton] at the bottom-right corner of the cutout. In landscape the
- * cutout is pushed to the right half of the screen, so the horizontal anchor differs.
- *
- * @param containerHeightPx The height of the hosting container in pixels (from `BoxWithConstraints`)
+ * Positions the [FlashlightButton] in the bottom-right corner of the cutout.
  */
 @Composable
 private fun ScannerFlashlightButton(
+    flashlightOn: Boolean,
     cutoutSize: Dp,
     screenWidthDp: Dp,
     screenHeight: Dp,
     containerHeightPx: Int,
-    onToggle: (Boolean) -> Unit,
+    onToggle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val offsetX = if (screenWidthDp > screenHeight) {
@@ -517,35 +484,22 @@ private fun ScannerFlashlightButton(
     val offsetY = with(LocalDensity.current) { (0.5 * containerHeightPx).toInt().toDp() } +
         (0.5 * cutoutSize) - FlashlightButtonSize - FlashlightButtonMargin
 
-    // The button anchors to the cutout, which the overlay draws edge-to-edge ignoring insets, so it
-    // must not apply window-inset padding itself — doing so shifts it off the cutout in landscape,
-    // where the navigation bar / display cutout contributes a horizontal inset.
     FlashlightButton(
+        flashlightOn = flashlightOn,
         onToggle = onToggle,
         modifier = modifier.offset(offsetX, offsetY),
     )
 }
 
-/**
- * A 48x48dp dark round button/mini FAB to toggle the device flashlight on and off. The button size
- * fits within the overlay cutout radius.
- *
- * Internal toggle state ([flashlightOn]) is saved across configuration changes via [rememberSaveable].
- */
 @Composable
-private fun FlashlightButton(onToggle: (Boolean) -> Unit, modifier: Modifier = Modifier) {
-    var flashlightOn by rememberSaveable { mutableStateOf(false) }
+private fun FlashlightButton(flashlightOn: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier) {
     OutlinedButton(
         modifier = modifier.size(FlashlightButtonSize),
         shape = CircleShape,
         border = null,
         contentPadding = PaddingValues(0.dp),
         colors = ButtonDefaults.outlinedButtonColors(containerColor = BarcodeScannerScrimColor),
-        onClick = {
-            val next = !flashlightOn
-            flashlightOn = next
-            onToggle(next)
-        },
+        onClick = onToggle,
     ) {
         Icon(
             imageVector = if (flashlightOn) Icons.Default.FlashlightOff else Icons.Default.FlashlightOn,
