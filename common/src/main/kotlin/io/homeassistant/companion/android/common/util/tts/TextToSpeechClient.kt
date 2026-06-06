@@ -19,6 +19,7 @@ import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
 
 /**
@@ -54,12 +55,12 @@ class TextToSpeechClient(private val applicationContext: Context, private val te
                 }
                 AudioManager.AUDIOFOCUS_LOSS -> {
                     Timber.d("Audio focus lost permanently")
+                    hasFocus.value = false
                     stopTTS()
                 }
-                AudioManager.AUDIOFOCUS_LOSS_TRANSIENT,
-                AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK,
-                -> {
+                AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
                     Timber.d("Audio focus lost temporarily")
+                    hasFocus.value = false
                     isTransientLoss = true
                     playbackJob?.cancel()
                     playbackJob = null
@@ -111,6 +112,7 @@ class TextToSpeechClient(private val applicationContext: Context, private val te
         utteranceQueue.clear()
         textToSpeechEngine.release()
         abandonAudioFocus()
+        hasFocus.value = false
         isPlaying = false
     }
 
@@ -154,7 +156,6 @@ class TextToSpeechClient(private val applicationContext: Context, private val te
 
             val request = AudioFocusRequestCompat.Builder(AudioManagerCompat.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
                 .setAudioAttributes(audioAttributesCompat)
-                .setWillPauseWhenDucked(false)
                 .setOnAudioFocusChangeListener(focusListener)
                 .build()
 
@@ -177,12 +178,13 @@ class TextToSpeechClient(private val applicationContext: Context, private val te
 
     private fun abandonAudioFocus() {
         val audioManager = applicationContext.getSystemService<AudioManager>() ?: return
-        focusRequest?.let { request ->
-            try {
+        try {
+            val request = focusRequest
+            if (request != null) {
                 AudioManagerCompat.abandonAudioFocusRequest(audioManager, request)
-            } catch (e: Exception) {
-                Timber.w(e, "Failed to abandon audio focus")
             }
+        } catch (e: Exception) {
+            Timber.w(e, "Failed to abandon audio focus")
         }
         focusRequest = null
     }
@@ -193,11 +195,30 @@ class TextToSpeechClient(private val applicationContext: Context, private val te
      */
     private suspend fun play() {
         isTransientLoss = false
-        requestAudioFocus()
+        val focusGranted = requestAudioFocus()
+
+        if (!focusGranted && !hasFocus.value) {
+            Timber.e("Audio focus request denied")
+            handleError(applicationContext.getString(R.string.tts_error_focus_denied))
+            utteranceQueue.clear()
+            abandonAudioFocus()
+            return
+        }
 
         if (!hasFocus.value) {
             Timber.d("Audio focus not granted yet, waiting...")
-            hasFocus.first { it }
+            val regained = withTimeoutOrNull(FOCUS_TIMEOUT_MS) {
+                hasFocus.first { it }
+                true
+            } ?: false
+
+            if (!regained) {
+                Timber.e("Timed out waiting for initial audio focus")
+                handleError(applicationContext.getString(R.string.tts_error_focus_denied))
+                utteranceQueue.clear()
+                abandonAudioFocus()
+                return
+            }
         }
 
         textToSpeechEngine.initialize().onFailure { throwable ->
@@ -213,7 +234,7 @@ class TextToSpeechClient(private val applicationContext: Context, private val te
                 // Over bluetooth connections, the first syllable or even word can be cut off.
                 // Adding an initial empty utterance seems to fix this.
                 // Testing shows this is more effective than utilizing the
-                // textToSpeach.playSilentUtterance method.
+                // textToSpeech.playSilentUtterance method.
                 if (utteranceQueue.isNotEmpty()) {
                     utteranceQueue.addFirst(
                         Utterance(
@@ -227,7 +248,18 @@ class TextToSpeechClient(private val applicationContext: Context, private val te
                 while (utteranceQueue.isNotEmpty()) {
                     if (!hasFocus.value) {
                         Timber.d("Audio focus lost before playing utterance, waiting...")
-                        hasFocus.first { it }
+                        val regained = withTimeoutOrNull(FOCUS_TIMEOUT_MS) {
+                            hasFocus.first { it }
+                            true
+                        } ?: false
+
+                        if (!regained) {
+                            Timber.e("Timed out waiting to regain audio focus")
+                            handleError(applicationContext.getString(R.string.tts_error_focus_denied))
+                            utteranceQueue.clear()
+                            abandonAudioFocus()
+                            return@onSuccess
+                        }
                     }
 
                     val utterance = utteranceQueue.removeFirst()
@@ -267,6 +299,8 @@ class TextToSpeechClient(private val applicationContext: Context, private val te
     }
 
     private companion object {
+        private const val FOCUS_TIMEOUT_MS = 10000L
+
         private fun getStreamVolumeAdjustment(context: Context, data: Map<String, String>): StreamVolumeAdjustment {
             val audioManager = context.getSystemService<AudioManager>()
             return if (
