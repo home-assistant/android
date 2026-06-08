@@ -6,7 +6,6 @@ import android.app.PictureInPictureParams
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.graphics.Rect
 import android.net.Uri
@@ -100,6 +99,7 @@ import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.getBooleanOrElse
 import io.homeassistant.companion.android.common.util.getBooleanOrNull
 import io.homeassistant.companion.android.common.util.getDoubleOrElse
@@ -119,6 +119,7 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
 import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
+import io.homeassistant.companion.android.frontend.addto.FrontendEntityAddToManager
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.EXPECTED_GET_AUTH_CALLBACK
@@ -127,6 +128,7 @@ import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.EXTERNAL_APP_V2_LISTENER
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.externalBusCallback
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.isServerSupportingExternalAppV2
+import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.improv.ui.ImprovPermissionDialog
 import io.homeassistant.companion.android.improv.ui.ImprovSetupDialog
 import io.homeassistant.companion.android.launch.LaunchActivity
@@ -151,7 +153,6 @@ import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
-import io.homeassistant.companion.android.webview.addto.EntityAddToHandler
 import io.homeassistant.companion.android.webview.externalbus.EntityAddToActionsResponse
 import io.homeassistant.companion.android.webview.externalbus.ExternalBusMessage
 import io.homeassistant.companion.android.webview.externalbus.ExternalConfigResponse
@@ -272,7 +273,7 @@ class WebViewActivity :
     lateinit var appVersionProvider: AppVersionProvider
 
     @Inject
-    lateinit var entityAddToHandler: EntityAddToHandler
+    lateinit var entityAddToManager: FrontendEntityAddToManager
 
     @Inject
     lateinit var dataUriDownloadManager: DataUriDownloadManager
@@ -365,7 +366,7 @@ class WebViewActivity :
     override fun onCreate(savedInstanceState: Bundle?) {
         if (
             intent.extras?.containsKey(EXTRA_SHOW_WHEN_LOCKED) == true &&
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1
+            SdkVersion.isAtLeast(Build.VERSION_CODES.O_MR1)
         ) {
             // Allow showing this on the lock screen when using device controls panel
             setShowWhenLocked(intent.extras?.getBoolean(EXTRA_SHOW_WHEN_LOCKED) ?: false)
@@ -675,7 +676,7 @@ class WebViewActivity :
             }
 
             setDownloadListener { url, _, contentDisposition, mimetype, _ ->
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
+                if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q) ||
                     ActivityCompat.checkSelfPermission(
                         context,
                         android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -783,7 +784,7 @@ class WebViewActivity :
             }
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             val webviewPackage = WebViewCompat.getCurrentWebViewPackage(this)
             Timber.d(
                 "Current webview package ${webviewPackage?.packageName} and version ${webviewPackage?.versionName}",
@@ -1197,12 +1198,18 @@ class WebViewActivity :
         if (entityId != null && appPayload != null) {
             val action = ExternalEntityAddToAction.appPayloadToAction(appPayload)
             lifecycleScope.launch {
-                entityAddToHandler.execute(this@WebViewActivity, action, entityId) { message, action ->
-                    snackbarHostState.showSnackbar(
-                        message,
-                        action,
-                        duration = SnackbarDuration.Short,
-                    ) == SnackbarResult.ActionPerformed
+                when (val event = entityAddToManager.execute(entityId, action)) {
+                    is FrontendEvent.NavigateToWidgetConfig -> {
+                        startActivity(event.widgetType.toConfigureIntent(this@WebViewActivity, event.entityId))
+                    }
+                    is FrontendEvent.ShowSnackbar -> {
+                        snackbarHostState.showSnackbar(
+                            getString(event.messageResId),
+                            duration = SnackbarDuration.Short,
+                        )
+                    }
+                    null -> Unit
+                    else -> FailFast.fail { "Unexpected event $event from EntityAddTo execute" }
                 }
             }
         } else {
@@ -1215,13 +1222,11 @@ class WebViewActivity :
         val entityId = payload?.getStringOrNull("entity_id")
         entityId?.let {
             lifecycleScope.launch {
-                val actions = entityAddToHandler.actionsForEntity(this@WebViewActivity, entityId)
+                val actions = entityAddToManager.getActionsForEntity(entityId)
                 sendExternalBusMessage(
                     EntityAddToActionsResponse(
                         id = json["id"],
-                        actions = actions.map { action ->
-                            ExternalEntityAddToAction.fromAction(this@WebViewActivity, action)
-                        },
+                        actions = actions,
                     ),
                 )
             }
@@ -1360,7 +1365,7 @@ class WebViewActivity :
      * devices the permission does not exist and no action is taken.
      */
     private fun maybeRequestLocalNetworkPermission() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.CINNAMON_BUN) return
+        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.CINNAMON_BUN)) return
         if (ContextCompat.checkSelfPermission(
                 this,
                 android.Manifest.permission.ACCESS_LOCAL_NETWORK,
@@ -1389,19 +1394,7 @@ class WebViewActivity :
             SensorWorker.start(this@WebViewActivity)
             WebsocketManager.start(this@WebViewActivity)
 
-            requestedOrientation = when (presenter.getScreenOrientation()) {
-                getString(
-                    R.string.screen_orientation_option_array_value_portrait,
-                ),
-                -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-
-                getString(
-                    R.string.screen_orientation_option_array_value_landscape,
-                ),
-                -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-
-                else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-            }
+            requestedOrientation = presenter.getScreenOrientation().activityInfo
 
             if (presenter.isKeepScreenOnEnabled()) {
                 window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -1611,7 +1604,7 @@ class WebViewActivity :
         videoHeight = decor.height
         val bounds = Rect(0, 0, 1920, 1080)
         if (isVideoFullScreen or isExoFullScreen) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
                 val mPictureInPictureParamsBuilder = PictureInPictureParams.Builder()
                 mPictureInPictureParamsBuilder.setAspectRatio(
                     Rational(

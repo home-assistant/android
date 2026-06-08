@@ -69,7 +69,7 @@ import org.robolectric.annotation.Config
 @HiltAndroidTest
 internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
 
-    @get:Rule(order = 3)
+    @get:Rule(order = 2)
     val mainDispatcherRule = MainDispatcherJUnit4Rule()
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -78,6 +78,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
         hideExistingServers: Boolean,
         skipWelcome: Boolean,
         hasLocationTracking: Boolean,
+        fromInvitation: Boolean,
         testContent: suspend AndroidComposeTestRule<*, *>.() -> Unit,
     ) {
         setContent(
@@ -85,6 +86,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
             hideExistingServers = hideExistingServers,
             skipWelcome = skipWelcome,
             hasLocationTracking = hasLocationTracking,
+            fromInvitation = fromInvitation,
         )
         runTest(mainDispatcherRule.testDispatcher) {
             composeTestRule.testContent()

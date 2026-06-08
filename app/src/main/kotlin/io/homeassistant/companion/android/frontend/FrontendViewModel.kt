@@ -11,8 +11,9 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.util.GestureDirection
-import io.homeassistant.companion.android.frontend.auth.HttpAuthManager
+import io.homeassistant.companion.android.frontend.auth.FrontendHttpAuthHandler
 import io.homeassistant.companion.android.frontend.auth.HttpAuthResult
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.frontend.download.DownloadResult
@@ -21,10 +22,10 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.exoplayer.FrontendExoPlayerManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
-import io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage
+import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserRequest
-import io.homeassistant.companion.android.frontend.gesture.FrontendGestureHandler
+import io.homeassistant.companion.android.frontend.gesture.FrontendGestureManager
 import io.homeassistant.companion.android.frontend.gesture.GestureResult
 import io.homeassistant.companion.android.frontend.handler.FrontendBusObserver
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
@@ -87,11 +88,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val permissionManager: PermissionManager,
     private val frontendJsBridgeFactory: FrontendJsBridgeFactory,
     private val downloadManager: FrontendDownloadManager,
-    private val gestureHandler: FrontendGestureHandler,
+    private val gestureManager: FrontendGestureManager,
     private val prefsRepository: PrefsRepository,
     private val dialogManager: FrontendDialogManager,
     private val fileChooserManager: FileChooserManager,
-    private val httpAuthManager: HttpAuthManager,
+    private val httpAuthHandler: FrontendHttpAuthHandler,
     private val exoPlayerManager: FrontendExoPlayerManager,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
@@ -107,11 +108,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         permissionManager: PermissionManager,
         frontendJsBridgeFactory: FrontendJsBridgeFactory,
         downloadManager: FrontendDownloadManager,
-        gestureHandler: FrontendGestureHandler,
+        gestureManager: FrontendGestureManager,
         prefsRepository: PrefsRepository,
         dialogManager: FrontendDialogManager,
         fileChooserManager: FileChooserManager,
-        httpAuthManager: HttpAuthManager,
+        httpAuthHandler: FrontendHttpAuthHandler,
         exoPlayerManager: FrontendExoPlayerManager,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
@@ -124,11 +125,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         permissionManager = permissionManager,
         frontendJsBridgeFactory = frontendJsBridgeFactory,
         downloadManager = downloadManager,
-        gestureHandler = gestureHandler,
+        gestureManager = gestureManager,
         prefsRepository = prefsRepository,
         dialogManager = dialogManager,
         fileChooserManager = fileChooserManager,
-        httpAuthManager = httpAuthManager,
+        httpAuthHandler = httpAuthHandler,
         exoPlayerManager = exoPlayerManager,
     )
 
@@ -209,7 +210,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         onPageFinished = ::onPageFinished,
         onReceivedHttpAuthRequest = { handler, host, resource, realm ->
             viewModelScope.launch {
-                if (httpAuthManager.handleAuthRequest(handler, host = host, resource = resource, realm = realm) ==
+                if (httpAuthHandler.handleAuthRequest(handler, host = host, resource = resource, realm = realm) ==
                     HttpAuthResult.Cancelled
                 ) {
                     _events.tryEmit(FrontendEvent.ShowSnackbar(commonR.string.auth_cancel))
@@ -246,6 +247,28 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      */
     val autoPlayVideoEnabled: StateFlow<Boolean> = flow {
         emitAll(prefsRepository.autoPlayVideoFlow())
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = false)
+
+    /**
+     * The user's "Screen orientation" preference.
+     *
+     * Applied by the screen to the hosting activity's `requestedOrientation` so the dashboard
+     * obeys the user's portrait/landscape/system preference. Exposed as a [StateFlow] so the
+     * screen can read the current value synchronously when first attaching and react to changes.
+     */
+    val screenOrientation: StateFlow<ScreenOrientation> = flow {
+        emitAll(prefsRepository.screenOrientationFlow())
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = ScreenOrientation.SYSTEM)
+
+    /**
+     * The user's "Keep screen on" preference.
+     *
+     * Applied by the screen to the hosting window so the device does not lock while the
+     * WebView is active. Exposed as a [StateFlow] so the screen can read the current value
+     * synchronously when first attaching to the window and react to subsequent changes.
+     */
+    val keepScreenOnEnabled: StateFlow<Boolean> = flow {
+        emitAll(prefsRepository.keepScreenOnFlow())
     }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = false)
 
     init {
@@ -322,7 +345,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             },
             onJsConfirm = { message, jsResult ->
                 viewModelScope.launch {
-                    if (dialogManager.showJsConfirm(message)) jsResult.confirm() else jsResult.cancel()
+                    if (dialogManager.showConfirm(message)) jsResult.confirm() else jsResult.cancel()
                 }
                 true
             },
@@ -431,7 +454,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      */
     fun onNfcWriteCompleted(messageId: Int) {
         viewModelScope.launch {
-            externalBusRepository.send(ResultMessage.success(messageId))
+            externalBusRepository.send(SuccessResultMessage(messageId))
         }
     }
 
@@ -443,7 +466,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      */
     fun onGesture(direction: GestureDirection, pointerCount: Int) {
         viewModelScope.launch {
-            val result = gestureHandler.handleGesture(
+            val result = gestureManager.handleGesture(
                 serverId = _viewState.value.serverId,
                 direction = direction,
                 pointerCount = pointerCount,
@@ -598,8 +621,30 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 Timber.d("Improv event received but not yet handled: $result")
             }
 
+            is FrontendHandlerEvent.EntityAddToExecuted -> {
+                result.event?.let { _events.tryEmit(it) }
+            }
+
+            is FrontendHandlerEvent.StartMatterCommissioning,
+            is FrontendHandlerEvent.ImportThreadCredentials,
+            -> {
+                // Matter/Thread handling lands in a follow-up PR
+                Timber.d("Matter/Thread event received but not yet handled: $result")
+            }
+
+            is FrontendHandlerEvent.ShowBarcodeScanner,
+            is FrontendHandlerEvent.NotifyBarcodeScanner,
+            FrontendHandlerEvent.CloseBarcodeScanner,
+            -> {
+                // Barcode scanner handling lands in a follow-up PR; the messages are already typed
+                // and hasBarCodeScanner is gated on FEATURE_CAMERA_ANY && !isAutomotive so the
+                // frontend should not send these on devices without a camera.
+                Timber.d("Barcode event received but not yet handled: $result")
+            }
+
             is FrontendHandlerEvent.ConfigSent,
             is FrontendHandlerEvent.UnknownMessage,
+            is FrontendHandlerEvent.EntityAddToActionsSent,
             -> {
                 // No-op
             }

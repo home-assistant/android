@@ -18,7 +18,6 @@ import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.database.server.TemporaryServer
 import io.homeassistant.companion.android.onboarding.nameyourdevice.navigation.NameYourDeviceRoute
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -42,7 +41,7 @@ import retrofit2.Response
 
 private const val DEFAULT_DEVICE_NAME = "Pixel 42"
 
-@ExtendWith(MainDispatcherJUnit5Extension::class, ConsoleLogExtension::class)
+@ExtendWith(MainDispatcherJUnit5Extension::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class NameYourDeviceViewModelTest {
 

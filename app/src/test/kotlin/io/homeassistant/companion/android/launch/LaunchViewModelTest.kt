@@ -18,7 +18,6 @@ import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.onboarding.OnboardingRoute
 import io.homeassistant.companion.android.onboarding.WearOnboardingRoute
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -31,9 +30,9 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
@@ -41,7 +40,7 @@ import org.junit.jupiter.params.provider.EnumSource
 import org.junit.jupiter.params.provider.ValueSource
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(MainDispatcherJUnit5Extension::class, ConsoleLogExtension::class)
+@ExtendWith(MainDispatcherJUnit5Extension::class)
 class LaunchViewModelTest {
     private val serverManager: ServerManager = mockk(relaxed = true)
     private val networkStatusMonitor: NetworkStatusMonitor = mockk(relaxed = true)
@@ -345,6 +344,25 @@ class LaunchViewModelTest {
                     urlToOnboard = "http://homeassistant.io",
                     hideExistingServers = hideExistingServers,
                     skipWelcome = skipWelcome,
+                ),
+            ),
+            viewModel.uiState.value,
+        )
+    }
+
+    @Test
+    fun `Given initial deep link is OpenInvitation when creating viewModel, then navigate to onboarding from invitation with the server url`() = runTest {
+        createViewModel(
+            initialDeepLink = LaunchActivity.DeepLink.OpenInvitation("http://homeassistant.io"),
+            hasLocationTrackingSupport = true,
+        )
+        advanceUntilIdle()
+        assertEquals(
+            LaunchUiState.Ready(
+                OnboardingRoute(
+                    hasLocationTracking = true,
+                    urlToOnboard = "http://homeassistant.io",
+                    fromInvitation = true,
                 ),
             ),
             viewModel.uiState.value,

@@ -7,6 +7,20 @@ import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationManagerCompat
 import timber.log.Timber
 
+// Groups are defined here:
+// https://cs.android.com/android/platform/superproject/+/android-latest-release:frameworks/base/services/core/java/com/android/server/notification/GroupHelper.java;drc=d5d4670d8a245da5468af767b17d1e57ed7c9278;l=2106
+// Section names are defined here:
+// https://cs.android.com/android/platform/superproject/+/android-latest-release:frameworks/base/services/core/java/com/android/server/notification/GroupHelper.java;drc=d5d4670d8a245da5468af767b17d1e57ed7c9278;l=195-199
+private val ANDROID_AUTO_GROUP_SUFFIXES = listOf(
+    "|g:ranker_group",
+    "|g:Aggregate_AlertingSection",
+    "|g:Aggregate_NewsSection",
+    "|g:Aggregate_PromotionsSection",
+    "|g:Aggregate_RecsSection",
+    "|g:Aggregate_SocialSection",
+    "|g:Aggregate_SilentSection",
+)
+
 fun NotificationManagerCompat.getNotificationManager(): NotificationManager {
     val field = this.javaClass.declaredFields
         .toList().first { it.name == "mNotificationManager" }
@@ -32,7 +46,7 @@ fun cancelNotificationGroupIfNeeded(
     id: Int,
     cancel: (String, Int) -> Unit,
 ): Boolean {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+    if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
         Timber.d("Cancel notification with tag \"$tag\" and id \"$id\"")
 
         val currentActiveNotifications = notificationManager.activeNotifications
@@ -49,8 +63,8 @@ fun cancelNotificationGroupIfNeeded(
             // Yes it has a group.
             Timber.d("Notification is in a group ($groupKey). Get all notifications for this group...")
 
-            // Check if the group is the auto group of android ("ranker_group")
-            if (!groupKey.endsWith("|g:ranker_group")) {
+            // Check if the group is one of the auto groups of android
+            if (ANDROID_AUTO_GROUP_SUFFIXES.none { groupKey.endsWith(it) }) {
                 // Nope it is a custom group. Get notifications of the group...
                 val groupNotifications =
                     currentActiveNotifications.filter { s -> s.groupKey == groupKey }
@@ -116,7 +130,7 @@ fun cancelNotificationGroupIfNeeded(
                     }
                 }
             } else {
-                Timber.d("Notification is in a group ($groupKey), but it is in the auto group. Cancel notification")
+                Timber.d("Notification is in a group ($groupKey), but it is in an auto group. Cancel notification")
             }
         } else {
             if (statusBarNotification == null) {

@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.frontend.dialog
 
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -8,25 +7,22 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(ConsoleLogExtension::class)
 class FrontendDialogManagerTest {
 
     @Test
-    fun `Given JS confirm shown when user confirms then suspend returns true and slot clears`() = runTest {
+    fun `Given confirm shown when user confirms then suspend returns true and slot clears`() = runTest {
         val manager = FrontendDialogManager()
 
-        val outcome = async { manager.showJsConfirm("Are you sure?") }
+        val outcome = async { manager.showConfirm("Are you sure?") }
         advanceUntilIdle()
 
-        val pending = manager.pendingDialog.value
-        assertInstanceOf(FrontendDialog.Confirm::class.java, pending)
-        assertEquals("Are you sure?", (pending as FrontendDialog.Confirm).message)
+        val pending = assertInstanceOf(FrontendDialog.Confirm::class.java, manager.pendingDialog.value)
+        assertEquals("Are you sure?", pending.message)
         assertFalse(outcome.isCompleted)
 
         pending.onConfirm()
@@ -37,10 +33,10 @@ class FrontendDialogManagerTest {
     }
 
     @Test
-    fun `Given JS confirm shown when user cancels then suspend returns false and slot clears`() = runTest {
+    fun `Given confirm shown when user cancels then suspend returns false and slot clears`() = runTest {
         val manager = FrontendDialogManager()
 
-        val outcome = async { manager.showJsConfirm("Discard?") }
+        val outcome = async { manager.showConfirm("Discard?") }
         advanceUntilIdle()
         (manager.pendingDialog.value as FrontendDialog.Confirm).onCancel()
         advanceUntilIdle()
@@ -50,10 +46,10 @@ class FrontendDialogManagerTest {
     }
 
     @Test
-    fun `Given JS confirm in flight when scope cancels then slot is cleared`() = runTest {
+    fun `Given confirm in flight when scope cancels then slot is cleared`() = runTest {
         val manager = FrontendDialogManager()
 
-        val outcome = async { manager.showJsConfirm("Confirm?") }
+        val outcome = async { manager.showConfirm("Confirm?") }
         advanceUntilIdle()
         assertInstanceOf(FrontendDialog.Confirm::class.java, manager.pendingDialog.value)
 
@@ -67,9 +63,9 @@ class FrontendDialogManagerTest {
     fun `Given dialog shown when second show then it queues until first completes`() = runTest {
         val manager = FrontendDialogManager()
 
-        val first = async { manager.showJsConfirm("first") }
+        val first = async { manager.showConfirm("first") }
         advanceUntilIdle()
-        val second = async { manager.showJsConfirm("second") }
+        val second = async { manager.showConfirm("second") }
         advanceUntilIdle()
 
         assertEquals("first", (manager.pendingDialog.value as FrontendDialog.Confirm).message)
@@ -94,17 +90,14 @@ class FrontendDialogManagerTest {
         }
         advanceUntilIdle()
 
-        val pending = manager.pendingDialog.value
-        assertInstanceOf(FrontendDialog.HttpAuth::class.java, pending)
-        (pending as FrontendDialog.HttpAuth).onProceed("alice", "s3cret", true)
+        val pending = assertInstanceOf(FrontendDialog.HttpAuth::class.java, manager.pendingDialog.value)
+        pending.onProceed("alice", "s3cret", true)
         advanceUntilIdle()
 
-        val resolved = outcome.await()
-        assertInstanceOf(HttpAuthOutcome.Proceed::class.java, resolved)
-        val proceed = resolved as HttpAuthOutcome.Proceed
-        assertEquals("alice", proceed.username)
-        assertEquals("s3cret", proceed.password)
-        assertEquals(true, proceed.remember)
+        val resolved = assertInstanceOf(HttpAuthOutcome.Proceed::class.java, outcome.await())
+        assertEquals("alice", resolved.username)
+        assertEquals("s3cret", resolved.password)
+        assertEquals(true, resolved.remember)
         assertNull(manager.pendingDialog.value)
     }
 

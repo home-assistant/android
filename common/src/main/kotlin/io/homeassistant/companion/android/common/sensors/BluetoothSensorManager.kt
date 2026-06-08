@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.common.bluetooth.ble.MonitoringManager
 import io.homeassistant.companion.android.common.bluetooth.ble.TransmitterManager
 import io.homeassistant.companion.android.common.bluetooth.ble.name
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.DatabaseEntryPoint
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
@@ -175,14 +176,14 @@ class BluetoothSensorManager : SensorManager {
     @SuppressLint("InlinedApi")
     override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
         return when {
-            (sensorId == bleTransmitter.id && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {
+            (sensorId == bleTransmitter.id && SdkVersion.isAtLeast(Build.VERSION_CODES.S)) -> {
                 arrayOf(
                     Manifest.permission.BLUETOOTH_ADVERTISE,
                     Manifest.permission.BLUETOOTH_CONNECT,
                 )
             }
 
-            (sensorId == beaconMonitor.id && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) -> {
+            (sensorId == beaconMonitor.id && !SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) -> {
                 arrayOf(
                     Manifest.permission.BLUETOOTH,
                     Manifest.permission.BLUETOOTH_ADMIN,
@@ -191,7 +192,7 @@ class BluetoothSensorManager : SensorManager {
                 )
             }
 
-            (sensorId == beaconMonitor.id && Build.VERSION.SDK_INT <= Build.VERSION_CODES.R) -> {
+            (sensorId == beaconMonitor.id && !SdkVersion.isAtLeast(Build.VERSION_CODES.S)) -> {
                 arrayOf(
                     Manifest.permission.BLUETOOTH,
                     Manifest.permission.BLUETOOTH_ADMIN,
@@ -201,7 +202,7 @@ class BluetoothSensorManager : SensorManager {
                 )
             }
 
-            (sensorId == beaconMonitor.id && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {
+            (sensorId == beaconMonitor.id && SdkVersion.isAtLeast(Build.VERSION_CODES.S)) -> {
                 arrayOf(
                     Manifest.permission.BLUETOOTH_CONNECT,
                     Manifest.permission.BLUETOOTH_SCAN,
@@ -211,7 +212,7 @@ class BluetoothSensorManager : SensorManager {
                 )
             }
 
-            (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {
+            (SdkVersion.isAtLeast(Build.VERSION_CODES.S)) -> {
                 arrayOf(
                     Manifest.permission.BLUETOOTH_CONNECT,
                 )

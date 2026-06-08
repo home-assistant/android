@@ -142,12 +142,18 @@ internal class PrefsRepositoryImpl @Inject constructor(
         localStorage().putString(PREF_LOCALES, lang)
     }
 
-    override suspend fun getScreenOrientation(): String? {
-        return localStorage().getString(PREF_SCREEN_ORIENTATION)
+    override suspend fun getScreenOrientation(): ScreenOrientation {
+        return ScreenOrientation.fromStorageValue(localStorage().getString(PREF_SCREEN_ORIENTATION))
     }
 
-    override suspend fun saveScreenOrientation(orientation: String?) {
-        localStorage().putString(PREF_SCREEN_ORIENTATION, orientation)
+    override suspend fun setScreenOrientation(orientation: ScreenOrientation) {
+        localStorage().putString(PREF_SCREEN_ORIENTATION, orientation.storageValue)
+    }
+
+    override suspend fun screenOrientationFlow(): Flow<ScreenOrientation> {
+        return localStorage().observeChanges(PREF_SCREEN_ORIENTATION) {
+            getScreenOrientation()
+        }
     }
 
     override suspend fun getControlsAuthRequired(): ControlsAuthRequiredSetting {
@@ -217,6 +223,12 @@ internal class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setKeepScreenOnEnabled(enabled: Boolean) {
         localStorage().putBoolean(PREF_KEEP_SCREEN_ON_ENABLED, enabled)
+    }
+
+    override suspend fun keepScreenOnFlow(): Flow<Boolean> {
+        return localStorage().observeChanges(PREF_KEEP_SCREEN_ON_ENABLED) {
+            isKeepScreenOnEnabled()
+        }
     }
 
     override suspend fun getPageZoomLevel(): Int {

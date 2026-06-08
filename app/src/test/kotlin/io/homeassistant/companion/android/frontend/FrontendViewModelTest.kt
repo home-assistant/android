@@ -14,11 +14,12 @@ import io.homeassistant.companion.android.common.data.connectivity.ConnectivityC
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.data.prefs.ZoomSettings
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
-import io.homeassistant.companion.android.frontend.auth.HttpAuthManager
+import io.homeassistant.companion.android.frontend.auth.FrontendHttpAuthHandler
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.frontend.download.DownloadResult
@@ -28,9 +29,9 @@ import io.homeassistant.companion.android.frontend.exoplayer.ExoPlayerUiState
 import io.homeassistant.companion.android.frontend.exoplayer.FrontendExoPlayerManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
-import io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage
+import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
-import io.homeassistant.companion.android.frontend.gesture.FrontendGestureHandler
+import io.homeassistant.companion.android.frontend.gesture.FrontendGestureManager
 import io.homeassistant.companion.android.frontend.gesture.GestureResult
 import io.homeassistant.companion.android.frontend.handler.FrontendBusObserver
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
@@ -39,7 +40,6 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
@@ -62,23 +62,21 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.json.JsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.assertNotNull
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(ConsoleLogExtension::class)
 class FrontendViewModelTest {
     @RegisterExtension
     val mainDispatcherExtension = MainDispatcherJUnit5Extension(UnconfinedTestDispatcher())
@@ -91,12 +89,16 @@ class FrontendViewModelTest {
     private val permissionManager: PermissionManager = mockk(relaxed = true)
     private val frontendJsBridgeFactory: FrontendJsBridgeFactory = mockk(relaxed = true)
     private val downloadManager: FrontendDownloadManager = mockk(relaxed = true)
-    private val gestureHandler: FrontendGestureHandler = mockk(relaxed = true)
+    private val gestureManager: FrontendGestureManager = mockk(relaxed = true)
     private val zoomSettingsFlow = MutableStateFlow(ZoomSettings())
     private val autoPlayVideoFlow = MutableStateFlow(false)
+    private val screenOrientationFlow = MutableStateFlow(ScreenOrientation.SYSTEM)
+    private val keepScreenOnFlow = MutableStateFlow(false)
     private val prefsRepository: PrefsRepository = mockk(relaxed = true) {
         coEvery { this@mockk.zoomSettingsFlow() } returns this@FrontendViewModelTest.zoomSettingsFlow
         coEvery { this@mockk.autoPlayVideoFlow() } returns this@FrontendViewModelTest.autoPlayVideoFlow
+        coEvery { this@mockk.screenOrientationFlow() } returns this@FrontendViewModelTest.screenOrientationFlow
+        coEvery { this@mockk.keepScreenOnFlow() } returns this@FrontendViewModelTest.keepScreenOnFlow
     }
 
     private val serverId = 1
@@ -121,7 +123,7 @@ class FrontendViewModelTest {
         path: String? = null,
         dialogManager: FrontendDialogManager = FrontendDialogManager(),
         fileChooserManager: FileChooserManager = FileChooserManager(),
-        httpAuthManager: HttpAuthManager = HttpAuthManager(
+        httpAuthHandler: FrontendHttpAuthHandler = FrontendHttpAuthHandler(
             authenticationDao = mockk(relaxed = true),
             clock = FakeClock(),
             dialogManager = dialogManager,
@@ -138,11 +140,11 @@ class FrontendViewModelTest {
             permissionManager = permissionManager,
             frontendJsBridgeFactory = frontendJsBridgeFactory,
             downloadManager = downloadManager,
-            gestureHandler = gestureHandler,
+            gestureManager = gestureManager,
             prefsRepository = prefsRepository,
             dialogManager = dialogManager,
             fileChooserManager = fileChooserManager,
-            httpAuthManager = httpAuthManager,
+            httpAuthHandler = httpAuthHandler,
             exoPlayerManager = exoPlayerManager,
         )
     }
@@ -611,7 +613,7 @@ class FrontendViewModelTest {
                 UrlLoadResult.Success(url = "https://server2.com?external_auth=1", serverId = 2),
             )
             coEvery {
-                gestureHandler.handleGesture(serverId = any(), direction = any(), pointerCount = any())
+                gestureManager.handleGesture(serverId = any(), direction = any(), pointerCount = any())
             } returns GestureResult.SwitchServer(2)
 
             val viewModel = createViewModel(serverId = 1)
@@ -635,7 +637,7 @@ class FrontendViewModelTest {
 
             val clearHistory = WebViewAction.ClearHistory()
             coEvery {
-                gestureHandler.handleGesture(serverId = any(), direction = any(), pointerCount = any())
+                gestureManager.handleGesture(serverId = any(), direction = any(), pointerCount = any())
             } returns GestureResult.PerformWebViewActionThen(
                 action = clearHistory,
                 then = {
@@ -705,6 +707,77 @@ class FrontendViewModelTest {
         }
 
         @Test
+        fun `Given EntityAddToExecuted with event when collected then event is forwarded`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+
+            viewModel.events.test {
+                advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+                messageFlow.emit(
+                    FrontendHandlerEvent.EntityAddToExecuted(
+                        FrontendEvent.NavigateToWidgetConfig(
+                            entityId = "light.test",
+                            widgetType = io.homeassistant.companion.android.frontend.navigation.WidgetType.Entity,
+                        ),
+                    ),
+                )
+
+                val event = awaitItem()
+                assertTrue(event is FrontendEvent.NavigateToWidgetConfig)
+                assertEquals("light.test", (event as FrontendEvent.NavigateToWidgetConfig).entityId)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given EntityAddToExecuted with null event when collected then no event is emitted`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+
+            viewModel.events.test {
+                advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+                messageFlow.emit(FrontendHandlerEvent.EntityAddToExecuted(event = null))
+                advanceUntilIdle()
+
+                expectNoEvents()
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given EntityAddToActionsSent when collected then no event is emitted`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+
+            viewModel.events.test {
+                advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+                messageFlow.emit(FrontendHandlerEvent.EntityAddToActionsSent)
+                advanceUntilIdle()
+
+                expectNoEvents()
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
         fun `Given onNfcWriteCompleted when called then sends empty-result ResultMessage back to frontend`() = runTest {
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
@@ -716,9 +789,7 @@ class FrontendViewModelTest {
             advanceUntilIdle()
 
             coVerify {
-                externalBusRepository.send(
-                    ResultMessage(id = 42, success = true, result = JsonObject(emptyMap())),
-                )
+                externalBusRepository.send(SuccessResultMessage(id = 42))
             }
         }
     }
@@ -1004,7 +1075,7 @@ class FrontendViewModelTest {
 
         private val authenticationDao: AuthenticationDao = mockk(relaxed = true)
         private val dialogManager = FrontendDialogManager()
-        private val httpAuthManager = HttpAuthManager(
+        private val httpAuthHandler = FrontendHttpAuthHandler(
             authenticationDao = authenticationDao,
             clock = FakeClock(),
             dialogManager = dialogManager,
@@ -1026,7 +1097,7 @@ class FrontendViewModelTest {
                 mockk(relaxed = true)
             }
 
-            val viewModel = createViewModel(httpAuthManager = httpAuthManager, dialogManager = dialogManager)
+            val viewModel = createViewModel(httpAuthHandler = httpAuthHandler, dialogManager = dialogManager)
             return viewModel to capturedCallback!!
         }
 
@@ -1132,9 +1203,8 @@ class FrontendViewModelTest {
             triggerJsConfirm("Are you sure?", mockk(relaxed = true))
             advanceUntilIdle()
 
-            val dialog = viewModel.pendingDialog.value
-            assertInstanceOf(FrontendDialog.Confirm::class.java, dialog)
-            assertEquals("Are you sure?", (dialog as FrontendDialog.Confirm).message)
+            val dialog = assertInstanceOf(FrontendDialog.Confirm::class.java, viewModel.pendingDialog.value)
+            assertEquals("Are you sure?", dialog.message)
         }
 
         @Test
@@ -1230,7 +1300,7 @@ class FrontendViewModelTest {
             assertTrue(handled)
             val pending = viewModel.pendingFileChooser.value
             assertNotNull(pending)
-            assertTrue(pending!!.fileChooserParams === fileChooserParams)
+            assertTrue(pending.fileChooserParams === fileChooserParams)
         }
 
         @Test
@@ -1244,7 +1314,7 @@ class FrontendViewModelTest {
 
             val client = viewModel.createWebChromeClient(onShowCustomView = {}, onHideCustomView = {})
 
-            val handled = client.onShowFileChooser(
+            client.onShowFileChooser(
                 mockk(relaxed = true),
                 filePathCallback,
                 mockk(relaxed = true),
@@ -1255,7 +1325,7 @@ class FrontendViewModelTest {
             assertNotNull(pending)
 
             val uris = arrayOf(mockk<Uri>())
-            pending!!.onResult(uris)
+            pending.onResult(uris)
             advanceUntilIdle()
 
             verify { filePathCallback.onReceiveValue(uris) }
@@ -1273,14 +1343,15 @@ class FrontendViewModelTest {
 
             val client = viewModel.createWebChromeClient(onShowCustomView = {}, onHideCustomView = {})
 
-            val handled = client.onShowFileChooser(
+            client.onShowFileChooser(
                 mockk(relaxed = true),
                 filePathCallback,
                 mockk(relaxed = true),
             )
             advanceUntilIdle()
-
-            viewModel.pendingFileChooser.value!!.onResult(null)
+            val request = viewModel.pendingFileChooser.value
+            assertNotNull(request)
+            request.onResult(null)
             advanceUntilIdle()
 
             verify { filePathCallback.onReceiveValue(null) }
@@ -1737,6 +1808,63 @@ class FrontendViewModelTest {
             advanceUntilIdle()
 
             assertEquals(value, viewModel.autoPlayVideoEnabled.value)
+        }
+    }
+
+    @Nested
+    inner class ScreenOrientationSetting {
+
+        @Test
+        fun `Given pref flow emits new value when collected then exposed StateFlow reflects it`() = runTest {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            assertEquals(ScreenOrientation.SYSTEM, viewModel.screenOrientation.value)
+
+            screenOrientationFlow.value = ScreenOrientation.LANDSCAPE
+            advanceUntilIdle()
+
+            assertEquals(ScreenOrientation.LANDSCAPE, viewModel.screenOrientation.value)
+        }
+
+        @Test
+        fun `Given pref flow seeded with portrait when ViewModel constructed then exposed StateFlow has portrait`() = runTest {
+            screenOrientationFlow.value = ScreenOrientation.PORTRAIT
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            assertEquals(ScreenOrientation.PORTRAIT, viewModel.screenOrientation.value)
+        }
+    }
+
+    @Nested
+    inner class KeepScreenOnSetting {
+
+        @Test
+        fun `Given pref flow emits new value when collected then exposed StateFlow reflects it`() = runTest {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            assertFalse(viewModel.keepScreenOnEnabled.value)
+
+            keepScreenOnFlow.value = true
+            advanceUntilIdle()
+
+            assertTrue(viewModel.keepScreenOnEnabled.value)
+        }
+
+        @ParameterizedTest
+        @ValueSource(booleans = [true, false])
+        fun `Given pref flow seeded with value when ViewModel constructed then exposed StateFlow has that value`(
+            value: Boolean,
+        ) = runTest {
+            keepScreenOnFlow.value = value
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            assertEquals(value, viewModel.keepScreenOnEnabled.value)
         }
     }
 }

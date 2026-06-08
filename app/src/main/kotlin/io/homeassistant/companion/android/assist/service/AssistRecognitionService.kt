@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Build
 import android.speech.RecognitionService
 import android.speech.SpeechRecognizer
+import io.homeassistant.companion.android.common.util.SdkVersion
 import timber.log.Timber
 
 /**
@@ -21,7 +22,7 @@ class AssistRecognitionService : RecognitionService() {
     }
 
     override fun onCheckRecognitionSupport(recognizerIntent: Intent, supportCallback: SupportCallback) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
             supportCallback.onError(SpeechRecognizer.ERROR_CLIENT)
         }
     }

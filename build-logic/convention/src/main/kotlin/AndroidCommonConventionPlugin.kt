@@ -125,6 +125,7 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
 
                     "implementation"(libs.core.ktx)
 
+                    "testCompileOnly"(libs.junit.platform.launcher)
                     "testRuntimeOnly"(libs.junit.platform.launcher)
 
                     "testImplementation"(platform(libs.junit.bom))

@@ -37,7 +37,9 @@ import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.s
 import io.homeassistant.companion.android.onboarding.wearmtls.navigation.URL_MTLS_DOCUMENTATION
 import io.homeassistant.companion.android.onboarding.wearmtls.navigation.navigateToWearMTLS
 import io.homeassistant.companion.android.onboarding.wearmtls.navigation.wearMTLSScreen
+import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeInvitationRoute
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
+import io.homeassistant.companion.android.onboarding.welcome.navigation.welcomeInvitationScreen
 import io.homeassistant.companion.android.onboarding.welcome.navigation.welcomeScreen
 import io.homeassistant.companion.android.util.canGoBack
 import io.homeassistant.companion.android.util.compose.navigateToUri
@@ -55,6 +57,7 @@ const val URL_GETTING_STARTED_DOCUMENTATION =
  * @property hideExistingServers When true, hides already registered servers from discovery results.
  * @property skipWelcome When true, skips the welcome screen and navigates directly to server discovery,
  *  or to the connection screen if [urlToOnboard] is provided.
+ * @property fromInvitation When true and [urlToOnboard] is set, starts on the WelcomeInvitation screen.
  */
 @Serializable
 data class OnboardingRoute(
@@ -62,6 +65,7 @@ data class OnboardingRoute(
     val urlToOnboard: String? = null,
     val hideExistingServers: Boolean = false,
     val skipWelcome: Boolean = false,
+    val fromInvitation: Boolean = false,
 ) : HAStartDestinationRoute
 
 /**
@@ -100,6 +104,7 @@ data class WearOnboardingRoute(val wearName: String, val urlToOnboard: String? =
  * @param hideExistingServers When true, hides already registered servers from discovery
  * @param skipWelcome When true, skips the welcome screen and goes directly to server discovery or connection
  * @param hasLocationTracking Whether location tracking is available (full flavor = true, minimal = false)
+ * @param fromInvitation When true with a non-empty [urlToOnboard], starts on the WelcomeInvitation screen
  */
 internal fun NavGraphBuilder.onboarding(
     navController: NavController,
@@ -109,6 +114,7 @@ internal fun NavGraphBuilder.onboarding(
     hideExistingServers: Boolean,
     skipWelcome: Boolean,
     hasLocationTracking: Boolean,
+    fromInvitation: Boolean,
 ) {
     val serverDiscoveryMode = if (hideExistingServers) {
         ServerDiscoveryMode.HIDE_EXISTING
@@ -117,6 +123,7 @@ internal fun NavGraphBuilder.onboarding(
     }
 
     val startDestination = when {
+        fromInvitation && !urlToOnboard.isNullOrEmpty() -> WelcomeInvitationRoute(urlToOnboard)
         !skipWelcome -> WelcomeRoute
         urlToOnboard.isNullOrEmpty() -> ServerDiscoveryRoute(serverDiscoveryMode)
         else -> ConnectionRoute(urlToOnboard)
@@ -129,6 +136,23 @@ internal fun NavGraphBuilder.onboarding(
                     navController.navigateToServerDiscovery(serverDiscoveryMode)
                 } else {
                     navController.navigateToConnection(urlToOnboard)
+                }
+            },
+            onLearnMoreClick = {
+                navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, onShowSnackbar)
+            },
+        )
+        welcomeInvitationScreen(
+            onAcceptClick = { serverUrl ->
+                navController.navigateToConnection(serverUrl)
+            },
+            onRejectClick = {
+                if (navController.canGoBack()) {
+                    navController.popBackStack()
+                } else {
+                    // The invitation is the start destination when launched from a link, so there is
+                    // nothing to go back to. Rejecting then closes the onboarding activity.
+                    (navController.context as? Activity)?.finish()
                 }
             },
             onLearnMoreClick = {
