@@ -22,6 +22,7 @@ import java.net.URL
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -160,19 +161,18 @@ class HomeAssistantSearcherImplTest {
     @CsvSource(
         nullValues = ["null"],
         value = [
-            "null,null",
-            "http://localhost:8123,null",
-            "http://localhost:8123,wrong_version",
-            "malformed://localhost:8123,null",
+            // No url attribute at all (neither external_url nor internal_url).
+            "null",
+            // Url attribute present but not a parseable URL.
+            "malformed://localhost:8123",
         ],
     )
-    fun `Given one discoverable instance with wrong attributes when discoveredInstanceFlow is called then nothing is emitted`(
+    fun `Given one discoverable instance with missing or malformed url when discoveredInstanceFlow is called then nothing is emitted`(
         baseUrl: String?,
-        version: String?,
     ) = runTest {
         val discoveryListener = slot<NsdManager.DiscoveryListener>()
         val resolveListener = slot<NsdManager.ResolveListener>()
-        val serviceInfo = createNsdServiceInfo(externalUrl = baseUrl, version = version)
+        val serviceInfo = createNsdServiceInfo(externalUrl = baseUrl)
 
         captureListeners(discoveryListener, resolveListener)
 
@@ -180,6 +180,42 @@ class HomeAssistantSearcherImplTest {
             discoveryListener.captured.onServiceFound(serviceInfo)
             resolveListener.captured.onServiceResolved(serviceInfo)
 
+            expectNoEvents()
+        }
+
+        verifyDiscoveryStartedAndStopped(discoveryListener.captured, resolveListener.captured)
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        nullValues = ["null"],
+        emptyValue = "",
+        value = [
+            // version attribute absent
+            "null",
+            // version attribute present but empty
+            "''",
+            // version attribute present but not parseable
+            "wrong_version",
+        ],
+    )
+    fun `Given a valid url but missing version when discoveredInstanceFlow is called then emits instance with null version`(
+        version: String?,
+    ) = runTest {
+        val discoveryListener = slot<NsdManager.DiscoveryListener>()
+        val resolveListener = slot<NsdManager.ResolveListener>()
+        // The version is optional, so a resolvable instance is still emitted without a parsed version.
+        val serviceInfo = createNsdServiceInfo(version = version)
+
+        captureListeners(discoveryListener, resolveListener)
+
+        discoveredInstanceFlow {
+            discoveryListener.captured.onServiceFound(serviceInfo)
+            resolveListener.captured.onServiceResolved(serviceInfo)
+
+            val instance = awaitItem()
+            assertEquals(URL("http://localhost:8123"), instance.url)
+            assertNull(instance.version)
             expectNoEvents()
         }
 

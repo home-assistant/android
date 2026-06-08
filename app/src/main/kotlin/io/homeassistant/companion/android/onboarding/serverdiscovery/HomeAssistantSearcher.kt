@@ -28,7 +28,7 @@ const val SERVICE_TYPE = "_home-assistant._tcp"
 @VisibleForTesting
 const val LOCK_TAG = "HomeAssistantSearcher_lock"
 
-internal data class HomeAssistantInstance(val name: String, val url: URL, val version: HomeAssistantVersion)
+internal data class HomeAssistantInstance(val name: String, val url: URL, val version: HomeAssistantVersion?)
 
 /**
  * Interface responsible for discovering Home Assistant instances on the local network.
@@ -64,7 +64,8 @@ internal class HomeAssistantSearcherImpl @Inject constructor(
          * (hence its static nature) or unintended multiple concurrent collections of the flow.
          * It ensures that only one collector can be active at any given time.
          */
-        @VisibleForTesting val hasCollector = AtomicBoolean(false)
+        @VisibleForTesting
+        val hasCollector = AtomicBoolean(false)
     }
 
     override fun discoveredInstanceFlow(): Flow<HomeAssistantInstance> {
@@ -242,18 +243,12 @@ private fun NsdServiceInfo.toHomeAssistantInstance(): HomeAssistantInstance? {
         return null
     }
 
-    val versionAttr = attributes?.get("version")?.toString(Charsets.UTF_8)
-    if (versionAttr.isNullOrBlank()) {
-        Timber.w(
-            "Version attribute is missing or empty for service: $serviceName. Cannot create HomeAssistantInstance.",
-        )
-        return null
-    }
-
-    val haVersion = HomeAssistantVersion.fromString(versionAttr)
+    // The version is optional: a discovered instance is still usable without it, the instance might simply be on the
+    // https://github.com/home-assistant/landingpage/.
+    val haVersion = attributes?.get("version")?.toString(Charsets.UTF_8)?.ifEmpty { null }
+        ?.let { HomeAssistantVersion.fromString(it) }
     if (haVersion == null) {
-        Timber.w("Failed to parse version from '$versionAttr' for service: $serviceName. Skipping.")
-        return null
+        Timber.w("Version is missing in NSD attributes for service: $serviceName")
     }
 
     return HomeAssistantInstance(
