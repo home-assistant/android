@@ -61,7 +61,8 @@ class FrontendExternalBusRepository @Inject constructor() {
      *
      * The message is serialized to JSON and emitted as a [WebViewAction.EvaluateScript].
      * This is fire-and-forget — the evaluation result is not awaited.
-     *
+     */
+    /*
      * Opts into [EvaluateJavascriptUsage] because this is the internal mechanism that
      * implements the external bus itself. The frontend installs `window.externalBus`
      * as the entry point for messages from the native app (see `ExternalMessaging.attach`
