@@ -4,7 +4,7 @@ import com.wifi.improv.ImprovDevice
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Repository façade for the [Improv Wi-Fi onboarding protocol](https://www.improv-wifi.com).
+ * Repository interface for the [Improv Wi-Fi onboarding protocol](https://www.improv-wifi.com).
  *
  * Exposes the protocol as two Flow operations, each fully driven by the collector's lifecycle.
  *
