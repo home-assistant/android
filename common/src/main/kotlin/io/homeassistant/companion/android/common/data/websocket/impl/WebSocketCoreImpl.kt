@@ -1025,27 +1025,36 @@ internal class WebSocketCoreImpl(
     private suspend fun reconnectSubscriptions() {
         if (connect()) {
             Timber.d("Resubscribing to active subscriptions...")
-            activeMessages.filterValues { it is ActiveMessage.Subscription }.entries
-                .forEach { (oldId, oldActiveMessage) ->
-                    oldActiveMessage as ActiveMessage.Subscription
-                    activeMessages.remove(oldId)
-
-                    val response = sendMessage(
-                        Command.WithAnswer.Subscription(
-                            request = oldActiveMessage.request,
-                            eventFlow = oldActiveMessage.eventFlow,
-                            onEvent = oldActiveMessage.onEvent,
-                        ),
-                    )
-                    if (response == null || response.success != true) {
-                        Timber.e("Issue re-registering subscription with ${oldActiveMessage.request}")
-                    }
+    
+            // Snapshot entries to avoid mutating the map while iterating.
+            val subscriptions = activeMessages
+                .filterValues { it is ActiveMessage.Subscription }
+                .map { (id, msg) -> id to (msg as ActiveMessage.Subscription) }
+    
+            subscriptions.forEach { (oldId, oldActiveMessage) ->
+                val response = sendMessage(
+                    Command.WithAnswer.Subscription(
+                        request = oldActiveMessage.request,
+                        eventFlow = oldActiveMessage.eventFlow,
+                        onEvent = oldActiveMessage.onEvent,
+                    ),
+                )
+    
+                if (response == null || response.success != true) {
+                    Timber.e("Issue re-registering subscription with ${oldActiveMessage.request}")
+                    // Keep oldId so we can retry on a later reconnect attempt
+                    return@forEach
                 }
+    
+                // Only remove after successful re-subscribe
+                activeMessages.remove(oldId)
+            }
         } else {
             // TODO https://github.com/home-assistant/android/issues/5259 handle re-connection gracefully or terminates the flows
             Timber.w("Unable to reconnect, cannot resubscribe to active subscriptions")
         }
     }
+
 
     private fun URL.toWebSocketURL(): String {
         return toString()
