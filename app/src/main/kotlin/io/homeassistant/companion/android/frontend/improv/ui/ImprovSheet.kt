@@ -16,7 +16,6 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -47,6 +46,7 @@ import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.frontend.improv.ImprovUIState
 
@@ -69,7 +69,7 @@ import io.homeassistant.companion.android.frontend.improv.ImprovUIState
  *   handle bottom-sheet swipe-to-dismiss separately.
  */
 @Composable
-fun ImprovSheetView(
+fun ImprovSheet(
     screenState: ImprovUIState,
     onConnect: (ssid: String, password: String) -> Unit,
     onRestart: () -> Unit,
@@ -245,7 +245,7 @@ private fun ColumnScope.ImprovAction(
     Image(
         asset = icon,
         contentDescription = null,
-        colorFilter = ColorFilter.tint(LocalContentColor.current),
+        colorFilter = ColorFilter.tint(LocalHAColorScheme.current.colorOnNeutralNormal),
         modifier = Modifier.size(40.dp),
     )
     Text(
@@ -264,7 +264,7 @@ private fun ColumnScope.ImprovAction(
 @Composable
 private fun PreviewImprovSearching() {
     HAThemeForPreview {
-        ImprovSheetView(
+        ImprovSheet(
             screenState = ImprovUIState.SearchingDevice(deviceName = "Smart Plug"),
             onConnect = { _, _ -> },
             onRestart = {},
@@ -277,7 +277,7 @@ private fun PreviewImprovSearching() {
 @Composable
 private fun PreviewImprovWifiInput() {
     HAThemeForPreview {
-        ImprovSheetView(
+        ImprovSheet(
             screenState = ImprovUIState.ConfiguringDevice(
                 deviceName = "Smart Plug",
                 deviceAddress = "A1:B2:C3:D4:E5:F6",
@@ -294,7 +294,7 @@ private fun PreviewImprovWifiInput() {
 @Composable
 private fun PreviewImprovProvisioning() {
     HAThemeForPreview {
-        ImprovSheetView(
+        ImprovSheet(
             screenState = ImprovUIState.Provisioning(
                 deviceName = "Smart Plug",
                 deviceAddress = "A1:B2:C3:D4:E5:F6",
@@ -311,7 +311,7 @@ private fun PreviewImprovProvisioning() {
 @Composable
 private fun PreviewImprovErrored() {
     HAThemeForPreview {
-        ImprovSheetView(
+        ImprovSheet(
             screenState = ImprovUIState.Errored(
                 deviceName = "Smart Plug",
                 deviceAddress = "A1:B2:C3:D4:E5:F6",
@@ -328,7 +328,7 @@ private fun PreviewImprovErrored() {
 @Composable
 private fun PreviewImprovProvisioned() {
     HAThemeForPreview {
-        ImprovSheetView(
+        ImprovSheet(
             screenState = ImprovUIState.Provisioned(domain = null),
             onConnect = { _, _ -> },
             onRestart = {},

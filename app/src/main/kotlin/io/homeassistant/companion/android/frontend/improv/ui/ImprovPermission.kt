@@ -47,7 +47,7 @@ import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
  * @param onSkip Invoked when the user taps Skip / dismisses without granting permission.
  */
 @Composable
-fun ImprovPermissionView(
+fun ImprovPermission(
     needsBluetooth: Boolean,
     needsLocation: Boolean,
     onContinue: () -> Unit,
@@ -134,9 +134,9 @@ private fun PermissionBullet(icon: IIcon, text: String, modifier: Modifier = Mod
 @Preview
 @PreviewLightDark
 @Composable
-private fun ImprovPermissionViewPreview() {
+private fun ImprovPermissionPreview() {
     HAThemeForPreview {
-        ImprovPermissionView(
+        ImprovPermission(
             needsBluetooth = true,
             needsLocation = true,
             onContinue = {},
@@ -147,9 +147,9 @@ private fun ImprovPermissionViewPreview() {
 
 @Preview
 @Composable
-private fun ImprovPermissionViewBluetoothOnlyPreview() {
+private fun ImprovPermissionBluetoothOnlyPreview() {
     HAThemeForPreview {
-        ImprovPermissionView(
+        ImprovPermission(
             needsBluetooth = true,
             needsLocation = false,
             onContinue = {},

@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.os.bundleOf
@@ -14,13 +15,14 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.wifi.improv.ImprovDevice
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
+import io.homeassistant.companion.android.common.compose.composable.rememberHAModalBottomSheetState
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.network.WifiHelper
 import io.homeassistant.companion.android.frontend.improv.ImprovRepository
 import io.homeassistant.companion.android.frontend.improv.ImprovUIState
 import io.homeassistant.companion.android.frontend.improv.ProvisioningEvent
-import io.homeassistant.companion.android.frontend.improv.ui.ImprovSheetView
-import io.homeassistant.companion.android.util.compose.ModalBottomSheet
+import io.homeassistant.companion.android.frontend.improv.ui.ImprovSheet
 import io.homeassistant.companion.android.util.setLayoutAndExpandedByDefault
 import io.homeassistant.companion.android.webview.externalbus.ExternalBusMessage
 import io.homeassistant.companion.android.webview.externalbus.ExternalBusRepository
@@ -98,13 +100,19 @@ class ImprovSetupDialog : BottomSheetDialogFragment() {
         }
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 HATheme {
-                    ModalBottomSheet(title = null) {
+                    val sheetState = rememberHAModalBottomSheetState()
+                    HAModalBottomSheet(
+                        bottomSheetState = sheetState,
+                        onDismissRequest = ::dismiss,
+                        dragHandle = {},
+                    ) {
                         val state = screenState.collectAsState()
-                        ImprovSheetView(
+                        ImprovSheet(
                             screenState = state.value,
                             onConnect = { ssid, password -> startProvisioning(ssid, password) },
                             onRestart = { restartConfiguringDevice() },
