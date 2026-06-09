@@ -228,7 +228,7 @@ data class ExoPlayerResizePayload(
 data class ImprovScanMessage(override val id: Int? = null) : IncomingExternalBusMessage
 
 /**
- * Message requesting the app to begin Wi-Fi onboarding for the named improv device the user
+ * Message requesting the app to begin Wi-Fi onboarding for the named Improv device the user
  * picked from the discovery list.
  *
  * The app should onboard [ImprovConfigureDevicePayload.name] and, once the device has been

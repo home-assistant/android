@@ -29,7 +29,7 @@ import io.homeassistant.companion.android.database.settings.SensorUpdateFrequenc
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
-import io.homeassistant.companion.android.improv.ImprovRepository
+import io.homeassistant.companion.android.frontend.improv.ImprovRepository
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
 import io.homeassistant.companion.android.util.UrlUtil
@@ -628,7 +628,7 @@ class WebViewPresenterImpl @Inject constructor(
     }
 
     override suspend fun shouldShowImprovPermissions(): Boolean {
-        return if (improvRepository.hasPermission(view as Context)) {
+        return if (improvRepository.hasPermissions()) {
             false
         } else {
             prefsRepository.getImprovPermissionDisplayedCount() < 2
@@ -637,7 +637,7 @@ class WebViewPresenterImpl @Inject constructor(
 
     override fun shouldRequestImprovPermission(): String? {
         val returnPermissions = try {
-            improvRepository.getRequiredPermissions().filter {
+            improvRepository.requiredPermissions.filter {
                 ContextCompat.checkSelfPermission(view as Context, it) != PackageManager.PERMISSION_GRANTED
             }
         } catch (_: Exception) {
@@ -653,7 +653,7 @@ class WebViewPresenterImpl @Inject constructor(
     }
 
     override fun startScanningForImprov(): Boolean {
-        if (!improvRepository.hasPermission(view as Context)) {
+        if (!improvRepository.hasPermissions()) {
             Timber.d("Improv scan request ignored because app doesn't have permission")
             return false
         } else {
@@ -661,11 +661,10 @@ class WebViewPresenterImpl @Inject constructor(
         }
         improvJobStarted = System.currentTimeMillis()
         improvJob = mainScope.launch {
-            withContext(Dispatchers.IO) {
-                improvRepository.startScanning(view as Context)
-            }
-            improvRepository.getDevices().collect {
-                it.forEach { device ->
+            // scanDevices() auto-manages the BLE scan via shareIn(WhileSubscribed); cancelling
+            // this job stops the scan after the repository's idle window.
+            improvRepository.scanDevices().collect { devices ->
+                devices.forEach { device ->
                     val name = device.name ?: return@forEach
                     externalBusRepository.send(
                         ExternalBusMessage(
@@ -686,7 +685,6 @@ class WebViewPresenterImpl @Inject constructor(
     override fun stopScanningForImprov(force: Boolean) {
         if (improvJob?.isActive == true && (force || System.currentTimeMillis() - improvJobStarted > 1000)) {
             Timber.d("Improv scan stopping")
-            improvRepository.stopScanning()
             improvJob?.cancel()
         }
     }
