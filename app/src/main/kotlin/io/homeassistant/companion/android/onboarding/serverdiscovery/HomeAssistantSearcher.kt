@@ -229,31 +229,33 @@ private fun ProducerScope<HomeAssistantInstance>.getResolvedListener(): NsdManag
     }
 }
 
+private fun NsdServiceInfo.attribute(key: String): String? =
+    attributes?.get(key)?.toString(Charsets.UTF_8)?.ifEmpty { null }
+
 private fun NsdServiceInfo.toHomeAssistantInstance(): HomeAssistantInstance? {
-    val baseUrlString = (attributes?.get("external_url") ?: attributes?.get("internal_url"))?.toString(Charsets.UTF_8)
-    if (baseUrlString.isNullOrBlank()) {
-        Timber.w("Base URL is missing or empty in NSD attributes for service: $this")
+    val urlString = attribute("external_url") ?: attribute("internal_url")
+    if (urlString.isNullOrBlank()) {
+        Timber.w("URL is missing or empty in NSD attributes for service: $this")
         return null
     }
 
-    val baseUrl = try {
-        URL(baseUrlString)
+    val url = try {
+        URL(urlString)
     } catch (e: MalformedURLException) {
-        Timber.w(e, "Invalid base_url format: $baseUrlString for service: $this")
+        Timber.w(e, "Invalid url format: $urlString for service: $this")
         return null
     }
 
     // The version is optional: a discovered instance is still usable without it, the instance might simply be on the
     // https://github.com/home-assistant/landingpage/.
-    val haVersion = attributes?.get("version")?.toString(Charsets.UTF_8)?.ifEmpty { null }
-        ?.let { HomeAssistantVersion.fromString(it) }
+    val haVersion = attribute("version")?.let { HomeAssistantVersion.fromString(it) }
     if (haVersion == null) {
         Timber.w("Version is missing in NSD attributes for service: $serviceName")
     }
 
     return HomeAssistantInstance(
         serviceName,
-        baseUrl,
+        url,
         haVersion,
     )
 }

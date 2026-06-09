@@ -168,11 +168,11 @@ class HomeAssistantSearcherImplTest {
         ],
     )
     fun `Given one discoverable instance with missing or malformed url when discoveredInstanceFlow is called then nothing is emitted`(
-        baseUrl: String?,
+        url: String?,
     ) = runTest {
         val discoveryListener = slot<NsdManager.DiscoveryListener>()
         val resolveListener = slot<NsdManager.ResolveListener>()
-        val serviceInfo = createNsdServiceInfo(externalUrl = baseUrl)
+        val serviceInfo = createNsdServiceInfo(externalUrl = url)
 
         captureListeners(discoveryListener, resolveListener)
 
@@ -259,6 +259,8 @@ class HomeAssistantSearcherImplTest {
             "http://external:8123,null,http://external:8123",
             // internal_url is used as a fallback when external_url is missing
             "null,http://internal:8123,http://internal:8123",
+            // internal_url is used as a fallback when external_url is empty
+            ",http://internal:8123,http://internal:8123",
         ],
     )
     fun `Given external and internal url attributes when discoveredInstanceFlow is called then external url is preferred`(
