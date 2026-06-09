@@ -329,6 +329,62 @@ class AssistVoiceInteractionServiceTest {
     }
 
     @Test
+    fun `Given service shut down when onReady delivered again then do not register receiver`() = runTest {
+        service.onReady()
+        advanceUntilIdle()
+        service.onShutdown()
+        advanceUntilIdle()
+
+        service.onReady()
+        advanceUntilIdle()
+
+        assertTrue(ACTION_START_LISTENING !in getRegisteredReceiverActions())
+    }
+
+    @Test
+    fun `Given service shut down when onReady delivered and wake word enabled then do not start listening`() = runTest {
+        coEvery { assistConfigManager.isWakeWordEnabled() } returns true
+        coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
+
+        service.onShutdown()
+        advanceUntilIdle()
+
+        service.onReady()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { wakeWordListener.start(any(), any()) }
+    }
+
+    @Test
+    fun `Given service destroyed when onReady delivered again then do not register receiver`() = runTest {
+        service.onDestroy()
+
+        service.onReady()
+        advanceUntilIdle()
+
+        assertTrue(ACTION_START_LISTENING !in getRegisteredReceiverActions())
+    }
+
+    @Test
+    fun `Given receiver already unregistered when onShutdown then do not crash`() = runTest {
+        service.onReady()
+        advanceUntilIdle()
+
+        // Simulate the framework removing the registration out from under the service
+        val application = ApplicationProvider.getApplicationContext<Application>()
+        val receiver = Shadows.shadowOf(application).registeredReceivers
+            .first { wrapper ->
+                (0 until wrapper.intentFilter.countActions())
+                    .any { wrapper.intentFilter.getAction(it) == ACTION_START_LISTENING }
+            }
+            .broadcastReceiver
+        application.unregisterReceiver(receiver)
+
+        // Should not throw
+        service.onShutdown()
+    }
+
+    @Test
     fun `Given context when startListening then send START_LISTENING broadcast with package`() {
         assertAction(ACTION_START_LISTENING, AssistVoiceInteractionService::startListening)
     }

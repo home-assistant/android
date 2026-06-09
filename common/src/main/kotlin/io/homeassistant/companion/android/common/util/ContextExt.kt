@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.net.Uri
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.compose.ui.platform.AndroidUriHandler
@@ -100,4 +101,23 @@ suspend fun Context.openUri(uri: String, onShowSnackbar: suspend (message: Strin
         Timber.e(e.takeIf { BuildConfig.DEBUG }, "Failed to navigate open uri")
         onShowSnackbar(getString(R.string.fail_to_navigate_to_uri, uri), null)
     }
+}
+
+/**
+ * Builds an [Intent] that opens this app's "App info" page in the system Settings.
+ */
+fun Context.createSystemAppSettingsIntent(): Intent {
+    return Intent(
+        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+        Uri.fromParts("package", packageName, null),
+    )
+}
+
+/**
+ * Opens this app's "App info" page in the system Settings.
+ */
+fun Context.openSystemAppSettings() {
+    startActivity(
+        createSystemAppSettingsIntent(),
+    )
 }

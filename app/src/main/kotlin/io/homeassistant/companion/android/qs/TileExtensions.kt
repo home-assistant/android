@@ -30,6 +30,7 @@ import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.common.data.integration.onEntityPressedWithoutState
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
 import io.homeassistant.companion.android.database.qs.getHighestInUse
@@ -146,7 +147,7 @@ abstract class TileExtensions : TileService() {
         try {
             return if (tileData != null && tileData.isSetup) {
                 tile.label = tileData.label
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
                     tile.subtitle = tileData.subtitle
                 }
                 val state: Entity? =
@@ -193,7 +194,7 @@ abstract class TileExtensions : TileService() {
                     } else {
                         Tile.STATE_UNAVAILABLE
                     }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
                     tile.subtitle = getString(commonR.string.tile_not_setup)
                 }
                 tile.updateTile()
@@ -212,7 +213,7 @@ abstract class TileExtensions : TileService() {
         val vm = getSystemService<Vibrator>()
         if (!isUnlock) {
             if (tileData?.shouldVibrate == true) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
                     vm?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
                 } else {
                     @Suppress("DEPRECATION")
@@ -281,7 +282,7 @@ abstract class TileExtensions : TileService() {
         if (e != null) Timber.e(e, "Unable to call service for tile ID: ${tileData?.id}")
         if (tileData != null && tileData.shouldVibrate) {
             val vm = getSystemService<Vibrator>()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
                 vm?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK))
             } else {
                 @Suppress("DEPRECATION")

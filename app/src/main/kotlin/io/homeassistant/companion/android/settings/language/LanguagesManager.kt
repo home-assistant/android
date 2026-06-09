@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.util.SdkVersion
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -20,7 +21,7 @@ class LanguagesManager @Inject constructor(private var prefs: PrefsRepository) {
 
     suspend fun getCurrentLang(): String {
         val lang = prefs.getCurrentLang()
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        return if (SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
             migrateLangSetting()
             AppCompatDelegate.getApplicationLocales().toLanguageTags().ifEmpty { DEF_LOCALE }
         } else {
@@ -39,7 +40,7 @@ class LanguagesManager @Inject constructor(private var prefs: PrefsRepository) {
         withContext(Dispatchers.IO) {
             if (!lang.isNullOrEmpty()) {
                 val currentLang = getCurrentLang()
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
                     val languages =
                         if (lang == DEF_LOCALE) {
                             LocaleListCompat.getEmptyLocaleList()
@@ -58,7 +59,7 @@ class LanguagesManager @Inject constructor(private var prefs: PrefsRepository) {
     suspend fun applyCurrentLang() {
         migrateLangSetting()
 
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.TIRAMISU) {
+        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
             val lang = getCurrentLang()
             val languages =
                 if (lang == DEF_LOCALE) {
@@ -71,7 +72,7 @@ class LanguagesManager @Inject constructor(private var prefs: PrefsRepository) {
     }
 
     private suspend fun migrateLangSetting() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) return
         val lang = prefs.getCurrentLang()
         if (lang == SYSTEM_MANAGES_LOCALE) return
 

@@ -99,6 +99,7 @@ import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.getBooleanOrElse
 import io.homeassistant.companion.android.common.util.getBooleanOrNull
 import io.homeassistant.companion.android.common.util.getDoubleOrElse
@@ -118,7 +119,7 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
 import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
-import io.homeassistant.companion.android.frontend.addto.FrontendEntityAddToHandler
+import io.homeassistant.companion.android.frontend.addto.FrontendEntityAddToManager
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.EXPECTED_GET_AUTH_CALLBACK
@@ -275,7 +276,7 @@ class WebViewActivity :
     lateinit var appVersionProvider: AppVersionProvider
 
     @Inject
-    lateinit var entityAddToHandler: FrontendEntityAddToHandler
+    lateinit var entityAddToManager: FrontendEntityAddToManager
 
     @Inject
     lateinit var dataUriDownloadManager: DataUriDownloadManager
@@ -368,7 +369,7 @@ class WebViewActivity :
     override fun onCreate(savedInstanceState: Bundle?) {
         if (
             intent.extras?.containsKey(EXTRA_SHOW_WHEN_LOCKED) == true &&
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1
+            SdkVersion.isAtLeast(Build.VERSION_CODES.O_MR1)
         ) {
             // Allow showing this on the lock screen when using device controls panel
             setShowWhenLocked(intent.extras?.getBoolean(EXTRA_SHOW_WHEN_LOCKED) ?: false)
@@ -700,7 +701,7 @@ class WebViewActivity :
             }
 
             setDownloadListener { url, _, contentDisposition, mimetype, _ ->
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
+                if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q) ||
                     ActivityCompat.checkSelfPermission(
                         context,
                         android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -808,7 +809,7 @@ class WebViewActivity :
             }
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             val webviewPackage = WebViewCompat.getCurrentWebViewPackage(this)
             Timber.d(
                 "Current webview package ${webviewPackage?.packageName} and version ${webviewPackage?.versionName}",
@@ -1222,7 +1223,7 @@ class WebViewActivity :
         if (entityId != null && appPayload != null) {
             val action = ExternalEntityAddToAction.appPayloadToAction(appPayload)
             lifecycleScope.launch {
-                when (val event = entityAddToHandler.execute(entityId, action)) {
+                when (val event = entityAddToManager.execute(entityId, action)) {
                     is FrontendEvent.NavigateToWidgetConfig -> {
                         startActivity(event.widgetType.toConfigureIntent(this@WebViewActivity, event.entityId))
                     }
@@ -1246,7 +1247,7 @@ class WebViewActivity :
         val entityId = payload?.getStringOrNull("entity_id")
         entityId?.let {
             lifecycleScope.launch {
-                val actions = entityAddToHandler.getActionsForEntity(entityId)
+                val actions = entityAddToManager.getActionsForEntity(entityId)
                 sendExternalBusMessage(
                     EntityAddToActionsResponse(
                         id = json["id"],
@@ -1389,7 +1390,7 @@ class WebViewActivity :
      * devices the permission does not exist and no action is taken.
      */
     private fun maybeRequestLocalNetworkPermission() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.CINNAMON_BUN) return
+        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.CINNAMON_BUN)) return
         if (ContextCompat.checkSelfPermission(
                 this,
                 android.Manifest.permission.ACCESS_LOCAL_NETWORK,
@@ -1635,7 +1636,7 @@ class WebViewActivity :
         videoHeight = decor.height
         val bounds = Rect(0, 0, 1920, 1080)
         if (isVideoFullScreen or isExoFullScreen) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
                 val mPictureInPictureParamsBuilder = PictureInPictureParams.Builder()
                 mPictureInPictureParamsBuilder.setAspectRatio(
                     Rational(
