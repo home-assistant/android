@@ -6,7 +6,6 @@ import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.BarcodeScanAbortedMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.BarcodeScanResultMessage
-import java.util.Locale
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -99,5 +98,17 @@ private fun BarcodeFormat.toFrontendWireFormat(): String = when (this) {
     BarcodeFormat.RSS_EXPANDED,
     BarcodeFormat.UPC_EAN_EXTENSION,
     -> "unknown"
-    else -> toString().lowercase(Locale.getDefault())
+
+    BarcodeFormat.AZTEC -> "aztec"
+    BarcodeFormat.CODABAR -> "codabar"
+    BarcodeFormat.CODE_39 -> "code_39"
+    BarcodeFormat.CODE_93 -> "code_93"
+    BarcodeFormat.CODE_128 -> "code_128"
+    BarcodeFormat.DATA_MATRIX -> "data_matrix"
+    BarcodeFormat.EAN_8 -> "ean_8"
+    BarcodeFormat.EAN_13 -> "ean_13"
+    BarcodeFormat.ITF -> "itf"
+    BarcodeFormat.QR_CODE -> "qr_code"
+    BarcodeFormat.UPC_A -> "upc_a"
+    BarcodeFormat.UPC_E -> "upc_e"
 }

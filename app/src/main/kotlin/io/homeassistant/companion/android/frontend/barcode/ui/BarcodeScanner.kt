@@ -28,7 +28,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -65,6 +64,7 @@ import com.journeyapps.barcodescanner.CaptureManager
 import com.journeyapps.barcodescanner.DecoratedBarcodeView
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
+import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.util.openSystemAppSettings
@@ -77,7 +77,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
 private val BarcodeScannerResultDebounce = 1.5.seconds
-private val FlashlightButtonSize = 48.dp
+private val FlashlightButtonSize = HADimens.SPACE12
 private val FlashlightButtonMargin = HADimens.SPACE2
 
 /**
@@ -454,11 +454,10 @@ private fun ScannerInstructions(
     ) {
         Text(text = title, color = Color.White, style = HATextStyle.Headline)
         Text(text = description, color = Color.White, style = HATextStyle.Body)
+
         alternativeOptionLabel?.let { label ->
             Spacer(Modifier.height(HADimens.SPACE8))
-            TextButton(onClick = onAlternativeOption) {
-                Text(text = label, color = Color.White, style = HATextStyle.Button)
-            }
+            HAPlainButton(text = label, onClick = onAlternativeOption)
         }
     }
 }

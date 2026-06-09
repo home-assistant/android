@@ -10,16 +10,15 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.slot
+import java.util.Locale
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.CsvSource
+import org.junit.jupiter.api.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class FrontendBarcodeScannerHandlerTest {
@@ -150,29 +149,46 @@ class FrontendBarcodeScannerHandlerTest {
         coVerify(exactly = 0) { externalBusRepository.send(any()) }
     }
 
-    @ParameterizedTest
-    @CsvSource(
-        "QR_CODE,qr_code",
-        "CODE_128,code_128",
-        "PDF_417,pdf417",
-        "MAXICODE,unknown",
-        "RSS_14,unknown",
-        "RSS_EXPANDED,unknown",
-        "UPC_EAN_EXTENSION,unknown",
-    )
-    fun `Given a scanned format when onScanned then it maps to the frontend wire string`(
-        format: BarcodeFormat,
-        expectedWire: String,
-    ) = runTest {
-        val sent = slot<OutgoingExternalBusMessage>()
-        coEvery { externalBusRepository.send(capture(sent)) } returns Unit
-        manager.show(messageId = 3, title = "A", description = "a", alternativeOptionLabel = null)
+    @Test
+    fun `Given a scanned format when onScanned then it maps to the frontend wire string`() = runTest {
+        suspend fun assertFormat(format: BarcodeFormat, expected: String) {
+            val sent = slot<OutgoingExternalBusMessage>()
+            coEvery { externalBusRepository.send(capture(sent)) } returns Unit
+            manager.show(messageId = 3, title = "A", description = "a", alternativeOptionLabel = null)
 
-        manager.onScanned(rawValue = "v", format = format)
+            manager.onScanned(rawValue = "v", format = format)
 
-        assertEquals(
-            """{"type":"command","id":3,"command":"bar_code/scan_result","payload":{"rawValue":"v","format":"$expectedWire"}}""",
-            frontendExternalBusJson.encodeToString<OutgoingExternalBusMessage>(sent.captured),
-        )
+            assertEquals(
+                """{"type":"command","id":3,"command":"bar_code/scan_result","payload":{"rawValue":"v","format":"$expected"}}""",
+                frontendExternalBusJson.encodeToString<OutgoingExternalBusMessage>(sent.captured),
+            )
+        }
+
+        BarcodeFormat.entries.forEach {
+            val expected = when (it) {
+                BarcodeFormat.PDF_417 -> "pdf417"
+                BarcodeFormat.MAXICODE,
+                BarcodeFormat.RSS_14,
+                BarcodeFormat.RSS_EXPANDED,
+                BarcodeFormat.UPC_EAN_EXTENSION,
+                -> "unknown"
+
+                BarcodeFormat.AZTEC,
+                BarcodeFormat.CODABAR,
+                BarcodeFormat.CODE_39,
+                BarcodeFormat.CODE_93,
+                BarcodeFormat.CODE_128,
+                BarcodeFormat.DATA_MATRIX,
+                BarcodeFormat.EAN_8,
+                BarcodeFormat.EAN_13,
+                BarcodeFormat.ITF,
+                BarcodeFormat.QR_CODE,
+                BarcodeFormat.UPC_A,
+                BarcodeFormat.UPC_E,
+                -> it.toString().lowercase(Locale.getDefault())
+            }
+
+            assertFormat(it, expected)
+        }
     }
 }
