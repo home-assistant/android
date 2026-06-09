@@ -398,24 +398,31 @@ class ThreadManagerImplTest {
             }
 
         @Test
-        fun `Given the device prefers a non-HA app dataset when sync then removes it without re-importing`() = runTest {
-            stubServerSupport(coreSupports = true)
-            mockOrphanCleanup()
-            mockPreferredCredentials(intentSender = mockk())
-            coEvery { webSocketRepository.getThreadDatasets() } returns
-                listOf(dataset(datasetId = "server", preferred = true, source = "Google"))
-            coEvery { webSocketRepository.getThreadDatasetTlv(any()) } returns null
-            mockDeviceCredentialPrefersApp()
+        fun `Given a foreign-sourced server dataset preferred via an app credential when sync then removes it`() =
+            runTest {
+                stubServerSupport(coreSupports = true)
+                mockOrphanCleanup()
+                mockPreferredCredentials(intentSender = mockk())
+                // The server's preferred dataset reports it originated from another app (not HA), so HA
+                // should stop managing it: remove its own contributed credential without re-importing.
+                coEvery { webSocketRepository.getThreadDatasets() } returns
+                    listOf(dataset(datasetId = "server", preferred = true, source = "Google"))
+                // No TLV, so the device does not prefer the server dataset directly...
+                coEvery { webSocketRepository.getThreadDatasetTlv(any()) } returns null
+                // ...but it does prefer a credential this app added previously, which is what lets HA
+                // remove it. A credential added by another app could not be removed here (see the
+                // "neither is device-preferred" test, which exports instead of removing).
+                mockDeviceCredentialPrefersApp()
 
-            val result = assertInstanceOf(
-                ThreadManager.SyncResult.AllHaveCredentials::class.java,
-                createManager().syncPreferredDataset(serverId = 1, scope = this),
-            )
-            assertEquals(false, result.matches)
-            assertEquals(true, result.fromApp)
-            assertEquals(false, result.updated)
-            assertNull(result.exportIntent)
-        }
+                val result = assertInstanceOf(
+                    ThreadManager.SyncResult.AllHaveCredentials::class.java,
+                    createManager().syncPreferredDataset(serverId = 1, scope = this),
+                )
+                assertEquals(false, result.matches)
+                assertEquals(true, result.fromApp)
+                assertEquals(false, result.updated)
+                assertNull(result.exportIntent)
+            }
     }
 
     private fun dataset(datasetId: String, preferred: Boolean, source: String = "HomeAssistant") =
