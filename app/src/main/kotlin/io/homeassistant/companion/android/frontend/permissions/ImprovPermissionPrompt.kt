@@ -15,7 +15,7 @@ import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
 import io.homeassistant.companion.android.common.compose.composable.rememberHAModalBottomSheetState
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
-import io.homeassistant.companion.android.frontend.improv.ui.ImprovPermissionView
+import io.homeassistant.companion.android.frontend.improv.ui.ImprovPermission
 import kotlinx.coroutines.launch
 
 /**
@@ -76,7 +76,7 @@ internal fun ImprovPermissionPrompt(request: PermissionRequest.Improv) {
             },
             dragHandle = {},
         ) {
-            ImprovPermissionView(
+            ImprovPermission(
                 needsBluetooth = request.needsBluetooth,
                 needsLocation = request.needsLocation,
                 onContinue = { multiPermissionsState.launchMultiplePermissionRequest() },

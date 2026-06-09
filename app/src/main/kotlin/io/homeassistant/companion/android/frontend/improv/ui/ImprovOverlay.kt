@@ -28,7 +28,7 @@ internal fun ImprovOverlay(
             onDismissRequest = onDismiss,
             dragHandle = {},
         ) {
-            ImprovSheetView(
+            ImprovSheet(
                 screenState = state,
                 onConnect = onConnectDevice,
                 onRestart = onRestart,
