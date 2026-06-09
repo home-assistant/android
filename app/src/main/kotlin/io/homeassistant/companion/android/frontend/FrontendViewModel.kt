@@ -1,7 +1,9 @@
 package io.homeassistant.companion.android.frontend
 
 import android.view.View
+import androidx.activity.result.ActivityResult
 import androidx.annotation.VisibleForTesting
+import androidx.core.net.toUri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -32,6 +34,7 @@ import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
 import io.homeassistant.companion.android.frontend.js.BridgeState
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridgeFactory
 import io.homeassistant.companion.android.frontend.js.FrontendJsCallback
+import io.homeassistant.companion.android.frontend.matterthread.FrontendMatterThreadHandler
 import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
@@ -94,6 +97,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val fileChooserManager: FileChooserManager,
     private val httpAuthManager: HttpAuthManager,
     private val exoPlayerManager: FrontendExoPlayerManager,
+    private val matterThreadHandler: FrontendMatterThreadHandler,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -114,6 +118,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         fileChooserManager: FileChooserManager,
         httpAuthManager: HttpAuthManager,
         exoPlayerManager: FrontendExoPlayerManager,
+        matterThreadHandler: FrontendMatterThreadHandler,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
         initialPath = savedStateHandle.toRoute<FrontendRoute>().path,
@@ -131,6 +136,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         fileChooserManager = fileChooserManager,
         httpAuthManager = httpAuthManager,
         exoPlayerManager = exoPlayerManager,
+        matterThreadHandler = matterThreadHandler,
     )
 
     /**
@@ -302,6 +308,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 }
             }
         }
+
+        collectMatterThreadEvents()
 
         loadServer()
     }
@@ -486,6 +494,14 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         _events.tryEmit(FrontendEvent.RequestFullscreen(isFullScreen))
     }
 
+    /**
+     * Forwarded ActivityResult after a Matter/Thread Play Services
+     * intent completes.
+     */
+    fun onMatterThreadIntentResult(result: ActivityResult) {
+        viewModelScope.launch { matterThreadHandler.onMatterThreadIntentResult(result) }
+    }
+
     private suspend fun handleGestureResult(result: GestureResult) {
         when (result) {
             is GestureResult.Navigate -> _events.emit(result.event)
@@ -546,6 +562,33 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 path = path,
             ).collect { result ->
                 handleUrlResult(result)
+            }
+        }
+    }
+
+    /**
+     * Bridges [matterThreadHandler] events onto the ViewModel's [FrontendEvent] stream so
+     * the screen only has one event flow to collect.
+     */
+    private fun collectMatterThreadEvents() {
+        viewModelScope.launch {
+            matterThreadHandler.events.collect { event ->
+                _events.emit(
+                    when (event) {
+                        is FrontendMatterThreadHandler.Event.LaunchIntent ->
+                            FrontendEvent.LaunchMatterThreadIntent(event.intentSender)
+                        is FrontendMatterThreadHandler.Event.ShowSnackbar ->
+                            FrontendEvent.ShowSnackbar(
+                                messageResId = event.snackbar.messageRes,
+                                action = event.snackbar.helpUrl?.let { url ->
+                                    FrontendEvent.ShowSnackbar.Action(
+                                        labelResId = commonR.string.get_help,
+                                        event = FrontendEvent.OpenExternalLink(url.toUri()),
+                                    )
+                                },
+                            )
+                    },
+                )
             }
         }
     }
@@ -625,11 +668,14 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 result.event?.let { _events.tryEmit(it) }
             }
 
-            is FrontendHandlerEvent.StartMatterCommissioning,
-            is FrontendHandlerEvent.ImportThreadCredentials,
-            -> {
-                // Matter/Thread handling lands in a follow-up PR
-                Timber.d("Matter/Thread event received but not yet handled: $result")
+            is FrontendHandlerEvent.StartMatterCommissioning -> {
+                viewModelScope.launch { matterThreadHandler.onStartMatterCommissioning() }
+            }
+
+            is FrontendHandlerEvent.ImportThreadCredentials -> {
+                viewModelScope.launch {
+                    matterThreadHandler.onImportThreadCredentials(serverId = _viewState.value.serverId)
+                }
             }
 
             is FrontendHandlerEvent.ConfigSent,

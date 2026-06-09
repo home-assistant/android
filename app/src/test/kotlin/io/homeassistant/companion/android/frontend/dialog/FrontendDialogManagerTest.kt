@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend.dialog
 
+import io.homeassistant.companion.android.frontend.matterthread.MatterThreadTerminal
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -131,5 +132,76 @@ class FrontendDialogManagerTest {
         pending.onCancel()
         advanceUntilIdle()
         outcome.await()
+    }
+
+    @Test
+    fun `Given showMatterThreadProgress when called then exposes the progress dialog and does not complete`() = runTest {
+        val manager = FrontendDialogManager()
+
+        val outcome = async { manager.showMatterThreadProgress() }
+        advanceUntilIdle()
+
+        assertEquals(FrontendDialog.MatterThreadProgressDialog, manager.pendingDialog.value)
+        assertFalse(outcome.isCompleted)
+
+        outcome.cancel()
+        advanceUntilIdle()
+    }
+
+    @Test
+    fun `Given showMatterThreadProgress in flight when caller is cancelled then slot is cleared`() = runTest {
+        val manager = FrontendDialogManager()
+
+        val outcome = async { manager.showMatterThreadProgress() }
+        advanceUntilIdle()
+        assertEquals(FrontendDialog.MatterThreadProgressDialog, manager.pendingDialog.value)
+
+        outcome.cancel()
+        advanceUntilIdle()
+
+        assertNull(manager.pendingDialog.value)
+    }
+
+    @Test
+    fun `Given showMatterThreadTerminal when shown then exposes the terminal dialog carrying the variant`() = runTest {
+        val manager = FrontendDialogManager()
+
+        val outcome = async { manager.showMatterThreadTerminal(MatterThreadTerminal.Dialog.ThreadNoDataset) }
+        advanceUntilIdle()
+
+        val pending = assertInstanceOf(FrontendDialog.MatterThreadTerminalDialog::class.java, manager.pendingDialog.value)
+        assertEquals(MatterThreadTerminal.Dialog.ThreadNoDataset, pending.terminal)
+        assertFalse(outcome.isCompleted)
+
+        pending.onDismiss()
+        advanceUntilIdle()
+        outcome.await()
+    }
+
+    @Test
+    fun `Given showMatterThreadTerminal shown when user dismisses then suspend returns and slot clears`() = runTest {
+        val manager = FrontendDialogManager()
+
+        val outcome = async { manager.showMatterThreadTerminal(MatterThreadTerminal.Dialog.ThreadNotConnected) }
+        advanceUntilIdle()
+        (manager.pendingDialog.value as FrontendDialog.MatterThreadTerminalDialog).onDismiss()
+        advanceUntilIdle()
+
+        assertEquals(Unit, outcome.await())
+        assertNull(manager.pendingDialog.value)
+    }
+
+    @Test
+    fun `Given showMatterThreadTerminal in flight when caller is cancelled then slot is cleared`() = runTest {
+        val manager = FrontendDialogManager()
+
+        val outcome = async { manager.showMatterThreadTerminal(MatterThreadTerminal.Dialog.ThreadNoDataset) }
+        advanceUntilIdle()
+        assertInstanceOf(FrontendDialog.MatterThreadTerminalDialog::class.java, manager.pendingDialog.value)
+
+        outcome.cancel()
+        advanceUntilIdle()
+
+        assertNull(manager.pendingDialog.value)
     }
 }

@@ -117,6 +117,10 @@ class FrontendViewModelTest {
     private val exoPlayerManager: FrontendExoPlayerManager = mockk(relaxed = true) {
         every { state } returns MutableStateFlow(null)
     }
+    private val matterThreadHandler: io.homeassistant.companion.android.frontend.matterthread.FrontendMatterThreadHandler =
+        mockk(relaxed = true) {
+            every { events } returns MutableSharedFlow()
+        }
 
     private fun createViewModel(
         serverId: Int = this.serverId,
@@ -146,6 +150,7 @@ class FrontendViewModelTest {
             fileChooserManager = fileChooserManager,
             httpAuthManager = httpAuthManager,
             exoPlayerManager = exoPlayerManager,
+            matterThreadHandler = matterThreadHandler,
         )
     }
 
@@ -1865,6 +1870,55 @@ class FrontendViewModelTest {
             advanceUntilIdle()
 
             assertEquals(value, viewModel.keepScreenOnEnabled.value)
+        }
+    }
+
+    @Nested
+    inner class MatterThreadRouting {
+
+        @Test
+        fun `Given StartMatterCommissioning handler event when collected then handler is called`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            createViewModel()
+            advanceUntilIdle()
+
+            messageFlow.emit(FrontendHandlerEvent.StartMatterCommissioning(messageId = 60))
+            advanceUntilIdle()
+
+            coVerify { matterThreadHandler.onStartMatterCommissioning() }
+        }
+
+        @Test
+        fun `Given ImportThreadCredentials handler event when collected then handler is called with current serverId`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            createViewModel()
+            advanceUntilIdle()
+
+            messageFlow.emit(FrontendHandlerEvent.ImportThreadCredentials(messageId = 61))
+            advanceUntilIdle()
+
+            coVerify { matterThreadHandler.onImportThreadCredentials(serverId = serverId) }
+        }
+
+        @Test
+        fun `Given onMatterThreadIntentResult when called then forwards to handler`() = runTest {
+            val viewModel = createViewModel()
+            val result = androidx.activity.result.ActivityResult(android.app.Activity.RESULT_OK, null)
+
+            viewModel.onMatterThreadIntentResult(result)
+            advanceUntilIdle()
+
+            coVerify { matterThreadHandler.onMatterThreadIntentResult(result) }
         }
     }
 }

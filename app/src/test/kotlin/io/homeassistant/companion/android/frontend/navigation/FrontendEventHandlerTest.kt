@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend.navigation
 
+import android.content.IntentSender
 import android.net.Uri
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -8,6 +9,7 @@ import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.testing.unit.TestSharedFlow
+import io.mockk.mockk
 import junit.framework.TestCase.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -45,6 +47,7 @@ class FrontendEventHandlerTest {
                 onOpenExternalLink = {},
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
+                onLaunchMatterThreadIntent = {},
                 onRequestFullscreen = {},
                 onNavigateToWidgetConfig = { _, _ -> },
             )
@@ -76,6 +79,7 @@ class FrontendEventHandlerTest {
                 onOpenExternalLink = {},
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
+                onLaunchMatterThreadIntent = {},
                 onRequestFullscreen = {},
                 onNavigateToWidgetConfig = { _, _ -> },
             )
@@ -109,6 +113,7 @@ class FrontendEventHandlerTest {
                 onOpenExternalLink = {},
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
+                onLaunchMatterThreadIntent = {},
                 onRequestFullscreen = {},
                 onNavigateToWidgetConfig = { _, _ -> },
             )
@@ -148,6 +153,7 @@ class FrontendEventHandlerTest {
                 onOpenExternalLink = {},
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
+                onLaunchMatterThreadIntent = {},
                 onRequestFullscreen = {},
                 onNavigateToWidgetConfig = { _, _ -> },
             )
@@ -175,6 +181,7 @@ class FrontendEventHandlerTest {
                 onOpenExternalLink = { uri -> capturedUri = uri },
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
+                onLaunchMatterThreadIntent = {},
                 onRequestFullscreen = {},
                 onNavigateToWidgetConfig = { _, _ -> },
             )
@@ -202,6 +209,7 @@ class FrontendEventHandlerTest {
                 onOpenExternalLink = {},
                 onShowServerSwitcher = { serverSwitcherShown = true },
                 onNavigateToNfcWrite = { _, _ -> },
+                onLaunchMatterThreadIntent = {},
                 onRequestFullscreen = {},
                 onNavigateToWidgetConfig = { _, _ -> },
             )
@@ -232,6 +240,7 @@ class FrontendEventHandlerTest {
                 onOpenExternalLink = {},
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
+                onLaunchMatterThreadIntent = {},
                 onRequestFullscreen = {},
                 onNavigateToWidgetConfig = { _, _ -> },
             )
@@ -263,6 +272,7 @@ class FrontendEventHandlerTest {
                     capturedMessageId = messageId
                     capturedTagId = tagId
                 },
+                onLaunchMatterThreadIntent = {},
                 onRequestFullscreen = {},
                 onNavigateToWidgetConfig = { _, _ -> },
             )
@@ -294,6 +304,7 @@ class FrontendEventHandlerTest {
                     capturedMessageId = messageId
                     capturedTagId = tagId
                 },
+                onLaunchMatterThreadIntent = {},
                 onRequestFullscreen = {},
                 onNavigateToWidgetConfig = { _, _ -> },
             )
@@ -332,6 +343,7 @@ class FrontendEventHandlerTest {
                 onOpenExternalLink = {},
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
+                onLaunchMatterThreadIntent = {},
                 onRequestFullscreen = {},
                 onNavigateToWidgetConfig = { entityId, widgetType ->
                     capturedEntityId = entityId
@@ -353,6 +365,148 @@ class FrontendEventHandlerTest {
         assertEquals(WidgetType.MediaPlayer, capturedWidgetType)
     }
 
+    @Test
+    fun `Given LaunchMatterThreadIntent event then onLaunchMatterThreadIntent is called with the intent sender`() {
+        var capturedIntentSender: IntentSender? = null
+        val intentSender = mockk<IntentSender>()
+        val events = TestSharedFlow<FrontendEvent>()
+
+        composeTestRule.setContent {
+            FrontendEventHandler(
+                events = events,
+                onShowSnackbar = { _, _ -> false },
+                onNavigateToSettings = {},
+                onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = {},
+                onShowServerSwitcher = {},
+                onNavigateToNfcWrite = { _, _ -> },
+                onLaunchMatterThreadIntent = { capturedIntentSender = it },
+                onRequestFullscreen = {},
+                onNavigateToWidgetConfig = { _, _ -> },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        events.emit(FrontendEvent.LaunchMatterThreadIntent(intentSender = intentSender))
+        composeTestRule.waitForIdle()
+
+        assertEquals(intentSender, capturedIntentSender)
+    }
+
+    @Test
+    fun `Given ShowSnackbar with action then onShowSnackbar receives the resolved action label`() {
+        var capturedMessage: String? = null
+        var capturedAction: String? = null
+        val events = TestSharedFlow<FrontendEvent>()
+
+        composeTestRule.setContent {
+            FrontendEventHandler(
+                events = events,
+                onShowSnackbar = { message, action ->
+                    capturedMessage = message
+                    capturedAction = action
+                    false
+                },
+                onNavigateToSettings = {},
+                onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = {},
+                onShowServerSwitcher = {},
+                onNavigateToNfcWrite = { _, _ -> },
+                onLaunchMatterThreadIntent = {},
+                onRequestFullscreen = {},
+                onNavigateToWidgetConfig = { _, _ -> },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        events.emit(
+            FrontendEvent.ShowSnackbar(
+                messageResId = android.R.string.ok,
+                action = FrontendEvent.ShowSnackbar.Action(
+                    labelResId = android.R.string.cancel,
+                    event = FrontendEvent.OpenExternalLink(Uri.parse("https://example.com/help")),
+                ),
+            ),
+        )
+        composeTestRule.waitForIdle()
+
+        assertEquals("OK", capturedMessage)
+        assertEquals("Cancel", capturedAction)
+    }
+
+    @Test
+    fun `Given ShowSnackbar with action when action is not tapped then the action event is not dispatched`() {
+        var openExternalLinkCalled = false
+        val events = TestSharedFlow<FrontendEvent>()
+
+        composeTestRule.setContent {
+            FrontendEventHandler(
+                events = events,
+                // Returning false models a snackbar that was dismissed without tapping the action.
+                onShowSnackbar = { _, _ -> false },
+                onNavigateToSettings = {},
+                onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = { openExternalLinkCalled = true },
+                onShowServerSwitcher = {},
+                onNavigateToNfcWrite = { _, _ -> },
+                onLaunchMatterThreadIntent = {},
+                onRequestFullscreen = {},
+                onNavigateToWidgetConfig = { _, _ -> },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        events.emit(
+            FrontendEvent.ShowSnackbar(
+                messageResId = android.R.string.ok,
+                action = FrontendEvent.ShowSnackbar.Action(
+                    labelResId = android.R.string.cancel,
+                    event = FrontendEvent.OpenExternalLink(Uri.parse("https://example.com/help")),
+                ),
+            ),
+        )
+        composeTestRule.waitForIdle()
+
+        assertEquals(false, openExternalLinkCalled)
+    }
+
+    @Test
+    fun `Given ShowSnackbar with action when action is tapped then the action event is dispatched`() {
+        var capturedUri: Uri? = null
+        val helpUri = Uri.parse("https://example.com/help")
+        val events = TestSharedFlow<FrontendEvent>()
+
+        composeTestRule.setContent {
+            FrontendEventHandler(
+                events = events,
+                // Returning true models the user tapping the snackbar action.
+                onShowSnackbar = { _, _ -> true },
+                onNavigateToSettings = {},
+                onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = { capturedUri = it },
+                onShowServerSwitcher = {},
+                onNavigateToNfcWrite = { _, _ -> },
+                onLaunchMatterThreadIntent = {},
+                onRequestFullscreen = {},
+                onNavigateToWidgetConfig = { _, _ -> },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        events.emit(
+            FrontendEvent.ShowSnackbar(
+                messageResId = android.R.string.ok,
+                action = FrontendEvent.ShowSnackbar.Action(
+                    labelResId = android.R.string.cancel,
+                    event = FrontendEvent.OpenExternalLink(helpUri),
+                ),
+            ),
+        )
+        composeTestRule.waitForIdle()
+
+        assertEquals(helpUri, capturedUri)
+    }
+
     private fun runRequestFullscreenTest(fullscreen: Boolean): Boolean? {
         var captured: Boolean? = null
         val events = TestSharedFlow<FrontendEvent>()
@@ -366,6 +520,7 @@ class FrontendEventHandlerTest {
                 onOpenExternalLink = {},
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
+                onLaunchMatterThreadIntent = {},
                 onRequestFullscreen = { captured = it },
                 onNavigateToWidgetConfig = { _, _ -> },
             )
