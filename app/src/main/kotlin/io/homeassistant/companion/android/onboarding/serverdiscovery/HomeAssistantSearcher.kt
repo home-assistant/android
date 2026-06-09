@@ -230,7 +230,7 @@ private fun ProducerScope<HomeAssistantInstance>.getResolvedListener(): NsdManag
 }
 
 private fun NsdServiceInfo.attribute(key: String): String? =
-    attributes?.get(key)?.toString(Charsets.UTF_8)?.ifEmpty { null }
+    attributes?.get(key)?.toString(Charsets.UTF_8)?.ifBlank { null }
 
 private fun NsdServiceInfo.toHomeAssistantInstance(): HomeAssistantInstance? {
     val urlString = attribute("external_url") ?: attribute("internal_url")
