@@ -26,7 +26,7 @@ import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 
 /**
- * Owns the runtime orchestration of the improv Wi-Fi onboarding flow on top of [ImprovRepository],
+ * Owns the runtime orchestration of the Improv Wi-Fi onboarding flow on top of [ImprovRepository],
  * exposing a single [uiState] that drives the UI and reacting to the outcome:
  *
  * - [scanRequested] is flipped on by `improv/scan` and off on dismiss. While true, the UI layer
@@ -65,11 +65,8 @@ internal class FrontendImprovHandler @Inject constructor(
     private val _scanRequested = MutableStateFlow(false)
 
     /**
-     * Whether the user has an active improv session that wants scanning to keep running. Flipped
-     * on by [onStartImprovScan] (after permissions) and off by [onDismissed]. The UI layer
-     * observes this StateFlow and runs [processImprovScanRequests] inside a lifecycle-bound
-     * effect — that collect is what actually drives the BLE scan; when navigation pauses the
-     * route, the collect drops and the scan stops.
+     * Whether there is an active session that wants to keep scanning for Improv Wi-Fi devices. Flipped
+     * on by [onStartImprovScan] (after permissions) and off by [onDismissed].
      */
     val scanRequested: StateFlow<Boolean> = _scanRequested.asStateFlow()
 
@@ -97,15 +94,13 @@ internal class FrontendImprovHandler @Inject constructor(
     private val _uiState = MutableStateFlow<ImprovUIState?>(null)
 
     /**
-     * Current improv sheet state. `null` while no flow is active; non-null while the UI should be on screen.
+     * Current Improv sheet state. `null` while no flow is active; non-null while the UI should be on screen.
      */
     val uiState: StateFlow<ImprovUIState?> = _uiState.asStateFlow()
 
     private val _events = MutableSharedFlow<Event>(extraBufferCapacity = 1)
 
-    /**
-     * Side-effect events to consume
-     */
+    /** Side-effect events to consume. */
     val events: SharedFlow<Event> = _events.asSharedFlow()
 
     /**
@@ -205,10 +200,10 @@ internal class FrontendImprovHandler @Inject constructor(
     }
 
     /**
-     * Resets per-device provisioning state — wired to the sheet's "Try again" button after an
+     * Resets per-device provisioning state, to be used with the "Try again" button after an
      * error. Reads the target device from the current [ImprovUIState.WithResolvedDevice] and
      * reverts to [ImprovUIState.ConfiguringDevice] so the user can re-submit Wi-Fi
-     * credentials. No-op when the sheet is still searching, terminal
+     * credentials. No-op when searching ([ImprovUIState.SearchingDevice]), terminal
      * ([ImprovUIState.Provisioned]) or absent — the "Try again" affordance only ever exists in
      * [ImprovUIState.Errored].
      */
@@ -225,11 +220,10 @@ internal class FrontendImprovHandler @Inject constructor(
     }
 
     /**
-     * UI dismissed. If the device reported a `domain` during provisioning, hands the
-     * `config_flow_start` redirect to the frontend (or emits [Event.ReloadAtPath] for the legacy
-     * fallback). Flips [scanRequested] off so the UI's lifecycle-bound effect cancels its
-     * [processImprovScanRequests] collect, which in turn ends the BLE scan. A follow-up flow
-     * needs another `improv/scan` from the frontend.
+     * UI dismissed. If the device reported a `domain` during provisioning, redirects the frontend
+     * to start a config flow for the domain. Flips [scanRequested] off so the UI's lifecycle-bound
+     * effect can cancel its [processImprovScanRequests] collect, which in turn ends the BLE scan.
+     * A follow-up flow needs another `improv/scan` from the frontend.
      */
     suspend fun onDismissed(serverId: Int) {
         val domain: String?
@@ -250,9 +244,8 @@ internal class FrontendImprovHandler @Inject constructor(
     }
 
     /**
-     * Builds a [ImprovUIState.ConfiguringDevice] for the given device, sampling the currently
-     * connected Wi-Fi SSID to pre-fill the credentials form. The SSID is re-sampled on every call
-     * so flow transitions reflect the network the user is on right now.
+     * Builds a [ImprovUIState.ConfiguringDevice] for the given device, prefilled with the
+     * currently connected Wi-Fi SSID.
      */
     private fun configuringDeviceFor(deviceName: String, deviceAddress: String): ImprovUIState.ConfiguringDevice =
         ImprovUIState.ConfiguringDevice(
