@@ -42,7 +42,7 @@ internal fun avatarCacheKey(serverId: Int, picturePath: String): String = "serve
  * The picture is taken from the `person` entity linked to the user and authenticated with the
  * server's bearer token. Results are cached by Coil, so repeated calls do not re-download.
  */
-class ServerUserAvatarManager @VisibleForTesting constructor(
+class ServerUserAvatarRepository @VisibleForTesting constructor(
     private val context: Context,
     private val imageLoader: ImageLoader,
     private val serverManager: ServerManager,
