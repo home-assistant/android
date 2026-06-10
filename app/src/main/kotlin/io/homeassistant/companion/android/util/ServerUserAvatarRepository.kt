@@ -57,18 +57,21 @@ class ServerUserAvatarRepository @VisibleForTesting constructor(
      * Returns the current user's profile picture for the server identified by [serverId], or `null`
      * when there is no resolvable picture for it.
      *
-     * When the server is currently unreachable, a previously cached copy is returned if one exists.
+     * The picture is only downloaded when there is a base URL and credentials can be sent to it
+     * safely (the picture is authenticated, so an unsafe request would just fail). Otherwise — no
+     * base URL (server unreachable) or credentials unsafe — a previously cached copy is returned if
+     * one exists.
      */
     suspend fun getUserAvatar(serverId: Int): Bitmap? {
         val userId = serverManager.getServer(serverId)?.user?.id ?: return null
         return try {
             val picturePath = findPersonPicturePath(serverId = serverId, userId = userId) ?: return null
             val cacheKey = avatarCacheKey(serverId = serverId, picturePath = picturePath)
-            when (val url = picturePath.toAbsoluteUrl(serverId = serverId)) {
-                // No base URL is currently available (e.g. the server is unreachable). We can still
-                // serve a previously downloaded copy from Coil's memory or disk cache by its key.
-                null -> cachedAvatar(cacheKey)
-                else -> downloadAvatar(serverId = serverId, url = url, cacheKey = cacheKey)
+            val url = picturePath.toAbsoluteUrl(serverId = serverId)
+            if (url != null && serverManager.connectionStateProvider(serverId).canSafelySendCredentials(url)) {
+                downloadAvatar(serverId = serverId, url = url, cacheKey = cacheKey)
+            } else {
+                cachedAvatar(cacheKey)
             }
         } catch (e: CancellationException) {
             throw e

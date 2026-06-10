@@ -80,6 +80,9 @@ class ServerUserAvatarRepositoryTest {
         coEvery { serverManager.authenticationRepository(serverId) } returns mockk {
             coEvery { buildBearerToken() } returns "Bearer token"
         }
+        coEvery { serverManager.connectionStateProvider(serverId) } returns mockk {
+            coEvery { canSafelySendCredentials(any()) } returns true
+        }
     }
 
     @Test
@@ -148,6 +151,7 @@ class ServerUserAvatarRepositoryTest {
         givenServerWithPersonPicture(serverId = 1, picture = "/api/image/serve/abc")
         coEvery { serverManager.connectionStateProvider(1) } returns mockk {
             every { urlFlow() } returns flowOf(UrlState.HasUrl(URL("http://homeassistant.local:8123/")))
+            coEvery { canSafelySendCredentials(any()) } returns true
         }
         val request = slot<ImageRequest>()
         coEvery { imageLoader.execute(capture(request)) } returns imageResult()
@@ -155,6 +159,23 @@ class ServerUserAvatarRepositoryTest {
         repository.getUserAvatar(1)
 
         assertEquals("http://homeassistant.local:8123/api/image/serve/abc", request.captured.data)
+    }
+
+    @Test
+    fun `Given credentials cannot be safely sent when getUserAvatar then it does not download and falls back to the cache`() = runTest {
+        val picture = "http://homeassistant.local:8123/api/image/serve/abc"
+        givenServerWithPersonPicture(serverId = 1, picture = picture)
+        coEvery { serverManager.connectionStateProvider(1) } returns mockk {
+            coEvery { canSafelySendCredentials(any()) } returns false
+        }
+        val memoryCache = mockk<MemoryCache>()
+        every { memoryCache.get(any()) } returns null
+        every { imageLoader.memoryCache } returns memoryCache
+        every { imageLoader.diskCache } returns null
+
+        assertNull(repository.getUserAvatar(1))
+        coVerify(exactly = 0) { imageLoader.execute(any()) }
+        verify { memoryCache.get(MemoryCache.Key(avatarCacheKey(serverId = 1, picturePath = picture))) }
     }
 
     @Test
