@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.util
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 
@@ -23,6 +24,12 @@ import android.content.Intent
  *
  * @return the same instance, mutated in place, for call chaining
  */
+/*
+ * Suppressing QueryPermissionsNeeded: this only resolves the intent to detect whether it targets one of
+ * our own components, and an app can always see itself regardless of Android 11 package visibility, so no
+ * <queries> declaration is required.
+ */
+@SuppressLint("QueryPermissionsNeeded")
 fun Intent.stripSelfNonExportedTarget(context: Context): Intent = apply {
     val target = resolveActivityInfo(context.packageManager, 0)
     if (target != null && target.packageName == context.packageName && !target.exported) {
