@@ -5,6 +5,7 @@ import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.frontend.barcode.BarcodeScannerUiState
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.exoplayer.ExoPlayerUiState
+import io.homeassistant.companion.android.frontend.improv.ImprovUIState
 import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
 
 /**
@@ -57,6 +58,7 @@ sealed interface FrontendViewState {
         val statusBarColor: Color? = null,
         val backgroundColor: Color? = null,
         val exoPlayerState: ExoPlayerUiState? = null,
+        val improvUiState: ImprovUIState? = null,
         val barcodeScanner: BarcodeScannerUiState? = null,
     ) : FrontendViewState
 

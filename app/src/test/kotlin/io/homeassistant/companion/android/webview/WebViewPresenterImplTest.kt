@@ -16,7 +16,7 @@ import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.settings.SettingsDao
-import io.homeassistant.companion.android.improv.ImprovRepository
+import io.homeassistant.companion.android.frontend.improv.ImprovRepository
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.thread.ThreadManager

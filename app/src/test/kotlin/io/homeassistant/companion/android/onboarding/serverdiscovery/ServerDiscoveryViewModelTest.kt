@@ -18,6 +18,7 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -190,6 +191,27 @@ private class ServerDiscoveryViewModelTest {
             assertEquals(instance1.name, discoveredState.servers[0].name)
             assertEquals(instance2.name, discoveredState.servers[1].name)
 
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given a discovered instance without a version when collecting from discoveryFlow then emits ServerDiscovered with a null version`() = runTest {
+        createViewModel()
+        // An instance whose version could not be resolved (e.g. the Home Assistant landing page) is
+        // still surfaced rather than dropped.
+        val instance = HomeAssistantInstance("Server 1", URL("http://server1.local:8123"), version = null)
+
+        viewModel.discoveryFlow.test {
+            assertEquals(Started, awaitItem())
+
+            discoveredInstanceFlow.emit(instance)
+            runCurrent()
+
+            val discoveredState = awaitItem()
+            assertTrue(discoveredState is ServerDiscovered)
+            assertEquals(instance.name, (discoveredState as ServerDiscovered).name)
+            assertNull(discoveredState.version)
             expectNoEvents()
         }
     }
