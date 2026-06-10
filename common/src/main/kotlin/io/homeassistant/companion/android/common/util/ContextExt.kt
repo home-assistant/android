@@ -131,6 +131,9 @@ fun Context.openSystemAppSettings() {
  * sanitization can never be forgotten at a call site.
  *
  * @return the parsed and sanitized [Intent]
+ * @throws java.net.URISyntaxException if the basic URI syntax
+ * it bad (as parsed by the Uri class) or the Intent data within the
+ * URI is invalid.
  */
 fun Context.parseExternalIntentUri(uri: String): Intent =
     Intent.parseUri(uri, Intent.URI_INTENT_SCHEME).stripSelfNonExportedTarget(this)
