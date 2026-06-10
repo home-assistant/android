@@ -205,7 +205,8 @@ class ConnectionViewModelTest {
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
 
-            // Landing page redirects the WebView to the core on a new port, same host
+            // Landing page redirects the WebView to the core on a new port, same host.
+            // Port 80 is http's default, so the normalized stored URL drops it.
             viewModel.webViewClient.onPageFinished(null, "http://homeassistant.local:80/onboarding")
 
             val result = viewModel.webViewClient.shouldOverrideUrlLoading(null, stringUri)
@@ -213,7 +214,33 @@ class ConnectionViewModelTest {
             assertTrue(result)
             val event = navigationEventsFlow.awaitItem()
             assertTrue(event is ConnectionNavigationEvent.Authenticated)
-            assertEquals("http://homeassistant.local:80", (event as ConnectionNavigationEvent.Authenticated).url)
+            assertEquals("http://homeassistant.local", (event as ConnectionNavigationEvent.Authenticated).url)
+        }
+    }
+
+    @Test
+    fun `Given same-host IPv6 redirect to a new port when auth completes then Authenticated url keeps the host bracketed`() = runTest {
+        val authCode = "test_auth_code"
+        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
+
+        val viewModel = ConnectionViewModel(
+            "http://[::1]:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserManager,
+        )
+
+        turbineScope {
+            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
+
+            // Same IPv6 host, new port: the produced origin must keep the brackets to stay a valid URL
+            viewModel.webViewClient.onPageFinished(null, "http://[::1]:80/onboarding")
+
+            val result = viewModel.webViewClient.shouldOverrideUrlLoading(null, stringUri)
+
+            assertTrue(result)
+            val event = navigationEventsFlow.awaitItem()
+            assertEquals("http://[::1]", (event as ConnectionNavigationEvent.Authenticated).url)
         }
     }
 
@@ -281,16 +308,17 @@ class ConnectionViewModelTest {
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
 
-            // Several hops on the same host; the last one wins
+            // Several hops on the same host; the last one wins. The final port is non-default,
+            // so it is kept explicitly in the stored URL.
             viewModel.webViewClient.onPageFinished(null, "http://homeassistant.local:8123/")
-            viewModel.webViewClient.onPageFinished(null, "http://homeassistant.local:8080/onboarding")
             viewModel.webViewClient.onPageFinished(null, "http://homeassistant.local:80/onboarding")
+            viewModel.webViewClient.onPageFinished(null, "http://homeassistant.local:8080/onboarding")
 
             val result = viewModel.webViewClient.shouldOverrideUrlLoading(null, stringUri)
 
             assertTrue(result)
             val event = navigationEventsFlow.awaitItem()
-            assertEquals("http://homeassistant.local:80", (event as ConnectionNavigationEvent.Authenticated).url)
+            assertEquals("http://homeassistant.local:8080", (event as ConnectionNavigationEvent.Authenticated).url)
         }
     }
 

@@ -211,7 +211,15 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         if (navigated.host != initial.host) return
         if (navigated.scheme == initial.scheme && navigated.port == initial.port) return
 
-        val newOrigin = "${navigated.scheme}://${navigated.host}:${navigated.port}"
+        // Rebuild from the initial URL, swapping only scheme/port. HttpUrl handles IPv6 bracketing and
+        // drops the scheme's default port; the trailing slash it always appends is removed to keep the
+        // same no-trailing-slash form as the URL used to open the screen.
+        val newOrigin = initial.newBuilder()
+            .scheme(navigated.scheme)
+            .port(navigated.port)
+            .build()
+            .toString()
+            .removeSuffix("/")
         if (newOrigin != effectiveUrl.value) {
             Timber.d("Onboarding redirected to a new origin on the same host, updating stored URL")
             effectiveUrl.value = newOrigin
