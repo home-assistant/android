@@ -784,13 +784,6 @@ class WebViewActivity :
             }
         }
 
-        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
-            val webviewPackage = WebViewCompat.getCurrentWebViewPackage(this)
-            Timber.d(
-                "Current webview package ${webviewPackage?.packageName} and version ${webviewPackage?.versionName}",
-            )
-        }
-
         lifecycleScope.launch {
             if (presenter.isKeepScreenOnEnabled()) {
                 window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
