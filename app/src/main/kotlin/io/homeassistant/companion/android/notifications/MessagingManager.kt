@@ -72,6 +72,7 @@ import io.homeassistant.companion.android.common.util.createSystemAppSettingsInt
 import io.homeassistant.companion.android.common.util.getActiveNotification
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.common.util.parseExternalIntentUri
 import io.homeassistant.companion.android.common.util.toJsonObject
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechData
@@ -1696,7 +1697,7 @@ class MessagingManager @Inject constructor(
 
             uri.startsWith(INTENT_PREFIX) -> {
                 try {
-                    Intent.parseUri(uri, Intent.URI_INTENT_SCHEME)
+                    context.parseExternalIntentUri(uri)
                 } catch (e: Exception) {
                     Timber.e(e, "Unable to parse intent URI")
                     null

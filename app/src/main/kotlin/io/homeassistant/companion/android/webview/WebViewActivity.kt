@@ -111,6 +111,7 @@ import io.homeassistant.companion.android.common.util.getStringOrNull
 import io.homeassistant.companion.android.common.util.initializePlayer
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.jsonObjectOrNull
+import io.homeassistant.companion.android.common.util.parseExternalIntentUri
 import io.homeassistant.companion.android.common.util.runFragmentTransactionIfStateSafe
 import io.homeassistant.companion.android.common.util.toJsonObject
 import io.homeassistant.companion.android.common.util.toJsonObjectOrNull
@@ -636,8 +637,7 @@ class WebViewActivity :
                                 return true
                             } else if (it.startsWith(INTENT_PREFIX)) {
                                 Timber.d("Launching the intent")
-                                val intent =
-                                    Intent.parseUri(it, Intent.URI_INTENT_SCHEME)
+                                val intent = parseExternalIntentUri(it)
                                 val intentPackage = intent.`package`?.let { it1 ->
                                     packageManager.getLaunchIntentForPackage(
                                         it1,
