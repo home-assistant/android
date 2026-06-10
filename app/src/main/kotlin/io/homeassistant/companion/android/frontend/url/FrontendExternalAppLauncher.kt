@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.net.toUri
 import io.homeassistant.companion.android.common.util.parseExternalIntentUri
+import java.net.URISyntaxException
 import timber.log.Timber
 
 private const val MARKET_PREFIX = "https://play.google.com/store/apps/details?id="
@@ -37,7 +38,7 @@ fun Context.launchAppOrStore(packageName: String) {
 fun Context.launchIntentUri(intentUri: String) {
     val intent = try {
         parseExternalIntentUri(intentUri)
-    } catch (e: java.net.URISyntaxException) {
+    } catch (e: URISyntaxException) {
         Timber.e(e, "Unable to parse intent URI")
         return
     }
