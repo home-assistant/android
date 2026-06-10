@@ -76,15 +76,15 @@ import kotlin.time.ComparableTimeMark
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
-private val BarcodeScannerResultDebounce = 1.5.seconds
-private val FlashlightButtonSize = HADimens.SPACE12
-private val FlashlightButtonMargin = HADimens.SPACE2
+private val SCANNER_RESULT_DEBOUNCE = 1.5.seconds
+private val FLASHLIGHT_BUTTON_SIZE = HADimens.SPACE12
+private val FLASHLIGHT_BUTTON_MARGIN = HADimens.SPACE2
 
 /**
  * Translucent black tint shared by the scanner's dimming overlay (the scrim around the cutout) and
  * the flashlight FAB background, so both read as the same shade over the camera preview.
  */
-private val BarcodeScannerScrimColor = Color(0xAA000000)
+private val SCRIM_COLOR = Color(0xAA000000)
 
 /**
  * Compose barcode scanner. While the camera permission is granted, renders a full-screen camera
@@ -254,7 +254,7 @@ private fun rememberBarcodeScannerView(
             decodeContinuous { result ->
                 val now = TimeSource.Monotonic.markNow()
                 val previous = lastScan
-                if (previous != null && now - previous < BarcodeScannerResultDebounce) {
+                if (previous != null && now - previous < SCANNER_RESULT_DEBOUNCE) {
                     return@decodeContinuous
                 }
                 result.text.ifBlank { null }?.let {
@@ -331,7 +331,7 @@ private fun BarcodeScannerOverlay(cutout: Dp, modifier: Modifier = Modifier) {
             val checkPoint = saveLayer(null, null)
 
             // Destination
-            drawRect(BarcodeScannerScrimColor)
+            drawRect(SCRIM_COLOR)
 
             // Source
             drawRoundRect(
@@ -476,12 +476,12 @@ private fun ScannerFlashlightButton(
     modifier: Modifier = Modifier,
 ) {
     val offsetX = if (screenWidthDp > screenHeight) {
-        screenWidthDp - (0.5 * ((0.5 * screenWidthDp) - cutoutSize)) - FlashlightButtonSize - FlashlightButtonMargin
+        screenWidthDp - (0.5 * ((0.5 * screenWidthDp) - cutoutSize)) - FLASHLIGHT_BUTTON_SIZE - FLASHLIGHT_BUTTON_MARGIN
     } else {
-        screenWidthDp - (0.5 * (screenWidthDp - cutoutSize)) - FlashlightButtonSize - FlashlightButtonMargin
+        screenWidthDp - (0.5 * (screenWidthDp - cutoutSize)) - FLASHLIGHT_BUTTON_SIZE - FLASHLIGHT_BUTTON_MARGIN
     }
     val offsetY = with(LocalDensity.current) { (0.5 * containerHeightPx).toInt().toDp() } +
-        (0.5 * cutoutSize) - FlashlightButtonSize - FlashlightButtonMargin
+        (0.5 * cutoutSize) - FLASHLIGHT_BUTTON_SIZE - FLASHLIGHT_BUTTON_MARGIN
 
     FlashlightButton(
         flashlightOn = flashlightOn,
@@ -493,11 +493,11 @@ private fun ScannerFlashlightButton(
 @Composable
 private fun FlashlightButton(flashlightOn: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier) {
     OutlinedButton(
-        modifier = modifier.size(FlashlightButtonSize),
+        modifier = modifier.size(FLASHLIGHT_BUTTON_SIZE),
         shape = CircleShape,
         border = null,
         contentPadding = PaddingValues(0.dp),
-        colors = ButtonDefaults.outlinedButtonColors(containerColor = BarcodeScannerScrimColor),
+        colors = ButtonDefaults.outlinedButtonColors(containerColor = SCRIM_COLOR),
         onClick = onToggle,
     ) {
         Icon(
