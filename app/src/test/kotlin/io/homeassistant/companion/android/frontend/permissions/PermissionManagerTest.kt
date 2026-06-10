@@ -4,6 +4,7 @@ import android.os.Build
 import android.webkit.PermissionRequest as WebViewPermissionRequest
 import app.cash.turbine.turbineScope
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissionUseCase
 import io.homeassistant.companion.android.common.util.NotificationStatusProvider
@@ -46,6 +47,7 @@ class PermissionManagerTest {
     private val notificationStatusProvider: NotificationStatusProvider = mockk()
     private val permissionChecker: PermissionChecker = mockk()
     private val checkLocalNetworkPermissionUseCase: CheckLocalNetworkPermissionUseCase = mockk(relaxed = true)
+    private val prefsRepository: PrefsRepository = mockk(relaxed = true)
 
     private val serverId = 1
 
@@ -71,6 +73,7 @@ class PermissionManagerTest {
             notificationStatusProvider = notificationStatusProvider,
             permissionChecker = permissionChecker,
             checkLocalNetworkPermissionUseCase = checkLocalNetworkPermissionUseCase,
+            prefsRepository = prefsRepository,
         )
     }
 
@@ -596,6 +599,108 @@ class PermissionManagerTest {
     // endregion
 
     // region Guard against concurrent requests
+
+    @Nested
+    inner class CheckImprovPermissions {
+
+        private val improvPermissions = listOf(
+            android.Manifest.permission.BLUETOOTH_SCAN,
+            android.Manifest.permission.BLUETOOTH_CONNECT,
+            android.Manifest.permission.ACCESS_FINE_LOCATION,
+        )
+
+        private fun grantAll() {
+            improvPermissions.forEach { every { permissionChecker.hasPermission(it) } returns true }
+        }
+
+        private fun denyAll() {
+            improvPermissions.forEach { every { permissionChecker.hasPermission(it) } returns false }
+        }
+
+        @Test
+        fun `Given all permissions granted then returns true without enqueuing`() = runTest {
+            grantAll()
+            val manager = createManager()
+
+            assertTrue(manager.checkImprovPermissions(improvPermissions))
+            assertNull(manager.pendingPermissionRequest.value)
+        }
+
+        @Test
+        fun `Given rationale below cap when called then enqueues Improv with showRationale true`() = runTest {
+            denyAll()
+            coEvery { prefsRepository.getImprovPermissionDisplayedCount() } returns 0
+
+            val manager = createManager()
+            val result = async { manager.checkImprovPermissions(improvPermissions) }
+            advanceUntilIdle()
+
+            val improv = assertInstanceOf(PermissionRequest.Improv::class.java, manager.pendingPermissionRequest.value)
+
+            assertTrue(improv.showRationale)
+            assertTrue(improv.needsBluetooth)
+            assertTrue(improv.needsLocation)
+            assertEquals(improvPermissions, improv.permissions)
+            coVerify { prefsRepository.addImprovPermissionDisplayedCount() }
+
+            improv.onDismiss()
+            advanceUntilIdle()
+            assertFalse(result.await())
+        }
+
+        @Test
+        fun `Given rationale below cap when system dialog grants then returns true`() = runTest {
+            denyAll()
+            coEvery { prefsRepository.getImprovPermissionDisplayedCount() } returns 0
+
+            val manager = createManager()
+            val result = async { manager.checkImprovPermissions(improvPermissions) }
+            advanceUntilIdle()
+
+            grantAll()
+            val request = assertInstanceOf(PermissionRequest.Improv::class.java, manager.pendingPermissionRequest.value)
+            request.onResult(improvPermissions.associateWith { true })
+            advanceUntilIdle()
+
+            assertTrue(result.await())
+        }
+
+        @Test
+        fun `Given rationale cap reached when called then enqueues Improv with showRationale false`() = runTest {
+            denyAll()
+            coEvery { prefsRepository.getImprovPermissionDisplayedCount() } returns IMPROV_RATIONALE_MAX_SHOWS
+
+            val manager = createManager()
+            val result = async { manager.checkImprovPermissions(improvPermissions) }
+            advanceUntilIdle()
+
+            val improv = assertInstanceOf(PermissionRequest.Improv::class.java, manager.pendingPermissionRequest.value)
+            assertFalse(improv.showRationale)
+            coVerify(exactly = 0) { prefsRepository.addImprovPermissionDisplayedCount() }
+
+            improv.onResult(improvPermissions.associateWith { false })
+            advanceUntilIdle()
+            assertFalse(result.await())
+        }
+
+        @Test
+        fun `Given system dialog returns partial grant when called then returns false`() = runTest {
+            denyAll()
+            coEvery { prefsRepository.getImprovPermissionDisplayedCount() } returns IMPROV_RATIONALE_MAX_SHOWS
+
+            val manager = createManager()
+            val result = async { manager.checkImprovPermissions(improvPermissions) }
+            advanceUntilIdle()
+
+            every { permissionChecker.hasPermission(android.Manifest.permission.BLUETOOTH_SCAN) } returns true
+            val request = assertInstanceOf(PermissionRequest.Improv::class.java, manager.pendingPermissionRequest.value)
+
+            request.onResult(mapOf(android.Manifest.permission.BLUETOOTH_SCAN to true))
+            advanceUntilIdle()
+
+            assertFalse(result.await())
+        }
+    }
 
     @Nested
     inner class ConcurrentRequestQueuing {

@@ -23,7 +23,9 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.rules.ActivityScenarioRule
+import com.wifi.improv.ErrorState
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -35,6 +37,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
+import io.homeassistant.companion.android.frontend.improv.ImprovUIState
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.permissions.PermissionRequest
@@ -256,6 +259,102 @@ class FrontendScreenTest {
     }
 
     @Test
+    fun `Given Content with null Improv state then Improv sheet is not displayed`() {
+        composeTestRule.apply {
+            setFrontendScreen(
+                viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
+            )
+
+            onNodeWithText(stringResource(commonR.string.improv_wifi_title)).assertDoesNotExist()
+            onNodeWithText(stringResource(commonR.string.improv_device_provisioned)).assertDoesNotExist()
+        }
+    }
+
+    @Test
+    fun `Given Content with SearchingDevice then Improv sheet shows connecting caption`() {
+        composeTestRule.apply {
+            setFrontendScreen(
+                viewState = FrontendViewState.Content(
+                    serverId = 1,
+                    url = "https://example.com",
+                    improvUiState = ImprovUIState.SearchingDevice(deviceName = "Smart Plug"),
+                ),
+            )
+
+            onNodeWithText(stringResource(commonR.string.improv_device_connecting)).assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun `Given Content with ConfiguringDevice when continue clicked then onImprovConnectDevice is called with credentials`() {
+        var connectArgs: Pair<String, String>? = null
+        composeTestRule.apply {
+            setFrontendScreen(
+                viewState = FrontendViewState.Content(
+                    serverId = 1,
+                    url = "https://example.com",
+                    improvUiState = ImprovUIState.ConfiguringDevice(
+                        deviceName = "Smart Plug",
+                        deviceAddress = "AA:BB",
+                        activeSsid = "Home Wi-Fi",
+                    ),
+                ),
+                onImprovConnectDevice = { ssid, password -> connectArgs = ssid to password },
+            )
+
+            onNodeWithText(stringResource(commonR.string.improv_wifi_title)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.password)).performTextInput("supersecret")
+            onNodeWithText(stringResource(commonR.string.continue_connect)).performClick()
+            waitForIdle()
+            assertEquals("Home Wi-Fi" to "supersecret", connectArgs)
+        }
+    }
+
+    @Test
+    fun `Given Content with Errored when try again clicked then onImprovRestart is called`() {
+        var restartCalled = false
+        composeTestRule.apply {
+            setFrontendScreen(
+                viewState = FrontendViewState.Content(
+                    serverId = 1,
+                    url = "https://example.com",
+                    improvUiState = ImprovUIState.Errored(
+                        deviceName = "Smart Plug",
+                        deviceAddress = "AA:BB",
+                        error = ErrorState.UNABLE_TO_CONNECT,
+                    ),
+                ),
+                onImprovRestart = { restartCalled = true },
+            )
+
+            onNodeWithText(stringResource(commonR.string.improv_error_unable_to_connect)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.continue_connect)).performClick()
+            waitForIdle()
+            assertTrue("onImprovRestart should be called when try again is clicked", restartCalled)
+        }
+    }
+
+    @Test
+    fun `Given Content with Provisioned when continue clicked then onImprovDismiss is called`() {
+        var dismissCalled = false
+        composeTestRule.apply {
+            setFrontendScreen(
+                viewState = FrontendViewState.Content(
+                    serverId = 1,
+                    url = "https://example.com",
+                    improvUiState = ImprovUIState.Provisioned(domain = "acme"),
+                ),
+                onImprovDismiss = { dismissCalled = true },
+            )
+
+            onNodeWithText(stringResource(commonR.string.improv_device_provisioned)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.continue_connect)).performClick()
+            waitForIdle()
+            assertTrue("onImprovDismiss should be called when continue is clicked", dismissCalled)
+        }
+    }
+
+    @Test
     fun `Given no pending notification permission then notification prompt is not displayed`() {
         composeTestRule.apply {
             setFrontendScreen(
@@ -385,6 +484,7 @@ class FrontendScreenTest {
         notificationStatusProvider = mockk(relaxed = true),
         permissionChecker = { false },
         checkLocalNetworkPermissionUseCase = mockk(relaxed = true),
+        prefsRepository = mockk(relaxed = true),
     )
 
     private fun AndroidComposeTestRule<ActivityScenarioRule<HiltComponentActivity>, HiltComponentActivity>.setFrontendScreen(
@@ -399,6 +499,9 @@ class FrontendScreenTest {
         onConfigureHomeNetwork: (serverId: Int) -> Unit = { _ -> },
         onSecurityLevelHelpClick: suspend () -> Unit = {},
         onSecurityLevelDone: () -> Unit = {},
+        onImprovConnectDevice: (ssid: String, password: String) -> Unit = { _, _ -> },
+        onImprovRestart: () -> Unit = {},
+        onImprovDismiss: () -> Unit = {},
         registry: ActivityResultRegistry? = null,
     ) {
         setContent {
@@ -422,6 +525,9 @@ class FrontendScreenTest {
                     onSecurityLevelDone = onSecurityLevelDone,
                     onShowSnackbar = { _, _ -> true },
                     onWebViewCreationFailed = {},
+                    onImprovConnectDevice = onImprovConnectDevice,
+                    onImprovRestart = onImprovRestart,
+                    onImprovDismiss = onImprovDismiss,
                 )
             }
 
