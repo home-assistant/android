@@ -30,7 +30,7 @@ class LinkActivityScreenshotTest {
                 uiState = LinkUiState.ChoosingServer(
                     items = listOf(
                         ServerChooserItem(serverId = 1, userName = "Alice Smith", serverName = "Home"),
-                        ServerChooserItem(serverId = 2, userName = "Bob", serverName = "Friends home"),
+                        ServerChooserItem(serverId = 2, userName = "Bob", serverName = "Friends home", isActive = true),
                     ),
                     path = "/lovelace",
                 ),
