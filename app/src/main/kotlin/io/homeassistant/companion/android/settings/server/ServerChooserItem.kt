@@ -2,6 +2,8 @@ package io.homeassistant.companion.android.settings.server
 
 import android.graphics.Bitmap
 
+private const val MAX_INITIALS = 2
+
 /**
  * Display model for a single server.
  *
@@ -17,4 +19,12 @@ data class ServerChooserItem(
     val serverName: String,
     val userAvatar: Bitmap? = null,
     val isActive: Boolean = false,
-)
+) {
+    val initials = userName
+        .ifBlank { serverName }
+        .split(" ")
+        .filter { it.isNotBlank() }
+        .take(MAX_INITIALS)
+        .joinToString(separator = "") { it.first().uppercase() }
+        .ifBlank { "?" }
+}
