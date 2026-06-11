@@ -210,11 +210,16 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         val navigated = url?.toHttpUrlOrNull() ?: return
         val initial = rawHttpUrl ?: return
         if (navigated.host != initial.host) return
-        if (navigated.scheme == initial.scheme && navigated.port == initial.port) return
+        // Never downgrade a secure connection: if the screen was opened on https, ignore a redirect to
+        // http and keep the original URL rather than silently storing a plaintext origin.
+        if (initial.isHttps && !navigated.isHttps) {
+            Timber.w("Ignoring an https to http downgrade during onboarding, keeping the original URL")
+            return
+        }
 
         val newOrigin = navigated.toBaseUrl()
         if (newOrigin != effectiveUrl.value) {
-            Timber.d("Onboarding redirected to a new origin on the same host, updating stored URL")
+            Timber.d("Onboarding navigated to a new origin on the same host, updating stored URL")
             effectiveUrl.value = newOrigin
         }
     }

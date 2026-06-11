@@ -245,6 +245,58 @@ class ConnectionViewModelTest {
     }
 
     @Test
+    fun `Given a same-host redirect that downgrades https to http when auth completes then Authenticated url keeps the original https url`() = runTest {
+        val authCode = "test_auth_code"
+        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
+
+        val viewModel = ConnectionViewModel(
+            "https://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserManager,
+        )
+
+        turbineScope {
+            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
+
+            // A redirect that downgrades https -> http on the same host must be ignored
+            viewModel.webViewClient.onPageFinished(null, "http://homeassistant.local:80/onboarding")
+
+            val result = viewModel.webViewClient.shouldOverrideUrlLoading(null, stringUri)
+
+            assertTrue(result)
+            val event = navigationEventsFlow.awaitItem()
+            assertEquals("https://homeassistant.local:8123", (event as ConnectionNavigationEvent.Authenticated).url)
+        }
+    }
+
+    @Test
+    fun `Given a same-host redirect that upgrades http to https when auth completes then Authenticated url uses the https origin`() = runTest {
+        val authCode = "test_auth_code"
+        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
+
+        val viewModel = ConnectionViewModel(
+            "http://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserManager,
+        )
+
+        turbineScope {
+            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
+
+            // An upgrade http -> https on the same host is allowed and adopted
+            viewModel.webViewClient.onPageFinished(null, "https://homeassistant.local/onboarding")
+
+            val result = viewModel.webViewClient.shouldOverrideUrlLoading(null, stringUri)
+
+            assertTrue(result)
+            val event = navigationEventsFlow.awaitItem()
+            assertEquals("https://homeassistant.local", (event as ConnectionNavigationEvent.Authenticated).url)
+        }
+    }
+
+    @Test
     fun `Given redirect to a different host when auth completes then Authenticated url stays the initial url`() = runTest {
         val authCode = "test_auth_code"
         val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
@@ -598,7 +650,7 @@ class ConnectionViewModelTest {
         assertTrue(handled)
         val pending = viewModel.pendingFileChooser.value
         assertNotNull(pending)
-        assertTrue(pending!!.fileChooserParams === fileChooserParams)
+        assertTrue(pending.fileChooserParams === fileChooserParams)
     }
 
     @Test
@@ -622,7 +674,7 @@ class ConnectionViewModelTest {
         val pending = viewModel.pendingFileChooser.value
         assertNotNull(pending)
         val uris = arrayOf(mockk<Uri>())
-        pending!!.onResult(uris)
+        pending.onResult(uris)
         advanceUntilIdle()
 
         verify { filePathCallback.onReceiveValue(uris) }
@@ -649,7 +701,7 @@ class ConnectionViewModelTest {
 
         val pending = viewModel.pendingFileChooser.value
         assertNotNull(pending)
-        pending!!.onResult(null)
+        pending.onResult(null)
         advanceUntilIdle()
 
         verify { filePathCallback.onReceiveValue(null) }
