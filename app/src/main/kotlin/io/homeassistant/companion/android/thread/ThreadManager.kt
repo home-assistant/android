@@ -18,6 +18,8 @@ interface ThreadManager {
             val matches: Boolean?,
             val fromApp: Boolean?,
             val updated: Boolean?,
+            val deviceNowPrefersCore: Boolean?,
+            val devicePreferredNetworkName: String?,
             val exportIntent: IntentSender?,
         ) : SyncResult()
         object NoneHaveCredentials : SyncResult()
