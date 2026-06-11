@@ -250,7 +250,7 @@ class ConnectionViewModelTest {
         val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
 
         val viewModel = ConnectionViewModel(
-            "http://homeassistant.local:8123",
+            "http://homeassistant.local:8123/lovelace?foo=bar#baz",
             webViewClientFactory,
             connectivityCheckRepository,
             fileChooserManager,
@@ -289,6 +289,30 @@ class ConnectionViewModelTest {
 
             assertTrue(result)
             val event = navigationEventsFlow.awaitItem()
+            assertEquals("http://homeassistant.local:8123", (event as ConnectionNavigationEvent.Authenticated).url)
+        }
+    }
+
+    @Test
+    fun `Given an initial url with a path and query when auth completes then Authenticated url is the bare origin`() = runTest {
+        val authCode = "test_auth_code"
+        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
+
+        val viewModel = ConnectionViewModel(
+            "http://homeassistant.local:8123/lovelace?foo=bar#baz",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserManager,
+        )
+
+        turbineScope {
+            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
+
+            val result = viewModel.webViewClient.shouldOverrideUrlLoading(null, stringUri)
+
+            assertTrue(result)
+            val event = navigationEventsFlow.awaitItem()
+            // The stored server URL is the bare origin, not the onboarding path/query
             assertEquals("http://homeassistant.local:8123", (event as ConnectionNavigationEvent.Authenticated).url)
         }
     }

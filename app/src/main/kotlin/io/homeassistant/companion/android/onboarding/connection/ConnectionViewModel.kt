@@ -95,14 +95,15 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     private val rawHttpUrl: HttpUrl? = rawUrl.toHttpUrlOrNull()
 
     /**
-     * The base URL the app should store for this server.
+     * The base URL the app should store for this server, normalized to its origin
+     * (`scheme://host:port`, no path/query/fragment).
      *
-     * Starts as the URL used to open the screen and is updated to a new origin when the WebView is
-     * redirected to the same host on a different scheme/port (e.g. the landing page on `:8123`
-     * handing over to the freshly installed core on `:80`). A redirect to a different host is
-     * ignored, so the initial URL is kept.
+     * Starts as the origin of the URL used to open the screen and is updated to a new origin when
+     * the WebView is redirected to the same host on a different scheme/port (e.g. the landing page on
+     * `:8123` handing over to the freshly installed core on `:80`). A redirect to a different host is
+     * ignored, so the initial origin is kept. Falls back to the raw URL if it cannot be parsed.
      */
-    private val effectiveUrl = MutableStateFlow(rawUrl)
+    private val effectiveUrl = MutableStateFlow(rawHttpUrl?.toBaseUrl() ?: rawUrl)
 
     private val _navigationEventsFlow = MutableSharedFlow<ConnectionNavigationEvent>(replay = 1)
     val navigationEventsFlow = _navigationEventsFlow.asSharedFlow()
@@ -211,15 +212,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         if (navigated.host != initial.host) return
         if (navigated.scheme == initial.scheme && navigated.port == initial.port) return
 
-        // Rebuild from the initial URL, swapping only scheme/port. HttpUrl handles IPv6 bracketing and
-        // drops the scheme's default port; the trailing slash it always appends is removed to keep the
-        // same no-trailing-slash form as the URL used to open the screen.
-        val newOrigin = initial.newBuilder()
-            .scheme(navigated.scheme)
-            .port(navigated.port)
-            .build()
-            .toString()
-            .removeSuffix("/")
+        val newOrigin = navigated.toBaseUrl()
         if (newOrigin != effectiveUrl.value) {
             Timber.d("Onboarding redirected to a new origin on the same host, updating stored URL")
             effectiveUrl.value = newOrigin
@@ -278,3 +271,18 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         runConnectivityChecks()
     }
 }
+
+/**
+ * The origin (`scheme://host:port`) of this URL as a string, with path, query and fragment removed.
+ *
+ * Delegating to [HttpUrl] keeps the formatting correct: IPv6 literal hosts stay bracketed (e.g.
+ * `http://[::1]:8123`) and the scheme's default port is dropped. The trailing slash that [HttpUrl]
+ * always appends is removed so the result has the same shape as a bare base URL.
+ */
+private fun HttpUrl.toBaseUrl(): String = newBuilder()
+    .encodedPath("/")
+    .encodedQuery(null)
+    .encodedFragment(null)
+    .build()
+    .toString()
+    .removeSuffix("/")
