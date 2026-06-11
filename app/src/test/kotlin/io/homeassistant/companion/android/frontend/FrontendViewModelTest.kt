@@ -1100,9 +1100,10 @@ class FrontendViewModelTest {
                     onUrlIntercepted = any(),
                     onPageFinished = any(),
                     onReceivedHttpAuthRequest = any(),
+                    onCanGoBackChanged = any(),
                 )
             } answers {
-                // onPageFinished is the 5th of the 6 named arguments (zero-based index 4)
+                // onPageFinished is at parameter index 4 in HAWebViewClientFactory.create
                 capturedPageFinished = arg(4)
                 mockk(relaxed = true)
             }
@@ -1199,9 +1200,10 @@ class FrontendViewModelTest {
                     onUrlIntercepted = any(),
                     onPageFinished = any(),
                     onReceivedHttpAuthRequest = any(),
+                    onCanGoBackChanged = any(),
                 )
             } answers {
-                capturedCallback = lastArg()
+                capturedCallback = arg(5)
                 mockk(relaxed = true)
             }
 
@@ -1283,6 +1285,137 @@ class FrontendViewModelTest {
                 assertTrue(event is FrontendEvent.ShowSnackbar)
                 cancelAndIgnoreRemainingEvents()
             }
+        }
+    }
+
+    @Nested
+    inner class BackNavigation {
+
+        private fun createViewModelWithCanGoBackCapture(): Pair<FrontendViewModel, (Boolean) -> Unit> {
+            var capturedCanGoBackChanged: ((Boolean) -> Unit)? = null
+            every {
+                webViewClientFactory.create(
+                    currentUrlFlow = any(),
+                    onFrontendError = any(),
+                    onCrash = any(),
+                    onUrlIntercepted = any(),
+                    onPageFinished = any(),
+                    onReceivedHttpAuthRequest = any(),
+                    onCanGoBackChanged = any(),
+                )
+            } answers {
+                // onCanGoBackChanged is at parameter index 6 in HAWebViewClientFactory.create
+                capturedCanGoBackChanged = arg(6)
+                mockk(relaxed = true)
+            }
+
+            val viewModel = createViewModel()
+            return viewModel to { capturedCanGoBackChanged!!.invoke(it) }
+        }
+
+        /** Reads the back-navigation flag from the current state (only the dashboard carries it). */
+        private fun FrontendViewModel.canGoBack(): Boolean = (viewState.value as? FrontendViewState.Content)?.canGoBack == true
+
+        @Test
+        fun `Given Content state when WebView reports back availability then canGoBack reflects it`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val (viewModel, reportCanGoBack) = createViewModelWithCanGoBackCapture()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+
+            assertFalse(viewModel.canGoBack())
+
+            reportCanGoBack(true)
+            assertTrue(viewModel.canGoBack())
+
+            reportCanGoBack(false)
+            assertFalse(viewModel.canGoBack())
+        }
+
+        @Test
+        fun `Given WebView covered by an overlay when it can go back then canGoBack is false`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val (viewModel, reportCanGoBack) = createViewModelWithCanGoBackCapture()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+            reportCanGoBack(true)
+            assertTrue(viewModel.canGoBack())
+
+            // An overlay (here the unrecoverable error screen) now covers the WebView: back must not
+            // drive the hidden WebView's history.
+            viewModel.onWebViewCreationFailed(RuntimeException("WebView unavailable"))
+            advanceUntilIdle()
+
+            assertFalse(viewModel.canGoBack())
+        }
+
+        @Test
+        fun `Given the frontend connects when content is shown then webViewActions emits ClearHistory`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val (viewModel, _) = createViewModelWithCanGoBackCapture()
+
+            viewModel.webViewActions.test {
+                advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+                // Connecting makes the dashboard the current page; clearing history drops the
+                // intermediate about:blank placeholder so it is not a reachable back entry.
+                messageFlow.emit(FrontendHandlerEvent.Connected)
+                advanceUntilIdle()
+
+                assertInstanceOf(WebViewAction.ClearHistory::class.java, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given a connected server with back history when switching servers then history is cleared and canGoBack is false`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(1, any()) } returns flowOf(
+                UrlLoadResult.Success(url = "https://server1.com?external_auth=1", serverId = 1),
+            )
+            every { urlManager.serverUrlFlow(2, any()) } returns flowOf(
+                UrlLoadResult.Success(url = "https://server2.com?external_auth=1", serverId = 2),
+            )
+
+            val (viewModel, reportCanGoBack) = createViewModelWithCanGoBackCapture()
+
+            // Connect to server 1 and let it accrue in-dashboard back history.
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+            reportCanGoBack(true)
+            assertTrue(viewModel.canGoBack())
+
+            viewModel.webViewActions.test {
+                viewModel.switchServer(2)
+                advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+                messageFlow.emit(FrontendHandlerEvent.Connected)
+                advanceUntilIdle()
+
+                // The new server's history is cleared so back cannot return to the previous server.
+                assertInstanceOf(WebViewAction.ClearHistory::class.java, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            assertEquals(2, viewModel.viewState.value.serverId)
+            assertFalse(viewModel.canGoBack())
         }
     }
 
