@@ -121,3 +121,16 @@ fun Context.openSystemAppSettings() {
         createSystemAppSettingsIntent(),
     )
 }
+
+/**
+ * Parses an `intent:` URI coming from an untrusted source (for example a link in the web
+ * frontend or a server-sent notification) into a launchable [Intent], neutralizing intent
+ * redirection in the process (see [Intent.stripSelfNonExportedTarget]).
+ *
+ * Use this instead of [Intent.parseUri] for any URI we do not fully control, so the
+ * sanitization can never be forgotten at a call site.
+ *
+ * @return the parsed and sanitized [Intent]
+ */
+fun Context.parseExternalIntentUri(uri: String): Intent =
+    Intent.parseUri(uri, Intent.URI_INTENT_SCHEME).stripSelfNonExportedTarget(this)
