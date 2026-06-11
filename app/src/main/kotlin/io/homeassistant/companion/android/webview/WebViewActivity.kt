@@ -2210,10 +2210,12 @@ class WebViewActivity :
         // Set base zoom level (percentage must be scaled to device density/percentage)
         webView.setInitialScale((resources.displayMetrics.density * presenter.getPageZoomLevel()).toInt())
 
-        // Enable pinch to zoom
-        webView.settings.builtInZoomControls = presenter.isPinchToZoomEnabled()
+        val pinchToZoomEnabled = presenter.isPinchToZoomEnabled()
+        // Toggle both setSupportZoom and builtInZoomControls together
+        webView.settings.setSupportZoom(pinchToZoomEnabled)
+        webView.settings.builtInZoomControls = pinchToZoomEnabled
         // Use idea from https://github.com/home-assistant/iOS/pull/1472 to filter viewport
-        val pinchToZoom = if (presenter.isPinchToZoomEnabled()) "true" else "false"
+        val pinchToZoom = if (pinchToZoomEnabled) "true" else "false"
         // Opts into [EvaluateJavascriptUsage] to rewrite the `<meta name="viewport">` tag and
         // toggle pinch-to-zoom. Viewport configuration is a WebView/HTML concern that sits below
         // the frontend, so no external bus message can express it — this script is the only way

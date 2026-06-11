@@ -93,8 +93,16 @@ sealed interface WebViewAction {
      * Applies zoom settings to the WebView.
      *
      * Sets the base zoom level via [WebView.setInitialScale] (scaled by device density),
-     * enables or disables pinch-to-zoom via [android.webkit.WebSettings.setBuiltInZoomControls],
-     * and injects JavaScript to modify the viewport meta tag.
+     * enables or disables pinch-to-zoom via [android.webkit.WebSettings.setSupportZoom] and
+     * [android.webkit.WebSettings.setBuiltInZoomControls], and injects JavaScript to modify
+     * the viewport meta tag.
+     *
+     * Both [android.webkit.WebSettings.setSupportZoom] and
+     * [android.webkit.WebSettings.setBuiltInZoomControls] must be toggled together: when a
+     * custom initial scale is applied via [WebView.setInitialScale], leaving
+     * [android.webkit.WebSettings.setSupportZoom] at its default of `true` lets WebView
+     * keep accepting pinch gestures to zoom with a small range around the initial scale,
+     * even though the built-in controls are disabled.
      *
      * @param zoomLevel Zoom level percentage (e.g. 100 for no zoom, 150 for 150%).
      * @param pinchToZoomEnabled Whether the user has enabled pinch-to-zoom.
@@ -136,7 +144,10 @@ sealed interface WebViewAction {
         override fun run(webView: WebView) {
             val density = webView.resources.displayMetrics.density
             webView.setInitialScale((density * zoomLevel).toInt())
-            webView.settings { builtInZoomControls = pinchToZoomEnabled }
+            webView.settings {
+                setSupportZoom(pinchToZoomEnabled)
+                builtInZoomControls = pinchToZoomEnabled
+            }
             // Opts into [EvaluateJavascriptUsage] to rewrite the `<meta name="viewport">` tag
             // and toggle pinch-to-zoom. Viewport configuration is a WebView/HTML concern that
             // sits below the frontend, so no external bus message can express it — this script
