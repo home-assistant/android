@@ -245,7 +245,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
                 false // Not intercepted: Auth code missing
             }
         } else if (url.host != rawHttpUrl?.host) {
-            Timber.d("$url is not from the server, opening it on external browser.")
+            Timber.d("$url is not from the server, opening it in an external browser")
             viewModelScope.launch {
                 _navigationEventsFlow.emit(ConnectionNavigationEvent.OpenExternalLink(url))
             }
