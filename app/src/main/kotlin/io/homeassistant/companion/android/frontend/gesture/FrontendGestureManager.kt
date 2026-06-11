@@ -9,7 +9,6 @@ import io.homeassistant.companion.android.common.util.HAGesture
 import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import io.homeassistant.companion.android.frontend.WebViewAction
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
-import io.homeassistant.companion.android.frontend.externalbus.outgoing.NavigateToMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ShowSidebarMessage
 import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import javax.inject.Inject
@@ -54,7 +53,7 @@ class FrontendGestureManager @Inject constructor(
                 externalBusRepository.send(ShowSidebarMessage)
                 GestureResult.Forwarded
             }
-            GestureAction.NAVIGATE_DASHBOARD -> navigateToDashboard(serverId)
+            GestureAction.NAVIGATE_DASHBOARD -> GestureResult.NavigateToDefaultDashboard
             GestureAction.QUICKBAR_DEFAULT -> openQuickBarDefault(serverId)
             GestureAction.QUICKBAR_ENTITIES -> {
                 dispatchKeyDown(key = "e", code = "KeyE", keyCode = 69)
@@ -148,22 +147,5 @@ class FrontendGestureManager @Inject constructor(
         if (currentIndex == -1) return GestureResult.Ignored
         val nextIndex = (currentIndex + offset).mod(servers.size)
         return GestureResult.SwitchServer(servers[nextIndex].id)
-    }
-
-    private suspend fun navigateToDashboard(serverId: Int): GestureResult {
-        val version = serverManager.getServer(serverId)?.version
-        if (!NavigateToMessage.isAvailable(version)) {
-            Timber.w(
-                "Server version $version does not support navigate command, requires 2025.6+",
-            )
-            return GestureResult.Ignored
-        }
-        return GestureResult.PerformWebViewActionThen(
-            action = WebViewAction.ClearHistory(),
-            then = {
-                externalBusRepository.send(NavigateToMessage(path = "/", replace = true))
-                GestureResult.Forwarded
-            },
-        )
     }
 }

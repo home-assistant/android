@@ -22,17 +22,9 @@ sealed interface GestureResult {
     /** The gesture requires a WebView operation. The ViewModel should emit this action. */
     data class PerformWebViewAction(val action: WebViewAction) : GestureResult
 
+    /** The gesture requires navigating to the server's default dashboard. */
+    data object NavigateToDefaultDashboard : GestureResult
+
     /** The gesture requires switching the active server. The ViewModel should switch to [serverId]. */
     data class SwitchServer(val serverId: Int) : GestureResult
-
-    /**
-     * The gesture requires a WebView operation that must complete before continuing.
-     *
-     * The ViewModel emits [action], awaits its [WebViewAction.AwaitableAction.result],
-     * then recursively handles the result of [then].
-     */
-    data class PerformWebViewActionThen<T>(
-        val action: WebViewAction.AwaitableAction<T>,
-        val then: suspend () -> GestureResult,
-    ) : GestureResult
 }

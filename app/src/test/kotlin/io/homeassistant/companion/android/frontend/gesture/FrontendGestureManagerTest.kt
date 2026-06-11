@@ -9,7 +9,6 @@ import io.homeassistant.companion.android.common.util.HAGesture
 import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import io.homeassistant.companion.android.frontend.WebViewAction
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
-import io.homeassistant.companion.android.frontend.externalbus.outgoing.OutgoingExternalBusMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ShowSidebarMessage
 import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.util.mockServer
@@ -68,15 +67,8 @@ class FrontendGestureManagerTest {
     }
 
     @Test
-    fun `Given NAVIGATE_DASHBOARD and server 2025_6 when handleGesture then returns PerformWebViewActionThen with ClearHistory`() = runTest {
+    fun `Given NAVIGATE_DASHBOARD when handleGesture then returns NavigateToDefaultDashboard`() = runTest {
         coEvery { prefsRepository.getGestureAction(HAGesture.SWIPE_UP_TWO) } returns GestureAction.NAVIGATE_DASHBOARD
-        val server = mockServer(
-            url = "https://ha.test",
-            name = "Test",
-            haVersion = HomeAssistantVersion(2025, 6, 0),
-            serverId = 1,
-        )
-        coEvery { serverManager.getServer(1) } returns server
 
         val result = manager.handleGesture(
             serverId = 1,
@@ -84,34 +76,7 @@ class FrontendGestureManagerTest {
             pointerCount = 2,
         )
 
-        assertInstanceOf(GestureResult.PerformWebViewActionThen::class.java, result)
-        val chainedResult = result as GestureResult.PerformWebViewActionThen<*>
-        assertInstanceOf(WebViewAction.ClearHistory::class.java, chainedResult.action)
-
-        // Execute the continuation and verify NavigateToMessage is sent
-        val thenResult = chainedResult.then()
-        assertEquals(GestureResult.Forwarded, thenResult)
-        coVerify { externalBusRepository.send(match { it is OutgoingExternalBusMessage }) }
-    }
-
-    @Test
-    fun `Given NAVIGATE_DASHBOARD and old server when handleGesture then returns Ignored`() = runTest {
-        coEvery { prefsRepository.getGestureAction(HAGesture.SWIPE_UP_TWO) } returns GestureAction.NAVIGATE_DASHBOARD
-        val server = mockServer(
-            url = "https://ha.test",
-            name = "Test",
-            haVersion = HomeAssistantVersion(2025, 5, 0),
-            serverId = 1,
-        )
-        coEvery { serverManager.getServer(1) } returns server
-
-        val result = manager.handleGesture(
-            serverId = 1,
-            direction = GestureDirection.UP,
-            pointerCount = 2,
-        )
-
-        assertEquals(GestureResult.Ignored, result)
+        assertEquals(GestureResult.NavigateToDefaultDashboard, result)
         coVerify(exactly = 0) { externalBusRepository.send(any()) }
     }
 
