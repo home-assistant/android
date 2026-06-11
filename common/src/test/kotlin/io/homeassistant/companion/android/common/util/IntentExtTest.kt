@@ -70,7 +70,7 @@ class IntentExtTest {
     }
 
     @Test
-    fun `Given intent targeting another app non-exported component when stripped then component is kept`() {
+    fun `Given intent targeting another app non-exported component when stripped then intent is left untouched`() {
         // Android already blocks launching another app's non-exported component, so we must not
         // interfere with cross-app intents here.
         val className = "$OTHER_PACKAGE.OtherActivity"
