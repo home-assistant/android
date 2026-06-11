@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.frontend.url
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.util.AndroidRuntimeException
 import androidx.core.net.toUri
 import io.homeassistant.companion.android.common.util.parseExternalIntentUri
 import java.net.URISyntaxException
@@ -58,5 +59,11 @@ private fun Context.startActivityCatching(intent: Intent) {
         startActivity(intent)
     } catch (e: ActivityNotFoundException) {
         Timber.e(e, "No activity found to handle intent")
+    } catch (e: SecurityException) {
+        // The resolved activity requires a permission we were not granted to launch it.
+        Timber.e(e, "Not allowed to launch intent")
+    } catch (e: AndroidRuntimeException) {
+        // e.g. launching without FLAG_ACTIVITY_NEW_TASK from a non-Activity context.
+        Timber.e(e, "Unable to launch intent")
     }
 }

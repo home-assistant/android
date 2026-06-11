@@ -132,7 +132,7 @@ fun Context.openSystemAppSettings() {
  *
  * @return the parsed and sanitized [Intent]
  * @throws java.net.URISyntaxException if the basic URI syntax
- * it bad (as parsed by the Uri class) or the Intent data within the
+ * is bad (as parsed by the Uri class) or the Intent data within the
  * URI is invalid.
  */
 fun Context.parseExternalIntentUri(uri: String): Intent =
