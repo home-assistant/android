@@ -6,6 +6,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.google.zxing.BarcodeFormat
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
@@ -15,6 +16,7 @@ import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.frontend.auth.FrontendHttpAuthHandler
 import io.homeassistant.companion.android.frontend.auth.HttpAuthResult
+import io.homeassistant.companion.android.frontend.barcode.FrontendBarcodeScannerHandler
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
@@ -96,6 +98,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val httpAuthHandler: FrontendHttpAuthHandler,
     private val exoPlayerManager: FrontendExoPlayerManager,
     private val improvHandler: FrontendImprovHandler,
+    private val barcodeScannerHandler: FrontendBarcodeScannerHandler,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -117,6 +120,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         httpAuthHandler: FrontendHttpAuthHandler,
         exoPlayerManager: FrontendExoPlayerManager,
         improvHandler: FrontendImprovHandler,
+        barcodeScannerHandler: FrontendBarcodeScannerHandler,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
         initialPath = savedStateHandle.toRoute<FrontendRoute>().path,
@@ -135,6 +139,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         httpAuthHandler = httpAuthHandler,
         exoPlayerManager = exoPlayerManager,
         improvHandler = improvHandler,
+        barcodeScannerHandler = barcodeScannerHandler,
     )
 
     /**
@@ -339,6 +344,18 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             }
         }
 
+        viewModelScope.launch {
+            barcodeScannerHandler.state.collect { barcodeState ->
+                _viewState.update { currentState ->
+                    if (currentState is FrontendViewState.Content) {
+                        currentState.copy(barcodeScanner = barcodeState)
+                    } else {
+                        currentState
+                    }
+                }
+            }
+        }
+
         loadServer()
     }
 
@@ -522,6 +539,19 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         _events.tryEmit(FrontendEvent.RequestFullscreen(isFullScreen))
     }
 
+    /**
+     * Forwards a scanned code to the manager, which replies to the frontend.
+     * The scanner stays open until the frontend sends bar_code/close.
+     */
+    fun onBarcodeScanned(rawValue: String, format: BarcodeFormat) {
+        viewModelScope.launch { barcodeScannerHandler.onScanned(rawValue, format) }
+    }
+
+    /** Forwards a scanner cancellation (close icon / back press = false, alternative option = true). */
+    fun onBarcodeCancelled(forAction: Boolean) {
+        viewModelScope.launch { barcodeScannerHandler.onCancelled(forAction) }
+    }
+
     private suspend fun handleGestureResult(result: GestureResult) {
         when (result) {
             is GestureResult.Navigate -> _events.emit(result.event)
@@ -664,15 +694,18 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 Timber.d("Matter/Thread event received but not yet handled: $result")
             }
 
-            is FrontendHandlerEvent.ShowBarcodeScanner,
-            is FrontendHandlerEvent.NotifyBarcodeScanner,
-            FrontendHandlerEvent.CloseBarcodeScanner,
-            -> {
-                // Barcode scanner handling lands in a follow-up PR; the messages are already typed
-                // and hasBarCodeScanner is gated on FEATURE_CAMERA_ANY && !isAutomotive so the
-                // frontend should not send these on devices without a camera.
-                Timber.d("Barcode event received but not yet handled: $result")
+            is FrontendHandlerEvent.ShowBarcodeScanner -> barcodeScannerHandler.show(
+                messageId = result.messageId,
+                title = result.title,
+                description = result.description,
+                alternativeOptionLabel = result.alternativeOptionLabel,
+            )
+
+            is FrontendHandlerEvent.NotifyBarcodeScanner -> viewModelScope.launch {
+                barcodeScannerHandler.notify(result.message)
             }
+
+            FrontendHandlerEvent.CloseBarcodeScanner -> barcodeScannerHandler.close()
 
             is FrontendHandlerEvent.ConfigSent,
             is FrontendHandlerEvent.UnknownMessage,

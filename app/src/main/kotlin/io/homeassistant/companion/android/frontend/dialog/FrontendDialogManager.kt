@@ -48,6 +48,21 @@ internal class FrontendDialogManager @Inject constructor() {
     }
 
     /**
+     * Shows an informational dialog with a single dismiss button and suspends until the user
+     * dismisses it. There is no result to return; callers use this purely to surface a message
+     * (e.g. the frontend's `bar_code/notify`). The slot is freed before returning, including on
+     * cancellation of the calling coroutine.
+     */
+    suspend fun showInformation(message: String) {
+        queue.awaitResult { onResult ->
+            FrontendDialog.Information(
+                message = message,
+                onDismiss = { onResult(Unit) },
+            )
+        }
+    }
+
+    /**
      * Shows an HTTP Basic Auth dialog and suspends until the user responds.
      *
      * Pass `isAuthError = true` to surface a "credentials were rejected".

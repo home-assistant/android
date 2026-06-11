@@ -1,12 +1,6 @@
 package io.homeassistant.companion.android.barcode
 
-import android.Manifest
 import android.app.Application
-import android.content.pm.PackageManager
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,19 +19,11 @@ class BarcodeScannerViewModel @Inject constructor(
     private val externalBusRepository: ExternalBusRepository,
     val app: Application,
 ) : AndroidViewModel(app) {
-    var hasPermission by mutableStateOf(false)
-        private set
-
-    var hasFlashlight by mutableStateOf(false)
-        private set
 
     private val frontendActionsFlow = MutableSharedFlow<BarcodeScannerAction>()
     val actionsFlow = frontendActionsFlow.asSharedFlow()
 
     init {
-        checkPermission()
-        hasFlashlight = app.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH)
-
         viewModelScope.launch {
             externalBusRepository.receive(
                 listOf(BarcodeActionType.NOTIFY.externalBusType, BarcodeActionType.CLOSE.externalBusType),
@@ -53,11 +39,6 @@ class BarcodeScannerViewModel @Inject constructor(
                 }
             }
         }
-    }
-
-    fun checkPermission() {
-        hasPermission =
-            ContextCompat.checkSelfPermission(app, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
     }
 
     fun sendScannerResult(messageId: Int, text: String, format: String) {

@@ -1,17 +1,12 @@
 package io.homeassistant.companion.android.barcode
 
-import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.addCallback
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -19,10 +14,9 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.google.zxing.BarcodeFormat
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
-import io.homeassistant.companion.android.barcode.view.BarcodeScannerView
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.util.openSystemAppSettings
-import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
+import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.frontend.barcode.ui.BarcodeScanner
 import java.util.Locale
 import kotlinx.coroutines.launch
 
@@ -47,13 +41,6 @@ class BarcodeScannerActivity : BaseActivity() {
 
     private val viewModel: BarcodeScannerViewModel by viewModels()
 
-    private val cameraPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-        viewModel.checkPermission()
-        requestSilently = false
-    }
-
-    private var requestSilently by mutableStateOf(true)
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -61,22 +48,21 @@ class BarcodeScannerActivity : BaseActivity() {
 
         val title = if (intent.hasExtra(EXTRA_TITLE)) intent.getStringExtra(EXTRA_TITLE) else null
         val subtitle = if (intent.hasExtra(EXTRA_SUBTITLE)) intent.getStringExtra(EXTRA_SUBTITLE) else null
-        if (title == null || subtitle == null) finish() // Invalid state
+        if (title == null || subtitle == null) {
+            finish() // Invalid state
+            return
+        }
         val action = if (intent.hasExtra(EXTRA_ACTION)) intent.getStringExtra(EXTRA_ACTION) else null
 
         // Enforce status bar to be always light so we can see it above the blur of the screen
         WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = false
 
         setContent {
-            HomeAssistantAppTheme {
-                BarcodeScannerView(
-                    title = title!!,
-                    subtitle = subtitle!!,
-                    action = action,
-                    hasFlashlight = viewModel.hasFlashlight,
-                    hasPermission = viewModel.hasPermission,
-                    requestPermission = { requestPermission(false) },
-                    didRequestPermission = !requestSilently,
+            HATheme {
+                BarcodeScanner(
+                    title = title,
+                    description = subtitle,
+                    alternativeOptionLabel = action,
                     onResult = { text, format ->
                         val frontendFormat = when (format) {
                             BarcodeFormat.PDF_417 -> "pdf417"
@@ -85,6 +71,7 @@ class BarcodeScannerActivity : BaseActivity() {
                             BarcodeFormat.RSS_EXPANDED,
                             BarcodeFormat.UPC_EAN_EXTENSION,
                             -> "unknown"
+
                             else -> format.toString().lowercase(Locale.getDefault())
                         }
                         viewModel.sendScannerResult(messageId, text, frontendFormat)
@@ -113,27 +100,11 @@ class BarcodeScannerActivity : BaseActivity() {
                                 .setPositiveButton(commonR.string.ok, null)
                                 .show()
                         }
+
                         BarcodeActionType.CLOSE -> finish()
                     }
                 }
             }
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        viewModel.checkPermission()
-        if (!viewModel.hasPermission && requestSilently) {
-            requestPermission(true)
-        }
-    }
-
-    private fun requestPermission(inContext: Boolean) {
-        if (inContext) {
-            cameraPermission.launch(Manifest.permission.CAMERA)
-        } else {
-            openSystemAppSettings()
-            requestSilently = true // Reset state to trigger new in context dialog/check when resumed
         }
     }
 }
