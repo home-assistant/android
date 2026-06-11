@@ -342,6 +342,9 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity<StaticWidgetEn
             throw IllegalStateException("Selected entity is unknown on server")
         }
 
+        val selectedBackgroundOption = binding.backgroundType.selectedItem as String? ?: ""
+        val selectedBackgroundType = WidgetUtils.getWidgetBackgroundType(this, selectedBackgroundOption)
+
         return StaticWidgetEntity(
             id = appWidgetId,
             serverId = serverId,
@@ -363,14 +366,8 @@ class EntityWidgetConfigureActivity : BaseWidgetConfigureActivity<StaticWidgetEn
                 0 -> WidgetTapAction.TOGGLE
                 else -> WidgetTapAction.REFRESH
             },
-            backgroundType = when (binding.backgroundType.selectedItem as String?) {
-                getString(commonR.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR
-                getString(commonR.string.widget_background_type_transparent) -> WidgetBackgroundType.TRANSPARENT
-                else -> WidgetBackgroundType.DAYNIGHT
-            },
-            textColor = if (binding.backgroundType.selectedItem as String? ==
-                getString(commonR.string.widget_background_type_transparent)
-            ) {
+            backgroundType = selectedBackgroundType,
+            textColor = if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
                 getHexForColor(
                     if (binding.textColorWhite.isChecked) {
                         android.R.color.white
