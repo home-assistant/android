@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -70,6 +71,9 @@ import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAHint
+import io.homeassistant.companion.android.common.compose.theme.HADimens
+import io.homeassistant.companion.android.common.compose.theme.HATextStyle
+import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.common.util.openSystemAppSettings
@@ -153,13 +157,32 @@ fun SensorDetailView(
                 onDismiss = { sensorUpdateTypeInfo = false },
             )
         } else {
-            viewModel.sensorSettingsDialog?.let {
-                SensorDetailSettingDialog(
-                    viewModel = viewModel,
-                    state = it,
-                    onDismiss = { viewModel.cancelSettingWithDialog() },
-                    onSubmit = { state -> onDialogSettingSubmitted(state) },
+            viewModel.sensorSettingsDialog?.let { dialogState ->
+                val isMultiSelectList = dialogState.setting.valueType in listOf(
+                    SensorSettingType.LIST_APPS,
+                    SensorSettingType.LIST_BLUETOOTH,
+                    SensorSettingType.LIST_ZONES,
+                    SensorSettingType.LIST_BEACONS,
                 )
+                if (isMultiSelectList) {
+                    // TODO Drop the explicit HATheme once SensorDetailView is migrated
+                    // https://github.com/home-assistant/android/issues/6839
+                    HATheme {
+                        SensorDetailSettingSheet(
+                            title = viewModel.getSettingTranslatedTitle(dialogState.setting.name),
+                            state = dialogState,
+                            onDismiss = viewModel::cancelSettingWithDialog,
+                            onSave = onDialogSettingSubmitted,
+                        )
+                    }
+                } else {
+                    SensorDetailSettingDialog(
+                        viewModel = viewModel,
+                        state = dialogState,
+                        onDismiss = viewModel::cancelSettingWithDialog,
+                        onSubmit = onDialogSettingSubmitted,
+                    )
+                }
             }
         }
         LazyColumn(
@@ -582,16 +605,16 @@ fun SensorDetailSettingDialog(
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val listSettingDialog = state.setting.valueType.listType
-    val inputValue = remember(state.loading) { mutableStateOf(state.setting.value) }
+    val inputValue = remember(state.isLoading) { mutableStateOf(state.setting.value) }
     val checkedValue =
-        remember(state.loading) { mutableStateListOf<String>().also { it.addAll(state.entriesSelected) } }
+        remember(state.isLoading) { mutableStateListOf<String>().also { it.addAll(state.entriesSelected) } }
 
     MdcAlertDialog(
         modifier = modifier,
         onDismissRequest = onDismiss,
         title = { Text(viewModel.getSettingTranslatedTitle(state.setting.name)) },
         content = {
-            if (state.loading) {
+            if (state.isLoading) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -616,7 +639,7 @@ fun SensorDetailSettingDialog(
                             onClick = { isChecked ->
                                 if (state.setting.valueType == SensorSettingType.LIST) {
                                     inputValue.value = id
-                                    onSubmit(state.copy().apply { setting.value = inputValue.value })
+                                    onSubmit(state.copy(setting = state.setting.copy(value = inputValue.value)))
                                 } else {
                                     if (checkedValue.contains(id) && !isChecked) {
                                         checkedValue.remove(id)
@@ -647,14 +670,14 @@ fun SensorDetailSettingDialog(
             }
         },
         onCancel = onDismiss,
-        onSave = if (state.loading) {
+        onSave = if (state.isLoading) {
             null
         } else if (state.setting.valueType != SensorSettingType.LIST) {
             {
                 if (listSettingDialog) {
-                    inputValue.value = checkedValue.joinToString().replace("[", "").replace("]", "")
+                    inputValue.value = joinSelectedValues(checkedValue)
                 }
-                onSubmit(state.copy().apply { setting.value = inputValue.value })
+                onSubmit(state.copy(setting = state.setting.copy(value = inputValue.value)))
             }
         } else { // list is saved when selecting a value
             null
@@ -735,10 +758,13 @@ fun SensorDetailSettingRow(
     onClick: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val parsed = parseSettingLabel(label)
+
     Row(
         modifier = modifier
             .clickable { onClick(!checked) }
             .padding(horizontal = 12.dp)
+            .heightIn(min = 64.dp)
             .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -755,6 +781,18 @@ fun SensorDetailSettingRow(
                 modifier = Modifier.size(width = 48.dp, height = 48.dp),
             )
         }
-        Text(label)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = parsed.primary,
+                style = HATextStyle.Body.copy(textAlign = TextAlign.Start),
+            )
+            if (parsed.secondary != null) {
+                Spacer(Modifier.height(HADimens.SPACE1))
+                Text(
+                    text = parsed.secondary,
+                    style = HATextStyle.BodyMedium.copy(textAlign = TextAlign.Start),
+                )
+            }
+        }
     }
 }

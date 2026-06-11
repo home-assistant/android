@@ -85,7 +85,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1095"
+            line="1107"
             column="17"/>
     </issue>
 
@@ -388,7 +388,7 @@
 
     <issue
         id="ComposeViewModelForwarding"
-        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
         errorLine1="    FrontendScreenContent("
         errorLine2="    ^">
         <location
@@ -399,7 +399,7 @@
 
     <issue
         id="ComposeViewModelForwarding"
-        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
         errorLine1="        StateOverlay("
         errorLine2="        ^">
         <location
@@ -410,7 +410,7 @@
 
     <issue
         id="ComposeViewModelForwarding"
-        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
         errorLine1="        is FrontendViewState.SecurityLevelRequired -> SecurityLevelOverlay("
         errorLine2="                                                      ^">
         <location
@@ -421,7 +421,7 @@
 
     <issue
         id="ComposeViewModelForwarding"
-        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
         errorLine1="        LocationForSecureConnectionScreen("
         errorLine2="        ^">
         <location
@@ -432,7 +432,7 @@
 
     <issue
         id="ComposeViewModelForwarding"
-        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
         errorLine1="            CreateShortcutView("
         errorLine2="            ^">
         <location
@@ -443,7 +443,7 @@
 
     <issue
         id="ComposeViewModelForwarding"
-        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
         errorLine1="        ShortcutRadioButtonRow(viewModel = viewModel, type = &quot;lovelace&quot;, index = i)"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -454,7 +454,7 @@
 
     <issue
         id="ComposeViewModelForwarding"
-        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
         errorLine1="        ShortcutRadioButtonRow(viewModel = viewModel, type = &quot;entityId&quot;, index = i)"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -465,7 +465,7 @@
 
     <issue
         id="ComposeViewModelForwarding"
-        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
         errorLine1="        AddDeleteButton(viewModel = viewModel, shortcutId = shortcutId, i)"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -476,18 +476,18 @@
 
     <issue
         id="ComposeViewModelForwarding"
-        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
-        errorLine1="                SensorDetailSettingDialog("
-        errorLine2="                ^">
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="                    SensorDetailSettingDialog("
+        errorLine2="                    ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="164"
-            column="17"/>
+            line="186"
+            column="21"/>
     </issue>
 
     <issue
         id="ComposeViewModelForwarding"
-        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
         errorLine1="                LoadWearFavoritesSettings("
         errorLine2="                ^">
         <location
@@ -690,7 +690,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="120"
+            line="124"
             column="17"/>
     </issue>
 
@@ -701,7 +701,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="121"
+            line="125"
             column="17"/>
     </issue>
 
@@ -1336,7 +1336,7 @@
 
     <issue
         id="ComposeCompositionLocalUsage"
-        message="`CompositionLocal`s are implicit dependencies and creating new ones should be avoided. See https://slackhq.github.io/compose-lints/rules/#compositionlocals for more information."
+        message="`CompositionLocal`s are implicit dependencies and creating new ones should be avoided.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#compositionlocals for more information."
         errorLine1="internal val LocalGlanceColors: ProvidableCompositionLocal&lt;ColorProviders> = staticCompositionLocalOf {"
         errorLine2="^">
         <location
@@ -1402,7 +1402,7 @@
 
     <issue
         id="ComposePreviewPublic"
-        message="Composables annotated with @Preview that are used only for previewing the UI should not be public.See https://slackhq.github.io/compose-lints/rules/#preview-composables-should-not-be-public for more information."
+        message="Composables annotated with @Preview that are used only for previewing the UI should not be public.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#preview-composables-should-not-be-public for more information."
         errorLine1="@Preview"
         errorLine2="^">
         <location
@@ -1413,7 +1413,7 @@
 
     <issue
         id="ComposePreviewPublic"
-        message="Composables annotated with @Preview that are used only for previewing the UI should not be public.See https://slackhq.github.io/compose-lints/rules/#preview-composables-should-not-be-public for more information."
+        message="Composables annotated with @Preview that are used only for previewing the UI should not be public.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#preview-composables-should-not-be-public for more information."
         errorLine1="@Preview"
         errorLine2="^">
         <location
@@ -1424,7 +1424,7 @@
 
     <issue
         id="ComposePreviewPublic"
-        message="Composables annotated with @Preview that are used only for previewing the UI should not be public.See https://slackhq.github.io/compose-lints/rules/#preview-composables-should-not-be-public for more information."
+        message="Composables annotated with @Preview that are used only for previewing the UI should not be public.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#preview-composables-should-not-be-public for more information."
         errorLine1="@Preview"
         errorLine2="^">
         <location
