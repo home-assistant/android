@@ -177,7 +177,6 @@ class ButtonWidgetConfigureActivity : BaseActivity() {
 
 @Composable
 private fun ButtonWidgetConfigureScreen(viewModel: ButtonWidgetViewModel, onAddWidgetClicked: () -> Unit) {
-//    val state = remember (viewModel) { viewModel.uiState.value }
     val state by viewModel.uiState.collectAsStateWithLifecycle(ButtonWidgetUiState())
     LaunchedEffect(viewModel.actionFieldState) {
         snapshotFlow { viewModel.actionFieldState.text.toString() }.collectLatest {
