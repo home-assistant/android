@@ -278,8 +278,11 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
 
     @RequiresApi(Build.VERSION_CODES.O)
     suspend fun requestWidgetCreation(context: Context) {
+        val appWidgetManager = AppWidgetManager.getInstance(context)
+        check(appWidgetManager.isRequestPinAppWidgetSupported) { "Widget pinning is not supported" }
+
         staticWidgetDao.getWidgetCountFlow().drop(1).onStart {
-            AppWidgetManager.getInstance(context).requestPinAppWidget(
+            val requestAccepted = appWidgetManager.requestPinAppWidget(
                 ComponentName(context, EntityWidget::class.java),
                 null,
                 PendingIntent.getBroadcast(
@@ -292,6 +295,7 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
                     PendingIntent.FLAG_MUTABLE,
                 ),
             )
+            check(requestAccepted) { "Widget pin request was rejected" }
         }.first()
     }
 
