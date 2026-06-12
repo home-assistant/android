@@ -3,6 +3,9 @@ package io.homeassistant.companion.android.frontend.permissions
 import android.Manifest
 import android.os.Build
 import android.webkit.PermissionRequest as WebViewPermissionRequest
+import androidx.annotation.VisibleForTesting
+import dagger.hilt.android.scopes.ViewModelScoped
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissionUseCase
 import io.homeassistant.companion.android.common.util.NotificationStatusProvider
@@ -29,6 +32,13 @@ private data class WebViewPermissionStatus(
 )
 
 /**
+ * Caps how many times the Improv permission rationale bottom sheet is shown to a user before
+ * skipping straight to the system multi-permission dialog.
+ */
+@VisibleForTesting
+internal const val IMPROV_RATIONALE_MAX_SHOWS = 2
+
+/**
  * Centralises all Android runtime permission request/result for the frontend screen.
  *
  * Each `check*` / `on*` method runs the full request/response cycle: build a [PermissionRequest],
@@ -39,6 +49,7 @@ private data class WebViewPermissionStatus(
  * Concurrent triggers are waiting in FIFO order: a second method call suspends until the
  * current request is resolved.
  */
+@ViewModelScoped
 internal class PermissionManager @Inject constructor(
     private val serverManager: ServerManager,
     private val settingsDao: SettingsDao,
@@ -46,6 +57,7 @@ internal class PermissionManager @Inject constructor(
     private val notificationStatusProvider: NotificationStatusProvider,
     private val permissionChecker: PermissionChecker,
     private val checkLocalNetworkPermissionUseCase: CheckLocalNetworkPermissionUseCase,
+    private val prefsRepository: PrefsRepository,
 ) {
 
     private val queue = SingleSlotQueue<PermissionRequest>()
@@ -130,6 +142,45 @@ internal class PermissionManager @Inject constructor(
         return queue.awaitResult { onResult ->
             PermissionRequest.ExternalStorage(onResult = onResult)
         }
+    }
+
+    /**
+     * Drives the full permission flow for the Improv Wi-Fi onboarding session.
+     *
+     * Returns `true` immediately when every permission in [requiredPermissions] is already
+     * granted. Otherwise enqueues a single [PermissionRequest.Improv] whose `showRationale` flag
+     * is `true` only while the displayed-count is below [IMPROV_RATIONALE_MAX_SHOWS]. The UI owns
+     * both stages: the optional rationale bottom sheet and the system multi-permission dialog.
+     * The call resolves to:
+     * - `true` after the user answered the system dialog (whether granting or denying — the
+     *   final return value reflects whether everything is granted),
+     * - `false` when the user skipped the rationale without reaching the system dialog.
+     *
+     * @param requiredPermissions The full set of Android runtime permissions Improv needs (BLE +
+     *   Location). Variants of the list that depend on SDK level are owned by the caller.
+     * @return `true` when every permission in [requiredPermissions] is granted after the user
+     *   responded; `false` when the user skipped the rationale or at least one permission is
+     *   still missing.
+     */
+    suspend fun checkImprovPermissions(requiredPermissions: List<String>): Boolean {
+        val toRequest = requiredPermissions.filterNot { permissionChecker.hasPermission(it) }
+        if (toRequest.isEmpty()) return true
+
+        val showRationale = prefsRepository.getImprovPermissionDisplayedCount() < IMPROV_RATIONALE_MAX_SHOWS
+        if (showRationale) {
+            prefsRepository.addImprovPermissionDisplayedCount()
+        }
+
+        val responded = queue.awaitResult { resolve ->
+            PermissionRequest.Improv(
+                permissions = toRequest,
+                showRationale = showRationale,
+                onResult = { _ -> resolve(true) },
+                onDismiss = { resolve(false) },
+            )
+        }
+        if (!responded) return false
+        return requiredPermissions.all { permissionChecker.hasPermission(it) }
     }
 
     /**

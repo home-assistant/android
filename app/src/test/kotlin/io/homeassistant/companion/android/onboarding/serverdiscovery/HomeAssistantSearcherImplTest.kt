@@ -22,6 +22,7 @@ import java.net.URL
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -85,7 +86,7 @@ class HomeAssistantSearcherImplTest {
         val resolveListener = slot<NsdManager.ResolveListener>()
         val wifiLock = mockk<WifiManager.MulticastLock>(relaxed = true)
         val serviceInfo = createNsdServiceInfo()
-        val serviceInfo2 = createNsdServiceInfo(baseUrl = "https://helloworld.org")
+        val serviceInfo2 = createNsdServiceInfo(externalUrl = "https://helloworld.org")
 
         captureListeners(discoveryListener, resolveListener)
         every { wifiManager.createMulticastLock(LOCK_TAG) } returns wifiLock
@@ -160,19 +161,18 @@ class HomeAssistantSearcherImplTest {
     @CsvSource(
         nullValues = ["null"],
         value = [
-            "null,null",
-            "http://localhost:8123,null",
-            "http://localhost:8123,wrong_version",
-            "malformed://localhost:8123,null",
+            // No url attribute at all (neither external_url nor internal_url).
+            "null",
+            // Url attribute present but not a parseable URL.
+            "malformed://localhost:8123",
         ],
     )
-    fun `Given one discoverable instance with wrong attributes when discoveredInstanceFlow is called then nothing is emitted`(
-        baseUrl: String?,
-        version: String?,
+    fun `Given one discoverable instance with missing or malformed url when discoveredInstanceFlow is called then nothing is emitted`(
+        url: String?,
     ) = runTest {
         val discoveryListener = slot<NsdManager.DiscoveryListener>()
         val resolveListener = slot<NsdManager.ResolveListener>()
-        val serviceInfo = createNsdServiceInfo(baseUrl, version)
+        val serviceInfo = createNsdServiceInfo(externalUrl = url)
 
         captureListeners(discoveryListener, resolveListener)
 
@@ -180,6 +180,105 @@ class HomeAssistantSearcherImplTest {
             discoveryListener.captured.onServiceFound(serviceInfo)
             resolveListener.captured.onServiceResolved(serviceInfo)
 
+            expectNoEvents()
+        }
+
+        verifyDiscoveryStartedAndStopped(discoveryListener.captured, resolveListener.captured)
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        nullValues = ["null"],
+        emptyValue = "",
+        value = [
+            // version attribute absent
+            "null",
+            // version attribute present but empty
+            "''",
+            // version attribute present but not parseable
+            "wrong_version",
+        ],
+    )
+    fun `Given a valid url but missing version when discoveredInstanceFlow is called then emits instance with null version`(
+        version: String?,
+    ) = runTest {
+        val discoveryListener = slot<NsdManager.DiscoveryListener>()
+        val resolveListener = slot<NsdManager.ResolveListener>()
+        // The version is optional, so a resolvable instance is still emitted without a parsed version.
+        val serviceInfo = createNsdServiceInfo(version = version)
+
+        captureListeners(discoveryListener, resolveListener)
+
+        discoveredInstanceFlow {
+            discoveryListener.captured.onServiceFound(serviceInfo)
+            resolveListener.captured.onServiceResolved(serviceInfo)
+
+            val instance = awaitItem()
+            assertEquals(URL("http://localhost:8123"), instance.url)
+            assertNull(instance.version)
+            expectNoEvents()
+        }
+
+        verifyDiscoveryStartedAndStopped(discoveryListener.captured, resolveListener.captured)
+    }
+
+    /**
+     * The Home Assistant landing page advertises itself over NSD with the placeholder version
+     * "0000.0.0". This test ensures we recognize it as a valid instance so it is discoverable
+     * during onboarding.
+     *
+     * See https://github.com/home-assistant/landingpage/pull/195
+     */
+    @Test
+    fun `Given one discoverable instance with version 0000_0_0 when discoveredInstanceFlow is called then should emit instance`() = runTest {
+        val discoveryListener = slot<NsdManager.DiscoveryListener>()
+        val resolveListener = slot<NsdManager.ResolveListener>()
+        // "0000.0.0" still matches the version pattern, so it is a valid (lower-bound) version.
+        val serviceInfo = createNsdServiceInfo(version = "0000.0.0")
+
+        captureListeners(discoveryListener, resolveListener)
+
+        discoveredInstanceFlow {
+            discoveryListener.captured.onServiceFound(serviceInfo)
+            resolveListener.captured.onServiceResolved(serviceInfo)
+
+            assertEquals(HomeAssistantVersion(year = 0, month = 0, release = 0), awaitItem().version)
+            expectNoEvents()
+        }
+
+        verifyDiscoveryStartedAndStopped(discoveryListener.captured, resolveListener.captured)
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        nullValues = ["null"],
+        value = [
+            // external_url is preferred when present, even if internal_url is also set
+            "http://external:8123,http://internal:8123,http://external:8123",
+            // external_url alone is used
+            "http://external:8123,null,http://external:8123",
+            // internal_url is used as a fallback when external_url is missing
+            "null,http://internal:8123,http://internal:8123",
+            // internal_url is used as a fallback when external_url is empty
+            ",http://internal:8123,http://internal:8123",
+        ],
+    )
+    fun `Given external and internal url attributes when discoveredInstanceFlow is called then external url is preferred`(
+        externalUrl: String?,
+        internalUrl: String?,
+        expectedUrl: String,
+    ) = runTest {
+        val discoveryListener = slot<NsdManager.DiscoveryListener>()
+        val resolveListener = slot<NsdManager.ResolveListener>()
+        val serviceInfo = createNsdServiceInfo(externalUrl = externalUrl, internalUrl = internalUrl)
+
+        captureListeners(discoveryListener, resolveListener)
+
+        discoveredInstanceFlow {
+            discoveryListener.captured.onServiceFound(serviceInfo)
+            resolveListener.captured.onServiceResolved(serviceInfo)
+
+            assertEquals(URL(expectedUrl), awaitItem().url)
             expectNoEvents()
         }
 
@@ -283,11 +382,18 @@ class HomeAssistantSearcherImplTest {
     }
 }
 
-private fun createNsdServiceInfo(baseUrl: String? = "http://localhost:8123", version: String? = "2025.8.0"): NsdServiceInfo {
+private fun createNsdServiceInfo(
+    externalUrl: String? = "http://localhost:8123",
+    internalUrl: String? = null,
+    version: String? = "2025.8.0",
+): NsdServiceInfo {
     return mockk<NsdServiceInfo>().apply {
         val attributes = mutableMapOf<String, ByteArray>()
-        baseUrl?.let {
-            attributes["base_url"] = it.toByteArray(Charsets.UTF_8)
+        externalUrl?.let {
+            attributes["external_url"] = it.toByteArray(Charsets.UTF_8)
+        }
+        internalUrl?.let {
+            attributes["internal_url"] = it.toByteArray(Charsets.UTF_8)
         }
         version?.let {
             attributes["version"] = it.toByteArray(Charsets.UTF_8)

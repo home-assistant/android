@@ -13,6 +13,7 @@ import android.os.PowerManager
 import android.telephony.TelephonyManager
 import android.webkit.WebView
 import androidx.core.content.ContextCompat
+import androidx.webkit.WebViewCompat
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
@@ -108,11 +109,7 @@ open class HomeAssistantApplication :
             )
             initCrashSaving(applicationContext)
 
-            val webViewDebug = BuildConfig.DEBUG || prefsRepository.isWebViewDebugEnabled()
-            withContext(Dispatchers.Main) {
-                // Release builds require calling this on the main thread
-                WebView.setWebContentsDebuggingEnabled(webViewDebug)
-            }
+            configureWebViewDebugging(enabled = BuildConfig.DEBUG || prefsRepository.isWebViewDebugEnabled())
 
             languagesManager.applyCurrentLang()
             nightModeManager.applyCurrentNightMode()
@@ -381,4 +378,20 @@ open class HomeAssistantApplication :
             )
         }
         .build()
+
+    /**
+     * Enables WebView contents debugging and logs the current WebView package.
+     *
+     * Runs on the main thread because [WebView.setWebContentsDebuggingEnabled] requires it in
+     * release builds.
+     */
+    private suspend fun configureWebViewDebugging(enabled: Boolean) = withContext(Dispatchers.Main) {
+        WebView.setWebContentsDebuggingEnabled(enabled)
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
+            val webviewPackage = WebViewCompat.getCurrentWebViewPackage(this@HomeAssistantApplication)
+            Timber.d(
+                "Current webview package ${webviewPackage?.packageName} and version ${webviewPackage?.versionName}",
+            )
+        }
+    }
 }

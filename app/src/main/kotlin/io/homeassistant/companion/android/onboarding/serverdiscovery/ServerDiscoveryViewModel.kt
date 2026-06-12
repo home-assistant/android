@@ -52,7 +52,7 @@ data object NoServerFound : DiscoveryState
 /**
  * The first server has been fully discovered.
  */
-data class ServerDiscovered(val name: String, val url: URL, val version: HomeAssistantVersion) : DiscoveryState
+data class ServerDiscovered(val name: String, val url: URL, val version: HomeAssistantVersion?) : DiscoveryState
 
 /**
  * Multiple server have been fully discovered.

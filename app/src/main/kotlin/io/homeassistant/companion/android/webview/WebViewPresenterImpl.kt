@@ -29,7 +29,7 @@ import io.homeassistant.companion.android.database.settings.SensorUpdateFrequenc
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
-import io.homeassistant.companion.android.improv.ImprovRepository
+import io.homeassistant.companion.android.frontend.improv.ImprovRepository
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
 import io.homeassistant.companion.android.util.UrlUtil
@@ -130,20 +130,42 @@ class WebViewPresenterImpl @Inject constructor(
         isNewServer: Boolean,
     ) {
         var pathConsumed = false
+        var lastBaseUrl: URL? = null
 
         if (isInternalOverride != null) {
             Timber.d("Using isInternalOverride to get URL")
         }
 
         serverManager.connectionStateProvider(serverId).urlFlow(isInternalOverride).collect { urlState ->
-            val shouldConsumePath = !pathConsumed && path != null
-            if (shouldConsumePath) pathConsumed = true
+            val currentBaseUrl = (urlState as? UrlState.HasUrl)?.url
+            // baseUrlChanged is only true from the second emission onwards; the first emission
+            // establishes lastBaseUrl and is therefore not considered a change.
+            val baseUrlChanged = currentBaseUrl != null && lastBaseUrl?.let { it != currentBaseUrl } == true
+            if (currentBaseUrl != null) lastBaseUrl = currentBaseUrl
+
+            val effectiveRelativeUrl = if (!pathConsumed && path != null) {
+                pathConsumed = true
+                path
+            } else if (baseUrlChanged && !isNewServer) {
+                // On internal/external URL switches on the same server, preserve the full
+                // relative URL (path + query params + fragment) so the user stays on the exact
+                // same page, including filtered views like history with date ranges.
+                // Skipped for server switches where the path may not exist and would leak
+                // navigation context from the previous server.
+                view.getCurrentWebViewRelativeUrl()
+            } else {
+                null
+            }
 
             handleUrlState(
                 urlState = urlState,
-                path = path,
-                shouldConsumePath = shouldConsumePath,
-                isNewServer = isNewServer,
+                path = effectiveRelativeUrl,
+                shouldConsumePath = effectiveRelativeUrl != null,
+                // Keep the WebView back-stack for same-server reloads (incl. internal <-> external
+                // URL switches). The stale cross-origin previousUrl is exactly the signal
+                // resolveBackAction uses to return NavigateToRoot and route the user to the
+                // dashboard before exiting. Only server switches discard history.
+                keepHistory = !isNewServer,
             )
         }
     }
@@ -180,13 +202,13 @@ class WebViewPresenterImpl @Inject constructor(
         urlState: UrlState,
         path: String?,
         shouldConsumePath: Boolean,
-        isNewServer: Boolean,
+        keepHistory: Boolean,
     ) {
         when (urlState) {
             is UrlState.HasUrl -> loadUrl(
                 baseUrl = urlState.url,
                 path = if (shouldConsumePath) path else null,
-                isNewServer = isNewServer,
+                keepHistory = keepHistory,
             )
 
             UrlState.InsecureState -> view.showBlockInsecure(serverId = serverId)
@@ -201,9 +223,10 @@ class WebViewPresenterImpl @Inject constructor(
      *
      * @param baseUrl the base server URL
      * @param path optional path to append (ignored if starts with "entityId:")
-     * @param isNewServer whether this is a new server (affects history behavior)
+     * @param keepHistory whether to keep WebView history after loading. False when the
+     *        base URL changes (e.g. server or connection switch) so old entries become unreachable.
      */
-    private suspend fun loadUrl(baseUrl: URL?, path: String?, isNewServer: Boolean) {
+    private suspend fun loadUrl(baseUrl: URL?, path: String?, keepHistory: Boolean) {
         val urlToLoad = if (path != null && !path.startsWith("entityId:")) {
             UrlUtil.handle(baseUrl, path)
         } else {
@@ -226,7 +249,7 @@ class WebViewPresenterImpl @Inject constructor(
                 } else {
                     view.loadUrl(
                         url = urlWithAuth,
-                        keepHistory = !isNewServer,
+                        keepHistory = keepHistory,
                         openInApp = it.baseIsEqual(baseUrl),
                         // We need the frontend to notify us of the mode to use for the status bar https://github.com/home-assistant/frontend/issues/29125
                         serverHandleInsets = false,
@@ -628,7 +651,7 @@ class WebViewPresenterImpl @Inject constructor(
     }
 
     override suspend fun shouldShowImprovPermissions(): Boolean {
-        return if (improvRepository.hasPermission(view as Context)) {
+        return if (improvRepository.hasPermissions()) {
             false
         } else {
             prefsRepository.getImprovPermissionDisplayedCount() < 2
@@ -637,7 +660,7 @@ class WebViewPresenterImpl @Inject constructor(
 
     override fun shouldRequestImprovPermission(): String? {
         val returnPermissions = try {
-            improvRepository.getRequiredPermissions().filter {
+            improvRepository.requiredPermissions.filter {
                 ContextCompat.checkSelfPermission(view as Context, it) != PackageManager.PERMISSION_GRANTED
             }
         } catch (_: Exception) {
@@ -653,7 +676,7 @@ class WebViewPresenterImpl @Inject constructor(
     }
 
     override fun startScanningForImprov(): Boolean {
-        if (!improvRepository.hasPermission(view as Context)) {
+        if (!improvRepository.hasPermissions()) {
             Timber.d("Improv scan request ignored because app doesn't have permission")
             return false
         } else {
@@ -661,11 +684,10 @@ class WebViewPresenterImpl @Inject constructor(
         }
         improvJobStarted = System.currentTimeMillis()
         improvJob = mainScope.launch {
-            withContext(Dispatchers.IO) {
-                improvRepository.startScanning(view as Context)
-            }
-            improvRepository.getDevices().collect {
-                it.forEach { device ->
+            // scanDevices() auto-manages the BLE scan via shareIn(WhileSubscribed); cancelling
+            // this job stops the scan after the repository's idle window.
+            improvRepository.scanDevices().collect { devices ->
+                devices.forEach { device ->
                     val name = device.name ?: return@forEach
                     externalBusRepository.send(
                         ExternalBusMessage(
@@ -686,7 +708,6 @@ class WebViewPresenterImpl @Inject constructor(
     override fun stopScanningForImprov(force: Boolean) {
         if (improvJob?.isActive == true && (force || System.currentTimeMillis() - improvJobStarted > 1000)) {
             Timber.d("Improv scan stopping")
-            improvRepository.stopScanning()
             improvJob?.cancel()
         }
     }

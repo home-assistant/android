@@ -22,11 +22,13 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import timber.log.Timber
 
-@VisibleForTesting const val SERVICE_TYPE = "_home-assistant._tcp"
+@VisibleForTesting
+const val SERVICE_TYPE = "_home-assistant._tcp"
 
-@VisibleForTesting const val LOCK_TAG = "HomeAssistantSearcher_lock"
+@VisibleForTesting
+const val LOCK_TAG = "HomeAssistantSearcher_lock"
 
-internal data class HomeAssistantInstance(val name: String, val url: URL, val version: HomeAssistantVersion)
+internal data class HomeAssistantInstance(val name: String, val url: URL, val version: HomeAssistantVersion?)
 
 /**
  * Interface responsible for discovering Home Assistant instances on the local network.
@@ -62,7 +64,8 @@ internal class HomeAssistantSearcherImpl @Inject constructor(
          * (hence its static nature) or unintended multiple concurrent collections of the flow.
          * It ensures that only one collector can be active at any given time.
          */
-        @VisibleForTesting val hasCollector = AtomicBoolean(false)
+        @VisibleForTesting
+        val hasCollector = AtomicBoolean(false)
     }
 
     override fun discoveredInstanceFlow(): Flow<HomeAssistantInstance> {
@@ -226,37 +229,33 @@ private fun ProducerScope<HomeAssistantInstance>.getResolvedListener(): NsdManag
     }
 }
 
+private fun NsdServiceInfo.attribute(key: String): String? =
+    attributes?.get(key)?.toString(Charsets.UTF_8)?.ifBlank { null }
+
 private fun NsdServiceInfo.toHomeAssistantInstance(): HomeAssistantInstance? {
-    val baseUrlString = attributes?.get("base_url")?.toString(Charsets.UTF_8)
-    if (baseUrlString.isNullOrBlank()) {
-        Timber.w("Base URL is missing or empty in NSD attributes for service: $this")
+    val urlString = attribute("external_url") ?: attribute("internal_url")
+    if (urlString.isNullOrBlank()) {
+        Timber.w("URL is missing or empty in NSD attributes for service: $this")
         return null
     }
 
-    val baseUrl = try {
-        URL(baseUrlString)
+    val url = try {
+        URL(urlString)
     } catch (e: MalformedURLException) {
-        Timber.w(e, "Invalid base_url format: $baseUrlString for service: $this")
+        Timber.w(e, "Invalid url format: $urlString for service: $this")
         return null
     }
 
-    val versionAttr = attributes?.get("version")?.toString(Charsets.UTF_8)
-    if (versionAttr.isNullOrBlank()) {
-        Timber.w(
-            "Version attribute is missing or empty for service: $serviceName. Cannot create HomeAssistantInstance.",
-        )
-        return null
-    }
-
-    val haVersion = HomeAssistantVersion.fromString(versionAttr)
+    // The version is optional: a discovered instance is still usable without it, the instance might simply be on the
+    // https://github.com/home-assistant/landingpage/.
+    val haVersion = attribute("version")?.let { HomeAssistantVersion.fromString(it) }
     if (haVersion == null) {
-        Timber.w("Failed to parse version from '$versionAttr' for service: $serviceName. Skipping.")
-        return null
+        Timber.w("Version is missing in NSD attributes for service: $serviceName")
     }
 
     return HomeAssistantInstance(
         serviceName,
-        baseUrl,
+        url,
         haVersion,
     )
 }

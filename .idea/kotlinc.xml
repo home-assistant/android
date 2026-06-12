@@ -8,6 +8,6 @@
   </component>
   <component name="KotlinJpsPluginSettings">
     <option name="externalSystemId" value="Gradle" />
-    <option name="version" value="2.3.21" />
+    <option name="version" value="2.4.0" />
   </component>
 </project>

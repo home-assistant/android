@@ -9,6 +9,7 @@ import android.webkit.WebChromeClient
 import androidx.lifecycle.ViewModel
 import androidx.media3.common.Player
 import app.cash.turbine.test
+import com.google.zxing.BarcodeFormat
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
@@ -19,7 +20,8 @@ import io.homeassistant.companion.android.common.data.prefs.ZoomSettings
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
-import io.homeassistant.companion.android.frontend.auth.HttpAuthManager
+import io.homeassistant.companion.android.frontend.auth.FrontendHttpAuthHandler
+import io.homeassistant.companion.android.frontend.barcode.FrontendBarcodeScannerHandler
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.frontend.download.DownloadResult
@@ -31,10 +33,12 @@ import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalB
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
-import io.homeassistant.companion.android.frontend.gesture.FrontendGestureHandler
+import io.homeassistant.companion.android.frontend.gesture.FrontendGestureManager
 import io.homeassistant.companion.android.frontend.gesture.GestureResult
 import io.homeassistant.companion.android.frontend.handler.FrontendBusObserver
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
+import io.homeassistant.companion.android.frontend.improv.FrontendImprovHandler
+import io.homeassistant.companion.android.frontend.improv.ImprovUIState
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridgeFactory
 import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
@@ -89,7 +93,7 @@ class FrontendViewModelTest {
     private val permissionManager: PermissionManager = mockk(relaxed = true)
     private val frontendJsBridgeFactory: FrontendJsBridgeFactory = mockk(relaxed = true)
     private val downloadManager: FrontendDownloadManager = mockk(relaxed = true)
-    private val gestureHandler: FrontendGestureHandler = mockk(relaxed = true)
+    private val gestureManager: FrontendGestureManager = mockk(relaxed = true)
     private val zoomSettingsFlow = MutableStateFlow(ZoomSettings())
     private val autoPlayVideoFlow = MutableStateFlow(false)
     private val screenOrientationFlow = MutableStateFlow(ScreenOrientation.SYSTEM)
@@ -118,16 +122,26 @@ class FrontendViewModelTest {
         every { state } returns MutableStateFlow(null)
     }
 
+    private val improvUiStateFlow = MutableStateFlow<ImprovUIState?>(null)
+    private val improvEventsFlow = MutableSharedFlow<FrontendImprovHandler.Event>(extraBufferCapacity = 1)
+    private val improvScanRequestedFlow = MutableStateFlow(false)
+    private val improvHandler: FrontendImprovHandler = mockk(relaxed = true) {
+        every { uiState } returns improvUiStateFlow
+        every { events } returns improvEventsFlow
+        every { scanRequested } returns improvScanRequestedFlow
+    }
+
     private fun createViewModel(
         serverId: Int = this.serverId,
         path: String? = null,
         dialogManager: FrontendDialogManager = FrontendDialogManager(),
         fileChooserManager: FileChooserManager = FileChooserManager(),
-        httpAuthManager: HttpAuthManager = HttpAuthManager(
+        httpAuthHandler: FrontendHttpAuthHandler = FrontendHttpAuthHandler(
             authenticationDao = mockk(relaxed = true),
             clock = FakeClock(),
             dialogManager = dialogManager,
         ),
+        improvHandler: FrontendImprovHandler = this.improvHandler,
     ): FrontendViewModel {
         return FrontendViewModel(
             initialServerId = serverId,
@@ -140,12 +154,14 @@ class FrontendViewModelTest {
             permissionManager = permissionManager,
             frontendJsBridgeFactory = frontendJsBridgeFactory,
             downloadManager = downloadManager,
-            gestureHandler = gestureHandler,
+            gestureManager = gestureManager,
             prefsRepository = prefsRepository,
             dialogManager = dialogManager,
             fileChooserManager = fileChooserManager,
-            httpAuthManager = httpAuthManager,
+            httpAuthHandler = httpAuthHandler,
             exoPlayerManager = exoPlayerManager,
+            improvHandler = improvHandler,
+            barcodeScannerHandler = FrontendBarcodeScannerHandler(externalBusRepository, dialogManager),
         )
     }
 
@@ -502,6 +518,98 @@ class FrontendViewModelTest {
         }
 
         @Test
+        fun `Given content when ShowBarcodeScanner then Content barcodeScanner is set`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+
+            messageFlow.emit(
+                FrontendHandlerEvent.ShowBarcodeScanner(
+                    messageId = 7,
+                    title = "Scan",
+                    description = "Point camera",
+                    alternativeOptionLabel = "Manual",
+                ),
+            )
+            advanceUntilIdle()
+
+            val barcode = (viewModel.viewState.value as FrontendViewState.Content).barcodeScanner
+            assertEquals(7, barcode?.messageId)
+            assertEquals("Scan", barcode?.title)
+            assertEquals("Point camera", barcode?.description)
+            assertEquals("Manual", barcode?.alternativeOptionLabel)
+        }
+
+        @Test
+        fun `Given an active barcode scan when NotifyBarcodeScanner then an information dialog is shown`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emit(
+                FrontendHandlerEvent.ShowBarcodeScanner(1, "Scan", "Point", alternativeOptionLabel = null),
+            )
+            messageFlow.emit(FrontendHandlerEvent.NotifyBarcodeScanner("Already paired"))
+            advanceUntilIdle()
+
+            val dialog = assertInstanceOf(FrontendDialog.Information::class.java, viewModel.pendingDialog.value)
+            assertEquals("Already paired", dialog.message)
+        }
+
+        @Test
+        fun `Given an active barcode scan when CloseBarcodeScanner then barcodeScanner is cleared`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emit(
+                FrontendHandlerEvent.ShowBarcodeScanner(1, "Scan", "Point", alternativeOptionLabel = null),
+            )
+            messageFlow.emit(FrontendHandlerEvent.CloseBarcodeScanner)
+            advanceUntilIdle()
+
+            assertNull((viewModel.viewState.value as FrontendViewState.Content).barcodeScanner)
+        }
+
+        @Test
+        fun `Given an active barcode scan when onBarcodeScanned then result is sent and scanner stays open`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emit(
+                FrontendHandlerEvent.ShowBarcodeScanner(7, "Scan", "Point", alternativeOptionLabel = null),
+            )
+            advanceUntilIdle()
+
+            viewModel.onBarcodeScanned(rawValue = "HA-12345", format = BarcodeFormat.QR_CODE)
+            advanceUntilIdle()
+
+            coVerify { externalBusRepository.send(any()) }
+            // The scanner stays open until the frontend sends bar_code/close.
+            val barcode = (viewModel.viewState.value as FrontendViewState.Content).barcodeScanner
+            assertEquals(7, barcode?.messageId)
+        }
+
+        @Test
         fun `Given auth error message result when collected then state transitions to Error`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
@@ -613,7 +721,7 @@ class FrontendViewModelTest {
                 UrlLoadResult.Success(url = "https://server2.com?external_auth=1", serverId = 2),
             )
             coEvery {
-                gestureHandler.handleGesture(serverId = any(), direction = any(), pointerCount = any())
+                gestureManager.handleGesture(serverId = any(), direction = any(), pointerCount = any())
             } returns GestureResult.SwitchServer(2)
 
             val viewModel = createViewModel(serverId = 1)
@@ -637,7 +745,7 @@ class FrontendViewModelTest {
 
             val clearHistory = WebViewAction.ClearHistory()
             coEvery {
-                gestureHandler.handleGesture(serverId = any(), direction = any(), pointerCount = any())
+                gestureManager.handleGesture(serverId = any(), direction = any(), pointerCount = any())
             } returns GestureResult.PerformWebViewActionThen(
                 action = clearHistory,
                 then = {
@@ -1075,7 +1183,7 @@ class FrontendViewModelTest {
 
         private val authenticationDao: AuthenticationDao = mockk(relaxed = true)
         private val dialogManager = FrontendDialogManager()
-        private val httpAuthManager = HttpAuthManager(
+        private val httpAuthHandler = FrontendHttpAuthHandler(
             authenticationDao = authenticationDao,
             clock = FakeClock(),
             dialogManager = dialogManager,
@@ -1097,7 +1205,7 @@ class FrontendViewModelTest {
                 mockk(relaxed = true)
             }
 
-            val viewModel = createViewModel(httpAuthManager = httpAuthManager, dialogManager = dialogManager)
+            val viewModel = createViewModel(httpAuthHandler = httpAuthHandler, dialogManager = dialogManager)
             return viewModel to capturedCallback!!
         }
 
@@ -1865,6 +1973,162 @@ class FrontendViewModelTest {
             advanceUntilIdle()
 
             assertEquals(value, viewModel.keepScreenOnEnabled.value)
+        }
+    }
+
+    @Nested
+    inner class Improv {
+
+        @Test
+        fun `Given StartImprovScan event when received then handler is invoked`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.StartImprovScan)
+            advanceTimeBy(1.seconds)
+
+            coVerify { improvHandler.onStartImprovScan() }
+        }
+
+        @Test
+        fun `Given ConfigureImprovDevice event when received then handler is invoked with name`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.ConfigureImprovDevice(deviceName = "Smart Plug"))
+            advanceTimeBy(1.seconds)
+
+            coVerify { improvHandler.onConfigureImprovDevice("Smart Plug") }
+        }
+
+        @Test
+        fun `Given handler emits uiState when collected then Content improvUiState is updated`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceTimeBy(1.seconds)
+
+            improvUiStateFlow.value = ImprovUIState.SearchingDevice(deviceName = "Smart Plug")
+            advanceTimeBy(1.seconds)
+
+            val state = viewModel.viewState.value
+            assertTrue(state is FrontendViewState.Content)
+            assertNotNull((state as FrontendViewState.Content).improvUiState)
+        }
+
+        @Test
+        fun `Given handler emits ReloadAtPath event when collected then state transitions to LoadServer`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            improvEventsFlow.emit(
+                FrontendImprovHandler.Event.ReloadAtPath(
+                    path = "/_my_redirect/config_flow_start?domain=acme",
+                    serverId = serverId,
+                ),
+            )
+            advanceTimeBy(1.seconds)
+
+            val state = viewModel.viewState.value
+            assertTrue(state is FrontendViewState.LoadServer)
+            assertEquals(
+                "/_my_redirect/config_flow_start?domain=acme",
+                (state as FrontendViewState.LoadServer).path,
+            )
+        }
+
+        @Test
+        fun `Given onImprovSheetDismissed when called then handler onDismissed is invoked`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            viewModel.onImprovSheetDismissed()
+            advanceTimeBy(1.seconds)
+
+            coVerify { improvHandler.onDismissed(serverId = any()) }
+        }
+
+        @Test
+        fun `Given onImprovConnectDevice when called then forwards to handler`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            viewModel.onImprovConnectDevice("wifi", "pwd")
+            advanceTimeBy(1.seconds)
+
+            coVerify { improvHandler.onConnectDevice(any(), "wifi", "pwd") }
+        }
+
+        @Test
+        fun `Given onImprovRestart when called then forwards to handler`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            viewModel.onImprovRestart()
+            advanceTimeBy(1.seconds)
+
+            coVerify { improvHandler.onRestart() }
+        }
+
+        @Test
+        fun `Given improvScanRequested exposed when collected then mirrors handler scanRequested`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            improvScanRequestedFlow.value = true
+            assertEquals(true, viewModel.improvScanRequested.value)
+            improvScanRequestedFlow.value = false
+            assertEquals(false, viewModel.improvScanRequested.value)
+        }
+
+        @Test
+        fun `Given processImprovScanRequests when called then forwards to handler`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            viewModel.processImprovScanRequests()
+
+            coVerify { improvHandler.processImprovScanRequests() }
         }
     }
 }

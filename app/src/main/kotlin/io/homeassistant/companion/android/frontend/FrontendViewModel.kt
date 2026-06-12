@@ -6,6 +6,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.google.zxing.BarcodeFormat
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
@@ -13,8 +14,9 @@ import io.homeassistant.companion.android.common.data.connectivity.ConnectivityC
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.util.GestureDirection
-import io.homeassistant.companion.android.frontend.auth.HttpAuthManager
+import io.homeassistant.companion.android.frontend.auth.FrontendHttpAuthHandler
 import io.homeassistant.companion.android.frontend.auth.HttpAuthResult
+import io.homeassistant.companion.android.frontend.barcode.FrontendBarcodeScannerHandler
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
@@ -25,10 +27,11 @@ import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalB
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserRequest
-import io.homeassistant.companion.android.frontend.gesture.FrontendGestureHandler
+import io.homeassistant.companion.android.frontend.gesture.FrontendGestureManager
 import io.homeassistant.companion.android.frontend.gesture.GestureResult
 import io.homeassistant.companion.android.frontend.handler.FrontendBusObserver
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
+import io.homeassistant.companion.android.frontend.improv.FrontendImprovHandler
 import io.homeassistant.companion.android.frontend.js.BridgeState
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridgeFactory
 import io.homeassistant.companion.android.frontend.js.FrontendJsCallback
@@ -88,12 +91,14 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val permissionManager: PermissionManager,
     private val frontendJsBridgeFactory: FrontendJsBridgeFactory,
     private val downloadManager: FrontendDownloadManager,
-    private val gestureHandler: FrontendGestureHandler,
+    private val gestureManager: FrontendGestureManager,
     private val prefsRepository: PrefsRepository,
     private val dialogManager: FrontendDialogManager,
     private val fileChooserManager: FileChooserManager,
-    private val httpAuthManager: HttpAuthManager,
+    private val httpAuthHandler: FrontendHttpAuthHandler,
     private val exoPlayerManager: FrontendExoPlayerManager,
+    private val improvHandler: FrontendImprovHandler,
+    private val barcodeScannerHandler: FrontendBarcodeScannerHandler,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -108,12 +113,14 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         permissionManager: PermissionManager,
         frontendJsBridgeFactory: FrontendJsBridgeFactory,
         downloadManager: FrontendDownloadManager,
-        gestureHandler: FrontendGestureHandler,
+        gestureManager: FrontendGestureManager,
         prefsRepository: PrefsRepository,
         dialogManager: FrontendDialogManager,
         fileChooserManager: FileChooserManager,
-        httpAuthManager: HttpAuthManager,
+        httpAuthHandler: FrontendHttpAuthHandler,
         exoPlayerManager: FrontendExoPlayerManager,
+        improvHandler: FrontendImprovHandler,
+        barcodeScannerHandler: FrontendBarcodeScannerHandler,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
         initialPath = savedStateHandle.toRoute<FrontendRoute>().path,
@@ -125,12 +132,14 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         permissionManager = permissionManager,
         frontendJsBridgeFactory = frontendJsBridgeFactory,
         downloadManager = downloadManager,
-        gestureHandler = gestureHandler,
+        gestureManager = gestureManager,
         prefsRepository = prefsRepository,
         dialogManager = dialogManager,
         fileChooserManager = fileChooserManager,
-        httpAuthManager = httpAuthManager,
+        httpAuthHandler = httpAuthHandler,
         exoPlayerManager = exoPlayerManager,
+        improvHandler = improvHandler,
+        barcodeScannerHandler = barcodeScannerHandler,
     )
 
     /**
@@ -210,7 +219,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         onPageFinished = ::onPageFinished,
         onReceivedHttpAuthRequest = { handler, host, resource, realm ->
             viewModelScope.launch {
-                if (httpAuthManager.handleAuthRequest(handler, host = host, resource = resource, realm = realm) ==
+                if (httpAuthHandler.handleAuthRequest(handler, host = host, resource = resource, realm = realm) ==
                     HttpAuthResult.Cancelled
                 ) {
                     _events.tryEmit(FrontendEvent.ShowSnackbar(commonR.string.auth_cancel))
@@ -271,6 +280,14 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         emitAll(prefsRepository.keepScreenOnFlow())
     }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = false)
 
+    /**
+     * Whether the frontend currently wants the Improv BLE scan running. Observed by
+     * [io.homeassistant.companion.android.frontend.FrontendScreen] to drive a lifecycle-bound
+     * collect that keeps the scan alive while the screen is RESUMED and tears it down on
+     * navigation or pause.
+     */
+    val improvScanRequested: StateFlow<Boolean> = improvHandler.scanRequested
+
     init {
         viewModelScope.launch {
             _viewState.collectLatest { state ->
@@ -296,6 +313,42 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 _viewState.update { currentState ->
                     if (currentState is FrontendViewState.Content) {
                         currentState.copy(exoPlayerState = exoState)
+                    } else {
+                        currentState
+                    }
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            improvHandler.uiState.collect { improvUiState ->
+                _viewState.update { currentState ->
+                    if (currentState is FrontendViewState.Content) {
+                        currentState.copy(improvUiState = improvUiState)
+                    } else {
+                        currentState
+                    }
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            improvHandler.events.collect { event ->
+                when (event) {
+                    is FrontendImprovHandler.Event.ReloadAtPath -> {
+                        _viewState.update {
+                            FrontendViewState.LoadServer(serverId = event.serverId, path = event.path)
+                        }
+                    }
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            barcodeScannerHandler.state.collect { barcodeState ->
+                _viewState.update { currentState ->
+                    if (currentState is FrontendViewState.Content) {
+                        currentState.copy(barcodeScanner = barcodeState)
                     } else {
                         currentState
                     }
@@ -345,7 +398,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             },
             onJsConfirm = { message, jsResult ->
                 viewModelScope.launch {
-                    if (dialogManager.showJsConfirm(message)) jsResult.confirm() else jsResult.cancel()
+                    if (dialogManager.showConfirm(message)) jsResult.confirm() else jsResult.cancel()
                 }
                 true
             },
@@ -466,7 +519,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      */
     fun onGesture(direction: GestureDirection, pointerCount: Int) {
         viewModelScope.launch {
-            val result = gestureHandler.handleGesture(
+            val result = gestureManager.handleGesture(
                 serverId = _viewState.value.serverId,
                 direction = direction,
                 pointerCount = pointerCount,
@@ -484,6 +537,19 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     fun onExoPlayerFullscreenChanged(isFullScreen: Boolean) {
         exoPlayerManager.onFullscreenChanged(isFullScreen)
         _events.tryEmit(FrontendEvent.RequestFullscreen(isFullScreen))
+    }
+
+    /**
+     * Forwards a scanned code to the manager, which replies to the frontend.
+     * The scanner stays open until the frontend sends bar_code/close.
+     */
+    fun onBarcodeScanned(rawValue: String, format: BarcodeFormat) {
+        viewModelScope.launch { barcodeScannerHandler.onScanned(rawValue, format) }
+    }
+
+    /** Forwards a scanner cancellation (close icon / back press = false, alternative option = true). */
+    fun onBarcodeCancelled(forAction: Boolean) {
+        viewModelScope.launch { barcodeScannerHandler.onCancelled(forAction) }
     }
 
     private suspend fun handleGestureResult(result: GestureResult) {
@@ -612,14 +678,10 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 exoPlayerManager.handle(result)
             }
 
-            is FrontendHandlerEvent.StartImprovScan,
-            is FrontendHandlerEvent.ConfigureImprovDevice,
-            -> {
-                // Improv handling lands in a follow-up PR; the messages are already typed and
-                // canSetupImprov will be `false` on devices without BLE so the frontend should
-                // not be sending these yet on hardware that lacks Bluetooth LE.
-                Timber.d("Improv event received but not yet handled: $result")
-            }
+            is FrontendHandlerEvent.StartImprovScan -> improvHandler.onStartImprovScan()
+
+            is FrontendHandlerEvent.ConfigureImprovDevice ->
+                improvHandler.onConfigureImprovDevice(result.deviceName)
 
             is FrontendHandlerEvent.EntityAddToExecuted -> {
                 result.event?.let { _events.tryEmit(it) }
@@ -632,15 +694,18 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 Timber.d("Matter/Thread event received but not yet handled: $result")
             }
 
-            is FrontendHandlerEvent.ShowBarcodeScanner,
-            is FrontendHandlerEvent.NotifyBarcodeScanner,
-            FrontendHandlerEvent.CloseBarcodeScanner,
-            -> {
-                // Barcode scanner handling lands in a follow-up PR; the messages are already typed
-                // and hasBarCodeScanner is gated on FEATURE_CAMERA_ANY && !isAutomotive so the
-                // frontend should not send these on devices without a camera.
-                Timber.d("Barcode event received but not yet handled: $result")
+            is FrontendHandlerEvent.ShowBarcodeScanner -> barcodeScannerHandler.show(
+                messageId = result.messageId,
+                title = result.title,
+                description = result.description,
+                alternativeOptionLabel = result.alternativeOptionLabel,
+            )
+
+            is FrontendHandlerEvent.NotifyBarcodeScanner -> viewModelScope.launch {
+                barcodeScannerHandler.notify(result.message)
             }
+
+            FrontendHandlerEvent.CloseBarcodeScanner -> barcodeScannerHandler.close()
 
             is FrontendHandlerEvent.ConfigSent,
             is FrontendHandlerEvent.UnknownMessage,
@@ -650,6 +715,34 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             }
         }
     }
+
+    /**
+     * Forwards user-entered Wi-Fi credentials to the device on the handler's current
+     * [io.homeassistant.companion.android.frontend.improv.ImprovUIState.ConfiguringDevice] —
+     * no-ops if no Improv session is active or the BLE address hasn't been resolved yet.
+     */
+    fun onImprovConnectDevice(ssid: String, password: String) {
+        viewModelScope.launch {
+            improvHandler.onConnectDevice(scope = viewModelScope, ssid = ssid, password = password)
+        }
+    }
+
+    /** Re-arms scanning after an Improv error — wired to the sheet's "Try again" button. */
+    fun onImprovRestart() {
+        viewModelScope.launch { improvHandler.onRestart() }
+    }
+
+    /** Closes the Improv bottom sheet and, if successful, navigates the frontend to the matching config flow. */
+    fun onImprovSheetDismissed() {
+        viewModelScope.launch { improvHandler.onDismissed(serverId = _viewState.value.serverId) }
+    }
+
+    /**
+     * Hosts the discovered-device forwarder on the caller's coroutine — suspends until cancelled.
+     * Intended to be invoked from `FrontendScreen` inside a `repeatOnLifecycle(RESUMED)` block so
+     * the BLE scan's lifetime is bound to the route's visibility.
+     */
+    suspend fun processImprovScanRequests() = improvHandler.processImprovScanRequests()
 
     /**
      * Handles URL load results from the URL manager.
