@@ -11,6 +11,9 @@ interface ButtonWidgetDao : WidgetDao<ButtonWidgetEntity> {
     @Query("SELECT * FROM button_widgets WHERE id = :id")
     suspend fun get(id: Int): ButtonWidgetEntity?
 
+    @Query("SELECT * FROM button_widgets WHERE id = :id")
+    fun getFlow(id: Int): Flow<ButtonWidgetEntity?>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     override suspend fun add(entity: ButtonWidgetEntity)
 

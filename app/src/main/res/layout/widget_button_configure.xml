@@ -25,7 +25,8 @@
             android:layout_height="50dp"
             android:gravity="center"
             android:orientation="horizontal"
-            android:visibility="gone">
+            android:visibility="gone"
+            tools:visibility="visible">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -70,7 +71,8 @@
             android:textAlignment="center"
             android:textSize="14sp"
             android:text="@string/widget_config_action_error"
-            android:visibility="gone" />
+            android:visibility="gone"
+            tools:visibility="visible"/>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/widget_config_fields_layout"
