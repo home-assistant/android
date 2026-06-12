@@ -1,12 +1,11 @@
 package io.homeassistant.companion.android.widgets.entity
 
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -276,7 +275,7 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
         )
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
+    @SuppressLint("NewApi") // The activity calls this only after its API 26 runtime check.
     suspend fun requestWidgetCreation(context: Context) {
         val appWidgetManager = AppWidgetManager.getInstance(context)
         check(appWidgetManager.isRequestPinAppWidgetSupported) { "Widget pinning is not supported" }
