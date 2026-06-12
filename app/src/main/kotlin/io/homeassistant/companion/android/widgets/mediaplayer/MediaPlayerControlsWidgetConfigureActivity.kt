@@ -19,16 +19,13 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationDom
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
-import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.databinding.WidgetMediaControlsConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.util.applySafeDrawingInsets
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetUtils
-import java.util.LinkedList
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
 // TODO Migrate to compose https://github.com/home-assistant/android/issues/6308
@@ -57,7 +54,6 @@ class MediaPlayerControlsWidgetConfigureActivity :
         get() = binding.serverSelectList
 
     private var entities = mutableMapOf<Int, List<Entity>>()
-    private var selectedEntities: LinkedList<Entity?> = LinkedList()
 
     private var entityAdapter: SingleItemArrayAdapter<Entity>? = null
 
@@ -136,24 +132,18 @@ class MediaPlayerControlsWidgetConfigureActivity :
                         backgroundTypeValues,
                     ),
                 )
-                val entities = runBlocking {
-                    try {
-                        mediaPlayerWidget.entityId.split(",").map { s ->
-                            serverManager.integrationRepository(mediaPlayerWidget.serverId).getEntity(s.trim())
-                        }
-                    } catch (e: Exception) {
-                        Timber.e(e, "Unable to get entity information")
-                        Toast.makeText(
-                            applicationContext,
-                            commonR.string.widget_entity_fetch_error,
-                            Toast.LENGTH_LONG,
-                        )
-                            .show()
-                        null
+                try {
+                    mediaPlayerWidget.entityId.split(",").forEach { s ->
+                        serverManager.integrationRepository(mediaPlayerWidget.serverId).getEntity(s.trim())
                     }
-                }
-                if (entities != null) {
-                    selectedEntities.addAll(entities)
+                } catch (e: Exception) {
+                    Timber.e(e, "Unable to get entity information")
+                    Toast.makeText(
+                        applicationContext,
+                        commonR.string.widget_entity_fetch_error,
+                        Toast.LENGTH_LONG,
+                    )
+                        .show()
                 }
                 binding.addButton.setText(commonR.string.update_widget)
             }
@@ -191,7 +181,6 @@ class MediaPlayerControlsWidgetConfigureActivity :
     }
 
     override fun onServerSelected(serverId: Int) {
-        selectedEntities.clear()
         binding.widgetTextConfigEntityId.setText("")
         setAdapterEntities(serverId)
     }
@@ -209,14 +198,10 @@ class MediaPlayerControlsWidgetConfigureActivity :
 
     override suspend fun getPendingDaoEntity(): MediaPlayerControlsWidgetEntity {
         val serverId = checkNotNull(selectedServerId) { "Selected server ID is null" }
-        selectedEntities = LinkedList()
-        val se = binding.widgetTextConfigEntityId.text.split(",")
-        se.forEach {
-            val entity = entities[serverId]?.firstOrNull { e -> e.entityId == it.trim() }
-            if (entity != null) selectedEntities.add(entity)
-        }
-
-        val entitySelection = selectedEntities.map { e -> e?.entityId }.reduceOrNull { a, b -> "$a,$b" }
+        val entitySelection = getSelectedMediaPlayerEntityIds(
+            binding.widgetTextConfigEntityId.text,
+            entities[serverId].orEmpty(),
+        )
 
         if (entitySelection == null) {
             throw IllegalStateException("No valid entities selected")
@@ -231,13 +216,27 @@ class MediaPlayerControlsWidgetConfigureActivity :
             showSkip = binding.widgetShowSkipButtonsCheckbox.isChecked,
             showSeek = binding.widgetShowSeekButtonsCheckbox.isChecked,
             showSource = binding.widgetShowMediaPlayerSource.isChecked,
-            backgroundType = when (binding.backgroundType.selectedItem as String?) {
-                getString(commonR.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR
-                getString(commonR.string.widget_background_type_transparent) -> WidgetBackgroundType.TRANSPARENT
-                else -> WidgetBackgroundType.DAYNIGHT
-            },
+            backgroundType = WidgetUtils.getWidgetBackgroundType(
+                this,
+                binding.backgroundType.selectedItem?.toString().orEmpty(),
+            ),
         )
     }
 
     override val widgetClass: Class<*> = MediaPlayerControlsWidget::class.java
+}
+
+internal fun getSelectedMediaPlayerEntityIds(
+    selectedEntityText: CharSequence,
+    availableEntities: List<Entity>,
+): String? {
+    val availableEntityIds = availableEntities.map { it.entityId }.toSet()
+    val selectedEntityIds = selectedEntityText.toString()
+        .split(",")
+        .mapNotNull { selectedEntityId ->
+            val entityId = selectedEntityId.trim()
+            entityId.takeIf { it in availableEntityIds }
+        }
+
+    return selectedEntityIds.joinToString(",").ifEmpty { null }
 }
