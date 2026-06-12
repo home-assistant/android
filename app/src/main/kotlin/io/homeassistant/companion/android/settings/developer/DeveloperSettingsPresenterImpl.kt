@@ -84,6 +84,11 @@ class DeveloperSettingsPresenterImpl @Inject constructor(
                             context.getString(commonR.string.thread_debug_result_unsupported_server),
                             false,
                         )
+                    is ThreadManager.SyncResult.ServerUserNotAdmin ->
+                        view.onThreadDebugResult(
+                            context.getString(commonR.string.thread_debug_result_user_not_admin),
+                            false,
+                        )
                     is ThreadManager.SyncResult.OnlyOnServer -> {
                         if (syncResult.imported) {
                             view.onThreadDebugResult(

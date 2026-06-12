@@ -11,6 +11,7 @@ interface ThreadManager {
     sealed class SyncResult {
         object AppUnsupported : SyncResult()
         object ServerUnsupported : SyncResult()
+        object ServerUserNotAdmin : SyncResult()
         object NotConnected : SyncResult()
         class OnlyOnServer(val imported: Boolean) : SyncResult()
         class OnlyOnDevice(val exportIntent: IntentSender?) : SyncResult()
@@ -29,7 +30,9 @@ interface ThreadManager {
     fun appSupportsThread(): Boolean
 
     /**
-     * Indicates if the server supports Thread credential management.
+     * Indicates if the server has the Thread component installed and is on a recent enough
+     * Home Assistant version for credential management. This does not consider whether the
+     * signed-in user is allowed to manage Thread credentials (which requires admin privileges).
      */
     suspend fun coreSupportsThread(serverId: Int): Boolean
 

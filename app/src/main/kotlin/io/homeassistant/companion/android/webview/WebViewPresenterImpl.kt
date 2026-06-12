@@ -590,6 +590,10 @@ class WebViewPresenterImpl @Inject constructor(
                             mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_THREAD_LOCAL_NETWORK)
                         }
 
+                        is ThreadManager.SyncResult.ServerUserNotAdmin -> {
+                            mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_THREAD_USER_NOT_ADMIN)
+                        }
+
                         else -> {
                             mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_THREAD_OTHER)
                         }

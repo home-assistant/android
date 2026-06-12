@@ -891,6 +891,15 @@ class WebViewActivity :
                             presenter.finishMatterThreadFlow()
                         }
 
+                        MatterThreadStep.ERROR_THREAD_USER_NOT_ADMIN -> {
+                            alertDialog?.cancel()
+                            AlertDialog.Builder(this@WebViewActivity)
+                                .setMessage(commonR.string.thread_export_user_not_admin)
+                                .setPositiveButton(commonR.string.ok, null)
+                                .show()
+                            presenter.finishMatterThreadFlow()
+                        }
+
                         else -> {} // Do nothing
                     }
                 }

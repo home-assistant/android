@@ -38,12 +38,15 @@ class ThreadManagerImpl @Inject constructor(
         !packageManager.isAutomotive()
 
     override suspend fun coreSupportsThread(serverId: Int): Boolean {
-        if (!serverManager.isRegistered() || serverManager.getServer(serverId)?.user?.isAdmin != true) return false
+        if (!serverManager.isRegistered() || serverManager.getServer(serverId) == null) return false
         val config = serverManager.webSocketRepository(serverId).getConfig()
         return config != null &&
             config.components.contains("thread") &&
             HomeAssistantVersion.fromString(config.version)?.isAtLeast(2023, 3, 0) == true
     }
+
+    private fun userIsAdmin(serverId: Int): Boolean =
+        serverManager.getServer(serverId)?.user?.isAdmin == true
 
     private suspend fun getDatasetsFromServer(serverId: Int): List<ThreadDatasetResponse>? =
         serverManager.webSocketRepository(serverId).getThreadDatasets()
@@ -56,6 +59,7 @@ class ThreadManagerImpl @Inject constructor(
     ): ThreadManager.SyncResult {
         if (!appSupportsThread()) return ThreadManager.SyncResult.AppUnsupported
         if (!coreSupportsThread(serverId)) return ThreadManager.SyncResult.ServerUnsupported
+        if (!userIsAdmin(serverId)) return ThreadManager.SyncResult.ServerUserNotAdmin
 
         return if (exportOnly) { // Limited sync, only export non-app dataset
             exportSyncPreferredDataset(context)
@@ -297,7 +301,7 @@ class ThreadManagerImpl @Inject constructor(
         }
 
     override suspend fun sendThreadDatasetExportResult(result: ActivityResult, serverId: Int): String? {
-        if (result.resultCode == Activity.RESULT_OK && coreSupportsThread(serverId)) {
+        if (result.resultCode == Activity.RESULT_OK && coreSupportsThread(serverId) && userIsAdmin(serverId)) {
             val threadNetworkCredentials = ThreadNetworkCredentials.fromIntentSenderResultData(result.data!!)
             try {
                 val added = serverManager.webSocketRepository(
