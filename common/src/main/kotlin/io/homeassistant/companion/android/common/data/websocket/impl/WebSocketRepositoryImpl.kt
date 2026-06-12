@@ -420,6 +420,16 @@ class WebSocketRepositoryImpl internal constructor(
         return response?.success == true
     }
 
+    override suspend fun setThreadPreferredDataset(datasetId: String): Boolean {
+        val response = webSocketCore.sendMessage(
+            mapOf(
+                "type" to "thread/set_preferred_dataset",
+                "dataset_id" to datasetId,
+            ),
+        )
+        return response?.success == true
+    }
+
     /**
      * Update server entry in [serverManager] with information from a [CurrentUserResponse] like user
      * name and admin status.

@@ -623,12 +623,16 @@ class WebViewPresenterImpl @Inject constructor(
                 mainScope.launch {
                     val sent = threadUseCase.sendThreadDatasetExportResult(result, serverId)
                     Timber.d(
-                        "Thread ${if (!sent.isNullOrBlank()) "sent credential for $sent" else "did not send credential"}",
+                        "Thread ${if (sent is ThreadManager.ExportResult.Sent) {
+                            "sent credential for ${sent.networkName} (server prefers exported: ${sent.serverPrefersExported})"
+                        } else {
+                            "did not send credential"
+                        }}",
                     )
-                    if (sent.isNullOrBlank()) {
-                        mutableMatterThreadStep.tryEmit(MatterThreadStep.THREAD_NONE)
-                    } else {
+                    if (sent is ThreadManager.ExportResult.Sent) {
                         mutableMatterThreadStep.tryEmit(MatterThreadStep.THREAD_SENT)
+                    } else {
+                        mutableMatterThreadStep.tryEmit(MatterThreadStep.THREAD_NONE)
                     }
                 }
             }

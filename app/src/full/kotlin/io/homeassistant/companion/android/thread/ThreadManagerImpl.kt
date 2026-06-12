@@ -296,19 +296,53 @@ class ThreadManagerImpl @Inject constructor(
                 .addOnFailureListener { cont.resumeWithException(it) }
         }
 
-    override suspend fun sendThreadDatasetExportResult(result: ActivityResult, serverId: Int): String? {
-        if (result.resultCode == Activity.RESULT_OK && coreSupportsThread(serverId)) {
-            val threadNetworkCredentials = ThreadNetworkCredentials.fromIntentSenderResultData(result.data!!)
-            try {
-                val added = serverManager.webSocketRepository(
-                    serverId,
-                ).addThreadDataset(threadNetworkCredentials.activeOperationalDataset)
-                if (added) return threadNetworkCredentials.networkName
-            } catch (e: Exception) {
-                Timber.e(e, "Error while executing server new Thread credentials request")
-            }
+    @OptIn(ExperimentalStdlibApi::class)
+    override suspend fun sendThreadDatasetExportResult(
+        result: ActivityResult,
+        serverId: Int,
+    ): ThreadManager.ExportResult {
+        if (result.resultCode != Activity.RESULT_OK || !coreSupportsThread(serverId)) {
+            return ThreadManager.ExportResult.NotSent
         }
-        return null
+        val credentials = ThreadNetworkCredentials.fromIntentSenderResultData(result.data!!)
+        val webSocket = serverManager.webSocketRepository(serverId)
+        val added = try {
+            webSocket.addThreadDataset(credentials.activeOperationalDataset)
+        } catch (e: Exception) {
+            Timber.e(e, "Error while executing server new Thread credentials request")
+            return ThreadManager.ExportResult.Failed
+        }
+        if (!added) return ThreadManager.ExportResult.Failed
+
+        // thread/add_dataset_tlv never promotes a dataset to preferred on the server side. To
+        // surface an honest result we re-query and compare extended PAN IDs. If the server has
+        // no preferred dataset at all (e.g. no border router announcing one), promote the
+        // just-exported dataset; we never override an existing server preference.
+        val deviceExtPan = credentials.extendedPanId.toHexString(HexFormat.UpperCase)
+        val serverPrefersExported = try {
+            val datasets = webSocket.getThreadDatasets()
+            val preferred = datasets?.firstOrNull { it.preferred }
+            when {
+                preferred == null -> {
+                    val ours = datasets?.firstOrNull { it.extendedPanId.equals(deviceExtPan, ignoreCase = true) }
+                    if (ours != null && webSocket.setThreadPreferredDataset(ours.datasetId)) {
+                        Timber.d("Thread: promoted exported dataset to preferred on the server")
+                        true
+                    } else {
+                        false
+                    }
+                }
+                preferred.extendedPanId.equals(deviceExtPan, ignoreCase = true) -> true
+                else -> false
+            }
+        } catch (e: Exception) {
+            Timber.w(e, "Unable to verify Thread preferred dataset after export")
+            null
+        }
+        return ThreadManager.ExportResult.Sent(
+            networkName = credentials.networkName,
+            serverPrefersExported = serverPrefersExported,
+        )
     }
 
     private suspend fun deleteOrphanedThreadCredentials(context: Context, serverId: Int) {

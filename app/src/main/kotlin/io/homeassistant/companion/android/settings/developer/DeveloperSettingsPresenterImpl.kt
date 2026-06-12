@@ -138,19 +138,39 @@ class DeveloperSettingsPresenterImpl @Inject constructor(
     ) {
         mainScope.launch {
             try {
-                val submitted = threadManager.sendThreadDatasetExportResult(result, serverId)
-                if (submitted != null) {
-                    if (isDeviceOnly) {
-                        view.onThreadDebugResult(context.getString(commonR.string.thread_debug_result_exported), true)
-                    } else {
-                        // If we got permission while both had a dataset, the device prefers a different network
-                        val out = "${context.getString(
-                            commonR.string.thread_debug_result_mismatch,
-                        )} ${context.getString(commonR.string.thread_debug_result_mismatch_detail, submitted)}"
-                        view.onThreadDebugResult(out, null)
+                when (val sent = threadManager.sendThreadDatasetExportResult(result, serverId)) {
+                    is ThreadManager.ExportResult.Sent -> {
+                        if (isDeviceOnly) {
+                            view.onThreadDebugResult(
+                                context.getString(commonR.string.thread_debug_result_exported),
+                                true,
+                            )
+                        } else if (sent.serverPrefersExported == true) {
+                            view.onThreadDebugResult(context.getString(commonR.string.thread_debug_result_match), true)
+                        } else if (sent.serverPrefersExported == false) {
+                            // The dataset was added on the server but a different one is still
+                            // preferred (typically a server-managed border router announces it).
+                            val out = "${context.getString(
+                                commonR.string.thread_debug_result_exported_not_preferred,
+                            )} ${context.getString(
+                                commonR.string.thread_debug_result_mismatch_detail,
+                                sent.networkName,
+                            )}"
+                            view.onThreadDebugResult(out, null)
+                        } else {
+                            val out = "${context.getString(
+                                commonR.string.thread_debug_result_mismatch,
+                            )} ${context.getString(
+                                commonR.string.thread_debug_result_mismatch_detail,
+                                sent.networkName,
+                            )}"
+                            view.onThreadDebugResult(out, null)
+                        }
                     }
-                } else {
-                    view.onThreadDebugResult(context.getString(commonR.string.thread_debug_result_error), false)
+                    ThreadManager.ExportResult.NotSent,
+                    ThreadManager.ExportResult.Failed,
+                    ->
+                        view.onThreadDebugResult(context.getString(commonR.string.thread_debug_result_error), false)
                 }
             } catch (e: Exception) {
                 view.onThreadDebugResult(context.getString(commonR.string.thread_debug_result_error), false)

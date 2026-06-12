@@ -23,6 +23,27 @@ interface ThreadManager {
         object NoneHaveCredentials : SyncResult()
     }
 
+    sealed class ExportResult {
+        /**
+         * The activity result was not OK, the server doesn't support Thread, or there was no
+         * dataset to send.
+         */
+        object NotSent : ExportResult()
+
+        /** Sending the dataset to the server failed. */
+        object Failed : ExportResult()
+
+        /**
+         * The dataset was added on the server.
+         * @param networkName Network name of the dataset that was sent
+         * @param serverPrefersExported `true` if the server now reports the exported dataset as
+         * its preferred one, `false` if the server still prefers a different dataset (typically
+         * because a Thread border router managed by the server is announcing one), or `null` if
+         * the post-export state could not be determined.
+         */
+        data class Sent(val networkName: String, val serverPrefersExported: Boolean?) : ExportResult()
+    }
+
     /**
      * Indicates if the app on this device supports Thread credential management.
      */
@@ -82,7 +103,15 @@ interface ThreadManager {
     /**
      * Process the result from [syncPreferredDataset] or [getPreferredDatasetFromDevice]'s intent
      * and add the Thread dataset, if any, to the server.
-     * @return Network name that was sent and accepted, or `null` if not sent or accepted
+     *
+     * The `thread/add_dataset_tlv` server command never promotes a dataset to preferred. After a
+     * successful add the server is queried again to determine the post-export state: if the
+     * server has no preferred dataset, the just-exported one is promoted; if it has another
+     * preferred dataset (typically because a server-managed border router announces it), no
+     * override is performed.
+     *
+     * @return [ExportResult] describing whether the dataset was sent and, if so, whether the
+     * server now prefers it
      */
-    suspend fun sendThreadDatasetExportResult(result: ActivityResult, serverId: Int): String?
+    suspend fun sendThreadDatasetExportResult(result: ActivityResult, serverId: Int): ExportResult
 }
