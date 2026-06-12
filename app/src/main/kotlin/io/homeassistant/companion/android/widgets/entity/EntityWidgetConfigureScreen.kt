@@ -279,7 +279,6 @@ private fun EntityWidgetConfigureView(
             HAAccentButton(
                 text = stringResource(if (isUpdateWidget) commonR.string.update_widget else commonR.string.add_widget),
                 onClick = onActionClick,
-                enabled = selectedEntityId != null,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
