@@ -45,6 +45,7 @@ sealed interface ButtonWidgetState {
 
 internal object Loading : ButtonWidgetState
 internal object Error : ButtonWidgetState
+internal object Success : ButtonWidgetState
 
 internal data class ButtonStateWithData(
     override val backgroundType: WidgetBackgroundType,

@@ -7,10 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -24,6 +21,8 @@ import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
+import androidx.glance.LocalContext
+import androidx.glance.LocalGlanceId
 import androidx.glance.LocalSize
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
@@ -45,6 +44,8 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.height
 import androidx.glance.layout.size
 import androidx.glance.material.ColorProviders
+import androidx.glance.preview.ExperimentalGlancePreviewApi
+import androidx.glance.preview.Preview
 import androidx.glance.semantics.semantics
 import androidx.glance.semantics.testTag
 import androidx.glance.text.Text
@@ -57,16 +58,19 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.EntryPoints
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.compose.HomeAssistantGlanceTheme
 import io.homeassistant.companion.android.util.compose.HomeAssistantGlanceTypography
 import io.homeassistant.companion.android.util.compose.glanceHaLightColors
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
+import io.homeassistant.companion.android.widgets.button.ButtonWidget.Companion.SENT_SUCCESSFUL_KEY
 import io.homeassistant.companion.android.widgets.button.ButtonWidget.Companion.CALL_SERVICE
 import io.homeassistant.companion.android.widgets.button.ButtonWidget.Companion.CALL_SERVICE_AUTH
 import io.homeassistant.companion.android.widgets.button.ButtonWidget.Companion.DEFAULT_MAX_ICON_SIZE
 import io.homeassistant.companion.android.widgets.button.ButtonWidget.Companion.IS_LOADING_KEY
-import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.delay
 import timber.log.Timber
 
 private val authKey = ActionParameters.Key<Boolean>("auth")
@@ -80,6 +84,8 @@ class ButtonGlanceAppWidget() : GlanceAppWidget() {
     }
 
     internal val isActionRunningKey = booleanPreferencesKey(IS_LOADING_KEY)
+    internal val isActionSuccessKey = booleanPreferencesKey(ButtonWidget.IS_SUCCESS_KEY)
+    internal val wasActionSentSuccessfulKey = booleanPreferencesKey(SENT_SUCCESSFUL_KEY)
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val manager = GlanceAppWidgetManager(context)
@@ -87,13 +93,17 @@ class ButtonGlanceAppWidget() : GlanceAppWidget() {
 
         provideContent {
             val isActionRunning = currentState(key = isActionRunningKey) ?: false
+            val isActionSuccess = currentState(key = isActionSuccessKey) ?: false
+            val wasActionSentSuccessful = currentState(key = wasActionSentSuccessfulKey) ?: true
 
             val entryPoints = remember { EntryPoints.get(context, ButtonGlanceWidgetEntryPoint::class.java) }
             val updater = remember { entryPoints.buttonStateUpdater() }
 
-            LaunchedEffect(widgetId, isActionRunning) {
+            LaunchedEffect(widgetId, isActionRunning, wasActionSentSuccessful, isActionSuccess) {
                 Timber.i("Running Launched Effect")
                 updater.updateIsActionRunning(widgetId, isActionRunning)
+                updater.updateIsActionError(widgetId, !wasActionSentSuccessful)
+                updater.updateIsActionSuccess(widgetId, isActionSuccess)
             }
 
             val flow = remember(widgetId) { updater.getButtonEntityFlow(widgetId) }
@@ -103,6 +113,7 @@ class ButtonGlanceAppWidget() : GlanceAppWidget() {
             Timber.i("GlanceAppWidget $state")
             HomeAssistantGlanceTheme(colors = getWidgetColors(state?.backgroundType, state?.textColor)) {
                 ScreenForState(
+                    id = id,
                     context = context,
                     state = state,
                     maxIconSize = DEFAULT_MAX_ICON_SIZE,
@@ -114,6 +125,7 @@ class ButtonGlanceAppWidget() : GlanceAppWidget() {
 
 @Composable
 fun ScreenForState(
+    id: GlanceId,
     context: Context,
     state: ButtonWidgetState?,
     maxIconSize: Int,
@@ -127,7 +139,54 @@ fun ScreenForState(
             maxIconSize = maxIconSize,
         )
 
+        Error -> ErrorScreen(context, id)
+        Success -> SuccessScreen(context, id)
+
         else -> {}
+    }
+}
+
+@Composable
+private fun SuccessScreen(context: Context, widgetId: GlanceId, modifier: Modifier = Modifier) {
+    LaunchedEffect(Unit) {
+        delay(1.seconds)
+        updateAppWidgetState(context, widgetId) {
+            it[booleanPreferencesKey(ButtonWidget.IS_SUCCESS_KEY)] = false
+        }
+        ButtonGlanceAppWidget().update(context, widgetId)
+    }
+    Column(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = GlanceModifier.background(Color.Green).fillMaxSize(),
+    ) {
+        Image(
+            provider = ImageProvider(R.drawable.ic_check_black_24dp),
+            contentDescription = null,
+            modifier = GlanceModifier.fillMaxSize(),
+        )
+    }
+}
+
+@Composable
+private fun ErrorScreen(context: Context, widgetId: GlanceId, modifier: Modifier = Modifier) {
+    LaunchedEffect(Unit) {
+        delay(1.seconds)
+        updateAppWidgetState(context, widgetId) {
+            it[booleanPreferencesKey(IS_LOADING_KEY)] = false
+        }
+        ButtonGlanceAppWidget().update(context, widgetId)
+    }
+    Column(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = GlanceModifier.background(Color.Red).fillMaxSize(),
+    ) {
+        Image(
+            provider = ImageProvider(R.drawable.ic_clear_black),
+            contentDescription = null,
+            modifier = GlanceModifier.fillMaxSize(),
+        )
     }
 }
 
@@ -256,5 +315,14 @@ class TapAction : ActionCallback {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId)
         }
         context.sendBroadcast(intent)
+    }
+}
+
+@OptIn(ExperimentalGlancePreviewApi::class)
+@Preview
+@Composable
+private fun ErrorScreenPreview() {
+    HomeAssistantGlanceTheme {
+        ErrorScreen(LocalContext.current, LocalGlanceId.current)
     }
 }

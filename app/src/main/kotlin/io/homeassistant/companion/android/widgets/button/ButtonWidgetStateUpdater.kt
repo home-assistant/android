@@ -18,19 +18,31 @@ class ButtonWidgetStateUpdater @Inject constructor(
 ) {
 
     private val isActionRunning = MutableStateFlow<Map<Int, Boolean>>(emptyMap())
+    private val isActionError = MutableStateFlow<Map<Int, Boolean>>(emptyMap())
+    private val isActionSuccess = MutableStateFlow<Map<Int, Boolean>>(emptyMap())
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getButtonEntityFlow(widgetId: Int): Flow<ButtonWidgetState?> {
         val runningFlow = isActionRunning
             .map { it[widgetId] ?: false }
             .distinctUntilChanged()
+        val errorFlow = isActionError
+            .map { it[widgetId] ?: false }
+            .distinctUntilChanged()
+        val successFlow = isActionSuccess
+            .map { it[widgetId] ?: false }
+            .distinctUntilChanged()
 
-        return combine(runningFlow, buttonWidgetDao.getFlow(widgetId)) { running, entity ->
-            running to entity
-        }.mapLatest { (running, entity) ->
-            Timber.i("Widget $widgetId is running: $running")
+        return combine(runningFlow, errorFlow, successFlow, buttonWidgetDao.getFlow(widgetId)) { running, error, success, entity ->
+            Quartet(running, error, success, entity)
+        }.mapLatest { (running, error, success, entity) ->
+            Timber.i("Widget $widgetId is running: $running, error: $error, success: $success")
             if (running) {
                 Loading
+            } else if (error) {
+                Error
+            } else if (success) {
+                Success
             } else if (entity != null) {
                 ButtonStateWithData.from(entity)
             } else {
@@ -44,4 +56,22 @@ class ButtonWidgetStateUpdater @Inject constructor(
             put(widgetId, isRunning)
         }
     }
+
+    fun updateIsActionError(widgetId: Int, isError: Boolean) {
+        isActionError.value = isActionError.value.toMutableMap().apply {
+            put(widgetId, isError)
+        }
+    }
+
+    fun updateIsActionSuccess(widgetId: Int, isSuccess: Boolean) {
+        isActionSuccess.value = isActionSuccess.value.toMutableMap().apply {
+            put(widgetId, isSuccess)
+        }
+    }
 }
+data class Quartet<out A, out B, out C, out D>(
+    val first: A,
+    val second: B,
+    val third: C,
+    val fourth: D
+)

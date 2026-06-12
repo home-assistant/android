@@ -6,6 +6,7 @@ import android.content.Intent
 import android.widget.Toast
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.glance.GlanceId
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.updateAppWidgetState
@@ -112,22 +113,13 @@ class ButtonWidget : BaseGlanceEntityWidgetReceiver<ButtonWidgetEntity, ButtonWi
                 Timber.d("Action call sent successfully")
 
                 // If action call does not throw an exception, send positive feedback
-                updateAppWidgetState(context = context, glanceId = glanceId) {
-                    it[booleanPreferencesKey(IS_LOADING_KEY)] = false
-                    it[booleanPreferencesKey(ACTION_SENT_SUCCESSFUL_KEY)] = true
-                }
+                updateButtonWidgetState(context = context, glanceId = glanceId, wasSent = true, isSuccess = true)
             } catch (e: CancellationException) {
-                updateAppWidgetState(context = context, glanceId = glanceId) {
-                    it[booleanPreferencesKey(IS_LOADING_KEY)] = false
-                    it[booleanPreferencesKey(ACTION_SENT_SUCCESSFUL_KEY)] = false
-                }
+                updateButtonWidgetState(context = context, glanceId = glanceId)
                 throw e
             } catch (e: Exception) {
                 Timber.e(e, "Could not send action call.")
-                updateAppWidgetState(context = context, glanceId = glanceId) {
-                    it[booleanPreferencesKey(IS_LOADING_KEY)] = false
-                    it[booleanPreferencesKey(ACTION_SENT_SUCCESSFUL_KEY)] = false
-                }
+                updateButtonWidgetState(context = context, glanceId = glanceId)
                 withContext(Dispatchers.Main) {
                     Toast.makeText(context, commonR.string.action_failure, Toast.LENGTH_LONG).show()
                 }
@@ -137,10 +129,19 @@ class ButtonWidget : BaseGlanceEntityWidgetReceiver<ButtonWidgetEntity, ButtonWi
         glanceAppWidget.update(context, glanceId)
     }
 
+    private suspend fun updateButtonWidgetState(context: Context, glanceId: GlanceId, isLoading: Boolean = false, wasSent: Boolean = false, isSuccess: Boolean = false) {
+        updateAppWidgetState(context = context, glanceId = glanceId) {
+            it[booleanPreferencesKey(IS_LOADING_KEY)] = isLoading
+            it[booleanPreferencesKey(SENT_SUCCESSFUL_KEY)] = wasSent
+            it[booleanPreferencesKey(IS_SUCCESS_KEY)] = isSuccess
+        }
+    }
+
     companion object {
 
         const val IS_LOADING_KEY = "isLoading"
-        const val ACTION_SENT_SUCCESSFUL_KEY = "wasSentSuccessfully"
+        const val IS_SUCCESS_KEY = "isSuccess"
+        const val SENT_SUCCESSFUL_KEY = "wasSentSuccessfully"
         const val CALL_SERVICE =
             "io.homeassistant.companion.android.widgets.button.ButtonWidget.CALL_SERVICE"
         const val CALL_SERVICE_AUTH =
