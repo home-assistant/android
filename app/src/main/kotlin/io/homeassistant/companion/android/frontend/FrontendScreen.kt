@@ -49,6 +49,8 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
@@ -183,6 +185,7 @@ internal fun FrontendScreen(
         onDownloadRequested = viewModel::onDownloadRequested,
         webViewActions = viewModel.webViewActions,
         onGesture = viewModel::onGesture,
+        onLeavingApp = viewModel::onLeavingApp,
         onExoPlayerFullscreenChanged = viewModel::onExoPlayerFullscreenChanged,
         onImprovConnectDevice = viewModel::onImprovConnectDevice,
         onImprovRestart = viewModel::onImprovRestart,
@@ -230,6 +233,7 @@ internal fun FrontendScreenContent(
     onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit = { _, _, _ -> },
     webViewActions: Flow<WebViewAction> = emptyFlow(),
     onGesture: (GestureDirection, Int) -> Unit = { _, _ -> },
+    onLeavingApp: (String?) -> Unit = {},
     onExoPlayerFullscreenChanged: (Boolean) -> Unit = {},
     onBarcodeScanned: (rawValue: String, format: BarcodeFormat) -> Unit = { _, _ -> },
     onBarcodeCancelled: (forAction: Boolean) -> Unit = {},
@@ -253,6 +257,7 @@ internal fun FrontendScreenContent(
         processImprovScanRequests = processImprovScanRequests,
         screenOrientation = screenOrientation,
         keepScreenOnEnabled = keepScreenOnEnabled,
+        onLeavingApp = onLeavingApp,
     )
 
     FrontendScreenHandlers(pendingPermissionRequest = pendingPermissionRequest, pendingDialog = pendingDialog)
@@ -332,6 +337,7 @@ private fun FrontendScreenEffects(
     processImprovScanRequests: suspend () -> Unit,
     screenOrientation: ScreenOrientation,
     keepScreenOnEnabled: Boolean,
+    onLeavingApp: (String?) -> Unit,
 ) {
     ImprovScanLifecycleEffect(
         scanRequested = improvScanRequested,
@@ -353,6 +359,21 @@ private fun FrontendScreenEffects(
     ScreenOrientationEffect(orientation = screenOrientation)
 
     KeepScreenOnEffect(enabled = keepScreenOnEnabled)
+
+    LeavingAppEffect(webView = webView, onLeavingApp = onLeavingApp)
+}
+
+/**
+ * Calls [onLeavingApp] with the WebView's current URL when the host activity stops (the app leaves
+ * the foreground). Uses the activity lifecycle — not the navigation back-stack entry — so in-app
+ * navigation (e.g. opening Settings) does not trigger it.
+ */
+@Composable
+private fun LeavingAppEffect(webView: WebView?, onLeavingApp: (String?) -> Unit) {
+    val lifecycleOwner = LocalActivity.current as? LifecycleOwner ?: return
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP, lifecycleOwner) {
+        onLeavingApp(webView?.url)
+    }
 }
 
 /**
