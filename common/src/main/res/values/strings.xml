@@ -958,6 +958,7 @@
     <string name="trust_server_summary">Allow this server to enable and manage sensors and send notification commands</string>
     <string name="tts_error_utterance">Unable to process notification \"%1$s\" as text to speech.</string>
     <string name="tts_error_init">Failed to initialize a text to speech engine.</string>
+    <string name="tts_error_focus_denied">Could not obtain audio focus for text to speech.</string>
     <string name="tts_no_text">Please set the text for text to speech to process</string>
     <string name="unknown_address">Unknown address</string>
     <string name="update_shortcut">Update shortcut data</string>
