@@ -50,7 +50,6 @@ import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.common.WidgetUtils
 import java.util.LinkedList
 import kotlinx.coroutines.launch
-
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -169,12 +168,12 @@ class MediaPlayerControlsWidgetConfigureActivity :
                             .fillMaxSize()
                             .padding(paddingValues)
                             .verticalScroll(rememberScrollState())
-                            .padding(16.dp)
+                            .padding(16.dp),
                     ) {
                         Text(
                             text = stringResource(commonR.string.select_entity_to_display),
                             style = MaterialTheme.typography.headlineSmall,
-                            modifier = Modifier.padding(bottom = 20.dp)
+                            modifier = Modifier.padding(bottom = 20.dp),
                         )
 
                         if (serversList.size > 1) {
@@ -190,7 +189,7 @@ class MediaPlayerControlsWidgetConfigureActivity :
                                 label = stringResource(commonR.string.widget_spinner_server),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(bottom = 16.dp)
+                                    .padding(bottom = 16.dp),
                             )
                         }
 
@@ -200,32 +199,32 @@ class MediaPlayerControlsWidgetConfigureActivity :
                             label = { Text(stringResource(commonR.string.label_entity_ids)) },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = 16.dp)
+                                .padding(bottom = 16.dp),
                         )
 
                         LabeledCheckbox(
                             checked = showVolume,
                             onCheckedChange = { showVolume = it },
-                            label = stringResource(commonR.string.widget_media_show_volume)
+                            label = stringResource(commonR.string.widget_media_show_volume),
                         )
 
                         LabeledCheckbox(
                             checked = showSkip,
                             onCheckedChange = { showSkip = it },
-                            label = stringResource(commonR.string.widget_media_show_skip)
+                            label = stringResource(commonR.string.widget_media_show_skip),
                         )
 
                         LabeledCheckbox(
                             checked = showSeek,
                             onCheckedChange = { showSeek = it },
-                            label = stringResource(commonR.string.widget_media_show_seek)
+                            label = stringResource(commonR.string.widget_media_show_seek),
                         )
 
                         LabeledCheckbox(
                             checked = showSource,
                             onCheckedChange = { showSource = it },
                             label = stringResource(commonR.string.widget_media_show_source),
-                            modifier = Modifier.padding(bottom = 16.dp)
+                            modifier = Modifier.padding(bottom = 16.dp),
                         )
 
                         HATextField(
@@ -234,16 +233,22 @@ class MediaPlayerControlsWidgetConfigureActivity :
                             label = { Text(stringResource(commonR.string.label_label)) },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = 16.dp)
+                                .padding(bottom = 16.dp),
                         )
 
-                        val backgroundOptions = WidgetUtils.getBackgroundOptionList(this@MediaPlayerControlsWidgetConfigureActivity)
+                        val backgroundOptions = WidgetUtils.getBackgroundOptionList(
+                            this@MediaPlayerControlsWidgetConfigureActivity,
+                        )
                         val backgroundItems = backgroundOptions.map { HADropdownItem(it, it) }
 
+                        val dynamicColorLabel = getString(commonR.string.widget_background_type_dynamiccolor)
+                        val transparentLabel = getString(commonR.string.widget_background_type_transparent)
+                        val dayNightLabel = getString(commonR.string.widget_background_type_daynight)
+
                         val backgroundKey = when (backgroundType) {
-                            WidgetBackgroundType.DYNAMICCOLOR -> getString(commonR.string.widget_background_type_dynamiccolor)
-                            WidgetBackgroundType.TRANSPARENT -> getString(commonR.string.widget_background_type_transparent)
-                            else -> getString(commonR.string.widget_background_type_daynight)
+                            WidgetBackgroundType.DYNAMICCOLOR -> dynamicColorLabel
+                            WidgetBackgroundType.TRANSPARENT -> transparentLabel
+                            else -> dayNightLabel
                         }
 
                         HADropdownMenu(
@@ -251,21 +256,29 @@ class MediaPlayerControlsWidgetConfigureActivity :
                             selectedKey = backgroundKey,
                             onItemSelected = { selection ->
                                 backgroundType = when (selection) {
-                                    getString(commonR.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR
-                                    getString(commonR.string.widget_background_type_transparent) -> WidgetBackgroundType.TRANSPARENT
+                                    dynamicColorLabel -> WidgetBackgroundType.DYNAMICCOLOR
+                                    transparentLabel -> WidgetBackgroundType.TRANSPARENT
                                     else -> WidgetBackgroundType.DAYNIGHT
                                 }
                             },
                             label = stringResource(commonR.string.widget_background_type_label),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = 24.dp)
+                                .padding(bottom = 24.dp),
                         )
 
                         HAAccentButton(
-                            text = stringResource(if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID && !requestLauncherSetup) commonR.string.update_widget else commonR.string.add_widget),
+                            text = stringResource(
+                                if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID &&
+                                    !requestLauncherSetup
+                                ) {
+                                    commonR.string.update_widget
+                                } else {
+                                    commonR.string.add_widget
+                                },
+                            ),
                             onClick = { onAddWidgetClicked() },
-                            modifier = Modifier.align(Alignment.End)
+                            modifier = Modifier.align(Alignment.End),
                         )
                     }
                 }
@@ -278,20 +291,20 @@ class MediaPlayerControlsWidgetConfigureActivity :
         checked: Boolean,
         onCheckedChange: (Boolean) -> Unit,
         label: String,
-        modifier: Modifier = Modifier
+        modifier: Modifier = Modifier,
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = modifier
                 .fillMaxWidth()
                 .clickable { onCheckedChange(!checked) }
-                .padding(vertical = 8.dp)
+                .padding(vertical = 8.dp),
         ) {
             Text(text = label)
             Spacer(Modifier.weight(1f))
             HACheckbox(
                 checked = checked,
-                onCheckedChange = null // we handle click on row
+                onCheckedChange = null, // we handle click on row
             )
         }
     }
