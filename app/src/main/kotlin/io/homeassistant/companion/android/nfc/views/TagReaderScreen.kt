@@ -19,7 +19,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
@@ -101,7 +103,7 @@ fun TagReaderScreen(
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    val sheetState = rememberHAModalBottomSheetState()
+    val sheetState = rememberHAModalBottomSheetState(skipPartiallyExpanded = true)
 
     // Tracks whether the bottom sheet has ever been shown. Used to decide whether the
     // [TagReaderUiState.Done] state should keep the sheet in composition long enough to
@@ -133,7 +135,9 @@ fun TagReaderScreen(
                 dragHandle = {},
             ) {
                 Column(
-                    modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)),
+                    modifier = Modifier
+                        .verticalScroll(rememberScrollState())
+                        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)),
                 ) {
                     TagApprovalSheetHeader(onClose = onDismissed)
 
