@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
     <external-path name="external_files" path="."/>
+    <!--
+        Issue #6055: WebView <input type="file" capture> support writes camera
+        captures into getExternalFilesDir(DIRECTORY_PICTURES) and shares them
+        back to the chooser via FileProvider. This entry exposes that
+        directory; no extra runtime permission is required because it lives
+        inside this app's external scoped storage.
+    -->
+    <external-files-path name="webview_captures" path="Pictures/"/>
 </paths>
