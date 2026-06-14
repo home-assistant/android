@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.onboarding.connection
 
 import android.net.Uri
 import androidx.annotation.VisibleForTesting
-import androidx.core.net.toUri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -31,6 +30,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import timber.log.Timber
 
 /**
@@ -86,7 +86,24 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         fileChooserManager,
     )
 
-    private val rawUri: Uri by lazy { rawUrl.toUri() }
+    /**
+     * The origin (scheme/host/port) of the URL used to open this screen.
+     *
+     * Used both to detect redirects to a new port/scheme and to tell apart links that belong to the
+     * server (same host) from external links that should open in a browser.
+     */
+    private val rawHttpUrl: HttpUrl? = rawUrl.toHttpUrlOrNull()
+
+    /**
+     * The base URL the app should store for this server, normalized to its origin
+     * (`scheme://host:port`, no path/query/fragment).
+     *
+     * Starts as the origin of the URL used to open the screen and is updated to a new origin when
+     * the WebView is redirected to the same host on a different scheme/port (e.g. the landing page on
+     * `:8123` handing over to the freshly installed core on `:80`). A redirect to a different host is
+     * ignored, so the initial origin is kept. Falls back to the raw URL if it cannot be parsed.
+     */
+    private val effectiveUrl = MutableStateFlow(rawHttpUrl?.toBaseUrl() ?: rawUrl)
 
     private val _navigationEventsFlow = MutableSharedFlow<ConnectionNavigationEvent>(replay = 1)
     val navigationEventsFlow = _navigationEventsFlow.asSharedFlow()
@@ -112,7 +129,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     override fun runConnectivityChecks() {
         connectivityCheckJob?.cancel()
         connectivityCheckJob = viewModelScope.launch {
-            connectivityCheckRepository.runChecks(rawUrl).collect { state ->
+            connectivityCheckRepository.runChecks(effectiveUrl.value).collect { state ->
                 _connectivityCheckState.value = state
             }
         }
@@ -122,7 +139,10 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         currentUrlFlow = urlFlow,
         onFrontendError = ::onError,
         onUrlIntercepted = ::interceptRedirectIfRequired,
-        onPageFinished = { _isLoadingFlow.update { false } },
+        onPageFinished = { url ->
+            _isLoadingFlow.update { false }
+            updateEffectiveBaseUrl(url)
+        },
     )
 
     /**
@@ -177,6 +197,33 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         }
     }
 
+    /**
+     * Tracks the origin the WebView ends up on after each page load during onboarding.
+     *
+     * The WebView's `onPageFinished` reports the final URL once any redirect chain (e.g. the landing page on
+     * `:8123` handing over to the freshly installed core on `:80`) has resolved. When that origin
+     * is on the same host as the initial URL but a different scheme or port, [effectiveUrl] is
+     * updated so the correct URL is stored once authentication completes. Navigations to a different
+     * host are ignored, keeping the initial URL.
+     */
+    private fun updateEffectiveBaseUrl(url: String?) {
+        val navigated = url?.toHttpUrlOrNull() ?: return
+        val initial = rawHttpUrl ?: return
+        if (navigated.host != initial.host) return
+        // Never downgrade a secure connection: if the screen was opened on https, ignore a redirect to
+        // http and keep the original URL rather than silently storing a plaintext origin.
+        if (initial.isHttps && !navigated.isHttps) {
+            Timber.w("Ignoring an https to http downgrade during onboarding, keeping the original URL")
+            return
+        }
+
+        val newOrigin = navigated.toBaseUrl()
+        if (newOrigin != effectiveUrl.value) {
+            Timber.d("Onboarding navigated to a new origin on the same host, updating stored URL")
+            effectiveUrl.value = newOrigin
+        }
+    }
+
     private fun interceptRedirectIfRequired(url: Uri, isTLSClientAuthNeeded: Boolean): Boolean {
         return if (url.isOpaque) {
             false // Not intercepted: opaque is not handled by app
@@ -186,7 +233,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
                 viewModelScope.launch {
                     _navigationEventsFlow.emit(
                         ConnectionNavigationEvent.Authenticated(
-                            url = rawUrl,
+                            url = effectiveUrl.value,
                             authCode = code,
                             requiredMTLS = isTLSClientAuthNeeded,
                         ),
@@ -197,8 +244,8 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
                 Timber.w("Auth code is missing from the auth callback")
                 false // Not intercepted: Auth code missing
             }
-        } else if (url.host != rawUri.host) {
-            Timber.d("$url is not from the server, opening it on external browser.")
+        } else if (url.host != rawHttpUrl?.host) {
+            Timber.d("$url is not from the server, opening it in an external browser")
             viewModelScope.launch {
                 _navigationEventsFlow.emit(ConnectionNavigationEvent.OpenExternalLink(url))
             }
@@ -229,3 +276,18 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         runConnectivityChecks()
     }
 }
+
+/**
+ * The origin (`scheme://host:port`) of this URL as a string, with path, query and fragment removed.
+ *
+ * Delegating to [HttpUrl] keeps the formatting correct: IPv6 literal hosts stay bracketed (e.g.
+ * `http://[::1]:8123`) and the scheme's default port is dropped. The trailing slash that [HttpUrl]
+ * always appends is removed so the result has the same shape as a bare base URL.
+ */
+private fun HttpUrl.toBaseUrl(): String = newBuilder()
+    .encodedPath("/")
+    .encodedQuery(null)
+    .encodedFragment(null)
+    .build()
+    .toString()
+    .removeSuffix("/")
