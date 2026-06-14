@@ -6,32 +6,53 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.View
-import android.widget.ArrayAdapter
-import android.widget.AutoCompleteTextView
-import android.widget.MultiAutoCompleteTextView
 import android.widget.Spinner
 import android.widget.Toast
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
+import io.homeassistant.companion.android.common.compose.composable.HACheckbox
+import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
+import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
+import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.util.SdkVersion
+import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
-import io.homeassistant.companion.android.databinding.WidgetMediaControlsConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
-import io.homeassistant.companion.android.util.applySafeDrawingInsets
+import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
-import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetUtils
 import java.util.LinkedList
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+
 import timber.log.Timber
 
-// TODO Migrate to compose https://github.com/home-assistant/android/issues/6308
 @AndroidEntryPoint
 class MediaPlayerControlsWidgetConfigureActivity :
     BaseWidgetConfigureActivity<MediaPlayerControlsWidgetEntity, MediaPlayerControlsWidgetDao>() {
@@ -48,56 +69,33 @@ class MediaPlayerControlsWidgetConfigureActivity :
 
     private var requestLauncherSetup = false
 
-    private lateinit var binding: WidgetMediaControlsConfigureBinding
-
-    override val serverSelect: View
-        get() = binding.serverSelect
-
-    override val serverSelectList: Spinner
-        get() = binding.serverSelectList
+    override val serverSelect by lazy { View(this) }
+    override val serverSelectList by lazy { Spinner(this) }
 
     private var entities = mutableMapOf<Int, List<Entity>>()
     private var selectedEntities: LinkedList<Entity?> = LinkedList()
 
-    private var entityAdapter: SingleItemArrayAdapter<Entity>? = null
+    private var serversList by mutableStateOf<List<Server>>(emptyList())
+    private var composeSelectedServerId by mutableStateOf<Int?>(null)
+
+    private var widgetLabel by mutableStateOf("")
+    private var entityIdInput by mutableStateOf("")
+    private var showVolume by mutableStateOf(true)
+    private var showSeek by mutableStateOf(true)
+    private var showSkip by mutableStateOf(true)
+    private var showSource by mutableStateOf(true)
+    private var backgroundType by mutableStateOf(WidgetBackgroundType.DAYNIGHT)
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Set the result to CANCELED.  This will cause the widget host to cancel
-        // out of the widget placement if the user presses the back button.
         setResult(RESULT_CANCELED)
 
-        binding = WidgetMediaControlsConfigureBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        binding.root.applySafeDrawingInsets()
-
-        binding.addButton.setOnClickListener {
-            lifecycleScope.launch {
-                if (requestLauncherSetup) {
-                    if (
-                        SdkVersion.isAtLeast(Build.VERSION_CODES.O) &&
-                        isValidServerId() &&
-                        binding.widgetTextConfigEntityId.text.split(",").any {
-                            entities[selectedServerId!!].orEmpty().any { e -> e.entityId == it.trim() }
-                        }
-                    ) {
-                        requestWidgetCreation()
-                    } else {
-                        showAddWidgetError()
-                    }
-                } else {
-                    updateWidget()
-                }
-            }
-        }
-
-        // Find the widget id from the intent.
         val intent = intent
         val extras = intent.extras
         if (extras != null) {
             if (extras.containsKey(FOR_ENTITY)) {
-                binding.widgetTextConfigEntityId.setText(extras.getString(FOR_ENTITY))
+                entityIdInput = extras.getString(FOR_ENTITY) ?: ""
             }
             appWidgetId = extras.getInt(
                 AppWidgetManager.EXTRA_APPWIDGET_ID,
@@ -109,62 +107,45 @@ class MediaPlayerControlsWidgetConfigureActivity :
             )
         }
 
-        // If this activity was started with an intent without an app widget ID, finish with an error.
         if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID && !requestLauncherSetup) {
             finish()
             return
         }
 
-        val backgroundTypeValues = WidgetUtils.getBackgroundOptionList(this)
-        binding.backgroundType.adapter =
-            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
-
         lifecycleScope.launch {
+            serversList = serverManager.servers()
+
             val mediaPlayerWidget = dao.get(appWidgetId)
 
             if (mediaPlayerWidget != null) {
-                binding.label.setText(mediaPlayerWidget.label)
-                binding.widgetTextConfigEntityId.setText(mediaPlayerWidget.entityId)
-                binding.widgetShowVolumeButtonCheckbox.isChecked = mediaPlayerWidget.showVolume
-                binding.widgetShowSeekButtonsCheckbox.isChecked = mediaPlayerWidget.showSeek
-                binding.widgetShowSkipButtonsCheckbox.isChecked = mediaPlayerWidget.showSkip
-                binding.widgetShowMediaPlayerSource.isChecked = mediaPlayerWidget.showSource
-                binding.backgroundType.setSelection(
-                    WidgetUtils.getSelectedBackgroundOption(
-                        this@MediaPlayerControlsWidgetConfigureActivity,
-                        mediaPlayerWidget.backgroundType,
-                        backgroundTypeValues,
-                    ),
-                )
-                val entities = runBlocking {
-                    try {
-                        mediaPlayerWidget.entityId.split(",").map { s ->
-                            serverManager.integrationRepository(mediaPlayerWidget.serverId).getEntity(s.trim())
-                        }
-                    } catch (e: Exception) {
-                        Timber.e(e, "Unable to get entity information")
-                        Toast.makeText(
-                            applicationContext,
-                            commonR.string.widget_entity_fetch_error,
-                            Toast.LENGTH_LONG,
-                        )
-                            .show()
-                        null
+                widgetLabel = mediaPlayerWidget.label ?: ""
+                entityIdInput = mediaPlayerWidget.entityId
+                showVolume = mediaPlayerWidget.showVolume
+                showSeek = mediaPlayerWidget.showSeek
+                showSkip = mediaPlayerWidget.showSkip
+                showSource = mediaPlayerWidget.showSource
+                backgroundType = mediaPlayerWidget.backgroundType
+
+                val entitiesList = try {
+                    mediaPlayerWidget.entityId.split(",").map { s ->
+                        serverManager.integrationRepository(mediaPlayerWidget.serverId).getEntity(s.trim())
                     }
+                } catch (e: Exception) {
+                    Timber.e(e, "Unable to get entity information")
+                    Toast.makeText(
+                        applicationContext,
+                        commonR.string.widget_entity_fetch_error,
+                        Toast.LENGTH_LONG,
+                    ).show()
+                    null
                 }
-                if (entities != null) {
-                    selectedEntities.addAll(entities)
+                if (entitiesList != null) {
+                    selectedEntities.addAll(entitiesList)
                 }
-                binding.addButton.setText(commonR.string.update_widget)
             }
             setupServerSelect(mediaPlayerWidget?.serverId)
+            composeSelectedServerId = selectedServerId
         }
-
-        entityAdapter = SingleItemArrayAdapter(this) { it?.entityId ?: "" }
-
-        binding.widgetTextConfigEntityId.setAdapter(entityAdapter)
-        binding.widgetTextConfigEntityId.setTokenizer(MultiAutoCompleteTextView.CommaTokenizer())
-        binding.widgetTextConfigEntityId.onFocusChangeListener = dropDownOnFocus
 
         lifecycleScope.launch {
             serverManager.servers().forEach { server ->
@@ -173,44 +154,178 @@ class MediaPlayerControlsWidgetConfigureActivity :
                         val fetchedEntities = serverManager.integrationRepository(server.id).getEntities().orEmpty()
                             .filter { it.domain == MEDIA_PLAYER_DOMAIN }
                         entities[server.id] = fetchedEntities
-                        if (server.id == selectedServerId) setAdapterEntities(server.id)
                     } catch (e: Exception) {
-                        // If entities fail to load, it's okay to pass
-                        // an empty map to the dynamicFieldAdapter
                         Timber.e(e, "Failed to query entities")
+                    }
+                }
+            }
+        }
+
+        setContent {
+            HomeAssistantAppTheme {
+                Scaffold { paddingValues ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues)
+                            .verticalScroll(rememberScrollState())
+                            .padding(16.dp)
+                    ) {
+                        Text(
+                            text = stringResource(commonR.string.select_entity_to_display),
+                            style = MaterialTheme.typography.headlineSmall,
+                            modifier = Modifier.padding(bottom = 20.dp)
+                        )
+
+                        if (serversList.size > 1) {
+                            val serverItems = serversList.map { HADropdownItem(it.id, it.friendlyName) }
+                            HADropdownMenu(
+                                items = serverItems,
+                                selectedKey = composeSelectedServerId,
+                                onItemSelected = {
+                                    composeSelectedServerId = it
+                                    selectedServerId = it
+                                    onServerSelected(it)
+                                },
+                                label = stringResource(commonR.string.widget_spinner_server),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 16.dp)
+                            )
+                        }
+
+                        HATextField(
+                            value = entityIdInput,
+                            onValueChange = { entityIdInput = it },
+                            label = { Text(stringResource(commonR.string.label_entity_ids)) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 16.dp)
+                        )
+
+                        LabeledCheckbox(
+                            checked = showVolume,
+                            onCheckedChange = { showVolume = it },
+                            label = stringResource(commonR.string.widget_media_show_volume)
+                        )
+
+                        LabeledCheckbox(
+                            checked = showSkip,
+                            onCheckedChange = { showSkip = it },
+                            label = stringResource(commonR.string.widget_media_show_skip)
+                        )
+
+                        LabeledCheckbox(
+                            checked = showSeek,
+                            onCheckedChange = { showSeek = it },
+                            label = stringResource(commonR.string.widget_media_show_seek)
+                        )
+
+                        LabeledCheckbox(
+                            checked = showSource,
+                            onCheckedChange = { showSource = it },
+                            label = stringResource(commonR.string.widget_media_show_source),
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+
+                        HATextField(
+                            value = widgetLabel,
+                            onValueChange = { widgetLabel = it },
+                            label = { Text(stringResource(commonR.string.label_label)) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 16.dp)
+                        )
+
+                        val backgroundOptions = WidgetUtils.getBackgroundOptionList(this@MediaPlayerControlsWidgetConfigureActivity)
+                        val backgroundItems = backgroundOptions.map { HADropdownItem(it, it) }
+
+                        val backgroundKey = when (backgroundType) {
+                            WidgetBackgroundType.DYNAMICCOLOR -> getString(commonR.string.widget_background_type_dynamiccolor)
+                            WidgetBackgroundType.TRANSPARENT -> getString(commonR.string.widget_background_type_transparent)
+                            else -> getString(commonR.string.widget_background_type_daynight)
+                        }
+
+                        HADropdownMenu(
+                            items = backgroundItems,
+                            selectedKey = backgroundKey,
+                            onItemSelected = { selection ->
+                                backgroundType = when (selection) {
+                                    getString(commonR.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR
+                                    getString(commonR.string.widget_background_type_transparent) -> WidgetBackgroundType.TRANSPARENT
+                                    else -> WidgetBackgroundType.DAYNIGHT
+                                }
+                            },
+                            label = stringResource(commonR.string.widget_background_type_label),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 24.dp)
+                        )
+
+                        HAAccentButton(
+                            text = stringResource(if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID && !requestLauncherSetup) commonR.string.update_widget else commonR.string.add_widget),
+                            onClick = { onAddWidgetClicked() },
+                            modifier = Modifier.align(Alignment.End)
+                        )
                     }
                 }
             }
         }
     }
 
-    private val dropDownOnFocus = View.OnFocusChangeListener { view, hasFocus ->
-        if (hasFocus && view is AutoCompleteTextView) {
-            view.showDropDown()
+    @Composable
+    private fun LabeledCheckbox(
+        checked: Boolean,
+        onCheckedChange: (Boolean) -> Unit,
+        label: String,
+        modifier: Modifier = Modifier
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = modifier
+                .fillMaxWidth()
+                .clickable { onCheckedChange(!checked) }
+                .padding(vertical = 8.dp)
+        ) {
+            Text(text = label)
+            Spacer(Modifier.weight(1f))
+            HACheckbox(
+                checked = checked,
+                onCheckedChange = null // we handle click on row
+            )
+        }
+    }
+
+    private fun onAddWidgetClicked() {
+        lifecycleScope.launch {
+            if (requestLauncherSetup) {
+                if (
+                    SdkVersion.isAtLeast(Build.VERSION_CODES.O) &&
+                    isValidServerId() &&
+                    entityIdInput.split(",").any {
+                        entities[selectedServerId!!].orEmpty().any { e -> e.entityId == it.trim() }
+                    }
+                ) {
+                    requestWidgetCreation()
+                } else {
+                    showAddWidgetError()
+                }
+            } else {
+                updateWidget()
+            }
         }
     }
 
     override fun onServerSelected(serverId: Int) {
         selectedEntities.clear()
-        binding.widgetTextConfigEntityId.setText("")
-        setAdapterEntities(serverId)
-    }
-
-    private fun setAdapterEntities(serverId: Int) {
-        entityAdapter?.let { adapter ->
-            adapter.clearAll()
-            if (entities[serverId] != null) {
-                adapter.addAll(entities[serverId].orEmpty().toMutableList())
-                adapter.sort()
-            }
-            runOnUiThread { adapter.notifyDataSetChanged() }
-        }
+        entityIdInput = ""
+        composeSelectedServerId = serverId
     }
 
     override suspend fun getPendingDaoEntity(): MediaPlayerControlsWidgetEntity {
         val serverId = checkNotNull(selectedServerId) { "Selected server ID is null" }
         selectedEntities = LinkedList()
-        val se = binding.widgetTextConfigEntityId.text.split(",")
+        val se = entityIdInput.split(",")
         se.forEach {
             val entity = entities[serverId]?.firstOrNull { e -> e.entityId == it.trim() }
             if (entity != null) selectedEntities.add(entity)
@@ -226,16 +341,12 @@ class MediaPlayerControlsWidgetConfigureActivity :
             id = appWidgetId,
             serverId = serverId,
             entityId = entitySelection,
-            label = binding.label.text.toString(),
-            showVolume = binding.widgetShowVolumeButtonCheckbox.isChecked,
-            showSkip = binding.widgetShowSkipButtonsCheckbox.isChecked,
-            showSeek = binding.widgetShowSeekButtonsCheckbox.isChecked,
-            showSource = binding.widgetShowMediaPlayerSource.isChecked,
-            backgroundType = when (binding.backgroundType.selectedItem as String?) {
-                getString(commonR.string.widget_background_type_dynamiccolor) -> WidgetBackgroundType.DYNAMICCOLOR
-                getString(commonR.string.widget_background_type_transparent) -> WidgetBackgroundType.TRANSPARENT
-                else -> WidgetBackgroundType.DAYNIGHT
-            },
+            label = widgetLabel,
+            showVolume = showVolume,
+            showSkip = showSkip,
+            showSeek = showSeek,
+            showSource = showSource,
+            backgroundType = backgroundType,
         )
     }
 
