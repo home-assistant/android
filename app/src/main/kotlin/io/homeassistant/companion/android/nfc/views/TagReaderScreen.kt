@@ -104,6 +104,7 @@ fun TagReaderScreen(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val sheetState = rememberHAModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetScrollState = rememberScrollState()
 
     // Tracks whether the bottom sheet has ever been shown. Used to decide whether the
     // [TagReaderUiState.Done] state should keep the sheet in composition long enough to
@@ -136,7 +137,7 @@ fun TagReaderScreen(
             ) {
                 Column(
                     modifier = Modifier
-                        .verticalScroll(rememberScrollState())
+                        .verticalScroll(sheetScrollState)
                         .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)),
                 ) {
                     TagApprovalSheetHeader(onClose = onDismissed)
