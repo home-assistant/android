@@ -189,6 +189,60 @@ class FrontendEventHandlerTest {
     }
 
     @Test
+    fun `Given LaunchApp event then onLaunchApp is called with the package name`() {
+        var capturedPackageName: String? = null
+        val events = TestSharedFlow<FrontendEvent>()
+
+        composeTestRule.setContent {
+            FrontendEventHandler(
+                events = events,
+                onShowSnackbar = { _, _ -> false },
+                onNavigateToSettings = {},
+                onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = {},
+                onShowServerSwitcher = {},
+                onNavigateToNfcWrite = { _, _ -> },
+                onRequestFullscreen = {},
+                onNavigateToWidgetConfig = { _, _ -> },
+                onLaunchApp = { packageName -> capturedPackageName = packageName },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        events.emit(FrontendEvent.LaunchApp(packageName = "com.example.app"))
+        composeTestRule.waitForIdle()
+
+        assertEquals("com.example.app", capturedPackageName)
+    }
+
+    @Test
+    fun `Given LaunchIntent event then onLaunchIntent is called with the intent uri`() {
+        var capturedIntentUri: String? = null
+        val events = TestSharedFlow<FrontendEvent>()
+
+        composeTestRule.setContent {
+            FrontendEventHandler(
+                events = events,
+                onShowSnackbar = { _, _ -> false },
+                onNavigateToSettings = {},
+                onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = {},
+                onShowServerSwitcher = {},
+                onNavigateToNfcWrite = { _, _ -> },
+                onRequestFullscreen = {},
+                onNavigateToWidgetConfig = { _, _ -> },
+                onLaunchIntent = { intentUri -> capturedIntentUri = intentUri },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        events.emit(FrontendEvent.LaunchIntent(intentUri = "intent://scan#Intent;end"))
+        composeTestRule.waitForIdle()
+
+        assertEquals("intent://scan#Intent;end", capturedIntentUri)
+    }
+
+    @Test
     fun `Given ShowServerSwitcher event then onShowServerSwitcher is called`() {
         var serverSwitcherShown = false
         val events = TestSharedFlow<FrontendEvent>()
