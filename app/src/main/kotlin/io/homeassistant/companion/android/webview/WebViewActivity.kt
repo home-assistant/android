@@ -251,7 +251,7 @@ class WebViewActivity :
     }
     private val commissionMatterDevice =
         registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-            presenter.onMatterThreadIntentResult(this, result)
+            presenter.onMatterThreadIntentResult(result)
         }
 
     @Inject
@@ -1137,9 +1137,9 @@ class WebViewActivity :
                     ),
                 )
 
-            "matter/commission" -> presenter.startCommissioningMatterDevice(this@WebViewActivity)
+            "matter/commission" -> presenter.startCommissioningMatterDevice()
             "thread/import_credentials" -> {
-                presenter.exportThreadCredentials(this@WebViewActivity)
+                presenter.exportThreadCredentials()
 
                 alertDialog = AlertDialog.Builder(this@WebViewActivity)
                     .setMessage(commonR.string.thread_debug_active)

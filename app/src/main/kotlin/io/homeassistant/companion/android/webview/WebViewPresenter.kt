@@ -72,14 +72,14 @@ interface WebViewPresenter {
     suspend fun parseWebViewColor(webViewColor: String): Int
 
     fun appCanCommissionMatterDevice(): Boolean
-    fun startCommissioningMatterDevice(context: Context)
+    fun startCommissioningMatterDevice()
 
     /** @return `true` if the app can send this device's preferred Thread credential to the server */
     fun appCanExportThreadCredentials(): Boolean
-    fun exportThreadCredentials(context: Context)
+    fun exportThreadCredentials()
     fun getMatterThreadStepFlow(): Flow<MatterThreadStep>
     fun getMatterThreadIntent(): IntentSender?
-    fun onMatterThreadIntentResult(context: Context, result: ActivityResult)
+    fun onMatterThreadIntentResult(result: ActivityResult)
     fun finishMatterThreadFlow()
 
     /** @return `true` if the app should prompt the user for Improv permissions before scanning */

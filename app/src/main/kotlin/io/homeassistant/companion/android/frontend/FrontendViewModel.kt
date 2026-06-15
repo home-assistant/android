@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend
 
+import android.net.Uri
 import android.view.View
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.SavedStateHandle
@@ -46,6 +47,7 @@ import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import io.homeassistant.companion.android.util.LifecycleHandler
+import io.homeassistant.companion.android.util.hasSameOrigin
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
@@ -73,6 +75,9 @@ import timber.log.Timber
 /** Maximum time to wait for the frontend to load before showing a timeout error. */
 @VisibleForTesting
 val CONNECTION_TIMEOUT = 10.seconds
+
+private const val APP_PREFIX = "app://"
+private const val INTENT_PREFIX = "intent:"
 
 /**
  * URLs that must NOT trigger the "always show first view on app start" navigation.
@@ -232,6 +237,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         onFrontendError = ::onError,
         onCrash = ::onRetry,
         onPageFinished = ::onPageFinished,
+        onUrlIntercepted = { uri, _ -> onUrlIntercepted(uri) },
         onReceivedHttpAuthRequest = { handler, host, resource, realm ->
             viewModelScope.launch {
                 if (httpAuthHandler.handleAuthRequest(handler, host = host, resource = resource, realm = realm) ==
@@ -887,6 +893,37 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         }
     }
 
+    /**
+     * Handles a URL the WebView is about to load.
+     *
+     * Custom schemes (`app://`, `intent:`) and URLs that do not match the current server origin are
+     * routed to the host through [FrontendEvent]s, while same-origin URLs are left for the WebView.
+     * The origin comparison uses scheme, host and port (see [hasSameOrigin]).
+     *
+     * @return `true` when the URL was intercepted (the host will handle it), `false` to let the WebView load it.
+     */
+    private fun onUrlIntercepted(uri: Uri): Boolean {
+        val rawUrl = uri.toString()
+        return when {
+            rawUrl.startsWith(APP_PREFIX) -> {
+                _events.tryEmit(FrontendEvent.LaunchApp(rawUrl.substringAfter(APP_PREFIX)))
+                true
+            }
+
+            rawUrl.startsWith(INTENT_PREFIX) -> {
+                _events.tryEmit(FrontendEvent.LaunchIntent(rawUrl))
+                true
+            }
+
+            uri.hasSameOrigin(urlFlow.value) -> false
+
+            else -> {
+                _events.tryEmit(FrontendEvent.OpenExternalLink(uri))
+                true
+            }
+        }
+    }
+
     private fun onError(error: FrontendConnectionError) {
         _viewState.update { currentState ->
             FrontendViewState.Error(
@@ -908,7 +945,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      * navigations can reset the viewport meta tag). The collection then stays active
      * to react to settings changes until the next page load restarts it.
      */
-    private fun onPageFinished() {
+    private fun onPageFinished(url: String?) {
         zoomObserverJob?.cancel()
         zoomObserverJob = viewModelScope.launch {
             prefsRepository.zoomSettingsFlow().collect { settings ->
