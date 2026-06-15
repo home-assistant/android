@@ -210,6 +210,7 @@ class FrontendEventHandlerTest {
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
                 onRequestFullscreen = {},
+                onLaunchMatterThreadIntent = {},
                 onNavigateToWidgetConfig = { _, _ -> },
                 onLaunchApp = { packageName -> capturedPackageName = packageName },
             )
@@ -236,6 +237,7 @@ class FrontendEventHandlerTest {
                 onOpenExternalLink = {},
                 onShowServerSwitcher = {},
                 onNavigateToNfcWrite = { _, _ -> },
+                onLaunchMatterThreadIntent = {},
                 onRequestFullscreen = {},
                 onNavigateToWidgetConfig = { _, _ -> },
                 onLaunchIntent = { intentUri -> capturedIntentUri = intentUri },

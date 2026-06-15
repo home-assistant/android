@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend.navigation
 
+import android.content.IntentSender
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
@@ -162,7 +163,7 @@ internal fun FrontendEventHandler(
     onOpenExternalLink: suspend (Uri) -> Unit,
     onShowServerSwitcher: () -> Unit,
     onNavigateToNfcWrite: (messageId: Int, tagId: String?) -> Unit,
-    onLaunchMatterThreadIntent: (android.content.IntentSender) -> Unit,
+    onLaunchMatterThreadIntent: (IntentSender) -> Unit,
     onRequestFullscreen: (Boolean) -> Unit,
     onNavigateToWidgetConfig: (entityId: String, widgetType: WidgetType) -> Unit,
     onLaunchApp: (packageName: String) -> Unit = {},
