@@ -882,7 +882,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      * navigations can reset the viewport meta tag). The collection then stays active
      * to react to settings changes until the next page load restarts it.
      */
-    private fun onPageFinished() {
+    private fun onPageFinished(url: String?) {
         zoomObserverJob?.cancel()
         zoomObserverJob = viewModelScope.launch {
             prefsRepository.zoomSettingsFlow().collect { settings ->
