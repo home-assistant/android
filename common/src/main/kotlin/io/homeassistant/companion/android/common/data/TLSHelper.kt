@@ -43,6 +43,10 @@ class TLSHelper @Inject constructor(
         // the user-installed CAs, consulted only when the default rejects a certificate. It can add
         // acceptances but never cause a rejection, so it can't bring back #6810. See
         // [CompositeX509ExtendedTrustManager] for the trust trade-off.
+        //
+        // This relies on the app intending to trust user-installed CAs, which network_security_config.xml
+        // opts into with <certificates src="user"/>. If that policy is ever removed, this fallback would
+        // keep trusting user CAs against the new policy, so it must be removed or gated alongside it.
         val handshakeTrustManager = withUserInstalledCaFallback(platformTrustManager)
 
         val sslContext = SSLContext.getInstance("TLS")
