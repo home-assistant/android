@@ -78,8 +78,7 @@ val CONNECTION_TIMEOUT = 10.seconds
  * URLs that must NOT trigger the "always show first view on app start" navigation.
  *
  * Matches the Home Assistant settings area — paths under `/config` (except `/config/dashboard`,
- * which is a regular dashboard) and under `/hassio` (add-ons). Mirrors the legacy `WebViewActivity`
- * regex.
+ * which is a regular dashboard) and under `/hassio` (apps).
  */
 private val FIRST_VIEW_EXCLUDED_URL_REGEX =
     """.*://.*/(config/(?!\bdashboard\b)|hassio)/*.*""".toRegex()
