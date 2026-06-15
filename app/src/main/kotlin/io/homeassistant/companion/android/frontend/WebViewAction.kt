@@ -9,6 +9,21 @@ import kotlinx.coroutines.CompletableDeferred
 import timber.log.Timber
 
 /**
+ * Clicks the sidebar anchor of the frontend's default panel (read from `localStorage.defaultPanel`,
+ * falling back to the first sidebar item) and scrolls to the top. Used by
+ * [WebViewAction.NavigateToDefaultPanelViaSidebar].
+ */
+private const val DEFAULT_PANEL_SIDEBAR_CLICK_SCRIPT = """
+    var anchor = 'a:nth-child(1)';
+    var defaultPanel = window.localStorage.getItem('defaultPanel')?.replaceAll('"',"");
+    if(defaultPanel) anchor = 'a[href="/' + defaultPanel + '"]';
+    document.querySelector('body > home-assistant').shadowRoot.querySelector('home-assistant-main')
+                                                   .shadowRoot.querySelector('ha-sidebar')
+                                                   .shadowRoot.querySelector('paper-listbox > ' + anchor).click();
+    window.scrollTo(0, 0);
+"""
+
+/**
  * Actions that require direct interaction with the WebView.
  *
  * These actions are emitted by the ViewModel and consumed by the Screen layer,
@@ -174,18 +189,3 @@ sealed interface WebViewAction {
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 annotation class EvaluateJavascriptUsage
-
-/**
- * Clicks the sidebar anchor of the frontend's default panel (read from `localStorage.defaultPanel`,
- * falling back to the first sidebar item) and scrolls to the top. Used by
- * [WebViewAction.NavigateToDefaultPanelViaSidebar].
- */
-private const val DEFAULT_PANEL_SIDEBAR_CLICK_SCRIPT = """
-    var anchor = 'a:nth-child(1)';
-    var defaultPanel = window.localStorage.getItem('defaultPanel')?.replaceAll('"',"");
-    if(defaultPanel) anchor = 'a[href="/' + defaultPanel + '"]';
-    document.querySelector('body > home-assistant').shadowRoot.querySelector('home-assistant-main')
-                                                   .shadowRoot.querySelector('ha-sidebar')
-                                                   .shadowRoot.querySelector('paper-listbox > ' + anchor).click();
-    window.scrollTo(0, 0);
-"""
