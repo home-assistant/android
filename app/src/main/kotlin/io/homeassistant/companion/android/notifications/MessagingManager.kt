@@ -1213,13 +1213,15 @@ class MessagingManager @Inject constructor(
                 builder.setStyle(progressStyle)
             }
         }
-
     }
 
-    private fun applyProgressSegments(style: NotificationCompat.ProgressStyle, accentColor: Int, data: Map<String, String>): Boolean {
+    private fun applyProgressSegments(
+        style: NotificationCompat.ProgressStyle,
+        accentColor: Int,
+        data: Map<String, String>,
+    ): Boolean {
         val segmentsData = data[PROGRESS_SEGMENTS] ?: ""
-        if (segmentsData.isNotBlank())
-        {
+        if (segmentsData.isNotBlank()) {
             try {
                 val segments: List<Map<String, String>> = lenientJson.decodeFromString(segmentsData)
                 for (segment in segments) {
@@ -1237,12 +1239,15 @@ class MessagingManager @Inject constructor(
             } catch (e: kotlinx.serialization.SerializationException) {
                 Timber.e(e, "Error while parsing notification progress segments")
             }
-
         }
         return false
     }
 
-    private fun applyProgressPoints(style: NotificationCompat.ProgressStyle, accentColor: Int, data: Map<String, String>): Boolean {
+    private fun applyProgressPoints(
+        style: NotificationCompat.ProgressStyle,
+        accentColor: Int,
+        data: Map<String, String>,
+    ): Boolean {
         val pointsData = data[PROGRESS_POINTS] ?: ""
         if (pointsData.isNotBlank()) {
             try {
@@ -1266,7 +1271,11 @@ class MessagingManager @Inject constructor(
         return false
     }
 
-    private fun applyProgressTrackerIcon(style: NotificationCompat.ProgressStyle, accentColor: Int, data: Map<String, String>): Boolean {
+    private fun applyProgressTrackerIcon(
+        style: NotificationCompat.ProgressStyle,
+        accentColor: Int,
+        data: Map<String, String>,
+    ): Boolean {
         val progressTrackerIcon = data[PROGRESS_TRACKER_ICON] ?: ""
         val progressTrackerColor =
             parseColor(context, data[PROGRESS_TRACKER_COLOR] ?: "", commonR.color.colorPrimary)
@@ -1289,7 +1298,11 @@ class MessagingManager @Inject constructor(
         return false
     }
 
-    private fun applyProgressStartIcon(style: NotificationCompat.ProgressStyle, accentColor: Int, data: Map<String, String>): Boolean {
+    private fun applyProgressStartIcon(
+        style: NotificationCompat.ProgressStyle,
+        accentColor: Int,
+        data: Map<String, String>,
+    ): Boolean {
         val progressStartIcon = data[PROGRESS_START_ICON] ?: ""
         val progressStartColor = parseColor(context, data[PROGRESS_START_COLOR] ?: "", accentColor)
         if (progressStartIcon.startsWith("mdi:") && progressStartIcon.substringAfter("mdi:").isNotBlank()) {
@@ -1308,7 +1321,11 @@ class MessagingManager @Inject constructor(
         return false
     }
 
-    private fun applyProgressEndIcon(style: NotificationCompat.ProgressStyle, accentColor: Int, data: Map<String, String>): Boolean {
+    private fun applyProgressEndIcon(
+        style: NotificationCompat.ProgressStyle,
+        accentColor: Int,
+        data: Map<String, String>,
+    ): Boolean {
         val progressEndIcon = data[PROGRESS_END_ICON] ?: ""
         val progressEndColor = parseColor(context, data[PROGRESS_END_COLOR] ?: "", accentColor)
         if (progressEndIcon.startsWith("mdi:") && progressEndIcon.substringAfter("mdi:").isNotBlank()) {
