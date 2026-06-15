@@ -199,32 +199,12 @@ internal fun FrontendEventHandler(
                 is FrontendEvent.LaunchMatterThreadIntent -> onLaunchMatterThreadIntent(event.intentSender)
                 is FrontendEvent.RequestFullscreen -> onRequestFullscreen(event.fullscreen)
 
-                is FrontendEvent.OpenExternalLink -> {
-                    onOpenExternalLink(event.uri)
-                }
-
                 is FrontendEvent.LaunchApp -> {
                     onLaunchApp(event.packageName)
                 }
 
                 is FrontendEvent.LaunchIntent -> {
                     onLaunchIntent(event.intentUri)
-                }
-
-                is FrontendEvent.NavigateToDeveloperSettings -> {
-                    onNavigateToSettings(SettingsActivity.Deeplink.Developer)
-                }
-
-                is FrontendEvent.ShowServerSwitcher -> {
-                    onShowServerSwitcher()
-                }
-
-                is FrontendEvent.NavigateToNfcWrite -> {
-                    onNavigateToNfcWrite(event.messageId, event.tagId)
-                }
-
-                is FrontendEvent.RequestFullscreen -> {
-                    onRequestFullscreen(event.fullscreen)
                 }
 
                 is FrontendEvent.NavigateToWidgetConfig -> {

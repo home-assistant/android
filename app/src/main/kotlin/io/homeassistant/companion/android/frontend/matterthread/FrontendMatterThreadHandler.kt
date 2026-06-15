@@ -27,7 +27,7 @@ import timber.log.Timber
  * **Stateful**: the handler owns mutable state in [inFlight] that spans the request →
  * Play-Services-intent → result round-trip. Method calls are not independent: callers must
  * invoke them in the natural sequence (start → result, or start → terminal). Calling
- * [onMatterThreadIntentResult] without a preceding start is a no-op (the hanlder logs and
+ * [onMatterThreadIntentResult] without a preceding start is a no-op (the handler logs and
  * ignores); calling a second start while a flow is in-flight is also a no-op. This is why the
  * scope is `@ViewModelScoped`.
  *

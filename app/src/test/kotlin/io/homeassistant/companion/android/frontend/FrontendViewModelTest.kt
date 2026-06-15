@@ -2257,7 +2257,7 @@ class FrontendViewModelTest {
             createViewModel()
             advanceUntilIdle()
 
-            messageFlow.emit(FrontendHandlerEvent.StartMatterCommissioning(messageId = 60))
+            messageFlow.emit(FrontendHandlerEvent.StartMatterCommissioning)
             advanceUntilIdle()
 
             coVerify { matterThreadHandler.onStartMatterCommissioning() }
@@ -2274,7 +2274,7 @@ class FrontendViewModelTest {
             createViewModel()
             advanceUntilIdle()
 
-            messageFlow.emit(FrontendHandlerEvent.ImportThreadCredentials(messageId = 61))
+            messageFlow.emit(FrontendHandlerEvent.ImportThreadCredentials)
             advanceUntilIdle()
 
             coVerify { matterThreadHandler.onImportThreadCredentials(serverId = serverId) }
