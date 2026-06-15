@@ -239,8 +239,6 @@ PLATFORMS
 DEPENDENCIES
   fastlane
   fastlane-plugin-amazon_app_submission
-  multi_json
-  ostruct
 
 CHECKSUMS
   CFPropertyList (3.0.8) sha256=2c99d0d980536d3d7ab252f7bd59ac8be50fbdd1ff487c98c949bb66bb114261
