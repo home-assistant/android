@@ -1197,7 +1197,7 @@ class FrontendViewModelTest {
     inner class Zoom {
 
         private fun createViewModelWithPageFinishedCapture(): Pair<FrontendViewModel, () -> Unit> {
-            var capturedPageFinished: (() -> Unit)? = null
+            var capturedPageFinished: ((String?) -> Unit)? = null
             every {
                 webViewClientFactory.create(
                     currentUrlFlow = any(),
@@ -1214,7 +1214,7 @@ class FrontendViewModelTest {
             }
 
             val viewModel = createViewModel()
-            return viewModel to { capturedPageFinished!!.invoke() }
+            return viewModel to { capturedPageFinished!!.invoke(null) }
         }
 
         @Test
