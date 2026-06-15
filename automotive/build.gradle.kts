@@ -4,7 +4,6 @@ plugins {
     alias(libs.plugins.google.services)
     alias(libs.plugins.homeassistant.android.dependencies)
     alias(libs.plugins.kotlin.parcelize)
-    alias(libs.plugins.aboutlibraries)
 }
 
 android {

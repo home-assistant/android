@@ -37,9 +37,7 @@ object FullApplicationModule {
 
     @Provides
     @Singleton
-    internal fun providesPlayServicesAvailability(
-        @ApplicationContext context: Context,
-    ): PlayServicesAvailability {
+    internal fun providesPlayServicesAvailability(@ApplicationContext context: Context): PlayServicesAvailability {
         return PlayServicesAvailability {
             GoogleApiAvailability.getInstance()
                 .isGooglePlayServicesAvailable(context) != ConnectionResult.SUCCESS

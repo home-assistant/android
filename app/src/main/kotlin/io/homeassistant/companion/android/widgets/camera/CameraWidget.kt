@@ -7,18 +7,16 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
-import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.View
 import android.widget.RemoteViews
 import androidx.core.os.BundleCompat
 import coil3.imageLoader
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
-import coil3.size.Dimension
+import coil3.request.allowHardware
 import coil3.size.Precision
 import coil3.size.Size
+import coil3.toBitmap
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -31,14 +29,13 @@ import io.homeassistant.companion.android.util.hasActiveConnection
 import io.homeassistant.companion.android.webview.WebViewActivity
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.UPDATE_WIDGETS
-import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.widgetScope
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
-import io.homeassistant.companion.android.widgets.common.RemoteViewsTarget
 import javax.inject.Inject
+import kotlin.math.sqrt
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
@@ -50,11 +47,8 @@ class CameraWidget : AppWidgetProvider() {
     companion object {
         internal const val UPDATE_IMAGE =
             "io.homeassistant.companion.android.widgets.camera.CameraWidget.UPDATE_IMAGE"
-
-        internal const val EXTRA_SERVER_ID = "EXTRA_SERVER_ID"
-        internal const val EXTRA_ENTITY_ID = "EXTRA_ENTITY_ID"
-        internal const val EXTRA_TAP_ACTION = "EXTRA_TAP_ACTION"
         private var lastIntent = ""
+        private var widgetScope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     }
 
     @Inject
@@ -66,20 +60,20 @@ class CameraWidget : AppWidgetProvider() {
     @Inject
     lateinit var okHttpClient: OkHttpClient
 
-    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
-
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         // There may be multiple widgets active, so update all of them
         appWidgetIds.forEach { appWidgetId ->
-            updateAppWidget(
-                context,
-                appWidgetId,
-                appWidgetManager,
-            )
+            widgetScope.launch {
+                updateAppWidget(
+                    context,
+                    appWidgetId,
+                    appWidgetManager,
+                )
+            }
         }
     }
 
-    private fun updateAppWidget(
+    private suspend fun updateAppWidget(
         context: Context,
         appWidgetId: Int,
         appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context),
@@ -88,37 +82,32 @@ class CameraWidget : AppWidgetProvider() {
             Timber.d("Skipping widget update since network connection is not active")
             return
         }
-        mainScope.launch {
-            val views = getWidgetRemoteViews(context, appWidgetId)
-            views?.let { appWidgetManager.updateAppWidget(appWidgetId, it) }
-        }
+        appWidgetManager.updateAppWidget(appWidgetId, getWidgetRemoteViews(context, appWidgetId))
     }
 
-    private fun updateAllWidgets(context: Context) {
-        mainScope.launch {
-            val appWidgetManager = AppWidgetManager.getInstance(context) ?: return@launch
-            val systemWidgetIds = appWidgetManager.getAppWidgetIds(ComponentName(context, CameraWidget::class.java))
-            val dbWidgetList = cameraWidgetDao.getAll()
+    private suspend fun updateAllWidgets(context: Context) {
+        val appWidgetManager = AppWidgetManager.getInstance(context) ?: return
+        val systemWidgetIds = appWidgetManager.getAppWidgetIds(ComponentName(context, CameraWidget::class.java))
+        val dbWidgetList = cameraWidgetDao.getAll()
 
-            val invalidWidgetIds = dbWidgetList
-                .filter { !systemWidgetIds.contains(it.id) }
-                .map { it.id }
-            if (invalidWidgetIds.isNotEmpty()) {
-                Timber.i("Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted")
-                onDeleted(context, invalidWidgetIds.toIntArray())
-            }
+        val invalidWidgetIds = dbWidgetList
+            .filter { !systemWidgetIds.contains(it.id) }
+            .map { it.id }
+        if (invalidWidgetIds.isNotEmpty()) {
+            Timber.i("Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted")
+            onDeleted(context, invalidWidgetIds.toIntArray())
+        }
 
-            val cameraWidgetList = dbWidgetList.filter { systemWidgetIds.contains(it.id) }
-            if (cameraWidgetList.isNotEmpty()) {
-                Timber.d("Updating all widgets")
-                for (item in cameraWidgetList) {
-                    updateAppWidget(context, item.id, appWidgetManager)
-                }
+        val cameraWidgetList = dbWidgetList.filter { systemWidgetIds.contains(it.id) }
+        if (cameraWidgetList.isNotEmpty()) {
+            Timber.d("Updating all widgets")
+            for (item in cameraWidgetList) {
+                updateAppWidget(context, item.id, appWidgetManager)
             }
         }
     }
 
-    private suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews? {
+    private suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews {
         val updateCameraIntent = Intent(context, CameraWidget::class.java).apply {
             action = UPDATE_IMAGE
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
@@ -175,21 +164,25 @@ class CameraWidget : AppWidgetProvider() {
                         View.GONE,
                     )
                     Timber.d("Fetching camera image")
-                    Handler(Looper.getMainLooper()).post {
-                        try {
-                            val request = ImageRequest.Builder(context)
+                    try {
+                        context.imageLoader.execute(
+                            ImageRequest.Builder(context)
                                 .data(url)
-                                .target(RemoteViewsTarget(context, appWidgetId, this, R.id.widgetCameraImage))
+                                // RemoteViews requires software bitmaps for serialization
+                                .allowHardware(false)
                                 .diskCachePolicy(CachePolicy.DISABLED)
                                 .memoryCachePolicy(CachePolicy.DISABLED)
                                 .networkCachePolicy(CachePolicy.READ_ONLY)
-                                .size(Size(getScreenWidth(), Dimension.Undefined))
+                                .size(getWidgetBitmapSize(AppWidgetManager.getInstance(context), appWidgetId))
                                 .precision(Precision.INEXACT)
-                                .build()
-                            context.imageLoader.enqueue(request)
-                        } catch (e: Exception) {
-                            Timber.e(e, "Unable to fetch image")
+                                .build(),
+                        ).image?.toBitmap()?.let {
+                            setImageViewBitmap(R.id.widgetCameraImage, it)
                         }
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Timber.e(e, "Unable to fetch image")
                     }
                 }
 
@@ -212,8 +205,7 @@ class CameraWidget : AppWidgetProvider() {
                 setOnClickPendingIntent(R.id.widgetCameraPlaceholder, tapWidgetPendingIntent)
             }
         }
-        // If there is an url, Coil will call appWidgetManager.updateAppWidget
-        return if (url == null) views else null
+        return views
     }
 
     private suspend fun retrieveCameraImageUrl(serverId: Int, entityId: String): String? {
@@ -233,14 +225,18 @@ class CameraWidget : AppWidgetProvider() {
 
         super.onReceive(context, intent)
         when (lastIntent) {
-            UPDATE_WIDGETS -> updateAllWidgets(context)
-            UPDATE_IMAGE -> updateAppWidget(context, appWidgetId)
-            Intent.ACTION_SCREEN_ON -> updateAllWidgets(context)
+            UPDATE_IMAGE -> widgetScope.launch { updateAppWidget(context, appWidgetId) }
+            UPDATE_WIDGETS, Intent.ACTION_SCREEN_ON -> widgetScope.launch {
+                updateAllWidgets(
+                    context,
+                )
+            }
+
             ACTION_APPWIDGET_CREATED -> {
-                if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
-                    FailFast.fail { "Missing appWidgetId in intent to add widget in DAO" }
-                } else {
-                    widgetScope?.launch {
+                widgetScope.launch {
+                    if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+                        FailFast.fail { "Missing appWidgetId in intent to add widget in DAO" }
+                    } else {
                         val entity = intent.extras?.let {
                             BundleCompat.getSerializable(
                                 it,
@@ -252,46 +248,15 @@ class CameraWidget : AppWidgetProvider() {
                             cameraWidgetDao.add(entity.copyWithWidgetId(appWidgetId))
                         } ?: FailFast.fail { "Missing $EXTRA_WIDGET_ENTITY or it's of the wrong type in intent." }
                     }
+                    updateAllWidgets(context)
                 }
-                updateAllWidgets(context)
             }
-        }
-    }
-
-    private fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
-        if (extras == null) return
-
-        val serverSelection = if (extras.containsKey(EXTRA_SERVER_ID)) extras.getInt(EXTRA_SERVER_ID) else null
-        val entitySelection: String? = extras.getString(EXTRA_ENTITY_ID)
-        val tapActionSelection = BundleCompat.getSerializable(extras, EXTRA_TAP_ACTION, WidgetTapAction::class.java)
-            ?: WidgetTapAction.REFRESH
-
-        if (serverSelection == null || entitySelection == null) {
-            Timber.e("Did not receive complete configuration data")
-            return
-        }
-
-        mainScope.launch {
-            Timber.d(
-                "Saving camera config data:" + System.lineSeparator() +
-                    "entity id: " + entitySelection + System.lineSeparator(),
-            )
-            cameraWidgetDao.add(
-                CameraWidgetEntity(
-                    appWidgetId,
-                    serverSelection,
-                    entitySelection,
-                    tapActionSelection,
-                ),
-            )
-
-            onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
         }
     }
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
         // When the user deletes the widget, delete the preference associated with it.
-        mainScope.launch {
+        widgetScope.launch {
             cameraWidgetDao.deleteAll(appWidgetIds)
         }
     }
@@ -304,7 +269,56 @@ class CameraWidget : AppWidgetProvider() {
         // Enter relevant functionality for when the last widget is disabled
     }
 
-    private fun getScreenWidth(): Int {
-        return Resources.getSystem().displayMetrics.widthPixels
+    /**
+     * Returns a [Size] based on the widget's allocated dimensions, capped to stay within the
+     * RemoteViews bitmap memory limit. Falls back to the full screen width and height when the
+     * widget manager does not report a size.
+     *
+     * The system computes the limit as `6 * screenWidth * screenHeight`
+     * (1.5× screen area × 4 bytes/pixel) in `AppWidgetServiceImpl.computeMaximumWidgetBitmapMemory`.
+     * https://cs.android.com/android/platform/superproject/+/8b289e3d7cf7fd9242870758a894c6e9b4c3e655:frameworks/base/services/appwidget/java/com/android/server/appwidget/AppWidgetServiceImpl.java;l=513
+     * There is no public API for this, so we replicate the formula and keep the camera bitmap
+     * under roughly 90% of that limit to leave headroom for other bitmap work in the same
+     * RemoteViews.
+     */
+    private fun getWidgetBitmapSize(appWidgetManager: AppWidgetManager, appWidgetId: Int): Size {
+        val res = Resources.getSystem()
+        val screenWidth = res.displayMetrics.widthPixels
+        val screenHeight = res.displayMetrics.heightPixels
+        // System limit = 1.5 × screen area × 4 bytes/pixel (ARGB_8888).
+        // Bytes-per-pixel cancels out when converting to pixels: 1.5 * w * h * 4 * 0.9 / 4 = 1.35 * w * h.
+        // The 0.9 factor keeps a 10% margin for RemoteViews overhead.
+        val maxPixels = (1.35 * screenWidth * screenHeight).toInt()
+
+        val options = appWidgetManager.getAppWidgetOptions(appWidgetId)
+        val widthDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, 0)
+        val heightDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 0)
+
+        val widthPx: Int
+        val heightPx: Int
+        if (widthDp <= 0) {
+            widthPx = screenWidth
+            heightPx = screenHeight
+        } else {
+            val density = res.displayMetrics.density
+            widthPx = (widthDp * density).toInt()
+            heightPx = if (heightDp > 0) (heightDp * density).toInt() else 0
+        }
+
+        if (heightPx <= 0) {
+            // Height unknown, derive a max height from the pixel budget so the
+            // bitmap stays within limits even if the source image is unusually tall.
+            val cappedWidth = minOf(widthPx, maxPixels / maxOf(screenHeight, 1)).coerceAtLeast(1)
+            val maxHeight = (maxPixels / cappedWidth).coerceAtLeast(1)
+            return Size(cappedWidth, maxHeight)
+        }
+
+        // Scale down proportionally if the bitmap would exceed the safe pixel budget
+        return if (widthPx.toLong() * heightPx > maxPixels) {
+            val scale = sqrt(maxPixels.toDouble() / (widthPx.toLong() * heightPx)).toFloat()
+            Size((widthPx * scale).toInt().coerceAtLeast(1), (heightPx * scale).toInt().coerceAtLeast(1))
+        } else {
+            Size(widthPx.coerceAtLeast(1), heightPx.coerceAtLeast(1))
+        }
     }
 }

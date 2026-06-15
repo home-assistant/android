@@ -1,17 +1,16 @@
 package io.homeassistant.companion.android.onboarding.nameyourdevice
 
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.onboarding.nameyourdevice.navigation.HandleNameYourDeviceNavigationEvents
-import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
+import io.homeassistant.companion.android.testing.unit.TestSharedFlow
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
@@ -25,21 +24,19 @@ import org.robolectric.annotation.Config
 @Config(application = HiltTestApplication::class)
 @HiltAndroidTest
 class NameYourDeviceNavigationTest {
-    @get:Rule(order = 0)
-    var consoleLog = ConsoleLogRule()
 
-    @get:Rule(order = 1)
+    @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
 
-    @get:Rule(order = 2)
+    @get:Rule(order = 1)
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
-    @get:Rule(order = 3)
+    @get:Rule(order = 2)
     val mainDispatcherRule = MainDispatcherJUnit4Rule()
 
     @Test
     fun `Given HandleNameYourDeviceNavigationEvents when viewModel emits DeviceNameSaved then invoke onDeviceNamed with serverId`() = runTest {
-        val sharedFlow = MutableSharedFlow<NameYourDeviceNavigationEvent>()
+        val sharedFlow = TestSharedFlow<NameYourDeviceNavigationEvent>()
         val viewModel = mockk<NameYourDeviceViewModel> {
             every { navigationEventsFlow } returns sharedFlow
         }
@@ -67,6 +64,8 @@ class NameYourDeviceNavigationTest {
             sharedFlow.emit(this)
         }
 
+        composeTestRule.awaitIdle()
+
         assertEquals(event.serverId, serverIdSet)
         assertEquals(event.hasPlainTextAccess, hasPlainTextAccessSet)
         assertEquals(event.isPubliclyAccessible, isPubliclyAccessibleSet)
@@ -74,7 +73,7 @@ class NameYourDeviceNavigationTest {
 
     @Test
     fun `Given HandleNameYourDeviceNavigationEvents when viewModel emits Error then invoke onShowSnackbar and onBackClick`() = runTest {
-        val sharedFlow = MutableSharedFlow<NameYourDeviceNavigationEvent>()
+        val sharedFlow = TestSharedFlow<NameYourDeviceNavigationEvent>()
         val viewModel = mockk<NameYourDeviceViewModel> {
             every { navigationEventsFlow } returns sharedFlow
         }
@@ -97,6 +96,8 @@ class NameYourDeviceNavigationTest {
         }
 
         sharedFlow.emit(NameYourDeviceNavigationEvent.Error(commonR.string.webview_error))
+
+        composeTestRule.awaitIdle()
 
         assertEquals(
             "There was an error loading Home Assistant, please review the connection settings and try again. We will attempt to try another provided URL when you select Refresh.",

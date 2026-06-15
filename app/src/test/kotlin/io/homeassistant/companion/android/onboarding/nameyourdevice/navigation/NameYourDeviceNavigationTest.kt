@@ -16,11 +16,11 @@ import io.homeassistant.companion.android.onboarding.locationforsecureconnection
 import io.homeassistant.companion.android.onboarding.locationsharing.navigation.LocationSharingRoute
 import io.homeassistant.companion.android.onboarding.nameyourdevice.NameYourDeviceNavigationEvent
 import io.homeassistant.companion.android.onboarding.nameyourdevice.NameYourDeviceViewModel
+import io.homeassistant.companion.android.testing.unit.TestSharedFlow
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.mockk.every
 import io.mockk.mockk
 import junit.framework.TestCase.assertTrue
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -34,13 +34,13 @@ import org.robolectric.annotation.Config
 @Config(application = HiltTestApplication::class)
 @HiltAndroidTest
 internal class NameYourDeviceNavigationTest : BaseOnboardingNavigationTest() {
-    val nameYourDeviceNavigationFlow = MutableSharedFlow<NameYourDeviceNavigationEvent>()
+    val nameYourDeviceNavigationFlow = TestSharedFlow<NameYourDeviceNavigationEvent>()
 
     @BindValue
     @JvmField
     val nameYourDeviceViewModel: NameYourDeviceViewModel = mockk(relaxed = true) {
         every { navigationEventsFlow } returns nameYourDeviceNavigationFlow
-        every { onSaveClick() } coAnswers {
+        every { onSaveClick() } answers {
             nameYourDeviceNavigationFlow.emit(
                 NameYourDeviceNavigationEvent.DeviceNameSaved(
                     serverId = 42,
@@ -84,6 +84,8 @@ internal class NameYourDeviceNavigationTest : BaseOnboardingNavigationTest() {
 
             composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
 
+            waitForIdle()
+
             // The back stack is unchanged in this situation, but in reality the app is in background
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocalFirstRoute>() == true)
         }
@@ -100,7 +102,7 @@ internal class NameYourDeviceNavigationTest : BaseOnboardingNavigationTest() {
     }
 
     private fun testDeviceNamedWithPublicUrl(hasPlainTextAccess: Boolean) {
-        every { nameYourDeviceViewModel.onSaveClick() } coAnswers {
+        every { nameYourDeviceViewModel.onSaveClick() } answers {
             nameYourDeviceNavigationFlow.emit(
                 NameYourDeviceNavigationEvent.DeviceNameSaved(
                     serverId = 42,
@@ -124,7 +126,7 @@ internal class NameYourDeviceNavigationTest : BaseOnboardingNavigationTest() {
 
     @Test
     fun `Given no location tracking with HTTPS public server when device named then onboarding completes`() {
-        every { nameYourDeviceViewModel.onSaveClick() } coAnswers {
+        every { nameYourDeviceViewModel.onSaveClick() } answers {
             nameYourDeviceNavigationFlow.emit(
                 NameYourDeviceNavigationEvent.DeviceNameSaved(
                     serverId = 42,
@@ -149,7 +151,7 @@ internal class NameYourDeviceNavigationTest : BaseOnboardingNavigationTest() {
 
     @Test
     fun `Given no location tracking with HTTP public server when device named then show LocationForSecureConnection`() {
-        every { nameYourDeviceViewModel.onSaveClick() } coAnswers {
+        every { nameYourDeviceViewModel.onSaveClick() } answers {
             nameYourDeviceNavigationFlow.emit(
                 NameYourDeviceNavigationEvent.DeviceNameSaved(
                     serverId = 42,

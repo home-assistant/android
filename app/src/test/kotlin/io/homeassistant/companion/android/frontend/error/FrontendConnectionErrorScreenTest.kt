@@ -2,7 +2,7 @@ package io.homeassistant.companion.android.frontend.error
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -18,8 +18,8 @@ import io.homeassistant.companion.android.common.data.connectivity.ConnectivityC
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.onboarding.connection.ConnectionErrorScreen
 import io.homeassistant.companion.android.onboarding.connection.ConnectionViewModel
-import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
+import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just
@@ -37,13 +37,11 @@ import org.robolectric.annotation.Config
 @Config(application = HiltTestApplication::class)
 @HiltAndroidTest
 class FrontendConnectionErrorScreenTest {
-    @get:Rule(order = 0)
-    var consoleLog = ConsoleLogRule()
 
-    @get:Rule(order = 1)
+    @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
 
-    @get:Rule(order = 2)
+    @get:Rule(order = 1)
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
     @Test
@@ -115,6 +113,27 @@ class FrontendConnectionErrorScreenTest {
                 "https://discord.com/channels/330944238910963714/1284965926336335993",
                 urlClicked,
             )
+        }
+    }
+
+    @Test
+    fun `Given FrontendConnectionErrorScreen when url is about blank then url info and connectivity checks are not displayed`() {
+        composeTestRule.apply {
+            setContent {
+                FrontendConnectionErrorScreen(
+                    error = FrontendConnectionError.UnknownError(R.string.tls_cert_expired_message, "details", "errorType"),
+                    url = BLANK_URL,
+                    onOpenExternalLink = {},
+                    connectivityCheckState = ConnectivityCheckState(),
+                )
+            }
+
+            onNodeWithText(stringResource(R.string.error_connection_failed)).assertIsDisplayed()
+            onNodeWithTag(URL_INFO_TAG).assertIsNotDisplayed()
+
+            onNodeWithText(stringResource(R.string.connection_error_more_details)).assertIsDisplayed().performClick()
+            onNodeWithText(stringResource(R.string.connection_error_more_details_description)).assertIsDisplayed()
+            onNodeWithText(stringResource(R.string.connection_check_title)).assertDoesNotExist()
         }
     }
 

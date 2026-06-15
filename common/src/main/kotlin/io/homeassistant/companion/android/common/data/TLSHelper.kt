@@ -13,8 +13,8 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509ExtendedKeyManager
 import javax.net.ssl.X509TrustManager
-import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
+import timber.log.Timber
 
 class TLSHelper @Inject constructor(
     @NamedKeyChain private val keyChainRepository: KeyChainRepository,
@@ -23,7 +23,17 @@ class TLSHelper @Inject constructor(
 
     fun setupOkHttpClientSSLSocketFactory(builder: OkHttpClient.Builder) {
         val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
-        trustManagerFactory.init(null as KeyStore?)
+        // Load AndroidCAStore explicitly to include user-installed CAs alongside
+        // system CAs. On some Android builds, passing null may load only the
+        // system store, which can bypass user-CA trust configured in
+        // network_security_config.xml (#5565).
+        val androidCaStore: KeyStore? = try {
+            KeyStore.getInstance("AndroidCAStore").apply { load(null) }
+        } catch (e: Throwable) {
+            Timber.w(e, "AndroidCAStore unavailable, falling back to system trust store")
+            null
+        }
+        trustManagerFactory.init(androidCaStore)
         val trustManagers = trustManagerFactory.trustManagers
 
         val sslContext = SSLContext.getInstance("TLS")
@@ -51,25 +61,11 @@ class TLSHelper @Inject constructor(
             }
 
             override fun getCertificateChain(p0: String?): Array<X509Certificate>? {
-                var chain: Array<X509Certificate>?
-
-                // block until a chain is provided via the TLSWebView
-                runBlocking {
-                    chain = keyChainRepository.getCertificateChain() ?: keyStore.getCertificateChain()
-                }
-
-                return chain
+                return keyChainRepository.getCertificateChain() ?: keyStore.getCertificateChain()
             }
 
             override fun getPrivateKey(p0: String?): PrivateKey? {
-                var key: PrivateKey?
-
-                // block until a key is provided via the TLSWebView
-                runBlocking {
-                    key = keyChainRepository.getPrivateKey() ?: keyStore.getPrivateKey()
-                }
-
-                return key
+                return keyChainRepository.getPrivateKey() ?: keyStore.getPrivateKey()
             }
         }
     }

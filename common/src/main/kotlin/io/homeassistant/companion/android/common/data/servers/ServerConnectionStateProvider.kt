@@ -4,12 +4,12 @@ import dagger.assisted.AssistedFactory
 import io.homeassistant.companion.android.common.data.integration.IntegrationException
 import io.homeassistant.companion.android.common.data.integration.NoUrlAvailableException
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
+import io.homeassistant.companion.android.util.sensitive
 import java.net.URL
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import okhttp3.HttpUrl
-import io.homeassistant.companion.android.util.sensitive
 import timber.log.Timber
 
 /**

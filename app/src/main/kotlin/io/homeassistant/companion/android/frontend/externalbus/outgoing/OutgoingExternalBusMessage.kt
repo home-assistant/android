@@ -1,12 +1,14 @@
 package io.homeassistant.companion.android.frontend.externalbus.outgoing
 
+import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.frontend.externalbus.frontendExternalBusJson
-import io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage.Companion.config
+import io.homeassistant.companion.android.webview.externalbus.ExternalEntityAddToAction
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.encodeToJsonElement
 
 /**
@@ -30,25 +32,89 @@ sealed interface OutgoingExternalBusMessage {
  */
 @Serializable
 @SerialName("result")
-data class ResultMessage(
+@VisibleForTesting
+internal data class ResultMessage(
     override val id: Int?,
     val success: Boolean = true,
     val result: JsonElement = JsonNull,
     val error: JsonElement = JsonNull,
-) : OutgoingExternalBusMessage {
+) : OutgoingExternalBusMessage
 
-    companion object {
+object SuccessResultMessage {
+    operator fun invoke(id: Int?): OutgoingExternalBusMessage {
+        return ResultMessage(
+            id = id,
+            result = JsonObject(emptyMap()),
+        )
+    }
+}
 
-        /**
-         * Creates a config response with app capabilities.
-         *
-         * @param id The message ID from the config/get request
-         * @param config The app capabilities configuration
-         */
-        fun config(id: Int?, config: ConfigResult): ResultMessage {
-            return ResultMessage(
-                id = id,
-                result = frontendExternalBusJson.encodeToJsonElement(config),
+object ConfigResultMessage {
+    /**
+     * Creates a config response with app capabilities.
+     *
+     * @param id The message ID from the config/get request
+     */
+    operator fun invoke(
+        id: Int?,
+        hasNfc: Boolean,
+        canCommissionMatter: Boolean,
+        canExportThread: Boolean,
+        hasBarCodeScanner: Int,
+        canSetupImprov: Boolean,
+        appVersion: AppVersion,
+    ): OutgoingExternalBusMessage {
+        return ResultMessage(
+            id = id,
+            result = frontendExternalBusJson.encodeToJsonElement(
+                ConfigResult.create(
+                    hasNfc,
+                    canCommissionMatter,
+                    canExportThread,
+                    hasBarCodeScanner,
+                    canSetupImprov,
+                    appVersion,
+                ),
+            ),
+        )
+    }
+
+    /**
+     * Configuration result payload for config/get requests.
+     *
+     * Contains the app's capabilities that the frontend needs to know about.
+     */
+    @Serializable
+    @VisibleForTesting
+    data class ConfigResult(
+        val hasSettingsScreen: Boolean = true,
+        val canWriteTag: Boolean,
+        val hasExoPlayer: Boolean = true,
+        val canCommissionMatter: Boolean,
+        val canImportThreadCredentials: Boolean,
+        val hasAssist: Boolean = true,
+        val hasBarCodeScanner: Int,
+        val canSetupImprov: Boolean,
+        val downloadFileSupported: Boolean = true,
+        val appVersion: String,
+        val hasEntityAddTo: Boolean = true,
+        val hasAssistSettings: Boolean = true,
+    ) {
+        companion object {
+            fun create(
+                hasNfc: Boolean,
+                canCommissionMatter: Boolean,
+                canExportThread: Boolean,
+                hasBarCodeScanner: Int,
+                canSetupImprov: Boolean,
+                appVersion: AppVersion,
+            ) = ConfigResult(
+                canWriteTag = hasNfc,
+                canCommissionMatter = canCommissionMatter,
+                canImportThreadCredentials = canExportThread,
+                hasBarCodeScanner = hasBarCodeScanner,
+                canSetupImprov = canSetupImprov,
+                appVersion = appVersion.value,
             )
         }
     }
@@ -72,6 +138,7 @@ data class ConfigResult(
     val downloadFileSupported: Boolean = true,
     val appVersion: String,
     val hasEntityAddTo: Boolean = true,
+    val hasAssistSettings: Boolean = true,
 ) {
     companion object {
         fun create(
@@ -79,13 +146,34 @@ data class ConfigResult(
             canCommissionMatter: Boolean,
             canExportThread: Boolean,
             hasBarCodeScanner: Int,
+            canSetupImprov: Boolean,
             appVersion: AppVersion,
         ) = ConfigResult(
             canWriteTag = hasNfc,
             canCommissionMatter = canCommissionMatter,
             canImportThreadCredentials = canExportThread,
             hasBarCodeScanner = hasBarCodeScanner,
+            canSetupImprov = canSetupImprov,
             appVersion = appVersion.value,
         )
     }
+}
+object EntityAddToActionsResultMessage {
+    /**
+     * Creates a response with available EntityAddTo actions.
+     *
+     * @param id The message ID from the entity/add_to/get_actions request
+     * @param actions The available actions for the entity
+     */
+    operator fun invoke(id: Int?, actions: List<ExternalEntityAddToAction>): OutgoingExternalBusMessage {
+        return ResultMessage(
+            id = id,
+            result = frontendExternalBusJson.encodeToJsonElement(
+                EntityAddToActionsResult(actions = actions),
+            ),
+        )
+    }
+
+    @Serializable
+    private data class EntityAddToActionsResult(val actions: List<ExternalEntityAddToAction>)
 }

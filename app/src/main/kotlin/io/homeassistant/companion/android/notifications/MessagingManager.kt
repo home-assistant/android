@@ -54,6 +54,7 @@ import com.mikepenz.iconics.utils.roundedCornersDp
 import com.mikepenz.iconics.utils.sizeDp
 import com.mikepenz.iconics.utils.toAndroidIconCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.R as commonR
@@ -75,9 +76,13 @@ import io.homeassistant.companion.android.common.notifications.handleText
 import io.homeassistant.companion.android.common.notifications.parseColor
 import io.homeassistant.companion.android.common.notifications.parseVibrationPattern
 import io.homeassistant.companion.android.common.notifications.prepareText
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
+import io.homeassistant.companion.android.common.util.createSystemAppSettingsIntent
 import io.homeassistant.companion.android.common.util.getActiveNotification
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.common.util.parseExternalIntentUri
 import io.homeassistant.companion.android.common.util.toJsonObject
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechData
@@ -95,6 +100,7 @@ import io.homeassistant.companion.android.settings.assist.DefaultAssistantManage
 import io.homeassistant.companion.android.util.FlashlightHelper
 import io.homeassistant.companion.android.util.PermissionRequestMediator
 import io.homeassistant.companion.android.util.UrlUtil
+import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.vehicle.HaCarAppService
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebViewActivity
@@ -325,7 +331,7 @@ class MessagingManager @Inject constructor(
                 } ?: return@launch
             } else {
                 val jsonObject = jsonData.toJsonObject()
-                val receivedServer = jsonData[NotificationData.WEBHOOK_ID]?.let {
+                val receivedServerId = jsonData[NotificationData.WEBHOOK_ID]?.let {
                     serverManager.getServer(webhookId = it)?.id
                 }
                 val notificationRow =
@@ -335,14 +341,14 @@ class MessagingManager @Inject constructor(
                         jsonData[NotificationData.MESSAGE].toString(),
                         jsonObject.toString(),
                         source,
-                        receivedServer,
+                        receivedServerId,
                     )
                 notificationId = notificationDao.add(notificationRow)
 
                 val confirmation = jsonData[CONFIRMATION]?.toBoolean() ?: false
                 if (confirmation) {
                     try {
-                        serverManager.integrationRepository(receivedServer ?: ServerManager.SERVER_ID_ACTIVE)
+                        serverManager.integrationRepository(receivedServerId ?: ServerManager.SERVER_ID_ACTIVE)
                             .fireEvent("mobile_app_notification_received", jsonData)
                     } catch (e: Exception) {
                         Timber.e(e, "Unable to send notification received event")
@@ -350,18 +356,29 @@ class MessagingManager @Inject constructor(
                 }
             }
 
-            val serverId = jsonData[NotificationData.WEBHOOK_ID]?.let { webhookId ->
-                serverManager.getServer(webhookId = webhookId)?.id
+            val webhookServerId = jsonData[NotificationData.WEBHOOK_ID]?.let { webhookId ->
+                val serverForWebhook = serverManager.getServer(webhookId = webhookId)
+                if (serverForWebhook == null) {
+                    Timber.w(
+                        "Received notification with webhook ID ${sensitive(
+                            webhookId,
+                        )} but no matching server, ignoring",
+                    )
+                    return@launch
+                }
+
+                serverForWebhook.id
             } ?: ServerManager.SERVER_ID_ACTIVE
 
-            if (serverManager.getServer(serverId) == null) {
-                Timber.w("Received notification but no server for it, discarding")
+            if (serverManager.getServer(webhookServerId) == null) {
+                Timber.w("Received notification but no server available, ignoring")
                 return@launch
             }
 
-            jsonData = jsonData + mutableMapOf<String, String>().apply { put(THIS_SERVER_ID, serverId.toString()) }
+            jsonData =
+                jsonData + mutableMapOf<String, String>().apply { put(THIS_SERVER_ID, webhookServerId.toString()) }
 
-            val allowCommands = serverManager.integrationRepository(serverId).isTrusted()
+            val allowCommands = serverManager.integrationRepository(webhookServerId).isTrusted()
             when {
                 jsonData[NotificationData.MESSAGE] == REQUEST_LOCATION_UPDATE && allowCommands -> {
                     Timber.d("Request location update")
@@ -443,7 +460,7 @@ class MessagingManager @Inject constructor(
                             if (
                                 !jsonData[NotificationData.COMMAND].isNullOrEmpty() &&
                                 jsonData[NotificationData.COMMAND] in DeviceCommandData.ENABLE_COMMANDS &&
-                                Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
+                                !SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)
                             ) {
                                 handleDeviceCommands(jsonData)
                             } else {
@@ -651,10 +668,7 @@ class MessagingManager @Inject constructor(
     }
 
     private fun requestAccurateLocationUpdate() {
-        val intent = Intent(context, LocationSensorManager::class.java)
-        intent.action = LocationSensorManager.ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
-
-        context.sendBroadcast(intent)
+        context.sendBroadcast(LocationSensorManager.createRequestAccurateLocationUpdateIntent(context))
     }
 
     private fun removeNotificationChannel(channelName: String) {
@@ -662,7 +676,7 @@ class MessagingManager @Inject constructor(
 
         val channelID: String = createChannelID(channelName)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && channelID != NotificationChannel.DEFAULT_CHANNEL_ID) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O) && channelID != NotificationChannel.DEFAULT_CHANNEL_ID) {
             notificationManagerCompat.deleteNotificationChannel(channelID)
         }
     }
@@ -755,7 +769,7 @@ class MessagingManager @Inject constructor(
 
             COMMAND_BLUETOOTH -> {
                 val bluetoothAdapter = context.getSystemService<BluetoothManager>()?.adapter
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (SdkVersion.isAtLeast(Build.VERSION_CODES.S)) {
                     when (PackageManager.PERMISSION_GRANTED) {
                         ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) -> {
                             Timber.d("We have proper bluetooth permissions proceeding with command")
@@ -1047,7 +1061,7 @@ class MessagingManager @Inject constructor(
             group = NotificationData.GROUP_PREFIX + group
             groupId = group.hashCode()
         } else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
                 val notification = notificationManagerCompat.getActiveNotification(tag, messageId)
                 if (notification != null && notification.isGroup) {
                     previousGroup = NotificationData.GROUP_PREFIX + notification.tag
@@ -1106,7 +1120,7 @@ class MessagingManager @Inject constructor(
 
         val useCarNotification = handleCarUiVisible(context, notificationBuilder, data)
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             handleLegacyPriority(notificationBuilder, data)
             handleLegacyLedColor(notificationBuilder, data)
             handleLegacyVibrationPattern(notificationBuilder, data)
@@ -1152,7 +1166,7 @@ class MessagingManager @Inject constructor(
                 builder.setWhen(notificationWhen)
                 builder.setUsesChronometer(usesChronometer)
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
                     val countdown = notificationWhen > System.currentTimeMillis()
                     // Without this builder.setChronometerCountDown throws a null reference exception
                     builder.addExtras(Bundle())
@@ -1314,7 +1328,7 @@ class MessagingManager @Inject constructor(
     }
 
     private fun handleLive(builder: NotificationCompat.Builder, data: Map<String, String>) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.BAKLAVA)) {
             val liveUpdate = data[LIVE_UPDATE]?.toBoolean() ?: false
             val criticalText = data[CRITICAL_TEXT]
 
@@ -1334,22 +1348,22 @@ class MessagingManager @Inject constructor(
         builder: NotificationCompat.Builder,
         data: Map<String, String>,
     ): Boolean {
-        if (data[CAR_UI]?.toBoolean() == true && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val carIntent = Intent(Intent.ACTION_VIEW).apply {
-                component = ComponentName(context, HaCarAppService::class.java)
+        if (data[CAR_UI]?.toBoolean() == true && SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
+            val carExtender = CarAppExtender.Builder()
+            if (context.isAutomotive() || BuildConfig.FLAVOR == "full") {
+                val carIntent = Intent(Intent.ACTION_VIEW).apply {
+                    component = ComponentName(context, HaCarAppService::class.java)
+                }
+                carExtender.setContentIntent(
+                    CarPendingIntent.getCarApp(
+                        context,
+                        carIntent.hashCode(),
+                        carIntent,
+                        PendingIntent.FLAG_IMMUTABLE,
+                    ),
+                )
             }
-            builder.extend(
-                CarAppExtender.Builder()
-                    .setContentIntent(
-                        CarPendingIntent.getCarApp(
-                            context,
-                            carIntent.hashCode(),
-                            carIntent,
-                            PendingIntent.FLAG_IMMUTABLE,
-                        ),
-                    )
-                    .build(),
-            )
+            builder.extend(carExtender.build())
             return true
         }
         return false
@@ -1504,7 +1518,7 @@ class MessagingManager @Inject constructor(
                         .setLargeIcon(bitmap)
                         .setStyle(
                             NotificationCompat.BigPictureStyle().also { style ->
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                                if (SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
                                     saveTempAnimatedImage(
                                         serverId,
                                         url,
@@ -1768,14 +1782,18 @@ class MessagingManager @Inject constructor(
                     )
                 }
 
+                val authenticationRequired = data["action_${i}_authenticationRequired"]?.toBoolean() == true
                 when {
                     notificationAction.key == URI -> {
                         if (!notificationAction.uri.isNullOrBlank()) {
-                            builder.addAction(
+                            val action = NotificationCompat.Action.Builder(
                                 commonR.drawable.ic_globe,
                                 notificationAction.title,
                                 createOpenUriPendingIntent(notificationAction.uri, data),
                             )
+                                .setAuthenticationRequired(authenticationRequired)
+                                .build()
+                            builder.addAction(action)
                         }
                     }
 
@@ -1797,6 +1815,7 @@ class MessagingManager @Inject constructor(
                         )
                             .addRemoteInput(remoteInput)
                             .setShowsUserInterface(false)
+                            .setAuthenticationRequired(authenticationRequired)
                             .build()
                         builder.addAction(action)
                     }
@@ -1809,11 +1828,14 @@ class MessagingManager @Inject constructor(
                             PendingIntent.FLAG_IMMUTABLE,
                         )
                         val action = NotificationCompat.Action.Builder(
-                            commonR.drawable.ic_stat_ic_notification,
+                            // Intentionally use no icon so Android Auto / heads-up notifications show the action
+                            // title instead of replacing it with an icon
+                            null,
                             notificationAction.title,
                             actionPendingIntent,
                         )
                             .setShowsUserInterface(false)
+                            .setAuthenticationRequired(authenticationRequired)
                             .build()
                         builder.addAction(action)
                     }
@@ -1837,7 +1859,7 @@ class MessagingManager @Inject constructor(
 
             uri.startsWith(INTENT_PREFIX) -> {
                 try {
-                    Intent.parseUri(uri, Intent.URI_INTENT_SCHEME)
+                    context.parseExternalIntentUri(uri)
                 } catch (e: Exception) {
                     Timber.e(e, "Unable to parse intent URI")
                     null
@@ -1903,7 +1925,7 @@ class MessagingManager @Inject constructor(
     }
 
     private fun handleReplyHistory(builder: NotificationCompat.Builder, data: Map<String, String>) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
             val replies = data.entries
                 .filter { it.key.startsWith(SOURCE_REPLY_HISTORY) }
                 .sortedBy { it.key.substringAfter(SOURCE_REPLY_HISTORY).toInt() }
@@ -1938,10 +1960,7 @@ class MessagingManager @Inject constructor(
     }
 
     private fun navigateAppDetails() {
-        val intent = Intent(
-            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-            "package:${context.packageName}".toUri(),
-        )
+        val intent = context.createSystemAppSettingsIntent()
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         context.startActivity(intent)
     }

@@ -11,15 +11,12 @@ import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MessageSocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
-import io.homeassistant.companion.android.common.util.DefaultFailFastHandler
-import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.MapAnySerializer
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -58,17 +55,14 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
-import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.fail
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(ConsoleLogExtension::class)
 class WebSocketCoreImplTest {
     private lateinit var mockOkHttpClient: OkHttpClient
     private lateinit var mockConnection: WebSocket
@@ -81,11 +75,6 @@ class WebSocketCoreImplTest {
      * Values are between 5 and 25.
      */
     private fun deterministicDelay(index: Long): Long = ((sin(index.toDouble()) + 1.5) * 10).toLong()
-
-    @BeforeEach
-    fun setup() {
-        FailFast.setHandler(DefaultFailFastHandler)
-    }
 
     @AfterEach
     fun tearDown() {

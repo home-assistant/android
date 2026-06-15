@@ -64,6 +64,8 @@ internal class ManualServerNavigationTest : BaseOnboardingNavigationTest() {
 
             composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
 
+            waitForIdle()
+
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ManualServerRoute>() == true)
         }
     }

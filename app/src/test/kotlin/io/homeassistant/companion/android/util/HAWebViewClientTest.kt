@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.util
 
 import android.net.http.SslError
+import android.webkit.HttpAuthHandler
 import android.webkit.WebResourceError
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -15,7 +16,6 @@ import androidx.annotation.StringRes
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.every
 import io.mockk.mockk
@@ -23,13 +23,13 @@ import io.mockk.slot
 import kotlin.reflect.KClass
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.extension.ExtendWith
 
-@ExtendWith(MainDispatcherJUnit5Extension::class, ConsoleLogExtension::class)
+@ExtendWith(MainDispatcherJUnit5Extension::class)
 class HAWebViewClientTest {
 
     private val keyChainRepository: KeyChainRepository = mockk(relaxed = true)
@@ -45,11 +45,29 @@ class HAWebViewClientTest {
             keyChainRepository = keyChainRepository,
             currentUrlFlow = currentUrlFlow,
             onFrontendError = { capturedError = it },
-            frontendJsCallback = null,
             onCrash = null,
             onUrlIntercepted = null,
             onPageFinished = null,
+            onReceivedHttpAuthRequest = null,
         )
+    }
+
+    @Test
+    fun `Given onPageFinished callback when onPageFinished then invokes callback with final url`() {
+        var finishedUrl: String? = null
+        val client = HAWebViewClient(
+            keyChainRepository = keyChainRepository,
+            currentUrlFlow = currentUrlFlow,
+            onFrontendError = { capturedError = it },
+            onCrash = null,
+            onUrlIntercepted = null,
+            onPageFinished = { finishedUrl = it },
+            onReceivedHttpAuthRequest = null,
+        )
+
+        client.onPageFinished(null, "http://homeassistant.local:80/onboarding")
+
+        assertEquals("http://homeassistant.local:80/onboarding", finishedUrl)
     }
 
     @Test
@@ -362,6 +380,44 @@ class HAWebViewClientTest {
                 every { getString(commonR.string.no_description) } returns "No description"
             }
         }
+    }
+
+    @Test
+    fun `Given onReceivedHttpAuthRequest callback when auth requested then callback receives resource url`() {
+        var capturedHandler: HttpAuthHandler? = null
+        var capturedHost: String? = null
+        var capturedResource: String? = null
+        var capturedRealm: String? = null
+        val client = HAWebViewClient(
+            keyChainRepository = keyChainRepository,
+            currentUrlFlow = currentUrlFlow,
+            onFrontendError = { capturedError = it },
+            onCrash = null,
+            onUrlIntercepted = null,
+            onPageFinished = null,
+            onReceivedHttpAuthRequest = { handler, host, resource, realm ->
+                capturedHandler = handler
+                capturedHost = host
+                capturedResource = resource
+                capturedRealm = realm
+            },
+        )
+        val handler = mockk<HttpAuthHandler>(relaxed = true)
+
+        // onLoadResource sets the last resource URL
+        client.onLoadResource(mockk(relaxed = true), "https://example.com/protected")
+        client.onReceivedHttpAuthRequest(mockk(relaxed = true), handler, "example.com", "myrealm")
+
+        assertTrue(capturedHandler === handler)
+        assertEquals("example.com", capturedHost)
+        assertEquals("https://example.com/protected", capturedResource)
+        assertEquals("myrealm", capturedRealm)
+    }
+
+    @Test
+    fun `Given no onReceivedHttpAuthRequest callback when auth requested then does not crash`() {
+        webViewClient.onReceivedHttpAuthRequest(mockk(relaxed = true), mockk(relaxed = true), "example.com", "realm")
+        // No exception thrown
     }
 
     private fun mockRequest(url: String) = mockk<android.webkit.WebResourceRequest> {

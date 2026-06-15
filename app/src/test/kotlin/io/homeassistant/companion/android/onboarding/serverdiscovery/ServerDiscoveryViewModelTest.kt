@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.onboarding.serverdiscovery
 import app.cash.turbine.test
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryMode
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.util.mockServer
 import io.homeassistant.companion.android.util.testHAVersion
@@ -19,14 +18,13 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(ConsoleLogExtension::class)
 private class ServerDiscoveryViewModelTest {
 
     @RegisterExtension
@@ -45,6 +43,37 @@ private class ServerDiscoveryViewModelTest {
 
     private fun createViewModel(discoveryMode: ServerDiscoveryMode = ServerDiscoveryMode.NORMAL) {
         viewModel = ServerDiscoveryViewModel(discoveryMode, searcher, serverManager)
+        // Existing tests assert behavior that depends on discovery having started; mirror the
+        // screen's permission-checked callback so they don't all have to opt in individually.
+        viewModel.onLocalNetworkPermissionChecked()
+    }
+
+    @Test
+    fun `Given local network permission not yet checked then no server discovery is started and NoServerFound is not emitted`() = runTest {
+        viewModel = ServerDiscoveryViewModel(ServerDiscoveryMode.NORMAL, searcher, serverManager)
+
+        viewModel.discoveryFlow.test {
+            assertEquals(Started, awaitItem())
+            advanceTimeBy(TIMEOUT_NO_SERVER_FOUND * 2)
+            runCurrent()
+            // Discovery hasn't started, so the no-server timeout never fires
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given local network permission checked twice then discovery is only started once`() = runTest {
+        viewModel = ServerDiscoveryViewModel(ServerDiscoveryMode.NORMAL, searcher, serverManager)
+        viewModel.onLocalNetworkPermissionChecked()
+        viewModel.onLocalNetworkPermissionChecked()
+
+        viewModel.discoveryFlow.test {
+            assertEquals(Started, awaitItem())
+            advanceTimeBy(TIMEOUT_NO_SERVER_FOUND)
+            // A single NoServerFound — not duplicated — proves discovery wasn't started twice
+            assertEquals(NoServerFound, awaitItem())
+            expectNoEvents()
+        }
     }
 
     @Test
@@ -162,6 +191,27 @@ private class ServerDiscoveryViewModelTest {
             assertEquals(instance1.name, discoveredState.servers[0].name)
             assertEquals(instance2.name, discoveredState.servers[1].name)
 
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given a discovered instance without a version when collecting from discoveryFlow then emits ServerDiscovered with a null version`() = runTest {
+        createViewModel()
+        // An instance whose version could not be resolved (e.g. the Home Assistant landing page) is
+        // still surfaced rather than dropped.
+        val instance = HomeAssistantInstance("Server 1", URL("http://server1.local:8123"), version = null)
+
+        viewModel.discoveryFlow.test {
+            assertEquals(Started, awaitItem())
+
+            discoveredInstanceFlow.emit(instance)
+            runCurrent()
+
+            val discoveredState = awaitItem()
+            assertTrue(discoveredState is ServerDiscovered)
+            assertEquals(instance.name, (discoveredState as ServerDiscovered).name)
+            assertNull(discoveredState.version)
             expectNoEvents()
         }
     }

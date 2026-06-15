@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.phone
 
-import android.annotation.SuppressLint
 import android.content.Intent
 import androidx.wear.tiles.TileService
 import com.google.android.gms.wearable.DataClient
@@ -39,15 +38,16 @@ import java.security.KeyStore
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 @AndroidEntryPoint
-@SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
 class PhoneSettingsListener :
     WearableListenerService(),
     DataClient.OnDataChangedListener {
@@ -78,7 +78,10 @@ class PhoneSettingsListener :
     @Inject
     lateinit var messagingTokenProvider: MessagingTokenProvider
 
-    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+    // This scope is never canceled so coroutines survive service destruction, keeping the service
+    // in memory until the coroutine completes. A better approach would be to use runBlocking for
+    // short operations (or a worker) and delegate login to the onboarding activity.
+    private val serviceScope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     override fun onMessageReceived(event: MessageEvent) {
         Timber.d("Message received: $event")
@@ -87,7 +90,7 @@ class PhoneSettingsListener :
         }
     }
 
-    private fun sendPhoneData() = mainScope.launch {
+    private fun sendPhoneData() = serviceScope.launch {
         val currentFavorites = favoritesDao.getAll()
         val putDataRequest = PutDataMapRequest.create("/config").run {
             dataMap.putLong(WearDataMessages.KEY_UPDATE_TIME, System.nanoTime())
@@ -136,6 +139,8 @@ class PhoneSettingsListener :
         try {
             Wearable.getDataClient(this@PhoneSettingsListener).putDataItem(putDataRequest).await()
             Timber.d("Successfully sent /config to device")
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.e(e, "Failed to send /config to device")
         }
@@ -165,7 +170,7 @@ class PhoneSettingsListener :
         dataEvents.release()
     }
 
-    private fun login(dataMap: DataMap) = mainScope.launch {
+    private fun login(dataMap: DataMap) = serviceScope.launch {
         var authId = ""
         var serverId: Int? = null
         try {
@@ -218,7 +223,11 @@ class PhoneSettingsListener :
 
             val intent = HomeActivity.newInstance(applicationContext, fromOnboarding = true)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            startActivity(intent)
+            withContext(Dispatchers.Main) {
+                startActivity(intent)
+            }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.e(e, "Unable to login to Home Assistant")
             try {
@@ -250,6 +259,8 @@ class PhoneSettingsListener :
             }
             Wearable.getDataClient(this@PhoneSettingsListener).putDataItem(putDataRequest).await()
             Timber.d("Successfully sent ${WearDataMessages.PATH_LOGIN_RESULT} to device")
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.w(e, "Failed to send ${WearDataMessages.PATH_LOGIN_RESULT} to device")
         }
@@ -259,7 +270,7 @@ class PhoneSettingsListener :
         val favoritesIds: List<String> =
             kotlinJsonMapper.decodeFromString(dataMap.getString(WearDataMessages.CONFIG_FAVORITES, "[]"))
 
-        mainScope.launch {
+        serviceScope.launch {
             favoritesDao.replaceAll(favoritesIds)
 
             if (favoritesIds.isEmpty() && wearPrefsRepository.getWearFavoritesOnly()) {
@@ -268,7 +279,7 @@ class PhoneSettingsListener :
         }
     }
 
-    private fun saveTemplateTiles(dataMap: DataMap) = mainScope.launch {
+    private fun saveTemplateTiles(dataMap: DataMap) = serviceScope.launch {
         val templateTilesFromPhone: Map<Int, TemplateTileConfig> = kotlinJsonMapper.decodeFromString(
             dataMap.getString(
                 WearDataMessages.CONFIG_TEMPLATE_TILES,
@@ -279,13 +290,15 @@ class PhoneSettingsListener :
         wearPrefsRepository.setAllTemplateTiles(templateTilesFromPhone)
     }
 
-    private fun updateTiles() = mainScope.launch {
+    private suspend fun updateTiles() = withContext(Dispatchers.Main) {
         try {
             val updater = TileService.getUpdater(applicationContext)
             updater.requestUpdate(CameraTile::class.java)
             updater.requestUpdate(ConversationTile::class.java)
             updater.requestUpdate(ShortcutsTile::class.java)
             updater.requestUpdate(TemplateTile::class.java)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.w(e, "Unable to request tiles update")
         }

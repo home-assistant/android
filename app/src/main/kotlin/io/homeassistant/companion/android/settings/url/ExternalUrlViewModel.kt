@@ -63,7 +63,7 @@ class ExternalUrlViewModel @Inject constructor(
         viewModelScope.launch {
             serverManager.getServer(serverId)?.let {
                 try {
-                    val formatted = UrlUtil.formattedUrlString(url)
+                    val formatted = UrlUtil.extractBaseUrl(url)
                     serverManager.updateServer(
                         it.copy(
                             connection = it.connection.copy(

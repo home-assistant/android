@@ -27,8 +27,8 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepositoryImpl
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepositoryImpl
-import io.homeassistant.companion.android.common.util.DeferredCreationDataSource
-import io.homeassistant.companion.android.common.util.createDataSourceFactory
+import io.homeassistant.companion.android.common.util.MtlsAwareDataSourceFactory
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.getSharedPreferencesSuspend
 import io.homeassistant.companion.android.common.util.tts.AndroidTextToSpeechEngine
@@ -70,10 +70,21 @@ internal abstract class DataModule {
         fun providesRealDataSourceFactory(
             @ApplicationContext appContext: Context,
             okHttpClient: Lazy<OkHttpClient>,
-        ): DataSource.Factory = DeferredCreationDataSource {
-            // Avoid IO during construction, defer to use
-            createDataSourceFactory(appContext, okHttpClient)
-        }
+            @NamedKeyChain keyChainRepository: KeyChainRepository,
+            @NamedKeyStore keyStoreRepository: KeyChainRepository,
+        ): DataSource.Factory = MtlsAwareDataSourceFactory(
+            context = appContext,
+            okHttpClientProvider = okHttpClient,
+            usesMtls = {
+                val keyChainHasClientCert =
+                    keyChainRepository.getPrivateKey() != null &&
+                        !keyChainRepository.getCertificateChain().isNullOrEmpty()
+                val keyStoreHasClientCert =
+                    keyStoreRepository.getPrivateKey() != null &&
+                        !keyStoreRepository.getCertificateChain().isNullOrEmpty()
+                keyChainHasClientCert || keyStoreHasClientCert
+            },
+        )
 
         @Provides
         @NamedSessionStorage
@@ -116,7 +127,7 @@ internal abstract class DataModule {
         @Provides
         @NamedOsVersion
         @Singleton
-        fun provideDeviceOsVersion() = Build.VERSION.SDK_INT.toString()
+        fun provideDeviceOsVersion() = SdkVersion.toString()
 
         @SuppressLint("HardwareIds")
         @Provides

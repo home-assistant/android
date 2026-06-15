@@ -7,6 +7,7 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.util.compose.HAPreviews
+import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
 
 class FrontendConnectionErrorScreenshotTest {
 
@@ -31,7 +32,7 @@ class FrontendConnectionErrorScreenshotTest {
     fun `FrontendConnectionErrorScreen with error expanded`() {
         HAThemeForPreview {
             FrontendConnectionErrorScreen(
-                url = null,
+                url = "http://home-assistant.local:8123",
                 error = FrontendConnectionError.AuthenticationError(
                     commonR.string.tls_cert_expired_message,
                     "Error code: 403, Description: forbidden",
@@ -63,7 +64,7 @@ class FrontendConnectionErrorScreenshotTest {
     fun `FrontendConnectionErrorScreen with AuthenticationError`() {
         HAThemeForPreview {
             FrontendConnectionErrorScreen(
-                url = null,
+                url = "http://home-assistant.local:8123",
                 error = FrontendConnectionError.AuthenticationError(
                     commonR.string.tls_cert_expired_message,
                     "details",
@@ -107,6 +108,46 @@ class FrontendConnectionErrorScreenshotTest {
                     commonR.string.tls_cert_expired_message,
                     "details",
                     "raw",
+                ),
+                onOpenExternalLink = {},
+                connectivityCheckState = ConnectivityCheckState(),
+                actions = {},
+            )
+        }
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `FrontendConnectionErrorScreen with null url expanded`() {
+        HAThemeForPreview {
+            FrontendConnectionErrorScreen(
+                url = null,
+                error = FrontendConnectionError.UnknownError(
+                    commonR.string.tls_cert_expired_message,
+                    "details",
+                    "raw",
+                ),
+                onOpenExternalLink = {},
+                connectivityCheckState = ConnectivityCheckState(),
+                actions = {},
+                errorDetailsExpanded = true,
+            )
+        }
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `FrontendConnectionErrorScreen with WebViewCreationError and blank URL`() {
+        HAThemeForPreview {
+            FrontendConnectionErrorScreen(
+                url = BLANK_URL,
+                error = FrontendConnectionError.UnrecoverableError.WebViewCreationError(
+                    message = commonR.string.webview_creation_failed,
+                    throwable = UnsatisfiedLinkError(
+                        "dlopen failed: libwebviewchromium.so is 32-bit instead of 64-bit",
+                    ),
                 ),
                 onOpenExternalLink = {},
                 connectivityCheckState = ConnectivityCheckState(),

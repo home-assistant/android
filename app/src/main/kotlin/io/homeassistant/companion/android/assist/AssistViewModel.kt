@@ -2,34 +2,58 @@ package io.homeassistant.companion.android.assist
 
 import android.app.Application
 import android.content.Intent
+import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.assist.ui.AssistMessage
 import io.homeassistant.companion.android.assist.ui.AssistUiPipeline
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.assist.AssistAudioStrategy
 import io.homeassistant.companion.android.common.assist.AssistEvent
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
-import io.homeassistant.companion.android.common.util.AudioRecorder
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
-import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-@HiltViewModel
-class AssistViewModel @Inject constructor(
-    val serverManager: ServerManager,
-    private val audioRecorder: AudioRecorder,
+@VisibleForTesting
+internal val CLOSE_INACTIVE = 30.seconds
+
+@HiltViewModel(assistedFactory = AssistViewModel.Factory::class)
+class AssistViewModel @AssistedInject constructor(
+    serverManager: ServerManager,
+    @Assisted initialAudioStrategy: AssistAudioStrategy,
     audioUrlPlayer: AudioUrlPlayer,
     application: Application,
-) : AssistViewModelBase(serverManager, audioRecorder, audioUrlPlayer, application) {
+) : AssistViewModelBase(serverManager, initialAudioStrategy, audioUrlPlayer, application) {
+
+    @AssistedFactory
+    interface Factory {
+        fun create(audioStrategy: AssistAudioStrategy): AssistViewModel
+    }
+
+    init {
+        viewModelScope.launch {
+            audioStrategy.wakeWordDetected.collect { detectedPhrase ->
+                if (inputMode != AssistInputMode.VOICE_ACTIVE) {
+                    wakeWordPhrase = detectedPhrase
+                    onMicrophoneInput()
+                }
+            }
+        }
+    }
 
     private var filteredServerId: Int? = null
     private val allPipelines = mutableMapOf<Int, List<AssistPipelineResponse>>()
@@ -64,6 +88,9 @@ class AssistViewModel @Inject constructor(
     var pendingWakeWordConfirmation by mutableStateOf(false)
         private set
 
+    private var startedFromWakeWord = false
+    private var inactivityTimerJob: Job? = null
+
     fun onCreate(
         hasPermission: Boolean,
         serverId: Int?,
@@ -74,6 +101,7 @@ class AssistViewModel @Inject constructor(
         viewModelScope.launch {
             this@AssistViewModel.hasPermission = hasPermission
             this@AssistViewModel.wakeWordPhrase = wakeWordPhrase
+            this@AssistViewModel.startedFromWakeWord = wakeWordPhrase != null
             serverId?.let {
                 filteredServerId = serverId
                 selectedServerId = serverId
@@ -129,6 +157,7 @@ class AssistViewModel @Inject constructor(
                         pipelineId == PIPELINE_LAST_USED -> serverManager.integrationRepository(
                             selectedServerId,
                         ).getLastUsedPipelineId()
+
                         pipelineId == PIPELINE_PREFERRED -> null
                         pipelineId?.isNotBlank() == true -> pipelineId
                         else -> null
@@ -168,6 +197,48 @@ class AssistViewModel @Inject constructor(
 
     override fun setInput(inputMode: AssistInputMode) {
         this.inputMode = inputMode
+        restartInactivityTimer()
+    }
+
+    /**
+     * Restarts the inactivity timer that closes the Assist dialog after [CLOSE_INACTIVE].
+     *
+     * The timer only runs when the input mode is [AssistInputMode.VOICE_INACTIVE],
+     * TTS audio is not currently playing, and the last conversation message is not a
+     * placeholder (assistant finished processing).
+     *
+     * Disabled for non wake word sessions to avoid auto-closing the dialog while the user
+     * is interacting with hands.
+     */
+    private fun restartInactivityTimer() {
+        inactivityTimerJob?.cancel()
+        if (!startedFromWakeWord) return
+        fun isInactive(): Boolean {
+            val shouldRun = when (inputMode) {
+                AssistInputMode.VOICE_INACTIVE -> true
+                AssistInputMode.TEXT,
+                AssistInputMode.TEXT_ONLY,
+                AssistInputMode.VOICE_ACTIVE,
+                AssistInputMode.BLOCKED,
+                null,
+                -> false
+            }
+            if (!shouldRun || isPlayingAudio) return false
+
+            val lastMessage = _conversation.lastOrNull()
+            return !(lastMessage == null || lastMessage.isPlaceholder)
+        }
+
+        if (!isInactive()) return
+
+        inactivityTimerJob = viewModelScope.launch {
+            delay(CLOSE_INACTIVE)
+            if (isInactive()) {
+                shouldFinish = true
+            } else {
+                Timber.d("Inactivity timer expired but Assist is no longer inactive, not finishing")
+            }
+        }
     }
 
     private suspend fun checkSupport(): Boolean? {
@@ -265,6 +336,7 @@ class AssistViewModel @Inject constructor(
             } else {
                 inputMode = AssistInputMode.TEXT_ONLY
             }
+            restartInactivityTimer()
         } ?: run {
             if (!id.isNullOrBlank()) {
                 setPipeline(null) // Try falling back to default pipeline
@@ -282,15 +354,18 @@ class AssistViewModel @Inject constructor(
     fun onChangeInput() {
         when (inputMode) {
             null, AssistInputMode.BLOCKED, AssistInputMode.TEXT_ONLY -> { /* Do nothing */ }
+
             AssistInputMode.TEXT -> {
                 inputMode = AssistInputMode.VOICE_INACTIVE
                 if (hasPermission || requestSilently) {
                     onMicrophoneInput()
                 }
             }
+
             AssistInputMode.VOICE_INACTIVE -> {
                 inputMode = AssistInputMode.TEXT
             }
+
             AssistInputMode.VOICE_ACTIVE -> {
                 stopRecording(sendRecorded = false)
                 // Remove placeholder message if present from proactive recording
@@ -300,6 +375,7 @@ class AssistViewModel @Inject constructor(
                 inputMode = AssistInputMode.TEXT
             }
         }
+        restartInactivityTimer()
     }
 
     fun onTextInput(input: String) = runAssistPipeline(input)
@@ -321,24 +397,24 @@ class AssistViewModel @Inject constructor(
 
         stopPlayback()
 
-        val recording = try {
-            recorderProactive || audioRecorder.startRecording()
-        } catch (e: Exception) {
-            Timber.e(e, "Exception while starting recording")
-            false
-        }
-
-        if (recording) {
-            if (!recorderProactive) setupRecorder()
-            inputMode = AssistInputMode.VOICE_ACTIVE
-            if (proactive == true) _conversation.add(AssistMessage.placeholder(isInput = true))
-            if (proactive != true) runAssistPipeline(null)
-        } else {
-            _conversation.add(
-                AssistMessage(app.getString(commonR.string.assist_error), isInput = false, isError = true),
+        if (!recorderProactive) {
+            audioStrategy.requestFocus()
+            setupRecorder(
+                onError = {
+                    stopRecording()
+                    _conversation.add(
+                        AssistMessage(app.getString(commonR.string.assist_error), isInput = false, isError = true),
+                    )
+                },
             )
         }
-        recorderProactive = recording && proactive == true
+        inputMode = AssistInputMode.VOICE_ACTIVE
+        if (proactive == true) _conversation.add(AssistMessage.placeholder(isInput = true))
+        if (proactive != true) runAssistPipeline(null)
+
+        restartInactivityTimer()
+
+        recorderProactive = proactive == true
     }
 
     private fun runAssistPipeline(text: String?) {
@@ -377,7 +453,9 @@ class AssistViewModel @Inject constructor(
                             stopRecording()
                         }
                     }
+                    restartInactivityTimer()
                 }
+
                 is AssistEvent.MessageChunk -> {
                     val lastMessage = _conversation.last()
                     if (lastMessage == haMessage) {
@@ -390,7 +468,13 @@ class AssistViewModel @Inject constructor(
                             lastMessage.copy(message = lastMessage.message + event.chunk)
                     }
                 }
+
                 is AssistEvent.PipelineStarted -> { /* handled below */ }
+
+                is AssistEvent.PipelineEnded,
+                is AssistEvent.PlaybackFinished,
+                -> restartInactivityTimer()
+
                 is AssistEvent.ContinueConversation -> onMicrophoneInput()
                 is AssistEvent.Dismiss -> shouldFinish = true
             }
@@ -418,16 +502,19 @@ class AssistViewModel @Inject constructor(
         } else if (!requestSilently) {
             _conversation.add(AssistMessage(app.getString(commonR.string.assist_permission), isInput = false))
         }
+        restartInactivityTimer()
         if (!proactive) requestSilently = false
     }
 
     fun onPause() {
         requestPermission = null
+        inactivityTimerJob?.cancel()
         stopRecording()
     }
 
     fun onDestroy() {
         requestPermission = null
+        inactivityTimerJob?.cancel()
         stopRecording()
         stopPlayback()
     }

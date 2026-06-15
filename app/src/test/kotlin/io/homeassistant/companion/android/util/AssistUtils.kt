@@ -16,17 +16,17 @@ val microWakeWordModelConfigs = listOf(
             slidingWindowSize = 20,
         ),
     ),
-        MicroWakeWordModelConfig(
-            wakeWord = "Hey Jarvis",
-            author = "test",
-            website = "https://test.com",
-            model = "hey_jarvis.tflite",
-            trainedLanguages = listOf("en"),
-            version = 1,
-            micro = MicroWakeWordModelConfig.MicroFrontendConfig(
-                probabilityCutoff = 0.5f,
-                featureStepSize = 10,
-                slidingWindowSize = 20,
-            ),
+    MicroWakeWordModelConfig(
+        wakeWord = "Hey Jarvis",
+        author = "test",
+        website = "https://test.com",
+        model = "hey_jarvis.tflite",
+        trainedLanguages = listOf("en"),
+        version = 1,
+        micro = MicroWakeWordModelConfig.MicroFrontendConfig(
+            probabilityCutoff = 0.5f,
+            featureStepSize = 10,
+            slidingWindowSize = 20,
         ),
-    )
+    ),
+)

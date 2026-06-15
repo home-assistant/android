@@ -21,7 +21,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -30,9 +30,9 @@ jobs:
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
-      - uses: ruby/setup-ruby@09a7688d3b55cf0e976497ff046b70949eeaccfd # v1.288.0
+      - uses: ruby/setup-ruby@89f90524b88a01fe6e0b732220432cc6142926af # v1.313.0
         with:
-          ruby-version: "4.0.1"
+          ruby-version: "4.0.5"
           bundler-cache: false
 
       - uses: ./.github/actions/create-release-number
@@ -70,7 +70,7 @@ jobs:
           ./gradlew :common:assemble :app:assembleRelease :wear:assembleRelease :automotive:assembleRelease
 
       - name: Archive Build
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: release-apks
           path: ./**/*.apk
@@ -83,15 +83,16 @@ jobs:
         run: |
           echo $VERSION_CODE > ./app/build/outputs/version_code.txt
 
-      - name: Create Github Pre-Release
+      - name: Create draft GitHub Pre-Release
         if: github.event.inputs.beta == 'true'
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
-        with:
-          tag_name: ${{ steps.rel_number.outputs.version }}
-          body_path: ./app/build/outputs/changelogGithub
-          draft: false
-          prerelease: true
-          files: |
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REL_VERSION: ${{ steps.rel_number.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          assets=(
             ./app/build/outputs/apk/full/release/app-full-release.apk
             ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
             ./app/build/outputs/version_code.txt
@@ -100,6 +101,30 @@ jobs:
             ./automotive/build/outputs/apk/minimal/release/automotive-minimal-release.apk
             ./strings.zip
             ./app/src/main/res/xml/locales_config.xml
+          )
+
+          # Immutable releases lock their assets at publish time, so we create the release as a
+          # draft first and attach assets while it is still mutable. The next step publishes it.
+          # On re-runs, --clobber keeps the upload idempotent as long as the previous attempt
+          # did not get past the publish step.
+          if ! gh release view "$REL_VERSION" >/dev/null 2>&1; then
+            gh release create "$REL_VERSION" \
+              --draft \
+              --prerelease \
+              --notes-file ./app/build/outputs/changelogGithub
+          fi
+
+          gh release upload "$REL_VERSION" "${assets[@]}" --clobber
+
+      - name: Publish Pre-Release
+        if: github.event.inputs.beta == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REL_VERSION: ${{ steps.rel_number.outputs.version }}
+        run: |
+          gh release edit "$REL_VERSION" \
+            --draft=false \
+            --notes-file ./app/build/outputs/changelogGithub
 
       - name: Deploy to Firebase
         env:
@@ -123,7 +148,9 @@ jobs:
           AMAZON_APPSTORE_APP_ID: ${{ secrets.AMAZON_APPSTORE_APP_ID }}
 
       - name: Upload Github Dependencies
-        uses: gradle/actions/dependency-submission@0723195856401067f7a2779048b490ace7a47d7c # v5.0.2
+        uses: gradle/actions/dependency-submission@5e2ebd065dc2488b7a6ad670704656cbbe1e8f60 # v6.1.1
+        with:
+          cache-provider: basic # Avoid the proprietary 'enhanced' cache; 'basic' uses the MIT-licensed GitHub Actions cache.
 
       - name: Print `git status`
         run: git status
@@ -136,7 +163,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -145,9 +172,9 @@ jobs:
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
-      - uses: ruby/setup-ruby@09a7688d3b55cf0e976497ff046b70949eeaccfd # v1.288.0
+      - uses: ruby/setup-ruby@89f90524b88a01fe6e0b732220432cc6142926af # v1.313.0
         with:
-          ruby-version: "4.0.1"
+          ruby-version: "4.0.5"
           bundler-cache: false
 
       - uses: ./.github/actions/create-release-number
@@ -185,7 +212,7 @@ jobs:
           ./gradlew :common:assemble :app:bundleFullRelease :wear:bundleRelease :automotive:bundleFullRelease
 
       - name: Archive Build
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: release-aabs
           path: ./**/*.aab

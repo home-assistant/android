@@ -28,6 +28,24 @@
             android:theme="@android:style/Theme.Material.Light.NoActionBar"
             android:name="io.homeassistant.companion.android.HiltComponentActivity"
             />
+
+        <!--
+        Support for next.home-assistant.io links when developing (merged with non-next links in main manifest).
+        -->
+        <activity
+            android:name=".nfc.TagReaderActivity"
+            android:exported="true">
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="https"
+                    android:host="next.home-assistant.io"
+                    android:pathPrefix="/tag/" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

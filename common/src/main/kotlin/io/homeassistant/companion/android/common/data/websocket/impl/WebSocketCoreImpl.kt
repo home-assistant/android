@@ -12,7 +12,6 @@ import io.homeassistant.companion.android.common.data.websocket.HAWebSocketExcep
 import io.homeassistant.companion.android.common.data.websocket.WebSocketCore
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRequest
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
-import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.EVENT_AREA_REGISTRY_UPDATED
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.EVENT_DEVICE_REGISTRY_UPDATED
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.EVENT_ENTITY_REGISTRY_UPDATED
@@ -50,6 +49,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Un
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.MapAnySerializer
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.util.sensitive
 import java.io.IOException
 import java.net.URL
 import java.util.concurrent.ConcurrentHashMap

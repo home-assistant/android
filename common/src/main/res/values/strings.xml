@@ -46,6 +46,7 @@
     <string name="auth_cancel">Authentication cancelled</string>
     <string name="auth_error_message">The \'Username\' and \'Password\' fields must be completed</string>
     <string name="auth_request">Authentication requested</string>
+    <string name="auth_request_rejected">The credentials were rejected. Please try again.</string>
     <string name="automation">Automation</string>
     <string name="autoplay_video_summary">Autoplay videos when dashboard is active. Enabling this setting may increase data usage unexpectedly, proceed with caution.</string>
     <string name="autoplay_video">Autoplay videos</string>
@@ -150,6 +151,8 @@
     <string name="changelog">View full change log</string>
     <string name="choose_entity">Choose entity</string>
     <string name="clear_favorites">Clear favorites</string>
+    <string name="clear_allowed_tags">Clear approved tags</string>
+    <string name="clear_allowed_tags_complete">Tags cleared</string>
     <string name="clear_search">Clear search</string>
     <string name="clear_webview_cache">Reset frontend cache</string>
     <string name="clear_webview_cache_active">Resetting…</string>
@@ -314,6 +317,7 @@
     <string name="get_help">Get help</string>
     <string name="help">Help</string>
     <string name="hide_password">Hide password</string>
+    <string name="show_password">Show password</string>
     <string name="high_accuracy_mode_channel_name">High accuracy location</string>
     <string name="high_accuracy_mode_notification_title">High accuracy (GPS) mode enabled</string>
     <string name="hold_to_reorder">Hold to reorder</string>
@@ -388,6 +392,10 @@
     <string name="template_widgets">Template widgets</string>
     <string name="loading_entities">Please wait while we load your entities</string>
     <string name="loading">Loading…</string>
+    <string name="local_network_permission_message">Home Assistant needs permission to access your local network to reach %1$s. Background updates have been paused. Tap to grant access.</string>
+    <string name="local_network_permission_short_message">Home Assistant needs local network access for background updates</string>
+    <string name="local_network_permission_title">Local network access required</string>
+    <string name="local_network_permission_warn_channel">Local network access warning</string>
     <string name="location_disabled_dialog_message">%1$s\nDo you want to enable location?</string>
     <string name="location_disabled_notification_message">Location is required for the following enabled option(s). If you do not enable location, the sensor(s)/setting(s) will not work!\n\n%1$s</string>
     <string name="location_disabled_notification_short_message">Some options require location to work</string>
@@ -450,6 +458,7 @@
     <string name="manage_widgets">Manage widgets</string>
     <string name="manual_setup">Enter address manually</string>
     <string name="manual_title">What is your Home Assistant address?</string>
+    <string name="matter_commissioning_cancelled">Unable to add Matter device?</string>
     <string name="matter_commissioning_unavailable">Matter is currently unavailable</string>
     <string name="matter_shared_title">Add Matter device</string>
     <string name="matter_shared_status_not_registered">Please connect to your Home Assistant server before adding a Matter device.</string>
@@ -487,6 +496,12 @@
     <string name="nfc_trigger_device">Scanned by this device:</string>
     <string name="nfc_invalid_tag">This tag does not contain Home Assistant data</string>
     <string name="nfc_processing_tag_error">Error while processing NFC tag</string>
+    <string name="tag_approval_title">Allow tag?</string>
+    <string name="tag_approval_description">Send this tag to Home Assistant to trigger linked automations.</string>
+    <string name="tag_allow_once">Allow once</string>
+    <string name="tag_allow_always">Allow always</string>
+    <string name="tag_copy_id">Copy tag identifier</string>
+    <string name="tag_id">Tag identifier</string>
     <string name="nfc_read_tag_instructions">Hold your device near an NFC tag</string>
     <string name="nfc_summary">Set up NFC tags</string>
     <string name="nfc_tag_identifier">Tag ID</string>
@@ -978,6 +993,8 @@
     <string name="webview_error_SSL_NOTYETVALID">The Home Assistant certificate is not yet valid, please review the Home Assistant certificate or the connection settings and try again.</string>
     <string name="webview_error_SSL_UNTRUSTED">The Home Assistant certificate authority is not trusted, please review the Home Assistant certificate or the connection settings and try again.</string>
     <string name="webview_error">There was an error loading Home Assistant, please review the connection settings and try again. We will attempt to try another provided URL when you select Refresh.</string>
+    <string name="webview_creation_error_title">WebView unavailable</string>
+    <string name="webview_creation_failed">WebView failed to initialize, please check and update your system WebView.</string>
     <string name="welcome_hass">Welcome to Home Assistant Companion!</string>
     <string name="widget_attribute_separator_label">Separator between attributes:</string>
     <string name="widget_background_type_title">Select widget theme</string>
@@ -1100,6 +1117,9 @@
     <string name="sensor_update_type_info_custom">This sensor updates on a non-standard schedule, please check the documentation.</string>
     <string name="sensor_privacy">You have full control over your data. When enabled, sensor data is only sent to your own Home\u00A0Assistant server. It will never be shared with the Home\u00A0Assistant project or third parties.</string>
     <string name="missing_camera_permission">\'Camera\' permission required</string>
+    <string name="barcode_camera_permission_title">Camera access needed</string>
+    <string name="barcode_camera_permission_message">Scanning codes requires access to your camera.</string>
+    <string name="barcode_camera_permission_action">Allow camera access</string>
     <string name="missing_mic_permission">\'Microphone\' permission required</string>
     <string name="missing_phone_permission">Please grant Phone permission to make a phone call</string>
     <string name="missing_bluetooth_permission">Please grant Nearby devices permission to control Bluetooth</string>
@@ -1218,8 +1238,6 @@
     <string name="assist_wake_word_test_hint">Say \"%s\" to test</string>
     <string name="assist_wake_word_detected">Wake word detected!</string>
     <string name="assist_wake_word_battery_warning">Wake word detection runs entirely on your device, no network connection required. It continuously listens for your wake word, which will increase battery usage.</string>
-    <string name="assist_wake_word_unsupported_device">Wake word detection is not available on this device due to hardware limitations.</string>
-    <string name="assist_wake_word_missing_play_services">Google Play Services is required to enable wake word detection.</string>
     <string name="assist_permission_microphone_required">Requires \'Microphone\' permission</string>
     <string name="not_registered">Please open the Home Assistant app and log in to start using Assist</string>
     <string name="ha_assist">HA: Assist</string>
@@ -1390,6 +1408,11 @@
     <string name="welcome_details">Access your Home\u00A0Assistant server on the go.\n\nHome\u00A0Assistant is open source home automation that puts local control and privacy first. Powered by a worldwide community of tinkerers and DIY enthusiasts.</string>
     <string name="welcome_connect_to_ha">Connect to my Home\u00A0Assistant server</string>
     <string name="welcome_learn_more">Learn more</string>
+    <string name="welcome_invitation_title">You\'ve been invited</string>
+    <string name="welcome_invitation_server_label">Home\u00A0Assistant address</string>
+    <string name="welcome_invitation_warning_detail">Only accept this invite if you trust the person who shared it. Connecting to an unknown server could give it access to data you enter or sent by the app, such as your location and device information.</string>
+    <string name="welcome_invitation_accept">Accept</string>
+    <string name="welcome_invitation_reject">Reject</string>
     <string name="name_your_device_title">How would you like to name this device?</string>
     <string name="name_your_device_content">This is used to identify your device.</string>
     <string name="name_your_device_save">Save</string>
@@ -1406,7 +1429,8 @@
     <string name="location_sharing_share">Share my location</string>
     <string name="location_sharing_no_share">Do not share my location</string>
     <string name="location_secure_connection_title">Let us help secure your remote connection</string>
-    <string name="location_secure_connection_content">It appears that your connection is not encrypted (using HTTP). If the app knows when you\'re away from home, it can choose a more secure way to connect to your Home Assistant system if available. This requires location services to be enabled.</string>
+    <string name="location_secure_connection_content_http">It appears that your connection is not encrypted (currently using HTTP in your configuration).</string>
+    <string name="location_secure_connection_content_location">If the app knows when you\'re away from home, it can choose a more secure way to connect to your Home Assistant system if available. This requires location services to be enabled.</string>
     <string name="location_secure_connection_hint">This data will never be shared with the Home Assistant project or third parties.</string>
     <string name="location_secure_connection_next">Next</string>
     <string name="location_secure_connection_save">Save</string>

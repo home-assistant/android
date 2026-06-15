@@ -2,9 +2,9 @@ package io.homeassistant.companion.android.frontend.session
 
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.SessionState
+import io.homeassistant.companion.android.common.data.servers.ServerConnectionStateProvider
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -12,13 +12,13 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.extension.ExtendWith
 
-@ExtendWith(MainDispatcherJUnit5Extension::class, ConsoleLogExtension::class)
+@ExtendWith(MainDispatcherJUnit5Extension::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class ServerSessionManagerTest {
 
@@ -144,5 +144,55 @@ class ServerSessionManagerTest {
 
         assertTrue(result is RevokeAuthResult.Failed)
         assertEquals("revokeCallback(false)", (result as RevokeAuthResult.Failed).callbackScript)
+    }
+
+    @Test
+    fun `Given valid token when getAuthorizationHeader then returns bearer token`() = runTest {
+        coEvery { authRepository.buildBearerToken() } returns "Bearer test-token"
+
+        val result = manager.getAuthorizationHeader(serverId = 1)
+
+        assertEquals("Bearer test-token", result)
+    }
+
+    @Test
+    fun `Given token build failure when getAuthorizationHeader then returns null`() = runTest {
+        coEvery { authRepository.buildBearerToken() } throws IllegalStateException("No token")
+
+        assertNull(manager.getAuthorizationHeader(serverId = 1))
+    }
+
+    @Test
+    fun `Given safe URL when canSafelySendCredentials then returns true`() = runTest {
+        val connectionStateProvider: ServerConnectionStateProvider = mockk()
+        coEvery { serverManager.getServer(1) } returns mockk()
+        coEvery { serverManager.connectionStateProvider(1) } returns connectionStateProvider
+        coEvery { connectionStateProvider.canSafelySendCredentials("https://example.com") } returns true
+
+        assertTrue(manager.canSafelySendCredentials(serverId = 1, url = "https://example.com"))
+    }
+
+    @Test
+    fun `Given unsafe URL when canSafelySendCredentials then returns false`() = runTest {
+        val connectionStateProvider: ServerConnectionStateProvider = mockk()
+        coEvery { serverManager.getServer(1) } returns mockk()
+        coEvery { serverManager.connectionStateProvider(1) } returns connectionStateProvider
+        coEvery { connectionStateProvider.canSafelySendCredentials("http://unknown.com") } returns false
+
+        assertFalse(manager.canSafelySendCredentials(serverId = 1, url = "http://unknown.com"))
+    }
+
+    @Test
+    fun `Given no server when canSafelySendCredentials then returns false`() = runTest {
+        coEvery { serverManager.getServer(1) } returns null
+
+        assertFalse(manager.canSafelySendCredentials(serverId = 1, url = "https://example.com"))
+    }
+
+    @Test
+    fun `Given exception when canSafelySendCredentials then returns false`() = runTest {
+        coEvery { serverManager.getServer(1) } throws RuntimeException("Connection error")
+
+        assertFalse(manager.canSafelySendCredentials(serverId = 1, url = "https://example.com"))
     }
 }

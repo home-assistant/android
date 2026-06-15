@@ -4,12 +4,11 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketCore
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
-import io.homeassistant.companion.android.common.util.AudioRecorder
+import io.homeassistant.companion.android.common.util.VOICE_SAMPLE_RATE
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.mockk.CapturingSlot
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -24,11 +23,9 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 
-@ExtendWith(ConsoleLogExtension::class)
 class WebSocketRepositoryImplTest {
 
     private lateinit var webSocketCore: WebSocketCore
@@ -68,7 +65,7 @@ class WebSocketRepositoryImplTest {
             val dataSlot = captureSubscribeData()
 
             repository.runAssistPipelineForVoice(
-                sampleRate = AudioRecorder.SAMPLE_RATE,
+                sampleRate = VOICE_SAMPLE_RATE,
                 outputTts = true,
                 pipelineId = null,
                 conversationId = null,
@@ -93,7 +90,7 @@ class WebSocketRepositoryImplTest {
             val dataSlot = captureSubscribeData()
 
             repository.runAssistPipelineForVoice(
-                sampleRate = AudioRecorder.SAMPLE_RATE,
+                sampleRate = VOICE_SAMPLE_RATE,
                 outputTts = true,
                 pipelineId = null,
                 conversationId = null,
@@ -114,7 +111,7 @@ class WebSocketRepositoryImplTest {
             val dataSlot = captureSubscribeData()
 
             repository.runAssistPipelineForVoice(
-                sampleRate = AudioRecorder.SAMPLE_RATE,
+                sampleRate = VOICE_SAMPLE_RATE,
                 outputTts = outputTts,
                 pipelineId = null,
                 conversationId = null,
@@ -129,7 +126,7 @@ class WebSocketRepositoryImplTest {
             val dataSlot = captureSubscribeData()
 
             repository.runAssistPipelineForVoice(
-                sampleRate = AudioRecorder.SAMPLE_RATE,
+                sampleRate = VOICE_SAMPLE_RATE,
                 outputTts = true,
                 pipelineId = "my-pipeline-id",
                 conversationId = null,
@@ -144,7 +141,7 @@ class WebSocketRepositoryImplTest {
             val dataSlot = captureSubscribeData()
 
             repository.runAssistPipelineForVoice(
-                sampleRate = AudioRecorder.SAMPLE_RATE,
+                sampleRate = VOICE_SAMPLE_RATE,
                 outputTts = true,
                 pipelineId = null,
                 conversationId = null,
@@ -159,7 +156,7 @@ class WebSocketRepositoryImplTest {
             val dataSlot = captureSubscribeData(server = createServer(deviceRegistryId = "device-123"))
 
             repository.runAssistPipelineForVoice(
-                sampleRate = AudioRecorder.SAMPLE_RATE,
+                sampleRate = VOICE_SAMPLE_RATE,
                 outputTts = true,
                 pipelineId = null,
                 conversationId = null,
@@ -174,7 +171,7 @@ class WebSocketRepositoryImplTest {
             val dataSlot = captureSubscribeData(server = createServer(deviceRegistryId = null))
 
             repository.runAssistPipelineForVoice(
-                sampleRate = AudioRecorder.SAMPLE_RATE,
+                sampleRate = VOICE_SAMPLE_RATE,
                 outputTts = true,
                 pipelineId = null,
                 conversationId = null,
@@ -189,7 +186,7 @@ class WebSocketRepositoryImplTest {
             val dataSlot = captureSubscribeData()
 
             repository.runAssistPipelineForVoice(
-                sampleRate = AudioRecorder.SAMPLE_RATE,
+                sampleRate = VOICE_SAMPLE_RATE,
                 outputTts = true,
                 pipelineId = null,
                 conversationId = "conv-456",
@@ -221,7 +218,7 @@ class WebSocketRepositoryImplTest {
             val dataSlot = captureSubscribeData()
 
             repository.runAssistPipelineForVoice(
-                sampleRate = AudioRecorder.SAMPLE_RATE,
+                sampleRate = VOICE_SAMPLE_RATE,
                 outputTts = true,
                 pipelineId = null,
                 conversationId = null,

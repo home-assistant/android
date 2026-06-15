@@ -7,6 +7,7 @@ import android.os.Parcelable
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.viewModels
 import androidx.biometric.BiometricManager
 import androidx.core.content.IntentCompat
 import androidx.fragment.app.commit
@@ -20,8 +21,10 @@ import eightbitlab.com.blurview.BlurView
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
+import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.settings.assist.AssistSettingsFragment
 import io.homeassistant.companion.android.settings.developer.DeveloperSettingsFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
@@ -32,7 +35,6 @@ import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFra
 import io.homeassistant.companion.android.util.applySafeDrawingInsets
 import javax.inject.Inject
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.parcelize.Parcelize
 import timber.log.Timber
 
@@ -44,11 +46,13 @@ class SettingsActivity : BaseActivity() {
     @Inject
     lateinit var serverManager: ServerManager
 
+    private val viewModel: SettingsViewModel by viewModels()
+
     private lateinit var authenticator: Authenticator
     private lateinit var blurView: BlurView
 
     private var authenticating = false
-    private var externalAuthCallback: ((Int) -> Boolean)? = null
+    private var externalAuthCallback: ((AuthenticationResult) -> Boolean)? = null
 
     companion object {
         fun newInstance(context: Context, screen: Deeplink? = null): Intent {
@@ -68,6 +72,7 @@ class SettingsActivity : BaseActivity() {
         data class QSTile(val tileId: String) : Deeplink
         data class Sensor(val sensorId: String) : Deeplink
         data object Websocket : Deeplink
+        data object AssistSettings : Deeplink
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -88,7 +93,7 @@ class SettingsActivity : BaseActivity() {
             .setBlurRadius(8f)
             .setBlurEnabled(false)
 
-        authenticator = Authenticator(this, this, ::settingsActivityAuthenticationResult)
+        authenticator = Authenticator(this, ::settingsActivityAuthenticationResult)
 
         if (savedInstanceState == null) {
             val settingsNavigation = IntentCompat.getParcelableExtra(intent, EXTRA_FRAGMENT, Deeplink::class.java)
@@ -107,6 +112,7 @@ class SettingsActivity : BaseActivity() {
                             Deeplink.NotificationHistory -> NotificationHistoryFragment::class.java
                             is Deeplink.Sensor -> SensorDetailFragment::class.java
                             is Deeplink.QSTile -> ManageTilesFragment::class.java
+                            Deeplink.AssistSettings -> AssistSettingsFragment::class.java
                             else -> SettingsFragment::class.java
                         },
                         when (settingsNavigation) {
@@ -175,7 +181,7 @@ class SettingsActivity : BaseActivity() {
         }
     }
 
-    private fun settingsActivityAuthenticationResult(result: Int) {
+    private fun settingsActivityAuthenticationResult(result: AuthenticationResult) {
         val isExtAuth = (externalAuthCallback != null)
         Timber.d("settingsActivityAuthenticationResult(): authenticating: $authenticating, externalAuth: $isExtAuth")
 
@@ -188,16 +194,16 @@ class SettingsActivity : BaseActivity() {
         if (authenticating) {
             authenticating = false
             when (result) {
-                Authenticator.SUCCESS -> {
+                AuthenticationResult.SUCCESS -> {
                     Timber.d("Authentication successful, unlocking app")
                     blurView.setBlurEnabled(false)
                     setAppActive(true)
                 }
-                Authenticator.CANCELED -> {
+                AuthenticationResult.CANCELED -> {
                     Timber.d("Authentication canceled by user, closing activity")
                     finishAffinity()
                 }
-                else -> Timber.d("Authentication failed, retry attempts allowed")
+                AuthenticationResult.ERROR -> Timber.d("Authentication failed, retry attempts allowed")
             }
         }
     }
@@ -207,19 +213,10 @@ class SettingsActivity : BaseActivity() {
      */
     private suspend fun isAppLocked(): Boolean {
         val serverFragment = supportFragmentManager.findFragmentByTag(ServerSettingsFragment.TAG)
-        val serverLocked = serverFragment?.let { isAppLocked((it as ServerSettingsFragment).getServerId()) } ?: false
-        return serverLocked || isAppLocked(ServerManager.SERVER_ID_ACTIVE)
-    }
-
-    suspend fun isAppLocked(serverId: Int?): Boolean {
-        return serverManager.getServer(serverId ?: ServerManager.SERVER_ID_ACTIVE)?.let {
-            try {
-                serverManager.integrationRepository(it.id).isAppLocked()
-            } catch (e: IllegalArgumentException) {
-                Timber.w(e, "Cannot determine app locked state")
-                false
-            }
+        val serverLocked = serverFragment?.let {
+            viewModel.isAppLocked((it as ServerSettingsFragment).getServerId())
         } ?: false
+        return serverLocked || viewModel.isAppLocked(ServerManager.SERVER_ID_ACTIVE)
     }
 
     /**
@@ -228,19 +225,8 @@ class SettingsActivity : BaseActivity() {
      */
     private fun setAppActive(active: Boolean) {
         val serverFragment = supportFragmentManager.findFragmentByTag(ServerSettingsFragment.TAG)
-        serverFragment?.let { setAppActive((it as ServerSettingsFragment).getServerId(), active) }
-        setAppActive(ServerManager.SERVER_ID_ACTIVE, active)
-    }
-
-    // TODO remove runBlocking https://github.com/home-assistant/android/issues/5688
-    fun setAppActive(serverId: Int?, active: Boolean) = runBlocking {
-        serverManager.getServer(serverId ?: ServerManager.SERVER_ID_ACTIVE)?.let {
-            try {
-                serverManager.integrationRepository(it.id).setAppActive(active)
-            } catch (e: IllegalArgumentException) {
-                Timber.w(e, "Cannot set app active $active for server $serverId")
-            }
-        }
+        serverFragment?.let { viewModel.setAppActive((it as ServerSettingsFragment).getServerId(), active) }
+        viewModel.setAppActive(ServerManager.SERVER_ID_ACTIVE, active)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -253,7 +239,7 @@ class SettingsActivity : BaseActivity() {
         }
     }
 
-    fun requestAuthentication(title: String, callback: (Int) -> Boolean): Boolean {
+    fun requestAuthentication(title: String, callback: (AuthenticationResult) -> Boolean): Boolean {
         return if (BiometricManager.from(this).canAuthenticate(Authenticator.AUTH_TYPES) !=
             BiometricManager.BIOMETRIC_SUCCESS
         ) {

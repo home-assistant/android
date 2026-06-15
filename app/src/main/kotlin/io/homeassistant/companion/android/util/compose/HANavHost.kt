@@ -1,21 +1,22 @@
 package io.homeassistant.companion.android.util.compose
 
 import android.app.Activity
-import android.content.Intent
 import android.net.Uri
-import android.provider.Settings
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
+import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import io.homeassistant.companion.android.automotive.navigation.carAppActivity
 import io.homeassistant.companion.android.automotive.navigation.navigateToCarAppActivity
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.frontend.navigation.frontendScreen
 import io.homeassistant.companion.android.frontend.navigation.navigateToFrontend
 import io.homeassistant.companion.android.launch.HAStartDestinationRoute
+import io.homeassistant.companion.android.launch.PipReadiness
 import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.loading.navigation.LoadingRoute
 import io.homeassistant.companion.android.loading.navigation.loadingScreen
@@ -28,7 +29,7 @@ import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.n
 import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.setHomeNetworkScreen
 import io.homeassistant.companion.android.onboarding.wearOnboarding
 import io.homeassistant.companion.android.settings.navigation.navigateToSettings
-import io.homeassistant.companion.android.settings.navigation.settingsScreen
+import io.homeassistant.companion.android.settings.server.ServerChooserFragment
 
 /**
  * Navigation host for the main application.
@@ -50,6 +51,8 @@ internal fun HANavHost(
     navController: NavHostController,
     startDestination: HAStartDestinationRoute?,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
+    onRequestFullscreen: (Boolean) -> Unit = {},
+    onPipReadinessChanged: (PipReadiness?) -> Unit = {},
 ) {
     val activity = LocalActivity.current
     val isAutomotive = activity?.isAutomotive() == true
@@ -74,6 +77,7 @@ internal fun HANavHost(
                 hideExistingServers = (startDestination as? OnboardingRoute)?.hideExistingServers == true,
                 skipWelcome = (startDestination as? OnboardingRoute)?.skipWelcome == true,
                 hasLocationTracking = (startDestination as? OnboardingRoute)?.hasLocationTracking == true,
+                fromInvitation = (startDestination as? OnboardingRoute)?.fromInvitation == true,
             )
             if (startDestination is WearOnboardingRoute) {
                 wearOnboarding(
@@ -108,7 +112,7 @@ internal fun HANavHost(
                     navController.navigateToUri(uri.toString(), onShowSnackbar)
                 },
                 onNavigateToSettings = {
-                    navController.navigateToSettings()
+                    navController.navigateToSettings(it)
                 },
                 onSecurityLevelHelpClick = {
                     navController.navigateToUri(URL_SECURITY_LEVEL_DOCUMENTATION, onShowSnackbar)
@@ -120,6 +124,9 @@ internal fun HANavHost(
                     navController.navigateToSetHomeNetworkRoute(serverId)
                 },
                 onShowSnackbar = onShowSnackbar,
+                onShowServerSwitcher = { onServerSelected -> showServerSwitcher(activity, onServerSelected) },
+                onRequestFullscreen = onRequestFullscreen,
+                onPipReadinessChanged = onPipReadinessChanged,
             )
             setHomeNetworkScreen(
                 onGotoNextScreen = {
@@ -129,7 +136,7 @@ internal fun HANavHost(
                     navController.navigateToUri(URL_SECURITY_LEVEL_DOCUMENTATION, onShowSnackbar)
                 },
             )
-            settingsScreen()
+
             if (isAutomotive) {
                 carAppActivity(navController)
             }
@@ -147,13 +154,24 @@ private fun openSystemLocationSettings(activity: Activity) {
     if (DisabledLocationHandler.isLocationEnabled(activity)) {
         return
     }
-    val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS).apply {
-        flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
-        addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+    activity.startActivity(DisabledLocationHandler.locationSettingsIntent(activity))
+}
+
+private fun showServerSwitcher(activity: Activity?, onServerSelected: (Int) -> Unit) {
+    val fragmentActivity = activity as? FragmentActivity
+    if (fragmentActivity == null) {
+        FailFast.fail { "Cannot show server switcher: hosting activity is not a FragmentActivity" }
+    } else {
+        val fragmentManager = fragmentActivity.supportFragmentManager
+        fragmentManager.setFragmentResultListener(
+            ServerChooserFragment.RESULT_KEY,
+            fragmentActivity,
+        ) { _, bundle ->
+            if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
+                onServerSelected(bundle.getInt(ServerChooserFragment.RESULT_SERVER))
+            }
+            fragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
+        }
+        ServerChooserFragment().show(fragmentManager, ServerChooserFragment.TAG)
     }
-    if (intent.resolveActivity(activity.packageManager) == null) {
-        intent.action = Settings.ACTION_SETTINGS
-    }
-    activity.startActivity(intent)
 }

@@ -1,11 +1,15 @@
 package io.homeassistant.companion.android.launch
 
+import android.graphics.Rect
+import android.util.Rational
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
+import io.homeassistant.companion.android.applock.AppLockStateManager
 import io.homeassistant.companion.android.automotive.navigation.AutomotiveRoute
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.network.NetworkState
 import io.homeassistant.companion.android.common.data.network.NetworkStatusMonitor
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
@@ -14,7 +18,6 @@ import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.onboarding.OnboardingRoute
 import io.homeassistant.companion.android.onboarding.WearOnboardingRoute
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -29,18 +32,25 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.EnumSource
+import org.junit.jupiter.params.provider.ValueSource
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(MainDispatcherJUnit5Extension::class, ConsoleLogExtension::class)
+@ExtendWith(MainDispatcherJUnit5Extension::class)
 class LaunchViewModelTest {
     private val serverManager: ServerManager = mockk(relaxed = true)
     private val networkStatusMonitor: NetworkStatusMonitor = mockk(relaxed = true)
+    private val fullScreenEnabledFlow = MutableStateFlow(false)
+    private val prefsRepository: PrefsRepository = mockk(relaxed = true) {
+        coEvery { this@mockk.fullScreenEnabledFlow() } returns this@LaunchViewModelTest.fullScreenEnabledFlow
+    }
 
     private val workManager: WorkManager = mockk()
+    private val appLockStateManager: AppLockStateManager = mockk(relaxed = true)
 
     private lateinit var viewModel: LaunchViewModel
 
@@ -55,6 +65,8 @@ class LaunchViewModelTest {
             workManager,
             serverManager,
             networkStatusMonitor,
+            prefsRepository,
+            appLockStateManager,
             hasLocationTrackingSupport,
             isAutomotive,
             isFullFlavor,
@@ -339,6 +351,25 @@ class LaunchViewModelTest {
     }
 
     @Test
+    fun `Given initial deep link is OpenInvitation when creating viewModel, then navigate to onboarding from invitation with the server url`() = runTest {
+        createViewModel(
+            initialDeepLink = LaunchActivity.DeepLink.OpenInvitation("http://homeassistant.io"),
+            hasLocationTrackingSupport = true,
+        )
+        advanceUntilIdle()
+        assertEquals(
+            LaunchUiState.Ready(
+                OnboardingRoute(
+                    hasLocationTracking = true,
+                    urlToOnboard = "http://homeassistant.io",
+                    fromInvitation = true,
+                ),
+            ),
+            viewModel.uiState.value,
+        )
+    }
+
+    @Test
     fun `Given initial deep link is NavigateTo when creating viewModel, then navigate to frontend with the server id and path`() = runTest {
         val serverId = 42
         val server = mockk<Server>(relaxed = true)
@@ -543,5 +574,162 @@ class LaunchViewModelTest {
             LaunchUiState.Ready(WearOnboardingRoute(wearName = "Pixel Watch", urlToOnboard = null)),
             viewModel.uiState.value,
         )
+    }
+
+    @Test
+    fun `Given fullscreen enabled when observed then isFullScreen is true`() = runTest {
+        fullScreenEnabledFlow.value = true
+        createViewModel()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.isFullScreen.value)
+    }
+
+    @Test
+    fun `Given fullscreen disabled when observed then isFullScreen is false`() = runTest {
+        fullScreenEnabledFlow.value = false
+        createViewModel()
+        advanceUntilIdle()
+
+        assertFalse(viewModel.isFullScreen.value)
+    }
+
+    @Test
+    fun `Given fullscreen preference changes then isFullScreen updates reactively`() = runTest {
+        fullScreenEnabledFlow.value = false
+        createViewModel()
+        advanceUntilIdle()
+
+        assertFalse(viewModel.isFullScreen.value)
+
+        fullScreenEnabledFlow.value = true
+        advanceUntilIdle()
+
+        assertTrue(viewModel.isFullScreen.value)
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = [true, false])
+    fun `Given refreshAppLockState when manager reports lock state then isAppLocked reflects it`(
+        locked: Boolean,
+    ) = runTest {
+        coEvery { appLockStateManager.isAppLocked() } returns locked
+        createViewModel()
+
+        viewModel.refreshAppLockState()
+        advanceUntilIdle()
+
+        assertEquals(locked, viewModel.isAppLocked.value)
+    }
+
+    @Test
+    fun `Given onAppPaused when invoked then manager is told app is inactive`() = runTest {
+        createViewModel()
+
+        viewModel.onAppPaused()
+        advanceUntilIdle()
+
+        coVerify { appLockStateManager.setAppActive(active = false) }
+    }
+
+    @Test
+    fun `Given onAuthenticated when invoked then manager is told app is active and isAppLocked is false`() = runTest {
+        coEvery { appLockStateManager.isAppLocked() } returns true
+        createViewModel()
+        viewModel.refreshAppLockState()
+        advanceUntilIdle()
+        assertTrue(viewModel.isAppLocked.value)
+
+        viewModel.onAuthenticated()
+        advanceUntilIdle()
+
+        coVerify { appLockStateManager.setAppActive(active = true) }
+        assertFalse(viewModel.isAppLocked.value)
+    }
+
+    @Test
+    fun `Given fullscreen preference off when fullscreen is requested then isFullScreen is true`() = runTest {
+        fullScreenEnabledFlow.value = false
+        createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onFullscreenRequested(fullscreen = true)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.isFullScreen.value)
+    }
+
+    @Test
+    fun `Given fullscreen preference off when fullscreen request is cleared then isFullScreen is false`() = runTest {
+        fullScreenEnabledFlow.value = false
+        createViewModel()
+        viewModel.onFullscreenRequested(fullscreen = true)
+        advanceUntilIdle()
+
+        viewModel.onFullscreenRequested(fullscreen = false)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.isFullScreen.value)
+    }
+
+    @Test
+    fun `Given fullscreen preference on when fullscreen request is cleared then isFullScreen stays true`() = runTest {
+        fullScreenEnabledFlow.value = true
+        createViewModel()
+        viewModel.onFullscreenRequested(fullscreen = true)
+        advanceUntilIdle()
+
+        viewModel.onFullscreenRequested(fullscreen = false)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.isFullScreen.value)
+    }
+
+    @Test
+    fun `Given fullscreen request is active when preference turns off then isFullScreen stays true`() = runTest {
+        fullScreenEnabledFlow.value = true
+        createViewModel()
+        viewModel.onFullscreenRequested(fullscreen = true)
+        advanceUntilIdle()
+
+        fullScreenEnabledFlow.value = false
+        advanceUntilIdle()
+
+        assertTrue(viewModel.isFullScreen.value)
+    }
+
+    @Test
+    fun `Given no pip readiness reported when initialized then pipReadiness is null`() = runTest {
+        createViewModel()
+        advanceUntilIdle()
+
+        assertNull(viewModel.pipReadiness.value)
+    }
+
+    @Test
+    fun `Given onPipReadinessChanged with non-null when called then pipReadiness reflects it`() = runTest {
+        createViewModel()
+        advanceUntilIdle()
+
+        val readiness = PipReadiness(
+            aspectRatio = Rational(16, 9),
+            sourceRect = Rect(0, 0, 1920, 1080),
+        )
+        viewModel.onPipReadinessChanged(readiness)
+        advanceUntilIdle()
+
+        assertEquals(readiness, viewModel.pipReadiness.value)
+    }
+
+    @Test
+    fun `Given non-null then null when reported then pipReadiness round-trips`() = runTest {
+        createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onPipReadinessChanged(PipReadiness(aspectRatio = Rational(16, 9)))
+        viewModel.onPipReadinessChanged(null)
+        advanceUntilIdle()
+
+        assertNull(viewModel.pipReadiness.value)
     }
 }

@@ -2,11 +2,11 @@ package io.homeassistant.companion.android.frontend
 
 import androidx.compose.ui.graphics.Color
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
+import io.homeassistant.companion.android.frontend.barcode.BarcodeScannerUiState
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
-import org.jetbrains.annotations.VisibleForTesting
-
-@VisibleForTesting
-const val BLANK_URL = "about:blank"
+import io.homeassistant.companion.android.frontend.exoplayer.ExoPlayerUiState
+import io.homeassistant.companion.android.frontend.improv.ImprovUIState
+import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
 
 /**
  * Represents the persistent UI state of the frontend screen.
@@ -15,9 +15,9 @@ const val BLANK_URL = "about:blank"
  * changed (e.g., loading indicators, error screens, security prompts). The state survives
  * recomposition and is preserved until a user action or system event triggers a transition.
  *
- * For one-shot navigation to external screens (e.g., opening Settings), use
- * [io.homeassistant.companion.android.frontend.navigation.FrontendNavigationEvent] instead.
- * Navigation events are consumed once and don't persist in state.
+ * For one-shot events (e.g., opening Settings, showing a snackbar), use
+ * [io.homeassistant.companion.android.frontend.navigation.FrontendEvent] instead.
+ * Events are consumed once and don't persist in state.
  */
 sealed interface FrontendViewState {
 
@@ -57,6 +57,9 @@ sealed interface FrontendViewState {
         val nightModeTheme: NightModeTheme? = null,
         val statusBarColor: Color? = null,
         val backgroundColor: Color? = null,
+        val exoPlayerState: ExoPlayerUiState? = null,
+        val improvUiState: ImprovUIState? = null,
+        val barcodeScanner: BarcodeScannerUiState? = null,
     ) : FrontendViewState
 
     /**

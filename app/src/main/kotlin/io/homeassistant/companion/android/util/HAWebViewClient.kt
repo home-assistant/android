@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.util
 import android.content.Context
 import android.net.Uri
 import android.net.http.SslError
+import android.webkit.HttpAuthHandler
 import android.webkit.RenderProcessGoneDetail
 import android.webkit.SslErrorHandler
 import android.webkit.WebResourceError
@@ -13,7 +14,6 @@ import androidx.core.net.toUri
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
-import io.homeassistant.companion.android.frontend.FrontendJsCallback
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import javax.inject.Inject
 import kotlinx.coroutines.flow.StateFlow
@@ -32,31 +32,38 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
      * @param currentUrlFlow StateFlow providing the current URL being loaded.
      *        Used to filter errors - only errors for this URL trigger [onFrontendError].
      * @param onFrontendError Callback when a WebView error is mapped to a [FrontendConnectionError].
-     * @param frontendJsCallback Optional JS interface to attach to the WebView.
-     *        If will be re-attached after WebView crash recovery.
      * @param onCrash Optional callback invoked after WebView crash recovery.
-     *        Called after the JS bridge is re-attached (if present).
      * @param onUrlIntercepted Optional callback to intercept URL navigation.
      *        Receives the URI and whether TLS client auth was required.
      *        Return `true` to prevent WebView from loading the URL.
-     * @param onPageFinished Optional callback when a page finishes loading.
+     * @param onPageFinished Optional callback when a page finishes loading, with the final URL
+     *        (after any redirects have resolved).
+     * @param onReceivedHttpAuthRequest Optional callback when the server requests HTTP Basic Auth.
+     *        Receives the handler, host, the resource URL that triggered the request, and the realm.
      */
     fun create(
         currentUrlFlow: StateFlow<String?>,
         onFrontendError: (FrontendConnectionError) -> Unit,
-        frontendJsCallback: FrontendJsCallback? = null,
         onCrash: (() -> Unit)? = null,
         onUrlIntercepted: ((uri: Uri, isTLSClientAuthNeeded: Boolean) -> Boolean)? = null,
-        onPageFinished: (() -> Unit)? = null,
+        onPageFinished: ((url: String?) -> Unit)? = null,
+        onReceivedHttpAuthRequest: (
+            (
+                handler: HttpAuthHandler,
+                host: String,
+                resource: String,
+                realm: String,
+            ) -> Unit
+        )? = null,
     ): HAWebViewClient {
         return HAWebViewClient(
             keyChainRepository = keyChainRepository,
             currentUrlFlow = currentUrlFlow,
             onFrontendError = onFrontendError,
-            frontendJsCallback = frontendJsCallback,
             onCrash = onCrash,
             onUrlIntercepted = onUrlIntercepted,
             onPageFinished = onPageFinished,
+            onReceivedHttpAuthRequest = onReceivedHttpAuthRequest,
         )
     }
 }
@@ -71,15 +78,39 @@ class HAWebViewClient internal constructor(
     keyChainRepository: KeyChainRepository,
     private val currentUrlFlow: StateFlow<String?>,
     private val onFrontendError: (FrontendConnectionError) -> Unit,
-    private val frontendJsCallback: FrontendJsCallback?,
     private val onCrash: (() -> Unit)?,
     private val onUrlIntercepted: ((uri: Uri, isTLSClientAuthNeeded: Boolean) -> Boolean)?,
-    private val onPageFinished: (() -> Unit)?,
+    private val onPageFinished: ((url: String?) -> Unit)?,
+    private val onReceivedHttpAuthRequest: (
+        (handler: HttpAuthHandler, host: String, resource: String, realm: String) -> Unit
+    )?,
 ) : TLSWebViewClient(keyChainRepository) {
+
+    /** Last resource URL loaded by the WebView, used to identify the resource requesting auth. */
+    private var lastResourceUrl: String? = null
+
+    override fun onLoadResource(view: WebView?, url: String?) {
+        super.onLoadResource(view, url)
+        lastResourceUrl = url
+    }
 
     override fun onPageFinished(view: WebView?, url: String?) {
         super.onPageFinished(view, url)
-        onPageFinished?.invoke()
+        onPageFinished?.invoke(url)
+    }
+
+    override fun onReceivedHttpAuthRequest(view: WebView?, handler: HttpAuthHandler?, host: String?, realm: String?) {
+        val lastResourceUrl = lastResourceUrl
+        if (handler != null &&
+            host != null &&
+            realm != null &&
+            onReceivedHttpAuthRequest != null &&
+            lastResourceUrl != null
+        ) {
+            onReceivedHttpAuthRequest.invoke(handler, host, lastResourceUrl, realm)
+        } else {
+            super.onReceivedHttpAuthRequest(view, handler, host, realm)
+        }
     }
 
     override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
@@ -210,10 +241,7 @@ class HAWebViewClient internal constructor(
 
     override fun onRenderProcessGone(view: WebView?, detail: RenderProcessGoneDetail?): Boolean {
         Timber.e("onRenderProcessGone: webView crashed")
-        view?.let { webView ->
-            frontendJsCallback?.attachToWebView(webView)
-            onCrash?.invoke()
-        }
+        onCrash?.invoke()
         return true
     }
 

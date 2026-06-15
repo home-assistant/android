@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding.connection
 
+import android.webkit.WebChromeClient
 import android.webkit.WebViewClient
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
@@ -18,7 +19,9 @@ class ConnectionScreenshotTest {
                 isLoading = true,
                 isError = false,
                 webViewClient = WebViewClient(),
+                webChromeClient = WebChromeClient(),
                 onBackClick = {},
+                onWebViewCreationFailed = {},
             )
         }
     }
@@ -33,7 +36,9 @@ class ConnectionScreenshotTest {
                 isLoading = false,
                 isError = false,
                 webViewClient = WebViewClient(),
+                webChromeClient = WebChromeClient(),
                 onBackClick = {},
+                onWebViewCreationFailed = {},
             )
         }
     }
@@ -48,7 +53,9 @@ class ConnectionScreenshotTest {
                 isLoading = false,
                 isError = true,
                 webViewClient = WebViewClient(),
+                webChromeClient = WebChromeClient(),
                 onBackClick = {},
+                onWebViewCreationFailed = {},
             )
         }
     }

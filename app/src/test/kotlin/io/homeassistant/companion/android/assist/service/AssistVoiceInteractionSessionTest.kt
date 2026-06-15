@@ -5,11 +5,9 @@ import android.os.Bundle
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.assist.AssistActivity
-import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -21,9 +19,6 @@ import org.robolectric.shadows.ShadowVoiceInteractionSession
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
 class AssistVoiceInteractionSessionTest {
-
-    @get:Rule
-    val consoleLogRule = ConsoleLogRule()
 
     private val context = ApplicationProvider.getApplicationContext<android.app.Application>()
 

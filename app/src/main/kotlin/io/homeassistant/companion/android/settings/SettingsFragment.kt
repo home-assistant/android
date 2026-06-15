@@ -13,6 +13,7 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
 import androidx.core.net.toUri
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -25,8 +26,9 @@ import androidx.preference.SwitchPreference
 import com.google.android.material.snackbar.Snackbar
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.authenticator.Authenticator
+import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.isIgnoringBatteryOptimizations
 import io.homeassistant.companion.android.common.util.maybeAskForIgnoringBatteryOptimizations
@@ -70,6 +72,8 @@ class SettingsFragment(
     private val defaultAssistantManager: DefaultAssistantManager,
 ) : PreferenceFragmentCompat(),
     SettingsView {
+
+    private val activityViewModel: SettingsViewModel by activityViewModels()
 
     private val requestNotificationPermissionResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -205,7 +209,7 @@ class SettingsFragment(
         }
 
         if (!QuestUtil.isQuest) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
+            if (SdkVersion.isAtLeast(Build.VERSION_CODES.N_MR1)) {
                 findPreference<PreferenceCategory>("shortcuts")?.let {
                     it.isVisible = true
                 }
@@ -218,7 +222,7 @@ class SettingsFragment(
                 }
             }
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
                 findPreference<PreferenceCategory>("quick_settings")?.let {
                     it.isVisible = true
                 }
@@ -231,7 +235,7 @@ class SettingsFragment(
                 }
             }
 
-            if (!isAutomotive && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (!isAutomotive && SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
                 findPreference<PreferenceCategory>("device_controls")?.let {
                     it.isVisible = true
                 }
@@ -251,7 +255,7 @@ class SettingsFragment(
 
         updateNotificationChannelPrefs()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             findPreference<Preference>("notification_permission")?.let {
                 it.setOnPreferenceClickListener {
                     openNotificationSettings()
@@ -289,7 +293,7 @@ class SettingsFragment(
 
                     if (rateLimits != null) {
                         var formattedDate = rateLimits.resetsAt
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
                             try {
                                 val utcDateTime = Instant.parse(rateLimits.resetsAt)
                                 formattedDate =
@@ -397,7 +401,7 @@ class SettingsFragment(
 
         findPreference<PreferenceCategory>("android_auto")?.let {
             it.isVisible =
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                SdkVersion.isAtLeast(Build.VERSION_CODES.O) &&
                 (BuildConfig.FLAVOR == "full" || isAutomotive)
             if (isAutomotive) {
                 it.title = getString(commonR.string.android_automotive)
@@ -430,7 +434,7 @@ class SettingsFragment(
     }
 
     private fun removeSystemFromThemesIfNeeded() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.P)) {
             val pref = findPreference<ListPreference>("themes")
             if (pref != null) {
                 val systemIndex = pref.findIndexOfValue("system")
@@ -505,16 +509,16 @@ class SettingsFragment(
                 serverAuth = server.id
                 val settingsActivity = requireActivity() as SettingsActivity
                 lifecycleScope.launch {
-                    val needsAuth = settingsActivity.isAppLocked(server.id)
+                    val needsAuth = activityViewModel.isAppLocked(server.id)
                     if (!needsAuth) {
-                        onServerLockResult(Authenticator.SUCCESS)
+                        onServerLockResult(AuthenticationResult.SUCCESS)
                     } else {
                         val canAuth = settingsActivity.requestAuthentication(
                             getString(commonR.string.biometric_set_title),
                             ::onServerLockResult,
                         )
                         if (!canAuth) {
-                            onServerLockResult(Authenticator.SUCCESS)
+                            onServerLockResult(AuthenticationResult.SUCCESS)
                         }
                     }
                 }
@@ -526,7 +530,7 @@ class SettingsFragment(
 
     private fun updateNotificationChannelPrefs() {
         val notificationsEnabled =
-            Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
+            !SdkVersion.isAtLeast(Build.VERSION_CODES.O) ||
                 NotificationManagerCompat.from(requireContext()).areNotificationsEnabled()
 
         findPreference<Preference>("notification_permission")?.let {
@@ -536,14 +540,14 @@ class SettingsFragment(
             val uiManager = requireContext().getSystemService<UiModeManager>()
             it.isVisible =
                 notificationsEnabled &&
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                SdkVersion.isAtLeast(Build.VERSION_CODES.O) &&
                 uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
         }
     }
 
-    private fun onServerLockResult(result: Int): Boolean {
-        if (result == Authenticator.SUCCESS && serverAuth != null) {
-            (activity as? SettingsActivity)?.setAppActive(serverAuth, true)
+    private fun onServerLockResult(result: AuthenticationResult): Boolean {
+        if (result == AuthenticationResult.SUCCESS && serverAuth != null) {
+            activityViewModel.setAppActive(serverAuth, true)
             parentFragmentManager.commit {
                 replace(
                     R.id.content,
@@ -558,7 +562,7 @@ class SettingsFragment(
     }
 
     private fun openNotificationSettings() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             requestNotificationPermissionResult.launch(
                 Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
                     putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().packageName)

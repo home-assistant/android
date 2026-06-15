@@ -1,9 +1,10 @@
 package io.homeassistant.companion.android.onboarding.serverdiscovery.navigation
 
+import android.os.Build
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -36,7 +37,9 @@ import io.homeassistant.companion.android.onboarding.serverdiscovery.ONE_SERVER_
 import io.homeassistant.companion.android.onboarding.serverdiscovery.ServerDiscoveryModule
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
+import io.homeassistant.companion.android.testing.unit.TestSharedFlow
 import io.homeassistant.companion.android.testing.unit.stringResource
+import io.homeassistant.companion.android.util.FakePermissionResultRegistry
 import io.homeassistant.companion.android.util.compose.navigateToUri
 import io.mockk.coVerify
 import io.mockk.every
@@ -45,11 +48,11 @@ import java.net.URL
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.test.runTest
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -66,7 +69,7 @@ import org.robolectric.annotation.Config
 @HiltAndroidTest
 internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
 
-    @get:Rule(order = 3)
+    @get:Rule(order = 2)
     val mainDispatcherRule = MainDispatcherJUnit4Rule()
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -75,6 +78,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
         hideExistingServers: Boolean,
         skipWelcome: Boolean,
         hasLocationTracking: Boolean,
+        fromInvitation: Boolean,
         testContent: suspend AndroidComposeTestRule<*, *>.() -> Unit,
     ) {
         setContent(
@@ -82,6 +86,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
             hideExistingServers = hideExistingServers,
             skipWelcome = skipWelcome,
             hasLocationTracking = hasLocationTracking,
+            fromInvitation = fromInvitation,
         )
         runTest(mainDispatcherRule.testDispatcher) {
             composeTestRule.testContent()
@@ -98,7 +103,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
 
     val instanceChannel = Channel<HomeAssistantInstance>()
 
-    val connectionNavigationEventFlow = MutableSharedFlow<ConnectionNavigationEvent>()
+    val connectionNavigationEventFlow = TestSharedFlow<ConnectionNavigationEvent>()
 
     @BindValue
     @JvmField
@@ -108,12 +113,38 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
         every { navigationEventsFlow } returns connectionNavigationEventFlow
         every { errorFlow } returns MutableStateFlow(null)
         every { connectivityCheckState } returns MutableStateFlow(ConnectivityCheckState())
+        every { pendingFileChooser } returns MutableStateFlow(null)
     }
 
     @Test
     fun `Given skipWelcome without urlToOnboard when starting then show ServerDiscovery`() {
         testNavigation(skipWelcome = true) {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
+        }
+    }
+
+    /**
+     * On Android 17+, entering the discovery screen requests
+     * `ACCESS_LOCAL_NETWORK`. A denial routes the user directly to ManualServer because
+     * LAN-based discovery cannot succeed without the permission. Pressing back from
+     * ManualServer must not bounce the user back to ServerDiscovery (which would re-detect the
+     * denial and re-redirect) — the discovery destination is popped from the back stack.
+     */
+    @Test
+    @Ignore("Robolectric 4.16.1 does not support API 37; re-enable once robolectric-target-sdk reaches 37")
+    @Config(sdk = [Build.VERSION_CODES.CINNAMON_BUN])
+    fun `Given API 37 with denied local network permission when entering ServerDiscovery then routes to ManualServer and back skips ServerDiscovery`() {
+        setContent(
+            skipWelcome = true,
+            permissionResultRegistry = FakePermissionResultRegistry(grantedPermissions = emptySet()),
+        )
+        runTest(mainDispatcherRule.testDispatcher) {
+            composeTestRule.apply {
+                waitForIdle()
+                assertTrue(
+                    navController.currentBackStackEntry?.destination?.hasRoute<ManualServerRoute>() == true,
+                )
+            }
         }
     }
 

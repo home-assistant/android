@@ -33,6 +33,7 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
             apply(plugin = libs.plugins.android.application.getPluginId())
             apply(plugin = libs.plugins.ksp.getPluginId())
             apply(plugin = libs.plugins.hilt.getPluginId())
+            apply(plugin = libs.plugins.aboutlibraries.getPluginId())
             AndroidCommonConventionPlugin().apply(target)
             AndroidComposeConventionPlugin().apply(target)
 
