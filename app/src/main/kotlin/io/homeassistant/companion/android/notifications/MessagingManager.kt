@@ -73,7 +73,6 @@ import io.homeassistant.companion.android.common.notifications.handleDeleteInten
 import io.homeassistant.companion.android.common.notifications.handleSmallIcon
 import io.homeassistant.companion.android.common.notifications.handleText
 import io.homeassistant.companion.android.common.notifications.parseColor
-import io.homeassistant.companion.android.common.notifications.parseFlattenedList
 import io.homeassistant.companion.android.common.notifications.parseVibrationPattern
 import io.homeassistant.companion.android.common.notifications.prepareText
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
@@ -116,6 +115,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okio.sink
@@ -303,6 +303,8 @@ class MessagingManager @Inject constructor(
 
         // Values for temporarily added keys
         const val THIS_SERVER_ID = "server_id"
+
+        private val lenientJson = Json { isLenient = true }
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -1204,19 +1206,24 @@ class MessagingManager @Inject constructor(
         val segmentsData = data[PROGRESS_SEGMENTS] ?: ""
         if (segmentsData.isNotBlank())
         {
-            val segments = parseFlattenedList(segmentsData)
-            for (segment in segments) {
-                val length = segment[PROGRESS_SEGMENTS_LENGTH]?.toIntOrNull() ?: 0
-                val color = segment[PROGRESS_SEGMENTS_COLOR]
-                val progressSegment = NotificationCompat.ProgressStyle.Segment(length)
-                if (color != null) {
-                    progressSegment.setColor(parseColor(context, color, accentColor))
+            try {
+                val segments: List<Map<String, String>> = lenientJson.decodeFromString(segmentsData)
+                for (segment in segments) {
+                    val length = segment[PROGRESS_SEGMENTS_LENGTH]?.toIntOrNull() ?: 0
+                    val color = segment[PROGRESS_SEGMENTS_COLOR]
+                    val progressSegment = NotificationCompat.ProgressStyle.Segment(length)
+                    if (color != null) {
+                        progressSegment.setColor(parseColor(context, color, accentColor))
+                    }
+                    style.addProgressSegment(progressSegment)
                 }
-                style.addProgressSegment(progressSegment)
+                if (segments.isNotEmpty()) {
+                    return true
+                }
+            } catch (e: kotlinx.serialization.SerializationException) {
+                Timber.e(e, "Error while parsing notification progress segments")
             }
-            if (segments.isNotEmpty()) {
-                return true
-            }
+
         }
         return false
     }
@@ -1224,18 +1231,22 @@ class MessagingManager @Inject constructor(
     private fun applyProgressPoints(style: NotificationCompat.ProgressStyle, accentColor: Int, data: Map<String, String>): Boolean {
         val pointsData = data[PROGRESS_POINTS] ?: ""
         if (pointsData.isNotBlank()) {
-            val points = parseFlattenedList(pointsData)
-            for (point in points) {
-                val position = point[PROGRESS_POINTS_POSITION]?.toIntOrNull() ?: 0
-                val color = point[PROGRESS_POINTS_COLOR]
-                val progressPoint = NotificationCompat.ProgressStyle.Point(position)
-                if (color != null) {
-                    progressPoint.setColor(parseColor(context, color, accentColor))
+            try {
+                val points: List<Map<String, String>> = lenientJson.decodeFromString(pointsData)
+                for (point in points) {
+                    val position = point[PROGRESS_POINTS_POSITION]?.toIntOrNull() ?: 0
+                    val color = point[PROGRESS_POINTS_COLOR]
+                    val progressPoint = NotificationCompat.ProgressStyle.Point(position)
+                    if (color != null) {
+                        progressPoint.setColor(parseColor(context, color, accentColor))
+                    }
+                    style.addProgressPoint(progressPoint)
                 }
-                style.addProgressPoint(progressPoint)
-            }
-            if (points.isNotEmpty()) {
-                return true
+                if (points.isNotEmpty()) {
+                    return true
+                }
+            } catch (e: kotlinx.serialization.SerializationException) {
+                Timber.e(e, "Error while parsing notification progress points")
             }
         }
         return false

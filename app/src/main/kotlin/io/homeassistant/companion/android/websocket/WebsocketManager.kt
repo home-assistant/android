@@ -42,6 +42,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONObject
 import timber.log.Timber
 
 class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
@@ -203,6 +205,10 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
                                 }
                             }
                         }
+                    } else if (value is Map<*, *>) {
+                        flattened[key.toString()] = JSONObject(value).toString()
+                    } else if (value is Iterable<*>) {
+                        flattened[key.toString()] = JSONArray(value.toList()).toString()
                     } else {
                         flattened[key.toString()] = value.toString()
                     }
