@@ -53,6 +53,24 @@ class HAWebViewClientTest {
     }
 
     @Test
+    fun `Given onPageFinished callback when onPageFinished then invokes callback with final url`() {
+        var finishedUrl: String? = null
+        val client = HAWebViewClient(
+            keyChainRepository = keyChainRepository,
+            currentUrlFlow = currentUrlFlow,
+            onFrontendError = { capturedError = it },
+            onCrash = null,
+            onUrlIntercepted = null,
+            onPageFinished = { finishedUrl = it },
+            onReceivedHttpAuthRequest = null,
+        )
+
+        client.onPageFinished(null, "http://homeassistant.local:80/onboarding")
+
+        assertEquals("http://homeassistant.local:80/onboarding", finishedUrl)
+    }
+
+    @Test
     fun `Given SSL_DATE_INVALID error when onReceivedSslError then emits AuthenticationError`() {
         testSslError(SslError.SSL_DATE_INVALID, commonR.string.webview_error_SSL_DATE_INVALID)
     }
