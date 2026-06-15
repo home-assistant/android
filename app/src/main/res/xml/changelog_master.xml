@@ -2,7 +2,6 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2026.6.3 - Main" versioncode="3">
-        <change>Fixed connecting to servers that use a custom or user-installed certificate authority</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2026.6.3 - Wear" versioncode="2">
