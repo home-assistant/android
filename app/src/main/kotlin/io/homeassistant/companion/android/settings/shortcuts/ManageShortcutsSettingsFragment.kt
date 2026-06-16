@@ -16,6 +16,7 @@ import androidx.fragment.app.viewModels
 import com.mikepenz.iconics.typeface.IIcon
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.shortcuts.views.ManageShortcutsView
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
@@ -48,7 +49,9 @@ class ManageShortcutsSettingsFragment : Fragment() {
                         )
                     }
 
-                    ManageShortcutsView(viewModel = viewModel, showIconDialog = { showingTag = it })
+                    HATheme {
+                        ManageShortcutsView(viewModel = viewModel, showIconDialog = { showingTag = it })
+                    }
                 }
             }
         }

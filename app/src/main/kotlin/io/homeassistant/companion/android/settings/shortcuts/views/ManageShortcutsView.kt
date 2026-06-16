@@ -4,44 +4,41 @@ import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.Button
-import androidx.compose.material.Divider
-import androidx.compose.material.DropdownMenu
-import androidx.compose.material.DropdownMenuItem
-import androidx.compose.material.OutlinedButton
-import androidx.compose.material.RadioButton
-import androidx.compose.material.Text
-import androidx.compose.material.TextField
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextAlign
 import com.mikepenz.iconics.compose.IconicsPainter
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.compose.composable.ButtonSize
+import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
+import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
+import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
+import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
+import io.homeassistant.companion.android.common.compose.composable.HAHorizontalDivider
+import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
+import io.homeassistant.companion.android.common.compose.composable.HARadioGroup
+import io.homeassistant.companion.android.common.compose.composable.HATextField
+import io.homeassistant.companion.android.common.compose.composable.RadioOption
+import io.homeassistant.companion.android.common.compose.theme.HADimens
+import io.homeassistant.companion.android.common.compose.theme.HASize
+import io.homeassistant.companion.android.common.compose.theme.HATextStyle
+import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsViewModel
-import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
@@ -55,15 +52,15 @@ fun ManageShortcutsView(
 ) {
     LazyColumn(
         modifier = modifier,
-        contentPadding = PaddingValues(all = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
+        contentPadding = PaddingValues(all = HADimens.SPACE4) + safeBottomPaddingValues(applyHorizontal = false),
     ) {
         item {
             Text(
                 text = stringResource(id = R.string.shortcut_instruction_desc),
-                fontSize = 14.sp,
-                modifier = Modifier.padding(bottom = 10.dp),
+                style = HATextStyle.BodyMedium.copy(textAlign = TextAlign.Start),
+                modifier = Modifier.padding(bottom = HADimens.SPACE3),
             )
-            Divider()
+            HAHorizontalDivider()
         }
 
         val shortcutCount = if (viewModel.canPinShortcuts) {
@@ -86,7 +83,7 @@ fun ManageShortcutsView(
 @Composable
 private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, showIconDialog: (tag: String) -> Unit) {
     val context = LocalContext.current
-    var expandedPinnedShortcuts by remember { mutableStateOf(false) }
+    val colorScheme = LocalHAColorScheme.current
 
     val index = i + 1
     val shortcut = viewModel.shortcuts[i]
@@ -99,69 +96,39 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
                 id = R.string.shortcut_pinned,
             )
         },
-        fontSize = 20.sp,
-        color = colorResource(id = R.color.colorAccent),
-        modifier = Modifier.padding(top = 20.dp),
+        style = HATextStyle.HeadlineMedium.copy(
+            color = colorScheme.colorTextPrimary,
+            textAlign = TextAlign.Start,
+        ),
+        modifier = Modifier.padding(top = HADimens.SPACE5),
     )
 
     if (index == 5) {
         Text(
             text = stringResource(id = R.string.shortcut5_note),
-            fontSize = 14.sp,
+            style = HATextStyle.BodyMedium.copy(textAlign = TextAlign.Start),
         )
     }
 
     if (index == 6) {
         Text(
             text = stringResource(id = R.string.shortcut_pinned_note),
-            fontSize = 14.sp,
-            modifier = Modifier.padding(top = 10.dp, bottom = 10.dp),
+            style = HATextStyle.BodyMedium.copy(textAlign = TextAlign.Start),
+            modifier = Modifier.padding(top = HADimens.SPACE3, bottom = HADimens.SPACE3),
         )
 
         val pinnedShortCutIds = viewModel.pinnedShortcuts.asSequence().map { it.id }.toList()
 
         if (pinnedShortCutIds.isNotEmpty()) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = stringResource(id = R.string.shortcut_pinned_list),
-                    fontSize = 15.sp,
-                    modifier = Modifier.padding(end = 10.dp),
-                )
-                Box {
-                    OutlinedButton(onClick = { expandedPinnedShortcuts = true }) {
-                        Text(
-                            if (viewModel.shortcuts[i].id.value in
-                                pinnedShortCutIds
-                            ) {
-                                viewModel.shortcuts[i].id.value ?: ""
-                            } else {
-                                ""
-                            },
-                        )
-                    }
-
-                    DropdownMenu(
-                        expanded = expandedPinnedShortcuts,
-                        onDismissRequest = {
-                            expandedPinnedShortcuts =
-                                false
-                        },
-                    ) {
-                        for (item in pinnedShortCutIds) {
-                            DropdownMenuItem(
-                                onClick = {
-                                    viewModel.setPinnedShortcutData(item)
-                                    expandedPinnedShortcuts = false
-                                },
-                            ) {
-                                Text(item)
-                            }
-                        }
-                    }
-                }
-            }
+            HADropdownMenu(
+                items = pinnedShortCutIds.map { item -> HADropdownItem(key = item, label = item) },
+                selectedKey = viewModel.shortcuts[i].id.value?.takeIf { it in pinnedShortCutIds },
+                onItemSelected = viewModel::setPinnedShortcutData,
+                label = stringResource(id = R.string.shortcut_pinned_list),
+                modifier = Modifier.padding(bottom = HADimens.SPACE4),
+            )
         }
-        TextField(
+        HATextField(
             value = viewModel.shortcuts[i].id.value ?: "",
             onValueChange = { viewModel.shortcuts[i].id.value = it },
             label = {
@@ -171,17 +138,14 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
         )
     }
 
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            text = stringResource(id = R.string.shortcut_icon),
-            fontSize = 15.sp,
-            modifier = Modifier.padding(end = 10.dp),
-        )
-        OutlinedButton(
-            onClick = {
-                showIconDialog(shortcutId)
-            },
-        ) {
+    HAFilledButton(
+        text = stringResource(id = R.string.shortcut_icon),
+        onClick = {
+            showIconDialog(shortcutId)
+        },
+        variant = ButtonVariant.NEUTRAL,
+        size = ButtonSize.LARGE,
+        prefix = {
             val icon = viewModel.shortcuts[i].selectedIcon.value
             val painter = if (icon != null) {
                 remember(icon) { IconicsPainter(icon) }
@@ -191,14 +155,15 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
 
             Image(
                 painter = painter,
-                contentDescription = stringResource(id = R.string.shortcut_icon),
-                modifier = Modifier.size(24.dp),
-                colorFilter = ColorFilter.tint(colorResource(R.color.colorAccent)),
+                contentDescription = null,
+                modifier = Modifier.size(HASize.X2L),
+                colorFilter = ColorFilter.tint(colorScheme.colorOnNeutralNormal),
             )
-        }
-    }
+        },
+        modifier = Modifier.padding(top = HADimens.SPACE3),
+    )
 
-    TextField(
+    HATextField(
         value = viewModel.shortcuts[i].label.value,
         onValueChange = { viewModel.shortcuts[i].label.value = it },
         label = {
@@ -212,10 +177,10 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
         },
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 16.dp),
+            .padding(top = HADimens.SPACE4),
     )
 
-    TextField(
+    HATextField(
         value = viewModel.shortcuts[i].desc.value,
         onValueChange = { viewModel.shortcuts[i].desc.value = it },
         label = {
@@ -229,31 +194,33 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
         },
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp),
+            .padding(vertical = HADimens.SPACE4),
     )
 
     if (viewModel.servers.size > 1 || viewModel.servers.none { it.id == shortcut.serverId.value }) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            ServerExposedDropdownMenu(
-                servers = viewModel.servers,
-                current = shortcut.serverId.value,
-                onSelected = { viewModel.shortcuts[i].serverId.value = it },
-            )
-        }
+        HADropdownMenu(
+            items = viewModel.servers.map { server ->
+                HADropdownItem(key = server.id, label = server.friendlyName)
+            },
+            selectedKey = shortcut.serverId.value.takeIf { serverId ->
+                viewModel.servers.any { it.id == serverId }
+            },
+            onItemSelected = { viewModel.shortcuts[i].serverId.value = it },
+            label = stringResource(id = R.string.server_select),
+            modifier = Modifier.padding(bottom = HADimens.SPACE4),
+        )
     }
 
     Text(
         text = stringResource(id = R.string.shortcut_type),
-        modifier = Modifier.padding(top = 16.dp),
+        style = HATextStyle.Body.copy(textAlign = TextAlign.Start),
+        modifier = Modifier.padding(top = HADimens.SPACE4),
     )
 
-    Row {
-        ShortcutRadioButtonRow(viewModel = viewModel, type = "lovelace", index = i)
-        ShortcutRadioButtonRow(viewModel = viewModel, type = "entityId", index = i)
-    }
+    ShortcutTypeRadioGroup(viewModel = viewModel, index = i)
 
     if (viewModel.shortcuts[i].type.value == "lovelace") {
-        TextField(
+        HATextField(
             value = viewModel.shortcuts[i].path.value,
             onValueChange = { viewModel.shortcuts[i].path.value = it },
             label = { Text(stringResource(id = R.string.lovelace_view_dashboard)) },
@@ -264,33 +231,55 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
             ),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 16.dp),
+                .padding(bottom = HADimens.SPACE4),
         )
     } else {
-        // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6258
-        HATheme {
-            EntityPicker(
-                entities = viewModel.entities[shortcut.serverId.value].orEmpty(),
-                entityRegistry = viewModel.entityRegistry[shortcut.serverId.value],
-                deviceRegistry = viewModel.deviceRegistry[shortcut.serverId.value],
-                areaRegistry = viewModel.areaRegistry[shortcut.serverId.value],
-                selectedEntityId = viewModel.shortcuts[i].path.value.split(":").getOrNull(1),
-                onEntitySelectedId = { entityId ->
-                    viewModel.shortcuts[i].path.value = "entityId:$entityId"
-                },
-                onEntityCleared = {
-                    viewModel.shortcuts[i].path.value = ""
-                },
-                modifier = Modifier.padding(bottom = 16.dp),
-            )
-        }
+        EntityPicker(
+            entities = viewModel.entities[shortcut.serverId.value].orEmpty(),
+            entityRegistry = viewModel.entityRegistry[shortcut.serverId.value],
+            deviceRegistry = viewModel.deviceRegistry[shortcut.serverId.value],
+            areaRegistry = viewModel.areaRegistry[shortcut.serverId.value],
+            selectedEntityId = viewModel.shortcuts[i].path.value.split(":").getOrNull(1),
+            onEntitySelectedId = { entityId ->
+                viewModel.shortcuts[i].path.value = "entityId:$entityId"
+            },
+            onEntityCleared = {
+                viewModel.shortcuts[i].path.value = ""
+            },
+            modifier = Modifier.padding(bottom = HADimens.SPACE4),
+        )
     }
     for (item in viewModel.dynamicShortcuts) {
         if (item.id == shortcutId) {
             viewModel.shortcuts[i].delete.value = true
         }
     }
-    Button(
+    HAFilledButton(
+        text = stringResource(
+            id =
+            if (
+                if (index < 6) {
+                    viewModel.shortcuts[i].delete.value
+                } else {
+                    var isCurrentPinned = false
+                    if (viewModel.pinnedShortcuts.isEmpty()) {
+                        isCurrentPinned = false
+                    } else {
+                        for (item in viewModel.pinnedShortcuts) {
+                            isCurrentPinned = when (item.id) {
+                                viewModel.shortcuts.last().id.value -> true
+                                else -> false
+                            }
+                        }
+                    }
+                    isCurrentPinned
+                }
+            ) {
+                R.string.update_shortcut
+            } else {
+                R.string.add_shortcut
+            },
+        ),
         onClick = {
             if (index < 6) {
                 if (viewModel.shortcuts[i].delete.value) {
@@ -313,63 +302,39 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
             shortcut.desc.value.isNotEmpty() &&
             shortcut.path.value.isNotEmpty() &&
             viewModel.servers.any { it.id == shortcut.serverId.value },
-    ) {
-        Text(
-            text = stringResource(
-                id =
-                if (
-                    if (index < 6) {
-                        viewModel.shortcuts[i].delete.value
-                    } else {
-                        var isCurrentPinned = false
-                        if (viewModel.pinnedShortcuts.isEmpty()) {
-                            isCurrentPinned = false
-                        } else {
-                            for (item in viewModel.pinnedShortcuts) {
-                                isCurrentPinned = when (item.id) {
-                                    viewModel.shortcuts.last().id.value -> true
-                                    else -> false
-                                }
-                            }
-                        }
-                        isCurrentPinned
-                    }
-                ) {
-                    R.string.update_shortcut
-                } else {
-                    R.string.add_shortcut
-                },
-            ),
-        )
-    }
+    )
 
     if (index < 6 && viewModel.shortcuts[i].delete.value) {
         AddDeleteButton(viewModel = viewModel, shortcutId = shortcutId, i)
-        Divider()
+        HAHorizontalDivider(modifier = Modifier.padding(top = HADimens.SPACE4))
     }
 }
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
-private fun ShortcutRadioButtonRow(viewModel: ManageShortcutsViewModel, type: String, index: Int) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        RadioButton(
-            selected = viewModel.shortcuts[index].type.value == type,
-            onClick = { viewModel.shortcuts[index].type.value = type },
-        )
-        Text(stringResource(id = if (type == "lovelace") R.string.lovelace else R.string.entity))
-    }
+private fun ShortcutTypeRadioGroup(viewModel: ManageShortcutsViewModel, index: Int) {
+    HARadioGroup(
+        options = listOf(
+            RadioOption(selectionKey = "lovelace", headline = stringResource(id = R.string.lovelace)),
+            RadioOption(selectionKey = "entityId", headline = stringResource(id = R.string.entity)),
+        ),
+        selectionKey = viewModel.shortcuts[index].type.value,
+        onSelect = { option -> viewModel.shortcuts[index].type.value = option.selectionKey },
+        spaceBy = HADimens.SPACE3,
+        modifier = Modifier.padding(vertical = HADimens.SPACE3),
+    )
 }
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
 private fun AddDeleteButton(viewModel: ManageShortcutsViewModel, shortcutId: String, index: Int) {
-    Button(
+    HAPlainButton(
+        text = stringResource(id = R.string.delete_shortcut),
         onClick = {
             viewModel.deleteShortcut(shortcutId)
             viewModel.shortcuts[index].delete.value = false
         },
-    ) {
-        Text(stringResource(id = R.string.delete_shortcut))
-    }
+        variant = ButtonVariant.DANGER,
+        modifier = Modifier.padding(top = HADimens.SPACE3),
+    )
 }
