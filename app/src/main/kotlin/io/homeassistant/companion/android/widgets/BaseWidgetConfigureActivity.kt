@@ -40,8 +40,13 @@ abstract class BaseWidgetConfigureActivity<T : WidgetEntity<T>, DAO : WidgetDao<
     @Inject
     lateinit var dao: DAO
 
-    abstract val serverSelect: View
-    abstract val serverSelectList: Spinner
+    /**
+     * The View-based server selector. View/ViewBinding screens override these to get automatic
+     * [Spinner] wiring from [setupServerSelect]. Compose-based screens drive server selection
+     * themselves and leave these as `null`.
+     */
+    protected open val serverSelect: View? = null
+    protected open val serverSelectList: Spinner? = null
 
     var selectedServerId: Int? = null
 
@@ -49,7 +54,11 @@ abstract class BaseWidgetConfigureActivity<T : WidgetEntity<T>, DAO : WidgetDao<
         lifecycleScope.launch {
             val servers = serverManager.servers()
             val activeServerId = serverManager.getServer()?.id
-            serverSelectList.adapter =
+            selectedServerId = widgetServerId ?: activeServerId
+
+            // Compose-based screens leave the Spinner null and manage their own selection UI.
+            val spinner = serverSelectList ?: return@launch
+            spinner.adapter =
                 ArrayAdapter(
                     this@BaseWidgetConfigureActivity,
                     android.R.layout.simple_spinner_dropdown_item,
@@ -57,7 +66,7 @@ abstract class BaseWidgetConfigureActivity<T : WidgetEntity<T>, DAO : WidgetDao<
                         it.friendlyName
                     },
                 )
-            serverSelectList.setSelection(
+            spinner.setSelection(
                 if (widgetServerId != null) {
                     servers.indexOfFirst { it.id == widgetServerId }
                 } else {
@@ -69,11 +78,10 @@ abstract class BaseWidgetConfigureActivity<T : WidgetEntity<T>, DAO : WidgetDao<
                 servers.size > 1 ||
                 (widgetServerId != null && serverManager.getServer(widgetServerId) == null)
             ) {
-                serverSelect.visibility = View.VISIBLE
+                serverSelect?.visibility = View.VISIBLE
             }
 
-            selectedServerId = widgetServerId ?: serverManager.getServer()?.id
-            serverSelectList.onItemSelectedListener = object : OnItemSelectedListener {
+            spinner.onItemSelectedListener = object : OnItemSelectedListener {
                 override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                     val newId = servers.getOrNull(position)?.id
                     val isDifferent = selectedServerId != newId

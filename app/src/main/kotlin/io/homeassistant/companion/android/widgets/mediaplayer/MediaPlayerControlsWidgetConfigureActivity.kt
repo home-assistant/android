@@ -5,8 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.view.View
-import android.widget.Spinner
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
@@ -71,9 +69,6 @@ class MediaPlayerControlsWidgetConfigureActivity :
     }
 
     private var requestLauncherSetup = false
-
-    override val serverSelect by lazy { View(this) }
-    override val serverSelectList by lazy { Spinner(this) }
 
     private var entities = mutableMapOf<Int, List<Entity>>()
     private var selectedEntities: LinkedList<Entity?> = LinkedList()
@@ -146,7 +141,9 @@ class MediaPlayerControlsWidgetConfigureActivity :
                     selectedEntities.addAll(entitiesList)
                 }
             }
-            setupServerSelect(mediaPlayerWidget?.serverId)
+            // The Compose UI (HADropdownMenu) drives server selection, so we resolve the initial
+            // selection directly here instead of relying on the View-based Spinner wiring.
+            selectedServerId = mediaPlayerWidget?.serverId ?: serverManager.getServer()?.id
             composeSelectedServerId = selectedServerId
         }
 
