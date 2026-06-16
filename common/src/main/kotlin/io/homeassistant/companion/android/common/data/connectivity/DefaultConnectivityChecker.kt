@@ -1,24 +1,20 @@
 package io.homeassistant.companion.android.common.data.connectivity
 
-import androidx.annotation.StringRes
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.util.UrlUtil
-import java.io.BufferedReader
-import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
-import java.net.URL
-import java.net.URLConnection
 import javax.inject.Inject
-import javax.net.ssl.HttpsURLConnection
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.Serializable
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import timber.log.Timber
 
 @Serializable
@@ -35,7 +31,9 @@ private val CONNECTIVITY_TIMEOUT = 5.seconds
 /**
  * Default implementation of [ConnectivityChecker] that performs real network operations.
  */
-internal class DefaultConnectivityChecker @Inject constructor() : ConnectivityChecker {
+internal class DefaultConnectivityChecker @Inject constructor(defaultOkHttpClient: OkHttpClient) : ConnectivityChecker {
+
+    private val okHttpClient by lazy { configureOkHttpClientForChecker(defaultOkHttpClient) }
 
     override suspend fun dns(hostname: String): ConnectivityCheckResult = withContext(Dispatchers.IO) {
         try {
@@ -68,10 +66,20 @@ internal class DefaultConnectivityChecker @Inject constructor() : ConnectivityCh
 
     override suspend fun tls(url: String): ConnectivityCheckResult = withContext(Dispatchers.IO) {
         try {
-            val connection = URL(url).openConnection() as HttpsURLConnection
-            connection.connectTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
-            connection.readTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
-            connection.tryConnect(commonR.string.connection_check_tls_success)
+            val request = Request.Builder()
+                .url(url)
+                .head() // Don't get the body as we are only checking TLS
+                .build()
+            okHttpClient.newCall(request).execute().use { response ->
+                val handshake = response.handshake
+                if (handshake != null) {
+                    Timber.d("TLS check success for $url with ${handshake.tlsVersion}")
+                    ConnectivityCheckResult.Success(commonR.string.connection_check_tls_success)
+                } else {
+                    Timber.d("Connection succeeded but no TLS handshake for $url")
+                    ConnectivityCheckResult.Failure(commonR.string.connection_check_error_tls)
+                }
+            }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -82,10 +90,12 @@ internal class DefaultConnectivityChecker @Inject constructor() : ConnectivityCh
 
     override suspend fun server(url: String): ConnectivityCheckResult = withContext(Dispatchers.IO) {
         try {
-            val connection = URL(url).openConnection()
-            connection.connectTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
-            connection.readTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
-            connection.tryConnect(commonR.string.connection_check_server_success)
+            val request = Request.Builder()
+                .url(url)
+                .build()
+            okHttpClient.newCall(request).execute().use {
+                ConnectivityCheckResult.Success(commonR.string.connection_check_server_success)
+            }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -96,13 +106,11 @@ internal class DefaultConnectivityChecker @Inject constructor() : ConnectivityCh
 
     override suspend fun homeAssistant(url: String): ConnectivityCheckResult = withContext(Dispatchers.IO) {
         try {
-            val manifestUrl = URL("${UrlUtil.extractBaseUrl(url)}manifest.json")
-            val connection = manifestUrl.openConnection()
-            connection.connectTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
-            connection.readTimeout = CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt()
-
-            connection.withConnection {
-                val responseText = connection.getInputStream().bufferedReader().use(BufferedReader::readText)
+            val request = Request.Builder()
+                .url("${UrlUtil.extractBaseUrl(url)}manifest.json")
+                .build()
+            okHttpClient.newCall(request).execute().use { response ->
+                val responseText = response.body.string()
                 val manifest = kotlinJsonMapper.decodeFromString<ManifestResponse>(responseText)
 
                 if (manifest.isHomeAssistant()) {
@@ -120,20 +128,12 @@ internal class DefaultConnectivityChecker @Inject constructor() : ConnectivityCh
         }
     }
 
-    private fun URLConnection.tryConnect(@StringRes successMessage: Int): ConnectivityCheckResult {
-        return withConnection {
-            ConnectivityCheckResult.Success(successMessage)
-        }
-    }
-
-    private inline fun <T> URLConnection.withConnection(block: () -> T): T {
-        return try {
-            connect()
-            block()
-        } finally {
-            if (this is HttpURLConnection) {
-                disconnect()
-            }
-        }
-    }
+    /**
+     * @return Pre-configured [OkHttpClient] as used in other places in the app with custom user agent,
+     * cookies support and certificate handling, configured with timeouts for connectivity testing.
+     * */
+    private fun configureOkHttpClientForChecker(client: OkHttpClient): OkHttpClient = client.newBuilder()
+        .connectTimeout(CONNECTIVITY_TIMEOUT)
+        .readTimeout(CONNECTIVITY_TIMEOUT)
+        .build()
 }
