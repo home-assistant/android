@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.common.data.connectivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.util.UrlUtil
+import io.homeassistant.companion.android.util.sensitive
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
@@ -45,7 +46,7 @@ internal class DefaultConnectivityChecker @Inject constructor(defaultOkHttpClien
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.d(e, "DNS resolution failed for $hostname")
+            Timber.d(e, "DNS resolution failed for ${sensitive(hostname)}")
             ConnectivityCheckResult.Failure(commonR.string.connection_check_error_dns)
         }
     }
@@ -59,7 +60,7 @@ internal class DefaultConnectivityChecker @Inject constructor(defaultOkHttpClien
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.d(e, "Port $port not reachable on $hostname")
+            Timber.d(e, "Port $port not reachable on ${sensitive(hostname)}")
             ConnectivityCheckResult.Failure(commonR.string.connection_check_error_port)
         }
     }
@@ -73,17 +74,17 @@ internal class DefaultConnectivityChecker @Inject constructor(defaultOkHttpClien
             okHttpClient.newCall(request).execute().use { response ->
                 val handshake = response.handshake
                 if (handshake != null) {
-                    Timber.d("TLS check success for $url with ${handshake.tlsVersion}")
+                    Timber.d("TLS check success for ${sensitive(url)} with ${handshake.tlsVersion}")
                     ConnectivityCheckResult.Success(commonR.string.connection_check_tls_success)
                 } else {
-                    Timber.d("Connection succeeded but no TLS handshake for $url")
+                    Timber.d("Connection succeeded but no TLS handshake for ${sensitive(url)}")
                     ConnectivityCheckResult.Failure(commonR.string.connection_check_error_tls)
                 }
             }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.d(e, "TLS check failed for $url")
+            Timber.d(e, "TLS check failed for ${sensitive(url)}")
             ConnectivityCheckResult.Failure(commonR.string.connection_check_error_tls)
         }
     }
@@ -99,7 +100,7 @@ internal class DefaultConnectivityChecker @Inject constructor(defaultOkHttpClien
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.d(e, "Server connection failed for $url")
+            Timber.d(e, "Server connection failed for ${sensitive(url)}")
             ConnectivityCheckResult.Failure(commonR.string.connection_check_error_server)
         }
     }
@@ -123,7 +124,7 @@ internal class DefaultConnectivityChecker @Inject constructor(defaultOkHttpClien
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.d(e, "Home Assistant verification failed for $url")
+            Timber.d(e, "Home Assistant verification failed for ${sensitive(url)}")
             ConnectivityCheckResult.Failure(commonR.string.connection_check_error_not_home_assistant)
         }
     }
