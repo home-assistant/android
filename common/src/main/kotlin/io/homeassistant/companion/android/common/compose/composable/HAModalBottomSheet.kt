@@ -21,7 +21,7 @@ import io.homeassistant.companion.android.common.compose.theme.LocalHAColorSchem
  *
  * In inspection mode (previews and screenshot tests), this returns a [rememberStandardBottomSheetState]
  * because [rememberModalBottomSheetState] requires a fully running Compose runtime, and [rememberStandardBottomSheetState]
- * doesn't animate properly. Inspection mode retains the standard state's existing default behavior.
+ * doesn't animate properly.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
