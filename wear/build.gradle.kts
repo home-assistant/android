@@ -70,4 +70,10 @@ dependencies {
     androidTestImplementation(libs.bundles.androidx.test)
     testImplementation(libs.bundles.androidx.test)
     testImplementation(libs.androidx.test.core)
+
+    ksp(project(":sensor-catalog-processor"))
+}
+
+ksp {
+    arg("catalogModuleSuffix", project.name)
 }

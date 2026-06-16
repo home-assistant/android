@@ -28,6 +28,7 @@ android {
 
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
+    arg("catalogModuleSuffix", project.name)
 }
 
 dependencies {
@@ -44,6 +45,7 @@ dependencies {
     api(libs.androidx.room.ktx)
     api(libs.androidx.room.paging)
     ksp(libs.androidx.room.compiler)
+    ksp(project(":sensor-catalog-processor"))
 
     api(libs.androidx.work.runtime.ktx)
 

@@ -92,4 +92,12 @@ android {
 dependencies {
     // Most of the dependencies are coming from the convention plugin to avoid duplication with `:app` module.
     implementation(libs.car.automotive)
+    ksp(project(":sensor-catalog-processor"))
+}
+
+ksp {
+    // `:automotive` reuses `:app/src/main` sources, including AppSensorCatalogModule which references
+    // GeneratedSensorCatalogApp — so this module must generate that same object (suffix "app"), not
+    // an "automotive"-suffixed one. The two are never on the same classpath, so there's no collision.
+    arg("catalogModuleSuffix", "app")
 }
