@@ -1193,7 +1193,7 @@ class MessagingManager @Inject constructor(
     }
 
     private fun handleProgressStyle(builder: NotificationCompat.Builder, data: Map<String, String>) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.BAKLAVA)) {
             val progressStyle = NotificationCompat.ProgressStyle().setStyledByProgress(true)
                 .setProgress(data[PROGRESS]?.toIntOrNull() ?: -1)
 
