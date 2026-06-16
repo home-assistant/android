@@ -1279,21 +1279,10 @@ class MessagingManager @Inject constructor(
         val progressTrackerIcon = data[PROGRESS_TRACKER_ICON] ?: ""
         val progressTrackerColor =
             parseColor(context, data[PROGRESS_TRACKER_COLOR] ?: "", commonR.color.colorPrimary)
-        if (progressTrackerIcon.startsWith("mdi:") && progressTrackerIcon.substringAfter("mdi:").isNotBlank()) {
-            val iconName = progressTrackerIcon.split(":")[1]
-            val iconDrawable = IconicsDrawable(context, "cmd-$iconName").apply {
-                sizeDp = 20
-                colorFilter = PorterDuffColorFilter(progressTrackerColor, PorterDuff.Mode.SRC_IN)
-                backgroundColorRes = accentColor
-                roundedCornersDp = 10
-                paddingDp = 4
-            }
-            if (iconDrawable.icon != null) {
-                style.setProgressTrackerIcon(
-                    iconDrawable.toAndroidIconCompat(),
-                )
-                return true
-            }
+        val icon = createProgressIcon(context, progressTrackerIcon, progressTrackerColor, accentColor)
+        if (icon != null) {
+            style.setProgressTrackerIcon(icon)
+            return true
         }
         return false
     }
@@ -1305,18 +1294,10 @@ class MessagingManager @Inject constructor(
     ): Boolean {
         val progressStartIcon = data[PROGRESS_START_ICON] ?: ""
         val progressStartColor = parseColor(context, data[PROGRESS_START_COLOR] ?: "", accentColor)
-        if (progressStartIcon.startsWith("mdi:") && progressStartIcon.substringAfter("mdi:").isNotBlank()) {
-            val iconName = progressStartIcon.split(":")[1]
-            val iconDrawable = IconicsDrawable(context, "cmd-$iconName").apply {
-                sizeDp = 20
-                colorFilter = PorterDuffColorFilter(progressStartColor, PorterDuff.Mode.SRC_IN)
-            }
-            if (iconDrawable.icon != null) {
-                style.setProgressStartIcon(
-                    iconDrawable.toAndroidIconCompat(),
-                )
-                return true
-            }
+        val icon = createProgressIcon(context, progressStartIcon, progressStartColor)
+        if (icon != null) {
+            style.setProgressStartIcon(icon)
+            return true
         }
         return false
     }
@@ -1328,20 +1309,42 @@ class MessagingManager @Inject constructor(
     ): Boolean {
         val progressEndIcon = data[PROGRESS_END_ICON] ?: ""
         val progressEndColor = parseColor(context, data[PROGRESS_END_COLOR] ?: "", accentColor)
-        if (progressEndIcon.startsWith("mdi:") && progressEndIcon.substringAfter("mdi:").isNotBlank()) {
-            val iconName = progressEndIcon.split(":")[1]
-            val iconDrawable = IconicsDrawable(context, "cmd-$iconName").apply {
-                sizeDp = 20
-                colorFilter = PorterDuffColorFilter(progressEndColor, PorterDuff.Mode.SRC_IN)
-            }
-            if (iconDrawable.icon != null) {
-                style.setProgressEndIcon(
-                    iconDrawable.toAndroidIconCompat(),
-                )
-                return true
-            }
+        val icon = createProgressIcon(context, progressEndIcon, progressEndColor)
+        if (icon != null) {
+            style.setProgressEndIcon(icon)
+            return true
         }
         return false
+    }
+
+    private fun createProgressIcon(
+        context: Context,
+        iconString: String,
+        iconColor: Int,
+        backgroundColor: Int? = null,
+    ): androidx.core.graphics.drawable.IconCompat? {
+        if (!iconString.startsWith("mdi:") || iconString.substringAfter("mdi:").isBlank()) {
+            return null
+        }
+
+        val iconName = iconString.split(":")[1]
+        val iconDrawable = IconicsDrawable(context, "cmd-$iconName").apply {
+            sizeDp = 20
+            colorFilter = PorterDuffColorFilter(iconColor, PorterDuff.Mode.SRC_IN)
+
+            // Apply a circular background if a background color is provided
+            backgroundColor?.let {
+                backgroundColorRes = it
+                roundedCornersDp = 10
+                paddingDp = 4
+            }
+        }
+
+        return if (iconDrawable.icon != null) {
+            iconDrawable.toAndroidIconCompat()
+        } else {
+            null
+        }
     }
 
     private fun handleLive(builder: NotificationCompat.Builder, data: Map<String, String>) {
