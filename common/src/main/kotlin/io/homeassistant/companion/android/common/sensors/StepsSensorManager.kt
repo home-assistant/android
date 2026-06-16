@@ -24,7 +24,9 @@ class StepsSensorManager :
     companion object {
         private var isListenerRegistered = false
         private var listenerLastRegistered = 0
-        private val stepsSensor = SensorManager.BasicSensor(
+
+        @CatalogSensor
+        internal val stepsSensor = SensorManager.BasicSensor(
             "steps_sensor",
             "sensor",
             commonR.string.sensor_name_steps,

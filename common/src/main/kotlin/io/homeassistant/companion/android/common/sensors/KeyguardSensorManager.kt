@@ -7,6 +7,7 @@ import io.homeassistant.companion.android.common.R as commonR
 
 class KeyguardSensorManager : SensorManager {
     companion object {
+        @CatalogSensor
         val deviceLocked = SensorManager.BasicSensor(
             "device_locked",
             "binary_sensor",
@@ -15,6 +16,8 @@ class KeyguardSensorManager : SensorManager {
             "mdi:cellphone-lock",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
+
+        @CatalogSensor
         val deviceSecure = SensorManager.BasicSensor(
             "device_secure",
             "binary_sensor",
@@ -23,6 +26,8 @@ class KeyguardSensorManager : SensorManager {
             "mdi:cellphone-key",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
+
+        @CatalogSensor
         val keyguardLocked = SensorManager.BasicSensor(
             "keyguard_locked",
             "binary_sensor",
@@ -31,6 +36,8 @@ class KeyguardSensorManager : SensorManager {
             "mdi:cellphone-lock",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
+
+        @CatalogSensor
         val keyguardSecure = SensorManager.BasicSensor(
             "keyguard_secure",
             "binary_sensor",

@@ -4,11 +4,13 @@ import android.content.Context
 import android.os.Build
 import android.provider.Settings
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.sensors.CatalogSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import timber.log.Timber
 
 class TheaterModeSensorManager : SensorManager {
     companion object {
+        @CatalogSensor
         val theaterMode = SensorManager.BasicSensor(
             "theater_mode",
             "binary_sensor",

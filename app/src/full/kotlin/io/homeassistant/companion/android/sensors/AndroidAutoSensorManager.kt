@@ -5,6 +5,7 @@ import android.os.Build
 import androidx.car.app.connection.CarConnection
 import androidx.lifecycle.Observer
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.sensors.CatalogSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.SdkVersion
 import kotlinx.coroutines.launch
@@ -15,7 +16,8 @@ class AndroidAutoSensorManager :
     Observer<Int> {
 
     companion object {
-        private val androidAutoConnected = SensorManager.BasicSensor(
+        @CatalogSensor
+        internal val androidAutoConnected = SensorManager.BasicSensor(
             "android_auto",
             "binary_sensor",
             commonR.string.basic_sensor_name_android_auto,

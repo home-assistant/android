@@ -20,6 +20,7 @@ class AudioSensorManager : SensorManager {
         private const val ATTRIBUTE_MIN = "min"
         private const val ATTRIBUTE_MAX = "max"
 
+        @CatalogSensor
         val audioSensor = SensorManager.BasicSensor(
             "audio_sensor",
             "sensor",
@@ -29,7 +30,9 @@ class AudioSensorManager : SensorManager {
             deviceClass = "enum",
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
-        private val audioState = SensorManager.BasicSensor(
+
+        @CatalogSensor
+        internal val audioState = SensorManager.BasicSensor(
             "audio_mode",
             "sensor",
             commonR.string.sensor_name_audio_mode,
@@ -37,7 +40,9 @@ class AudioSensorManager : SensorManager {
             "mdi:volume-high",
             deviceClass = "enum",
         )
-        private val headphoneState = SensorManager.BasicSensor(
+
+        @CatalogSensor
+        internal val headphoneState = SensorManager.BasicSensor(
             "headphone_state",
             "binary_sensor",
             commonR.string.sensor_name_headphone,
@@ -45,6 +50,8 @@ class AudioSensorManager : SensorManager {
             "mdi:headphones",
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
+
+        @CatalogSensor
         val micMuted = SensorManager.BasicSensor(
             "mic_muted",
             "binary_sensor",
@@ -58,13 +65,17 @@ class AudioSensorManager : SensorManager {
                 SensorManager.BasicSensor.UpdateType.WORKER
             },
         )
-        private val musicActive = SensorManager.BasicSensor(
+
+        @CatalogSensor
+        internal val musicActive = SensorManager.BasicSensor(
             "music_active",
             "binary_sensor",
             commonR.string.sensor_name_music_active,
             commonR.string.sensor_description_music_active,
             "mdi:music",
         )
+
+        @CatalogSensor
         val speakerphoneState = SensorManager.BasicSensor(
             "speakerphone_state",
             "binary_sensor",
@@ -78,6 +89,8 @@ class AudioSensorManager : SensorManager {
                 SensorManager.BasicSensor.UpdateType.WORKER
             },
         )
+
+        @CatalogSensor
         val volAlarm = SensorManager.BasicSensor(
             "volume_alarm",
             "sensor",
@@ -87,6 +100,8 @@ class AudioSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
+
+        @CatalogSensor
         val volCall = SensorManager.BasicSensor(
             "volume_call",
             "sensor",
@@ -96,6 +111,8 @@ class AudioSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
+
+        @CatalogSensor
         val volMusic = SensorManager.BasicSensor(
             "volume_music",
             "sensor",
@@ -105,6 +122,8 @@ class AudioSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
+
+        @CatalogSensor
         val volRing = SensorManager.BasicSensor(
             "volume_ring",
             "sensor",
@@ -114,6 +133,8 @@ class AudioSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
+
+        @CatalogSensor
         val volNotification = SensorManager.BasicSensor(
             "volume_notification",
             "sensor",
@@ -123,6 +144,8 @@ class AudioSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
+
+        @CatalogSensor
         val volSystem = SensorManager.BasicSensor(
             "volume_system",
             "sensor",
@@ -132,6 +155,8 @@ class AudioSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
+
+        @CatalogSensor
         val volAccessibility = SensorManager.BasicSensor(
             "volume_accessibility",
             "sensor",
@@ -141,6 +166,8 @@ class AudioSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
+
+        @CatalogSensor
         val volDTMF = SensorManager.BasicSensor(
             "volume_dtmf",
             "sensor",

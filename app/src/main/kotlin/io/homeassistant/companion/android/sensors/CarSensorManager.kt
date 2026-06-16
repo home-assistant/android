@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.sensors.CatalogSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
@@ -30,6 +31,7 @@ class CarSensorManager :
     DefaultLifecycleObserver {
 
     data class CarSensor(
+        @Suppress("CatalogSensorMissing")
         val sensor: SensorManager.BasicSensor,
         val autoEnabled: Boolean = true,
         val automotiveEnabled: Boolean = true,
@@ -42,55 +44,63 @@ class CarSensorManager :
     )
 
     companion object {
+        @CatalogSensor
+        internal val carFuel = SensorManager.BasicSensor(
+            "car_fuel",
+            "sensor",
+            R.string.basic_sensor_name_car_fuel,
+            R.string.sensor_description_car_fuel,
+            "mdi:barrel",
+            unitOfMeasurement = "%",
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
+            deviceClass = "battery",
+        )
         private val fuelLevel = CarSensor(
-            SensorManager.BasicSensor(
-                "car_fuel",
-                "sensor",
-                R.string.basic_sensor_name_car_fuel,
-                R.string.sensor_description_car_fuel,
-                "mdi:barrel",
-                unitOfMeasurement = "%",
-                stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-                deviceClass = "battery",
-            ),
+            carFuel,
             autoPermissions = listOf("com.google.android.gms.permission.CAR_FUEL"),
             automotivePermissions = listOf(
                 "android.car.permission.CAR_ENERGY",
                 "android.car.permission.CAR_ENERGY_PORTS",
                 "android.car.permission.READ_CAR_DISPLAY_UNITS",
             ),
+        )
+
+        @CatalogSensor
+        internal val carBattery = SensorManager.BasicSensor(
+            "car_battery",
+            "sensor",
+            R.string.basic_sensor_name_car_battery,
+            R.string.sensor_description_car_battery,
+            "mdi:car-battery",
+            unitOfMeasurement = "%",
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
+            deviceClass = "battery",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
         private val batteryLevel = CarSensor(
-            SensorManager.BasicSensor(
-                "car_battery",
-                "sensor",
-                R.string.basic_sensor_name_car_battery,
-                R.string.sensor_description_car_battery,
-                "mdi:car-battery",
-                unitOfMeasurement = "%",
-                stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-                deviceClass = "battery",
-                entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            ),
+            carBattery,
             autoPermissions = listOf("com.google.android.gms.permission.CAR_FUEL"),
             automotivePermissions = listOf(
                 "android.car.permission.CAR_ENERGY",
                 "android.car.permission.CAR_ENERGY_PORTS",
                 "android.car.permission.READ_CAR_DISPLAY_UNITS",
             ),
+        )
+
+        @CatalogSensor
+        internal val carRangeRemaining = SensorManager.BasicSensor(
+            "car_range_remaining",
+            "sensor",
+            R.string.basic_sensor_name_car_range_remaining,
+            R.string.sensor_description_car_range_remaining,
+            "mdi:map-marker-distance",
+            unitOfMeasurement = "m",
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
+            deviceClass = "distance",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
         private val rangeRemaining = CarSensor(
-            SensorManager.BasicSensor(
-                "car_range_remaining",
-                "sensor",
-                R.string.basic_sensor_name_car_range_remaining,
-                R.string.sensor_description_car_range_remaining,
-                "mdi:map-marker-distance",
-                unitOfMeasurement = "m",
-                stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-                deviceClass = "distance",
-                entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            ),
+            carRangeRemaining,
             autoPermissions = listOf("com.google.android.gms.permission.CAR_FUEL"),
             automotivePermissions = listOf(
                 "android.car.permission.CAR_ENERGY",
@@ -98,78 +108,96 @@ class CarSensorManager :
                 "android.car.permission.READ_CAR_DISPLAY_UNITS",
             ),
         )
+
+        @CatalogSensor
+        internal val carNameSensor = SensorManager.BasicSensor(
+            "car_name",
+            "sensor",
+            R.string.basic_sensor_name_car_name,
+            R.string.sensor_description_car_name,
+            "mdi:car-info",
+        )
         private val carName = CarSensor(
-            SensorManager.BasicSensor(
-                "car_name",
-                "sensor",
-                R.string.basic_sensor_name_car_name,
-                R.string.sensor_description_car_name,
-                "mdi:car-info",
-            ),
+            carNameSensor,
             automotivePermissions = listOf("android.car.permission.CAR_INFO"),
         )
+
+        @CatalogSensor
+        internal val carChargingStatusSensor = SensorManager.BasicSensor(
+            "car_charging_status",
+            "sensor",
+            R.string.basic_sensor_name_car_charging_status,
+            R.string.sensor_description_car_charging_status,
+            "mdi:ev-station",
+            deviceClass = "plug",
+        )
         private val carChargingStatus = CarSensor(
-            SensorManager.BasicSensor(
-                "car_charging_status",
-                "sensor",
-                R.string.basic_sensor_name_car_charging_status,
-                R.string.sensor_description_car_charging_status,
-                "mdi:ev-station",
-                deviceClass = "plug",
-            ),
+            carChargingStatusSensor,
             automotivePermissions = listOf("android.car.permission.CAR_ENERGY_PORTS"),
         )
+
+        @CatalogSensor
+        internal val carOdometer = SensorManager.BasicSensor(
+            "car_odometer",
+            "sensor",
+            R.string.basic_sensor_name_car_odometer,
+            R.string.sensor_description_car_odometer,
+            "mdi:map-marker-distance",
+            unitOfMeasurement = "m",
+            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
+            deviceClass = "distance",
+        )
         private val odometerValue = CarSensor(
-            SensorManager.BasicSensor(
-                "car_odometer",
-                "sensor",
-                R.string.basic_sensor_name_car_odometer,
-                R.string.sensor_description_car_odometer,
-                "mdi:map-marker-distance",
-                unitOfMeasurement = "m",
-                stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
-                deviceClass = "distance",
-            ),
+            carOdometer,
             automotiveEnabled = false,
             autoPermissions = listOf("com.google.android.gms.permission.CAR_MILEAGE"),
         )
+
+        @CatalogSensor
+        internal val carFuelType = SensorManager.BasicSensor(
+            "car_fuel_type",
+            "sensor",
+            R.string.basic_sensor_name_car_fuel_type,
+            R.string.sensor_description_car_fuel_type,
+            "mdi:gas-station",
+            deviceClass = "enum",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+        )
         private val fuelType = CarSensor(
-            SensorManager.BasicSensor(
-                "car_fuel_type",
-                "sensor",
-                R.string.basic_sensor_name_car_fuel_type,
-                R.string.sensor_description_car_fuel_type,
-                "mdi:gas-station",
-                deviceClass = "enum",
-                entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            ),
+            carFuelType,
             autoPermissions = listOf("com.google.android.gms.permission.CAR_FUEL"),
             automotivePermissions = listOf("android.car.permission.CAR_INFO"),
+        )
+
+        @CatalogSensor
+        internal val carEvConnector = SensorManager.BasicSensor(
+            "car_ev_connector",
+            "sensor",
+            R.string.basic_sensor_name_car_ev_connector_type,
+            R.string.sensor_description_car_ev_connector_type,
+            "mdi:car-electric",
+            deviceClass = "enum",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
         private val evConnector = CarSensor(
-            SensorManager.BasicSensor(
-                "car_ev_connector",
-                "sensor",
-                R.string.basic_sensor_name_car_ev_connector_type,
-                R.string.sensor_description_car_ev_connector_type,
-                "mdi:car-electric",
-                deviceClass = "enum",
-                entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            ),
+            carEvConnector,
             autoPermissions = listOf("com.google.android.gms.permission.CAR_FUEL"),
             automotivePermissions = listOf("android.car.permission.CAR_INFO"),
         )
+
+        @CatalogSensor
+        internal val carSpeedSensor = SensorManager.BasicSensor(
+            "car_speed",
+            "sensor",
+            R.string.basic_sensor_name_car_speed,
+            R.string.sensor_description_car_speed,
+            "mdi:speedometer",
+            unitOfMeasurement = "m/s",
+            deviceClass = "speed",
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
+        )
         private val carSpeed = CarSensor(
-            SensorManager.BasicSensor(
-                "car_speed",
-                "sensor",
-                R.string.basic_sensor_name_car_speed,
-                R.string.sensor_description_car_speed,
-                "mdi:speedometer",
-                unitOfMeasurement = "m/s",
-                deviceClass = "speed",
-                stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-            ),
+            carSpeedSensor,
             autoPermissions = listOf("com.google.android.gms.permission.CAR_SPEED"),
             automotivePermissions = listOf(
                 "android.car.permission.CAR_SPEED",

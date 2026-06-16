@@ -12,6 +12,7 @@ import timber.log.Timber
 
 class DisplaySensorManager : SensorManager {
     companion object {
+        @CatalogSensor
         val screenBrightness = SensorManager.BasicSensor(
             "screen_brightness",
             "sensor",
@@ -21,6 +22,7 @@ class DisplaySensorManager : SensorManager {
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#screen-brightness-sensor",
         )
 
+        @CatalogSensor
         val screenOffTimeout = SensorManager.BasicSensor(
             "screen_off_timeout",
             "sensor",
@@ -32,6 +34,7 @@ class DisplaySensorManager : SensorManager {
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#screen-off-timeout-sensor",
         )
 
+        @CatalogSensor
         val screenOrientation = SensorManager.BasicSensor(
             "screen_orientation",
             "sensor",
@@ -42,6 +45,7 @@ class DisplaySensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
+        @CatalogSensor
         val screenRotation = SensorManager.BasicSensor(
             "screen_rotation",
             "sensor",

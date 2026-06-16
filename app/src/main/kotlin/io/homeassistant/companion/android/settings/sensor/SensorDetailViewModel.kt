@@ -102,6 +102,7 @@ class SensorDetailViewModel @Inject constructor(
             }
     }
 
+    @Suppress("CatalogSensorMissing")
     val basicSensor: SensorManager.BasicSensor? = runBlocking {
         sensorManager?.getAvailableSensors(getApplication())
             ?.find { it.id == sensorId }

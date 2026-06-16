@@ -6,10 +6,12 @@ import androidx.core.graphics.green
 import androidx.core.graphics.red
 import com.google.android.material.color.DynamicColors
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.sensors.CatalogSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
 
 class DynamicColorSensorManager : SensorManager {
     companion object {
+        @CatalogSensor
         val accentColorSensor = SensorManager.BasicSensor(
             "accent_color",
             "sensor",

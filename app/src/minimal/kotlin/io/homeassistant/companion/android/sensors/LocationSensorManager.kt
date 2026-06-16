@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.sensors.CatalogSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
 
 class LocationSensorManager :
@@ -24,6 +25,7 @@ class LocationSensorManager :
         const val ACTION_FORCE_HIGH_ACCURACY =
             "io.homeassistant.companion.android.background.FORCE_HIGH_ACCURACY"
 
+        @CatalogSensor
         val backgroundLocation = SensorManager.BasicSensor(
             "location_background",
             "",
@@ -32,6 +34,8 @@ class LocationSensorManager :
             "mdi:map-marker-multiple",
             updateType = SensorManager.BasicSensor.UpdateType.LOCATION,
         )
+
+        @CatalogSensor
         val zoneLocation = SensorManager.BasicSensor(
             "zone_background",
             "",
@@ -40,6 +44,8 @@ class LocationSensorManager :
             "mdi:map-marker-radius",
             updateType = SensorManager.BasicSensor.UpdateType.LOCATION,
         )
+
+        @CatalogSensor
         val singleAccurateLocation = SensorManager.BasicSensor(
             "accurate_location",
             "",

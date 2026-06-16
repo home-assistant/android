@@ -15,6 +15,7 @@ import android.hardware.SensorManager.SENSOR_STATUS_UNRELIABLE
 import android.os.Build
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.sensors.CatalogSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -36,7 +37,9 @@ class HeartRateSensorManager :
             SENSOR_STATUS_NO_CONTACT,
         )
         private var eventCount = 0
-        private val heartRate = SensorManager.BasicSensor(
+
+        @CatalogSensor
+        internal val heartRate = SensorManager.BasicSensor(
             "heart_rate",
             "sensor",
             commonR.string.sensor_name_heart_rate,

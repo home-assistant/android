@@ -21,6 +21,7 @@ class NextAlarmManager : SensorManager {
     companion object {
         private const val SETTING_ALLOW_LIST = "nextalarm_allow_list"
 
+        @CatalogSensor
         val nextAlarm = SensorManager.BasicSensor(
             "next_alarm",
             "sensor",

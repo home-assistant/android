@@ -22,7 +22,9 @@ class BatterySensorManager : SensorManager {
         private const val DEFAULT_BATTERY_CURRENT_DIVISOR = 1000000
         private const val SETTING_BATTERY_VOLTAGE_DIVISOR = "battery_voltage_divisor"
         private const val DEFAULT_BATTERY_VOLTAGE_DIVISOR = 1000
-        private val batteryLevel = SensorManager.BasicSensor(
+
+        @CatalogSensor
+        internal val batteryLevel = SensorManager.BasicSensor(
             "battery_level",
             "sensor",
             commonR.string.basic_sensor_name_battery_level,
@@ -34,7 +36,9 @@ class BatterySensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             enabledByDefault = true,
         )
-        private val batteryState = SensorManager.BasicSensor(
+
+        @CatalogSensor
+        internal val batteryState = SensorManager.BasicSensor(
             "battery_state",
             "sensor",
             commonR.string.basic_sensor_name_battery_state,
@@ -45,6 +49,8 @@ class BatterySensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
             enabledByDefault = true,
         )
+
+        @CatalogSensor
         val isChargingState = SensorManager.BasicSensor(
             "is_charging",
             "binary_sensor",
@@ -55,7 +61,9 @@ class BatterySensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
-        private val chargerTypeState = SensorManager.BasicSensor(
+
+        @CatalogSensor
+        internal val chargerTypeState = SensorManager.BasicSensor(
             "charger_type",
             "sensor",
             commonR.string.basic_sensor_name_charger_type,
@@ -66,7 +74,9 @@ class BatterySensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
             enabledByDefault = true,
         )
-        private val batteryHealthState = SensorManager.BasicSensor(
+
+        @CatalogSensor
+        internal val batteryHealthState = SensorManager.BasicSensor(
             "battery_health",
             "sensor",
             commonR.string.basic_sensor_name_battery_health,
@@ -76,7 +86,8 @@ class BatterySensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        private val batteryTemperature = SensorManager.BasicSensor(
+        @CatalogSensor
+        internal val batteryTemperature = SensorManager.BasicSensor(
             "battery_temperature",
             "sensor",
             commonR.string.basic_sensor_name_battery_temperature,
@@ -88,7 +99,8 @@ class BatterySensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        private val batteryPower = SensorManager.BasicSensor(
+        @CatalogSensor
+        internal val batteryPower = SensorManager.BasicSensor(
             "battery_power",
             "sensor",
             commonR.string.basic_sensor_name_battery_power,
@@ -100,7 +112,8 @@ class BatterySensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        private val remainingChargeTime = SensorManager.BasicSensor(
+        @CatalogSensor
+        internal val remainingChargeTime = SensorManager.BasicSensor(
             "remaining_charge_time",
             "sensor",
             commonR.string.basic_sensor_name_remaining_charge_time,
@@ -111,7 +124,8 @@ class BatterySensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        private val batteryCycles = SensorManager.BasicSensor(
+        @CatalogSensor
+        internal val batteryCycles = SensorManager.BasicSensor(
             "battery_cycles",
             "sensor",
             commonR.string.basic_sensor_name_battery_cycles,

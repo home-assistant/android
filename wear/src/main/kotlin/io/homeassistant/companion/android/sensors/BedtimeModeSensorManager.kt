@@ -4,12 +4,14 @@ import android.content.Context
 import android.os.Build
 import android.provider.Settings
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.sensors.CatalogSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.SdkVersion
 import timber.log.Timber
 
 class BedtimeModeSensorManager : SensorManager {
     companion object {
+        @CatalogSensor
         val bedtimeMode = SensorManager.BasicSensor(
             "bedtime_mode",
             "binary_sensor",
