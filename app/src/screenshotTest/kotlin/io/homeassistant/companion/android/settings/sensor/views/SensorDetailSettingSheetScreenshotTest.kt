@@ -2,17 +2,14 @@
 
 package io.homeassistant.companion.android.settings.sensor.views
 
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.SheetState
-import androidx.compose.material3.SheetValue.Expanded
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
+import io.homeassistant.companion.android.common.compose.composable.rememberHAModalBottomSheetState
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.util.compose.HAPreviews
 
@@ -63,7 +60,6 @@ class SensorDetailSettingSheetScreenshotTest {
         PreviewSheet(
             entries = fewEntries(),
             showSearch = false,
-            height = 400.dp,
             isSelected = { it == "com.google.android.apps.maps" },
         )
     }
@@ -76,7 +72,6 @@ class SensorDetailSettingSheetScreenshotTest {
             entries = emptyList(),
             showSearch = false,
             isLoading = true,
-            height = 400.dp,
         )
     }
 
@@ -97,18 +92,11 @@ class SensorDetailSettingSheetScreenshotTest {
         showSearch: Boolean,
         searchQuery: String = "",
         isLoading: Boolean = false,
-        height: Dp = 600.dp,
         isSelected: (id: String) -> Boolean = { false },
     ) {
         HAThemeForPreview {
-            val density = LocalDensity.current
             HAModalBottomSheet(
-                bottomSheetState = SheetState(
-                    skipPartiallyExpanded = true,
-                    positionalThreshold = { with(density) { 56.dp.toPx() } },
-                    velocityThreshold = { with(density) { 125.dp.toPx() } },
-                    initialValue = Expanded,
-                ),
+                bottomSheetState = rememberHAModalBottomSheetState(skipPartiallyExpanded = true),
             ) {
                 SensorDetailSettingSheetContent(
                     title = "Monitored apps",
@@ -121,8 +109,9 @@ class SensorDetailSettingSheetScreenshotTest {
                     onToggle = { _, _ -> },
                     onCancel = {},
                     onSave = {},
-                    // Bounds the entry list's weight(1f), mirroring the screen height the real sheet applies.
-                    modifier = Modifier.height(height),
+                    // Cap the height so the footer stays on-screen; the real sheet uses safeScreenHeight,
+                    // which overflows the windowless preview host.
+                    modifier = Modifier.heightIn(max = 560.dp),
                 )
             }
         }
