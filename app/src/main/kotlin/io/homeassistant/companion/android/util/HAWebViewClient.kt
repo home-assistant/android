@@ -36,7 +36,8 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
      * @param onUrlIntercepted Optional callback to intercept URL navigation.
      *        Receives the URI and whether TLS client auth was required.
      *        Return `true` to prevent WebView from loading the URL.
-     * @param onPageFinished Optional callback when a page finishes loading.
+     * @param onPageFinished Optional callback when a page finishes loading, with the final URL
+     *        (after any redirects have resolved).
      * @param onReceivedHttpAuthRequest Optional callback when the server requests HTTP Basic Auth.
      *        Receives the handler, host, the resource URL that triggered the request, and the realm.
      */
@@ -45,7 +46,7 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
         onFrontendError: (FrontendConnectionError) -> Unit,
         onCrash: (() -> Unit)? = null,
         onUrlIntercepted: ((uri: Uri, isTLSClientAuthNeeded: Boolean) -> Boolean)? = null,
-        onPageFinished: (() -> Unit)? = null,
+        onPageFinished: ((url: String?) -> Unit)? = null,
         onReceivedHttpAuthRequest: (
             (
                 handler: HttpAuthHandler,
@@ -79,7 +80,7 @@ class HAWebViewClient internal constructor(
     private val onFrontendError: (FrontendConnectionError) -> Unit,
     private val onCrash: (() -> Unit)?,
     private val onUrlIntercepted: ((uri: Uri, isTLSClientAuthNeeded: Boolean) -> Boolean)?,
-    private val onPageFinished: (() -> Unit)?,
+    private val onPageFinished: ((url: String?) -> Unit)?,
     private val onReceivedHttpAuthRequest: (
         (handler: HttpAuthHandler, host: String, resource: String, realm: String) -> Unit
     )?,
@@ -95,7 +96,7 @@ class HAWebViewClient internal constructor(
 
     override fun onPageFinished(view: WebView?, url: String?) {
         super.onPageFinished(view, url)
-        onPageFinished?.invoke()
+        onPageFinished?.invoke(url)
     }
 
     override fun onReceivedHttpAuthRequest(view: WebView?, handler: HttpAuthHandler?, host: String?, realm: String?) {

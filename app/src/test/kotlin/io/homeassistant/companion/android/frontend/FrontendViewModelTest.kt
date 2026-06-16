@@ -47,13 +47,16 @@ import io.homeassistant.companion.android.frontend.url.UrlLoadResult
 import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
+import io.homeassistant.companion.android.util.hasSameOrigin
 import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.mockkStatic
 import io.mockk.runs
+import io.mockk.unmockkStatic
 import io.mockk.verify
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -163,6 +166,109 @@ class FrontendViewModelTest {
             improvHandler = improvHandler,
             barcodeScannerHandler = FrontendBarcodeScannerHandler(externalBusRepository, dialogManager),
         )
+    }
+
+    @Nested
+    inner class UrlInterception {
+
+        /**
+         * Captures the `onUrlIntercepted` callback the ViewModel wires into the WebView client and returns a
+         * lambda that drives it (the `false` TLS-client-auth flag is irrelevant to scheme handling).
+         *
+         * The external/same-origin branch relies on [hasSameOrigin], which parses URLs via real
+         * `android.net.Uri` (unavailable on the plain JVM these tests run on); tests covering that branch
+         * mock [hasSameOrigin] directly. The origin parsing itself is covered by `UrlUtilTest`.
+         */
+        private fun createViewModelWithUrlInterceptCapture(): Pair<FrontendViewModel, (Uri) -> Boolean> {
+            var capturedCallback: ((Uri, Boolean) -> Boolean)? = null
+            every {
+                webViewClientFactory.create(
+                    currentUrlFlow = any(),
+                    onFrontendError = any(),
+                    onCrash = any(),
+                    onUrlIntercepted = any(),
+                    onPageFinished = any(),
+                    onReceivedHttpAuthRequest = any(),
+                )
+            } answers {
+                // onUrlIntercepted is the 4th of the 6 named arguments (zero-based index 3)
+                capturedCallback = arg(3)
+                mockk(relaxed = true)
+            }
+
+            val viewModel = createViewModel()
+            return viewModel to { uri -> capturedCallback!!.invoke(uri, false) }
+        }
+
+        private fun uri(value: String): Uri = mockk {
+            every { this@mockk.toString() } returns value
+        }
+
+        @Test
+        fun `Given app scheme url when intercepted then emits LaunchApp event and intercepts`() = runTest {
+            val (viewModel, intercept) = createViewModelWithUrlInterceptCapture()
+
+            viewModel.events.test {
+                val handled = intercept(uri("app://com.example.app"))
+
+                assertTrue(handled)
+                assertEquals(FrontendEvent.LaunchApp("com.example.app"), awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given intent scheme url when intercepted then emits LaunchIntent event and intercepts`() = runTest {
+            val intentUri = "intent://scan/#Intent;scheme=zxing;package=com.google.zxing;end"
+            val (viewModel, intercept) = createViewModelWithUrlInterceptCapture()
+
+            viewModel.events.test {
+                val handled = intercept(uri(intentUri))
+
+                assertTrue(handled)
+                assertEquals(FrontendEvent.LaunchIntent(intentUri), awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given external url not matching server origin when intercepted then emits OpenExternalLink and intercepts`() = runTest {
+            mockkStatic("io.homeassistant.companion.android.util.UrlUtilKt")
+            try {
+                every { any<Uri>().hasSameOrigin(any<String>()) } returns false
+                val externalUri = uri("https://external.example.org/page")
+                val (viewModel, intercept) = createViewModelWithUrlInterceptCapture()
+
+                viewModel.events.test {
+                    val handled = intercept(externalUri)
+
+                    assertTrue(handled)
+                    assertEquals(FrontendEvent.OpenExternalLink(externalUri), awaitItem())
+                    cancelAndIgnoreRemainingEvents()
+                }
+            } finally {
+                unmockkStatic("io.homeassistant.companion.android.util.UrlUtilKt")
+            }
+        }
+
+        @Test
+        fun `Given url matching server origin when intercepted then emits no event and lets WebView load`() = runTest {
+            mockkStatic("io.homeassistant.companion.android.util.UrlUtilKt")
+            try {
+                every { any<Uri>().hasSameOrigin(any<String>()) } returns true
+                val (viewModel, intercept) = createViewModelWithUrlInterceptCapture()
+
+                viewModel.events.test {
+                    val handled = intercept(uri("https://example.com/lovelace/0"))
+
+                    assertFalse(handled)
+                    expectNoEvents()
+                    cancelAndIgnoreRemainingEvents()
+                }
+            } finally {
+                unmockkStatic("io.homeassistant.companion.android.util.UrlUtilKt")
+            }
+        }
     }
 
     @Nested
@@ -1091,7 +1197,7 @@ class FrontendViewModelTest {
     inner class Zoom {
 
         private fun createViewModelWithPageFinishedCapture(): Pair<FrontendViewModel, () -> Unit> {
-            var capturedPageFinished: (() -> Unit)? = null
+            var capturedPageFinished: ((String?) -> Unit)? = null
             every {
                 webViewClientFactory.create(
                     currentUrlFlow = any(),
@@ -1108,7 +1214,7 @@ class FrontendViewModelTest {
             }
 
             val viewModel = createViewModel()
-            return viewModel to { capturedPageFinished!!.invoke() }
+            return viewModel to { capturedPageFinished!!.invoke(null) }
         }
 
         @Test

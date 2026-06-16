@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.util
 
 import android.net.Uri
+import androidx.core.net.toUri
 import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.MalformedHttpUrlException
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
@@ -216,6 +217,18 @@ fun Uri.hasSameOrigin(other: Uri?): Boolean {
         host.equals(other.host, ignoreCase = true) &&
         effectivePort == other.effectivePort
 }
+
+/**
+ * Checks if this Uri has the same origin (scheme, host, and port) as the [other] URL string.
+ * Default ports (443 for HTTPS, 80 for HTTP) are normalized for comparison.
+ *
+ * Convenience overload for callers that hold the other side as a raw URL string; the string is parsed
+ * into a [Uri] before comparison.
+ *
+ * @param other the URL string to compare against; a `null` or unparsable value never matches
+ * @return `true` if both origins share the same scheme, host, and port
+ */
+fun Uri.hasSameOrigin(other: String?): Boolean = hasSameOrigin(other?.toUri())
 
 private val Uri.effectivePort: Int
     get() = when {

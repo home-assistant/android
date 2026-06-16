@@ -34,6 +34,22 @@ sealed interface FrontendEvent {
     /** Open a URI externally using the host-provided external link handler. */
     data class OpenExternalLink(val uri: Uri) : FrontendEvent
 
+    /**
+     * Launch an installed app by its [packageName].
+     *
+     * The host is responsible for opening the app store when no app with this package is installed.
+     */
+    data class LaunchApp(val packageName: String) : FrontendEvent
+
+    /**
+     * Parse and launch an Android `intent:` URI.
+     *
+     * The host is responsible for opening the app store when the intent targets a package that is not installed.
+     *
+     * @param intentUri The raw `intent:` URI as provided by the frontend.
+     */
+    data class LaunchIntent(val intentUri: String) : FrontendEvent
+
     /** Navigate to the developer tools settings screen */
     data object NavigateToDeveloperSettings : FrontendEvent
 
