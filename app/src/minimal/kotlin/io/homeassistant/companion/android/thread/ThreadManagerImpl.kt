@@ -30,4 +30,11 @@ class ThreadManagerImpl @Inject constructor() : ThreadManager {
     }
 
     override suspend fun sendThreadDatasetExportResult(result: ActivityResult, serverId: Int): String? = null
+
+    override fun networkNameFromTlv(tlv: ByteArray): String? = null
+
+    override suspend fun predictPreferredOutcome(tlv: ByteArray): ThreadManager.PreflightOutcome =
+        ThreadManager.PreflightOutcome.Unknown
+
+    override suspend fun addCredentialToDevice(serverId: Int, tlv: ByteArray, borderAgentId: String): Boolean? = null
 }

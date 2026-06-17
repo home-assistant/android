@@ -256,7 +256,10 @@ class ThreadManagerImpl @Inject constructor(
         }
     }
 
-    private suspend fun appAddedIsPreferredCredentials(): Boolean {
+    private suspend fun appAddedIsPreferredCredentials(): Boolean = appAddedPreferredCredential() != null
+
+    @OptIn(ExperimentalStdlibApi::class)
+    private suspend fun appAddedPreferredCredential(): ThreadNetworkCredentials? {
         val appCredentials = suspendCancellableCoroutine { cont ->
             threadNetworkClient
                 .allCredentials
@@ -264,24 +267,19 @@ class ThreadManagerImpl @Inject constructor(
                 .addOnFailureListener { if (cont.isActive) cont.resume(null) }
         }
         return try {
-            appCredentials?.any {
-                val isPreferred = isPreferredCredentials(it)
-                if (isPreferred) {
-                    Timber.d(
-                        "Thread device prefers app added dataset: ${it.networkName} (PAN ${it.panId}, EXTPAN ${
-                            String(
-                                it.extendedPanId,
-                            )
-                        })",
-                    )
-                }
-                isPreferred
-            } ?: false
+            appCredentials?.firstOrNull { isPreferredCredentials(it) }?.also {
+                Timber.d(
+                    "Thread device prefers app added dataset: %s (PAN %s, EXTPAN %s)",
+                    it.networkName,
+                    it.panId,
+                    it.extendedPanId.toHexString(HexFormat.UpperCase),
+                )
+            }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             Timber.e(e, "Thread app added credentials preferred check failed")
-            false
+            null
         }
     }
 
@@ -314,6 +312,90 @@ class ThreadManagerImpl @Inject constructor(
             }
         }
         return null
+    }
+
+    override fun networkNameFromTlv(tlv: ByteArray): String? = try {
+        ThreadNetworkCredentials.fromActiveOperationalDataset(tlv).networkName
+    } catch (e: Exception) {
+        Timber.w(e, "Thread: cannot parse TLV to extract network name")
+        null
+    }
+
+    override suspend fun predictPreferredOutcome(tlv: ByteArray): ThreadManager.PreflightOutcome {
+        val prospective = try {
+            ThreadNetworkCredentials.fromActiveOperationalDataset(tlv)
+        } catch (e: Exception) {
+            Timber.w(e, "Thread preflight: cannot parse TLV")
+            return ThreadManager.PreflightOutcome.Unknown
+        }
+        val alreadyPreferred = try {
+            isPreferredCredentials(prospective)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.w(e, "Thread preflight: isPreferredCredentials failed")
+            return ThreadManager.PreflightOutcome.Unknown
+        }
+        if (alreadyPreferred) return ThreadManager.PreflightOutcome.AlreadyPreferred
+
+        val ourPreferred = try {
+            appAddedPreferredCredential()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.w(e, "Thread preflight: appAddedPreferredCredential failed")
+            return ThreadManager.PreflightOutcome.Unknown
+        }
+        if (ourPreferred != null) {
+            return ThreadManager.PreflightOutcome.DifferentAppPreferred(ourPreferred.networkName)
+        }
+
+        // No app-owned preferred credential. Probe how many credentials are stored to distinguish
+        // "nothing stored" (this add will likely become preferred) from "we own credentials but
+        // none is preferred — another app may own the preferred one" (ambiguous).
+        val ownedCount = suspendCancellableCoroutine { cont ->
+            threadNetworkClient
+                .allCredentials
+                .addOnSuccessListener { if (cont.isActive) cont.resume(it?.size ?: 0) }
+                .addOnFailureListener {
+                    Timber.w(it, "Thread preflight: allCredentials failed")
+                    if (cont.isActive) cont.resume(-1)
+                }
+        }
+        return if (ownedCount == 0) {
+            ThreadManager.PreflightOutcome.LikelyToBecomePreferred
+        } else {
+            ThreadManager.PreflightOutcome.Unknown
+        }
+    }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    override suspend fun addCredentialToDevice(serverId: Int, tlv: ByteArray, borderAgentId: String): Boolean? {
+        // Sweep stale credentials before adding. Used to run at the top of fullSyncPreferredDataset;
+        // the HA -> Phone path is the natural new home for it.
+        deleteOrphanedThreadCredentials(serverId)
+
+        val idAsBytes = if (borderAgentId.length == 16) borderAgentId.toByteArray() else borderAgentId.hexToByteArray()
+        val threadBorderAgent = ThreadBorderAgent.newBuilder(idAsBytes).build()
+        val credentials = ThreadNetworkCredentials.fromActiveOperationalDataset(tlv)
+        suspendCancellableCoroutine { cont ->
+            threadNetworkClient
+                .addCredentials(threadBorderAgent, credentials)
+                .addOnSuccessListener { if (cont.isActive) cont.resume(Unit) }
+                .addOnFailureListener { if (cont.isActive) cont.resumeWithException(it) }
+        }
+        // Track the BA so the orphan path can clean it up if this server is later removed.
+        serverManager.integrationRepository(serverId).setThreadBorderAgentIds(
+            (serverManager.integrationRepository(serverId).getThreadBorderAgentIds() + borderAgentId).distinct(),
+        )
+        return try {
+            isPreferredCredentials(credentials)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.w(e, "Thread: post-add preferred check failed")
+            null
+        }
     }
 
     private suspend fun deleteOrphanedThreadCredentials(serverId: Int) {
