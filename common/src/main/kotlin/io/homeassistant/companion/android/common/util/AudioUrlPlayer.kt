@@ -46,7 +46,11 @@ class AudioUrlPlayer @VisibleForTesting constructor(
     private val playerCreator: suspend (ExoPlayer.() -> Unit) -> ExoPlayer,
 ) {
 
-    constructor(context: Context, audioManager: AudioManager?, dataSourceFactoryProvider: SuspendProvider<DataSource.Factory>) : this(
+    constructor(
+        context: Context,
+        audioManager: AudioManager?,
+        dataSourceFactoryProvider: SuspendProvider<DataSource.Factory>,
+    ) : this(
         audioManager,
         {
             val player = initializePlayer(context, dataSourceFactoryProvider())

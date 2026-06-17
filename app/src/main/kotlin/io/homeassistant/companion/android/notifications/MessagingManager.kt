@@ -1394,9 +1394,9 @@ class MessagingManager @Inject constructor(
                 }
             }.build()
 
-            val response = okHttpClientProvider().newCall(request).execute()
-            image = BitmapFactory.decodeStream(response.body.byteStream())
-            response.close()
+            okHttpClientProvider().newCall(request).execute().use {
+                image = BitmapFactory.decodeStream(it.body.byteStream())
+            }
         } catch (e: Exception) {
             Timber.e(e, "Couldn't download image for notification")
         }
@@ -1430,11 +1430,10 @@ class MessagingManager @Inject constructor(
                     }
                 }.build()
 
-                val response = okHttpClientProvider().newCall(request).execute()
-                val bytes = response.body.bytes()
-                file.writeBytes(bytes)
-
-                response.close()
+                okHttpClientProvider().newCall(request).execute().use {
+                    val bytes = it.body.bytes()
+                    file.writeBytes(bytes)
+                }
             } catch (e: Exception) {
                 Timber.e(e, "Couldn't download image for notification")
             }
@@ -1507,15 +1506,15 @@ class MessagingManager @Inject constructor(
                             )
                         }
                     }.build()
-                    val response = okHttpClientProvider().newCall(request).execute()
-
                     if (!videoFile.exists()) {
                         videoFile.parentFile?.mkdirs()
                         videoFile.createNewFile()
                     }
-                    response.body.source().use { source ->
-                        videoFile.sink().use { sink ->
-                            source.readAll(sink)
+                    okHttpClientProvider().newCall(request).execute().use {
+                        it.body.source().use { source ->
+                            videoFile.sink().use { sink ->
+                                source.readAll(sink)
+                            }
                         }
                     }
 
