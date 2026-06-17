@@ -198,7 +198,7 @@ class FrontendViewModelTest {
                     onCanGoBackChanged = any(),
                 )
             } answers {
-                // onUrlIntercepted is the 4th of the 6 named arguments (zero-based index 3)
+                // onUrlIntercepted is at parameter index 3 in HAWebViewClientFactory.create
                 capturedCallback = arg(3)
                 mockk(relaxed = true)
             }
