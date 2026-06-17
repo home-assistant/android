@@ -124,8 +124,8 @@ interface SensorManager {
 
     /** @return Set of server IDs for which this sensor is enabled */
     suspend fun getEnabledServers(context: Context, basicSensor: BasicSensor): Set<Int> {
-        val permission = checkPermission(context, basicSensor.id)
-        return sensorRepository(context).get(basicSensor.id).filter { it.enabled && permission }.map { it.serverId }
+        if (!checkPermission(context, basicSensor.id)) return emptySet()
+        return sensorRepository(context).get(basicSensor.id).filter { it.enabled }.map { it.serverId }
             .toSet()
     }
 
