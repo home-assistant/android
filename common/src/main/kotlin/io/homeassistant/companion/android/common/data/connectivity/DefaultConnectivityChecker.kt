@@ -130,8 +130,7 @@ internal class DefaultConnectivityChecker @Inject constructor(defaultOkHttpClien
     }
 
     /**
-     * @return Pre-configured [OkHttpClient] as used in other places in the app with custom user agent,
-     * cookies support and certificate handling, configured with timeouts for connectivity testing.
+     * Preconfigures the provided [OkHttpClient] with timeouts for connectivity testing.
      * */
     private fun configureOkHttpClientForChecker(client: OkHttpClient): OkHttpClient = client.newBuilder()
         .connectTimeout(CONNECTIVITY_TIMEOUT)
