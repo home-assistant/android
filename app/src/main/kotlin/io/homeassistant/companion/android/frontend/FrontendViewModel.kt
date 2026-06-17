@@ -247,6 +247,13 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 }
             }
         },
+        onCanGoBackChanged = { canGoBack ->
+            // Only meaningful while the dashboard is shown; in any other state the WebView is hidden
+            // behind an overlay, so the flag is dropped with the state.
+            _viewState.update { state ->
+                if (state is FrontendViewState.Content) state.copy(canGoBack = canGoBack) else state
+            }
+        },
     )
 
     /** The current pending file chooser request from the WebView, or null if none. */
@@ -688,6 +695,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private suspend fun handleMessageResult(result: FrontendHandlerEvent) {
         when (result) {
             is FrontendHandlerEvent.Connected -> {
+                val wasLoading = _viewState.value is FrontendViewState.Loading
                 _viewState.update { currentState ->
                     if (currentState is FrontendViewState.Loading) {
                         FrontendViewState.Content(
@@ -697,6 +705,10 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                     } else {
                         currentState
                     }
+                }
+                if (wasLoading) {
+                    // Remove any previous navigation
+                    _webViewActions.emit(WebViewAction.ClearHistory())
                 }
                 permissionManager.checkNotificationPermission(_viewState.value.serverId)
             }
