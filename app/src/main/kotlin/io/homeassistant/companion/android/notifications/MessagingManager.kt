@@ -66,6 +66,7 @@ import io.homeassistant.companion.android.common.notifications.handleText
 import io.homeassistant.companion.android.common.notifications.parseColor
 import io.homeassistant.companion.android.common.notifications.parseVibrationPattern
 import io.homeassistant.companion.android.common.notifications.prepareText
+import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.createSystemAppSettingsIntent
@@ -79,7 +80,6 @@ import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechData
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
-import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.sensors.LocationSensorManager
@@ -122,7 +122,7 @@ class MessagingManager @Inject constructor(
     private val serverManager: ServerManager,
     private val prefsRepository: PrefsRepository,
     private val notificationDao: NotificationDao,
-    private val sensorDao: SensorDao,
+    private val sensorRepository: SensorRepository,
     private val settingsDao: SettingsDao,
     private val textToSpeechClient: TextToSpeechClient,
     private val flashlightHelper: FlashlightHelper,
@@ -451,7 +451,7 @@ class MessagingManager @Inject constructor(
                         }
 
                         DeviceCommandData.COMMAND_BLE_TRANSMITTER -> {
-                            if (!commandBleTransmitter(context, jsonData, sensorDao)) {
+                            if (!commandBleTransmitter(context, jsonData, sensorRepository)) {
                                 sendNotification(jsonData)
                             }
                         }

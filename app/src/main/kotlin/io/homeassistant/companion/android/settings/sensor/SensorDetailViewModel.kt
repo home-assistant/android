@@ -23,9 +23,9 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.common.sensors.NetworkSensorManager
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.SdkVersion
-import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
@@ -53,7 +53,7 @@ import timber.log.Timber
 class SensorDetailViewModel @Inject constructor(
     state: SavedStateHandle,
     private val serverManager: ServerManager,
-    private val sensorDao: SensorDao,
+    private val sensorRepository: SensorRepository,
     private val settingsDao: SettingsDao,
     private val prefsRepository: PrefsRepository,
     application: Application,
@@ -116,7 +116,7 @@ class SensorDetailViewModel @Inject constructor(
     var sensor by mutableStateOf<SensorWithAttributes?>(null)
         private set
     private var sensorCheckedEnabled = false
-    val sensorSettings = sensorDao.getSettingsFlow(sensorId).collectAsState()
+    val sensorSettings = sensorRepository.getSettingsFlow(sensorId).collectAsState()
     var sensorSettingsDialog by mutableStateOf<SettingDialogState?>(null)
         private set
 
@@ -160,7 +160,7 @@ class SensorDetailViewModel @Inject constructor(
     }
 
     init {
-        val sensorFlow = sensorDao.getFullFlow(sensorId)
+        val sensorFlow = sensorRepository.getFullFlow(sensorId)
         viewModelScope.launch {
             serverNames = serverManager.servers().associate { it.id to it.friendlyName }
 
@@ -325,7 +325,7 @@ class SensorDetailViewModel @Inject constructor(
 
     fun setSetting(setting: SensorSetting) {
         viewModelScope.launch {
-            sensorDao.add(setting)
+            sensorRepository.add(setting)
             try {
                 sensorManager?.requestSensorUpdate(getApplication())
             } catch (e: Exception) {
@@ -342,7 +342,7 @@ class SensorDetailViewModel @Inject constructor(
             } else {
                 listOf(serverId)
             }
-        sensorDao.setSensorEnabled(sensorId, serverIds, isEnabled)
+        sensorRepository.setSensorEnabled(sensorId, serverIds, isEnabled)
         refreshSensorData()
     }
 

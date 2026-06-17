@@ -128,13 +128,13 @@ class BluetoothSensorManager : SensorManager {
         )
 
         suspend fun enableDisableBLETransmitter(context: Context, transmitEnabled: Boolean) {
-            val sensorDao = DatabaseEntryPoint.resolve(context).sensorDao()
-            val sensorEntity = sensorDao.get(bleTransmitter.id)
+            val sensorRepository = DatabaseEntryPoint.resolve(context).sensorRepository()
+            val sensorEntity = sensorRepository.get(bleTransmitter.id)
             if (sensorEntity.none { it.enabled }) {
                 return
             }
 
-            sensorDao.add(
+            sensorRepository.add(
                 SensorSetting(
                     bleTransmitter.id,
                     SETTING_BLE_TRANSMIT_ENABLED,
@@ -145,8 +145,8 @@ class BluetoothSensorManager : SensorManager {
         }
 
         suspend fun enableDisableBeaconMonitor(context: Context, monitorEnabled: Boolean) {
-            val sensorDao = DatabaseEntryPoint.resolve(context).sensorDao()
-            val sensorEntity = sensorDao.get(beaconMonitor.id)
+            val sensorRepository = DatabaseEntryPoint.resolve(context).sensorRepository()
+            val sensorEntity = sensorRepository.get(beaconMonitor.id)
             if (sensorEntity.none { it.enabled }) {
                 return
             }
@@ -156,7 +156,7 @@ class BluetoothSensorManager : SensorManager {
             } else {
                 monitoringManager.stopMonitoring(context, beaconMonitoringDevice)
             }
-            sensorDao.add(
+            sensorRepository.add(
                 SensorSetting(
                     beaconMonitor.id,
                     SETTING_BEACON_MONITOR_ENABLED,
@@ -492,7 +492,7 @@ class BluetoothSensorManager : SensorManager {
         }
 
         val lastState =
-            sensorDao(context).get(bleTransmitter.id).firstOrNull()?.state ?: STATE_UNKNOWN
+            sensorRepository(context).get(bleTransmitter.id).firstOrNull()?.state ?: STATE_UNKNOWN
         val state = if (isBtOn(context)) bleTransmitterDevice.state else "Bluetooth is turned off"
         val icon = if (bleTransmitterDevice.transmitting) "mdi:bluetooth" else "mdi:bluetooth-off"
         onSensorUpdated(

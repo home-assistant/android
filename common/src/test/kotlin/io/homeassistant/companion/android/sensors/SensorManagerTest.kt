@@ -3,9 +3,9 @@ package io.homeassistant.companion.android.sensors
 import android.content.Context
 import dagger.hilt.android.EntryPointAccessors
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Sensor
-import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.mockk.coEvery
 import io.mockk.coJustRun
 import io.mockk.every
@@ -22,7 +22,7 @@ class SensorManagerTest {
     fun `Given attributes when invoking onSensorUpdated then attributes are replaced in DAO properly formatted in json`() = runTest {
         val context: Context = mockk()
         val sensorManager = FakeSensorManager()
-        val sensorDao = mockk<SensorDao>()
+        val sensorRepository = mockk<SensorRepository>()
         val entryPoint = mockk<SensorManager.SensorManagerEntryPoint>()
 
         mockkStatic(EntryPointAccessors::class)
@@ -33,8 +33,8 @@ class SensorManagerTest {
                 SensorManager.SensorManagerEntryPoint::class.java,
             )
         } returns entryPoint
-        every { entryPoint.sensorDao() } returns sensorDao
-        coEvery { sensorDao.get("test") } returns listOf(
+        every { entryPoint.sensorRepository() } returns sensorRepository
+        coEvery { sensorRepository.get("test") } returns listOf(
             Sensor(
                 id = "test",
                 serverId = 0,
@@ -42,9 +42,9 @@ class SensorManagerTest {
                 state = "test",
             ),
         )
-        coJustRun { sensorDao.update(any()) }
+        coJustRun { sensorRepository.update(any()) }
         val slot = slot<List<Attribute>>()
-        coJustRun { sensorDao.replaceAllAttributes(any(), capture(slot)) }
+        coJustRun { sensorRepository.replaceAllAttributes(any(), capture(slot)) }
 
         sensorManager.onSensorUpdated(
             context,
