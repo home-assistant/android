@@ -2,9 +2,12 @@ package io.homeassistant.companion.android.common.data
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.common.data.keychain.NamedKeyStore
+import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.common.util.SdkVersion
 import java.io.IOException
 import java.net.Socket
 import java.security.GeneralSecurityException
@@ -12,7 +15,6 @@ import java.security.KeyStore
 import java.security.Principal
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
-import java.util.Collections
 import javax.inject.Inject
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
@@ -22,72 +24,71 @@ import javax.net.ssl.X509TrustManager
 import okhttp3.OkHttpClient
 import timber.log.Timber
 
-private const val ANDROID_CA_STORE = "AndroidCAStore"
-
-// AndroidCAStore prefixes user-installed CA aliases with "user:" and system ones with "system:".
-private const val USER_CA_ALIAS_PREFIX = "user:"
-
+/**
+ * Helper to configure an [OkHttpClient] for server-certificate validation (with a
+ * user-installed CA fallback) and the client certificate for mutual TLS (mTLS).
+ */
 class TLSHelper @Inject constructor(
     @NamedKeyChain private val keyChainRepository: KeyChainRepository,
     @NamedKeyStore private val keyStore: KeyChainRepository,
 ) {
 
+    /**
+     * Configures [builder] to validate server certificates.
+     *
+     * It uses Android's default trust manager, which honors `network_security_config.xml` (system and
+     * user CAs) and can rebuild an incomplete chain itself (see
+     * https://github.com/home-assistant/android/issues/6810).
+     *
+     * Some ROMs (e.g. /e/OS, https://github.com/home-assistant/android/issues/5565) don't honor
+     * user-installed CAs through that default path even though their browser and WebView do. To cover
+     * them, the handshake also falls back to a trust manager holding only the user-installed CAs
+     * whenever the default rejects a certificate (see [withUserInstalledCaFallback]). This relies on
+     * the app opting into user CAs via `<certificates src="user"/>` in `network_security_config.xml`.
+     */
     fun setupOkHttpClientSSLSocketFactory(builder: OkHttpClient.Builder) {
-        // Default trust manager. init(null) gives us Android's default, which honors
-        // network_security_config.xml (system + user CAs) and builds the certificate chain itself.
-        // Passing an explicit KeyStore here instead breaks validation of valid certificates (#6810).
-        val platformTrustManager = defaultX509TrustManager(keyStore = null)
-
-        // Some ROMs (e.g. /e/OS, #5565) don't trust user-installed CAs through the default path even
-        // though the browser and WebView do. On those we fall back to a trust manager holding only
-        // the user-installed CAs, consulted only when the default rejects a certificate. It can add
-        // acceptances but never cause a rejection, so it can't bring back #6810. See
-        // [CompositeX509ExtendedTrustManager] for the trust trade-off.
-        //
-        // This relies on the app intending to trust user-installed CAs, which network_security_config.xml
-        // opts into with <certificates src="user"/>. If that policy is ever removed, this fallback would
-        // keep trusting user CAs against the new policy, so it must be removed or gated alongside it.
+        val platformTrustManager = defaultX509TrustManager() ?: run {
+            FailFast.fail { "No default X509 trust manager available" }
+            return
+        }
         val handshakeTrustManager = withUserInstalledCaFallback(platformTrustManager)
 
         val sslContext = SSLContext.getInstance("TLS")
         sslContext.init(arrayOf(getMTLSKeyManagerForOKHTTP()), arrayOf(handshakeTrustManager), null)
 
-        // OkHttp only uses this trust manager to build a chain cleaner for certificate pinning, which
-        // the app doesn't use, so it doesn't affect the handshake (handshakeTrustManager decides
-        // that). We still pass the default one so OkHttp keeps using Android's chain cleaner if
-        // pinning is ever added.
         builder.sslSocketFactory(sslContext.socketFactory, platformTrustManager)
     }
 
     /**
-     * Wraps [platformTrustManager] so user-installed CAs are honored as a fallback (see #5565).
+     * Wraps [trustManager] so user-installed CAs are honored as a fallback (see
+     * https://github.com/home-assistant/android/issues/5565).
      *
-     * Returns it unchanged, with no fallback, when:
-     * - running before Android N, where user-installed CAs are trusted by default;
-     * - the platform trust manager is not an [X509ExtendedTrustManager] (the composite needs the
+     * Returns [trustManager] unchanged when there is nothing to add:
+     * - before Android N, where user-installed CAs are already trusted by default;
+     * - when [trustManager] is not an [X509ExtendedTrustManager] (the composite needs the
      *   hostname-aware overloads); or
-     * - there are no user-installed CAs to fall back to.
+     * - when there are no user-installed CAs.
      */
-    private fun withUserInstalledCaFallback(platformTrustManager: X509TrustManager): X509TrustManager {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return platformTrustManager
-        val extendedPlatform = platformTrustManager as? X509ExtendedTrustManager ?: return platformTrustManager
-        val userCaTrustManager = userInstalledCaTrustManager() ?: return platformTrustManager
-        return CompositeX509ExtendedTrustManager(primary = extendedPlatform, fallback = userCaTrustManager)
+    private fun withUserInstalledCaFallback(trustManager: X509TrustManager): X509TrustManager {
+        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.N)) return trustManager
+        val extended = trustManager as? X509ExtendedTrustManager ?: return trustManager
+        val userCaTrustManager = userInstalledCaTrustManager() ?: return trustManager
+        return CompositeX509ExtendedTrustManager(primary = extended, fallback = userCaTrustManager)
     }
 
-    private fun defaultX509TrustManager(keyStore: KeyStore?): X509TrustManager {
+    private fun defaultX509TrustManager(keyStore: KeyStore? = null): X509TrustManager? {
         val factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
         factory.init(keyStore)
-        return factory.trustManagers.filterIsInstance<X509TrustManager>().first()
+        return factory.trustManagers.filterIsInstance<X509TrustManager>().firstOrNull()
     }
 
     /**
      * Builds a trust manager from the user-installed CAs (see [userInstalledCaKeyStore]), or `null`
-     * when there are none or the AndroidCAStore can't be read.
+     * when there are none or AndroidCAStore can't be read.
      */
     @RequiresApi(Build.VERSION_CODES.N)
     private fun userInstalledCaTrustManager(): X509ExtendedTrustManager? = try {
-        val androidCaStore = KeyStore.getInstance(ANDROID_CA_STORE).apply { load(null, null) }
+        val androidCaStore = loadKeyStore("AndroidCAStore")
         userInstalledCaKeyStore(androidCaStore)?.let { defaultX509TrustManager(it) as? X509ExtendedTrustManager }
     } catch (e: GeneralSecurityException) {
         Timber.w(e, "Could not read user-installed CAs, user-CA fallback disabled")
@@ -127,18 +128,24 @@ class TLSHelper @Inject constructor(
 }
 
 /**
- * Returns a key store holding only the user-installed CA certificates of [androidCaStore] (the
- * entries aliased with [USER_CA_ALIAS_PREFIX]), or `null` if there are none.
- *
- * The preinstalled system CAs are left out so the fallback can only trust CAs the user added, never
- * override the platform's rejection of a system-rooted certificate (e.g. one from a distrusted CA).
+ * Returns a new key store holding only the user-installed CA certificates of [caStore],
+ * or `null` if there are none.
  */
-internal fun userInstalledCaKeyStore(androidCaStore: KeyStore): KeyStore? {
-    val userCaAliases = Collections.list(androidCaStore.aliases())
-        .filter { it.startsWith(USER_CA_ALIAS_PREFIX) }
-    if (userCaAliases.isEmpty()) return null
-    return KeyStore.getInstance(KeyStore.getDefaultType()).apply {
-        load(null, null)
-        userCaAliases.forEach { alias -> setCertificateEntry(alias, androidCaStore.getCertificate(alias)) }
+@VisibleForTesting
+internal fun userInstalledCaKeyStore(caStore: KeyStore): KeyStore? {
+    val userCaStore = loadKeyStore()
+
+    for (alias in caStore.aliases()) {
+        if (alias.startsWith("user:")) {
+            userCaStore.setCertificateEntry(alias, caStore.getCertificate(alias))
+        }
     }
+    return userCaStore.takeIf { it.size() > 0 }
 }
+
+/**
+ * Returns a key store of the given [type] initialized with `load(null, null)`.
+ */
+@VisibleForTesting
+internal fun loadKeyStore(type: String = KeyStore.getDefaultType()): KeyStore =
+    KeyStore.getInstance(type).apply { load(null, null) }

@@ -52,8 +52,7 @@ class TLSHelperTest {
     }
 
     private fun keyStoreOf(vararg entries: Pair<String, X509Certificate>): KeyStore {
-        return KeyStore.getInstance(KeyStore.getDefaultType()).apply {
-            load(null, null)
+        return loadKeyStore().apply {
             entries.forEach { (alias, certificate) -> setCertificateEntry(alias, certificate) }
         }
     }
