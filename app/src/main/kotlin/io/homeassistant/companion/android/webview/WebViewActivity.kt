@@ -653,7 +653,7 @@ class WebViewActivity :
                                     startActivity(intent)
                                 }
                                 return true
-                            } else if (!webView.url.toString().contains(it)) {
+                            } else if (shouldOpenInExternalBrowser(currentUrl = webView.url, targetUrl = it.toUri())) {
                                 Timber.d("Launching browser")
                                 val browserIntent = Intent(Intent.ACTION_VIEW, it.toUri())
                                 startActivity(browserIntent)
