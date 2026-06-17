@@ -69,6 +69,7 @@ import io.homeassistant.companion.android.common.notifications.prepareText
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.createSystemAppSettingsIntent
+import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.getActiveNotification
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
@@ -118,7 +119,7 @@ import timber.log.Timber
 
 class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,
-    private val okHttpClient: OkHttpClient,
+    private val okHttpClientProvider: SuspendProvider<OkHttpClient>,
     private val serverManager: ServerManager,
     private val prefsRepository: PrefsRepository,
     private val notificationDao: NotificationDao,
@@ -1393,8 +1394,8 @@ class MessagingManager @Inject constructor(
                 }
             }.build()
 
-            val response = okHttpClient.newCall(request).execute()
-            image = BitmapFactory.decodeStream(response.body?.byteStream())
+            val response = okHttpClientProvider().newCall(request).execute()
+            image = BitmapFactory.decodeStream(response.body.byteStream())
             response.close()
         } catch (e: Exception) {
             Timber.e(e, "Couldn't download image for notification")
@@ -1429,8 +1430,8 @@ class MessagingManager @Inject constructor(
                     }
                 }.build()
 
-                val response = okHttpClient.newCall(request).execute()
-                val bytes = response.body?.bytes() ?: return@withContext null
+                val response = okHttpClientProvider().newCall(request).execute()
+                val bytes = response.body.bytes()
                 file.writeBytes(bytes)
 
                 response.close()
@@ -1506,7 +1507,7 @@ class MessagingManager @Inject constructor(
                             )
                         }
                     }.build()
-                    val response = okHttpClient.newCall(request).execute()
+                    val response = okHttpClientProvider().newCall(request).execute()
 
                     if (!videoFile.exists()) {
                         videoFile.parentFile?.mkdirs()

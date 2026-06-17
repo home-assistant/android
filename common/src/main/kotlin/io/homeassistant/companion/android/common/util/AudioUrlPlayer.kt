@@ -16,6 +16,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
 import androidx.media3.exoplayer.ExoPlayer
+import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -45,10 +46,10 @@ class AudioUrlPlayer @VisibleForTesting constructor(
     private val playerCreator: suspend (ExoPlayer.() -> Unit) -> ExoPlayer,
 ) {
 
-    constructor(context: Context, audioManager: AudioManager?, dataSourceFactory: DataSource.Factory) : this(
+    constructor(context: Context, audioManager: AudioManager?, dataSourceFactoryProvider: SuspendProvider<DataSource.Factory>) : this(
         audioManager,
         {
-            val player = initializePlayer(context, dataSourceFactory)
+            val player = initializePlayer(context, dataSourceFactoryProvider())
             player.apply(it)
         },
     )

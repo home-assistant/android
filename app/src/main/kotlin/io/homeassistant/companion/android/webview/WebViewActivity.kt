@@ -100,6 +100,7 @@ import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.common.util.SdkVersion
+import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.getBooleanOrElse
 import io.homeassistant.companion.android.common.util.getBooleanOrNull
 import io.homeassistant.companion.android.common.util.getDoubleOrElse
@@ -283,7 +284,7 @@ class WebViewActivity :
     lateinit var checkLocationDisabled: CheckLocationDisabledUseCase
 
     @Inject
-    lateinit var dataSourceFactory: DataSource.Factory
+    lateinit var dataSourceFactoryProvider: SuspendProvider<DataSource.Factory>
 
     private lateinit var webView: WebView
     private var loadedUrl: Uri? = null
@@ -1424,7 +1425,7 @@ class WebViewActivity :
         val uri = payload?.getStringOrNull("url")?.toUri() ?: return
         val isMuted = payload.getBooleanOrElse("muted", false)
         lifecycleScope.launch {
-            exoPlayer.value = initializePlayer(this@WebViewActivity, dataSourceFactory).apply {
+            exoPlayer.value = initializePlayer(this@WebViewActivity, dataSourceFactoryProvider()).apply {
                 setMediaItem(MediaItem.fromUri(uri))
                 playWhenReady = true
                 addListener(
