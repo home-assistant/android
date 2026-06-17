@@ -1,14 +1,12 @@
 package io.homeassistant.companion.android.common.data
 
-import java.io.ByteArrayInputStream
 import java.security.KeyStore
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
-import java.util.Base64
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNotNull
+import org.junit.jupiter.api.assertNull
 
 class TLSHelperTest {
 
@@ -22,7 +20,7 @@ class TLSHelperTest {
         val userCaStore = userInstalledCaKeyStore(store)
 
         assertNotNull(userCaStore)
-        assertEquals(1, userCaStore!!.size())
+        assertEquals(1, userCaStore.size())
         assertNotNull(userCaStore.getCertificateAlias(USER_CA))
         assertNull(userCaStore.getCertificateAlias(SYSTEM_CA))
     }
@@ -38,7 +36,7 @@ class TLSHelperTest {
         val userCaStore = userInstalledCaKeyStore(store)
 
         assertNotNull(userCaStore)
-        assertEquals(2, userCaStore!!.size())
+        assertEquals(2, userCaStore.size())
     }
 
     @Test
@@ -61,15 +59,41 @@ class TLSHelperTest {
     }
 
     companion object {
-        private val USER_CA = loadCertificate("/tls/user-ca.b64")
-        private val SYSTEM_CA = loadCertificate("/tls/system-ca.b64")
+        private val USER_CA = parseCertificate(
+            """
+            -----BEGIN CERTIFICATE-----
+            MIIBgjCCASmgAwIBAgIUK3+GgehOO2LIwFaGYCqBPSfr9gAwCgYIKoZIzj0EAwIw
+            FzEVMBMGA1UEAwwMVGVzdCBVc2VyIENBMB4XDTI2MDYxNTA5MTYxMloXDTM2MDYx
+            MjA5MTYxMlowFzEVMBMGA1UEAwwMVGVzdCBVc2VyIENBMFkwEwYHKoZIzj0CAQYI
+            KoZIzj0DAQcDQgAEuWKQFJagdiv0NG8ROZUjviXdxMAYZVIPiBRtPKZ4xEdZ3TSy
+            7gFe5R6ZRGD65P/554JCVv99Z5UiUdrn3A0Dt6NTMFEwHQYDVR0OBBYEFNTSQ/2z
+            oR4mJW8BfJjWudET1UR+MB8GA1UdIwQYMBaAFNTSQ/2zoR4mJW8BfJjWudET1UR+
+            MA8GA1UdEwEB/wQFMAMBAf8wCgYIKoZIzj0EAwIDRwAwRAIgWRDzptriiK+L11Em
+            KRPW95Y/AAevho3810p++8sAiK8CIBL/aktDSszIPhvngN/YObx9Rsa1X0GhbCur
+            WttX27wB
+            -----END CERTIFICATE-----
+            """.trimIndent(),
+        )
 
-        private fun loadCertificate(resource: String): X509Certificate {
-            val base64 = TLSHelperTest::class.java.getResourceAsStream(resource)!!
-                .bufferedReader().use { it.readText() }.trim()
-            val der = Base64.getDecoder().decode(base64)
+        private val SYSTEM_CA = parseCertificate(
+            """
+            -----BEGIN CERTIFICATE-----
+            MIIBhjCCAS2gAwIBAgIULM9Sv5gifek7RA04cDsow+5DUC8wCgYIKoZIzj0EAwIw
+            GTEXMBUGA1UEAwwOVGVzdCBTeXN0ZW0gQ0EwHhcNMjYwNjE1MDkxNjEyWhcNMzYw
+            NjEyMDkxNjEyWjAZMRcwFQYDVQQDDA5UZXN0IFN5c3RlbSBDQTBZMBMGByqGSM49
+            AgEGCCqGSM49AwEHA0IABIoDRdoHkgePxBTI/FrxNtwmlmw2ASjf0nDsXrGzvaCe
+            Hmopa+Kk+XidaLBFM7uxs01pYfMwfsVM8EFuK4OOsxajUzBRMB0GA1UdDgQWBBR5
+            9mR1Ojk9OqBRX1pZSuaNsSnkuTAfBgNVHSMEGDAWgBR59mR1Ojk9OqBRX1pZSuaN
+            sSnkuTAPBgNVHRMBAf8EBTADAQH/MAoGCCqGSM49BAMCA0cAMEQCIFWTMdMCTVkn
+            0sVpgRzAofWK821vZgz9M2c9KOWLYrQNAiAAlkVuqpbn6Z+KXNvkMteeAyr0sTwn
+            8x92kn3oJNr6WA==
+            -----END CERTIFICATE-----
+            """.trimIndent(),
+        )
+
+        private fun parseCertificate(pem: String): X509Certificate {
             return CertificateFactory.getInstance("X.509")
-                .generateCertificate(ByteArrayInputStream(der)) as X509Certificate
+                .generateCertificate(pem.byteInputStream()) as X509Certificate
         }
     }
 }
