@@ -195,6 +195,7 @@ class FrontendViewModelTest {
                     onUrlIntercepted = any(),
                     onPageFinished = any(),
                     onReceivedHttpAuthRequest = any(),
+                    onCanGoBackChanged = any(),
                 )
             } answers {
                 // onUrlIntercepted is the 4th of the 6 named arguments (zero-based index 3)
@@ -203,7 +204,11 @@ class FrontendViewModelTest {
             }
 
             val viewModel = createViewModel()
-            return viewModel to { uri -> capturedCallback!!.invoke(uri, false) }
+            return viewModel to { uri ->
+                val callback = capturedCallback
+                assertNotNull(callback)
+                callback.invoke(uri, false)
+            }
         }
 
         private fun uri(value: String): Uri = mockk {
@@ -1319,7 +1324,9 @@ class FrontendViewModelTest {
             }
 
             val viewModel = createViewModel(httpAuthHandler = httpAuthHandler, dialogManager = dialogManager)
-            return viewModel to capturedCallback!!
+            val callback = capturedCallback
+            assertNotNull(callback)
+            return viewModel to callback
         }
 
         @Test
@@ -1421,7 +1428,11 @@ class FrontendViewModelTest {
             }
 
             val viewModel = createViewModel()
-            return viewModel to { capturedCanGoBackChanged!!.invoke(it) }
+            return viewModel to {
+                val callback = capturedCanGoBackChanged
+                assertNotNull(callback)
+                callback.invoke(it)
+            }
         }
 
         /** Reads the back-navigation flag from the current state (only the dashboard carries it). */
