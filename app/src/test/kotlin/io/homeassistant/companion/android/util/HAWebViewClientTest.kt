@@ -28,6 +28,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 
 @ExtendWith(MainDispatcherJUnit5Extension::class)
 class HAWebViewClientTest {
@@ -412,6 +414,29 @@ class HAWebViewClientTest {
         assertEquals("example.com", capturedHost)
         assertEquals("https://example.com/protected", capturedResource)
         assertEquals("myrealm", capturedRealm)
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = [true, false])
+    fun `Given onCanGoBackChanged callback when doUpdateVisitedHistory then reports webView canGoBack`(
+        canGoBack: Boolean,
+    ) {
+        var captured: Boolean? = null
+        val client = HAWebViewClient(
+            keyChainRepository = keyChainRepository,
+            currentUrlFlow = currentUrlFlow,
+            onFrontendError = { capturedError = it },
+            onCrash = null,
+            onUrlIntercepted = null,
+            onPageFinished = null,
+            onReceivedHttpAuthRequest = null,
+            onCanGoBackChanged = { captured = it },
+        )
+        val webView = mockk<WebView> { every { canGoBack() } returns canGoBack }
+
+        client.doUpdateVisitedHistory(webView, "https://example.com", false)
+
+        assertEquals(canGoBack, captured)
     }
 
     @Test

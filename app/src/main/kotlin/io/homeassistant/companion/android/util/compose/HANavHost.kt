@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
+import androidx.navigation.navOptions
 import io.homeassistant.companion.android.automotive.navigation.carAppActivity
 import io.homeassistant.companion.android.automotive.navigation.navigateToCarAppActivity
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
@@ -67,10 +68,13 @@ internal fun HANavHost(
                 navController,
                 onShowSnackbar = onShowSnackbar,
                 onOnboardingDone = {
+                    val navOptions = navOptions {
+                        popUpTo<OnboardingRoute> { inclusive = true }
+                    }
                     if (isAutomotive) {
-                        navController.navigateToCarAppActivity()
+                        navController.navigateToCarAppActivity(navOptions)
                     } else {
-                        navController.navigateToFrontend()
+                        navController.navigateToFrontend(navOptions = navOptions)
                     }
                 },
                 urlToOnboard = (startDestination as? OnboardingRoute)?.urlToOnboard,
