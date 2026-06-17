@@ -312,6 +312,37 @@ data class MatterCommissionMessage(override val id: Int? = null) : IncomingExter
 data class ThreadImportCredentialsMessage(override val id: Int? = null) : IncomingExternalBusMessage
 
 /**
+ * Inverse of [ThreadImportCredentialsMessage]: the frontend Thread panel's "Send credentials to
+ * phone" button on a preferred dataset row fires this with the active operational dataset
+ * already inlined.
+ *
+ * The app stores the credential in the device's Thread credential storage (Google Play
+ * Services); the message name follows the frontend/iOS naming, where the credentials land in
+ * the Apple Keychain. All
+ * fields are hex strings as sent by the frontend; the [activeOperationalDataset] decodes to the
+ * raw Thread TLV.
+ *
+ * Will not be sent by the frontend when the device reports
+ * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResult.canTransferThreadCredentialsToKeychain] = `false`.
+ *
+ * @see <a href="https://github.com/home-assistant/frontend/blob/dev/src/panels/config/integrations/integration-panels/thread/thread-config-panel.ts">thread-config-panel.ts</a>
+ */
+@Serializable
+@SerialName("thread/store_in_platform_keychain")
+data class ThreadStoreInPlatformKeychainMessage(
+    override val id: Int? = null,
+    val payload: ThreadStoreInPlatformKeychainPayload,
+) : IncomingExternalBusMessage
+
+@Serializable
+data class ThreadStoreInPlatformKeychainPayload(
+    @SerialName("mac_extended_address") val macExtendedAddress: String,
+    @SerialName("border_agent_id") val borderAgentId: String,
+    @SerialName("active_operational_dataset") val activeOperationalDataset: String,
+    @SerialName("extended_pan_id") val extendedPanId: String,
+)
+
+/**
  * Message requesting the app to open the in-app barcode scanner overlay.
  *
  * Once scanning completes (or is cancelled), the app responds out-of-band with a

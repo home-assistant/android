@@ -34,6 +34,7 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenSett
 import io.homeassistant.companion.android.frontend.externalbus.incoming.TagWriteMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ThemeUpdateMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ThreadImportCredentialsMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.ThreadStoreInPlatformKeychainMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.UnknownIncomingMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResultMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.EntityAddToActionsResultMessage
@@ -298,6 +299,28 @@ class FrontendMessageHandler @Inject constructor(
                 FrontendHandlerEvent.ImportThreadCredentials
             }
 
+            is ThreadStoreInPlatformKeychainMessage -> {
+                Timber.d(
+                    "thread/store_in_platform_keychain received with id: %s (BA=%s)",
+                    message.id,
+                    message.payload.borderAgentId,
+                )
+                val tlv = try {
+                    decodeHex(message.payload.activeOperationalDataset)
+                } catch (e: Exception) {
+                    Timber.w(e, "thread/store_in_platform_keychain: cannot decode TLV hex")
+                    null
+                }
+                if (tlv == null || message.payload.borderAgentId.isBlank()) {
+                    FrontendHandlerEvent.UnknownMessage
+                } else {
+                    FrontendHandlerEvent.StoreThreadCredentialsInPlatformKeychain(
+                        borderAgentId = message.payload.borderAgentId,
+                        tlv = tlv,
+                    )
+                }
+            }
+
             is UnknownIncomingMessage -> {
                 Timber.d("Unknown message type received: ${message.content}")
                 FrontendHandlerEvent.UnknownMessage
@@ -328,4 +351,7 @@ class FrontendMessageHandler @Inject constructor(
         )
         externalBusRepository.send(response)
     }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    private fun decodeHex(hex: String): ByteArray = hex.hexToByteArray()
 }

@@ -1,8 +1,11 @@
 package io.homeassistant.companion.android.frontend.matterthread
 
+import android.content.Context
 import android.content.IntentSender
 import androidx.activity.result.ActivityResult
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.scopes.ViewModelScoped
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
@@ -54,6 +57,7 @@ internal class FrontendMatterThreadHandler @Inject constructor(
     private val dialogManager: FrontendDialogManager,
     private val externalBusRepository: FrontendExternalBusRepository,
     private val serverManager: ServerManager,
+    @param:ApplicationContext private val applicationContext: Context,
 ) {
 
     /**
@@ -190,9 +194,123 @@ internal class FrontendMatterThreadHandler @Inject constructor(
             when (current) {
                 is InFlight.Matter -> handleMatterIntentResult(result)
                 is InFlight.Thread -> handleThreadIntentResult(result, current.serverId)
+                is InFlight.ThreadStore -> Timber.w(
+                    "Matter/Thread intent result received during a ThreadStore flow; ignoring " +
+                        "(this flow does not launch an IntentSender)",
+                )
             }
         } finally {
             inFlight.set(null)
+        }
+    }
+
+    /**
+     * Drive the HA → Phone Thread credential add flow triggered by the frontend Thread panel's
+     * "Send credentials to phone" button.
+     *
+     * Unlike [onImportThreadCredentials], this flow does not launch a Play Services
+     * `IntentSender` — the credential is added directly via [ThreadManager.addCredentialToDevice].
+     * The shape is therefore:
+     *  1. progress dialog while [ThreadManager.predictPreferredOutcome] reads the stored
+     *     credentials state;
+     *  2. preflight confirm/information dialog based on the prediction (4 variants);
+     *  3. progress dialog while [ThreadManager.addCredentialToDevice] writes;
+     *  4. result information dialog reporting whether Play Services prefers the just-added
+     *     credential.
+     *
+     * The result is always reported via [FrontendDialogManager.showInformation] (not a terminal
+     * dialog/snackbar) because every message references the network name, which the
+     * @StringRes-only [MatterThreadTerminal] cannot interpolate.
+     *
+     * No-op if another flow is already in-flight.
+     */
+    suspend fun onStoreThreadCredentialsInPlatformKeychain(serverId: Int, borderAgentId: String, tlv: ByteArray) {
+        if (!inFlight.compareAndSet(null, InFlight.ThreadStore)) {
+            Timber.w("thread/store_in_platform_keychain ignored: another flow is in-flight")
+            return
+        }
+        try {
+            if (!threadManager.appSupportsThread()) {
+                dialogManager.showInformation(
+                    applicationContext.getString(commonR.string.thread_store_unsupported),
+                )
+                return
+            }
+            val networkName = threadManager.networkNameFromTlv(tlv)
+            if (networkName == null) {
+                dialogManager.showInformation(
+                    applicationContext.getString(commonR.string.thread_store_invalid_payload),
+                )
+                return
+            }
+            val outcome = withProgress { threadManager.predictPreferredOutcome(tlv) }
+            val proceed = when (outcome) {
+                ThreadManager.PreflightOutcome.AlreadyPreferred -> {
+                    dialogManager.showInformation(
+                        applicationContext.getString(commonR.string.thread_store_already_preferred, networkName),
+                    )
+                    return
+                }
+                is ThreadManager.PreflightOutcome.DifferentAppPreferred ->
+                    dialogManager.showConfirm(
+                        applicationContext.getString(
+                            commonR.string.thread_store_different_preferred,
+                            networkName,
+                            outcome.networkName,
+                        ),
+                    )
+                ThreadManager.PreflightOutcome.LikelyToBecomePreferred ->
+                    dialogManager.showConfirm(
+                        applicationContext.getString(commonR.string.thread_store_likely_preferred, networkName),
+                    )
+                ThreadManager.PreflightOutcome.Unknown ->
+                    dialogManager.showConfirm(
+                        applicationContext.getString(commonR.string.thread_store_unknown_preferred, networkName),
+                    )
+            }
+            if (!proceed) return
+
+            val resultMessage = try {
+                val isPreferred = withProgress {
+                    threadManager.addCredentialToDevice(serverId = serverId, tlv = tlv, borderAgentId = borderAgentId)
+                }
+                Timber.d("Thread store: added '%s' (preferred=%s)", networkName, isPreferred)
+                when (isPreferred) {
+                    true -> applicationContext.getString(commonR.string.thread_store_added_preferred, networkName)
+                    false -> applicationContext.getString(commonR.string.thread_store_added_not_preferred, networkName)
+                    null -> applicationContext.getString(commonR.string.thread_store_added_unknown, networkName)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.w(e, "Thread store: failed to add credential '%s'", networkName)
+                applicationContext.getString(commonR.string.thread_store_failed, networkName, e.message ?: "")
+            }
+            dialogManager.showInformation(resultMessage)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Unexpected error storing Thread credentials on the device")
+            dialogManager.showInformation(
+                applicationContext.getString(commonR.string.thread_store_failed_unknown),
+            )
+        } finally {
+            inFlight.set(null)
+        }
+    }
+
+    /**
+     * Run [block] with the Matter/Thread progress dialog on screen for its duration. The
+     * progress dialog is dismissed by cancelling its job — the [FrontendDialogManager] frees the
+     * slot from [SingleSlotQueue.awaitResult]'s cancellation handler so the next dialog can
+     * follow immediately.
+     */
+    private suspend fun <T> withProgress(block: suspend () -> T): T = supervisorScope {
+        val job = launch { dialogManager.showMatterThreadProgress() }
+        try {
+            block()
+        } finally {
+            job.cancel()
         }
     }
 
@@ -267,5 +385,13 @@ internal class FrontendMatterThreadHandler @Inject constructor(
     private sealed interface InFlight {
         data object Matter : InFlight
         data class Thread(val serverId: Int) : InFlight
+
+        /**
+         * HA → Phone Thread credential add flow. No payload here: this flow does not produce an
+         * IntentSender, so [onMatterThreadIntentResult] never needs to dispatch on it. The
+         * variant only exists to occupy [inFlight] and block other flows from running
+         * concurrently.
+         */
+        data object ThreadStore : InFlight
     }
 }
