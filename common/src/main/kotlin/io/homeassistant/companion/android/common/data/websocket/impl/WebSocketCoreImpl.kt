@@ -641,7 +641,9 @@ internal class WebSocketCoreImpl(
 
     override fun shutdown() {
         Timber.i("Shutting down websocket")
-        connectionHolder.get()?.webSocket?.close(1001, "Session removed from app.")
+        wsScope.launch {
+            close(1001, "Session removed from app.")
+        }
     }
 
     // ----- WebSocketListener section

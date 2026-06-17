@@ -893,11 +893,13 @@ shutdown()
         advanceTimeBy(100)
 
         webSocketCore.shutdown()
+        advanceUntilIdle()
         verify(exactly = 1) { mockConnection.close(1001, "Session removed from app.") }
 
         advanceTimeBy(50)
 
         assertTrue(webSocketCore.connect())
+        advanceUntilIdle()
         verify(exactly = 2) { mockOkHttpClient.newWebSocket(any(), webSocketListener) }
     }
 
