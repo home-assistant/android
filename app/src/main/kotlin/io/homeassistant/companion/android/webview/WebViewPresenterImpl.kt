@@ -130,42 +130,20 @@ class WebViewPresenterImpl @Inject constructor(
         isNewServer: Boolean,
     ) {
         var pathConsumed = false
-        var lastBaseUrl: URL? = null
 
         if (isInternalOverride != null) {
             Timber.d("Using isInternalOverride to get URL")
         }
 
         serverManager.connectionStateProvider(serverId).urlFlow(isInternalOverride).collect { urlState ->
-            val currentBaseUrl = (urlState as? UrlState.HasUrl)?.url
-            // baseUrlChanged is only true from the second emission onwards; the first emission
-            // establishes lastBaseUrl and is therefore not considered a change.
-            val baseUrlChanged = currentBaseUrl != null && lastBaseUrl?.let { it != currentBaseUrl } == true
-            if (currentBaseUrl != null) lastBaseUrl = currentBaseUrl
-
-            val effectiveRelativeUrl = if (!pathConsumed && path != null) {
-                pathConsumed = true
-                path
-            } else if (baseUrlChanged && !isNewServer) {
-                // On internal/external URL switches on the same server, preserve the full
-                // relative URL (path + query params + fragment) so the user stays on the exact
-                // same page, including filtered views like history with date ranges.
-                // Skipped for server switches where the path may not exist and would leak
-                // navigation context from the previous server.
-                view.getCurrentWebViewRelativeUrl()
-            } else {
-                null
-            }
+            val shouldConsumePath = !pathConsumed && path != null
+            if (shouldConsumePath) pathConsumed = true
 
             handleUrlState(
                 urlState = urlState,
-                path = effectiveRelativeUrl,
-                shouldConsumePath = effectiveRelativeUrl != null,
-                // Keep the WebView back-stack for same-server reloads (incl. internal <-> external
-                // URL switches). The stale cross-origin previousUrl is exactly the signal
-                // resolveBackAction uses to return NavigateToRoot and route the user to the
-                // dashboard before exiting. Only server switches discard history.
-                keepHistory = !isNewServer,
+                path = path,
+                shouldConsumePath = shouldConsumePath,
+                isNewServer = isNewServer,
             )
         }
     }
@@ -202,13 +180,13 @@ class WebViewPresenterImpl @Inject constructor(
         urlState: UrlState,
         path: String?,
         shouldConsumePath: Boolean,
-        keepHistory: Boolean,
+        isNewServer: Boolean,
     ) {
         when (urlState) {
             is UrlState.HasUrl -> loadUrl(
                 baseUrl = urlState.url,
                 path = if (shouldConsumePath) path else null,
-                keepHistory = keepHistory,
+                isNewServer = isNewServer,
             )
 
             UrlState.InsecureState -> view.showBlockInsecure(serverId = serverId)
@@ -223,10 +201,9 @@ class WebViewPresenterImpl @Inject constructor(
      *
      * @param baseUrl the base server URL
      * @param path optional path to append (ignored if starts with "entityId:")
-     * @param keepHistory whether to keep WebView history after loading. False when the
-     *        base URL changes (e.g. server or connection switch) so old entries become unreachable.
+     * @param isNewServer whether this is a new server (affects history behavior)
      */
-    private suspend fun loadUrl(baseUrl: URL?, path: String?, keepHistory: Boolean) {
+    private suspend fun loadUrl(baseUrl: URL?, path: String?, isNewServer: Boolean) {
         val urlToLoad = if (path != null && !path.startsWith("entityId:")) {
             UrlUtil.handle(baseUrl, path)
         } else {
@@ -249,7 +226,7 @@ class WebViewPresenterImpl @Inject constructor(
                 } else {
                     view.loadUrl(
                         url = urlWithAuth,
-                        keepHistory = keepHistory,
+                        keepHistory = !isNewServer,
                         openInApp = it.baseIsEqual(baseUrl),
                         // We need the frontend to notify us of the mode to use for the status bar https://github.com/home-assistant/frontend/issues/29125
                         serverHandleInsets = false,
