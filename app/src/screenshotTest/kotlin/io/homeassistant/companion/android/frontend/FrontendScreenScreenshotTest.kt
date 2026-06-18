@@ -317,7 +317,6 @@ class FrontendScreenScreenshotTest {
     fun `FrontendScreen Content with Matter Thread progress dialog`() {
         HAThemeForPreview {
             FrontendScreenContent(
-                onBackClick = {},
                 viewState = FrontendViewState.Content(
                     serverId = 1,
                     url = "https://example.com",
@@ -346,7 +345,6 @@ class FrontendScreenScreenshotTest {
     fun `FrontendScreen Content with Matter Thread no dataset dialog`() {
         HAThemeForPreview {
             FrontendScreenContent(
-                onBackClick = {},
                 viewState = FrontendViewState.Content(
                     serverId = 1,
                     url = "https://example.com",
@@ -378,7 +376,6 @@ class FrontendScreenScreenshotTest {
     fun `FrontendScreen Content with Matter Thread not connected dialog`() {
         HAThemeForPreview {
             FrontendScreenContent(
-                onBackClick = {},
                 viewState = FrontendViewState.Content(
                     serverId = 1,
                     url = "https://example.com",
