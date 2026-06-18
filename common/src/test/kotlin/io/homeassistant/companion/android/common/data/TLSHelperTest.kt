@@ -29,7 +29,7 @@ class TLSHelperTest {
     fun `Given several user CAs when filtering then all of them are kept`() {
         val store = keyStoreOf(
             "user:1a2b.0" to USER_CA,
-            "user:5e6f.0" to SYSTEM_CA,
+            "user:5e6f.0" to USER_CA,
             "system:3c4d.0" to SYSTEM_CA,
         )
 
