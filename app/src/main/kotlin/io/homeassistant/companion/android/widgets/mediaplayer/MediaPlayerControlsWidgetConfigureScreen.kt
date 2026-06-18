@@ -1,175 +1,323 @@
 package io.homeassistant.companion.android.widgets.mediaplayer
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HACheckbox
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
 import io.homeassistant.companion.android.common.compose.composable.HATextField
+import io.homeassistant.companion.android.common.compose.composable.HATopBar
+import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
+import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
+import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+import io.homeassistant.companion.android.util.compose.entity.EntityPicker
+import io.homeassistant.companion.android.util.previewEntity1
+import io.homeassistant.companion.android.util.previewEntity2
+import io.homeassistant.companion.android.util.previewServer1
+import io.homeassistant.companion.android.util.previewServer2
+
+/**
+ * Stateful entry point that connects [MediaPlayerControlsWidgetConfigureViewModel] to the stateless
+ * [MediaPlayerControlsWidgetConfigureView]. Collects the view state and surfaces one-shot user
+ * messages as a Snackbar.
+ */
+@Composable
+internal fun MediaPlayerControlsWidgetConfigureScreen(
+    viewModel: MediaPlayerControlsWidgetConfigureViewModel,
+    dynamicColorAvailable: Boolean,
+    onActionClick: () -> Unit,
+    onClose: () -> Unit,
+) {
+    val state by viewModel.viewState.collectAsStateWithLifecycle()
+    val servers by viewModel.servers.collectAsStateWithLifecycle(emptyList())
+    val entities by viewModel.entities.collectAsStateWithLifecycle()
+    val entityRegistry by viewModel.entityRegistry.collectAsStateWithLifecycle()
+    val deviceRegistry by viewModel.deviceRegistry.collectAsStateWithLifecycle()
+    val areaRegistry by viewModel.areaRegistry.collectAsStateWithLifecycle()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    LaunchedEffect(snackbarHostState) {
+        viewModel.userMessages.collect { messageResId ->
+            snackbarHostState.showSnackbar(context.getString(messageResId))
+        }
+    }
+
+    MediaPlayerControlsWidgetConfigureView(
+        state = state,
+        servers = servers,
+        entities = entities,
+        dynamicColorAvailable = dynamicColorAvailable,
+        onServerSelected = viewModel::onServerSelected,
+        onEntitySelected = viewModel::onEntitySelected,
+        onLabelChanged = viewModel::onLabelChanged,
+        onShowVolumeChanged = viewModel::onShowVolumeChanged,
+        onShowSkipChanged = viewModel::onShowSkipChanged,
+        onShowSeekChanged = viewModel::onShowSeekChanged,
+        onShowSourceChanged = viewModel::onShowSourceChanged,
+        onBackgroundTypeSelected = viewModel::onBackgroundTypeSelected,
+        onActionClick = onActionClick,
+        onClose = onClose,
+        snackbarHostState = snackbarHostState,
+        entityRegistry = entityRegistry,
+        deviceRegistry = deviceRegistry,
+        areaRegistry = areaRegistry,
+    )
+}
 
 /**
  * Stateless configuration screen for the Media Player Controls widget.
  *
- * All state is hoisted to the caller (the configure activity) so this composable can be
- * previewed and screenshot-tested in isolation.
+ * All state is hoisted to the caller so this composable can be previewed and screenshot-tested in
+ * isolation.
  */
 @Composable
-internal fun MediaPlayerControlsWidgetConfigureScreen(
-    servers: List<HADropdownItem<Int>>,
-    selectedServerId: Int?,
+internal fun MediaPlayerControlsWidgetConfigureView(
+    state: MediaPlayerControlsWidgetConfigureViewState,
+    servers: List<Server>,
+    entities: List<Entity>,
+    dynamicColorAvailable: Boolean,
     onServerSelected: (Int) -> Unit,
-    entityId: String,
-    onEntityIdChange: (String) -> Unit,
-    showVolume: Boolean,
-    onShowVolumeChange: (Boolean) -> Unit,
-    showSkip: Boolean,
-    onShowSkipChange: (Boolean) -> Unit,
-    showSeek: Boolean,
-    onShowSeekChange: (Boolean) -> Unit,
-    showSource: Boolean,
-    onShowSourceChange: (Boolean) -> Unit,
-    widgetLabel: String,
-    onWidgetLabelChange: (String) -> Unit,
-    backgroundOptions: List<HADropdownItem<String>>,
-    selectedBackgroundKey: String,
-    onBackgroundSelected: (String) -> Unit,
-    isUpdate: Boolean,
-    onAddWidgetClick: () -> Unit,
+    onEntitySelected: (String?) -> Unit,
+    onLabelChanged: (String) -> Unit,
+    onShowVolumeChanged: (Boolean) -> Unit,
+    onShowSkipChanged: (Boolean) -> Unit,
+    onShowSeekChanged: (Boolean) -> Unit,
+    onShowSourceChanged: (Boolean) -> Unit,
+    onBackgroundTypeSelected: (WidgetBackgroundType) -> Unit,
+    onActionClick: () -> Unit,
+    onClose: () -> Unit,
     modifier: Modifier = Modifier,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+    entityRegistry: List<EntityRegistryResponse>? = null,
+    deviceRegistry: List<DeviceRegistryResponse>? = null,
+    areaRegistry: List<AreaRegistryResponse>? = null,
 ) {
-    Scaffold(modifier = modifier, contentWindowInsets = WindowInsets.safeDrawing) { paddingValues ->
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            HATopBar(
+                title = { Text(stringResource(commonR.string.select_entity_to_display)) },
+                onCloseClick = onClose,
+            )
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        contentWindowInsets = WindowInsets.safeDrawing,
+    ) { contentPadding ->
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+                .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+                .padding(contentPadding)
+                .padding(HADimens.SPACE4),
+            verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
         ) {
-            Text(
-                text = stringResource(commonR.string.select_entity_to_display),
-                style = HATextStyle.Headline,
-                modifier = Modifier.padding(bottom = 20.dp),
-            )
-
-            if (servers.size > 1) {
+            if (servers.size > 1 || (state.isUpdateWidget && servers.none { it.id == state.selectedServerId })) {
                 HADropdownMenu(
-                    items = servers,
-                    selectedKey = selectedServerId,
+                    items = servers.map { HADropdownItem(key = it.id, label = it.friendlyName) },
+                    selectedKey = state.selectedServerId,
                     onItemSelected = onServerSelected,
                     label = stringResource(commonR.string.widget_spinner_server),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp),
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
 
-            HATextField(
-                value = entityId,
-                onValueChange = onEntityIdChange,
-                label = { Text(stringResource(commonR.string.label_entity_ids)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
+            EntityPicker(
+                entities = entities,
+                selectedEntityId = state.selectedEntityId,
+                onEntitySelectedId = onEntitySelected,
+                onEntityCleared = { onEntitySelected(null) },
+                entityRegistry = entityRegistry,
+                deviceRegistry = deviceRegistry,
+                areaRegistry = areaRegistry,
             )
 
-            LabeledCheckbox(
-                checked = showVolume,
-                onCheckedChange = onShowVolumeChange,
-                label = stringResource(commonR.string.widget_media_show_volume),
-            )
-
-            LabeledCheckbox(
-                checked = showSkip,
-                onCheckedChange = onShowSkipChange,
-                label = stringResource(commonR.string.widget_media_show_skip),
-            )
-
-            LabeledCheckbox(
-                checked = showSeek,
-                onCheckedChange = onShowSeekChange,
-                label = stringResource(commonR.string.widget_media_show_seek),
-            )
-
-            LabeledCheckbox(
-                checked = showSource,
-                onCheckedChange = onShowSourceChange,
-                label = stringResource(commonR.string.widget_media_show_source),
-                modifier = Modifier.padding(bottom = 16.dp),
+            MediaControlsOptions(
+                state = state,
+                onShowVolumeChanged = onShowVolumeChanged,
+                onShowSkipChanged = onShowSkipChanged,
+                onShowSeekChanged = onShowSeekChanged,
+                onShowSourceChanged = onShowSourceChanged,
             )
 
             HATextField(
-                value = widgetLabel,
-                onValueChange = onWidgetLabelChange,
+                value = state.label,
+                onValueChange = onLabelChanged,
                 label = { Text(stringResource(commonR.string.label_label)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
+                maxLines = 1,
+                modifier = Modifier.fillMaxWidth(),
             )
 
-            HADropdownMenu(
-                items = backgroundOptions,
-                selectedKey = selectedBackgroundKey,
-                onItemSelected = onBackgroundSelected,
-                label = stringResource(commonR.string.widget_background_type_label),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 24.dp),
+            BackgroundTypeDropdown(
+                selected = state.backgroundType,
+                dynamicColorAvailable = dynamicColorAvailable,
+                onSelected = onBackgroundTypeSelected,
             )
 
             HAAccentButton(
                 text = stringResource(
-                    if (isUpdate) commonR.string.update_widget else commonR.string.add_widget,
+                    if (state.isUpdateWidget) commonR.string.update_widget else commonR.string.add_widget,
                 ),
-                onClick = onAddWidgetClick,
-                modifier = Modifier.align(Alignment.End),
+                onClick = onActionClick,
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
 }
 
 @Composable
-private fun LabeledCheckbox(
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    label: String,
+private fun MediaControlsOptions(
+    state: MediaPlayerControlsWidgetConfigureViewState,
+    onShowVolumeChanged: (Boolean) -> Unit,
+    onShowSkipChanged: (Boolean) -> Unit,
+    onShowSeekChanged: (Boolean) -> Unit,
+    onShowSourceChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .fillMaxWidth()
-            .toggleable(
-                value = checked,
-                role = Role.Checkbox,
-                onValueChange = onCheckedChange,
-            )
-            .padding(vertical = 8.dp),
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(HADimens.SPACE1),
     ) {
-        Text(text = label, style = HATextStyle.Body)
-        Spacer(Modifier.weight(1f))
+        CheckboxRow(
+            text = stringResource(commonR.string.widget_media_show_volume),
+            checked = state.showVolume,
+            onCheckedChange = onShowVolumeChanged,
+        )
+        CheckboxRow(
+            text = stringResource(commonR.string.widget_media_show_skip),
+            checked = state.showSkip,
+            onCheckedChange = onShowSkipChanged,
+        )
+        CheckboxRow(
+            text = stringResource(commonR.string.widget_media_show_seek),
+            checked = state.showSeek,
+            onCheckedChange = onShowSeekChanged,
+        )
+        CheckboxRow(
+            text = stringResource(commonR.string.widget_media_show_source),
+            checked = state.showSource,
+            onCheckedChange = onShowSourceChanged,
+        )
+    }
+}
+
+@Composable
+private fun CheckboxRow(text: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
+    ) {
         HACheckbox(
             checked = checked,
-            onCheckedChange = null, // we handle click on row
+            onCheckedChange = onCheckedChange,
+        )
+        Text(
+            text = text,
+            style = HATextStyle.Body,
+            color = LocalHAColorScheme.current.colorTextPrimary,
+        )
+    }
+}
+
+@Composable
+private fun BackgroundTypeDropdown(
+    selected: WidgetBackgroundType,
+    dynamicColorAvailable: Boolean,
+    onSelected: (WidgetBackgroundType) -> Unit,
+) {
+    HADropdownMenu(
+        items = buildList {
+            if (dynamicColorAvailable) {
+                add(
+                    HADropdownItem(
+                        key = WidgetBackgroundType.DYNAMICCOLOR,
+                        label = stringResource(commonR.string.widget_background_type_dynamiccolor),
+                    ),
+                )
+            }
+            add(
+                HADropdownItem(
+                    key = WidgetBackgroundType.DAYNIGHT,
+                    label = stringResource(commonR.string.widget_background_type_daynight),
+                ),
+            )
+            add(
+                HADropdownItem(
+                    key = WidgetBackgroundType.TRANSPARENT,
+                    label = stringResource(commonR.string.widget_background_type_transparent),
+                ),
+            )
+        },
+        selectedKey = selected,
+        onItemSelected = onSelected,
+        label = stringResource(commonR.string.widget_background_type_label),
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+@Preview
+@Composable
+private fun MediaPlayerControlsWidgetConfigureViewPreview() {
+    HAThemeForPreview {
+        MediaPlayerControlsWidgetConfigureView(
+            state = MediaPlayerControlsWidgetConfigureViewState(
+                selectedServerId = previewServer1.id,
+                selectedEntityId = previewEntity1.entityId,
+                label = "Living room",
+                showVolume = true,
+                showSkip = true,
+                showSeek = false,
+                showSource = true,
+                backgroundType = WidgetBackgroundType.DAYNIGHT,
+                isUpdateWidget = false,
+            ),
+            servers = listOf(previewServer1, previewServer2),
+            entities = listOf(previewEntity1, previewEntity2),
+            dynamicColorAvailable = true,
+            onServerSelected = {},
+            onEntitySelected = {},
+            onLabelChanged = {},
+            onShowVolumeChanged = {},
+            onShowSkipChanged = {},
+            onShowSeekChanged = {},
+            onShowSourceChanged = {},
+            onBackgroundTypeSelected = {},
+            onActionClick = {},
+            onClose = {},
         )
     }
 }
