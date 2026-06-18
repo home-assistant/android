@@ -6,6 +6,7 @@ import android.os.strictmode.DiskWriteViolation
 import android.os.strictmode.IncorrectContextUseViolation
 import android.os.strictmode.Violation
 import androidx.annotation.RequiresApi
+import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.util.IgnoreViolationRule
 
 val vmPolicyIgnoredViolationRules = listOf(
@@ -28,6 +29,7 @@ val threadPolicyIgnoredViolationRules = listOf(
     IgnoreMiuiTurboSchedMonitorDiskRead,
     IgnoreChromiumKeyStoreDiskWrite,
     IgnoreAppCompatPersistLocalesDiskReadWrite,
+    IgnoreConfigureOkHttpClientDiskRead,
 )
 
 /**
@@ -325,5 +327,23 @@ private data object IgnoreChromiumKeyStoreDiskWrite : IgnoreViolationRule {
             violation.stackTrace.any {
                 it.fileName?.startsWith("chromium-") == true
             }
+    }
+}
+
+/**
+ * Ignores a [DiskReadViolation] raised while [HomeAssistantApis] configures its OkHttpClient:
+ * building the TLSHelper reads CA keystores from disk on some devices.
+ *
+ * Solved by https://github.com/home-assistant/android/pull/7042
+ */
+private data object IgnoreConfigureOkHttpClientDiskRead : IgnoreViolationRule {
+    @RequiresApi(Build.VERSION_CODES.P)
+    override fun shouldIgnore(violation: Violation): Boolean {
+        if (violation !is DiskReadViolation) return false
+
+        return violation.stackTrace.any {
+            it.className == HomeAssistantApis::class.java.name &&
+                it.methodName == "configureOkHttpClient"
+        }
     }
 }

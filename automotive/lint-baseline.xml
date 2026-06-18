@@ -349,7 +349,7 @@
         errorLine2="        ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/frontend/FrontendScreen.kt"
-            line="288"
+            line="291"
             column="9"/>
     </issue>
 
@@ -360,7 +360,7 @@
         errorLine2="                                                      ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/frontend/FrontendScreen.kt"
-            line="386"
+            line="405"
             column="55"/>
     </issue>
 
@@ -371,7 +371,7 @@
         errorLine2="        ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/frontend/FrontendScreen.kt"
-            line="423"
+            line="442"
             column="9"/>
     </issue>
 
@@ -778,7 +778,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="104"
+            line="106"
             column="5"/>
     </issue>
 
@@ -789,7 +789,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="118"
+            line="120"
             column="5"/>
     </issue>
 
@@ -800,7 +800,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="133"
+            line="135"
             column="5"/>
     </issue>
 
@@ -811,7 +811,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="149"
+            line="151"
             column="5"/>
     </issue>
 
@@ -822,7 +822,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="166"
+            line="168"
             column="5"/>
     </issue>
 
@@ -833,7 +833,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="181"
+            line="183"
             column="5"/>
     </issue>
 
@@ -844,7 +844,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="201"
+            line="203"
             column="5"/>
     </issue>
 
@@ -855,7 +855,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="218"
+            line="220"
             column="5"/>
     </issue>
 
@@ -866,7 +866,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="235"
+            line="237"
             column="5"/>
     </issue>
 
@@ -877,7 +877,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="252"
+            line="254"
             column="5"/>
     </issue>
 
@@ -888,7 +888,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="268"
+            line="270"
             column="5"/>
     </issue>
 
@@ -899,7 +899,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="291"
+            line="293"
             column="5"/>
     </issue>
 
@@ -910,7 +910,18 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="317"
+            line="319"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="Unnecessary; `SDK_INT` is always >= 28"
+        errorLine1="    @RequiresApi(Build.VERSION_CODES.P)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
+            line="340"
             column="5"/>
     </issue>
 
