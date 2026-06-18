@@ -70,10 +70,9 @@ object NavigateToMessage {
 val ShowSidebarMessage: OutgoingExternalBusMessage = CommandMessage(command = "sidebar/show")
 
 /**
- * Notifies the frontend that an improv-capable BLE device has been discovered while scanning.
+ * Reports an Improv-capable BLE device to the frontend by its advertised [name].
  *
- * Emitted once per device — the frontend deduplicates by [name] when adding the entry to its
- * "Add device" list. This is a one-way command; the frontend does not respond.
+ * This is a one-way command; the frontend does not respond.
  *
  * @see CommandMessage
  */
@@ -88,12 +87,60 @@ object ImprovDiscoveredDeviceMessage {
 }
 
 /**
- * Notifies the frontend that the user-selected improv device has finished its Wi-Fi onboarding
- * (BLE state moved to provisioned). The frontend uses this to dismiss its progress UI before
- * the app navigates the WebView to the `config_flow_start` URL for the device's domain.
+ * Notifies the frontend that the user-selected Improv device has finished its Wi-Fi onboarding.
  *
- * One-way command; no response is expected.
+ * This is a one-way command; the frontend does not respond.
  *
  * @see CommandMessage
  */
 val ImprovDeviceSetupDoneMessage: OutgoingExternalBusMessage = CommandMessage(command = "improv/device_setup_done")
+
+/**
+ * Notifies the frontend that the user scanned a code.
+ *
+ * Sent in response to a [io.homeassistant.companion.android.frontend.externalbus.incoming.BarcodeScanMessage].
+ * The frontend correlates by [id] back to its original request.
+ *
+ * @param id The id of the originating [io.homeassistant.companion.android.frontend.externalbus.incoming.BarcodeScanMessage]
+ * @param rawValue The decoded barcode contents, verbatim
+ * @param format The decoded format name, lowercased — `qr_code`, `code_128`, `pdf417`, etc., or
+ *   `unknown` for formats the frontend does not recognise.
+ *
+ * @see CommandMessage
+ */
+object BarcodeScanResultMessage {
+    operator fun invoke(id: Int, rawValue: String, format: String): OutgoingExternalBusMessage = CommandMessage(
+        id = id,
+        command = "bar_code/scan_result",
+        payload = frontendExternalBusJson.encodeToJsonElement(
+            ScanResultPayload(rawValue = rawValue, format = format),
+        ),
+    )
+
+    @Serializable
+    private data class ScanResultPayload(val rawValue: String, val format: String)
+}
+
+/**
+ * Notifies the frontend that the user closed the scanner without producing a result.
+ *
+ * Sent in response to a [io.homeassistant.companion.android.frontend.externalbus.incoming.BarcodeScanMessage]
+ * when the user cancels.
+ *
+ * @see CommandMessage
+ */
+object BarcodeScanAbortedMessage {
+    operator fun invoke(id: Int, forAction: Boolean): OutgoingExternalBusMessage = CommandMessage(
+        id = id,
+        command = "bar_code/aborted",
+        payload = frontendExternalBusJson.encodeToJsonElement(
+            ScanAbortedPayload(reason = if (forAction) REASON_ALTERNATIVE_OPTIONS else REASON_CANCELED),
+        ),
+    )
+
+    private const val REASON_ALTERNATIVE_OPTIONS = "alternative_options"
+    private const val REASON_CANCELED = "canceled"
+
+    @Serializable
+    private data class ScanAbortedPayload(val reason: String)
+}

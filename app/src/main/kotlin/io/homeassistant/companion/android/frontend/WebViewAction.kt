@@ -9,6 +9,21 @@ import kotlinx.coroutines.CompletableDeferred
 import timber.log.Timber
 
 /**
+ * Clicks the sidebar anchor of the frontend's default panel (read from `localStorage.defaultPanel`,
+ * falling back to the first sidebar item) and scrolls to the top. Used by
+ * [WebViewAction.NavigateToDefaultPanelViaSidebar].
+ */
+private const val DEFAULT_PANEL_SIDEBAR_CLICK_SCRIPT = """
+    var anchor = 'a:nth-child(1)';
+    var defaultPanel = window.localStorage.getItem('defaultPanel')?.replaceAll('"',"");
+    if(defaultPanel) anchor = 'a[href="/' + defaultPanel + '"]';
+    document.querySelector('body > home-assistant').shadowRoot.querySelector('home-assistant-main')
+                                                   .shadowRoot.querySelector('ha-sidebar')
+                                                   .shadowRoot.querySelector('paper-listbox > ' + anchor).click();
+    window.scrollTo(0, 0);
+"""
+
+/**
  * Actions that require direct interaction with the WebView.
  *
  * These actions are emitted by the ViewModel and consumed by the Screen layer,
@@ -69,6 +84,23 @@ sealed interface WebViewAction {
         override fun run(webView: WebView) {
             webView.clearHistory()
             result.complete(Unit)
+        }
+    }
+
+    /**
+     * Navigates the frontend to its default panel by clicking the matching sidebar anchor.
+     */
+    @Deprecated(
+        "Legacy fallback for Home Assistant servers older than 2025.6 that lack the `navigate` " +
+            "external bus command. Prefer NavigateToMessage on supported servers; remove this once " +
+            "the minimum supported server version is 2025.6 or later.",
+    )
+    data class NavigateToDefaultPanelViaSidebar(
+        override val result: CompletableDeferred<Unit> = CompletableDeferred(),
+    ) : AwaitableAction<Unit> {
+        override fun run(webView: WebView) {
+            @OptIn(EvaluateJavascriptUsage::class)
+            webView.evaluateJavascript(DEFAULT_PANEL_SIDEBAR_CLICK_SCRIPT) { result.complete(Unit) }
         }
     }
 

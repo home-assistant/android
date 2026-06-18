@@ -17,6 +17,14 @@ sealed interface FrontendDialog {
     data class Confirm(val message: String, val onConfirm: () -> Unit, val onCancel: () -> Unit) : FrontendDialog
 
     /**
+     * An informational dialog with a message and a single dismiss button.
+     *
+     * @param message The message displayed in the dialog
+     * @param onDismiss Called when the user dismisses the dialog (button tap or outside tap)
+     */
+    data class Information(val message: String, val onDismiss: () -> Unit) : FrontendDialog
+
+    /**
      * An HTTP Basic Auth dialog with username, password, and remember fields.
      *
      * @param host The host requesting authentication

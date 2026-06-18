@@ -29,7 +29,7 @@ import io.homeassistant.companion.android.database.settings.SensorUpdateFrequenc
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
-import io.homeassistant.companion.android.improv.ImprovRepository
+import io.homeassistant.companion.android.frontend.improv.ImprovRepository
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
 import io.homeassistant.companion.android.util.UrlUtil
@@ -43,10 +43,10 @@ import java.util.regex.Pattern
 import javax.inject.Inject
 import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -62,8 +62,8 @@ class WebViewPresenterImpl @Inject constructor(
     private val externalBusRepository: ExternalBusRepository,
     private val improvRepository: ImprovRepository,
     private val prefsRepository: PrefsRepository,
-    private val matterUseCase: MatterManager,
-    private val threadUseCase: ThreadManager,
+    private val matterManager: MatterManager,
+    private val threadManager: ThreadManager,
     private val settingsDao: SettingsDao,
 ) : WebViewPresenter {
 
@@ -130,20 +130,42 @@ class WebViewPresenterImpl @Inject constructor(
         isNewServer: Boolean,
     ) {
         var pathConsumed = false
+        var lastBaseUrl: URL? = null
 
         if (isInternalOverride != null) {
             Timber.d("Using isInternalOverride to get URL")
         }
 
         serverManager.connectionStateProvider(serverId).urlFlow(isInternalOverride).collect { urlState ->
-            val shouldConsumePath = !pathConsumed && path != null
-            if (shouldConsumePath) pathConsumed = true
+            val currentBaseUrl = (urlState as? UrlState.HasUrl)?.url
+            // baseUrlChanged is only true from the second emission onwards; the first emission
+            // establishes lastBaseUrl and is therefore not considered a change.
+            val baseUrlChanged = currentBaseUrl != null && lastBaseUrl?.let { it != currentBaseUrl } == true
+            if (currentBaseUrl != null) lastBaseUrl = currentBaseUrl
+
+            val effectiveRelativeUrl = if (!pathConsumed && path != null) {
+                pathConsumed = true
+                path
+            } else if (baseUrlChanged && !isNewServer) {
+                // On internal/external URL switches on the same server, preserve the full
+                // relative URL (path + query params + fragment) so the user stays on the exact
+                // same page, including filtered views like history with date ranges.
+                // Skipped for server switches where the path may not exist and would leak
+                // navigation context from the previous server.
+                view.getCurrentWebViewRelativeUrl()
+            } else {
+                null
+            }
 
             handleUrlState(
                 urlState = urlState,
-                path = path,
-                shouldConsumePath = shouldConsumePath,
-                isNewServer = isNewServer,
+                path = effectiveRelativeUrl,
+                shouldConsumePath = effectiveRelativeUrl != null,
+                // Keep the WebView back-stack for same-server reloads (incl. internal <-> external
+                // URL switches). The stale cross-origin previousUrl is exactly the signal
+                // resolveBackAction uses to return NavigateToRoot and route the user to the
+                // dashboard before exiting. Only server switches discard history.
+                keepHistory = !isNewServer,
             )
         }
     }
@@ -180,13 +202,13 @@ class WebViewPresenterImpl @Inject constructor(
         urlState: UrlState,
         path: String?,
         shouldConsumePath: Boolean,
-        isNewServer: Boolean,
+        keepHistory: Boolean,
     ) {
         when (urlState) {
             is UrlState.HasUrl -> loadUrl(
                 baseUrl = urlState.url,
                 path = if (shouldConsumePath) path else null,
-                isNewServer = isNewServer,
+                keepHistory = keepHistory,
             )
 
             UrlState.InsecureState -> view.showBlockInsecure(serverId = serverId)
@@ -201,9 +223,10 @@ class WebViewPresenterImpl @Inject constructor(
      *
      * @param baseUrl the base server URL
      * @param path optional path to append (ignored if starts with "entityId:")
-     * @param isNewServer whether this is a new server (affects history behavior)
+     * @param keepHistory whether to keep WebView history after loading. False when the
+     *        base URL changes (e.g. server or connection switch) so old entries become unreachable.
      */
-    private suspend fun loadUrl(baseUrl: URL?, path: String?, isNewServer: Boolean) {
+    private suspend fun loadUrl(baseUrl: URL?, path: String?, keepHistory: Boolean) {
         val urlToLoad = if (path != null && !path.startsWith("entityId:")) {
             UrlUtil.handle(baseUrl, path)
         } else {
@@ -226,7 +249,7 @@ class WebViewPresenterImpl @Inject constructor(
                 } else {
                     view.loadUrl(
                         url = urlWithAuth,
-                        keepHistory = !isNewServer,
+                        keepHistory = keepHistory,
                         openInApp = it.baseIsEqual(baseUrl),
                         // We need the frontend to notify us of the mode to use for the status bar https://github.com/home-assistant/frontend/issues/29125
                         serverHandleInsets = false,
@@ -440,7 +463,7 @@ class WebViewPresenterImpl @Inject constructor(
     }
 
     override fun onStart(context: Context) {
-        matterUseCase.suppressDiscoveryBottomSheet(context)
+        matterManager.suppressDiscoveryBottomSheet()
     }
 
     override fun onFinish() {
@@ -504,9 +527,9 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
-    override fun appCanCommissionMatterDevice(): Boolean = matterUseCase.appSupportsCommissioning()
+    override fun appCanCommissionMatterDevice(): Boolean = matterManager.appSupportsCommissioning()
 
-    override fun startCommissioningMatterDevice(context: Context) {
+    override fun startCommissioningMatterDevice() {
         if (mutableMatterThreadStep.value != MatterThreadStep.REQUESTED) {
             mutableMatterThreadStep.tryEmit(MatterThreadStep.REQUESTED)
 
@@ -514,67 +537,60 @@ class WebViewPresenterImpl @Inject constructor(
             // (temporarily?) removed due to slowing down the Matter commissioning flow for the user
             // and limited usefulness of the result (because of API limitations)
 
-            startMatterCommissioningFlow(context)
+            startMatterCommissioningFlow()
         } // else already waiting for a result, don't send another request
     }
 
-    private fun startMatterCommissioningFlow(context: Context) {
-        matterUseCase.startNewCommissioningFlow(
-            context,
-            { intentSender ->
-                Timber.d("Matter commissioning is ready")
-                matterThreadIntentSender = intentSender
-                mutableMatterThreadStep.tryEmit(MatterThreadStep.MATTER_IN_PROGRESS)
-            },
-            { e ->
-                Timber.e(e, "Matter commissioning couldn't be prepared")
-                mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_MATTER_OTHER)
-            },
-        )
+    private fun startMatterCommissioningFlow() {
+        mainScope.launch {
+            when (val result = matterManager.prepareMatterDeviceCommissioning()) {
+                is MatterManager.CommissioningResult.Ready -> {
+                    Timber.d("Matter commissioning is ready")
+                    matterThreadIntentSender = result.intentSender
+                    mutableMatterThreadStep.tryEmit(MatterThreadStep.MATTER_IN_PROGRESS)
+                }
+
+                is MatterManager.CommissioningResult.Error -> {
+                    Timber.e(result.cause, "Matter commissioning couldn't be prepared")
+                    mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_MATTER_OTHER)
+                }
+            }
+        }
     }
 
-    override fun appCanExportThreadCredentials(): Boolean = threadUseCase.appSupportsThread()
+    override fun appCanExportThreadCredentials(): Boolean = threadManager.appSupportsThread()
 
-    override fun exportThreadCredentials(context: Context) {
+    override fun exportThreadCredentials() {
         if (mutableMatterThreadStep.value != MatterThreadStep.REQUESTED) {
             mutableMatterThreadStep.tryEmit(MatterThreadStep.REQUESTED)
 
             mainScope.launch {
-                try {
-                    val result = threadUseCase.syncPreferredDataset(
-                        context,
-                        serverId,
-                        true,
-                        CoroutineScope(
-                            coroutineContext + SupervisorJob(),
-                        ),
-                    )
-                    Timber.d("Export preferred Thread dataset returned $result")
-
-                    when (result) {
-                        is ThreadManager.SyncResult.OnlyOnDevice -> {
-                            matterThreadIntentSender = result.exportIntent
-                            mutableMatterThreadStep.tryEmit(MatterThreadStep.THREAD_EXPORT_TO_SERVER_ONLY)
-                        }
-
-                        is ThreadManager.SyncResult.NoneHaveCredentials,
-                        is ThreadManager.SyncResult.OnlyOnServer,
-                        -> {
-                            mutableMatterThreadStep.tryEmit(MatterThreadStep.THREAD_NONE)
-                        }
-
-                        is ThreadManager.SyncResult.NotConnected -> {
-                            mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_THREAD_LOCAL_NETWORK)
-                        }
-
-                        else -> {
-                            mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_THREAD_OTHER)
-                        }
-                    }
+                val result = try {
+                    threadManager.exportPreferredDataset(serverId)
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
-                    Timber.w(e, "Unable to export preferred Thread dataset")
+                    Timber.e(e, "Error while trying to export preferred dataset")
                     mutableMatterThreadStep.tryEmit(MatterThreadStep.ERROR_THREAD_OTHER)
+                    return@launch
                 }
+                Timber.d("Export preferred Thread dataset returned $result")
+                val step = when (result) {
+                    is ThreadManager.SyncResult.OnlyOnDevice -> {
+                        matterThreadIntentSender = result.exportIntent
+                        MatterThreadStep.THREAD_EXPORT_TO_SERVER_ONLY
+                    }
+
+                    is ThreadManager.SyncResult.NoneHaveCredentials,
+                    is ThreadManager.SyncResult.OnlyOnServer,
+                    -> MatterThreadStep.THREAD_NONE
+
+                    is ThreadManager.SyncResult.NotConnected -> MatterThreadStep.ERROR_THREAD_LOCAL_NETWORK
+                    is ThreadManager.SyncResult.AppUnsupported,
+                    is ThreadManager.SyncResult.ServerUnsupported,
+                    -> MatterThreadStep.ERROR_THREAD_OTHER
+                }
+                mutableMatterThreadStep.tryEmit(step)
             }
         } // else already waiting for a result, don't send another request
     }
@@ -587,18 +603,18 @@ class WebViewPresenterImpl @Inject constructor(
         return intent
     }
 
-    override fun onMatterThreadIntentResult(context: Context, result: ActivityResult) {
+    override fun onMatterThreadIntentResult(result: ActivityResult) {
         when (mutableMatterThreadStep.value) {
             MatterThreadStep.THREAD_EXPORT_TO_SERVER_MATTER -> {
                 mainScope.launch {
-                    threadUseCase.sendThreadDatasetExportResult(result, serverId)
-                    startMatterCommissioningFlow(context)
+                    threadManager.sendThreadDatasetExportResult(result, serverId)
+                    startMatterCommissioningFlow()
                 }
             }
 
             MatterThreadStep.THREAD_EXPORT_TO_SERVER_ONLY -> {
                 mainScope.launch {
-                    val sent = threadUseCase.sendThreadDatasetExportResult(result, serverId)
+                    val sent = threadManager.sendThreadDatasetExportResult(result, serverId)
                     Timber.d(
                         "Thread ${if (!sent.isNullOrBlank()) "sent credential for $sent" else "did not send credential"}",
                     )
@@ -628,7 +644,7 @@ class WebViewPresenterImpl @Inject constructor(
     }
 
     override suspend fun shouldShowImprovPermissions(): Boolean {
-        return if (improvRepository.hasPermission(view as Context)) {
+        return if (improvRepository.hasPermissions()) {
             false
         } else {
             prefsRepository.getImprovPermissionDisplayedCount() < 2
@@ -637,7 +653,7 @@ class WebViewPresenterImpl @Inject constructor(
 
     override fun shouldRequestImprovPermission(): String? {
         val returnPermissions = try {
-            improvRepository.getRequiredPermissions().filter {
+            improvRepository.requiredPermissions.filter {
                 ContextCompat.checkSelfPermission(view as Context, it) != PackageManager.PERMISSION_GRANTED
             }
         } catch (_: Exception) {
@@ -653,7 +669,7 @@ class WebViewPresenterImpl @Inject constructor(
     }
 
     override fun startScanningForImprov(): Boolean {
-        if (!improvRepository.hasPermission(view as Context)) {
+        if (!improvRepository.hasPermissions()) {
             Timber.d("Improv scan request ignored because app doesn't have permission")
             return false
         } else {
@@ -661,11 +677,10 @@ class WebViewPresenterImpl @Inject constructor(
         }
         improvJobStarted = System.currentTimeMillis()
         improvJob = mainScope.launch {
-            withContext(Dispatchers.IO) {
-                improvRepository.startScanning(view as Context)
-            }
-            improvRepository.getDevices().collect {
-                it.forEach { device ->
+            // scanDevices() auto-manages the BLE scan via shareIn(WhileSubscribed); cancelling
+            // this job stops the scan after the repository's idle window.
+            improvRepository.scanDevices().collect { devices ->
+                devices.forEach { device ->
                     val name = device.name ?: return@forEach
                     externalBusRepository.send(
                         ExternalBusMessage(
@@ -686,7 +701,6 @@ class WebViewPresenterImpl @Inject constructor(
     override fun stopScanningForImprov(force: Boolean) {
         if (improvJob?.isActive == true && (force || System.currentTimeMillis() - improvJobStarted > 1000)) {
             Timber.d("Improv scan stopping")
-            improvRepository.stopScanning()
             improvJob?.cancel()
         }
     }

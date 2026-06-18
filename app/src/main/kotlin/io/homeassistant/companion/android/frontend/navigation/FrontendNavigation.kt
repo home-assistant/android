@@ -18,6 +18,8 @@ import io.homeassistant.companion.android.assist.AssistActivity
 import io.homeassistant.companion.android.common.data.servers.ServerManager.Companion.SERVER_ID_ACTIVE
 import io.homeassistant.companion.android.frontend.FrontendScreen
 import io.homeassistant.companion.android.frontend.FrontendViewModel
+import io.homeassistant.companion.android.frontend.url.launchAppOrStore
+import io.homeassistant.companion.android.frontend.url.launchIntentUri
 import io.homeassistant.companion.android.launch.HAStartDestinationRoute
 import io.homeassistant.companion.android.launch.PipReadiness
 import io.homeassistant.companion.android.nfc.WriteNfcTag
@@ -107,10 +109,11 @@ internal fun NavGraphBuilder.frontendScreen(
                     val context = navController.context
                     context.startActivity(widgetType.toConfigureIntent(context, entityId))
                 },
+                onLaunchApp = { packageName -> navController.context.launchAppOrStore(packageName) },
+                onLaunchIntent = { intentUri -> navController.context.launchIntentUri(intentUri) },
             )
 
             FrontendScreen(
-                onBackClick = navController::popBackStack,
                 viewModel = viewModel,
                 onOpenExternalLink = onOpenExternalLink,
                 onBlockInsecureHelpClick = onSecurityLevelHelpClick,
@@ -152,6 +155,8 @@ internal fun FrontendEventHandler(
     onNavigateToNfcWrite: (messageId: Int, tagId: String?) -> Unit,
     onRequestFullscreen: (Boolean) -> Unit,
     onNavigateToWidgetConfig: (entityId: String, widgetType: WidgetType) -> Unit,
+    onLaunchApp: (packageName: String) -> Unit = {},
+    onLaunchIntent: (intentUri: String) -> Unit = {},
 ) {
     val resources = LocalResources.current
     LaunchedEffect(Unit) {
@@ -175,6 +180,14 @@ internal fun FrontendEventHandler(
 
                 is FrontendEvent.OpenExternalLink -> {
                     onOpenExternalLink(event.uri)
+                }
+
+                is FrontendEvent.LaunchApp -> {
+                    onLaunchApp(event.packageName)
+                }
+
+                is FrontendEvent.LaunchIntent -> {
+                    onLaunchIntent(event.intentUri)
                 }
 
                 is FrontendEvent.NavigateToDeveloperSettings -> {

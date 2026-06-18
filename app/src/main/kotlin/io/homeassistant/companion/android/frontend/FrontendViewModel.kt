@@ -1,20 +1,24 @@
 package io.homeassistant.companion.android.frontend
 
+import android.net.Uri
 import android.view.View
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.google.zxing.BarcodeFormat
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.GestureDirection
-import io.homeassistant.companion.android.frontend.auth.HttpAuthManager
+import io.homeassistant.companion.android.frontend.auth.FrontendHttpAuthHandler
 import io.homeassistant.companion.android.frontend.auth.HttpAuthResult
+import io.homeassistant.companion.android.frontend.barcode.FrontendBarcodeScannerHandler
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
@@ -22,13 +26,15 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.exoplayer.FrontendExoPlayerManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
+import io.homeassistant.companion.android.frontend.externalbus.outgoing.NavigateToMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserRequest
-import io.homeassistant.companion.android.frontend.gesture.FrontendGestureHandler
+import io.homeassistant.companion.android.frontend.gesture.FrontendGestureManager
 import io.homeassistant.companion.android.frontend.gesture.GestureResult
 import io.homeassistant.companion.android.frontend.handler.FrontendBusObserver
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
+import io.homeassistant.companion.android.frontend.improv.FrontendImprovHandler
 import io.homeassistant.companion.android.frontend.js.BridgeState
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridgeFactory
 import io.homeassistant.companion.android.frontend.js.FrontendJsCallback
@@ -40,6 +46,8 @@ import io.homeassistant.companion.android.frontend.url.UrlLoadResult
 import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
+import io.homeassistant.companion.android.util.LifecycleHandler
+import io.homeassistant.companion.android.util.hasSameOrigin
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
@@ -68,6 +76,18 @@ import timber.log.Timber
 @VisibleForTesting
 val CONNECTION_TIMEOUT = 10.seconds
 
+private const val APP_PREFIX = "app://"
+private const val INTENT_PREFIX = "intent:"
+
+/**
+ * URLs that must NOT trigger the "always show first view on app start" navigation.
+ *
+ * Matches the Home Assistant settings area — paths under `/config` (except `/config/dashboard`,
+ * which is a regular dashboard) and under `/hassio` (apps).
+ */
+private val FIRST_VIEW_EXCLUDED_URL_REGEX =
+    """.*://.*/(config/(?!\bdashboard\b)|hassio)/*.*""".toRegex()
+
 /**
  * ViewModel for frontend screen.
  *
@@ -83,17 +103,20 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     webViewClientFactory: HAWebViewClientFactory,
     private val frontendBusObserver: FrontendBusObserver,
     private val externalBusRepository: FrontendExternalBusRepository,
+    private val serverManager: ServerManager,
     private val urlManager: FrontendUrlManager,
     private val connectivityCheckRepository: ConnectivityCheckRepository,
     private val permissionManager: PermissionManager,
     private val frontendJsBridgeFactory: FrontendJsBridgeFactory,
     private val downloadManager: FrontendDownloadManager,
-    private val gestureHandler: FrontendGestureHandler,
+    private val gestureManager: FrontendGestureManager,
     private val prefsRepository: PrefsRepository,
     private val dialogManager: FrontendDialogManager,
     private val fileChooserManager: FileChooserManager,
-    private val httpAuthManager: HttpAuthManager,
+    private val httpAuthHandler: FrontendHttpAuthHandler,
     private val exoPlayerManager: FrontendExoPlayerManager,
+    private val improvHandler: FrontendImprovHandler,
+    private val barcodeScannerHandler: FrontendBarcodeScannerHandler,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -103,34 +126,40 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         webViewClientFactory: HAWebViewClientFactory,
         frontendBusObserver: FrontendBusObserver,
         externalBusRepository: FrontendExternalBusRepository,
+        serverManager: ServerManager,
         urlManager: FrontendUrlManager,
         connectivityCheckRepository: ConnectivityCheckRepository,
         permissionManager: PermissionManager,
         frontendJsBridgeFactory: FrontendJsBridgeFactory,
         downloadManager: FrontendDownloadManager,
-        gestureHandler: FrontendGestureHandler,
+        gestureManager: FrontendGestureManager,
         prefsRepository: PrefsRepository,
         dialogManager: FrontendDialogManager,
         fileChooserManager: FileChooserManager,
-        httpAuthManager: HttpAuthManager,
+        httpAuthHandler: FrontendHttpAuthHandler,
         exoPlayerManager: FrontendExoPlayerManager,
+        improvHandler: FrontendImprovHandler,
+        barcodeScannerHandler: FrontendBarcodeScannerHandler,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
         initialPath = savedStateHandle.toRoute<FrontendRoute>().path,
         webViewClientFactory = webViewClientFactory,
         frontendBusObserver = frontendBusObserver,
         externalBusRepository = externalBusRepository,
+        serverManager = serverManager,
         urlManager = urlManager,
         connectivityCheckRepository = connectivityCheckRepository,
         permissionManager = permissionManager,
         frontendJsBridgeFactory = frontendJsBridgeFactory,
         downloadManager = downloadManager,
-        gestureHandler = gestureHandler,
+        gestureManager = gestureManager,
         prefsRepository = prefsRepository,
         dialogManager = dialogManager,
         fileChooserManager = fileChooserManager,
-        httpAuthManager = httpAuthManager,
+        httpAuthHandler = httpAuthHandler,
         exoPlayerManager = exoPlayerManager,
+        improvHandler = improvHandler,
+        barcodeScannerHandler = barcodeScannerHandler,
     )
 
     /**
@@ -208,13 +237,21 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         onFrontendError = ::onError,
         onCrash = ::onRetry,
         onPageFinished = ::onPageFinished,
+        onUrlIntercepted = { uri, _ -> onUrlIntercepted(uri) },
         onReceivedHttpAuthRequest = { handler, host, resource, realm ->
             viewModelScope.launch {
-                if (httpAuthManager.handleAuthRequest(handler, host = host, resource = resource, realm = realm) ==
+                if (httpAuthHandler.handleAuthRequest(handler, host = host, resource = resource, realm = realm) ==
                     HttpAuthResult.Cancelled
                 ) {
                     _events.tryEmit(FrontendEvent.ShowSnackbar(commonR.string.auth_cancel))
                 }
+            }
+        },
+        onCanGoBackChanged = { canGoBack ->
+            // Only meaningful while the dashboard is shown; in any other state the WebView is hidden
+            // behind an overlay, so the flag is dropped with the state.
+            _viewState.update { state ->
+                if (state is FrontendViewState.Content) state.copy(canGoBack = canGoBack) else state
             }
         },
     )
@@ -271,6 +308,14 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         emitAll(prefsRepository.keepScreenOnFlow())
     }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = false)
 
+    /**
+     * Whether the frontend currently wants the Improv BLE scan running. Observed by
+     * [io.homeassistant.companion.android.frontend.FrontendScreen] to drive a lifecycle-bound
+     * collect that keeps the scan alive while the screen is RESUMED and tears it down on
+     * navigation or pause.
+     */
+    val improvScanRequested: StateFlow<Boolean> = improvHandler.scanRequested
+
     init {
         viewModelScope.launch {
             _viewState.collectLatest { state ->
@@ -296,6 +341,42 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 _viewState.update { currentState ->
                     if (currentState is FrontendViewState.Content) {
                         currentState.copy(exoPlayerState = exoState)
+                    } else {
+                        currentState
+                    }
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            improvHandler.uiState.collect { improvUiState ->
+                _viewState.update { currentState ->
+                    if (currentState is FrontendViewState.Content) {
+                        currentState.copy(improvUiState = improvUiState)
+                    } else {
+                        currentState
+                    }
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            improvHandler.events.collect { event ->
+                when (event) {
+                    is FrontendImprovHandler.Event.ReloadAtPath -> {
+                        _viewState.update {
+                            FrontendViewState.LoadServer(serverId = event.serverId, path = event.path)
+                        }
+                    }
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            barcodeScannerHandler.state.collect { barcodeState ->
+                _viewState.update { currentState ->
+                    if (currentState is FrontendViewState.Content) {
+                        currentState.copy(barcodeScanner = barcodeState)
                     } else {
                         currentState
                     }
@@ -345,7 +426,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             },
             onJsConfirm = { message, jsResult ->
                 viewModelScope.launch {
-                    if (dialogManager.showJsConfirm(message)) jsResult.confirm() else jsResult.cancel()
+                    if (dialogManager.showConfirm(message)) jsResult.confirm() else jsResult.cancel()
                 }
                 true
             },
@@ -466,7 +547,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      */
     fun onGesture(direction: GestureDirection, pointerCount: Int) {
         viewModelScope.launch {
-            val result = gestureHandler.handleGesture(
+            val result = gestureManager.handleGesture(
                 serverId = _viewState.value.serverId,
                 direction = direction,
                 pointerCount = pointerCount,
@@ -486,18 +567,79 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         _events.tryEmit(FrontendEvent.RequestFullscreen(isFullScreen))
     }
 
+    /**
+     * Forwards a scanned code to the manager, which replies to the frontend.
+     * The scanner stays open until the frontend sends bar_code/close.
+     */
+    fun onBarcodeScanned(rawValue: String, format: BarcodeFormat) {
+        viewModelScope.launch { barcodeScannerHandler.onScanned(rawValue, format) }
+    }
+
+    /** Forwards a scanner cancellation (close icon / back press = false, alternative option = true). */
+    fun onBarcodeCancelled(forAction: Boolean) {
+        viewModelScope.launch { barcodeScannerHandler.onCancelled(forAction) }
+    }
+
+    /**
+     * Called when the app is leaving the foreground (host activity stop). When the user enabled
+     * "always show first view on app start", resets the frontend to its default dashboard so the
+     * next launch starts there — unless the user is in the Home Assistant settings or add-ons area.
+     *
+     * The preference is read first on purpose: it suspends, which lets the pending stop dispatch
+     * complete so [LifecycleHandler.isAppInBackground] reads an up-to-date value (the activity stop
+     * is not yet reflected at the instant the stop event fires). The background check then excludes
+     * the case where one of our own activities (e.g. NFC write) came to the foreground.
+     */
+    fun onLeavingApp(currentUrl: String?) {
+        viewModelScope.launch {
+            if (!prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled()) return@launch
+            if (!LifecycleHandler.isAppInBackground()) return@launch
+            if (!shouldShowFirstView(currentUrl)) return@launch
+            navigateToDefaultDashboard(_viewState.value.serverId)
+        }
+    }
+
     private suspend fun handleGestureResult(result: GestureResult) {
         when (result) {
             is GestureResult.Navigate -> _events.emit(result.event)
             is GestureResult.PerformWebViewAction -> _webViewActions.emit(result.action)
-            is GestureResult.PerformWebViewActionThen<*> -> {
-                _webViewActions.emit(result.action)
-                result.action.result.await()
-                handleGestureResult(result.then())
-            }
             is GestureResult.SwitchServer -> switchServer(result.serverId)
+            is GestureResult.NavigateToDefaultDashboard -> navigateToDefaultDashboard(_viewState.value.serverId)
             is GestureResult.Forwarded, is GestureResult.Ignored -> { /* no-op */ }
         }
+    }
+
+    /**
+     * Clears the WebView history and navigates the frontend to the server's default dashboard.
+     *
+     * Uses the `navigate` external bus command on Home Assistant 2025.6+, falling back to a
+     * sidebar-click script ([WebViewAction.NavigateToDefaultPanelViaSidebar]) on older servers that
+     * do not support it. History is cleared first (and awaited) so the back stack is reset before
+     * the navigation lands.
+     */
+    private suspend fun navigateToDefaultDashboard(serverId: Int) {
+        val clearHistory = WebViewAction.ClearHistory()
+        _webViewActions.emit(clearHistory)
+        clearHistory.result.await()
+
+        val version = serverManager.getServer(serverId)?.version
+        if (NavigateToMessage.isAvailable(version)) {
+            externalBusRepository.send(NavigateToMessage(path = "/", replace = true))
+        } else {
+            // Deliberate use of the deprecated legacy fallback for servers without `navigate` support.
+            @Suppress("DEPRECATION")
+            _webViewActions.emit(WebViewAction.NavigateToDefaultPanelViaSidebar())
+        }
+    }
+
+    /**
+     * Returns `true` when, on leaving the app, the frontend should be reset to its default dashboard
+     * (the "first view"). Returns `false` for a missing URL and for the Home Assistant settings and
+     * add-ons areas, where the user should return to where they were.
+     */
+    private fun shouldShowFirstView(url: String?): Boolean {
+        if (url.isNullOrBlank()) return false
+        return !url.matches(FIRST_VIEW_EXCLUDED_URL_REGEX)
     }
 
     /**
@@ -553,6 +695,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private suspend fun handleMessageResult(result: FrontendHandlerEvent) {
         when (result) {
             is FrontendHandlerEvent.Connected -> {
+                val wasLoading = _viewState.value is FrontendViewState.Loading
                 _viewState.update { currentState ->
                     if (currentState is FrontendViewState.Loading) {
                         FrontendViewState.Content(
@@ -562,6 +705,10 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                     } else {
                         currentState
                     }
+                }
+                if (wasLoading) {
+                    // Remove any previous navigation
+                    _webViewActions.emit(WebViewAction.ClearHistory())
                 }
                 permissionManager.checkNotificationPermission(_viewState.value.serverId)
             }
@@ -612,18 +759,34 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 exoPlayerManager.handle(result)
             }
 
-            is FrontendHandlerEvent.StartImprovScan,
-            is FrontendHandlerEvent.ConfigureImprovDevice,
-            -> {
-                // Improv handling lands in a follow-up PR; the messages are already typed and
-                // canSetupImprov will be `false` on devices without BLE so the frontend should
-                // not be sending these yet on hardware that lacks Bluetooth LE.
-                Timber.d("Improv event received but not yet handled: $result")
-            }
+            is FrontendHandlerEvent.StartImprovScan -> improvHandler.onStartImprovScan()
+
+            is FrontendHandlerEvent.ConfigureImprovDevice ->
+                improvHandler.onConfigureImprovDevice(result.deviceName)
 
             is FrontendHandlerEvent.EntityAddToExecuted -> {
                 result.event?.let { _events.tryEmit(it) }
             }
+
+            is FrontendHandlerEvent.StartMatterCommissioning,
+            is FrontendHandlerEvent.ImportThreadCredentials,
+            -> {
+                // Matter/Thread handling lands in a follow-up PR
+                Timber.d("Matter/Thread event received but not yet handled: $result")
+            }
+
+            is FrontendHandlerEvent.ShowBarcodeScanner -> barcodeScannerHandler.show(
+                messageId = result.messageId,
+                title = result.title,
+                description = result.description,
+                alternativeOptionLabel = result.alternativeOptionLabel,
+            )
+
+            is FrontendHandlerEvent.NotifyBarcodeScanner -> viewModelScope.launch {
+                barcodeScannerHandler.notify(result.message)
+            }
+
+            FrontendHandlerEvent.CloseBarcodeScanner -> barcodeScannerHandler.close()
 
             is FrontendHandlerEvent.ConfigSent,
             is FrontendHandlerEvent.UnknownMessage,
@@ -633,6 +796,34 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             }
         }
     }
+
+    /**
+     * Forwards user-entered Wi-Fi credentials to the device on the handler's current
+     * [io.homeassistant.companion.android.frontend.improv.ImprovUIState.ConfiguringDevice] —
+     * no-ops if no Improv session is active or the BLE address hasn't been resolved yet.
+     */
+    fun onImprovConnectDevice(ssid: String, password: String) {
+        viewModelScope.launch {
+            improvHandler.onConnectDevice(scope = viewModelScope, ssid = ssid, password = password)
+        }
+    }
+
+    /** Re-arms scanning after an Improv error — wired to the sheet's "Try again" button. */
+    fun onImprovRestart() {
+        viewModelScope.launch { improvHandler.onRestart() }
+    }
+
+    /** Closes the Improv bottom sheet and, if successful, navigates the frontend to the matching config flow. */
+    fun onImprovSheetDismissed() {
+        viewModelScope.launch { improvHandler.onDismissed(serverId = _viewState.value.serverId) }
+    }
+
+    /**
+     * Hosts the discovered-device forwarder on the caller's coroutine — suspends until cancelled.
+     * Intended to be invoked from `FrontendScreen` inside a `repeatOnLifecycle(RESUMED)` block so
+     * the BLE scan's lifetime is bound to the route's visibility.
+     */
+    suspend fun processImprovScanRequests() = improvHandler.processImprovScanRequests()
 
     /**
      * Handles URL load results from the URL manager.
@@ -714,6 +905,37 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         }
     }
 
+    /**
+     * Handles a URL the WebView is about to load.
+     *
+     * Custom schemes (`app://`, `intent:`) and URLs that do not match the current server origin are
+     * routed to the host through [FrontendEvent]s, while same-origin URLs are left for the WebView.
+     * The origin comparison uses scheme, host and port (see [hasSameOrigin]).
+     *
+     * @return `true` when the URL was intercepted (the host will handle it), `false` to let the WebView load it.
+     */
+    private fun onUrlIntercepted(uri: Uri): Boolean {
+        val rawUrl = uri.toString()
+        return when {
+            rawUrl.startsWith(APP_PREFIX) -> {
+                _events.tryEmit(FrontendEvent.LaunchApp(rawUrl.substringAfter(APP_PREFIX)))
+                true
+            }
+
+            rawUrl.startsWith(INTENT_PREFIX) -> {
+                _events.tryEmit(FrontendEvent.LaunchIntent(rawUrl))
+                true
+            }
+
+            uri.hasSameOrigin(urlFlow.value) -> false
+
+            else -> {
+                _events.tryEmit(FrontendEvent.OpenExternalLink(uri))
+                true
+            }
+        }
+    }
+
     private fun onError(error: FrontendConnectionError) {
         _viewState.update { currentState ->
             FrontendViewState.Error(
@@ -735,7 +957,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      * navigations can reset the viewport meta tag). The collection then stays active
      * to react to settings changes until the next page load restarts it.
      */
-    private fun onPageFinished() {
+    private fun onPageFinished(url: String?) {
         zoomObserverJob?.cancel()
         zoomObserverJob = viewModelScope.launch {
             prefsRepository.zoomSettingsFlow().collect { settings ->

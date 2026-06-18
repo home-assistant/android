@@ -351,6 +351,25 @@ class LaunchViewModelTest {
     }
 
     @Test
+    fun `Given initial deep link is OpenInvitation when creating viewModel, then navigate to onboarding from invitation with the server url`() = runTest {
+        createViewModel(
+            initialDeepLink = LaunchActivity.DeepLink.OpenInvitation("http://homeassistant.io"),
+            hasLocationTrackingSupport = true,
+        )
+        advanceUntilIdle()
+        assertEquals(
+            LaunchUiState.Ready(
+                OnboardingRoute(
+                    hasLocationTracking = true,
+                    urlToOnboard = "http://homeassistant.io",
+                    fromInvitation = true,
+                ),
+            ),
+            viewModel.uiState.value,
+        )
+    }
+
+    @Test
     fun `Given initial deep link is NavigateTo when creating viewModel, then navigate to frontend with the server id and path`() = runTest {
         val serverId = 42
         val server = mockk<Server>(relaxed = true)

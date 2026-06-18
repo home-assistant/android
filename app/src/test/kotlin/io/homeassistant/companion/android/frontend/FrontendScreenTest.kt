@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
@@ -23,7 +24,10 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.rules.ActivityScenarioRule
+import com.google.zxing.BarcodeFormat
+import com.wifi.improv.ErrorState
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -33,8 +37,11 @@ import io.homeassistant.companion.android.common.data.connectivity.ConnectivityC
 import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.settings.SettingsDao
+import io.homeassistant.companion.android.frontend.barcode.BarcodeScannerUiState
+import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
+import io.homeassistant.companion.android.frontend.improv.ImprovUIState
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.permissions.PermissionRequest
@@ -256,6 +263,102 @@ class FrontendScreenTest {
     }
 
     @Test
+    fun `Given Content with null Improv state then Improv sheet is not displayed`() {
+        composeTestRule.apply {
+            setFrontendScreen(
+                viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
+            )
+
+            onNodeWithText(stringResource(commonR.string.improv_wifi_title)).assertDoesNotExist()
+            onNodeWithText(stringResource(commonR.string.improv_device_provisioned)).assertDoesNotExist()
+        }
+    }
+
+    @Test
+    fun `Given Content with SearchingDevice then Improv sheet shows connecting caption`() {
+        composeTestRule.apply {
+            setFrontendScreen(
+                viewState = FrontendViewState.Content(
+                    serverId = 1,
+                    url = "https://example.com",
+                    improvUiState = ImprovUIState.SearchingDevice(deviceName = "Smart Plug"),
+                ),
+            )
+
+            onNodeWithText(stringResource(commonR.string.improv_device_connecting)).assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun `Given Content with ConfiguringDevice when continue clicked then onImprovConnectDevice is called with credentials`() {
+        var connectArgs: Pair<String, String>? = null
+        composeTestRule.apply {
+            setFrontendScreen(
+                viewState = FrontendViewState.Content(
+                    serverId = 1,
+                    url = "https://example.com",
+                    improvUiState = ImprovUIState.ConfiguringDevice(
+                        deviceName = "Smart Plug",
+                        deviceAddress = "AA:BB",
+                        activeSsid = "Home Wi-Fi",
+                    ),
+                ),
+                onImprovConnectDevice = { ssid, password -> connectArgs = ssid to password },
+            )
+
+            onNodeWithText(stringResource(commonR.string.improv_wifi_title)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.password)).performTextInput("supersecret")
+            onNodeWithText(stringResource(commonR.string.continue_connect)).performClick()
+            waitForIdle()
+            assertEquals("Home Wi-Fi" to "supersecret", connectArgs)
+        }
+    }
+
+    @Test
+    fun `Given Content with Errored when try again clicked then onImprovRestart is called`() {
+        var restartCalled = false
+        composeTestRule.apply {
+            setFrontendScreen(
+                viewState = FrontendViewState.Content(
+                    serverId = 1,
+                    url = "https://example.com",
+                    improvUiState = ImprovUIState.Errored(
+                        deviceName = "Smart Plug",
+                        deviceAddress = "AA:BB",
+                        error = ErrorState.UNABLE_TO_CONNECT,
+                    ),
+                ),
+                onImprovRestart = { restartCalled = true },
+            )
+
+            onNodeWithText(stringResource(commonR.string.improv_error_unable_to_connect)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.continue_connect)).performClick()
+            waitForIdle()
+            assertTrue("onImprovRestart should be called when try again is clicked", restartCalled)
+        }
+    }
+
+    @Test
+    fun `Given Content with Provisioned when continue clicked then onImprovDismiss is called`() {
+        var dismissCalled = false
+        composeTestRule.apply {
+            setFrontendScreen(
+                viewState = FrontendViewState.Content(
+                    serverId = 1,
+                    url = "https://example.com",
+                    improvUiState = ImprovUIState.Provisioned(domain = "acme"),
+                ),
+                onImprovDismiss = { dismissCalled = true },
+            )
+
+            onNodeWithText(stringResource(commonR.string.improv_device_provisioned)).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.continue_connect)).performClick()
+            waitForIdle()
+            assertTrue("onImprovDismiss should be called when continue is clicked", dismissCalled)
+        }
+    }
+
+    @Test
     fun `Given no pending notification permission then notification prompt is not displayed`() {
         composeTestRule.apply {
             setFrontendScreen(
@@ -385,6 +488,7 @@ class FrontendScreenTest {
         notificationStatusProvider = mockk(relaxed = true),
         permissionChecker = { false },
         checkLocalNetworkPermissionUseCase = mockk(relaxed = true),
+        prefsRepository = mockk(relaxed = true),
     )
 
     private fun AndroidComposeTestRule<ActivityScenarioRule<HiltComponentActivity>, HiltComponentActivity>.setFrontendScreen(
@@ -399,12 +503,14 @@ class FrontendScreenTest {
         onConfigureHomeNetwork: (serverId: Int) -> Unit = { _ -> },
         onSecurityLevelHelpClick: suspend () -> Unit = {},
         onSecurityLevelDone: () -> Unit = {},
+        onImprovConnectDevice: (ssid: String, password: String) -> Unit = { _, _ -> },
+        onImprovRestart: () -> Unit = {},
+        onImprovDismiss: () -> Unit = {},
         registry: ActivityResultRegistry? = null,
     ) {
         setContent {
             val content: @Composable () -> Unit = {
                 FrontendScreenContent(
-                    onBackClick = {},
                     viewState = viewState,
                     webViewClient = WebViewClient(),
                     webChromeClient = WebChromeClient(),
@@ -422,6 +528,9 @@ class FrontendScreenTest {
                     onSecurityLevelDone = onSecurityLevelDone,
                     onShowSnackbar = { _, _ -> true },
                     onWebViewCreationFailed = {},
+                    onImprovConnectDevice = onImprovConnectDevice,
+                    onImprovRestart = onImprovRestart,
+                    onImprovDismiss = onImprovDismiss,
                 )
             }
 
@@ -439,6 +548,122 @@ class FrontendScreenTest {
         }
     }
 
+    /**
+     * Renders [FrontendScreenContent] in a [Content][FrontendViewState.Content] state carrying the
+     * given [barcodeScanner]. Wrapped in [LocalInspectionMode] so the scanner skips the real camera
+     * (and Accompanist reports the permission as granted), letting the overlay chrome render.
+     */
+    private fun AndroidComposeTestRule<ActivityScenarioRule<HiltComponentActivity>, HiltComponentActivity>.setBarcodeOverlay(
+        barcodeScanner: BarcodeScannerUiState,
+        pendingDialog: FrontendDialog? = null,
+        onBarcodeScanned: (rawValue: String, format: BarcodeFormat) -> Unit = { _, _ -> },
+        onBarcodeCancelled: (forAction: Boolean) -> Unit = {},
+    ) {
+        setContent {
+            CompositionLocalProvider(LocalInspectionMode provides true) {
+                FrontendScreenContent(
+                    viewState = FrontendViewState.Content(
+                        serverId = 1,
+                        url = "https://example.com",
+                        barcodeScanner = barcodeScanner,
+                    ),
+                    pendingDialog = pendingDialog,
+                    webViewClient = WebViewClient(),
+                    webChromeClient = WebChromeClient(),
+                    frontendJsCallback = FrontendJsBridge.noOp,
+                    onBlockInsecureRetry = {},
+                    onOpenExternalLink = {},
+                    onBlockInsecureHelpClick = {},
+                    onOpenSettings = {},
+                    onChangeSecurityLevel = {},
+                    onOpenLocationSettings = {},
+                    onConfigureHomeNetwork = { _ -> },
+                    onSecurityLevelHelpClick = {},
+                    onShowSnackbar = { _, _ -> true },
+                    onWebViewCreationFailed = {},
+                    onBarcodeScanned = onBarcodeScanned,
+                    onBarcodeCancelled = onBarcodeCancelled,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `Given Content with barcodeScanner then scanner overlay is shown`() {
+        composeTestRule.apply {
+            setBarcodeOverlay(
+                barcodeScanner = BarcodeScannerUiState(
+                    messageId = 1,
+                    title = "Scan a code",
+                    description = "Point the camera",
+                    alternativeOptionLabel = null,
+                ),
+            )
+
+            onNodeWithText("Scan a code").assertIsDisplayed()
+            onNodeWithText("Point the camera").assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun `Given barcode overlay when close icon tapped then onBarcodeCancelled false`() {
+        val cancels = mutableListOf<Boolean>()
+        composeTestRule.apply {
+            setBarcodeOverlay(
+                barcodeScanner = BarcodeScannerUiState(
+                    messageId = 1,
+                    title = "Scan",
+                    description = "Point",
+                    alternativeOptionLabel = null,
+                ),
+                onBarcodeCancelled = { cancels += it },
+            )
+
+            onNodeWithContentDescription(stringResource(commonR.string.cancel)).performClick()
+            assertEquals(listOf(false), cancels)
+        }
+    }
+
+    @Test
+    fun `Given barcode overlay when back pressed then onBarcodeCancelled false`() {
+        val cancels = mutableListOf<Boolean>()
+        composeTestRule.apply {
+            setBarcodeOverlay(
+                barcodeScanner = BarcodeScannerUiState(
+                    messageId = 1,
+                    title = "Scan",
+                    description = "Point",
+                    alternativeOptionLabel = null,
+                ),
+                onBarcodeCancelled = { cancels += it },
+            )
+
+            runOnUiThread { activity.onBackPressedDispatcher.onBackPressed() }
+            waitForIdle()
+            assertEquals(listOf(false), cancels)
+        }
+    }
+
+    @Test
+    fun `Given a notification dialog over the scanner then it is shown and dismiss invokes callback`() {
+        var dismissed = false
+        composeTestRule.apply {
+            setBarcodeOverlay(
+                barcodeScanner = BarcodeScannerUiState(
+                    messageId = 1,
+                    title = "Scan",
+                    description = "Point",
+                    alternativeOptionLabel = null,
+                ),
+                pendingDialog = FrontendDialog.Information("Already paired", onDismiss = { dismissed = true }),
+            )
+
+            onNodeWithText("Already paired").assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.ok)).performClick()
+            assertTrue("onDismiss should be called when OK tapped", dismissed)
+        }
+    }
+
     @Test
     fun `Given WebViewCreationError state then error screen with open settings button is displayed`() {
         var openSettingsCalled = false
@@ -449,7 +674,6 @@ class FrontendScreenTest {
         composeTestRule.apply {
             setContent {
                 FrontendScreenContent(
-                    onBackClick = {},
                     viewState = FrontendViewState.Error(
                         serverId = 1,
                         url = "https://example.com",
@@ -495,7 +719,6 @@ class FrontendScreenTest {
         composeTestRule.setContent {
             val context = LocalContext.current
             FrontendScreenContent(
-                onBackClick = {},
                 viewState = FrontendViewState.Content(
                     serverId = 1,
                     url = "https://example.com",
@@ -540,7 +763,6 @@ class FrontendScreenTest {
         composeTestRule.setContent {
             val context = androidx.compose.ui.platform.LocalContext.current
             FrontendScreenContent(
-                onBackClick = {},
                 viewState = FrontendViewState.Content(
                     serverId = 1,
                     url = "https://example.com",
@@ -574,7 +796,6 @@ class FrontendScreenTest {
 
         composeTestRule.setContent {
             FrontendScreenContent(
-                onBackClick = {},
                 viewState = FrontendViewState.Content(
                     serverId = 1,
                     url = "https://example.com",
@@ -607,7 +828,6 @@ class FrontendScreenTest {
         val orientationState = mutableStateOf(ScreenOrientation.SYSTEM)
         composeTestRule.setContent {
             FrontendScreenContent(
-                onBackClick = {},
                 viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
                 webViewClient = WebViewClient(),
                 webChromeClient = WebChromeClient(),
@@ -653,7 +873,6 @@ class FrontendScreenTest {
         composeTestRule.setContent {
             if (visible.value) {
                 FrontendScreenContent(
-                    onBackClick = {},
                     viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
                     webViewClient = WebViewClient(),
                     webChromeClient = WebChromeClient(),
@@ -693,7 +912,6 @@ class FrontendScreenTest {
         composeTestRule.setContent {
             capturedView = LocalView.current
             FrontendScreenContent(
-                onBackClick = {},
                 viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
                 webViewClient = WebViewClient(),
                 webChromeClient = WebChromeClient(),
@@ -723,7 +941,6 @@ class FrontendScreenTest {
         composeTestRule.setContent {
             capturedView = LocalView.current
             FrontendScreenContent(
-                onBackClick = {},
                 viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
                 webViewClient = WebViewClient(),
                 webChromeClient = WebChromeClient(),
@@ -757,7 +974,6 @@ class FrontendScreenTest {
         composeTestRule.setContent {
             capturedView = LocalView.current
             FrontendScreenContent(
-                onBackClick = {},
                 viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
                 webViewClient = WebViewClient(),
                 webChromeClient = WebChromeClient(),
@@ -793,7 +1009,6 @@ class FrontendScreenTest {
             capturedView = LocalView.current
             if (visible.value) {
                 FrontendScreenContent(
-                    onBackClick = {},
                     viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
                     webViewClient = WebViewClient(),
                     webChromeClient = WebChromeClient(),

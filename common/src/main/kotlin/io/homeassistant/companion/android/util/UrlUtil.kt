@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.util
 
 import android.net.Uri
+import androidx.core.net.toUri
 import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.MalformedHttpUrlException
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
@@ -217,6 +218,18 @@ fun Uri.hasSameOrigin(other: Uri?): Boolean {
         effectivePort == other.effectivePort
 }
 
+/**
+ * Checks if this Uri has the same origin (scheme, host, and port) as the [other] URL string.
+ * Default ports (443 for HTTPS, 80 for HTTP) are normalized for comparison.
+ *
+ * Convenience overload for callers that hold the other side as a raw URL string; the string is parsed
+ * into a [Uri] before comparison.
+ *
+ * @param other the URL string to compare against; a `null` or unparsable value never matches
+ * @return `true` if both origins share the same scheme, host, and port
+ */
+fun Uri.hasSameOrigin(other: String?): Boolean = hasSameOrigin(other?.toUri())
+
 private val Uri.effectivePort: Int
     get() = when {
         port != -1 -> port
@@ -233,4 +246,32 @@ private val Uri.effectivePort: Int
 fun Uri.hasNonRootPath(): Boolean {
     val path = this.path ?: return false
     return path.isNotBlank() && path != "/"
+}
+
+/**
+ * Extracts the relative URL (path, filtered query parameters, and fragment) from this [Uri].
+ *
+ * The root path (`/`) is treated as empty since it represents the home page with no
+ * meaningful relative navigation.
+ *
+ * @param excludeParams query parameter names to omit from the result
+ * @return the relative URL string (e.g. `/history?start_date=2026-01-01#tab`),
+ *         or `null` if the path is root-only or the result would be empty.
+ */
+fun Uri.toRelativeUrl(excludeParams: Set<String> = emptySet()): String? {
+    val path = encodedPath?.takeIf { it.length > 1 } ?: return null
+
+    val relativeUrl = Uri.Builder()
+        .encodedPath(path)
+        .apply {
+            queryParameterNames
+                .filterNot { it in excludeParams }
+                .flatMap { name -> getQueryParameters(name).map { name to it } }
+                .forEach { (name, value) -> appendQueryParameter(name, value) }
+        }
+        .encodedFragment(encodedFragment)
+        .build()
+        .toString()
+
+    return relativeUrl.takeIf { it.isNotEmpty() }
 }

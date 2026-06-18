@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.frontend.improv
 /**
  * Reports the device's Bluetooth-related capabilities.
  *
- * Exposed as an interface so call sites (e.g. the config/get response, the improv scan flow)
+ * Exposed as an interface so call sites (e.g. the config/get response, the Improv scan flow)
  * can stay testable without Robolectric.
  */
 fun interface BluetoothCapabilities {

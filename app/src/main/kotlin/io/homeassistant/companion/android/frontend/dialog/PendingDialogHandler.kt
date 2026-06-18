@@ -19,6 +19,9 @@ internal fun PendingDialogHandler(pendingDialog: FrontendDialog?) {
         is FrontendDialog.Confirm -> {
             SimpleConfirmDialog(pendingDialog)
         }
+        is FrontendDialog.Information -> {
+            InformationDialog(pendingDialog)
+        }
         is FrontendDialog.HttpAuth -> {
             HttpAuthDialog(
                 message = pendingDialog.message(LocalContext.current),
