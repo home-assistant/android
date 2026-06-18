@@ -5,7 +5,7 @@ import app.cash.turbine.test
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.settings.server.ServerChooserItem
-import io.homeassistant.companion.android.settings.server.ServerChooserItemsManager
+import io.homeassistant.companion.android.settings.server.ServerChooserItemsUseCase
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -20,9 +20,9 @@ import org.junit.jupiter.api.Test
 class LinkViewModelTest {
 
     private val linkHandler: LinkHandler = mockk()
-    private val serverChooserItems: ServerChooserItemsManager = mockk()
+    private val serverChooserItems: ServerChooserItemsUseCase = mockk()
 
-    private fun createViewModel(): LinkViewModel = LinkViewModel(linkHandler = linkHandler, serverChooserItemsManager = serverChooserItems)
+    private fun createViewModel(): LinkViewModel = LinkViewModel(linkHandler = linkHandler, serverChooserItemsUseCase = serverChooserItems)
 
     private fun uri(value: String = "https://my.home-assistant.io/redirect/foo"): Uri = mockk(relaxed = true) {
         every { this@mockk.toString() } returns value

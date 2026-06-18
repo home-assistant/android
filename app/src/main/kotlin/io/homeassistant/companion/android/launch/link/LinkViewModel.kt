@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.util.FailFast
-import io.homeassistant.companion.android.settings.server.ServerChooserItemsManager
+import io.homeassistant.companion.android.settings.server.ServerChooserItemsUseCase
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class LinkViewModel @Inject constructor(
     private val linkHandler: LinkHandler,
-    private val serverChooserItemsManager: ServerChooserItemsManager,
+    private val serverChooserItemsUseCase: ServerChooserItemsUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<LinkUiState>(LinkUiState.Loading)
@@ -59,7 +59,7 @@ class LinkViewModel @Inject constructor(
                     )
                 is LinkDestination.ServerPicker ->
                     _uiState.value = LinkUiState.ChoosingServer(
-                        items = serverChooserItemsManager(destination.servers),
+                        items = serverChooserItemsUseCase(destination.servers),
                         path = destination.path,
                     )
             }

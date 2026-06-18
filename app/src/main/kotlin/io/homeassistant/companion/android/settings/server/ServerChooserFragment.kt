@@ -23,7 +23,7 @@ class ServerChooserFragment : DialogFragment() {
     lateinit var serverManager: ServerManager
 
     @Inject
-    lateinit var serverChooserItems: ServerChooserItemsManager
+    lateinit var serverChooserItems: ServerChooserItemsUseCase
 
     companion object {
         const val TAG = "ServerChooser"

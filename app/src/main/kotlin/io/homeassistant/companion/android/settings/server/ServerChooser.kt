@@ -63,7 +63,7 @@ private val DIVIDER_START_INSET = HADimens.SPACE4 + AVATAR_SIZE + HADimens.SPACE
  * The sheet provides its own scrim and surface through [HAModalBottomSheet], so it must be hosted
  * directly in a Compose hierarchy (not inside a `BottomSheetDialogFragment`).
  *
- * @param items the servers to choose from, already resolved by [ServerChooserItemsManager].
+ * @param items the servers to choose from, already resolved by [ServerChooserItemsUseCase].
  * @param onServerSelected invoked with [ServerChooserItem.serverId] when a row is tapped.
  * @param onDismissRequest invoked when the user dismisses the sheet (scrim tap, swipe or back).
  * @param sheetState state controlling the sheet, exposed so the host can drive show/hide animations.

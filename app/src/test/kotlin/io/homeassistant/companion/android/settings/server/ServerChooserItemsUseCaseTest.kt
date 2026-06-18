@@ -6,7 +6,7 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
-import io.homeassistant.companion.android.util.ServerUserAvatarRepository
+import io.homeassistant.companion.android.util.ServerUserAvatarUseCase
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -18,14 +18,14 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class ServerChooserItemsManagerTest {
+class ServerChooserItemsUseCaseTest {
 
     private val serverManager: ServerManager = mockk()
-    private val serverUserAvatarRepository: ServerUserAvatarRepository = mockk()
+    private val serverUserAvatarUseCase: ServerUserAvatarUseCase = mockk()
 
-    private val chooserItemsManager = ServerChooserItemsManager(
+    private val chooserItemsUseCase = ServerChooserItemsUseCase(
         serverManager = serverManager,
-        serverUserAvatarRepository = serverUserAvatarRepository,
+        serverUserAvatarUseCase = serverUserAvatarUseCase,
     )
 
     private fun server(id: Int, name: String, userName: String?): Server = Server(
@@ -39,9 +39,9 @@ class ServerChooserItemsManagerTest {
     @Test
     fun `Given servers with named users when invoked then maps the user and server names`() = runTest {
         coEvery { serverManager.getServer() } returns null
-        coEvery { serverUserAvatarRepository.getUserAvatar(any()) } returns null
+        coEvery { serverUserAvatarUseCase.getUserAvatar(any()) } returns null
 
-        val items = chooserItemsManager(listOf(server(1, "Home", "Alice"), server(2, "Office", "Bob")))
+        val items = chooserItemsUseCase(listOf(server(1, "Home", "Alice"), server(2, "Office", "Bob")))
 
         assertEquals(
             listOf(
@@ -55,9 +55,9 @@ class ServerChooserItemsManagerTest {
     @Test
     fun `Given a user without a name when invoked then the user name falls back to the server name`() = runTest {
         coEvery { serverManager.getServer() } returns null
-        coEvery { serverUserAvatarRepository.getUserAvatar(any()) } returns null
+        coEvery { serverUserAvatarUseCase.getUserAvatar(any()) } returns null
 
-        val items = chooserItemsManager(listOf(server(1, "Home", userName = null)))
+        val items = chooserItemsUseCase(listOf(server(1, "Home", userName = null)))
 
         assertEquals("Home", items.single().userName)
     }
@@ -66,9 +66,9 @@ class ServerChooserItemsManagerTest {
     fun `Given the avatar manager resolves a picture when invoked then it is carried in the item`() = runTest {
         val avatar = mockk<Bitmap>()
         coEvery { serverManager.getServer() } returns null
-        coEvery { serverUserAvatarRepository.getUserAvatar(1) } returns avatar
+        coEvery { serverUserAvatarUseCase.getUserAvatar(1) } returns avatar
 
-        val items = chooserItemsManager(listOf(server(1, "Home", "Alice")))
+        val items = chooserItemsUseCase(listOf(server(1, "Home", "Alice")))
 
         assertSame(avatar, items.single().userAvatar)
     }
@@ -76,9 +76,9 @@ class ServerChooserItemsManagerTest {
     @Test
     fun `Given an active server when invoked then only that item is marked active`() = runTest {
         coEvery { serverManager.getServer() } returns server(2, "Office", "Bob")
-        coEvery { serverUserAvatarRepository.getUserAvatar(any()) } returns null
+        coEvery { serverUserAvatarUseCase.getUserAvatar(any()) } returns null
 
-        val items = chooserItemsManager(listOf(server(1, "Home", "Alice"), server(2, "Office", "Bob")))
+        val items = chooserItemsUseCase(listOf(server(1, "Home", "Alice"), server(2, "Office", "Bob")))
 
         assertFalse(items.single { it.serverId == 1 }.isActive)
         assertTrue(items.single { it.serverId == 2 }.isActive)
