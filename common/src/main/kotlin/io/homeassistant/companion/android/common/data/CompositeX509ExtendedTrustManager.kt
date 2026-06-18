@@ -63,15 +63,23 @@ internal class CompositeX509ExtendedTrustManager(
         checkServerOrFallback { it.checkServerTrusted(chain, authType, engine) }
     }
 
-    // Client trust uses the primary only (see class doc).
+    /**
+     * Client trust uses the primary only (see class doc).
+     */
     override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {
         primary.checkClientTrusted(chain, authType)
     }
 
+    /**
+     * Client trust uses the primary only (see class doc).
+     */
     override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?, socket: Socket?) {
         primary.checkClientTrusted(chain, authType, socket)
     }
 
+    /**
+     * Client trust uses the primary only (see class doc).
+     */
     override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?, engine: SSLEngine?) {
         primary.checkClientTrusted(chain, authType, engine)
     }
