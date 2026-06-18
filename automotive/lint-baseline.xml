@@ -8,7 +8,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="233"
+            line="236"
             column="13"/>
     </issue>
 
@@ -19,40 +19,40 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="238"
+            line="241"
             column="17"/>
     </issue>
 
     <issue
         id="MissingPermission"
         message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
-        errorLine1="                        ActivityRecognition.getClient(context).requestSleepSegmentUpdates("
+        errorLine1="                        ActivityRecognition.getClient(applicationContext).requestSleepSegmentUpdates("
         errorLine2="                        ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="258"
+            line="260"
             column="25"/>
     </issue>
 
     <issue
         id="MissingPermission"
         message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
-        errorLine1="                        ActivityRecognition.getClient(context).requestSleepSegmentUpdates("
+        errorLine1="                        ActivityRecognition.getClient(applicationContext).requestSleepSegmentUpdates("
         errorLine2="                        ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="266"
+            line="268"
             column="25"/>
     </issue>
 
     <issue
         id="MissingPermission"
         message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
-        errorLine1="                        ActivityRecognition.getClient(context).requestSleepSegmentUpdates("
+        errorLine1="                        ActivityRecognition.getClient(applicationContext).requestSleepSegmentUpdates("
         errorLine2="                        ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="274"
+            line="276"
             column="25"/>
     </issue>
 
@@ -74,7 +74,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="128"
+            line="129"
             column="17"/>
     </issue>
 
@@ -85,7 +85,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1113"
+            line="1116"
             column="17"/>
     </issue>
 
@@ -129,7 +129,7 @@
         errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="115"
+            line="116"
             column="26"/>
     </issue>
 
@@ -140,7 +140,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="116"
+            line="117"
             column="25"/>
     </issue>
 
@@ -646,7 +646,7 @@
         errorLine2="                                     ~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/sensor/SensorDetailViewModel.kt"
-            line="369"
+            line="371"
             column="38"/>
     </issue>
 
@@ -1616,7 +1616,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="53"
+            line="54"
             column="9"/>
     </issue>
 
@@ -1627,7 +1627,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="55"
+            line="56"
             column="9"/>
     </issue>
 
