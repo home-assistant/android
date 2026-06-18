@@ -11,12 +11,14 @@ import androidx.media3.common.Player
 import app.cash.turbine.test
 import com.google.zxing.BarcodeFormat
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.data.prefs.ZoomSettings
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
@@ -47,7 +49,9 @@ import io.homeassistant.companion.android.frontend.url.UrlLoadResult
 import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
+import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.util.hasSameOrigin
+import io.homeassistant.companion.android.util.mockServer
 import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -97,6 +101,7 @@ class FrontendViewModelTest {
     private val frontendJsBridgeFactory: FrontendJsBridgeFactory = mockk(relaxed = true)
     private val downloadManager: FrontendDownloadManager = mockk(relaxed = true)
     private val gestureManager: FrontendGestureManager = mockk(relaxed = true)
+    private val serverManager: ServerManager = mockk(relaxed = true)
     private val zoomSettingsFlow = MutableStateFlow(ZoomSettings())
     private val autoPlayVideoFlow = MutableStateFlow(false)
     private val screenOrientationFlow = MutableStateFlow(ScreenOrientation.SYSTEM)
@@ -156,6 +161,7 @@ class FrontendViewModelTest {
             webViewClientFactory = webViewClientFactory,
             frontendBusObserver = frontendBusObserver,
             externalBusRepository = externalBusRepository,
+            serverManager = serverManager,
             urlManager = urlManager,
             connectivityCheckRepository = connectivityCheckRepository,
             permissionManager = permissionManager,
@@ -194,15 +200,20 @@ class FrontendViewModelTest {
                     onUrlIntercepted = any(),
                     onPageFinished = any(),
                     onReceivedHttpAuthRequest = any(),
+                    onCanGoBackChanged = any(),
                 )
             } answers {
-                // onUrlIntercepted is the 4th of the 6 named arguments (zero-based index 3)
+                // onUrlIntercepted is at parameter index 3 in HAWebViewClientFactory.create
                 capturedCallback = arg(3)
                 mockk(relaxed = true)
             }
 
             val viewModel = createViewModel()
-            return viewModel to { uri -> capturedCallback!!.invoke(uri, false) }
+            return viewModel to { uri ->
+                val callback = capturedCallback
+                assertNotNull(callback)
+                callback.invoke(uri, false)
+            }
         }
 
         private fun uri(value: String): Uri = mockk {
@@ -848,37 +859,36 @@ class FrontendViewModelTest {
         }
 
         @Test
-        fun `Given gesture returns PerformWebViewActionThen when handled then action is emitted and then is executed`() = runTest {
-            every { frontendBusObserver.messageResults() } returns emptyFlow()
+        fun `Given NAVIGATE_DASHBOARD gesture on 2025_6 server then clears history and sends navigate`() = runTest {
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
-
-            val clearHistory = WebViewAction.ClearHistory()
             coEvery {
                 gestureManager.handleGesture(serverId = any(), direction = any(), pointerCount = any())
-            } returns GestureResult.PerformWebViewActionThen(
-                action = clearHistory,
-                then = {
-                    GestureResult.PerformWebViewAction(WebViewAction.Reload())
-                },
+            } returns GestureResult.NavigateToDefaultDashboard
+            coEvery { serverManager.getServer(serverId) } returns mockServer(
+                url = "https://ha.test",
+                name = "t",
+                haVersion = HomeAssistantVersion(2025, 6, 0),
+                serverId = serverId,
             )
 
             val viewModel = createViewModel()
             val actions = mutableListOf<WebViewAction>()
-            val job = backgroundScope.launch { viewModel.webViewActions.collect { actions.add(it) } }
-
+            val job = backgroundScope.launch {
+                viewModel.webViewActions.collect {
+                    actions.add(it)
+                    if (it is WebViewAction.ClearHistory) it.result.complete(Unit)
+                }
+            }
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
 
             viewModel.onGesture(GestureDirection.UP, pointerCount = 2)
-
-            // Simulate Screen completing the ClearHistory action
-            clearHistory.result.complete(Unit)
             advanceUntilIdle()
 
-            assertEquals(2, actions.size)
+            assertEquals(1, actions.size)
             assertInstanceOf(WebViewAction.ClearHistory::class.java, actions[0])
-            assertInstanceOf(WebViewAction.Reload::class.java, actions[1])
+            coVerify { externalBusRepository.send(any()) }
             job.cancel()
         }
 
@@ -1202,7 +1212,7 @@ class FrontendViewModelTest {
     inner class Zoom {
 
         private fun createViewModelWithPageFinishedCapture(): Pair<FrontendViewModel, () -> Unit> {
-            var capturedPageFinished: (() -> Unit)? = null
+            var capturedPageFinished: ((String?) -> Unit)? = null
             every {
                 webViewClientFactory.create(
                     currentUrlFlow = any(),
@@ -1211,15 +1221,16 @@ class FrontendViewModelTest {
                     onUrlIntercepted = any(),
                     onPageFinished = any(),
                     onReceivedHttpAuthRequest = any(),
+                    onCanGoBackChanged = any(),
                 )
             } answers {
-                // onPageFinished is the 5th of the 6 named arguments (zero-based index 4)
+                // onPageFinished is at parameter index 4 in HAWebViewClientFactory.create
                 capturedPageFinished = arg(4)
                 mockk(relaxed = true)
             }
 
             val viewModel = createViewModel()
-            return viewModel to { capturedPageFinished!!.invoke() }
+            return viewModel to { capturedPageFinished!!.invoke(null) }
         }
 
         @Test
@@ -1310,14 +1321,17 @@ class FrontendViewModelTest {
                     onUrlIntercepted = any(),
                     onPageFinished = any(),
                     onReceivedHttpAuthRequest = any(),
+                    onCanGoBackChanged = any(),
                 )
             } answers {
-                capturedCallback = lastArg()
+                capturedCallback = arg(5)
                 mockk(relaxed = true)
             }
 
             val viewModel = createViewModel(httpAuthHandler = httpAuthHandler, dialogManager = dialogManager)
-            return viewModel to capturedCallback!!
+            val callback = capturedCallback
+            assertNotNull(callback)
+            return viewModel to callback
         }
 
         @Test
@@ -1394,6 +1408,141 @@ class FrontendViewModelTest {
                 assertTrue(event is FrontendEvent.ShowSnackbar)
                 cancelAndIgnoreRemainingEvents()
             }
+        }
+    }
+
+    @Nested
+    inner class BackNavigation {
+
+        private fun createViewModelWithCanGoBackCapture(): Pair<FrontendViewModel, (Boolean) -> Unit> {
+            var capturedCanGoBackChanged: ((Boolean) -> Unit)? = null
+            every {
+                webViewClientFactory.create(
+                    currentUrlFlow = any(),
+                    onFrontendError = any(),
+                    onCrash = any(),
+                    onUrlIntercepted = any(),
+                    onPageFinished = any(),
+                    onReceivedHttpAuthRequest = any(),
+                    onCanGoBackChanged = any(),
+                )
+            } answers {
+                // onCanGoBackChanged is at parameter index 6 in HAWebViewClientFactory.create
+                capturedCanGoBackChanged = arg(6)
+                mockk(relaxed = true)
+            }
+
+            val viewModel = createViewModel()
+            return viewModel to {
+                val callback = capturedCanGoBackChanged
+                assertNotNull(callback)
+                callback.invoke(it)
+            }
+        }
+
+        /** Reads the back-navigation flag from the current state (only the dashboard carries it). */
+        private fun FrontendViewModel.canGoBack(): Boolean = (viewState.value as? FrontendViewState.Content)?.canGoBack == true
+
+        @Test
+        fun `Given Content state when WebView reports back availability then canGoBack reflects it`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val (viewModel, reportCanGoBack) = createViewModelWithCanGoBackCapture()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+
+            assertFalse(viewModel.canGoBack())
+
+            reportCanGoBack(true)
+            assertTrue(viewModel.canGoBack())
+
+            reportCanGoBack(false)
+            assertFalse(viewModel.canGoBack())
+        }
+
+        @Test
+        fun `Given WebView covered by an overlay when it can go back then canGoBack is false`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val (viewModel, reportCanGoBack) = createViewModelWithCanGoBackCapture()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+            reportCanGoBack(true)
+            assertTrue(viewModel.canGoBack())
+
+            // An overlay (here the unrecoverable error screen) now covers the WebView: back must not
+            // drive the hidden WebView's history.
+            viewModel.onWebViewCreationFailed(RuntimeException("WebView unavailable"))
+            advanceUntilIdle()
+
+            assertFalse(viewModel.canGoBack())
+        }
+
+        @Test
+        fun `Given the frontend connects when content is shown then webViewActions emits ClearHistory`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val (viewModel, _) = createViewModelWithCanGoBackCapture()
+
+            viewModel.webViewActions.test {
+                advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+                // Connecting makes the dashboard the current page; clearing history drops the
+                // intermediate about:blank placeholder so it is not a reachable back entry.
+                messageFlow.emit(FrontendHandlerEvent.Connected)
+                advanceUntilIdle()
+
+                assertInstanceOf(WebViewAction.ClearHistory::class.java, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given a connected server with back history when switching servers then history is cleared and canGoBack is false`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(1, any()) } returns flowOf(
+                UrlLoadResult.Success(url = "https://server1.com?external_auth=1", serverId = 1),
+            )
+            every { urlManager.serverUrlFlow(2, any()) } returns flowOf(
+                UrlLoadResult.Success(url = "https://server2.com?external_auth=1", serverId = 2),
+            )
+
+            val (viewModel, reportCanGoBack) = createViewModelWithCanGoBackCapture()
+
+            // Connect to server 1 and let it accrue in-dashboard back history.
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+            reportCanGoBack(true)
+            assertTrue(viewModel.canGoBack())
+
+            viewModel.webViewActions.test {
+                viewModel.switchServer(2)
+                advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+                messageFlow.emit(FrontendHandlerEvent.Connected)
+                advanceUntilIdle()
+
+                // The new server's history is cleared so back cannot return to the previous server.
+                assertInstanceOf(WebViewAction.ClearHistory::class.java, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            assertEquals(2, viewModel.viewState.value.serverId)
+            assertFalse(viewModel.canGoBack())
         }
     }
 
@@ -2240,6 +2389,193 @@ class FrontendViewModelTest {
             viewModel.processImprovScanRequests()
 
             coVerify { improvHandler.processImprovScanRequests() }
+        }
+    }
+
+    @Nested
+    inner class FirstViewOnStart {
+
+        @Test
+        fun `Given pref on and allowed url on 2025_6 server when onLeavingApp then clears history and sends navigate`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery { prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled() } returns true
+            coEvery { serverManager.getServer(serverId) } returns mockServer(
+                url = "https://ha.test",
+                name = "t",
+                haVersion = HomeAssistantVersion(2025, 6, 0),
+                serverId = serverId,
+            )
+
+            val viewModel = createViewModel()
+            val actions = mutableListOf<WebViewAction>()
+            val job = backgroundScope.launch {
+                viewModel.webViewActions.collect {
+                    actions.add(it)
+                    if (it is WebViewAction.ClearHistory) it.result.complete(Unit)
+                }
+            }
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            viewModel.onLeavingApp("https://ha.test/lovelace/0")
+            advanceUntilIdle()
+
+            assertEquals(1, actions.size)
+            assertInstanceOf(WebViewAction.ClearHistory::class.java, actions[0])
+            coVerify { externalBusRepository.send(any()) }
+            job.cancel()
+        }
+
+        @Suppress("DEPRECATION")
+        @Test
+        fun `Given pref on and allowed url on old server when onLeavingApp then clears history and emits sidebar fallback`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery { prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled() } returns true
+            coEvery { serverManager.getServer(serverId) } returns mockServer(
+                url = "https://ha.test",
+                name = "t",
+                haVersion = HomeAssistantVersion(2025, 5, 0),
+                serverId = serverId,
+            )
+
+            val viewModel = createViewModel()
+            val actions = mutableListOf<WebViewAction>()
+            val job = backgroundScope.launch {
+                viewModel.webViewActions.collect {
+                    actions.add(it)
+                    if (it is WebViewAction.ClearHistory) it.result.complete(Unit)
+                }
+            }
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            viewModel.onLeavingApp("https://ha.test/lovelace/0")
+            advanceUntilIdle()
+
+            assertEquals(2, actions.size)
+            assertInstanceOf(WebViewAction.ClearHistory::class.java, actions[0])
+            assertInstanceOf(WebViewAction.NavigateToDefaultPanelViaSidebar::class.java, actions[1])
+            coVerify(exactly = 0) { externalBusRepository.send(any()) }
+            job.cancel()
+        }
+
+        @Test
+        fun `Given pref off when onLeavingApp then does nothing`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery { prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled() } returns false
+
+            val viewModel = createViewModel()
+            val actions = mutableListOf<WebViewAction>()
+            val job = backgroundScope.launch { viewModel.webViewActions.collect { actions.add(it) } }
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            viewModel.onLeavingApp("https://ha.test/lovelace/0")
+            advanceUntilIdle()
+
+            assertTrue(actions.isEmpty())
+            coVerify(exactly = 0) { externalBusRepository.send(any()) }
+            job.cancel()
+        }
+
+        @Test
+        fun `Given excluded config url when onLeavingApp then does nothing`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery { prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled() } returns true
+
+            val viewModel = createViewModel()
+            val actions = mutableListOf<WebViewAction>()
+            val job = backgroundScope.launch { viewModel.webViewActions.collect { actions.add(it) } }
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            viewModel.onLeavingApp("https://ha.test/config/general")
+            advanceUntilIdle()
+
+            assertTrue(actions.isEmpty())
+            coVerify(exactly = 0) { externalBusRepository.send(any()) }
+            job.cancel()
+        }
+
+        @Test
+        fun `Given excluded hassio url when onLeavingApp then does nothing`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery { prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled() } returns true
+
+            val viewModel = createViewModel()
+            val actions = mutableListOf<WebViewAction>()
+            val job = backgroundScope.launch { viewModel.webViewActions.collect { actions.add(it) } }
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            viewModel.onLeavingApp("https://ha.test/hassio/dashboard")
+            advanceUntilIdle()
+
+            assertTrue(actions.isEmpty())
+            coVerify(exactly = 0) { externalBusRepository.send(any()) }
+            job.cancel()
+        }
+
+        @Test
+        fun `Given config dashboard url when onLeavingApp then navigates`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery { prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled() } returns true
+            coEvery { serverManager.getServer(serverId) } returns mockServer(
+                url = "https://ha.test",
+                name = "t",
+                haVersion = HomeAssistantVersion(2025, 6, 0),
+                serverId = serverId,
+            )
+
+            val viewModel = createViewModel()
+            val actions = mutableListOf<WebViewAction>()
+            val job = backgroundScope.launch {
+                viewModel.webViewActions.collect {
+                    actions.add(it)
+                    if (it is WebViewAction.ClearHistory) it.result.complete(Unit)
+                }
+            }
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            viewModel.onLeavingApp("https://ha.test/config/dashboard")
+            advanceUntilIdle()
+
+            assertEquals(1, actions.size)
+            assertInstanceOf(WebViewAction.ClearHistory::class.java, actions[0])
+            coVerify { externalBusRepository.send(any()) }
+            job.cancel()
+        }
+
+        @Test
+        fun `Given app not in background when onLeavingApp then does nothing`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery { prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled() } returns true
+
+            val viewModel = createViewModel()
+            val actions = mutableListOf<WebViewAction>()
+            val job = backgroundScope.launch { viewModel.webViewActions.collect { actions.add(it) } }
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            // Simulate a started activity so LifecycleHandler reports the app is in the foreground.
+            val activity = mockk<android.app.Activity>(relaxed = true)
+            LifecycleHandler.onActivityStarted(activity)
+            try {
+                viewModel.onLeavingApp("https://ha.test/lovelace/0")
+                advanceUntilIdle()
+                assertTrue(actions.isEmpty())
+            } finally {
+                LifecycleHandler.onActivityStopped(activity) // reset global counter for other tests
+            }
+            job.cancel()
         }
     }
 

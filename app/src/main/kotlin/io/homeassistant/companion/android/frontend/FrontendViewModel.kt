@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.common.data.connectivity.ConnectivityC
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.frontend.auth.FrontendHttpAuthHandler
 import io.homeassistant.companion.android.frontend.auth.HttpAuthResult
@@ -27,6 +28,7 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.exoplayer.FrontendExoPlayerManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
+import io.homeassistant.companion.android.frontend.externalbus.outgoing.NavigateToMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserRequest
@@ -47,6 +49,7 @@ import io.homeassistant.companion.android.frontend.url.UrlLoadResult
 import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
+import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.util.hasSameOrigin
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
@@ -80,6 +83,15 @@ private const val APP_PREFIX = "app://"
 private const val INTENT_PREFIX = "intent:"
 
 /**
+ * URLs that must NOT trigger the "always show first view on app start" navigation.
+ *
+ * Matches the Home Assistant settings area — paths under `/config` (except `/config/dashboard`,
+ * which is a regular dashboard) and under `/hassio` (apps).
+ */
+private val FIRST_VIEW_EXCLUDED_URL_REGEX =
+    """.*://.*/(config/(?!\bdashboard\b)|hassio)/*.*""".toRegex()
+
+/**
  * ViewModel for frontend screen.
  *
  * Handles loading the Home Assistant WebView, authentication, external bus communication,
@@ -94,6 +106,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     webViewClientFactory: HAWebViewClientFactory,
     private val frontendBusObserver: FrontendBusObserver,
     private val externalBusRepository: FrontendExternalBusRepository,
+    private val serverManager: ServerManager,
     private val urlManager: FrontendUrlManager,
     private val connectivityCheckRepository: ConnectivityCheckRepository,
     private val permissionManager: PermissionManager,
@@ -117,6 +130,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         webViewClientFactory: HAWebViewClientFactory,
         frontendBusObserver: FrontendBusObserver,
         externalBusRepository: FrontendExternalBusRepository,
+        serverManager: ServerManager,
         urlManager: FrontendUrlManager,
         connectivityCheckRepository: ConnectivityCheckRepository,
         permissionManager: PermissionManager,
@@ -137,6 +151,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         webViewClientFactory = webViewClientFactory,
         frontendBusObserver = frontendBusObserver,
         externalBusRepository = externalBusRepository,
+        serverManager = serverManager,
         urlManager = urlManager,
         connectivityCheckRepository = connectivityCheckRepository,
         permissionManager = permissionManager,
@@ -236,6 +251,13 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 ) {
                     _events.tryEmit(FrontendEvent.ShowSnackbar(commonR.string.auth_cancel))
                 }
+            }
+        },
+        onCanGoBackChanged = { canGoBack ->
+            // Only meaningful while the dashboard is shown; in any other state the WebView is hidden
+            // behind an overlay, so the flag is dropped with the state.
+            _viewState.update { state ->
+                if (state is FrontendViewState.Content) state.copy(canGoBack = canGoBack) else state
             }
         },
     )
@@ -567,6 +589,25 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     }
 
     /**
+     * Called when the app is leaving the foreground (host activity stop). When the user enabled
+     * "always show first view on app start", resets the frontend to its default dashboard so the
+     * next launch starts there — unless the user is in the Home Assistant settings or add-ons area.
+     *
+     * The preference is read first on purpose: it suspends, which lets the pending stop dispatch
+     * complete so [LifecycleHandler.isAppInBackground] reads an up-to-date value (the activity stop
+     * is not yet reflected at the instant the stop event fires). The background check then excludes
+     * the case where one of our own activities (e.g. NFC write) came to the foreground.
+     */
+    fun onLeavingApp(currentUrl: String?) {
+        viewModelScope.launch {
+            if (!prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled()) return@launch
+            if (!LifecycleHandler.isAppInBackground()) return@launch
+            if (!shouldShowFirstView(currentUrl)) return@launch
+            navigateToDefaultDashboard(_viewState.value.serverId)
+        }
+    }
+
+    /**
      * Forwarded ActivityResult after a Matter/Thread Play Services
      * intent completes.
      */
@@ -578,14 +619,43 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         when (result) {
             is GestureResult.Navigate -> _events.emit(result.event)
             is GestureResult.PerformWebViewAction -> _webViewActions.emit(result.action)
-            is GestureResult.PerformWebViewActionThen<*> -> {
-                _webViewActions.emit(result.action)
-                result.action.result.await()
-                handleGestureResult(result.then())
-            }
             is GestureResult.SwitchServer -> switchServer(result.serverId)
+            is GestureResult.NavigateToDefaultDashboard -> navigateToDefaultDashboard(_viewState.value.serverId)
             is GestureResult.Forwarded, is GestureResult.Ignored -> { /* no-op */ }
         }
+    }
+
+    /**
+     * Clears the WebView history and navigates the frontend to the server's default dashboard.
+     *
+     * Uses the `navigate` external bus command on Home Assistant 2025.6+, falling back to a
+     * sidebar-click script ([WebViewAction.NavigateToDefaultPanelViaSidebar]) on older servers that
+     * do not support it. History is cleared first (and awaited) so the back stack is reset before
+     * the navigation lands.
+     */
+    private suspend fun navigateToDefaultDashboard(serverId: Int) {
+        val clearHistory = WebViewAction.ClearHistory()
+        _webViewActions.emit(clearHistory)
+        clearHistory.result.await()
+
+        val version = serverManager.getServer(serverId)?.version
+        if (NavigateToMessage.isAvailable(version)) {
+            externalBusRepository.send(NavigateToMessage(path = "/", replace = true))
+        } else {
+            // Deliberate use of the deprecated legacy fallback for servers without `navigate` support.
+            @Suppress("DEPRECATION")
+            _webViewActions.emit(WebViewAction.NavigateToDefaultPanelViaSidebar())
+        }
+    }
+
+    /**
+     * Returns `true` when, on leaving the app, the frontend should be reset to its default dashboard
+     * (the "first view"). Returns `false` for a missing URL and for the Home Assistant settings and
+     * add-ons areas, where the user should return to where they were.
+     */
+    private fun shouldShowFirstView(url: String?): Boolean {
+        if (url.isNullOrBlank()) return false
+        return !url.matches(FIRST_VIEW_EXCLUDED_URL_REGEX)
     }
 
     /**
@@ -668,6 +738,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private suspend fun handleMessageResult(result: FrontendHandlerEvent) {
         when (result) {
             is FrontendHandlerEvent.Connected -> {
+                val wasLoading = _viewState.value is FrontendViewState.Loading
                 _viewState.update { currentState ->
                     if (currentState is FrontendViewState.Loading) {
                         FrontendViewState.Content(
@@ -677,6 +748,10 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                     } else {
                         currentState
                     }
+                }
+                if (wasLoading) {
+                    // Remove any previous navigation
+                    _webViewActions.emit(WebViewAction.ClearHistory())
                 }
                 permissionManager.checkNotificationPermission(_viewState.value.serverId)
             }
@@ -928,7 +1003,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      * navigations can reset the viewport meta tag). The collection then stays active
      * to react to settings changes until the next page load restarts it.
      */
-    private fun onPageFinished() {
+    private fun onPageFinished(url: String?) {
         zoomObserverJob?.cancel()
         zoomObserverJob = viewModelScope.launch {
             prefsRepository.zoomSettingsFlow().collect { settings ->

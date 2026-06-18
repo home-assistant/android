@@ -57,6 +57,7 @@ sealed interface FrontendViewState {
         val nightModeTheme: NightModeTheme? = null,
         val statusBarColor: Color? = null,
         val backgroundColor: Color? = null,
+        val canGoBack: Boolean = false,
         val exoPlayerState: ExoPlayerUiState? = null,
         val improvUiState: ImprovUIState? = null,
         val barcodeScanner: BarcodeScannerUiState? = null,
