@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.common.notifications.handleChannel
 import io.homeassistant.companion.android.common.notifications.handleDeleteIntent
 import io.homeassistant.companion.android.common.notifications.handleSmallIcon
 import io.homeassistant.companion.android.common.notifications.handleText
+import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.getActiveNotification
@@ -39,6 +40,7 @@ class MessagingManager @Inject constructor(
     private val sensorRepository: SensorRepository,
     private val notificationDao: NotificationDao,
     private val textToSpeechClient: TextToSpeechClient,
+    private val bluetoothSensorManager: BluetoothSensorManager,
 ) {
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -94,7 +96,7 @@ class MessagingManager @Inject constructor(
                     }
                 }
                 message == DeviceCommandData.COMMAND_BLE_TRANSMITTER && allowCommands -> {
-                    if (!commandBleTransmitter(context, notificationData, sensorRepository)) {
+                    if (!commandBleTransmitter(context, notificationData, sensorRepository, bluetoothSensorManager)) {
                         sendNotification(notificationData)
                     }
                 }

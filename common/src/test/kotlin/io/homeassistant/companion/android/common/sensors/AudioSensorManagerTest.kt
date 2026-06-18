@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.common.sensors
 import android.content.Context
 import android.content.Context.AUDIO_SERVICE
 import android.media.AudioManager
-import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.sensor.Attribute
@@ -13,7 +12,6 @@ import io.mockk.coJustRun
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.unmockkAll
 import kotlinx.coroutines.test.runTest
@@ -50,26 +48,14 @@ class AudioSensorManagerTest {
 
     @Before
     fun setUp() {
-        sensorManager = AudioSensorManager()
         context = mockk()
         audioManager = mockk(relaxed = true)
         sensorRepository = mockk()
         serverManager = mockk()
-        val entryPoint = mockk<SensorManager.SensorManagerEntryPoint>()
+        sensorManager = AudioSensorManager(context, sensorRepository, serverManager)
 
-        mockkStatic(EntryPointAccessors::class)
-
-        every { context.applicationContext } returns context
         every { context.getSystemService(AudioManager::class.java) } returns audioManager
         every { context.getSystemService(AUDIO_SERVICE) } returns audioManager
-        every {
-            EntryPointAccessors.fromApplication(
-                context,
-                SensorManager.SensorManagerEntryPoint::class.java,
-            )
-        } returns entryPoint
-        every { entryPoint.sensorRepository() } returns sensorRepository
-        every { entryPoint.serverManager() } returns serverManager
 
         coEvery { serverManager.servers() } returns listOf(mockk(relaxed = true))
         coEvery { sensorRepository.get(any()) } returns emptyList()
@@ -97,7 +83,7 @@ class AudioSensorManagerTest {
         coJustRun { sensorRepository.update(capture(updatedSensor)) }
         coJustRun { sensorRepository.replaceAllAttributes(AudioSensorManager.volMusic.id, capture(updatedAttributes)) }
 
-        sensorManager.requestSensorUpdate(context)
+        sensorManager.requestSensorUpdate()
 
         updatedSensor.captured.assertForceUpdate()
         assertEquals(
@@ -117,7 +103,7 @@ class AudioSensorManagerTest {
         )
         coJustRun { sensorRepository.update(capture(updatedSensor)) }
 
-        sensorManager.requestSensorUpdate(context)
+        sensorManager.requestSensorUpdate()
 
         updatedSensor.captured.assertForceUpdate()
     }
@@ -133,8 +119,8 @@ class AudioSensorManagerTest {
         )
         coJustRun { sensorRepository.update(capture(updatedSensors)) }
 
-        sensorManager.requestSensorUpdate(context)
-        sensorManager.requestSensorUpdate(context)
+        sensorManager.requestSensorUpdate()
+        sensorManager.requestSensorUpdate()
 
         assertEquals(2, updatedSensors.size)
         updatedSensors.forEach { it.assertForceUpdate() }
@@ -157,7 +143,7 @@ class AudioSensorManagerTest {
         )
         coJustRun { sensorRepository.update(capture(updatedSensors)) }
 
-        sensorManager.requestSensorUpdate(context)
+        sensorManager.requestSensorUpdate()
 
         assertEquals(2, updatedSensors.size)
         updatedSensors.forEach { it.assertForceUpdate() }
@@ -180,7 +166,7 @@ class AudioSensorManagerTest {
         )
         coJustRun { sensorRepository.update(capture(updatedSensor)) }
 
-        sensorManager.requestSensorUpdate(context)
+        sensorManager.requestSensorUpdate()
 
         updatedSensor.captured.assertNoForceUpdate()
     }
@@ -196,7 +182,7 @@ class AudioSensorManagerTest {
         )
         coJustRun { sensorRepository.update(capture(updatedSensor)) }
 
-        sensorManager.requestSensorUpdate(context)
+        sensorManager.requestSensorUpdate()
 
         updatedSensor.captured.assertNoForceUpdate()
     }
@@ -210,8 +196,8 @@ class AudioSensorManagerTest {
             ),
         )
 
-        sensorManager.requestSensorUpdate(context)
-        sensorManager.requestSensorUpdate(context)
+        sensorManager.requestSensorUpdate()
+        sensorManager.requestSensorUpdate()
 
         coVerify(exactly = 1) { sensorRepository.getFull(AudioSensorManager.volMusic.id) }
     }
@@ -224,7 +210,7 @@ class AudioSensorManagerTest {
         coJustRun { sensorRepository.update(any()) }
         coJustRun { sensorRepository.replaceAllAttributes(AudioSensorManager.volMusic.id, capture(updatedAttributes)) }
 
-        sensorManager.requestSensorUpdate(context)
+        sensorManager.requestSensorUpdate()
 
         assertEquals(
             mapOf("min" to "0", "max" to "15"),
@@ -239,7 +225,7 @@ class AudioSensorManagerTest {
         coJustRun { sensorRepository.update(any()) }
         coJustRun { sensorRepository.replaceAllAttributes(AudioSensorManager.volMusic.id, capture(updatedAttributes)) }
 
-        sensorManager.requestSensorUpdate(context)
+        sensorManager.requestSensorUpdate()
 
         assertEquals(
             mapOf("min" to "2", "max" to "15"),
@@ -260,8 +246,8 @@ class AudioSensorManagerTest {
         )
         coJustRun { sensorRepository.update(capture(updatedSensors)) }
 
-        sensorManager.requestSensorUpdate(context)
-        sensorManager.requestSensorUpdate(context)
+        sensorManager.requestSensorUpdate()
+        sensorManager.requestSensorUpdate()
 
         assertEquals(2, updatedSensors.size)
         updatedSensors.forEach { it.assertForceUpdate() }
@@ -275,7 +261,7 @@ class AudioSensorManagerTest {
             ),
         )
 
-        sensorManager.requestSensorUpdate(context)
+        sensorManager.requestSensorUpdate()
 
         // Third call: attributes now match → cached, no more force update.
         assertEquals(1, updatedSensors.size)
@@ -286,7 +272,7 @@ class AudioSensorManagerTest {
 
         // Fourth call: should use cache, no additional getFull call.
         updatedSensors.clear()
-        sensorManager.requestSensorUpdate(context)
+        sensorManager.requestSensorUpdate()
 
         assertEquals(1, updatedSensors.size)
         updatedSensors.single().assertNoForceUpdate()

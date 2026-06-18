@@ -102,7 +102,7 @@ class MonitoringManager {
         beaconManager.enableForegroundServiceScanning(builder.build(), 444)
         beaconManager.setEnableScheduledScanJobs(false)
         beaconManager.startRangingBeacons(region)
-        haMonitor.sensorManager.updateBeaconMonitoringSensor(context)
+        haMonitor.sensorManager.updateBeaconMonitoringSensor()
     }
 
     fun stopMonitoring(context: Context, haMonitor: IBeaconMonitor) {
@@ -110,7 +110,7 @@ class MonitoringManager {
             beaconManager.stopRangingBeacons(region)
             haMonitor.clearBeacons()
             beaconManager.disableForegroundServiceScanning()
-            haMonitor.sensorManager.updateBeaconMonitoringSensor(context)
+            haMonitor.sensorManager.updateBeaconMonitoringSensor()
         }
     }
 }

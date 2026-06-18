@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import io.homeassistant.companion.android.common.util.launchAsync
 import io.homeassistant.companion.android.sensors.LocationSensorManager
+import io.homeassistant.companion.android.sensors.LocationSensorReceiver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -22,7 +23,7 @@ class HighAccuracyLocationReceiver : BroadcastReceiver() {
                 HighAccuracyLocationService.stopService(context)
                 launchAsync(ioScope) {
                     LocationSensorManager.setHighAccuracyModeSetting(context, false)
-                    val locationIntent = Intent(context, LocationSensorManager::class.java)
+                    val locationIntent = Intent(context, LocationSensorReceiver::class.java)
                     locationIntent.action = LocationSensorManager.ACTION_REQUEST_LOCATION_UPDATES
                     context.sendBroadcast(locationIntent)
                 }

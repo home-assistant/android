@@ -66,6 +66,7 @@ import io.homeassistant.companion.android.common.notifications.handleText
 import io.homeassistant.companion.android.common.notifications.parseColor
 import io.homeassistant.companion.android.common.notifications.parseVibrationPattern
 import io.homeassistant.companion.android.common.notifications.prepareText
+import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
@@ -83,7 +84,8 @@ import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.sensors.LocationSensorManager
-import io.homeassistant.companion.android.sensors.NotificationSensorManager
+import io.homeassistant.companion.android.sensors.LocationSensorReceiver
+import io.homeassistant.companion.android.sensors.NotificationSensorListenerService
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.assist.AssistConfigManager
@@ -129,6 +131,7 @@ class MessagingManager @Inject constructor(
     private val permissionRequestMediator: PermissionRequestMediator,
     private val assistConfigManager: AssistConfigManager,
     private val defaultAssistantManager: DefaultAssistantManager,
+    private val bluetoothSensorManager: BluetoothSensorManager,
 ) {
     companion object {
         const val APP_PREFIX = "app://"
@@ -451,7 +454,7 @@ class MessagingManager @Inject constructor(
                         }
 
                         DeviceCommandData.COMMAND_BLE_TRANSMITTER -> {
-                            if (!commandBleTransmitter(context, jsonData, sensorRepository)) {
+                            if (!commandBleTransmitter(context, jsonData, sensorRepository, bluetoothSensorManager)) {
                                 sendNotification(jsonData)
                             }
                         }
@@ -778,7 +781,7 @@ class MessagingManager @Inject constructor(
                         data[HIGH_ACCURACY_UPDATE_INTERVAL]!!.toInt(),
                     )
                 }
-                val intent = Intent(context, LocationSensorManager::class.java)
+                val intent = Intent(context, LocationSensorReceiver::class.java)
                 intent.action = LocationSensorManager.ACTION_FORCE_HIGH_ACCURACY
                 intent.putExtra("command", command)
                 context.sendBroadcast(intent)
@@ -1850,7 +1853,7 @@ class MessagingManager @Inject constructor(
         val mediaList = mediaSessionManager.getActiveSessions(
             ComponentName(
                 context,
-                NotificationSensorManager::class.java,
+                NotificationSensorListenerService::class.java,
             ),
         )
         var hasCorrectPackage = false

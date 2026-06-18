@@ -107,7 +107,7 @@ fun SensorDetailView(
             ?: (
                 viewModel.basicSensor != null &&
                     viewModel.basicSensor.enabledByDefault &&
-                    viewModel.sensorManager?.checkPermission(context, viewModel.basicSensor.id) == true
+                    viewModel.sensorManager?.checkPermission(viewModel.basicSensor.id) == true
                 )
     }
 

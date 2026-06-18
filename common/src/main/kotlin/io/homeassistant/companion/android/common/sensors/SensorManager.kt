@@ -8,10 +8,6 @@ import android.os.Build
 import android.os.Process.myPid
 import android.os.Process.myUid
 import androidx.core.content.getSystemService
-import dagger.hilt.EntryPoint
-import dagger.hilt.InstallIn
-import dagger.hilt.android.EntryPointAccessors
-import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.AnySerializer
@@ -30,9 +26,7 @@ interface SensorManager {
 
     companion object {
         const val ENTITY_CATEGORY_DIAGNOSTIC = "diagnostic"
-        const val ENTITY_CATEGORY_CONFIG = "config"
         const val STATE_CLASS_MEASUREMENT = "measurement"
-        const val STATE_CLASS_TOTAL = "total"
         const val STATE_CLASS_TOTAL_INCREASING = "total_increasing"
         const val SENSOR_LISTENER_TIMEOUT = 60000
     }
@@ -42,6 +36,12 @@ interface SensorManager {
     // TODO any reason to use mainScope here and not iO? https://github.com/home-assistant/android/issues/5585
     val sensorWorkerScope: CoroutineScope
         get() = CoroutineScope(Dispatchers.Main + Job())
+
+    val applicationContext: Context
+
+    val sensorRepository: SensorRepository
+
+    val serverManager: ServerManager
 
     data class BasicSensor(
         val id: String,
@@ -76,27 +76,27 @@ interface SensorManager {
     /**
      * Get list of Android permissions that are required to use this sensor
      */
-    fun requiredPermissions(context: Context, sensorId: String): Array<String>
+    fun requiredPermissions(sensorId: String): Array<String>
 
-    suspend fun checkPermission(context: Context, sensorId: String): Boolean {
-        return requiredPermissions(context, sensorId).all {
+    suspend fun checkPermission(sensorId: String): Boolean {
+        return requiredPermissions(sensorId).all {
             if (sensorId != "last_used_app") {
-                context.checkPermission(it, myPid(), myUid()) == PackageManager.PERMISSION_GRANTED
+                applicationContext.checkPermission(it, myPid(), myUid()) == PackageManager.PERMISSION_GRANTED
             } else {
-                checkUsageStatsPermission(context)
+                checkUsageStatsPermission()
             }
         }
     }
 
-    fun checkUsageStatsPermission(context: Context): Boolean {
-        val pm = context.packageManager
+    fun checkUsageStatsPermission(): Boolean {
+        val pm = applicationContext.packageManager
         val appInfo = if (SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
-            pm.getApplicationInfo(context.packageName, PackageManager.ApplicationInfoFlags.of(0))
+            pm.getApplicationInfo(applicationContext.packageName, PackageManager.ApplicationInfoFlags.of(0))
         } else {
             @Suppress("DEPRECATION")
-            pm.getApplicationInfo(context.packageName, 0)
+            pm.getApplicationInfo(applicationContext.packageName, 0)
         }
-        val appOpsManager = context.getSystemService<AppOpsManager>()
+        val appOpsManager = applicationContext.getSystemService<AppOpsManager>()
         val mode = if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
             appOpsManager?.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, appInfo.uid, appInfo.packageName)
         } else {
@@ -109,23 +109,23 @@ interface SensorManager {
     /**
      * @return `true` if this sensor is enabled on any server.
      */
-    suspend fun isEnabled(context: Context, basicSensor: BasicSensor): Boolean {
-        if (!checkPermission(context, basicSensor.id)) return false
-        return sensorRepository(context).get(basicSensor.id).any { it.enabled }
+    suspend fun isEnabled(basicSensor: BasicSensor): Boolean {
+        if (!checkPermission(basicSensor.id)) return false
+        return sensorRepository.get(basicSensor.id).any { it.enabled }
     }
 
     /**
      * @return `true` if this sensor is enabled for the specified server.
      */
-    suspend fun isEnabled(context: Context, basicSensor: BasicSensor, serverId: Int): Boolean {
-        if (!checkPermission(context, basicSensor.id)) return false
-        return sensorRepository(context).get(basicSensor.id, serverId)?.enabled == true
+    suspend fun isEnabled(basicSensor: BasicSensor, serverId: Int): Boolean {
+        if (!checkPermission(basicSensor.id)) return false
+        return sensorRepository.get(basicSensor.id, serverId)?.enabled == true
     }
 
     /** @return Set of server IDs for which this sensor is enabled */
-    suspend fun getEnabledServers(context: Context, basicSensor: BasicSensor): Set<Int> {
-        if (!checkPermission(context, basicSensor.id)) return emptySet()
-        return sensorRepository(context).get(basicSensor.id).filter { it.enabled }.map { it.serverId }
+    suspend fun getEnabledServers(basicSensor: BasicSensor): Set<Int> {
+        if (!checkPermission(basicSensor.id)) return emptySet()
+        return sensorRepository.get(basicSensor.id).filter { it.enabled }.map { it.serverId }
             .toSet()
     }
 
@@ -134,53 +134,51 @@ interface SensorManager {
      * The intent will be null if the update is being done on a timer, rather than as a result
      * of a broadcast being received.
      */
-    suspend fun requestSensorUpdate(context: Context, intent: Intent?) {
+    suspend fun requestSensorUpdate(intent: Intent?) {
         // Few sensors care about the intent, so allow them to just implement the interface that
         // does not get passed that parameter.
-        requestSensorUpdate(context)
+        requestSensorUpdate()
     }
 
     /**
      * Request to update a sensor, without a corresponding broadcast intent.
      */
-    suspend fun requestSensorUpdate(context: Context)
+    suspend fun requestSensorUpdate()
 
-    suspend fun getAvailableSensors(context: Context): List<BasicSensor>
+    suspend fun getAvailableSensors(): List<BasicSensor>
 
     /**
      * Check if the user's device supports this type of sensor
      */
-    fun hasSensor(context: Context): Boolean {
+    fun hasSensor(): Boolean {
         return true
     }
 
-    suspend fun isSettingEnabled(context: Context, sensor: BasicSensor, settingName: String): Boolean {
-        val setting = sensorRepository(context)
+    suspend fun isSettingEnabled(sensor: BasicSensor, settingName: String): Boolean {
+        val setting = sensorRepository
             .getSettings(sensor.id)
             .firstOrNull { it.name == settingName }
         return setting?.enabled ?: false
     }
 
-    suspend fun enableDisableSetting(context: Context, sensor: BasicSensor, settingName: String, enabled: Boolean) {
-        val settingEnabled = isSettingEnabled(context, sensor, settingName)
+    suspend fun enableDisableSetting(sensor: BasicSensor, settingName: String, enabled: Boolean) {
+        val settingEnabled = isSettingEnabled(sensor, settingName)
         if (enabled &&
             !settingEnabled ||
             !enabled &&
             settingEnabled
         ) {
-            sensorRepository(context).updateSettingEnabled(sensor.id, settingName, enabled)
+            sensorRepository.updateSettingEnabled(sensor.id, settingName, enabled)
         }
     }
 
     suspend fun getToggleSetting(
-        context: Context,
         sensor: BasicSensor,
         settingName: String,
         default: Boolean,
         enabled: Boolean = true,
     ): Boolean {
         return getSetting(
-            context,
             sensor,
             settingName,
             SensorSettingType.TOGGLE,
@@ -190,14 +188,12 @@ interface SensorManager {
     }
 
     suspend fun getNumberSetting(
-        context: Context,
         sensor: BasicSensor,
         settingName: String,
         default: Int,
         enabled: Boolean = true,
     ): Int {
         return getSetting(
-            context,
             sensor,
             settingName,
             SensorSettingType.NUMBER,
@@ -212,7 +208,6 @@ interface SensorManager {
      * @param default Value to use if the setting does not exist
      */
     suspend fun getSetting(
-        context: Context,
         sensor: BasicSensor,
         settingName: String,
         settingType: SensorSettingType,
@@ -220,7 +215,6 @@ interface SensorManager {
         enabled: Boolean = true,
         entries: List<String> = arrayListOf(),
     ): String {
-        val sensorRepository = sensorRepository(context)
         val setting = sensorRepository
             .getSettings(sensor.id)
             .firstOrNull { it.name == settingName }
@@ -242,14 +236,12 @@ interface SensorManager {
     }
 
     suspend fun onSensorUpdated(
-        context: Context,
         basicSensor: BasicSensor,
         state: Any,
         mdiIcon: String,
         attributes: Map<String, Any?>,
         forceUpdate: Boolean = false,
     ) = withContext(Dispatchers.Default) {
-        val sensorRepository = sensorRepository(context)
         val sensors = sensorRepository.get(basicSensor.id)
         if (sensors.isEmpty()) return@withContext
 
@@ -316,23 +308,6 @@ interface SensorManager {
             },
         )
     }
-
-    @EntryPoint
-    @InstallIn(SingletonComponent::class)
-    interface SensorManagerEntryPoint {
-        fun serverManager(): ServerManager
-        fun sensorRepository(): SensorRepository
-    }
-
-    private fun sensorManagerEntryPoint(context: Context): SensorManagerEntryPoint =
-        EntryPointAccessors.fromApplication(
-            context.applicationContext,
-            SensorManagerEntryPoint::class.java,
-        )
-
-    fun serverManager(context: Context) = sensorManagerEntryPoint(context).serverManager()
-
-    fun sensorRepository(context: Context) = sensorManagerEntryPoint(context).sensorRepository()
 }
 
 fun SensorManager.id(): String {
