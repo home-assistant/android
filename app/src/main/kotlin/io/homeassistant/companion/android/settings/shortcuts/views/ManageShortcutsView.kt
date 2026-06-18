@@ -254,27 +254,14 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
             viewModel.shortcuts[i].delete.value = true
         }
     }
+    val isExistingShortcut = if (index < 6) {
+        viewModel.shortcuts[i].delete.value
+    } else {
+        viewModel.pinnedShortcuts.any { it.id == shortcut.id.value }
+    }
     HAFilledButton(
         text = stringResource(
-            id =
-            if (
-                if (index < 6) {
-                    viewModel.shortcuts[i].delete.value
-                } else {
-                    var isCurrentPinned = false
-                    if (viewModel.pinnedShortcuts.isEmpty()) {
-                        isCurrentPinned = false
-                    } else {
-                        for (item in viewModel.pinnedShortcuts) {
-                            isCurrentPinned = when (item.id) {
-                                viewModel.shortcuts.last().id.value -> true
-                                else -> false
-                            }
-                        }
-                    }
-                    isCurrentPinned
-                }
-            ) {
+            id = if (isExistingShortcut) {
                 R.string.update_shortcut
             } else {
                 R.string.add_shortcut
