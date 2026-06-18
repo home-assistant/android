@@ -1,5 +1,4 @@
 package io.homeassistant.companion.android.common.sensors
-
 import android.content.Context
 import android.content.pm.PackageManager
 import android.hardware.Sensor
@@ -7,7 +6,10 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import androidx.core.content.getSystemService
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
+import javax.inject.Inject
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -15,8 +17,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-class ProximitySensorManager :
-    SensorManager,
+class ProximitySensorManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager,
     SensorEventListener {
     companion object {
         private var isListenerRegistered = false
@@ -33,7 +38,6 @@ class ProximitySensorManager :
         )
     }
 
-    private lateinit var latestContext: Context
     private lateinit var mySensorManager: android.hardware.SensorManager
     private var maxRange: Int = 0
 
@@ -46,26 +50,25 @@ class ProximitySensorManager :
     override val name: Int
         get() = commonR.string.sensor_name_proximity
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return listOf(proximitySensor)
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 
-    override fun hasSensor(context: Context): Boolean {
-        val packageManager: PackageManager = context.packageManager
+    override fun hasSensor(): Boolean {
+        val packageManager: PackageManager = applicationContext.packageManager
         return packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_PROXIMITY)
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
-        latestContext = context
+    override suspend fun requestSensorUpdate() {
         updateProximitySensor()
     }
 
     private suspend fun updateProximitySensor() {
-        if (!isEnabled(latestContext, proximitySensor)) {
+        if (!isEnabled(proximitySensor)) {
             return
         }
 
@@ -76,7 +79,7 @@ class ProximitySensorManager :
             isListenerRegistered = false
         }
 
-        mySensorManager = latestContext.getSystemService()!!
+        mySensorManager = applicationContext.getSystemService()!!
 
         val proximitySensors = mySensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY)
         if (proximitySensors != null && !isListenerRegistered) {
@@ -107,7 +110,6 @@ class ProximitySensorManager :
                 }
             ioScope.launch {
                 onSensorUpdated(
-                    latestContext,
                     proximitySensor,
                     state,
                     proximitySensor.statelessIcon,

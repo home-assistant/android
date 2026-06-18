@@ -29,6 +29,7 @@ import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissio
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.sensors.LocationSensorManager
+import io.homeassistant.companion.android.sensors.LocationSensorReceiver
 import io.homeassistant.companion.android.util.ForegroundServiceLauncher
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -224,7 +225,7 @@ class HighAccuracyLocationService : Service() {
     }
 
     private fun getLocationUpdateIntent(): PendingIntent {
-        val intent = Intent(this, LocationSensorManager::class.java)
+        val intent = Intent(this, LocationSensorReceiver::class.java)
         intent.action = LocationSensorManager.ACTION_PROCESS_HIGH_ACCURACY_LOCATION
         return PendingIntent.getBroadcast(
             this,

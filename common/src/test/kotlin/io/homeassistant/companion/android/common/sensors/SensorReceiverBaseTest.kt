@@ -97,7 +97,7 @@ class SensorReceiverBaseTest {
     }
 
     private fun receiver(hasPermission: Boolean) = TestSensorReceiver(
-        managers = listOf(FakeSensorManager(listOf(basicSensor), hasPermission)),
+        managers = setOf(FakeSensorManager(listOf(basicSensor), hasPermission)),
         currentAppVersion = appVersion,
     ).apply {
         serverManager = this@SensorReceiverBaseTest.serverManager
@@ -131,7 +131,7 @@ class SensorReceiverBaseTest {
 }
 
 private class TestSensorReceiver(
-    override val managers: List<SensorManager>,
+    override val managers: Set<SensorManager>,
     override val currentAppVersion: String,
 ) : SensorReceiverBase() {
     override val skippableActions: Map<String, List<String>> = emptyMap()
@@ -149,12 +149,18 @@ private class FakeSensorManager(
     private val hasPermission: Boolean,
 ) : SensorManager {
     override val name: Int = commonR.string.sensor
+    override val applicationContext: Context
+        get() = TODO("Not yet implemented")
+    override val sensorRepository: SensorRepository
+        get() = TODO("Not yet implemented")
+    override val serverManager: ServerManager
+        get() = TODO("Not yet implemented")
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> = emptyArray()
+    override fun requiredPermissions(sensorId: String): Array<String> = emptyArray()
 
-    override suspend fun checkPermission(context: Context, sensorId: String): Boolean = hasPermission
+    override suspend fun checkPermission(sensorId: String): Boolean = hasPermission
 
-    override suspend fun requestSensorUpdate(context: Context) {}
+    override suspend fun requestSensorUpdate() {}
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> = sensors
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> = sensors
 }

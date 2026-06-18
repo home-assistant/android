@@ -14,11 +14,11 @@ import org.junit.jupiter.params.provider.ValueSource
 
 class HealthConnectSensorManagerTest {
 
-    private val sensorManager = HealthConnectSensorManager()
-
     private val context = mockk<Context> {
         every { applicationContext } returns this
     }
+
+    private val sensorManager = HealthConnectSensorManager(context, mockk(), mockk())
     private val healthConnectClient = mockk<HealthConnectClient>(relaxed = true)
 
     @BeforeEach
@@ -43,7 +43,7 @@ class HealthConnectSensorManagerTest {
             }
 
         // Get permission(s) for any sensor - the actual sensor doesn't matter here
-        val permissions = sensorManager.requiredPermissions(context, HealthConnectSensorManager.steps.id)
+        val permissions = sensorManager.requiredPermissions(HealthConnectSensorManager.steps.id)
         assertEquals(
             available,
             permissions.contains(HealthPermission.PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND),

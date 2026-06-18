@@ -1,16 +1,14 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
-import dagger.hilt.android.EntryPointAccessors
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.mockk.coEvery
 import io.mockk.coJustRun
-import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkStatic
 import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -20,20 +18,8 @@ class SensorManagerTest {
 
     @Test
     fun `Given attributes when invoking onSensorUpdated then attributes are replaced in DAO properly formatted in json`() = runTest {
-        val context: Context = mockk()
-        val sensorManager = FakeSensorManager()
         val sensorRepository = mockk<SensorRepository>()
-        val entryPoint = mockk<SensorManager.SensorManagerEntryPoint>()
-
-        mockkStatic(EntryPointAccessors::class)
-        every { context.applicationContext } returns context
-        every {
-            EntryPointAccessors.fromApplication(
-                context,
-                SensorManager.SensorManagerEntryPoint::class.java,
-            )
-        } returns entryPoint
-        every { entryPoint.sensorRepository() } returns sensorRepository
+        val sensorManager = FakeSensorManager(sensorRepository = sensorRepository)
         coEvery { sensorRepository.get("test") } returns listOf(
             Sensor(
                 id = "test",
@@ -47,7 +33,6 @@ class SensorManagerTest {
         coJustRun { sensorRepository.replaceAllAttributes(any(), capture(slot)) }
 
         sensorManager.onSensorUpdated(
-            context,
             SensorManager.BasicSensor("test", "test"),
             "test",
             "test",
@@ -57,7 +42,6 @@ class SensorManagerTest {
         assertEquals("""["test","hello"]""", slot.captured.first().value)
 
         sensorManager.onSensorUpdated(
-            context,
             SensorManager.BasicSensor("test", "test"),
             "test",
             "test",
@@ -67,7 +51,6 @@ class SensorManagerTest {
         assertEquals("""[true,false]""", slot.captured.first().value)
 
         sensorManager.onSensorUpdated(
-            context,
             SensorManager.BasicSensor("test", "test"),
             "test",
             "test",
@@ -77,18 +60,23 @@ class SensorManagerTest {
         assertEquals("""true""", slot.captured.first().value)
     }
 }
-private class FakeSensorManager : SensorManager {
+
+private class FakeSensorManager(
+    override val applicationContext: Context = mockk(),
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager = mockk(),
+) : SensorManager {
     override val name: Int = -1
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         TODO("Not needed")
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
+    override suspend fun requestSensorUpdate() {
         TODO("Not needed")
     }
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         TODO("Not needed")
     }
 }

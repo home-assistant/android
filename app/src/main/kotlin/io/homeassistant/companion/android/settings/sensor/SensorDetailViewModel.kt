@@ -52,6 +52,7 @@ import timber.log.Timber
 @HiltViewModel
 class SensorDetailViewModel @Inject constructor(
     state: SavedStateHandle,
+    private val managers: Set<@JvmSuppressWildcards SensorManager>,
     private val serverManager: ServerManager,
     private val sensorRepository: SensorRepository,
     private val settingsDao: SettingsDao,
@@ -96,15 +97,15 @@ class SensorDetailViewModel @Inject constructor(
     var permissionSnackbar = _permissionSnackbar.asSharedFlow()
 
     val sensorManager: SensorManager? = runBlocking {
-        SensorReceiver.MANAGERS
+        managers
             .find {
-                it.getAvailableSensors(getApplication()).any { sensor -> sensor.id == sensorId }
+                it.getAvailableSensors().any { sensor -> sensor.id == sensorId }
             }
     }
 
     @Suppress("ProvidesSensorMissing")
     val basicSensor: SensorManager.BasicSensor? = runBlocking {
-        sensorManager?.getAvailableSensors(getApplication())
+        sensorManager?.getAvailableSensors()
             ?.find { it.id == sensorId }
     }
 
@@ -193,7 +194,7 @@ class SensorDetailViewModel @Inject constructor(
     private suspend fun checkSensorEnabled(sensors: List<SensorWithAttributes>) {
         if (sensorManager != null && basicSensor != null && sensors.isNotEmpty()) {
             sensorCheckedEnabled = true
-            val hasPermission = sensorManager.checkPermission(getApplication(), basicSensor.id)
+            val hasPermission = sensorManager.checkPermission(basicSensor.id)
             sensors.forEach { thisSensor ->
                 val enabled = thisSensor.sensor.enabled && hasPermission
                 updateSensorEntity(enabled, thisSensor.sensor.serverId)
@@ -204,7 +205,7 @@ class SensorDetailViewModel @Inject constructor(
     fun setEnabled(isEnabled: Boolean, serverId: Int?) {
         viewModelScope.launch {
             if (isEnabled) {
-                sensorManager?.requiredPermissions(getApplication(), sensorId)?.let { permissions ->
+                sensorManager?.requiredPermissions(sensorId)?.let { permissions ->
                     val fineLocation = DisabledLocationHandler.containsLocationPermission(permissions, true)
                     val coarseLocation = DisabledLocationHandler.containsLocationPermission(permissions, false)
 
@@ -220,12 +221,12 @@ class SensorDetailViewModel @Inject constructor(
                             LocationPermissionsDialog(block = true, serverId = serverId, sensors = arrayOf(sensorName))
                         return@launch
                     } else {
-                        if (!sensorManager.checkPermission(getApplication(), sensorId)) {
+                        if (!sensorManager.checkPermission(sensorId)) {
                             if (sensorManager is NetworkSensorManager) {
                                 locationPermissionRequests.value =
                                     LocationPermissionsDialog(false, serverId, emptyArray(), permissions)
                             } else if (sensorManager is LastAppSensorManager &&
-                                !sensorManager.checkUsageStatsPermission(getApplication())
+                                !sensorManager.checkUsageStatsPermission()
                             ) {
                                 permissionRequests.value = PermissionsDialog(serverId, permissions)
                             } else {
@@ -241,7 +242,7 @@ class SensorDetailViewModel @Inject constructor(
             updateSensorEntity(isEnabled, serverId)
             if (isEnabled) {
                 try {
-                    sensorManager?.requestSensorUpdate(getApplication())
+                    sensorManager?.requestSensorUpdate()
                 } catch (e: Exception) {
                     Timber.e(e, "Exception while requesting update for sensor $sensorId")
                 }
@@ -327,7 +328,7 @@ class SensorDetailViewModel @Inject constructor(
         viewModelScope.launch {
             sensorRepository.add(setting)
             try {
-                sensorManager?.requestSensorUpdate(getApplication())
+                sensorManager?.requestSensorUpdate()
             } catch (e: Exception) {
                 Timber.e(e, "Exception while requesting update for sensor $sensorId")
             }
@@ -538,7 +539,7 @@ class SensorDetailViewModel @Inject constructor(
         viewModelScope.launch {
             // This is only called when we requested permissions to enable a sensor, so check if
             // we have all permissions and should enable the sensor.
-            val hasPermission = sensorManager?.checkPermission(getApplication(), sensorId) == true
+            val hasPermission = sensorManager?.checkPermission(sensorId) == true
             if (!hasPermission) {
                 _permissionSnackbar.emit(
                     PermissionSnackbar(commonR.string.enable_sensor_missing_permission_general, false),
@@ -562,7 +563,7 @@ class SensorDetailViewModel @Inject constructor(
 
         viewModelScope.launch {
             val hasPermission =
-                results.values.all { it } && sensorManager?.checkPermission(getApplication(), sensorId) == true
+                results.values.all { it } && sensorManager?.checkPermission(sensorId) == true
             if (!hasPermission) {
                 _permissionSnackbar.emit(
                     PermissionSnackbar(

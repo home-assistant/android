@@ -16,7 +16,6 @@ import io.homeassistant.companion.android.common.util.CHANNEL_SENSOR_WORKER
 import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissionUseCase
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.DatabaseEntryPoint
-import java.lang.IllegalStateException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -27,6 +26,7 @@ abstract class SensorWorkerBase(val appContext: Context, workerParams: WorkerPar
     protected abstract val serverManager: ServerManager
     protected abstract val sensorReceiver: SensorReceiverBase
     protected abstract val checkLocalNetworkPermission: CheckLocalNetworkPermissionUseCase
+    protected abstract val lastUpdateManager: LastUpdateManager
 
     companion object {
         const val TAG = "SensorWorker"
@@ -77,7 +77,7 @@ abstract class SensorWorkerBase(val appContext: Context, workerParams: WorkerPar
 
             val lastUpdateSensor = sensorRepository.get(LastUpdateManager.lastUpdate.id)
             if (lastUpdateSensor.any { it.enabled }) {
-                LastUpdateManager().sendLastUpdate(appContext, TAG)
+                lastUpdateManager.sendLastUpdate(TAG)
             }
             sensorReceiver.updateSensors(appContext, serverManager, sensorRepository, null)
         }

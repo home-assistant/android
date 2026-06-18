@@ -95,7 +95,7 @@ class IBeaconMonitor {
 
     private fun sendUpdate(context: Context, tmp: List<IBeacon>) {
         beacons = tmp
-        sensorManager.updateBeaconMonitoringSensor(context)
+        sensorManager.updateBeaconMonitoringSensor()
         SensorUpdateReceiver.updateSensors(context)
     }
 

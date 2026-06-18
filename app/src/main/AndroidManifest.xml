@@ -319,7 +319,7 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".sensors.NotificationSensorManager"
+        <service android:name=".sensors.NotificationSensorListenerService"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
             android:exported="true">
             <intent-filter>
@@ -346,7 +346,7 @@
             android:enabled="false" />
 
         <receiver
-            android:name=".sensors.LocationSensorManager"
+            android:name=".sensors.LocationSensorReceiver"
             android:enabled="true"
             android:exported="false" />
 
@@ -366,7 +366,7 @@
         </receiver>
 
         <receiver
-            android:name=".sensors.ActivitySensorManager"
+            android:name=".sensors.ActivitySensorReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter>
