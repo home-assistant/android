@@ -33,14 +33,14 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class ServerUserAvatarRepositoryTest {
+class ServerUserAvatarUseCaseTest {
 
     // The context is only stored on the ImageRequest (its methods are never called at build time),
     // so a relaxed mock is enough and we avoid needing Robolectric.
     private val imageLoader: ImageLoader = mockk()
     private val serverManager: ServerManager = mockk()
 
-    private val repository = ServerUserAvatarRepository(
+    private val useCase = ServerUserAvatarUseCase(
         context = mockk(relaxed = true),
         imageLoader = imageLoader,
         serverManager = serverManager,
@@ -89,14 +89,14 @@ class ServerUserAvatarRepositoryTest {
     fun `Given an unknown server when getUserAvatar then returns null`() = runTest {
         coEvery { serverManager.getServer(1) } returns null
 
-        assertNull(repository.getUserAvatar(1))
+        assertNull(useCase.getUserAvatar(1))
     }
 
     @Test
     fun `Given a user without an id when getUserAvatar then returns null and entities are not queried`() = runTest {
         coEvery { serverManager.getServer(1) } returns server(id = 1, userId = null)
 
-        assertNull(repository.getUserAvatar(1))
+        assertNull(useCase.getUserAvatar(1))
         coVerify(exactly = 0) { serverManager.integrationRepository(any()) }
     }
 
@@ -107,7 +107,7 @@ class ServerUserAvatarRepositoryTest {
             coEvery { getEntities() } returns listOf(personEntity(userId = "someone-else", picture = "/picture.png"))
         }
 
-        assertNull(repository.getUserAvatar(1))
+        assertNull(useCase.getUserAvatar(1))
     }
 
     @Test
@@ -115,7 +115,7 @@ class ServerUserAvatarRepositoryTest {
         givenServerWithPersonPicture(serverId = 1, picture = "http://homeassistant.local:8123/api/image/serve/abc")
         coEvery { imageLoader.execute(any()) } returns imageResult()
 
-        repository.getUserAvatar(1)
+        useCase.getUserAvatar(1)
 
         coVerify { imageLoader.execute(any()) }
     }
@@ -127,7 +127,7 @@ class ServerUserAvatarRepositoryTest {
         val request = slot<ImageRequest>()
         coEvery { imageLoader.execute(capture(request)) } returns imageResult()
 
-        repository.getUserAvatar(1)
+        useCase.getUserAvatar(1)
 
         val cacheKey = avatarCacheKey(serverId = 1, picturePath = picture)
         assertEquals(cacheKey, request.captured.diskCacheKey)
@@ -140,7 +140,7 @@ class ServerUserAvatarRepositoryTest {
         val request = slot<ImageRequest>()
         coEvery { imageLoader.execute(capture(request)) } returns imageResult()
 
-        repository.getUserAvatar(1)
+        useCase.getUserAvatar(1)
 
         assertFalse(request.captured.allowHardware)
         assertEquals("Bearer token", request.captured.httpHeaders["Authorization"])
@@ -156,7 +156,7 @@ class ServerUserAvatarRepositoryTest {
         val request = slot<ImageRequest>()
         coEvery { imageLoader.execute(capture(request)) } returns imageResult()
 
-        repository.getUserAvatar(1)
+        useCase.getUserAvatar(1)
 
         assertEquals("http://homeassistant.local:8123/api/image/serve/abc", request.captured.data)
     }
@@ -173,7 +173,7 @@ class ServerUserAvatarRepositoryTest {
         every { imageLoader.memoryCache } returns memoryCache
         every { imageLoader.diskCache } returns null
 
-        assertNull(repository.getUserAvatar(1))
+        assertNull(useCase.getUserAvatar(1))
         coVerify(exactly = 0) { imageLoader.execute(any()) }
         verify { memoryCache.get(MemoryCache.Key(avatarCacheKey(serverId = 1, picturePath = picture))) }
     }
@@ -183,7 +183,7 @@ class ServerUserAvatarRepositoryTest {
         givenServerWithPersonPicture(serverId = 1, picture = "http://homeassistant.local:8123/api/image/serve/abc")
         coEvery { imageLoader.execute(any()) } returns imageResult(image = null)
 
-        assertNull(repository.getUserAvatar(1))
+        assertNull(useCase.getUserAvatar(1))
     }
 
     @Test
@@ -199,7 +199,7 @@ class ServerUserAvatarRepositoryTest {
         every { imageLoader.memoryCache } returns memoryCache
         every { imageLoader.diskCache } returns null
 
-        assertNull(repository.getUserAvatar(1))
+        assertNull(useCase.getUserAvatar(1))
         verify { memoryCache.get(MemoryCache.Key(avatarCacheKey(serverId = 1, picturePath = picture))) }
         coVerify(exactly = 0) { imageLoader.execute(any()) }
     }
@@ -218,7 +218,7 @@ class ServerUserAvatarRepositoryTest {
         every { diskCache.openSnapshot(any()) } returns null
         every { imageLoader.diskCache } returns diskCache
 
-        assertNull(repository.getUserAvatar(1))
+        assertNull(useCase.getUserAvatar(1))
         verify { diskCache.openSnapshot(avatarCacheKey(serverId = 1, picturePath = picture)) }
     }
 
