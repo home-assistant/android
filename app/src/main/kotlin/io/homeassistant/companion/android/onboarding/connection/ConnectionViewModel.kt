@@ -1,16 +1,7 @@
 package io.homeassistant.companion.android.onboarding.connection
 
-import android.content.Context
 import android.net.Uri
-import android.net.http.SslError
-import android.webkit.SslErrorHandler
-import android.webkit.WebResourceError
-import android.webkit.WebResourceRequest
-import android.webkit.WebResourceResponse
-import android.webkit.WebView
-import androidx.annotation.StringRes
 import androidx.annotation.VisibleForTesting
-import androidx.core.net.toUri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -20,55 +11,27 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
-import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
-import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
+import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
+import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
+import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
+import io.homeassistant.companion.android.frontend.filechooser.FileChooserRequest
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
-import io.homeassistant.companion.android.util.TLSWebViewClient
+import io.homeassistant.companion.android.util.HAWebChromeClient
+import io.homeassistant.companion.android.util.HAWebViewClient
+import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import timber.log.Timber
-
-internal sealed interface ConnectionError {
-    @get:StringRes
-    val title: Int
-
-    @get:StringRes
-    val message: Int
-    val errorDetails: String?
-    val rawErrorType: String
-
-    data class AuthenticationError(
-        @StringRes override val message: Int,
-        override val errorDetails: String,
-        override val rawErrorType: String,
-    ) : ConnectionError {
-        override val title: Int = commonR.string.error_connection_failed
-    }
-
-    data class UnreachableError(
-        @StringRes override val message: Int,
-        override val errorDetails: String?,
-        override val rawErrorType: String,
-    ) : ConnectionError {
-        override val title: Int = commonR.string.error_connection_failed
-    }
-
-    data class UnknownError(
-        @StringRes override val message: Int,
-        override val errorDetails: String,
-        override val rawErrorType: String,
-    ) : ConnectionError {
-        override val title: Int = commonR.string.error_connection_failed
-    }
-}
 
 /**
  * Represents the navigation events that can occur during the connection process.
@@ -104,34 +67,58 @@ private const val AUTH_CALLBACK = "$AUTH_CALLBACK_SCHEME://$AUTH_CALLBACK_HOST"
 @HiltViewModel
 internal class ConnectionViewModel @VisibleForTesting constructor(
     private val rawUrl: String,
-    private val keyChainRepository: KeyChainRepository,
+    private val webViewClientFactory: HAWebViewClientFactory,
     private val connectivityCheckRepository: ConnectivityCheckRepository,
-) : ViewModel() {
+    private val fileChooserManager: FileChooserManager,
+) : ViewModel(),
+    FrontendConnectionErrorStateProvider {
 
     @Inject
     constructor(
         savedStateHandle: SavedStateHandle,
-        @NamedKeyChain
-        keyChainRepository: KeyChainRepository,
+        webViewClientFactory: HAWebViewClientFactory,
         connectivityCheckRepository: ConnectivityCheckRepository,
-    ) : this(savedStateHandle.toRoute<ConnectionRoute>().url, keyChainRepository, connectivityCheckRepository)
+        fileChooserManager: FileChooserManager,
+    ) : this(
+        savedStateHandle.toRoute<ConnectionRoute>().url,
+        webViewClientFactory,
+        connectivityCheckRepository,
+        fileChooserManager,
+    )
 
-    private val rawUri: Uri by lazy { rawUrl.toUri() }
+    /**
+     * The origin (scheme/host/port) of the URL used to open this screen.
+     *
+     * Used both to detect redirects to a new port/scheme and to tell apart links that belong to the
+     * server (same host) from external links that should open in a browser.
+     */
+    private val rawHttpUrl: HttpUrl? = rawUrl.toHttpUrlOrNull()
+
+    /**
+     * The base URL the app should store for this server, normalized to its origin
+     * (`scheme://host:port`, no path/query/fragment).
+     *
+     * Starts as the origin of the URL used to open the screen and is updated to a new origin when
+     * the WebView is redirected to the same host on a different scheme/port (e.g. the landing page on
+     * `:8123` handing over to the freshly installed core on `:80`). A redirect to a different host is
+     * ignored, so the initial origin is kept. Falls back to the raw URL if it cannot be parsed.
+     */
+    private val effectiveUrl = MutableStateFlow(rawHttpUrl?.toBaseUrl() ?: rawUrl)
 
     private val _navigationEventsFlow = MutableSharedFlow<ConnectionNavigationEvent>(replay = 1)
     val navigationEventsFlow = _navigationEventsFlow.asSharedFlow()
 
     private val _urlFlow = MutableStateFlow<String?>(null)
-    val urlFlow = _urlFlow.asStateFlow()
+    override val urlFlow = _urlFlow.asStateFlow()
 
     private val _isLoadingFlow = MutableStateFlow(true)
     val isLoadingFlow = _isLoadingFlow.asStateFlow()
 
-    private val _errorFlow = MutableStateFlow<ConnectionError?>(null)
-    val errorFlow = _errorFlow.asStateFlow()
+    private val _errorFlow = MutableStateFlow<FrontendConnectionError?>(null)
+    override val errorFlow = _errorFlow.asStateFlow()
 
     private val _connectivityCheckState = MutableStateFlow(ConnectivityCheckState())
-    val connectivityCheckState = _connectivityCheckState.asStateFlow()
+    override val connectivityCheckState = _connectivityCheckState.asStateFlow()
 
     private var connectivityCheckJob: Job? = null
 
@@ -139,147 +126,41 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
      * Runs connectivity checks against the server URL.
      * Results are emitted to [connectivityCheckState].
      */
-    fun runConnectivityChecks() {
+    override fun runConnectivityChecks() {
         connectivityCheckJob?.cancel()
         connectivityCheckJob = viewModelScope.launch {
-            connectivityCheckRepository.runChecks(rawUrl).collect { state ->
+            connectivityCheckRepository.runChecks(effectiveUrl.value).collect { state ->
                 _connectivityCheckState.value = state
             }
         }
     }
 
-    val webViewClient: TLSWebViewClient = object : TLSWebViewClient(keyChainRepository) {
-        override fun onPageFinished(view: WebView?, url: String?) {
-            super.onPageFinished(view, url)
+    val webViewClient: HAWebViewClient = webViewClientFactory.create(
+        currentUrlFlow = urlFlow,
+        onFrontendError = ::onError,
+        onUrlIntercepted = ::interceptRedirectIfRequired,
+        onPageFinished = { url ->
             _isLoadingFlow.update { false }
-        }
+            updateEffectiveBaseUrl(url)
+        },
+    )
 
-        // Override deprecated method for backward compatibility with API 23 and below.
-        // The non-deprecated shouldOverrideUrlLoading(WebView, WebResourceRequest) is not invoked
-        // on these older Android versions, so this method remains necessary.
-        @Suppress("DEPRECATION")
-        override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
-            return url?.toUri()?.let { interceptRedirectIfRequired(it) } ?: false
-        }
-
-        private fun errorDetails(context: Context?, code: Int?, description: String?): String {
-            return context?.getString(
-                commonR.string.connection_error_more_details_description_content,
-                code.toString(),
-                description?.takeIf {
-                    it.isNotEmpty()
-                } ?: context.getString(commonR.string.no_description),
-            ) ?: ""
-        }
-
-        override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
-            super.onReceivedError(view, request, error)
-            val errorDetails = errorDetails(view?.context, error?.errorCode, error?.description?.toString())
-            Timber.e("onReceivedError: $errorDetails")
-
-            fun authenticationError(message: Int): ConnectionError {
-                return ConnectionError.AuthenticationError(
-                    message = message,
-                    errorDetails = errorDetails,
-                    rawErrorType = WebResourceError::class.toString(),
-                )
+    /**
+     * [WebChromeClient][android.webkit.WebChromeClient] used by the onboarding WebView.
+     *
+     * The Home Assistant onboarding flow could request a file selection (e.g. backup restore).
+     */
+    val webChromeClient: HAWebChromeClient = HAWebChromeClient(
+        onShowFileChooser = { filePathCallback, fileChooserParams ->
+            viewModelScope.launch {
+                filePathCallback.onReceiveValue(fileChooserManager.pickFiles(fileChooserParams))
             }
+            true
+        },
+    )
 
-            if (request?.url?.toString() == urlFlow.value) {
-                val error = when (error?.errorCode) {
-                    ERROR_FAILED_SSL_HANDSHAKE -> authenticationError(
-                        commonR.string.webview_error_FAILED_SSL_HANDSHAKE,
-                    )
-
-                    ERROR_AUTHENTICATION -> authenticationError(
-                        commonR.string.webview_error_AUTHENTICATION,
-                    )
-
-                    ERROR_PROXY_AUTHENTICATION -> authenticationError(
-                        commonR.string.webview_error_PROXY_AUTHENTICATION,
-                    )
-
-                    ERROR_UNSUPPORTED_AUTH_SCHEME -> authenticationError(
-                        commonR.string.webview_error_AUTH_SCHEME,
-                    )
-
-                    ERROR_HOST_LOOKUP -> ConnectionError.UnreachableError(
-                        message = commonR.string.webview_error_HOST_LOOKUP,
-                        errorDetails = errorDetails,
-                        rawErrorType = WebResourceError::class.toString(),
-                    )
-
-                    else -> ConnectionError.UnknownError(
-                        message = commonR.string.connection_error_unknown_error,
-                        errorDetails = errorDetails,
-                        rawErrorType = WebResourceError::class.toString(),
-                    )
-                }
-
-                onError(error)
-            }
-        }
-
-        override fun onReceivedHttpError(
-            view: WebView?,
-            request: WebResourceRequest?,
-            errorResponse: WebResourceResponse?,
-        ) {
-            super.onReceivedHttpError(view, request, errorResponse)
-            if (request?.url?.toString() == urlFlow.value) {
-                val errorDetails =
-                    errorDetails(view?.context, errorResponse?.statusCode, errorResponse?.reasonPhrase)
-                Timber.e("onReceivedHttpError: $errorDetails")
-
-                fun authenticationError(message: Int): ConnectionError {
-                    return ConnectionError.AuthenticationError(
-                        message = message,
-                        errorDetails = errorDetails,
-                        rawErrorType = WebResourceResponse::class.toString(),
-                    )
-                }
-
-                val error = when {
-                    isTLSClientAuthNeeded && !isCertificateChainValid -> authenticationError(
-                        commonR.string.tls_cert_expired_message,
-                    )
-
-                    isTLSClientAuthNeeded && errorResponse?.statusCode == 400 -> authenticationError(
-                        commonR.string.tls_cert_not_found_message,
-                    )
-
-                    else -> ConnectionError.UnknownError(
-                        message = commonR.string.connection_error_unknown_error,
-                        errorDetails = errorDetails,
-                        rawErrorType = WebResourceResponse::class.toString(),
-                    )
-                }
-                onError(error)
-            }
-        }
-
-        override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
-            super.onReceivedSslError(view, handler, error)
-            Timber.e("onReceivedSslError: $error")
-            val messageRes = when (error?.primaryError) {
-                SslError.SSL_DATE_INVALID -> commonR.string.webview_error_SSL_DATE_INVALID
-                SslError.SSL_EXPIRED -> commonR.string.webview_error_SSL_EXPIRED
-                SslError.SSL_IDMISMATCH -> commonR.string.webview_error_SSL_IDMISMATCH
-                SslError.SSL_INVALID -> commonR.string.webview_error_SSL_INVALID
-                SslError.SSL_NOTYETVALID -> commonR.string.webview_error_SSL_NOTYETVALID
-                SslError.SSL_UNTRUSTED -> commonR.string.webview_error_SSL_UNTRUSTED
-                else -> commonR.string.error_ssl
-            }
-            onError(
-                ConnectionError.AuthenticationError(
-                    message = messageRes,
-                    // SslError overrides the toString method with the error details
-                    error.toString(),
-                    SslError::class.toString(),
-                ),
-            )
-        }
-    }
+    /** The current pending file chooser request from the WebView, or `null` if none. */
+    val pendingFileChooser: StateFlow<FileChooserRequest?> = fileChooserManager.pendingFileChooser
 
     init {
         viewModelScope.launch {
@@ -307,7 +188,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         } catch (e: Exception) {
             Timber.e(e, "Unable to build authentication URL")
             onError(
-                ConnectionError.UnreachableError(
+                FrontendConnectionError.UnreachableError(
                     message = commonR.string.connection_screen_malformed_url,
                     errorDetails = e.localizedMessage ?: e.message,
                     rawErrorType = e::class.toString(),
@@ -316,17 +197,45 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         }
     }
 
-    private fun interceptRedirectIfRequired(url: Uri): Boolean {
-        val code = url.getQueryParameter("code")
+    /**
+     * Tracks the origin the WebView ends up on after each page load during onboarding.
+     *
+     * The WebView's `onPageFinished` reports the final URL once any redirect chain (e.g. the landing page on
+     * `:8123` handing over to the freshly installed core on `:80`) has resolved. When that origin
+     * is on the same host as the initial URL but a different scheme or port, [effectiveUrl] is
+     * updated so the correct URL is stored once authentication completes. Navigations to a different
+     * host are ignored, keeping the initial URL.
+     */
+    private fun updateEffectiveBaseUrl(url: String?) {
+        val navigated = url?.toHttpUrlOrNull() ?: return
+        val initial = rawHttpUrl ?: return
+        if (navigated.host != initial.host) return
+        // Never downgrade a secure connection: if the screen was opened on https, ignore a redirect to
+        // http and keep the original URL rather than silently storing a plaintext origin.
+        if (initial.isHttps && !navigated.isHttps) {
+            Timber.w("Ignoring an https to http downgrade during onboarding, keeping the original URL")
+            return
+        }
 
-        return if (url.scheme == AUTH_CALLBACK_SCHEME && url.host == AUTH_CALLBACK_HOST) {
+        val newOrigin = navigated.toBaseUrl()
+        if (newOrigin != effectiveUrl.value) {
+            Timber.d("Onboarding navigated to a new origin on the same host, updating stored URL")
+            effectiveUrl.value = newOrigin
+        }
+    }
+
+    private fun interceptRedirectIfRequired(url: Uri, isTLSClientAuthNeeded: Boolean): Boolean {
+        return if (url.isOpaque) {
+            false // Not intercepted: opaque is not handled by app
+        } else if (url.scheme == AUTH_CALLBACK_SCHEME && url.host == AUTH_CALLBACK_HOST) {
+            val code = url.getQueryParameter("code")
             if (!code.isNullOrBlank()) {
                 viewModelScope.launch {
                     _navigationEventsFlow.emit(
                         ConnectionNavigationEvent.Authenticated(
-                            url = rawUrl,
+                            url = effectiveUrl.value,
                             authCode = code,
-                            requiredMTLS = webViewClient.isTLSClientAuthNeeded,
+                            requiredMTLS = isTLSClientAuthNeeded,
                         ),
                     )
                 }
@@ -335,8 +244,8 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
                 Timber.w("Auth code is missing from the auth callback")
                 false // Not intercepted: Auth code missing
             }
-        } else if (url.host != rawUri.host) {
-            Timber.d("$url is not from the server, opening it on external browser.")
+        } else if (url.host != rawHttpUrl?.host) {
+            Timber.d("$url is not from the server, opening it in an external browser")
             viewModelScope.launch {
                 _navigationEventsFlow.emit(ConnectionNavigationEvent.OpenExternalLink(url))
             }
@@ -346,9 +255,39 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         }
     }
 
-    private fun onError(error: ConnectionError) {
+    /**
+     * Called when the system WebView fails to initialize.
+     *
+     * Transitions to an error state with a [FrontendConnectionError.UnrecoverableError.WebViewCreationError]
+     * so the error screen is displayed with guidance to update the system WebView.
+     */
+    fun onWebViewCreationFailed(throwable: Throwable) {
+        onError(
+            FrontendConnectionError.UnrecoverableError.WebViewCreationError(
+                message = commonR.string.webview_creation_failed,
+                throwable = throwable,
+            ),
+        )
+    }
+
+    private fun onError(error: FrontendConnectionError) {
         _errorFlow.update { error }
         // Automatically run connectivity checks when an error occurs
         runConnectivityChecks()
     }
 }
+
+/**
+ * The origin (`scheme://host:port`) of this URL as a string, with path, query and fragment removed.
+ *
+ * Delegating to [HttpUrl] keeps the formatting correct: IPv6 literal hosts stay bracketed (e.g.
+ * `http://[::1]:8123`) and the scheme's default port is dropped. The trailing slash that [HttpUrl]
+ * always appends is removed so the result has the same shape as a bare base URL.
+ */
+private fun HttpUrl.toBaseUrl(): String = newBuilder()
+    .encodedPath("/")
+    .encodedQuery(null)
+    .encodedFragment(null)
+    .build()
+    .toString()
+    .removeSuffix("/")

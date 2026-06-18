@@ -7,21 +7,20 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.MultiplePermissionsState
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.permissions.rememberPermissionState
+import io.homeassistant.companion.android.common.util.SdkVersion
 
 private val foregroundLocationPermissions: List<String> = listOf(
     Manifest.permission.ACCESS_FINE_LOCATION,
     Manifest.permission.ACCESS_COARSE_LOCATION,
     // TODO drop this requirement https://github.com/home-assistant/android/issues/5931
-    if (Build.VERSION.SDK_INT >=
-        Build.VERSION_CODES.S
-    ) {
+    if (SdkVersion.isAtLeast(Build.VERSION_CODES.S)) {
         Manifest.permission.BLUETOOTH_CONNECT
     } else {
         Manifest.permission.BLUETOOTH
     },
 )
 val locationPermissions: List<String> = foregroundLocationPermissions.run {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+    if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
         this + Manifest.permission.ACCESS_BACKGROUND_LOCATION
     } else {
         this
@@ -50,7 +49,7 @@ val locationPermissions: List<String> = foregroundLocationPermissions.run {
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun rememberLocationPermission(onPermissionResult: (Boolean) -> Unit): MultiplePermissionsState {
-    val backgroundPermissionState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+    val backgroundPermissionState = if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
         rememberPermissionState(
             Manifest.permission.ACCESS_BACKGROUND_LOCATION,
         ) {

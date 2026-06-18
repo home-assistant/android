@@ -1,6 +1,7 @@
 name: Pull Request
 
 on: # yamllint disable-line rule:truthy
+  workflow_dispatch:
   pull_request:
 
 # This workflow should cancel previous builds since it means that a new commit has been made to the PR
@@ -12,10 +13,60 @@ permissions:
   contents: read
 
 jobs:
+  validate_localize_setup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check for Lokalise setup changes
+        id: changes
+        shell: bash
+        run: |
+          if git diff --name-only "origin/main...HEAD" -- '.github/actions/download-translations/' | grep -q .; then
+            echo "Lokalise setup changes detected"
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "No Lokalise setup changes detected, skipping validation"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: ./.github/actions/download-translations
+        if: steps.changes.outputs.skip != 'true'
+        name: Download Translations
+        with:
+          lokalise-project: ${{ secrets.LOKALISE_PROJECT }}
+          lokalise-token: ${{ secrets.LOKALISE_TOKEN }}
+
+      - name: Validate French translation is not empty
+        if: steps.changes.outputs.skip != 'true'
+        shell: bash
+        run: |
+          FR_FILE="common/src/main/res/values-fr/strings.xml"
+          if [ ! -f "$FR_FILE" ]; then
+            echo "::error::French translation file not found at $FR_FILE"
+            exit 1
+          fi
+          if ! grep -q '<string ' "$FR_FILE"; then
+            echo "::error::French translation file exists but contains no string entries"
+            exit 1
+          fi
+
+      - name: Archive Translations
+        if: steps.changes.outputs.skip != 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: strings
+          path: strings.zip
+
   yamllint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
 
       - name: Register yamllint problem matcher
         run: |
@@ -27,7 +78,9 @@ jobs:
   lockfiles:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
 
       - uses: ./.github/actions/setup-build-env
         with:
@@ -52,13 +105,45 @@ jobs:
             echo -e "\n✔️ All dependency lockfiles are up to date. No uncommitted changes detected."
           fi
 
+  license_check:
+    needs: [lockfiles]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-build-env
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+          mock-google-services: "true"
+
+      - name: Generate aboutlibraries JSON
+        run: |
+          ./gradlew :app:exportLibraryDefinitionsFullDebug \
+            :app:exportLibraryDefinitionsMinimalDebug \
+            :automotive:exportLibraryDefinitionsFullDebug \
+            :automotive:exportLibraryDefinitionsMinimalDebug \
+            :wear:exportLibraryDefinitionsDebug
+
+      - name: Check licenses
+        run: |
+          python3 .github/scripts/check_licenses.py \
+            app/build/generated/aboutLibraries/fullDebug/res/raw/aboutlibraries.json appFullDebug \
+            app/build/generated/aboutLibraries/minimalDebug/res/raw/aboutlibraries.json appMinimalDebug \
+            automotive/build/generated/aboutLibraries/fullDebug/res/raw/aboutlibraries.json automotiveFullDebug \
+            automotive/build/generated/aboutLibraries/minimalDebug/res/raw/aboutlibraries.json automotiveMinimalDebug \
+            wear/build/generated/aboutLibraries/debug/res/raw/aboutlibraries.json wearDebug
+
   ktlint:
-    needs: [yamllint]
+    needs: [license_check, yamllint, validate_localize_setup]
     runs-on: ubuntu-latest
     permissions:
       security-events: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
 
       - uses: ./.github/actions/setup-build-env
         with:
@@ -80,7 +165,9 @@ jobs:
     permissions:
       security-events: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
 
       - uses: ./.github/actions/setup-build-env
         with:
@@ -92,7 +179,7 @@ jobs:
 
       - name: Upload lint reports (HTML)
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: lint-reports
           path: "**/build/reports/lint-results-*.html"
@@ -107,39 +194,37 @@ jobs:
     needs: [lint, lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
 
       - uses: ./.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
-      - name: Validate Screenshot Previews
-        run: ./gradlew validateDebugScreenshotTest validateFullDebugScreenshotTest
+      - name: Validate Screenshot Previews - app
+        run: ./gradlew :app:validateFullDebugScreenshotTest
 
-      - name: Upload test results
+      - name: Validate Screenshot Previews - wear
+        run: ./gradlew :wear:validateDebugScreenshotTest
+
+      - name: Validate Screenshot Previews - common
+        run: ./gradlew :common:validateDebugScreenshotTest
+
+      - uses: ./.github/actions/upload-test-results
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: Screenshot test results
-          path: |
-            **/build/test-results/**/TEST-*.xml
-
-      - name: Upload test results
-        if: failure()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: Screenshot test failure HTML report
-          path: |
-            **/build/reports/screenshotTest/**
+          test-name: Screenshot test
 
   pr_build:
     needs: [lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Check for modified DB schemas on branch
         run: |
@@ -173,7 +258,7 @@ jobs:
           fi
 
       - name: Archive Debug Build
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: APKs
           path: ./**/*.apk
@@ -182,9 +267,10 @@ jobs:
     needs: [lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: ./.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
@@ -215,7 +301,9 @@ jobs:
     needs: [lint, lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
 
       - uses: ./.github/actions/setup-build-env
         with:
@@ -226,13 +314,50 @@ jobs:
         # Run testFullDebugUnitTest at the app level since :automotive shares the same sourceSet than app. Minimal and Full are the same in unit tests for now
         run: ./gradlew testDebugUnitTest :app:testFullDebugUnitTest :lint:test
 
-      - name: Upload test results
+      - uses: ./.github/actions/upload-test-results
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: Unit test results
+          test-name: Unit test
+
+  build_emulator_wtf_apks:
+    name: "Build Emulator.wtf APKs"
+    needs: [lint, lockfiles, ktlint]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-build-env
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+          mock-google-services: "true"
+
+      - name: Build x86 APKs
+        run: ./gradlew :app:assembleDebug :app:assembleAndroidTest -Pabis=x86,x86_64
+
+      - name: Build device list
+        run: |
+          MIN=$(grep '^androidSdk-min' gradle/libs.versions.toml | cut -d'"' -f2)
+          MAX=$(grep '^androidSdk-target' gradle/libs.versions.toml | cut -d'"' -f2)
+          {
+            for v in $(seq "$MIN" "$MAX"); do
+              echo "model=Pixel7,version=$v"
+            done
+          } > devices.txt
+
+      - name: Upload emulator.wtf inputs
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: emulator-wtf-inputs
+          retention-days: 1
+          if-no-files-found: error
           path: |
-            **/build/test-results/**/TEST-*.xml
+            app/build/outputs/apk/full/debug/app-full-debug.apk
+            app/build/outputs/apk/minimal/debug/app-minimal-debug.apk
+            app/build/outputs/apk/androidTest/full/debug/app-full-debug-androidTest.apk
+            app/build/outputs/apk/androidTest/minimal/debug/app-minimal-debug-androidTest.apk
+            devices.txt
 
   instrumentation_test:
     name: "Instrumentation Tests"
@@ -243,27 +368,17 @@ jobs:
       fail-fast: false
       matrix:
         configuration:
-          - api-level: 23
-            arch: x86_64
-            profile: "Nexus 5"
-            target: "google_apis"
-            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
-          - api-level: 36
-            arch: x86_64
-            profile: "pixel_7"
-            target: "google_apis"
-            gradle_target: ":app:connectedFullDebugAndroidTest :app:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
           - api-level: 33
             arch: x86_64
             profile: "automotive_1024p_landscape"
             target: "android-automotive"
-            gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+            gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest :microwakeword:connectedDebugAndroidTest"
           - api-level: "34"
             system-image-api-level: "34-ext9"
             arch: x86_64
             profile: "automotive_1024p_landscape"
             target: "android-automotive"
-            gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest"
+            gradle_target: ":automotive:connectedFullDebugAndroidTest :automotive:connectedMinimalDebugAndroidTest :common:connectedDebugAndroidTest :microwakeword:connectedDebugAndroidTest"
           - api-level: 26
             arch: x86
             profile: "wearos_square"
@@ -283,7 +398,9 @@ jobs:
           docker-images: false # Takes 16s, enable if needed in the future
           large-packages: false # includes google-cloud-sdk and it's slow
 
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
 
       - uses: ./.github/actions/setup-build-env
         with:
@@ -298,7 +415,7 @@ jobs:
           ls /dev/kvm
 
       - name: Build projects and run instrumentation tests
-        uses: reactivecircus/android-emulator-runner@b530d96654c385303d652368551fb075bc2f0b6b # v2.35.0
+        uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a # v2.37.0
         with:
           api-level: ${{ matrix.configuration.api-level }}
           arch: ${{ matrix.configuration.arch }}
@@ -312,35 +429,7 @@ jobs:
           system-image-api-level: ${{ matrix.configuration.system-image-api-level }}
           script: ./gradlew ${{ matrix.configuration.gradle_target }}
 
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: Instrumentation test results (API${{ matrix.configuration.api-level }}) ${{ matrix.configuration.target }}
-          path: |
-            **/build/reports/*
-            **/build/outputs/*/connected/*
-
-  publish_test_results:
-    name: "Publish Tests Results"
-    needs: [instrumentation_test, unit_tests, screenshot_test]
-    runs-on: ubuntu-latest
-    permissions:
-      checks: write
-      pull-requests: write
-    if: always()
-
-    steps:
-      - name: Download Artifacts
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
-
-      - name: Publish Test Results EnricoMi
-        uses: EnricoMi/publish-unit-test-result-action@27d65e188ec43221b20d26de30f4892fad91df2f # v2.22.0
+      - uses: ./.github/actions/upload-test-results
         if: always()
         with:
-          comment_mode: "failures"
-          # We want to fail the build to block the merge if any test fail it allows us simplify the setup of the protected branch.
-          action_fail: true
-          files: |
-            **/androidTest-results/**/TEST-*.xml
-            **/build/test-results/**/TEST-*.xml
+          test-name: Instrumentation test (API${{ matrix.configuration.api-level }}) ${{ matrix.configuration.target }}

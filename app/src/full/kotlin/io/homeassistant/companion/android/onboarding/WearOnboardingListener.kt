@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.onboarding
 
-import android.annotation.SuppressLint
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.PutDataRequest
@@ -10,10 +9,10 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 
 @AndroidEntryPoint
-@SuppressLint("VisibleForTests") // https://issuetracker.google.com/issues/239451111
 class WearOnboardingListener : WearableListenerService() {
 
     @Inject
@@ -28,6 +27,7 @@ class WearOnboardingListener : WearableListenerService() {
         }
     }
 
+    // Uses runBlocking because WearableListenerService may destroy the service once onMessageReceived returns
     private fun sendHomeAssistantInstance(nodeId: String) = runBlocking {
         Timber.d("sendHomeAssistantInstance: $nodeId")
         // Retrieve current instance
@@ -43,12 +43,10 @@ class WearOnboardingListener : WearableListenerService() {
                 asPutDataRequest()
             }
             try {
-                Wearable.getDataClient(this@WearOnboardingListener).putDataItem(putDataReq)
-                    .addOnCompleteListener {
-                        Timber.d(
-                            "sendHomeAssistantInstance: ${if (it.isSuccessful) "success" else "failed"}",
-                        )
-                    }
+                Wearable.getDataClient(this@WearOnboardingListener)
+                    .putDataItem(putDataReq)
+                    .await()
+                Timber.d("sendHomeAssistantInstance: success")
             } catch (e: Exception) {
                 Timber.e(e, "Failed to send home assistant instance")
             }

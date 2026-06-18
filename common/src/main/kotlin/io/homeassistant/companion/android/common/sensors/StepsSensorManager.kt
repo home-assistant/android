@@ -10,6 +10,7 @@ import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import android.os.Build
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.util.SdkVersion
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -51,7 +52,7 @@ class StepsSensorManager :
     private lateinit var mySensorManager: android.hardware.SensorManager
 
     override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        return if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
             arrayOf(Manifest.permission.ACTIVITY_RECOGNITION)
         } else {
             emptyArray()

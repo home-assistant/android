@@ -1,13 +1,10 @@
 package io.homeassistant.companion.android.settings
 
-import android.app.role.RoleManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
-import android.provider.Settings
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.getSystemService
 import androidx.preference.PreferenceDataStore
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
@@ -15,10 +12,12 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.util.isAutomotive
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.settings.SettingsDao
+import io.homeassistant.companion.android.settings.assist.DefaultAssistantManager
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.NightModeManager
 import io.homeassistant.companion.android.util.ChangeLog
@@ -42,6 +41,7 @@ class SettingsPresenterImpl @Inject constructor(
     private val langsManager: LanguagesManager,
     private val changeLog: ChangeLog,
     private val settingsDao: SettingsDao,
+    private val defaultAssistantManager: DefaultAssistantManager,
 ) : PreferenceDataStore(),
     SettingsPresenter {
 
@@ -114,7 +114,7 @@ class SettingsPresenterImpl @Inject constructor(
             "themes" -> nightModeManager.getCurrentNightMode().storageValue
             "languages" -> langsManager.getCurrentLang()
             "page_zoom" -> prefsRepository.getPageZoomLevel().toString()
-            "screen_orientation" -> prefsRepository.getScreenOrientation()
+            "screen_orientation" -> prefsRepository.getScreenOrientation().storageValue
             else -> throw IllegalArgumentException("No string found by this key: $key")
         }
     }
@@ -125,7 +125,7 @@ class SettingsPresenterImpl @Inject constructor(
                 "themes" -> nightModeManager.saveNightMode(NightModeTheme.fromStorageValue(value))
                 "languages" -> langsManager.saveLang(value)
                 "page_zoom" -> prefsRepository.setPageZoomLevel(value?.toIntOrNull())
-                "screen_orientation" -> prefsRepository.saveScreenOrientation(value)
+                "screen_orientation" -> prefsRepository.setScreenOrientation(ScreenOrientation.fromStorageValue(value))
                 else -> throw IllegalArgumentException("No string found by this key: $key")
             }
         }
@@ -190,23 +190,7 @@ class SettingsPresenterImpl @Inject constructor(
         val suggestions = mutableListOf<SettingsHomeSuggestion>()
 
         // Assist
-        var assistantSuggestion = serverManager.servers().any { it.version?.isAtLeast(2023, 5) == true }
-        assistantSuggestion = if (
-            assistantSuggestion &&
-            context.isAutomotive()
-        ) {
-            false
-        } else if (assistantSuggestion && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val roleManager = context.getSystemService<RoleManager>()
-            roleManager?.isRoleAvailable(RoleManager.ROLE_ASSISTANT) == true &&
-                !roleManager.isRoleHeld(RoleManager.ROLE_ASSISTANT)
-        } else if (assistantSuggestion) {
-            val defaultApp: String? = Settings.Secure.getString(context.contentResolver, "assistant")
-            defaultApp?.contains(BuildConfig.APPLICATION_ID) == false
-        } else {
-            false
-        }
-        if (assistantSuggestion) {
+        if (defaultAssistantManager.shouldSuggestAssistantSetup()) {
             suggestions += SettingsHomeSuggestion(
                 SettingsPresenter.SUGGESTION_ASSISTANT_APP,
                 commonR.string.suggestion_assist_title,
@@ -216,7 +200,7 @@ class SettingsPresenterImpl @Inject constructor(
         }
 
         // Notifications
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O) &&
             !NotificationManagerCompat.from(context).areNotificationsEnabled()
         ) {
             suggestions += SettingsHomeSuggestion(

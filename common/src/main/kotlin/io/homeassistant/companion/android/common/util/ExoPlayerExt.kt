@@ -18,11 +18,21 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import dagger.Lazy
 import java.io.File
 import java.util.concurrent.Executors
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import org.chromium.net.CronetEngine
 import timber.log.Timber
+
+/**
+ * Connection and read timeout for Cronet and HttpEngine data sources.
+ *
+ * Increased from the default 8 seconds to accommodate streams that may remain idle
+ * before sending data, such as Assist TTS where the stream stays open until the user speaks.
+ * With the default timeout, the connection would be closed even though the stream is still alive.
+ */
+private val DATA_SOURCE_TIMEOUT = 30.seconds
 
 /**
  * Initializes and returns an ExoPlayer instance optimized for live streaming,
@@ -74,11 +84,18 @@ suspend fun initializePlayer(context: Context, dataSourceFactory: DataSource.Fac
  * 2.  **Cronet (via GMS or embedded):** If `HttpEngine` is not available, it attempts to build
  *     a `CronetEngine`. This can come from Google Play Services (in the `full` flavor) or be
  *     embedded directly (in the `minimal` flavor). This also provides QUIC support.
- * 3.  **OkHttp:** If Cronet cannot be initialized, it falls back to using the app's shared
- *     `OkHttpClient` instance. This provides modern features like HTTP/2 but lacks QUIC.
+ * 3.  **OkHttp:** Falls back to the factory provided by [okHttpClientFactoryProvider]. The
+ *     provider is only called when neither HttpEngine nor Cronet is available, avoiding
+ *     unnecessary initialization of the OkHttp factory.
+ *
+ * @param okHttpClientFactoryProvider lazily provides an OkHttp-backed factory, only invoked
+ *   when HttpEngine and Cronet are both unavailable
  */
 @OptIn(UnstableApi::class)
-internal fun createDataSourceFactory(context: Context, okHttpClientProvider: Lazy<OkHttpClient>): DataSource.Factory {
+private fun createDataSourceFactory(
+    context: Context,
+    okHttpClientFactoryProvider: () -> OkHttpDataSource.Factory,
+): DataSource.Factory {
     val httpEngineFactory = buildHttpEngineFactory(context)
 
     return if (httpEngineFactory != null) {
@@ -90,11 +107,13 @@ internal fun createDataSourceFactory(context: Context, okHttpClientProvider: Laz
             Timber.i("Using CronetDataSource for media")
             // assumed to be singleton scoped, so app lifetime for executor
             val singleThreadExecutor = Executors.newSingleThreadExecutor()
+            val timeout = DATA_SOURCE_TIMEOUT.inWholeMilliseconds.toInt()
             CronetDataSource.Factory(cronetEngine, singleThreadExecutor)
+                .setConnectionTimeoutMs(timeout)
+                .setReadTimeoutMs(timeout)
         } else {
-            // Reuse OkHttpClient instance for Http/2 support
-            Timber.w("Failed to build cronet engine fallback to OkHttpDataSource")
-            OkHttpDataSource.Factory(okHttpClientProvider.get())
+            Timber.w("Failed to build cronet engine, falling back to OkHttpDataSource")
+            okHttpClientFactoryProvider()
         }
     }
 }
@@ -107,7 +126,7 @@ internal fun createDataSourceFactory(context: Context, okHttpClientProvider: Laz
 private fun buildHttpEngineFactory(context: Context): DataSource.Factory? {
     // https://developer.android.com/reference/android/net/http/HttpEngine
     // Added in API level 34 also in S Extensions 7
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+    return if (SdkVersion.isAtLeast(Build.VERSION_CODES.R) &&
         SdkExtensions.getExtensionVersion(Build.VERSION_CODES.S) >= 7
     ) {
         // Use Platform embedded Cronet via android.net.http.HttpEngine
@@ -129,26 +148,46 @@ private fun buildHttpEngineFactory(context: Context): DataSource.Factory? {
         Timber.i("Using HttpEngineDataSource for media")
         // assumed to be singleton scoped, so app lifetime for executor
         val singleThreadExecutor = Executors.newSingleThreadExecutor()
+        val timeout = DATA_SOURCE_TIMEOUT.inWholeMilliseconds.toInt()
         HttpEngineDataSource.Factory(httpEngine, singleThreadExecutor)
+            .setConnectionTimeoutMs(timeout)
+            .setReadTimeoutMs(timeout)
     } else {
         null
     }
 }
 
 /**
- * A [DataSource.Factory] that defers the creation of its underlying (delegate) factory
- * until a [DataSource] is actually requested.
+ * A [DataSource.Factory] that dynamically selects between the best available HTTP stack
+ * and OkHttp based on whether mTLS is currently active.
  *
- * This is useful for expensive factory creation processes, such as those involving I/O
- * or complex initialization (like building a `CronetEngine`). By wrapping the creation
- * logic in a lambda and passing it to this class, the expensive work is postponed
- * from the initial setup phase to the moment playback is about to begin.
+ * HttpEngine and Cronet do not support client certificates, so when mTLS is configured
+ * this factory falls back to OkHttp which has the [javax.net.ssl.SSLSocketFactory] configured
+ * with the client certificate.
+ *
+ * The mTLS check is performed on every [createDataSource] call so that changes to the
+ * certificate configuration (adding or removing mTLS) are picked up without an app restart.
+ * The check is not per server, if one server in the current setup of the app is using mTLS
+ * then we use the OkHttp datasource.
+ *
+ * @param context application context for initializing HttpEngine/Cronet
+ * @param okHttpClientProvider lazily provides the shared [OkHttpClient] configured with mTLS
+ * @param usesMtls called on every [createDataSource] to check if mTLS is currently used
  */
-class DeferredCreationDataSource(private val factory: () -> DataSource.Factory) : DataSource.Factory {
-    val delegate by lazy { factory() }
+internal class MtlsAwareDataSourceFactory(
+    context: Context,
+    okHttpClientProvider: Lazy<OkHttpClient>,
+    private val usesMtls: () -> Boolean,
+) : DataSource.Factory {
+    private val okHttpDelegate by lazy { OkHttpDataSource.Factory(okHttpClientProvider.get()) }
+    private val defaultDelegate by lazy { createDataSourceFactory(context) { okHttpDelegate } }
 
     @OptIn(UnstableApi::class)
     override fun createDataSource(): DataSource {
-        return delegate.createDataSource()
+        return if (usesMtls()) {
+            okHttpDelegate
+        } else {
+            defaultDelegate
+        }.createDataSource()
     }
 }

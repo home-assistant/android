@@ -41,7 +41,21 @@ class UriExtensionsTest {
     @Test
     fun `hasSameOrigin returns false when other is null`() {
         val uri = Uri.parse("https://example.com")
-        assertFalse(uri.hasSameOrigin(null))
+        assertFalse(uri.hasSameOrigin(null as Uri?))
+    }
+
+    @Test
+    fun `hasSameOrigin with string overload returns expected value`() {
+        val uri = Uri.parse("https://example.com:8123")
+        assertEquals(true, uri.hasSameOrigin("https://example.com:8123/lovelace/0"))
+        assertEquals(false, uri.hasSameOrigin("https://other.com"))
+        assertEquals(false, uri.hasSameOrigin("http://example.com:8123"))
+    }
+
+    @Test
+    fun `hasSameOrigin with string overload returns false when other is null`() {
+        val uri = Uri.parse("https://example.com")
+        assertFalse(uri.hasSameOrigin(null as String?))
     }
 
     @Test

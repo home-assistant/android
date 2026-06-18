@@ -9,10 +9,12 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.applock.AppLockStateManager
 import io.homeassistant.companion.android.automotive.navigation.AutomotiveRoute
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.network.NetworkState
 import io.homeassistant.companion.android.common.data.network.NetworkStatusMonitor
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.ResyncRegistrationWorker.Companion.enqueueResyncRegistration
 import io.homeassistant.companion.android.database.server.Server
@@ -22,8 +24,14 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.onboarding.OnboardingRoute
 import io.homeassistant.companion.android.onboarding.WearOnboardingRoute
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -67,6 +75,8 @@ internal class LaunchViewModel @VisibleForTesting constructor(
     private val workManager: WorkManager,
     private val serverManager: ServerManager,
     private val networkStatusMonitor: NetworkStatusMonitor,
+    private val prefsRepository: PrefsRepository,
+    private val appLockStateManager: AppLockStateManager,
     private val hasLocationTrackingSupport: Boolean,
     isAutomotive: Boolean,
     isFullFlavor: Boolean,
@@ -78,6 +88,8 @@ internal class LaunchViewModel @VisibleForTesting constructor(
         workManager: WorkManager,
         serverManager: ServerManager,
         networkStatusMonitor: NetworkStatusMonitor,
+        prefsRepository: PrefsRepository,
+        appLockStateManager: AppLockStateManager,
         @LocationTrackingSupport hasLocationTrackingSupport: Boolean,
         @IsAutomotive isAutomotive: Boolean,
     ) : this(
@@ -85,6 +97,8 @@ internal class LaunchViewModel @VisibleForTesting constructor(
         workManager,
         serverManager,
         networkStatusMonitor,
+        prefsRepository,
+        appLockStateManager,
         hasLocationTrackingSupport,
         isAutomotive = isAutomotive,
         isFullFlavor = BuildConfig.FLAVOR == "full",
@@ -102,6 +116,35 @@ internal class LaunchViewModel @VisibleForTesting constructor(
     private val _uiState = MutableStateFlow<LaunchUiState>(LaunchUiState.Loading)
     val uiState = _uiState.asStateFlow()
 
+    private val fullscreenRequested = MutableStateFlow(false)
+
+    /**
+     * Emits whether the app should currently be in fullscreen mode.
+     *
+     * Combines the user's fullscreen preference with temporary fullscreen requests from the
+     * frontend (e.g. ExoPlayer entering fullscreen) via a logical OR. The preference therefore
+     * takes priority: while it is enabled, a `false` request cannot leave fullscreen.
+     */
+    val isFullScreen: StateFlow<Boolean> = combine(
+        flow { emitAll(prefsRepository.fullScreenEnabledFlow()) },
+        fullscreenRequested,
+    ) { preference, requested -> preference || requested }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = false)
+
+    private val _isAppLocked = MutableStateFlow(false)
+    val isAppLocked: StateFlow<Boolean> = _isAppLocked.asStateFlow()
+
+    private val _pipReadiness = MutableStateFlow<PipReadiness?>(null)
+
+    /**
+     * Latest [PipReadiness] reported by the active screen, or `null` if no screen is currently
+     * displaying PiP-eligible content.
+     *
+     * Read by [LaunchActivity] to build [android.app.PictureInPictureParams] when the user
+     * backgrounds the app or when `setAutoEnterEnabled` is honored by the OS (API 31+).
+     */
+    val pipReadiness: StateFlow<PipReadiness?> = _pipReadiness.asStateFlow()
+
     init {
         viewModelScope.launch {
             cleanupServers()
@@ -114,12 +157,63 @@ internal class LaunchViewModel @VisibleForTesting constructor(
      */
     fun shouldShowSplashScreen(): Boolean = _uiState.value is LaunchUiState.Loading
 
+    /**
+     * Refresh the [isAppLocked] state.
+     */
+    fun refreshAppLockState() {
+        viewModelScope.launch {
+            _isAppLocked.value = appLockStateManager.isAppLocked()
+        }
+    }
+
+    /**
+     * Mark the app as inactive for the active server.
+     */
+    fun onAppPaused() {
+        viewModelScope.launch {
+            appLockStateManager.setAppActive(active = false)
+        }
+    }
+
+    /**
+     * Mark the app as active for the active server and unlock the UI after a successful
+     * authentication.
+     */
+    fun onAuthenticated() {
+        viewModelScope.launch {
+            appLockStateManager.setAppActive(active = true)
+            _isAppLocked.value = false
+        }
+    }
+
+    /**
+     * Request a temporary fullscreen state from the frontend.
+     *
+     * A `true` request makes the app enter fullscreen regardless of the user preference.
+     * A `false` request only leaves fullscreen when the user preference is also disabled.
+     */
+    fun onFullscreenRequested(fullscreen: Boolean) {
+        fullscreenRequested.value = fullscreen
+    }
+
+    /**
+     * Updates [pipReadiness] from the screen layer. `null` indicates no PiP-eligible content.
+     */
+    fun onPipReadinessChanged(readiness: PipReadiness?) {
+        _pipReadiness.value = readiness
+    }
+
     private suspend fun handleInitialState(initialDeepLink: LaunchActivity.DeepLink?) {
         when (initialDeepLink) {
             is LaunchActivity.DeepLink.OpenOnboarding -> navigateToOnboarding(
                 initialDeepLink.urlToOnboard,
                 hideExistingServers = initialDeepLink.hideExistingServers,
                 skipWelcome = initialDeepLink.skipWelcome,
+            )
+
+            is LaunchActivity.DeepLink.OpenInvitation -> navigateToOnboarding(
+                initialDeepLink.serverUrl,
+                fromInvitation = true,
             )
 
             is LaunchActivity.DeepLink.NavigateTo,
@@ -145,7 +239,7 @@ internal class LaunchViewModel @VisibleForTesting constructor(
                         !handleNetworkState(state, path, serverId)
                     }.collect()
             } ?: navigateToOnboarding()
-        } catch (e: IllegalArgumentException) {
+        } catch (e: IllegalStateException) {
             Timber.e(
                 e,
                 "Something went wrong while checking if any server are registered with a connected session",
@@ -156,8 +250,13 @@ internal class LaunchViewModel @VisibleForTesting constructor(
 
     private suspend fun getServerConnectedAndRegistered(serverId: Int): Server? {
         return serverManager.getServer(serverId)?.takeIf {
-            serverManager.isRegistered() &&
-                serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED
+            try {
+                serverManager.isRegistered() &&
+                    serverManager.authenticationRepository().getSessionState() == SessionState.CONNECTED
+            } catch (e: IllegalStateException) {
+                Timber.e(e, "Failed to get server state")
+                false
+            }
         }
     }
 
@@ -176,6 +275,7 @@ internal class LaunchViewModel @VisibleForTesting constructor(
         urlToOnboard: String? = null,
         hideExistingServers: Boolean = false,
         skipWelcome: Boolean = false,
+        fromInvitation: Boolean = false,
     ) {
         _uiState.value = LaunchUiState.Ready(
             OnboardingRoute(
@@ -183,6 +283,7 @@ internal class LaunchViewModel @VisibleForTesting constructor(
                 urlToOnboard = urlToOnboard,
                 hideExistingServers = hideExistingServers,
                 skipWelcome = skipWelcome,
+                fromInvitation = fromInvitation,
             ),
         )
     }
@@ -191,8 +292,13 @@ internal class LaunchViewModel @VisibleForTesting constructor(
         // Remove any invalid servers (incomplete, partly migrated from another device)
         serverManager.servers()
             .filter {
-                serverManager.authenticationRepository(it.id)
-                    .getSessionState() == SessionState.ANONYMOUS
+                try {
+                    serverManager.authenticationRepository(it.id)
+                        .getSessionState() == SessionState.ANONYMOUS
+                } catch (e: IllegalStateException) {
+                    Timber.w(e, "Failed to get server ${it.id} state")
+                    false
+                }
             }
             .forEach { serverManager.removeServer(it.id) }
     }

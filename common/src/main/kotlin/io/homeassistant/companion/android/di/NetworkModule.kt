@@ -10,6 +10,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import io.homeassistant.companion.android.common.data.network.NetworkChangeObserver
+import io.homeassistant.companion.android.common.data.network.NetworkChangeObserverImpl
 import io.homeassistant.companion.android.common.data.network.NetworkHelper
 import io.homeassistant.companion.android.common.data.network.NetworkHelperImpl
 import io.homeassistant.companion.android.common.data.network.NetworkStatusMonitor
@@ -43,6 +45,10 @@ internal abstract class NetworkModule {
     @Binds
     @Singleton
     abstract fun bindNetworkHelper(networkHelper: NetworkHelperImpl): NetworkHelper
+
+    @Binds
+    @Singleton
+    abstract fun bindNetworkChangeObserver(networkChangeObserver: NetworkChangeObserverImpl): NetworkChangeObserver
 
     @Binds
     @Singleton

@@ -11,11 +11,13 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon3
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateDiff
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryOptions
 import io.homeassistant.companion.android.common.util.LocalDateTimeSerializer
 import io.homeassistant.companion.android.common.util.MapAnySerializer
+import io.homeassistant.companion.android.common.util.SdkVersion
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
@@ -23,21 +25,105 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.util.Locale
 import kotlin.math.round
+import kotlinx.coroutines.CancellationException
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonPrimitive
 import timber.log.Timber
 
-@Serializable
+/**
+ * Validates a JSON element representing an entity state. Returns the string content if valid,
+ * empty string if null, or empty string with a warning if the type is not a string.
+ */
+private fun validateStateElement(element: JsonElement, entityId: String): String = when (element) {
+    is JsonPrimitive if element.isString -> element.content
+    is JsonNull -> ""
+    else -> {
+        Timber.w(
+            "Entity $entityId state is not a String: $element. Please open an issue on the relevant integration.",
+        )
+        ""
+    }
+}
+
+/**
+ * Class-level serializer for [Entity] used to partially parse the JSON using a surrogate.
+ * It is important to validate the type of the `state` since some custom integrations are
+ * not respecting the fact that it should be a string. To avoid crashing while parsing
+ * we simply don't parse fully the state and delegate this to the [Entity] constructor.
+ */
+private object EntitySerializer : KSerializer<Entity> {
+    @Serializable
+    private data class Surrogate(
+        val entityId: String,
+        val state: JsonElement,
+        @Serializable(with = MapAnySerializer::class)
+        val attributes: Map<String, @Polymorphic Any?>,
+        @Serializable(with = LocalDateTimeSerializer::class)
+        val lastChanged: LocalDateTime,
+        @Serializable(with = LocalDateTimeSerializer::class)
+        val lastUpdated: LocalDateTime,
+    )
+
+    override val descriptor = Surrogate.serializer().descriptor
+
+    override fun serialize(encoder: Encoder, value: Entity) {
+        Surrogate.serializer().serialize(
+            encoder,
+            Surrogate(
+                entityId = value.entityId,
+                state = JsonPrimitive(value.state),
+                attributes = value.attributes,
+                lastChanged = value.lastChanged,
+                lastUpdated = value.lastUpdated,
+            ),
+        )
+    }
+
+    override fun deserialize(decoder: Decoder): Entity {
+        val surrogate = Surrogate.serializer().deserialize(decoder)
+        return Entity(
+            entityId = surrogate.entityId,
+            state = surrogate.state,
+            attributes = surrogate.attributes,
+            lastChanged = surrogate.lastChanged,
+            lastUpdated = surrogate.lastUpdated,
+        )
+    }
+}
+
+@Serializable(with = EntitySerializer::class)
 data class Entity(
     val entityId: String,
     val state: String,
-    @Serializable(with = MapAnySerializer::class)
-    val attributes: Map<String, @Polymorphic Any?>,
-    @Serializable(with = LocalDateTimeSerializer::class)
+    val attributes: Map<String, Any?>,
     val lastChanged: LocalDateTime,
-    @Serializable(with = LocalDateTimeSerializer::class)
     val lastUpdated: LocalDateTime,
 ) {
+    /**
+     * Secondary constructor that accepts a raw [JsonElement] for the state and validates it.
+     * If the element is not a JSON string, logs a warning with the [entityId] and falls back
+     * to an empty string.
+     */
+    internal constructor(
+        entityId: String,
+        state: JsonElement,
+        attributes: Map<String, @Polymorphic Any?>,
+        lastChanged: LocalDateTime,
+        lastUpdated: LocalDateTime,
+    ) : this(
+        entityId = entityId,
+        state = validateStateElement(state, entityId = entityId),
+        attributes = attributes,
+        lastChanged = lastChanged,
+        lastUpdated = lastUpdated,
+    )
+
     /**
      * The domain part of the [entityId] (e.g., "light" from "light.living_room").
      * Lazy to avoid repeated string allocations on each access.
@@ -75,7 +161,7 @@ object EntityExt {
         "binary_sensor",
         "calendar",
         CAMERA_DOMAIN,
-        "climate",
+        CLIMATE_DOMAIN,
         "cover",
         "device_tracker",
         "fan",
@@ -119,6 +205,7 @@ fun Entity.applyCompressedStateDiff(diff: CompressedStateDiff): Entity {
         plus?.lastChanged != null -> newLastChanged
         plus?.lastUpdated != null ->
             LocalDateTime.ofEpochSecond(round(plus.lastUpdated).toLong(), 0, ZoneOffset.UTC)
+
         else -> lastUpdated
     }
 
@@ -135,13 +222,24 @@ fun Entity.applyCompressedStateDiff(diff: CompressedStateDiff): Entity {
         attributes
     }
 
-    return Entity(
-        entityId = entityId,
-        state = plus?.state ?: state,
-        attributes = newAttributes,
-        lastChanged = newLastChanged,
-        lastUpdated = newLastUpdated,
-    )
+    val newState = plus?.state
+    return if (newState != null) {
+        Entity(
+            entityId = entityId,
+            state = newState,
+            attributes = newAttributes,
+            lastChanged = newLastChanged,
+            lastUpdated = newLastUpdated,
+        )
+    } else {
+        Entity(
+            entityId = entityId,
+            state = state,
+            attributes = newAttributes,
+            lastChanged = newLastChanged,
+            lastUpdated = newLastUpdated,
+        )
+    }
 }
 
 fun Entity.getCoverPosition(): EntityPosition? {
@@ -358,9 +456,9 @@ fun Entity.getVolumeStep(): Float {
 fun Entity.getIcon(context: Context): IIcon {
     val attributes = this.attributes
     val icon = attributes["icon"] as? String
-    return if (icon?.startsWith("mdi") == true) {
-        val mdiIcon = icon.split(":")[1]
-        return IconicsDrawable(context, "cmd-$mdiIcon").icon ?: Icon.cmd_bookmark
+    return if (icon?.startsWith("mdi:") == true) {
+        val mdiIcon = icon.split(":").getOrElse(1, { _ -> "" })
+        IconicsDrawable(context, "cmd-$mdiIcon").icon ?: Icon.cmd_bookmark
     } else {
         /**
          * Return a default icon for the domain that matches the icon used in the frontend, see
@@ -368,7 +466,15 @@ fun Entity.getIcon(context: Context): IIcon {
          * Note: for SimplifiedEntity sometimes return a more general icon because we don't have state.
          */
         val compareState =
-            state.ifBlank { attributes["state"] as String? }
+            state.ifBlank {
+                val attributeState = attributes["state"]
+                if (attributeState != null && attributeState !is String) {
+                    Timber.w(
+                        "Entity $entityId has non-String state attribute: ${attributeState::class.simpleName}. Please open an issue on the relevant integration.",
+                    )
+                }
+                attributeState as? String?
+            }
         when (domain) {
             "air_quality" -> Icon.cmd_air_filter
             "alarm_control_panel" -> when (compareState) {
@@ -404,7 +510,7 @@ fun Entity.getIcon(context: Context): IIcon {
                 Icon3.cmd_video
             }
 
-            "climate" -> Icon3.cmd_thermostat
+            CLIMATE_DOMAIN -> Icon3.cmd_thermostat
             "configurator" -> Icon.cmd_cog
             "conversation" -> Icon3.cmd_microphone_message
             "cover" -> coverIcon(compareState, this)
@@ -834,7 +940,10 @@ suspend fun onEntityPressedWithoutState(entityId: String, integrationRepository:
         "lock" -> {
             val lockEntity = try {
                 integrationRepository.getEntity(entityId)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
+                Timber.w(e, "Failed to get lock entity $entityId")
                 null
             }
             if (lockEntity?.state == "locked") "unlock" else "lock"
@@ -1087,7 +1196,7 @@ fun Entity.friendlyState(
             }
         }
     }
-    if (friendlyState == state && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+    if (friendlyState == state && SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
         try {
             val stateInMillis = ZonedDateTime.parse(state, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
                 .toInstant()

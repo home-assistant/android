@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.IntentSender
 import androidx.activity.result.ActivityResult
 import androidx.lifecycle.Lifecycle
+import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
@@ -35,14 +36,12 @@ interface WebViewPresenter {
 
     suspend fun isFullScreen(): Boolean
 
-    suspend fun getScreenOrientation(): String?
+    suspend fun getScreenOrientation(): ScreenOrientation
 
     suspend fun isKeepScreenOnEnabled(): Boolean
 
     suspend fun getPageZoomLevel(): Int
     suspend fun isPinchToZoomEnabled(): Boolean
-    suspend fun isWebViewDebugEnabled(): Boolean
-
     suspend fun isAppLocked(): Boolean
     suspend fun setAppActive(active: Boolean)
 
@@ -73,14 +72,14 @@ interface WebViewPresenter {
     suspend fun parseWebViewColor(webViewColor: String): Int
 
     fun appCanCommissionMatterDevice(): Boolean
-    fun startCommissioningMatterDevice(context: Context)
+    fun startCommissioningMatterDevice()
 
     /** @return `true` if the app can send this device's preferred Thread credential to the server */
     fun appCanExportThreadCredentials(): Boolean
-    fun exportThreadCredentials(context: Context)
+    fun exportThreadCredentials()
     fun getMatterThreadStepFlow(): Flow<MatterThreadStep>
     fun getMatterThreadIntent(): IntentSender?
-    fun onMatterThreadIntentResult(context: Context, result: ActivityResult)
+    fun onMatterThreadIntentResult(result: ActivityResult)
     fun finishMatterThreadFlow()
 
     /** @return `true` if the app should prompt the user for Improv permissions before scanning */

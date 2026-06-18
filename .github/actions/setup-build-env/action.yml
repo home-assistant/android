@@ -30,7 +30,8 @@ runs:
         java-version: "21"
 
     - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@f29f5a9d7b09a7c6b29859002d29d24e1674c884 # v5.0.1
+      uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
       with:
+        cache-provider: basic # Avoid the proprietary 'enhanced' cache; 'basic' uses the MIT-licensed GitHub Actions cache.
         cache-disabled: ${{ inputs.cache-disabled == 'true'}}
         cache-encryption-key: ${{ inputs.cache-encryption-key}}

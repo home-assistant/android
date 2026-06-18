@@ -126,6 +126,7 @@ interface WebSocketRepository {
         outputTts: Boolean,
         pipelineId: String? = null,
         conversationId: String? = null,
+        wakeWordPhrase: String? = null,
     ): Flow<AssistPipelineEvent>?
 
     /**

@@ -2,14 +2,15 @@
     $schema: 'https://docs.renovatebot.com/renovate-schema.json',
     configMigration: true,
     extends: [
-        'config:recommended',
+        'config:best-practices',
         'group:linters',
         'group:monorepos',
         'group:recommended',
     ],
-    lockFileMaintenance: {
-        enabled: true,
-    },
+    skipArtifactsUpdate: true,
+    gitIgnoredAuthors: [
+        'github-actions[bot]@users.noreply.github.com',
+    ],
     minimumReleaseAge: '3 days',
     hostRules: [
         {
@@ -34,6 +35,10 @@
         },
     ],
     packageRules: [
+        {
+            matchManagers: ['bundler'],
+            skipArtifactsUpdate: false,
+        },
         {
             matchDatasources: [
                 'maven',
@@ -95,14 +100,30 @@
                 '!androidx.compose{/,}**',
                 '!androidx.navigation:navigation-compose{/,}**',
                 '!androidx.wear.compose{/,}**',
+                '!androidx.webkit{/,}**',
                 'androidx.{/,}**',
+            ],
+        },
+        {
+            groupName: 'androidx.webkit:*',
+            matchPackageNames: [
+                'androidx.webkit:{/,}**',
             ],
         },
         {
             groupName: 'com.android.*',
             matchPackageNames: [
+                '!com.android.compose.screenshot{/,}**',
+                '!com.android.tools.screenshot{/,}**',
                 'com.android:{/,}**',
                 'com.android.{/,}**',
+            ],
+        },
+        {
+            groupName: 'com.android.*.screenshot',
+            matchPackageNames: [
+                'com.android.compose.screenshot{/,}**',
+                'com.android.tools.screenshot{/,}**',
             ],
         },
         {

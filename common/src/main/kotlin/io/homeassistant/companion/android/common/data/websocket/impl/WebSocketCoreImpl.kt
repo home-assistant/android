@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.common.data.websocket.impl
 
 import androidx.annotation.GuardedBy
 import androidx.annotation.VisibleForTesting
-import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.HomeAssistantApis.Companion.USER_AGENT
 import io.homeassistant.companion.android.common.data.HomeAssistantApis.Companion.USER_AGENT_STRING
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
@@ -50,6 +49,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Un
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.MapAnySerializer
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.util.sensitive
 import java.io.IOException
 import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
@@ -656,7 +656,7 @@ internal class WebSocketCoreImpl(
 
     @OptIn(DelicateCoroutinesApi::class)
     override fun onMessage(webSocket: WebSocket, text: String) {
-        Timber.d("Websocket: onMessage (${if (BuildConfig.DEBUG) "text: $text" else "text"})")
+        Timber.d("Websocket: onMessage (text: ${sensitive(text)})")
         if (isStaleConnection(webSocket)) {
             Timber.w("Ignoring onMessage from stale connection")
             return

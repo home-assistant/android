@@ -4,12 +4,17 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.net.Uri
 import android.os.PowerManager
 import android.provider.Settings
+import androidx.compose.ui.platform.AndroidUriHandler
 import androidx.core.content.getSystemService
 import androidx.core.net.toUri
+import io.homeassistant.companion.android.common.BuildConfig
+import io.homeassistant.companion.android.common.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 /**
  * Wrapper around [Context.getSharedPreferences] that uses [Dispatchers.IO] to ensure
@@ -87,3 +92,48 @@ fun Context.isIgnoringBatteryOptimizations(): Boolean {
         ?.isIgnoringBatteryOptimizations(packageName ?: "")
         ?: false
 }
+
+suspend fun Context.openUri(uri: String, onShowSnackbar: suspend (message: String, action: String?) -> Boolean) {
+    try {
+        AndroidUriHandler(this).openUri(uri)
+    } catch (e: IllegalArgumentException) {
+        // Don't log e in release to not leak the URL in the log
+        Timber.e(e.takeIf { BuildConfig.DEBUG }, "Failed to navigate open uri")
+        onShowSnackbar(getString(R.string.fail_to_navigate_to_uri, uri), null)
+    }
+}
+
+/**
+ * Builds an [Intent] that opens this app's "App info" page in the system Settings.
+ */
+fun Context.createSystemAppSettingsIntent(): Intent {
+    return Intent(
+        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+        Uri.fromParts("package", packageName, null),
+    )
+}
+
+/**
+ * Opens this app's "App info" page in the system Settings.
+ */
+fun Context.openSystemAppSettings() {
+    startActivity(
+        createSystemAppSettingsIntent(),
+    )
+}
+
+/**
+ * Parses an `intent:` URI coming from an untrusted source (for example a link in the web
+ * frontend or a server-sent notification) into a launchable [Intent], neutralizing intent
+ * redirection in the process (see [Intent.stripSelfNonExportedTarget]).
+ *
+ * Use this instead of [Intent.parseUri] for any URI we do not fully control, so the
+ * sanitization can never be forgotten at a call site.
+ *
+ * @return the parsed and sanitized [Intent]
+ * @throws java.net.URISyntaxException if the basic URI syntax
+ * is bad (as parsed by the Uri class) or the Intent data within the
+ * URI is invalid.
+ */
+fun Context.parseExternalIntentUri(uri: String): Intent =
+    Intent.parseUri(uri, Intent.URI_INTENT_SCHEME).stripSelfNonExportedTarget(this)

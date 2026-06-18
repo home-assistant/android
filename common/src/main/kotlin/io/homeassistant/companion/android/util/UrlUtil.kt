@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.util
 
 import android.net.Uri
+import androidx.core.net.toUri
+import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.MalformedHttpUrlException
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import java.net.InetAddress
@@ -15,7 +17,15 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import timber.log.Timber
 
 object UrlUtil {
-    fun formattedUrlString(url: String): String {
+    /**
+     * Extracts the base URL (scheme, host, and port) from the given URL string,
+     * stripping any path, query parameters, and fragments.
+     *
+     * @param url the full URL string to extract the base from
+     * @return the base URL containing only the scheme, host, and port, with a trailing `/`
+     * @throws MalformedHttpUrlException if [url] is empty or not a valid HTTP(S) URL
+     */
+    fun extractBaseUrl(url: String): String {
         return if (url == "") {
             throw MalformedHttpUrlException()
         } else {
@@ -113,11 +123,19 @@ object UrlUtil {
             userInfo == other.userInfo
     }
 
+    /**
+     * Matches `https://www.home-assistant.io/tag/<id>` URLs in production. Debug builds also
+     * accept `next.home-assistant.io` so the tag flow can be exercised against the next branch
+     * of the documentation site.
+     */
+    private val nfcTagUrlRegex: Regex = if (BuildConfig.DEBUG) {
+        Regex("^https?://(?:www|next)\\.home-assistant\\.io/tag/(.*)")
+    } else {
+        Regex("^https?://www\\.home-assistant\\.io/tag/(.*)")
+    }
+
     fun splitNfcTagId(it: Uri?): String? {
-        val matches =
-            Regex("^https?://www\\.home-assistant\\.io/tag/(.*)").find(
-                it.toString(),
-            )
+        val matches = nfcTagUrlRegex.find(it.toString())
         return matches?.groups?.get(1)?.value
     }
 }
@@ -138,6 +156,11 @@ object UrlUtil {
  *         if DNS resolution fails.
  */
 suspend fun URL.isPubliclyAccessible(): Boolean {
+    return isPubliclyAccessible(host)
+}
+
+/** [HttpUrl] overload — see [URL.isPubliclyAccessible] for behavior. */
+suspend fun HttpUrl.isPubliclyAccessible(): Boolean {
     return isPubliclyAccessible(host)
 }
 
@@ -194,6 +217,18 @@ fun Uri.hasSameOrigin(other: Uri?): Boolean {
         host.equals(other.host, ignoreCase = true) &&
         effectivePort == other.effectivePort
 }
+
+/**
+ * Checks if this Uri has the same origin (scheme, host, and port) as the [other] URL string.
+ * Default ports (443 for HTTPS, 80 for HTTP) are normalized for comparison.
+ *
+ * Convenience overload for callers that hold the other side as a raw URL string; the string is parsed
+ * into a [Uri] before comparison.
+ *
+ * @param other the URL string to compare against; a `null` or unparsable value never matches
+ * @return `true` if both origins share the same scheme, host, and port
+ */
+fun Uri.hasSameOrigin(other: String?): Boolean = hasSameOrigin(other?.toUri())
 
 private val Uri.effectivePort: Int
     get() = when {

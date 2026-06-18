@@ -1,0 +1,16 @@
+{
+  "type": "micro",
+  "wake_word": "Okay Nabu",
+  "author": "Kevin Ahrendt",
+  "website": "https://www.kevinahrendt.com/",
+  "model": "okay_nabu.tflite",
+  "trained_languages": ["en","nl","fr","de","it","es","sv"],
+  "version": 2,
+  "micro": {
+    "probability_cutoff": 0.85,
+    "feature_step_size": 10,
+    "sliding_window_size": 5,
+    "tensor_arena_size": 37000,
+    "minimum_esphome_version": "2024.7.0"
+  }
+}

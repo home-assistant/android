@@ -5,11 +5,14 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.VisualTransformation
+import io.homeassistant.companion.android.common.compose.theme.HAColorScheme
 import io.homeassistant.companion.android.common.compose.theme.HARadius
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
@@ -85,5 +88,72 @@ fun HATextField(
         modifier = modifier
             .widthIn(max = MaxButtonWidth)
             .fillMaxWidth(),
+    )
+}
+
+private fun HAColorScheme.textField(): TextFieldColors {
+    return TextFieldColors(
+        focusedTextColor = colorTextPrimary,
+        unfocusedTextColor = colorTextPrimary,
+        disabledTextColor = colorTextDisabled,
+        errorTextColor = colorOnDangerQuiet,
+
+        focusedContainerColor = colorSurfaceDefault,
+        unfocusedContainerColor = colorSurfaceDefault,
+        disabledContainerColor = colorFillDisabledNormalResting,
+        errorContainerColor = colorSurfaceDefault,
+
+        cursorColor = colorBorderPrimaryNormal,
+        errorCursorColor = colorBorderDangerNormal,
+
+        // TODO Change colors with design team (current value are picked approximatively)
+        textSelectionColors = TextSelectionColors(
+            handleColor = colorFillPrimaryLoudHover,
+            backgroundColor = colorFillPrimaryLoudResting,
+        ),
+
+        focusedIndicatorColor = colorBorderPrimaryNormal,
+        unfocusedIndicatorColor = colorBorderNeutralQuiet,
+        disabledIndicatorColor = colorFillDisabledLoudResting,
+        errorIndicatorColor = colorBorderDangerNormal,
+
+        focusedLeadingIconColor = colorOnNeutralQuiet,
+        unfocusedLeadingIconColor = colorOnNeutralQuiet,
+        disabledLeadingIconColor = colorOnNeutralQuiet,
+        errorLeadingIconColor = colorOnNeutralQuiet,
+
+        focusedTrailingIconColor = colorOnNeutralQuiet,
+        unfocusedTrailingIconColor = colorOnNeutralQuiet,
+        disabledTrailingIconColor = colorOnNeutralQuiet,
+        errorTrailingIconColor = colorOnNeutralQuiet,
+
+        focusedLabelColor = colorTextSecondary,
+        unfocusedLabelColor = colorTextSecondary,
+        disabledLabelColor = colorTextDisabled,
+        errorLabelColor = colorTextSecondary,
+
+        // TODO Verify colors with design team
+        focusedPlaceholderColor = colorTextPrimary,
+        unfocusedPlaceholderColor = colorTextPrimary,
+        disabledPlaceholderColor = colorTextPrimary,
+        errorPlaceholderColor = colorTextPrimary,
+
+        // TODO Verify colors with design team
+        focusedSupportingTextColor = colorTextPrimary,
+        unfocusedSupportingTextColor = colorTextPrimary,
+        disabledSupportingTextColor = colorTextDisabled,
+        errorSupportingTextColor = colorOnDangerQuiet,
+
+        // TODO Verify colors with design team
+        focusedPrefixColor = colorOnNeutralQuiet,
+        unfocusedPrefixColor = colorOnNeutralQuiet,
+        disabledPrefixColor = colorOnNeutralQuiet,
+        errorPrefixColor = colorOnNeutralQuiet,
+
+        // TODO Verify colors with design team
+        focusedSuffixColor = colorOnNeutralQuiet,
+        unfocusedSuffixColor = colorOnNeutralQuiet,
+        disabledSuffixColor = colorOnNeutralQuiet,
+        errorSuffixColor = colorOnNeutralQuiet,
     )
 }

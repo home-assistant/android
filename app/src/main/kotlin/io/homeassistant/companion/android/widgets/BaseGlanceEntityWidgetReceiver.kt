@@ -29,7 +29,7 @@ private fun newCoroutineScopeProvider(): () -> CoroutineScope {
     val exceptionHandler =
         CoroutineExceptionHandler { _, throwable -> Timber.e(throwable, "Unhandled error in widget scope") }
     // Use SupervisorJob to avoid cancelling all jobs when one fails since the scope is used across all the widgets
-    return { CoroutineScope(Dispatchers.Main + SupervisorJob() + exceptionHandler) }
+    return { CoroutineScope(Dispatchers.Default + SupervisorJob() + exceptionHandler) }
 }
 
 data class EntitiesPerServer(val serverId: Int, val entityIds: List<String>)
@@ -116,9 +116,10 @@ abstract class BaseGlanceEntityWidgetReceiver<T : WidgetEntity<T>, DAO : WidgetD
 
         // Handle the Glance [androidx.glance.action.Action]
         super.onReceive(context, intent)
+        setupWidgetScope()
 
         when (intent.action) {
-            Intent.ACTION_SCREEN_ON -> startWatchingForEntitiesChanges(context)
+            Intent.ACTION_SCREEN_ON -> widgetScope.launch { startWatchingForEntitiesChanges(context) }
             Intent.ACTION_SCREEN_OFF -> stopWatchingForEntitiesChanges()
             /**
              * This action will trigger an update for all widgets but will not monitor for changes.
@@ -135,6 +136,7 @@ abstract class BaseGlanceEntityWidgetReceiver<T : WidgetEntity<T>, DAO : WidgetD
                     glanceAppWidget.updateAll(context)
                 }
             }
+
             ACTION_APPWIDGET_CREATED -> {
                 if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
                     FailFast.fail { "Missing appWidgetId in intent to add widget in DAO" }
@@ -186,48 +188,49 @@ abstract class BaseGlanceEntityWidgetReceiver<T : WidgetEntity<T>, DAO : WidgetD
         }
     }
 
-    private fun startWatchingForEntitiesChanges(context: Context) {
-        setupWidgetScope()
-        widgetScope.launch {
-            if (!serverManager.isRegistered()) {
-                Timber.tag(widgetClassName).d("No server registered won't watch for entities")
-                return@launch
+    private suspend fun startWatchingForEntitiesChanges(context: Context) {
+        if (!serverManager.isRegistered()) {
+            Timber.tag(widgetClassName).d("No server registered won't watch for entities")
+            return
+        }
+
+        val entitiesPerServer = cleanupOrphansWidgetAndGetEntitiesByServer(context)
+
+        entitiesPerServer.forEach { (appWidgetId, entitiesPerServer) ->
+            widgetJobs[appWidgetId]?.cancel()
+
+            val serverId = entitiesPerServer.serverId
+            val entitiesId = entitiesPerServer.entityIds
+
+            val entityUpdatesFlow = if (serverManager.getServer(serverId) != null) {
+                serverManager.integrationRepository(serverId).getEntityUpdates(entitiesId)
+            } else {
+                null
             }
-
-            val entitiesPerServer = cleanupOrphansWidgetAndGetEntitiesByServer(context)
-
-            entitiesPerServer.forEach { (appWidgetId, entitiesPerServer) ->
-                widgetJobs[appWidgetId]?.cancel()
-
-                val serverId = entitiesPerServer.serverId
-                val entitiesId = entitiesPerServer.entityIds
-
-                val entityUpdatesFlow = if (serverManager.getServer(serverId) != null) {
-                    serverManager.integrationRepository(serverId).getEntityUpdates(entitiesId)
-                } else {
-                    null
-                }
-                if (entityUpdatesFlow != null) {
-                    widgetJobs[appWidgetId] = widgetScope.launch {
-                        Timber.tag(
-                            widgetClassName,
-                        ).d("Watching updates of entities($entitiesId) for widget $appWidgetId")
-                        entityUpdatesFlow.collect {
-                            onEntityUpdate(context, appWidgetId, it)
-                            updateView(context, appWidgetId)
-                        }
+            if (entityUpdatesFlow != null) {
+                widgetJobs[appWidgetId] = widgetScope.launch {
+                    Timber.tag(
+                        widgetClassName,
+                    ).d("Watching updates of entities($entitiesId) for widget $appWidgetId")
+                    entityUpdatesFlow.collect {
+                        onEntityUpdate(context, appWidgetId, it)
+                        updateView(context, appWidgetId)
                     }
-                } else {
-                    Timber.tag(widgetClassName).w("Entity updates is null for widget $appWidgetId not watching")
-                    // Shouldn't do anything since the job should have been canceled already
-                    removeSubscription(appWidgetId)
                 }
+            } else {
+                Timber.tag(widgetClassName).w("Entity updates is null for widget $appWidgetId not watching")
+                // Shouldn't do anything since the job should have been canceled already
+                removeSubscription(appWidgetId)
             }
         }
     }
 
     private fun stopWatchingForEntitiesChanges() {
-        widgetScope.cancel()
+        try {
+            widgetScope.cancel()
+        } catch (e: IllegalStateException) {
+            Timber.w(e, "Calling stop without any job started")
+        }
         widgetJobs.clear()
     }
 

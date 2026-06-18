@@ -4,8 +4,8 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.LocationManager
-import android.net.ConnectivityManager
 import androidx.core.content.ContextCompat
+import io.homeassistant.companion.android.common.data.network.NetworkChangeObserver
 import io.homeassistant.companion.android.common.data.network.NetworkHelper
 import io.homeassistant.companion.android.common.data.network.WifiHelper
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
@@ -14,7 +14,6 @@ import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerDao
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -31,20 +30,18 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.NullAndEmptySource
 import org.junit.jupiter.params.provider.ValueSource
 
-@ExtendWith(ConsoleLogExtension::class)
 class ServerConnectionStateProviderImplTest {
     private val context: Context = mockk(relaxed = true)
     private val wifiHelper: WifiHelper = mockk()
     private val networkHelper: NetworkHelper = mockk()
     private val serverManager: ServerManager = mockk()
     private val serverDao: ServerDao = mockk()
-    private val connectivityManager: ConnectivityManager = mockk(relaxed = true)
+    private val networkChangeObserver: NetworkChangeObserver = mockk(relaxed = true)
     private val locationManager: LocationManager = mockk()
 
     private val serverId = 1
@@ -107,7 +104,7 @@ class ServerConnectionStateProviderImplTest {
             serverDao = serverDao,
             wifiHelper = wifiHelper,
             networkHelper = networkHelper,
-            connectivityManager = connectivityManager,
+            networkChangeObserver = networkChangeObserver,
             serverId = serverId,
         )
     }

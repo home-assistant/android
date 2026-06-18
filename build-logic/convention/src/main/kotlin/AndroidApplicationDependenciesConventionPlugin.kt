@@ -26,6 +26,7 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
             extensions.getByType<ApplicationExtension>().apply {
                 dependencies {
                     "implementation"(project(":common"))
+                    "implementation"(project(":microwakeword"))
 
                     "implementation"(libs.blurView)
                     "implementation"(libs.haze)
@@ -111,6 +112,7 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     "testImplementation"(libs.bundles.androidx.glance.testing)
                     "testImplementation"(libs.navigation.test)
                     "testImplementation"(libs.hilt.android.testing)
+                    "testImplementation"(libs.androidx.work.testing)
 
                     "lintChecks"(libs.compose.lint.checks)
                 }

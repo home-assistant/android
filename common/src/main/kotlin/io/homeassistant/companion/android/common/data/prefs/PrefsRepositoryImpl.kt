@@ -9,6 +9,7 @@ import io.homeassistant.companion.android.di.qualifiers.NamedIntegrationStorage
 import io.homeassistant.companion.android.di.qualifiers.NamedThemesStorage
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -44,6 +45,9 @@ private const val PREF_IMPROV_PERMISSION_DISPLAYED = "improv_permission_displaye
 private const val PREF_GESTURE_ACTION_PREFIX = "gesture_action"
 private const val PREF_CHANGE_LOG_POPUP_ENABLED = "change_log_popup_enabled"
 private const val PREF_SHOW_PRIVACY_HINT = "show_privacy_hint"
+private const val PREF_WAKE_WORD_ENABLED = "wake_word_enabled"
+private const val PREF_SELECTED_WAKE_WORD = "selected_wake_word"
+private const val PREF_ALLOWED_TAGS = "allowed_tags"
 
 /**
  * This class ensure that when we use the local storage in [PrefsRepositoryImpl] the migrations has been made
@@ -138,12 +142,18 @@ internal class PrefsRepositoryImpl @Inject constructor(
         localStorage().putString(PREF_LOCALES, lang)
     }
 
-    override suspend fun getScreenOrientation(): String? {
-        return localStorage().getString(PREF_SCREEN_ORIENTATION)
+    override suspend fun getScreenOrientation(): ScreenOrientation {
+        return ScreenOrientation.fromStorageValue(localStorage().getString(PREF_SCREEN_ORIENTATION))
     }
 
-    override suspend fun saveScreenOrientation(orientation: String?) {
-        localStorage().putString(PREF_SCREEN_ORIENTATION, orientation)
+    override suspend fun setScreenOrientation(orientation: ScreenOrientation) {
+        localStorage().putString(PREF_SCREEN_ORIENTATION, orientation.storageValue)
+    }
+
+    override suspend fun screenOrientationFlow(): Flow<ScreenOrientation> {
+        return localStorage().observeChanges(PREF_SCREEN_ORIENTATION) {
+            getScreenOrientation()
+        }
     }
 
     override suspend fun getControlsAuthRequired(): ControlsAuthRequiredSetting {
@@ -201,12 +211,24 @@ internal class PrefsRepositoryImpl @Inject constructor(
         localStorage().putBoolean(PREF_FULLSCREEN_ENABLED, enabled)
     }
 
+    override suspend fun fullScreenEnabledFlow(): Flow<Boolean> {
+        return localStorage().observeChanges(PREF_FULLSCREEN_ENABLED) {
+            isFullScreenEnabled()
+        }
+    }
+
     override suspend fun isKeepScreenOnEnabled(): Boolean {
         return localStorage().getBoolean(PREF_KEEP_SCREEN_ON_ENABLED)
     }
 
     override suspend fun setKeepScreenOnEnabled(enabled: Boolean) {
         localStorage().putBoolean(PREF_KEEP_SCREEN_ON_ENABLED, enabled)
+    }
+
+    override suspend fun keepScreenOnFlow(): Flow<Boolean> {
+        return localStorage().observeChanges(PREF_KEEP_SCREEN_ON_ENABLED) {
+            isKeepScreenOnEnabled()
+        }
     }
 
     override suspend fun getPageZoomLevel(): Int {
@@ -225,8 +247,22 @@ internal class PrefsRepositoryImpl @Inject constructor(
         localStorage().putBoolean(PREF_PINCH_TO_ZOOM_ENABLED, enabled)
     }
 
+    override suspend fun zoomSettingsFlow(): Flow<ZoomSettings> =
+        localStorage().observeChanges(PREF_PAGE_ZOOM_LEVEL, PREF_PINCH_TO_ZOOM_ENABLED) {
+            ZoomSettings(
+                zoomLevel = getPageZoomLevel(),
+                pinchToZoomEnabled = isPinchToZoomEnabled(),
+            )
+        }
+
     override suspend fun isAutoPlayVideoEnabled(): Boolean {
         return localStorage().getBoolean(PREF_AUTOPLAY_VIDEO)
+    }
+
+    override suspend fun autoPlayVideoFlow(): Flow<Boolean> {
+        return localStorage().observeChanges(PREF_AUTOPLAY_VIDEO) {
+            isAutoPlayVideoEnabled()
+        }
     }
 
     override suspend fun setAutoPlayVideo(enabled: Boolean) {
@@ -362,5 +398,36 @@ internal class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setShowPrivacyHint(showPrivacyHint: Boolean) {
         localStorage().putBoolean(PREF_SHOW_PRIVACY_HINT, showPrivacyHint)
+    }
+
+    override suspend fun isWakeWordEnabled(): Boolean {
+        return localStorage().getBoolean(PREF_WAKE_WORD_ENABLED)
+    }
+
+    override suspend fun setWakeWordEnabled(enabled: Boolean) {
+        localStorage().putBoolean(PREF_WAKE_WORD_ENABLED, enabled)
+    }
+
+    override suspend fun getSelectedWakeWord(): String? {
+        return localStorage().getString(PREF_SELECTED_WAKE_WORD)
+    }
+
+    override suspend fun setSelectedWakeWord(wakeWord: String) {
+        localStorage().putString(PREF_SELECTED_WAKE_WORD, wakeWord)
+    }
+
+    override suspend fun addAllowedTag(tag: String) {
+        val approved = getAllowedTags().toMutableSet()
+        if (approved.add(tag)) {
+            localStorage().putStringSet(PREF_ALLOWED_TAGS, approved)
+        }
+    }
+
+    override suspend fun getAllowedTags(): Set<String> {
+        return localStorage().getStringSet(PREF_ALLOWED_TAGS) ?: emptySet()
+    }
+
+    override suspend fun clearAllowedTags() {
+        localStorage().remove(PREF_ALLOWED_TAGS)
     }
 }

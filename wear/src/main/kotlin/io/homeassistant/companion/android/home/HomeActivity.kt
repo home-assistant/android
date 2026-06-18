@@ -16,6 +16,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.wear.protolayout.ActionBuilders
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_CAMERA_TILE
 import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_SHORTCUT_TILE
 import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_TEMPLATE_TILE
@@ -155,7 +156,7 @@ class HomeActivity :
                     }
                 }
                 launch { mainViewModel.entityRegistryUpdates() }
-                if (!mainViewModel.isFavoritesOnly) {
+                if (!mainViewModel.mainViewUiState.value.isFavoritesOnly) {
                     launch { mainViewModel.areaUpdates() }
                     launch { mainViewModel.deviceUpdates() }
                 }
@@ -170,7 +171,7 @@ class HomeActivity :
         mainViewModel.initAllSensors()
 
         lifecycleScope.launch {
-            if (mainViewModel.loadingState == MainViewModel.LoadingState.READY) {
+            if (mainViewModel.mainViewUiState.value.loadingState == MainViewModel.LoadingState.READY) {
                 try {
                     mainViewModel.updateUI()
                 } catch (e: CancellationException) {
@@ -182,7 +183,7 @@ class HomeActivity :
         }
         if (
             intent.getBooleanExtra(EXTRA_FROM_ONBOARDING, false) &&
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) &&
             !NotificationManagerCompat.from(this@HomeActivity).areNotificationsEnabled()
         ) {
             permissionRequest.launch(Manifest.permission.POST_NOTIFICATIONS)

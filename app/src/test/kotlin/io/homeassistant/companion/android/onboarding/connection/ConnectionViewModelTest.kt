@@ -1,17 +1,12 @@
 package io.homeassistant.companion.android.onboarding.connection
 
 import android.net.Uri
-import android.net.http.SslError
+import android.webkit.ValueCallback
+import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
-import android.webkit.WebResourceResponse
 import android.webkit.WebView
-import android.webkit.WebViewClient.ERROR_AUTHENTICATION
-import android.webkit.WebViewClient.ERROR_FAILED_SSL_HANDSHAKE
 import android.webkit.WebViewClient.ERROR_HOST_LOOKUP
-import android.webkit.WebViewClient.ERROR_PROXY_AUTHENTICATION
-import android.webkit.WebViewClient.ERROR_UNSUPPORTED_AUTH_SCHEME
-import androidx.annotation.StringRes
 import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.turbineScope
 import io.homeassistant.companion.android.common.R as commonR
@@ -19,8 +14,11 @@ import io.homeassistant.companion.android.common.data.authentication.impl.Authen
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
+import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
+import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
+import io.homeassistant.companion.android.util.HAWebViewClient
+import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -30,6 +28,7 @@ import java.net.URL
 import kotlin.reflect.KClass
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
@@ -45,12 +44,40 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
-@ExtendWith(MainDispatcherJUnit5Extension::class, ConsoleLogExtension::class)
+/**
+ * Tests for [ConnectionViewModel].
+ *
+ * Note: WebView error handling (SSL errors, HTTP errors, WebResource errors) is tested
+ * in [io.homeassistant.companion.android.util.HAWebViewClientTest] to avoid duplication.
+ */
+@ExtendWith(MainDispatcherJUnit5Extension::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class ConnectionViewModelTest {
 
-    private val keyChainRepository: KeyChainRepository = mockk()
+    private val keyChainRepository: KeyChainRepository = mockk(relaxed = true)
+    private val webViewClientFactory: HAWebViewClientFactory = mockk {
+        every {
+            create(
+                currentUrlFlow = any<StateFlow<String?>>(),
+                onFrontendError = any(),
+                onCrash = any(),
+                onUrlIntercepted = any(),
+                onPageFinished = any(),
+            )
+        } answers {
+            HAWebViewClient(
+                keyChainRepository = keyChainRepository,
+                currentUrlFlow = firstArg(),
+                onFrontendError = secondArg(),
+                onCrash = thirdArg(),
+                onUrlIntercepted = arg(3),
+                onPageFinished = arg(4),
+                onReceivedHttpAuthRequest = arg(5),
+            )
+        }
+    }
     private val connectivityCheckRepository: ConnectivityCheckRepository = mockk()
+    private val fileChooserManager = FileChooserManager()
 
     @BeforeEach
     fun setup() {
@@ -61,7 +88,7 @@ class ConnectionViewModelTest {
     @ParameterizedTest
     @ValueSource(strings = ["http://homeassistant.local:8123", "https://cloud.ui.nabu.casa"])
     fun `Given a valid http url when buildAuthUrl then urlFlow emits correct auth url and isLoading is false`(baseUrl: String) = runTest {
-        val viewModel = ConnectionViewModel(baseUrl, keyChainRepository, connectivityCheckRepository)
+        val viewModel = ConnectionViewModel(baseUrl, webViewClientFactory, connectivityCheckRepository, fileChooserManager)
 
         turbineScope {
             val urlFlow = viewModel.urlFlow.testIn(backgroundScope)
@@ -92,7 +119,7 @@ class ConnectionViewModelTest {
     @ValueSource(strings = ["http://homeassistant.local:8123", "https://cloud.ui.nabu.casa"])
     fun `Given a valid http url with suffix when buildAuthUrl then urlFlow emits correct auth url with path stripped`(baseUrl: String) = runTest {
         val suffix = "/hello?query=param&isHA=true#segment"
-        val viewModel = ConnectionViewModel("$baseUrl$suffix", keyChainRepository, connectivityCheckRepository)
+        val viewModel = ConnectionViewModel("$baseUrl$suffix", webViewClientFactory, connectivityCheckRepository, fileChooserManager)
 
         turbineScope {
             val urlFlow = viewModel.urlFlow.testIn(backgroundScope)
@@ -109,7 +136,7 @@ class ConnectionViewModelTest {
     @Test
     fun `Given a malformed url when buildAuthUrl then errorFlow emits malformed url error`() = runTest {
         val malformedUrl = "not_a_url"
-        val viewModel = ConnectionViewModel(malformedUrl, keyChainRepository, connectivityCheckRepository)
+        val viewModel = ConnectionViewModel(malformedUrl, webViewClientFactory, connectivityCheckRepository, fileChooserManager)
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -121,7 +148,11 @@ class ConnectionViewModelTest {
             advanceUntilIdle()
             assertNull(urlFlow.awaitItem())
 
-            errorFlow.awaitConnectionError<ConnectionError.UnreachableError>(commonR.string.connection_screen_malformed_url, "Expected URL scheme 'http' or 'https' but no scheme was found for not_a_...", IllegalArgumentException::class)
+            errorFlow.awaitFrontendError<FrontendConnectionError.UnreachableError>(
+                commonR.string.connection_screen_malformed_url,
+                "Expected URL scheme 'http' or 'https' but no scheme was found for not_a_...",
+                IllegalArgumentException::class,
+            )
 
             urlFlow.expectNoEvents()
             navigationEventsFlow.expectNoEvents()
@@ -134,7 +165,7 @@ class ConnectionViewModelTest {
         val authCode = "test_auth_code"
         val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
 
-        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository, connectivityCheckRepository)
+        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository, fileChooserManager)
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -160,10 +191,246 @@ class ConnectionViewModelTest {
     }
 
     @Test
+    fun `Given same-host redirect to a new port when auth completes then Authenticated url uses the new origin`() = runTest {
+        val authCode = "test_auth_code"
+        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
+
+        val viewModel = ConnectionViewModel(
+            "http://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserManager,
+        )
+
+        turbineScope {
+            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
+
+            // Landing page redirects the WebView to the core on a new port, same host.
+            // Port 80 is http's default, so the normalized stored URL drops it.
+            viewModel.webViewClient.onPageFinished(null, "http://homeassistant.local:80/onboarding")
+
+            val result = viewModel.webViewClient.shouldOverrideUrlLoading(null, stringUri)
+
+            assertTrue(result)
+            val event = navigationEventsFlow.awaitItem()
+            assertTrue(event is ConnectionNavigationEvent.Authenticated)
+            assertEquals("http://homeassistant.local", (event as ConnectionNavigationEvent.Authenticated).url)
+        }
+    }
+
+    @Test
+    fun `Given same-host IPv6 redirect to a new port when auth completes then Authenticated url keeps the host bracketed`() = runTest {
+        val authCode = "test_auth_code"
+        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
+
+        val viewModel = ConnectionViewModel(
+            "http://[::1]:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserManager,
+        )
+
+        turbineScope {
+            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
+
+            // Same IPv6 host, new port: the produced origin must keep the brackets to stay a valid URL
+            viewModel.webViewClient.onPageFinished(null, "http://[::1]:80/onboarding")
+
+            val result = viewModel.webViewClient.shouldOverrideUrlLoading(null, stringUri)
+
+            assertTrue(result)
+            val event = navigationEventsFlow.awaitItem()
+            assertEquals("http://[::1]", (event as ConnectionNavigationEvent.Authenticated).url)
+        }
+    }
+
+    @Test
+    fun `Given a same-host redirect that downgrades https to http when auth completes then Authenticated url keeps the original https url`() = runTest {
+        val authCode = "test_auth_code"
+        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
+
+        val viewModel = ConnectionViewModel(
+            "https://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserManager,
+        )
+
+        turbineScope {
+            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
+
+            // A redirect that downgrades https -> http on the same host must be ignored
+            viewModel.webViewClient.onPageFinished(null, "http://homeassistant.local:80/onboarding")
+
+            val result = viewModel.webViewClient.shouldOverrideUrlLoading(null, stringUri)
+
+            assertTrue(result)
+            val event = navigationEventsFlow.awaitItem()
+            assertEquals("https://homeassistant.local:8123", (event as ConnectionNavigationEvent.Authenticated).url)
+        }
+    }
+
+    @Test
+    fun `Given a same-host redirect that upgrades http to https when auth completes then Authenticated url uses the https origin`() = runTest {
+        val authCode = "test_auth_code"
+        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
+
+        val viewModel = ConnectionViewModel(
+            "http://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserManager,
+        )
+
+        turbineScope {
+            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
+
+            // An upgrade http -> https on the same host is allowed and adopted
+            viewModel.webViewClient.onPageFinished(null, "https://homeassistant.local/onboarding")
+
+            val result = viewModel.webViewClient.shouldOverrideUrlLoading(null, stringUri)
+
+            assertTrue(result)
+            val event = navigationEventsFlow.awaitItem()
+            assertEquals("https://homeassistant.local", (event as ConnectionNavigationEvent.Authenticated).url)
+        }
+    }
+
+    @Test
+    fun `Given redirect to a different host when auth completes then Authenticated url stays the initial url`() = runTest {
+        val authCode = "test_auth_code"
+        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
+
+        val viewModel = ConnectionViewModel(
+            "http://homeassistant.local:8123/lovelace?foo=bar#baz",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserManager,
+        )
+
+        turbineScope {
+            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
+
+            // A redirect to a different host must NOT change the stored URL
+            viewModel.webViewClient.onPageFinished(null, "http://other.local:80/onboarding")
+
+            val result = viewModel.webViewClient.shouldOverrideUrlLoading(null, stringUri)
+
+            assertTrue(result)
+            val event = navigationEventsFlow.awaitItem()
+            assertEquals("http://homeassistant.local:8123", (event as ConnectionNavigationEvent.Authenticated).url)
+        }
+    }
+
+    @Test
+    fun `Given no redirect when auth completes then Authenticated url stays the initial url`() = runTest {
+        val authCode = "test_auth_code"
+        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
+
+        val viewModel = ConnectionViewModel(
+            "http://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserManager,
+        )
+
+        turbineScope {
+            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
+
+            val result = viewModel.webViewClient.shouldOverrideUrlLoading(null, stringUri)
+
+            assertTrue(result)
+            val event = navigationEventsFlow.awaitItem()
+            assertEquals("http://homeassistant.local:8123", (event as ConnectionNavigationEvent.Authenticated).url)
+        }
+    }
+
+    @Test
+    fun `Given an initial url with a path and query when auth completes then Authenticated url is the bare origin`() = runTest {
+        val authCode = "test_auth_code"
+        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
+
+        val viewModel = ConnectionViewModel(
+            "http://homeassistant.local:8123/lovelace?foo=bar#baz",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserManager,
+        )
+
+        turbineScope {
+            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
+
+            val result = viewModel.webViewClient.shouldOverrideUrlLoading(null, stringUri)
+
+            assertTrue(result)
+            val event = navigationEventsFlow.awaitItem()
+            // The stored server URL is the bare origin, not the onboarding path/query
+            assertEquals("http://homeassistant.local:8123", (event as ConnectionNavigationEvent.Authenticated).url)
+        }
+    }
+
+    @Test
+    fun `Given multiple same-host redirects when auth completes then Authenticated url uses the last origin`() = runTest {
+        val authCode = "test_auth_code"
+        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
+
+        val viewModel = ConnectionViewModel(
+            "http://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserManager,
+        )
+
+        turbineScope {
+            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
+
+            // Several hops on the same host; the last one wins. The final port is non-default,
+            // so it is kept explicitly in the stored URL.
+            viewModel.webViewClient.onPageFinished(null, "http://homeassistant.local:8123/")
+            viewModel.webViewClient.onPageFinished(null, "http://homeassistant.local:80/onboarding")
+            viewModel.webViewClient.onPageFinished(null, "http://homeassistant.local:8080/onboarding")
+
+            val result = viewModel.webViewClient.shouldOverrideUrlLoading(null, stringUri)
+
+            assertTrue(result)
+            val event = navigationEventsFlow.awaitItem()
+            assertEquals("http://homeassistant.local:8080", (event as ConnectionNavigationEvent.Authenticated).url)
+        }
+    }
+
+    @Test
     fun `Given auth callback uri without code when shouldRedirect then no event and returns false`() = runTest {
         val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = null)
 
-        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository, connectivityCheckRepository)
+        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository, fileChooserManager)
+
+        turbineScope {
+            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
+            val errorFlow = viewModel.errorFlow.testIn(backgroundScope)
+
+            assertNull(errorFlow.awaitItem())
+
+            val result = viewModel.webViewClient.shouldOverrideUrlLoading(
+                null,
+                stringUri,
+            )
+
+            assertFalse(result)
+            navigationEventsFlow.expectNoEvents()
+            errorFlow.expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given opaque auth callback uri when shouldRedirect then no event and returns false`() = runTest {
+        val stringUri = mockAuthCodeUri(
+            scheme = "homeassistant",
+            host = "auth-callback",
+            authCode = "test_auth_code",
+            isOpaque = true,
+        )
+
+        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository, fileChooserManager)
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -184,7 +451,7 @@ class ConnectionViewModelTest {
 
     @Test
     fun `Given unmatching uri and webview not null when shouldRedirect is invoked then open in external browser and return true`() = runTest {
-        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository, connectivityCheckRepository)
+        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository, fileChooserManager)
 
         // Used to parse the rawUrl given in the constructor of ConnectionViewModel
         mockUriParse()
@@ -212,199 +479,11 @@ class ConnectionViewModelTest {
         }
     }
 
-    @Test
-    fun `Given SSL errors when onReceivedSslError is invoked then errorFlow emits AuthenticationError with message`() = runTest {
-        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", keyChainRepository, connectivityCheckRepository)
-
-        turbineScope {
-            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
-            val errorFlow = viewModel.errorFlow.testIn(backgroundScope)
-
-            assertNull(errorFlow.awaitItem())
-
-            suspend fun testError(primaryError: Int?, @StringRes messageRes: Int) {
-                val details = "SSL Error: $primaryError".takeIf { primaryError != null }.toString()
-                viewModel.webViewClient.onReceivedSslError(
-                    null,
-                    null,
-                    primaryError?.let {
-                        mockk<SslError> {
-                            every { this@mockk.primaryError } returns primaryError
-                            every { this@mockk.toString() } returns details
-                        }
-                    },
-                )
-                errorFlow.awaitConnectionError<ConnectionError.AuthenticationError>(messageRes, details, SslError::class)
-            }
-
-            testError(SslError.SSL_DATE_INVALID, commonR.string.webview_error_SSL_DATE_INVALID)
-            testError(SslError.SSL_EXPIRED, commonR.string.webview_error_SSL_EXPIRED)
-            testError(SslError.SSL_IDMISMATCH, commonR.string.webview_error_SSL_IDMISMATCH)
-            testError(SslError.SSL_INVALID, commonR.string.webview_error_SSL_INVALID)
-            testError(SslError.SSL_NOTYETVALID, commonR.string.webview_error_SSL_NOTYETVALID)
-            testError(SslError.SSL_UNTRUSTED, commonR.string.webview_error_SSL_UNTRUSTED)
-            testError(null, commonR.string.error_ssl)
-
-            navigationEventsFlow.expectNoEvents()
-        }
-    }
-
-    @Test
-    fun `Given HTTP errors when onReceivedHttpError is invoked then errorFlow emits appropriate error`() = runTest {
-        val rawUrl = "http://homeassistant.local:8123"
-        val viewModel = ConnectionViewModel(rawUrl, keyChainRepository, connectivityCheckRepository)
-        val webView = mockWebView()
-
-        turbineScope {
-            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
-            val errorFlow = viewModel.errorFlow.testIn(backgroundScope)
-            val urlFlow = viewModel.urlFlow.testIn(backgroundScope)
-
-            assertNull(errorFlow.awaitItem())
-
-            assertEquals(null, urlFlow.awaitItem())
-            assertNotNull(urlFlow.awaitItem())
-
-            val request = mockk<WebResourceRequest> {
-                every { url } returns mockk<Uri> {
-                    every { this@mockk.toString() } returns "http://homeassistant.local:8123/auth/authorize?response_type=code&client_id=${AuthenticationService.CLIENT_ID}&redirect_uri=homeassistant://auth-callback"
-                }
-            }
-
-            val webViewClient = viewModel.webViewClient
-
-            // Expired cert
-            webViewClient.isTLSClientAuthNeeded = true
-            webViewClient.isCertificateChainValid = false
-            webViewClient.onReceivedHttpError(webView, request, null)
-            errorFlow.awaitConnectionError<ConnectionError.AuthenticationError>(commonR.string.tls_cert_expired_message, errorDetails(null, "No description"), WebResourceResponse::class)
-
-            // Cert not found
-            webViewClient.isTLSClientAuthNeeded = true
-            webViewClient.isCertificateChainValid = true
-            webViewClient.onReceivedHttpError(
-                webView,
-                request,
-                mockk<WebResourceResponse> {
-                    every { statusCode } returns 400
-                    every { reasonPhrase } returns "reason"
-                },
-            )
-            errorFlow.awaitConnectionError<ConnectionError.AuthenticationError>(commonR.string.tls_cert_not_found_message, errorDetails(400, "reason"), WebResourceResponse::class)
-
-            // Generic error
-            webViewClient.isTLSClientAuthNeeded = false
-            webViewClient.isCertificateChainValid = false
-            webViewClient.onReceivedHttpError(
-                webView,
-                request,
-                mockk<WebResourceResponse> {
-                    every { statusCode } returns 418
-                    every { reasonPhrase } returns "I'm a teapot"
-                },
-            )
-            errorFlow.awaitConnectionError<ConnectionError.UnknownError>(commonR.string.connection_error_unknown_error, errorDetails(418, "I'm a teapot"), WebResourceResponse::class)
-
-            // Generic error without reason
-            webViewClient.isTLSClientAuthNeeded = false
-            webViewClient.isCertificateChainValid = false
-            webViewClient.onReceivedHttpError(
-                webView,
-                request,
-                mockk<WebResourceResponse> {
-                    every { statusCode } returns 418
-                    every { reasonPhrase } returns ""
-                },
-            )
-            errorFlow.awaitConnectionError<ConnectionError.UnknownError>(commonR.string.connection_error_unknown_error, errorDetails(418, "No description"), WebResourceResponse::class)
-            navigationEventsFlow.expectNoEvents()
-        }
-    }
-
-    @Test
-    fun `Given received error when onReceivedError is invoked then errorFlow emits appropriate error`() = runTest {
-        val rawUrl = "http://homeassistant.local:8123"
-        val viewModel = ConnectionViewModel(rawUrl, keyChainRepository, connectivityCheckRepository)
-
-        val webView = mockWebView()
-
-        turbineScope {
-            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
-            val urlFlow = viewModel.urlFlow.testIn(backgroundScope)
-            val errorFlow = viewModel.errorFlow.testIn(backgroundScope)
-
-            assertNull(errorFlow.awaitItem())
-            assertEquals(null, urlFlow.awaitItem())
-            assertNotNull(urlFlow.awaitItem())
-
-            val request = mockk<WebResourceRequest> {
-                every { url } returns mockk<Uri> {
-                    every { this@mockk.toString() } returns "http://homeassistant.local:8123/auth/authorize?response_type=code&client_id=https://home-assistant.io/android&redirect_uri=homeassistant://auth-callback"
-                }
-            }
-
-            suspend fun testAuthError(errorCode: Int, @StringRes messageRes: Int) {
-                val description = "Error description"
-                viewModel.webViewClient.onReceivedError(
-                    webView,
-                    request,
-                    mockk<WebResourceError> {
-                        every { this@mockk.errorCode } returns errorCode
-                        every { this@mockk.description } returns description
-                    },
-                )
-                errorFlow.awaitConnectionError<ConnectionError.AuthenticationError>(messageRes, errorDetails(errorCode, description), WebResourceError::class)
-            }
-
-            suspend fun testUnreachableError(errorCode: Int, @StringRes messageRes: Int) {
-                val description = "Error description"
-                viewModel.webViewClient.onReceivedError(
-                    webView,
-                    request,
-                    mockk<WebResourceError> {
-                        every { this@mockk.errorCode } returns errorCode
-                        every { this@mockk.description } returns description
-                    },
-                )
-                errorFlow.awaitConnectionError<ConnectionError.UnreachableError>(messageRes, errorDetails(errorCode, description), WebResourceError::class)
-            }
-
-            testAuthError(ERROR_FAILED_SSL_HANDSHAKE, commonR.string.webview_error_FAILED_SSL_HANDSHAKE)
-            testAuthError(ERROR_AUTHENTICATION, commonR.string.webview_error_AUTHENTICATION)
-            testAuthError(ERROR_PROXY_AUTHENTICATION, commonR.string.webview_error_PROXY_AUTHENTICATION)
-            testAuthError(ERROR_UNSUPPORTED_AUTH_SCHEME, commonR.string.webview_error_AUTH_SCHEME)
-            testUnreachableError(ERROR_HOST_LOOKUP, commonR.string.webview_error_HOST_LOOKUP)
-
-            // Generic error with description
-            viewModel.webViewClient.onReceivedError(
-                webView,
-                request,
-                mockk<WebResourceError> {
-                    every { this@mockk.errorCode } returns -1
-                    every { this@mockk.description } returns "description"
-                },
-            )
-            errorFlow.awaitConnectionError<ConnectionError.UnknownError>(commonR.string.connection_error_unknown_error, errorDetails(-1, "description"), WebResourceError::class)
-
-            // Generic error without description
-            viewModel.webViewClient.onReceivedError(
-                webView,
-                request,
-                mockk<WebResourceError> {
-                    every { this@mockk.errorCode } returns -1
-                    every { this@mockk.description } returns ""
-                },
-            )
-            errorFlow.awaitConnectionError<ConnectionError.UnknownError>(commonR.string.connection_error_unknown_error, errorDetails(-1, "No description"), WebResourceError::class)
-            navigationEventsFlow.expectNoEvents()
-        }
-    }
-
-    private fun errorDetails(code: Int?, description: String?): String {
-        return "Status Code: ${code}\nDescription: $description"
-    }
-
-    private suspend inline fun <reified T : ConnectionError> ReceiveTurbine<ConnectionError?>.awaitConnectionError(messageId: Int, errorDetails: String?, errorClass: KClass<*>) {
+    private suspend inline fun <reified T : FrontendConnectionError> ReceiveTurbine<FrontendConnectionError?>.awaitFrontendError(
+        messageId: Int,
+        errorDetails: String?,
+        errorClass: KClass<*>,
+    ) {
         val error = awaitItem()
         assertNotNull(error)
         assertTrue(error is T)
@@ -413,7 +492,7 @@ class ConnectionViewModelTest {
         assertEquals(errorClass.toString(), error.rawErrorType)
     }
 
-    private fun mockAuthCodeUri(scheme: String, host: String, authCode: String?): String {
+    private fun mockAuthCodeUri(scheme: String, host: String, authCode: String?, isOpaque: Boolean = false): String {
         val stringUri = "$scheme://$host${authCode?.let { "?code=$authCode" } ?: ""}"
         every { Uri.parse(stringUri) } answers {
             val uriString = firstArg<String>()
@@ -421,6 +500,7 @@ class ConnectionViewModelTest {
                 every { this@mockk.toString() } returns uriString
                 every { this@mockk.scheme } returns scheme
                 every { this@mockk.host } returns host
+                every { this@mockk.isOpaque } returns isOpaque
                 every { getQueryParameter("code") } returns authCode
             }
         }
@@ -444,7 +524,7 @@ class ConnectionViewModelTest {
                 val code = slot<String>()
                 val detail = slot<String>()
                 every { getString(any(), capture(code), capture(detail)) } answers {
-                    errorDetails(code.captured.toIntOrNull(), detail.captured)
+                    "Status Code: ${code.captured}\nDescription: ${detail.captured}"
                 }
                 every { getString(commonR.string.no_description) } returns "No description"
             }
@@ -458,7 +538,7 @@ class ConnectionViewModelTest {
         val connectivityFlow = MutableSharedFlow<ConnectivityCheckState>()
         every { connectivityCheckRepository.runChecks(rawUrl) } returns connectivityFlow
 
-        val viewModel = ConnectionViewModel(rawUrl, keyChainRepository, connectivityCheckRepository)
+        val viewModel = ConnectionViewModel(rawUrl, webViewClientFactory, connectivityCheckRepository, fileChooserManager)
         val webView = mockWebView()
 
         advanceUntilIdle()
@@ -484,7 +564,7 @@ class ConnectionViewModelTest {
         advanceUntilIdle()
 
         // Then
-        assertTrue(viewModel.errorFlow.value is ConnectionError.UnreachableError)
+        assertTrue(viewModel.errorFlow.value is FrontendConnectionError.UnreachableError)
         verify(exactly = 1) { connectivityCheckRepository.runChecks(rawUrl) }
         assertEquals(1, connectivityFlow.subscriptionCount.value)
     }
@@ -499,7 +579,7 @@ class ConnectionViewModelTest {
 
         every { connectivityCheckRepository.runChecks(rawUrl) } returnsMany listOf(first, second)
 
-        val viewModel = ConnectionViewModel(rawUrl, keyChainRepository, connectivityCheckRepository)
+        val viewModel = ConnectionViewModel(rawUrl, webViewClientFactory, connectivityCheckRepository, fileChooserManager)
 
         // When: first click on "Run checks"
         viewModel.runConnectivityChecks()
@@ -519,5 +599,112 @@ class ConnectionViewModelTest {
 
         // Then: repository method was called for each click
         verify(exactly = 2) { connectivityCheckRepository.runChecks(rawUrl) }
+    }
+
+    @Test
+    fun `Given a working state when onWebViewCreationFailed is called then errorFlow emits WebViewCreationError and connectivity checks run`() = runTest {
+        // Given
+        val rawUrl = "http://homeassistant.local:8123"
+        val connectivityFlow = MutableSharedFlow<ConnectivityCheckState>()
+        every { connectivityCheckRepository.runChecks(rawUrl) } returns connectivityFlow
+
+        val viewModel = ConnectionViewModel(rawUrl, webViewClientFactory, connectivityCheckRepository, fileChooserManager)
+        advanceUntilIdle()
+
+        assertNull(viewModel.errorFlow.value)
+
+        // When
+        val exception = UnsatisfiedLinkError("dlopen failed: libwebviewchromium.so is 32-bit")
+        viewModel.onWebViewCreationFailed(exception)
+        advanceUntilIdle()
+
+        // Then
+        val error = viewModel.errorFlow.value
+        assertNotNull(error)
+        assertTrue(error is FrontendConnectionError.UnrecoverableError.WebViewCreationError)
+        assertEquals(commonR.string.webview_creation_failed, error.message)
+        assertEquals("dlopen failed: libwebviewchromium.so is 32-bit", error.errorDetails)
+        assertEquals("class java.lang.UnsatisfiedLinkError", error.rawErrorType)
+        verify(exactly = 1) { connectivityCheckRepository.runChecks(rawUrl) }
+    }
+
+    @Test
+    fun `Given webChromeClient when onShowFileChooser is invoked then pendingFileChooser exposes the params`() = runTest {
+        val viewModel = ConnectionViewModel(
+            "http://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserManager,
+        )
+
+        val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
+        val fileChooserParams = mockk<WebChromeClient.FileChooserParams>(relaxed = true)
+
+        val handled = viewModel.webChromeClient.onShowFileChooser(
+            mockk(relaxed = true),
+            filePathCallback,
+            fileChooserParams,
+        )
+        advanceUntilIdle()
+
+        assertTrue(handled)
+        val pending = viewModel.pendingFileChooser.value
+        assertNotNull(pending)
+        assertTrue(pending.fileChooserParams === fileChooserParams)
+    }
+
+    @Test
+    fun `Given pending file chooser when result delivered then filePathCallback receives uris and slot clears`() = runTest {
+        val viewModel = ConnectionViewModel(
+            "http://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserManager,
+        )
+
+        val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
+
+        viewModel.webChromeClient.onShowFileChooser(
+            mockk(relaxed = true),
+            filePathCallback,
+            mockk(relaxed = true),
+        )
+        advanceUntilIdle()
+
+        val pending = viewModel.pendingFileChooser.value
+        assertNotNull(pending)
+        val uris = arrayOf(mockk<Uri>())
+        pending.onResult(uris)
+        advanceUntilIdle()
+
+        verify { filePathCallback.onReceiveValue(uris) }
+        assertNull(viewModel.pendingFileChooser.value)
+    }
+
+    @Test
+    fun `Given pending file chooser when user cancels then filePathCallback receives null and slot clears`() = runTest {
+        val viewModel = ConnectionViewModel(
+            "http://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserManager,
+        )
+
+        val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
+
+        viewModel.webChromeClient.onShowFileChooser(
+            mockk(relaxed = true),
+            filePathCallback,
+            mockk(relaxed = true),
+        )
+        advanceUntilIdle()
+
+        val pending = viewModel.pendingFileChooser.value
+        assertNotNull(pending)
+        pending.onResult(null)
+        advanceUntilIdle()
+
+        verify { filePathCallback.onReceiveValue(null) }
+        assertNull(viewModel.pendingFileChooser.value)
     }
 }

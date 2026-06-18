@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding.connection
 
+import android.webkit.WebChromeClient
 import android.webkit.WebViewClient
 import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.Image
@@ -26,6 +27,8 @@ import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.frontend.filechooser.FileChooserEffect
+import io.homeassistant.companion.android.frontend.filechooser.FileChooserRequest
 import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.compose.webview.HAWebView
@@ -44,6 +47,7 @@ internal fun ConnectionScreen(onBackClick: () -> Unit, viewModel: ConnectionView
     val url by viewModel.urlFlow.collectAsState()
     val isLoading by viewModel.isLoadingFlow.collectAsState()
     val error by viewModel.errorFlow.collectAsState()
+    val pendingFileChooser by viewModel.pendingFileChooser.collectAsState()
     val isError = error != null
 
     ConnectionScreen(
@@ -51,7 +55,10 @@ internal fun ConnectionScreen(onBackClick: () -> Unit, viewModel: ConnectionView
         isLoading = isLoading,
         isError = isError,
         webViewClient = viewModel.webViewClient,
+        webChromeClient = viewModel.webChromeClient,
+        pendingFileChooser = pendingFileChooser,
         onBackClick = onBackClick,
+        onWebViewCreationFailed = viewModel::onWebViewCreationFailed,
         modifier = modifier,
     )
 }
@@ -62,9 +69,14 @@ internal fun ConnectionScreen(
     isLoading: Boolean,
     isError: Boolean,
     webViewClient: WebViewClient,
+    webChromeClient: WebChromeClient,
     onBackClick: () -> Unit,
+    onWebViewCreationFailed: (Throwable) -> Unit,
     modifier: Modifier = Modifier,
+    pendingFileChooser: FileChooserRequest? = null,
 ) {
+    FileChooserEffect(pendingRequest = pendingFileChooser)
+
     Box(modifier = modifier.testTag(CONNECTION_SCREEN_TAG)) {
         Spacer(
             modifier = Modifier
@@ -82,9 +94,11 @@ internal fun ConnectionScreen(
                         .windowInsetsPadding(WindowInsets.safeDrawing),
                     configure = {
                         this.webViewClient = webViewClient
+                        this.webChromeClient = webChromeClient
                         loadUrl(url)
                     },
                     onBackPressed = onBackClick,
+                    onWebViewCreationFailed = onWebViewCreationFailed,
                 )
             } ?: Timber.i("ConnectionScreen: url is null")
         } else {
@@ -124,7 +138,9 @@ private fun ConnectionScreenPreview() {
             isLoading = false,
             isError = false,
             webViewClient = WebViewClient(),
+            webChromeClient = WebChromeClient(),
             onBackClick = {},
+            onWebViewCreationFailed = {},
             modifier = Modifier.fillMaxSize(),
         )
     }

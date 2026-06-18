@@ -12,9 +12,9 @@ import timber.log.Timber
 abstract class BaseVehicleScreen(carContext: CarContext) : Screen(carContext) {
     private var car: Car? = null
     private var carRestrictionManager: CarUxRestrictionsManager? = null
-    protected val isDrivingOptimized
+    protected val isDrivingOptimized: Boolean
         get() = try {
-            (car?.getCarManager(Car.CAR_UX_RESTRICTION_SERVICE) as? CarUxRestrictionsManager)
+            carRestrictionManager
                 ?.currentCarUxRestrictions
                 ?.isRequiresDistractionOptimization
                 ?: false
@@ -32,6 +32,7 @@ abstract class BaseVehicleScreen(carContext: CarContext) : Screen(carContext) {
 
             override fun onPause(owner: LifecycleOwner) {
                 carRestrictionManager?.unregisterListener()
+                carRestrictionManager = null
                 car?.disconnect()
                 car = null
             }
@@ -51,6 +52,7 @@ abstract class BaseVehicleScreen(carContext: CarContext) : Screen(carContext) {
                     onDrivingOptimizedChanged(restrictions.isRequiresDistractionOptimization)
                 }
             carRestrictionManager?.registerListener(listener)
+            invalidate()
         }
     }
 }

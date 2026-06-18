@@ -40,6 +40,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.IconDialogCompat
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
@@ -63,7 +64,7 @@ class ManageShortcutsViewModel @Inject constructor(
     val app = application
 
     val canPinShortcuts =
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && ShortcutManagerCompat.isRequestPinShortcutSupported(app)
+        SdkVersion.isAtLeast(Build.VERSION_CODES.O) && ShortcutManagerCompat.isRequestPinShortcutSupported(app)
     var pinnedShortcuts = ShortcutManagerCompat.getShortcuts(app, ShortcutManagerCompat.FLAG_MATCH_PINNED)
         .filter { !it.id.startsWith(AssistShortcutActivity.SHORTCUT_PREFIX) }
         .toMutableList()
@@ -169,7 +170,7 @@ class ManageShortcutsViewModel @Inject constructor(
             updateDynamicShortcuts()
             Timber.d("We have ${dynamicShortcuts.size} dynamic shortcuts")
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
                 Timber.d("Can we pin shortcuts: ${ShortcutManagerCompat.isRequestPinShortcutSupported(app)}")
                 Timber.d("We have ${pinnedShortcuts.size} pinned shortcuts")
             }
@@ -228,7 +229,7 @@ class ManageShortcutsViewModel @Inject constructor(
 
             if (isNewPinned) {
                 Timber.d("Requesting to pin shortcut: $shortcutId")
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
                     ShortcutManagerCompat.requestPinShortcut(app, shortcut, null)
                 }
             }

@@ -1,15 +1,32 @@
 package io.homeassistant.companion.android.frontend.navigation
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.annotation.VisibleForTesting
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalResources
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.activity
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import io.homeassistant.companion.android.WIPFeature
+import io.homeassistant.companion.android.assist.AssistActivity
 import io.homeassistant.companion.android.common.data.servers.ServerManager.Companion.SERVER_ID_ACTIVE
+import io.homeassistant.companion.android.frontend.FrontendScreen
+import io.homeassistant.companion.android.frontend.FrontendViewModel
+import io.homeassistant.companion.android.frontend.url.launchAppOrStore
+import io.homeassistant.companion.android.frontend.url.launchIntentUri
 import io.homeassistant.companion.android.launch.HAStartDestinationRoute
+import io.homeassistant.companion.android.launch.PipReadiness
+import io.homeassistant.companion.android.nfc.WriteNfcTag
+import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.getActivity
 import io.homeassistant.companion.android.webview.WebViewActivity
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -35,26 +52,164 @@ internal fun NavController.navigateToFrontend(
 /**
  * Registers the frontend/webview destination for the Home Assistant app.
  *
- * The actual navigation to the frontend is done by navigating to [FrontendActivityRoute] with the
- * `path` and `serverId` parameters. This will launch the `WebViewActivity` (which is in `:app`).
+ * When [WIPFeature.USE_FRONTEND_V2] is enabled, uses the new Compose-based [FrontendScreen].
+ * Otherwise, falls back to the legacy [WebViewActivity].
  *
- * To ensure that the activity that starts the `WebViewActivity` is finished, users should navigate
- * to [FrontendRoute]. This route will then navigate to [FrontendActivityRoute] and finish the
- * current activity. This behavior is necessary until `WebViewActivity` is replaced with a
- * composable NavGraph entry, allowing for more direct navigation.
- *
- * Note: Security level verification is handled by [WebViewActivity] before loading any URL.
- * If the security level is not set, [WebViewActivity] will show the
- * [io.homeassistant.companion.android.settings.ConnectionSecurityLevelFragment].
+ * @param navController The navigation controller
+ * @param onOpenExternalLink Callback to open external links (required for V2)
+ * @param onNavigateToSettings Callback to navigate to settings
+ * @param onOpenLocationSettings Callback to open location settings
+ * @param onConfigureHomeNetwork Callback to configure home network (receives serverId)
+ * @param onSecurityLevelHelpClick Callback when user taps help on security level screen
+ * @param onShowSnackbar Callback to show snackbar messages
+ * @param onShowServerSwitcher Callback to display the server switcher bottom sheet. Receives an
+ *   `onServerSelected` callback that must be invoked with the chosen server ID.
  */
-internal fun NavGraphBuilder.frontendScreen(navController: NavController) {
-    composable<FrontendRoute> {
-        val route = it.toRoute<FrontendRoute>()
-        navController.navigate(FrontendActivityRoute(route.serverId, route.path))
-        navController.context.getActivity()?.finish()
-    }
+internal fun NavGraphBuilder.frontendScreen(
+    navController: NavController,
+    onOpenExternalLink: suspend (Uri) -> Unit = {},
+    onNavigateToSettings: (SettingsActivity.Deeplink?) -> Unit,
+    onSecurityLevelHelpClick: suspend () -> Unit,
+    onOpenLocationSettings: () -> Unit,
+    onConfigureHomeNetwork: (serverId: Int) -> Unit,
+    onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
+    onShowServerSwitcher: (onServerSelected: (Int) -> Unit) -> Unit,
+    onRequestFullscreen: (Boolean) -> Unit = {},
+    onPipReadinessChanged: (PipReadiness?) -> Unit = {},
+) {
+    if (WIPFeature.USE_FRONTEND_V2) {
+        composable<FrontendRoute> {
+            val viewModel: FrontendViewModel = hiltViewModel()
 
-    activity<FrontendActivityRoute> {
-        activityClass = WebViewActivity::class
+            val nfcWriteLauncher = rememberLauncherForActivityResult(WriteNfcTag()) { messageId ->
+                viewModel.onNfcWriteCompleted(messageId)
+            }
+
+            FrontendEventHandler(
+                events = viewModel.events,
+                onShowSnackbar = onShowSnackbar,
+                onNavigateToSettings = onNavigateToSettings,
+                onNavigateToAssist = { serverId, pipelineId, startListening ->
+                    navController.context.startActivity(
+                        AssistActivity.newInstance(
+                            context = navController.context,
+                            serverId = serverId,
+                            pipelineId = pipelineId,
+                            startListening = startListening,
+                        ),
+                    )
+                },
+                onOpenExternalLink = onOpenExternalLink,
+                onShowServerSwitcher = { onShowServerSwitcher(viewModel::switchServer) },
+                onNavigateToNfcWrite = { messageId, tagId ->
+                    nfcWriteLauncher.launch(WriteNfcTag.Input(tagId = tagId, messageId = messageId))
+                },
+                onRequestFullscreen = onRequestFullscreen,
+                onNavigateToWidgetConfig = { entityId, widgetType ->
+                    val context = navController.context
+                    context.startActivity(widgetType.toConfigureIntent(context, entityId))
+                },
+                onLaunchApp = { packageName -> navController.context.launchAppOrStore(packageName) },
+                onLaunchIntent = { intentUri -> navController.context.launchIntentUri(intentUri) },
+            )
+
+            FrontendScreen(
+                viewModel = viewModel,
+                onOpenExternalLink = onOpenExternalLink,
+                onBlockInsecureHelpClick = onSecurityLevelHelpClick,
+                onOpenSettings = { onNavigateToSettings(null) },
+                onOpenLocationSettings = onOpenLocationSettings,
+                onConfigureHomeNetwork = onConfigureHomeNetwork,
+                onSecurityLevelHelpClick = onSecurityLevelHelpClick,
+                onShowSnackbar = onShowSnackbar,
+                onPipReadinessChanged = onPipReadinessChanged,
+            )
+        }
+    } else {
+        composable<FrontendRoute> {
+            val route = it.toRoute<FrontendRoute>()
+            navController.navigate(FrontendActivityRoute(route.serverId, route.path))
+            navController.context.getActivity()?.finish()
+        }
+
+        activity<FrontendActivityRoute> {
+            activityClass = WebViewActivity::class
+        }
+    }
+}
+
+/**
+ * Handles one-shot events from the [FrontendViewModel].
+ *
+ * Collects [FrontendEvent]s and performs the appropriate action
+ */
+@Composable
+@VisibleForTesting
+internal fun FrontendEventHandler(
+    events: SharedFlow<FrontendEvent>,
+    onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
+    onNavigateToSettings: (SettingsActivity.Deeplink?) -> Unit,
+    onNavigateToAssist: (serverId: Int, pipelineId: String?, startListening: Boolean) -> Unit,
+    onOpenExternalLink: suspend (Uri) -> Unit,
+    onShowServerSwitcher: () -> Unit,
+    onNavigateToNfcWrite: (messageId: Int, tagId: String?) -> Unit,
+    onRequestFullscreen: (Boolean) -> Unit,
+    onNavigateToWidgetConfig: (entityId: String, widgetType: WidgetType) -> Unit,
+    onLaunchApp: (packageName: String) -> Unit = {},
+    onLaunchIntent: (intentUri: String) -> Unit = {},
+) {
+    val resources = LocalResources.current
+    LaunchedEffect(Unit) {
+        events.collect { event ->
+            when (event) {
+                is FrontendEvent.ShowSnackbar -> {
+                    onShowSnackbar(resources.getString(event.messageResId), null)
+                }
+
+                is FrontendEvent.NavigateToSettings -> {
+                    onNavigateToSettings(null)
+                }
+
+                is FrontendEvent.NavigateToAssistSettings -> {
+                    onNavigateToSettings(SettingsActivity.Deeplink.AssistSettings)
+                }
+
+                is FrontendEvent.NavigateToAssist -> {
+                    onNavigateToAssist(event.serverId, event.pipelineId, event.startListening)
+                }
+
+                is FrontendEvent.OpenExternalLink -> {
+                    onOpenExternalLink(event.uri)
+                }
+
+                is FrontendEvent.LaunchApp -> {
+                    onLaunchApp(event.packageName)
+                }
+
+                is FrontendEvent.LaunchIntent -> {
+                    onLaunchIntent(event.intentUri)
+                }
+
+                is FrontendEvent.NavigateToDeveloperSettings -> {
+                    onNavigateToSettings(SettingsActivity.Deeplink.Developer)
+                }
+
+                is FrontendEvent.ShowServerSwitcher -> {
+                    onShowServerSwitcher()
+                }
+
+                is FrontendEvent.NavigateToNfcWrite -> {
+                    onNavigateToNfcWrite(event.messageId, event.tagId)
+                }
+
+                is FrontendEvent.RequestFullscreen -> {
+                    onRequestFullscreen(event.fullscreen)
+                }
+
+                is FrontendEvent.NavigateToWidgetConfig -> {
+                    onNavigateToWidgetConfig(event.entityId, event.widgetType)
+                }
+            }
+        }
     }
 }

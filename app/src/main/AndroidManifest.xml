@@ -6,6 +6,7 @@
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.BLUETOOTH"
         android:maxSdkVersion="30"/>
@@ -35,6 +36,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_REMOTE_MESSAGING"/>
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
@@ -44,26 +46,27 @@
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS"
         tools:ignore="ProtectedPermissions"/>
     <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND" />
     <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED" />
-    <!--    <uses-permission android:name="android.permission.health.READ_BASAL_BODY_TEMPERATURE" />-->
-    <!--    <uses-permission android:name="android.permission.health.READ_BASAL_METABOLIC_RATE" />-->
+    <uses-permission android:name="android.permission.health.READ_BASAL_BODY_TEMPERATURE" />
+    <uses-permission android:name="android.permission.health.READ_BASAL_METABOLIC_RATE" />
     <uses-permission android:name="android.permission.health.READ_BLOOD_GLUCOSE" />
     <uses-permission android:name="android.permission.health.READ_BLOOD_PRESSURE" />
     <uses-permission android:name="android.permission.health.READ_BODY_FAT" />
-    <!--    <uses-permission android:name="android.permission.health.READ_BODY_WATER_MASS" />-->
-    <!--    <uses-permission android:name="android.permission.health.READ_BODY_TEMPERATURE" />-->
-    <!--    <uses-permission android:name="android.permission.health.READ_BONE_MASS" />-->
+    <uses-permission android:name="android.permission.health.READ_BODY_TEMPERATURE" />
+    <uses-permission android:name="android.permission.health.READ_BODY_WATER_MASS" />
+    <uses-permission android:name="android.permission.health.READ_BONE_MASS" />
     <uses-permission android:name="android.permission.health.READ_DISTANCE" />
     <uses-permission android:name="android.permission.health.READ_ELEVATION_GAINED" />
     <uses-permission android:name="android.permission.health.READ_FLOORS_CLIMBED" />
     <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
     <uses-permission android:name="android.permission.health.READ_HEART_RATE_VARIABILITY" />
-    <!--    <uses-permission android:name="android.permission.health.READ_HEIGHT" />-->
-    <!--    <uses-permission android:name="android.permission.health.READ_HYDRATION" />-->
-    <!--    <uses-permission android:name="android.permission.health.READ_LEAN_BODY_MASS" />-->
+    <uses-permission android:name="android.permission.health.READ_HEIGHT" />
+    <uses-permission android:name="android.permission.health.READ_HYDRATION" />
+    <uses-permission android:name="android.permission.health.READ_LEAN_BODY_MASS" />
     <uses-permission android:name="android.permission.health.READ_OXYGEN_SATURATION" />
     <uses-permission android:name="android.permission.health.READ_RESPIRATORY_RATE" />
     <uses-permission android:name="android.permission.health.READ_RESTING_HEART_RATE" />
@@ -110,6 +113,8 @@
         <activity
             android:name="io.homeassistant.companion.android.launch.LaunchActivity"
             android:exported="true"
+            android:supportsPictureInPicture="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|uiMode"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.LaunchScreen">
             <intent-filter>
@@ -140,6 +145,18 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity-alias>
+
+        <!--
+        Non-exported entry point that lets internal callers (currently the device controls panel)
+        bring up the dashboard over the keyguard. LaunchActivity only honors
+        setShowWhenLocked when the inbound intent is routed through this alias, so external apps
+        hitting the public LaunchActivity intent-filters cannot force the activity to render over
+        the lock screen.
+        -->
+        <activity-alias
+            android:name="io.homeassistant.companion.android.launch.LaunchOverLockScreen"
+            android:exported="false"
+            android:targetActivity="io.homeassistant.companion.android.launch.LaunchActivity" />
 
         <!-- Start things like SensorWorker on device boot -->
         <receiver android:name=".websocket.WebsocketBroadcastReceiver"
@@ -330,12 +347,18 @@
         <receiver
             android:name=".sensors.LocationSensorManager"
             android:enabled="true"
+            android:exported="false" />
+
+        <!--Exported proxy for the public REQUEST_ACCURATE_UPDATE action, used by external
+        automation tools such as Tasker (see https://github.com/home-assistant/android/pull/5509).
+        LocationSensorManager itself stays unexported. Exposing this receiver is safe: no data
+        leaves Home Assistant, and the action only triggers a sensor update with no other side
+        effects.-->
+        <receiver
+            android:name=".sensors.RequestAccurateLocationReceiver"
+            android:enabled="true"
             android:exported="true"
             tools:ignore="ExportedReceiver">
-            <!--As discussed in https://github.com/home-assistant/android/pull/5509 we are ok
-            about exposing this receiver since the data are not leaking outside of Home Assistant.
-            And Action would just force the update of the sensor nothing else.
-            -->
             <intent-filter>
                 <action android:name="io.homeassistant.companion.android.background.REQUEST_ACCURATE_UPDATE" />
             </intent-filter>
@@ -454,7 +477,7 @@
             android:supportsPictureInPicture="true"
             android:resizeableActivity="true"
             android:exported="false"
-            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation" />
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|uiMode" />
 
         <activity
             android:name=".settings.SettingsActivity"
@@ -466,7 +489,11 @@
         <activity
             android:name=".nfc.TagReaderActivity"
             android:label="@string/tag_reader_title"
-            android:exported="true">
+            android:launchMode="singleTask"
+            android:taskAffinity="io.homeassistant.companion.android.tag.reader"
+            android:autoRemoveFromRecents="true"
+            android:exported="true"
+            android:theme="@style/Theme.HomeAssistant.TranslucentOverlay">
             <tools:validation testUrl="https://www.home-assistant.io/tag/123e4567-e89b-12d3-a456-426614174000" />
 
             <intent-filter>
@@ -516,7 +543,7 @@
             android:taskAffinity="io.homeassistant.companion.android.assist"
             android:autoRemoveFromRecents="true"
             android:showWhenLocked="true"
-            android:theme="@style/Theme.HomeAssistant.Assist">
+            android:theme="@style/Theme.HomeAssistant.TranslucentOverlay">
             <intent-filter>
                 <action android:name="android.intent.action.ASSIST" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -542,6 +569,38 @@
                 <action android:name="android.intent.action.CREATE_SHORTCUT"/>
             </intent-filter>
         </activity>
+
+        <!-- Voice Interaction Service for being the system's default assistant -->
+        <service
+            android:name=".assist.service.AssistVoiceInteractionService"
+            android:exported="true"
+            android:foregroundServiceType="microphone"
+            android:permission="android.permission.BIND_VOICE_INTERACTION">
+            <meta-data
+                android:name="android.voice_interaction"
+                android:resource="@xml/voice_interaction_service" />
+            <intent-filter>
+                <action android:name="android.service.voice.VoiceInteractionService" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".assist.service.AssistVoiceInteractionSessionService"
+            android:exported="true"
+            android:permission="android.permission.BIND_VOICE_INTERACTION" />
+
+        <service
+            android:name=".assist.service.AssistRecognitionService"
+            android:exported="true"
+            android:permission="android.permission.BIND_VOICE_INTERACTION">
+            <intent-filter>
+                <action android:name="android.speech.RecognitionService" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <meta-data
+                android:name="android.speech"
+                android:resource="@xml/recognition_service" />
+        </service>
 
         <provider
             android:name="androidx.core.content.FileProvider"

@@ -15,29 +15,44 @@ import android.util.Base64
 import android.webkit.MimeTypeMap
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.CHANNEL_DOWNLOADS
+import io.homeassistant.companion.android.common.util.SdkVersion
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-object DataUriDownloadManager {
-    suspend fun saveDataUri(context: Context, url: String, mimetype: String, filename: String? = null) {
+@Singleton
+class DataUriDownloadManager @Inject constructor(@param:ApplicationContext private val context: Context) {
+
+    /**
+     * Decodes a data URI, writes the content to the Downloads directory, and shows a notification
+     * indicating success or failure.
+     *
+     * @param url The data URI to save
+     * @param mimetype The MIME type of the content (falls back to extracting from the URI if blank)
+     * @param filename Optional filename; a timestamped name is generated if null or blank
+     */
+    suspend fun saveDataUri(url: String, mimetype: String, filename: String? = null) {
         val mime = mimetype.ifBlank {
             url.removePrefix("data:").split(";")[0].ifBlank {
                 "text/plain"
             }
         }
-        val result = writeDataUriToFile(context, url, mime)
+        val result = writeDataUriToFile(url, mime, filename)
 
-        createNotificationChannel(context)
+        createNotificationChannel()
         val notification = NotificationCompat.Builder(context, CHANNEL_DOWNLOADS)
             .setContentTitle(filename ?: context.getString(commonR.string.downloads_unnamed_file))
             .setSmallIcon(android.R.drawable.stat_sys_download_done)
@@ -65,7 +80,7 @@ object DataUriDownloadManager {
             .notify(url.hashCode(), notification.build())
     }
 
-    private suspend fun writeDataUriToFile(context: Context, url: String, mimetype: String): Uri? =
+    private suspend fun writeDataUriToFile(url: String, mimetype: String, filename: String?): Uri? =
         withContext(Dispatchers.IO) {
             try {
                 val decodedBytes = if (url.split(",")[0].endsWith("base64")) {
@@ -75,16 +90,21 @@ object DataUriDownloadManager {
                     Uri.decode(url.substring(url.indexOf(",") + 1)).toByteArray()
                 }
 
-                // URLUtil doesn't handle data URIs correctly, so we have to use a generic filename
-                var fileName = "Home Assistant ${SimpleDateFormat(
-                    "yyyy-MM-dd HH:mm:ss",
-                    Locale.getDefault(),
-                ).format(Date())}"
-                MimeTypeMap.getSingleton().getExtensionFromMimeType(mimetype)?.let { extension ->
-                    fileName += ".$extension"
+                val fileName = if (!filename.isNullOrBlank()) {
+                    filename
+                } else {
+                    // URLUtil doesn't handle data URIs correctly, so we have to use a generic filename
+                    var generated = "Home Assistant ${SimpleDateFormat(
+                        "yyyy-MM-dd HH:mm:ss",
+                        Locale.getDefault(),
+                    ).format(Date())}"
+                    MimeTypeMap.getSingleton().getExtensionFromMimeType(mimetype)?.let { extension ->
+                        generated += ".$extension"
+                    }
+                    generated
                 }
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
                     val contentValues = ContentValues().apply {
                         put(MediaStore.Downloads.DISPLAY_NAME, fileName)
                         put(MediaStore.Downloads.MIME_TYPE, mimetype)
@@ -117,28 +137,29 @@ object DataUriDownloadManager {
                         output.write(decodedBytes)
                     }
 
-                    return@withContext scanAndGetDownload(context, dataFile.absolutePath, mimetype)
+                    return@withContext scanAndGetDownload(dataFile.absolutePath, mimetype)
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Timber.e(e, "Exception while writing file from data URI")
                 return@withContext null
             }
         }
 
-    private suspend fun scanAndGetDownload(context: Context, path: String, mimetype: String) =
-        suspendCoroutine<Uri?> { cont ->
-            MediaScannerConnection.scanFile(
-                context,
-                arrayOf(path),
-                arrayOf(mimetype),
-            ) { _, uri ->
-                Timber.d("Received uri from media scanner for file: $uri")
-                cont.resume(uri)
-            }
+    private suspend fun scanAndGetDownload(path: String, mimetype: String) = suspendCoroutine<Uri?> { cont ->
+        MediaScannerConnection.scanFile(
+            context,
+            arrayOf(path),
+            arrayOf(mimetype),
+        ) { _, uri ->
+            Timber.d("Received uri from media scanner for file: $uri")
+            cont.resume(uri)
         }
+    }
 
-    private fun createNotificationChannel(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+    private fun createNotificationChannel() {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             val notificationManager = NotificationManagerCompat.from(context)
             val channel = NotificationChannel(
                 CHANNEL_DOWNLOADS,

@@ -12,6 +12,7 @@ import com.android.tools.screenshot.PreviewTest
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
 
 @Preview(name = "phoneLTR", device = "spec:width=411.4dp,height=923.4dp", group = "phone") // Pixel 9 LTR
 @Preview(name = "phoneRLT", device = "spec:width=411.4dp,height=923.4dp", group = "phone", locale = "ar") // Pixel 9 RTL
@@ -198,7 +199,7 @@ class EntityPickerScreenshotTest {
         ),
         EntityPickerItem(
             entityId = "climate.thermostat",
-            domain = "climate",
+            domain = CLIMATE_DOMAIN,
             friendlyName = "Thermostat",
             icon = CommunityMaterial.Icon3.cmd_thermostat,
             areaName = "Hallway",

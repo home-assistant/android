@@ -4,17 +4,19 @@ import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.activity.compose.LocalActivity
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.core.content.IntentCompat
 import androidx.navigation.ActivityNavigator
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.ComposeNavigator
@@ -25,25 +27,29 @@ import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
+import dagger.hilt.android.testing.UninstallModules
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.automotive.navigation.AutomotiveRoute
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.frontend.navigation.FrontendActivityRoute
+import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.di.ServerManagerModule
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.launch.HAStartDestinationRoute
 import io.homeassistant.companion.android.onboarding.OnboardingRoute
 import io.homeassistant.companion.android.onboarding.WearOnboardApp
 import io.homeassistant.companion.android.onboarding.WearOnboardingRoute
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
-import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModel
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation.navigateToLocationForSecureConnection
 import io.homeassistant.companion.android.onboarding.nameyourweardevice.navigation.navigateToNameYourWearDevice
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryRoute
+import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.SetHomeNetworkRoute
+import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.navigateToSetHomeNetworkRoute
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
-import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
+import io.homeassistant.companion.android.settings.SettingsActivity
+import io.homeassistant.companion.android.settings.navigation.navigateToSettings
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.compose.webview.HA_WEBVIEW_TAG
-import io.mockk.coJustRun
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -57,23 +63,22 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.assertNull
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
+@UninstallModules(ServerManagerModule::class)
 @HiltAndroidTest
 class HAAppTest {
 
     @get:Rule(order = 0)
-    var consoleLog = ConsoleLogRule()
-
-    @get:Rule(order = 1)
     val hiltRule = HiltAndroidRule(this)
 
-    @get:Rule(order = 2)
+    @get:Rule(order = 1)
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
-    // Mock the ViewModel to prevent the real allowInsecureConnection() from executing.
+    // Mock the ServerManager to prevent the real allowInsecureConnection() from executing.
     // Without this, the suspend function switches to Dispatchers.IO and the coroutine resumes
     // on a non-main thread, causing navigation to fail with "Method setCurrentState must be
     // called on the main thread" because LifecycleRegistry requires main thread access.
@@ -81,8 +86,8 @@ class HAAppTest {
     // where dispatcher context is not properly preserved across suspend function boundaries.
     @BindValue
     @JvmField
-    val locationForSecureConnectionViewModel = spyk(LocationForSecureConnectionViewModel(0, mockk())).apply {
-        coJustRun { this@apply.allowInsecureConnection(any()) }
+    val serverManager: ServerManager = mockk(relaxed = true) {
+        coEvery { getServer(any<Int>()) } returns null
     }
 
     private lateinit var navController: TestNavHostController
@@ -107,6 +112,7 @@ class HAAppTest {
                 HAApp(
                     navController = navController,
                     startDestination = startDestination,
+                    snackbarHostState = SnackbarHostState(),
                 )
             }
         }
@@ -153,21 +159,12 @@ class HAAppTest {
     }
 
     @Test
-    fun `Given FrontendRoute as start when starts then navigate to Frontend and finish current activity`() {
+    fun `Given FrontendRoute as start when starts then show FrontendScreen`() {
         testApp(FrontendRoute()) {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<FrontendRoute>() == true)
-            verify(exactly = 1) {
-                activityNavigator.navigate(
-                    match {
-                        it.route == FrontendActivityRoute.serializer().descriptor.serialName + "?server={server}&path={path}"
-                    },
-                    any<SavedState>(),
-                    any(),
-                    any(),
-                )
-            }
-            // TODO remove this once we are using WebViewActivity anymore
-            assertTrue(activity.isFinishing)
+            // With USE_FRONTEND_V2 enabled, FrontendScreen composable is shown
+            // instead of navigating to WebViewActivity. The WebView is always rendered.
+            onNodeWithTag(HA_WEBVIEW_TAG).assertIsDisplayed()
         }
     }
 
@@ -247,6 +244,52 @@ class HAAppTest {
             assertNull(output.tlsClientCertificatePassword)
 
             verify { spyActivity.finish() }
+        }
+    }
+
+    @Test
+    fun `Given FrontendRoute when navigateToSettings then start SettingsActivity`() {
+        testApp(FrontendRoute()) {
+            navController.navigateToSettings()
+
+            val startedIntent = Shadows.shadowOf(composeTestRule.activity).nextStartedActivity
+            assertEquals(
+                SettingsActivity::class.java.name,
+                startedIntent.component?.className,
+            )
+        }
+    }
+
+    @Test
+    fun `Given FrontendRoute when navigateToSettings with deeplink then start SettingsActivity with deeplink extra`() {
+        testApp(FrontendRoute()) {
+            navController.navigateToSettings(SettingsActivity.Deeplink.AssistSettings)
+
+            val startedIntent = Shadows.shadowOf(composeTestRule.activity).nextStartedActivity
+            assertEquals(
+                SettingsActivity::class.java.name,
+                startedIntent.component?.className,
+            )
+            val deeplink = IntentCompat.getParcelableExtra(
+                startedIntent,
+                "fragment",
+                SettingsActivity.Deeplink::class.java,
+            )
+            assertEquals(SettingsActivity.Deeplink.AssistSettings, deeplink)
+        }
+    }
+
+    @Test
+    fun `Given FrontendRoute when navigateToSetHomeNetworkRoute then navigate to SetHomeNetworkRoute`() {
+        val serverId = 42
+        testApp(FrontendRoute()) {
+            navController.navigateToSetHomeNetworkRoute(serverId)
+
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<SetHomeNetworkRoute>() == true)
+            assertEquals(
+                serverId,
+                navController.currentBackStackEntry?.toRoute<SetHomeNetworkRoute>()?.serverId,
+            )
         }
     }
 }

@@ -17,10 +17,11 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineRunStart
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineSttEnd
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineTtsEnd
-import io.homeassistant.companion.android.common.util.AudioRecorder
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.PlaybackState
+import io.homeassistant.companion.android.common.util.VOICE_SAMPLE_RATE
+import io.homeassistant.companion.android.common.util.toAudioBytes
 import io.homeassistant.companion.android.util.UrlUtil
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CancellationException
@@ -29,6 +30,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -44,11 +46,21 @@ sealed interface AssistEvent {
 
     class MessageChunk(val chunk: String) : AssistEvent
     data object ContinueConversation : AssistEvent
+
+    /** Signals that the pipeline has started processing and the UI can be shown */
+    data object PipelineStarted : AssistEvent
+    data object PipelineEnded : AssistEvent
+
+    /** Signals that the Assist UI should be dismissed without showing an error */
+    data object Dismiss : AssistEvent
+
+    /** Signals that TTS audio playback has finished */
+    data object PlaybackFinished : AssistEvent
 }
 
 abstract class AssistViewModelBase(
-    private val serverManager: ServerManager,
-    private val audioRecorder: AudioRecorder,
+    protected val serverManager: ServerManager,
+    protected val audioStrategy: AssistAudioStrategy,
     private val audioUrlPlayer: AudioUrlPlayer,
     application: Application,
 ) : AndroidViewModel(application) {
@@ -74,14 +86,14 @@ abstract class AssistViewModelBase(
 
     /**
      * Parent job managing the audio recording pipeline. Contains both the producer
-     * (collecting from [AudioRecorder.audioBytes]) and consumer (forwarding to server).
+     * (collecting from [AssistAudioStrategy.audioData]) and consumer (forwarding to server).
      * Joining this job ensures all buffered audio has been sent before cleanup.
      */
     private var recorderJob: Job? = null
 
     /**
-     * Child job that collects audio bytes from [AudioRecorder.audioBytes] SharedFlow
-     * and buffers them in a channel. Cancelled separately from [recorderJob] to stop
+     * Child job that collects audio data from [AssistAudioStrategy.audioData] and
+     * buffers them in a channel. Cancelled separately from [recorderJob] to stop
      * collecting while still allowing the consumer to drain buffered data.
      */
     private var producerJob: Job? = null
@@ -114,6 +126,9 @@ abstract class AssistViewModelBase(
 
     private var currentPathBeingPlayed: String? = null
 
+    /** Whether TTS audio is currently being played back. Updated by playback handlers. */
+    protected var isPlayingAudio = false
+
     /**
      * @param text input to run an intent pipeline with, or `null` to run a STT pipeline (check if
      * STT is supported _before_ calling this function)
@@ -123,6 +138,7 @@ abstract class AssistViewModelBase(
     protected fun runAssistPipelineInternal(
         text: String?,
         pipeline: AssistPipelineResponse?,
+        wakeWordPhrase: String? = null,
         onEvent: (AssistEvent) -> Unit,
     ) {
         val isVoice = text == null
@@ -131,10 +147,11 @@ abstract class AssistViewModelBase(
             val flow = try {
                 if (isVoice) {
                     serverManager.webSocketRepository(selectedServerId).runAssistPipelineForVoice(
-                        sampleRate = AudioRecorder.SAMPLE_RATE,
+                        sampleRate = VOICE_SAMPLE_RATE,
                         outputTts = pipeline?.ttsEngine?.isNotBlank() == true,
                         pipelineId = pipeline?.id,
                         conversationId = conversationId,
+                        wakeWordPhrase = wakeWordPhrase,
                     )
                 } else {
                     serverManager.integrationRepository(selectedServerId).getAssistResponse(
@@ -152,11 +169,14 @@ abstract class AssistViewModelBase(
 
             flow?.collect { event ->
                 when (event.type) {
-                    AssistPipelineEventType.RUN_START -> handleRunStart(
-                        event.data as? AssistPipelineRunStart,
-                        isVoice,
-                        onEvent,
-                    )
+                    AssistPipelineEventType.RUN_START -> {
+                        handleRunStart(
+                            event.data as? AssistPipelineRunStart,
+                            isVoice,
+                            onEvent,
+                        )
+                        onEvent(AssistEvent.PipelineStarted)
+                    }
 
                     AssistPipelineEventType.STT_START -> handleSttStart()
                     AssistPipelineEventType.STT_END -> handleSttEnd(event.data as? AssistPipelineSttEnd, onEvent)
@@ -179,6 +199,7 @@ abstract class AssistViewModelBase(
                     AssistPipelineEventType.RUN_END -> {
                         stopRecording()
                         job?.cancel()
+                        onEvent(AssistEvent.PipelineEnded)
                     }
 
                     AssistPipelineEventType.ERROR -> if (handleError(event.data as? AssistPipelineError, onEvent)) {
@@ -200,14 +221,25 @@ abstract class AssistViewModelBase(
 
         data?.ttsOutput?.let { ttsOutput ->
             val audioPath = ttsOutput.url
-            if (audioPath.isNotBlank() && currentPathBeingPlayed != audioPath) {
+            val shouldPlay = currentPathBeingPlayed != audioPath || currentPlayAudioJob?.isActive != true
+            if (audioPath.isNotBlank() && shouldPlay) {
                 currentPathBeingPlayed = audioPath
                 stopPlayback()
                 currentPlayAudioJob = viewModelScope.launch {
-                    playAudio(audioPath).collect { state ->
-                        if (state == PlaybackState.STOP_PLAYING) {
-                            notifyContinueConversationIfNeeded(onEvent)
+                    try {
+                        playAudio(audioPath).collect { state ->
+                            when (state) {
+                                PlaybackState.PLAYING -> isPlayingAudio = true
+                                PlaybackState.STOP_PLAYING -> {
+                                    isPlayingAudio = false
+                                    onEvent(AssistEvent.PlaybackFinished)
+                                    notifyContinueConversationIfNeeded(onEvent)
+                                }
+                                PlaybackState.READY -> { /* No op */ }
+                            }
                         }
+                    } finally {
+                        isPlayingAudio = false
                     }
                 }
             }
@@ -255,7 +287,13 @@ abstract class AssistViewModelBase(
         currentPlayAudioJob = viewModelScope.launch {
             val audioPath = data?.ttsOutput?.url
             if (!audioPath.isNullOrBlank()) {
-                playAudio(audioPath).first { state -> state == PlaybackState.STOP_PLAYING }
+                isPlayingAudio = true
+                try {
+                    playAudio(audioPath).first { state -> state == PlaybackState.STOP_PLAYING }
+                } finally {
+                    isPlayingAudio = false
+                }
+                onEvent(AssistEvent.PlaybackFinished)
             }
             notifyContinueConversationIfNeeded(onEvent)
         }
@@ -265,6 +303,12 @@ abstract class AssistViewModelBase(
      * Return true if we need to cancel the job
      */
     private fun handleError(data: AssistPipelineError?, onEvent: (AssistEvent) -> Unit): Boolean {
+        if (data?.isDuplicatedWakeWord == true) {
+            Timber.d("Duplicate wake-up detected, dismissing Assist")
+            onEvent(AssistEvent.Dismiss)
+            stopRecording()
+            return true
+        }
         val errorMessage = data?.message ?: return false
         onEvent(AssistEvent.Message.Error(errorMessage))
         stopRecording()
@@ -278,21 +322,23 @@ abstract class AssistViewModelBase(
      * Audio data is buffered until the server is ready to receive, then all
      * buffered and subsequent audio is forwarded.
      *
-     * Note: [AudioRecorder.audioBytes] is a SharedFlow which never completes, so we use
-     * explicit channel management to allow graceful shutdown with buffer draining.
+     * Collects from [audioStrategy]'s [AssistAudioStrategy.audioData] flow, converts
+     * each [ShortArray] chunk to bytes via [toAudioBytes], and sends them to the server.
      */
     @VisibleForTesting(otherwise = PROTECTED)
-    fun setupRecorder() {
+    fun setupRecorder(onError: (Throwable) -> Unit) {
         Timber.d("Setting up recorder")
         sttReady = CompletableDeferred()
 
         recorderJob = viewModelScope.launch {
             val audioChannel = Channel<ByteArray>(Channel.UNLIMITED)
 
-            // Producer: collect from SharedFlow and buffer in channel
             producerJob = launch {
-                audioRecorder.audioBytes.collect { data ->
-                    audioChannel.send(data)
+                audioStrategy.audioData().catch {
+                    Timber.e(it, "Error collecting audio data")
+                    onError(it)
+                }.collect { samples ->
+                    audioChannel.send(samples.toAudioBytes())
                 }
             }.apply {
                 invokeOnCompletion {
@@ -308,8 +354,15 @@ abstract class AssistViewModelBase(
                 return@launch
             }
 
-            for (data in audioChannel) {
-                serverManager.webSocketRepository(selectedServerId).sendVoiceData(handlerId, data)
+            try {
+                for (data in audioChannel) {
+                    serverManager.webSocketRepository(selectedServerId).sendVoiceData(handlerId, data)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Error sending audio data to server")
+                onError(e)
             }
         }
     }
@@ -339,7 +392,7 @@ abstract class AssistViewModelBase(
     }
 
     private fun stopAudioCapture() {
-        audioRecorder.stopRecording()
+        audioStrategy.abandonFocus()
         producerJob?.cancel()
         producerJob = null
     }
@@ -377,7 +430,9 @@ abstract class AssistViewModelBase(
         recorderProactive = false
     }
 
-    protected fun stopPlayback() = currentPlayAudioJob?.cancel()
+    protected fun stopPlayback() {
+        currentPlayAudioJob?.cancel()
+    }
 
     /**
      * Checks if the conversation should continue and notifies the UI if so.

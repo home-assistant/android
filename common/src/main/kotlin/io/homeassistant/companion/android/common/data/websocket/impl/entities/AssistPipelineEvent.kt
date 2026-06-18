@@ -58,4 +58,6 @@ data class AssistPipelineIntentEnd(val intentOutput: ConversationResponse) : Ass
 data class AssistPipelineTtsEnd(val ttsOutput: TtsOutputResponse) : AssistPipelineEventData
 
 @Serializable
-data class AssistPipelineError(val code: String? = null, val message: String? = null) : AssistPipelineEventData
+data class AssistPipelineError(val code: String? = null, val message: String? = null) : AssistPipelineEventData {
+    val isDuplicatedWakeWord: Boolean = code == "duplicate_wake_up_detected"
+}

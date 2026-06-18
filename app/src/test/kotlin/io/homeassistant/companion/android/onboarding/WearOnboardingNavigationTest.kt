@@ -11,7 +11,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -53,9 +53,10 @@ import io.homeassistant.companion.android.onboarding.wearmtls.WearMTLSViewModel
 import io.homeassistant.companion.android.onboarding.wearmtls.navigation.URL_MTLS_DOCUMENTATION
 import io.homeassistant.companion.android.onboarding.wearmtls.navigation.WearMTLSRoute
 import io.homeassistant.companion.android.onboarding.wearmtls.navigation.navigateToWearMTLS
-import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
+import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
+import io.homeassistant.companion.android.testing.unit.TestSharedFlow
 import io.homeassistant.companion.android.testing.unit.stringResource
-import io.homeassistant.companion.android.util.LocationPermissionActivityResultRegistry
+import io.homeassistant.companion.android.util.FakePermissionResultRegistry
 import io.homeassistant.companion.android.util.compose.navigateToUri
 import io.homeassistant.companion.android.util.compose.webview.HA_WEBVIEW_TAG
 import io.mockk.Runs
@@ -67,9 +68,9 @@ import io.mockk.mockk
 import io.mockk.mockkStatic
 import java.net.URL
 import junit.framework.TestCase.assertTrue
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.test.runTest
@@ -90,14 +91,15 @@ private const val VALID_PASSWORD = "1234"
 @UninstallModules(ServerDiscoveryModule::class)
 @HiltAndroidTest
 internal class WearOnboardingNavigationTest {
-    @get:Rule(order = 0)
-    var consoleLog = ConsoleLogRule()
 
-    @get:Rule(order = 1)
+    @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
 
-    @get:Rule(order = 2)
+    @get:Rule(order = 1)
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
+
+    @get:Rule(order = 2)
+    val mainDispatcherRule = MainDispatcherJUnit4Rule()
 
     @BindValue
     @JvmField
@@ -107,7 +109,7 @@ internal class WearOnboardingNavigationTest {
         }
     }
 
-    private val connectionNavigationEventFlow = MutableSharedFlow<ConnectionNavigationEvent>()
+    private val connectionNavigationEventFlow = TestSharedFlow<ConnectionNavigationEvent>()
 
     @BindValue
     @JvmField
@@ -117,6 +119,7 @@ internal class WearOnboardingNavigationTest {
         every { navigationEventsFlow } returns connectionNavigationEventFlow
         every { errorFlow } returns MutableStateFlow(null)
         every { connectivityCheckState } returns MutableStateFlow(ConnectivityCheckState())
+        every { pendingFileChooser } returns MutableStateFlow(null)
     }
 
     private val selectedUri = mockk<Uri>()
@@ -160,7 +163,7 @@ internal class WearOnboardingNavigationTest {
 
             CompositionLocalProvider(
                 LocalActivityResultRegistryOwner provides object : ActivityResultRegistryOwner {
-                    override val activityResultRegistry: ActivityResultRegistry = LocationPermissionActivityResultRegistry(true)
+                    override val activityResultRegistry: ActivityResultRegistry = FakePermissionResultRegistry(true)
                 },
             ) {
                 NavHost(
@@ -186,9 +189,10 @@ internal class WearOnboardingNavigationTest {
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun testNavigation(urlToOnboard: String? = null, testContent: suspend AndroidComposeTestRule<*, *>.() -> Unit) {
         setContent(urlToOnboard)
-        runTest {
+        runTest(mainDispatcherRule.testDispatcher) {
             composeTestRule.testContent()
         }
     }
@@ -212,7 +216,7 @@ internal class WearOnboardingNavigationTest {
 
     // This test is similar to the classic onboarding but it is just to test the behavior of the shared screen.
     // We are skipping the test of the manual setup since it is the same as the classic onboarding.
-    @OptIn(ExperimentalTestApi::class)
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `Given a server discovered when clicking on it then show ConnectScreen then back goes to ServerDiscovery`() {
         val instanceUrl = "http://ha.local"
@@ -220,10 +224,13 @@ internal class WearOnboardingNavigationTest {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
             onNodeWithText(stringResource(commonR.string.searching_home_network)).assertIsDisplayed()
 
-            instanceChannel.trySend(HomeAssistantInstance("Test", URL(instanceUrl), HomeAssistantVersion(2025, 9, 1)))
-            waitUntilAtLeastOneExists(hasText(instanceUrl), timeoutMillis = DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds)
+            instanceChannel.send(HomeAssistantInstance("Test", URL(instanceUrl), HomeAssistantVersion(2025, 9, 1)))
+            mainDispatcherRule.testDispatcher.scheduler.advanceTimeBy(DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds)
+            mainDispatcherRule.testDispatcher.scheduler.runCurrent()
+            mainClock.advanceTimeBy(DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds, ignoreFrameDuration = true)
+            waitForIdle()
 
-            onNodeWithTag(ONE_SERVER_FOUND_MODAL_TAG).performTouchInput {
+            onNodeWithTag(ONE_SERVER_FOUND_MODAL_TAG).assertIsDisplayed().performTouchInput {
                 swipeUp(startY = bottom * 0.9f, endY = centerY, durationMillis = 200)
             }
 

@@ -30,7 +30,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -67,6 +66,7 @@ import io.homeassistant.companion.android.common.compose.composable.HAFilledButt
 import io.homeassistant.companion.android.common.compose.composable.HAHorizontalDivider
 import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
 import io.homeassistant.companion.android.common.compose.composable.HATextField
+import io.homeassistant.companion.android.common.compose.composable.rememberHAModalBottomSheetState
 import io.homeassistant.companion.android.common.compose.theme.HABorderWidth
 import io.homeassistant.companion.android.common.compose.theme.HAColorScheme
 import io.homeassistant.companion.android.common.compose.theme.HADimens
@@ -247,7 +247,7 @@ internal fun EntityPicker(
     var isExpanded by remember { mutableStateOf(isExpanded) }
     var searchQuery by remember { mutableStateOf("") }
 
-    val bottomSheetState = rememberStandardBottomSheetState(skipHiddenState = false)
+    val bottomSheetState = rememberHAModalBottomSheetState()
     val scope = rememberCoroutineScope()
 
     Column(modifier = modifier) {

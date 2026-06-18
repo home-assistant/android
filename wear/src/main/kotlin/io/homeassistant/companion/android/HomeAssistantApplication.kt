@@ -10,8 +10,6 @@ import android.net.wifi.WifiManager
 import android.nfc.NfcAdapter
 import android.os.Build
 import android.os.PowerManager
-import androidx.compose.runtime.Composer
-import androidx.compose.runtime.ExperimentalComposeRuntimeApi
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
@@ -19,8 +17,11 @@ import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepositor
 import io.homeassistant.companion.android.common.data.keychain.NamedKeyStore
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.util.HAStrictMode
+import io.homeassistant.companion.android.common.util.SdkVersion
+import io.homeassistant.companion.android.common.util.configureComposeDiagnosticStackTrace
 import io.homeassistant.companion.android.complications.ComplicationReceiver
 import io.homeassistant.companion.android.sensors.SensorReceiver
+import io.homeassistant.companion.android.util.threadPolicyIgnoredViolationRules
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -36,23 +37,21 @@ open class HomeAssistantApplication : Application() {
     @NamedKeyStore
     lateinit var keyStore: KeyChainRepository
 
-    @OptIn(ExperimentalComposeRuntimeApi::class)
     override fun onCreate() {
+        // We should initialize the logger as early as possible in the lifecycle of the application
+        Timber.plant(Timber.DebugTree())
         super.onCreate()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.S) &&
             BuildConfig.DEBUG &&
             !BuildConfig.NO_STRICT_MODE
         ) {
-            HAStrictMode.enable()
+            HAStrictMode.enable(threadPolicyIgnoredViolationRules = threadPolicyIgnoredViolationRules)
         }
 
-        // We should initialize the logger as early as possible in the lifecycle of the application
-        Timber.plant(Timber.DebugTree())
-        Timber.i("Running ${BuildConfig.VERSION_NAME} on SDK ${Build.VERSION.SDK_INT}")
+        Timber.i("Running ${BuildConfig.VERSION_NAME} on SDK $SdkVersion")
 
-        // Enable only for debug flavor to avoid perf regressions in release
-        Composer.setDiagnosticStackTraceEnabled(BuildConfig.DEBUG)
+        configureComposeDiagnosticStackTrace(isDebug = BuildConfig.DEBUG)
 
         ioScope.launch {
             keyStore.load(applicationContext, KeyStoreRepository.ALIAS)
@@ -107,7 +106,7 @@ open class HomeAssistantApplication : Application() {
         )
 
         // Listen for microphone mute changes
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.P)) {
             ContextCompat.registerReceiver(
                 this,
                 sensorReceiver,
@@ -117,7 +116,7 @@ open class HomeAssistantApplication : Application() {
         }
 
         // Listen for speakerphone state changes
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
             ContextCompat.registerReceiver(
                 this,
                 sensorReceiver,

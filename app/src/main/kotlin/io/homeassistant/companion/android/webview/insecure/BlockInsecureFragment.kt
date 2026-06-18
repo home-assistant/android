@@ -1,8 +1,6 @@
 package io.homeassistant.companion.android.webview.insecure
 
-import android.content.Intent
 import android.os.Bundle
-import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -104,15 +102,7 @@ class BlockInsecureFragment : Fragment() {
             retry()
             return
         }
-        val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
-            addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
-        }
-        if (intent.resolveActivity(requireContext().packageManager) == null) {
-            intent.action = Settings.ACTION_SETTINGS
-        }
-        startActivity(intent)
+        startActivity(DisabledLocationHandler.locationSettingsIntent(requireContext()))
     }
 
     private fun retry() {

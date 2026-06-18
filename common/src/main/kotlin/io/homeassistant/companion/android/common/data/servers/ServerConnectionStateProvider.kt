@@ -1,10 +1,10 @@
 package io.homeassistant.companion.android.common.data.servers
 
 import dagger.assisted.AssistedFactory
-import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.integration.IntegrationException
 import io.homeassistant.companion.android.common.data.integration.NoUrlAvailableException
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
+import io.homeassistant.companion.android.util.sensitive
 import java.net.URL
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
@@ -55,7 +55,7 @@ suspend fun <T> tryOnUrls(urls: List<HttpUrl>, requestName: String, action: susp
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.w(e, "Failed $requestName ${if (BuildConfig.DEBUG) "on $url" else ""}")
+            Timber.w(e, "Failed $requestName on ${sensitive(url.toString())}")
             if (firstException == null) firstException = e
         }
     }

@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.common.compose.composable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
@@ -34,10 +35,15 @@ import io.homeassistant.companion.android.common.compose.theme.LocalHAColorSchem
  * using [io.homeassistant.companion.android.common.compose.theme.HAColorScheme].
  *
  * @param modifier Optional [androidx.compose.ui.Modifier] to be applied to the banner.
+ * @param contentPadding Inner padding applied around the [content]. Pass [PaddingValues]. Defaults to [HADimens.SPACE4] on all sides.
  * @param content The composable content to be displayed inside the banner, provided as a [RowScope] lambda.
  */
 @Composable
-fun HABanner(modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
+fun HABanner(
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(HADimens.SPACE4),
+    content: @Composable RowScope.() -> Unit,
+) {
     Row(
         modifier = modifier
             .background(
@@ -46,7 +52,7 @@ fun HABanner(modifier: Modifier = Modifier, content: @Composable RowScope.() -> 
                     HARadius.XL,
                 ),
             )
-            .padding(HADimens.SPACE4),
+            .padding(contentPadding),
         horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
         verticalAlignment = Alignment.CenterVertically,
         content = content,

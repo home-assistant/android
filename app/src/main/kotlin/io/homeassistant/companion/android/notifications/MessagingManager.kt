@@ -44,6 +44,7 @@ import androidx.core.graphics.scale
 import androidx.core.net.toUri
 import androidx.core.text.isDigitsOnly
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.R as commonR
@@ -65,9 +66,13 @@ import io.homeassistant.companion.android.common.notifications.handleText
 import io.homeassistant.companion.android.common.notifications.parseColor
 import io.homeassistant.companion.android.common.notifications.parseVibrationPattern
 import io.homeassistant.companion.android.common.notifications.prepareText
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
+import io.homeassistant.companion.android.common.util.createSystemAppSettingsIntent
 import io.homeassistant.companion.android.common.util.getActiveNotification
+import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.common.util.parseExternalIntentUri
 import io.homeassistant.companion.android.common.util.toJsonObject
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechData
@@ -80,9 +85,12 @@ import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.NotificationSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.SettingsActivity
+import io.homeassistant.companion.android.settings.assist.AssistConfigManager
+import io.homeassistant.companion.android.settings.assist.DefaultAssistantManager
 import io.homeassistant.companion.android.util.FlashlightHelper
 import io.homeassistant.companion.android.util.PermissionRequestMediator
 import io.homeassistant.companion.android.util.UrlUtil
+import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.vehicle.HaCarAppService
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebViewActivity
@@ -119,6 +127,8 @@ class MessagingManager @Inject constructor(
     private val textToSpeechClient: TextToSpeechClient,
     private val flashlightHelper: FlashlightHelper,
     private val permissionRequestMediator: PermissionRequestMediator,
+    private val assistConfigManager: AssistConfigManager,
+    private val defaultAssistantManager: DefaultAssistantManager,
 ) {
     companion object {
         const val APP_PREFIX = "app://"
@@ -142,6 +152,8 @@ class MessagingManager @Inject constructor(
         const val PROGRESS = "progress"
         const val PROGRESS_MAX = "progress_max"
         const val PROGRESS_INDETERMINATE = "progress_indeterminate"
+        const val LIVE_UPDATE = "live_update"
+        const val CRITICAL_TEXT = "critical_text"
         const val CAR_UI = "car_ui"
         const val KEY_TEXT_REPLY = "key_text_reply"
         const val INTENT_CLASS_NAME = "intent_class_name"
@@ -180,6 +192,8 @@ class MessagingManager @Inject constructor(
         const val COMMAND_SCREEN_BRIGHTNESS_LEVEL = "command_screen_brightness_level"
         const val COMMAND_SCREEN_OFF_TIMEOUT = "command_screen_off_timeout"
         const val COMMAND_FLASHLIGHT = "command_flashlight"
+
+        const val COMMAND_WAKE_WORD_DETECTION = "command_wake_word_detection"
 
         // DND commands
         const val DND_PRIORITY_ONLY = "priority_only"
@@ -236,6 +250,7 @@ class MessagingManager @Inject constructor(
             COMMAND_SCREEN_BRIGHTNESS_LEVEL,
             COMMAND_SCREEN_OFF_TIMEOUT,
             COMMAND_FLASHLIGHT,
+            COMMAND_WAKE_WORD_DETECTION,
         )
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
@@ -291,7 +306,7 @@ class MessagingManager @Inject constructor(
                 } ?: return@launch
             } else {
                 val jsonObject = jsonData.toJsonObject()
-                val receivedServer = jsonData[NotificationData.WEBHOOK_ID]?.let {
+                val receivedServerId = jsonData[NotificationData.WEBHOOK_ID]?.let {
                     serverManager.getServer(webhookId = it)?.id
                 }
                 val notificationRow =
@@ -301,14 +316,14 @@ class MessagingManager @Inject constructor(
                         jsonData[NotificationData.MESSAGE].toString(),
                         jsonObject.toString(),
                         source,
-                        receivedServer,
+                        receivedServerId,
                     )
                 notificationId = notificationDao.add(notificationRow)
 
                 val confirmation = jsonData[CONFIRMATION]?.toBoolean() ?: false
                 if (confirmation) {
                     try {
-                        serverManager.integrationRepository(receivedServer ?: ServerManager.SERVER_ID_ACTIVE)
+                        serverManager.integrationRepository(receivedServerId ?: ServerManager.SERVER_ID_ACTIVE)
                             .fireEvent("mobile_app_notification_received", jsonData)
                     } catch (e: Exception) {
                         Timber.e(e, "Unable to send notification received event")
@@ -316,18 +331,29 @@ class MessagingManager @Inject constructor(
                 }
             }
 
-            val serverId = jsonData[NotificationData.WEBHOOK_ID]?.let { webhookId ->
-                serverManager.getServer(webhookId = webhookId)?.id
+            val webhookServerId = jsonData[NotificationData.WEBHOOK_ID]?.let { webhookId ->
+                val serverForWebhook = serverManager.getServer(webhookId = webhookId)
+                if (serverForWebhook == null) {
+                    Timber.w(
+                        "Received notification with webhook ID ${sensitive(
+                            webhookId,
+                        )} but no matching server, ignoring",
+                    )
+                    return@launch
+                }
+
+                serverForWebhook.id
             } ?: ServerManager.SERVER_ID_ACTIVE
 
-            if (serverManager.getServer(serverId) == null) {
-                Timber.w("Received notification but no server for it, discarding")
+            if (serverManager.getServer(webhookServerId) == null) {
+                Timber.w("Received notification but no server available, ignoring")
                 return@launch
             }
 
-            jsonData = jsonData + mutableMapOf<String, String>().apply { put(THIS_SERVER_ID, serverId.toString()) }
+            jsonData =
+                jsonData + mutableMapOf<String, String>().apply { put(THIS_SERVER_ID, webhookServerId.toString()) }
 
-            val allowCommands = serverManager.integrationRepository(serverId).isTrusted()
+            val allowCommands = serverManager.integrationRepository(webhookServerId).isTrusted()
             when {
                 jsonData[NotificationData.MESSAGE] == REQUEST_LOCATION_UPDATE && allowCommands -> {
                     Timber.d("Request location update")
@@ -409,7 +435,7 @@ class MessagingManager @Inject constructor(
                             if (
                                 !jsonData[NotificationData.COMMAND].isNullOrEmpty() &&
                                 jsonData[NotificationData.COMMAND] in DeviceCommandData.ENABLE_COMMANDS &&
-                                Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
+                                !SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)
                             ) {
                                 handleDeviceCommands(jsonData)
                             } else {
@@ -594,6 +620,16 @@ class MessagingManager @Inject constructor(
                             }
                         }
 
+                        COMMAND_WAKE_WORD_DETECTION -> {
+                            val command = jsonData[NotificationData.COMMAND]
+                            if (command in DeviceCommandData.ENABLE_COMMANDS) {
+                                handleDeviceCommands(jsonData)
+                            } else {
+                                Timber.d("Invalid wake word command received, posting notification to device")
+                                sendNotification(jsonData)
+                            }
+                        }
+
                         else -> Timber.d("No command received")
                     }
                 }
@@ -607,10 +643,7 @@ class MessagingManager @Inject constructor(
     }
 
     private fun requestAccurateLocationUpdate() {
-        val intent = Intent(context, LocationSensorManager::class.java)
-        intent.action = LocationSensorManager.ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
-
-        context.sendBroadcast(intent)
+        context.sendBroadcast(LocationSensorManager.createRequestAccurateLocationUpdateIntent(context))
     }
 
     private fun removeNotificationChannel(channelName: String) {
@@ -618,7 +651,7 @@ class MessagingManager @Inject constructor(
 
         val channelID: String = createChannelID(channelName)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && channelID != NotificationChannel.DEFAULT_CHANNEL_ID) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O) && channelID != NotificationChannel.DEFAULT_CHANNEL_ID) {
             notificationManagerCompat.deleteNotificationChannel(channelID)
         }
     }
@@ -632,7 +665,7 @@ class MessagingManager @Inject constructor(
                 val notificationManager =
                     context.getSystemService<NotificationManager>()
                 if (notificationManager?.isNotificationPolicyAccessGranted == false) {
-                    notifyMissingPermission(message.toString(), serverId)
+                    notifyMissingPermission(message, serverId)
                 } else {
                     when (command) {
                         DND_ALARMS_ONLY -> notificationManager?.setInterruptionFilter(
@@ -661,7 +694,7 @@ class MessagingManager @Inject constructor(
                 val notificationManager =
                     context.getSystemService<NotificationManager>()
                 if (notificationManager?.isNotificationPolicyAccessGranted == false) {
-                    notifyMissingPermission(message.toString(), serverId)
+                    notifyMissingPermission(message, serverId)
                 } else {
                     processRingerMode(audioManager!!, command)
                 }
@@ -699,7 +732,7 @@ class MessagingManager @Inject constructor(
                     context.getSystemService<AudioManager>()
                 val notificationManager = context.getSystemService<NotificationManager>()
                 if (notificationManager?.isNotificationPolicyAccessGranted == false) {
-                    notifyMissingPermission(message.toString(), serverId)
+                    notifyMissingPermission(message, serverId)
                 } else {
                     processStreamVolume(
                         audioManager!!,
@@ -711,7 +744,7 @@ class MessagingManager @Inject constructor(
 
             COMMAND_BLUETOOTH -> {
                 val bluetoothAdapter = context.getSystemService<BluetoothManager>()?.adapter
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (SdkVersion.isAtLeast(Build.VERSION_CODES.S)) {
                     when (PackageManager.PERMISSION_GRANTED) {
                         ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) -> {
                             Timber.d("We have proper bluetooth permissions proceeding with command")
@@ -719,7 +752,7 @@ class MessagingManager @Inject constructor(
 
                         else -> {
                             Timber.e("Missing Bluetooth permissions, notifying user to grant permissions")
-                            notifyMissingPermission(message.toString(), serverId)
+                            notifyMissingPermission(message, serverId)
                         }
                     }
                 }
@@ -749,7 +782,7 @@ class MessagingManager @Inject constructor(
 
             COMMAND_ACTIVITY -> {
                 if (!Settings.canDrawOverlays(context)) {
-                    notifyMissingPermission(message.toString(), serverId)
+                    notifyMissingPermission(message, serverId)
                 } else if (ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) !=
                     PackageManager.PERMISSION_GRANTED &&
                     data["tag"] == Intent.ACTION_CALL
@@ -773,7 +806,7 @@ class MessagingManager @Inject constructor(
 
             COMMAND_WEBVIEW -> {
                 if (!Settings.canDrawOverlays(context)) {
-                    notifyMissingPermission(message.toString(), serverId)
+                    notifyMissingPermission(message, serverId)
                 } else {
                     openWebview(command, data)
                 }
@@ -801,7 +834,7 @@ class MessagingManager @Inject constructor(
                 if (!NotificationManagerCompat.getEnabledListenerPackages(context)
                         .contains(context.packageName)
                 ) {
-                    notifyMissingPermission(message.toString(), serverId)
+                    notifyMissingPermission(message, serverId)
                 } else {
                     processMediaCommand(data)
                 }
@@ -809,7 +842,7 @@ class MessagingManager @Inject constructor(
 
             COMMAND_LAUNCH_APP -> {
                 if (!Settings.canDrawOverlays(context)) {
-                    notifyMissingPermission(message.toString(), serverId)
+                    notifyMissingPermission(message, serverId)
                 } else {
                     launchApp(data)
                 }
@@ -828,7 +861,7 @@ class MessagingManager @Inject constructor(
                         sendNotification(data)
                     }
                 } else {
-                    notifyMissingPermission(message.toString(), serverId)
+                    notifyMissingPermission(message, serverId)
                 }
             }
 
@@ -841,10 +874,29 @@ class MessagingManager @Inject constructor(
                         DeviceCommandData.TURN_ON -> flashlightHelper.turnOnFlashlight()
                     }
                 } else {
-                    Handler(Looper.getMainLooper()).post {
-                        Toast.makeText(context, commonR.string.missing_camera_permission, Toast.LENGTH_LONG).show()
-                    }
-                    requestCameraPermission()
+                    notifyMissingPermission(message, serverId)
+                }
+            }
+
+            COMMAND_WAKE_WORD_DETECTION -> {
+                val enabled = when (command) {
+                    DeviceCommandData.TURN_OFF -> false
+                    DeviceCommandData.TURN_ON -> true
+                    else -> return
+                }
+
+                if (enabled && !defaultAssistantManager.isDefaultAssistant()) {
+                    Timber.w("Cannot enable wake word: app is not the default assistant")
+                    notifyMissingPermission(message, serverId)
+                    return
+                }
+
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) ==
+                    PackageManager.PERMISSION_GRANTED
+                ) {
+                    assistConfigManager.setWakeWordEnabled(enabled)
+                } else {
+                    notifyMissingPermission(message, serverId)
                 }
             }
 
@@ -984,7 +1036,7 @@ class MessagingManager @Inject constructor(
             group = NotificationData.GROUP_PREFIX + group
             groupId = group.hashCode()
         } else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
                 val notification = notificationManagerCompat.getActiveNotification(tag, messageId)
                 if (notification != null && notification.isGroup) {
                     previousGroup = NotificationData.GROUP_PREFIX + notification.tag
@@ -1037,9 +1089,11 @@ class MessagingManager @Inject constructor(
 
         handleProgress(notificationBuilder, data)
 
+        handleLive(notificationBuilder, data)
+
         val useCarNotification = handleCarUiVisible(context, notificationBuilder, data)
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             handleLegacyPriority(notificationBuilder, data)
             handleLegacyLedColor(notificationBuilder, data)
             handleLegacyVibrationPattern(notificationBuilder, data)
@@ -1085,7 +1139,7 @@ class MessagingManager @Inject constructor(
                 builder.setWhen(notificationWhen)
                 builder.setUsesChronometer(usesChronometer)
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
                     val countdown = notificationWhen > System.currentTimeMillis()
                     // Without this builder.setChronometerCountDown throws a null reference exception
                     builder.addExtras(Bundle())
@@ -1111,27 +1165,43 @@ class MessagingManager @Inject constructor(
         }
     }
 
+    private fun handleLive(builder: NotificationCompat.Builder, data: Map<String, String>) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.BAKLAVA)) {
+            val liveUpdate = data[LIVE_UPDATE]?.toBoolean() ?: false
+            val criticalText = data[CRITICAL_TEXT]
+
+            if (liveUpdate) {
+                builder.setOngoing(true)
+                builder.setRequestPromotedOngoing(true)
+
+                if (criticalText != null) {
+                    builder.setShortCriticalText(criticalText)
+                }
+            }
+        }
+    }
+
     private fun handleCarUiVisible(
         context: Context,
         builder: NotificationCompat.Builder,
         data: Map<String, String>,
     ): Boolean {
-        if (data[CAR_UI]?.toBoolean() == true && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val carIntent = Intent(Intent.ACTION_VIEW).apply {
-                component = ComponentName(context, HaCarAppService::class.java)
+        if (data[CAR_UI]?.toBoolean() == true && SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
+            val carExtender = CarAppExtender.Builder()
+            if (context.isAutomotive() || BuildConfig.FLAVOR == "full") {
+                val carIntent = Intent(Intent.ACTION_VIEW).apply {
+                    component = ComponentName(context, HaCarAppService::class.java)
+                }
+                carExtender.setContentIntent(
+                    CarPendingIntent.getCarApp(
+                        context,
+                        carIntent.hashCode(),
+                        carIntent,
+                        PendingIntent.FLAG_IMMUTABLE,
+                    ),
+                )
             }
-            builder.extend(
-                CarAppExtender.Builder()
-                    .setContentIntent(
-                        CarPendingIntent.getCarApp(
-                            context,
-                            carIntent.hashCode(),
-                            carIntent,
-                            PendingIntent.FLAG_IMMUTABLE,
-                        ),
-                    )
-                    .build(),
-            )
+            builder.extend(carExtender.build())
             return true
         }
         return false
@@ -1286,7 +1356,7 @@ class MessagingManager @Inject constructor(
                         .setLargeIcon(bitmap)
                         .setStyle(
                             NotificationCompat.BigPictureStyle().also { style ->
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                                if (SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
                                     saveTempAnimatedImage(
                                         serverId,
                                         url,
@@ -1550,14 +1620,18 @@ class MessagingManager @Inject constructor(
                     )
                 }
 
+                val authenticationRequired = data["action_${i}_authenticationRequired"]?.toBoolean() == true
                 when {
                     notificationAction.key == URI -> {
                         if (!notificationAction.uri.isNullOrBlank()) {
-                            builder.addAction(
+                            val action = NotificationCompat.Action.Builder(
                                 commonR.drawable.ic_globe,
                                 notificationAction.title,
                                 createOpenUriPendingIntent(notificationAction.uri, data),
                             )
+                                .setAuthenticationRequired(authenticationRequired)
+                                .build()
+                            builder.addAction(action)
                         }
                     }
 
@@ -1572,12 +1646,14 @@ class MessagingManager @Inject constructor(
                             eventIntent,
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
                         )
-                        val action: NotificationCompat.Action = NotificationCompat.Action.Builder(
+                        val action = NotificationCompat.Action.Builder(
                             R.drawable.ic_baseline_reply_24,
                             notificationAction.title,
                             replyPendingIntent,
                         )
                             .addRemoteInput(remoteInput)
+                            .setShowsUserInterface(false)
+                            .setAuthenticationRequired(authenticationRequired)
                             .build()
                         builder.addAction(action)
                     }
@@ -1589,11 +1665,17 @@ class MessagingManager @Inject constructor(
                             eventIntent,
                             PendingIntent.FLAG_IMMUTABLE,
                         )
-                        builder.addAction(
-                            commonR.drawable.ic_stat_ic_notification,
+                        val action = NotificationCompat.Action.Builder(
+                            // Intentionally use no icon so Android Auto / heads-up notifications show the action
+                            // title instead of replacing it with an icon
+                            null,
                             notificationAction.title,
                             actionPendingIntent,
                         )
+                            .setShowsUserInterface(false)
+                            .setAuthenticationRequired(authenticationRequired)
+                            .build()
+                        builder.addAction(action)
                     }
                 }
             }
@@ -1615,7 +1697,7 @@ class MessagingManager @Inject constructor(
 
             uri.startsWith(INTENT_PREFIX) -> {
                 try {
-                    Intent.parseUri(uri, Intent.URI_INTENT_SCHEME)
+                    context.parseExternalIntentUri(uri)
                 } catch (e: Exception) {
                     Timber.e(e, "Unable to parse intent URI")
                     null
@@ -1681,7 +1763,7 @@ class MessagingManager @Inject constructor(
     }
 
     private fun handleReplyHistory(builder: NotificationCompat.Builder, data: Map<String, String>) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
             val replies = data.entries
                 .filter { it.key.startsWith(SOURCE_REPLY_HISTORY) }
                 .sortedBy { it.key.substringAfter(SOURCE_REPLY_HISTORY).toInt() }
@@ -1716,10 +1798,7 @@ class MessagingManager @Inject constructor(
     }
 
     private fun navigateAppDetails() {
-        val intent = Intent(
-            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-            "package:${context.packageName}".toUri(),
-        )
+        val intent = context.createSystemAppSettingsIntent()
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         context.startActivity(intent)
     }
@@ -1736,6 +1815,19 @@ class MessagingManager @Inject constructor(
     }
 
     private fun requestCameraPermission() = requestRuntimePermission(Manifest.permission.CAMERA)
+
+    private fun requestMicPermission() {
+        if (defaultAssistantManager.isDefaultAssistant()) {
+            requestRuntimePermission(Manifest.permission.RECORD_AUDIO)
+        } else {
+            context.startActivity(
+                defaultAssistantManager.getSetDefaultAssistantIntent().apply {
+                    flags =
+                        Intent.FLAG_ACTIVITY_NEW_TASK
+                },
+            )
+        }
+    }
 
     private fun getKeyEvent(key: String): Int {
         return when (key) {
@@ -2044,6 +2136,8 @@ class MessagingManager @Inject constructor(
                             COMMAND_AUTO_SCREEN_BRIGHTNESS,
                             COMMAND_SCREEN_OFF_TIMEOUT,
                             -> requestWriteSystemPermission()
+                            COMMAND_FLASHLIGHT -> requestCameraPermission()
+                            COMMAND_WAKE_WORD_DETECTION -> requestMicPermission()
                         }
                     }
                 }

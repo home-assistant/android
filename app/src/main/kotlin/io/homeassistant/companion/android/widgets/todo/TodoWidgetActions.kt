@@ -25,7 +25,6 @@ import timber.log.Timber
 /**
  * Get an Action that will toggle the given [todoItem] of a Todo widget once given to Glance.
  */
-@Composable
 internal fun actionToggleTodo(todoItem: TodoItemState): Action {
     return actionRunCallback<ToggleTodoAction>(actionParametersOf(TOGGLE_KEY to todoItem))
 }
@@ -33,7 +32,6 @@ internal fun actionToggleTodo(todoItem: TodoItemState): Action {
 /**
  * Get an Action that will refresh the Todo widget once given to Glance.
  */
-@Composable
 internal fun actionRefreshTodo(): Action {
     return actionRunCallback<RefreshAction>()
 }
@@ -43,7 +41,7 @@ internal fun actionRefreshTodo(): Action {
  */
 @Composable
 internal fun actionOpenTodolist(listEntityId: String, serverId: Int): Action {
-    return actionStartWebView("todo?entity_id=$listEntityId", serverId)
+    return actionStartWebView("todo?entity_id=$listEntityId&add_item=true", serverId)
 }
 
 /**

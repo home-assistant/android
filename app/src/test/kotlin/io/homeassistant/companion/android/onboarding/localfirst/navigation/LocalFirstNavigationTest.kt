@@ -39,6 +39,8 @@ internal class LocalFirstNavigationTest : BaseOnboardingNavigationTest() {
 
             composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
 
+            waitForIdle()
+
             // In the test scenario since we never opened NameYourDevice the stack still contains Welcome
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
         }

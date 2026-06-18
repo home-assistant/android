@@ -15,11 +15,11 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult.ActionPerformed
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.launch.HAStartDestinationRoute
+import io.homeassistant.companion.android.launch.PipReadiness
 import io.homeassistant.companion.android.loading.LoadingScreen
 
 /**
@@ -34,16 +34,18 @@ import io.homeassistant.companion.android.loading.LoadingScreen
  * @param navController The NavHostController to use for navigation.
  * @param startDestination The initial destination of the navigation graph. If it is null [LoadingScreen]
  *                         is displayed.
+ * @param snackbarHostState The [SnackbarHostState] used to show snackbars for the app.
  * @param modifier The modifier to be applied to this composable.
  */
 @Composable
 internal fun HAApp(
     navController: NavHostController,
     startDestination: HAStartDestinationRoute?,
+    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
+    onRequestFullscreen: (Boolean) -> Unit = {},
+    onPipReadinessChanged: (PipReadiness?) -> Unit = {},
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
-
     Scaffold(
         modifier = modifier,
         containerColor = LocalHAColorScheme.current.colorSurfaceDefault,
@@ -70,6 +72,8 @@ internal fun HAApp(
             HANavHost(
                 navController = navController,
                 startDestination = startDestination,
+                onRequestFullscreen = onRequestFullscreen,
+                onPipReadinessChanged = onPipReadinessChanged,
                 onShowSnackbar = { message, action ->
                     snackbarHostState.showSnackbar(
                         message,

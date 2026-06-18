@@ -50,6 +50,9 @@ private val haDarkColors = darkColors(
  * A Compose [MaterialTheme] version of the app's XML theme. This achieves the same goal as the
  * (now deprecated) [com.google.accompanist.themeadapter.material.MdcTheme].
  */
+@Deprecated(
+    "Uses Material Design 2. Use HATheme (Material Design 3) instead. Kept until remaining call sites are migrated.",
+)
 @Composable
 fun HomeAssistantAppTheme(content: @Composable () -> Unit) {
     MaterialTheme(
@@ -124,7 +127,6 @@ object HomeAssistantGlanceTypography {
 
 object HomeAssistantGlanceDimensions {
     val iconSize: Dp
-        @Composable
         get() = 48.dp
 }
 
@@ -158,9 +160,7 @@ object HomeAssistantGlanceTheme {
         @Composable
         get() = LocalGlanceColors.current
     val typography: HomeAssistantGlanceTypography
-        @Composable
         get() = HomeAssistantGlanceTypography
     val dimensions: HomeAssistantGlanceDimensions
-        @Composable
         get() = HomeAssistantGlanceDimensions
 }

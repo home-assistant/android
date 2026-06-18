@@ -1,4 +1,4 @@
-include(":common", ":app", ":wear", ":automotive", ":testing-unit", ":lint")
+include(":common", ":app", ":wear", ":automotive", ":testing-unit", ":lint", ":microwakeword")
 
 rootProject.name = "home-assistant-android"
 
@@ -20,7 +20,8 @@ pluginManagement {
 
 plugins {
     // So we can't reach the libs.plugins.* aliases from here so we need to declare them the old way...
-    id("org.ajoberstar.reckon.settings").version("2.0.0")
+    id("org.ajoberstar.reckon.settings") version "2.0.0"
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
 extensions.configure<org.ajoberstar.reckon.gradle.ReckonExtension>("reckon") {
