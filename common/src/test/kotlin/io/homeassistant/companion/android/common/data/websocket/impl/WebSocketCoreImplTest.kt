@@ -868,11 +868,14 @@ shutdown()
 
         webSocketCore.shutdown()
 
+        // Wait for close() to be called
+        advanceUntilIdle()
+
         verify { mockConnection.close(1001, "Session removed from app.") }
     }
 
     @Test
-    fun reconnectsAfterShutdown() = runTest {
+    fun `Given a shutdown connection When connect is invoked before onClosed Then it reconnects`() = runTest {
         setupServer(backgroundScope = backgroundScope)
         every {
             mockConnection.close(1001, "Session removed from app.")
@@ -900,6 +903,7 @@ shutdown()
 
         assertTrue(webSocketCore.connect())
         advanceUntilIdle()
+        // Should connect again
         verify(exactly = 2) { mockOkHttpClient.newWebSocket(any(), webSocketListener) }
     }
 

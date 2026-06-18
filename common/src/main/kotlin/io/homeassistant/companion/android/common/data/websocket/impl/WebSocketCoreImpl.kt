@@ -364,17 +364,18 @@ internal class WebSocketCoreImpl(
     }
 
     /**
-     * Closes the WebSocket connection with the given code and reason.
+     * Intentionally closes the WebSocket connection with the given code and reason.
      *
      * New connection attempts can be made after this call.
      */
-    private suspend fun close(code: Int, reason: String?) = connectedMutex.withLock {
-        // Cancel this so new connection attempts will create a new deferred and not await this one
-        pendingConnectDeferred?.cancel()
-        pendingConnectDeferred = null
+    private fun close(code: Int, reason: String?) = wsScope.launch {
+        connectedMutex.withLock {
+            val holder = connectionHolder.getAndSet(null)
+            holder?.webSocket?.close(code, reason)
+            holder?.urlObserverJob?.cancel()
 
-        connectionHolder.get()?.webSocket?.close(code, reason)
-        connectionHolder.set(null)
+            cleanupClosingSocket()
+        }
     }
 
     /**
@@ -641,9 +642,7 @@ internal class WebSocketCoreImpl(
 
     override fun shutdown() {
         Timber.i("Shutting down websocket")
-        wsScope.launch {
-            close(1001, "Session removed from app.")
-        }
+        close(1001, "Session removed from app.")
     }
 
     // ----- WebSocketListener section
@@ -976,6 +975,30 @@ internal class WebSocketCoreImpl(
         )
     }
 
+    /**
+     * Clean up deferred and messages when the socket is being closed.
+     */
+    @GuardedBy("connectedMutex")
+    private fun cleanupClosingSocket() {
+        //  Complete connected and pending connect deferred with error
+        pendingConnectDeferred?.completeExceptionally(IOException("Connection closed"))
+        pendingConnectDeferred = null
+        authCompleted.completeExceptionally(IOException("Connection closed"))
+        authCompleted = CompletableDeferred()
+
+        // Complete all pending simple messages with error
+        activeMessages
+            .filterValues { it is ActiveMessage.Simple }
+            .forEach { (key, activeMessage) ->
+                val completed =
+                    activeMessage.responseDeferred.completeExceptionally(IOException("Connection closed"))
+                if (!completed) {
+                    Timber.w("Response deferred was already completed, skipping IOException")
+                }
+                activeMessages.remove(key)
+            }
+    }
+
     private fun handleClosingSocket() {
         val previousState = connectionState
         val closeReason = pendingCloseReason ?: WebSocketState.Closed.Reason.OTHER
@@ -1006,23 +1029,7 @@ internal class WebSocketCoreImpl(
                 // Cancel URL observer - connect() will recreate it if needed
                 holder?.urlObserverJob?.cancel()
 
-                // Complete the connected deferred if still active
-                if (authCompleted.isActive) {
-                    authCompleted.completeExceptionally(IOException("Connection closed"))
-                }
-                authCompleted = CompletableDeferred()
-
-                // Complete all pending simple messages with error
-                activeMessages
-                    .filterValues { it is ActiveMessage.Simple }
-                    .forEach { (key, activeMessage) ->
-                        val completed =
-                            activeMessage.responseDeferred.completeExceptionally(IOException("Connection closed"))
-                        if (!completed) {
-                            Timber.w("Response deferred was already completed, skipping IOException")
-                        }
-                        activeMessages.remove(key)
-                    }
+                cleanupClosingSocket()
                 hasSubscriptions = activeMessages.any { it.value is ActiveMessage.Subscription }
             }
 
