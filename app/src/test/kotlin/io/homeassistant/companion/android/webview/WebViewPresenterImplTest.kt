@@ -90,10 +90,6 @@ private class FakeWebViewContext(
     override fun showConnectionSecurityLevel(serverId: Int) {
         webViewDelegate.showConnectionSecurityLevel(serverId)
     }
-
-    override fun getCurrentWebViewRelativeUrl(): String? {
-        return webViewDelegate.getCurrentWebViewRelativeUrl()
-    }
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -126,7 +122,6 @@ class WebViewPresenterImplTest {
     fun setUp() {
         mockkStatic(Uri::class)
         mockUriParse()
-        every { webView.getCurrentWebViewRelativeUrl() } returns null
         fakeContext = FakeWebViewContext(mockk<Context>(), webView)
 
         lifecycleOwner = object : LifecycleOwner {
@@ -412,49 +407,6 @@ class WebViewPresenterImplTest {
         assertEquals("https://first.com?external_auth=1", urlSlot[0].toString())
         assertEquals("https://second.com?external_auth=1", urlSlot[1].toString())
         assertEquals("https://second-updated.com?external_auth=1", urlSlot[2].toString())
-    }
-
-    @Test
-    fun `Given base url changes when collecting then preserves current path and keeps history`() = runTest(testDispatcher) {
-        val server = mockk<Server>(relaxed = true)
-        val urlFlow = MutableStateFlow<UrlState>(UrlState.HasUrl(URL("https://internal.example.com")))
-
-        coEvery { serverManager.getServer(any<Int>()) } returns server
-        coEvery { authenticationRepository.getSessionState() } returns SessionState.CONNECTED
-        coEvery { connectionStateProvider.urlFlow(any()) } returns urlFlow
-        every { webView.getCurrentWebViewRelativeUrl() } returns "/history?start_date=2026-01-01"
-
-        lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
-        lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_START)
-
-        createPresenter()
-
-        backgroundScope.launch {
-            presenter.load(lifecycle, path = null, isInternalOverride = null)
-        }
-
-        // Emit a new base URL (e.g. WiFi -> mobile data switch)
-        urlFlow.emit(UrlState.HasUrl(URL("https://external.example.com")))
-
-        val urlSlot = mutableListOf<Uri>()
-        val keepHistorySlot = mutableListOf<Boolean>()
-        verify(exactly = 2) {
-            webView.loadUrl(capture(urlSlot), capture(keepHistorySlot), any(), any())
-        }
-
-        // First load: initial internal URL, keeps history (no base URL change yet)
-        assertTrue(urlSlot[0].toString().startsWith("https://internal.example.com"))
-        assertTrue(keepHistorySlot[0])
-
-        // Second load: external URL with preserved path. History is kept so the
-        // stale cross-origin entry survives long enough for resolveBackAction to
-        // detect it and emit NavigateToRoot before the user exits the app.
-        assertTrue(urlSlot[1].toString().startsWith("https://external.example.com"))
-        assertTrue(urlSlot[1].toString().contains("/history"))
-        assertTrue(urlSlot[1].toString().contains("start_date=2026-01-01"))
-        assertTrue(keepHistorySlot[1])
-
-        verify { webView.getCurrentWebViewRelativeUrl() }
     }
 
     @Test
