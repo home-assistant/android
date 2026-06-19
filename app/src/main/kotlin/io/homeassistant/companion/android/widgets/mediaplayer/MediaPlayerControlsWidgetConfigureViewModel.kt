@@ -48,6 +48,13 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
+ * Stable request code for the widget-creation broadcast [PendingIntent]. A fixed value (combined with
+ * [PendingIntent.FLAG_UPDATE_CURRENT]) keeps the pending intent deterministic and testable while making
+ * sure a reconfigured request replaces the previously registered extras.
+ */
+private const val PIN_WIDGET_REQUEST_CODE = 0
+
+/**
  * Immutable UI state for the Media Player Controls widget configuration screen.
  *
  * Only holds the values the user can edit. Server-dependent data (the list of servers, entities and
@@ -247,13 +254,14 @@ class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
                 null,
                 PendingIntent.getBroadcast(
                     context,
-                    System.currentTimeMillis().toInt(),
+                    PIN_WIDGET_REQUEST_CODE,
                     Intent(context, MediaPlayerControlsWidget::class.java).apply {
                         action = ACTION_APPWIDGET_CREATED
                         putExtra(EXTRA_WIDGET_ENTITY, getPendingDaoEntity())
                     },
-                    // The PendingIntent must be mutable so the system can inject the created EXTRA_APPWIDGET_ID.
-                    PendingIntent.FLAG_MUTABLE,
+                    // FLAG_MUTABLE: the system injects the created EXTRA_APPWIDGET_ID.
+                    // FLAG_UPDATE_CURRENT: refresh the extras when the screen is reconfigured and re-requested.
+                    PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
                 ),
             )
             check(requestAccepted) { "Widget pin request was rejected" }

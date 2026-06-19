@@ -37,7 +37,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
     private val viewModel: MediaPlayerControlsWidgetConfigureViewModel by viewModels(
         extrasProducer = {
             defaultViewModelCreationExtras.withCreationCallback<Factory> { factory ->
-                factory.create(intent.extras?.getString(FOR_ENTITY, null))
+                factory.create(intent.getStringExtra(FOR_ENTITY))
             }
         },
     )
