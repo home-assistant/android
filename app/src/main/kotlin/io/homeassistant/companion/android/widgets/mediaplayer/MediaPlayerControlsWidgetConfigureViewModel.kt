@@ -7,18 +7,21 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import androidx.annotation.StringRes
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
+import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -34,7 +37,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.WhileSubscribed
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
@@ -55,15 +58,12 @@ import timber.log.Timber
 private const val PIN_WIDGET_REQUEST_CODE = 0
 
 /**
- * Immutable UI state for the Media Player Controls widget configuration screen.
- *
- * Only holds the values the user can edit. Server-dependent data (the list of servers, entities and
- * registries) is exposed as separate flows on [MediaPlayerControlsWidgetConfigureViewModel] because
- * it is derived rather than directly edited.
+ * The values the user can edit on the Media Player Controls widget configuration screen.
  */
+@Stable
 internal data class MediaPlayerControlsWidgetConfigureViewState(
     val selectedServerId: Int = ServerManager.SERVER_ID_ACTIVE,
-    val selectedEntityId: String? = null,
+    val selectedEntityIds: List<String> = emptyList(),
     val label: String = "",
     val showVolume: Boolean = true,
     val showSkip: Boolean = true,
@@ -71,6 +71,33 @@ internal data class MediaPlayerControlsWidgetConfigureViewState(
     val showSource: Boolean = true,
     val backgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
     val isUpdateWidget: Boolean = false,
+)
+
+/**
+ * Complete UI state for the Media Player Controls widget configuration screen.
+ *
+ * Bundles the user-editable [config] together with the server-dependent data the screen renders
+ * (available servers, media-player entities and registries) and whether the current selection can be
+ * saved ([isInputValid]), so the screen only collects a single state.
+ */
+@Stable
+internal data class MediaPlayerControlsWidgetConfigureUiState(
+    val config: MediaPlayerControlsWidgetConfigureViewState = MediaPlayerControlsWidgetConfigureViewState(),
+    val servers: List<Server> = emptyList(),
+    val availableEntities: List<Entity> = emptyList(),
+    val entityRegistry: List<EntityRegistryResponse>? = null,
+    val deviceRegistry: List<DeviceRegistryResponse>? = null,
+    val areaRegistry: List<AreaRegistryResponse>? = null,
+    val isInputValid: Boolean = false,
+)
+
+/** Server-dependent data combined into [MediaPlayerControlsWidgetConfigureUiState]. */
+private data class ServerData(
+    val servers: List<Server>,
+    val availableEntities: List<Entity>,
+    val entityRegistry: List<EntityRegistryResponse>?,
+    val deviceRegistry: List<DeviceRegistryResponse>?,
+    val areaRegistry: List<AreaRegistryResponse>?,
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -86,33 +113,66 @@ class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
     var widgetId: Int = AppWidgetManager.INVALID_APPWIDGET_ID
         private set
 
-    private val _viewState = MutableStateFlow(
-        MediaPlayerControlsWidgetConfigureViewState(selectedEntityId = preselectedEntityId),
+    private val editState = MutableStateFlow(
+        MediaPlayerControlsWidgetConfigureViewState(selectedEntityIds = listOfNotNull(preselectedEntityId)),
     )
-    internal val viewState: StateFlow<MediaPlayerControlsWidgetConfigureViewState> = _viewState.asStateFlow()
 
     /** One-shot user-facing messages (string resources) surfaced by the screen as a Snackbar. */
     private val userMessageChannel = Channel<Int>(Channel.BUFFERED)
     val userMessages: Flow<Int> = userMessageChannel.receiveAsFlow()
 
-    val servers = serverManager.serversFlow
+    private val servers = serverManager.serversFlow
 
-    private val selectedServerIdFlow = _viewState
+    private val selectedServerIdFlow = editState
         .map { it.selectedServerId }
         .distinctUntilChanged()
 
-    val entities: StateFlow<List<Entity>> = selectedServerIdFlow
+    private val entities: StateFlow<List<Entity>> = selectedServerIdFlow
         .mapLatest { serverId -> loadMediaPlayerEntities(serverId) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), emptyList())
 
-    val entityRegistry: StateFlow<List<EntityRegistryResponse>?> =
+    private val entityRegistry: StateFlow<List<EntityRegistryResponse>?> =
         registryFlow { serverManager.webSocketRepository(it).getEntityRegistry() }
 
-    val deviceRegistry: StateFlow<List<DeviceRegistryResponse>?> =
+    private val deviceRegistry: StateFlow<List<DeviceRegistryResponse>?> =
         registryFlow { serverManager.webSocketRepository(it).getDeviceRegistry() }
 
-    val areaRegistry: StateFlow<List<AreaRegistryResponse>?> =
+    private val areaRegistry: StateFlow<List<AreaRegistryResponse>?> =
         registryFlow { serverManager.webSocketRepository(it).getAreaRegistry() }
+
+    private val serverData: Flow<ServerData> = combine(
+        servers,
+        entities,
+        entityRegistry,
+        deviceRegistry,
+        areaRegistry,
+    ) { serverList, availableEntities, entityReg, deviceReg, areaReg ->
+        ServerData(serverList, availableEntities, entityReg, deviceReg, areaReg)
+    }
+
+    /**
+     * Single source of truth the screen collects: the user-editable [MediaPlayerControlsWidgetConfigureViewState]
+     * combined with the server-dependent data (servers, entities, registries) and whether the current
+     * selection can be saved. Started eagerly so the activity and tests can read [StateFlow.value] directly.
+     *
+     * [MediaPlayerControlsWidgetConfigureUiState.isInputValid] is `true` when at least one selected entity
+     * exists in the media-player entities loaded for the selected server (which only happens for a valid,
+     * registered server); it drives the enabled state of the confirm button.
+     */
+    internal val uiState: StateFlow<MediaPlayerControlsWidgetConfigureUiState> = combine(
+        editState,
+        serverData,
+    ) { config, data ->
+        MediaPlayerControlsWidgetConfigureUiState(
+            config = config,
+            servers = data.servers,
+            availableEntities = data.availableEntities,
+            entityRegistry = data.entityRegistry,
+            deviceRegistry = data.deviceRegistry,
+            areaRegistry = data.areaRegistry,
+            isInputValid = config.selectedEntityIds.any { id -> data.availableEntities.any { it.entityId == id } },
+        )
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, MediaPlayerControlsWidgetConfigureUiState())
 
     /**
      * Initializes the screen for the given [widgetId]. Restores the persisted configuration when the
@@ -129,7 +189,7 @@ class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
     private fun loadInitialConfiguration(widgetId: Int) = viewModelScope.launch {
         val existingWidget = if (
             widgetId != AppWidgetManager.INVALID_APPWIDGET_ID &&
-            _viewState.value.selectedEntityId == null
+            editState.value.selectedEntityIds.isEmpty()
         ) {
             mediaPlayerControlsWidgetDao.get(widgetId)
         } else {
@@ -137,16 +197,16 @@ class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
         }
 
         if (existingWidget != null) {
-            _viewState.update {
+            editState.update {
                 it.copy(
                     isUpdateWidget = true,
                     selectedServerId = existingWidget.serverId,
-                    // Legacy widgets could store several comma-separated entities; the picker
-                    // selects a single one, so we restore the first configured entity.
-                    selectedEntityId = existingWidget.entityId
+                    // Widgets store one or several comma-separated entities; restore all of them so the
+                    // multi-player "show whichever is currently playing" behaviour is preserved.
+                    selectedEntityIds = existingWidget.entityId
                         .split(",")
-                        .firstOrNull { id -> id.isNotBlank() }
-                        ?.trim(),
+                        .map { id -> id.trim() }
+                        .filter { id -> id.isNotBlank() },
                     label = existingWidget.label.orEmpty(),
                     showVolume = existingWidget.showVolume,
                     showSkip = existingWidget.showSkip,
@@ -156,43 +216,54 @@ class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
                 )
             }
         } else {
-            _viewState.update {
+            editState.update {
                 it.copy(selectedServerId = serverManager.getServer()?.id ?: ServerManager.SERVER_ID_ACTIVE)
             }
         }
     }
 
     fun onServerSelected(serverId: Int) {
-        if (serverId == _viewState.value.selectedServerId) return
-        _viewState.update { it.copy(selectedServerId = serverId, selectedEntityId = null) }
+        if (serverId == editState.value.selectedServerId) return
+        editState.update { it.copy(selectedServerId = serverId, selectedEntityIds = emptyList()) }
     }
 
-    fun onEntitySelected(entityId: String?) {
-        _viewState.update { it.copy(selectedEntityId = entityId) }
+    fun onEntityAdded(entityId: String) {
+        if (entityId.isBlank()) return
+        editState.update { state ->
+            if (entityId in state.selectedEntityIds) {
+                state
+            } else {
+                state.copy(selectedEntityIds = state.selectedEntityIds + entityId)
+            }
+        }
+    }
+
+    fun onEntityRemoved(entityId: String) {
+        editState.update { it.copy(selectedEntityIds = it.selectedEntityIds - entityId) }
     }
 
     fun onLabelChanged(label: String) {
-        _viewState.update { it.copy(label = label) }
+        editState.update { it.copy(label = label) }
     }
 
     fun onShowVolumeChanged(show: Boolean) {
-        _viewState.update { it.copy(showVolume = show) }
+        editState.update { it.copy(showVolume = show) }
     }
 
     fun onShowSkipChanged(show: Boolean) {
-        _viewState.update { it.copy(showSkip = show) }
+        editState.update { it.copy(showSkip = show) }
     }
 
     fun onShowSeekChanged(show: Boolean) {
-        _viewState.update { it.copy(showSeek = show) }
+        editState.update { it.copy(showSeek = show) }
     }
 
     fun onShowSourceChanged(show: Boolean) {
-        _viewState.update { it.copy(showSource = show) }
+        editState.update { it.copy(showSource = show) }
     }
 
     fun onBackgroundTypeSelected(backgroundType: WidgetBackgroundType) {
-        _viewState.update { it.copy(backgroundType = backgroundType) }
+        editState.update { it.copy(backgroundType = backgroundType) }
     }
 
     fun onUserMessage(@StringRes messageResId: Int) {
@@ -200,9 +271,10 @@ class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
     }
 
     suspend fun isValidSelection(): Boolean {
-        val state = _viewState.value
+        val state = editState.value
+        val availableEntityIds = entities.value.map { it.entityId }
         return serverManager.getServer(state.selectedServerId) != null &&
-            state.selectedEntityId in entities.value.map { it.entityId }
+            state.selectedEntityIds.any { it in availableEntityIds }
     }
 
     /**
@@ -217,8 +289,12 @@ class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
     }
 
     private fun getPendingDaoEntity(): MediaPlayerControlsWidgetEntity {
-        val state = _viewState.value
-        val entityId = checkNotNull(state.selectedEntityId?.takeIf { it.isNotBlank() }) { "No entity selected" }
+        val state = editState.value
+        val entityId = state.selectedEntityIds
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .joinToString(",")
+        check(entityId.isNotBlank()) { "No entity selected" }
         return MediaPlayerControlsWidgetEntity(
             id = widgetId,
             serverId = state.selectedServerId,
@@ -290,6 +366,7 @@ class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
             throw e
         } catch (e: Exception) {
             Timber.e(e, "Failed to get media player entities")
+            userMessageChannel.trySend(commonR.string.widget_entity_fetch_error)
             emptyList()
         }
     }

@@ -17,23 +17,27 @@ class MediaPlayerControlsWidgetConfigureScreenshotTest {
     @Composable
     fun `MediaPlayerControlsWidgetConfigureScreen single server`() {
         HAThemeForPreview {
-            MediaPlayerControlsWidgetConfigureView(
-                state = MediaPlayerControlsWidgetConfigureViewState(
-                    selectedServerId = previewServer1.id,
-                    selectedEntityId = previewEntity1.entityId,
-                    label = "Living room",
-                    showVolume = true,
-                    showSkip = true,
-                    showSeek = false,
-                    showSource = true,
-                    backgroundType = WidgetBackgroundType.DAYNIGHT,
-                    isUpdateWidget = false,
+            MediaPlayerControlsWidgetConfigureContent(
+                uiState = MediaPlayerControlsWidgetConfigureUiState(
+                    config = MediaPlayerControlsWidgetConfigureViewState(
+                        selectedServerId = previewServer1.id,
+                        selectedEntityIds = listOf(previewEntity1.entityId),
+                        label = "Living room",
+                        showVolume = true,
+                        showSkip = true,
+                        showSeek = false,
+                        showSource = true,
+                        backgroundType = WidgetBackgroundType.DAYNIGHT,
+                        isUpdateWidget = false,
+                    ),
+                    servers = listOf(previewServer1),
+                    availableEntities = listOf(previewEntity1),
+                    isInputValid = true,
                 ),
-                servers = listOf(previewServer1),
-                entities = listOf(previewEntity1),
                 dynamicColorAvailable = true,
                 onServerSelected = {},
-                onEntitySelected = {},
+                onEntityAdded = {},
+                onEntityRemoved = {},
                 onLabelChanged = {},
                 onShowVolumeChanged = {},
                 onShowSkipChanged = {},
@@ -51,23 +55,27 @@ class MediaPlayerControlsWidgetConfigureScreenshotTest {
     @Composable
     fun `MediaPlayerControlsWidgetConfigureScreen multiple servers updating`() {
         HAThemeForPreview {
-            MediaPlayerControlsWidgetConfigureView(
-                state = MediaPlayerControlsWidgetConfigureViewState(
-                    selectedServerId = previewServer2.id,
-                    selectedEntityId = previewEntity2.entityId,
-                    label = "",
-                    showVolume = true,
-                    showSkip = false,
-                    showSeek = true,
-                    showSource = false,
-                    backgroundType = WidgetBackgroundType.TRANSPARENT,
-                    isUpdateWidget = true,
+            MediaPlayerControlsWidgetConfigureContent(
+                uiState = MediaPlayerControlsWidgetConfigureUiState(
+                    config = MediaPlayerControlsWidgetConfigureViewState(
+                        selectedServerId = previewServer2.id,
+                        selectedEntityIds = listOf(previewEntity1.entityId, previewEntity2.entityId),
+                        label = "",
+                        showVolume = true,
+                        showSkip = false,
+                        showSeek = true,
+                        showSource = false,
+                        backgroundType = WidgetBackgroundType.TRANSPARENT,
+                        isUpdateWidget = true,
+                    ),
+                    servers = listOf(previewServer1, previewServer2),
+                    availableEntities = listOf(previewEntity1, previewEntity2),
+                    isInputValid = true,
                 ),
-                servers = listOf(previewServer1, previewServer2),
-                entities = listOf(previewEntity1, previewEntity2),
                 dynamicColorAvailable = true,
                 onServerSelected = {},
-                onEntitySelected = {},
+                onEntityAdded = {},
+                onEntityRemoved = {},
                 onLabelChanged = {},
                 onShowVolumeChanged = {},
                 onShowSkipChanged = {},
