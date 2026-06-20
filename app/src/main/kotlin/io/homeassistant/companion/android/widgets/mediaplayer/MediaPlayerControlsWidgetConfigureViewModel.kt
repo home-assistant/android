@@ -31,7 +31,6 @@ import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -44,7 +43,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -89,6 +87,8 @@ internal data class MediaPlayerControlsWidgetConfigureUiState(
     val deviceRegistry: List<DeviceRegistryResponse>? = null,
     val areaRegistry: List<AreaRegistryResponse>? = null,
     val isInputValid: Boolean = false,
+    /** One-shot message to surface as a Snackbar, then cleared via [onUserMessageShown]. */
+    @StringRes val userMessage: Int? = null,
 )
 
 /** Server-dependent data combined into [MediaPlayerControlsWidgetConfigureUiState]. */
@@ -117,9 +117,8 @@ class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
         MediaPlayerControlsWidgetConfigureViewState(selectedEntityIds = listOfNotNull(preselectedEntityId)),
     )
 
-    /** One-shot user-facing messages (string resources) surfaced by the screen as a Snackbar. */
-    private val userMessageChannel = Channel<Int>(Channel.BUFFERED)
-    val userMessages: Flow<Int> = userMessageChannel.receiveAsFlow()
+    /** One-shot user-facing message (string resource) folded into [uiState] and cleared via [onUserMessageShown]. */
+    private val userMessage = MutableStateFlow<Int?>(null)
 
     private val servers = serverManager.serversFlow
 
@@ -162,7 +161,8 @@ class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
     internal val uiState: StateFlow<MediaPlayerControlsWidgetConfigureUiState> = combine(
         editState,
         serverData,
-    ) { config, data ->
+        userMessage,
+    ) { config, data, message ->
         MediaPlayerControlsWidgetConfigureUiState(
             config = config,
             servers = data.servers,
@@ -171,6 +171,7 @@ class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
             deviceRegistry = data.deviceRegistry,
             areaRegistry = data.areaRegistry,
             isInputValid = config.selectedEntityIds.any { id -> data.availableEntities.any { it.entityId == id } },
+            userMessage = message,
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, MediaPlayerControlsWidgetConfigureUiState())
 
@@ -267,7 +268,12 @@ class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
     }
 
     fun onUserMessage(@StringRes messageResId: Int) {
-        userMessageChannel.trySend(messageResId)
+        userMessage.value = messageResId
+    }
+
+    /** Clears the current [MediaPlayerControlsWidgetConfigureUiState.userMessage] once the screen has shown it. */
+    fun onUserMessageShown() {
+        userMessage.value = null
     }
 
     suspend fun isValidSelection(): Boolean {
@@ -366,7 +372,7 @@ class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
             throw e
         } catch (e: Exception) {
             Timber.e(e, "Failed to get media player entities")
-            userMessageChannel.trySend(commonR.string.widget_entity_fetch_error)
+            userMessage.value = commonR.string.widget_entity_fetch_error
             emptyList()
         }
     }

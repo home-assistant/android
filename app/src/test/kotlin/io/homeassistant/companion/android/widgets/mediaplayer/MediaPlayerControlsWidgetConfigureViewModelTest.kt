@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.widgets.mediaplayer
 
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -20,6 +21,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -211,6 +213,34 @@ class MediaPlayerControlsWidgetConfigureViewModelTest {
         val state = viewModel.uiState.value.config
         assertEquals(newServerId, state.selectedServerId)
         assertTrue(state.selectedEntityIds.isEmpty())
+    }
+
+    @Test
+    fun `Given entity loading fails when the screen is shown then a user message is surfaced and cleared once shown`() = runTest {
+        coEvery { integrationRepository.getEntities() } throws RuntimeException("boom")
+        val viewModel = createViewModel()
+
+        viewModel.onSetup(widgetId)
+        advanceUntilIdle()
+
+        assertEquals(commonR.string.widget_entity_fetch_error, viewModel.uiState.value.userMessage)
+
+        viewModel.onUserMessageShown()
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.userMessage)
+    }
+
+    @Test
+    fun `Given a user message is requested then it is exposed in the ui state`() = runTest {
+        val viewModel = createViewModel()
+        viewModel.onSetup(widgetId)
+        advanceUntilIdle()
+
+        viewModel.onUserMessage(commonR.string.widget_creation_error)
+        advanceUntilIdle()
+
+        assertEquals(commonR.string.widget_creation_error, viewModel.uiState.value.userMessage)
     }
 
     private fun createViewModel(preselectedEntityId: String? = null) = MediaPlayerControlsWidgetConfigureViewModel(dao, serverManager, preselectedEntityId)
