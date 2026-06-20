@@ -10,6 +10,7 @@ import androidx.annotation.StringRes
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.material.color.DynamicColors
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -218,9 +219,19 @@ class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
             }
         } else {
             editState.update {
-                it.copy(selectedServerId = serverManager.getServer()?.id ?: ServerManager.SERVER_ID_ACTIVE)
+                it.copy(
+                    selectedServerId = serverManager.getServer()?.id ?: ServerManager.SERVER_ID_ACTIVE,
+                    backgroundType = defaultBackgroundType(),
+                )
             }
         }
+    }
+
+    /** New widgets default to dynamic color when the device supports it, else day/night. */
+    private fun defaultBackgroundType(): WidgetBackgroundType = if (DynamicColors.isDynamicColorAvailable()) {
+        WidgetBackgroundType.DYNAMICCOLOR
+    } else {
+        WidgetBackgroundType.DAYNIGHT
     }
 
     fun onServerSelected(serverId: Int) {
