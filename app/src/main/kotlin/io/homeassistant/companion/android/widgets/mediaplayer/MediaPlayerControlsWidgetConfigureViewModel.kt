@@ -203,12 +203,14 @@ class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
                 it.copy(
                     isUpdateWidget = true,
                     selectedServerId = existingWidget.serverId,
-                    // Widgets store one or several comma-separated entities; restore all of them so the
-                    // multi-player "show whichever is currently playing" behaviour is preserved.
+                    // Widgets store one or several comma-separated entities; restore all of them
+                    // (de-duplicated) so the multi-player "show whichever is currently playing"
+                    // behaviour is preserved without rendering or re-saving duplicate rows.
                     selectedEntityIds = existingWidget.entityId
                         .split(",")
                         .map { id -> id.trim() }
-                        .filter { id -> id.isNotBlank() },
+                        .filter { id -> id.isNotBlank() }
+                        .distinct(),
                     label = existingWidget.label.orEmpty(),
                     showVolume = existingWidget.showVolume,
                     showSkip = existingWidget.showSkip,

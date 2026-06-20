@@ -92,6 +92,22 @@ class MediaPlayerControlsWidgetConfigureViewModelTest {
     }
 
     @Test
+    fun `Given an existing widget with duplicate entities when setup completes then duplicates are removed`() = runTest {
+        coEvery { dao.get(widgetId) } returns createWidgetEntity(
+            entityId = "${entity.entityId}, ${entity.entityId}, ${secondEntity.entityId}",
+        )
+        val viewModel = createViewModel()
+
+        viewModel.onSetup(widgetId)
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf(entity.entityId, secondEntity.entityId),
+            viewModel.uiState.value.config.selectedEntityIds,
+        )
+    }
+
+    @Test
     fun `Given setup is called again when state changed then current state is preserved`() = runTest {
         val viewModel = createViewModel(preselectedEntityId = entity.entityId)
         viewModel.onSetup(widgetId)

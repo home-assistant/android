@@ -18,6 +18,7 @@ import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControlsWidgetConfigureViewModel.Factory
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @AndroidEntryPoint
 class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
@@ -95,6 +96,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
             viewModel.requestWidgetCreation(this)
             finish()
         } catch (e: IllegalStateException) {
+            Timber.e(e, "Unable to request widget pin")
             viewModel.onUserMessage(commonR.string.widget_creation_error)
         }
     }
@@ -109,6 +111,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
             )
             finish()
         } catch (e: IllegalStateException) {
+            Timber.e(e, "Unable to update widget")
             viewModel.onUserMessage(commonR.string.widget_update_error)
         }
     }
