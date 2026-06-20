@@ -17,20 +17,18 @@ import io.mockk.mockk
 import java.time.LocalDateTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.api.extension.ExtendWith
 
 @OptIn(ExperimentalCoroutinesApi::class)
+@ExtendWith(MainDispatcherJUnit5Extension::class)
 class EntityWidgetConfigureViewModelTest {
-
-    @RegisterExtension
-    val mainDispatcherExtension = MainDispatcherJUnit5Extension(UnconfinedTestDispatcher())
 
     private val dao = mockk<StaticWidgetDao>(relaxUnitFun = true)
     private val integrationRepository = mockk<IntegrationRepository>()
@@ -57,11 +55,12 @@ class EntityWidgetConfigureViewModelTest {
     }
 
     @Test
-    fun `Given an existing widget when setup completes then persisted configuration is restored`() = runTest(mainDispatcherExtension.testDispatcher) {
+    fun `Given an existing widget when setup completes then persisted configuration is restored`() = runTest {
         coEvery { dao.get(widgetId) } returns createWidgetEntity()
         val viewModel = createViewModel()
 
         viewModel.onSetup(widgetId, WidgetBackgroundType.DAYNIGHT, TEXT_COLORS)
+        advanceUntilIdle()
 
         assertTrue(viewModel.isUpdateWidget)
         assertEquals(serverId, viewModel.selectedServerId)
@@ -78,24 +77,27 @@ class EntityWidgetConfigureViewModelTest {
     }
 
     @Test
-    fun `Given setup is called again when state changed then current state is preserved`() = runTest(mainDispatcherExtension.testDispatcher) {
+    fun `Given setup is called again when state changed then current state is preserved`() = runTest {
         val viewModel = createViewModel(entity.entityId)
         viewModel.onSetup(widgetId, WidgetBackgroundType.DAYNIGHT, TEXT_COLORS)
+        advanceUntilIdle()
         viewModel.onBackgroundTypeSelected(WidgetBackgroundType.TRANSPARENT)
 
         viewModel.onSetup(widgetId, WidgetBackgroundType.DYNAMICCOLOR, TEXT_COLORS)
+        advanceUntilIdle()
 
         assertEquals(WidgetBackgroundType.TRANSPARENT, viewModel.selectedBackgroundType)
         coVerify(exactly = 0) { dao.get(widgetId) }
     }
 
     @Test
-    fun `Given valid selections when configuration is saved then widget data is persisted`() = runTest(mainDispatcherExtension.testDispatcher) {
+    fun `Given valid selections when configuration is saved then widget data is persisted`() = runTest {
         val viewModel = createViewModel()
         viewModel.onSetup(widgetId, WidgetBackgroundType.DAYNIGHT, TEXT_COLORS)
 
         viewModel.entities.test {
-            assertEquals(listOf(entity), awaitItem())
+            advanceUntilIdle()
+            assertEquals(listOf(entity), expectMostRecentItem())
 
             viewModel.onEntitySelected(entity.entityId)
             viewModel.onAppendAttributesChanged(true)
@@ -133,10 +135,34 @@ class EntityWidgetConfigureViewModelTest {
     }
 
     @Test
-    fun `Given a server change when an entity was selected then dependent state is cleared`() = runTest(mainDispatcherExtension.testDispatcher) {
+    fun `Given a generated label when entity changes then label follows the selected entity`() = runTest {
+        val secondEntity = createEntity(
+            entityId = "switch.fan",
+            attributes = mapOf("friendly_name" to "Fan"),
+        )
+        coEvery { integrationRepository.getEntities() } returns listOf(entity, secondEntity)
+        val viewModel = createViewModel()
+
+        viewModel.entities.test {
+            advanceUntilIdle()
+            assertEquals(listOf(entity, secondEntity), expectMostRecentItem())
+
+            viewModel.onEntitySelected(entity.entityId)
+            assertEquals("Office light", viewModel.label)
+
+            viewModel.onEntitySelected(secondEntity.entityId)
+            assertEquals("Fan", viewModel.label)
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `Given a server change when an entity was selected then dependent state is cleared`() = runTest {
         val newServerId = serverId + 1
         val viewModel = createViewModel(entity.entityId)
         viewModel.onSetup(widgetId, WidgetBackgroundType.DAYNIGHT, TEXT_COLORS)
+        advanceUntilIdle()
         viewModel.onAttributeAdded("brightness")
         viewModel.onTapActionSelected(WidgetTapAction.TOGGLE)
 

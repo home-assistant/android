@@ -184,9 +184,18 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
         }
 
         if (label.isBlank() || labelFromEntity) {
-            val friendlyName = entity?.friendlyName?.takeIf { it != entity.entityId }.orEmpty()
-            label = friendlyName
+            updateLabelFromEntity(entity)
+        }
+    }
+
+    internal fun onSelectedEntityLoaded(entity: Entity?) {
+        if (entity == null || entity.entityId != selectedEntityId) return
+
+        val friendlyName = entity.friendlyName.takeIf { it != entity.entityId }.orEmpty()
+        if (label == friendlyName) {
             labelFromEntity = friendlyName.isNotEmpty()
+        } else if (label.isBlank() || labelFromEntity) {
+            updateLabelFromEntity(entity)
         }
     }
 
@@ -299,11 +308,17 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
     }
 
     fun updateWidget(context: Context) {
-        context.applicationContext.sendBroadcast(
-            Intent(context.applicationContext, EntityWidget::class.java).apply {
+        context.sendBroadcast(
+            Intent(context, EntityWidget::class.java).apply {
                 action = BaseWidgetProvider.UPDATE_WIDGETS
             },
         )
+    }
+
+    private fun updateLabelFromEntity(entity: Entity?) {
+        val friendlyName = entity?.friendlyName?.takeIf { it != entity.entityId }.orEmpty()
+        label = friendlyName
+        labelFromEntity = friendlyName.isNotEmpty()
     }
 
     @AssistedFactory
