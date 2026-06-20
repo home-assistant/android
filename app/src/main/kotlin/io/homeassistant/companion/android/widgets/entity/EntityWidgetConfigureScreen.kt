@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.widgets.entity
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -23,6 +25,7 @@ import androidx.compose.material3.InputChipDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -45,12 +48,13 @@ import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
+import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
-import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import io.homeassistant.companion.android.util.previewEntity1
 import io.homeassistant.companion.android.util.previewServer1
@@ -65,6 +69,10 @@ internal fun EntityWidgetConfigureScreen(
     val servers by viewModel.servers.collectAsStateWithLifecycle(emptyList())
     val entities by viewModel.entities.collectAsStateWithLifecycle()
     val selectedEntity = entities.firstOrNull { it.entityId == viewModel.selectedEntityId }
+
+    LaunchedEffect(selectedEntity?.entityId, selectedEntity?.friendlyName) {
+        viewModel.onSelectedEntityLoaded(selectedEntity)
+    }
 
     EntityWidgetConfigureView(
         servers = servers,
@@ -143,16 +151,26 @@ private fun EntityWidgetConfigureView(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
                 .padding(contentPadding)
-                .padding(HADimens.SPACE4),
+                .padding(HADimens.SPACE4)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
         ) {
             if (servers.size > 1 ||
                 (isUpdateWidget && servers.none { it.id == selectedServerId })
             ) {
-                ServerExposedDropdownMenu(
-                    servers = servers,
-                    current = selectedServerId,
-                    onSelected = onServerSelected,
+                HADropdownMenu(
+                    items = servers.map {
+                        HADropdownItem(key = it.id, label = it.friendlyName)
+                    },
+                    selectedKey = selectedServerId.takeIf { serverId ->
+                        servers.any { it.id == serverId }
+                    },
+                    onItemSelected = onServerSelected,
+                    label = stringResource(commonR.string.server_select),
+                    placeholder = stringResource(commonR.string.server_select),
+                    modifier = Modifier.formControlWidth(),
+                    enabled = servers.isNotEmpty(),
                 )
             }
 
@@ -161,28 +179,39 @@ private fun EntityWidgetConfigureView(
                 selectedEntityId = selectedEntityId,
                 onEntitySelectedId = onEntitySelected,
                 onEntityCleared = { onEntitySelected(null) },
+                modifier = Modifier.formControlWidth(),
             )
 
-            CheckboxRow(
-                text = stringResource(commonR.string.entity_attribute_checkbox),
-                checked = appendAttributes,
-                onCheckedChange = onAppendAttributesChanged,
-            )
+            Column(
+                modifier = Modifier.formControlWidth(),
+                verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
+            ) {
+                CheckboxRow(
+                    text = stringResource(commonR.string.entity_attribute_checkbox),
+                    checked = appendAttributes,
+                    onCheckedChange = onAppendAttributesChanged,
+                )
 
-            if (appendAttributes) {
-                AttributeSelector(
-                    availableAttributes = availableAttributes,
-                    selectedAttributeIds = selectedAttributeIds,
-                    onAttributeAdded = onAttributeAdded,
-                    onAttributeRemoved = onAttributeRemoved,
-                )
-                HATextField(
-                    value = attributeSeparator,
-                    onValueChange = onAttributeSeparatorChanged,
-                    label = { Text(stringResource(commonR.string.widget_attribute_separator_label)) },
-                    placeholder = { Text(stringResource(commonR.string.widget_separator_input_hint)) },
-                    maxLines = 1,
-                )
+                AnimatedVisibility(visible = appendAttributes) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
+                    ) {
+                        AttributeSelector(
+                            availableAttributes = availableAttributes,
+                            selectedAttributeIds = selectedAttributeIds,
+                            onAttributeAdded = onAttributeAdded,
+                            onAttributeRemoved = onAttributeRemoved,
+                        )
+                        HATextField(
+                            value = attributeSeparator,
+                            onValueChange = onAttributeSeparatorChanged,
+                            label = { Text(stringResource(commonR.string.widget_attribute_separator_label)) },
+                            placeholder = { Text(stringResource(commonR.string.widget_separator_input_hint)) },
+                            maxLines = 1,
+                        )
+                    }
+                }
             }
 
             HATextField(
@@ -227,6 +256,7 @@ private fun EntityWidgetConfigureView(
                     selectedKey = selectedTapAction,
                     onItemSelected = onTapActionSelected,
                     label = stringResource(commonR.string.widget_tap_action_label),
+                    modifier = Modifier.formControlWidth(),
                 )
             }
 
@@ -256,6 +286,7 @@ private fun EntityWidgetConfigureView(
                 selectedKey = selectedBackgroundType,
                 onItemSelected = onBackgroundTypeSelected,
                 label = stringResource(commonR.string.widget_background_type_label),
+                modifier = Modifier.formControlWidth(),
             )
 
             if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
@@ -273,17 +304,22 @@ private fun EntityWidgetConfigureView(
                     selectedKey = selectedTextColor,
                     onItemSelected = onTextColorSelected,
                     label = stringResource(commonR.string.widget_text_color_label),
+                    modifier = Modifier.formControlWidth(),
                 )
             }
 
             HAAccentButton(
                 text = stringResource(if (isUpdateWidget) commonR.string.update_widget else commonR.string.add_widget),
                 onClick = onActionClick,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.formControlWidth(),
             )
         }
     }
 }
+
+private fun Modifier.formControlWidth(): Modifier = this
+    .widthIn(max = MaxButtonWidth)
+    .fillMaxWidth()
 
 @Composable
 private fun CheckboxRow(text: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
@@ -325,19 +361,11 @@ private fun AttributeSelector(
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2)) {
-        HADropdownMenu(
-            items = unselectedAttributes.map { HADropdownItem(key = it, label = it) },
-            selectedKey = null,
-            onItemSelected = onAttributeAdded,
-            label = stringResource(commonR.string.label_attribute),
-            placeholder = stringResource(commonR.string.widget_attribute_add),
-            enabled = unselectedAttributes.isNotEmpty(),
-        )
-
         HATextField(
             value = customAttribute,
             onValueChange = { customAttribute = it },
             label = { Text(stringResource(commonR.string.widget_attribute_add)) },
+            placeholder = { Text(stringResource(commonR.string.label_attribute)) },
             trailingIcon = {
                 IconButton(
                     onClick = addCustomAttributes,
@@ -353,6 +381,27 @@ private fun AttributeSelector(
             keyboardActions = KeyboardActions(onDone = { addCustomAttributes() }),
             maxLines = 1,
         )
+
+        if (unselectedAttributes.isNotEmpty()) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
+                verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
+            ) {
+                unselectedAttributes.forEach { attributeId ->
+                    InputChip(
+                        selected = false,
+                        onClick = { onAttributeAdded(attributeId) },
+                        label = { Text(attributeId) },
+                        trailingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = stringResource(commonR.string.widget_attribute_add),
+                            )
+                        },
+                    )
+                }
+            }
+        }
 
         if (selectedAttributeIds.isNotEmpty()) {
             FlowRow(
