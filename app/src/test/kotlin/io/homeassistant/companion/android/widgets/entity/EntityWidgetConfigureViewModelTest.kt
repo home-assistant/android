@@ -100,6 +100,7 @@ class EntityWidgetConfigureViewModelTest {
             assertEquals(listOf(entity), expectMostRecentItem())
 
             viewModel.onEntitySelected(entity.entityId)
+            viewModel.onSelectedEntityLoaded(entity)
             viewModel.onAppendAttributesChanged(true)
             viewModel.onAttributeAdded("brightness")
             viewModel.onAttributeSeparatorChanged(", ")
@@ -148,9 +149,11 @@ class EntityWidgetConfigureViewModelTest {
             assertEquals(listOf(entity, secondEntity), expectMostRecentItem())
 
             viewModel.onEntitySelected(entity.entityId)
+            viewModel.onSelectedEntityLoaded(entity)
             assertEquals("Office light", viewModel.label)
 
             viewModel.onEntitySelected(secondEntity.entityId)
+            viewModel.onSelectedEntityLoaded(secondEntity)
             assertEquals("Fan", viewModel.label)
 
             cancelAndIgnoreRemainingEvents()
@@ -173,6 +176,28 @@ class EntityWidgetConfigureViewModelTest {
         assertTrue(viewModel.selectedAttributeIds.isEmpty())
         assertEquals(WidgetTapAction.REFRESH, viewModel.selectedTapAction)
         assertFalse(viewModel.isValidSelection())
+    }
+
+    @Test
+    fun `Given custom attributes when attributes are added then input is parsed and cleared`() {
+        val viewModel = createViewModel(entity.entityId)
+        viewModel.onAttributeAdded("brightness")
+        viewModel.onCustomAttributeChanged("friendly_name, unit_of_measurement, brightness")
+
+        viewModel.onCustomAttributesAdded()
+
+        assertEquals(listOf("brightness", "friendly_name", "unit_of_measurement"), viewModel.selectedAttributeIds)
+        assertEquals("", viewModel.viewState.customAttribute)
+    }
+
+    @Test
+    fun `Given an invalid text size when view state is read then action is disabled`() {
+        val viewModel = createViewModel(entity.entityId)
+
+        viewModel.onTextSizeChanged("")
+
+        assertFalse(viewModel.viewState.hasValidTextSize)
+        assertFalse(viewModel.viewState.isActionEnabled)
     }
 
     private fun createViewModel(preselectedEntityId: String? = null) = EntityWidgetConfigureViewModel(dao, serverManager, preselectedEntityId)

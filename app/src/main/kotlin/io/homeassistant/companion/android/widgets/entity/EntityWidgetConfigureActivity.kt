@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -94,7 +93,7 @@ class EntityWidgetConfigureActivity : BaseActivity() {
                 if (SdkVersion.isAtLeast(Build.VERSION_CODES.O) && viewModel.isValidSelection()) {
                     requestPinWidget()
                 } else {
-                    showWidgetError(commonR.string.widget_creation_error)
+                    showWidgetError(EntityWidgetConfigureError.CREATE)
                 }
             } else {
                 updateWidget()
@@ -107,7 +106,7 @@ class EntityWidgetConfigureActivity : BaseActivity() {
             viewModel.requestWidgetCreation(this)
             finish()
         } catch (_: IllegalStateException) {
-            showWidgetError(commonR.string.widget_creation_error)
+            showWidgetError(EntityWidgetConfigureError.CREATE)
         }
     }
 
@@ -121,11 +120,11 @@ class EntityWidgetConfigureActivity : BaseActivity() {
             )
             finish()
         } catch (_: IllegalStateException) {
-            showWidgetError(commonR.string.widget_update_error)
+            showWidgetError(EntityWidgetConfigureError.UPDATE)
         }
     }
 
-    private fun showWidgetError(message: Int) {
-        Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
+    private fun showWidgetError(error: EntityWidgetConfigureError) {
+        viewModel.onActionError(error)
     }
 }
