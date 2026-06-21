@@ -6,6 +6,8 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Build
+import android.os.RemoteException
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -21,6 +23,10 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -89,6 +95,60 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
             started = SharingStarted.WhileSubscribed(500.milliseconds),
             initialValue = emptyList(),
         )
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val entityRegistry: StateFlow<List<EntityRegistryResponse>?> = snapshotFlow { selectedServerId }
+        .distinctUntilChanged()
+        .mapLatest { serverId ->
+            if (!serverManager.isRegistered()) {
+                null
+            } else {
+                try {
+                    serverManager.webSocketRepository(serverId).getEntityRegistry()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to get entity registry")
+                    null
+                }
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), null)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val deviceRegistry: StateFlow<List<DeviceRegistryResponse>?> = snapshotFlow { selectedServerId }
+        .distinctUntilChanged()
+        .mapLatest { serverId ->
+            if (!serverManager.isRegistered()) {
+                null
+            } else {
+                try {
+                    serverManager.webSocketRepository(serverId).getDeviceRegistry()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to get device registry")
+                    null
+                }
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), null)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val areaRegistry: StateFlow<List<AreaRegistryResponse>?> = snapshotFlow { selectedServerId }
+        .distinctUntilChanged()
+        .mapLatest { serverId ->
+            if (!serverManager.isRegistered()) {
+                null
+            } else {
+                try {
+                    serverManager.webSocketRepository(serverId).getAreaRegistry()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to get area registry")
+                    null
+                }
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), null)
 
     var selectedEntityId by mutableStateOf(preselectedEntityId)
         private set
@@ -286,8 +346,16 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
 
     @SuppressLint("NewApi") // The activity calls this only after its API 26 runtime check.
     suspend fun requestWidgetCreation(context: Context) {
+        check(SdkVersion.isAtLeast(Build.VERSION_CODES.O)) { "Widget pinning is not supported" }
+
         val appWidgetManager = AppWidgetManager.getInstance(context)
-        check(appWidgetManager.isRequestPinAppWidgetSupported) { "Widget pinning is not supported" }
+        val pinningSupported = try {
+            appWidgetManager.isRequestPinAppWidgetSupported
+        } catch (e: RemoteException) {
+            Timber.e(e, "Unable to read isRequestPinAppWidgetSupported")
+            false
+        }
+        check(pinningSupported) { "Widget pinning is not supported" }
 
         staticWidgetDao.getWidgetCountFlow().drop(1).onStart {
             val requestAccepted = appWidgetManager.requestPinAppWidget(
