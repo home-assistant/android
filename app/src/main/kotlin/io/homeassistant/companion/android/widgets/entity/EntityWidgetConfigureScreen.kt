@@ -52,6 +52,9 @@ import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.friendlyName
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
@@ -68,6 +71,9 @@ internal fun EntityWidgetConfigureScreen(
 ) {
     val servers by viewModel.servers.collectAsStateWithLifecycle(emptyList())
     val entities by viewModel.entities.collectAsStateWithLifecycle()
+    val entityRegistry by viewModel.entityRegistry.collectAsStateWithLifecycle()
+    val deviceRegistry by viewModel.deviceRegistry.collectAsStateWithLifecycle()
+    val areaRegistry by viewModel.areaRegistry.collectAsStateWithLifecycle()
     val selectedEntity = entities.firstOrNull { it.entityId == viewModel.selectedEntityId }
 
     LaunchedEffect(selectedEntity?.entityId, selectedEntity?.friendlyName) {
@@ -81,6 +87,9 @@ internal fun EntityWidgetConfigureScreen(
         entities = entities,
         selectedEntityId = viewModel.selectedEntityId,
         onEntitySelected = viewModel::onEntitySelected,
+        entityRegistry = entityRegistry,
+        deviceRegistry = deviceRegistry,
+        areaRegistry = areaRegistry,
         availableAttributes = selectedEntity?.attributes?.keys.orEmpty().sorted(),
         appendAttributes = viewModel.appendAttributes,
         onAppendAttributesChanged = viewModel::onAppendAttributesChanged,
@@ -116,6 +125,9 @@ private fun EntityWidgetConfigureView(
     entities: List<Entity>,
     selectedEntityId: String?,
     onEntitySelected: (String?) -> Unit,
+    entityRegistry: List<EntityRegistryResponse>? = null,
+    deviceRegistry: List<DeviceRegistryResponse>? = null,
+    areaRegistry: List<AreaRegistryResponse>? = null,
     availableAttributes: List<String>,
     appendAttributes: Boolean,
     onAppendAttributesChanged: (Boolean) -> Unit,
@@ -180,6 +192,9 @@ private fun EntityWidgetConfigureView(
                 onEntitySelectedId = onEntitySelected,
                 onEntityCleared = { onEntitySelected(null) },
                 modifier = Modifier.formControlWidth(),
+                entityRegistry = entityRegistry,
+                deviceRegistry = deviceRegistry,
+                areaRegistry = areaRegistry,
             )
 
             Column(
@@ -442,6 +457,9 @@ private fun EntityWidgetConfigureViewPreview() {
             entities = listOf(previewEntity1),
             selectedEntityId = previewEntity1.entityId,
             onEntitySelected = {},
+            entityRegistry = null,
+            deviceRegistry = null,
+            areaRegistry = null,
             availableAttributes = listOf("brightness", "friendly_name"),
             appendAttributes = true,
             onAppendAttributesChanged = {},
