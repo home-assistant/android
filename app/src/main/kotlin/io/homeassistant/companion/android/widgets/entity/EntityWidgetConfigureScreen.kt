@@ -23,15 +23,17 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.InputChipDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -62,6 +64,13 @@ import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import io.homeassistant.companion.android.util.previewEntity1
 import io.homeassistant.companion.android.util.previewServer1
 import io.homeassistant.companion.android.util.previewServer2
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+internal const val ENTITY_WIDGET_CUSTOM_ATTRIBUTE_TAG = "entity_widget_custom_attribute"
+internal const val ENTITY_WIDGET_ACTION_BUTTON_TAG = "entity_widget_action_button"
+
+private data class SelectedEntityData(val entity: Entity? = null, val availableAttributes: List<String> = emptyList())
 
 @Composable
 internal fun EntityWidgetConfigureScreen(
@@ -74,7 +83,21 @@ internal fun EntityWidgetConfigureScreen(
     val entityRegistry by viewModel.entityRegistry.collectAsStateWithLifecycle()
     val deviceRegistry by viewModel.deviceRegistry.collectAsStateWithLifecycle()
     val areaRegistry by viewModel.areaRegistry.collectAsStateWithLifecycle()
-    val selectedEntity = entities.firstOrNull { it.entityId == viewModel.selectedEntityId }
+    val viewState = viewModel.viewState
+    val selectedEntityData by produceState(
+        initialValue = SelectedEntityData(),
+        entities,
+        viewState.selectedEntityId,
+    ) {
+        value = withContext(Dispatchers.Default) {
+            val entity = entities.firstOrNull { it.entityId == viewState.selectedEntityId }
+            SelectedEntityData(
+                entity = entity,
+                availableAttributes = entity?.attributes?.keys.orEmpty().sorted(),
+            )
+        }
+    }
+    val selectedEntity = selectedEntityData.entity
 
     LaunchedEffect(selectedEntity?.entityId, selectedEntity?.friendlyName) {
         viewModel.onSelectedEntityLoaded(selectedEntity)
@@ -82,80 +105,82 @@ internal fun EntityWidgetConfigureScreen(
 
     EntityWidgetConfigureView(
         servers = servers,
-        selectedServerId = viewModel.selectedServerId,
+        viewState = viewState,
         onServerSelected = viewModel::onServerSelected,
         entities = entities,
-        selectedEntityId = viewModel.selectedEntityId,
         onEntitySelected = viewModel::onEntitySelected,
         entityRegistry = entityRegistry,
         deviceRegistry = deviceRegistry,
         areaRegistry = areaRegistry,
-        availableAttributes = selectedEntity?.attributes?.keys.orEmpty().sorted(),
-        appendAttributes = viewModel.appendAttributes,
+        availableAttributes = selectedEntityData.availableAttributes,
         onAppendAttributesChanged = viewModel::onAppendAttributesChanged,
-        selectedAttributeIds = viewModel.selectedAttributeIds,
         onAttributeAdded = viewModel::onAttributeAdded,
         onAttributeRemoved = viewModel::onAttributeRemoved,
-        label = viewModel.label,
+        onCustomAttributeChanged = viewModel::onCustomAttributeChanged,
+        onCustomAttributesAdded = viewModel::onCustomAttributesAdded,
         onLabelChanged = viewModel::onLabelChanged,
-        textSize = viewModel.textSize,
         onTextSizeChanged = viewModel::onTextSizeChanged,
-        stateSeparator = viewModel.stateSeparator,
         onStateSeparatorChanged = viewModel::onStateSeparatorChanged,
-        attributeSeparator = viewModel.attributeSeparator,
         onAttributeSeparatorChanged = viewModel::onAttributeSeparatorChanged,
         isToggleable = selectedEntity?.domain in EntityExt.APP_PRESS_ACTION_DOMAINS,
-        selectedTapAction = viewModel.selectedTapAction,
         onTapActionSelected = viewModel::onTapActionSelected,
-        selectedBackgroundType = viewModel.selectedBackgroundType,
         onBackgroundTypeSelected = viewModel::onBackgroundTypeSelected,
         dynamicColorAvailable = dynamicColorAvailable,
-        selectedTextColor = viewModel.selectedTextColor,
         onTextColorSelected = viewModel::onTextColorSelected,
-        isUpdateWidget = viewModel.isUpdateWidget,
+        onErrorShown = viewModel::onErrorShown,
         onActionClick = onActionClick,
     )
 }
 
 @Composable
-private fun EntityWidgetConfigureView(
+internal fun EntityWidgetConfigureView(
     servers: List<Server>,
-    selectedServerId: Int,
+    viewState: EntityWidgetConfigureViewState,
     onServerSelected: (Int) -> Unit,
     entities: List<Entity>,
-    selectedEntityId: String?,
     onEntitySelected: (String?) -> Unit,
     entityRegistry: List<EntityRegistryResponse>? = null,
     deviceRegistry: List<DeviceRegistryResponse>? = null,
     areaRegistry: List<AreaRegistryResponse>? = null,
     availableAttributes: List<String>,
-    appendAttributes: Boolean,
     onAppendAttributesChanged: (Boolean) -> Unit,
-    selectedAttributeIds: List<String>,
     onAttributeAdded: (String) -> Unit,
     onAttributeRemoved: (String) -> Unit,
-    label: String,
+    onCustomAttributeChanged: (String) -> Unit,
+    onCustomAttributesAdded: () -> Unit,
     onLabelChanged: (String) -> Unit,
-    textSize: String,
     onTextSizeChanged: (String) -> Unit,
-    stateSeparator: String,
     onStateSeparatorChanged: (String) -> Unit,
-    attributeSeparator: String,
     onAttributeSeparatorChanged: (String) -> Unit,
     isToggleable: Boolean,
-    selectedTapAction: WidgetTapAction,
     onTapActionSelected: (WidgetTapAction) -> Unit,
-    selectedBackgroundType: WidgetBackgroundType,
     onBackgroundTypeSelected: (WidgetBackgroundType) -> Unit,
     dynamicColorAvailable: Boolean,
-    selectedTextColor: EntityWidgetTextColor,
     onTextColorSelected: (EntityWidgetTextColor) -> Unit,
-    isUpdateWidget: Boolean,
+    onErrorShown: () -> Unit,
     onActionClick: () -> Unit,
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val creationError = stringResource(commonR.string.widget_creation_error)
+    val updateError = stringResource(commonR.string.widget_update_error)
+
+    LaunchedEffect(viewState.error) {
+        val error = viewState.error ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(
+            when (error) {
+                EntityWidgetConfigureError.CREATE -> creationError
+                EntityWidgetConfigureError.UPDATE -> updateError
+            },
+        )
+        onErrorShown()
+    }
+
     Scaffold(
         topBar = {
             HATopBar(title = { Text(stringResource(commonR.string.select_entity_to_display)) })
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
         },
         contentWindowInsets = WindowInsets.safeDrawing,
     ) { contentPadding ->
@@ -168,168 +193,279 @@ private fun EntityWidgetConfigureView(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
         ) {
-            if (servers.size > 1 ||
-                (isUpdateWidget && servers.none { it.id == selectedServerId })
-            ) {
-                HADropdownMenu(
-                    items = servers.map {
-                        HADropdownItem(key = it.id, label = it.friendlyName)
-                    },
-                    selectedKey = selectedServerId.takeIf { serverId ->
-                        servers.any { it.id == serverId }
-                    },
-                    onItemSelected = onServerSelected,
-                    label = stringResource(commonR.string.server_select),
-                    placeholder = stringResource(commonR.string.server_select),
-                    modifier = Modifier.formControlWidth(),
-                    enabled = servers.isNotEmpty(),
-                )
-            }
-
-            EntityPicker(
+            ServerSelector(
+                servers = servers,
+                selectedServerId = viewState.selectedServerId,
+                isUpdateWidget = viewState.isUpdateWidget,
+                onServerSelected = onServerSelected,
+            )
+            EntityPickerSection(
                 entities = entities,
-                selectedEntityId = selectedEntityId,
-                onEntitySelectedId = onEntitySelected,
-                onEntityCleared = { onEntitySelected(null) },
-                modifier = Modifier.formControlWidth(),
+                selectedEntityId = viewState.selectedEntityId,
                 entityRegistry = entityRegistry,
                 deviceRegistry = deviceRegistry,
                 areaRegistry = areaRegistry,
+                onEntitySelected = onEntitySelected,
             )
-
-            Column(
-                modifier = Modifier.formControlWidth(),
-                verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
-            ) {
-                CheckboxRow(
-                    text = stringResource(commonR.string.entity_attribute_checkbox),
-                    checked = appendAttributes,
-                    onCheckedChange = onAppendAttributesChanged,
-                )
-
-                AnimatedVisibility(visible = appendAttributes) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
-                    ) {
-                        AttributeSelector(
-                            availableAttributes = availableAttributes,
-                            selectedAttributeIds = selectedAttributeIds,
-                            onAttributeAdded = onAttributeAdded,
-                            onAttributeRemoved = onAttributeRemoved,
-                        )
-                        HATextField(
-                            value = attributeSeparator,
-                            onValueChange = onAttributeSeparatorChanged,
-                            label = { Text(stringResource(commonR.string.widget_attribute_separator_label)) },
-                            placeholder = { Text(stringResource(commonR.string.widget_separator_input_hint)) },
-                            maxLines = 1,
-                        )
-                    }
-                }
-            }
-
-            HATextField(
-                value = textSize,
-                onValueChange = onTextSizeChanged,
-                label = { Text(stringResource(commonR.string.widget_text_size_label)) },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number,
-                    imeAction = ImeAction.Next,
-                ),
-                maxLines = 1,
+            AttributeSection(
+                viewState = viewState,
+                availableAttributes = availableAttributes,
+                onAppendAttributesChanged = onAppendAttributesChanged,
+                onAttributeAdded = onAttributeAdded,
+                onAttributeRemoved = onAttributeRemoved,
+                onCustomAttributeChanged = onCustomAttributeChanged,
+                onCustomAttributesAdded = onCustomAttributesAdded,
+                onAttributeSeparatorChanged = onAttributeSeparatorChanged,
             )
-
-            HATextField(
-                value = stateSeparator,
-                onValueChange = onStateSeparatorChanged,
-                label = { Text(stringResource(commonR.string.widget_state_separator_label)) },
-                placeholder = { Text(stringResource(commonR.string.widget_separator_input_hint)) },
-                maxLines = 1,
+            TextOptionsSection(
+                viewState = viewState,
+                onTextSizeChanged = onTextSizeChanged,
+                onStateSeparatorChanged = onStateSeparatorChanged,
+                onLabelChanged = onLabelChanged,
             )
-
-            HATextField(
-                value = label,
-                onValueChange = onLabelChanged,
-                label = { Text(stringResource(commonR.string.label_label)) },
-                placeholder = { Text(stringResource(commonR.string.widget_text_hint_label)) },
-                maxLines = 1,
+            TapActionSection(
+                selectedTapAction = viewState.selectedTapAction,
+                isToggleable = isToggleable,
+                onTapActionSelected = onTapActionSelected,
             )
-
-            if (isToggleable) {
-                HADropdownMenu(
-                    items = listOf(
-                        HADropdownItem(
-                            key = WidgetTapAction.TOGGLE,
-                            label = stringResource(commonR.string.widget_tap_action_toggle),
-                        ),
-                        HADropdownItem(
-                            key = WidgetTapAction.REFRESH,
-                            label = stringResource(commonR.string.refresh),
-                        ),
-                    ),
-                    selectedKey = selectedTapAction,
-                    onItemSelected = onTapActionSelected,
-                    label = stringResource(commonR.string.widget_tap_action_label),
-                    modifier = Modifier.formControlWidth(),
-                )
-            }
-
-            HADropdownMenu(
-                items = buildList {
-                    if (dynamicColorAvailable) {
-                        add(
-                            HADropdownItem(
-                                key = WidgetBackgroundType.DYNAMICCOLOR,
-                                label = stringResource(commonR.string.widget_background_type_dynamiccolor),
-                            ),
-                        )
-                    }
-                    add(
-                        HADropdownItem(
-                            key = WidgetBackgroundType.DAYNIGHT,
-                            label = stringResource(commonR.string.widget_background_type_daynight),
-                        ),
-                    )
-                    add(
-                        HADropdownItem(
-                            key = WidgetBackgroundType.TRANSPARENT,
-                            label = stringResource(commonR.string.widget_background_type_transparent),
-                        ),
-                    )
-                },
-                selectedKey = selectedBackgroundType,
-                onItemSelected = onBackgroundTypeSelected,
-                label = stringResource(commonR.string.widget_background_type_label),
-                modifier = Modifier.formControlWidth(),
+            AppearanceSection(
+                selectedBackgroundType = viewState.selectedBackgroundType,
+                dynamicColorAvailable = dynamicColorAvailable,
+                selectedTextColor = viewState.selectedTextColor,
+                onBackgroundTypeSelected = onBackgroundTypeSelected,
+                onTextColorSelected = onTextColorSelected,
             )
-
-            if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
-                HADropdownMenu(
-                    items = listOf(
-                        HADropdownItem(
-                            key = EntityWidgetTextColor.WHITE,
-                            label = stringResource(commonR.string.widget_text_color_white),
-                        ),
-                        HADropdownItem(
-                            key = EntityWidgetTextColor.BLACK,
-                            label = stringResource(commonR.string.widget_text_color_black),
-                        ),
-                    ),
-                    selectedKey = selectedTextColor,
-                    onItemSelected = onTextColorSelected,
-                    label = stringResource(commonR.string.widget_text_color_label),
-                    modifier = Modifier.formControlWidth(),
-                )
-            }
-
-            HAAccentButton(
-                text = stringResource(if (isUpdateWidget) commonR.string.update_widget else commonR.string.add_widget),
-                onClick = onActionClick,
-                modifier = Modifier.formControlWidth(),
+            ActionButton(
+                isUpdateWidget = viewState.isUpdateWidget,
+                enabled = viewState.isActionEnabled,
+                onActionClick = onActionClick,
             )
         }
     }
+}
+
+@Composable
+private fun ServerSelector(
+    servers: List<Server>,
+    selectedServerId: Int,
+    isUpdateWidget: Boolean,
+    onServerSelected: (Int) -> Unit,
+) {
+    if (servers.size <= 1 && !(isUpdateWidget && servers.none { it.id == selectedServerId })) return
+
+    HADropdownMenu(
+        items = servers.map {
+            HADropdownItem(key = it.id, label = it.friendlyName)
+        },
+        selectedKey = selectedServerId.takeIf { serverId ->
+            servers.any { it.id == serverId }
+        },
+        onItemSelected = onServerSelected,
+        label = stringResource(commonR.string.server_select),
+        placeholder = stringResource(commonR.string.server_select),
+        modifier = Modifier.formControlWidth(),
+        enabled = servers.isNotEmpty(),
+    )
+}
+
+@Composable
+private fun EntityPickerSection(
+    entities: List<Entity>,
+    selectedEntityId: String?,
+    entityRegistry: List<EntityRegistryResponse>? = null,
+    deviceRegistry: List<DeviceRegistryResponse>? = null,
+    areaRegistry: List<AreaRegistryResponse>? = null,
+    onEntitySelected: (String?) -> Unit,
+) {
+    EntityPicker(
+        entities = entities,
+        selectedEntityId = selectedEntityId,
+        onEntitySelectedId = onEntitySelected,
+        onEntityCleared = { onEntitySelected(null) },
+        modifier = Modifier.formControlWidth(),
+        entityRegistry = entityRegistry,
+        deviceRegistry = deviceRegistry,
+        areaRegistry = areaRegistry,
+    )
+}
+
+@Composable
+private fun AttributeSection(
+    viewState: EntityWidgetConfigureViewState,
+    availableAttributes: List<String>,
+    onAppendAttributesChanged: (Boolean) -> Unit,
+    onAttributeAdded: (String) -> Unit,
+    onAttributeRemoved: (String) -> Unit,
+    onCustomAttributeChanged: (String) -> Unit,
+    onCustomAttributesAdded: () -> Unit,
+    onAttributeSeparatorChanged: (String) -> Unit,
+) {
+    Column(
+        modifier = Modifier.formControlWidth(),
+        verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
+    ) {
+        CheckboxRow(
+            text = stringResource(commonR.string.entity_attribute_checkbox),
+            checked = viewState.appendAttributes,
+            onCheckedChange = onAppendAttributesChanged,
+        )
+
+        AnimatedVisibility(visible = viewState.appendAttributes) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
+            ) {
+                AttributeSelector(
+                    availableAttributes = availableAttributes,
+                    selectedAttributeIds = viewState.selectedAttributeIds,
+                    customAttribute = viewState.customAttribute,
+                    onAttributeAdded = onAttributeAdded,
+                    onAttributeRemoved = onAttributeRemoved,
+                    onCustomAttributeChanged = onCustomAttributeChanged,
+                    onCustomAttributesAdded = onCustomAttributesAdded,
+                )
+                HATextField(
+                    value = viewState.attributeSeparator,
+                    onValueChange = onAttributeSeparatorChanged,
+                    label = { Text(stringResource(commonR.string.widget_attribute_separator_label)) },
+                    placeholder = { Text(stringResource(commonR.string.widget_separator_input_hint)) },
+                    maxLines = 1,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TextOptionsSection(
+    viewState: EntityWidgetConfigureViewState,
+    onTextSizeChanged: (String) -> Unit,
+    onStateSeparatorChanged: (String) -> Unit,
+    onLabelChanged: (String) -> Unit,
+) {
+    HATextField(
+        value = viewState.textSize,
+        onValueChange = onTextSizeChanged,
+        label = { Text(stringResource(commonR.string.widget_text_size_label)) },
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Number,
+            imeAction = ImeAction.Next,
+        ),
+        maxLines = 1,
+    )
+
+    HATextField(
+        value = viewState.stateSeparator,
+        onValueChange = onStateSeparatorChanged,
+        label = { Text(stringResource(commonR.string.widget_state_separator_label)) },
+        placeholder = { Text(stringResource(commonR.string.widget_separator_input_hint)) },
+        maxLines = 1,
+    )
+
+    HATextField(
+        value = viewState.label,
+        onValueChange = onLabelChanged,
+        label = { Text(stringResource(commonR.string.label_label)) },
+        placeholder = { Text(stringResource(commonR.string.widget_text_hint_label)) },
+        maxLines = 1,
+    )
+}
+
+@Composable
+private fun TapActionSection(
+    selectedTapAction: WidgetTapAction,
+    isToggleable: Boolean,
+    onTapActionSelected: (WidgetTapAction) -> Unit,
+) {
+    if (!isToggleable) return
+
+    HADropdownMenu(
+        items = listOf(
+            HADropdownItem(
+                key = WidgetTapAction.TOGGLE,
+                label = stringResource(commonR.string.widget_tap_action_toggle),
+            ),
+            HADropdownItem(
+                key = WidgetTapAction.REFRESH,
+                label = stringResource(commonR.string.refresh),
+            ),
+        ),
+        selectedKey = selectedTapAction,
+        onItemSelected = onTapActionSelected,
+        label = stringResource(commonR.string.widget_tap_action_label),
+        modifier = Modifier.formControlWidth(),
+    )
+}
+
+@Composable
+private fun AppearanceSection(
+    selectedBackgroundType: WidgetBackgroundType,
+    dynamicColorAvailable: Boolean,
+    selectedTextColor: EntityWidgetTextColor,
+    onBackgroundTypeSelected: (WidgetBackgroundType) -> Unit,
+    onTextColorSelected: (EntityWidgetTextColor) -> Unit,
+) {
+    HADropdownMenu(
+        items = buildList {
+            if (dynamicColorAvailable) {
+                add(
+                    HADropdownItem(
+                        key = WidgetBackgroundType.DYNAMICCOLOR,
+                        label = stringResource(commonR.string.widget_background_type_dynamiccolor),
+                    ),
+                )
+            }
+            add(
+                HADropdownItem(
+                    key = WidgetBackgroundType.DAYNIGHT,
+                    label = stringResource(commonR.string.widget_background_type_daynight),
+                ),
+            )
+            add(
+                HADropdownItem(
+                    key = WidgetBackgroundType.TRANSPARENT,
+                    label = stringResource(commonR.string.widget_background_type_transparent),
+                ),
+            )
+        },
+        selectedKey = selectedBackgroundType,
+        onItemSelected = onBackgroundTypeSelected,
+        label = stringResource(commonR.string.widget_background_type_label),
+        modifier = Modifier.formControlWidth(),
+    )
+
+    if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
+        HADropdownMenu(
+            items = listOf(
+                HADropdownItem(
+                    key = EntityWidgetTextColor.WHITE,
+                    label = stringResource(commonR.string.widget_text_color_white),
+                ),
+                HADropdownItem(
+                    key = EntityWidgetTextColor.BLACK,
+                    label = stringResource(commonR.string.widget_text_color_black),
+                ),
+            ),
+            selectedKey = selectedTextColor,
+            onItemSelected = onTextColorSelected,
+            label = stringResource(commonR.string.widget_text_color_label),
+            modifier = Modifier.formControlWidth(),
+        )
+    }
+}
+
+@Composable
+private fun ActionButton(isUpdateWidget: Boolean, enabled: Boolean, onActionClick: () -> Unit) {
+    HAAccentButton(
+        text = stringResource(
+            if (isUpdateWidget) commonR.string.update_widget else commonR.string.add_widget,
+        ),
+        onClick = onActionClick,
+        modifier = Modifier
+            .formControlWidth()
+            .testTag(ENTITY_WIDGET_ACTION_BUTTON_TAG),
+        enabled = enabled,
+    )
 }
 
 private fun Modifier.formControlWidth(): Modifier = this
@@ -361,29 +497,24 @@ private fun CheckboxRow(text: String, checked: Boolean, onCheckedChange: (Boolea
 private fun AttributeSelector(
     availableAttributes: List<String>,
     selectedAttributeIds: List<String>,
+    customAttribute: String,
     onAttributeAdded: (String) -> Unit,
     onAttributeRemoved: (String) -> Unit,
+    onCustomAttributeChanged: (String) -> Unit,
+    onCustomAttributesAdded: () -> Unit,
 ) {
     val unselectedAttributes = availableAttributes.filterNot(selectedAttributeIds::contains)
-    var customAttribute by rememberSaveable { mutableStateOf("") }
-    val addCustomAttributes = {
-        customAttribute
-            .split(',')
-            .map(String::trim)
-            .filter(String::isNotEmpty)
-            .forEach(onAttributeAdded)
-        customAttribute = ""
-    }
 
     Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2)) {
         HATextField(
             value = customAttribute,
-            onValueChange = { customAttribute = it },
+            onValueChange = onCustomAttributeChanged,
+            modifier = Modifier.testTag(ENTITY_WIDGET_CUSTOM_ATTRIBUTE_TAG),
             label = { Text(stringResource(commonR.string.widget_attribute_add)) },
             placeholder = { Text(stringResource(commonR.string.label_attribute)) },
             trailingIcon = {
                 IconButton(
-                    onClick = addCustomAttributes,
+                    onClick = onCustomAttributesAdded,
                     enabled = customAttribute.isNotBlank(),
                 ) {
                     Icon(
@@ -393,7 +524,7 @@ private fun AttributeSelector(
                 }
             },
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { addCustomAttributes() }),
+            keyboardActions = KeyboardActions(onDone = { onCustomAttributesAdded() }),
             maxLines = 1,
         )
 
@@ -452,37 +583,41 @@ private fun EntityWidgetConfigureViewPreview() {
     HAThemeForPreview {
         EntityWidgetConfigureView(
             servers = listOf(previewServer1, previewServer2),
-            selectedServerId = previewServer1.id,
+            viewState = EntityWidgetConfigureViewState(
+                selectedServerId = previewServer1.id,
+                selectedEntityId = previewEntity1.entityId,
+                appendAttributes = true,
+                selectedAttributeIds = listOf("brightness"),
+                label = "Office light",
+                textSize = "30",
+                stateSeparator = " - ",
+                attributeSeparator = ", ",
+                selectedTapAction = WidgetTapAction.TOGGLE,
+                selectedBackgroundType = WidgetBackgroundType.TRANSPARENT,
+                selectedTextColor = EntityWidgetTextColor.WHITE,
+            ),
             onServerSelected = {},
             entities = listOf(previewEntity1),
-            selectedEntityId = previewEntity1.entityId,
             onEntitySelected = {},
             entityRegistry = null,
             deviceRegistry = null,
             areaRegistry = null,
             availableAttributes = listOf("brightness", "friendly_name"),
-            appendAttributes = true,
             onAppendAttributesChanged = {},
-            selectedAttributeIds = listOf("brightness"),
             onAttributeAdded = {},
             onAttributeRemoved = {},
-            label = "Office light",
+            onCustomAttributeChanged = {},
+            onCustomAttributesAdded = {},
             onLabelChanged = {},
-            textSize = "30",
             onTextSizeChanged = {},
-            stateSeparator = " - ",
             onStateSeparatorChanged = {},
-            attributeSeparator = ", ",
             onAttributeSeparatorChanged = {},
             isToggleable = true,
-            selectedTapAction = WidgetTapAction.TOGGLE,
             onTapActionSelected = {},
-            selectedBackgroundType = WidgetBackgroundType.TRANSPARENT,
             onBackgroundTypeSelected = {},
             dynamicColorAvailable = true,
-            selectedTextColor = EntityWidgetTextColor.WHITE,
             onTextColorSelected = {},
-            isUpdateWidget = false,
+            onErrorShown = {},
             onActionClick = {},
         )
     }

@@ -9,7 +9,6 @@ import android.content.Intent
 import android.os.Build
 import android.os.RemoteException
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -36,6 +35,7 @@ import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -47,6 +47,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 internal data class EntityWidgetTextColors(val white: String, val black: String)
@@ -54,6 +55,34 @@ internal data class EntityWidgetTextColors(val white: String, val black: String)
 internal enum class EntityWidgetTextColor {
     WHITE,
     BLACK,
+}
+
+internal enum class EntityWidgetConfigureError {
+    CREATE,
+    UPDATE,
+}
+
+internal data class EntityWidgetConfigureViewState(
+    val selectedServerId: Int = ServerManager.SERVER_ID_ACTIVE,
+    val selectedEntityId: String? = null,
+    val appendAttributes: Boolean = false,
+    val selectedAttributeIds: List<String> = emptyList(),
+    val customAttribute: String = "",
+    val label: String = "",
+    val textSize: String = DEFAULT_TEXT_SIZE,
+    val stateSeparator: String = "",
+    val attributeSeparator: String = "",
+    val selectedTapAction: WidgetTapAction = WidgetTapAction.REFRESH,
+    val selectedBackgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
+    val selectedTextColor: EntityWidgetTextColor = EntityWidgetTextColor.WHITE,
+    val isUpdateWidget: Boolean = false,
+    val error: EntityWidgetConfigureError? = null,
+) {
+    val hasValidTextSize: Boolean
+        get() = textSize.toFloatOrNull()?.let { it.isFinite() && it > 0 } == true
+
+    val isActionEnabled: Boolean
+        get() = selectedEntityId != null && hasValidTextSize
 }
 
 @HiltViewModel(assistedFactory = EntityWidgetConfigureViewModel.Factory::class)
@@ -71,8 +100,21 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
 
     val servers = serverManager.serversFlow
 
-    var selectedServerId by mutableIntStateOf(ServerManager.SERVER_ID_ACTIVE)
+    internal var viewState by mutableStateOf(EntityWidgetConfigureViewState(selectedEntityId = preselectedEntityId))
         private set
+
+    val selectedServerId: Int get() = viewState.selectedServerId
+    val selectedEntityId: String? get() = viewState.selectedEntityId
+    val appendAttributes: Boolean get() = viewState.appendAttributes
+    val selectedAttributeIds: List<String> get() = viewState.selectedAttributeIds
+    val label: String get() = viewState.label
+    val textSize: String get() = viewState.textSize
+    val stateSeparator: String get() = viewState.stateSeparator
+    val attributeSeparator: String get() = viewState.attributeSeparator
+    val selectedTapAction: WidgetTapAction get() = viewState.selectedTapAction
+    val selectedBackgroundType: WidgetBackgroundType get() = viewState.selectedBackgroundType
+    internal val selectedTextColor: EntityWidgetTextColor get() = viewState.selectedTextColor
+    val isUpdateWidget: Boolean get() = viewState.isUpdateWidget
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val entities: StateFlow<List<Entity>> = snapshotFlow { selectedServerId }
@@ -150,29 +192,6 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), null)
 
-    var selectedEntityId by mutableStateOf(preselectedEntityId)
-        private set
-    var appendAttributes by mutableStateOf(false)
-        private set
-    var selectedAttributeIds by mutableStateOf<List<String>>(emptyList())
-        private set
-    var label by mutableStateOf("")
-        private set
-    var textSize by mutableStateOf(DEFAULT_TEXT_SIZE)
-        private set
-    var stateSeparator by mutableStateOf("")
-        private set
-    var attributeSeparator by mutableStateOf("")
-        private set
-    var selectedTapAction by mutableStateOf(WidgetTapAction.REFRESH)
-        private set
-    var selectedBackgroundType by mutableStateOf(WidgetBackgroundType.DAYNIGHT)
-        private set
-    internal var selectedTextColor by mutableStateOf(EntityWidgetTextColor.WHITE)
-        private set
-    var isUpdateWidget by mutableStateOf(false)
-        private set
-
     private var labelFromEntity = false
 
     internal fun onSetup(
@@ -185,7 +204,7 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
 
         this.widgetId = widgetId
         this.textColors = textColors
-        selectedBackgroundType = defaultBackgroundType
+        viewState = viewState.copy(selectedBackgroundType = defaultBackgroundType)
 
         initializeState(widgetId)
     }
@@ -198,53 +217,59 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
         }
 
         if (widget != null) {
-            isUpdateWidget = true
-            selectedServerId = widget.serverId
-            selectedEntityId = widget.entityId
-            appendAttributes = !widget.attributeIds.isNullOrBlank()
-            selectedAttributeIds = widget.attributeIds
-                ?.split(',')
-                ?.map(String::trim)
-                ?.filter(String::isNotEmpty)
-                .orEmpty()
-            label = widget.label.orEmpty()
-            textSize = widget.textSize.toInt().toString()
-            stateSeparator = widget.stateSeparator
-            attributeSeparator = widget.attributeSeparator
-            selectedTapAction = widget.tapAction
-            selectedBackgroundType = widget.backgroundType
-            selectedTextColor = if (widget.textColor == textColors.black) {
-                EntityWidgetTextColor.BLACK
-            } else {
-                EntityWidgetTextColor.WHITE
-            }
+            viewState = viewState.copy(
+                selectedServerId = widget.serverId,
+                selectedEntityId = widget.entityId,
+                appendAttributes = !widget.attributeIds.isNullOrBlank(),
+                selectedAttributeIds = widget.attributeIds
+                    ?.split(',')
+                    ?.map(String::trim)
+                    ?.filter(String::isNotEmpty)
+                    .orEmpty(),
+                label = widget.label.orEmpty(),
+                textSize = widget.textSize.toInt().toString(),
+                stateSeparator = widget.stateSeparator,
+                attributeSeparator = widget.attributeSeparator,
+                selectedTapAction = widget.tapAction,
+                selectedBackgroundType = widget.backgroundType,
+                selectedTextColor = if (widget.textColor == textColors.black) {
+                    EntityWidgetTextColor.BLACK
+                } else {
+                    EntityWidgetTextColor.WHITE
+                },
+                isUpdateWidget = true,
+            )
         } else {
-            selectedServerId = serverManager.getServer()?.id ?: ServerManager.SERVER_ID_ACTIVE
+            val serverId = serverManager.getServer()?.id ?: ServerManager.SERVER_ID_ACTIVE
+            viewState = viewState.copy(selectedServerId = serverId)
         }
     }
 
     fun onServerSelected(serverId: Int) {
         if (serverId == selectedServerId) return
 
-        selectedServerId = serverId
-        selectedEntityId = null
-        selectedAttributeIds = emptyList()
-        selectedTapAction = WidgetTapAction.REFRESH
+        viewState = viewState.copy(
+            selectedServerId = serverId,
+            selectedEntityId = null,
+            selectedAttributeIds = emptyList(),
+            selectedTapAction = WidgetTapAction.REFRESH,
+        )
     }
 
     fun onEntitySelected(entityId: String?) {
-        selectedEntityId = entityId
-        selectedAttributeIds = emptyList()
-
-        val entity = selectedEntity()
-        selectedTapAction = if (entity?.domain in EntityExt.APP_PRESS_ACTION_DOMAINS) {
-            WidgetTapAction.TOGGLE
-        } else {
-            WidgetTapAction.REFRESH
-        }
+        val domain = entityId?.substringBefore('.')
+        viewState = viewState.copy(
+            selectedEntityId = entityId,
+            selectedAttributeIds = emptyList(),
+            selectedTapAction = if (domain in EntityExt.APP_PRESS_ACTION_DOMAINS) {
+                WidgetTapAction.TOGGLE
+            } else {
+                WidgetTapAction.REFRESH
+            },
+        )
 
         if (label.isBlank() || labelFromEntity) {
-            updateLabelFromEntity(entity)
+            updateLabelFromEntity(null)
         }
     }
 
@@ -260,52 +285,82 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
     }
 
     fun onAppendAttributesChanged(append: Boolean) {
-        appendAttributes = append
+        viewState = viewState.copy(appendAttributes = append)
     }
 
     fun onAttributeAdded(attributeId: String) {
         if (attributeId !in selectedAttributeIds) {
-            selectedAttributeIds = selectedAttributeIds + attributeId
+            viewState = viewState.copy(selectedAttributeIds = selectedAttributeIds + attributeId)
         }
     }
 
     fun onAttributeRemoved(attributeId: String) {
-        selectedAttributeIds = selectedAttributeIds - attributeId
+        viewState = viewState.copy(selectedAttributeIds = selectedAttributeIds - attributeId)
+    }
+
+    fun onCustomAttributeChanged(value: String) {
+        viewState = viewState.copy(customAttribute = value)
+    }
+
+    fun onCustomAttributesAdded() {
+        val attributes = viewState.customAttribute
+            .split(',')
+            .map(String::trim)
+            .filter(String::isNotEmpty)
+
+        if (attributes.isEmpty()) return
+
+        viewState = viewState.copy(
+            selectedAttributeIds = selectedAttributeIds + attributes.filterNot(selectedAttributeIds::contains),
+            customAttribute = "",
+        )
     }
 
     fun onLabelChanged(value: String) {
-        label = value
+        viewState = viewState.copy(label = value)
         labelFromEntity = false
     }
 
     fun onTextSizeChanged(value: String) {
-        textSize = value.filter(Char::isDigit)
+        viewState = viewState.copy(textSize = value.filter(Char::isDigit))
     }
 
     fun onStateSeparatorChanged(value: String) {
-        stateSeparator = value
+        viewState = viewState.copy(stateSeparator = value)
     }
 
     fun onAttributeSeparatorChanged(value: String) {
-        attributeSeparator = value
+        viewState = viewState.copy(attributeSeparator = value)
     }
 
     fun onTapActionSelected(action: WidgetTapAction) {
-        selectedTapAction = action
+        viewState = viewState.copy(selectedTapAction = action)
     }
 
     fun onBackgroundTypeSelected(backgroundType: WidgetBackgroundType) {
-        selectedBackgroundType = backgroundType
+        viewState = viewState.copy(selectedBackgroundType = backgroundType)
     }
 
     internal fun onTextColorSelected(textColor: EntityWidgetTextColor) {
-        selectedTextColor = textColor
+        viewState = viewState.copy(selectedTextColor = textColor)
     }
 
-    fun selectedEntity(): Entity? = entities.value.firstOrNull { it.entityId == selectedEntityId }
+    internal fun onActionError(error: EntityWidgetConfigureError) {
+        viewState = viewState.copy(error = error)
+    }
+
+    internal fun onErrorShown() {
+        viewState = viewState.copy(error = null)
+    }
+
+    private suspend fun selectedEntity(): Entity? = withContext(Dispatchers.Default) {
+        entities.value.firstOrNull { it.entityId == selectedEntityId }
+    }
 
     suspend fun isValidSelection(): Boolean {
-        return serverManager.getServer(selectedServerId) != null && selectedEntity() != null
+        return viewState.isActionEnabled &&
+            serverManager.getServer(selectedServerId) != null &&
+            selectedEntity() != null
     }
 
     suspend fun updateWidgetConfiguration() {
@@ -385,7 +440,7 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
 
     private fun updateLabelFromEntity(entity: Entity?) {
         val friendlyName = entity?.friendlyName?.takeIf { it != entity.entityId }.orEmpty()
-        label = friendlyName
+        viewState = viewState.copy(label = friendlyName)
         labelFromEntity = friendlyName.isNotEmpty()
     }
 
