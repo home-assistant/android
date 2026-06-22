@@ -388,7 +388,6 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     }
 
     override fun onCleared() {
-        super.onCleared()
         exoPlayerManager.close()
     }
 
