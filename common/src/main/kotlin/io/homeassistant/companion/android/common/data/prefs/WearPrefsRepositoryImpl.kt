@@ -62,10 +62,7 @@ private class WearLocalStorageWithMigration(
                         localStorage.putBoolean(PREF_WEAR_TOAST_CONFIRMATION, it)
                     }
 
-                    localStorage.putInt(
-                        MIGRATION_PREF,
-                        MIGRATION_VERSION,
-                    )
+                    localStorage.putInt(MIGRATION_PREF, MIGRATION_VERSION)
                 }
 
                 if (currentVersion == null || currentVersion < 2) {
@@ -91,10 +88,7 @@ private class WearLocalStorageWithMigration(
                     localStorage.remove(legacyPrefTileTemplate)
                     localStorage.remove(legacyPrefTileTemplateRefreshInterval)
 
-                    localStorage.putInt(
-                        MIGRATION_PREF,
-                        MIGRATION_VERSION,
-                    )
+                    localStorage.putInt(MIGRATION_PREF, MIGRATION_VERSION)
                 }
             }
             migrationChecked = true
