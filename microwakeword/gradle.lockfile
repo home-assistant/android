@@ -1,6 +1,7 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
+# To regenerate this file, run: ./gradlew :microwakeword:dependencies --write-locks
 androidx.activity:activity-compose:1.7.0=debugUnitTestLintChecksClasspath,debugUnitTestRuntimeClasspath
 androidx.activity:activity-ktx:1.7.0=debugUnitTestLintChecksClasspath,debugUnitTestRuntimeClasspath
 androidx.activity:activity:1.5.1=debugAndroidTestCompileClasspath,debugAndroidTestLintChecksClasspath,debugAndroidTestRuntimeClasspath,debugCompileClasspath,debugLintChecksClasspath,debugRuntimeClasspath,debugUnitTestCompileClasspath,releaseCompileClasspath,releaseLintChecksClasspath,releaseRuntimeClasspath
