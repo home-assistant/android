@@ -62,7 +62,7 @@ private class WearLocalStorageWithMigration(
                         localStorage.putBoolean(PREF_WEAR_TOAST_CONFIRMATION, it)
                     }
 
-                    localStorage.putInt(MIGRATION_PREF, MIGRATION_VERSION)
+                    localStorage.putInt(MIGRATION_PREF, 1)
                 }
 
                 if (currentVersion == null || currentVersion < 2) {
