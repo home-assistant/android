@@ -58,10 +58,12 @@ class LinkViewModel @Inject constructor(
                         LinkNavigationEvent.NavigateToWebView(destination.path, destination.serverId),
                     )
                 is LinkDestination.ServerPicker ->
-                    _uiState.value = LinkUiState.ChoosingServer(
-                        items = serverChooserItemsUseCase(destination.servers),
-                        path = destination.path,
-                    )
+                    serverChooserItemsUseCase(destination.servers).collect { items ->
+                        _uiState.value = LinkUiState.ChoosingServer(
+                            items = items,
+                            path = destination.path,
+                        )
+                    }
             }
         }
     }

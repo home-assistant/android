@@ -10,6 +10,7 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -36,7 +37,7 @@ class LinkViewModelTest {
             ServerChooserItem(serverId = 2, userName = "Bob", serverName = "Office"),
         )
         coEvery { linkHandler.handleLink(any()) } returns LinkDestination.ServerPicker("/lovelace", servers)
-        coEvery { serverChooserItems(servers) } returns items
+        every { serverChooserItems(servers) } returns flowOf(items)
 
         val viewModel = createViewModel()
         viewModel.uiState.test {
@@ -96,9 +97,11 @@ class LinkViewModelTest {
     fun `Given ChoosingServer state when onServerSelected then NavigateToWebView event carries the path and id`() = runTest {
         val servers = listOf<Server>(mockk { every { id } returns 1 }, mockk { every { id } returns 2 })
         coEvery { linkHandler.handleLink(any()) } returns LinkDestination.ServerPicker("/lovelace", servers)
-        coEvery { serverChooserItems(servers) } returns listOf(
-            ServerChooserItem(serverId = 1, userName = "Alice", serverName = "Home"),
-            ServerChooserItem(serverId = 2, userName = "Bob", serverName = "Office"),
+        every { serverChooserItems(servers) } returns flowOf(
+            listOf(
+                ServerChooserItem(serverId = 1, userName = "Alice", serverName = "Home"),
+                ServerChooserItem(serverId = 2, userName = "Bob", serverName = "Office"),
+            ),
         )
 
         val viewModel = createViewModel()

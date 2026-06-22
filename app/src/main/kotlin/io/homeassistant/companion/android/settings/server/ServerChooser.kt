@@ -48,8 +48,8 @@ import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 
-private val ROW_MIN_HEIGHT = HADimens.SPACE20
-private val AVATAR_SIZE = HADimens.SPACE12
+private val ROW_MIN_HEIGHT = HADimens.SPACE18
+private val AVATAR_SIZE = HADimens.SPACE10
 private val AVATAR_BADGE_SIZE = HADimens.SPACE5
 private val AVATAR_BADGE_ICON_SIZE = HADimens.SPACE3
 

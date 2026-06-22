@@ -37,7 +37,7 @@ class ServerChooserFragment : DialogFragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 val items by produceState(initialValue = emptyList()) {
-                    value = serverChooserItems(serverManager.servers())
+                    serverChooserItems(serverManager.servers()).collect { value = it }
                 }
                 HATheme {
                     ServerChooser(
