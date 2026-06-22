@@ -109,7 +109,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -2098,7 +2097,7 @@ class MessagingManager @Inject constructor(
         return success
     }
 
-    private fun notifyMissingPermission(type: String, serverId: String) {
+    private suspend fun notifyMissingPermission(type: String, serverId: String) {
         val appManager =
             context.getSystemService<ActivityManager>()
         val currentProcess = appManager?.runningAppProcesses
@@ -2110,9 +2109,7 @@ class MessagingManager @Inject constructor(
                             NotificationData.MESSAGE to context.getString(commonR.string.missing_command_permission),
                             THIS_SERVER_ID to serverId,
                         )
-                        runBlocking {
-                            sendNotification(data)
-                        }
+                        sendNotification(data)
                     } else {
                         when (type) {
                             COMMAND_WEBVIEW, COMMAND_ACTIVITY, COMMAND_LAUNCH_APP -> requestSystemAlertPermission()
