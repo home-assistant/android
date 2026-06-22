@@ -139,9 +139,6 @@ internal fun EntityWidgetConfigureView(
     onServerSelected: (Int) -> Unit,
     entities: List<Entity>,
     onEntitySelected: (String?) -> Unit,
-    entityRegistry: List<EntityRegistryResponse>? = null,
-    deviceRegistry: List<DeviceRegistryResponse>? = null,
-    areaRegistry: List<AreaRegistryResponse>? = null,
     availableAttributes: List<String>,
     onAppendAttributesChanged: (Boolean) -> Unit,
     onAttributeAdded: (String) -> Unit,
@@ -158,6 +155,9 @@ internal fun EntityWidgetConfigureView(
     dynamicColorAvailable: Boolean,
     onTextColorSelected: (EntityWidgetTextColor) -> Unit,
     onErrorShown: () -> Unit,
+    entityRegistry: List<EntityRegistryResponse>? = null,
+    deviceRegistry: List<DeviceRegistryResponse>? = null,
+    areaRegistry: List<AreaRegistryResponse>? = null,
     onActionClick: () -> Unit,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
