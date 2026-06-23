@@ -32,7 +32,7 @@ import timber.log.Timber
  * scope is `@ViewModelScoped`.
  *
  * **User-facing dialogs** go through [FrontendDialogManager] just like all other dialogs on the
- * frontend screen — `showMatterThreadProgress()` for the "reading dataset" spinner and
+ * frontend screen — `showMatterThreadProgress()` for the "syncing" spinner and
  * `showMatterThreadTerminal(terminal)` for the post-flow alert.
  *
  * **One-shot screen events** flow through [events]:
