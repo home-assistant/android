@@ -184,6 +184,7 @@ class MessagingManager @Inject constructor(
         const val COMMAND_ACTIVITY = "command_activity"
         const val COMMAND_WEBVIEW = "command_webview"
         const val COMMAND_KEEP_SCREEN_ON = "keep_screen_on"
+        const val ACTION_KEEP_SCREEN_ON_CHANGED = "io.homeassistant.companion.android.KEEP_SCREEN_ON_CHANGED"
         const val COMMAND_LAUNCH_APP = "command_launch_app"
         const val COMMAND_APP_LOCK = "command_app_lock"
         const val COMMAND_PERSISTENT_CONNECTION = "command_persistent_connection"
@@ -815,6 +816,9 @@ class MessagingManager @Inject constructor(
                 if (!command.isNullOrEmpty()) {
                     prefsRepository.setKeepScreenOnEnabled(
                         command == COMMAND_KEEP_SCREEN_ON,
+                    )
+                    context.sendBroadcast(
+                        Intent(ACTION_KEEP_SCREEN_ON_CHANGED).setPackage(context.packageName),
                     )
                 }
 

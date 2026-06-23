@@ -4,8 +4,10 @@ import android.annotation.SuppressLint
 import android.app.DownloadManager
 import android.app.PictureInPictureParams
 import android.content.ActivityNotFoundException
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.Rect
 import android.net.Uri
@@ -134,6 +136,7 @@ import io.homeassistant.companion.android.improv.ui.ImprovPermissionDialog
 import io.homeassistant.companion.android.improv.ui.ImprovSetupDialog
 import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.nfc.WriteNfcTag
+import io.homeassistant.companion.android.notifications.MessagingManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.ConnectionSecurityLevelFragment
@@ -350,6 +353,12 @@ class WebViewActivity :
     private var downloadFileContentDisposition = ""
     private var downloadFileMimetype = ""
     private var serverHandleInsets = mutableStateOf(false)
+    private var isKeepScreenOnReceiverRegistered = false
+    private val keepScreenOnReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            applyKeepScreenOn()
+        }
+    }
 
     private val snackbarHostState = SnackbarHostState()
 
@@ -809,11 +818,9 @@ class WebViewActivity :
             }
         }
 
-        lifecycleScope.launch {
-            if (presenter.isKeepScreenOnEnabled()) {
-                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            }
+        applyKeepScreenOn()
 
+        lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 presenter.getMatterThreadStepFlow().collect {
                     Timber.d("Matter/Thread step changed to $it")
@@ -1394,8 +1401,42 @@ class WebViewActivity :
         requestLocalNetworkPermission.launch(android.Manifest.permission.ACCESS_LOCAL_NETWORK)
     }
 
+    private fun registerKeepScreenOnReceiver() {
+        if (isKeepScreenOnReceiverRegistered) return
+        ContextCompat.registerReceiver(
+            this,
+            keepScreenOnReceiver,
+            IntentFilter(MessagingManager.ACTION_KEEP_SCREEN_ON_CHANGED),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
+        isKeepScreenOnReceiverRegistered = true
+    }
+
+    private fun unregisterKeepScreenOnReceiver() {
+        if (!isKeepScreenOnReceiverRegistered) return
+        isKeepScreenOnReceiverRegistered = false
+        try {
+            unregisterReceiver(keepScreenOnReceiver)
+        } catch (e: IllegalArgumentException) {
+            Timber.w(e, "Keep screen on receiver was already unregistered")
+        }
+    }
+
+    private fun applyKeepScreenOn() {
+        lifecycleScope.launch {
+            if (presenter.isKeepScreenOnEnabled()) {
+                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            } else {
+                window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            }
+        }
+    }
+
     override fun onResume() {
         super.onResume()
+        registerKeepScreenOnReceiver()
+        applyKeepScreenOn()
+
         lifecycleScope.launch {
             // if null it means that the settings were not yet read so we should not recreate
             if (currentAutoplay != null && currentAutoplay != presenter.isAutoPlayVideoEnabled()) {
@@ -1413,12 +1454,6 @@ class WebViewActivity :
             WebsocketManager.start(this@WebViewActivity)
 
             requestedOrientation = presenter.getScreenOrientation().activityInfo
-
-            if (presenter.isKeepScreenOnEnabled()) {
-                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            } else {
-                window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            }
 
             checkLocationDisabled()
             changeLog.showChangeLog(this@WebViewActivity, false)
@@ -1438,6 +1473,7 @@ class WebViewActivity :
 
     override fun onPause() {
         super.onPause()
+        unregisterKeepScreenOnReceiver()
         lifecycleScope.launch {
             presenter.setAppActive(false)
         }
