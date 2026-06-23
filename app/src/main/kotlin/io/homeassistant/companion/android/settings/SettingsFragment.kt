@@ -216,7 +216,7 @@ class SettingsFragment(
                 findPreference<Preference>("manage_shortcuts")?.setOnPreferenceClickListener {
                     parentFragmentManager.commit {
                         replace(R.id.content, ManageShortcutsSettingsFragment::class.java, null)
-                        addToBackStack(getString(commonR.string.shortcuts_legacy))
+                        addToBackStack(getString(commonR.string.shortcuts))
                     }
                     return@setOnPreferenceClickListener true
                 }

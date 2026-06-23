@@ -177,12 +177,12 @@
     </PreferenceCategory>
     <PreferenceCategory
         android:key="shortcuts"
-        android:title="@string/shortcuts_legacy"
+        android:title="@string/shortcuts"
         app:isPreferenceVisible="false">
         <Preference
             android:key="manage_shortcuts"
             android:icon="@drawable/ic_shortcut"
-            android:title="@string/manage_shortcuts"
+            android:title="@string/manage_shortcuts_legacy"
             android:summary="@string/manage_shortcuts_summary" />
     </PreferenceCategory>
     <PreferenceCategory
