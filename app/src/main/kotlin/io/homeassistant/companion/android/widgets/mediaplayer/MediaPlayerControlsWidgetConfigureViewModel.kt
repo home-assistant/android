@@ -216,7 +216,7 @@ class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
                     showSkip = existingWidget.showSkip,
                     showSeek = existingWidget.showSeek,
                     showSource = existingWidget.showSource,
-                    backgroundType = existingWidget.backgroundType,
+                    backgroundType = coerceBackgroundType(existingWidget.backgroundType),
                 )
             }
         } else {
@@ -235,6 +235,19 @@ class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
     } else {
         WidgetBackgroundType.DAYNIGHT
     }
+
+    /**
+     * A persisted DYNAMICCOLOR background is only offered when the device supports dynamic color
+     * (e.g. a widget restored from backup onto an unsupported device). In that case it isn't in the
+     * dropdown items, so coerce it to DAYNIGHT to avoid a blank selection, matching the fallback in
+     * WidgetUtils.getSelectedBackgroundOption.
+     */
+    private fun coerceBackgroundType(backgroundType: WidgetBackgroundType): WidgetBackgroundType =
+        if (backgroundType == WidgetBackgroundType.DYNAMICCOLOR && !DynamicColors.isDynamicColorAvailable()) {
+            WidgetBackgroundType.DAYNIGHT
+        } else {
+            backgroundType
+        }
 
     fun onServerSelected(serverId: Int) {
         if (serverId == editState.value.selectedServerId) return
