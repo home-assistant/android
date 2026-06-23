@@ -153,6 +153,9 @@ internal fun MediaPlayerControlsWidgetConfigureContent(
                         selectedKey = state.selectedServerId,
                         onItemSelected = onServerSelected,
                         label = stringResource(commonR.string.widget_spinner_server),
+                        // When editing a widget whose persisted server no longer exists, the
+                        // selected id is absent from items; show a prompt instead of a blank field.
+                        placeholder = stringResource(commonR.string.select),
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
