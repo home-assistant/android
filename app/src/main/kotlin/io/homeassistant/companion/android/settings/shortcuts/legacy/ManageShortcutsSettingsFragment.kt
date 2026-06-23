@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.settings.shortcuts
+package io.homeassistant.companion.android.settings.shortcuts.legacy
 
 import android.os.Build
 import android.os.Bundle
@@ -17,7 +17,7 @@ import com.mikepenz.iconics.typeface.IIcon
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.settings.addHelpMenuProvider
-import io.homeassistant.companion.android.settings.shortcuts.views.ManageShortcutsView
+import io.homeassistant.companion.android.settings.shortcuts.legacy.views.ManageShortcutsView
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.icondialog.IconDialog
 import timber.log.Timber

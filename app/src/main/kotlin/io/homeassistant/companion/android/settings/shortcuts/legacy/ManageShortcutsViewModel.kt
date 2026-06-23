@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.settings.shortcuts
+package io.homeassistant.companion.android.settings.shortcuts.legacy
 
 import android.app.Application
 import android.content.Intent

@@ -177,7 +177,7 @@
     </PreferenceCategory>
     <PreferenceCategory
         android:key="shortcuts"
-        android:title="@string/shortcuts"
+        android:title="@string/shortcuts_legacy"
         app:isPreferenceVisible="false">
         <Preference
             android:key="manage_shortcuts"
