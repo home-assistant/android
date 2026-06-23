@@ -42,6 +42,7 @@ import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
 import io.homeassistant.companion.android.frontend.improv.FrontendImprovHandler
 import io.homeassistant.companion.android.frontend.improv.ImprovUIState
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridgeFactory
+import io.homeassistant.companion.android.frontend.matterthread.FrontendMatterThreadHandler
 import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
@@ -129,6 +130,9 @@ class FrontendViewModelTest {
     private val exoPlayerManager: FrontendExoPlayerManager = mockk(relaxed = true) {
         every { state } returns MutableStateFlow(null)
     }
+    private val matterThreadHandler: FrontendMatterThreadHandler = mockk(relaxed = true) {
+        every { events } returns MutableSharedFlow()
+    }
 
     private val improvUiStateFlow = MutableStateFlow<ImprovUIState?>(null)
     private val improvEventsFlow = MutableSharedFlow<FrontendImprovHandler.Event>(extraBufferCapacity = 1)
@@ -171,6 +175,7 @@ class FrontendViewModelTest {
             exoPlayerManager = exoPlayerManager,
             improvHandler = improvHandler,
             barcodeScannerHandler = FrontendBarcodeScannerHandler(externalBusRepository, dialogManager),
+            matterThreadHandler = matterThreadHandler,
         )
     }
 
@@ -2571,6 +2576,55 @@ class FrontendViewModelTest {
                 LifecycleHandler.onActivityStopped(activity) // reset global counter for other tests
             }
             job.cancel()
+        }
+    }
+
+    @Nested
+    inner class MatterThreadRouting {
+
+        @Test
+        fun `Given StartMatterCommissioning handler event when collected then handler is called`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            createViewModel()
+            advanceUntilIdle()
+
+            messageFlow.emit(FrontendHandlerEvent.StartMatterCommissioning)
+            advanceUntilIdle()
+
+            coVerify { matterThreadHandler.onStartMatterCommissioning() }
+        }
+
+        @Test
+        fun `Given ImportThreadCredentials handler event when collected then handler is called with current serverId`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            createViewModel()
+            advanceUntilIdle()
+
+            messageFlow.emit(FrontendHandlerEvent.ImportThreadCredentials)
+            advanceUntilIdle()
+
+            coVerify { matterThreadHandler.onImportThreadCredentials(serverId = serverId) }
+        }
+
+        @Test
+        fun `Given onMatterThreadIntentResult when called then forwards to handler`() = runTest {
+            val viewModel = createViewModel()
+            val result = androidx.activity.result.ActivityResult(android.app.Activity.RESULT_OK, null)
+
+            viewModel.onMatterThreadIntentResult(result)
+            advanceUntilIdle()
+
+            coVerify { matterThreadHandler.onMatterThreadIntentResult(result) }
         }
     }
 }

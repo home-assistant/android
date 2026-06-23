@@ -285,12 +285,12 @@ class FrontendMessageHandler @Inject constructor(
 
             is MatterCommissionMessage -> {
                 Timber.d("matter/commission received with id: ${message.id}")
-                FrontendHandlerEvent.StartMatterCommissioning(messageId = message.id)
+                FrontendHandlerEvent.StartMatterCommissioning
             }
 
             is ThreadImportCredentialsMessage -> {
                 Timber.d("thread/import_credentials received with id: ${message.id}")
-                FrontendHandlerEvent.ImportThreadCredentials(messageId = message.id)
+                FrontendHandlerEvent.ImportThreadCredentials
             }
 
             is UnknownIncomingMessage -> {
