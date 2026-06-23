@@ -896,7 +896,7 @@ shutdown()
         advanceTimeBy(100)
 
         webSocketCore.shutdown()
-        advanceUntilIdle()
+        runCurrent()
         verify(exactly = 1) { mockConnection.close(1001, "Session removed from app.") }
 
         advanceTimeBy(50)
