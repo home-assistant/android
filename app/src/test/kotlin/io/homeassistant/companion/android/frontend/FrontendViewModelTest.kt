@@ -42,6 +42,7 @@ import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
 import io.homeassistant.companion.android.frontend.improv.FrontendImprovHandler
 import io.homeassistant.companion.android.frontend.improv.ImprovUIState
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridgeFactory
+import io.homeassistant.companion.android.frontend.matterthread.FrontendMatterThreadHandler
 import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
@@ -129,10 +130,9 @@ class FrontendViewModelTest {
     private val exoPlayerManager: FrontendExoPlayerManager = mockk(relaxed = true) {
         every { state } returns MutableStateFlow(null)
     }
-    private val matterThreadHandler: io.homeassistant.companion.android.frontend.matterthread.FrontendMatterThreadHandler =
-        mockk(relaxed = true) {
-            every { events } returns MutableSharedFlow()
-        }
+    private val matterThreadHandler: FrontendMatterThreadHandler = mockk(relaxed = true) {
+        every { events } returns MutableSharedFlow()
+    }
 
     private val improvUiStateFlow = MutableStateFlow<ImprovUIState?>(null)
     private val improvEventsFlow = MutableSharedFlow<FrontendImprovHandler.Event>(extraBufferCapacity = 1)

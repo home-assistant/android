@@ -1,6 +1,6 @@
 package io.homeassistant.companion.android.frontend.matterthread.ui
 
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
@@ -28,17 +28,16 @@ internal fun MatterThreadProgressDialogContent() {
         onDismissRequest = {},
         title = { Text(text = stringResource(commonR.string.app_name), style = HATextStyle.HeadlineMedium) },
         text = {
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                HALoading()
+            Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                HALoading(modifier = Modifier.padding(top = HADimens.SPACE4))
+                Text(
+                    text = stringResource(commonR.string.thread_debug_active),
+                    style = HATextStyle.Body,
+                    modifier = Modifier.padding(top = HADimens.SPACE4),
+                )
             }
         },
-        confirmButton = {
-            Text(
-                text = stringResource(commonR.string.thread_debug_active),
-                style = HATextStyle.Body,
-                modifier = Modifier.padding(horizontal = HADimens.SPACE2),
-            )
-        },
+        confirmButton = {},
     )
 }
 

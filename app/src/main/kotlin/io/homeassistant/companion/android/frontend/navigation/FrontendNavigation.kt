@@ -197,18 +197,9 @@ internal fun FrontendEventHandler(
                 is FrontendEvent.NavigateToNfcWrite -> onNavigateToNfcWrite(event.messageId, event.tagId)
                 is FrontendEvent.LaunchMatterThreadIntent -> onLaunchMatterThreadIntent(event.intentSender)
                 is FrontendEvent.RequestFullscreen -> onRequestFullscreen(event.fullscreen)
-
-                is FrontendEvent.LaunchApp -> {
-                    onLaunchApp(event.packageName)
-                }
-
-                is FrontendEvent.LaunchIntent -> {
-                    onLaunchIntent(event.intentUri)
-                }
-
-                is FrontendEvent.NavigateToWidgetConfig -> {
-                    onNavigateToWidgetConfig(event.entityId, event.widgetType)
-                }
+                is FrontendEvent.LaunchApp -> onLaunchApp(event.packageName)
+                is FrontendEvent.LaunchIntent -> onLaunchIntent(event.intentUri)
+                is FrontendEvent.NavigateToWidgetConfig -> onNavigateToWidgetConfig(event.entityId, event.widgetType)
             }
         }
         events.collect { event -> handle(event) }
