@@ -18,6 +18,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
@@ -29,14 +30,12 @@ import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
-import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
@@ -73,17 +72,30 @@ internal data class MediaPlayerControlsWidgetConfigureViewState(
 )
 
 /**
+ * A media-player entity the user has already selected, paired with the display name resolved by the
+ * view model so the screen renders the list without doing any look-up or filtering itself.
+ */
+@Stable
+internal data class SelectedMediaPlayer(val entityId: String, val friendlyName: String)
+
+/**
  * Complete UI state for the Media Player Controls widget configuration screen.
  *
  * Bundles the user-editable [config] together with the server-dependent data the screen renders
  * (available servers, media-player entities and registries) and whether the current selection can be
  * saved ([isInputValid]), so the screen only collects a single state.
+ *
+ * [availableEntities] are the media players that can still be added (the picker options, already
+ * filtered to exclude [selectedEntities]) and [selectedEntities] are the chosen players with their
+ * resolved display names. Both are computed by the view model so the UI never filters or resolves
+ * names itself.
  */
 @Stable
 internal data class MediaPlayerControlsWidgetConfigureUiState(
     val config: MediaPlayerControlsWidgetConfigureViewState = MediaPlayerControlsWidgetConfigureViewState(),
     val servers: List<Server> = emptyList(),
     val availableEntities: List<Entity> = emptyList(),
+    val selectedEntities: List<SelectedMediaPlayer> = emptyList(),
     val entityRegistry: List<EntityRegistryResponse>? = null,
     val deviceRegistry: List<DeviceRegistryResponse>? = null,
     val areaRegistry: List<AreaRegistryResponse>? = null,
@@ -127,9 +139,11 @@ class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
         .map { it.selectedServerId }
         .distinctUntilChanged()
 
+    // Shared eagerly because the always-on [uiState] combine keeps these subscribed for the view
+    // model's lifetime anyway, so a WhileSubscribed timeout would never expire.
     private val entities: StateFlow<List<Entity>> = selectedServerIdFlow
         .mapLatest { serverId -> loadMediaPlayerEntities(serverId) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), emptyList())
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     private val entityRegistry: StateFlow<List<EntityRegistryResponse>?> =
         registryFlow { serverManager.webSocketRepository(it).getEntityRegistry() }
@@ -164,14 +178,22 @@ class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
         serverData,
         userMessage,
     ) { config, data, message ->
+        val mediaPlayers = data.availableEntities
         MediaPlayerControlsWidgetConfigureUiState(
             config = config,
             servers = data.servers,
-            availableEntities = data.availableEntities,
+            // Filtering and name resolution live here so the screen renders the lists as-is.
+            availableEntities = mediaPlayers.filter { it.entityId !in config.selectedEntityIds },
+            selectedEntities = config.selectedEntityIds.map { id ->
+                SelectedMediaPlayer(
+                    entityId = id,
+                    friendlyName = mediaPlayers.firstOrNull { it.entityId == id }?.friendlyName ?: id,
+                )
+            },
             entityRegistry = data.entityRegistry,
             deviceRegistry = data.deviceRegistry,
             areaRegistry = data.areaRegistry,
-            isInputValid = config.selectedEntityIds.any { id -> data.availableEntities.any { it.entityId == id } },
+            isInputValid = config.selectedEntityIds.any { id -> mediaPlayers.any { it.entityId == id } },
             userMessage = message,
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, MediaPlayerControlsWidgetConfigureUiState())
@@ -312,12 +334,17 @@ class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
     /**
      * Persists the current configuration for an existing widget.
      *
-     * @throws IllegalStateException when the widget id or the current selection is invalid.
+     * @return `true` when the configuration was saved; `false` when the widget id or the current
+     * selection is invalid, in which case a user-facing
+     * [MediaPlayerControlsWidgetConfigureUiState.userMessage] is emitted instead of throwing.
      */
-    suspend fun updateWidgetConfiguration() {
-        check(widgetId != AppWidgetManager.INVALID_APPWIDGET_ID) { "Widget ID is invalid" }
-        check(isValidSelection()) { "Widget data is invalid" }
+    suspend fun updateWidgetConfiguration(): Boolean {
+        if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID || !isValidSelection()) {
+            userMessage.value = commonR.string.widget_update_error
+            return false
+        }
         mediaPlayerControlsWidgetDao.add(getPendingDaoEntity())
+        return true
     }
 
     private fun getPendingDaoEntity(): MediaPlayerControlsWidgetEntity {
@@ -418,7 +445,7 @@ class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
                 }
             }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), null)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     @AssistedFactory
     interface Factory {

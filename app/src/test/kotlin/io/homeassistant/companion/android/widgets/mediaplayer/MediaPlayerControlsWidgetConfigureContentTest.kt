@@ -12,7 +12,7 @@ import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
-import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.previewEntity1
 import io.homeassistant.companion.android.util.previewServer1
@@ -23,6 +23,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+
+private const val SELECTED_ENTITY_NAME = "Living room speaker"
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
@@ -37,143 +39,120 @@ class MediaPlayerControlsWidgetConfigureContentTest {
 
     @Test
     fun `Given an invalid selection then the action button is disabled`() {
-        composeTestRule.apply {
-            setContent {
-                HAThemeForPreview {
-                    MediaPlayerControlsWidgetConfigureContent(
-                        uiState = uiState(isInputValid = false, selectedEntityIds = emptyList()),
-                        dynamicColorAvailable = false,
-                        onServerSelected = {},
-                        onEntityAdded = {},
-                        onEntityRemoved = {},
-                        onLabelChanged = {},
-                        onShowVolumeChanged = {},
-                        onShowSkipChanged = {},
-                        onShowSeekChanged = {},
-                        onShowSourceChanged = {},
-                        onBackgroundTypeSelected = {},
-                        onActionClick = {},
-                        onClose = {},
-                    )
-                }
-            }
+        setScreen(uiState(isInputValid = false, selectedEntities = emptyList()))
 
-            onNodeWithText(stringResource(commonR.string.add_widget))
-                .performScrollTo()
-                .assertIsNotEnabled()
-        }
+        composeTestRule.onNodeWithText(stringResource(commonR.string.add_widget))
+            .performScrollTo()
+            .assertIsNotEnabled()
     }
 
     @Test
-    fun `Given a valid selection when the action button is clicked then onActionClick is invoked`() {
+    fun `Given a valid selection when the controls are used then the matching callbacks are invoked`() {
         var actionClicked = false
-        composeTestRule.apply {
-            setContent {
-                HAThemeForPreview {
-                    MediaPlayerControlsWidgetConfigureContent(
-                        uiState = uiState(isInputValid = true),
-                        dynamicColorAvailable = false,
-                        onServerSelected = {},
-                        onEntityAdded = {},
-                        onEntityRemoved = {},
-                        onLabelChanged = {},
-                        onShowVolumeChanged = {},
-                        onShowSkipChanged = {},
-                        onShowSeekChanged = {},
-                        onShowSourceChanged = {},
-                        onBackgroundTypeSelected = {},
-                        onActionClick = { actionClicked = true },
-                        onClose = {},
-                    )
-                }
-            }
-
-            onNodeWithText(stringResource(commonR.string.add_widget))
-                .performScrollTo()
-                .performClick()
-
-            assertTrue("onActionClick should be invoked", actionClicked)
-        }
-    }
-
-    @Test
-    fun `Given the show volume row when it is clicked then onShowVolumeChanged is invoked with the toggled value`() {
+        var closed = false
         var volumeChange: Boolean? = null
-        composeTestRule.apply {
-            setContent {
-                HAThemeForPreview {
-                    MediaPlayerControlsWidgetConfigureContent(
-                        uiState = uiState(showVolume = true),
-                        dynamicColorAvailable = false,
-                        onServerSelected = {},
-                        onEntityAdded = {},
-                        onEntityRemoved = {},
-                        onLabelChanged = {},
-                        onShowVolumeChanged = { volumeChange = it },
-                        onShowSkipChanged = {},
-                        onShowSeekChanged = {},
-                        onShowSourceChanged = {},
-                        onBackgroundTypeSelected = {},
-                        onActionClick = {},
-                        onClose = {},
-                    )
-                }
-            }
-
-            onNodeWithText(stringResource(commonR.string.widget_media_show_volume))
-                .performScrollTo()
-                .performClick()
-
-            assertEquals(false, volumeChange)
-        }
-    }
-
-    @Test
-    fun `Given a selected entity when its remove button is clicked then onEntityRemoved is invoked`() {
+        var skipChange: Boolean? = null
+        var seekChange: Boolean? = null
+        var sourceChange: Boolean? = null
         var removedEntityId: String? = null
-        composeTestRule.apply {
-            setContent {
-                HAThemeForPreview {
-                    MediaPlayerControlsWidgetConfigureContent(
-                        uiState = uiState(selectedEntityIds = listOf(previewEntity1.entityId)),
-                        dynamicColorAvailable = false,
-                        onServerSelected = {},
-                        onEntityAdded = {},
-                        onEntityRemoved = { removedEntityId = it },
-                        onLabelChanged = {},
-                        onShowVolumeChanged = {},
-                        onShowSkipChanged = {},
-                        onShowSeekChanged = {},
-                        onShowSourceChanged = {},
-                        onBackgroundTypeSelected = {},
-                        onActionClick = {},
-                        onClose = {},
-                    )
-                }
-            }
 
-            onNodeWithText(previewEntity1.entityId).assertExists()
+        setScreen(
+            uiState = uiState(isInputValid = true),
+            onShowVolumeChanged = { volumeChange = it },
+            onShowSkipChanged = { skipChange = it },
+            onShowSeekChanged = { seekChange = it },
+            onShowSourceChanged = { sourceChange = it },
+            onEntityRemoved = { removedEntityId = it },
+            onActionClick = { actionClicked = true },
+            onClose = { closed = true },
+        )
+
+        composeTestRule.apply {
+            // The selected entity is rendered from the resolved view state, not filtered in the UI;
+            // the remove click below fails if that row was not rendered.
+            clickRow(commonR.string.widget_media_show_volume)
+            clickRow(commonR.string.widget_media_show_skip)
+            clickRow(commonR.string.widget_media_show_seek)
+            clickRow(commonR.string.widget_media_show_source)
+
             onNodeWithContentDescription(stringResource(commonR.string.delete))
                 .performScrollTo()
                 .performClick()
 
-            assertEquals(previewEntity1.entityId, removedEntityId)
+            onNodeWithText(stringResource(commonR.string.add_widget))
+                .performScrollTo()
+                .performClick()
+
+            onNodeWithContentDescription(stringResource(commonR.string.close))
+                .performClick()
+        }
+
+        // All show-* flags default to true, so toggling them reports false.
+        assertEquals(false, volumeChange)
+        assertEquals(false, skipChange)
+        assertEquals(false, seekChange)
+        assertEquals(false, sourceChange)
+        assertEquals(previewEntity1.entityId, removedEntityId)
+        assertTrue("onActionClick should be invoked", actionClicked)
+        assertTrue("onClose should be invoked", closed)
+    }
+
+    private fun clickRow(textResId: Int) {
+        composeTestRule.onNodeWithText(stringResource(textResId))
+            .performScrollTo()
+            .performClick()
+    }
+
+    private fun setScreen(
+        uiState: MediaPlayerControlsWidgetConfigureUiState,
+        onServerSelected: (Int) -> Unit = {},
+        onEntityAdded: (String) -> Unit = {},
+        onEntityRemoved: (String) -> Unit = {},
+        onLabelChanged: (String) -> Unit = {},
+        onShowVolumeChanged: (Boolean) -> Unit = {},
+        onShowSkipChanged: (Boolean) -> Unit = {},
+        onShowSeekChanged: (Boolean) -> Unit = {},
+        onShowSourceChanged: (Boolean) -> Unit = {},
+        onBackgroundTypeSelected: (WidgetBackgroundType) -> Unit = {},
+        onActionClick: () -> Unit = {},
+        onClose: () -> Unit = {},
+    ) {
+        composeTestRule.setContent {
+            HAThemeForPreview {
+                MediaPlayerControlsWidgetConfigureContent(
+                    uiState = uiState,
+                    dynamicColorAvailable = false,
+                    onServerSelected = onServerSelected,
+                    onEntityAdded = onEntityAdded,
+                    onEntityRemoved = onEntityRemoved,
+                    onLabelChanged = onLabelChanged,
+                    onShowVolumeChanged = onShowVolumeChanged,
+                    onShowSkipChanged = onShowSkipChanged,
+                    onShowSeekChanged = onShowSeekChanged,
+                    onShowSourceChanged = onShowSourceChanged,
+                    onBackgroundTypeSelected = onBackgroundTypeSelected,
+                    onActionClick = onActionClick,
+                    onClose = onClose,
+                )
+            }
         }
     }
 
     private fun uiState(
         isInputValid: Boolean = true,
-        selectedEntityIds: List<String> = listOf(previewEntity1.entityId),
-        availableEntities: List<Entity> = listOf(previewEntity1),
+        selectedEntities: List<SelectedMediaPlayer> = listOf(
+            SelectedMediaPlayer(previewEntity1.entityId, SELECTED_ENTITY_NAME),
+        ),
         showVolume: Boolean = true,
     ) = MediaPlayerControlsWidgetConfigureUiState(
         config = MediaPlayerControlsWidgetConfigureViewState(
             selectedServerId = previewServer1.id,
-            selectedEntityIds = selectedEntityIds,
+            selectedEntityIds = selectedEntities.map { it.entityId },
             showVolume = showVolume,
         ),
         servers = listOf(previewServer1),
-        availableEntities = availableEntities,
+        availableEntities = emptyList(),
+        selectedEntities = selectedEntities,
         isInputValid = isInputValid,
     )
 }

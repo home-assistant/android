@@ -1026,6 +1026,7 @@
     <string name="widget_media_show_seek">Show seek buttons</string>
     <string name="widget_media_show_skip">Show skip buttons</string>
     <string name="widget_media_show_source">Show source label</string>
+    <string name="widget_media_selected_entities">Selected entities:</string>
     <string name="widget_no_configuration">Oops. It looks like this widget is not configured.</string>
     <string name="widget_separator_input_hint">No separator</string>
     <string name="widget_spinner_server">Server:</string>

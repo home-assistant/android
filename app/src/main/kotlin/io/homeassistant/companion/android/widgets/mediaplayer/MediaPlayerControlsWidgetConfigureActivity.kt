@@ -102,17 +102,13 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
     }
 
     private suspend fun updateWidget() {
-        try {
-            viewModel.updateWidgetConfiguration()
-            viewModel.updateWidget(this)
-            setResult(
-                RESULT_OK,
-                Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, viewModel.widgetId),
-            )
-            finish()
-        } catch (e: IllegalStateException) {
-            Timber.e(e, "Unable to update widget")
-            viewModel.onUserMessage(commonR.string.widget_update_error)
-        }
+        // The view model surfaces a user message itself when the selection is invalid.
+        if (!viewModel.updateWidgetConfiguration()) return
+        viewModel.updateWidget(this)
+        setResult(
+            RESULT_OK,
+            Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, viewModel.widgetId),
+        )
+        finish()
     }
 }
