@@ -8,16 +8,16 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.platform.ComposeView
-import androidx.core.os.bundleOf
-import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.setFragmentResult
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.util.setLayoutAndExpandedByDefault
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class ServerChooserFragment : DialogFragment() {
+class ServerChooserFragment : BottomSheetDialogFragment() {
 
     @Inject
     lateinit var serverManager: ServerManager
@@ -43,13 +43,21 @@ class ServerChooserFragment : DialogFragment() {
                     ServerChooser(
                         items = items,
                         onServerSelected = { serverId ->
-                            setFragmentResult(RESULT_KEY, bundleOf(RESULT_SERVER to serverId))
+                            setFragmentResult(RESULT_KEY, Bundle().apply { putInt(RESULT_SERVER, serverId) })
                             dismiss()
                         },
-                        onDismissRequest = ::dismiss,
+                        onDismissRequest = {
+                            setFragmentResult(RESULT_KEY, Bundle())
+                            dismiss()
+                        },
                     )
                 }
             }
         }
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        setLayoutAndExpandedByDefault()
     }
 }
