@@ -41,7 +41,7 @@ class MediaPlayerControlsWidgetConfigureContentTest {
     fun `Given an invalid selection then the action button is disabled`() {
         setScreen(uiState(isInputValid = false, selectedEntities = emptyList()))
 
-        composeTestRule.onNodeWithText(stringResource(commonR.string.add_widget))
+        composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.add_widget))
             .performScrollTo()
             .assertIsNotEnabled()
     }
@@ -98,7 +98,7 @@ class MediaPlayerControlsWidgetConfigureContentTest {
     }
 
     private fun clickRow(textResId: Int) {
-        composeTestRule.onNodeWithText(stringResource(textResId))
+        composeTestRule.onNodeWithText(composeTestRule.stringResource(textResId))
             .performScrollTo()
             .performClick()
     }
