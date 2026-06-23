@@ -980,8 +980,8 @@ internal class WebSocketCoreImpl(
      */
     @GuardedBy("connectedMutex")
     private fun cleanupClosingSocket() {
-        //  Complete connected and pending connect deferred with error
-        pendingConnectDeferred?.completeExceptionally(IOException("Connection closed"))
+        //  Complete connected and pending connect deferred
+        pendingConnectDeferred?.complete(false)
         pendingConnectDeferred = null
         authCompleted.completeExceptionally(IOException("Connection closed"))
         authCompleted = CompletableDeferred()
