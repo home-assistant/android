@@ -337,9 +337,11 @@ private fun FullscreenEffect(isFullScreen: Boolean) {
                 applyFullscreen()
             }
         }
-        view.viewTreeObserver.addOnWindowFocusChangeListener(focusListener)
+        val viewTreeObserver = view.viewTreeObserver
+
+        viewTreeObserver.addOnWindowFocusChangeListener(focusListener)
         onDispose {
-            view.viewTreeObserver.removeOnWindowFocusChangeListener(focusListener)
+            viewTreeObserver.removeOnWindowFocusChangeListener(focusListener)
         }
     }
 }
