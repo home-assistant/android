@@ -26,6 +26,7 @@ import androidx.preference.SwitchPreference
 import com.google.android.material.snackbar.Snackbar
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.WIPFeature
 import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -48,7 +49,8 @@ import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
 import io.homeassistant.companion.android.settings.sensor.SensorSettingsFragment
 import io.homeassistant.companion.android.settings.sensor.SensorUpdateFrequencyFragment
 import io.homeassistant.companion.android.settings.server.ServerSettingsFragment
-import io.homeassistant.companion.android.settings.shortcuts.legacy.ManageShortcutsSettingsFragment
+import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment
+import io.homeassistant.companion.android.settings.shortcuts.legacy.ManageShortcutsSettingsFragment as LegacyManageShortcutsSettingsFragment
 import io.homeassistant.companion.android.settings.vehicle.ManageAndroidAutoSettingsFragment
 import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
 import io.homeassistant.companion.android.settings.wear.SettingsWearDetection
@@ -215,7 +217,11 @@ class SettingsFragment(
                 }
                 findPreference<Preference>("manage_shortcuts")?.setOnPreferenceClickListener {
                     parentFragmentManager.commit {
-                        replace(R.id.content, ManageShortcutsSettingsFragment::class.java, null)
+                        if (WIPFeature.USE_SHORTCUTS_V2) {
+                            replace(R.id.content, ManageShortcutsSettingsFragment::class.java, null)
+                        } else {
+                            replace(R.id.content, LegacyManageShortcutsSettingsFragment::class.java, null)
+                        }
                         addToBackStack(getString(commonR.string.shortcuts))
                     }
                     return@setOnPreferenceClickListener true
