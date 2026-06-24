@@ -120,11 +120,11 @@ jobs:
 
       - name: Generate aboutlibraries JSON
         run: |
-          ./gradlew :app:exportLibraryDefinitionsFullDebug \
-            :app:exportLibraryDefinitionsMinimalDebug \
-            :automotive:exportLibraryDefinitionsFullDebug \
-            :automotive:exportLibraryDefinitionsMinimalDebug \
-            :wear:exportLibraryDefinitionsDebug
+          ./gradlew :app:prepareLibraryDefinitionsFullDebug \
+            :app:prepareLibraryDefinitionsMinimalDebug \
+            :automotive:prepareLibraryDefinitionsFullDebug \
+            :automotive:prepareLibraryDefinitionsMinimalDebug \
+            :wear:prepareLibraryDefinitionsDebug
 
       - name: Check licenses
         run: |
