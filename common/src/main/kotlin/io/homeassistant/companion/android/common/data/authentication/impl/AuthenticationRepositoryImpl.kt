@@ -1,7 +1,5 @@
 package io.homeassistant.companion.android.common.data.authentication.impl
 
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedInject
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
@@ -10,22 +8,19 @@ import io.homeassistant.companion.android.common.data.authentication.impl.Authen
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.common.util.MapAnySerializer
-import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
-import io.homeassistant.companion.android.di.qualifiers.NamedInstallId
-import io.homeassistant.companion.android.di.qualifiers.NamedSessionStorage
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import timber.log.Timber
 
-class AuthenticationRepositoryImpl @AssistedInject constructor(
+class AuthenticationRepositoryImpl internal constructor(
     private val authenticationService: AuthenticationService,
     private val serverManager: ServerManager,
-    @Assisted private val serverId: Int,
-    @NamedSessionStorage private val localStorage: LocalStorage,
-    @NamedInstallId private val installId: SuspendProvider<String>,
+    private val serverId: Int,
+    private val localStorage: LocalStorage,
+    private val installId: String,
 ) : AuthenticationRepository {
 
     companion object {
@@ -38,15 +33,6 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
     }
 
     private suspend fun connectionStateProvider() = serverManager.connectionStateProvider(serverId)
-
-    override suspend fun registerRefreshToken(refreshToken: String) {
-        val url = connectionStateProvider().urlFlow().firstUrlOrNull()?.toHttpUrlOrNull()
-        if (url == null) {
-            Timber.e("Unable to register session with refresh token. No available URL")
-            return
-        }
-        refreshSessionWithToken(url, refreshToken)
-    }
 
     override suspend fun retrieveExternalAuthentication(forceRefresh: Boolean): String {
         ensureValidSession(forceRefresh)
@@ -103,7 +89,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
     override suspend fun getSessionState(): SessionState {
         val server = server()
         return if (server.session.isComplete() &&
-            server.session.installId == installId() &&
+            server.session.installId == installId &&
             server.connection.hasAtLeastOneUrl
         ) {
             SessionState.CONNECTED
@@ -120,7 +106,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
     private suspend fun ensureValidSession(forceRefresh: Boolean = false) {
         val server = server()
         val url = connectionStateProvider().urlFlow().firstUrlOrNull()?.toHttpUrlOrNull()
-        if (!server.session.isComplete() || server.session.installId != installId() || url == null) {
+        if (!server.session.isComplete() || server.session.installId != installId || url == null) {
             Timber.e("Unable to ensure valid session.")
             throw AuthorizationException()
         }
@@ -147,7 +133,7 @@ class AuthenticationRepositoryImpl @AssistedInject constructor(
                             refreshToken = refreshToken,
                             tokenExpiration = System.currentTimeMillis() / 1000 + refreshedToken.expiresIn,
                             tokenType = refreshedToken.tokenType,
-                            installId = installId(),
+                            installId = installId,
                         ),
                     ),
                 )
