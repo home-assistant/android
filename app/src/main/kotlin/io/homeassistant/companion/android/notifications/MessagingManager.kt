@@ -262,6 +262,7 @@ class MessagingManager @Inject constructor(
             NotificationData.CALL_STREAM,
             NotificationData.SYSTEM_STREAM,
             NotificationData.DTMF_STREAM,
+            NotificationData.ASSISTANT_STREAM,
         )
         val FORCE_COMMANDS = listOf(FORCE_OFF, FORCE_ON)
         val MEDIA_COMMANDS = listOf(
@@ -335,9 +336,11 @@ class MessagingManager @Inject constructor(
                 val serverForWebhook = serverManager.getServer(webhookId = webhookId)
                 if (serverForWebhook == null) {
                     Timber.w(
-                        "Received notification with webhook ID ${sensitive(
-                            webhookId,
-                        )} but no matching server, ignoring",
+                        "Received notification with webhook ID ${
+                            sensitive(
+                                webhookId,
+                            )
+                        } but no matching server, ignoring",
                     )
                     return@launch
                 }
@@ -738,6 +741,7 @@ class MessagingManager @Inject constructor(
                         audioManager!!,
                         data[NotificationData.MEDIA_STREAM].toString(),
                         command!!.toInt(),
+                        serverId,
                     )
                 }
             }
@@ -887,7 +891,7 @@ class MessagingManager @Inject constructor(
 
                 if (enabled && !defaultAssistantManager.isDefaultAssistant()) {
                     Timber.w("Cannot enable wake word: app is not the default assistant")
-                    notifyMissingPermission(message, serverId)
+                    notifyDefaultAssistant(command = message, serverId = serverId)
                     return
                 }
 
@@ -1815,17 +1819,15 @@ class MessagingManager @Inject constructor(
 
     private fun requestCameraPermission() = requestRuntimePermission(Manifest.permission.CAMERA)
 
-    private fun requestMicPermission() {
-        if (defaultAssistantManager.isDefaultAssistant()) {
-            requestRuntimePermission(Manifest.permission.RECORD_AUDIO)
-        } else {
-            context.startActivity(
-                defaultAssistantManager.getSetDefaultAssistantIntent().apply {
-                    flags =
-                        Intent.FLAG_ACTIVITY_NEW_TASK
-                },
-            )
-        }
+    private fun requestMicPermission() = requestRuntimePermission(Manifest.permission.RECORD_AUDIO)
+
+    private fun requestSetDefaultAssistant() {
+        context.startActivity(
+            defaultAssistantManager.getSetDefaultAssistantIntent().apply {
+                flags =
+                    Intent.FLAG_ACTIVITY_NEW_TASK
+            },
+        )
     }
 
     private fun getKeyEvent(key: String): Int {
@@ -1901,7 +1903,7 @@ class MessagingManager @Inject constructor(
         }
     }
 
-    private fun processStreamVolume(audioManager: AudioManager, stream: String, volume: Int) {
+    private suspend fun processStreamVolume(audioManager: AudioManager, stream: String, volume: Int, serverId: String) {
         when (stream) {
             NotificationData.ALARM_STREAM -> adjustVolumeStream(AudioManager.STREAM_ALARM, volume, audioManager)
             NotificationData.MUSIC_STREAM -> adjustVolumeStream(AudioManager.STREAM_MUSIC, volume, audioManager)
@@ -1915,7 +1917,18 @@ class MessagingManager @Inject constructor(
             NotificationData.CALL_STREAM -> adjustVolumeStream(AudioManager.STREAM_VOICE_CALL, volume, audioManager)
             NotificationData.SYSTEM_STREAM -> adjustVolumeStream(AudioManager.STREAM_SYSTEM, volume, audioManager)
             NotificationData.DTMF_STREAM -> adjustVolumeStream(AudioManager.STREAM_DTMF, volume, audioManager)
-            else -> Timber.d("Skipping command due to invalid channel stream")
+            NotificationData.ASSISTANT_STREAM -> if (SdkVersion.isAtLeast(Build.VERSION_CODES.CINNAMON_BUN)) {
+                if (!defaultAssistantManager.isDefaultAssistant()) {
+                    Timber.w("Cannot control assistant volume: app is not the default assistant")
+                    notifyDefaultAssistant(command = "$COMMAND_VOLUME_LEVEL($stream)", serverId = serverId)
+                    return
+                }
+                adjustVolumeStream(AudioManager.STREAM_ASSISTANT, volume, audioManager)
+            } else {
+                Timber.w("Cannot control assistant volume: Not supported by the current version of Android")
+            }
+
+            else -> Timber.d("Skipping command due to invalid channel stream ($stream)")
         }
     }
 
@@ -2133,9 +2146,33 @@ class MessagingManager @Inject constructor(
                             COMMAND_AUTO_SCREEN_BRIGHTNESS,
                             COMMAND_SCREEN_OFF_TIMEOUT,
                             -> requestWriteSystemPermission()
+
                             COMMAND_FLASHLIGHT -> requestCameraPermission()
                             COMMAND_WAKE_WORD_DETECTION -> requestMicPermission()
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun notifyDefaultAssistant(command: String, serverId: String) {
+        val appManager = context.getSystemService<ActivityManager>()
+        val currentProcess = appManager?.runningAppProcesses
+        if (currentProcess != null) {
+            for (item in currentProcess) {
+                if (context.applicationInfo.processName == item.processName) {
+                    if (item.importance != ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+                        val data = mutableMapOf(
+                            NotificationData.MESSAGE to context.getString(
+                                commonR.string.default_assistant_required,
+                                command,
+                            ),
+                            THIS_SERVER_ID to serverId,
+                        )
+                        sendNotification(data)
+                    } else {
+                        requestSetDefaultAssistant()
                     }
                 }
             }
