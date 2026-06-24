@@ -182,7 +182,7 @@
         <Preference
             android:key="manage_shortcuts"
             android:icon="@drawable/ic_shortcut"
-            android:title="@string/manage_shortcuts_legacy"
+            android:title="@string/manage_shortcuts"
             android:summary="@string/manage_shortcuts_summary" />
     </PreferenceCategory>
     <PreferenceCategory

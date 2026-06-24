@@ -443,7 +443,6 @@
     <string name="lovelace">Dashboard</string>
     <string name="manage_shortcuts_summary">Manage launcher shortcuts</string>
     <string name="manage_shortcuts">Manage shortcuts</string>
-    <string name="manage_shortcuts_legacy">Manage shortcuts (Legacy)</string>
     <string name="manage_ssids_ethernet">Ethernet connected</string>
     <string name="manage_ssids_input_exists">This SSID already exists</string>
     <string name="manage_ssids_input">New Wi-Fi SSID</string>
