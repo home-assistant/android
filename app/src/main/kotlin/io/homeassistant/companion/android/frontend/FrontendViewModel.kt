@@ -43,6 +43,7 @@ import io.homeassistant.companion.android.frontend.js.FrontendJsCallback
 import io.homeassistant.companion.android.frontend.matterthread.FrontendMatterThreadHandler
 import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
@@ -102,7 +103,7 @@ private val FIRST_VIEW_EXCLUDED_URL_REGEX =
 @HiltViewModel
 internal class FrontendViewModel @VisibleForTesting constructor(
     initialServerId: Int,
-    initialPath: String?,
+    initialTarget: FrontendTarget,
     webViewClientFactory: HAWebViewClientFactory,
     private val frontendBusObserver: FrontendBusObserver,
     private val externalBusRepository: FrontendExternalBusRepository,
@@ -147,7 +148,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         matterThreadHandler: FrontendMatterThreadHandler,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
-        initialPath = savedStateHandle.toRoute<FrontendRoute>().path,
+        initialTarget = savedStateHandle.toRoute<FrontendRoute>().target,
         webViewClientFactory = webViewClientFactory,
         frontendBusObserver = frontendBusObserver,
         externalBusRepository = externalBusRepository,
@@ -204,7 +205,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val _viewState = ViewStateManager(
         FrontendViewState.LoadServer(
             serverId = initialServerId,
-            path = initialPath,
+            target = initialTarget,
         ),
     )
     val viewState: StateFlow<FrontendViewState> = _viewState
@@ -371,7 +372,10 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 when (event) {
                     is FrontendImprovHandler.Event.ReloadAtPath -> {
                         _viewState.update {
-                            FrontendViewState.LoadServer(serverId = event.serverId, path = event.path)
+                            FrontendViewState.LoadServer(
+                                serverId = event.serverId,
+                                target = FrontendTarget.Path(event.path),
+                            )
                         }
                     }
                 }
@@ -693,14 +697,14 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         urlFlowJob = viewModelScope.launch {
             permissionManager.checkLocalNetworkPermission()
             val currentState = _viewState.value
-            val path = when (currentState) {
-                is FrontendViewState.LoadServer -> currentState.path
-                is FrontendViewState.Loading -> currentState.path
-                else -> null
+            val target = when (currentState) {
+                is FrontendViewState.LoadServer -> currentState.target
+                is FrontendViewState.Loading -> currentState.target
+                else -> FrontendTarget.Default
             }
             urlManager.serverUrlFlow(
                 serverId = currentState.serverId,
-                path = path,
+                target = target,
             ).collect { result ->
                 handleUrlResult(result)
             }
@@ -882,7 +886,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                     FrontendViewState.Loading(
                         serverId = result.serverId,
                         url = result.url,
-                        path = null,
+                        target = FrontendTarget.Default,
                     )
                 }
             }

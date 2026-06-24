@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.frontend.url
 import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.frontend.session.ServerSessionManager
 import io.homeassistant.companion.android.util.UrlUtil
 import java.net.URL
@@ -41,14 +42,14 @@ class FrontendUrlManager @Inject constructor(
     /**
      * Retrieve URL for server. Returns a Flow that emits URL updates when connection state changes.
      *
-     * The path parameter is only applied to the first emission to handle deep links.
-     * Subsequent emissions (e.g., when switching between internal/external URLs) use only the base URL.
+     * The target is only applied to the first emission to handle deep links.
+     * Subsequent emissions (e.g., when switching between internal/external URLs) load only the base URL.
      *
      * @param serverId The server ID to use (can be [ServerManager.SERVER_ID_ACTIVE])
-     * @param path Optional path to append to the initial URL (e.g., deep link path)
+     * @param target The frontend destination to open on the initial URL (e.g., a deep link)
      * @return Flow of [UrlLoadResult] that emits when URL state changes
      */
-    fun serverUrlFlow(serverId: Int, path: String?): Flow<UrlLoadResult> = flow {
+    fun serverUrlFlow(serverId: Int, target: FrontendTarget): Flow<UrlLoadResult> = flow {
         val server = serverManager.getServer(serverId)
         if (server == null) {
             Timber.e("Server not found for id: $serverId")
@@ -65,30 +66,30 @@ class FrontendUrlManager @Inject constructor(
 
         serverManager.activateServer(actualServerId)
 
-        var pathConsumed = false
+        var targetConsumed = false
         serverManager.connectionStateProvider(actualServerId).urlFlow().collect { urlState ->
-            val currentPath = if (pathConsumed) null else path
+            val currentTarget = if (targetConsumed) FrontendTarget.Default else target
 
             val result = handleUrlState(
                 serverId = actualServerId,
                 urlState = urlState,
-                path = currentPath,
+                target = currentTarget,
             )
-            // Only consume the path when a URL was actually loaded with it
+            // Only consume the target when a URL was actually loaded with it
             if (urlState is UrlState.HasUrl) {
-                pathConsumed = true
+                targetConsumed = true
             }
             emit(result)
         }
     }
 
-    private suspend fun handleUrlState(serverId: Int, urlState: UrlState, path: String?): UrlLoadResult {
+    private suspend fun handleUrlState(serverId: Int, urlState: UrlState, target: FrontendTarget): UrlLoadResult {
         return when (urlState) {
             is UrlState.HasUrl -> {
                 buildUrl(
                     baseUrl = urlState.url,
                     serverId = serverId,
-                    path = path,
+                    target = target,
                 )
             }
 
@@ -104,12 +105,14 @@ class FrontendUrlManager @Inject constructor(
         }
     }
 
-    private suspend fun buildUrl(baseUrl: URL?, serverId: Int, path: String?): UrlLoadResult {
-        // Build URL with path (skip path handling if it starts with "entityId:")
-        val urlToLoad = if (path != null && !path.startsWith("entityId:")) {
-            UrlUtil.handle(baseUrl, path)
-        } else {
-            baseUrl
+    private suspend fun buildUrl(baseUrl: URL?, serverId: Int, target: FrontendTarget): UrlLoadResult {
+        val urlToLoad = when (target) {
+            FrontendTarget.Default -> baseUrl
+            is FrontendTarget.Path -> UrlUtil.handle(baseUrl, target.path)
+            is FrontendTarget.EntityMoreInfo -> {
+                val moreInfoPath = moreInfoPath(target.entityId, serverId)
+                if (moreInfoPath != null) UrlUtil.handle(baseUrl, moreInfoPath) else baseUrl
+            }
         }
 
         if (urlToLoad == null) {
@@ -140,6 +143,22 @@ class FrontendUrlManager @Inject constructor(
 
         Timber.d("Loading server URL: $urlWithAuth")
         return UrlLoadResult.Success(url = urlWithAuth, serverId = serverId)
+    }
+
+    /**
+     * Resolves the relative path that opens the more-info dialog for [entityId], or `null` when it
+     * cannot be opened via the URL.
+     *
+     * HA 2025.6+ honors the `more-info-entity-id` query parameter directly. Older servers ignore it,
+     * so we fall back to loading the dashboard.
+     */
+    private suspend fun moreInfoPath(entityId: String, serverId: Int): String? {
+        return if (serverManager.getServer(serverId)?.version?.isAtLeast(2025, 6, 0) == true) {
+            "/?more-info-entity-id=$entityId"
+        } else {
+            Timber.w("more-info deep link requires HA 2025.6+, loading dashboard instead")
+            null
+        }
     }
 
     private suspend fun shouldSetSecurityLevel(serverId: Int): Boolean {
