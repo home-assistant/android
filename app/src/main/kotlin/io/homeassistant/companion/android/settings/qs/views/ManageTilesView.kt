@@ -5,13 +5,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -39,6 +41,7 @@ import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
@@ -162,16 +165,23 @@ internal fun ManageTilesView(
                 modifier = Modifier.windowInsetsPadding(safeBottomWindowInsets(applyHorizontal = false)),
             )
         },
+        contentWindowInsets = WindowInsets()
     ) { contentPadding ->
         Box(
             modifier = Modifier
                 .padding(contentPadding)
-                .verticalScroll(scrollState),
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+            ,
+            contentAlignment = Alignment.TopCenter
         ) {
             Column(
                 modifier = Modifier
                     .padding(safeBottomPaddingValues(applyHorizontal = false))
-                    .padding(all = 16.dp),
+                    .padding(all = 16.dp)
+                    .widthIn(max = MaxButtonWidth)
+                ,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 TileDropdown(
                     tileSlots = state.tileSlots,
@@ -196,7 +206,7 @@ internal fun ManageTilesView(
                         label = { Text(text = stringResource(R.string.tile_subtitle)) },
                         modifier = Modifier
                             .padding(top = 16.dp)
-                            .fillMaxWidth(),
+                            .fillMaxWidth()
                     )
                 }
 
@@ -295,30 +305,43 @@ private fun TileIconRow(
     onResetIcon: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = modifier.fillMaxWidth()
+    ) {
         Text(
             text = stringResource(R.string.tile_icon),
             style = HATextStyle.Body,
             modifier = Modifier.padding(end = 8.dp),
         )
 
-        IconButton(onClick = onShowIconDialog) {
-            selectedIcon?.let { icon ->
+        OutlinedButton(
+            onClick = onShowIconDialog
+        ) {
+            if (selectedIcon != null) {
                 com.mikepenz.iconics.compose.Image(
-                    icon,
+                    selectedIcon,
                     contentDescription = stringResource(R.string.tile_icon),
                     colorFilter = ColorFilter.tint(LocalHAColorScheme.current.colorFillPrimaryLoudResting),
                     modifier = Modifier.size(24.dp),
                 )
+            } else {
+                Text(
+                    text = stringResource(R.string.select),
+                    style = HATextStyle.BodyMedium,
+                    color = LocalHAColorScheme.current.colorFillPrimaryLoudResting,
+                )
             }
         }
-        if (showResetIcon) {
-            HAPlainButton(
-                text = stringResource(R.string.tile_icon_original),
-                onClick = onResetIcon,
-                modifier = Modifier.padding(start = 4.dp),
-            )
-        }
+
+    }
+    if (showResetIcon) {
+        HAPlainButton(
+            text = stringResource(R.string.tile_icon_original),
+            onClick = onResetIcon,
+            modifier = Modifier.padding(start = 4.dp),
+        )
     }
 }
 
