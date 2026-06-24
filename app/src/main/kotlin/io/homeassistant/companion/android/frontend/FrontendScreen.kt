@@ -505,7 +505,7 @@ private fun ErrorOverlay(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
             ) {
-                if (error !is FrontendConnectionError.UnrecoverableError) {
+                if (error !is FrontendConnectionError.Unrecoverable) {
                     HAAccentButton(
                         text = stringResource(commonR.string.retry),
                         onClick = onRetry,
@@ -883,7 +883,7 @@ private fun FrontendScreenErrorPreview() {
             viewState = FrontendViewState.Error(
                 serverId = 1,
                 url = "https://example.com",
-                error = FrontendConnectionError.UnreachableError(
+                error = FrontendConnectionError.Unreachable(
                     message = commonR.string.webview_error_HOST_LOOKUP,
                     errorDetails = "Connection timed out",
                     rawErrorType = "HostLookupError",

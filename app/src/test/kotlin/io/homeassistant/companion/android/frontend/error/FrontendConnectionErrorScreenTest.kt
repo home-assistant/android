@@ -65,7 +65,7 @@ class FrontendConnectionErrorScreenTest {
             var urlClicked: String? = null
             setContent {
                 FrontendConnectionErrorScreen(
-                    error = FrontendConnectionError.UnknownError(R.string.tls_cert_expired_message, "details", "errorType"),
+                    error = FrontendConnectionError.Unknown(R.string.tls_cert_expired_message, "details", "errorType"),
                     url = null,
                     onOpenExternalLink = {
                         urlClicked = it.toString()
@@ -121,7 +121,7 @@ class FrontendConnectionErrorScreenTest {
         composeTestRule.apply {
             setContent {
                 FrontendConnectionErrorScreen(
-                    error = FrontendConnectionError.UnknownError(R.string.tls_cert_expired_message, "details", "errorType"),
+                    error = FrontendConnectionError.Unknown(R.string.tls_cert_expired_message, "details", "errorType"),
                     url = BLANK_URL,
                     onOpenExternalLink = {},
                     connectivityCheckState = ConnectivityCheckState(),
@@ -143,7 +143,7 @@ class FrontendConnectionErrorScreenTest {
             val url = "http://ha.org"
             setContent {
                 FrontendConnectionErrorScreen(
-                    error = FrontendConnectionError.AuthenticationError(R.string.tls_cert_expired_message, "details", "errorType"),
+                    error = FrontendConnectionError.AuthRevoked(R.string.tls_cert_expired_message, "details", "errorType"),
                     url = url,
                     onOpenExternalLink = {},
                     connectivityCheckState = ConnectivityCheckState(),
@@ -160,7 +160,7 @@ class FrontendConnectionErrorScreenTest {
     @Test
     fun `Given FrontendConnectionErrorScreen with viewmodel when retry is clicked then connectivity check is retried`() {
         val viewModel = mockk<ConnectionViewModel>()
-        val error = FrontendConnectionError.UnreachableError(
+        val error = FrontendConnectionError.Unreachable(
             R.string.tls_cert_expired_message,
             "details",
             "errorType",

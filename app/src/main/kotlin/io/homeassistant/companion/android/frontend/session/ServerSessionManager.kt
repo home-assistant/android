@@ -66,7 +66,7 @@ class ServerSessionManager @Inject constructor(private val serverManager: Server
             }
 
             val error = if (isAnonymousSession) {
-                FrontendConnectionError.AuthenticationError(
+                FrontendConnectionError.AuthRevoked(
                     message = commonR.string.error_connection_failed,
                     errorDetails = e.message ?: "Authentication failed",
                     rawErrorType = "ExternalAuthFailed",

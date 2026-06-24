@@ -103,7 +103,7 @@ class FrontendScreenTest {
     @Test
     fun `Given Error state then error screen with retry button and webview are displayed`() {
         var retryCalled = false
-        val error = FrontendConnectionError.UnreachableError(
+        val error = FrontendConnectionError.Unreachable(
             message = commonR.string.webview_error_HOST_LOOKUP,
             errorDetails = "Connection failed",
             rawErrorType = "HostLookupError",
@@ -667,7 +667,7 @@ class FrontendScreenTest {
     @Test
     fun `Given WebViewCreationError state then error screen with open settings button is displayed`() {
         var openSettingsCalled = false
-        val error = FrontendConnectionError.UnrecoverableError.WebViewCreationError(
+        val error = FrontendConnectionError.Unrecoverable.WebViewCreationError(
             message = commonR.string.webview_creation_failed,
             throwable = UnsatisfiedLinkError("dlopen failed: libwebviewchromium.so is 32-bit instead of 64-bit"),
         )

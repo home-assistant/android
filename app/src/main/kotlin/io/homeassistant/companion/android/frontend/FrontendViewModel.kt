@@ -171,7 +171,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     /**
      * Manages the frontend view state with protection against transitions out of unrecoverable states.
      *
-     * Once a [FrontendConnectionError.UnrecoverableError] is set, the current state is
+     * Once a [FrontendConnectionError.Unrecoverable] is set, the current state is
      * fundamentally broken and no state transition can recover from it. All subsequent
      * [update] calls are ignored to prevent URL emissions, message results, or timeouts
      * from hiding the error screen.
@@ -185,13 +185,13 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         /**
          * Updates the view state using the given [transform] function.
          *
-         * If the current state is an [FrontendConnectionError] with an [FrontendConnectionError.UnrecoverableError],
+         * If the current state is an [FrontendConnectionError] with an [FrontendConnectionError.Unrecoverable],
          * the update is silently ignored because the state cannot be recovered.
          */
         fun update(transform: (FrontendViewState) -> FrontendViewState) {
             _state.update { currentState ->
                 if (currentState is FrontendViewState.Error &&
-                    currentState.error is FrontendConnectionError.UnrecoverableError
+                    currentState.error is FrontendConnectionError.Unrecoverable
                 ) {
                     Timber.w("Ignoring state transition: unrecoverable error present")
                     return
@@ -463,12 +463,12 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     /**
      * Called when the system WebView fails to initialize.
      *
-     * Transitions to [FrontendViewState.Error] with a [FrontendConnectionError.UnrecoverableError.WebViewCreationError]
+     * Transitions to [FrontendViewState.Error] with a [FrontendConnectionError.Unrecoverable.WebViewCreationError]
      * so the error screen is displayed with guidance to update the system WebView.
      */
     fun onWebViewCreationFailed(throwable: Throwable) {
         onError(
-            FrontendConnectionError.UnrecoverableError.WebViewCreationError(
+            FrontendConnectionError.Unrecoverable.WebViewCreationError(
                 message = commonR.string.webview_creation_failed,
                 throwable = throwable,
             ),
@@ -672,14 +672,14 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
     /**
      * Waits the [CONNECTION_TIMEOUT] in [FrontendViewState.Loading] and emits an
-     * [FrontendConnectionError.UnreachableError] if the WebView has not finished loading by then.
+     * [FrontendConnectionError.Timeout] if the WebView has not finished loading by then.
      */
     private suspend fun watchLoadingTimeout(state: FrontendViewState) {
         if (state !is FrontendViewState.Loading) return
         delay(CONNECTION_TIMEOUT)
         if (_viewState.value is FrontendViewState.Loading) {
             onError(
-                FrontendConnectionError.UnreachableError(
+                FrontendConnectionError.ExternalBusTimeout(
                     message = commonR.string.webview_error_TIMEOUT,
                     errorDetails = "",
                     rawErrorType = "ConnectionTimeout",
@@ -889,7 +889,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
             is UrlLoadResult.ServerNotFound -> {
                 onError(
-                    FrontendConnectionError.UnreachableError(
+                    FrontendConnectionError.Unreachable(
                         message = commonR.string.error_connection_failed,
                         errorDetails = "Server not found",
                         rawErrorType = "ServerNotFound",
@@ -899,7 +899,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
             is UrlLoadResult.SessionNotConnected -> {
                 onError(
-                    FrontendConnectionError.AuthenticationError(
+                    FrontendConnectionError.AuthRevoked(
                         message = commonR.string.error_connection_failed,
                         errorDetails = "Session not authenticated",
                         rawErrorType = "SessionNotConnected",
@@ -923,7 +923,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
             is UrlLoadResult.NoUrlAvailable -> {
                 onError(
-                    FrontendConnectionError.UnreachableError(
+                    FrontendConnectionError.Unreachable(
                         message = commonR.string.error_connection_failed,
                         errorDetails = "No URL available",
                         rawErrorType = "NoUrlAvailable",

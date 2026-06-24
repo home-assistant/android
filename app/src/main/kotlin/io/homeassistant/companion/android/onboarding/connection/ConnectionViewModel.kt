@@ -188,7 +188,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         } catch (e: Exception) {
             Timber.e(e, "Unable to build authentication URL")
             onError(
-                FrontendConnectionError.UnreachableError(
+                FrontendConnectionError.Unreachable(
                     message = commonR.string.connection_screen_malformed_url,
                     errorDetails = e.localizedMessage ?: e.message,
                     rawErrorType = e::class.toString(),
@@ -258,12 +258,12 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     /**
      * Called when the system WebView fails to initialize.
      *
-     * Transitions to an error state with a [FrontendConnectionError.UnrecoverableError.WebViewCreationError]
+     * Transitions to an error state with a [FrontendConnectionError.Unrecoverable.WebViewCreationError]
      * so the error screen is displayed with guidance to update the system WebView.
      */
     fun onWebViewCreationFailed(throwable: Throwable) {
         onError(
-            FrontendConnectionError.UnrecoverableError.WebViewCreationError(
+            FrontendConnectionError.Unrecoverable.WebViewCreationError(
                 message = commonR.string.webview_creation_failed,
                 throwable = throwable,
             ),

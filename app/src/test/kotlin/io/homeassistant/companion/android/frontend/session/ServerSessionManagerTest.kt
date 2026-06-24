@@ -78,7 +78,7 @@ class ServerSessionManagerTest {
     }
 
     @Test
-    fun `Given auth failure with anonymous session when getExternalAuth then returns Failed with AuthenticationError`() = runTest {
+    fun `Given auth failure with anonymous session when getExternalAuth then returns Failed with AuthRevoked`() = runTest {
         val payload = AuthPayload(callback = "externalAuthCallback", force = false)
         coEvery { authRepository.retrieveExternalAuthentication(false) } throws Exception("Auth failed")
         coEvery { authRepository.getSessionState() } returns SessionState.ANONYMOUS
@@ -88,7 +88,7 @@ class ServerSessionManagerTest {
         assertTrue(result is ExternalAuthResult.Failed)
         val failed = result as ExternalAuthResult.Failed
         assertEquals("externalAuthCallback(false)", failed.callbackScript)
-        val error = failed.error as FrontendConnectionError.AuthenticationError
+        val error = failed.error as FrontendConnectionError.AuthRevoked
         assertEquals("Auth failed", error.errorDetails)
         assertEquals("ExternalAuthFailed", error.rawErrorType)
     }
@@ -108,18 +108,18 @@ class ServerSessionManagerTest {
     }
 
     @Test
-    fun `Given auth failure and session check failure when getExternalAuth then returns Failed with AuthenticationError`() = runTest {
+    fun `Given auth failure and session check failure when getExternalAuth then returns Failed with AuthRevoked`() = runTest {
         val payload = AuthPayload(callback = "externalAuthCallback", force = false)
         coEvery { authRepository.retrieveExternalAuthentication(false) } throws Exception("Auth failed")
         coEvery { authRepository.getSessionState() } throws Exception("Session check failed")
 
         val result = manager.getExternalAuth(serverId = 1, payload = payload)
 
-        // When session check fails, treated as anonymous and returns AuthenticationError
+        // When session check fails, treated as anonymous and returns AuthRevoked
         assertTrue(result is ExternalAuthResult.Failed)
         val failed = result as ExternalAuthResult.Failed
         assertEquals("externalAuthCallback(false)", failed.callbackScript)
-        val error = failed.error as FrontendConnectionError.AuthenticationError
+        val error = failed.error as FrontendConnectionError.AuthRevoked
         assertEquals("Auth failed", error.errorDetails)
         assertEquals("ExternalAuthFailed", error.rawErrorType)
     }

@@ -113,16 +113,9 @@ fun FrontendConnectionErrorScreen(
     actions: @Composable () -> Unit = {},
 ) {
     error?.let { connectionError ->
-        val icon = when (connectionError) {
-            is FrontendConnectionError.AuthenticationError -> R.drawable.ic_casita_crying
-            is FrontendConnectionError.UnknownError -> R.drawable.ic_casita_problem
-            is FrontendConnectionError.UnreachableError -> R.drawable.ic_casita_no_connection
-            is FrontendConnectionError.UnrecoverableError -> R.drawable.ic_casita_problem
-        }
-
         FrontendConnectionErrorScreen(
             onOpenExternalLink = onOpenExternalLink,
-            icon = ImageVector.vectorResource(icon),
+            icon = ImageVector.vectorResource(connectionError.icon),
             title = stringResource(connectionError.title),
             subtitle = stringResource(connectionError.message),
             url = url,
@@ -406,7 +399,7 @@ private fun FrontendErrorScreenPreview() {
             onOpenExternalLink = {},
             title = "Connection failed",
             subtitle = "Unable to reach your Home Assistant server",
-            errorType = "UnreachableError",
+            errorType = "Unreachable",
             connectivityCheckState = ConnectivityCheckState(),
             onRetryConnectivityCheck = {},
             errorDescription = "Connection timed out after 30 seconds",

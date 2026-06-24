@@ -33,7 +33,7 @@ class FrontendConnectionErrorScreenshotTest {
         HAThemeForPreview {
             FrontendConnectionErrorScreen(
                 url = "http://home-assistant.local:8123",
-                error = FrontendConnectionError.AuthenticationError(
+                error = FrontendConnectionError.AuthRevoked(
                     commonR.string.tls_cert_expired_message,
                     "Error code: 403, Description: forbidden",
                     "raw",
@@ -65,7 +65,7 @@ class FrontendConnectionErrorScreenshotTest {
         HAThemeForPreview {
             FrontendConnectionErrorScreen(
                 url = "http://home-assistant.local:8123",
-                error = FrontendConnectionError.AuthenticationError(
+                error = FrontendConnectionError.AuthRevoked(
                     commonR.string.tls_cert_expired_message,
                     "details",
                     "raw",
@@ -84,7 +84,7 @@ class FrontendConnectionErrorScreenshotTest {
         HAThemeForPreview {
             FrontendConnectionErrorScreen(
                 url = "http://ha.org",
-                error = FrontendConnectionError.UnreachableError(
+                error = FrontendConnectionError.Unreachable(
                     commonR.string.tls_cert_expired_message,
                     "details",
                     "raw",
@@ -104,7 +104,7 @@ class FrontendConnectionErrorScreenshotTest {
             FrontendConnectionErrorScreen(
                 url =
                 "http://super-long-url-to-see-how-it-displays-in-the-screenshot.org/path/1/home-assistant/io?external_auth=1",
-                error = FrontendConnectionError.UnknownError(
+                error = FrontendConnectionError.Unknown(
                     commonR.string.tls_cert_expired_message,
                     "details",
                     "raw",
@@ -123,7 +123,7 @@ class FrontendConnectionErrorScreenshotTest {
         HAThemeForPreview {
             FrontendConnectionErrorScreen(
                 url = null,
-                error = FrontendConnectionError.UnknownError(
+                error = FrontendConnectionError.Unknown(
                     commonR.string.tls_cert_expired_message,
                     "details",
                     "raw",
@@ -143,7 +143,7 @@ class FrontendConnectionErrorScreenshotTest {
         HAThemeForPreview {
             FrontendConnectionErrorScreen(
                 url = BLANK_URL,
-                error = FrontendConnectionError.UnrecoverableError.WebViewCreationError(
+                error = FrontendConnectionError.Unrecoverable.WebViewCreationError(
                     message = commonR.string.webview_creation_failed,
                     throwable = UnsatisfiedLinkError(
                         "dlopen failed: libwebviewchromium.so is 32-bit instead of 64-bit",

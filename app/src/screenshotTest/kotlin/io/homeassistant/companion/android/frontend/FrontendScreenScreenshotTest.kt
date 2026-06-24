@@ -220,7 +220,7 @@ class FrontendScreenScreenshotTest {
                 viewState = FrontendViewState.Error(
                     serverId = 1,
                     url = "https://example.com",
-                    error = FrontendConnectionError.UnreachableError(
+                    error = FrontendConnectionError.Unreachable(
                         message = commonR.string.webview_error_HOST_LOOKUP,
                         errorDetails = "Connection timed out",
                         rawErrorType = "HostLookupError",

@@ -316,7 +316,7 @@ class FrontendViewModelTest {
 
             val state = viewModel.viewState.value
             assertTrue(state is FrontendViewState.Error, "Expected Error state but got $state")
-            assertTrue((state as FrontendViewState.Error).error is FrontendConnectionError.AuthenticationError)
+            assertTrue((state as FrontendViewState.Error).error is FrontendConnectionError.AuthRevoked)
         }
 
         @Test
@@ -330,7 +330,7 @@ class FrontendViewModelTest {
 
             val state = viewModel.viewState.value
             assertTrue(state is FrontendViewState.Error)
-            assertTrue((state as FrontendViewState.Error).error is FrontendConnectionError.UnreachableError)
+            assertTrue((state as FrontendViewState.Error).error is FrontendConnectionError.Unreachable)
         }
 
         @Test
@@ -377,7 +377,7 @@ class FrontendViewModelTest {
 
             val state = viewModel.viewState.value
             assertTrue(state is FrontendViewState.Error)
-            assertTrue((state as FrontendViewState.Error).error is FrontendConnectionError.UnreachableError)
+            assertTrue((state as FrontendViewState.Error).error is FrontendConnectionError.Unreachable)
         }
     }
 
@@ -506,7 +506,7 @@ class FrontendViewModelTest {
             val viewModel = createViewModel()
             advanceUntilIdle()
 
-            assertTrue(viewModel.errorFlow.value is FrontendConnectionError.UnreachableError)
+            assertTrue(viewModel.errorFlow.value is FrontendConnectionError.Unreachable)
         }
     }
 
@@ -522,7 +522,7 @@ class FrontendViewModelTest {
             val viewModel = createViewModel()
             advanceUntilIdle()
 
-            assertTrue(viewModel.errorFlow.value is FrontendConnectionError.UnreachableError)
+            assertTrue(viewModel.errorFlow.value is FrontendConnectionError.Unreachable)
         }
 
         @Test
@@ -567,7 +567,7 @@ class FrontendViewModelTest {
             val state = viewModel.viewState.value
             assertTrue(state is FrontendViewState.Error, "Expected Error state but got $state")
             val error = (state as FrontendViewState.Error).error
-            assertTrue(error is FrontendConnectionError.UnrecoverableError.WebViewCreationError)
+            assertTrue(error is FrontendConnectionError.Unrecoverable.WebViewCreationError)
             assertEquals(io.homeassistant.companion.android.common.R.string.webview_creation_failed, error.message)
             assertEquals("dlopen failed: libwebviewchromium.so is 32-bit", error.errorDetails)
             assertEquals("class java.lang.UnsatisfiedLinkError", error.rawErrorType)
@@ -597,7 +597,7 @@ class FrontendViewModelTest {
             // Verify error state
             val errorState = viewModel.viewState.value
             assertTrue(errorState is FrontendViewState.Error)
-            assertTrue((errorState as FrontendViewState.Error).error is FrontendConnectionError.UnrecoverableError.WebViewCreationError)
+            assertTrue((errorState as FrontendViewState.Error).error is FrontendConnectionError.Unrecoverable.WebViewCreationError)
 
             // Now emit a new URL (e.g., switching from external to internal network)
             urlFlow.emit(UrlLoadResult.Success(url = "https://internal.example.com?external_auth=1", serverId = serverId))
@@ -609,7 +609,7 @@ class FrontendViewModelTest {
                 finalState is FrontendViewState.Error,
                 "Expected Error to be preserved but got $finalState",
             )
-            assertTrue((finalState as FrontendViewState.Error).error is FrontendConnectionError.UnrecoverableError.WebViewCreationError)
+            assertTrue((finalState as FrontendViewState.Error).error is FrontendConnectionError.Unrecoverable.WebViewCreationError)
         }
     }
 
@@ -746,7 +746,7 @@ class FrontendViewModelTest {
             assertTrue(viewModel.viewState.value is FrontendViewState.Loading)
 
             // Emit auth error message
-            val authError = FrontendConnectionError.AuthenticationError(
+            val authError = FrontendConnectionError.AuthRevoked(
                 message = io.homeassistant.companion.android.common.R.string.error_connection_failed,
                 errorDetails = "Token expired",
                 rawErrorType = "AuthError",
@@ -1747,7 +1747,7 @@ class FrontendViewModelTest {
 
             val state = viewModel.viewState.value
             assertTrue(state is FrontendViewState.Error, "Expected Error state but got $state")
-            assertTrue((state as FrontendViewState.Error).error is FrontendConnectionError.UnreachableError)
+            assertTrue((state as FrontendViewState.Error).error is FrontendConnectionError.ExternalBusTimeout)
         }
 
         @Test
