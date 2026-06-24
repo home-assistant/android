@@ -128,12 +128,33 @@ class FrontendUrlManagerTest {
                 "https://home.example.com/?more-info-entity-id=light.living_room&external_auth=1",
                 success.url,
             )
+            // The query param opens the dialog, so no JavaScript fallback is needed.
+            assertEquals(null, success.moreInfoEntityId)
             awaitComplete()
         }
     }
 
     @Test
-    fun `Given EntityMoreInfo on HA older than 2025_6 when serverUrlFlow then falls back to dashboard`() = runTest {
+    fun `Given EntityMoreInfo with URL-special chars on HA 2025_6+ then the entity id is percent-encoded`() = runTest {
+        val server = createTestServer(id = 1, externalUrl = "https://home.example.com", version = "2025.6.0")
+        coEvery { serverManager.getServer(1) } returns server
+        coEvery { sessionManager.isSessionConnected(1) } returns true
+        coEvery { serverManager.activateServer(1) } just runs
+        coEvery { serverManager.connectionStateProvider(1) } returns connectionStateProvider
+        every { connectionStateProvider.urlFlow(null) } returns flowOf(
+            UrlState.HasUrl(URL("https://home.example.com")),
+        )
+
+        urlManager.serverUrlFlow(serverId = 1, target = FrontendTarget.EntityMoreInfo("x&admin=1")).test {
+            val success = awaitItem() as UrlLoadResult.Success
+            // The '&' is encoded (%26) so it cannot break out and inject a second query parameter.
+            assertTrue(success.url.contains("more-info-entity-id=x%26"))
+            awaitComplete()
+        }
+    }
+
+    @Test
+    fun `Given EntityMoreInfo on HA older than 2025_6 when serverUrlFlow then signals JS more-info fallback`() = runTest {
         val server = createTestServer(id = 1, externalUrl = "https://home.example.com", version = "2025.5.0")
         coEvery { serverManager.getServer(1) } returns server
         coEvery { sessionManager.isSessionConnected(1) } returns true
@@ -147,7 +168,9 @@ class FrontendUrlManagerTest {
             val result = awaitItem()
             assertTrue(result is UrlLoadResult.Success)
             val success = result as UrlLoadResult.Success
+            // Loads the dashboard (no query param) and signals that the dialog must be opened via JS.
             assertEquals("https://home.example.com/?external_auth=1", success.url)
+            assertEquals("light.living_room", success.moreInfoEntityId)
             awaitComplete()
         }
     }

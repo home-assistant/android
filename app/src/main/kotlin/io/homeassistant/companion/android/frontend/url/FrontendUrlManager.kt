@@ -106,12 +106,22 @@ class FrontendUrlManager @Inject constructor(
     }
 
     private suspend fun buildUrl(baseUrl: URL?, serverId: Int, target: FrontendTarget): UrlLoadResult {
+        // Set when the more-info dialog must be opened via the `more-info-entity-id` URL parameter
+        // (HA 2025.6+) — added through the query builder below so the entity id is percent-encoded.
+        var moreInfoEntityIdForQuery: String? = null
+        // Set when the more-info dialog must instead be opened via JavaScript after the page loads
+        // (older servers that don't honor the `more-info-entity-id` URL parameter).
+        var moreInfoEntityIdForJs: String? = null
         val urlToLoad = when (target) {
             FrontendTarget.Default -> baseUrl
             is FrontendTarget.Path -> UrlUtil.handle(baseUrl, target.path)
             is FrontendTarget.EntityMoreInfo -> {
-                val moreInfoPath = moreInfoPath(target.entityId, serverId)
-                if (moreInfoPath != null) UrlUtil.handle(baseUrl, moreInfoPath) else baseUrl
+                if (supportsMoreInfoQueryParam(serverId)) {
+                    moreInfoEntityIdForQuery = target.entityId
+                } else {
+                    moreInfoEntityIdForJs = target.entityId
+                }
+                baseUrl
             }
         }
 
@@ -137,28 +147,21 @@ class FrontendUrlManager @Inject constructor(
         }
 
         val urlWithAuth = httpUrl.newBuilder()
+            .apply { moreInfoEntityIdForQuery?.let { addQueryParameter("more-info-entity-id", it) } }
             .addQueryParameter("external_auth", "1")
             .build()
             .toString()
 
         Timber.d("Loading server URL: $urlWithAuth")
-        return UrlLoadResult.Success(url = urlWithAuth, serverId = serverId)
+        return UrlLoadResult.Success(url = urlWithAuth, serverId = serverId, moreInfoEntityId = moreInfoEntityIdForJs)
     }
 
     /**
-     * Resolves the relative path that opens the more-info dialog for [entityId], or `null` when it
-     * cannot be opened via the URL.
-     *
-     * HA 2025.6+ honors the `more-info-entity-id` query parameter directly. Older servers ignore it,
-     * so we fall back to loading the dashboard.
+     * Whether the server honors the `more-info-entity-id` URL query parameter (HA 2025.6+). Older
+     * servers ignore it, so the more-info dialog must be opened via JavaScript after the page loads.
      */
-    private suspend fun moreInfoPath(entityId: String, serverId: Int): String? {
-        return if (serverManager.getServer(serverId)?.version?.isAtLeast(2025, 6, 0) == true) {
-            "/?more-info-entity-id=$entityId"
-        } else {
-            Timber.w("more-info deep link requires HA 2025.6+, loading dashboard instead")
-            null
-        }
+    private suspend fun supportsMoreInfoQueryParam(serverId: Int): Boolean {
+        return serverManager.getServer(serverId)?.version?.isAtLeast(2025, 6, 0) == true
     }
 
     private suspend fun shouldSetSecurityLevel(serverId: Int): Boolean {
