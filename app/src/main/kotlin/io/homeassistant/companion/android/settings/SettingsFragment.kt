@@ -34,7 +34,9 @@ import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.isIgnoringBatteryOptimizations
 import io.homeassistant.companion.android.common.util.maybeAskForIgnoringBatteryOptimizations
 import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.intentLaunchOnboarding
+import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.settings.assist.AssistSettingsFragment
 import io.homeassistant.companion.android.settings.assist.DefaultAssistantManager
@@ -57,7 +59,6 @@ import io.homeassistant.companion.android.settings.wear.SettingsWearDetection
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
 import io.homeassistant.companion.android.util.QuestUtil
 import io.homeassistant.companion.android.util.applyBottomSafeDrawingInsets
-import io.homeassistant.companion.android.webview.WebViewActivity
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -621,9 +622,10 @@ class SettingsFragment(
             ).apply {
                 if (success && serverId != null) {
                     setAction(commonR.string.activate) {
-                        val intent = WebViewActivity.newInstance(requireContext(), null, serverId).apply {
-                            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                        }
+                        val intent = requireContext().intentLaunchWithNavigateTo(
+                            FrontendTarget.Default,
+                            serverId,
+                        ).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                         requireContext().startActivity(intent)
                     }
                 }

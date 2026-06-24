@@ -7,6 +7,8 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.glance.LocalContext
 import androidx.glance.action.Action
 import androidx.glance.appwidget.action.actionStartActivity
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
+import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 import io.homeassistant.companion.android.webview.WebViewActivity
 
 @Composable
@@ -19,11 +21,9 @@ fun glanceStringResource(@StringRes id: Int, vararg arguments: Any): String =
  */
 @Composable
 fun actionStartWebView(path: String, serverId: Int): Action {
-    val intent = Intent(
-        WebViewActivity.newInstance(LocalContext.current, path, serverId)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-    )
+    val intent = LocalContext.current.intentLaunchWithNavigateTo(FrontendTarget.fromRawPath(path), serverId)
     intent.action = path
+    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
     intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
     return actionStartActivity(intent)

@@ -192,6 +192,7 @@ class WebViewActivity :
         private const val INTENT_PREFIX = "intent:"
         private const val MARKET_PREFIX = "https://play.google.com/store/apps/details?id="
 
+        @Deprecated("Use LaunchActivity directly")
         fun newInstance(context: Context, path: String? = null, serverId: Int? = null): Intent {
             return Intent(context, WebViewActivity::class.java).apply {
                 putExtra(EXTRA_PATH, path)
