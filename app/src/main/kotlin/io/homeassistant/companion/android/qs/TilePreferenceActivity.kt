@@ -14,7 +14,7 @@ import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.isSetup
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.LaunchActivity
-import io.homeassistant.companion.android.launch.intentLaunchWithNavigate
+import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.qs.ManageTilesViewModel
 import javax.inject.Inject
@@ -63,7 +63,7 @@ class TilePreferenceActivity : BaseActivity() {
             val intent = if (!serverManager.isRegistered()) {
                 Intent(this@TilePreferenceActivity, LaunchActivity::class.java)
             } else if (tileData?.isSetup == true) {
-                this@TilePreferenceActivity.intentLaunchWithNavigate(
+                this@TilePreferenceActivity.intentLaunchWithNavigateTo(
                     target = FrontendTarget.EntityMoreInfo(tileData.entityId),
                     serverId = tileData.serverId,
                 )

@@ -23,7 +23,7 @@ import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
-import io.homeassistant.companion.android.launch.intentLaunchWithNavigate
+import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 
 @RequiresApi(Build.VERSION_CODES.R)
 interface HaControl {
@@ -31,7 +31,7 @@ interface HaControl {
     @SuppressLint("ResourceType")
     fun createControl(context: Context, entity: Entity, info: HaControlInfo): Control {
         val controlIntent =
-            context.applicationContext.intentLaunchWithNavigate(
+            context.applicationContext.intentLaunchWithNavigateTo(
                 FrontendTarget.EntityMoreInfo(info.entityId),
                 info.serverId,
             )

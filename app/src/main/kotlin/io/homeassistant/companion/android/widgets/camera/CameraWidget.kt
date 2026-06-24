@@ -26,7 +26,7 @@ import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
-import io.homeassistant.companion.android.launch.intentLaunchWithNavigate
+import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 import io.homeassistant.companion.android.util.hasActiveConnection
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.UPDATE_WIDGETS
@@ -187,7 +187,7 @@ class CameraWidget : AppWidgetProvider() {
                     WidgetTapAction.OPEN -> PendingIntent.getActivity(
                         context,
                         appWidgetId,
-                        context.intentLaunchWithNavigate(
+                        context.intentLaunchWithNavigateTo(
                             FrontendTarget.EntityMoreInfo(widget.entityId),
                             widget.serverId,
                         ),

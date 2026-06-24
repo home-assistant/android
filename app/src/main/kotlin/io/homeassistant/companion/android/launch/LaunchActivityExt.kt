@@ -13,11 +13,11 @@ internal fun Context.startLaunchInvitation(serverUrl: String) {
     )
 }
 
-internal fun Context.intentLaunchWithNavigate(target: FrontendTarget, serverId: Int): Intent =
+internal fun Context.intentLaunchWithNavigateTo(target: FrontendTarget, serverId: Int): Intent =
     LaunchActivity.newInstance(this, LaunchActivity.DeepLink.NavigateTo(target, serverId))
 
 internal fun Context.startLaunchWithNavigateTo(target: FrontendTarget, serverId: Int) {
-    startActivity(intentLaunchWithNavigate(target, serverId))
+    startActivity(intentLaunchWithNavigateTo(target, serverId))
 }
 
 internal fun Context.intentLaunchWearOnboarding(wearName: String, urlToOnboard: String?): Intent {
