@@ -9,6 +9,7 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.frontend.session.ServerSessionManager
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -45,7 +46,7 @@ class FrontendUrlManagerTest {
     fun `Given server not found when serverUrlFlow then returns ServerNotFound`() = runTest {
         coEvery { serverManager.getServer(1) } returns null
 
-        urlManager.serverUrlFlow(serverId = 1, path = null).test {
+        urlManager.serverUrlFlow(serverId = 1, target = FrontendTarget.Default).test {
             val result = awaitItem()
             assertTrue(result is UrlLoadResult.ServerNotFound)
             assertEquals(1, (result as UrlLoadResult.ServerNotFound).serverId)
@@ -59,7 +60,7 @@ class FrontendUrlManagerTest {
         coEvery { serverManager.getServer(1) } returns server
         coEvery { sessionManager.isSessionConnected(1) } returns false
 
-        urlManager.serverUrlFlow(serverId = 1, path = null).test {
+        urlManager.serverUrlFlow(serverId = 1, target = FrontendTarget.Default).test {
             val result = awaitItem()
             assertTrue(result is UrlLoadResult.SessionNotConnected)
             assertEquals(1, (result as UrlLoadResult.SessionNotConnected).serverId)
@@ -78,7 +79,7 @@ class FrontendUrlManagerTest {
             UrlState.HasUrl(URL("https://home.example.com")),
         )
 
-        urlManager.serverUrlFlow(serverId = 1, path = null).test {
+        urlManager.serverUrlFlow(serverId = 1, target = FrontendTarget.Default).test {
             val result = awaitItem()
             assertTrue(result is UrlLoadResult.Success)
             val success = result as UrlLoadResult.Success
@@ -99,7 +100,7 @@ class FrontendUrlManagerTest {
             UrlState.HasUrl(URL("https://home.example.com")),
         )
 
-        urlManager.serverUrlFlow(serverId = 1, path = "/dashboard").test {
+        urlManager.serverUrlFlow(serverId = 1, target = FrontendTarget.Path("/dashboard")).test {
             val result = awaitItem()
             assertTrue(result is UrlLoadResult.Success)
             val success = result as UrlLoadResult.Success
@@ -109,8 +110,8 @@ class FrontendUrlManagerTest {
     }
 
     @Test
-    fun `Given path with entityId prefix when serverUrlFlow then skips path handling`() = runTest {
-        val server = createTestServer(id = 1, externalUrl = "https://home.example.com")
+    fun `Given EntityMoreInfo on HA 2025_6+ when serverUrlFlow then loads more-info-entity-id query`() = runTest {
+        val server = createTestServer(id = 1, externalUrl = "https://home.example.com", version = "2025.6.0")
         coEvery { serverManager.getServer(1) } returns server
         coEvery { sessionManager.isSessionConnected(1) } returns true
         coEvery { serverManager.activateServer(1) } just runs
@@ -119,11 +120,33 @@ class FrontendUrlManagerTest {
             UrlState.HasUrl(URL("https://home.example.com")),
         )
 
-        urlManager.serverUrlFlow(serverId = 1, path = "entityId:light.living_room").test {
+        urlManager.serverUrlFlow(serverId = 1, target = FrontendTarget.EntityMoreInfo("light.living_room")).test {
             val result = awaitItem()
             assertTrue(result is UrlLoadResult.Success)
             val success = result as UrlLoadResult.Success
-            // Should not contain the entityId path in URL
+            assertEquals(
+                "https://home.example.com/?more-info-entity-id=light.living_room&external_auth=1",
+                success.url,
+            )
+            awaitComplete()
+        }
+    }
+
+    @Test
+    fun `Given EntityMoreInfo on HA older than 2025_6 when serverUrlFlow then falls back to dashboard`() = runTest {
+        val server = createTestServer(id = 1, externalUrl = "https://home.example.com", version = "2025.5.0")
+        coEvery { serverManager.getServer(1) } returns server
+        coEvery { sessionManager.isSessionConnected(1) } returns true
+        coEvery { serverManager.activateServer(1) } just runs
+        coEvery { serverManager.connectionStateProvider(1) } returns connectionStateProvider
+        every { connectionStateProvider.urlFlow(null) } returns flowOf(
+            UrlState.HasUrl(URL("https://home.example.com")),
+        )
+
+        urlManager.serverUrlFlow(serverId = 1, target = FrontendTarget.EntityMoreInfo("light.living_room")).test {
+            val result = awaitItem()
+            assertTrue(result is UrlLoadResult.Success)
+            val success = result as UrlLoadResult.Success
             assertEquals("https://home.example.com/?external_auth=1", success.url)
             awaitComplete()
         }
@@ -152,7 +175,7 @@ class FrontendUrlManagerTest {
             locationEnabled = locationEnabled,
         )
 
-        urlManager.serverUrlFlow(serverId = 1, path = null).test {
+        urlManager.serverUrlFlow(serverId = 1, target = FrontendTarget.Default).test {
             val result = awaitItem()
             assertTrue(result is UrlLoadResult.InsecureBlocked)
             val blocked = result as UrlLoadResult.InsecureBlocked
@@ -172,7 +195,7 @@ class FrontendUrlManagerTest {
         coEvery { serverManager.connectionStateProvider(1) } returns connectionStateProvider
         every { connectionStateProvider.urlFlow(null) } returns flowOf(UrlState.HasUrl(null))
 
-        urlManager.serverUrlFlow(serverId = 1, path = null).test {
+        urlManager.serverUrlFlow(serverId = 1, target = FrontendTarget.Default).test {
             val result = awaitItem()
             assertTrue(result is UrlLoadResult.NoUrlAvailable)
             assertEquals(1, (result as UrlLoadResult.NoUrlAvailable).serverId)
@@ -192,7 +215,7 @@ class FrontendUrlManagerTest {
             UrlState.HasUrl(URL("https://home.example.com")),
         )
 
-        urlManager.serverUrlFlow(serverId = ServerManager.SERVER_ID_ACTIVE, path = null).test {
+        urlManager.serverUrlFlow(serverId = ServerManager.SERVER_ID_ACTIVE, target = FrontendTarget.Default).test {
             val result = awaitItem()
             assertTrue(result is UrlLoadResult.Success)
             assertEquals(42, (result as UrlLoadResult.Success).serverId)
@@ -218,7 +241,7 @@ class FrontendUrlManagerTest {
             UrlState.HasUrl(URL("http://home.example.com")),
         )
 
-        urlManager.serverUrlFlow(serverId = 1, path = null).test {
+        urlManager.serverUrlFlow(serverId = 1, target = FrontendTarget.Default).test {
             val result = awaitItem()
             assertTrue(result is UrlLoadResult.SecurityLevelRequired)
             assertEquals(1, (result as UrlLoadResult.SecurityLevelRequired).serverId)
@@ -243,7 +266,7 @@ class FrontendUrlManagerTest {
 
         urlManager.onSecurityLevelShown(serverId = 1)
 
-        urlManager.serverUrlFlow(serverId = 1, path = null).test {
+        urlManager.serverUrlFlow(serverId = 1, target = FrontendTarget.Default).test {
             val result = awaitItem()
             assertTrue(result is UrlLoadResult.Success)
             awaitComplete()
@@ -265,7 +288,7 @@ class FrontendUrlManagerTest {
             UrlState.HasUrl(URL("https://home.example.com")),
         )
 
-        urlManager.serverUrlFlow(serverId = 1, path = null).test {
+        urlManager.serverUrlFlow(serverId = 1, target = FrontendTarget.Default).test {
             val result = awaitItem()
             assertTrue(result is UrlLoadResult.Success)
             awaitComplete()
@@ -287,7 +310,7 @@ class FrontendUrlManagerTest {
             UrlState.HasUrl(URL("http://home.example.com")),
         )
 
-        urlManager.serverUrlFlow(serverId = 1, path = null).test {
+        urlManager.serverUrlFlow(serverId = 1, target = FrontendTarget.Default).test {
             val result = awaitItem()
             assertTrue(result is UrlLoadResult.Success)
             awaitComplete()
@@ -312,7 +335,7 @@ class FrontendUrlManagerTest {
             locationEnabled = false,
         )
 
-        urlManager.serverUrlFlow(serverId = 1, path = null).test {
+        urlManager.serverUrlFlow(serverId = 1, target = FrontendTarget.Default).test {
             val first = awaitItem()
             assertTrue(first is UrlLoadResult.Success)
 
@@ -337,7 +360,7 @@ class FrontendUrlManagerTest {
             UrlState.HasUrl(URL("https://home.example.com")),
         )
 
-        urlManager.serverUrlFlow(serverId = 1, path = "/dashboard").test {
+        urlManager.serverUrlFlow(serverId = 1, target = FrontendTarget.Path("/dashboard")).test {
             val first = awaitItem() as UrlLoadResult.Success
             assertTrue(first.url.contains("/dashboard"), "First emission should contain path")
 
@@ -364,7 +387,7 @@ class FrontendUrlManagerTest {
             locationEnabled = false,
         )
 
-        urlManager.serverUrlFlow(serverId = 1, path = "/dashboard").test {
+        urlManager.serverUrlFlow(serverId = 1, target = FrontendTarget.Path("/dashboard")).test {
             val first = awaitItem()
             assertTrue(first is UrlLoadResult.InsecureBlocked)
 
@@ -378,11 +401,13 @@ class FrontendUrlManagerTest {
         id: Int,
         externalUrl: String = "https://home.example.com",
         connectionInfo: ServerConnectionInfo? = null,
+        version: String? = null,
     ): Server {
         val connection = connectionInfo ?: ServerConnectionInfo(externalUrl = externalUrl)
         return Server(
             id = id,
             _name = "Test Server",
+            _version = version,
             connection = connection,
             session = ServerSessionInfo(),
             user = ServerUserInfo(),

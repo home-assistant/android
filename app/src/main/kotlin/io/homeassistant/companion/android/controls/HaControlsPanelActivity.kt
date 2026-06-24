@@ -28,6 +28,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.ServerManager.Companion.SERVER_ID_ACTIVE
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.webview.WebViewActivity
@@ -73,7 +74,10 @@ class HaControlsPanelActivity : AppCompatActivity() {
                 Timber.d("Launching LaunchActivity…")
                 LaunchActivity.newInstance(
                     context = this@HaControlsPanelActivity,
-                    deepLink = LaunchActivity.DeepLink.NavigateTo(path = path, serverId = serverId ?: SERVER_ID_ACTIVE),
+                    deepLink = LaunchActivity.DeepLink.NavigateTo(
+                        target = FrontendTarget.fromRawPath(path),
+                        serverId = serverId ?: SERVER_ID_ACTIVE,
+                    ),
                     showWhenLocked = true,
                 )
             } else {

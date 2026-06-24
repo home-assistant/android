@@ -22,6 +22,7 @@ import io.homeassistant.companion.android.assist.AssistActivity
 import io.homeassistant.companion.android.common.data.servers.ServerManager.Companion.SERVER_ID_ACTIVE
 import io.homeassistant.companion.android.frontend.FrontendScreen
 import io.homeassistant.companion.android.frontend.FrontendViewModel
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget.Companion.toRawPath
 import io.homeassistant.companion.android.launch.HAStartDestinationRoute
 import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.launch.PipReadiness
@@ -41,15 +42,33 @@ internal data class FrontendActivityRoute(
 )
 
 @Serializable
-internal data class FrontendRoute(val path: String? = null, val serverId: Int = SERVER_ID_ACTIVE) :
-    HAStartDestinationRoute
+internal data class FrontendRoute
+/**
+ * The destination is stored as the raw [rawPath] string rather than a custom-typed field on
+ * purpose: a custom `NavType` for a [FrontendTarget] field would force a `typeOf`/kotlin-reflect
+ * lookup on the main thread during navigation.
+ *
+ * Annotated `@VisibleForTesting` so the linter discourages building a route from a raw path;
+ * production code should use the [FrontendTarget] constructor instead. It remains used by the
+ * generated kotlinx.serialization route serializer.
+ */
+@VisibleForTesting constructor(
+    // TODO make this private when removing FrontendActivityRoute
+    val rawPath: String? = null,
+    val serverId: Int = SERVER_ID_ACTIVE,
+) : HAStartDestinationRoute {
+
+    constructor(target: FrontendTarget, serverId: Int = SERVER_ID_ACTIVE) : this(target.toRawPath(), serverId)
+
+    val target: FrontendTarget get() = FrontendTarget.fromRawPath(rawPath)
+}
 
 internal fun NavController.navigateToFrontend(
-    path: String? = null,
+    target: FrontendTarget = FrontendTarget.Default,
     serverId: Int = SERVER_ID_ACTIVE,
     navOptions: NavOptions? = null,
 ) {
-    navigate(FrontendRoute(path, serverId), navOptions)
+    navigate(FrontendRoute(target, serverId), navOptions)
 }
 
 /**
@@ -158,7 +177,7 @@ internal fun NavGraphBuilder.frontendScreen(
     } else {
         composable<FrontendRoute> {
             val route = it.toRoute<FrontendRoute>()
-            navController.navigate(FrontendActivityRoute(route.serverId, route.path))
+            navController.navigate(FrontendActivityRoute(route.serverId, route.rawPath))
             navController.context.getActivity()?.finish()
         }
 
@@ -214,12 +233,15 @@ internal fun FrontendEventHandler(
                 is FrontendEvent.NavigateToAssistSettings -> onNavigateToSettings(
                     SettingsActivity.Deeplink.AssistSettings,
                 )
+
                 is FrontendEvent.NavigateToAssist ->
                     onNavigateToAssist(event.serverId, event.pipelineId, event.startListening)
+
                 is FrontendEvent.OpenExternalLink -> onOpenExternalLink(event.uri)
                 is FrontendEvent.NavigateToDeveloperSettings -> onNavigateToSettings(
                     SettingsActivity.Deeplink.Developer,
                 )
+
                 is FrontendEvent.ShowServerSwitcher -> onShowServerSwitcher()
                 is FrontendEvent.NavigateToNfcWrite -> onNavigateToNfcWrite(event.messageId, event.tagId)
                 is FrontendEvent.LaunchMatterThreadIntent -> onLaunchMatterThreadIntent(event.intentSender)

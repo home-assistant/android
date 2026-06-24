@@ -7,6 +7,7 @@ import io.homeassistant.companion.android.frontend.error.ErrorAction
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.exoplayer.ExoPlayerUiState
 import io.homeassistant.companion.android.frontend.improv.ImprovUIState
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
 
 /**
@@ -36,7 +37,8 @@ sealed interface FrontendViewState {
      *
      * The [url] is set to about:blank to clear the webview of any previously loaded URL
      */
-    data class LoadServer(override val serverId: Int, val path: String? = null) : FrontendViewState {
+    data class LoadServer(override val serverId: Int, val target: FrontendTarget = FrontendTarget.Default) :
+        FrontendViewState {
         override val url: String = BLANK_URL
     }
 
@@ -45,8 +47,11 @@ sealed interface FrontendViewState {
      *
      * The connection timeout starts when entering this state.
      */
-    data class Loading(override val serverId: Int, override val url: String, val path: String? = null) :
-        FrontendViewState
+    data class Loading(
+        override val serverId: Int,
+        override val url: String,
+        val target: FrontendTarget = FrontendTarget.Default,
+    ) : FrontendViewState
 
     /**
      * Content state when the WebView is displaying the Home Assistant frontend.
