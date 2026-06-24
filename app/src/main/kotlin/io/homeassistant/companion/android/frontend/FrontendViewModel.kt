@@ -281,6 +281,13 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private var zoomObserverJob: Job? = null
 
     /**
+     * Entity whose more-info dialog must be opened via JavaScript once the page finishes loading.
+     * Set for servers older than HA 2025.6 (see [UrlLoadResult.Success.moreInfoEntityId]) and
+     * cleared after it is dispatched in [onPageFinished].
+     */
+    private var pendingMoreInfoEntityId: String? = null
+
+    /**
      * The user's "Autoplay video" preference.
      *
      * Lives outside [FrontendViewState] because the WebView is rendered during `Loading`,
@@ -882,6 +889,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private fun handleUrlResult(result: UrlLoadResult) {
         when (result) {
             is UrlLoadResult.Success -> {
+                pendingMoreInfoEntityId = result.moreInfoEntityId
                 _viewState.update {
                     FrontendViewState.Loading(
                         serverId = result.serverId,
@@ -1007,6 +1015,12 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      * to react to settings changes until the next page load restarts it.
      */
     private fun onPageFinished(url: String?) {
+        // Open the more-info dialog for an older-server deep link now that the frontend has loaded.
+        pendingMoreInfoEntityId?.let { entityId ->
+            pendingMoreInfoEntityId = null
+            viewModelScope.launch { _webViewActions.emit(WebViewAction.OpenMoreInfo(entityId)) }
+        }
+
         zoomObserverJob?.cancel()
         zoomObserverJob = viewModelScope.launch {
             prefsRepository.zoomSettingsFlow().collect { settings ->

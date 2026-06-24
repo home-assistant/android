@@ -10,8 +10,12 @@ sealed interface UrlLoadResult {
 
     /**
      * URL ready to load in the WebView.
+     *
+     * @property moreInfoEntityId When non-null, the more-info dialog for this entity must be opened
+     *   via JavaScript once the page has loaded. Used as a fallback for servers older than HA 2025.6,
+     *   which ignore the `more-info-entity-id` URL parameter.
      */
-    data class Success(val url: String, val serverId: Int) : UrlLoadResult
+    data class Success(val url: String, val serverId: Int, val moreInfoEntityId: String? = null) : UrlLoadResult
 
     /**
      * Server not found in the database.

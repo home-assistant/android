@@ -1254,6 +1254,42 @@ class FrontendViewModelTest {
         }
 
         @Test
+        fun `Given older-server more-info deep link when page finishes then OpenMoreInfo is dispatched`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId, moreInfoEntityId = "light.kitchen"),
+            )
+
+            val (viewModel, triggerPageFinished) = createViewModelWithPageFinishedCapture()
+
+            viewModel.webViewActions.test {
+                triggerPageFinished()
+
+                assertEquals(WebViewAction.OpenMoreInfo("light.kitchen"), awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given more-info dispatched when page finishes again then OpenMoreInfo is not repeated`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId, moreInfoEntityId = "light.kitchen"),
+            )
+
+            val (viewModel, triggerPageFinished) = createViewModelWithPageFinishedCapture()
+
+            viewModel.webViewActions.test {
+                triggerPageFinished()
+                assertEquals(WebViewAction.OpenMoreInfo("light.kitchen"), awaitItem())
+                awaitItem() // ApplyZoom from the first page load
+
+                triggerPageFinished()
+                // Only the zoom action repeats; the more-info dialog must not be reopened.
+                assertTrue(awaitItem() is WebViewAction.ApplyZoom)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
         fun `Given page loaded when settings change then ApplyZoom action is emitted without page finish`() = runTest {
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
