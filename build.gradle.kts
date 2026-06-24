@@ -1,5 +1,7 @@
 import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
 
+val kotlinVersion = libs.versions.kotlin.get()
+
 plugins {
     alias(libs.plugins.ktlint)
 
@@ -19,6 +21,29 @@ plugins {
 
 allprojects {
     apply(plugin = rootProject.libs.plugins.ktlint.get().pluginId)
+
+    configurations.matching { it.name == "kotlinAbiValidationCompatClasspath" }.configureEach {
+        resolutionStrategy.eachDependency {
+            if (
+                requested.group == "org.jetbrains.kotlin" &&
+                requested.name in setOf(
+                    "kotlin-build-tools-api",
+                    "kotlin-build-tools-cri-impl",
+                    "kotlin-build-tools-impl",
+                    "kotlin-compiler-embeddable",
+                    "kotlin-compiler-runner",
+                    "kotlin-daemon-client",
+                    "kotlin-daemon-embeddable",
+                    "kotlin-script-runtime",
+                    "kotlin-stdlib",
+                    "kotlin-tooling-core",
+                )
+            ) {
+                useVersion(kotlinVersion)
+                because("Keep Kotlin ABI validation tooling aligned with the configured Kotlin version.")
+            }
+        }
+    }
 
     ktlint {
         android.set(true)
