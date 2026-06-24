@@ -1,22 +1,18 @@
 package io.homeassistant.companion.android.settings
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.android.tools.screenshot.PreviewTest
 import com.mikepenz.aboutlibraries.Libs
+import com.mikepenz.aboutlibraries.entity.Library
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.settings.license.LicensesContent
 import io.homeassistant.companion.android.util.compose.HAPreviews
 
-class LicensesScreenshotTest {
-
-    @HAPreviews
-    @PreviewTest
-    @Composable
-    fun Licences() {
-        HAThemeForPreview {
-            val libs = Libs.Builder()
-                .withJson(
-                    """
+private const val FAKE_LIBS = """
 {
   "libraries": [
     {
@@ -61,7 +57,7 @@ class LicensesScreenshotTest {
         "url": "https://github.com/home-assistant/android"
       },
       "licenses": [
-        "Apache-2.0"
+        "Home-Assistant"
       ],
       "funding": []
     }
@@ -70,21 +66,67 @@ class LicensesScreenshotTest {
     "Apache-2.0": {
       "name": "Apache License 2.0",
       "url": "https://spdx.org/licenses/Apache-2.0.html",
-      "content": "CLEARED FOR TEST",
+      "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
       "internalHash": "Apache-2.0",
       "spdxId": "Apache-2.0",
       "hash": "Apache-2.0"
+    },
+    "Home-Assistant": {
+      "name": "Home Assistant",
+      "url": "https://home-assistant.io",
+      "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+      "internalHash": "HA",
+      "spdxId": "FAKE",
+      "hash": "FAKE"
     }
   }
-}               
-                    """.trimIndent(),
-                )
+}
+"""
+
+class LicensesScreenshotTest {
+
+    @HAPreviews
+    @PreviewTest
+    @Composable
+    fun Licences() {
+        HAThemeForPreview {
+            val libs = Libs.Builder()
+                .withJson(FAKE_LIBS)
                 .build()
 
             assert(libs.libraries.isNotEmpty()) { "Fail to parse fake JSON" }
 
+            var openDialog by remember { mutableStateOf<Library?>(null) }
+            var openSheet by remember { mutableStateOf<Library?>(null) }
             LicensesContent(
-                libs,
+                libraries = libs,
+                dialogLibrary = openDialog,
+                sheetLibrary = openSheet,
+                onDialogLibraryChange = { openDialog = it },
+                onSheetLibraryChange = { openSheet = it },
+            )
+        }
+    }
+
+    @HAPreviews
+    @PreviewTest
+    @Composable
+    fun `Licences sheet details`() {
+        HAThemeForPreview {
+            val libs = Libs.Builder()
+                .withJson(FAKE_LIBS)
+                .build()
+
+            assert(libs.libraries.size == 2) { "Fail to parse fake JSON" }
+
+            var openDialog by remember { mutableStateOf<Library?>(null) }
+            var openSheet by remember { mutableStateOf<Library?>(libs.libraries[1]) }
+            LicensesContent(
+                libraries = libs,
+                dialogLibrary = openDialog,
+                sheetLibrary = openSheet,
+                onDialogLibraryChange = { openDialog = it },
+                onSheetLibraryChange = { openSheet = it },
             )
         }
     }
