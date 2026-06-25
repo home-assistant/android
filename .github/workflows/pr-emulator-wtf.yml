@@ -18,8 +18,7 @@ jobs:
     environment: ui-test
     if: >
       github.event.workflow_run.event == 'pull_request'
-      && github.event.workflow_run.conclusion != 'cancelled'
-      && github.event.workflow_run.conclusion != 'skipped'
+      && github.event.workflow_run.conclusion == 'success'
     permissions:
       id-token: write  # Needed for OIDC authentication
       actions: read  # Needed for retrieving artifacts
@@ -87,17 +86,6 @@ jobs:
             echo "job_url=$JOB_URL"
           } >> "$GITHUB_OUTPUT"
 
-      # Halt before spending any emulator.wtf credits if the triggering Pull Request
-      # workflow did not succeed (publish_test_results still runs afterward to
-      # aggregate whatever results pr.yml produced).
-      - name: Halt if triggering workflow did not succeed
-        if: github.event.workflow_run.conclusion != 'success'
-        env:
-          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
-        run: |
-          echo "::error::Triggering 'Pull Request' workflow concluded as '$CONCLUSION'; skipping emulator.wtf to save resources"
-          exit 1
-
       - name: Download emulator.wtf inputs
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
@@ -164,7 +152,7 @@ jobs:
           name: Instrumentation Test app reports
           path: build/test-results/**
 
-      # job.status reflects everything above (halt, downloads, test runs) and is
+      # job.status reflects everything above (downloads, test runs) and is
       # one of success/failure/cancelled, all valid check-run conclusions.
       # We re-send the same output.summary link so the completed check page
       # keeps the deep-link to the emulator.wtf job logs (see the Create step
@@ -207,11 +195,12 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: pr-artifacts
 
-      # If emulator_wtf halted or failed before running tests, it uploads no
-      # results artifact, and downloading it by name errors. Tolerate that so we
-      # still publish the pr.yml results below. We cannot gate on
-      # needs.emulator_wtf.result because a real test failure also fails the job
-      # yet does produce this artifact, which we must still publish.
+      # If emulator_wtf was skipped (triggering workflow did not succeed) or
+      # failed before running tests, it uploads no results artifact, and
+      # downloading it by name errors. Tolerate that so we still publish the
+      # pr.yml results below. We cannot gate on needs.emulator_wtf.result because
+      # a real test failure also fails the job yet does produce this artifact,
+      # which we must still publish.
       - name: Download emulator.wtf results from this run
         continue-on-error: true
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
