@@ -21,6 +21,8 @@ import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509ExtendedKeyManager
 import javax.net.ssl.X509ExtendedTrustManager
 import javax.net.ssl.X509TrustManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import timber.log.Timber
 
@@ -45,11 +47,13 @@ class TLSHelper @Inject constructor(
      * them, the handshake also falls back to a trust manager holding only the user-installed CAs
      * whenever the default rejects a certificate (see [withUserInstalledCaFallback]). This relies on
      * the app opting into user CAs via `<certificates src="user"/>` in `network_security_config.xml`.
+     *
+     * Runs on [Dispatchers.IO] because it may read keystores from disk.
      */
-    fun setupOkHttpClientSSLSocketFactory(builder: OkHttpClient.Builder) {
+    suspend fun setupOkHttpClientSSLSocketFactory(builder: OkHttpClient.Builder) = withContext(Dispatchers.IO) {
         val platformTrustManager = defaultX509TrustManager() ?: run {
             FailFast.fail { "No default X509 trust manager available" }
-            return
+            return@withContext
         }
         val handshakeTrustManager = withUserInstalledCaFallback(platformTrustManager)
 
