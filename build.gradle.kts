@@ -22,6 +22,7 @@ plugins {
 allprojects {
     apply(plugin = rootProject.libs.plugins.ktlint.get().pluginId)
 
+    // TODO this has been added until https://youtrack.jetbrains.com/issue/KT-87220/Kotlin-Gradle-plugin-resolves-kotlinAbiValidationCompatClasspath-to-newer-beta-Kotlin-artifacts-during-dependency-locking is addressed
     configurations.matching { it.name == "kotlinAbiValidationCompatClasspath" }.configureEach {
         resolutionStrategy.eachDependency {
             if (
