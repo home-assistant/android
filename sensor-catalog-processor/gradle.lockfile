@@ -1,6 +1,7 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
+# To regenerate this file, run: ./gradlew :sensor-catalog-processor:dependencies --write-locks
 ch.qos.logback:logback-classic:1.3.14=ktlint
 ch.qos.logback:logback-core:1.3.14=ktlint
 com.github.ajalt.clikt:clikt-jvm:5.0.2=ktlint
