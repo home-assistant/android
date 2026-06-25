@@ -140,6 +140,7 @@ import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.ConnectionSecurityLevelFragment
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
+import io.homeassistant.companion.android.settings.shortcuts.HaShortcutManager
 import io.homeassistant.companion.android.themes.NightModeManager
 import io.homeassistant.companion.android.util.ChangeLog
 import io.homeassistant.companion.android.util.CheckLocationDisabledUseCase
@@ -290,6 +291,9 @@ class WebViewActivity :
     @Inject
     lateinit var dataSourceFactoryProvider: SuspendProvider<DataSource.Factory>
 
+    @Inject
+    lateinit var shortcutManager: HaShortcutManager
+
     private lateinit var webView: WebView
     private var loadedUrl: Uri? = null
     private lateinit var decor: FrameLayout
@@ -379,6 +383,14 @@ class WebViewActivity :
         }
 
         super.onCreate(savedInstanceState)
+
+        // Old shortcuts launch this activity directly, so migrate them to the LinkActivity deep-link
+        // format on use (a safety net alongside the startup migration in HomeAssistantApplication).
+        // KEEP this trigger when migrating away from WebViewActivity: whatever component replaces it
+        // as the legacy shortcut target must keep migrating those shortcuts, otherwise they break.
+        lifecycleScope.launch(Dispatchers.IO) {
+            shortcutManager.migrateLegacyShortcuts()
+        }
 
         maybeRequestLocalNetworkPermission()
 
