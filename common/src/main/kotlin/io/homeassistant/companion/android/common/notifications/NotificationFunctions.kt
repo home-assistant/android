@@ -246,7 +246,7 @@ fun prepareText(text: String): Spanned {
 }
 
 fun handleColor(context: Context, builder: NotificationCompat.Builder, data: Map<String, String>) {
-    val colorString = data["color"]
+    val colorString = data["notification_icon_color"] ?: data["color"]
     val color = parseColor(context, colorString, R.color.colorPrimary)
     builder.color = color
 }
