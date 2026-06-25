@@ -39,6 +39,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.frontend.barcode.BarcodeScannerUiState
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
+import io.homeassistant.companion.android.frontend.error.ErrorActionIntent
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.improv.ImprovUIState
@@ -101,8 +102,8 @@ class FrontendScreenTest {
     }
 
     @Test
-    fun `Given Error state then error screen with retry button and webview are displayed`() {
-        var retryCalled = false
+    fun `Given Error state then error screen with recovery action and webview are displayed`() {
+        var action: ErrorActionIntent? = null
         val error = FrontendConnectionError.Unreachable(
             message = commonR.string.webview_error_HOST_LOOKUP,
             errorDetails = "Connection failed",
@@ -112,7 +113,7 @@ class FrontendScreenTest {
             setFrontendScreen(
                 viewState = FrontendViewState.Error(serverId = 1, url = "https://example.com", error = error),
                 errorStateProvider = FakeConnectionErrorStateProvider(url = "https://example.com", error = error),
-                onBlockInsecureRetry = { retryCalled = true },
+                onErrorAction = { action = it },
             )
 
             assertIsLoading(false)
@@ -120,8 +121,10 @@ class FrontendScreenTest {
 
             onNodeWithText(stringResource(commonR.string.error_connection_failed)).assertIsDisplayed()
             onNodeWithText(stringResource(commonR.string.webview_error_HOST_LOOKUP)).assertIsDisplayed()
-            onNodeWithText(stringResource(commonR.string.retry)).performScrollTo().performClick()
-            assertTrue("onRetry should be called when retry button is clicked", retryCalled)
+            // isInternalConnection defaults to false on a freshly built Error state, so the action
+            // refreshes the external URL.
+            onNodeWithText(stringResource(commonR.string.refresh_external)).performScrollTo().performClick()
+            assertEquals(ErrorActionIntent.Refresh, action)
         }
     }
 
@@ -496,6 +499,7 @@ class FrontendScreenTest {
         errorStateProvider: FrontendConnectionErrorStateProvider = FrontendConnectionErrorStateProvider.noOp,
         pendingPermissionRequest: PermissionRequest? = null,
         onBlockInsecureRetry: () -> Unit = {},
+        onErrorAction: (ErrorActionIntent) -> Unit = {},
         onBlockInsecureHelpClick: suspend () -> Unit = {},
         onOpenSettings: () -> Unit = {},
         onChangeSecurityLevel: () -> Unit = {},
@@ -518,6 +522,7 @@ class FrontendScreenTest {
                     errorStateProvider = errorStateProvider,
                     pendingPermissionRequest = pendingPermissionRequest,
                     onBlockInsecureRetry = onBlockInsecureRetry,
+                    onErrorAction = onErrorAction,
                     onOpenExternalLink = {},
                     onBlockInsecureHelpClick = onBlockInsecureHelpClick,
                     onOpenSettings = onOpenSettings,
@@ -666,9 +671,8 @@ class FrontendScreenTest {
 
     @Test
     fun `Given WebViewCreationError state then error screen with open settings button is displayed`() {
-        var openSettingsCalled = false
+        var action: ErrorActionIntent? = null
         val error = FrontendConnectionError.Unrecoverable.WebViewCreationError(
-            message = commonR.string.webview_creation_failed,
             throwable = UnsatisfiedLinkError("dlopen failed: libwebviewchromium.so is 32-bit instead of 64-bit"),
         )
         composeTestRule.apply {
@@ -687,9 +691,10 @@ class FrontendScreenTest {
                     webChromeClient = WebChromeClient(),
                     frontendJsCallback = FrontendJsBridge.noOp,
                     onBlockInsecureRetry = {},
+                    onErrorAction = { action = it },
                     onOpenExternalLink = {},
                     onBlockInsecureHelpClick = {},
-                    onOpenSettings = { openSettingsCalled = true },
+                    onOpenSettings = {},
                     onChangeSecurityLevel = {},
                     onOpenLocationSettings = {},
                     onConfigureHomeNetwork = { _ -> },
@@ -706,11 +711,12 @@ class FrontendScreenTest {
             onNodeWithText(stringResource(commonR.string.webview_creation_error_title)).assertIsDisplayed()
             // Error message should be displayed
             onNodeWithText(stringResource(commonR.string.webview_creation_failed)).assertIsDisplayed()
-            // Retry button should NOT be displayed
-            onNodeWithText(stringResource(commonR.string.retry)).assertDoesNotExist()
-            // Open Settings button should be displayed
+            // No refresh action for an unrecoverable error
+            onNodeWithText(stringResource(commonR.string.refresh_external)).assertDoesNotExist()
+            onNodeWithText(stringResource(commonR.string.refresh_internal)).assertDoesNotExist()
+            // Open Settings action should be displayed and dispatch GoToSettings
             onNodeWithText(stringResource(commonR.string.open_settings)).performScrollTo().performClick()
-            assertTrue("onOpenSettings should be called when open settings button is clicked", openSettingsCalled)
+            assertEquals(ErrorActionIntent.GoToSettings, action)
         }
     }
 

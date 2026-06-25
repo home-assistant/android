@@ -8,6 +8,8 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
 import io.mockk.mockk
+import java.net.SocketTimeoutException
+import javax.net.ssl.SSLHandshakeException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -91,6 +93,34 @@ class ServerSessionManagerTest {
         val error = failed.error as FrontendConnectionError.AuthRevoked
         assertEquals("Auth failed", error.errorDetails)
         assertEquals("ExternalAuthFailed", error.rawErrorType)
+    }
+
+    @Test
+    fun `Given SSL handshake failure when getExternalAuth then returns Failed with SslError`() = runTest {
+        val payload = AuthPayload(callback = "externalAuthCallback", force = false)
+        coEvery {
+            authRepository.retrieveExternalAuthentication(false)
+        } throws SSLHandshakeException("handshake failed")
+        coEvery { authRepository.getSessionState() } returns SessionState.CONNECTED
+
+        val result = manager.getExternalAuth(serverId = 1, payload = payload)
+
+        val failed = result as ExternalAuthResult.Failed
+        assertTrue(failed.error is FrontendConnectionError.SslError)
+        assertEquals("ExternalAuthSsl", failed.error?.rawErrorType)
+    }
+
+    @Test
+    fun `Given socket timeout when getExternalAuth then returns Failed with Timeout`() = runTest {
+        val payload = AuthPayload(callback = "externalAuthCallback", force = false)
+        coEvery { authRepository.retrieveExternalAuthentication(false) } throws SocketTimeoutException("timed out")
+        coEvery { authRepository.getSessionState() } returns SessionState.CONNECTED
+
+        val result = manager.getExternalAuth(serverId = 1, payload = payload)
+
+        val failed = result as ExternalAuthResult.Failed
+        assertTrue(failed.error is FrontendConnectionError.Timeout)
+        assertEquals("ExternalAuthTimeout", failed.error?.rawErrorType)
     }
 
     @Test

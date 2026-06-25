@@ -39,6 +39,12 @@ sealed interface FrontendEvent {
     /** Navigate to the app settings screen. */
     data object NavigateToSettings : FrontendEvent
 
+    /**
+     * Restart the app from scratch (via `LaunchActivity`). Used by destructive error recovery
+     * (after removing the server or clearing the client credentials).
+     */
+    data object Relaunch : FrontendEvent
+
     /** Navigate to the assist settings screen. */
     data object NavigateToAssistSettings : FrontendEvent
 

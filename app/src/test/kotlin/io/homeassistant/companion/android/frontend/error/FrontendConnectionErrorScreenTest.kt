@@ -65,7 +65,7 @@ class FrontendConnectionErrorScreenTest {
             var urlClicked: String? = null
             setContent {
                 FrontendConnectionErrorScreen(
-                    error = FrontendConnectionError.Unknown(R.string.tls_cert_expired_message, "details", "errorType"),
+                    error = FrontendConnectionError.Unknown("details", "errorType"),
                     url = null,
                     onOpenExternalLink = {
                         urlClicked = it.toString()
@@ -75,7 +75,7 @@ class FrontendConnectionErrorScreenTest {
             }
 
             onNodeWithText(stringResource(R.string.error_connection_failed)).assertIsDisplayed()
-            onNodeWithText(stringResource(R.string.tls_cert_expired_message)).assertIsDisplayed()
+            onNodeWithText(stringResource(R.string.connection_error_unknown_error)).assertIsDisplayed()
             onNodeWithTag(URL_INFO_TAG).assertIsNotDisplayed()
 
             val description = onNodeWithText(stringResource(R.string.connection_error_more_details_description))
@@ -121,7 +121,7 @@ class FrontendConnectionErrorScreenTest {
         composeTestRule.apply {
             setContent {
                 FrontendConnectionErrorScreen(
-                    error = FrontendConnectionError.Unknown(R.string.tls_cert_expired_message, "details", "errorType"),
+                    error = FrontendConnectionError.Unknown("details", "errorType"),
                     url = BLANK_URL,
                     onOpenExternalLink = {},
                     connectivityCheckState = ConnectivityCheckState(),
@@ -211,6 +211,41 @@ class FrontendConnectionErrorScreenTest {
 
             runOnIdle {
                 verify(exactly = 1) { viewModel.runConnectivityChecks() }
+            }
+        }
+    }
+
+    @Test
+    fun `Given TlsCertNotFound when actions rendered then shows recovery actions and dispatches intent`() {
+        composeTestRule.apply {
+            var dispatched: ErrorActionIntent? = null
+            val error = FrontendConnectionError.TlsCertNotFound(
+                "details",
+                "errorType",
+            )
+            setContent {
+                FrontendConnectionErrorScreen(
+                    error = error,
+                    url = "http://ha.org",
+                    onOpenExternalLink = {},
+                    connectivityCheckState = ConnectivityCheckState(),
+                    actions = {
+                        ErrorActions(
+                            actions = errorActions(error, isInternalConnection = true),
+                            onAction = { dispatched = it },
+                        )
+                    },
+                )
+            }
+
+            onNodeWithText(stringResource(R.string.open_settings)).performScrollTo().assertIsDisplayed()
+            onNodeWithText(stringResource(R.string.error_action_remove_server))
+                .performScrollTo()
+                .assertIsDisplayed()
+                .performClick()
+
+            runOnIdle {
+                assertEquals(ErrorActionIntent.RemoveServerAndRelaunch, dispatched)
             }
         }
     }

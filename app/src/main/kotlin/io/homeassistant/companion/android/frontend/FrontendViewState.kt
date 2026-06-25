@@ -65,9 +65,16 @@ sealed interface FrontendViewState {
 
     /**
      * Error state when connection to the server fails.
+     *
+     * [isInternalConnection] reflects whether the active connection is the internal one; it is
+     * resolved asynchronously after entering this state and drives the "Refresh" action's label.
      */
-    data class Error(override val serverId: Int, override val url: String, val error: FrontendConnectionError) :
-        FrontendViewState
+    data class Error(
+        override val serverId: Int,
+        override val url: String,
+        val error: FrontendConnectionError,
+        val isInternalConnection: Boolean = false,
+    ) : FrontendViewState
 
     /**
      * Insecure connection state when HTTP is not allowed.

@@ -10,7 +10,7 @@ import io.homeassistant.companion.android.common.R as commonR
  *
  * This sealed interface provides a type-safe way to handle different connection
  * error scenarios with appropriate user-facing messages. The concrete subtype determines
- * the [icon] shown and which recovery actions the error screen offers (see `ErrorActionsProvider`).
+ * the [icon] shown and which recovery actions the error screen offers (see `errorActions`).
  */
 sealed interface FrontendConnectionError {
     @get:StringRes
@@ -41,11 +41,9 @@ sealed interface FrontendConnectionError {
     /**
      * A WebView-level timeout while connecting to the server.
      */
-    data class Timeout(
-        @StringRes override val message: Int,
-        override val errorDetails: String?,
-        override val rawErrorType: String,
-    ) : FrontendConnectionError {
+    data class Timeout(override val errorDetails: String?, override val rawErrorType: String) :
+        FrontendConnectionError {
+        @StringRes override val message: Int = commonR.string.webview_error_TIMEOUT
         override val title: Int = commonR.string.error_connection_failed
         override val icon: Int = R.drawable.ic_casita_no_connection
     }
@@ -55,13 +53,12 @@ sealed interface FrontendConnectionError {
      * connection timeout. Distinct from [Timeout] because the recovery offers an extra "Wait"
      * action to keep waiting for the handshake.
      */
-    data class ExternalBusTimeout(
-        @StringRes override val message: Int,
-        override val errorDetails: String?,
-        override val rawErrorType: String,
-    ) : FrontendConnectionError {
+    data object ExternalBusTimeout : FrontendConnectionError {
+        @StringRes override val message: Int = commonR.string.webview_error_TIMEOUT
         override val title: Int = commonR.string.error_connection_failed
         override val icon: Int = R.drawable.ic_casita_no_connection
+        override val errorDetails: String? = null
+        override val rawErrorType: String = "ConnectionTimeout"
     }
 
     /**
@@ -93,11 +90,9 @@ sealed interface FrontendConnectionError {
      * The server requires a TLS client certificate but none is available (key denied / HTTP 400).
      * Recovery removes the server and relaunches.
      */
-    data class TlsCertNotFound(
-        @StringRes override val message: Int,
-        override val errorDetails: String?,
-        override val rawErrorType: String,
-    ) : FrontendConnectionError {
+    data class TlsCertNotFound(override val errorDetails: String?, override val rawErrorType: String) :
+        FrontendConnectionError {
+        @StringRes override val message: Int = commonR.string.tls_cert_not_found_message
         override val title: Int = commonR.string.tls_cert_title
         override val icon: Int = R.drawable.ic_casita_crying
     }
@@ -106,11 +101,9 @@ sealed interface FrontendConnectionError {
      * The installed TLS client certificate chain is no longer valid. Recovery clears the keychain
      * and relaunches.
      */
-    data class TlsCertExpired(
-        @StringRes override val message: Int,
-        override val errorDetails: String?,
-        override val rawErrorType: String,
-    ) : FrontendConnectionError {
+    data class TlsCertExpired(override val errorDetails: String?, override val rawErrorType: String) :
+        FrontendConnectionError {
+        @StringRes override val message: Int = commonR.string.tls_cert_expired_message
         override val title: Int = commonR.string.tls_cert_title
         override val icon: Int = R.drawable.ic_casita_crying
     }
@@ -129,8 +122,8 @@ sealed interface FrontendConnectionError {
          * problem. The recommended user action is to check and update the system WebView
          * via device settings.
          */
-        data class WebViewCreationError(@StringRes override val message: Int, val throwable: Throwable) :
-            Unrecoverable {
+        data class WebViewCreationError(val throwable: Throwable) : Unrecoverable {
+            @StringRes override val message: Int = commonR.string.webview_creation_failed
             override val title: Int = commonR.string.webview_creation_error_title
             override val icon: Int = R.drawable.ic_casita_problem
             override val errorDetails: String = throwable.message ?: throwable.toString()
@@ -141,11 +134,9 @@ sealed interface FrontendConnectionError {
     /**
      * Unknown or unexpected errors that don't fit other categories.
      */
-    data class Unknown(
-        @StringRes override val message: Int,
-        override val errorDetails: String?,
-        override val rawErrorType: String,
-    ) : FrontendConnectionError {
+    data class Unknown(override val errorDetails: String?, override val rawErrorType: String) :
+        FrontendConnectionError {
+        @StringRes override val message: Int = commonR.string.connection_error_unknown_error
         override val title: Int = commonR.string.error_connection_failed
         override val icon: Int = R.drawable.ic_casita_problem
     }

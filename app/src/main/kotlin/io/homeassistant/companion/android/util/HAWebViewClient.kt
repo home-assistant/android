@@ -168,7 +168,6 @@ class HAWebViewClient internal constructor(
             )
 
             ERROR_TIMEOUT -> FrontendConnectionError.Timeout(
-                message = commonR.string.webview_error_TIMEOUT,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
@@ -180,7 +179,6 @@ class HAWebViewClient internal constructor(
             )
 
             else -> FrontendConnectionError.Unknown(
-                message = commonR.string.connection_error_unknown_error,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
@@ -207,19 +205,16 @@ class HAWebViewClient internal constructor(
 
         val frontendConnectionError = when {
             isTLSClientAuthNeeded && !isCertificateChainValid -> FrontendConnectionError.TlsCertExpired(
-                message = commonR.string.tls_cert_expired_message,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceResponse::class.toString(),
             )
 
             isTLSClientAuthNeeded && errorResponse?.statusCode == 400 -> FrontendConnectionError.TlsCertNotFound(
-                message = commonR.string.tls_cert_not_found_message,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceResponse::class.toString(),
             )
 
             else -> FrontendConnectionError.Unknown(
-                message = commonR.string.connection_error_unknown_error,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceResponse::class.toString(),
             )
