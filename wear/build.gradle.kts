@@ -73,7 +73,3 @@ dependencies {
 
     ksp(project(":sensor-catalog-processor"))
 }
-
-ksp {
-    arg("catalogModuleSuffix", project.name)
-}

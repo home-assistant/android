@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.sensorcatalog
 
+import com.google.devtools.ksp.getVisibility
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.KSPLogger
@@ -10,6 +11,7 @@ import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFile
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
+import com.google.devtools.ksp.symbol.Visibility
 import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
@@ -24,6 +26,7 @@ import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.writeTo
 
 private const val CATALOG_SENSOR_FQN = "io.homeassistant.companion.android.common.sensors.CatalogSensor"
+private const val BASIC_SENSOR_FQN = "io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor"
 private const val GENERATED_PACKAGE = "io.homeassistant.companion.android.sensorcatalog.generated"
 private const val GENERATED_OBJECT_PREFIX = "GeneratedSensorCatalog"
 
@@ -32,8 +35,11 @@ private val BASIC_SENSOR =
 private val SET = ClassName("kotlin.collections", "Set")
 
 private const val REFERENCEABILITY_ERROR =
-    "@CatalogSensor BasicSensor must be a top-level, object, or companion-object val " +
+    "@CatalogSensor BasicSensor must be a non-private top-level, object, or companion-object val " +
         "so it can be referenced from generated code"
+
+private const val TYPE_ERROR =
+    "@CatalogSensor can only annotate a SensorManager.BasicSensor val"
 
 /**
  * Collects every `val` annotated with `@CatalogSensor` and generates a plain
@@ -44,9 +50,10 @@ private const val REFERENCEABILITY_ERROR =
  * live in source.
  *
  * The processor is a pure collector: it resolves each annotated property to a statically
- * referenceable expression (top-level, `object`, or `companion object` val). An instance property
- * cannot be referenced from generated code, so it is reported as an error. Symbols that have not yet
- * been fully resolved are deferred to a later round.
+ * referenceable expression (a non-private top-level, `object`, or `companion object` val). A
+ * property that is not a `BasicSensor`, or that cannot be referenced from generated code (an
+ * instance member or a private val), is reported as an error. Symbols that have not yet been fully
+ * resolved are deferred to a later round.
  *
  * References are accumulated across rounds and the module is written exactly once in [finish]. KSP
  * only hands each symbol to [process] in the round it first resolves, so generating per round would
@@ -70,6 +77,10 @@ class SensorCatalogProcessor(
                 deferred.add(property)
                 continue
             }
+            if (!property.isBasicSensor()) {
+                logger.error(TYPE_ERROR, property)
+                continue
+            }
             val reference = referenceOrNull(property)
             if (reference == null) {
                 logger.error(REFERENCEABILITY_ERROR, property)
@@ -88,9 +99,21 @@ class SensorCatalogProcessor(
         }
     }
 
+    /**
+     * Whether the property's type is `SensorManager.BasicSensor`. The annotation's
+     * `@Target(PROPERTY)` cannot restrict this, so annotating any other type is rejected here.
+     * `BasicSensor` is a final data class, so an exact type match is sufficient.
+     */
+    private fun KSPropertyDeclaration.isBasicSensor(): Boolean =
+        type.resolve().declaration.qualifiedName?.asString() == BASIC_SENSOR_FQN
+
     /** Resolves how to reference the property from generated code, or null if it isn't statically reachable. */
     @OptIn(KotlinPoetKspPreview::class)
     private fun referenceOrNull(property: KSPropertyDeclaration): CodeBlock? {
+        // A private val is only visible within its own file/class, so the generated catalog (a
+        // separate file) cannot reach it regardless of where it is declared.
+        if (property.getVisibility() == Visibility.PRIVATE) return null
+
         val parent = property.parentDeclaration
         val name = property.simpleName.asString()
         return when (parent) {

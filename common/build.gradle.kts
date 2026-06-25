@@ -28,7 +28,6 @@ android {
 
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
-    arg("catalogModuleSuffix", project.name)
 }
 
 dependencies {

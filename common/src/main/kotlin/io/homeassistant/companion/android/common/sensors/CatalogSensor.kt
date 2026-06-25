@@ -6,7 +6,9 @@ package io.homeassistant.companion.android.common.sensors
  * error-severity lint rule (`CatalogSensorMissing`) flags omissions. To intentionally exclude a
  * `BasicSensor` from the catalog, leave it un-annotated and `@Suppress("CatalogSensorMissing")`.
  *
- * The annotated val must be statically referenceable (top-level, `object`, or `companion object`).
+ * The val must be statically referenceable so the generated catalog can reach it: a non-private val
+ * that is top-level, in an `object`, or in a `companion object`. The processor reports a compile
+ * error otherwise.
  */
 @Target(AnnotationTarget.PROPERTY)
 @Retention(AnnotationRetention.SOURCE)

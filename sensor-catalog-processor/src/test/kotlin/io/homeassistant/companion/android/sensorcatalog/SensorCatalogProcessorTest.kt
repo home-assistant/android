@@ -131,7 +131,49 @@ class SensorCatalogProcessorTest {
         val result = workingDir.runProcessor()
 
         assertTrue(
-            result.errors.any { it.contains("must be a top-level, object, or companion-object val") },
+            result.errors.any { it.contains("top-level, object, or companion-object val") },
+            result.messages.joinToString("\n"),
+        )
+    }
+
+    @Test
+    fun `Given a private val when processed then fails with referenceability error`(
+        @TempDir workingDir: File,
+    ) {
+        workingDir.writeStub()
+        workingDir.writeSensorSource(
+            "SecretManager.kt",
+            """
+            object SecretManager {
+                @CatalogSensor private val secret = SensorManager.BasicSensor("secret")
+            }
+            """,
+        )
+
+        val result = workingDir.runProcessor()
+
+        assertTrue(
+            result.errors.any { it.contains("so it can be referenced from generated code") },
+            result.messages.joinToString("\n"),
+        )
+    }
+
+    @Test
+    fun `Given annotation on a non-BasicSensor property when processed then fails with type error`(
+        @TempDir workingDir: File,
+    ) {
+        workingDir.writeStub()
+        workingDir.writeSensorSource(
+            "NotASensor.kt",
+            """
+            @CatalogSensor val notASensor = "I am not a BasicSensor"
+            """,
+        )
+
+        val result = workingDir.runProcessor()
+
+        assertTrue(
+            result.errors.any { it.contains("can only annotate a SensorManager.BasicSensor val") },
             result.messages.joinToString("\n"),
         )
     }

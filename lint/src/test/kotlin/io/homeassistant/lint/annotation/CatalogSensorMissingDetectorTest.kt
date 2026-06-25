@@ -52,7 +52,7 @@ class CatalogSensorMissingDetectorTest {
     }
 
     @Test
-    fun `Given un-annotated val with Suppress then clean`() {
+    fun `Given un-annotated val when suppressed then clean`() {
         TestLintTask.lint().files(
             stubs,
             TestFiles.kotlin(

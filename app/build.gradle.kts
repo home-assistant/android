@@ -52,7 +52,3 @@ dependencies {
     "fullImplementation"(libs.car.projected)
     ksp(project(":sensor-catalog-processor"))
 }
-
-ksp {
-    arg("catalogModuleSuffix", project.name)
-}
