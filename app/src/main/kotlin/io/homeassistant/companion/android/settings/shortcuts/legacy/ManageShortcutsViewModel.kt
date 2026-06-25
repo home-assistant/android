@@ -25,6 +25,9 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.De
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.settings.shortcuts.HaShortcutManager
+import io.homeassistant.companion.android.settings.shortcuts.SHORTCUT_EXTRA_PATH
+import io.homeassistant.companion.android.settings.shortcuts.SHORTCUT_EXTRA_SERVER
 import io.homeassistant.companion.android.widgets.assist.AssistShortcutActivity
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
