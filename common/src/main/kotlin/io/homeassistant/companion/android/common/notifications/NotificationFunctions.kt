@@ -41,6 +41,7 @@ object NotificationData {
     const val LED_COLOR = "ledColor"
     const val VIBRATION_PATTERN = "vibrationPattern"
     const val NOTIFICATION_ICON = "notification_icon"
+    const val NOTIFICATION_ICON_COLOR = "notification_icon_color"
     const val ALERT_ONCE = "alert_once"
     const val COMMAND = "command"
 
@@ -246,7 +247,7 @@ fun prepareText(text: String): Spanned {
 }
 
 fun handleColor(context: Context, builder: NotificationCompat.Builder, data: Map<String, String>) {
-    val colorString = data["notification_icon_color"] ?: data["color"]
+    val colorString = data[NotificationData.NOTIFICATION_ICON_COLOR] ?: data["color"]
     val color = parseColor(context, colorString, R.color.colorPrimary)
     builder.color = color
 }
