@@ -2219,7 +2219,7 @@ class WebViewActivity :
             bubbles: true,
             cancelable: true
         });
-        document.dispatchEvent(event);
+        document.body.dispatchEvent(event);
         """.trimIndent()
         // Opts into [EvaluateJavascriptUsage] to simulate a keyboard input, which is an
         // interaction the frontend already handles through its normal DOM event listeners — no
