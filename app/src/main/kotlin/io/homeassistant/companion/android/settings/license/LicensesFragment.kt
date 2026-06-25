@@ -15,7 +15,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.fragment.app.Fragment
 import com.mikepenz.aboutlibraries.Libs
@@ -25,16 +24,11 @@ import com.mikepenz.aboutlibraries.ui.compose.DefaultLibraryColors
 import com.mikepenz.aboutlibraries.ui.compose.LibraryColors
 import com.mikepenz.aboutlibraries.ui.compose.LibraryDefaults
 import com.mikepenz.aboutlibraries.ui.compose.android.produceLibraries
-import com.mikepenz.aboutlibraries.ui.compose.m3.LicenseDialog
-import com.mikepenz.aboutlibraries.ui.compose.m3.LicenseDialogBody
-import com.mikepenz.aboutlibraries.ui.compose.m3.sheet.LibraryDetailSheet
+import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import com.mikepenz.aboutlibraries.ui.compose.m3.style.m3VariantColors
 import com.mikepenz.aboutlibraries.ui.compose.m3.style.m3VariantTextStyles
-import com.mikepenz.aboutlibraries.ui.compose.style.LibrariesStyle
 import com.mikepenz.aboutlibraries.ui.compose.style.LicenseHueResolver
 import com.mikepenz.aboutlibraries.ui.compose.style.VariantColors
-import com.mikepenz.aboutlibraries.ui.compose.style.librariesStyle
-import com.mikepenz.aboutlibraries.ui.compose.variant.Libraries
 import com.mikepenz.aboutlibraries.ui.compose.variant.LibraryActionMode
 import com.mikepenz.aboutlibraries.ui.compose.variant.LibraryDetailMode
 import io.homeassistant.companion.android.common.R as commonR
@@ -87,46 +81,25 @@ internal fun LicensesContent(
     onSheetLibraryChange: (Library?) -> Unit,
 ) {
     val colors = rememberLibraryColors()
-    val variantColors = rememberLibraryVariantColors()
-    val style = rememberLibraryStyle(variantColors)
     val sheetState = rememberHAModalBottomSheetState(skipPartiallyExpanded = true)
 
-    // We replicate LibrariesContainer here instead of using it directly because the container
-    // composable builds its LibrariesStyle internally and doesn't expose it, so there is no way to
-    // override the text styles.
-    Libraries(
-        libraries = libraries?.libraries.orEmpty(),
-        style = style,
+    LibrariesContainer(
+        libraries = libraries,
+        sheetState = sheetState,
+        variantTextStyles = libraryTextStyles(),
+        variantColors = libraryVariantColors(),
+        colors = colors,
         modifier = Modifier
             .fillMaxSize()
             .background(colors.libraryBackgroundColor),
         detailMode = LibraryDetailMode.Sheet,
         actionMode = LibraryActionMode.Chips,
         contentPadding = safeBottomWindowInsets(applyHorizontal = false).asPaddingValues(),
-        onSheetRequest = { onSheetLibraryChange(it) },
-        onDialogRequest = { onDialogLibraryChange(it) },
+        onSheetLibraryChange = { onSheetLibraryChange(it) },
+        onDialogLibraryChange = { onDialogLibraryChange(it) },
+        dialogLibrary = dialogLibrary,
+        sheetLibrary = sheetLibrary,
     )
-
-    dialogLibrary?.let { library ->
-        LicenseDialog(
-            library = library,
-            style = style,
-            colors = colors,
-            confirmText = stringResource(commonR.string.ok),
-            body = { lib, modifier -> LicenseDialogBody(library = lib, colors = colors, modifier = modifier) },
-            onDismiss = { onDialogLibraryChange(null) },
-        )
-    }
-
-    sheetLibrary?.let { library ->
-        LibraryDetailSheet(
-            library = library,
-            onDismiss = { onSheetLibraryChange(null) },
-            style = style,
-            sheetState = sheetState,
-            actionMode = LibraryActionMode.Chips,
-        )
-    }
 }
 
 @Composable
@@ -156,7 +129,7 @@ private fun rememberLibraryColors(): LibraryColors {
 }
 
 @Composable
-private fun rememberLibraryVariantColors(): VariantColors {
+private fun libraryVariantColors(): VariantColors {
     val colorScheme = LocalHAColorScheme.current
     return LibraryDefaults.m3VariantColors(
         headerBackground = colorScheme.colorSurfaceLow,
@@ -187,22 +160,19 @@ private fun rememberLibraryVariantColors(): VariantColors {
 }
 
 @Composable
-private fun rememberLibraryStyle(variantColors: VariantColors): LibrariesStyle = LibraryDefaults.librariesStyle(
-    colors = variantColors,
-    textStyles = LibraryDefaults.m3VariantTextStyles(
-        nameTextStyle = HATextStyle.Body.copy(textAlign = TextAlign.Start),
-        authorTextStyle = HATextStyle.Body,
-        versionTextStyle = HATextStyle.BodyMedium,
-        licenseTextStyle = HATextStyle.BodyMedium,
-        descriptionTextStyle = HATextStyle.Body,
-        headerTitleTextStyle = HATextStyle.Headline,
-        headerTaglineTextStyle = HATextStyle.Body,
-        tabTextStyle = HATextStyle.Button,
-        tabCountTextStyle = HATextStyle.Body,
-        sheetTitleTextStyle = HATextStyle.Headline,
-        sheetMetaTextStyle = HATextStyle.Body.copy(textAlign = TextAlign.Start),
-        sheetBodyTextStyle = HATextStyle.Body,
-        actionLinkTextStyle = HATextStyle.Button,
-        actionChipTextStyle = HATextStyle.Button,
-    ),
+private fun libraryTextStyles() = LibraryDefaults.m3VariantTextStyles(
+    nameTextStyle = HATextStyle.Body.copy(textAlign = TextAlign.Start),
+    authorTextStyle = HATextStyle.Body,
+    versionTextStyle = HATextStyle.BodyMedium,
+    licenseTextStyle = HATextStyle.BodyMedium,
+    descriptionTextStyle = HATextStyle.Body,
+    headerTitleTextStyle = HATextStyle.Headline,
+    headerTaglineTextStyle = HATextStyle.Body,
+    tabTextStyle = HATextStyle.Button,
+    tabCountTextStyle = HATextStyle.Body,
+    sheetTitleTextStyle = HATextStyle.Headline,
+    sheetMetaTextStyle = HATextStyle.Body.copy(textAlign = TextAlign.Start),
+    sheetBodyTextStyle = HATextStyle.Body,
+    actionLinkTextStyle = HATextStyle.Button,
+    actionChipTextStyle = HATextStyle.Button,
 )
