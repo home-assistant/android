@@ -152,7 +152,7 @@ jobs:
           name: Instrumentation Test app reports
           path: build/test-results/**
 
-      # job.status reflects everything above (downloads, test runs) and is
+      # job.status reflects everything above (check creation, downloads, test runs) and is
       # one of success/failure/cancelled, all valid check-run conclusions.
       # We re-send the same output.summary link so the completed check page
       # keeps the deep-link to the emulator.wtf job logs (see the Create step
@@ -195,8 +195,8 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: pr-artifacts
 
-      # If emulator_wtf was skipped (triggering workflow did not succeed) or
-      # failed before running tests, it uploads no results artifact, and
+      # If emulator_wtf was skipped (non-PR trigger or triggering workflow did not succeed) or
+      # cancelled/failed before running tests, it uploads no results artifact, and
       # downloading it by name errors. Tolerate that so we still publish the
       # pr.yml results below. We cannot gate on needs.emulator_wtf.result because
       # a real test failure also fails the job yet does produce this artifact,
