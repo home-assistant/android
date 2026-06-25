@@ -2,6 +2,8 @@ package io.homeassistant.companion.android.frontend.dialog
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import io.homeassistant.companion.android.frontend.matterthread.ui.MatterThreadProgressDialogContent
+import io.homeassistant.companion.android.frontend.matterthread.ui.MatterThreadTerminalDialogContent
 
 /**
  * Routes the current [FrontendDialog] to the appropriate Compose dialog.
@@ -30,6 +32,8 @@ internal fun PendingDialogHandler(pendingDialog: FrontendDialog?) {
                 onCancel = pendingDialog.onCancel,
             )
         }
+        is FrontendDialog.MatterThreadProgressDialog -> MatterThreadProgressDialogContent()
+        is FrontendDialog.MatterThreadTerminalDialog -> MatterThreadTerminalDialogContent(pendingDialog)
         null -> { /* No pending dialog */ }
     }
 }

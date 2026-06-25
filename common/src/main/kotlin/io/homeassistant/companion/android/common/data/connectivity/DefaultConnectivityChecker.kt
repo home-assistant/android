@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.data.connectivity
 
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.util.UrlUtil
 import io.homeassistant.companion.android.util.sensitive
@@ -11,6 +12,8 @@ import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.Serializable
@@ -30,11 +33,39 @@ private data class ManifestResponse(val name: String? = null) {
 private val CONNECTIVITY_TIMEOUT = 5.seconds
 
 /**
+ * Lazily builds and caches a single [OkHttpClient].
+ *
+ * Creation is guarded by a [Mutex] so concurrent callers share one instance instead of each building
+ * their own.
+ */
+private class OkHttpClientProvider(private val defaultOkHttpClientProvider: SuspendProvider<OkHttpClient>) {
+    @Volatile
+    private var okHttpClient: OkHttpClient? = null
+    private val okHttpClientMutex = Mutex()
+
+    suspend operator fun invoke(): OkHttpClient {
+        return okHttpClient ?: okHttpClientMutex.withLock {
+            okHttpClient ?: configureOkHttpClientForChecker(defaultOkHttpClientProvider()).also { okHttpClient = it }
+        }
+    }
+
+    /**
+     * Preconfigures the provided [OkHttpClient] with timeouts for connectivity testing.
+     */
+    private fun configureOkHttpClientForChecker(client: OkHttpClient): OkHttpClient = client.newBuilder()
+        .connectTimeout(CONNECTIVITY_TIMEOUT)
+        .readTimeout(CONNECTIVITY_TIMEOUT)
+        .build()
+}
+
+/**
  * Default implementation of [ConnectivityChecker] that performs real network operations.
  */
-internal class DefaultConnectivityChecker @Inject constructor(defaultOkHttpClient: OkHttpClient) : ConnectivityChecker {
+internal class DefaultConnectivityChecker @Inject constructor(
+    defaultOkHttpClientProvider: SuspendProvider<OkHttpClient>,
+) : ConnectivityChecker {
 
-    private val okHttpClient by lazy { configureOkHttpClientForChecker(defaultOkHttpClient) }
+    private val okHttpClientProvider = OkHttpClientProvider(defaultOkHttpClientProvider)
 
     override suspend fun dns(hostname: String): ConnectivityCheckResult = withContext(Dispatchers.IO) {
         try {
@@ -71,7 +102,7 @@ internal class DefaultConnectivityChecker @Inject constructor(defaultOkHttpClien
                 .url(url)
                 .head() // Don't get the body as we are only checking TLS
                 .build()
-            okHttpClient.newCall(request).execute().use { response ->
+            okHttpClientProvider().newCall(request).execute().use { response ->
                 val handshake = response.handshake
                 if (handshake != null) {
                     Timber.d("TLS check success for ${sensitive(url)} with ${handshake.tlsVersion}")
@@ -94,7 +125,7 @@ internal class DefaultConnectivityChecker @Inject constructor(defaultOkHttpClien
             val request = Request.Builder()
                 .url(url)
                 .build()
-            okHttpClient.newCall(request).execute().use {
+            okHttpClientProvider().newCall(request).execute().use {
                 ConnectivityCheckResult.Success(commonR.string.connection_check_server_success)
             }
         } catch (e: CancellationException) {
@@ -110,7 +141,7 @@ internal class DefaultConnectivityChecker @Inject constructor(defaultOkHttpClien
             val request = Request.Builder()
                 .url("${UrlUtil.extractBaseUrl(url)}manifest.json")
                 .build()
-            okHttpClient.newCall(request).execute().use { response ->
+            okHttpClientProvider().newCall(request).execute().use { response ->
                 val responseText = response.body.string()
                 val manifest = kotlinJsonMapper.decodeFromString<ManifestResponse>(responseText)
 
@@ -128,12 +159,4 @@ internal class DefaultConnectivityChecker @Inject constructor(defaultOkHttpClien
             ConnectivityCheckResult.Failure(commonR.string.connection_check_error_not_home_assistant)
         }
     }
-
-    /**
-     * Preconfigures the provided [OkHttpClient] with timeouts for connectivity testing.
-     * */
-    private fun configureOkHttpClientForChecker(client: OkHttpClient): OkHttpClient = client.newBuilder()
-        .connectTimeout(CONNECTIVITY_TIMEOUT)
-        .readTimeout(CONNECTIVITY_TIMEOUT)
-        .build()
 }
