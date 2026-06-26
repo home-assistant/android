@@ -237,6 +237,17 @@
                 android:resource="@xml/todo_widget_info" />
         </receiver>
 
+        <receiver android:name=".widgets.climate.ClimateWidget" android:label="@string/widget_climate_label"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/climate_widget_info" />
+        </receiver>
+
         <receiver android:name=".widgets.mediaplayer.MediaPlayerControlsWidget" android:label="@string/widget_media_player_description"
             android:exported="false">
             <intent-filter>
