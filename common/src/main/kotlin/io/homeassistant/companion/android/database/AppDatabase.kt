@@ -40,6 +40,8 @@ import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
+import io.homeassistant.companion.android.database.widget.ClimateWidgetDao
+import io.homeassistant.companion.android.database.widget.ClimateWidgetEntity
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
@@ -62,6 +64,7 @@ import io.homeassistant.companion.android.database.widget.WidgetTapActionConvert
         MediaPlayerControlsWidgetEntity::class,
         StaticWidgetEntity::class,
         TodoWidgetEntity::class,
+        ClimateWidgetEntity::class,
         TemplateWidgetEntity::class,
         NotificationItem::class,
         LocationHistoryItem::class,
@@ -74,7 +77,7 @@ import io.homeassistant.companion.android.database.widget.WidgetTapActionConvert
         Server::class,
         Setting::class,
     ],
-    version = 52,
+    version = 53,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
@@ -102,6 +105,7 @@ import io.homeassistant.companion.android.database.widget.WidgetTapActionConvert
         AutoMigration(from = 49, to = 50),
         AutoMigration(from = 50, to = 51),
         AutoMigration(from = 51, to = 52),
+        AutoMigration(from = 52, to = 53),
     ],
 )
 @TypeConverters(
@@ -120,6 +124,7 @@ internal abstract class AppDatabase : RoomDatabase() {
     abstract fun mediaPlayCtrlWidgetDao(): MediaPlayerControlsWidgetDao
     abstract fun staticWidgetDao(): StaticWidgetDao
     abstract fun todoWidgetDao(): TodoWidgetDao
+    abstract fun climateWidgetDao(): ClimateWidgetDao
     abstract fun templateWidgetDao(): TemplateWidgetDao
     abstract fun notificationDao(): NotificationDao
     abstract fun locationHistoryDao(): LocationHistoryDao

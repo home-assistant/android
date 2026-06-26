@@ -60,7 +60,6 @@ import io.homeassistant.companion.android.util.previewServer1
 import io.homeassistant.companion.android.util.previewServer2
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import io.homeassistant.companion.android.util.safeTopWindowInsets
-import io.homeassistant.companion.android.widgets.todo.TodoWidgetConfigureViewModel
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -77,9 +76,9 @@ class ClimateWidgetConfigureActivity : BaseActivity() {
         }
     }
 
-    private val viewModel: TodoWidgetConfigureViewModel by viewModels(
+    private val viewModel: ClimateWidgetConfigureViewModel by viewModels(
         extrasProducer = {
-            defaultViewModelCreationExtras.withCreationCallback<TodoWidgetConfigureViewModel.Factory> { factory ->
+            defaultViewModelCreationExtras.withCreationCallback<ClimateWidgetConfigureViewModel.Factory> { factory ->
                 factory.create(intent.extras?.getString(FOR_ENTITY, null))
             }
         },
@@ -162,7 +161,7 @@ class ClimateWidgetConfigureActivity : BaseActivity() {
 }
 
 @Composable
-private fun TodoWidgetConfigureScreen(viewModel: TodoWidgetConfigureViewModel, onActionClick: () -> Unit) {
+private fun TodoWidgetConfigureScreen(viewModel: ClimateWidgetConfigureViewModel, onActionClick: () -> Unit) {
     val servers by viewModel.servers.collectAsStateWithLifecycle(emptyList())
     val entities by viewModel.entities.collectAsStateWithLifecycle()
     val entityRegistry by viewModel.entityRegistry.collectAsStateWithLifecycle()
@@ -213,7 +212,7 @@ private fun TodoWidgetConfigureView(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(commonR.string.widget_todo_label)) },
+                title = { Text(stringResource(commonR.string.widget_climate_label)) },
                 windowInsets = safeTopWindowInsets(),
                 backgroundColor = colorResource(commonR.color.colorBackground),
                 contentColor = colorResource(commonR.color.colorOnBackground),
@@ -247,7 +246,7 @@ private fun TodoWidgetConfigureView(
                     entityRegistry = entityRegistry,
                     deviceRegistry = deviceRegistry,
                     areaRegistry = areaRegistry,
-                    addButtonText = stringResource(commonR.string.todo_widget_select_list),
+                    addButtonText = stringResource(commonR.string.climate_widget_select_entity),
                 )
             }
 

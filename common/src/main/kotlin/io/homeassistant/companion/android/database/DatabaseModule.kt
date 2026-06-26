@@ -22,6 +22,7 @@ import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.wear.ThermostatTileDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
+import io.homeassistant.companion.android.database.widget.ClimateWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
@@ -63,6 +64,9 @@ internal object DatabaseModule {
 
     @Provides
     fun provideTodoWidgetDao(database: AppDatabase): TodoWidgetDao = database.todoWidgetDao()
+
+    @Provides
+    fun provideClimateWidgetDao(database: AppDatabase): ClimateWidgetDao = database.climateWidgetDao()
 
     @Provides
     fun provideTemplateWidgetDao(database: AppDatabase): TemplateWidgetDao = database.templateWidgetDao()

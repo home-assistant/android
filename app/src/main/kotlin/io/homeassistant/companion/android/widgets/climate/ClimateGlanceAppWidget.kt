@@ -48,6 +48,7 @@ import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.compose.HomeAssistantGlanceTheme
 import io.homeassistant.companion.android.util.compose.HomeAssistantGlanceTypography
 import io.homeassistant.companion.android.util.compose.glanceStringResource
+import io.homeassistant.companion.android.widgets.climate.ClimateState.Companion.getColors
 import io.homeassistant.companion.android.widgets.todo.TodoWidgetStateUpdater
 
 // TODO: agregar widget_example_climate.png
@@ -72,7 +73,7 @@ class ClimateGlanceAppWidget : GlanceAppWidget() {
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     internal interface ClimateGlanceWidgetEntryPoint {
-        fun stateUpdater(): TodoWidgetStateUpdater  // TODO crear tipo
+        fun climateStateUpdater(): ClimateWidgetStateUpdater
     }
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
@@ -81,15 +82,14 @@ class ClimateGlanceAppWidget : GlanceAppWidget() {
 
         provideContent {
             val entryPoints = remember { EntryPoints.get(context, ClimateGlanceWidgetEntryPoint::class.java) }
-            val flow = remember { entryPoints.stateUpdater().stateFlow(widgetId) }
+            val flow = remember { entryPoints.climateStateUpdater().stateFlow(widgetId) }
 
             val state by flow.collectAsState(LoadingClimateState)
 
             HomeAssistantGlanceTheme(
-                colors = GlanceTheme.colors //state.getColors(), // TODO: crear el stateUpdater para climate
+                colors = state.getColors(),
             ) {
-//                ScreenForState(state)                     // TODO: crear el stateUpdater para climate
-                ScreenForState(LoadingClimateState)
+                ScreenForState(state)
             }
         }
     }
@@ -169,7 +169,7 @@ private fun Screen(state: ClimateStateWithData) {
                 state.currentTemp,
                 state.showComplete,
                 onActionPlus = {},
-                onActionMinus = {}
+                onActionMinus = {},
             )
         } else {
             EmptyContent()
@@ -197,36 +197,38 @@ private fun ShowClimateContent(
     Column(
         modifier = GlanceModifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             modifier = GlanceModifier.padding(16.dp),
             text = climateTemp?.toString() ?: "Empty",          // TODO: formatear temp
-            style = HomeAssistantGlanceTypography.titleLarge.copy(fontWeight = FontWeight.Bold)
+            style = HomeAssistantGlanceTypography.titleLarge.copy(fontWeight = FontWeight.Bold),
         )
 
         Row(
             modifier = GlanceModifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             SquareIconButton(
-                modifier = GlanceModifier.size(HomeAssistantGlanceTheme.dimensions.iconSize).semantics { testTag = "Add" },
+                modifier = GlanceModifier.size(HomeAssistantGlanceTheme.dimensions.iconSize)
+                    .semantics { testTag = "Add" },
                 imageProvider = ImageProvider(androidx.media3.session.R.drawable.media3_icon_minus),    // TODO: ajustar ICON, no viene de donde viene el resto
                 contentDescription = LocalContext.current.getString(commonR.string.widget_todo_add),    // TODO: ajustar string description
                 backgroundColor = GlanceTheme.colors.primary,
                 enabled = climateTemp != null,
-                onClick = onActionMinus //actionOpenTodolist(listEntityId, serverId), // TODO agregar actions para climate
+                onClick = onActionMinus, //actionOpenTodolist(listEntityId, serverId), // TODO agregar actions para climate
             )
 
             Spacer(GlanceModifier.width(16.dp))
 
             SquareIconButton(
-                modifier = GlanceModifier.size(HomeAssistantGlanceTheme.dimensions.iconSize).semantics { testTag = "Add" },
+                modifier = GlanceModifier.size(HomeAssistantGlanceTheme.dimensions.iconSize)
+                    .semantics { testTag = "Add" },
                 imageProvider = ImageProvider(R.drawable.ic_plus),
                 contentDescription = LocalContext.current.getString(commonR.string.widget_todo_add),    // TODO: ajustar string description
                 backgroundColor = GlanceTheme.colors.primary,
                 enabled = climateTemp != null,
-                onClick = onActionPlus //actionOpenTodolist(listEntityId, serverId), // TODO agregar actions para climate
+                onClick = onActionPlus, //actionOpenTodolist(listEntityId, serverId), // TODO agregar actions para climate
             )
         }
     }
@@ -259,7 +261,7 @@ private fun TitleBar(climateTemp: Float?, currentTemp: Float?, serverId: Int, ou
             },
             contentDescription = LocalContext.current.getString(commonR.string.widget_todo_refresh),
             backgroundColor = GlanceTheme.colors.widgetBackground,
-            onClick = {} // actionRefreshTodo(), // TODO agregar actions para climate
+            onClick = {}, // actionRefreshTodo(), // TODO agregar actions para climate
         )
     }
 }
@@ -274,6 +276,7 @@ private fun ScreenPreview() {
                 backgroundType = WidgetBackgroundType.DYNAMICCOLOR,
                 textColor = null,
                 serverId = 1,
+                listEntityId = "",
                 currentTemp = null,
                 climateTemp = 12f,
                 outOfSync = false,
@@ -293,6 +296,7 @@ private fun ScreenPreviewEmptyItems() {
                 backgroundType = WidgetBackgroundType.DYNAMICCOLOR,
                 textColor = null,
                 serverId = 1,
+                listEntityId = "",
                 currentTemp = null,
                 climateTemp = null,
                 outOfSync = false,
@@ -312,6 +316,7 @@ private fun ScreenPreviewOutOfSync() {
                 backgroundType = WidgetBackgroundType.DYNAMICCOLOR,
                 textColor = null,
                 serverId = 1,
+                listEntityId = "",
                 currentTemp = null,
                 climateTemp = 12f,
                 outOfSync = true,

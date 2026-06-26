@@ -316,6 +316,13 @@
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
         </activity>
+        <activity android:name=".widgets.climate.ClimateWidgetConfigureActivity"
+            android:configChanges="orientation|screenSize"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
         <activity android:name=".widgets.mediaplayer.MediaPlayerControlsWidgetConfigureActivity"
             android:configChanges="orientation|screenSize"
             android:exported="true">

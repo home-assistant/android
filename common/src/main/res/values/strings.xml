@@ -1041,7 +1041,12 @@
     <string name="widget_todo_label">To-do list</string>
     <string name="widget_todo_empty">You have no to-do items!</string>
     <string name="widget_todo_show_completed">Show completed items</string>
+
+    <!--    Climate widget-->
     <string name="widget_climate_label">Climate control</string>
+    <string name="climate_widget_select_entity">Select climate</string>
+
+
     <string name="widget_tap_action_label">Tap action:</string>
     <string name="widget_tap_action_open">Open</string>
     <string name="widget_tap_action_toggle">Toggle</string>
