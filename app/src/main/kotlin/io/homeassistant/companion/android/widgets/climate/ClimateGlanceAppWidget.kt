@@ -97,10 +97,11 @@ class ClimateGlanceAppWidget : GlanceAppWidget() {
 
 @Composable
 private fun GlanceModifier.climateWidgetBackground(): GlanceModifier {
-    return this.appWidgetBackground().fillMaxSize().background(
-        GlanceTheme
-            .colors.widgetBackground,
-    )
+    return this.appWidgetBackground().fillMaxSize()
+//        .background(
+//        GlanceTheme
+//            .colors.widgetBackground,
+//    )
 }
 
 @Composable
@@ -159,14 +160,17 @@ private fun Screen(state: ClimateStateWithData) {
         modifier = GlanceModifier.climateWidgetBackground().semantics { testTag = "Screen" },
     ) {
         if (state.isPowerOn()) {
-            ShowClimateContent(
-                climateName = state.climateName,
-                climateTemp = state.climateTemp,
-                currentTemp = state.currentTemp,
-                displayComplete = state.showComplete,
-                onActionPlus = {},
-                onActionMinus = {},
-            )
+            if (state.hasDisplayableItems()) {
+                ShowClimateContent(
+                    climateName = state.climateName!!,
+                    climateTemp = state.climateTemp!!,
+                    currentTemp = state.currentTemp,
+                    displayComplete = state.showComplete,
+                    hvacMode = state.hvacMode
+                )
+            } else {
+                LoadingScreen()
+            }
         } else {
             PowerOffContent()
         }
@@ -180,7 +184,7 @@ private fun PowerOffContent() {
         imageProvider = ImageProvider(R.drawable.ic_flash_on_24dp),    // TODO: ajustar ICON
         contentDescription = LocalContext.current.getString(commonR.string.widget_todo_add),    // TODO: ajustar string description
         backgroundColor = GlanceTheme.colors.primary,
-        onClick = {}, //actionOpenTodolist(listEntityId, serverId), // TODO agregar actions para climate
+        onClick = {}//actionSetHvac("heat")
     )
 }
 
@@ -189,10 +193,14 @@ private fun ShowClimateContent(
     climateName: String,
     climateTemp: Float?,
     currentTemp: Float?,
+    hvacMode: String,
     displayComplete: Boolean,
-    onActionPlus: () -> Unit,
-    onActionMinus: () -> Unit
 ) {
+//    var actualTemp by remember { mutableFloatStateOf(15F) }
+//    LaunchedEffect(climateTemp) {
+//        actualTemp = climateTemp
+//    }
+
     Column(
         modifier = GlanceModifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -217,8 +225,10 @@ private fun ShowClimateContent(
                 imageProvider = ImageProvider(androidx.media3.session.R.drawable.media3_icon_minus),    // TODO: ajustar ICON, no viene de donde viene el resto
                 contentDescription = LocalContext.current.getString(commonR.string.widget_todo_add),    // TODO: ajustar string description
                 backgroundColor = GlanceTheme.colors.primary,
-                enabled = climateTemp != null,
-                onClick = onActionMinus, //actionOpenTodolist(listEntityId, serverId), // TODO agregar actions para climate
+                onClick =
+//                    actualTemp -= 0.5F
+                    actionUpdateTemp(25.0)
+
             )
 
             Spacer(GlanceModifier.width(16.dp))
@@ -229,14 +239,15 @@ private fun ShowClimateContent(
                 imageProvider = ImageProvider(R.drawable.ic_plus),
                 contentDescription = LocalContext.current.getString(commonR.string.widget_todo_add),    // TODO: ajustar string description
                 backgroundColor = GlanceTheme.colors.primary,
-                enabled = climateTemp != null,
-                onClick = onActionPlus, //actionOpenTodolist(listEntityId, serverId), // TODO agregar actions para climate
+                onClick =
+//                    actualTemp += 0.5F
+                    actionUpdateTemp(21.0)
             )
         }
 
         Text(
             modifier = GlanceModifier.padding(16.dp),
-            text = climateName,
+            text = hvacMode,
             style = HomeAssistantGlanceTypography.bodySmall.copy(
                 textAlign = TextAlign.Center,
                 fontWeight = FontWeight.Bold
@@ -281,7 +292,7 @@ private fun TitleBar(outOfSync: Boolean) {
             },
             contentDescription = LocalContext.current.getString(commonR.string.widget_todo_refresh),
             backgroundColor = GlanceTheme.colors.widgetBackground,
-            onClick = {}, // actionRefreshTodo(), // TODO agregar actions para climate
+            onClick = actionRefreshClimate()
         )
     }
 }

@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.data.websocket.impl
 
 import io.homeassistant.companion.android.common.data.integration.ActionData
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.TODO_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -52,6 +53,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.intOrNull
 import okhttp3.WebSocketListener
+import timber.log.Timber
 
 private val matterTimeout = 2.minutes
 
@@ -116,6 +118,25 @@ class WebSocketRepositoryImpl internal constructor(
                     "item" to todoItem,
                     "status" to status,
                     "rename" to newName,
+                ).filterValues { it != null },
+            ),
+        )
+        return response?.success == true
+    }
+
+    override suspend fun setClimateTempOrHvac(entityId: String, newTemp: String?, hvacMode: String?): Boolean  {
+        Timber.d("setClimateTempOrHvac $newTemp $hvacMode")
+        val response = webSocketCore.sendMessage(
+            mapOf(
+                "type" to "call_service",
+                "domain" to CLIMATE_DOMAIN,
+                "service" to "set_temperature",
+                "target" to mapOf(
+                    "entity_id" to entityId,
+                ),
+                "service_data" to mapOf(
+                    "temperature" to newTemp,
+//                    "hvac_mode" to hvacMode
                 ).filterValues { it != null },
             ),
         )

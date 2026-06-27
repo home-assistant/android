@@ -55,9 +55,9 @@ internal data class ClimateStateWithData(
     override val textColor: String?,
     val serverId: Int,
     val listEntityId: String,
-    val climateName: String,
+    val climateName: String? = null,
     val currentTemp: Float? = null,
-    val climateTemp: Float,
+    val climateTemp: Float? = null,
     val hvacMode: String,
     val lastUpdate: String? = null,
     val outOfSync: Boolean,
@@ -66,6 +66,11 @@ internal data class ClimateStateWithData(
 
     fun isPowerOn(): Boolean {
         return showComplete && hvacMode != "off"
+    }
+
+    fun hasDisplayableItems(): Boolean {
+        return showComplete && !climateName.isNullOrEmpty() && climateTemp != null
+
     }
 
     companion object {
@@ -82,7 +87,7 @@ internal data class ClimateStateWithData(
             val min = attributes["min_temp"] as? Double
             val max = attributes["max_temp"] as? Double
             val currentTemp = attributes["current_temperature"] as? Double
-            val climateTemp = attributes["temperature"] as Double
+            val climateTemp = attributes["temperature"] as? Double ?: 0f
             val hvacMode = attributes["hvac_modes"]
 
             Timber.d("entityUpdate: min: $min, max: $max, currentTemp: $currentTemp, climateTemp: $climateTemp, hvacMode: $hvacMode")

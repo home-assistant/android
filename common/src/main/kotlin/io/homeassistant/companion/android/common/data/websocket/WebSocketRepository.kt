@@ -54,6 +54,8 @@ interface WebSocketRepository {
     suspend fun getTodos(entityId: String): GetTodosResponse?
     suspend fun updateTodo(entityId: String, todoItem: String, newName: String?, status: String?): Boolean
 
+    suspend fun setClimateTempOrHvac(entityId: String, newTemp: String? = null, hvacMode: String? = null): Boolean
+
     /**
      * Request the server to add a Matter device to the network and commission it.
      * @return [MatterCommissionResponse] detailing the server's response, or `null` if the server

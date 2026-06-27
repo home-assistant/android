@@ -1,8 +1,7 @@
-package io.homeassistant.companion.android.widgets.todo
+package io.homeassistant.companion.android.widgets.climate
 
 import android.content.Context
 import androidx.annotation.VisibleForTesting
-import androidx.compose.runtime.Composable
 import androidx.glance.GlanceId
 import androidx.glance.action.Action
 import androidx.glance.action.ActionParameters
@@ -15,34 +14,23 @@ import dagger.hilt.EntryPoints
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse.TodoItem.Companion.COMPLETED_STATUS
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse.TodoItem.Companion.NEEDS_ACTION_STATUS
-import io.homeassistant.companion.android.database.widget.TodoWidgetDao
-import io.homeassistant.companion.android.util.compose.actionStartWebView
-import io.homeassistant.companion.android.webview.WebViewActivity
+import io.homeassistant.companion.android.database.widget.ClimateWidgetDao
 import timber.log.Timber
 
 /**
  * Get an Action that will toggle the given [todoItem] of a Todo widget once given to Glance.
  */
-internal fun actionToggleTodo(todoItem: TodoItemState): Action {
-    return actionRunCallback<ToggleTodoAction>(actionParametersOf(TOGGLE_KEY to todoItem))
+internal fun actionUpdateTemp(newTemp: Double): Action {
+    return actionRunCallback<ControlClimateAction>(actionParametersOf(SET_TEMP_KEY to newTemp))
 }
 
 /**
  * Get an Action that will refresh the Todo widget once given to Glance.
  */
-internal fun actionRefreshTodo(): Action {
+internal fun actionRefreshClimate(): Action {
     return actionRunCallback<RefreshAction>()
 }
 
-/**
- * Get an Action that will open the [WebViewActivity] for the given [listEntityId]
- */
-@Composable
-internal fun actionOpenTodolist(listEntityId: String, serverId: Int): Action {
-    return actionStartWebView("todo?entity_id=$listEntityId&add_item=true", serverId)
-}
 
 /**
  * Basic action that will refresh the given widget. Use [actionRefreshTodo] to get the
@@ -55,12 +43,11 @@ internal fun actionOpenTodolist(listEntityId: String, serverId: Int): Action {
  */
 class RefreshAction : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        TodoGlanceAppWidget().update(context, glanceId)
+
+        Timber.d("ON ACTION REFRESH CLIMATE")
+        ClimateGlanceAppWidget().update(context, glanceId)
     }
 }
-
-@VisibleForTesting
-internal val TOGGLE_KEY = ActionParameters.Key<TodoItemState>("TOGGLE_ITEM")
 
 /**
  * Action that will toggle the given [todoItem] through a given parameters with the key [TOGGLE_KEY]. Use [actionToggleTodo] to get the
@@ -71,23 +58,18 @@ internal val TOGGLE_KEY = ActionParameters.Key<TodoItemState>("TOGGLE_ITEM")
  *
  * Note: This needs to be public since it is instantiated by the Glance framework.
  */
-class ToggleTodoAction : ActionCallback {
+class ControlClimateAction : ActionCallback {
 
     @EntryPoint
     @InstallIn(SingletonComponent::class)
-    interface ToggleTodoActionEntryPoint {
+    interface ClimateActionEntryPoint {
         fun serverManager(): ServerManager
-        fun todoDao(): TodoWidgetDao
+        fun climateDao(): ClimateWidgetDao
     }
 
     @VisibleForTesting
-    fun toggleStatus(done: Boolean): String {
-        return if (done) NEEDS_ACTION_STATUS else COMPLETED_STATUS
-    }
-
-    @VisibleForTesting
-    fun getEntryPoints(context: Context): ToggleTodoActionEntryPoint {
-        return EntryPoints.get(context.applicationContext, ToggleTodoActionEntryPoint::class.java)
+    fun getEntryPoints(context: Context): ClimateActionEntryPoint {
+        return EntryPoints.get(context.applicationContext, ClimateActionEntryPoint::class.java)
     }
 
     @VisibleForTesting
@@ -100,21 +82,19 @@ class ToggleTodoAction : ActionCallback {
         val serverManager = entryPoints.serverManager()
         val glanceManager = getGlanceManager(context)
         val appWidgetId = glanceManager.getAppWidgetId(glanceId)
-        val dao = entryPoints.todoDao()
+        val dao = entryPoints.climateDao()
 
-        Timber.d("onAction TODO LIST")
+        val newTemp = parameters[SET_TEMP_KEY]
 
-        val todoItem = parameters[TOGGLE_KEY]
-
-        if (todoItem == null || todoItem.uid == null) {
-            Timber.w("Aborting toggle action because the todo item or uid is null ($todoItem)")
+        if (newTemp == null) {
+            Timber.w("Aborting set temp action because newTemp is null")
             return
         }
 
         val widgetEntity = dao.get(appWidgetId)
 
         if (widgetEntity == null) {
-            Timber.w("Aborting toggle action widget entity is null for $appWidgetId")
+            Timber.w("Aborting set temp action widget entity is null for $appWidgetId")
             return
         }
 
@@ -123,19 +103,20 @@ class ToggleTodoAction : ActionCallback {
             return
         }
 
-        val result = serverManager.webSocketRepository(widgetEntity.serverId).updateTodo(
+        val result = serverManager.webSocketRepository(widgetEntity.serverId).setClimateTempOrHvac(
             entityId = widgetEntity.entityId,
-            todoItem = todoItem.uid,
-            newName = null,
-            status = toggleStatus(todoItem.done),
+            newTemp = newTemp.toString()
         )
 
         if (!result) {
-            Timber.e("Failed to toggle $todoItem")
+            Timber.e("Failed to set new temp $newTemp")
             // We cannot update the UI from an action nor send a toast, we don't have any UI context.
             // TODO we could modify the entry in DB to add the error message
         }
 
-        TodoGlanceAppWidget().update(context, glanceId)
+        ClimateGlanceAppWidget().update(context, glanceId)
     }
 }
+
+@VisibleForTesting
+internal val SET_TEMP_KEY = ActionParameters.Key<Double>("TEMP_SETTING_KEY")
