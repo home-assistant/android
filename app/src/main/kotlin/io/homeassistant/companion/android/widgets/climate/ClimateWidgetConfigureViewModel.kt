@@ -24,8 +24,8 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
-import io.homeassistant.companion.android.database.widget.TodoWidgetDao
-import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
+import io.homeassistant.companion.android.database.widget.ClimateWidgetDao
+import io.homeassistant.companion.android.database.widget.ClimateWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
@@ -48,7 +48,7 @@ import timber.log.Timber
 
 @HiltViewModel(assistedFactory = ClimateWidgetConfigureViewModel.Factory::class)
 class ClimateWidgetConfigureViewModel @AssistedInject constructor(
-    private val todoWidgetDao: TodoWidgetDao,
+    private val climateWidgetDao: ClimateWidgetDao,
     private val serverManager: ServerManager,
     @Assisted preSelectedEntityId: String?,
 ) : ViewModel() {
@@ -171,7 +171,7 @@ class ClimateWidgetConfigureViewModel @AssistedInject constructor(
             if (this@ClimateWidgetConfigureViewModel.widgetId == AppWidgetManager.INVALID_APPWIDGET_ID &&
                 selectedEntityId == null
             ) {
-                todoWidgetDao.get(widgetId)?.let {          // TODO: cambiar el Dao por el propio de climate
+                climateWidgetDao.get(widgetId)?.let {
                     isUpdateWidget = true
                     selectedServerId = it.serverId
                     selectedEntityId = it.entityId
@@ -207,14 +207,14 @@ class ClimateWidgetConfigureViewModel @AssistedInject constructor(
             throw IllegalArgumentException("Widget ID is invalid")
         }
 
-        val entity = getPendingDaoEntity()              // TODO crear climate dao entity
-        todoWidgetDao.add(entity)
+        val entity = getPendingDaoEntity()
+        climateWidgetDao.add(entity)
     }
 
     /**
-     * Return a [TodoWidgetEntity] with the current selection, but without pushing this to the [todoWidgetDao]
+     * Return a [ClimateWidgetEntity] with the current selection, but without pushing this to the [ClimateWidgetDao]
      */
-    private suspend fun getPendingDaoEntity(): TodoWidgetEntity {           // TODO crear climate dao entity
+    private suspend fun getPendingDaoEntity(): ClimateWidgetEntity {
         val textColor = if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
             supportedTextColors.getOrNull(textColorIndex) ?: supportedTextColors.first()
         } else {
@@ -224,27 +224,16 @@ class ClimateWidgetConfigureViewModel @AssistedInject constructor(
             val listEntityId = selectedEntityId!!
 
             val integrationRepository = serverManager.integrationRepository(selectedServerId)
-            val webSocketRepository = serverManager.webSocketRepository(selectedServerId)
             val name = integrationRepository.getEntity(listEntityId)?.friendlyName
-            val todos = webSocketRepository.getTodos(listEntityId)?.response?.get(listEntityId)?.items.orEmpty()
 
-            return TodoWidgetEntity(
+            return ClimateWidgetEntity(
                 id = widgetId,
                 serverId = selectedServerId,
                 entityId = selectedEntityId!!,
                 backgroundType = selectedBackgroundType,
                 textColor = textColor,
                 showCompleted = showCompletedState,
-                latestUpdateData = TodoWidgetEntity.LastUpdateData(
-                    entityName = name,
-                    todos = todos.map {
-                        TodoWidgetEntity.TodoItem(
-                            uid = it.uid,
-                            summary = it.summary,
-                            status = it.status,
-                        )
-                    },
-                ),
+                latestUpdateData = ClimateWidgetEntity.LastUpdateData(entityName = name),
             )
         }
     }
@@ -259,7 +248,7 @@ class ClimateWidgetConfigureViewModel @AssistedInject constructor(
      */
     suspend fun requestWidgetCreation(context: Context) {
         // We drop the first value since we only care about knowing when the widget is actually added
-        todoWidgetDao.getWidgetCountFlow().drop(1).onStart {
+        climateWidgetDao.getWidgetCountFlow().drop(1).onStart {
             GlanceAppWidgetManager(context)
                 .requestPinGlanceAppWidget(
                     ClimateWidget::class.java,

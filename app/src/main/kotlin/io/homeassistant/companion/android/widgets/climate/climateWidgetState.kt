@@ -9,11 +9,13 @@ import androidx.glance.GlanceTheme
 import androidx.glance.color.ColorProviders
 import androidx.glance.material.ColorProviders
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.widget.ClimateWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.compose.HomeAssistantGlanceTheme
 import io.homeassistant.companion.android.util.compose.glanceHaLightColors
+import timber.log.Timber
 
 internal sealed interface ClimateState {
     val backgroundType: WidgetBackgroundType
@@ -53,14 +55,17 @@ internal data class ClimateStateWithData(
     override val textColor: String?,
     val serverId: Int,
     val listEntityId: String,
+    val climateName: String,
     val currentTemp: Float? = null,
-    val climateTemp: Float? = null,
+    val climateTemp: Float,
+    val hvacMode: String,
+    val lastUpdate: String? = null,
     val outOfSync: Boolean,
     val showComplete: Boolean,
 ) : ClimateState {
 
-    fun isControlEnabled(): Boolean {
-        return showComplete && climateTemp != null
+    fun isPowerOn(): Boolean {
+        return showComplete && hvacMode != "off"
     }
 
     companion object {
@@ -72,11 +77,25 @@ internal data class ClimateStateWithData(
             climateEntity: ClimateWidgetEntity,
             entity: Entity,
         ): ClimateStateWithData {
+
+            val attributes = entity.attributes
+            val min = attributes["min_temp"] as? Double
+            val max = attributes["max_temp"] as? Double
+            val currentTemp = attributes["current_temperature"] as? Double
+            val climateTemp = attributes["temperature"] as Double
+            val hvacMode = attributes["hvac_modes"]
+
+            Timber.d("entityUpdate: min: $min, max: $max, currentTemp: $currentTemp, climateTemp: $climateTemp, hvacMode: $hvacMode")
+
             return ClimateStateWithData(
                 backgroundType = climateEntity.backgroundType,
                 textColor = climateEntity.textColor,
                 serverId = climateEntity.serverId,
                 listEntityId = entity.entityId,
+                climateName = entity.friendlyName,
+                currentTemp = currentTemp?.toFloat(),
+                climateTemp = climateTemp.toFloat(),
+                hvacMode = entity.state,
                 outOfSync = false,
                 showComplete = climateEntity.showCompleted,
             )
@@ -92,6 +111,9 @@ internal data class ClimateStateWithData(
                 textColor = climateEntity.textColor,
                 serverId = climateEntity.serverId,
                 listEntityId = climateEntity.entityId,
+                climateName = "",
+                climateTemp = 10f,
+                hvacMode = "unknown",
                 outOfSync = true,
                 showComplete = climateEntity.showCompleted,
             )

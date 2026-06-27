@@ -38,10 +38,6 @@ data class ClimateWidgetEntity(
 //        val todos: List<TodoItem>,                    // TODO: cambiar si hay algo relacionado a climate que quiera guardar
     ) : java.io.Serializable
 
-//    @Serializable
-//    data class TodoItem(val uid: String? = null, val summary: String? = null, val status: String? = null) :
-//        java.io.Serializable
-//
     fun isSameConfiguration(other: ClimateWidgetEntity): Boolean {
         /**
          *  The only field that is not part of the configuration is [latestUpdateData], we make copy of the data classes

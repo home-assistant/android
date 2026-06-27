@@ -61,6 +61,7 @@ import io.homeassistant.companion.android.util.previewServer2
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import io.homeassistant.companion.android.util.safeTopWindowInsets
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @AndroidEntryPoint
 class ClimateWidgetConfigureActivity : BaseActivity() {
@@ -106,7 +107,7 @@ class ClimateWidgetConfigureActivity : BaseActivity() {
 
         setContent {
             HomeAssistantAppTheme {
-                TodoWidgetConfigureScreen(
+                ClimateWidgetConfigureScreen(
                     viewModel = viewModel,
                     onActionClick = { onActionClick() },
                 )
@@ -161,14 +162,14 @@ class ClimateWidgetConfigureActivity : BaseActivity() {
 }
 
 @Composable
-private fun TodoWidgetConfigureScreen(viewModel: ClimateWidgetConfigureViewModel, onActionClick: () -> Unit) {
+private fun ClimateWidgetConfigureScreen(viewModel: ClimateWidgetConfigureViewModel, onActionClick: () -> Unit) {
     val servers by viewModel.servers.collectAsStateWithLifecycle(emptyList())
     val entities by viewModel.entities.collectAsStateWithLifecycle()
     val entityRegistry by viewModel.entityRegistry.collectAsStateWithLifecycle()
     val deviceRegistry by viewModel.deviceRegistry.collectAsStateWithLifecycle()
     val areaRegistry by viewModel.areaRegistry.collectAsStateWithLifecycle()
 
-    TodoWidgetConfigureView(
+    ClimateWidgetConfigureView(
         servers = servers,
         selectedServerId = viewModel.selectedServerId,
         onServerSelected = viewModel::setServer,
@@ -190,7 +191,7 @@ private fun TodoWidgetConfigureScreen(viewModel: ClimateWidgetConfigureViewModel
 }
 
 @Composable
-private fun TodoWidgetConfigureView(
+private fun ClimateWidgetConfigureView(
     servers: List<Server>,
     selectedServerId: Int,
     onServerSelected: (Int) -> Unit,
@@ -231,7 +232,9 @@ private fun TodoWidgetConfigureView(
                 ServerExposedDropdownMenu(
                     servers = servers,
                     current = selectedServerId,
-                    onSelected = { onServerSelected(it) },
+                    onSelected = {
+                        Timber.d("onServerSelected: $it")
+                        onServerSelected(it) },
                     modifier = Modifier.padding(bottom = 16.dp),
                 )
             }
@@ -254,7 +257,7 @@ private fun TodoWidgetConfigureView(
                 modifier = Modifier.clickable { onShowCompletedChanged(!showCompleted) },
             ) {
                 Text(
-                    text = stringResource(commonR.string.widget_todo_show_completed),
+                    text = stringResource(commonR.string.widget_todo_show_completed),   // TODO: cambiar string
                     modifier = Modifier
                         .align(Alignment.CenterVertically)
                         .weight(1f),
@@ -300,9 +303,9 @@ private fun TodoWidgetConfigureView(
 
 @Preview
 @Composable
-private fun TodoWidgetConfigureViewPreview() {
+private fun ClimateWidgetConfigureViewPreview() {
     HomeAssistantAppTheme {
-        TodoWidgetConfigureView(
+        ClimateWidgetConfigureView(
             servers = listOf(
                 previewServer1,
                 previewServer2,

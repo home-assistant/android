@@ -7,6 +7,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
@@ -49,7 +50,6 @@ import io.homeassistant.companion.android.util.compose.HomeAssistantGlanceTheme
 import io.homeassistant.companion.android.util.compose.HomeAssistantGlanceTypography
 import io.homeassistant.companion.android.util.compose.glanceStringResource
 import io.homeassistant.companion.android.widgets.climate.ClimateState.Companion.getColors
-import io.homeassistant.companion.android.widgets.todo.TodoWidgetStateUpdater
 
 // TODO: agregar widget_example_climate.png
 
@@ -58,9 +58,9 @@ import io.homeassistant.companion.android.widgets.todo.TodoWidgetStateUpdater
  *
  * This widget tries to follow guidelines from https://developer.android.com/design/ui/mobile/guides/widgets/widget_quality_guide
  *
- * This widget display a list from a specified `entity_id` of `todo` domain.
+ * This widget display a list from a specified `entity_id` of `climate` domain.
  * It provides functionality to add new items, refresh the list, and toggle the completion status of tasks.
- * The widget's `todo` entity and theme can be set via the [TodoWidgetConfigureActivity].
+ * The widget's `climate` entity and theme can be set via the [ClimateWidgetConfigureActivity].
  *
  * ### Limitations:
  * - No error messages are displayed except for the out-of-sync indicator.
@@ -151,43 +151,42 @@ private fun EmptyScreen() {
 private fun Screen(state: ClimateStateWithData) {
     Scaffold(
         titleBar = {
-            TitleBar(
-                climateTemp = state.climateTemp,
-                currentTemp = state.currentTemp,
-                serverId = state.serverId,
-                outOfSync = state.outOfSync,
-            )
+            TitleBar(outOfSync = state.outOfSync)
         },
         // We manually set the padding on each item since the checkbox comes with an embedded padding that
         // we cannot modify.
         horizontalPadding = 0.dp,
         modifier = GlanceModifier.climateWidgetBackground().semantics { testTag = "Screen" },
     ) {
-        if (state.isControlEnabled()) {
+        if (state.isPowerOn()) {
             ShowClimateContent(
-                state.climateTemp,
-                state.currentTemp,
-                state.showComplete,
+                climateName = state.climateName,
+                climateTemp = state.climateTemp,
+                currentTemp = state.currentTemp,
+                displayComplete = state.showComplete,
                 onActionPlus = {},
                 onActionMinus = {},
             )
         } else {
-            EmptyContent()
+            PowerOffContent()
         }
     }
 }
 
 @Composable
-private fun EmptyContent() {
-    Text(
-        text = glanceStringResource(commonR.string.widget_todo_empty),
-        style = HomeAssistantGlanceTypography.bodyMedium,
-        modifier = GlanceModifier.padding(all = 16.dp),
+private fun PowerOffContent() {
+    SquareIconButton(
+        modifier = GlanceModifier.size(HomeAssistantGlanceTheme.dimensions.iconSize).semantics { testTag = "powerOn" },
+        imageProvider = ImageProvider(R.drawable.ic_flash_on_24dp),    // TODO: ajustar ICON
+        contentDescription = LocalContext.current.getString(commonR.string.widget_todo_add),    // TODO: ajustar string description
+        backgroundColor = GlanceTheme.colors.primary,
+        onClick = {}, //actionOpenTodolist(listEntityId, serverId), // TODO agregar actions para climate
     )
 }
 
 @Composable
 private fun ShowClimateContent(
+    climateName: String,
     climateTemp: Float?,
     currentTemp: Float?,
     displayComplete: Boolean,
@@ -202,7 +201,10 @@ private fun ShowClimateContent(
         Text(
             modifier = GlanceModifier.padding(16.dp),
             text = climateTemp?.toString() ?: "Empty",          // TODO: formatear temp
-            style = HomeAssistantGlanceTypography.titleLarge.copy(fontWeight = FontWeight.Bold),
+            style = HomeAssistantGlanceTypography.titleLarge.copy(
+                fontSize = 48.sp,
+                fontWeight = FontWeight.Bold
+            ),
         )
 
         Row(
@@ -231,11 +233,29 @@ private fun ShowClimateContent(
                 onClick = onActionPlus, //actionOpenTodolist(listEntityId, serverId), // TODO agregar actions para climate
             )
         }
+
+        Text(
+            modifier = GlanceModifier.padding(16.dp),
+            text = climateName,
+            style = HomeAssistantGlanceTypography.bodySmall.copy(
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold
+            ),
+        )
+
+        Text(
+            modifier = GlanceModifier.padding(16.dp),
+            text = climateName,
+            style = HomeAssistantGlanceTypography.bodySmall.copy(
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold
+            ),
+        )
     }
 }
 
 @Composable
-private fun TitleBar(climateTemp: Float?, currentTemp: Float?, serverId: Int, outOfSync: Boolean) {
+private fun TitleBar(outOfSync: Boolean) {
     Row(
         // Try to align the paddings with Google Calendar widget
         modifier = GlanceModifier.padding(top = 12.dp, end = 12.dp, start = 16.dp).fillMaxWidth(),
@@ -273,12 +293,14 @@ private fun ScreenPreview() {
     HomeAssistantGlanceTheme {
         ScreenForState(
             ClimateStateWithData(
+                climateName = "Air name 1",
                 backgroundType = WidgetBackgroundType.DYNAMICCOLOR,
                 textColor = null,
                 serverId = 1,
                 listEntityId = "",
                 currentTemp = null,
                 climateTemp = 12f,
+                hvacMode = "unknown",
                 outOfSync = false,
                 showComplete = true,
             ),
@@ -289,20 +311,9 @@ private fun ScreenPreview() {
 @OptIn(ExperimentalGlancePreviewApi::class)
 @Preview
 @Composable
-private fun ScreenPreviewEmptyItems() {
+private fun ScreenPreviewPowerOff() {
     HomeAssistantGlanceTheme {
-        ScreenForState(
-            ClimateStateWithData(
-                backgroundType = WidgetBackgroundType.DYNAMICCOLOR,
-                textColor = null,
-                serverId = 1,
-                listEntityId = "",
-                currentTemp = null,
-                climateTemp = null,
-                outOfSync = false,
-                showComplete = true,
-            ),
-        )
+        PowerOffContent()
     }
 }
 
@@ -313,12 +324,14 @@ private fun ScreenPreviewOutOfSync() {
     HomeAssistantGlanceTheme {
         ScreenForState(
             ClimateStateWithData(
+                climateName = "Air name 1",
                 backgroundType = WidgetBackgroundType.DYNAMICCOLOR,
                 textColor = null,
                 serverId = 1,
                 listEntityId = "",
                 currentTemp = null,
                 climateTemp = 12f,
+                hvacMode = "unknown",
                 outOfSync = true,
                 showComplete = true,
             ),

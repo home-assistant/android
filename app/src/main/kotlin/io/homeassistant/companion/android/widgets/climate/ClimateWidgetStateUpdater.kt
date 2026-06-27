@@ -61,6 +61,7 @@ internal class ClimateWidgetStateUpdater @Inject constructor(
     private fun getInitialStateFlow(widgetId: Int): Flow<ClimateState> {
         return suspend { climateWidgetDao.get(widgetId) }.asFlow().map {
             if (it == null) {
+                Timber.d("Error empty climate widget")
                 EmptyClimateState
             } else {
                 ClimateStateWithData.from(it)
@@ -91,7 +92,6 @@ internal class ClimateWidgetStateUpdater @Inject constructor(
                 Timber.d("Got a new entity to watch $climateEntity")
                 val serverId = climateEntity.serverId
                 val listEntityId = climateEntity.entityId
-
                 getAndSubscribeEntityUpdates(
                     serverId,
                     listEntityId,
