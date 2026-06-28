@@ -122,7 +122,7 @@ fun ManageTiles(
         onTileSubtitleChange = viewModel::setTileSubtitle,
         onEntitySelectedId = viewModel::selectEntityId,
         onEntityCleared = { viewModel.selectEntityId("") },
-        onShowIconDialog = { onShowIconDialog(state.selectedTile.id) },
+        onShowIconDialog = { onShowIconDialog(state.selectedTileId) },
         onResetIcon = { viewModel.selectIcon(null) },
         onShouldVibrateChange = viewModel::setShouldVibrate,
         onAuthRequiredChange = viewModel::setAuthRequired,
@@ -135,8 +135,8 @@ fun ManageTiles(
 internal fun ManageTiles(
     snackbarHostState: SnackbarHostState,
     state: ManageTilesState,
-    submitEnabled:Boolean,
-    onTileSelected: (index: Int) -> Unit,
+    submitEnabled: Boolean,
+    onTileSelected: (id: String) -> Unit,
     onServerSelected: (Int) -> Unit,
     onTileLabelChange: (String) -> Unit,
     onTileSubtitleChange: (String) -> Unit,
@@ -181,7 +181,7 @@ internal fun ManageTiles(
 
             if (state.showServerSelector) {
                 ServerDropdown(
-                    servers = state.servers,
+                    servers = state.serversDropdownItems,
                     selectedServerId = state.selectedServerId,
                     onServerSelected = onServerSelected,
                     modifier = Modifier
@@ -198,7 +198,7 @@ internal fun ManageTiles(
                 onAuthRequiredChange = onAuthRequiredChange,
                 onShowIconDialog = onShowIconDialog,
                 onResetIcon = onResetIcon,
-                onShouldVibrateChange = onShouldVibrateChange
+                onShouldVibrateChange = onShouldVibrateChange,
             )
 
             HAFilledButton(
@@ -217,7 +217,7 @@ internal fun ManageTiles(
 @Composable
 private fun TileLabelContent(
     state: ManageTilesState,
-    onTileSelected: (index: Int) -> Unit,
+    onTileSelected: (id: String) -> Unit,
     onTileLabelChange: (String) -> Unit,
     onTileSubtitleChange: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -226,8 +226,8 @@ private fun TileLabelContent(
         modifier = modifier,
     ) {
         TileDropdown(
-            tileSlots = state.tileSlots,
-            selectedTile = state.selectedTile,
+            tileSlots = state.tileSlotsDropdownItems,
+            selectedTileId = state.selectedTileId,
             onTileSelected = onTileSelected,
             modifier = Modifier.fillMaxWidth(),
         )
@@ -306,14 +306,14 @@ private fun TileIconContent(
 
 @Composable
 private fun TileDropdown(
-    tileSlots: List<TileSlot>,
-    selectedTile: TileSlot,
-    onTileSelected: (index: Int) -> Unit,
+    tileSlots: List<HADropdownItem<String>>,
+    selectedTileId: String,
+    onTileSelected: (id: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     HADropdownMenu(
-        items = tileSlots.mapIndexed { index, slot -> HADropdownItem(key = index, label = slot.name) },
-        selectedKey = tileSlots.indexOf(selectedTile).takeIf { it >= 0 },
+        items = tileSlots,
+        selectedKey = selectedTileId,
         onItemSelected = onTileSelected,
         label = stringResource(R.string.tile_select),
         modifier = modifier,
@@ -322,13 +322,13 @@ private fun TileDropdown(
 
 @Composable
 private fun ServerDropdown(
-    servers: List<Server>,
+    servers: List<HADropdownItem<Int>>,
     selectedServerId: Int,
     onServerSelected: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     HADropdownMenu(
-        items = servers.map { HADropdownItem(key = it.id, label = it.friendlyName) },
+        items = servers,
         selectedKey = selectedServerId,
         onItemSelected = onServerSelected,
         label = stringResource(R.string.tile_server),
@@ -357,7 +357,7 @@ private fun TileIconRow(
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2)
+            horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
         ) {
             if (showResetIcon) {
                 HAIconButton(
@@ -365,7 +365,7 @@ private fun TileIconRow(
                         .padding(start = HADimens.SPACE1),
                     icon = Icons.Default.Restore,
                     onClick = onResetIcon,
-                    contentDescription = MANAGE_TILES_RESET_ICON_TAG
+                    contentDescription = MANAGE_TILES_RESET_ICON_TAG,
                 )
             }
             OutlinedButton(
@@ -447,7 +447,7 @@ private fun ManageTilesUpdatePreview() {
             snackbarHostState = remember { SnackbarHostState() },
             submitEnabled = false,
             state = previewState.copy(
-                selectedTile = previewState.tileSlots[1],
+                selectedTileId = "tile_2",
                 tileLabel = "Living room",
                 tileSubtitle = "Lights",
                 selectedEntityId = "light.living_room",
@@ -482,10 +482,10 @@ private fun LabeledSwitchRowPreview() {
 
 private val previewState = ManageTilesState(
     tileSlots = listOf(
-        TileSlot(id = "tile_1", name = "Tile 1"),
-        TileSlot(id = "tile_2", name = "Tile 2"),
+        TileSlot("tile_1", "Tile 1"),
+        TileSlot("tile_2", "Tile 2"),
     ),
-    selectedTile = TileSlot(id = "tile_1", name = "Tile 1"),
+    selectedTileId = "tile_1",
     servers = emptyList(),
     selectedServerId = 0,
     tileLabel = "",

@@ -137,7 +137,7 @@ class ManageTilesTest {
     }
 
     private class TestHelper {
-        var tileSelected: Int? = null
+        var tileSelected: String? = null
         var serverSelected: Int? = null
         var tileLabel: String? = null
         var tileSubtitle: String? = null
@@ -191,7 +191,7 @@ class ManageTilesTest {
                 TileSlot(id = "tile_1", name = "Tile 1"),
                 TileSlot(id = "tile_2", name = "Tile 2"),
             ),
-            selectedTile = TileSlot(id = "tile_1", name = "Tile 1"),
+            selectedTileId = "tile_1",
             servers = emptyList(),
             selectedServerId = 0,
             tileLabel = "",

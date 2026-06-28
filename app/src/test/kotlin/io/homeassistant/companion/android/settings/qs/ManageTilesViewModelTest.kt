@@ -39,9 +39,6 @@ import org.robolectric.annotation.Config
 /**
  * Tests for [ManageTilesViewModel].
  *
- * This is a characterization test suite — it asserts the current behavior of the ViewModel
- * as a safety net before an upcoming refactor.
- *
  * Note: the ViewModel's init block dispatches to [kotlinx.coroutines.Dispatchers.IO] with a
  * hardcoded dispatcher. [serverManager.servers] is parked via [kotlinx.coroutines.awaitCancellation]
  * so the IO block suspends indefinitely and never reaches the `withContext(Main){ selectTile() }`
@@ -120,7 +117,7 @@ class ManageTilesViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        assertEquals(viewModel.slots[0], viewModel.state.value.selectedTile)
+        assertEquals(viewModel.slots[0].id, viewModel.state.value.selectedTileId)
         assertTrue(viewModel.slots.isNotEmpty())
     }
 
@@ -133,7 +130,7 @@ class ManageTilesViewModelTest {
             val snackbar = viewModel.tileInfoSnackbar.testIn(backgroundScope)
             advanceUntilIdle()
 
-            assertEquals(viewModel.slots[1], viewModel.state.value.selectedTile)
+            assertEquals(viewModel.slots[1].id, viewModel.state.value.selectedTileId)
             assertEquals(commonR.string.tile_data_missing, snackbar.awaitItem())
             snackbar.cancelAndConsumeRemainingEvents()
         }
@@ -157,7 +154,7 @@ class ManageTilesViewModelTest {
         coEvery { tileDao.get(tileId) } returns setupTile
 
         val viewModel = createViewModel()
-        viewModel.selectTile(0)
+        viewModel.selectTile()
         advanceUntilIdle()
 
         assertEquals("Living Room", viewModel.state.value.tileLabel)
@@ -177,7 +174,7 @@ class ManageTilesViewModelTest {
         coEvery { serverManager.getServer(any<Int>()) } returns fakeServer(id = 7)
 
         val viewModel = createViewModel()
-        viewModel.selectTile(0)
+        viewModel.selectTile()
         advanceUntilIdle()
 
         assertEquals(7, viewModel.state.value.selectedServerId)
@@ -189,21 +186,21 @@ class ManageTilesViewModelTest {
         coEvery { tileDao.get(tileId) } returns fakeTile(tileId = tileId, serverId = 3)
 
         val viewModel = createViewModel()
-        viewModel.selectTile(0)
+        viewModel.selectTile()
         advanceUntilIdle()
 
         assertEquals(3, viewModel.state.value.selectedServerId)
     }
 
     @Test
-    fun `Given index -1 when selectTile then first tile is selected`() = runTest {
+    fun `Given id empty when selectTile then first tile is selected`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.selectTile(-1)
+        viewModel.selectTile("")
         advanceUntilIdle()
 
-        assertEquals(viewModel.slots[0], viewModel.state.value.selectedTile)
+        assertEquals(viewModel.slots[0].id, viewModel.state.value.selectedTileId)
     }
 
     @Test

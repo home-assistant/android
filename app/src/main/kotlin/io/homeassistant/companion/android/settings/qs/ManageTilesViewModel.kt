@@ -16,6 +16,7 @@ import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.integration.isUsableInTile
@@ -96,7 +97,7 @@ import timber.log.Timber
 @Stable
 internal data class ManageTilesState(
     val tileSlots:List<TileSlot>,
-    val selectedTile: TileSlot,
+    val selectedTileId: String = "",
     val servers: List<Server> = emptyList(),
     val sortedEntities: List<Entity> = emptyList(),
     val entityRegistry: List<EntityRegistryResponse> = emptyList(),
@@ -111,6 +112,8 @@ internal data class ManageTilesState(
     val submitButtonLabel: Int = commonR.string.tile_save,
     val selectedShouldVibrate: Boolean = false,
     val tileAuthRequired: Boolean = false,
+    val tileSlotsDropdownItems:List<HADropdownItem<String>> = tileSlots.map { HADropdownItem(key = it.id, label = it.name) },
+    val serversDropdownItems:List<HADropdownItem<Int>> = servers.map { HADropdownItem(key = it.id, label = it.friendlyName) }
 ) {
     val showSubtitle = SdkVersion.isAtLeast(Build.VERSION_CODES.Q)
 
@@ -118,8 +121,6 @@ internal data class ManageTilesState(
         servers.none { server -> server.id == selectedServerId }
 
     val showResetIcon get() = selectedIconId != null && selectedEntityId.isNotBlank()
-
-
 }
 
 @HiltViewModel
@@ -182,7 +183,7 @@ class ManageTilesViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(
         ManageTilesState(
-            selectedTile = slots[0],
+            selectedTileId = slots[0].id,
             tileSlots = slots
         )
     )
@@ -195,7 +196,6 @@ class ManageTilesViewModel @Inject constructor(
     }
         .flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.Lazily, false)
-
 
     private var selectedTileId = 0
     private var selectedTileAdded = false
@@ -211,18 +211,25 @@ class ManageTilesViewModel @Inject constructor(
     init {
         // Initialize fields based on the tile_1 TileEntity
         savedStateHandle.get<String>("id")?.let { id ->
-            selectTile(slots.indexOfFirst { it.id == id })
+            selectTile(id)
             viewModelScope.launch {
                 // A deeplink only happens when tapping on a tile that hasn't been setup
                 _tileInfoSnackbar.emit(commonR.string.tile_data_missing)
             }
         } ?: run {
-            selectTile(0)
+            selectTile()
         }
 
         viewModelScope.launch(Dispatchers.IO) {
             val loadedServers = serverManager.servers()
-            _state.update { it.copy(servers = loadedServers) }
+            _state.update {
+                it.copy(
+                    servers = loadedServers,
+                    serversDropdownItems = loadedServers.map { server ->
+                        HADropdownItem(key = server.id, label = server.friendlyName)
+                    }
+                )
+            }
             loadedServers.map { server ->
                 val serverId = server.id
                 async {
@@ -234,15 +241,15 @@ class ManageTilesViewModel @Inject constructor(
             }.awaitAll()
             withContext(Dispatchers.Main) {
                 // The entities list might not have been loaded when the tile data was loaded
-                selectTile(slots.indexOf(_state.value.selectedTile))
+                selectTile(_state.value.selectedTileId)
             }
         }
     }
 
-    fun selectTile(index: Int) {
-        val tile = slots[if (index == -1) 0 else index]
-        _state.update { it.copy(selectedTile = tile) }
+    fun selectTile(id: String? = null) {
         viewModelScope.launch {
+            val tile = slots.find { it.id == id } ?: slots.first()
+            _state.update { it.copy(selectedTileId = tile.id) }
             tileDao.get(tile.id).also { entity ->
                 selectedTileId = entity?.id ?: 0
                 selectedTileAdded = entity?.added ?: false
@@ -320,7 +327,7 @@ class ManageTilesViewModel @Inject constructor(
             val current = _state.value
             val tileData = TileEntity(
                 id = selectedTileId,
-                tileId = current.selectedTile.id,
+                tileId = current.selectedTileId,
                 serverId = current.selectedServerId,
                 added = selectedTileAdded,
                 iconName = current.selectedIconId,
@@ -337,7 +344,7 @@ class ManageTilesViewModel @Inject constructor(
 
             if (SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) && !selectedTileAdded) {
                 val statusBarManager = app.getSystemService<StatusBarManager>()
-                val service = idToTileService[current.selectedTile.id] ?: Tile1Service::class.java
+                val service = idToTileService[current.selectedTileId] ?: Tile1Service::class.java
                 val icon = current.selectedIcon?.let {
                     val bitmap = IconicsDrawable(getApplication(), it).toBitmap()
                     Icon.createWithBitmap(bitmap)
