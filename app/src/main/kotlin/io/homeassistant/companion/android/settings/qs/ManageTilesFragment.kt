@@ -16,7 +16,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.settings.addHelpMenuProvider
-import io.homeassistant.companion.android.settings.qs.views.ManageTilesView
+import io.homeassistant.companion.android.settings.qs.ui.ManageTiles
 import io.homeassistant.companion.android.util.icondialog.IconDialog
 import timber.log.Timber
 
@@ -40,7 +40,7 @@ class ManageTilesFragment : Fragment() {
                         )
                     }
 
-                    ManageTilesView(
+                    ManageTiles(
                         viewModel = viewModel,
                         onShowIconDialog = {
                             showingDialog = true

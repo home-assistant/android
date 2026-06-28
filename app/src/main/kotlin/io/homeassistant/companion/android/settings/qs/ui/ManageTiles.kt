@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.settings.qs.views
+package io.homeassistant.companion.android.settings.qs.ui
 
 import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
@@ -80,7 +80,7 @@ internal data class ManageTilesViewState(
 )
 
 @Composable
-fun ManageTilesView(
+fun ManageTiles(
     viewModel: ManageTilesViewModel,
     onShowIconDialog: (tag: String?) -> Unit,
     modifier: Modifier = Modifier,
@@ -120,7 +120,7 @@ fun ManageTilesView(
             viewModel.selectedEntityId in viewModel.sortedEntities.map { it.entityId },
     )
 
-    ManageTilesView(
+    ManageTiles(
         snackbarHostState = snackbarHostState,
         state = state,
         onTileSelected = viewModel::selectTile,
@@ -139,7 +139,7 @@ fun ManageTilesView(
 }
 
 @Composable
-internal fun ManageTilesView(
+internal fun ManageTiles(
     snackbarHostState: SnackbarHostState,
     state: ManageTilesViewState,
     onTileSelected: (index: Int) -> Unit,
@@ -370,9 +370,9 @@ private fun LabeledSwitchRow(
 
 @Preview(name = "Add tile", showBackground = true)
 @Composable
-private fun ManageTilesViewPreview() {
+private fun ManageTilesPreview() {
     HAThemeForPreview {
-        ManageTilesView(
+        ManageTiles(
             snackbarHostState = remember { SnackbarHostState() },
             state = previewState,
             onTileSelected = {},
@@ -392,9 +392,9 @@ private fun ManageTilesViewPreview() {
 
 @Preview(name = "Update tile", showBackground = true)
 @Composable
-private fun ManageTilesViewUpdatePreview() {
+private fun ManageTilesUpdatePreview() {
     HAThemeForPreview {
-        ManageTilesView(
+        ManageTiles(
             snackbarHostState = remember { SnackbarHostState() },
             state = previewState.copy(
                 selectedTile = previewState.tileSlots[1],

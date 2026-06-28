@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.settings.qs.views
+package io.homeassistant.companion.android.settings.qs.ui
 
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -14,9 +14,9 @@ class ManageTilesViewScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `ManageTilesView add tile`() {
+    fun `ManageTiles add tile`() {
         HAThemeForPreview {
-            ManageTilesView(
+            ManageTiles(
                 snackbarHostState = remember { SnackbarHostState() },
                 state = addTileState,
                 onTileSelected = {},
@@ -37,9 +37,9 @@ class ManageTilesViewScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `ManageTilesView update tile`() {
+    fun `ManageTiles update tile`() {
         HAThemeForPreview {
-            ManageTilesView(
+            ManageTiles(
                 snackbarHostState = remember { SnackbarHostState() },
                 state = addTileState.copy(
                     selectedTile = addTileState.tileSlots[1],
