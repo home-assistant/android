@@ -256,7 +256,12 @@ private fun TileIconContent(
     onAuthRequiredChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .wrapContentWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
         EntityPicker(
             entities = state.sortedEntities,
             selectedEntityId = state.selectedEntityId,
