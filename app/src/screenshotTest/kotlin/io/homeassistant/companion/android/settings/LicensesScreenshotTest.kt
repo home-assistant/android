@@ -94,7 +94,7 @@ class LicensesScreenshotTest {
                 .withJson(FAKE_LIBS)
                 .build()
 
-            assert(libs.libraries.isNotEmpty()) { "Fail to parse fake JSON" }
+            assert(libs.libraries.isNotEmpty()) { "Failed to parse fake JSON" }
 
             var openDialog by remember { mutableStateOf<Library?>(null) }
             var openSheet by remember { mutableStateOf<Library?>(null) }
@@ -117,7 +117,7 @@ class LicensesScreenshotTest {
                 .withJson(FAKE_LIBS)
                 .build()
 
-            assert(libs.libraries.size == 2) { "Fail to parse fake JSON" }
+            assert(libs.libraries.size == 2) { "Failed to parse fake JSON" }
 
             var openDialog by remember { mutableStateOf<Library?>(null) }
             var openSheet by remember { mutableStateOf<Library?>(libs.libraries[1]) }
