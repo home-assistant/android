@@ -1,7 +1,10 @@
 package io.homeassistant.companion.android.frontend.navigation
 
+import android.content.IntentSender
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -84,6 +87,9 @@ internal fun NavGraphBuilder.frontendScreen(
             val nfcWriteLauncher = rememberLauncherForActivityResult(WriteNfcTag()) { messageId ->
                 viewModel.onNfcWriteCompleted(messageId)
             }
+            val matterThreadIntentLauncher = rememberLauncherForActivityResult(
+                ActivityResultContracts.StartIntentSenderForResult(),
+            ) { result -> viewModel.onMatterThreadIntentResult(result) }
 
             FrontendEventHandler(
                 events = viewModel.events,
@@ -103,6 +109,9 @@ internal fun NavGraphBuilder.frontendScreen(
                 onShowServerSwitcher = { onShowServerSwitcher(viewModel::switchServer) },
                 onNavigateToNfcWrite = { messageId, tagId ->
                     nfcWriteLauncher.launch(WriteNfcTag.Input(tagId = tagId, messageId = messageId))
+                },
+                onLaunchMatterThreadIntent = { intentSender ->
+                    matterThreadIntentLauncher.launch(IntentSenderRequest.Builder(intentSender).build())
                 },
                 onRequestFullscreen = onRequestFullscreen,
                 onNavigateToWidgetConfig = { entityId, widgetType ->
@@ -153,6 +162,7 @@ internal fun FrontendEventHandler(
     onOpenExternalLink: suspend (Uri) -> Unit,
     onShowServerSwitcher: () -> Unit,
     onNavigateToNfcWrite: (messageId: Int, tagId: String?) -> Unit,
+    onLaunchMatterThreadIntent: (IntentSender) -> Unit,
     onRequestFullscreen: (Boolean) -> Unit,
     onNavigateToWidgetConfig: (entityId: String, widgetType: WidgetType) -> Unit,
     onLaunchApp: (packageName: String) -> Unit = {},
@@ -160,56 +170,38 @@ internal fun FrontendEventHandler(
 ) {
     val resources = LocalResources.current
     LaunchedEffect(Unit) {
-        events.collect { event ->
+        // Local suspend dispatcher so the snackbar's action can route its inner event back
+        // through the same routing table (e.g. tapping "Get help" fires an OpenExternalLink).
+        suspend fun handle(event: FrontendEvent) {
             when (event) {
                 is FrontendEvent.ShowSnackbar -> {
-                    onShowSnackbar(resources.getString(event.messageResId), null)
+                    val action = event.action
+                    val tapped = onShowSnackbar(
+                        resources.getString(event.messageResId),
+                        action?.let { resources.getString(it.labelResId) },
+                    )
+                    if (tapped && action != null) handle(action.event)
                 }
 
-                is FrontendEvent.NavigateToSettings -> {
-                    onNavigateToSettings(null)
-                }
-
-                is FrontendEvent.NavigateToAssistSettings -> {
-                    onNavigateToSettings(SettingsActivity.Deeplink.AssistSettings)
-                }
-
-                is FrontendEvent.NavigateToAssist -> {
+                is FrontendEvent.NavigateToSettings -> onNavigateToSettings(null)
+                is FrontendEvent.NavigateToAssistSettings -> onNavigateToSettings(
+                    SettingsActivity.Deeplink.AssistSettings,
+                )
+                is FrontendEvent.NavigateToAssist ->
                     onNavigateToAssist(event.serverId, event.pipelineId, event.startListening)
-                }
-
-                is FrontendEvent.OpenExternalLink -> {
-                    onOpenExternalLink(event.uri)
-                }
-
-                is FrontendEvent.LaunchApp -> {
-                    onLaunchApp(event.packageName)
-                }
-
-                is FrontendEvent.LaunchIntent -> {
-                    onLaunchIntent(event.intentUri)
-                }
-
-                is FrontendEvent.NavigateToDeveloperSettings -> {
-                    onNavigateToSettings(SettingsActivity.Deeplink.Developer)
-                }
-
-                is FrontendEvent.ShowServerSwitcher -> {
-                    onShowServerSwitcher()
-                }
-
-                is FrontendEvent.NavigateToNfcWrite -> {
-                    onNavigateToNfcWrite(event.messageId, event.tagId)
-                }
-
-                is FrontendEvent.RequestFullscreen -> {
-                    onRequestFullscreen(event.fullscreen)
-                }
-
-                is FrontendEvent.NavigateToWidgetConfig -> {
-                    onNavigateToWidgetConfig(event.entityId, event.widgetType)
-                }
+                is FrontendEvent.OpenExternalLink -> onOpenExternalLink(event.uri)
+                is FrontendEvent.NavigateToDeveloperSettings -> onNavigateToSettings(
+                    SettingsActivity.Deeplink.Developer,
+                )
+                is FrontendEvent.ShowServerSwitcher -> onShowServerSwitcher()
+                is FrontendEvent.NavigateToNfcWrite -> onNavigateToNfcWrite(event.messageId, event.tagId)
+                is FrontendEvent.LaunchMatterThreadIntent -> onLaunchMatterThreadIntent(event.intentSender)
+                is FrontendEvent.RequestFullscreen -> onRequestFullscreen(event.fullscreen)
+                is FrontendEvent.LaunchApp -> onLaunchApp(event.packageName)
+                is FrontendEvent.LaunchIntent -> onLaunchIntent(event.intentUri)
+                is FrontendEvent.NavigateToWidgetConfig -> onNavigateToWidgetConfig(event.entityId, event.widgetType)
             }
         }
+        events.collect { event -> handle(event) }
     }
 }

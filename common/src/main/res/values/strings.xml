@@ -784,6 +784,7 @@
     <string name="server_add_success">Server added</string>
     <string name="server_add_failed">Couldn\'t add server</string>
     <string name="server_select">Select server</string>
+    <string name="server_active">Active</string>
     <string name="server_delete">Delete server</string>
     <string name="server_delete_confirm">Are you sure you want to delete this server from the app?</string>
     <string name="server_delete_working">Deleting server…</string>
@@ -1491,4 +1492,5 @@
     <string name="fail_to_navigate_to_uri">No app available to open %s</string>
     <string name="experimental">Experimental</string>
     <string name="learn_more">Learn more</string>
+    <string name="default_assistant_required">Home Assistant must be your default assistant to perform %s.</string>
 </resources>

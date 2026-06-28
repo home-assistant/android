@@ -100,6 +100,7 @@ import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.common.util.SdkVersion
+import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.getBooleanOrElse
 import io.homeassistant.companion.android.common.util.getBooleanOrNull
 import io.homeassistant.companion.android.common.util.getDoubleOrElse
@@ -148,10 +149,13 @@ import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.homeassistant.companion.android.util.applyInsets
 import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
+import io.homeassistant.companion.android.util.compose.webview.BackAction
+import io.homeassistant.companion.android.util.compose.webview.resolveBackAction
 import io.homeassistant.companion.android.util.hasNonRootPath
 import io.homeassistant.companion.android.util.hasSameOrigin
 import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.util.sensitive
+import io.homeassistant.companion.android.util.toRelativeUrl
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
 import io.homeassistant.companion.android.webview.externalbus.EntityAddToActionsResponse
@@ -283,7 +287,7 @@ class WebViewActivity :
     lateinit var checkLocationDisabled: CheckLocationDisabledUseCase
 
     @Inject
-    lateinit var dataSourceFactory: DataSource.Factory
+    lateinit var dataSourceFactoryProvider: SuspendProvider<DataSource.Factory>
 
     private lateinit var webView: WebView
     private var loadedUrl: Uri? = null
@@ -473,7 +477,25 @@ class WebViewActivity :
 
         val onBackPressed = object : OnBackPressedCallback(webView.canGoBack()) {
             override fun handleOnBackPressed() {
-                if (webView.canGoBack()) webView.goBack()
+                when (val action = resolveBackAction(webView, loadedUrl)) {
+                    BackAction.GoBack -> webView.goBack()
+                    is BackAction.NavigateToRoot -> {
+                        clearHistory = true
+                        loadedUrl = action.rootUrl
+                        webView.loadUrl(action.rootUrl.toString())
+                    }
+                    BackAction.None -> {
+                        // Already on root — let the system handle back (exit app).
+                        // We must temporarily disable this callback so that the
+                        // dispatcher invokes the next handler in the chain (the
+                        // default Activity handler which finishes the activity).
+                        // Re-enabling afterwards keeps the callback functional in
+                        // case the activity is not destroyed (e.g. multi-window).
+                        isEnabled = false
+                        onBackPressedDispatcher.onBackPressed()
+                        isEnabled = true
+                    }
+                }
             }
         }
 
@@ -670,6 +692,10 @@ class WebViewActivity :
 
                 override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
                     super.doUpdateVisitedHistory(view, url, isReload)
+                    // Enable the callback only when there's browser history. On a fresh
+                    // load (e.g. deeplink to a sub-path) the callback stays disabled so
+                    // the system can handle the gesture and show the Android 14+
+                    // predictive-back peek animation.
                     onBackPressed.isEnabled = canGoBack()
                     presenter.stopScanningForImprov(false)
                 }
@@ -1424,7 +1450,7 @@ class WebViewActivity :
         val uri = payload?.getStringOrNull("url")?.toUri() ?: return
         val isMuted = payload.getBooleanOrElse("muted", false)
         lifecycleScope.launch {
-            exoPlayer.value = initializePlayer(this@WebViewActivity, dataSourceFactory).apply {
+            exoPlayer.value = initializePlayer(this@WebViewActivity, dataSourceFactoryProvider()).apply {
                 setMediaItem(MediaItem.fromUri(uri))
                 playWhenReady = true
                 addListener(
@@ -1549,12 +1575,15 @@ class WebViewActivity :
                     showSystemUI()
                 }
 
-                var path = intent.getStringExtra(EXTRA_PATH)
-                if (path?.startsWith("entityId:") == true) {
+                val intentPath = intent.getStringExtra(EXTRA_PATH)
+                // Let the presenter handle falling back to the current WebView path
+                // when no explicit navigation path is set. See https://github.com/home-assistant/android/issues/4983
+                var path: String? = intentPath
+                if (intentPath?.startsWith("entityId:") == true) {
                     // Get the entity ID from a string formatted "entityId:domain.entity"
                     // https://github.com/home-assistant/core/blob/dev/homeassistant/core.py#L159
                     val pattern = "(?<=^entityId:)((?!.+__)(?!_)[\\da-z_]+(?<!_)\\.(?!_)[\\da-z_]+(?<!_)$)".toRegex()
-                    val entity = pattern.find(path)?.value ?: ""
+                    val entity = pattern.find(intentPath)?.value ?: ""
                     if (
                         entity.isNotBlank() &&
                         serverManager.getServer(presenter.getActiveServer())?.version?.isAtLeast(2025, 6, 0) == true
@@ -1568,6 +1597,10 @@ class WebViewActivity :
                 presenter.load(lifecycle, path, isInternalOverride)
             }
         }
+    }
+
+    override fun getCurrentWebViewRelativeUrl(): String? {
+        return webView.url?.toUri()?.toRelativeUrl(excludeParams = setOf("external_auth"))
     }
 
     override suspend fun unlockAppIfNeeded() {

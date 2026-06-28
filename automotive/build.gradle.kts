@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.homeassistant.android.application)
     alias(libs.plugins.homeassistant.android.flavor)
-    alias(libs.plugins.google.services)
     alias(libs.plugins.homeassistant.android.dependencies)
     alias(libs.plugins.kotlin.parcelize)
 }
@@ -93,9 +92,4 @@ android {
 dependencies {
     // Most of the dependencies are coming from the convention plugin to avoid duplication with `:app` module.
     implementation(libs.car.automotive)
-}
-
-// Disable to fix memory leak and be compatible with the configuration cache.
-googleServices {
-    disableVersionCheck = true
 }

@@ -387,53 +387,25 @@ class FrontendMessageHandlerTest {
     }
 
     @Test
-    fun `Given Matter commission message when messageResults then emits StartMatterCommissioning with id`() = runTest {
+    fun `Given Matter commission message when messageResults then emits StartMatterCommissioning`() = runTest {
         val message = MatterCommissionMessage(id = 60)
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
         handler.messageResults().test {
             val result = awaitItem()
             assertTrue(result is FrontendHandlerEvent.StartMatterCommissioning)
-            assertEquals(60, (result as FrontendHandlerEvent.StartMatterCommissioning).messageId)
             expectNoEvents()
         }
     }
 
     @Test
-    fun `Given Matter commission message without id when messageResults then emits StartMatterCommissioning with null id`() = runTest {
-        val message = MatterCommissionMessage(id = null)
-        every { externalBusRepository.incomingMessages() } returns flowOf(message)
-
-        handler.messageResults().test {
-            val result = awaitItem()
-            assertTrue(result is FrontendHandlerEvent.StartMatterCommissioning)
-            assertEquals(null, (result as FrontendHandlerEvent.StartMatterCommissioning).messageId)
-            expectNoEvents()
-        }
-    }
-
-    @Test
-    fun `Given Thread import_credentials message when messageResults then emits ImportThreadCredentials with id`() = runTest {
+    fun `Given Thread import_credentials message when messageResults then emits ImportThreadCredentials`() = runTest {
         val message = ThreadImportCredentialsMessage(id = 61)
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
         handler.messageResults().test {
             val result = awaitItem()
             assertTrue(result is FrontendHandlerEvent.ImportThreadCredentials)
-            assertEquals(61, (result as FrontendHandlerEvent.ImportThreadCredentials).messageId)
-            expectNoEvents()
-        }
-    }
-
-    @Test
-    fun `Given Thread import_credentials message without id when messageResults then emits ImportThreadCredentials with null id`() = runTest {
-        val message = ThreadImportCredentialsMessage(id = null)
-        every { externalBusRepository.incomingMessages() } returns flowOf(message)
-
-        handler.messageResults().test {
-            val result = awaitItem()
-            assertTrue(result is FrontendHandlerEvent.ImportThreadCredentials)
-            assertEquals(null, (result as FrontendHandlerEvent.ImportThreadCredentials).messageId)
             expectNoEvents()
         }
     }
