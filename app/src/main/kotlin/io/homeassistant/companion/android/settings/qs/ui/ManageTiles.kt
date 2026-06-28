@@ -57,7 +57,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
 @Stable
-internal data class ManageTilesViewState(
+internal data class ManageTilesState(
     val tileSlots: List<TileSlot>,
     val selectedTile: TileSlot,
     val servers: List<Server>,
@@ -95,7 +95,7 @@ fun ManageTiles(
         }.launchIn(this)
     }
 
-    val state = ManageTilesViewState(
+    val state = ManageTilesState(
         tileSlots = viewModel.slots,
         selectedTile = viewModel.selectedTile,
         servers = viewModel.servers,
@@ -141,7 +141,7 @@ fun ManageTiles(
 @Composable
 internal fun ManageTiles(
     snackbarHostState: SnackbarHostState,
-    state: ManageTilesViewState,
+    state: ManageTilesState,
     onTileSelected: (index: Int) -> Unit,
     onServerSelected: (Int) -> Unit,
     onTileLabelChange: (String) -> Unit,
@@ -433,7 +433,7 @@ private fun LabeledSwitchRowPreview() {
     }
 }
 
-private val previewState = ManageTilesViewState(
+private val previewState = ManageTilesState(
     tileSlots = listOf(
         TileSlot(id = "tile_1", name = "Tile 1"),
         TileSlot(id = "tile_2", name = "Tile 2"),
