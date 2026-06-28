@@ -96,7 +96,7 @@ import timber.log.Timber
 
 @Stable
 internal data class ManageTilesState(
-    val tileSlots:List<TileSlot>,
+    val tileSlots: List<TileSlot>,
     val selectedTileId: String = "",
     val servers: List<Server> = emptyList(),
     val sortedEntities: List<Entity> = emptyList(),
@@ -112,8 +112,12 @@ internal data class ManageTilesState(
     val submitButtonLabel: Int = commonR.string.tile_save,
     val selectedShouldVibrate: Boolean = false,
     val tileAuthRequired: Boolean = false,
-    val tileSlotsDropdownItems:List<HADropdownItem<String>> = tileSlots.map { HADropdownItem(key = it.id, label = it.name) },
-    val serversDropdownItems:List<HADropdownItem<Int>> = servers.map { HADropdownItem(key = it.id, label = it.friendlyName) }
+    val tileSlotsDropdownItems: List<HADropdownItem<String>> = tileSlots.map {
+        HADropdownItem(key = it.id, label = it.name)
+    },
+    val serversDropdownItems: List<HADropdownItem<Int>> = servers.map {
+        HADropdownItem(key = it.id, label = it.friendlyName)
+    },
 ) {
     val showSubtitle = SdkVersion.isAtLeast(Build.VERSION_CODES.Q)
 
@@ -184,8 +188,8 @@ class ManageTilesViewModel @Inject constructor(
     private val _state = MutableStateFlow(
         ManageTilesState(
             selectedTileId = slots[0].id,
-            tileSlots = slots
-        )
+            tileSlots = slots,
+        ),
     )
     internal val state: StateFlow<ManageTilesState> = _state.asStateFlow()
 
@@ -227,7 +231,7 @@ class ManageTilesViewModel @Inject constructor(
                     servers = loadedServers,
                     serversDropdownItems = loadedServers.map { server ->
                         HADropdownItem(key = server.id, label = server.friendlyName)
-                    }
+                    },
                 )
             }
             loadedServers.map { server ->
@@ -263,7 +267,9 @@ class ManageTilesViewModel @Inject constructor(
                         selectedServerId = serverId,
                         selectedShouldVibrate = entity?.shouldVibrate ?: false,
                         tileAuthRequired = entity?.authRequired ?: false,
-                        submitButtonLabel = if (!SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) || entity?.added == true) {
+                        submitButtonLabel = if (!SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) ||
+                            entity?.added == true
+                        ) {
                             commonR.string.tile_save
                         } else {
                             commonR.string.tile_add
@@ -281,7 +287,8 @@ class ManageTilesViewModel @Inject constructor(
     fun selectServerId(serverId: Int) {
         val current = _state.value
         val resetEntity =
-            serverId != current.selectedServerId && entities[serverId]?.none { it.entityId == current.selectedEntityId } == true
+            serverId != current.selectedServerId &&
+                entities[serverId]?.none { it.entityId == current.selectedEntityId } == true
         _state.update { it.copy(selectedServerId = serverId) }
         loadEntities(serverId)
         selectEntityId(if (resetEntity) "" else current.selectedEntityId)
@@ -305,7 +312,8 @@ class ManageTilesViewModel @Inject constructor(
 
     fun selectIcon(icon: IIcon?) {
         val current = _state.value
-        val resolvedIcon = icon ?: current.sortedEntities.firstOrNull { it.entityId == current.selectedEntityId }?.getIcon(app)
+        val resolvedIcon =
+            icon ?: current.sortedEntities.firstOrNull { it.entityId == current.selectedEntityId }?.getIcon(app)
         _state.update { it.copy(selectedIconId = icon?.mdiName, selectedIcon = resolvedIcon) }
     }
 

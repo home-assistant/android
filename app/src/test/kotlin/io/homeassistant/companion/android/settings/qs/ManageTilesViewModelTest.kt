@@ -104,13 +104,12 @@ class ManageTilesViewModelTest {
         authRequired = authRequired,
     )
 
-    private fun createViewModel(savedState: SavedStateHandle = SavedStateHandle()) =
-        ManageTilesViewModel(
-            savedStateHandle = savedState,
-            serverManager = serverManager,
-            tileDao = tileDao,
-            application = application,
-        )
+    private fun createViewModel(savedState: SavedStateHandle = SavedStateHandle()) = ManageTilesViewModel(
+        savedStateHandle = savedState,
+        serverManager = serverManager,
+        tileDao = tileDao,
+        application = application,
+    )
 
     @Test
     fun `Given no deeplink id when created then first tile is selected`() = runTest {
