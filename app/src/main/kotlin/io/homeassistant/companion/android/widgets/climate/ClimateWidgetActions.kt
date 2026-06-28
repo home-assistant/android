@@ -15,17 +15,25 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.ClimateWidgetDao
+import io.homeassistant.companion.android.database.widget.ClimateWidgetEntity
 import timber.log.Timber
 
 /**
- * Get an Action that will toggle the given [todoItem] of a Todo widget once given to Glance.
+ * Get an Action that will set the given temp of a Climate widget once given to Glance.
  */
-internal fun actionUpdateTemp(newTemp: Double): Action {
-    return actionRunCallback<ControlClimateAction>(actionParametersOf(SET_TEMP_KEY to newTemp))
+internal fun actionIncreaseTemp(): Action {
+    return actionRunCallback<ControlClimateAction>(actionParametersOf(IS_INCREASE_KEY to true))
 }
 
 /**
- * Get an Action that will refresh the Todo widget once given to Glance.
+ * Get an Action that will set the given temp of a Climate widget once given to Glance.
+ */
+internal fun actionDecreaseTemp(): Action {
+    return actionRunCallback<ControlClimateAction>(actionParametersOf(IS_INCREASE_KEY to false))
+}
+
+/**
+ * Get an Action that will refresh the Climate widget once given to Glance.
  */
 internal fun actionRefreshClimate(): Action {
     return actionRunCallback<RefreshAction>()
@@ -33,7 +41,7 @@ internal fun actionRefreshClimate(): Action {
 
 
 /**
- * Basic action that will refresh the given widget. Use [actionRefreshTodo] to get the
+ * Basic action that will refresh the given widget. Use [actionRefreshClimate] to get the
  * Action for Glance.
  *
  * Note: This needs to be public since it is instantiated by the Glance framework.
@@ -50,11 +58,11 @@ class RefreshAction : ActionCallback {
 }
 
 /**
- * Action that will toggle the given [todoItem] through a given parameters with the key [TOGGLE_KEY]. Use [actionToggleTodo] to get the
+ * Action that will set the given [Double] through a given parameters with the key [SET_TEMP_KEY]. Use [actionUpdateTemp] to get the
  * Action for Glance.
  *
- * The action call the server to toggle the item. On Success the widget is updated and the state will be updated
- * through the [TodoWidgetStateUpdater]. On Failure it will show a toast with the failure message.
+ * The action call the server to set the new Temperature. On Success the widget is updated and the state will be updated
+ * through the [ClimateWidgetStateUpdater]. On Failure it will show a toast with the failure message.
  *
  * Note: This needs to be public since it is instantiated by the Glance framework.
  */
@@ -84,10 +92,10 @@ class ControlClimateAction : ActionCallback {
         val appWidgetId = glanceManager.getAppWidgetId(glanceId)
         val dao = entryPoints.climateDao()
 
-        val newTemp = parameters[SET_TEMP_KEY]
+        val isIncrease = parameters[IS_INCREASE_KEY]
 
-        if (newTemp == null) {
-            Timber.w("Aborting set temp action because newTemp is null")
+        if (isIncrease == null) {
+            Timber.w("Aborting set temp action because isIncrease is null")
             return
         }
 
@@ -100,6 +108,13 @@ class ControlClimateAction : ActionCallback {
 
         if (serverManager.getServer(widgetEntity.serverId) == null) {
             Timber.w("Aborting the server has been removed, widget needs to be configured again")
+            return
+        }
+
+        val newTemp = widgetEntity.latestUpdateData?.calculateNewTemp(isIncrease)
+
+        if (newTemp == null) {
+            Timber.w("Aborting set temp action, newTemp calculation is null")
             return
         }
 
@@ -116,7 +131,16 @@ class ControlClimateAction : ActionCallback {
 
         ClimateGlanceAppWidget().update(context, glanceId)
     }
+
+    private fun ClimateWidgetEntity.LastUpdateData.calculateNewTemp(isIncrease: Boolean): Double? {
+        val current = this.climateTemp ?: return null
+        val step = this.stepTemp ?: return null
+        val newTemp = current + if (isIncrease) step else -step
+        return newTemp.coerceIn(minTemp, maxTemp)
+    }
 }
 
 @VisibleForTesting
 internal val SET_TEMP_KEY = ActionParameters.Key<Double>("TEMP_SETTING_KEY")
+@VisibleForTesting
+internal val IS_INCREASE_KEY = ActionParameters.Key<Boolean>("IS_INCREASY_KEY")

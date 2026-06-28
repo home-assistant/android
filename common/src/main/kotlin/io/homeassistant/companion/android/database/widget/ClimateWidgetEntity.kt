@@ -5,7 +5,6 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
 import io.homeassistant.companion.android.database.widget.converters.ClimateLastUpdateDataConverter
-import io.homeassistant.companion.android.database.widget.converters.TodoLastUpdateDataConverter
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonNames
@@ -35,7 +34,13 @@ data class ClimateWidgetEntity(
         // For historical reasons the field is not using snake_case
         @JsonNames("entityName")
         val entityName: String? = null,
-//        val todos: List<TodoItem>,                    // TODO: cambiar si hay algo relacionado a climate que quiera guardar
+        val climateTemp: Double? = null,
+        val currentTemp: Double? = null,
+        val minTemp: Double? = null,
+        val maxTemp: Double? = null,
+        val stepTemp: Double? = null,
+        val stateClimate: String? = null,
+        val hvacModesSupported: List<String>? = null
     ) : java.io.Serializable
 
     fun isSameConfiguration(other: ClimateWidgetEntity): Boolean {

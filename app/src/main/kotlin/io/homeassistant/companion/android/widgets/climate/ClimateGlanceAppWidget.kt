@@ -3,9 +3,12 @@ package io.homeassistant.companion.android.widgets.climate
 import android.content.Context
 import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
@@ -98,10 +101,10 @@ class ClimateGlanceAppWidget : GlanceAppWidget() {
 @Composable
 private fun GlanceModifier.climateWidgetBackground(): GlanceModifier {
     return this.appWidgetBackground().fillMaxSize()
-//        .background(
-//        GlanceTheme
-//            .colors.widgetBackground,
-//    )
+        .background(
+        GlanceTheme
+            .colors.widgetBackground,
+    )
 }
 
 @Composable
@@ -196,11 +199,6 @@ private fun ShowClimateContent(
     hvacMode: String,
     displayComplete: Boolean,
 ) {
-//    var actualTemp by remember { mutableFloatStateOf(15F) }
-//    LaunchedEffect(climateTemp) {
-//        actualTemp = climateTemp
-//    }
-
     Column(
         modifier = GlanceModifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -225,9 +223,7 @@ private fun ShowClimateContent(
                 imageProvider = ImageProvider(androidx.media3.session.R.drawable.media3_icon_minus),    // TODO: ajustar ICON, no viene de donde viene el resto
                 contentDescription = LocalContext.current.getString(commonR.string.widget_todo_add),    // TODO: ajustar string description
                 backgroundColor = GlanceTheme.colors.primary,
-                onClick =
-//                    actualTemp -= 0.5F
-                    actionUpdateTemp(25.0)
+                onClick = actionDecreaseTemp()
 
             )
 
@@ -239,9 +235,7 @@ private fun ShowClimateContent(
                 imageProvider = ImageProvider(R.drawable.ic_plus),
                 contentDescription = LocalContext.current.getString(commonR.string.widget_todo_add),    // TODO: ajustar string description
                 backgroundColor = GlanceTheme.colors.primary,
-                onClick =
-//                    actualTemp += 0.5F
-                    actionUpdateTemp(21.0)
+                onClick = actionIncreaseTemp()
             )
         }
 
