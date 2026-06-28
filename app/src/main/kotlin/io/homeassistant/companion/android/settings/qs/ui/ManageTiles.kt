@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.settings.qs.ui
 import android.os.Build
 import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -12,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.OutlinedButton
@@ -194,107 +194,101 @@ internal fun ManageTiles(
         },
         contentWindowInsets = WindowInsets()
     ) { contentPadding ->
-        Box(
+        Column(
             modifier = Modifier
                 .padding(contentPadding)
-                .fillMaxWidth()
                 .verticalScroll(scrollState)
-            ,
-            contentAlignment = Alignment.TopCenter
+                .fillMaxWidth()
+                .wrapContentWidth()
+                .padding(all = HADimens.SPACE4)
+                .widthIn(max = MaxButtonWidth)
+                .padding(safeBottomPaddingValues(applyHorizontal = false)),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Column(
+            TileDropdown(
+                tileSlots = state.tileSlots,
+                selectedTile = state.selectedTile,
+                onTileSelected = onTileSelected,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            HAHorizontalDivider(modifier = Modifier.padding(vertical = HADimens.SPACE4))
+
+            HATextField(
+                value = state.tileLabel,
+                onValueChange = onTileLabelChange,
+                label = { Text(text = stringResource(R.string.tile_label)) },
                 modifier = Modifier
-                    .padding(safeBottomPaddingValues(applyHorizontal = false))
-                    .padding(all = HADimens.SPACE4)
-                    .widthIn(max = MaxButtonWidth)
-                ,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                TileDropdown(
-                    tileSlots = state.tileSlots,
-                    selectedTile = state.selectedTile,
-                    onTileSelected = onTileSelected,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                    .fillMaxWidth()
+                    .testTag(MANAGE_TILES_LABEL_TAG),
+            )
 
-                HAHorizontalDivider(modifier = Modifier.padding(vertical = HADimens.SPACE4))
-
+            if (state.showSubtitle) {
                 HATextField(
-                    value = state.tileLabel,
-                    onValueChange = onTileLabelChange,
-                    label = { Text(text = stringResource(R.string.tile_label)) },
+                    value = state.tileSubtitle,
+                    onValueChange = onTileSubtitleChange,
+                    label = { Text(text = stringResource(R.string.tile_subtitle)) },
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag(MANAGE_TILES_LABEL_TAG),
-                )
-
-                if (state.showSubtitle) {
-                    HATextField(
-                        value = state.tileSubtitle,
-                        onValueChange = onTileSubtitleChange,
-                        label = { Text(text = stringResource(R.string.tile_subtitle)) },
-                        modifier = Modifier
-                            .padding(top = HADimens.SPACE4)
-                            .fillMaxWidth()
-                            .testTag(MANAGE_TILES_SUBTITLE_TAG)
-                    )
-                }
-
-                if (state.showServerSelector) {
-                    ServerDropdown(
-                        servers = state.servers,
-                        selectedServerId = state.selectedServerId,
-                        onServerSelected = onServerSelected,
-                        modifier = Modifier
-                            .padding(top = HADimens.SPACE4)
-                            .fillMaxWidth()
-                            .testTag(MANAGE_TILES_SERVER_DROPDOWN_TAG),
-                    )
-                }
-
-                EntityPicker(
-                    entities = state.entities,
-                    selectedEntityId = state.selectedEntityId,
-                    onEntitySelectedId = onEntitySelectedId,
-                    onEntityCleared = onEntityCleared,
-                    modifier = Modifier.padding(vertical = HADimens.SPACE4),
-                    addButtonText = stringResource(R.string.tile_entity),
-                    entityRegistry = state.entityRegistry,
-                    deviceRegistry = state.deviceRegistry,
-                    areaRegistry = state.areaRegistry,
-                )
-
-                TileIconRow(
-                    selectedIcon = state.selectedIcon,
-                    showResetIcon = state.showResetIcon,
-                    onShowIconDialog = onShowIconDialog,
-                    onResetIcon = onResetIcon,
-                )
-
-                LabeledSwitchRow(
-                    label = stringResource(R.string.tile_vibrate),
-                    checked = state.shouldVibrate,
-                    onCheckedChange = onShouldVibrateChange,
-                    switchTestTag = MANAGE_TILES_VIBRATE_SWITCH_TAG,
-                )
-
-                LabeledSwitchRow(
-                    label = stringResource(R.string.tile_auth_required),
-                    checked = state.authRequired,
-                    onCheckedChange = onAuthRequiredChange,
-                    switchTestTag = MANAGE_TILES_AUTH_SWITCH_TAG,
-                )
-
-                HAFilledButton(
-                    text = stringResource(state.submitButtonLabel),
-                    onClick = onSubmit,
-                    enabled = state.submitEnabled,
-                    modifier = Modifier
-                        .fillMaxWidth()
                         .padding(top = HADimens.SPACE4)
-                        .testTag(MANAGE_TILES_SUBMIT_TAG),
+                        .fillMaxWidth()
+                        .testTag(MANAGE_TILES_SUBTITLE_TAG)
                 )
             }
+
+            if (state.showServerSelector) {
+                ServerDropdown(
+                    servers = state.servers,
+                    selectedServerId = state.selectedServerId,
+                    onServerSelected = onServerSelected,
+                    modifier = Modifier
+                        .padding(top = HADimens.SPACE4)
+                        .fillMaxWidth()
+                        .testTag(MANAGE_TILES_SERVER_DROPDOWN_TAG),
+                )
+            }
+
+            EntityPicker(
+                entities = state.entities,
+                selectedEntityId = state.selectedEntityId,
+                onEntitySelectedId = onEntitySelectedId,
+                onEntityCleared = onEntityCleared,
+                modifier = Modifier.padding(vertical = HADimens.SPACE4),
+                addButtonText = stringResource(R.string.tile_entity),
+                entityRegistry = state.entityRegistry,
+                deviceRegistry = state.deviceRegistry,
+                areaRegistry = state.areaRegistry,
+            )
+
+            TileIconRow(
+                selectedIcon = state.selectedIcon,
+                showResetIcon = state.showResetIcon,
+                onShowIconDialog = onShowIconDialog,
+                onResetIcon = onResetIcon,
+            )
+
+            LabeledSwitchRow(
+                label = stringResource(R.string.tile_vibrate),
+                checked = state.shouldVibrate,
+                onCheckedChange = onShouldVibrateChange,
+                switchTestTag = MANAGE_TILES_VIBRATE_SWITCH_TAG,
+            )
+
+            LabeledSwitchRow(
+                label = stringResource(R.string.tile_auth_required),
+                checked = state.authRequired,
+                onCheckedChange = onAuthRequiredChange,
+                switchTestTag = MANAGE_TILES_AUTH_SWITCH_TAG,
+            )
+
+            HAFilledButton(
+                text = stringResource(state.submitButtonLabel),
+                onClick = onSubmit,
+                enabled = state.submitEnabled,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = HADimens.SPACE4)
+                    .testTag(MANAGE_TILES_SUBMIT_TAG),
+            )
         }
     }
 }
