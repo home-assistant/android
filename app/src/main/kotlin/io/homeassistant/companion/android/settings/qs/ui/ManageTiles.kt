@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,6 +38,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mikepenz.iconics.typeface.IIcon
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
@@ -58,6 +60,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.De
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.settings.qs.ManageTilesState
 import io.homeassistant.companion.android.settings.qs.ManageTilesViewModel
 import io.homeassistant.companion.android.settings.qs.TileSlot
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
@@ -90,29 +93,6 @@ const val MANAGE_TILES_AUTH_SWITCH_TAG = "manage_tiles_auth_switch"
 @VisibleForTesting
 const val MANAGE_TILES_SUBMIT_TAG = "manage_tiles_submit"
 
-@Stable
-internal data class ManageTilesState(
-    val tileSlots: List<TileSlot>,
-    val selectedTile: TileSlot,
-    val servers: List<Server>,
-    val selectedServerId: Int,
-    val showServerSelector: Boolean,
-    val tileLabel: String,
-    val showSubtitle: Boolean,
-    val tileSubtitle: String,
-    val entities: List<Entity>,
-    val selectedEntityId: String,
-    val entityRegistry: List<EntityRegistryResponse>,
-    val deviceRegistry: List<DeviceRegistryResponse>,
-    val areaRegistry: List<AreaRegistryResponse>,
-    val selectedIcon: IIcon?,
-    val showResetIcon: Boolean,
-    val shouldVibrate: Boolean,
-    val authRequired: Boolean,
-    val submitButtonLabel: Int,
-    val submitEnabled: Boolean,
-)
-
 @Composable
 fun ManageTiles(
     viewModel: ManageTilesViewModel,
@@ -121,6 +101,9 @@ fun ManageTiles(
 ) {
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val submitEnabled by viewModel.submitEnabled.collectAsStateWithLifecycle()
+
     LaunchedEffect(Unit) {
         viewModel.tileInfoSnackbar.onEach {
             if (it != 0) {
@@ -129,44 +112,20 @@ fun ManageTiles(
         }.launchIn(this)
     }
 
-    val state = ManageTilesState(
-        tileSlots = viewModel.slots,
-        selectedTile = viewModel.selectedTile,
-        servers = viewModel.servers,
-        selectedServerId = viewModel.selectedServerId,
-        showServerSelector = viewModel.servers.size > 1 ||
-            viewModel.servers.none { it.id == viewModel.selectedServerId },
-        tileLabel = viewModel.tileLabel,
-        showSubtitle = SdkVersion.isAtLeast(Build.VERSION_CODES.Q),
-        tileSubtitle = viewModel.tileSubtitle.orEmpty(),
-        entities = viewModel.sortedEntities,
-        selectedEntityId = viewModel.selectedEntityId,
-        entityRegistry = viewModel.entityRegistry,
-        deviceRegistry = viewModel.deviceRegistry,
-        areaRegistry = viewModel.areaRegistry,
-        selectedIcon = viewModel.selectedIcon,
-        showResetIcon = viewModel.selectedIconId != null && viewModel.selectedEntityId.isNotBlank(),
-        shouldVibrate = viewModel.selectedShouldVibrate,
-        authRequired = viewModel.tileAuthRequired,
-        submitButtonLabel = viewModel.submitButtonLabel,
-        submitEnabled = viewModel.tileLabel.isNotBlank() &&
-            viewModel.selectedServerId in viewModel.servers.map { it.id } &&
-            viewModel.selectedEntityId in viewModel.sortedEntities.map { it.entityId },
-    )
-
     ManageTiles(
         snackbarHostState = snackbarHostState,
         state = state,
+        submitEnabled = submitEnabled,
         onTileSelected = viewModel::selectTile,
         onServerSelected = viewModel::selectServerId,
-        onTileLabelChange = { viewModel.tileLabel = it },
-        onTileSubtitleChange = { viewModel.tileSubtitle = it },
+        onTileLabelChange = viewModel::setTileLabel,
+        onTileSubtitleChange = viewModel::setTileSubtitle,
         onEntitySelectedId = viewModel::selectEntityId,
         onEntityCleared = { viewModel.selectEntityId("") },
-        onShowIconDialog = { onShowIconDialog(viewModel.selectedTile.id) },
+        onShowIconDialog = { onShowIconDialog(state.selectedTile.id) },
         onResetIcon = { viewModel.selectIcon(null) },
-        onShouldVibrateChange = { viewModel.selectedShouldVibrate = it },
-        onAuthRequiredChange = { viewModel.tileAuthRequired = it },
+        onShouldVibrateChange = viewModel::setShouldVibrate,
+        onAuthRequiredChange = viewModel::setAuthRequired,
         onSubmit = viewModel::addTile,
         modifier = modifier,
     )
@@ -176,6 +135,7 @@ fun ManageTiles(
 internal fun ManageTiles(
     snackbarHostState: SnackbarHostState,
     state: ManageTilesState,
+    submitEnabled:Boolean,
     onTileSelected: (index: Int) -> Unit,
     onServerSelected: (Int) -> Unit,
     onTileLabelChange: (String) -> Unit,
@@ -244,7 +204,7 @@ internal fun ManageTiles(
             HAFilledButton(
                 text = stringResource(state.submitButtonLabel),
                 onClick = onSubmit,
-                enabled = state.submitEnabled,
+                enabled = submitEnabled,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = HADimens.SPACE4)
@@ -283,7 +243,7 @@ private fun TileLabelContent(
                 .testTag(MANAGE_TILES_LABEL_TAG),
         )
 
-        if (state.showSubtitle) {
+        if (state.showSubtitle && state.tileSubtitle != null) {
             HATextField(
                 value = state.tileSubtitle,
                 onValueChange = onTileSubtitleChange,
@@ -310,7 +270,7 @@ private fun TileIconContent(
 ) {
     Column(modifier = modifier) {
         EntityPicker(
-            entities = state.entities,
+            entities = state.sortedEntities,
             selectedEntityId = state.selectedEntityId,
             onEntitySelectedId = onEntitySelectedId,
             onEntityCleared = onEntityCleared,
@@ -330,14 +290,14 @@ private fun TileIconContent(
 
         LabeledSwitchRow(
             label = stringResource(R.string.tile_vibrate),
-            checked = state.shouldVibrate,
+            checked = state.selectedShouldVibrate,
             onCheckedChange = onShouldVibrateChange,
             switchTestTag = MANAGE_TILES_VIBRATE_SWITCH_TAG,
         )
 
         LabeledSwitchRow(
             label = stringResource(R.string.tile_auth_required),
-            checked = state.authRequired,
+            checked = state.tileAuthRequired,
             onCheckedChange = onAuthRequiredChange,
             switchTestTag = MANAGE_TILES_AUTH_SWITCH_TAG,
         )
@@ -463,6 +423,7 @@ private fun ManageTilesPreview() {
         ManageTiles(
             snackbarHostState = remember { SnackbarHostState() },
             state = previewState,
+            submitEnabled = false,
             onTileSelected = {},
             onServerSelected = {},
             onTileLabelChange = {},
@@ -484,15 +445,13 @@ private fun ManageTilesUpdatePreview() {
     HAThemeForPreview {
         ManageTiles(
             snackbarHostState = remember { SnackbarHostState() },
+            submitEnabled = false,
             state = previewState.copy(
                 selectedTile = previewState.tileSlots[1],
                 tileLabel = "Living room",
                 tileSubtitle = "Lights",
                 selectedEntityId = "light.living_room",
-                showResetIcon = true,
-                shouldVibrate = true,
                 submitButtonLabel = R.string.tile_save,
-                submitEnabled = true,
             ),
             onTileSelected = {},
             onServerSelected = {},
@@ -529,19 +488,12 @@ private val previewState = ManageTilesState(
     selectedTile = TileSlot(id = "tile_1", name = "Tile 1"),
     servers = emptyList(),
     selectedServerId = 0,
-    showServerSelector = false,
     tileLabel = "",
-    showSubtitle = true,
     tileSubtitle = "",
-    entities = emptyList(),
     selectedEntityId = "",
     entityRegistry = emptyList(),
     deviceRegistry = emptyList(),
     areaRegistry = emptyList(),
     selectedIcon = null,
-    showResetIcon = false,
-    shouldVibrate = false,
-    authRequired = false,
     submitButtonLabel = R.string.tile_add,
-    submitEnabled = false,
 )

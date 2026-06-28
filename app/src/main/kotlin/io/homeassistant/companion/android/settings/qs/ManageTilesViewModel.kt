@@ -6,10 +6,7 @@ import android.app.StatusBarManager
 import android.content.ComponentName
 import android.graphics.drawable.Icon
 import android.os.Build
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.Stable
 import androidx.core.content.getSystemService
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
@@ -77,19 +74,57 @@ import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import io.homeassistant.companion.android.util.icondialog.mdiName
 import java.util.concurrent.Executors
 import javax.inject.Inject
+import kotlin.collections.map
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
+@Stable
+internal data class ManageTilesState(
+    val tileSlots:List<TileSlot>,
+    val selectedTile: TileSlot,
+    val servers: List<Server> = emptyList(),
+    val sortedEntities: List<Entity> = emptyList(),
+    val entityRegistry: List<EntityRegistryResponse> = emptyList(),
+    val deviceRegistry: List<DeviceRegistryResponse> = emptyList(),
+    val areaRegistry: List<AreaRegistryResponse> = emptyList(),
+    val selectedServerId: Int = ServerManager.SERVER_ID_ACTIVE,
+    val selectedIconId: String? = null,
+    val selectedIcon: IIcon? = null,
+    val selectedEntityId: String = "",
+    val tileLabel: String = "",
+    val tileSubtitle: String? = null,
+    val submitButtonLabel: Int = commonR.string.tile_save,
+    val selectedShouldVibrate: Boolean = false,
+    val tileAuthRequired: Boolean = false,
+) {
+    val showSubtitle = SdkVersion.isAtLeast(Build.VERSION_CODES.Q)
+
+    val showServerSelector get() = servers.size > 1 ||
+        servers.none { server -> server.id == selectedServerId }
+
+    val showResetIcon get() = selectedIconId != null && selectedEntityId.isNotBlank()
+
+
+}
+
 @HiltViewModel
 class ManageTilesViewModel @Inject constructor(
-    state: SavedStateHandle,
+    savedStateHandle: SavedStateHandle,
     private val serverManager: ServerManager,
     private val tileDao: TileDao,
     application: Application,
@@ -145,32 +180,23 @@ class ManageTilesViewModel @Inject constructor(
 
     val slots = loadTileSlots(application.resources)
 
-    var selectedTile by mutableStateOf(slots[0])
-        private set
+    private val _state = MutableStateFlow(
+        ManageTilesState(
+            selectedTile = slots[0],
+            tileSlots = slots
+        )
+    )
+    internal val state: StateFlow<ManageTilesState> = _state.asStateFlow()
 
-    var servers by mutableStateOf(emptyList<Server>())
-        private set
-    var sortedEntities by mutableStateOf<List<Entity>>(emptyList())
-        private set
-    var entityRegistry by mutableStateOf<List<EntityRegistryResponse>>(emptyList())
-        private set
-    var deviceRegistry by mutableStateOf<List<DeviceRegistryResponse>>(emptyList())
-        private set
-    var areaRegistry by mutableStateOf<List<AreaRegistryResponse>>(emptyList())
-        private set
-    var selectedServerId by mutableIntStateOf(ServerManager.SERVER_ID_ACTIVE)
-        private set
-    var selectedIconId by mutableStateOf<String?>(null)
-        private set
-    var selectedEntityId by mutableStateOf("")
-    var tileLabel by mutableStateOf("")
-    var tileSubtitle by mutableStateOf<String?>(null)
-    var submitButtonLabel by mutableIntStateOf(commonR.string.tile_save)
-        private set
-    var selectedShouldVibrate by mutableStateOf(false)
-    var tileAuthRequired by mutableStateOf(false)
+    val submitEnabled = state.map {
+        it.tileLabel.isNotBlank() &&
+            it.selectedServerId in it.servers.map { server -> server.id } &&
+            it.selectedEntityId in it.sortedEntities.map { entity -> entity.entityId }
+    }
+        .flowOn(Dispatchers.IO)
+        .stateIn(viewModelScope, SharingStarted.Lazily, false)
 
-    var selectedIcon: IIcon? = null
+
     private var selectedTileId = 0
     private var selectedTileAdded = false
 
@@ -184,7 +210,7 @@ class ManageTilesViewModel @Inject constructor(
 
     init {
         // Initialize fields based on the tile_1 TileEntity
-        state.get<String>("id")?.let { id ->
+        savedStateHandle.get<String>("id")?.let { id ->
             selectTile(slots.indexOfFirst { it.id == id })
             viewModelScope.launch {
                 // A deeplink only happens when tapping on a tile that hasn't been setup
@@ -195,9 +221,9 @@ class ManageTilesViewModel @Inject constructor(
         }
 
         viewModelScope.launch(Dispatchers.IO) {
-            val servers = serverManager.servers()
-            this@ManageTilesViewModel.servers = servers
-            servers.map { server ->
+            val loadedServers = serverManager.servers()
+            _state.update { it.copy(servers = loadedServers) }
+            loadedServers.map { server ->
                 val serverId = server.id
                 async {
                     launch { entities[serverId] = loadEntitiesForServer(serverId) }
@@ -208,89 +234,101 @@ class ManageTilesViewModel @Inject constructor(
             }.awaitAll()
             withContext(Dispatchers.Main) {
                 // The entities list might not have been loaded when the tile data was loaded
-                selectTile(slots.indexOf(selectedTile))
+                selectTile(slots.indexOf(_state.value.selectedTile))
             }
         }
     }
 
     fun selectTile(index: Int) {
         val tile = slots[if (index == -1) 0 else index]
-        selectedTile = tile
+        _state.update { it.copy(selectedTile = tile) }
         viewModelScope.launch {
-            tileDao.get(tile.id).also {
-                selectedTileId = it?.id ?: 0
-                selectedTileAdded = it?.added ?: false
-                selectedServerId =
-                    if (it?.serverId == null || it.serverId == 0) {
-                        serverManager.getServer()?.id ?: 0
-                    } else {
-                        it.serverId
-                    }
-                selectedShouldVibrate = it?.shouldVibrate ?: false
-                tileAuthRequired = it?.authRequired ?: false
-                submitButtonLabel =
-                    if (!SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) || it?.added == true) {
-                        commonR.string.tile_save
-                    } else {
-                        commonR.string.tile_add
-                    }
-                loadEntities(selectedServerId)
-                if (it?.isSetup == true) {
-                    updateExistingTileFields(it)
+            tileDao.get(tile.id).also { entity ->
+                selectedTileId = entity?.id ?: 0
+                selectedTileAdded = entity?.added ?: false
+                val serverId = if (entity?.serverId == null || entity.serverId == 0) {
+                    serverManager.getServer()?.id ?: 0
+                } else {
+                    entity.serverId
+                }
+                _state.update {
+                    it.copy(
+                        selectedServerId = serverId,
+                        selectedShouldVibrate = entity?.shouldVibrate ?: false,
+                        tileAuthRequired = entity?.authRequired ?: false,
+                        submitButtonLabel = if (!SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) || entity?.added == true) {
+                            commonR.string.tile_save
+                        } else {
+                            commonR.string.tile_add
+                        },
+                    )
+                }
+                loadEntities(serverId)
+                if (entity?.isSetup == true) {
+                    updateExistingTileFields(entity)
                 }
             }
         }
     }
 
     fun selectServerId(serverId: Int) {
+        val current = _state.value
         val resetEntity =
-            serverId != selectedServerId && entities[serverId]?.none { it.entityId == selectedEntityId } == true
-        selectedServerId = serverId
+            serverId != current.selectedServerId && entities[serverId]?.none { it.entityId == current.selectedEntityId } == true
+        _state.update { it.copy(selectedServerId = serverId) }
         loadEntities(serverId)
-        selectEntityId(if (resetEntity) "" else selectedEntityId)
+        selectEntityId(if (resetEntity) "" else current.selectedEntityId)
     }
 
     private fun loadEntities(serverId: Int) {
-        sortedEntities = entities[serverId] ?: emptyList()
-        entityRegistry = entityRegistries[serverId] ?: emptyList()
-        deviceRegistry = deviceRegistries[serverId] ?: emptyList()
-        areaRegistry = areaRegistries[serverId] ?: emptyList()
+        _state.update {
+            it.copy(
+                sortedEntities = entities[serverId] ?: emptyList(),
+                entityRegistry = entityRegistries[serverId] ?: emptyList(),
+                deviceRegistry = deviceRegistries[serverId] ?: emptyList(),
+                areaRegistry = areaRegistries[serverId] ?: emptyList(),
+            )
+        }
     }
 
     fun selectEntityId(entityId: String) {
-        selectedEntityId = entityId
-        if (selectedIconId == null) selectIcon(null) // trigger drawable update
+        _state.update { it.copy(selectedEntityId = entityId) }
+        if (_state.value.selectedIconId == null) selectIcon(null) // trigger drawable update
     }
 
     fun selectIcon(icon: IIcon?) {
-        selectedIconId = icon?.mdiName
-        selectedIcon = icon ?: sortedEntities.firstOrNull { it.entityId == selectedEntityId }?.getIcon(app)
+        val current = _state.value
+        val resolvedIcon = icon ?: current.sortedEntities.firstOrNull { it.entityId == current.selectedEntityId }?.getIcon(app)
+        _state.update { it.copy(selectedIconId = icon?.mdiName, selectedIcon = resolvedIcon) }
     }
 
     private fun updateExistingTileFields(currentTile: TileEntity) {
-        tileLabel = currentTile.label
-        tileSubtitle = currentTile.subtitle
-        selectedEntityId = currentTile.entityId
-        selectedShouldVibrate = currentTile.shouldVibrate
-        tileAuthRequired = currentTile.authRequired
-        selectIcon(
-            currentTile.iconName?.let { CommunityMaterial.getIconByMdiName(it) },
-        )
+        _state.update {
+            it.copy(
+                tileLabel = currentTile.label,
+                tileSubtitle = currentTile.subtitle,
+                selectedEntityId = currentTile.entityId,
+                selectedShouldVibrate = currentTile.shouldVibrate,
+                tileAuthRequired = currentTile.authRequired,
+            )
+        }
+        selectIcon(currentTile.iconName?.let { CommunityMaterial.getIconByMdiName(it) })
     }
 
     fun addTile() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
+            val current = _state.value
             val tileData = TileEntity(
                 id = selectedTileId,
-                tileId = selectedTile.id,
-                serverId = selectedServerId,
+                tileId = current.selectedTile.id,
+                serverId = current.selectedServerId,
                 added = selectedTileAdded,
-                iconName = selectedIconId,
-                entityId = selectedEntityId,
-                label = tileLabel,
-                subtitle = tileSubtitle,
-                shouldVibrate = selectedShouldVibrate,
-                authRequired = tileAuthRequired,
+                iconName = current.selectedIconId,
+                entityId = current.selectedEntityId,
+                label = current.tileLabel,
+                subtitle = current.tileSubtitle,
+                shouldVibrate = current.selectedShouldVibrate,
+                authRequired = current.tileAuthRequired,
             )
             tileDao.add(tileData)
 
@@ -299,15 +337,15 @@ class ManageTilesViewModel @Inject constructor(
 
             if (SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) && !selectedTileAdded) {
                 val statusBarManager = app.getSystemService<StatusBarManager>()
-                val service = idToTileService[selectedTile.id] ?: Tile1Service::class.java
-                val icon = selectedIcon?.let {
+                val service = idToTileService[current.selectedTile.id] ?: Tile1Service::class.java
+                val icon = current.selectedIcon?.let {
                     val bitmap = IconicsDrawable(getApplication(), it).toBitmap()
                     Icon.createWithBitmap(bitmap)
                 } ?: Icon.createWithResource(app, commonR.drawable.ic_stat_ic_notification)
 
                 statusBarManager?.requestAddTileService(
                     ComponentName(app, service),
-                    tileLabel,
+                    current.tileLabel,
                     icon,
                     Executors.newSingleThreadExecutor(),
                 ) { result ->
@@ -318,7 +356,7 @@ class ManageTilesViewModel @Inject constructor(
                         ) {
                             _tileInfoSnackbar.emit(commonR.string.tile_added)
                             selectedTileAdded = true
-                            submitButtonLabel = commonR.string.tile_save
+                            _state.update { it.copy(submitButtonLabel = commonR.string.tile_save) }
                         } else { // Silently ignore error, database was still updated
                             _tileInfoSnackbar.emit(commonR.string.tile_updated)
                         }
@@ -329,6 +367,14 @@ class ManageTilesViewModel @Inject constructor(
             }
         }
     }
+
+    internal fun setTileLabel(value: String) = _state.update { it.copy(tileLabel = value) }
+
+    internal fun setTileSubtitle(value: String) = _state.update { it.copy(tileSubtitle = value) }
+
+    internal fun setShouldVibrate(value: Boolean) = _state.update { it.copy(selectedShouldVibrate = value) }
+
+    internal fun setAuthRequired(value: Boolean) = _state.update { it.copy(tileAuthRequired = value) }
 
     private suspend fun loadEntitiesForServer(serverId: Int): List<Entity> = try {
         serverManager.integrationRepository(serverId).getEntities().orEmpty()

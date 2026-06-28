@@ -22,6 +22,7 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
+import io.homeassistant.companion.android.settings.qs.ManageTilesState
 import io.homeassistant.companion.android.settings.qs.TileSlot
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -158,6 +159,7 @@ class ManageTilesTest {
                 ManageTiles(
                     snackbarHostState = remember { SnackbarHostState() },
                     state = state,
+                    submitEnabled = false,
                     onTileSelected = { tileSelected = it },
                     onServerSelected = { serverSelected = it },
                     onTileLabelChange = { tileLabel = it },
@@ -192,21 +194,14 @@ class ManageTilesTest {
             selectedTile = TileSlot(id = "tile_1", name = "Tile 1"),
             servers = emptyList(),
             selectedServerId = 0,
-            showServerSelector = false,
             tileLabel = "",
-            showSubtitle = true,
             tileSubtitle = "",
-            entities = emptyList(),
             selectedEntityId = "",
             entityRegistry = emptyList(),
             deviceRegistry = emptyList(),
             areaRegistry = emptyList(),
             selectedIcon = null,
-            showResetIcon = false,
-            shouldVibrate = false,
-            authRequired = false,
             submitButtonLabel = commonR.string.tile_add,
-            submitEnabled = false,
         )
 
         val multipleServersState = addTileState.copy(
@@ -215,13 +210,9 @@ class ManageTilesTest {
                 fakeServer(id = 2, name = "Vacation home"),
             ),
             selectedServerId = 1,
-            showServerSelector = true,
             tileLabel = "Living room",
             selectedEntityId = "light.living_room",
-            showResetIcon = true,
-            shouldVibrate = true,
             submitButtonLabel = commonR.string.tile_save,
-            submitEnabled = true,
         )
     }
 }
