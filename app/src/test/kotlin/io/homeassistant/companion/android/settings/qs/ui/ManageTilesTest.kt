@@ -8,6 +8,7 @@ import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -46,7 +47,7 @@ class ManageTilesTest {
         composeTestRule.apply {
             testScreen(addTileState) {
                 onNodeWithTag(MANAGE_TILES_SERVER_DROPDOWN_TAG).assertIsNotDisplayed()
-                onNodeWithTag(MANAGE_TILES_RESET_ICON_TAG).assertIsNotDisplayed()
+                onNodeWithContentDescription(MANAGE_TILES_RESET_ICON_TAG).assertIsNotDisplayed()
                 onNodeWithTag(MANAGE_TILES_SUBTITLE_TAG).performScrollTo().assertIsDisplayed()
                 onNodeWithTag(MANAGE_TILES_SUBMIT_TAG).performScrollTo().assertIsNotEnabled()
             }
@@ -58,7 +59,7 @@ class ManageTilesTest {
         composeTestRule.apply {
             testScreen(multipleServersState) {
                 onNodeWithTag(MANAGE_TILES_SERVER_DROPDOWN_TAG).performScrollTo().assertIsDisplayed()
-                onNodeWithTag(MANAGE_TILES_RESET_ICON_TAG).performScrollTo().assertIsDisplayed()
+                onNodeWithContentDescription(MANAGE_TILES_RESET_ICON_TAG).performScrollTo().assertIsDisplayed()
                 onNodeWithTag(MANAGE_TILES_SUBMIT_TAG).performScrollTo().assertIsEnabled()
             }
         }
@@ -118,7 +119,7 @@ class ManageTilesTest {
     fun `Given reset icon shown when clicking reset then onResetIcon is triggered`() {
         composeTestRule.apply {
             testScreen(multipleServersState) {
-                onNodeWithTag(MANAGE_TILES_RESET_ICON_TAG).performScrollTo().performClick()
+                onNodeWithContentDescription(MANAGE_TILES_RESET_ICON_TAG).performScrollTo().performClick()
                 assertTrue(iconReset)
             }
         }

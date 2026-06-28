@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.settings.qs.ui
 
+import android.graphics.drawable.Icon
 import android.os.Build
 import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.layout.Arrangement
@@ -14,6 +15,10 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.sharp.Restore
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -28,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -37,6 +43,7 @@ import io.homeassistant.companion.android.common.compose.composable.HADropdownIt
 import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.composable.HAHorizontalDivider
+import io.homeassistant.companion.android.common.compose.composable.HAIconButton
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.composable.HASwitch
 import io.homeassistant.companion.android.common.compose.composable.HATextField
@@ -388,35 +395,39 @@ private fun TileIconRow(
             modifier = Modifier.padding(end = HADimens.SPACE2),
         )
 
-        OutlinedButton(
-            onClick = onShowIconDialog,
-            modifier = Modifier.testTag(MANAGE_TILES_ICON_BUTTON_TAG),
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2)
         ) {
-            if (selectedIcon != null) {
-                com.mikepenz.iconics.compose.Image(
-                    selectedIcon,
-                    contentDescription = stringResource(R.string.tile_icon),
-                    colorFilter = ColorFilter.tint(LocalHAColorScheme.current.colorFillPrimaryLoudResting),
-                    modifier = Modifier.size(24.dp),
-                )
-            } else {
-                Text(
-                    text = stringResource(R.string.select),
-                    style = HATextStyle.BodyMedium,
-                    color = LocalHAColorScheme.current.colorFillPrimaryLoudResting,
+            if (showResetIcon) {
+                HAIconButton(
+                    modifier = Modifier
+                        .padding(start = HADimens.SPACE1),
+                    icon = Icons.Default.Restore,
+                    onClick = onResetIcon,
+                    contentDescription = MANAGE_TILES_RESET_ICON_TAG
                 )
             }
+            OutlinedButton(
+                onClick = onShowIconDialog,
+                modifier = Modifier.testTag(MANAGE_TILES_ICON_BUTTON_TAG),
+            ) {
+                if (selectedIcon != null) {
+                    com.mikepenz.iconics.compose.Image(
+                        selectedIcon,
+                        contentDescription = stringResource(R.string.tile_icon),
+                        colorFilter = ColorFilter.tint(LocalHAColorScheme.current.colorFillPrimaryLoudResting),
+                        modifier = Modifier.size(24.dp),
+                    )
+                } else {
+                    Text(
+                        text = stringResource(R.string.select),
+                        style = HATextStyle.BodyMedium,
+                        color = LocalHAColorScheme.current.colorFillPrimaryLoudResting,
+                    )
+                }
+            }
         }
-
-    }
-    if (showResetIcon) {
-        HAPlainButton(
-            text = stringResource(R.string.tile_icon_original),
-            onClick = onResetIcon,
-            modifier = Modifier
-                .padding(start = HADimens.SPACE1)
-                .testTag(MANAGE_TILES_RESET_ICON_TAG),
-        )
     }
 }
 
