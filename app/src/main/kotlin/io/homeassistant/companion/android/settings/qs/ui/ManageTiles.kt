@@ -38,6 +38,7 @@ import io.homeassistant.companion.android.common.compose.composable.HAHorizontal
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.composable.HASwitch
 import io.homeassistant.companion.android.common.compose.composable.HATextField
+import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
@@ -178,7 +179,7 @@ internal fun ManageTiles(
             Column(
                 modifier = Modifier
                     .padding(safeBottomPaddingValues(applyHorizontal = false))
-                    .padding(all = 16.dp)
+                    .padding(all = HADimens.SPACE4)
                     .widthIn(max = MaxButtonWidth)
                 ,
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -190,7 +191,7 @@ internal fun ManageTiles(
                     modifier = Modifier.fillMaxWidth(),
                 )
 
-                HAHorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+                HAHorizontalDivider(modifier = Modifier.padding(vertical = HADimens.SPACE4))
 
                 HATextField(
                     value = state.tileLabel,
@@ -205,7 +206,7 @@ internal fun ManageTiles(
                         onValueChange = onTileSubtitleChange,
                         label = { Text(text = stringResource(R.string.tile_subtitle)) },
                         modifier = Modifier
-                            .padding(top = 16.dp)
+                            .padding(top = HADimens.SPACE4)
                             .fillMaxWidth()
                     )
                 }
@@ -216,7 +217,7 @@ internal fun ManageTiles(
                         selectedServerId = state.selectedServerId,
                         onServerSelected = onServerSelected,
                         modifier = Modifier
-                            .padding(top = 16.dp)
+                            .padding(top = HADimens.SPACE4)
                             .fillMaxWidth(),
                     )
                 }
@@ -226,7 +227,7 @@ internal fun ManageTiles(
                     selectedEntityId = state.selectedEntityId,
                     onEntitySelectedId = onEntitySelectedId,
                     onEntityCleared = onEntityCleared,
-                    modifier = Modifier.padding(vertical = 16.dp),
+                    modifier = Modifier.padding(vertical = HADimens.SPACE4),
                     addButtonText = stringResource(R.string.tile_entity),
                     entityRegistry = state.entityRegistry,
                     deviceRegistry = state.deviceRegistry,
@@ -258,7 +259,7 @@ internal fun ManageTiles(
                     enabled = state.submitEnabled,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 16.dp),
+                        .padding(top = HADimens.SPACE4),
                 )
             }
         }
@@ -313,7 +314,7 @@ private fun TileIconRow(
         Text(
             text = stringResource(R.string.tile_icon),
             style = HATextStyle.Body,
-            modifier = Modifier.padding(end = 8.dp),
+            modifier = Modifier.padding(end = HADimens.SPACE2),
         )
 
         OutlinedButton(
@@ -340,7 +341,7 @@ private fun TileIconRow(
         HAPlainButton(
             text = stringResource(R.string.tile_icon_original),
             onClick = onResetIcon,
-            modifier = Modifier.padding(start = 4.dp),
+            modifier = Modifier.padding(start = HADimens.SPACE1),
         )
     }
 }
