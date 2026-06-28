@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.settings.qs.ui
 
 import android.os.Build
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -56,6 +58,30 @@ import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+
+@VisibleForTesting
+const val MANAGE_TILES_LABEL_TAG = "manage_tiles_label"
+
+@VisibleForTesting
+const val MANAGE_TILES_SUBTITLE_TAG = "manage_tiles_subtitle"
+
+@VisibleForTesting
+const val MANAGE_TILES_SERVER_DROPDOWN_TAG = "manage_tiles_server_dropdown"
+
+@VisibleForTesting
+const val MANAGE_TILES_ICON_BUTTON_TAG = "manage_tiles_icon_button"
+
+@VisibleForTesting
+const val MANAGE_TILES_RESET_ICON_TAG = "manage_tiles_reset_icon"
+
+@VisibleForTesting
+const val MANAGE_TILES_VIBRATE_SWITCH_TAG = "manage_tiles_vibrate_switch"
+
+@VisibleForTesting
+const val MANAGE_TILES_AUTH_SWITCH_TAG = "manage_tiles_auth_switch"
+
+@VisibleForTesting
+const val MANAGE_TILES_SUBMIT_TAG = "manage_tiles_submit"
 
 @Stable
 internal data class ManageTilesState(
@@ -197,7 +223,9 @@ internal fun ManageTiles(
                     value = state.tileLabel,
                     onValueChange = onTileLabelChange,
                     label = { Text(text = stringResource(R.string.tile_label)) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(MANAGE_TILES_LABEL_TAG),
                 )
 
                 if (state.showSubtitle) {
@@ -208,6 +236,7 @@ internal fun ManageTiles(
                         modifier = Modifier
                             .padding(top = HADimens.SPACE4)
                             .fillMaxWidth()
+                            .testTag(MANAGE_TILES_SUBTITLE_TAG)
                     )
                 }
 
@@ -218,7 +247,8 @@ internal fun ManageTiles(
                         onServerSelected = onServerSelected,
                         modifier = Modifier
                             .padding(top = HADimens.SPACE4)
-                            .fillMaxWidth(),
+                            .fillMaxWidth()
+                            .testTag(MANAGE_TILES_SERVER_DROPDOWN_TAG),
                     )
                 }
 
@@ -245,12 +275,14 @@ internal fun ManageTiles(
                     label = stringResource(R.string.tile_vibrate),
                     checked = state.shouldVibrate,
                     onCheckedChange = onShouldVibrateChange,
+                    switchTestTag = MANAGE_TILES_VIBRATE_SWITCH_TAG,
                 )
 
                 LabeledSwitchRow(
                     label = stringResource(R.string.tile_auth_required),
                     checked = state.authRequired,
                     onCheckedChange = onAuthRequiredChange,
+                    switchTestTag = MANAGE_TILES_AUTH_SWITCH_TAG,
                 )
 
                 HAFilledButton(
@@ -259,7 +291,8 @@ internal fun ManageTiles(
                     enabled = state.submitEnabled,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = HADimens.SPACE4),
+                        .padding(top = HADimens.SPACE4)
+                        .testTag(MANAGE_TILES_SUBMIT_TAG),
                 )
             }
         }
@@ -318,7 +351,8 @@ private fun TileIconRow(
         )
 
         OutlinedButton(
-            onClick = onShowIconDialog
+            onClick = onShowIconDialog,
+            modifier = Modifier.testTag(MANAGE_TILES_ICON_BUTTON_TAG),
         ) {
             if (selectedIcon != null) {
                 com.mikepenz.iconics.compose.Image(
@@ -341,7 +375,9 @@ private fun TileIconRow(
         HAPlainButton(
             text = stringResource(R.string.tile_icon_original),
             onClick = onResetIcon,
-            modifier = Modifier.padding(start = HADimens.SPACE1),
+            modifier = Modifier
+                .padding(start = HADimens.SPACE1)
+                .testTag(MANAGE_TILES_RESET_ICON_TAG),
         )
     }
 }
@@ -352,6 +388,7 @@ private fun LabeledSwitchRow(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    switchTestTag: String = "",
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -365,6 +402,7 @@ private fun LabeledSwitchRow(
         HASwitch(
             checked = checked,
             onCheckedChange = onCheckedChange,
+            modifier = Modifier.testTag(switchTestTag),
         )
     }
 }
