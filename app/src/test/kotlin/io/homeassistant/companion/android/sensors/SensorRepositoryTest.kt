@@ -24,16 +24,14 @@ class SensorRepositoryTest {
     @Inject
     lateinit var repository: SensorRepository
 
-    // The generated catalog multibinding the repository consumes for its missing-sensor default.
     @Inject
     lateinit var basicSensors: Set<@JvmSuppressWildcards SensorManager.BasicSensor>
 
     @Test
     fun `Given hilt graph then repository is built from the generated sensor set`() {
         hilt.inject()
-        // The repository resolves, so its injected BasicSensor catalog dependency is satisfied.
         assertNotNull(repository)
-        // That catalog is the generated multibinding, populated with the annotated sensors.
+        // That set is the generated multibinding, populated with the annotated sensors.
         assertTrue(basicSensors.isNotEmpty())
         assertTrue(basicSensors.any { it.id == "last_update" })
     }
