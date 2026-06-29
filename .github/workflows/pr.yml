@@ -191,7 +191,6 @@ jobs:
 
   screenshot_test:
     name: "Screenshot Tests"
-    needs: [lint, lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -204,7 +203,7 @@ jobs:
           mock-google-services: "true"
 
       - name: Validate Screenshot Previews - app
-        run: ./gradlew :app:validateFullDebugScreenshotTest
+        run: ORG_GRADLE_JVMARGS=-Xmx2g ./gradlew :app:validateFullDebugScreenshotTest
 
       - name: Validate Screenshot Previews - wear
         run: ./gradlew :wear:validateDebugScreenshotTest
