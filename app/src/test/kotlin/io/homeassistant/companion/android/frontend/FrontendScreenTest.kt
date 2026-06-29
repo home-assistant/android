@@ -42,6 +42,7 @@ import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
 import io.homeassistant.companion.android.frontend.error.ErrorActionIntent
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
+import io.homeassistant.companion.android.frontend.error.errorActions
 import io.homeassistant.companion.android.frontend.improv.ImprovUIState
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
@@ -111,7 +112,12 @@ class FrontendScreenTest {
         )
         composeTestRule.apply {
             setFrontendScreen(
-                viewState = FrontendViewState.Error(serverId = 1, url = "https://example.com", error = error),
+                viewState = FrontendViewState.Error(
+                    serverId = 1,
+                    url = "https://example.com",
+                    error = error,
+                    actions = errorActions(error, isInternalConnection = false),
+                ),
                 errorStateProvider = FakeConnectionErrorStateProvider(url = "https://example.com", error = error),
                 onErrorAction = { action = it },
             )
@@ -121,8 +127,7 @@ class FrontendScreenTest {
 
             onNodeWithText(stringResource(commonR.string.error_connection_failed)).assertIsDisplayed()
             onNodeWithText(stringResource(commonR.string.webview_error_HOST_LOOKUP)).assertIsDisplayed()
-            // isInternalConnection defaults to false on a freshly built Error state, so the action
-            // refreshes the external URL.
+            // The external-connection actions refresh the external URL.
             onNodeWithText(stringResource(commonR.string.refresh_external)).performScrollTo().performClick()
             assertEquals(ErrorActionIntent.Refresh, action)
         }
@@ -682,6 +687,7 @@ class FrontendScreenTest {
                         serverId = 1,
                         url = "https://example.com",
                         error = error,
+                        actions = errorActions(error, isInternalConnection = false),
                     ),
                     errorStateProvider = FakeConnectionErrorStateProvider(
                         url = "https://example.com",

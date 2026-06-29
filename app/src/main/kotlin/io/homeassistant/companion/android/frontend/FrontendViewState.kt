@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.frontend
 import androidx.compose.ui.graphics.Color
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.frontend.barcode.BarcodeScannerUiState
+import io.homeassistant.companion.android.frontend.error.ErrorAction
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.exoplayer.ExoPlayerUiState
 import io.homeassistant.companion.android.frontend.improv.ImprovUIState
@@ -66,14 +67,13 @@ sealed interface FrontendViewState {
     /**
      * Error state when connection to the server fails.
      *
-     * [isInternalConnection] reflects whether the active connection is the internal one; it is
-     * resolved asynchronously after entering this state and drives the "Refresh" action's label.
+     * [actions] are the recovery actions offered for [error].
      */
     data class Error(
         override val serverId: Int,
         override val url: String,
         val error: FrontendConnectionError,
-        val isInternalConnection: Boolean = false,
+        val actions: List<ErrorAction> = emptyList(),
     ) : FrontendViewState
 
     /**

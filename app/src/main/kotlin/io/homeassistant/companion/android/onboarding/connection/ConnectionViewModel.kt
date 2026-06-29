@@ -67,7 +67,7 @@ private const val AUTH_CALLBACK = "$AUTH_CALLBACK_SCHEME://$AUTH_CALLBACK_HOST"
 @HiltViewModel
 internal class ConnectionViewModel @VisibleForTesting constructor(
     private val rawUrl: String,
-    private val webViewClientFactory: HAWebViewClientFactory,
+    webViewClientFactory: HAWebViewClientFactory,
     private val connectivityCheckRepository: ConnectivityCheckRepository,
     private val fileChooserManager: FileChooserManager,
 ) : ViewModel(),

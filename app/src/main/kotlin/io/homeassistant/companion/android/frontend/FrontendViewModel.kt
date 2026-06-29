@@ -29,6 +29,7 @@ import io.homeassistant.companion.android.frontend.download.FrontendDownloadMana
 import io.homeassistant.companion.android.frontend.error.ErrorActionIntent
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
+import io.homeassistant.companion.android.frontend.error.errorActions
 import io.homeassistant.companion.android.frontend.exoplayer.FrontendExoPlayerManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.NavigateToMessage
@@ -1010,19 +1011,19 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     }
 
     private fun onError(error: FrontendConnectionError) {
-        val serverId = _viewState.value.serverId
-        _viewState.update { currentState ->
-            FrontendViewState.Error(
-                serverId = currentState.serverId,
-                url = currentState.url,
-                error = error,
-            )
-        }
-        // Resolve the connection type so the error screen can label the "Refresh" action.
+        // Resolve the connection type so the error screen can label the "Refresh" action, then
+        // build the recovery actions for the screen to render.
         viewModelScope.launch {
+            val serverId = _viewState.value.serverId
             val isInternal = resolveIsInternalConnection(serverId)
-            _viewState.update { state ->
-                if (state is FrontendViewState.Error) state.copy(isInternalConnection = isInternal) else state
+            val actions = errorActions(error, isInternalConnection = isInternal)
+            _viewState.update { currentState ->
+                FrontendViewState.Error(
+                    serverId = currentState.serverId,
+                    url = currentState.url,
+                    error = error,
+                    actions = actions,
+                )
             }
         }
         // Automatically run connectivity checks when an error occurs

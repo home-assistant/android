@@ -396,9 +396,6 @@ private fun ColumnScope.GetMoreHelp(onOpenExternalLink: suspend (Uri) -> Unit) {
 
 /**
  * Renders the recovery actions for a connection error as a vertical stack of buttons.
- *
- * The first action is the recommended recovery and is rendered as the accent button; the remaining
- * actions are plain buttons. Build the list with `errorActions`.
  */
 @Composable
 internal fun ErrorActions(

@@ -62,12 +62,12 @@ import io.homeassistant.companion.android.frontend.barcode.BarcodeScannerUiState
 import io.homeassistant.companion.android.frontend.barcode.ui.BarcodeScanner
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
 import io.homeassistant.companion.android.frontend.dialog.PendingDialogHandler
+import io.homeassistant.companion.android.frontend.error.ErrorAction
 import io.homeassistant.companion.android.frontend.error.ErrorActionIntent
 import io.homeassistant.companion.android.frontend.error.ErrorActions
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorScreen
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
-import io.homeassistant.companion.android.frontend.error.errorActions
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserEffect
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserRequest
 import io.homeassistant.companion.android.frontend.improv.ui.ImprovOverlay
@@ -423,8 +423,7 @@ private fun StateOverlay(
 
         is FrontendViewState.Error -> ErrorOverlay(
             errorStateProvider = errorStateProvider,
-            error = viewState.error,
-            isInternalConnection = viewState.isInternalConnection,
+            actions = viewState.actions,
             onErrorAction = onErrorAction,
             onOpenExternalLink = onOpenExternalLink,
         )
@@ -492,8 +491,7 @@ private fun InsecureOverlay(
 @Composable
 private fun ErrorOverlay(
     errorStateProvider: FrontendConnectionErrorStateProvider,
-    error: FrontendConnectionError?,
-    isInternalConnection: Boolean,
+    actions: List<ErrorAction>,
     onErrorAction: (ErrorActionIntent) -> Unit,
     onOpenExternalLink: suspend (Uri) -> Unit,
 ) {
@@ -502,13 +500,11 @@ private fun ErrorOverlay(
         onOpenExternalLink = onOpenExternalLink,
         modifier = Modifier.fillMaxSize(),
         actions = {
-            error?.let {
-                ErrorActions(
-                    actions = errorActions(it, isInternalConnection),
-                    onAction = onErrorAction,
-                    modifier = Modifier.padding(bottom = HADimens.SPACE6),
-                )
-            }
+            ErrorActions(
+                actions = actions,
+                onAction = onErrorAction,
+                modifier = Modifier.padding(bottom = HADimens.SPACE6),
+            )
         },
     )
 }

@@ -3,8 +3,7 @@ package io.homeassistant.companion.android.frontend.error
 /**
  * An action a user can take from the connection-error screen.
  *
- * Produced by [errorActions] and handled by the frontend ViewModel / host. Kept free of any
- * UI concern (label, styling) so the same intent can be rendered differently per error.
+ * Produced by [errorActions] and handled by the frontend ViewModel / host.
  */
 sealed interface ErrorActionIntent {
     /** Remove the current server and relaunch the app from scratch. */

@@ -7,7 +7,7 @@ import io.homeassistant.companion.android.common.R as commonR
  * A single button shown on the connection-error screen.
  *
  * @property labelRes The button label.
- * @property style How prominently to render the button. The first action for an error is [Style.Primary].
+ * @property style How prominently to render the button.
  * @property intent What happens when the button is tapped.
  */
 data class ErrorAction(@param:StringRes val labelRes: Int, val style: Style, val intent: ErrorActionIntent) {
@@ -15,11 +15,9 @@ data class ErrorAction(@param:StringRes val labelRes: Int, val style: Style, val
 }
 
 /**
- * Maps a [FrontendConnectionError] to the ordered list of actions the error screen should offer,
- * matching the legacy `WebViewActivity.showError` actions.
+ * Maps a [FrontendConnectionError] to the ordered list of actions the error screen should offer.
  *
- * Pure and free of Android dependencies so it can be unit-tested in isolation. The first action is
- * the recommended recovery ([ErrorAction.Style.Primary]); the rest are secondary. "Go to Settings"
+ * The first action is the recommended recovery action; the rest are secondary. "Go to Settings"
  * is always offered as the universal escape hatch.
  *
  * @param isInternalConnection whether the active connection is the internal one, used to label the

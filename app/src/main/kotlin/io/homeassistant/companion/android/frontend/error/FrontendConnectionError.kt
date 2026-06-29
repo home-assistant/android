@@ -9,8 +9,7 @@ import io.homeassistant.companion.android.common.R as commonR
  * Represents errors that can occur when connecting to a Home Assistant server.
  *
  * This sealed interface provides a type-safe way to handle different connection
- * error scenarios with appropriate user-facing messages. The concrete subtype determines
- * the [icon] shown and which recovery actions the error screen offers (see `errorActions`).
+ * error scenarios with appropriate user-facing messages.
  */
 sealed interface FrontendConnectionError {
     @get:StringRes

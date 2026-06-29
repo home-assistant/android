@@ -32,6 +32,7 @@ import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
 import io.homeassistant.companion.android.frontend.error.ErrorActionIntent
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
+import io.homeassistant.companion.android.frontend.error.errorActions
 import io.homeassistant.companion.android.frontend.exoplayer.ExoPlayerUiState
 import io.homeassistant.companion.android.frontend.exoplayer.FrontendExoPlayerManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
@@ -383,6 +384,7 @@ class FrontendViewModelTest {
             val state = viewModel.viewState.value
             assertTrue(state is FrontendViewState.Error)
             assertTrue((state as FrontendViewState.Error).error is FrontendConnectionError.Unreachable)
+            assertEquals(errorActions(state.error, isInternalConnection = false), state.actions)
         }
     }
 
