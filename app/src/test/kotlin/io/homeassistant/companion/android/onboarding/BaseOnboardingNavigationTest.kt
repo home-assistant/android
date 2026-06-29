@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.onboarding
 
 import android.content.Context
 import android.content.pm.PackageManager
-import android.provider.Settings
 import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.result.ActivityResultRegistry
 import androidx.activity.result.ActivityResultRegistryOwner
@@ -18,6 +17,7 @@ import androidx.navigation.testing.TestNavHostController
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltAndroidRule
 import io.homeassistant.companion.android.HiltComponentActivity
+import io.homeassistant.companion.android.testing.unit.seedFakeAndroidId
 import io.homeassistant.companion.android.util.FakePermissionResultRegistry
 import io.homeassistant.companion.android.util.compose.navigateToUri
 import io.mockk.Runs
@@ -28,10 +28,6 @@ import io.mockk.mockkStatic
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
-
-// Robolectric leaves Settings.Secure.ANDROID_ID null, but the integration graph injects it as a
-// non-null @NamedDeviceId, so we seed a value to avoid a null-from-@Provides crash during DI.
-private const val FAKE_ANDROID_ID = "robolectric-android-id"
 
 /**
  * Base class for onboarding navigation tests providing shared setup, mocks, and utilities.
@@ -53,11 +49,7 @@ internal abstract class BaseOnboardingNavigationTest {
 
     @Before
     fun baseSetup() {
-        Settings.Secure.putString(
-            ApplicationProvider.getApplicationContext<Context>().contentResolver,
-            Settings.Secure.ANDROID_ID,
-            FAKE_ANDROID_ID,
-        )
+        ApplicationProvider.getApplicationContext<Context>().seedFakeAndroidId()
         mockkStatic(NavController::navigateToUri)
         coEvery { any<NavController>().navigateToUri(any(), any()) } just Runs
     }
