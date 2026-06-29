@@ -177,7 +177,6 @@ private fun ClimateWidgetConfigureScreen(viewModel: ClimateWidgetConfigureViewMo
         selectedEntityId = viewModel.selectedEntityId,
         onEntitySelected = { viewModel.selectedEntityId = it },
         showCompleted = viewModel.showCompletedState,
-        onShowCompletedChanged = { viewModel.showCompletedState = it },
         selectedBackgroundType = viewModel.selectedBackgroundType,
         onBackgroundTypeSelected = { viewModel.selectedBackgroundType = it },
         textColorIndex = viewModel.textColorIndex,
@@ -199,7 +198,6 @@ private fun ClimateWidgetConfigureView(
     selectedEntityId: String?,
     onEntitySelected: (String?) -> Unit,
     showCompleted: Boolean,
-    onShowCompletedChanged: (Boolean) -> Unit,
     selectedBackgroundType: WidgetBackgroundType,
     onBackgroundTypeSelected: (WidgetBackgroundType) -> Unit,
     textColorIndex: Int,
@@ -253,25 +251,6 @@ private fun ClimateWidgetConfigureView(
                 )
             }
 
-            Row(
-                modifier = Modifier.clickable { onShowCompletedChanged(!showCompleted) },
-            ) {
-                Text(
-                    text = stringResource(commonR.string.widget_todo_show_completed),   // TODO: cambiar string
-                    modifier = Modifier
-                        .align(Alignment.CenterVertically)
-                        .weight(1f),
-                )
-
-                Switch(
-                    checked = showCompleted,
-                    onCheckedChange = { onShowCompletedChanged(it) },
-                    colors = SwitchDefaults.colors(
-                        uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb),
-                    ),
-                )
-            }
-
             WidgetBackgroundTypeExposedDropdownMenu(
                 current = selectedBackgroundType,
                 onSelected = { onBackgroundTypeSelected(it) },
@@ -319,7 +298,6 @@ private fun ClimateWidgetConfigureViewPreview() {
             selectedEntityId = previewEntity1.entityId,
             onEntitySelected = {},
             showCompleted = true,
-            onShowCompletedChanged = {},
             selectedBackgroundType = WidgetBackgroundType.TRANSPARENT,
             onBackgroundTypeSelected = {},
             textColorIndex = 0,

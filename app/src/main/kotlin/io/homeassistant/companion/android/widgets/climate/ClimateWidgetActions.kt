@@ -33,6 +33,13 @@ internal fun actionDecreaseTemp(): Action {
 }
 
 /**
+ * Get an Action that will set the given temp of a Climate widget once given to Glance.
+ */
+internal fun actionSetHvacMode(hvcaMode: String): Action {
+    return actionRunCallback<ControlClimateAction>(actionParametersOf(HVAC_MODE_KEY to hvcaMode))
+}
+
+/**
  * Get an Action that will refresh the Climate widget once given to Glance.
  */
 internal fun actionRefreshClimate(): Action {
@@ -93,11 +100,7 @@ class ControlClimateAction : ActionCallback {
         val dao = entryPoints.climateDao()
 
         val isIncrease = parameters[IS_INCREASE_KEY]
-
-        if (isIncrease == null) {
-            Timber.w("Aborting set temp action because isIncrease is null")
-            return
-        }
+        val hvacMode = parameters[HVAC_MODE_KEY]
 
         val widgetEntity = dao.get(appWidgetId)
 
@@ -111,6 +114,21 @@ class ControlClimateAction : ActionCallback {
             return
         }
 
+        if (isIncrease != null) {
+            serverManager.setClimateTemp(widgetEntity, isIncrease)
+        } else if (hvacMode != null) {
+            serverManager.setClimateHvacMode(widgetEntity, hvacMode)
+        } else {
+            Timber.w("Aborting set temp action because isIncrease and hvacMode are null")
+        }
+
+        ClimateGlanceAppWidget().update(context, glanceId)
+    }
+
+    private suspend fun ServerManager.setClimateTemp(
+        widgetEntity: ClimateWidgetEntity,
+        isIncrease: Boolean
+    ) {
         val newTemp = widgetEntity.latestUpdateData?.calculateNewTemp(isIncrease)
 
         if (newTemp == null) {
@@ -118,18 +136,31 @@ class ControlClimateAction : ActionCallback {
             return
         }
 
-        val result = serverManager.webSocketRepository(widgetEntity.serverId).setClimateTempOrHvac(
-            entityId = widgetEntity.entityId,
-            newTemp = newTemp.toString()
-        )
+        val result = webSocketRepository(widgetEntity.serverId).setClimateTemperature(
+                entityId = widgetEntity.entityId,
+                newTemp = newTemp.toString()
+            )
+
 
         if (!result) {
-            Timber.e("Failed to set new temp $newTemp")
+            Timber.e("Failed to setClimateTemperature")
             // We cannot update the UI from an action nor send a toast, we don't have any UI context.
             // TODO we could modify the entry in DB to add the error message
         }
+    }
 
-        ClimateGlanceAppWidget().update(context, glanceId)
+    private suspend fun ServerManager.setClimateHvacMode(widgetEntity: ClimateWidgetEntity, hvacMode: String) {
+
+        val result = webSocketRepository(widgetEntity.serverId).setClimateHvacMode(
+            entityId = widgetEntity.entityId,
+            hvacMode = hvacMode
+        )
+
+        if (!result) {
+            Timber.e("Failed to setClimateHvacMode")
+            // We cannot update the UI from an action nor send a toast, we don't have any UI context.
+            // TODO we could modify the entry in DB to add the error message
+        }
     }
 
     private fun ClimateWidgetEntity.LastUpdateData.calculateNewTemp(isIncrease: Boolean): Double? {
@@ -144,3 +175,5 @@ class ControlClimateAction : ActionCallback {
 internal val SET_TEMP_KEY = ActionParameters.Key<Double>("TEMP_SETTING_KEY")
 @VisibleForTesting
 internal val IS_INCREASE_KEY = ActionParameters.Key<Boolean>("IS_INCREASY_KEY")
+@VisibleForTesting
+internal val HVAC_MODE_KEY = ActionParameters.Key<String>("HVAC_MODE_KEY")

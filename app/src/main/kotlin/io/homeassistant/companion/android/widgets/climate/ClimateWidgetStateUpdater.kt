@@ -104,8 +104,8 @@ internal class ClimateWidgetStateUpdater @Inject constructor(
                     val step = attributes["target_temp_step"] as? Double
                     val currentTemp = attributes["current_temperature"] as? Double
                     val climateTemp = attributes["temperature"] as? Double
-                    val hvacSupportedModes = (attributes["hvac_modes"] as? List<*>)?.mapNotNull { it as? String } ?: emptyList()
-                    val fanSupportedModes = (attributes["fan_modes"] as? List<*>)?.mapNotNull { it as? String } ?: emptyList()
+                    val hvacSupportedModes = attributes.getStringList("hvac_modes")
+                    val fanSupportedModes = attributes.getStringList("fan_modes")
 
                     // We update the DAO to keep it up to date for the next update of the widget
                     climateWidgetDao.updateWidgetLastUpdate(

@@ -9,6 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
@@ -21,6 +22,7 @@ import androidx.glance.appwidget.CircularProgressIndicator
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.appWidgetBackground
+import androidx.glance.appwidget.background
 import androidx.glance.appwidget.components.CircleIconButton
 import androidx.glance.appwidget.components.Scaffold
 import androidx.glance.appwidget.components.SquareIconButton
@@ -122,7 +124,7 @@ private fun LoadingScreen() {
     Column(
         verticalAlignment = Alignment.CenterVertically,
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = GlanceModifier.climateWidgetBackground().semantics { testTag = "LoadingScreen" },
+        modifier = GlanceModifier.climateWidgetBackground().fillMaxSize().semantics { testTag = "LoadingScreen" },
     ) {
         CircularProgressIndicator(
             color = GlanceTheme.colors.primary,
@@ -136,7 +138,7 @@ private fun EmptyScreen() {
     Column(
         verticalAlignment = Alignment.CenterVertically,
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = GlanceModifier.climateWidgetBackground().semantics { testTag = "EmptyScreen" },
+        modifier = GlanceModifier.climateWidgetBackground().fillMaxSize().semantics { testTag = "EmptyScreen" },
     ) {
         Image(
             provider = ImageProvider(R.drawable.app_icon_launch),
@@ -157,38 +159,22 @@ private fun Screen(state: ClimateStateWithData) {
         titleBar = {
             TitleBar(outOfSync = state.outOfSync)
         },
-        // We manually set the padding on each item since the checkbox comes with an embedded padding that
-        // we cannot modify.
         horizontalPadding = 0.dp,
         modifier = GlanceModifier.climateWidgetBackground().semantics { testTag = "Screen" },
     ) {
-        if (state.isPowerOn()) {
-            if (state.hasDisplayableItems()) {
-                ShowClimateContent(
-                    climateName = state.climateName!!,
-                    climateTemp = state.climateTemp!!,
-                    currentTemp = state.currentTemp,
-                    displayComplete = state.showComplete,
-                    hvacMode = state.hvacMode
-                )
-            } else {
-                LoadingScreen()
-            }
+        if (state.hasDisplayableItems()) {
+            ShowClimateContent(
+                climateName = state.climateName!!,
+                climateTemp = state.climateTemp!!,
+                currentTemp = state.currentTemp,
+                displayComplete = state.showComplete,
+                hvacMode = state.hvacSelectedMode,
+                hvacSupportedModes = state.hvacSupportedModes
+            )
         } else {
-            PowerOffContent()
+            LoadingScreen()
         }
     }
-}
-
-@Composable
-private fun PowerOffContent() {
-    SquareIconButton(
-        modifier = GlanceModifier.size(HomeAssistantGlanceTheme.dimensions.iconSize).semantics { testTag = "powerOn" },
-        imageProvider = ImageProvider(R.drawable.ic_flash_on_24dp),    // TODO: ajustar ICON
-        contentDescription = LocalContext.current.getString(commonR.string.widget_todo_add),    // TODO: ajustar string description
-        backgroundColor = GlanceTheme.colors.primary,
-        onClick = {}//actionSetHvac("heat")
-    )
 }
 
 @Composable
@@ -197,6 +183,7 @@ private fun ShowClimateContent(
     climateTemp: Float?,
     currentTemp: Float?,
     hvacMode: String,
+    hvacSupportedModes: List<String>,
     displayComplete: Boolean,
 ) {
     Column(
@@ -204,17 +191,9 @@ private fun ShowClimateContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            modifier = GlanceModifier.padding(16.dp),
-            text = climateTemp?.toString() ?: "Empty",          // TODO: formatear temp
-            style = HomeAssistantGlanceTypography.titleLarge.copy(
-                fontSize = 48.sp,
-                fontWeight = FontWeight.Bold
-            ),
-        )
-
         Row(
             modifier = GlanceModifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             SquareIconButton(
@@ -227,7 +206,14 @@ private fun ShowClimateContent(
 
             )
 
-            Spacer(GlanceModifier.width(16.dp))
+            Text(
+                modifier = GlanceModifier.padding(horizontal = 16.dp),
+                text = climateTemp?.toString() ?: "Empty",          // TODO: formatear temp
+                style = HomeAssistantGlanceTypography.titleLarge.copy(
+                    fontSize = 48.sp,
+                    fontWeight = FontWeight.Bold
+                ),
+            )
 
             SquareIconButton(
                 modifier = GlanceModifier.size(HomeAssistantGlanceTheme.dimensions.iconSize)
@@ -239,14 +225,7 @@ private fun ShowClimateContent(
             )
         }
 
-        Text(
-            modifier = GlanceModifier.padding(16.dp),
-            text = hvacMode,
-            style = HomeAssistantGlanceTypography.bodySmall.copy(
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Bold
-            ),
-        )
+        HvacModeSelector(hvacMode, hvacSupportedModes)
 
         Text(
             modifier = GlanceModifier.padding(16.dp),
@@ -256,6 +235,44 @@ private fun ShowClimateContent(
                 fontWeight = FontWeight.Bold
             ),
         )
+    }
+}
+
+@Composable
+private fun HvacModeSelector(
+    hvacSelectedMode: String,
+    supportedModes: List<String>,
+) {
+    Row(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = GlanceModifier.padding(top = 8.dp),
+    ) {
+        supportedModes.forEach { mode ->
+            Column(
+                modifier = GlanceModifier.padding(horizontal = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                SquareIconButton(
+                    modifier = GlanceModifier
+                        .size(48.dp)
+                        .padding(4.dp),
+                    imageProvider = ImageProvider(R.drawable.ic_flash_on_24dp), // TODO: cargar iconos de todos los modos
+                    enabled = mode != hvacSelectedMode,
+                    contentDescription = mode,
+                    backgroundColor = GlanceTheme.colors.primary,
+                    onClick = actionSetHvacMode(mode)
+                )
+
+                Text(
+                    modifier = GlanceModifier.padding(16.dp),
+                    text = mode,
+                    style = HomeAssistantGlanceTypography.bodySmall.copy(
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.Bold
+                    ),
+                )
+            }
+        }
     }
 }
 
@@ -292,7 +309,7 @@ private fun TitleBar(outOfSync: Boolean) {
 }
 
 @OptIn(ExperimentalGlancePreviewApi::class)
-@Preview(250, 320)
+@Preview(widthDp = 360, heightDp = 180)
 @Composable
 private fun ScreenPreview() {
     HomeAssistantGlanceTheme {
@@ -305,7 +322,8 @@ private fun ScreenPreview() {
                 listEntityId = "",
                 currentTemp = null,
                 climateTemp = 12f,
-                hvacMode = "unknown",
+                hvacSelectedMode = "heat",
+                hvacSupportedModes = listOf("off, heat, cool, dry"),
                 outOfSync = false,
                 showComplete = true,
             ),
@@ -314,16 +332,30 @@ private fun ScreenPreview() {
 }
 
 @OptIn(ExperimentalGlancePreviewApi::class)
-@Preview
+@Preview(widthDp = 360, heightDp = 180)
 @Composable
 private fun ScreenPreviewPowerOff() {
     HomeAssistantGlanceTheme {
-        PowerOffContent()
+        ScreenForState(
+            ClimateStateWithData(
+                climateName = "Air name 1",
+                backgroundType = WidgetBackgroundType.DYNAMICCOLOR,
+                textColor = null,
+                serverId = 1,
+                listEntityId = "",
+                currentTemp = null,
+                climateTemp = 12f,
+                hvacSelectedMode = "off",
+                hvacSupportedModes = listOf("off, heat, cool, dry"),
+                outOfSync = true,
+                showComplete = true,
+            ),
+        )
     }
 }
 
 @OptIn(ExperimentalGlancePreviewApi::class)
-@Preview
+@Preview(widthDp = 360, heightDp = 180)
 @Composable
 private fun ScreenPreviewOutOfSync() {
     HomeAssistantGlanceTheme {
@@ -336,7 +368,8 @@ private fun ScreenPreviewOutOfSync() {
                 listEntityId = "",
                 currentTemp = null,
                 climateTemp = 12f,
-                hvacMode = "unknown",
+                hvacSelectedMode = "heat",
+                hvacSupportedModes = listOf("off, heat, cool, dry"),
                 outOfSync = true,
                 showComplete = true,
             ),
@@ -345,7 +378,7 @@ private fun ScreenPreviewOutOfSync() {
 }
 
 @OptIn(ExperimentalGlancePreviewApi::class)
-@Preview
+@Preview(widthDp = 360, heightDp = 180)
 @Composable
 private fun ScreenPreviewEmpty() {
     HomeAssistantGlanceTheme {
@@ -354,7 +387,7 @@ private fun ScreenPreviewEmpty() {
 }
 
 @OptIn(ExperimentalGlancePreviewApi::class)
-@Preview
+@Preview(widthDp = 360, heightDp = 180)
 @Composable
 private fun ScreenPreviewLoading() {
     HomeAssistantGlanceTheme {

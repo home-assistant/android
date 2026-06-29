@@ -58,18 +58,15 @@ internal data class ClimateStateWithData(
     val climateName: String? = null,
     val currentTemp: Float? = null,
     val climateTemp: Float? = null,
-    val hvacMode: String,
+    val hvacSelectedMode: String,
+    val hvacSupportedModes: List<String> = emptyList(),
     val lastUpdate: String? = null,
     val outOfSync: Boolean,
     val showComplete: Boolean,
 ) : ClimateState {
 
-    fun isPowerOn(): Boolean {
-        return showComplete && hvacMode != "off"
-    }
-
     fun hasDisplayableItems(): Boolean {
-        return showComplete && !climateName.isNullOrEmpty() && climateTemp != null
+        return showComplete  && climateTemp != null
 
     }
 
@@ -88,9 +85,9 @@ internal data class ClimateStateWithData(
             val max = attributes["max_temp"] as? Double
             val currentTemp = attributes["current_temperature"] as? Double
             val climateTemp = attributes["temperature"] as? Double ?: 0f
-            val hvacMode = attributes["hvac_modes"]
+            val hvacSupportedModes = attributes.getStringList("hvac_modes")
 
-            Timber.d("entityUpdate: min: $min, max: $max, currentTemp: $currentTemp, climateTemp: $climateTemp, hvacMode: $hvacMode")
+            Timber.d("entityUpdate: min: $min, max: $max, currentTemp: $currentTemp, climateTemp: $climateTemp, hvacMode: $hvacSupportedModes")
 
             return ClimateStateWithData(
                 backgroundType = climateEntity.backgroundType,
@@ -100,7 +97,8 @@ internal data class ClimateStateWithData(
                 climateName = entity.friendlyName,
                 currentTemp = currentTemp?.toFloat(),
                 climateTemp = climateTemp.toFloat(),
-                hvacMode = entity.state,
+                hvacSelectedMode = entity.state,
+                hvacSupportedModes = hvacSupportedModes,
                 outOfSync = false,
                 showComplete = climateEntity.showCompleted,
             )
@@ -118,10 +116,13 @@ internal data class ClimateStateWithData(
                 listEntityId = climateEntity.entityId,
                 climateName = "",
                 climateTemp = 10f,
-                hvacMode = "unknown",
+                hvacSelectedMode = "unknown",
                 outOfSync = true,
                 showComplete = climateEntity.showCompleted,
             )
         }
     }
 }
+
+fun Map<String, Any?>.getStringList(key: String): List<String> =
+    (this[key] as? List<*>)?.filterIsInstance<String>() ?: emptyList()

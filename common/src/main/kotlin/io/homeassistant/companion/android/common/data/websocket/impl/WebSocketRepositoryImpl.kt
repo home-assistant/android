@@ -124,8 +124,7 @@ class WebSocketRepositoryImpl internal constructor(
         return response?.success == true
     }
 
-    override suspend fun setClimateTempOrHvac(entityId: String, newTemp: String?, hvacMode: String?): Boolean  {
-        Timber.d("setClimateTempOrHvac $newTemp $hvacMode")
+    override suspend fun setClimateTemperature(entityId: String, newTemp: String): Boolean  {
         val response = webSocketCore.sendMessage(
             mapOf(
                 "type" to "call_service",
@@ -136,8 +135,24 @@ class WebSocketRepositoryImpl internal constructor(
                 ),
                 "service_data" to mapOf(
                     "temperature" to newTemp,
-//                    "hvac_mode" to hvacMode
-                ).filterValues { it != null },
+                )
+            ),
+        )
+        return response?.success == true
+    }
+
+    override suspend fun setClimateHvacMode(entityId: String, hvacMode: String): Boolean  {
+        val response = webSocketCore.sendMessage(
+            mapOf(
+                "type" to "call_service",
+                "domain" to CLIMATE_DOMAIN,
+                "service" to "set_hvac_mode",
+                "target" to mapOf(
+                    "entity_id" to entityId,
+                ),
+                "service_data" to mapOf(
+                    "hvac_mode" to hvacMode
+                )
             ),
         )
         return response?.success == true
