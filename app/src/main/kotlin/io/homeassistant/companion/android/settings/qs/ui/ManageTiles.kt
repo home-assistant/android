@@ -28,7 +28,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -87,16 +86,13 @@ fun ManageTiles(
     onShowIconDialog: (tag: String?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val state by viewModel.state.collectAsStateWithLifecycle()
     val submitEnabled by viewModel.submitEnabled.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         viewModel.tileInfoSnackbar.onEach {
-            if (it != 0) {
-                snackbarHostState.showSnackbar(context.getString(it))
-            }
+            snackbarHostState.showSnackbar(it)
         }.launchIn(this)
     }
 

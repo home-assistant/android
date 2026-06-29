@@ -209,7 +209,7 @@ class ManageTilesViewModel @Inject constructor(
     private val deviceRegistries = mutableMapOf<Int, List<DeviceRegistryResponse>>()
     private val areaRegistries = mutableMapOf<Int, List<AreaRegistryResponse>>()
 
-    private val _tileInfoSnackbar = MutableSharedFlow<Int>(replay = 1)
+    private val _tileInfoSnackbar = MutableSharedFlow<String>(replay = 1)
     var tileInfoSnackbar = _tileInfoSnackbar.asSharedFlow()
 
     init {
@@ -218,7 +218,9 @@ class ManageTilesViewModel @Inject constructor(
             selectTile(id)
             viewModelScope.launch {
                 // A deeplink only happens when tapping on a tile that hasn't been setup
-                _tileInfoSnackbar.emit(commonR.string.tile_data_missing)
+                _tileInfoSnackbar.emit(
+                    app.getString(commonR.string.tile_data_missing),
+                )
             }
         } ?: run {
             selectTile()
@@ -369,16 +371,22 @@ class ManageTilesViewModel @Inject constructor(
                         if (result == StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED ||
                             result == StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED
                         ) {
-                            _tileInfoSnackbar.emit(commonR.string.tile_added)
+                            _tileInfoSnackbar.emit(
+                                app.getString(commonR.string.tile_added),
+                            )
                             selectedTileAdded = true
                             _state.update { it.copy(submitButtonLabel = commonR.string.tile_save) }
                         } else { // Silently ignore error, database was still updated
-                            _tileInfoSnackbar.emit(commonR.string.tile_updated)
+                            _tileInfoSnackbar.emit(
+                                app.getString(commonR.string.tile_updated),
+                            )
                         }
                     }
                 }
             } else {
-                _tileInfoSnackbar.emit(commonR.string.tile_updated)
+                _tileInfoSnackbar.emit(
+                    app.getString(commonR.string.tile_updated),
+                )
             }
         }
     }
