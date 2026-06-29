@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
+import android.view.ViewTreeObserver
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -16,6 +17,7 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult.ActionPerformed
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -308,14 +310,38 @@ private fun AppLockEffect(isAppLocked: Boolean, onAuthSucceeded: () -> Unit) {
 private fun FullscreenEffect(isFullScreen: Boolean) {
     val view = LocalView.current
     val window = LocalActivity.current?.window ?: return
-    LaunchedEffect(isFullScreen) {
-        val controller = WindowInsetsControllerCompat(window, view)
-        if (isFullScreen) {
-            controller.systemBarsBehavior =
-                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            controller.hide(systemBars())
-        } else {
-            controller.show(systemBars())
+    val controller = remember(window, view) { WindowInsetsControllerCompat(window, view) }
+
+    // Applies the state immediately (the effect re-runs whenever [isFullScreen] changes) and,
+    // while fullscreen, re-applies it every time the window regains focus. The system can
+    // transiently restore the system bars when focus is lost — a dialog, the notification
+    // shade, or the recents switcher — so re-hiding on focus regain keeps the frontend in
+    // fullscreen.
+    DisposableEffect(view, isFullScreen) {
+        fun applyFullscreen() {
+            if (isFullScreen) {
+                controller.systemBarsBehavior =
+                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                controller.hide(systemBars())
+            } else {
+                controller.show(systemBars())
+            }
+        }
+
+        applyFullscreen()
+
+        val focusListener = ViewTreeObserver.OnWindowFocusChangeListener { hasFocus ->
+            // Only re-hide on focus regain while fullscreen. Outside fullscreen the bars are
+            // already shown, so reacting to every focus change here would be redundant work.
+            if (hasFocus && isFullScreen) {
+                applyFullscreen()
+            }
+        }
+        val viewTreeObserver = view.viewTreeObserver
+
+        viewTreeObserver.addOnWindowFocusChangeListener(focusListener)
+        onDispose {
+            viewTreeObserver.removeOnWindowFocusChangeListener(focusListener)
         }
     }
 }
