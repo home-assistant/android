@@ -31,7 +31,6 @@ class CarSensorManager :
     DefaultLifecycleObserver {
 
     data class CarSensor(
-        @Suppress("ProvidesSensorMissing")
         val sensor: SensorManager.BasicSensor,
         val autoEnabled: Boolean = true,
         val automotiveEnabled: Boolean = true,

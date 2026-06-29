@@ -44,6 +44,12 @@ object ProvidesSensorMissingDetector {
             return object : UElementHandler() {
                 override fun visitField(node: UField) {
                     if (node.type.canonicalText != BASIC_SENSOR_FQN) return
+                    // A field without an initializer merely declares a slot that holds a sensor
+                    // (e.g. a data-class/constructor-parameter property). It cannot be a sensor
+                    // definition, so it never needs @ProvidesSensor. A real definition always
+                    // initializes its BasicSensor here, so requiring the annotation on any
+                    // initialized field keeps factory-built definitions from escaping the check.
+                    if (node.uastInitializer == null) return
                     val annotations = context.evaluator.getAllAnnotations(node as UAnnotated, false)
                     val annotated = annotations.any { it.qualifiedName == PROVIDES_SENSOR_FQN }
                     if (!annotated) {

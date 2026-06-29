@@ -52,6 +52,55 @@ class ProvidesSensorMissingDetectorTest {
     }
 
     @Test
+    fun `Given BasicSensor field without initializer then clean`() {
+        TestLintTask.lint().files(
+            stubs,
+            TestFiles.kotlin(
+                """
+                package io.homeassistant.companion.android.sensors
+                import io.homeassistant.companion.android.common.sensors.SensorManager
+                data class SensorWrapper(val sensor: SensorManager.BasicSensor)
+                """,
+            ).indented(),
+        ).issues(ProvidesSensorMissingDetector.ISSUE).run().expectClean()
+    }
+
+    @Test
+    fun `Given lateinit BasicSensor field then clean`() {
+        TestLintTask.lint().files(
+            stubs,
+            TestFiles.kotlin(
+                """
+                package io.homeassistant.companion.android.sensors
+                import io.homeassistant.companion.android.common.sensors.SensorManager
+                class FooManager {
+                    lateinit var held: SensorManager.BasicSensor
+                }
+                """,
+            ).indented(),
+        ).issues(ProvidesSensorMissingDetector.ISSUE).run().expectClean()
+    }
+
+    @Test
+    fun `Given BasicSensor field built by a factory call then reports error`() {
+        TestLintTask.lint().files(
+            stubs,
+            TestFiles.kotlin(
+                """
+                package io.homeassistant.companion.android.sensors
+                import io.homeassistant.companion.android.common.sensors.SensorManager
+                class FooManager {
+                    companion object {
+                        fun factory(): SensorManager.BasicSensor = SensorManager.BasicSensor("a")
+                        val alpha = factory()
+                    }
+                }
+                """,
+            ).indented(),
+        ).issues(ProvidesSensorMissingDetector.ISSUE).run().expectErrorCount(1)
+    }
+
+    @Test
     fun `Given un-annotated val when suppressed then clean`() {
         TestLintTask.lint().files(
             stubs,
