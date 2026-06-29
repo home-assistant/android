@@ -155,8 +155,11 @@ class ServerSessionManager @Inject constructor(private val serverManager: Server
     }
 
     /**
-     * Whether this throwable represents an SSL/TLS failure, including a socket timeout that wraps one.
+     * Whether this throwable represents an SSL/TLS failure. Walks the [Throwable.cause] chain (SSL
+     * failures are commonly wrapped, e.g. an `IOException` caused by an `SSLException`) and also
+     * checks [Throwable.suppressed] at each level (a socket timeout can carry a suppressed SSL error).
      */
     private fun Throwable.isSslException(): Boolean =
-        this is SSLException || (this is SocketTimeoutException && suppressed.any { it is SSLException })
+        generateSequence(this) { current -> current.cause?.takeIf { it != current } }
+            .any { it is SSLException || it.suppressed.any { suppressed -> suppressed is SSLException } }
 }

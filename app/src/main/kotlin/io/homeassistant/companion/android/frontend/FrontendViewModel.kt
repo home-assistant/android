@@ -704,7 +704,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
     /**
      * Waits the [CONNECTION_TIMEOUT] in [FrontendViewState.Loading] and emits an
-     * [FrontendConnectionError.Timeout] if the WebView has not finished loading by then.
+     * [FrontendConnectionError.ExternalBusTimeout] if the frontend has not completed its external-bus
+     * handshake (transitioned to [FrontendViewState.Content]) by then.
      */
     private suspend fun watchLoadingTimeout(state: FrontendViewState) {
         if (state !is FrontendViewState.Loading) return

@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend.navigation
 
+import android.content.Intent
 import android.content.IntentSender
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -98,7 +99,13 @@ internal fun NavGraphBuilder.frontendScreen(
                 onNavigateToSettings = onNavigateToSettings,
                 onRelaunch = {
                     val context = navController.context
-                    context.startActivity(LaunchActivity.newInstance(context))
+                    // Clear the task so the relaunch starts from scratch and back can't return to
+                    // the pre-relaunch state (e.g. after removing the server or clearing credentials).
+                    context.startActivity(
+                        LaunchActivity.newInstance(context).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                        },
+                    )
                     context.getActivity()?.finish()
                 },
                 onNavigateToAssist = { serverId, pipelineId, startListening ->
