@@ -32,6 +32,7 @@ import timber.log.Timber
 
 class NetworkSensorManager : SensorManager {
     companion object {
+        @ProvidesSensor
         val hotspotState = SensorManager.BasicSensor(
             "hotspot_state",
             "binary_sensor",
@@ -41,6 +42,8 @@ class NetworkSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
+
+        @ProvidesSensor
         val wifiConnection = SensorManager.BasicSensor(
             "wifi_connection",
             "sensor",
@@ -50,6 +53,8 @@ class NetworkSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
+
+        @ProvidesSensor
         val bssidState = SensorManager.BasicSensor(
             "wifi_bssid",
             "sensor",
@@ -59,6 +64,8 @@ class NetworkSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
+
+        @ProvidesSensor
         val wifiIp = SensorManager.BasicSensor(
             "wifi_ip_address",
             "sensor",
@@ -68,6 +75,8 @@ class NetworkSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
+
+        @ProvidesSensor
         val wifiLinkSpeed = SensorManager.BasicSensor(
             "wifi_link_speed",
             "sensor",
@@ -78,6 +87,8 @@ class NetworkSensorManager : SensorManager {
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
+
+        @ProvidesSensor
         val wifiState = SensorManager.BasicSensor(
             "wifi_state",
             "binary_sensor",
@@ -87,6 +98,8 @@ class NetworkSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
+
+        @ProvidesSensor
         val wifiFrequency = SensorManager.BasicSensor(
             "wifi_frequency",
             "sensor",
@@ -98,6 +111,8 @@ class NetworkSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
+
+        @ProvidesSensor
         val wifiSignalStrength = SensorManager.BasicSensor(
             "wifi_signal_strength",
             "sensor",
@@ -109,6 +124,8 @@ class NetworkSensorManager : SensorManager {
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
+
+        @ProvidesSensor
         val publicIp = SensorManager.BasicSensor(
             "public_ip_address",
             "sensor",
@@ -118,6 +135,8 @@ class NetworkSensorManager : SensorManager {
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#public-ip-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
+
+        @ProvidesSensor
         val ip6Addresses = SensorManager.BasicSensor(
             "ip6_addresses",
             "sensor",
@@ -129,6 +148,8 @@ class NetworkSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
+
+        @ProvidesSensor
         val networkType = SensorManager.BasicSensor(
             "network_type",
             "sensor",

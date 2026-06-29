@@ -22,7 +22,8 @@ class LastRebootSensorManager : SensorManager {
         private const val SETTING_DEADBAND = "lastreboot_deadband"
         private const val TIME_MILLISECONDS = "Time in Milliseconds"
 
-        private val lastRebootSensor = SensorManager.BasicSensor(
+        @ProvidesSensor
+        internal val lastRebootSensor = SensorManager.BasicSensor(
             "last_reboot",
             "sensor",
             commonR.string.basic_sensor_name_last_reboot,

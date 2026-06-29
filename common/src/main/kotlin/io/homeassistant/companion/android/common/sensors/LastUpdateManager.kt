@@ -11,6 +11,7 @@ class LastUpdateManager : SensorManager {
         private const val SETTING_ADD_NEW_INTENT = "lastupdate_add_new_intent"
         private const val INTENT_SETTING_PREFIX = "lastupdate_intent_var1:"
 
+        @ProvidesSensor
         val lastUpdate = SensorManager.BasicSensor(
             "last_update",
             "sensor",

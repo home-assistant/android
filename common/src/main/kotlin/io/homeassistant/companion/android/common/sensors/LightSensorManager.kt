@@ -21,7 +21,9 @@ class LightSensorManager :
     companion object {
         private var isListenerRegistered = false
         private var listenerLastRegistered = 0
-        private val lightSensor = SensorManager.BasicSensor(
+
+        @ProvidesSensor
+        internal val lightSensor = SensorManager.BasicSensor(
             "light_sensor",
             "sensor",
             commonR.string.sensor_name_light,

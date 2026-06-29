@@ -1,4 +1,5 @@
 import com.android.build.api.dsl.ApplicationExtension
+import com.google.devtools.ksp.gradle.KspExtension
 import io.homeassistant.companion.android.androidConfig
 import io.homeassistant.companion.android.getPluginId
 import java.io.File
@@ -6,6 +7,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.apply
+import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -28,6 +30,15 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
             apply(plugin = libs.plugins.kotlin.serialization.getPluginId())
             apply(plugin = libs.plugins.ksp.getPluginId())
             apply(plugin = libs.plugins.hilt.getPluginId())
+
+            // The provides-sensor KSP processor names its generated object per module via this arg.
+            // Set here so every module applying the processor (`:common`, `:app`, `:wear`, ...) gets a
+            // unique suffix without per-module boilerplate. `:automotive` overrides it to "app" because
+            // it reuses `:app` sources referencing the "app"-suffixed object. Modules that don't depend
+            // on the processor simply ignore this arg, so setting it unconditionally is a no-op for them.
+            extensions.configure<KspExtension> {
+                arg("providesSensorModuleSuffix", project.name)
+            }
 
             // We create a resources directory to put `robolectric.properties` and set the SDK version
             // inspired from https://github.com/PaulWoitaschek/Voice/commit/55505083dd3c3ecfe7b28192d7e9664ebb066399

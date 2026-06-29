@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -15,6 +16,7 @@ import timber.log.Timber
 
 class LastAppSensorManager : SensorManager {
     companion object {
+        @ProvidesSensor
         val last_used = SensorManager.BasicSensor(
             "last_used_app",
             "sensor",

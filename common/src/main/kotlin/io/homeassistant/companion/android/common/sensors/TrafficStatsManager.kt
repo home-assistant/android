@@ -14,6 +14,7 @@ class TrafficStatsManager : SensorManager {
     companion object {
         private const val GB = 1000000000
 
+        @ProvidesSensor
         val rxBytesMobile = SensorManager.BasicSensor(
             "mobile_rx_gb",
             "sensor",
@@ -24,6 +25,8 @@ class TrafficStatsManager : SensorManager {
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
+
+        @ProvidesSensor
         val txBytesMobile = SensorManager.BasicSensor(
             "mobile_tx_gb",
             "sensor",
@@ -34,6 +37,8 @@ class TrafficStatsManager : SensorManager {
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
+
+        @ProvidesSensor
         val rxBytesTotal = SensorManager.BasicSensor(
             "total_rx_gb",
             "sensor",
@@ -44,6 +49,8 @@ class TrafficStatsManager : SensorManager {
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
+
+        @ProvidesSensor
         val txBytesTotal = SensorManager.BasicSensor(
             "total_tx_gb",
             "sensor",

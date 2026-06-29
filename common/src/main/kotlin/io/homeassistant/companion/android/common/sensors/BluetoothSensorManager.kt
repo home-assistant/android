@@ -77,6 +77,8 @@ class BluetoothSensorManager : SensorManager {
                 restartRequired = false,
             )
         private var beaconMonitoringDevice = IBeaconMonitor()
+
+        @ProvidesSensor
         val bluetoothConnection = SensorManager.BasicSensor(
             "bluetooth_connection",
             "sensor",
@@ -87,6 +89,8 @@ class BluetoothSensorManager : SensorManager {
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
+
+        @ProvidesSensor
         val bluetoothState = SensorManager.BasicSensor(
             "bluetooth_state",
             "binary_sensor",
@@ -96,6 +100,8 @@ class BluetoothSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
+
+        @ProvidesSensor
         val bleTransmitter = SensorManager.BasicSensor(
             "ble_emitter",
             "sensor",
@@ -108,6 +114,8 @@ class BluetoothSensorManager : SensorManager {
         )
 
         val monitoringManager = MonitoringManager()
+
+        @ProvidesSensor
         val beaconMonitor = SensorManager.BasicSensor(
             "beacon_monitor",
             "sensor",

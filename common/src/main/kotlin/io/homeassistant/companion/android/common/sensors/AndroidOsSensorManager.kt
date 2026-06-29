@@ -8,6 +8,7 @@ import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 class AndroidOsSensorManager : SensorManager {
 
     companion object {
+        @ProvidesSensor
         val osVersion = SensorManager.BasicSensor(
             "android_os_version",
             "sensor",
@@ -16,6 +17,8 @@ class AndroidOsSensorManager : SensorManager {
             "mdi:android",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
+
+        @ProvidesSensor
         val osSecurityPatch = SensorManager.BasicSensor(
             "android_os_security_patch",
             "sensor",

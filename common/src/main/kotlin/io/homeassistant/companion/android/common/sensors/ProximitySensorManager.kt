@@ -21,7 +21,9 @@ class ProximitySensorManager :
     companion object {
         private var isListenerRegistered = false
         private var listenerLastRegistered = 0
-        private val proximitySensor = SensorManager.BasicSensor(
+
+        @ProvidesSensor
+        internal val proximitySensor = SensorManager.BasicSensor(
             "proximity_sensor",
             "sensor",
             commonR.string.sensor_name_proximity,

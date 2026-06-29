@@ -18,6 +18,7 @@ import androidx.health.services.client.data.PassiveMonitoringCapabilities
 import androidx.health.services.client.data.UserActivityInfo
 import androidx.health.services.client.data.UserActivityState
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -34,7 +35,9 @@ class HealthServicesSensorManager : SensorManager {
     companion object {
 
         private var callbackLastUpdated = 0L
-        private val userActivityState = SensorManager.BasicSensor(
+
+        @ProvidesSensor
+        internal val userActivityState = SensorManager.BasicSensor(
             "activity_state",
             "sensor",
             commonR.string.sensor_name_activity_state,
@@ -44,7 +47,9 @@ class HealthServicesSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
-        private val dailyFloors = SensorManager.BasicSensor(
+
+        @ProvidesSensor
+        internal val dailyFloors = SensorManager.BasicSensor(
             "daily_floors",
             "sensor",
             commonR.string.sensor_name_daily_floors,
@@ -55,7 +60,9 @@ class HealthServicesSensorManager : SensorManager {
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             updateType = SensorManager.BasicSensor.UpdateType.WORKER,
         )
-        private val dailyDistance = SensorManager.BasicSensor(
+
+        @ProvidesSensor
+        internal val dailyDistance = SensorManager.BasicSensor(
             "daily_distance",
             "sensor",
             commonR.string.sensor_name_daily_distance,
@@ -67,7 +74,9 @@ class HealthServicesSensorManager : SensorManager {
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             updateType = SensorManager.BasicSensor.UpdateType.WORKER,
         )
-        private val dailyCalories = SensorManager.BasicSensor(
+
+        @ProvidesSensor
+        internal val dailyCalories = SensorManager.BasicSensor(
             "daily_calories",
             "sensor",
             commonR.string.sensor_name_daily_calories,
@@ -79,7 +88,9 @@ class HealthServicesSensorManager : SensorManager {
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             updateType = SensorManager.BasicSensor.UpdateType.WORKER,
         )
-        private val dailySteps = SensorManager.BasicSensor(
+
+        @ProvidesSensor
+        internal val dailySteps = SensorManager.BasicSensor(
             "daily_steps",
             "sensor",
             commonR.string.sensor_name_daily_steps,

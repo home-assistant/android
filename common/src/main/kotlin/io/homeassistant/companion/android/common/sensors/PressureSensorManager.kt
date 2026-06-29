@@ -21,7 +21,9 @@ class PressureSensorManager :
     companion object {
         private var isListenerRegistered = false
         private var listenerLastRegistered = 0
-        private val pressureSensor = SensorManager.BasicSensor(
+
+        @ProvidesSensor
+        internal val pressureSensor = SensorManager.BasicSensor(
             "pressure_sensor",
             "sensor",
             commonR.string.sensor_name_pressure,

@@ -17,6 +17,7 @@ abstract class AppSensorManagerBase : SensorManager {
     companion object {
         private const val GB = 1000000000
 
+        @ProvidesSensor
         val currentVersion = SensorManager.BasicSensor(
             "current_version",
             "sensor",
@@ -27,6 +28,7 @@ abstract class AppSensorManagerBase : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
+        @ProvidesSensor
         val app_rx_gb = SensorManager.BasicSensor(
             "app_rx_gb",
             "sensor",
@@ -39,6 +41,7 @@ abstract class AppSensorManagerBase : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
+        @ProvidesSensor
         val app_tx_gb = SensorManager.BasicSensor(
             "app_tx_gb",
             "sensor",
@@ -51,6 +54,7 @@ abstract class AppSensorManagerBase : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
+        @ProvidesSensor
         val app_memory = SensorManager.BasicSensor(
             "app_memory",
             "sensor",
@@ -63,6 +67,7 @@ abstract class AppSensorManagerBase : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
+        @ProvidesSensor
         val app_inactive = SensorManager.BasicSensor(
             "app_inactive",
             "binary_sensor",
@@ -73,6 +78,7 @@ abstract class AppSensorManagerBase : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
+        @ProvidesSensor
         val app_standby_bucket = SensorManager.BasicSensor(
             "app_standby_bucket",
             "sensor",
@@ -84,6 +90,7 @@ abstract class AppSensorManagerBase : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
+        @ProvidesSensor
         val app_importance = SensorManager.BasicSensor(
             "app_importance",
             "sensor",

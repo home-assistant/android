@@ -3,10 +3,12 @@ package io.homeassistant.companion.android.sensors
 import android.content.Context
 import android.content.Intent
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
 
 class DevicePolicyManager : SensorManager {
     companion object {
+        @ProvidesSensor
         val isWorkProfile = SensorManager.BasicSensor(
             "is_work_profile",
             "binary_sensor",

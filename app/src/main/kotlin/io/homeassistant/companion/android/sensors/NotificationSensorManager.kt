@@ -15,6 +15,7 @@ import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
@@ -35,6 +36,8 @@ class NotificationSensorManager :
         private const val SETTING_INCLUDE_CONTENTS_AS_ATTRS = "active_notification_count_content_attrs"
 
         private var listenerConnected = false
+
+        @ProvidesSensor
         val lastNotification = SensorManager.BasicSensor(
             "last_notification",
             "sensor",
@@ -44,6 +47,8 @@ class NotificationSensorManager :
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#last-notification",
             updateType = SensorManager.BasicSensor.UpdateType.INTENT_ONLY,
         )
+
+        @ProvidesSensor
         val lastRemovedNotification = SensorManager.BasicSensor(
             "last_removed_notification",
             "sensor",
@@ -53,6 +58,8 @@ class NotificationSensorManager :
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#last-removed-notification",
             updateType = SensorManager.BasicSensor.UpdateType.INTENT_ONLY,
         )
+
+        @ProvidesSensor
         val activeNotificationCount = SensorManager.BasicSensor(
             "active_notification_count",
             "sensor",
@@ -64,7 +71,9 @@ class NotificationSensorManager :
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
-        private val mediaSession = SensorManager.BasicSensor(
+
+        @ProvidesSensor
+        internal val mediaSession = SensorManager.BasicSensor(
             "media_session",
             "sensor",
             commonR.string.basic_sensor_name_media_session,

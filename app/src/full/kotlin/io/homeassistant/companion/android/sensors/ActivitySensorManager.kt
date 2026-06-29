@@ -14,6 +14,7 @@ import com.google.android.gms.location.SleepSegmentEvent
 import com.google.android.gms.location.SleepSegmentRequest
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
@@ -39,7 +40,8 @@ class ActivitySensorManager :
             "io.homeassistant.companion.android.background.SLEEP_ACTIVITY"
         private var sleepRegistration = false
 
-        private val activity = SensorManager.BasicSensor(
+        @ProvidesSensor
+        internal val activity = SensorManager.BasicSensor(
             "detected_activity",
             "sensor",
             commonR.string.basic_sensor_name_activity,
@@ -48,7 +50,8 @@ class ActivitySensorManager :
             deviceClass = "enum",
         )
 
-        private val sleepConfidence = SensorManager.BasicSensor(
+        @ProvidesSensor
+        internal val sleepConfidence = SensorManager.BasicSensor(
             "sleep_confidence",
             "sensor",
             commonR.string.basic_sensor_name_sleep_confidence,
@@ -59,7 +62,8 @@ class ActivitySensorManager :
             updateType = SensorManager.BasicSensor.UpdateType.CUSTOM,
         )
 
-        private val sleepSegment = SensorManager.BasicSensor(
+        @ProvidesSensor
+        internal val sleepSegment = SensorManager.BasicSensor(
             "sleep_segment",
             "sensor",
             commonR.string.basic_sensor_name_sleep_segment,
