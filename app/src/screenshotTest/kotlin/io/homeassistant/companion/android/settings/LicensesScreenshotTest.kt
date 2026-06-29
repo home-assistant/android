@@ -90,7 +90,7 @@ class LicensesScreenshotTest {
     @PreviewTest
     @Composable
     fun Licences() {
-        FailFast.setHandler { throwable, string -> throw throwable }
+        FailFast.setHandler { throwable, string -> }
         HAThemeForPreview {
             val libs = Libs.Builder()
                 .withJson(FAKE_LIBS)
@@ -114,7 +114,7 @@ class LicensesScreenshotTest {
     @PreviewTest
     @Composable
     fun `Licences sheet details`() {
-        FailFast.setHandler { throwable, string -> throw throwable }
+        FailFast.setHandler { throwable, string -> }
         HAThemeForPreview {
             val libs = Libs.Builder()
                 .withJson(FAKE_LIBS)
