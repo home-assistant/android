@@ -216,12 +216,39 @@ class SensorRepositoryImplTest {
     fun `Given getEnabledCount then counts effective-enabled across servers including catalog defaults`() = runTest {
         coEvery { serverDao.getAll() } returns listOf(serverMock(1), serverMock(2))
         // Server 1 has no rows; server 2 has app_inactive explicitly enabled.
-        coEvery { dao.getAllServer(1) } returns emptyList()
-        coEvery { dao.getAllServer(2) } returns listOf(Sensor("app_inactive", 2, enabled = true, state = ""))
+        coEvery { dao.getAll() } returns listOf(Sensor("app_inactive", 2, enabled = true, state = ""))
 
         val result = repository.getEnabledCount()
 
         // last_update is enabled-by-default on both servers (2), plus app_inactive enabled on server 2 (1).
         assertEquals(3, result)
+    }
+
+    @Test
+    fun `Given a row disabling a default-enabled sensor when getEnabledCount then it is not counted`() = runTest {
+        coEvery { serverDao.getAll() } returns listOf(serverMock(1), serverMock(2))
+        // last_update is enabled-by-default but explicitly disabled on server 1.
+        coEvery { dao.getAll() } returns listOf(Sensor("last_update", 1, enabled = false, state = ""))
+
+        val result = repository.getEnabledCount()
+
+        // last_update counts only on server 2 (1); app_inactive is disabled-by-default everywhere.
+        assertEquals(1, result)
+    }
+
+    @Test
+    fun `Given rows for removed servers or unknown sensors when getEnabledCount then they are ignored`() = runTest {
+        coEvery { serverDao.getAll() } returns listOf(serverMock(1))
+        coEvery { dao.getAll() } returns listOf(
+            // Orphan row for a server that is no longer configured.
+            Sensor("app_inactive", 99, enabled = true, state = ""),
+            // Row for a sensor absent from the catalog.
+            Sensor("unknown", 1, enabled = true, state = ""),
+        )
+
+        val result = repository.getEnabledCount()
+
+        // Only last_update's default-enabled state on the single configured server counts.
+        assertEquals(1, result)
     }
 }

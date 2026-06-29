@@ -23,6 +23,9 @@ internal interface SensorDao {
     @Query("SELECT * FROM sensors")
     fun getAllFlow(): Flow<List<Sensor>>
 
+    @Query("SELECT * FROM sensors")
+    suspend fun getAll(): List<Sensor>
+
     @Transaction
     @Query(
         "SELECT * FROM sensors LEFT JOIN sensor_attributes ON sensors.id = sensor_attributes.sensor_id WHERE sensors.id = :id",

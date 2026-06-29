@@ -139,6 +139,8 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                                     eventData as Map<String, Any>,
                                 )
                                 Timber.d("Event successfully sent to Home Assistant")
+                            } catch (e: CancellationException) {
+                                throw e
                             } catch (e: Exception) {
                                 Timber.e(e, "Unable to send event data to Home Assistant")
                             }
@@ -188,6 +190,8 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
             if (hasSensor) {
                 try {
                     manager.requestSensorUpdate(context, intent)
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Issue requesting updates for ${context.getString(manager.name)}")
                 }
@@ -199,6 +203,8 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                 ioScope.async { syncSensorsWithServer(context, serverManager, server, sensorRepository) }
             }.awaitAll()
             Timber.i("Sensor updates and sync completed")
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.e(e, "Exception while awaiting sensor updates.")
         }
@@ -216,6 +222,8 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         try {
             integrationRepository = serverManager.integrationRepository(server.id)
             config = integrationRepository.getConfig()
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.e(e, "Error while getting core config to sync sensor status aborting")
             return false
@@ -319,6 +327,8 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                         sensor.coreRegistration = currentHAversion
                         sensor.appRegistration = currentAppVersion
                         sensorRepository.update(sensor)
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         Timber.e(e, "Issue enabling/disabling sensor ${basicSensor.id}")
                     }
@@ -336,6 +346,8 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                         sensor.coreRegistration = currentHAversion
                         sensor.appRegistration = currentAppVersion
                         sensorRepository.update(sensor)
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         Timber.e(e, "Issue re-registering sensor ${basicSensor.id}")
                         if (e is IntegrationException &&
@@ -367,10 +379,12 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                     sensorRepository.updateLastSentStateAndIcon(it.uniqueId, it.serverId, it.state.toString(), it.icon)
                 }
                 serverSuccess
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 // Don't trigger re-registration when the server is down or job was cancelled
                 val exceptionOk = e is IntegrationException &&
-                    (e.cause is IOException || e.cause is CancellationException)
+                    (e.cause is IOException)
                 if (exceptionOk) {
                     Timber.w(e, "Exception while updating sensors")
                 } else {
@@ -417,6 +431,8 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         } ?: return
         try {
             sensorManager.requestSensorUpdate(context)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.e(e, "Issue requesting updates for ${context.getString(sensorManager.name)}")
         }
@@ -438,6 +454,8 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                         fullSensor.sensor.state,
                         fullSensor.sensor.icon,
                     )
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Exception while updating individual sensor.")
                 }

@@ -49,9 +49,24 @@ internal class SensorRepositoryImpl @Inject constructor(
         }
 
     // Catalog-aware: a default-enabled sensor counts even before it has a stored row, so this is the
-    // count of effective-enabled (sensor, server) pairs, not just persisted enabled rows.
-    override suspend fun getEnabledCount(): Int =
-        configuredServerIds().sumOf { serverId -> getAllServer(serverId).count { it.enabled } }
+    // count of effective-enabled (sensor, server) pairs, not just persisted enabled rows. Rather than
+    // synthesizing a full per-server list, start from the default-enabled count for every configured
+    // server and treat each stored row as an override that adjusts its sensor's default contribution.
+    override suspend fun getEnabledCount(): Int {
+        val serverIds = configuredServerIds().toSet()
+        val defaultEnabledCount = enabledByDefaultById.count { (_, enabledByDefault) -> enabledByDefault }
+        var count = serverIds.size * defaultEnabledCount
+        for (row in dao.getAll()) {
+            // Skip rows that don't contribute to the effective count: sensors absent from the catalog
+            // don't exist, and rows for removed (non-configured) servers must not be counted.
+            val enabledByDefault = enabledByDefaultById[row.id] ?: continue
+            if (row.serverId !in serverIds) continue
+            if (row.enabled != enabledByDefault) {
+                count += if (row.enabled) 1 else -1
+            }
+        }
+        return count
+    }
 
     // Upsert: a single statement that inserts the row when absent and overwrites it when present,
     // matching the catalog model where a sensor always "exists" and has no separate create step.
@@ -140,7 +155,4 @@ internal class SensorRepositoryImpl @Inject constructor(
             enabledByDefaultById.keys.mapNotNull { id -> byKey[id to serverId] ?: defaultSensor(id, serverId) }
         }
     }
-
-    private suspend fun getAllServer(serverId: Int): List<Sensor> =
-        withDefaults(dao.getAllServer(serverId), listOf(serverId))
 }

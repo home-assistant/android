@@ -6,7 +6,7 @@ import io.homeassistant.companion.android.database.sensor.SensorSetting
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Single access point to sensors their state, settings and attributes.
+ * Single access point to sensors, their state, settings and attributes.
  *
  * A known sensor always has a state: reads fall back to its default when nothing has been set yet,
  * so they never come back empty for a real sensor. There is no separate create step — [update] sets
