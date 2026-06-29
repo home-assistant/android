@@ -124,7 +124,7 @@ class FrontendGestureManager @Inject constructor(
                 bubbles: true,
                 cancelable: true
             });
-            document.body.dispatchEvent(event);
+             (document.body || document.documentElement || document).dispatchEvent(event);
         """.trimIndent()
         externalBusRepository.evaluateScript(script)
     }
