@@ -1,13 +1,17 @@
 package io.homeassistant.companion.android.sensors
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.github.classgraph.ClassGraph
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.testing.unit.seedFakeAndroidId
 import javax.inject.Inject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -15,7 +19,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Guards against forgetting a `@Binds @IntoSet` for a new wear [SensorManager]: every concrete
+ * Guards against forgetting a `@Binds @IntoSet` for a new [SensorManager]: every concrete
  * implementation on the classpath must be present in the Hilt-injected `Set<SensorManager>`.
  * ClassGraph is used because neither Hilt nor reflection can enumerate an interface's
  * implementations — only a classpath scan can.
@@ -29,6 +33,11 @@ class SensorManagerCompletenessTest {
 
     @Inject
     lateinit var managers: Set<@JvmSuppressWildcards SensorManager>
+
+    @Before
+    fun setup() {
+        ApplicationProvider.getApplicationContext<Context>().seedFakeAndroidId()
+    }
 
     @Test
     fun `Given every SensorManager on the classpath then each is bound into the injected set`() {

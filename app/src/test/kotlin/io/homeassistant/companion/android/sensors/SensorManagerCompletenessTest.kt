@@ -1,13 +1,17 @@
 package io.homeassistant.companion.android.sensors
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.github.classgraph.ClassGraph
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.testing.unit.seedFakeAndroidId
 import javax.inject.Inject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -30,6 +34,11 @@ class SensorManagerCompletenessTest {
 
     @Inject
     lateinit var managers: Set<@JvmSuppressWildcards SensorManager>
+
+    @Before
+    fun setup() {
+        ApplicationProvider.getApplicationContext<Context>().seedFakeAndroidId()
+    }
 
     @Test
     fun `Given every SensorManager on the classpath then each is bound into the injected set`() {
