@@ -55,6 +55,7 @@ import io.homeassistant.companion.android.util.compose.HomeAssistantGlanceTheme
 import io.homeassistant.companion.android.util.compose.HomeAssistantGlanceTypography
 import io.homeassistant.companion.android.util.compose.glanceStringResource
 import io.homeassistant.companion.android.widgets.climate.ClimateState.Companion.getColors
+import timber.log.Timber
 
 // TODO: agregar widget_example_climate.png
 
@@ -200,7 +201,7 @@ private fun ShowClimateContent(
                 modifier = GlanceModifier.size(HomeAssistantGlanceTheme.dimensions.iconSize)
                     .semantics { testTag = "Add" },
                 imageProvider = ImageProvider(androidx.media3.session.R.drawable.media3_icon_minus),    // TODO: ajustar ICON, no viene de donde viene el resto
-                contentDescription = LocalContext.current.getString(commonR.string.widget_todo_add),    // TODO: ajustar string description
+                contentDescription = LocalContext.current.getString(commonR.string.widget_climate_plus),
                 backgroundColor = GlanceTheme.colors.primary,
                 onClick = actionDecreaseTemp()
 
@@ -208,7 +209,7 @@ private fun ShowClimateContent(
 
             Text(
                 modifier = GlanceModifier.padding(horizontal = 16.dp),
-                text = climateTemp?.toString() ?: "Empty",          // TODO: formatear temp
+                text = LocalContext.current.getString(commonR.string.widget_climate_format_temp, climateTemp),
                 style = HomeAssistantGlanceTypography.titleLarge.copy(
                     fontSize = 48.sp,
                     fontWeight = FontWeight.Bold
@@ -219,7 +220,7 @@ private fun ShowClimateContent(
                 modifier = GlanceModifier.size(HomeAssistantGlanceTheme.dimensions.iconSize)
                     .semantics { testTag = "Add" },
                 imageProvider = ImageProvider(R.drawable.ic_plus),
-                contentDescription = LocalContext.current.getString(commonR.string.widget_todo_add),    // TODO: ajustar string description
+                contentDescription = LocalContext.current.getString(commonR.string.widget_climate_minus),
                 backgroundColor = GlanceTheme.colors.primary,
                 onClick = actionIncreaseTemp()
             )
@@ -248,18 +249,16 @@ private fun HvacModeSelector(
         modifier = GlanceModifier.padding(top = 8.dp),
     ) {
         supportedModes.forEach { mode ->
-            Column(
-                modifier = GlanceModifier.padding(horizontal = 4.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                val isEnabled = mode != hvacSelectedMode
                 SquareIconButton(
                     modifier = GlanceModifier
                         .size(48.dp)
                         .padding(4.dp),
-                    imageProvider = ImageProvider(R.drawable.ic_flash_on_24dp), // TODO: cargar iconos de todos los modos
-                    enabled = mode != hvacSelectedMode,
+                    imageProvider = hvacModeIcon(mode),
+                    enabled = isEnabled,
                     contentDescription = mode,
-                    backgroundColor = GlanceTheme.colors.primary,
+                    backgroundColor = if (isEnabled) { GlanceTheme.colors.primary } else GlanceTheme.colors.inversePrimary ,
                     onClick = actionSetHvacMode(mode)
                 )
 
@@ -268,12 +267,25 @@ private fun HvacModeSelector(
                     text = mode,
                     style = HomeAssistantGlanceTypography.bodySmall.copy(
                         textAlign = TextAlign.Center,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     ),
                 )
             }
         }
     }
+}
+
+private fun hvacModeIcon(hvacMode: String): ImageProvider {
+    val drawable = when (hvacMode) {            // TODO: cargar los estados en el state
+        "off" -> R.drawable.hvac_mode_off
+        "heat" -> R.drawable.hvac_mode_heat
+        "cool" -> R.drawable.hvac_mode_cool
+        "dry" -> R.drawable.hvac_mode_dry
+        "fan_only" -> R.drawable.hvac_mode_fan
+        "auto" -> R.drawable.hvac_mode_auto
+        else -> null
+    }
+    return ImageProvider(drawable ?: R.drawable.ic_bug_report)  // TODO: revisar el failsafe del icon
 }
 
 @Composable
@@ -323,7 +335,7 @@ private fun ScreenPreview() {
                 currentTemp = null,
                 climateTemp = 12f,
                 hvacSelectedMode = "heat",
-                hvacSupportedModes = listOf("off, heat, cool, dry"),
+                hvacSupportedModes = listOf("off", "heat", "cool", "dry"),
                 outOfSync = false,
                 showComplete = true,
             ),
@@ -346,7 +358,7 @@ private fun ScreenPreviewPowerOff() {
                 currentTemp = null,
                 climateTemp = 12f,
                 hvacSelectedMode = "off",
-                hvacSupportedModes = listOf("off, heat, cool, dry"),
+                hvacSupportedModes = listOf("off", "heat", "cool", "dry"),
                 outOfSync = true,
                 showComplete = true,
             ),
@@ -369,7 +381,7 @@ private fun ScreenPreviewOutOfSync() {
                 currentTemp = null,
                 climateTemp = 12f,
                 hvacSelectedMode = "heat",
-                hvacSupportedModes = listOf("off, heat, cool, dry"),
+                hvacSupportedModes = listOf("off", "heat", "cool", "dry"),
                 outOfSync = true,
                 showComplete = true,
             ),
