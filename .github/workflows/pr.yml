@@ -204,6 +204,7 @@ jobs:
           mock-google-services: "true"
 
       - name: Validate Screenshot Previews - app
+        timeout-minutes: 20
         run: ./gradlew :app:validateFullDebugScreenshotTest
 
       - name: Validate Screenshot Previews - wear
