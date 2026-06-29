@@ -7,7 +7,7 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.sensors.CatalogSensor
+import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
@@ -22,7 +22,7 @@ class OnBodySensorManager :
     companion object {
         private var isListenerRegistered = false
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val onBodySensor = SensorManager.BasicSensor(
             "on_body",
             "binary_sensor",

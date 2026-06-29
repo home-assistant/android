@@ -23,7 +23,7 @@ class BatterySensorManager : SensorManager {
         private const val SETTING_BATTERY_VOLTAGE_DIVISOR = "battery_voltage_divisor"
         private const val DEFAULT_BATTERY_VOLTAGE_DIVISOR = 1000
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val batteryLevel = SensorManager.BasicSensor(
             "battery_level",
             "sensor",
@@ -37,7 +37,7 @@ class BatterySensorManager : SensorManager {
             enabledByDefault = true,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val batteryState = SensorManager.BasicSensor(
             "battery_state",
             "sensor",
@@ -50,7 +50,7 @@ class BatterySensorManager : SensorManager {
             enabledByDefault = true,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val isChargingState = SensorManager.BasicSensor(
             "is_charging",
             "binary_sensor",
@@ -62,7 +62,7 @@ class BatterySensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val chargerTypeState = SensorManager.BasicSensor(
             "charger_type",
             "sensor",
@@ -75,7 +75,7 @@ class BatterySensorManager : SensorManager {
             enabledByDefault = true,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val batteryHealthState = SensorManager.BasicSensor(
             "battery_health",
             "sensor",
@@ -86,7 +86,7 @@ class BatterySensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val batteryTemperature = SensorManager.BasicSensor(
             "battery_temperature",
             "sensor",
@@ -99,7 +99,7 @@ class BatterySensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val batteryPower = SensorManager.BasicSensor(
             "battery_power",
             "sensor",
@@ -112,7 +112,7 @@ class BatterySensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val remainingChargeTime = SensorManager.BasicSensor(
             "remaining_charge_time",
             "sensor",
@@ -124,7 +124,7 @@ class BatterySensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val batteryCycles = SensorManager.BasicSensor(
             "battery_cycles",
             "sensor",

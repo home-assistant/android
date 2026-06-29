@@ -9,7 +9,7 @@ import io.homeassistant.companion.android.common.util.isAutomotive
 
 class DNDSensorManager : SensorManager {
     companion object {
-        @CatalogSensor
+        @ProvidesSensor
         val dndSensor = SensorManager.BasicSensor(
             "dnd_sensor",
             "sensor",

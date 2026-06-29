@@ -14,7 +14,7 @@ import io.homeassistant.companion.android.common.util.SdkVersion
 class MobileDataManager : SensorManager {
 
     companion object {
-        @CatalogSensor
+        @ProvidesSensor
         val mobileDataState = SensorManager.BasicSensor(
             "mobile_data",
             "binary_sensor",
@@ -24,7 +24,7 @@ class MobileDataManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val mobileDataRoaming = SensorManager.BasicSensor(
             "mobile_data_roaming",
             "binary_sensor",

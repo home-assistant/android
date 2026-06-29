@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.sensorcatalog
+package io.homeassistant.companion.android.sensors
 
 import com.google.devtools.ksp.getVisibility
 import com.google.devtools.ksp.processing.CodeGenerator
@@ -25,25 +25,25 @@ import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.writeTo
 
-private const val CATALOG_SENSOR_FQN = "io.homeassistant.companion.android.common.sensors.CatalogSensor"
+private const val PROVIDES_SENSOR_FQN = "io.homeassistant.companion.android.common.sensors.ProvidesSensor"
 private const val BASIC_SENSOR_FQN = "io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor"
-private const val GENERATED_PACKAGE = "io.homeassistant.companion.android.sensorcatalog.generated"
-private const val GENERATED_OBJECT_PREFIX = "GeneratedSensorCatalog"
+private const val GENERATED_PACKAGE = "io.homeassistant.companion.android.sensors.generated"
+private const val GENERATED_OBJECT_PREFIX = "GeneratedProvidesSensor"
 
 private val BASIC_SENSOR =
     ClassName("io.homeassistant.companion.android.common.sensors", "SensorManager", "BasicSensor")
 private val SET = ClassName("kotlin.collections", "Set")
 
 private const val REFERENCEABILITY_ERROR =
-    "@CatalogSensor BasicSensor must be a non-private top-level, object, or companion-object val " +
+    "@ProvidesSensor BasicSensor must be a non-private top-level, object, or companion-object val " +
         "so it can be referenced from generated code"
 
 private const val TYPE_ERROR =
-    "@CatalogSensor can only annotate a SensorManager.BasicSensor val"
+    "@ProvidesSensor can only annotate a SensorManager.BasicSensor val"
 
 /**
- * Collects every `val` annotated with `@CatalogSensor` and generates a plain
- * `GeneratedSensorCatalog<suffix>` data object exposing those `SensorManager.BasicSensor` values as
+ * Collects every `val` annotated with `@ProvidesSensor` and generates a plain
+ * `GeneratedProvidesSensor<suffix>` data object exposing those `SensorManager.BasicSensor` values as
  * a `Set`. A hand-written source Hilt module contributes that set into the `Set<BasicSensor>`
  * multibinding — Hilt cannot reliably aggregate an `@InstallIn` module *generated* by another KSP
  * processor (the KSP2 round model does not feed it to Hilt's processor), so the Hilt binding must
@@ -59,7 +59,7 @@ private const val TYPE_ERROR =
  * only hands each symbol to [process] in the round it first resolves, so generating per round would
  * both lose earlier references and re-write the same file name on a later round.
  */
-class SensorCatalogProcessor(
+class ProvidesSensorProcessor(
     private val codeGenerator: CodeGenerator,
     private val logger: KSPLogger,
     private val moduleSuffix: String,
@@ -71,7 +71,7 @@ class SensorCatalogProcessor(
     override fun process(resolver: Resolver): List<KSAnnotated> {
         val deferred = mutableListOf<KSAnnotated>()
 
-        for (property in resolver.getSymbolsWithAnnotation(CATALOG_SENSOR_FQN)
+        for (property in resolver.getSymbolsWithAnnotation(PROVIDES_SENSOR_FQN)
             .filterIsInstance<KSPropertyDeclaration>()) {
             if (!property.validate()) {
                 deferred.add(property)
@@ -95,7 +95,7 @@ class SensorCatalogProcessor(
 
     override fun finish() {
         if (references.isNotEmpty()) {
-            generateCatalog(references, originatingFiles.toTypedArray())
+            generateSet(references, originatingFiles.toTypedArray())
         }
     }
 
@@ -110,7 +110,7 @@ class SensorCatalogProcessor(
     /** Resolves how to reference the property from generated code, or null if it isn't statically reachable. */
     @OptIn(KotlinPoetKspPreview::class)
     private fun referenceOrNull(property: KSPropertyDeclaration): CodeBlock? {
-        // A private val is only visible within its own file/class, so the generated catalog (a
+        // A private val is only visible within its own file/class, so the generated set builder (a
         // separate file) cannot reach it regardless of where it is declared.
         if (property.getVisibility() == Visibility.PRIVATE) return null
 
@@ -126,7 +126,7 @@ class SensorCatalogProcessor(
     }
 
     @OptIn(KotlinPoetKspPreview::class)
-    private fun generateCatalog(references: List<CodeBlock>, originatingFiles: Array<KSFile>) {
+    private fun generateSet(references: List<CodeBlock>, originatingFiles: Array<KSFile>) {
         val objectName = GENERATED_OBJECT_PREFIX + moduleSuffix.replaceFirstChar { it.uppercase() }
 
         // Sort by the fully-qualified reference for deterministic output: KSP discovery order is
@@ -140,13 +140,13 @@ class SensorCatalogProcessor(
             .initializer(setExpression.build())
             .build()
 
-        val catalogObject = TypeSpec.objectBuilder(objectName)
+        val generatedObject = TypeSpec.objectBuilder(objectName)
             .addModifiers(KModifier.INTERNAL)
             .addProperty(sensorsProperty)
             .build()
 
         FileSpec.builder(GENERATED_PACKAGE, objectName)
-            .addType(catalogObject)
+            .addType(generatedObject)
             .build()
             .writeTo(codeGenerator, Dependencies(aggregating = true, *originatingFiles))
     }

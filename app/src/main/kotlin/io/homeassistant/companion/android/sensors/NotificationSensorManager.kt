@@ -15,7 +15,7 @@ import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.sensors.CatalogSensor
+import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
@@ -37,7 +37,7 @@ class NotificationSensorManager :
 
         private var listenerConnected = false
 
-        @CatalogSensor
+        @ProvidesSensor
         val lastNotification = SensorManager.BasicSensor(
             "last_notification",
             "sensor",
@@ -48,7 +48,7 @@ class NotificationSensorManager :
             updateType = SensorManager.BasicSensor.UpdateType.INTENT_ONLY,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val lastRemovedNotification = SensorManager.BasicSensor(
             "last_removed_notification",
             "sensor",
@@ -59,7 +59,7 @@ class NotificationSensorManager :
             updateType = SensorManager.BasicSensor.UpdateType.INTENT_ONLY,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val activeNotificationCount = SensorManager.BasicSensor(
             "active_notification_count",
             "sensor",
@@ -72,7 +72,7 @@ class NotificationSensorManager :
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val mediaSession = SensorManager.BasicSensor(
             "media_session",
             "sensor",

@@ -12,22 +12,22 @@ import com.android.tools.lint.detector.api.SourceCodeScanner
 import org.jetbrains.uast.UAnnotated
 import org.jetbrains.uast.UField
 
-object CatalogSensorMissingDetector {
+object ProvidesSensorMissingDetector {
 
     private const val BASIC_SENSOR_FQN =
         "io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor"
-    private const val CATALOG_SENSOR_FQN =
-        "io.homeassistant.companion.android.common.sensors.CatalogSensor"
+    private const val PROVIDES_SENSOR_FQN =
+        "io.homeassistant.companion.android.common.sensors.ProvidesSensor"
 
     @JvmField
     val ISSUE = Issue.create(
-        id = "CatalogSensorMissing",
-        briefDescription = "BasicSensor not registered in the sensor catalog",
+        id = "ProvidesSensorMissing",
+        briefDescription = "BasicSensor not annotated with @ProvidesSensor",
         explanation = """
-            Every `SensorManager.BasicSensor` must be annotated `@CatalogSensor` so the KSP
-            processor adds it to the generated `Set<BasicSensor>` catalog. An un-annotated sensor
+            Every `SensorManager.BasicSensor` must be annotated `@ProvidesSensor` so the KSP
+            processor adds it to the generated `Set<BasicSensor>`. An un-annotated sensor
             silently disappears from the app (e.g. the sensors settings list). To intentionally
-            exclude a `BasicSensor`, add `@Suppress("CatalogSensorMissing")`.
+            exclude a `BasicSensor`, add `@Suppress("ProvidesSensorMissing")`.
         """.trimIndent(),
         category = Category.CORRECTNESS,
         priority = 10,
@@ -45,14 +45,14 @@ object CatalogSensorMissingDetector {
                 override fun visitField(node: UField) {
                     if (node.type.canonicalText != BASIC_SENSOR_FQN) return
                     val annotations = context.evaluator.getAllAnnotations(node as UAnnotated, false)
-                    val annotated = annotations.any { it.qualifiedName == CATALOG_SENSOR_FQN }
+                    val annotated = annotations.any { it.qualifiedName == PROVIDES_SENSOR_FQN }
                     if (!annotated) {
                         context.report(
                             ISSUE,
                             node,
                             context.getLocation(node),
-                            "BasicSensor '${node.name}' must be annotated @CatalogSensor " +
-                                "(or @Suppress(\"CatalogSensorMissing\") to exclude it)",
+                            "BasicSensor '${node.name}' must be annotated @ProvidesSensor " +
+                                "(or @Suppress(\"ProvidesSensorMissing\") to exclude it)",
                         )
                     }
                 }

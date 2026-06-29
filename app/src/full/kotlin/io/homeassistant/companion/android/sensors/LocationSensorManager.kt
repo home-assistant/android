@@ -33,7 +33,7 @@ import io.homeassistant.companion.android.common.data.integration.UpdateLocation
 import io.homeassistant.companion.android.common.data.integration.containsWithAccuracy
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.notifications.DeviceCommandData
-import io.homeassistant.companion.android.common.sensors.CatalogSensor
+import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
@@ -103,7 +103,7 @@ class LocationSensorManager :
         const val ACTION_FORCE_HIGH_ACCURACY =
             "io.homeassistant.companion.android.background.FORCE_HIGH_ACCURACY"
 
-        @CatalogSensor
+        @ProvidesSensor
         val backgroundLocation = SensorManager.BasicSensor(
             "location_background",
             "",
@@ -113,7 +113,7 @@ class LocationSensorManager :
             updateType = SensorManager.BasicSensor.UpdateType.LOCATION,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val zoneLocation = SensorManager.BasicSensor(
             "zone_background",
             "",
@@ -123,7 +123,7 @@ class LocationSensorManager :
             updateType = SensorManager.BasicSensor.UpdateType.LOCATION,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val singleAccurateLocation = SensorManager.BasicSensor(
             "accurate_location",
             "",
@@ -133,7 +133,7 @@ class LocationSensorManager :
             updateType = SensorManager.BasicSensor.UpdateType.LOCATION,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val highAccuracyMode = SensorManager.BasicSensor(
             "high_accuracy_mode",
             "binary_sensor",
@@ -144,7 +144,7 @@ class LocationSensorManager :
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val highAccuracyUpdateInterval = SensorManager.BasicSensor(
             "high_accuracy_update_interval",
             "sensor",

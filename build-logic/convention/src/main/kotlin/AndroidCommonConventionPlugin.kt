@@ -31,13 +31,13 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
             apply(plugin = libs.plugins.ksp.getPluginId())
             apply(plugin = libs.plugins.hilt.getPluginId())
 
-            // The sensor-catalog KSP processor names its generated object per module via this arg.
+            // The provides-sensor KSP processor names its generated object per module via this arg.
             // Set here so every module applying the processor (`:common`, `:app`, `:wear`, ...) gets a
             // unique suffix without per-module boilerplate. `:automotive` overrides it to "app" because
             // it reuses `:app` sources referencing the "app"-suffixed object. Modules that don't depend
             // on the processor simply ignore this arg, so setting it unconditionally is a no-op for them.
             extensions.configure<KspExtension> {
-                arg("catalogModuleSuffix", project.name)
+                arg("providesSensorModuleSuffix", project.name)
             }
 
             // We create a resources directory to put `robolectric.properties` and set the SDK version

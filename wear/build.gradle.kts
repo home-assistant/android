@@ -71,5 +71,5 @@ dependencies {
     testImplementation(libs.bundles.androidx.test)
     testImplementation(libs.androidx.test.core)
 
-    ksp(project(":sensor-catalog-processor"))
+    ksp(project(":provides-sensor-processor"))
 }

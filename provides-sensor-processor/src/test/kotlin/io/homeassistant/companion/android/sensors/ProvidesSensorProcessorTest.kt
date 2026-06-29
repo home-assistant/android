@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.sensorcatalog
+package io.homeassistant.companion.android.sensors
 
 import com.google.devtools.ksp.impl.KotlinSymbolProcessing
 import com.google.devtools.ksp.processing.CodeGenerator
@@ -25,19 +25,19 @@ private const val SENSORS_PACKAGE = "io.homeassistant.companion.android.sensors"
  */
 private val SENSOR_SOURCE_HEADER = listOf(
     "package $SENSORS_PACKAGE",
-    "import io.homeassistant.companion.android.common.sensors.CatalogSensor",
+    "import io.homeassistant.companion.android.common.sensors.ProvidesSensor",
     "import io.homeassistant.companion.android.common.sensors.SensorManager",
 ).joinToString(separator = "\n", postfix = "\n")
 
 /**
- * Drives the [SensorCatalogProcessor] end-to-end through the KSP2 [KotlinSymbolProcessing] entry
+ * Drives the [ProvidesSensorProcessor] end-to-end through the KSP2 [KotlinSymbolProcessing] entry
  * point. We avoid a third-party compile-testing harness and instead reuse the KSP version pinned by
  * the project, feeding the processor real Kotlin sources and inspecting the generated output.
  */
-class SensorCatalogProcessorTest {
+class ProvidesSensorProcessorTest {
 
     @Test
-    fun `Given annotated companion vals when processed then generated catalog references them`(
+    fun `Given annotated companion vals when processed then the generated object references them`(
         @TempDir workingDir: File,
     ) {
         workingDir.writeStub()
@@ -46,8 +46,8 @@ class SensorCatalogProcessorTest {
             """
             class FooManager {
                 companion object {
-                    @CatalogSensor val alpha = SensorManager.BasicSensor("alpha")
-                    @CatalogSensor val beta = SensorManager.BasicSensor("beta")
+                    @ProvidesSensor val alpha = SensorManager.BasicSensor("alpha")
+                    @ProvidesSensor val beta = SensorManager.BasicSensor("beta")
                 }
             }
             """,
@@ -56,8 +56,8 @@ class SensorCatalogProcessorTest {
         val result = workingDir.runProcessor()
 
         assertEquals(KotlinSymbolProcessing.ExitCode.OK, result.exitCode, result.messages.joinToString("\n"))
-        val generated = workingDir.generatedFile("GeneratedSensorCatalogTest.kt").readText()
-        assertTrue(generated.contains("internal object GeneratedSensorCatalogTest"), generated)
+        val generated = workingDir.generatedFile("GeneratedProvidesSensorTest.kt").readText()
+        assertTrue(generated.contains("internal object GeneratedProvidesSensorTest"), generated)
         assertTrue(generated.contains("val sensors"), generated)
         assertTrue(generated.contains("setOf("), generated)
         assertTrue(generated.contains("FooManager.Companion.alpha"), generated)
@@ -65,7 +65,7 @@ class SensorCatalogProcessorTest {
     }
 
     @Test
-    fun `Given annotated sensors in all referenceable forms when processed then catalog references them sorted`(
+    fun `Given annotated sensors in all referenceable forms when processed then the generated object references them sorted`(
         @TempDir workingDir: File,
     ) {
         workingDir.writeStub()
@@ -74,28 +74,28 @@ class SensorCatalogProcessorTest {
             "FooManager.kt",
             """
             object FooManager {
-                @CatalogSensor val alpha = SensorManager.BasicSensor("alpha")
+                @ProvidesSensor val alpha = SensorManager.BasicSensor("alpha")
             }
 
             class BarManager {
                 companion object {
-                    @CatalogSensor val beta = SensorManager.BasicSensor("beta")
+                    @ProvidesSensor val beta = SensorManager.BasicSensor("beta")
                 }
             }
-            @CatalogSensor val gamma = SensorManager.BasicSensor("gamma")
+            @ProvidesSensor val gamma = SensorManager.BasicSensor("gamma")
             """,
         )
 
         val result = workingDir.runProcessor()
 
         assertEquals(KotlinSymbolProcessing.ExitCode.OK, result.exitCode, result.messages.joinToString("\n"))
-        val generated = workingDir.generatedFile("GeneratedSensorCatalogTest.kt").readText()
+        val generated = workingDir.generatedFile("GeneratedProvidesSensorTest.kt").readText()
         // Golden source documenting the generated module. Object and companion-object vals are
         // referenced qualified by their declaring type (a member import of a companion-object member
         // does not compile), so a companion resolves to `BarManager.Companion.beta`; only the
         // top-level gamma is imported directly.
         val expected = """
-            package io.homeassistant.`companion`.android.sensorcatalog.generated
+            package io.homeassistant.`companion`.android.sensors.generated
 
             import io.homeassistant.`companion`.android.common.sensors.SensorManager
             import io.homeassistant.`companion`.android.sensors.BarManager
@@ -103,7 +103,7 @@ class SensorCatalogProcessorTest {
             import io.homeassistant.`companion`.android.sensors.gamma
             import kotlin.collections.Set
 
-            internal object GeneratedSensorCatalogTest {
+            internal object GeneratedProvidesSensorTest {
               public val sensors: Set<SensorManager.BasicSensor> = setOf(
                       BarManager.Companion.beta,
                       FooManager.alpha,
@@ -123,7 +123,7 @@ class SensorCatalogProcessorTest {
             "BarManager.kt",
             """
             class BarManager {
-                @CatalogSensor val instanceSensor = SensorManager.BasicSensor("x")
+                @ProvidesSensor val instanceSensor = SensorManager.BasicSensor("x")
             }
             """,
         )
@@ -145,7 +145,7 @@ class SensorCatalogProcessorTest {
             "SecretManager.kt",
             """
             object SecretManager {
-                @CatalogSensor private val secret = SensorManager.BasicSensor("secret")
+                @ProvidesSensor private val secret = SensorManager.BasicSensor("secret")
             }
             """,
         )
@@ -166,7 +166,7 @@ class SensorCatalogProcessorTest {
         workingDir.writeSensorSource(
             "NotASensor.kt",
             """
-            @CatalogSensor val notASensor = "I am not a BasicSensor"
+            @ProvidesSensor val notASensor = "I am not a BasicSensor"
             """,
         )
 
@@ -188,7 +188,7 @@ class SensorCatalogProcessorTest {
             "EagerManager.kt",
             """
             object EagerManager {
-                @CatalogSensor val eager = SensorManager.BasicSensor("eager")
+                @ProvidesSensor val eager = SensorManager.BasicSensor("eager")
             }
             """,
         )
@@ -199,7 +199,7 @@ class SensorCatalogProcessorTest {
         val result = workingDir.runProcessor(RoundTwoSensorGeneratorProvider())
 
         assertEquals(KotlinSymbolProcessing.ExitCode.OK, result.exitCode, result.messages.joinToString("\n"))
-        val generated = workingDir.generatedFile("GeneratedSensorCatalogTest.kt").readText()
+        val generated = workingDir.generatedFile("GeneratedProvidesSensorTest.kt").readText()
         assertTrue(generated.contains("EagerManager.eager"), generated)
         assertTrue(generated.contains("LateManager.late"), generated)
     }
@@ -211,7 +211,7 @@ class SensorCatalogProcessorTest {
         package io.homeassistant.companion.android.common.sensors
         @Target(AnnotationTarget.PROPERTY)
         @Retention(AnnotationRetention.SOURCE)
-        annotation class CatalogSensor
+        annotation class ProvidesSensor
         class SensorManager { class BasicSensor(val id: String) }
         """.trimIndent(),
     )
@@ -242,7 +242,7 @@ class SensorCatalogProcessorTest {
             javaOutputDir = resolve("kspOutput/java")
             // Classpath of the test JVM so the stub sources resolve against kotlin-stdlib etc.
             libraries = System.getProperty("java.class.path").split(File.pathSeparator).map(::File)
-            processorOptions = mapOf("catalogModuleSuffix" to "Test")
+            processorOptions = mapOf("providesSensorModuleSuffix" to "Test")
             jvmTarget = "17"
             languageVersion = "2.1"
             apiVersion = "2.1"
@@ -250,7 +250,7 @@ class SensorCatalogProcessorTest {
 
         val exitCode = KotlinSymbolProcessing(
             config,
-            listOf(SensorCatalogProcessorProvider(), *extraProviders),
+            listOf(ProvidesSensorProcessorProvider(), *extraProviders),
             collectingLogger,
         ).execute()
 
@@ -268,7 +268,7 @@ class SensorCatalogProcessorTest {
     }
 
     /**
-     * Emits a single `@CatalogSensor` source on its first round so that [SensorCatalogProcessor]
+     * Emits a single `@ProvidesSensor` source on its first round so that [ProvidesSensorProcessor]
      * encounters that sensor only in a subsequent round, exercising cross-round accumulation.
      */
     private class RoundTwoSensorGenerator(private val codeGenerator: CodeGenerator) : SymbolProcessor {
@@ -284,7 +284,7 @@ class SensorCatalogProcessorTest {
                                 SENSOR_SOURCE_HEADER +
                                     """
                                     object LateManager {
-                                        @CatalogSensor val late = SensorManager.BasicSensor("late")
+                                        @ProvidesSensor val late = SensorManager.BasicSensor("late")
                                     }
                                     """.trimIndent()
                                 ).toByteArray(),

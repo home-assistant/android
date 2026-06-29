@@ -13,7 +13,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.common.sensors.CatalogSensor
+import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
@@ -31,7 +31,7 @@ class CarSensorManager :
     DefaultLifecycleObserver {
 
     data class CarSensor(
-        @Suppress("CatalogSensorMissing")
+        @Suppress("ProvidesSensorMissing")
         val sensor: SensorManager.BasicSensor,
         val autoEnabled: Boolean = true,
         val automotiveEnabled: Boolean = true,
@@ -44,7 +44,7 @@ class CarSensorManager :
     )
 
     companion object {
-        @CatalogSensor
+        @ProvidesSensor
         internal val carFuel = SensorManager.BasicSensor(
             "car_fuel",
             "sensor",
@@ -65,7 +65,7 @@ class CarSensorManager :
             ),
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val carBattery = SensorManager.BasicSensor(
             "car_battery",
             "sensor",
@@ -87,7 +87,7 @@ class CarSensorManager :
             ),
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val carRangeRemaining = SensorManager.BasicSensor(
             "car_range_remaining",
             "sensor",
@@ -109,7 +109,7 @@ class CarSensorManager :
             ),
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val carNameSensor = SensorManager.BasicSensor(
             "car_name",
             "sensor",
@@ -122,7 +122,7 @@ class CarSensorManager :
             automotivePermissions = listOf("android.car.permission.CAR_INFO"),
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val carChargingStatusSensor = SensorManager.BasicSensor(
             "car_charging_status",
             "sensor",
@@ -136,7 +136,7 @@ class CarSensorManager :
             automotivePermissions = listOf("android.car.permission.CAR_ENERGY_PORTS"),
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val carOdometer = SensorManager.BasicSensor(
             "car_odometer",
             "sensor",
@@ -153,7 +153,7 @@ class CarSensorManager :
             autoPermissions = listOf("com.google.android.gms.permission.CAR_MILEAGE"),
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val carFuelType = SensorManager.BasicSensor(
             "car_fuel_type",
             "sensor",
@@ -169,7 +169,7 @@ class CarSensorManager :
             automotivePermissions = listOf("android.car.permission.CAR_INFO"),
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val carEvConnector = SensorManager.BasicSensor(
             "car_ev_connector",
             "sensor",
@@ -185,7 +185,7 @@ class CarSensorManager :
             automotivePermissions = listOf("android.car.permission.CAR_INFO"),
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val carSpeedSensor = SensorManager.BasicSensor(
             "car_speed",
             "sensor",

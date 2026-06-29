@@ -42,7 +42,7 @@ import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.response.ReadRecordsResponse
 import androidx.health.connect.client.time.TimeRangeFilter
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.sensors.CatalogSensor
+import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
@@ -65,7 +65,7 @@ class HealthConnectSensorManager : SensorManager {
         fun getPermissionResultContract(): ActivityResultContract<Set<String>, Set<String>>? =
             PermissionController.createRequestPermissionResultContract()
 
-        @CatalogSensor
+        @ProvidesSensor
         val activeCaloriesBurned = SensorManager.BasicSensor(
             id = "health_connect_active_calories_burned",
             type = "sensor",
@@ -77,7 +77,7 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val basalBodyTemperature = SensorManager.BasicSensor(
             id = "health_connect_basal_body_temperature",
             type = "sensor",
@@ -89,7 +89,7 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val basalMetabolicRate = SensorManager.BasicSensor(
             id = "health_connect_basal_metabolic_rate",
             type = "sensor",
@@ -100,7 +100,7 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val bloodGlucose = SensorManager.BasicSensor(
             id = "health_connect_blood_glucose",
             type = "sensor",
@@ -112,7 +112,7 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val bodyFat = SensorManager.BasicSensor(
             id = "health_connect_body_fat",
             type = "sensor",
@@ -123,7 +123,7 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val bodyWaterMass = SensorManager.BasicSensor(
             id = "health_connect_body_water_mass",
             type = "sensor",
@@ -135,7 +135,7 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val bodyTemperature = SensorManager.BasicSensor(
             id = "health_connect_body_temperature",
             type = "sensor",
@@ -147,7 +147,7 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val boneMass = SensorManager.BasicSensor(
             id = "health_connect_bone_mass",
             type = "sensor",
@@ -159,7 +159,7 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val diastolicBloodPressure = SensorManager.BasicSensor(
             id = "health_connect_diastolic_blood_pressure",
             type = "sensor",
@@ -171,7 +171,7 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val distance = SensorManager.BasicSensor(
             id = "health_connect_distance",
             type = "sensor",
@@ -184,7 +184,7 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val elevationGained = SensorManager.BasicSensor(
             id = "health_connect_elevation_gained",
             type = "sensor",
@@ -197,7 +197,7 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val floorsClimbed = SensorManager.BasicSensor(
             id = "health_connect_floors_climbed",
             type = "sensor",
@@ -209,7 +209,7 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val heartRate = SensorManager.BasicSensor(
             id = "health_connect_heart_rate",
             type = "sensor",
@@ -220,7 +220,7 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val heartRateVariability = SensorManager.BasicSensor(
             id = "health_connect_heart_rate_variability",
             type = "sensor",
@@ -232,7 +232,7 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val height = SensorManager.BasicSensor(
             id = "health_connect_height",
             type = "sensor",
@@ -244,7 +244,7 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val hydration = SensorManager.BasicSensor(
             id = "health_connect_hydration",
             type = "sensor",
@@ -257,7 +257,7 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val leanBodyMass = SensorManager.BasicSensor(
             id = "health_connect_lean_body_mass",
             type = "sensor",
@@ -269,7 +269,7 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val oxygenSaturation = SensorManager.BasicSensor(
             id = "health_connect_oxygen_saturation",
             type = "sensor",
@@ -280,7 +280,7 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val respiratoryRate = SensorManager.BasicSensor(
             id = "health_connect_respiratory_rate",
             type = "sensor",
@@ -291,7 +291,7 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val restingHeartRate = SensorManager.BasicSensor(
             id = "health_connect_resting_heart_rate",
             type = "sensor",
@@ -302,7 +302,7 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val sleepDuration = SensorManager.BasicSensor(
             id = "health_connect_sleep_duration",
             type = "sensor",
@@ -314,7 +314,7 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val steps = SensorManager.BasicSensor(
             id = "health_connect_steps",
             type = "sensor",
@@ -326,7 +326,7 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val systolicBloodPressure = SensorManager.BasicSensor(
             id = "health_connect_systolic_blood_pressure",
             type = "sensor",
@@ -338,7 +338,7 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val totalCaloriesBurned = SensorManager.BasicSensor(
             id = "health_connect_total_calories_burned",
             type = "sensor",
@@ -351,7 +351,7 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val vo2Max = SensorManager.BasicSensor(
             id = "health_connect_vo2_max",
             type = "sensor",
@@ -362,7 +362,7 @@ class HealthConnectSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val weight = SensorManager.BasicSensor(
             id = "health_connect_weight",
             type = "sensor",

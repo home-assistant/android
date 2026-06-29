@@ -20,7 +20,7 @@ import timber.log.Timber
 class PhoneStateSensorManager : SensorManager {
 
     companion object {
-        @CatalogSensor
+        @ProvidesSensor
         val phoneState = SensorManager.BasicSensor(
             "phone_state",
             "sensor",
@@ -32,7 +32,7 @@ class PhoneStateSensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val sim_1 = SensorManager.BasicSensor(
             "sim_1",
             "sensor",
@@ -43,7 +43,7 @@ class PhoneStateSensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val sim_2 = SensorManager.BasicSensor(
             "sim_2",
             "sensor",
@@ -54,7 +54,7 @@ class PhoneStateSensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val sim1SignalStrength = SensorManager.BasicSensor(
             "sim_1_signal_strength",
             "sensor",
@@ -66,7 +66,7 @@ class PhoneStateSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val sim2SignalStrength = SensorManager.BasicSensor(
             "sim_2_signal_strength",
             "sensor",
@@ -78,7 +78,7 @@ class PhoneStateSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val sim1DataNetworkType = SensorManager.BasicSensor(
             "sim_1_data_network_type",
             "sensor",
@@ -88,7 +88,7 @@ class PhoneStateSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val sim2DataNetworkType = SensorManager.BasicSensor(
             "sim_2_data_network_type",
             "sensor",

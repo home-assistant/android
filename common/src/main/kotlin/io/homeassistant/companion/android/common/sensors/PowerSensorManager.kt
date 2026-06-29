@@ -9,7 +9,7 @@ class PowerSensorManager : SensorManager {
     companion object {
         private const val PACKAGE_NAME = "io.homeassistant.companion.android"
 
-        @CatalogSensor
+        @ProvidesSensor
         val interactiveDevice = SensorManager.BasicSensor(
             "is_interactive",
             "binary_sensor",
@@ -21,7 +21,7 @@ class PowerSensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val doze = SensorManager.BasicSensor(
             "is_idle",
             "binary_sensor",
@@ -33,7 +33,7 @@ class PowerSensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val powerSave = SensorManager.BasicSensor(
             "power_save",
             "binary_sensor",

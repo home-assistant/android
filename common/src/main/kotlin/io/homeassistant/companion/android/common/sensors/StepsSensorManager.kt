@@ -25,7 +25,7 @@ class StepsSensorManager :
         private var isListenerRegistered = false
         private var listenerLastRegistered = 0
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val stepsSensor = SensorManager.BasicSensor(
             "steps_sensor",
             "sensor",

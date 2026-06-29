@@ -23,7 +23,7 @@ class SensorRepositoryTest {
     lateinit var repository: SensorRepository
 
     @Test
-    fun `Given hilt graph then repository is injected with the generated sensor catalog`() {
+    fun `Given hilt graph then repository is injected with the generated sensor set`() {
         hilt.inject()
         assertTrue(repository.basicSensors.isNotEmpty())
         assertTrue(repository.basicSensors.any { it.id == "last_update" })

@@ -32,7 +32,7 @@ import timber.log.Timber
 
 class NetworkSensorManager : SensorManager {
     companion object {
-        @CatalogSensor
+        @ProvidesSensor
         val hotspotState = SensorManager.BasicSensor(
             "hotspot_state",
             "binary_sensor",
@@ -43,7 +43,7 @@ class NetworkSensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val wifiConnection = SensorManager.BasicSensor(
             "wifi_connection",
             "sensor",
@@ -54,7 +54,7 @@ class NetworkSensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val bssidState = SensorManager.BasicSensor(
             "wifi_bssid",
             "sensor",
@@ -65,7 +65,7 @@ class NetworkSensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val wifiIp = SensorManager.BasicSensor(
             "wifi_ip_address",
             "sensor",
@@ -76,7 +76,7 @@ class NetworkSensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val wifiLinkSpeed = SensorManager.BasicSensor(
             "wifi_link_speed",
             "sensor",
@@ -88,7 +88,7 @@ class NetworkSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val wifiState = SensorManager.BasicSensor(
             "wifi_state",
             "binary_sensor",
@@ -99,7 +99,7 @@ class NetworkSensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val wifiFrequency = SensorManager.BasicSensor(
             "wifi_frequency",
             "sensor",
@@ -112,7 +112,7 @@ class NetworkSensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val wifiSignalStrength = SensorManager.BasicSensor(
             "wifi_signal_strength",
             "sensor",
@@ -125,7 +125,7 @@ class NetworkSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val publicIp = SensorManager.BasicSensor(
             "public_ip_address",
             "sensor",
@@ -136,7 +136,7 @@ class NetworkSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val ip6Addresses = SensorManager.BasicSensor(
             "ip6_addresses",
             "sensor",
@@ -149,7 +149,7 @@ class NetworkSensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val networkType = SensorManager.BasicSensor(
             "network_type",
             "sensor",

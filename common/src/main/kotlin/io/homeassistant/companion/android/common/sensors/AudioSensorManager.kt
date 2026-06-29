@@ -20,7 +20,7 @@ class AudioSensorManager : SensorManager {
         private const val ATTRIBUTE_MIN = "min"
         private const val ATTRIBUTE_MAX = "max"
 
-        @CatalogSensor
+        @ProvidesSensor
         val audioSensor = SensorManager.BasicSensor(
             "audio_sensor",
             "sensor",
@@ -31,7 +31,7 @@ class AudioSensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val audioState = SensorManager.BasicSensor(
             "audio_mode",
             "sensor",
@@ -41,7 +41,7 @@ class AudioSensorManager : SensorManager {
             deviceClass = "enum",
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val headphoneState = SensorManager.BasicSensor(
             "headphone_state",
             "binary_sensor",
@@ -51,7 +51,7 @@ class AudioSensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val micMuted = SensorManager.BasicSensor(
             "mic_muted",
             "binary_sensor",
@@ -66,7 +66,7 @@ class AudioSensorManager : SensorManager {
             },
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val musicActive = SensorManager.BasicSensor(
             "music_active",
             "binary_sensor",
@@ -75,7 +75,7 @@ class AudioSensorManager : SensorManager {
             "mdi:music",
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val speakerphoneState = SensorManager.BasicSensor(
             "speakerphone_state",
             "binary_sensor",
@@ -90,7 +90,7 @@ class AudioSensorManager : SensorManager {
             },
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val volAlarm = SensorManager.BasicSensor(
             "volume_alarm",
             "sensor",
@@ -101,7 +101,7 @@ class AudioSensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val volCall = SensorManager.BasicSensor(
             "volume_call",
             "sensor",
@@ -112,7 +112,7 @@ class AudioSensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val volMusic = SensorManager.BasicSensor(
             "volume_music",
             "sensor",
@@ -123,7 +123,7 @@ class AudioSensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val volRing = SensorManager.BasicSensor(
             "volume_ring",
             "sensor",
@@ -134,7 +134,7 @@ class AudioSensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val volNotification = SensorManager.BasicSensor(
             "volume_notification",
             "sensor",
@@ -145,7 +145,7 @@ class AudioSensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val volSystem = SensorManager.BasicSensor(
             "volume_system",
             "sensor",
@@ -156,7 +156,7 @@ class AudioSensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val volAccessibility = SensorManager.BasicSensor(
             "volume_accessibility",
             "sensor",
@@ -167,7 +167,7 @@ class AudioSensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         val volDTMF = SensorManager.BasicSensor(
             "volume_dtmf",
             "sensor",

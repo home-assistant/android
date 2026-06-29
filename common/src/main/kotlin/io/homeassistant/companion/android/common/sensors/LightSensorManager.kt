@@ -22,7 +22,7 @@ class LightSensorManager :
         private var isListenerRegistered = false
         private var listenerLastRegistered = 0
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val lightSensor = SensorManager.BasicSensor(
             "light_sensor",
             "sensor",

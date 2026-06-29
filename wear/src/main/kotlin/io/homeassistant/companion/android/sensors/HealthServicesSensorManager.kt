@@ -18,7 +18,7 @@ import androidx.health.services.client.data.PassiveMonitoringCapabilities
 import androidx.health.services.client.data.UserActivityInfo
 import androidx.health.services.client.data.UserActivityState
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.sensors.CatalogSensor
+import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -36,7 +36,7 @@ class HealthServicesSensorManager : SensorManager {
 
         private var callbackLastUpdated = 0L
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val userActivityState = SensorManager.BasicSensor(
             "activity_state",
             "sensor",
@@ -48,7 +48,7 @@ class HealthServicesSensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val dailyFloors = SensorManager.BasicSensor(
             "daily_floors",
             "sensor",
@@ -61,7 +61,7 @@ class HealthServicesSensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.WORKER,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val dailyDistance = SensorManager.BasicSensor(
             "daily_distance",
             "sensor",
@@ -75,7 +75,7 @@ class HealthServicesSensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.WORKER,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val dailyCalories = SensorManager.BasicSensor(
             "daily_calories",
             "sensor",
@@ -89,7 +89,7 @@ class HealthServicesSensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.WORKER,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val dailySteps = SensorManager.BasicSensor(
             "daily_steps",
             "sensor",

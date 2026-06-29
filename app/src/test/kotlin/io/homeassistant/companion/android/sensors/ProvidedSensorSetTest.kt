@@ -16,7 +16,7 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
 @HiltAndroidTest
-class BasicSensorCatalogSetTest {
+class ProvidedSensorSetTest {
     @get:Rule
     val hilt = HiltAndroidRule(this)
 
@@ -24,7 +24,7 @@ class BasicSensorCatalogSetTest {
     lateinit var sensors: Set<@JvmSuppressWildcards SensorManager.BasicSensor>
 
     @Test
-    fun `Given hilt graph then catalog set is non-empty with unique ids and includes catalog sensors`() {
+    fun `Given hilt graph then provided sensor set is non-empty with unique ids and includes module sensors`() {
         hilt.inject()
         assertTrue(sensors.isNotEmpty())
         val ids = sensors.map { it.id }

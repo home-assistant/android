@@ -22,7 +22,7 @@ class PressureSensorManager :
         private var isListenerRegistered = false
         private var listenerLastRegistered = 0
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val pressureSensor = SensorManager.BasicSensor(
             "pressure_sensor",
             "sensor",

@@ -11,7 +11,7 @@ import timber.log.Timber
 class StorageSensorManager : SensorManager {
     companion object {
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val storageSensor = SensorManager.BasicSensor(
             "storage_sensor",
             "sensor",
@@ -23,7 +23,7 @@ class StorageSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        @CatalogSensor
+        @ProvidesSensor
         internal val externalStorage = SensorManager.BasicSensor(
             "external_storage",
             "sensor",

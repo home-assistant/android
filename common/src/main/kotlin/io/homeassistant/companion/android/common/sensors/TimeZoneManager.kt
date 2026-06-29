@@ -8,7 +8,7 @@ import java.util.TimeZone
 
 class TimeZoneManager : SensorManager {
     companion object {
-        @CatalogSensor
+        @ProvidesSensor
         val currentTimeZone = SensorManager.BasicSensor(
             "current_time_zone",
             "sensor",

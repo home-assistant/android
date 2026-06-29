@@ -5,13 +5,13 @@ import android.content.Intent
 import android.content.IntentFilter
 import androidx.core.content.ContextCompat
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.sensors.CatalogSensor
+import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.util.QuestUtil
 
 class QuestSensorManager : SensorManager {
     companion object {
-        @CatalogSensor
+        @ProvidesSensor
         val headsetMounted = SensorManager.BasicSensor(
             "in_use",
             "binary_sensor",

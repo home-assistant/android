@@ -4,12 +4,12 @@ import com.android.tools.lint.checks.infrastructure.TestFiles
 import com.android.tools.lint.checks.infrastructure.TestLintTask
 import org.junit.Test
 
-class CatalogSensorMissingDetectorTest {
+class ProvidesSensorMissingDetectorTest {
 
     private val stubs = TestFiles.kotlin(
         """
         package io.homeassistant.companion.android.common.sensors
-        annotation class CatalogSensor
+        annotation class ProvidesSensor
         class SensorManager { class BasicSensor(val id: String) }
         """,
     ).indented()
@@ -29,7 +29,7 @@ class CatalogSensorMissingDetectorTest {
                 }
                 """,
             ).indented(),
-        ).issues(CatalogSensorMissingDetector.ISSUE).run().expectErrorCount(1)
+        ).issues(ProvidesSensorMissingDetector.ISSUE).run().expectErrorCount(1)
     }
 
     @Test
@@ -39,16 +39,16 @@ class CatalogSensorMissingDetectorTest {
             TestFiles.kotlin(
                 """
                 package io.homeassistant.companion.android.sensors
-                import io.homeassistant.companion.android.common.sensors.CatalogSensor
+                import io.homeassistant.companion.android.common.sensors.ProvidesSensor
                 import io.homeassistant.companion.android.common.sensors.SensorManager
                 class FooManager {
                     companion object {
-                        @CatalogSensor val alpha = SensorManager.BasicSensor("alpha")
+                        @ProvidesSensor val alpha = SensorManager.BasicSensor("alpha")
                     }
                 }
                 """,
             ).indented(),
-        ).issues(CatalogSensorMissingDetector.ISSUE).run().expectClean()
+        ).issues(ProvidesSensorMissingDetector.ISSUE).run().expectClean()
     }
 
     @Test
@@ -61,12 +61,12 @@ class CatalogSensorMissingDetectorTest {
                 import io.homeassistant.companion.android.common.sensors.SensorManager
                 class FooManager {
                     companion object {
-                        @Suppress("CatalogSensorMissing")
+                        @Suppress("ProvidesSensorMissing")
                         val alpha = SensorManager.BasicSensor("alpha")
                     }
                 }
                 """,
             ).indented(),
-        ).issues(CatalogSensorMissingDetector.ISSUE).run().expectClean()
+        ).issues(ProvidesSensorMissingDetector.ISSUE).run().expectClean()
     }
 }

@@ -8,7 +8,7 @@ import android.location.Location
 import android.os.Build
 import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.sensors.CatalogSensor
+import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -52,7 +52,7 @@ class GeocodeSensorManager : SensorManager {
         const val SETTINGS_INCLUDE_LOCATION = "geocode_include_location_updates"
         val LOCATION_OUTDATED_THRESHOLD = 5.minutes
 
-        @CatalogSensor
+        @ProvidesSensor
         val geocodedLocation = SensorManager.BasicSensor(
             "geocoded_location",
             "sensor",
