@@ -32,7 +32,7 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 /**
- * Sensor manager for the notification sensors. Owns the catalog, availability, permission and
+ * Sensor manager for the notification sensors. Owns the basic sensors, availability, permission and
  * reporting logic.
  */
 class NotificationSensorManager @Inject constructor(
@@ -44,6 +44,7 @@ class NotificationSensorManager @Inject constructor(
         private const val SETTING_ALLOW_LIST = "notification_allow_list"
         private const val SETTING_DISABLE_ALLOW_LIST = "notification_disable_allow_list"
         private const val SETTING_INCLUDE_CONTENTS_AS_ATTRS = "active_notification_count_content_attrs"
+
         @ProvidesSensor
         val lastNotification = SensorManager.BasicSensor(
             "last_notification",
