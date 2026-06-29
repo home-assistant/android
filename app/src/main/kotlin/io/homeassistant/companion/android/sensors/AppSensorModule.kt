@@ -67,4 +67,3 @@ abstract class AppSensorModule {
         fun appProvidesSensors(): Set<SensorManager.BasicSensor> = GeneratedProvidesSensorApp.sensors
     }
 }
-
