@@ -40,7 +40,8 @@ data class ClimateWidgetEntity(
         val maxTemp: Double? = null,
         val stepTemp: Double? = null,
         val stateClimate: String? = null,
-        val hvacModesSupported: List<String>? = null
+        val hvacModesSupported: List<String>? = null,
+        val fanModes: List<String>? = null
     ) : java.io.Serializable
 
     fun isSameConfiguration(other: ClimateWidgetEntity): Boolean {

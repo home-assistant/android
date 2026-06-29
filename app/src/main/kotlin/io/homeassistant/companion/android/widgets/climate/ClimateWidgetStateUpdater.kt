@@ -105,9 +105,8 @@ internal class ClimateWidgetStateUpdater @Inject constructor(
                     val currentTemp = attributes["current_temperature"] as? Double
                     val climateTemp = attributes["temperature"] as? Double
                     val hvacSupportedModes = (attributes["hvac_modes"] as? List<*>)?.mapNotNull { it as? String } ?: emptyList()
-                    // TODO: me faltan los fan modes
+                    val fanSupportedModes = (attributes["fan_modes"] as? List<*>)?.mapNotNull { it as? String } ?: emptyList()
 
-                    Timber.d("Mapeo de step $step, entity: $attributes")
                     // We update the DAO to keep it up to date for the next update of the widget
                     climateWidgetDao.updateWidgetLastUpdate(
                         widgetId = widgetId,
@@ -119,7 +118,8 @@ internal class ClimateWidgetStateUpdater @Inject constructor(
                             maxTemp = max,
                             stepTemp = step,
                             stateClimate = entity.state,
-                            hvacModesSupported = hvacSupportedModes
+                            hvacModesSupported = hvacSupportedModes,
+                            fanModes = fanSupportedModes
                         ),
                     )
                     ClimateStateWithData.from(climateEntity, entity)
