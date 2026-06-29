@@ -203,7 +203,7 @@ jobs:
           mock-google-services: "true"
 
       - name: Validate Screenshot Previews - app
-        run: ORG_GRADLE_JVMARGS=-Xmx2g ./gradlew :app:validateFullDebugScreenshotTest
+        run: ./gradlew :app:validateFullDebugScreenshotTest
 
       - name: Validate Screenshot Previews - wear
         run: ./gradlew :wear:validateDebugScreenshotTest

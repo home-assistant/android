@@ -12,7 +12,6 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.settings.license.LicensesContent
 import io.homeassistant.companion.android.util.compose.HAPreviews
-import timber.log.Timber
 
 private const val FAKE_LIBS = """
 {
@@ -91,7 +90,7 @@ class LicensesScreenshotTest {
     @PreviewTest
     @Composable
     fun Licences() {
-        FailFast.setHandler { throwable, string -> Timber.e(throwable, "caught $string") }
+        FailFast.setHandler { throwable, string -> throw throwable }
         HAThemeForPreview {
             val libs = Libs.Builder()
                 .withJson(FAKE_LIBS)
@@ -115,7 +114,7 @@ class LicensesScreenshotTest {
     @PreviewTest
     @Composable
     fun `Licences sheet details`() {
-        FailFast.setHandler { throwable, string -> Timber.e(throwable, "caught $string") }
+        FailFast.setHandler { throwable, string -> throw throwable }
         HAThemeForPreview {
             val libs = Libs.Builder()
                 .withJson(FAKE_LIBS)
