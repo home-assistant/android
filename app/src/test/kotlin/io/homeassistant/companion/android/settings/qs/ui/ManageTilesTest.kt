@@ -18,6 +18,7 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
@@ -58,7 +59,7 @@ class ManageTilesTest {
     @Test
     fun `Given multiple servers state when displayed then server selector and reset are shown and submit is enabled`() {
         composeTestRule.apply {
-            testScreen(multipleServersState) {
+            testScreen(multipleServersState, submitEnabled = true) {
                 onNodeWithTag(MANAGE_TILES_SERVER_DROPDOWN_TAG).performScrollTo().assertIsDisplayed()
                 onNodeWithContentDescription(MANAGE_TILES_RESET_ICON_TAG).performScrollTo().assertIsDisplayed()
                 onNodeWithTag(MANAGE_TILES_SUBMIT_TAG).performScrollTo().assertIsEnabled()
@@ -129,7 +130,7 @@ class ManageTilesTest {
     @Test
     fun `Given submit enabled when clicking submit then onSubmit is triggered`() {
         composeTestRule.apply {
-            testScreen(multipleServersState) {
+            testScreen(multipleServersState, submitEnabled = true) {
                 onNodeWithTag(MANAGE_TILES_SUBMIT_TAG).performScrollTo().performClick()
                 assertTrue(submitted)
             }
@@ -152,6 +153,7 @@ class ManageTilesTest {
 
     private fun AndroidComposeTestRule<*, *>.testScreen(
         state: ManageTilesState,
+        submitEnabled: Boolean = false,
         dsl: TestHelper.() -> Unit,
     ) {
         TestHelper().apply {
@@ -159,7 +161,7 @@ class ManageTilesTest {
                 ManageTiles(
                     snackbarHostState = remember { SnackbarHostState() },
                     state = state,
-                    submitEnabled = false,
+                    submitEnabled = submitEnabled,
                     onTileSelected = { tileSelected = it },
                     onServerSelected = { serverSelected = it },
                     onTileLabelChange = { tileLabel = it },
@@ -192,8 +194,8 @@ class ManageTilesTest {
                 TileSlot(id = "tile_2", name = "Tile 2"),
             ),
             selectedTileId = "tile_1",
-            servers = emptyList(),
-            selectedServerId = 0,
+            servers = listOf(fakeServer(id = 1, name = "Home")),
+            selectedServerId = 1,
             tileLabel = "",
             tileSubtitle = "",
             selectedEntityId = "",
@@ -209,7 +211,12 @@ class ManageTilesTest {
                 fakeServer(id = 1, name = "Home"),
                 fakeServer(id = 2, name = "Vacation home"),
             ),
+            serversDropdownItems = listOf(
+                HADropdownItem(key = 1, label = "Home"),
+                HADropdownItem(key = 2, label = "Vacation home"),
+            ),
             selectedServerId = 1,
+            selectedIconId = "mdi:home",
             tileLabel = "Living room",
             selectedEntityId = "light.living_room",
             submitButtonLabel = commonR.string.tile_save,

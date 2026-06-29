@@ -130,7 +130,7 @@ class ManageTilesViewModelTest {
             advanceUntilIdle()
 
             assertEquals(viewModel.slots[1].id, viewModel.state.value.selectedTileId)
-            assertEquals(commonR.string.tile_data_missing, snackbar.awaitItem())
+            assertEquals(application.getString(commonR.string.tile_data_missing), snackbar.awaitItem())
             snackbar.cancelAndConsumeRemainingEvents()
         }
     }
@@ -299,7 +299,7 @@ class ManageTilesViewModelTest {
                     },
                 )
             }
-            assertEquals(commonR.string.tile_updated, snackbar.awaitItem())
+            assertEquals(application.getString(commonR.string.tile_updated), snackbar.awaitItem())
             snackbar.cancelAndConsumeRemainingEvents()
         }
     }
