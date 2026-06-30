@@ -68,8 +68,6 @@ internal class SensorRepositoryImpl @Inject constructor(
         return count
     }
 
-    // Upsert: a single statement that inserts the row when absent and overwrites it when present,
-    // matching the catalog model where a sensor always "exists" and has no separate create step.
     override suspend fun update(sensor: Sensor) = dao.upsert(sensor)
 
     override suspend fun setSensorEnabled(sensorId: String, serverIds: List<Int>, enabled: Boolean) =

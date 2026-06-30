@@ -23,11 +23,11 @@ class SensorRepositoryImplTest {
     private val dao: SensorDao = mockk(relaxed = true)
     private val serverDao: ServerDao = mockk(relaxed = true)
 
-    private val catalog = setOf(
+    private val basicSensors = setOf(
         SensorManager.BasicSensor(id = "last_update", type = "sensor", enabledByDefault = true),
         SensorManager.BasicSensor(id = "app_inactive", type = "sensor", enabledByDefault = false),
     )
-    private val repository: SensorRepository = SensorRepositoryImpl(dao, serverDao, catalog)
+    private val repository: SensorRepository = SensorRepositoryImpl(dao, serverDao, basicSensors)
 
     private fun serverMock(id: Int): Server = mockk<Server>(relaxed = true).also { every { it.id } returns id }
 
@@ -38,13 +38,13 @@ class SensorRepositoryImplTest {
 
         val result = repository.get("last_update", 1)
 
-        // Stored row wins even though the catalog marks last_update enabled-by-default.
+        // Stored row wins even though the basic sensor marks last_update enabled-by-default.
         assertEquals(stored, result)
         coVerify(exactly = 0) { dao.upsert(any()) }
     }
 
     @Test
-    fun `Given no row when get by id and server then returns catalog default without writing`() = runTest {
+    fun `Given no row when get by id and server then returns basic sensor default without writing`() = runTest {
         coEvery { dao.get("last_update", 1) } returns null
 
         val result = repository.get("last_update", 1)
@@ -63,7 +63,7 @@ class SensorRepositoryImplTest {
     }
 
     @Test
-    fun `Given a sensor absent from the catalog and no row when get then fails fast and returns null`() = runTest {
+    fun `Given a sensor absent from the basic sensor set and no row when get then fails fast and returns null`() = runTest {
         coEvery { dao.get("unknown", 1) } returns null
         var throwableCaptured: Throwable? = null
         FailFast.setHandler { throwable, _ -> throwableCaptured = throwable }
@@ -76,7 +76,7 @@ class SensorRepositoryImplTest {
     }
 
     @Test
-    fun `Given get by id then configured servers without a row get a catalog default`() = runTest {
+    fun `Given get by id then configured servers without a row get a basic sensor default`() = runTest {
         coEvery { serverDao.getAll() } returns listOf(serverMock(1), serverMock(2))
         coEvery { dao.get("last_update") } returns listOf(Sensor("last_update", 1, enabled = false, state = "on"))
 
@@ -92,7 +92,7 @@ class SensorRepositoryImplTest {
     }
 
     @Test
-    fun `Given no row when getFull by server then returns catalog default with empty attributes`() = runTest {
+    fun `Given no row when getFull by server then returns basic sensor default with empty attributes`() = runTest {
         coEvery { dao.getFull("last_update", 1) } returns emptyMap()
 
         val result = repository.getFull("last_update", 1)
@@ -112,7 +112,7 @@ class SensorRepositoryImplTest {
     }
 
     @Test
-    fun `Given getFull by id then configured servers without a row get a catalog default with no attributes`() = runTest {
+    fun `Given getFull by id then configured servers without a row get a basic sensor default with no attributes`() = runTest {
         coEvery { serverDao.getAll() } returns listOf(serverMock(1), serverMock(2))
         val stored = Sensor("last_update", 1, enabled = false, state = "on")
         val storedAttrs = listOf(Attribute("last_update", "k", "v", "string"))
@@ -131,7 +131,7 @@ class SensorRepositoryImplTest {
     }
 
     @Test
-    fun `Given getFullFlow then configured servers without a row get a catalog default`() = runTest {
+    fun `Given getFullFlow then configured servers without a row get a basic sensor default`() = runTest {
         every { serverDao.getAllFlow() } returns flowOf(listOf(serverMock(1), serverMock(2)))
         val stored = Sensor("last_update", 1, enabled = false, state = "on")
         val storedAttrs = listOf(Attribute("last_update", "k", "v", "string"))
@@ -166,7 +166,7 @@ class SensorRepositoryImplTest {
     }
 
     @Test
-    fun `Given getAllFlow then emits every catalog sensor per configured server, stored or defaulted`() = runTest {
+    fun `Given getAllFlow then emits every basic sensor per configured server, stored or defaulted`() = runTest {
         every { dao.getAllFlow() } returns flowOf(listOf(Sensor("last_update", 1, enabled = false, state = "on")))
         every { serverDao.getAllFlow() } returns flowOf(listOf(serverMock(1), serverMock(2)))
 
@@ -174,7 +174,7 @@ class SensorRepositoryImplTest {
             val emitted = awaitItem().associateBy { it.id to it.serverId }
             // Stored row preserved...
             assertEquals(Sensor("last_update", 1, enabled = false, state = "on"), emitted["last_update" to 1])
-            // ...and defaults filled in for the other catalog/server combinations.
+            // ...and defaults filled in for the other basic sensor/server combinations.
             assertEquals(Sensor("last_update", 2, enabled = true, state = ""), emitted["last_update" to 2])
             assertEquals(Sensor("app_inactive", 1, enabled = false, state = ""), emitted["app_inactive" to 1])
             assertEquals(Sensor("app_inactive", 2, enabled = false, state = ""), emitted["app_inactive" to 2])
@@ -213,7 +213,7 @@ class SensorRepositoryImplTest {
     }
 
     @Test
-    fun `Given getEnabledCount then counts effective-enabled across servers including catalog defaults`() = runTest {
+    fun `Given getEnabledCount then counts effective-enabled across servers including basic sensor defaults`() = runTest {
         coEvery { serverDao.getAll() } returns listOf(serverMock(1), serverMock(2))
         // Server 1 has no rows; server 2 has app_inactive explicitly enabled.
         coEvery { dao.getAll() } returns listOf(Sensor("app_inactive", 2, enabled = true, state = ""))
@@ -242,7 +242,7 @@ class SensorRepositoryImplTest {
         coEvery { dao.getAll() } returns listOf(
             // Orphan row for a server that is no longer configured.
             Sensor("app_inactive", 99, enabled = true, state = ""),
-            // Row for a sensor absent from the catalog.
+            // Row for a sensor absent from the basic sensor.
             Sensor("unknown", 1, enabled = true, state = ""),
         )
 
