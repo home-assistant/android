@@ -84,10 +84,7 @@ class LinkActivity : BaseActivity() {
         when (event) {
             LinkNavigationEvent.Finish -> Unit
             is LinkNavigationEvent.OpenInvitation -> startLaunchInvitation(event.serverUrl)
-            is LinkNavigationEvent.NavigateToWebView -> startLaunchWithNavigateTo(
-                FrontendTarget.fromRawPath(event.path),
-                event.serverId,
-            )
+            is LinkNavigationEvent.NavigateToWebView -> startLaunchWithNavigateTo(event.target, event.serverId)
         }
         finish()
     }
@@ -131,7 +128,7 @@ private fun LinkActivityScreenPreview() {
                     ServerChooserItem(serverId = 1, userName = "Alice Smith", serverName = "Home"),
                     ServerChooserItem(serverId = 2, userName = "Bob", serverName = "Friends home"),
                 ),
-                path = "/lovelace",
+                target = FrontendTarget.Path("/lovelace"),
             ),
             onServerSelected = {},
             onServerChooserDismissed = {},

@@ -86,6 +86,7 @@ import androidx.webkit.WebViewFeature
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.WIPFeature
 import io.homeassistant.companion.android.assist.AssistActivity
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
@@ -131,9 +132,11 @@ import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.externalBusCallback
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.isServerSupportingExternalAppV2
 import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.improv.ui.ImprovPermissionDialog
 import io.homeassistant.companion.android.improv.ui.ImprovSetupDialog
 import io.homeassistant.companion.android.launch.LaunchActivity
+import io.homeassistant.companion.android.launch.startLaunchWithNavigateTo
 import io.homeassistant.companion.android.nfc.WriteNfcTag
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
@@ -379,6 +382,20 @@ class WebViewActivity :
         }
 
         super.onCreate(savedInstanceState)
+
+        // Legacy shortcuts launch this activity directly with a path and/or server extra. Under the
+        // V2 frontend, redirect them to the navigate deep link so they open in FrontendScreen, then
+        // close this activity. The shortcuts themselves are rewritten to the deep-link format by the
+        // startup migration in HomeAssistantApplication; this only covers a direct launch that slips
+        // through. KEEP this redirect when migrating away from WebViewActivity: whatever component
+        // replaces it as the legacy shortcut target must keep doing this, otherwise shortcuts break.
+        if (WIPFeature.USE_FRONTEND_V2 && (intent.hasExtra(EXTRA_PATH) || intent.hasExtra(EXTRA_SERVER))) {
+            val target = intent.getStringExtra(EXTRA_PATH)?.let(FrontendTarget::fromRawPath) ?: FrontendTarget.Default
+            val serverId = intent.getIntExtra(EXTRA_SERVER, ServerManager.SERVER_ID_ACTIVE)
+            startLaunchWithNavigateTo(target, serverId)
+            finish()
+            return
+        }
 
         maybeRequestLocalNetworkPermission()
 
