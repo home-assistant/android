@@ -238,7 +238,7 @@ class AudioSensorManager : SensorManager {
             updateVolumeAccessibility(context, audioManager)
         }
         if (SdkVersion.isAtLeast(Build.VERSION_CODES.CINNAMON_BUN)) {
-            updateVolumeAssistant(audioManager)
+            updateVolumeAssistant(context, audioManager)
         }
     }
 
@@ -437,8 +437,8 @@ class AudioSensorManager : SensorManager {
     }
 
     @RequiresApi(Build.VERSION_CODES.CINNAMON_BUN)
-    private suspend fun updateVolumeAssistant(audioManager: AudioManager) {
-        updateVolumeSensor(audioManager, volAssistant, AudioManager.STREAM_ASSISTANT)
+    private suspend fun updateVolumeAssistant(context: Context, audioManager: AudioManager) {
+        updateVolumeSensor(context, audioManager, volAssistant, AudioManager.STREAM_ASSISTANT)
     }
 
     private suspend fun updateVolumeSensor(
