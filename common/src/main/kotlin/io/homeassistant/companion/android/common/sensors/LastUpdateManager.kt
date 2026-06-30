@@ -6,8 +6,10 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import javax.inject.Inject
+import javax.inject.Singleton
 import timber.log.Timber
 
+@Singleton
 class LastUpdateManager @Inject constructor(
     @ApplicationContext override val applicationContext: Context,
     override val sensorRepository: SensorRepository,

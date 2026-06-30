@@ -7,9 +7,11 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import java.io.File
 import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.math.roundToInt
 import timber.log.Timber
 
+@Singleton
 class StorageSensorManager @Inject constructor(
     @ApplicationContext override val applicationContext: Context,
     override val sensorRepository: SensorRepository,

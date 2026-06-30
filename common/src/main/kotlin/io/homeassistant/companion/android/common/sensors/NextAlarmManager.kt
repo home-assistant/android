@@ -17,8 +17,10 @@ import java.util.GregorianCalendar
 import java.util.Locale
 import java.util.TimeZone
 import javax.inject.Inject
+import javax.inject.Singleton
 import timber.log.Timber
 
+@Singleton
 class NextAlarmManager @Inject constructor(
     @ApplicationContext override val applicationContext: Context,
     override val sensorRepository: SensorRepository,

@@ -11,7 +11,9 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.util.QuestUtil
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class QuestSensorManager @Inject constructor(
     @ApplicationContext override val applicationContext: Context,
     override val sensorRepository: SensorRepository,

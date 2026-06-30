@@ -12,8 +12,10 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.SdkVersion
 import java.math.RoundingMode
+import javax.inject.Singleton
 import timber.log.Timber
 
+@Singleton
 abstract class AppSensorManagerBase(
     override val applicationContext: Context,
     override val sensorRepository: SensorRepository,

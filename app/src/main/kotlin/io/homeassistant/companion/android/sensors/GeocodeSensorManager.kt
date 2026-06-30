@@ -21,6 +21,7 @@ import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import io.homeassistant.companion.android.location.getLastLocation
 import io.homeassistant.companion.android.sensors.GeocodeSensorManager.Companion.LOCATION_OUTDATED_THRESHOLD
 import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -49,6 +50,8 @@ private val GPS_ROLLOVER_WEEKS1024 = (7 * 1024).days
  */
 private val TIME_INACCURACY_FACTOR = 10.seconds
 private const val SETTING_ACCURACY = "geocode_minimum_accuracy"
+
+@Singleton
 class GeocodeSensorManager @Inject constructor(
     @ApplicationContext override val applicationContext: Context,
     override val sensorRepository: SensorRepository,
