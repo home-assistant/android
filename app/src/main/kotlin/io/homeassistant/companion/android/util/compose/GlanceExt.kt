@@ -9,7 +9,6 @@ import androidx.glance.action.Action
 import androidx.glance.appwidget.action.actionStartActivity
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
-import io.homeassistant.companion.android.webview.WebViewActivity
 
 @Composable
 @ReadOnlyComposable
@@ -17,7 +16,7 @@ fun glanceStringResource(@StringRes id: Int, vararg arguments: Any): String =
     LocalContext.current.getString(id, *arguments)
 
 /**
- * Get an Action that will open the [WebViewActivity] for the given [path]
+ * Get an Action that will open the frontend for the given [path]
  */
 @Composable
 fun actionStartWebView(path: String, serverId: Int): Action {

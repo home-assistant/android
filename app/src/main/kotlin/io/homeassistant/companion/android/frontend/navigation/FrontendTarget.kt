@@ -35,7 +35,7 @@ sealed interface FrontendTarget : Parcelable {
         }
 
         /**
-         * Serializes this target back to the raw path string, persisted
+         * Serializes this target back to the raw path string
          * Returns `null` for [FrontendTarget.Default].
          */
         internal fun FrontendTarget.toRawPath(): String? = when (this) {
