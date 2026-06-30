@@ -256,6 +256,15 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                 val canBeRegistered = hasSensor &&
                     basicSensor.type.isNotBlank() &&
                     basicSensor.statelessIcon.isNotBlank()
+                val hasPermission = manager.checkPermission(context, basicSensor.id)
+
+                // A sensor enabled in the database but missing its runtime permission isn't really
+                // enabled. Persist that so the reconciliation below unregisters it on the server instead
+                // of leaving a stale entity behind.
+                if (sensor.enabled && !hasPermission) {
+                    sensor.enabled = false
+                    sensorRepository.update(sensor)
+                }
 
                 // Register sensor and/or update the sensor enabled state. Priority is:
                 // 1. There is a new sensor or change in enabled state according to the app
@@ -295,7 +304,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                         if (!serverIsTrusted) { // Core changed, but app doesn't trust server so 'override'
                             registerSensor(context, serverManager, fullSensor, basicSensor)
                         } else if (sensorCoreEnabled) { // App disabled, should enable
-                            if (manager.checkPermission(context.applicationContext, basicSensor.id)) {
+                            if (hasPermission) {
                                 sensor.enabled = true
                                 sensor.registered = true
                             } else {
