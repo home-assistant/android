@@ -29,7 +29,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -54,6 +53,7 @@ import io.homeassistant.companion.android.common.compose.theme.LocalHAColorSchem
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.settings.qs.ManageTilesState
 import io.homeassistant.companion.android.settings.qs.ManageTilesViewModel
+import io.homeassistant.companion.android.settings.qs.TileInfoSnackbarEvent
 import io.homeassistant.companion.android.settings.qs.TileSlot
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import io.homeassistant.companion.android.util.icondialog.IconDialog
@@ -75,12 +75,20 @@ const val MANAGE_TILES_AUTH_SWITCH_TAG = "manage_tiles_auth_switch"
 internal fun ManageTiles(viewModel: ManageTilesViewModel, modifier: Modifier = Modifier) {
     val snackbarHostState = remember { SnackbarHostState() }
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val context = LocalContext.current
     var showIconDialog by remember { mutableStateOf(false) }
 
+    val missingDataMessage = stringResource(R.string.tile_data_missing)
+    val addedMessage = stringResource(R.string.tile_added)
+    val updatedMessage = stringResource(R.string.tile_updated)
+
     LaunchedEffect(Unit) {
-        viewModel.tileInfoSnackbar.onEach { resId ->
-            snackbarHostState.showSnackbar(context.getString(resId))
+        viewModel.tileInfoSnackbar.onEach { event ->
+            val message = when (event) {
+                TileInfoSnackbarEvent.DataMissing -> missingDataMessage
+                TileInfoSnackbarEvent.Added -> addedMessage
+                TileInfoSnackbarEvent.Updated -> updatedMessage
+            }
+            snackbarHostState.showSnackbar(message)
         }.launchIn(this)
     }
 

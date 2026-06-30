@@ -6,7 +6,6 @@ import android.app.StatusBarManager
 import android.content.ComponentName
 import android.graphics.drawable.Icon
 import android.os.Build
-import androidx.compose.runtime.Stable
 import androidx.core.content.getSystemService
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
@@ -30,7 +29,6 @@ import io.homeassistant.companion.android.database.qs.TileEntity
 import io.homeassistant.companion.android.database.qs.getHighestInUse
 import io.homeassistant.companion.android.database.qs.isSetup
 import io.homeassistant.companion.android.database.qs.numberedId
-import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.qs.Tile10Service
 import io.homeassistant.companion.android.qs.Tile11Service
 import io.homeassistant.companion.android.qs.Tile12Service
@@ -87,43 +85,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
-
-@Stable
-internal data class ManageTilesState(
-    val tileSlots: List<TileSlot>,
-    val selectedTileId: String = "",
-    val servers: List<Server> = emptyList(),
-    val sortedEntities: List<Entity> = emptyList(),
-    val entityRegistry: List<EntityRegistryResponse> = emptyList(),
-    val deviceRegistry: List<DeviceRegistryResponse> = emptyList(),
-    val areaRegistry: List<AreaRegistryResponse> = emptyList(),
-    val selectedServerId: Int = ServerManager.SERVER_ID_ACTIVE,
-    val selectedIconId: String? = null,
-    val selectedIcon: IIcon? = null,
-    val selectedEntityId: String = "",
-    val tileLabel: String = "",
-    val tileSubtitle: String? = null,
-    val submitButtonLabel: Int = commonR.string.tile_save,
-    val selectedShouldVibrate: Boolean = false,
-    val tileAuthRequired: Boolean = false,
-    val tileSlotsDropdownItems: List<HADropdownItem<String>> = tileSlots.map {
-        HADropdownItem(key = it.id, label = it.name)
-    },
-    val serversDropdownItems: List<HADropdownItem<Int>> = servers.map {
-        HADropdownItem(key = it.id, label = it.friendlyName)
-    },
-) {
-    val showSubtitle = SdkVersion.isAtLeast(Build.VERSION_CODES.Q)
-
-    val showServerSelector get() = servers.size > 1 ||
-        servers.none { server -> server.id == selectedServerId }
-
-    val showResetIcon get() = selectedIconId != null && selectedEntityId.isNotBlank()
-
-    val submitEnabled get() = tileLabel.isNotBlank() &&
-        selectedServerId in servers.map { it.id } &&
-        selectedEntityId in sortedEntities.map { it.entityId }
-}
 
 @HiltViewModel
 internal class ManageTilesViewModel @Inject constructor(
@@ -191,15 +152,15 @@ internal class ManageTilesViewModel @Inject constructor(
     )
     internal val state: StateFlow<ManageTilesState> = _state.asStateFlow()
 
-    private var selectedTileId = 0
-    private var selectedTileAdded = false
+    private var selectedTileEntityId = 0
+    private var selectedTileEntityAdded = false
 
     private val entities = mutableMapOf<Int, List<Entity>>()
     private val entityRegistries = mutableMapOf<Int, List<EntityRegistryResponse>>()
     private val deviceRegistries = mutableMapOf<Int, List<DeviceRegistryResponse>>()
     private val areaRegistries = mutableMapOf<Int, List<AreaRegistryResponse>>()
 
-    private val _tileInfoSnackbar = MutableSharedFlow<Int>(replay = 1)
+    private val _tileInfoSnackbar = MutableSharedFlow<TileInfoSnackbarEvent>(replay = 1)
     var tileInfoSnackbar = _tileInfoSnackbar.asSharedFlow()
 
     init {
@@ -208,7 +169,7 @@ internal class ManageTilesViewModel @Inject constructor(
             selectTile(id)
             viewModelScope.launch {
                 // A deeplink only happens when tapping on a tile that hasn't been setup
-                _tileInfoSnackbar.emit(commonR.string.tile_data_missing)
+                _tileInfoSnackbar.emit(TileInfoSnackbarEvent.DataMissing)
             }
         } ?: run {
             selectTile()
@@ -242,8 +203,8 @@ internal class ManageTilesViewModel @Inject constructor(
         viewModelScope.launch {
             val tile = slots.find { it.id == id } ?: slots.first()
             val entity = tileDao.get(tile.id)
-            selectedTileId = entity?.id ?: 0
-            selectedTileAdded = entity?.added ?: false
+            selectedTileEntityId = entity?.id ?: 0
+            selectedTileEntityAdded = entity?.added ?: false
             val serverId = if (entity?.serverId == null || entity.serverId == 0) {
                 serverManager.getServer()?.id ?: 0
             } else {
@@ -276,7 +237,9 @@ internal class ManageTilesViewModel @Inject constructor(
         val resetEntity =
             serverId != current.selectedServerId &&
                 entities[serverId]?.none { it.entityId == current.selectedEntityId } == true
-        _state.update { it.copy(selectedServerId = serverId) }
+        _state.update {
+            it.copy(selectedServerId = serverId)
+        }
         loadEntities(serverId)
         selectEntityId(if (resetEntity) "" else current.selectedEntityId)
     }
@@ -298,10 +261,11 @@ internal class ManageTilesViewModel @Inject constructor(
     }
 
     fun selectIcon(icon: IIcon?) {
-        val current = _state.value
-        val resolvedIcon =
-            icon ?: current.sortedEntities.firstOrNull { it.entityId == current.selectedEntityId }?.getIcon(app)
-        _state.update { it.copy(selectedIconId = icon?.mdiName, selectedIcon = resolvedIcon) }
+        _state.update {
+            val resolvedIcon =
+                icon ?: it.sortedEntities.firstOrNull { entity -> entity.entityId == it.selectedEntityId }?.getIcon(app)
+            it.copy(selectedIconId = icon?.mdiName, selectedIcon = resolvedIcon)
+        }
     }
 
     private fun updateExistingTileFields(currentTile: TileEntity) {
@@ -321,10 +285,10 @@ internal class ManageTilesViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val current = _state.value
             val tileData = TileEntity(
-                id = selectedTileId,
+                id = selectedTileEntityId,
                 tileId = current.selectedTileId,
                 serverId = current.selectedServerId,
-                added = selectedTileAdded,
+                added = selectedTileEntityAdded,
                 iconName = current.selectedIconId,
                 entityId = current.selectedEntityId,
                 label = current.tileLabel,
@@ -337,7 +301,7 @@ internal class ManageTilesViewModel @Inject constructor(
             val highestInUse = tileDao.getHighestInUse()?.numberedId ?: 0
             updateActiveTileServices(highestInUse, app)
 
-            if (SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) && !selectedTileAdded) {
+            if (SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) && !selectedTileEntityAdded) {
                 val statusBarManager = app.getSystemService<StatusBarManager>()
                 val service = idToTileService[current.selectedTileId] ?: Tile1Service::class.java
                 val icon = current.selectedIcon?.let {
@@ -356,16 +320,16 @@ internal class ManageTilesViewModel @Inject constructor(
                         if (result == StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED ||
                             result == StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED
                         ) {
-                            _tileInfoSnackbar.emit(commonR.string.tile_added)
-                            selectedTileAdded = true
+                            _tileInfoSnackbar.emit(TileInfoSnackbarEvent.Added)
+                            selectedTileEntityAdded = true
                             _state.update { it.copy(submitButtonLabel = commonR.string.tile_save) }
                         } else { // Silently ignore error, database was still updated
-                            _tileInfoSnackbar.emit(commonR.string.tile_updated)
+                            _tileInfoSnackbar.emit(TileInfoSnackbarEvent.Updated)
                         }
                     }
                 }
             } else {
-                _tileInfoSnackbar.emit(commonR.string.tile_updated)
+                _tileInfoSnackbar.emit(TileInfoSnackbarEvent.Updated)
             }
         }
     }
