@@ -39,9 +39,9 @@ import org.robolectric.annotation.Config
 /**
  * Tests for [ManageTilesViewModel].
  *
- * Note: the ViewModel's init block dispatches to [kotlinx.coroutines.Dispatchers.IO] with a
+ * Note: the ViewModel's init block dispatches to [kotlinx.coroutines.Dispatchers.Default] with a
  * hardcoded dispatcher. [serverManager.servers] is parked via [kotlinx.coroutines.awaitCancellation]
- * so the IO block suspends indefinitely and never reaches the `withContext(Main){ selectTile() }`
+ * so the Default block suspends indefinitely and never reaches the `withContext(Main){ selectTile() }`
  * re-invocation that would otherwise clobber state set by individual tests.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -112,7 +112,7 @@ class ManageTilesViewModelTest {
     )
 
     @Test
-    fun `Given no deeplink id when created then first tile is selected`() = runTest {
+    fun `Given no saved tile id when created then first tile is selected`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
@@ -121,7 +121,7 @@ class ManageTilesViewModelTest {
     }
 
     @Test
-    fun `Given deeplink id when created then that tile is selected and tile_data_missing is emitted`() = runTest {
+    fun `Given a saved tile id when created then that tile is selected and tile_data_missing is emitted`() = runTest {
         val targetId = slots[1].id
 
         turbineScope {
@@ -130,7 +130,7 @@ class ManageTilesViewModelTest {
             advanceUntilIdle()
 
             assertEquals(viewModel.slots[1].id, viewModel.state.value.selectedTileId)
-            assertEquals(application.getString(commonR.string.tile_data_missing), snackbar.awaitItem())
+            assertEquals(commonR.string.tile_data_missing, snackbar.awaitItem())
             snackbar.cancelAndConsumeRemainingEvents()
         }
     }
@@ -299,7 +299,7 @@ class ManageTilesViewModelTest {
                     },
                 )
             }
-            assertEquals(application.getString(commonR.string.tile_updated), snackbar.awaitItem())
+            assertEquals(commonR.string.tile_updated, snackbar.awaitItem())
             snackbar.cancelAndConsumeRemainingEvents()
         }
     }

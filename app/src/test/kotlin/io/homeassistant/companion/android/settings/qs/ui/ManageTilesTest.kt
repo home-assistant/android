@@ -4,12 +4,12 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
@@ -48,10 +48,10 @@ class ManageTilesTest {
     fun `Given add tile state when displayed then optional sections are hidden and submit is disabled`() {
         composeTestRule.apply {
             testScreen(addTileState) {
-                onNodeWithTag(MANAGE_TILES_SERVER_DROPDOWN_TAG).assertIsNotDisplayed()
-                onNodeWithContentDescription(MANAGE_TILES_RESET_ICON_TAG).assertIsNotDisplayed()
-                onNodeWithTag(MANAGE_TILES_SUBTITLE_TAG).performScrollTo().assertIsDisplayed()
-                onNodeWithTag(MANAGE_TILES_SUBMIT_TAG).performScrollTo().assertIsNotEnabled()
+                onNodeWithText(activity.getString(commonR.string.tile_server)).assertDoesNotExist()
+                onNodeWithContentDescription(activity.getString(commonR.string.tile_reset_icon)).assertDoesNotExist()
+                onNodeWithText(activity.getString(commonR.string.tile_subtitle)).performScrollTo().assertIsDisplayed()
+                onNodeWithText(activity.getString(commonR.string.tile_add)).performScrollTo().assertIsNotEnabled()
             }
         }
     }
@@ -60,9 +60,9 @@ class ManageTilesTest {
     fun `Given multiple servers state when displayed then server selector and reset are shown and submit is enabled`() {
         composeTestRule.apply {
             testScreen(multipleServersState, submitEnabled = true) {
-                onNodeWithTag(MANAGE_TILES_SERVER_DROPDOWN_TAG).performScrollTo().assertIsDisplayed()
-                onNodeWithContentDescription(MANAGE_TILES_RESET_ICON_TAG).performScrollTo().assertIsDisplayed()
-                onNodeWithTag(MANAGE_TILES_SUBMIT_TAG).performScrollTo().assertIsEnabled()
+                onNodeWithText(activity.getString(commonR.string.tile_server)).performScrollTo().assertIsDisplayed()
+                onNodeWithContentDescription(activity.getString(commonR.string.tile_reset_icon)).performScrollTo().assertIsDisplayed()
+                onNodeWithText(activity.getString(commonR.string.tile_save)).performScrollTo().assertIsEnabled()
             }
         }
     }
@@ -71,7 +71,7 @@ class ManageTilesTest {
     fun `Given screen when typing label then onTileLabelChange is triggered`() {
         composeTestRule.apply {
             testScreen(addTileState) {
-                onNodeWithTag(MANAGE_TILES_LABEL_TAG).performScrollTo().performTextInput("Living room")
+                onNodeWithText(activity.getString(commonR.string.tile_label)).performScrollTo().performTextInput("Living room")
                 assertEquals("Living room", tileLabel)
             }
         }
@@ -81,7 +81,7 @@ class ManageTilesTest {
     fun `Given screen when typing subtitle then onTileSubtitleChange is triggered`() {
         composeTestRule.apply {
             testScreen(addTileState) {
-                onNodeWithTag(MANAGE_TILES_SUBTITLE_TAG).performScrollTo().performTextInput("Lights")
+                onNodeWithText(activity.getString(commonR.string.tile_subtitle)).performScrollTo().performTextInput("Lights")
                 assertEquals("Lights", tileSubtitle)
             }
         }
@@ -111,7 +111,7 @@ class ManageTilesTest {
     fun `Given screen when clicking icon button then onShowIconDialog is triggered`() {
         composeTestRule.apply {
             testScreen(addTileState) {
-                onNodeWithTag(MANAGE_TILES_ICON_BUTTON_TAG).performScrollTo().performClick()
+                onNodeWithContentDescription(activity.getString(commonR.string.tile_icon)).performScrollTo().performClick()
                 assertTrue(iconDialogShown)
             }
         }
@@ -121,7 +121,7 @@ class ManageTilesTest {
     fun `Given reset icon shown when clicking reset then onResetIcon is triggered`() {
         composeTestRule.apply {
             testScreen(multipleServersState) {
-                onNodeWithContentDescription(MANAGE_TILES_RESET_ICON_TAG).performScrollTo().performClick()
+                onNodeWithContentDescription(activity.getString(commonR.string.tile_reset_icon)).performScrollTo().performClick()
                 assertTrue(iconReset)
             }
         }
@@ -131,7 +131,7 @@ class ManageTilesTest {
     fun `Given submit enabled when clicking submit then onSubmit is triggered`() {
         composeTestRule.apply {
             testScreen(multipleServersState, submitEnabled = true) {
-                onNodeWithTag(MANAGE_TILES_SUBMIT_TAG).performScrollTo().performClick()
+                onNodeWithText(activity.getString(commonR.string.tile_save)).performScrollTo().performClick()
                 assertTrue(submitted)
             }
         }
