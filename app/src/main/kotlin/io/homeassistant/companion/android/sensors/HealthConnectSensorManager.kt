@@ -51,6 +51,7 @@ import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -878,8 +879,16 @@ class HealthConnectSensorManager @Inject constructor(
             return
         }
         val lastSleepRecord = sleepRecords.records.last()
-        val sleepRecordDuration = (lastSleepRecord.endTime.toEpochMilli() - lastSleepRecord.startTime.toEpochMilli())
-            .toDuration(DurationUnit.MILLISECONDS)
+        // Get duration based on the sleep stages, as some stages may be awake/out of bed (assumed awake).
+        // Don't convert to minutes until the end to avoid losing detail.
+        val sleepRecordDuration = lastSleepRecord.stages
+            .filter {
+                it.stage != SleepSessionRecord.STAGE_TYPE_AWAKE &&
+                    it.stage != SleepSessionRecord.STAGE_TYPE_AWAKE_IN_BED &&
+                    it.stage != SleepSessionRecord.STAGE_TYPE_OUT_OF_BED
+            }
+            .sumOf { Duration.between(it.startTime, it.endTime).seconds }
+            .toDuration(DurationUnit.SECONDS)
             .inWholeMinutes
         onSensorUpdated(
             sleepDuration,
@@ -887,6 +896,7 @@ class HealthConnectSensorManager @Inject constructor(
             sleepDuration.statelessIcon,
             attributes = mapOf(
                 "endTime" to lastSleepRecord.endTime,
+                "startTime" to lastSleepRecord.startTime,
                 "sources" to lastSleepRecord.metadata.dataOrigin.packageName,
             ),
         )
