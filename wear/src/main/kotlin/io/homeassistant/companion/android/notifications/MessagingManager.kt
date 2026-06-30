@@ -91,12 +91,12 @@ class MessagingManager @Inject constructor(
                     clearNotification(context, notificationData["tag"]!!)
                 }
                 message == DeviceCommandData.COMMAND_BEACON_MONITOR && allowCommands -> {
-                    if (!commandBeaconMonitor(context, notificationData, sensorRepository)) {
+                    if (!commandBeaconMonitor(notificationData, bluetoothSensorManager)) {
                         sendNotification(notificationData, now)
                     }
                 }
                 message == DeviceCommandData.COMMAND_BLE_TRANSMITTER && allowCommands -> {
-                    if (!commandBleTransmitter(context, notificationData, sensorRepository, bluetoothSensorManager)) {
+                    if (!commandBleTransmitter(notificationData, sensorRepository, bluetoothSensorManager)) {
                         sendNotification(notificationData)
                     }
                 }

@@ -4,14 +4,12 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
-import io.homeassistant.companion.android.common.sensors.SensorUpdateReceiver
+import io.homeassistant.companion.android.common.sensors.StopBeaconScanningReceiver
 import io.homeassistant.companion.android.common.util.CHANNEL_BEACON_MONITOR
 import io.homeassistant.companion.android.common.util.SdkVersion
 import kotlinx.coroutines.CoroutineScope
@@ -68,10 +66,7 @@ class MonitoringManager {
             scope.launch(Dispatchers.Main) {
                 beaconManager.getRegionViewModel(region).rangedBeacons.observeForever { beacons ->
                     if (beaconManager.isAnyConsumerBound) {
-                        haMonitor.setBeacons(
-                            context,
-                            beacons,
-                        )
+                        haMonitor.setBeacons(beacons)
                     }
                 }
             }
@@ -90,12 +85,10 @@ class MonitoringManager {
             val notifManager = context.getSystemService<NotificationManager>()!!
             notifManager.createNotificationChannel(channel)
         }
-        val stopScanningIntent = Intent(context, SensorUpdateReceiver::class.java)
-        stopScanningIntent.action = SensorReceiverBase.ACTION_STOP_BEACON_SCANNING
         val stopScanningPendingIntent = PendingIntent.getBroadcast(
             context,
             0,
-            stopScanningIntent,
+            StopBeaconScanningReceiver.stopScanningIntent(context),
             PendingIntent.FLAG_MUTABLE,
         )
         builder.addAction(0, context.getString(R.string.disable), stopScanningPendingIntent)

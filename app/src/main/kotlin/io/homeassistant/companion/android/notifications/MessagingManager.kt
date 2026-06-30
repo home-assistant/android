@@ -456,13 +456,13 @@ class MessagingManager @Inject constructor(
                         }
 
                         DeviceCommandData.COMMAND_BLE_TRANSMITTER -> {
-                            if (!commandBleTransmitter(context, jsonData, sensorRepository, bluetoothSensorManager)) {
+                            if (!commandBleTransmitter(jsonData, sensorRepository, bluetoothSensorManager)) {
                                 sendNotification(jsonData)
                             }
                         }
 
                         DeviceCommandData.COMMAND_BEACON_MONITOR -> {
-                            if (!commandBeaconMonitor(context, jsonData, sensorRepository)) {
+                            if (!commandBeaconMonitor(jsonData, bluetoothSensorManager)) {
                                 sendNotification(jsonData)
                             }
                         }
