@@ -10,15 +10,17 @@ import android.text.style.UnderlineSpan
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.DropdownMenu
-import androidx.compose.material.DropdownMenuItem
-import androidx.compose.material.OutlinedButton
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
-import androidx.compose.material.TextField
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,7 +31,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -44,6 +45,7 @@ import androidx.core.text.HtmlCompat.fromHtml
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.util.intervalToString
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
@@ -59,6 +61,7 @@ fun SettingsWearTemplateTile(
 ) {
     Scaffold(
         modifier = modifier,
+        containerColor = LocalHAColorScheme.current.colorSurfaceDefault,
         topBar = {
             SettingsWearTopAppBar(
                 title = { Text(stringResource(commonR.string.template_tile)) },
@@ -76,7 +79,7 @@ fun SettingsWearTemplateTile(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Image(
                     asset = CommunityMaterial.Icon3.cmd_timer_cog,
-                    colorFilter = ColorFilter.tint(colorResource(commonR.color.colorPrimary)),
+                    colorFilter = ColorFilter.tint(LocalHAColorScheme.current.colorTextPrimary),
                     modifier = Modifier
                         .height(24.dp)
                         .width(24.dp),
@@ -84,13 +87,17 @@ fun SettingsWearTemplateTile(
                 Text(
                     stringResource(commonR.string.refresh_interval),
                     modifier = Modifier.padding(start = 4.dp, end = 4.dp),
+                    color = LocalHAColorScheme.current.colorTextPrimary,
                 )
                 Box {
                     var dropdownExpanded by remember { mutableStateOf(false) }
                     OutlinedButton(
                         onClick = { dropdownExpanded = true },
                     ) {
-                        Text(intervalToString(LocalContext.current, refreshInterval))
+                        Text(
+                            intervalToString(LocalContext.current, refreshInterval),
+                            color = LocalHAColorScheme.current.colorTextPrimary,
+                        )
                     }
                     DropdownMenu(
                         expanded = dropdownExpanded,
@@ -101,29 +108,39 @@ fun SettingsWearTemplateTile(
                             5 * 60 * 60, 10 * 60 * 60, 24 * 60 * 60,
                         )
                         for (option in options) {
-                            DropdownMenuItem(onClick = {
-                                onRefreshIntervalChanged(option)
-                                dropdownExpanded = false
-                            }) {
-                                Text(intervalToString(LocalContext.current, option))
-                            }
+                            DropdownMenuItem(
+                                text = {
+                                    Text(intervalToString(LocalContext.current, option))
+                                },
+                                onClick = {
+                                    onRefreshIntervalChanged(option)
+                                    dropdownExpanded = false
+                                },
+                            )
                         }
                     }
                 }
             }
-            Text(stringResource(commonR.string.template_tile_help))
+            Text(
+                stringResource(commonR.string.template_tile_help),
+                color = LocalHAColorScheme.current.colorTextPrimary,
+                modifier = Modifier.padding(top = 8.dp),
+            )
             TextField(
                 value = template,
                 onValueChange = onContentChanged,
                 label = {
                     Text(stringResource(commonR.string.template_tile_content))
                 },
-                modifier = Modifier.padding(top = 8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
                 maxLines = 10,
             )
             Text(
-                parseHtml(renderedTemplate),
-                fontSize = 12.sp,
+                text = parseHtml(renderedTemplate),
+                style = MaterialTheme.typography.bodySmall,
+                color = LocalHAColorScheme.current.colorTextPrimary,
                 modifier = Modifier.padding(top = 8.dp),
             )
         }
