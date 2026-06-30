@@ -57,7 +57,7 @@ internal class SensorRepositoryImpl @Inject constructor(
         val defaultEnabledCount = enabledByDefaultById.count { (_, enabledByDefault) -> enabledByDefault }
         var count = serverIds.size * defaultEnabledCount
         for (row in dao.getAll()) {
-            // Skip rows that don't contribute to the effective count: sensors absent from the catalog
+            // Skip rows that don't contribute to the effective count: sensors that aren't annotated
             // don't exist, and rows for removed (non-configured) servers must not be counted.
             val enabledByDefault = enabledByDefaultById[row.id] ?: continue
             if (row.serverId !in serverIds) continue
@@ -113,13 +113,13 @@ internal class SensorRepositoryImpl @Inject constructor(
 
     /**
      * In-memory default state for ([id], [serverId]), or `null` when [id] has no backing
-     * `BasicSensor` in the catalog — meaning the sensor does not exist. That should never happen for
+     * `BasicSensor` - meaning the sensor does not exist. That should never happen for
      * a sensor the app actually queries, so it is also surfaced via [FailFast].
      */
     private fun defaultSensor(id: String, serverId: Int): Sensor? {
         val enabledByDefault = enabledByDefaultById[id]
         if (enabledByDefault == null) {
-            FailFast.fail { "No BasicSensor in the catalog for sensor id=$id" }
+            FailFast.fail { "No BasicSensor defined for sensor id=$id" }
             return null
         }
         return Sensor(id = id, serverId = serverId, enabled = enabledByDefault, state = "")
@@ -127,7 +127,7 @@ internal class SensorRepositoryImpl @Inject constructor(
 
     /**
      * Row-or-default state for [id], one entry per server in [serverIds] plus any server that
-     * already has a stored row, using [rows] where present and a catalog default otherwise. Empty
+     * already has a stored row, using [rows] where present and the sensor definition otherwise. Empty
      * when [id] isn't a known sensor (no rows and no catalog entry).
      */
     private fun sensorsByServer(id: String, rows: List<Sensor>, serverIds: Collection<Int>): List<Sensor> {
@@ -145,9 +145,9 @@ internal class SensorRepositoryImpl @Inject constructor(
         .associateWith { sensor -> existing[sensor] ?: emptyList() }
 
     /**
-     * Every catalog sensor across [serverIds], as its stored row in [rows] when present or a catalog
-     * default otherwise. Stored rows for sensors absent from the catalog are **not** surfaced — only
-     * catalog-backed sensors exist.
+     * Every defined sensor across [serverIds], as its stored row in [rows] when present or a the
+     * default otherwise. Stored rows for undefined sensors are **not** surfaced - only defined
+     * sensors exist.
      */
     private fun withDefaults(rows: List<Sensor>, serverIds: Collection<Int>): List<Sensor> {
         val byKey = rows.associateBy { it.id to it.serverId }
