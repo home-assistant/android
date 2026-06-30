@@ -35,7 +35,6 @@ import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.SdkVersion
-import io.homeassistant.companion.android.database.DatabaseEntryPoint
 import io.homeassistant.companion.android.database.location.LocationHistoryDao
 import io.homeassistant.companion.android.database.location.LocationHistoryItem
 import io.homeassistant.companion.android.database.location.LocationHistoryItemResult
@@ -206,8 +205,8 @@ class LocationSensorManager @Inject constructor(
             action = ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
         }
 
-        suspend fun setHighAccuracyModeSetting(context: Context, enabled: Boolean) {
-            DatabaseEntryPoint.resolve(context).sensorRepository().add(
+        suspend fun SensorRepository.setHighAccuracyModeSetting(enabled: Boolean) {
+            add(
                 SensorSetting(
                     backgroundLocation.id,
                     SETTING_HIGH_ACCURACY_MODE,
@@ -217,17 +216,8 @@ class LocationSensorManager @Inject constructor(
             )
         }
 
-        suspend fun getHighAccuracyModeIntervalSetting(context: Context): Int {
-            val sensorSettings = DatabaseEntryPoint.resolve(context).sensorRepository()
-                .getSettings(backgroundLocation.id)
-            return sensorSettings.firstOrNull {
-                it.name == SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL
-            }?.value?.toIntOrNull()
-                ?: DEFAULT_UPDATE_INTERVAL_HA_SECONDS
-        }
-
-        suspend fun setHighAccuracyModeIntervalSetting(context: Context, updateInterval: Int) {
-            DatabaseEntryPoint.resolve(context).sensorRepository().add(
+        suspend fun SensorRepository.setHighAccuracyModeIntervalSetting(updateInterval: Int) {
+            add(
                 SensorSetting(
                     backgroundLocation.id,
                     SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL,
@@ -264,7 +254,7 @@ class LocationSensorManager @Inject constructor(
                             }
                             forceHighAccuracyModeOn = turnOn
                             forceHighAccuracyModeOff = false
-                            setHighAccuracyModeSetting(applicationContext, turnOn)
+                            sensorRepository.setHighAccuracyModeSetting(turnOn)
                             setupBackgroundLocation()
                         }
 
@@ -277,7 +267,7 @@ class LocationSensorManager @Inject constructor(
 
                         MessagingManager.HIGH_ACCURACY_SET_UPDATE_INTERVAL -> {
                             if (lastHighAccuracyMode) {
-                                restartHighAccuracyService(getHighAccuracyModeIntervalSetting(applicationContext))
+                                restartHighAccuracyService(getHighAccuracyModeIntervalSetting())
                             }
                         }
                     }
@@ -286,6 +276,14 @@ class LocationSensorManager @Inject constructor(
                 else -> Timber.w("Unknown intent action: ${intent.action}!")
             }
         }
+    }
+
+    private suspend fun getHighAccuracyModeIntervalSetting(): Int {
+        val sensorSettings = sensorRepository.getSettings(backgroundLocation.id)
+        return sensorSettings.firstOrNull {
+            it.name == SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL
+        }?.value?.toIntOrNull()
+            ?: DEFAULT_UPDATE_INTERVAL_HA_SECONDS
     }
 
     private suspend fun setupLocationTracking() {
@@ -487,7 +485,7 @@ class LocationSensorManager @Inject constructor(
         if (updateIntervalHighAccuracySecondsInt < 5) {
             updateIntervalHighAccuracySecondsInt = DEFAULT_UPDATE_INTERVAL_HA_SECONDS
 
-            setHighAccuracyModeIntervalSetting(applicationContext, updateIntervalHighAccuracySecondsInt)
+            sensorRepository.setHighAccuracyModeIntervalSetting(updateIntervalHighAccuracySecondsInt)
         }
         return updateIntervalHighAccuracySecondsInt
     }

@@ -16,11 +16,12 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
-import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
+import io.homeassistant.companion.android.common.sensors.SensorReceiverBase.Companion.shouldDoFastUpdates
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.isAutomotive
+import io.homeassistant.companion.android.database.settings.SettingsDao
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -35,6 +36,7 @@ class ActivitySensorManager @Inject constructor(
     @ApplicationContext override val applicationContext: Context,
     override val sensorRepository: SensorRepository,
     override val serverManager: ServerManager,
+    private val settingsDao: SettingsDao,
 ) : SensorManager {
 
     companion object {
@@ -239,7 +241,7 @@ class ActivitySensorManager @Inject constructor(
             actReg.removeActivityUpdates(pendingIntent)
 
             Timber.d("Registering for activity updates.")
-            val fastUpdate = SensorReceiverBase.shouldDoFastUpdates(applicationContext)
+            val fastUpdate = settingsDao.shouldDoFastUpdates(applicationContext)
             try {
                 actReg.requestActivityUpdates(TimeUnit.MINUTES.toMillis(if (fastUpdate) 1 else 2), pendingIntent)
             } catch (e: Exception) {

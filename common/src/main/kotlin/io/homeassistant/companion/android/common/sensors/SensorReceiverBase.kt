@@ -18,14 +18,15 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
+import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager.Companion.enableDisableBeaconMonitor
 import io.homeassistant.companion.android.common.util.CHANNEL_SENSOR_SYNC
 import io.homeassistant.companion.android.common.util.SdkVersion
-import io.homeassistant.companion.android.database.DatabaseEntryPoint
 import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
 import io.homeassistant.companion.android.database.sensor.toSensorWithAttributes
 import io.homeassistant.companion.android.database.sensor.toSensorsWithAttributes
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
+import io.homeassistant.companion.android.database.settings.SettingsDao
 import java.io.IOException
 import java.net.ConnectException
 import java.net.SocketTimeoutException
@@ -49,8 +50,8 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         const val ACTION_STOP_BEACON_SCANNING = "io.homeassistant.companion.android.STOP_BEACON_SCANNING"
         const val EXTRA_SENSOR_ID = "sensorId"
 
-        suspend fun shouldDoFastUpdates(context: Context): Boolean {
-            val setting = DatabaseEntryPoint.resolve(context).settingsDao().get(0)
+        suspend fun SettingsDao.shouldDoFastUpdates(context: Context): Boolean {
+            val setting = get(0)
             return when (setting?.sensorUpdateFrequency) {
                 SensorUpdateFrequencySetting.FAST_ALWAYS -> true
                 SensorUpdateFrequencySetting.FAST_WHILE_CHARGING -> {
@@ -61,7 +62,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                             IntentFilter(Intent.ACTION_BATTERY_CHANGED),
                             ContextCompat.RECEIVER_NOT_EXPORTED,
                         )
-                    return batteryStatusIntent?.let { BatterySensorManager.getIsCharging(it) } ?: false
+                    batteryStatusIntent?.let { BatterySensorManager.getIsCharging(it) } ?: false
                 }
 
                 else -> false
@@ -82,6 +83,9 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
     @Inject
     lateinit var lastUpdateManager: LastUpdateManager
+
+    @Inject
+    lateinit var settingsDao: SettingsDao
 
     private val chargingActions = listOf(
         Intent.ACTION_BATTERY_LOW,
@@ -119,7 +123,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
             }
 
             if (intent.action == ACTION_STOP_BEACON_SCANNING) {
-                BluetoothSensorManager.enableDisableBeaconMonitor(context, false)
+                sensorRepository.enableDisableBeaconMonitor(context, false)
                 return@launch
             }
 
@@ -152,7 +156,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                 }
             }
 
-            if (intent.action == Intent.ACTION_TIME_TICK && !shouldDoFastUpdates(context)) {
+            if (intent.action == Intent.ACTION_TIME_TICK && !settingsDao.shouldDoFastUpdates(context)) {
                 Timber.i("Skipping faster update because not charging/different preference")
                 return@launch
             }

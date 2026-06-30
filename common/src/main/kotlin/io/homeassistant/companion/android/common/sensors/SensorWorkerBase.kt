@@ -10,23 +10,31 @@ import androidx.core.content.getSystemService
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.CHANNEL_SENSOR_WORKER
 import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissionUseCase
 import io.homeassistant.companion.android.common.util.SdkVersion
-import io.homeassistant.companion.android.database.DatabaseEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 abstract class SensorWorkerBase(val appContext: Context, workerParams: WorkerParameters) :
     CoroutineWorker(appContext, workerParams) {
-
-    protected abstract val serverManager: ServerManager
     protected abstract val sensorReceiver: SensorReceiverBase
-    protected abstract val checkLocalNetworkPermission: CheckLocalNetworkPermissionUseCase
-    protected abstract val lastUpdateManager: LastUpdateManager
+
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    internal interface SensorWorkerEntryPoint {
+        fun serverManager(): ServerManager
+        fun checkLocalNetworkPermission(): CheckLocalNetworkPermissionUseCase
+        fun lastUpdateManager(): LastUpdateManager
+        fun sensorRepository(): SensorRepository
+    }
 
     companion object {
         const val TAG = "SensorWorker"
@@ -36,8 +44,12 @@ abstract class SensorWorkerBase(val appContext: Context, workerParams: WorkerPar
     private val notificationManager = appContext.getSystemService<NotificationManager>()!!
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-        val databaseEntryPoint = DatabaseEntryPoint.resolve(applicationContext)
-        val sensorRepository = databaseEntryPoint.sensorRepository()
+        val entryPoint = EntryPointAccessors.fromApplication(appContext, SensorWorkerEntryPoint::class.java)
+        val sensorRepository = entryPoint.sensorRepository()
+        val serverManager = entryPoint.serverManager()
+        val checkLocalNetworkPermission = entryPoint.checkLocalNetworkPermission()
+        val lastUpdateManager = entryPoint.lastUpdateManager()
+
         val enabledSensorCount = sensorRepository.getEnabledCount()
         if (
             enabledSensorCount > 0 ||

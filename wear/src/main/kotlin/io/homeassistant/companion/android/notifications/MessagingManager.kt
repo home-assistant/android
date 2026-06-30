@@ -91,7 +91,7 @@ class MessagingManager @Inject constructor(
                     clearNotification(context, notificationData["tag"]!!)
                 }
                 message == DeviceCommandData.COMMAND_BEACON_MONITOR && allowCommands -> {
-                    if (!commandBeaconMonitor(context, notificationData)) {
+                    if (!commandBeaconMonitor(context, notificationData, sensorRepository)) {
                         sendNotification(notificationData, now)
                     }
                 }
