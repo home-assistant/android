@@ -214,7 +214,7 @@ private fun ColumnScope.TileLabelContent(
         modifier = Modifier.fillMaxWidth(),
     )
 
-    HAHorizontalDivider(modifier = Modifier.padding(vertical = HADimens.SPACE4))
+    HAHorizontalDivider()
 
     HATextField(
         value = state.tileLabel,
@@ -234,7 +234,7 @@ private fun ColumnScope.TileLabelContent(
 }
 
 @Composable
-private fun ColumnScope.TileConfigContent(
+private fun TileConfigContent(
     state: ManageTilesState,
     onEntityCleared: () -> Unit,
     onEntitySelectedId: (String) -> Unit,
@@ -242,39 +242,44 @@ private fun ColumnScope.TileConfigContent(
     onResetIcon: () -> Unit,
     onShouldVibrateChange: (Boolean) -> Unit,
     onAuthRequiredChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    EntityPicker(
-        entities = state.sortedEntities,
-        selectedEntityId = state.selectedEntityId,
-        onEntitySelectedId = onEntitySelectedId,
-        onEntityCleared = onEntityCleared,
-        modifier = Modifier.padding(vertical = HADimens.SPACE4),
-        addButtonText = stringResource(R.string.tile_entity),
-        entityRegistry = state.entityRegistry,
-        deviceRegistry = state.deviceRegistry,
-        areaRegistry = state.areaRegistry,
-    )
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        EntityPicker(
+            entities = state.sortedEntities,
+            selectedEntityId = state.selectedEntityId,
+            onEntitySelectedId = onEntitySelectedId,
+            onEntityCleared = onEntityCleared,
+            addButtonText = stringResource(R.string.tile_entity),
+            entityRegistry = state.entityRegistry,
+            deviceRegistry = state.deviceRegistry,
+            areaRegistry = state.areaRegistry,
+        )
 
-    TileIconRow(
-        selectedIcon = state.selectedIcon,
-        showResetIcon = state.showResetIcon,
-        onShowIconDialog = onShowIconDialog,
-        onResetIcon = onResetIcon,
-    )
+        TileIconRow(
+            selectedIcon = state.selectedIcon,
+            showResetIcon = state.showResetIcon,
+            onShowIconDialog = onShowIconDialog,
+            onResetIcon = onResetIcon,
+        )
 
-    LabeledSwitchRow(
-        label = stringResource(R.string.tile_vibrate),
-        checked = state.selectedShouldVibrate,
-        onCheckedChange = onShouldVibrateChange,
-        switchTestTag = MANAGE_TILES_VIBRATE_SWITCH_TAG,
-    )
+        LabeledSwitchRow(
+            label = stringResource(R.string.tile_vibrate),
+            checked = state.selectedShouldVibrate,
+            onCheckedChange = onShouldVibrateChange,
+            switchTestTag = MANAGE_TILES_VIBRATE_SWITCH_TAG,
+        )
 
-    LabeledSwitchRow(
-        label = stringResource(R.string.tile_auth_required),
-        checked = state.tileAuthRequired,
-        onCheckedChange = onAuthRequiredChange,
-        switchTestTag = MANAGE_TILES_AUTH_SWITCH_TAG,
-    )
+        LabeledSwitchRow(
+            label = stringResource(R.string.tile_auth_required),
+            checked = state.tileAuthRequired,
+            onCheckedChange = onAuthRequiredChange,
+            switchTestTag = MANAGE_TILES_AUTH_SWITCH_TAG,
+        )
+    }
 }
 
 @Composable
@@ -286,7 +291,6 @@ private fun TileIconRow(
     modifier: Modifier = Modifier,
 ) {
     val iconContentDescription = stringResource(R.string.tile_icon)
-    val icon = selectedIcon
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier.fillMaxWidth(),
@@ -299,20 +303,19 @@ private fun TileIconRow(
         Spacer(modifier = Modifier.weight(1f))
         if (showResetIcon) {
             HAIconButton(
-                modifier = Modifier.padding(start = HADimens.SPACE1),
                 icon = Icons.Default.Restore,
                 onClick = onResetIcon,
                 contentDescription = stringResource(R.string.tile_reset_icon),
             )
         }
         HAPlainButton(
-            text = if (icon != null) "" else stringResource(R.string.select),
+            text = if (selectedIcon != null) "" else stringResource(R.string.select),
             onClick = onShowIconDialog,
             modifier = Modifier.semantics { contentDescription = iconContentDescription },
-            prefix = if (icon != null) {
+            suffix = if (selectedIcon != null) {
                 {
                     Image(
-                        icon,
+                        selectedIcon,
                         contentDescription = null,
                         colorFilter = ColorFilter.tint(LocalHAColorScheme.current.colorFillPrimaryLoudResting),
                         modifier = Modifier.size(24.dp),
