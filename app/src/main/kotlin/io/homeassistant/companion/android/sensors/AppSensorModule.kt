@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.sensors
 
+import android.app.PendingIntent
+import android.content.Intent
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -8,7 +10,10 @@ import dagger.hilt.components.SingletonComponent
 import dagger.multibindings.ElementsIntoSet
 import dagger.multibindings.IntoSet
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorSettingsIntentProvider
 import io.homeassistant.companion.android.sensors.generated.GeneratedProvidesSensorApp
+import io.homeassistant.companion.android.settings.SettingsActivity
+import javax.inject.Singleton
 
 /**
  * Hilt bindings for the `:app` sensor managers: each `:app/main` [SensorManager] contributed into the
@@ -65,5 +70,20 @@ abstract class AppSensorModule {
         @Provides
         @ElementsIntoSet
         fun appProvidesSensors(): Set<SensorManager.BasicSensor> = GeneratedProvidesSensorApp.sensors
+
+        @Provides
+        @Singleton
+        fun providesSensorSettingsIntentProvider(): SensorSettingsIntentProvider = SensorSettingsIntentProvider {
+                context,
+                sensorId,
+                _,
+                notificationId,
+            ->
+            val intent = SettingsActivity.newInstance(context, SettingsActivity.Deeplink.Sensor(sensorId)).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+            }
+            PendingIntent.getActivity(context, notificationId, intent, PendingIntent.FLAG_IMMUTABLE)
+        }
     }
 }
