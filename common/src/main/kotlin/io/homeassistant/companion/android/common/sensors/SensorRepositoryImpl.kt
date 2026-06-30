@@ -13,7 +13,7 @@ import timber.log.Timber
 
 /**
  * [SensorRepository] backed by [SensorDao], with [ServerDao] providing the configured servers and
- * [basicSensors] the catalog used to fill in defaults. See [SensorRepository] for the behavior.
+ * [basicSensors] the sensor definitions used to fill in defaults. See [SensorRepository] for the behavior.
  */
 internal class SensorRepositoryImpl @Inject constructor(
     private val dao: SensorDao,
@@ -21,10 +21,10 @@ internal class SensorRepositoryImpl @Inject constructor(
     basicSensors: Set<@JvmSuppressWildcards SensorManager.BasicSensor>,
 ) : SensorRepository {
 
-    // Catalog default (enabled-by-default) per sensor id, used to synthesize a Sensor when no row exists.
+    // Sensor enabled-by-default per sensor id, used to synthesize a Sensor when no row exists.
     private val enabledByDefaultById: Map<String, Boolean> = basicSensors.associate { it.id to it.enabledByDefault }
 
-    // This could in theory return orphan sensors for server that have been removed but the DB was not cleared properly
+    // This could in theory return orphan sensors for removed servers where the DB was not cleared properly
     override suspend fun get(id: String): List<Sensor> = sensorsByServer(id, dao.get(id), configuredServerIds())
 
     override suspend fun get(id: String, serverId: Int): Sensor? = dao.get(id, serverId) ?: defaultSensor(id, serverId)
@@ -48,7 +48,7 @@ internal class SensorRepositoryImpl @Inject constructor(
             fullByServer(id, existing, servers.map { it.id })
         }
 
-    // Catalog-aware: a default-enabled sensor counts even before it has a stored row, so this is the
+    // A default-enabled sensor counts even before it has a stored row, so this is the
     // count of effective-enabled (sensor, server) pairs, not just persisted enabled rows. Rather than
     // synthesizing a full per-server list, start from the default-enabled count for every configured
     // server and treat each stored row as an override that adjusts its sensor's default contribution.
