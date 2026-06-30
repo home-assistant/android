@@ -5,6 +5,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.common.data.integration.PushWebsocketSupport
+import io.homeassistant.companion.android.common.sensors.SensorSettingsIntentProvider
 import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.MessagingToken
@@ -35,4 +36,8 @@ object CommonTestModule {
     fun providesPushWebsocketSupport(): Boolean {
         return true
     }
+
+    @Provides
+    @Singleton
+    fun providesSensorSettingsIntentProvider(): SensorSettingsIntentProvider = SensorSettingsIntentProvider { _, _, _, _ -> null }
 }

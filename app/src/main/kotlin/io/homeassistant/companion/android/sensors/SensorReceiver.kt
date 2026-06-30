@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.sensors
 
 import android.annotation.SuppressLint
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.Intent
@@ -11,7 +10,6 @@ import android.net.wifi.WifiManager
 import android.nfc.NfcAdapter
 import android.os.PowerManager
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.common.sensors.DNDSensorManager
@@ -20,22 +18,10 @@ import io.homeassistant.companion.android.common.sensors.NetworkSensorManager
 import io.homeassistant.companion.android.common.sensors.NextAlarmManager
 import io.homeassistant.companion.android.common.sensors.NfcSensorManager
 import io.homeassistant.companion.android.common.sensors.PowerSensorManager
-import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
-import io.homeassistant.companion.android.settings.SettingsActivity
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class SensorReceiver : SensorReceiverBase() {
-
-    override val currentAppVersion: String
-        get() = BuildConfig.VERSION_NAME
-
-    @Inject
-    lateinit var injectedManagers: Set<@JvmSuppressWildcards SensorManager>
-
-    override val managers: Set<SensorManager>
-        get() = injectedManagers
 
     companion object {
         fun updateAllSensors(context: Context) {
@@ -82,17 +68,4 @@ class SensorReceiver : SensorReceiverBase() {
             DisplaySensorManager.screenRotation.id,
         ),
     )
-
-    override fun getSensorSettingsIntent(
-        context: Context,
-        sensorId: String,
-        sensorManagerId: String,
-        notificationId: Int,
-    ): PendingIntent? {
-        val intent = SettingsActivity.newInstance(context, SettingsActivity.Deeplink.Sensor(sensorId)).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-        }
-        return PendingIntent.getActivity(context, notificationId, intent, PendingIntent.FLAG_IMMUTABLE)
-    }
 }
