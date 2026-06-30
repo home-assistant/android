@@ -3,8 +3,9 @@ package io.homeassistant.companion.android.settings.qs.ui
 import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -15,8 +16,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Restore
-import androidx.compose.material.icons.sharp.Restore
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -24,22 +23,28 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.IIcon
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.composable.HAHorizontalDivider
 import io.homeassistant.companion.android.common.compose.composable.HAIconButton
+import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.composable.HASwitch
 import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.theme.HADimens
@@ -51,25 +56,10 @@ import io.homeassistant.companion.android.settings.qs.ManageTilesState
 import io.homeassistant.companion.android.settings.qs.ManageTilesViewModel
 import io.homeassistant.companion.android.settings.qs.TileSlot
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
-import io.homeassistant.companion.android.util.safeBottomPaddingValues
+import io.homeassistant.companion.android.util.icondialog.IconDialog
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-
-@VisibleForTesting
-const val MANAGE_TILES_LABEL_TAG = "manage_tiles_label"
-
-@VisibleForTesting
-const val MANAGE_TILES_SUBTITLE_TAG = "manage_tiles_subtitle"
-
-@VisibleForTesting
-const val MANAGE_TILES_SERVER_DROPDOWN_TAG = "manage_tiles_server_dropdown"
-
-@VisibleForTesting
-const val MANAGE_TILES_ICON_BUTTON_TAG = "manage_tiles_icon_button"
-
-@VisibleForTesting
-const val MANAGE_TILES_RESET_ICON_TAG = "manage_tiles_reset_icon"
 
 @VisibleForTesting
 const val MANAGE_TILES_VIBRATE_SWITCH_TAG = "manage_tiles_vibrate_switch"
@@ -77,36 +67,44 @@ const val MANAGE_TILES_VIBRATE_SWITCH_TAG = "manage_tiles_vibrate_switch"
 @VisibleForTesting
 const val MANAGE_TILES_AUTH_SWITCH_TAG = "manage_tiles_auth_switch"
 
-@VisibleForTesting
-const val MANAGE_TILES_SUBMIT_TAG = "manage_tiles_submit"
-
+/**
+ * VM-facing overload of ManageTiles. Owns the icon dialog lifecycle — showing/dismissing
+ * [IconDialog] and forwarding icon selections to the ViewModel.
+ */
 @Composable
-fun ManageTiles(
-    viewModel: ManageTilesViewModel,
-    onShowIconDialog: (tag: String?) -> Unit,
-    modifier: Modifier = Modifier,
-) {
+internal fun ManageTiles(viewModel: ManageTilesViewModel, modifier: Modifier = Modifier) {
     val snackbarHostState = remember { SnackbarHostState() }
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val submitEnabled by viewModel.submitEnabled.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    var showIconDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        viewModel.tileInfoSnackbar.onEach {
-            snackbarHostState.showSnackbar(it)
+        viewModel.tileInfoSnackbar.onEach { resId ->
+            snackbarHostState.showSnackbar(context.getString(resId))
         }.launchIn(this)
+    }
+
+    if (showIconDialog) {
+        IconDialog(
+            onSelect = { icon ->
+                viewModel.selectIcon(icon)
+                showIconDialog = false
+            },
+            onDismissRequest = { showIconDialog = false },
+        )
     }
 
     ManageTiles(
         snackbarHostState = snackbarHostState,
         state = state,
-        submitEnabled = submitEnabled,
+        submitEnabled = state.submitEnabled,
         onTileSelected = viewModel::selectTile,
         onServerSelected = viewModel::selectServerId,
         onTileLabelChange = viewModel::setTileLabel,
         onTileSubtitleChange = viewModel::setTileSubtitle,
         onEntitySelectedId = viewModel::selectEntityId,
         onEntityCleared = { viewModel.selectEntityId("") },
-        onShowIconDialog = { onShowIconDialog(state.selectedTileId) },
+        onShowIconDialog = { showIconDialog = true },
         onResetIcon = { viewModel.selectIcon(null) },
         onShouldVibrateChange = viewModel::setShouldVibrate,
         onAuthRequiredChange = viewModel::setAuthRequired,
@@ -143,7 +141,7 @@ internal fun ManageTiles(
                 modifier = Modifier.windowInsetsPadding(safeBottomWindowInsets(applyHorizontal = false)),
             )
         },
-        contentWindowInsets = WindowInsets(),
+        contentWindowInsets = safeBottomWindowInsets(applyHorizontal = false),
     ) { contentPadding ->
         Column(
             modifier = Modifier
@@ -152,9 +150,9 @@ internal fun ManageTiles(
                 .fillMaxWidth()
                 .wrapContentWidth()
                 .padding(all = HADimens.SPACE4)
-                .widthIn(max = MaxButtonWidth)
-                .padding(safeBottomPaddingValues(applyHorizontal = false)),
+                .widthIn(max = MaxButtonWidth),
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
         ) {
             TileLabelContent(
                 state = state,
@@ -164,18 +162,16 @@ internal fun ManageTiles(
             )
 
             if (state.showServerSelector) {
-                ServerDropdown(
-                    servers = state.serversDropdownItems,
-                    selectedServerId = state.selectedServerId,
-                    onServerSelected = onServerSelected,
-                    modifier = Modifier
-                        .padding(top = HADimens.SPACE4)
-                        .fillMaxWidth()
-                        .testTag(MANAGE_TILES_SERVER_DROPDOWN_TAG),
+                HADropdownMenu(
+                    items = state.serversDropdownItems,
+                    selectedKey = state.selectedServerId,
+                    onItemSelected = onServerSelected,
+                    label = stringResource(R.string.tile_server),
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
 
-            TileIconContent(
+            TileConfigContent(
                 state = state,
                 onEntityCleared = onEntityCleared,
                 onEntitySelectedId = onEntitySelectedId,
@@ -189,60 +185,48 @@ internal fun ManageTiles(
                 text = stringResource(state.submitButtonLabel),
                 onClick = onSubmit,
                 enabled = submitEnabled,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = HADimens.SPACE4)
-                    .testTag(MANAGE_TILES_SUBMIT_TAG),
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
 }
 
 @Composable
-private fun TileLabelContent(
+private fun ColumnScope.TileLabelContent(
     state: ManageTilesState,
     onTileSelected: (id: String) -> Unit,
     onTileLabelChange: (String) -> Unit,
     onTileSubtitleChange: (String) -> Unit,
-    modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier,
-    ) {
-        TileDropdown(
-            tileSlots = state.tileSlotsDropdownItems,
-            selectedTileId = state.selectedTileId,
-            onTileSelected = onTileSelected,
+    HADropdownMenu(
+        items = state.tileSlotsDropdownItems,
+        selectedKey = state.selectedTileId,
+        onItemSelected = onTileSelected,
+        label = stringResource(R.string.tile_select),
+        modifier = Modifier.fillMaxWidth(),
+    )
+
+    HAHorizontalDivider(modifier = Modifier.padding(vertical = HADimens.SPACE4))
+
+    HATextField(
+        value = state.tileLabel,
+        onValueChange = onTileLabelChange,
+        label = { Text(text = stringResource(R.string.tile_label)) },
+        modifier = Modifier.fillMaxWidth(),
+    )
+
+    if (state.showSubtitle && state.tileSubtitle != null) {
+        HATextField(
+            value = state.tileSubtitle,
+            onValueChange = onTileSubtitleChange,
+            label = { Text(text = stringResource(R.string.tile_subtitle)) },
             modifier = Modifier.fillMaxWidth(),
         )
-
-        HAHorizontalDivider(modifier = Modifier.padding(vertical = HADimens.SPACE4))
-
-        HATextField(
-            value = state.tileLabel,
-            onValueChange = onTileLabelChange,
-            label = { Text(text = stringResource(R.string.tile_label)) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag(MANAGE_TILES_LABEL_TAG),
-        )
-
-        if (state.showSubtitle && state.tileSubtitle != null) {
-            HATextField(
-                value = state.tileSubtitle,
-                onValueChange = onTileSubtitleChange,
-                label = { Text(text = stringResource(R.string.tile_subtitle)) },
-                modifier = Modifier
-                    .padding(top = HADimens.SPACE4)
-                    .fillMaxWidth()
-                    .testTag(MANAGE_TILES_SUBTITLE_TAG),
-            )
-        }
     }
 }
 
 @Composable
-private fun TileIconContent(
+private fun ColumnScope.TileConfigContent(
     state: ManageTilesState,
     onEntityCleared: () -> Unit,
     onEntitySelectedId: (String) -> Unit,
@@ -250,78 +234,38 @@ private fun TileIconContent(
     onResetIcon: () -> Unit,
     onShouldVibrateChange: (Boolean) -> Unit,
     onAuthRequiredChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .wrapContentWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        EntityPicker(
-            entities = state.sortedEntities,
-            selectedEntityId = state.selectedEntityId,
-            onEntitySelectedId = onEntitySelectedId,
-            onEntityCleared = onEntityCleared,
-            modifier = Modifier.padding(vertical = HADimens.SPACE4),
-            addButtonText = stringResource(R.string.tile_entity),
-            entityRegistry = state.entityRegistry,
-            deviceRegistry = state.deviceRegistry,
-            areaRegistry = state.areaRegistry,
-        )
-
-        TileIconRow(
-            selectedIcon = state.selectedIcon,
-            showResetIcon = state.showResetIcon,
-            onShowIconDialog = onShowIconDialog,
-            onResetIcon = onResetIcon,
-        )
-
-        LabeledSwitchRow(
-            label = stringResource(R.string.tile_vibrate),
-            checked = state.selectedShouldVibrate,
-            onCheckedChange = onShouldVibrateChange,
-            switchTestTag = MANAGE_TILES_VIBRATE_SWITCH_TAG,
-        )
-
-        LabeledSwitchRow(
-            label = stringResource(R.string.tile_auth_required),
-            checked = state.tileAuthRequired,
-            onCheckedChange = onAuthRequiredChange,
-            switchTestTag = MANAGE_TILES_AUTH_SWITCH_TAG,
-        )
-    }
-}
-
-@Composable
-private fun TileDropdown(
-    tileSlots: List<HADropdownItem<String>>,
-    selectedTileId: String,
-    onTileSelected: (id: String) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    HADropdownMenu(
-        items = tileSlots,
-        selectedKey = selectedTileId,
-        onItemSelected = onTileSelected,
-        label = stringResource(R.string.tile_select),
-        modifier = modifier,
+    EntityPicker(
+        entities = state.sortedEntities,
+        selectedEntityId = state.selectedEntityId,
+        onEntitySelectedId = onEntitySelectedId,
+        onEntityCleared = onEntityCleared,
+        modifier = Modifier.padding(vertical = HADimens.SPACE4),
+        addButtonText = stringResource(R.string.tile_entity),
+        entityRegistry = state.entityRegistry,
+        deviceRegistry = state.deviceRegistry,
+        areaRegistry = state.areaRegistry,
     )
-}
 
-@Composable
-private fun ServerDropdown(
-    servers: List<HADropdownItem<Int>>,
-    selectedServerId: Int,
-    onServerSelected: (Int) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    HADropdownMenu(
-        items = servers,
-        selectedKey = selectedServerId,
-        onItemSelected = onServerSelected,
-        label = stringResource(R.string.tile_server),
-        modifier = modifier,
+    TileIconRow(
+        selectedIcon = state.selectedIcon,
+        showResetIcon = state.showResetIcon,
+        onShowIconDialog = onShowIconDialog,
+        onResetIcon = onResetIcon,
+    )
+
+    LabeledSwitchRow(
+        label = stringResource(R.string.tile_vibrate),
+        checked = state.selectedShouldVibrate,
+        onCheckedChange = onShouldVibrateChange,
+        switchTestTag = MANAGE_TILES_VIBRATE_SWITCH_TAG,
+    )
+
+    LabeledSwitchRow(
+        label = stringResource(R.string.tile_auth_required),
+        checked = state.tileAuthRequired,
+        onCheckedChange = onAuthRequiredChange,
+        switchTestTag = MANAGE_TILES_AUTH_SWITCH_TAG,
     )
 }
 
@@ -333,9 +277,10 @@ private fun TileIconRow(
     onResetIcon: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val iconContentDescription = stringResource(R.string.tile_icon)
+    val icon = selectedIcon
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
         modifier = modifier.fillMaxWidth(),
     ) {
         Text(
@@ -343,40 +288,32 @@ private fun TileIconRow(
             style = HATextStyle.Body,
             modifier = Modifier.padding(end = HADimens.SPACE2),
         )
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
-        ) {
-            if (showResetIcon) {
-                HAIconButton(
-                    modifier = Modifier
-                        .padding(start = HADimens.SPACE1),
-                    icon = Icons.Default.Restore,
-                    onClick = onResetIcon,
-                    contentDescription = MANAGE_TILES_RESET_ICON_TAG,
-                )
-            }
-            OutlinedButton(
-                onClick = onShowIconDialog,
-                modifier = Modifier.testTag(MANAGE_TILES_ICON_BUTTON_TAG),
-            ) {
-                if (selectedIcon != null) {
-                    com.mikepenz.iconics.compose.Image(
-                        selectedIcon,
-                        contentDescription = stringResource(R.string.tile_icon),
+        Spacer(modifier = Modifier.weight(1f))
+        if (showResetIcon) {
+            HAIconButton(
+                modifier = Modifier.padding(start = HADimens.SPACE1),
+                icon = Icons.Default.Restore,
+                onClick = onResetIcon,
+                contentDescription = stringResource(R.string.tile_reset_icon),
+            )
+        }
+        HAPlainButton(
+            text = if (icon != null) "" else stringResource(R.string.select),
+            onClick = onShowIconDialog,
+            modifier = Modifier.semantics { contentDescription = iconContentDescription },
+            prefix = if (icon != null) {
+                {
+                    Image(
+                        icon,
+                        contentDescription = null,
                         colorFilter = ColorFilter.tint(LocalHAColorScheme.current.colorFillPrimaryLoudResting),
                         modifier = Modifier.size(24.dp),
                     )
-                } else {
-                    Text(
-                        text = stringResource(R.string.select),
-                        style = HATextStyle.BodyMedium,
-                        color = LocalHAColorScheme.current.colorFillPrimaryLoudResting,
-                    )
                 }
-            }
-        }
+            } else {
+                null
+            },
+        )
     }
 }
 
