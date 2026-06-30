@@ -28,6 +28,8 @@ import io.homeassistant.companion.android.common.util.CHANNEL_GENERAL
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.cancel
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 object NotificationData {
@@ -216,7 +218,7 @@ fun handleSmallIcon(context: Context, builder: NotificationCompat.Builder, data:
     }
 }
 
-fun getGroupNotificationBuilder(
+suspend fun getGroupNotificationBuilder(
     context: Context,
     channelId: String,
     group: String,
@@ -240,11 +242,12 @@ fun getGroupNotificationBuilder(
     return groupNotificationBuilder
 }
 
-fun prepareText(text: String): Spanned {
+// Emoji parser can trigger a read from the disk so it needs to happen on IO
+suspend fun prepareText(text: String): Spanned = withContext(Dispatchers.IO) {
     // Replace control char \r\n, \r, \n and also \r\n, \r, \n as text literals in strings to <br>
     val brText = text.replace("(\r\n|\r|\n)|(\\\\r\\\\n|\\\\r|\\\\n)".toRegex(), "<br>")
     val emojiParsedText = EmojiParser.parseToUnicode(brText)
-    return HtmlCompat.fromHtml(emojiParsedText, HtmlCompat.FROM_HTML_MODE_LEGACY)
+    return@withContext HtmlCompat.fromHtml(emojiParsedText, HtmlCompat.FROM_HTML_MODE_LEGACY)
 }
 
 fun handleColor(context: Context, builder: NotificationCompat.Builder, data: Map<String, String>) {
@@ -253,7 +256,7 @@ fun handleColor(context: Context, builder: NotificationCompat.Builder, data: Map
     builder.color = color
 }
 
-fun handleText(builder: NotificationCompat.Builder, data: Map<String, String>) {
+suspend fun handleText(builder: NotificationCompat.Builder, data: Map<String, String>) {
     data[NotificationData.TITLE]?.let {
         builder.setContentTitle(prepareText(it))
     }
