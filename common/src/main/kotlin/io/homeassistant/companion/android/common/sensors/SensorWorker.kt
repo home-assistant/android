@@ -7,8 +7,13 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
+import androidx.work.Constraints
 import androidx.work.CoroutineWorker
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ForegroundInfo
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -19,13 +24,13 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.CHANNEL_SENSOR_WORKER
 import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissionUseCase
 import io.homeassistant.companion.android.common.util.SdkVersion
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-abstract class SensorWorkerBase(val appContext: Context, workerParams: WorkerParameters) :
-    CoroutineWorker(appContext, workerParams) {
-    protected abstract val sensorReceiver: SensorReceiverBase
+class SensorWorker(private val context: Context, workerParams: WorkerParameters) :
+    CoroutineWorker(context, workerParams) {
 
     @EntryPoint
     @InstallIn(SingletonComponent::class)
@@ -34,21 +39,36 @@ abstract class SensorWorkerBase(val appContext: Context, workerParams: WorkerPar
         fun checkLocalNetworkPermission(): CheckLocalNetworkPermissionUseCase
         fun lastUpdateManager(): LastUpdateManager
         fun sensorRepository(): SensorRepository
+        fun sensorUpdater(): SensorUpdater
     }
 
     companion object {
-        const val TAG = "SensorWorker"
-        const val NOTIFICATION_ID = 42
+        private const val TAG = "SensorWorker"
+        private const val NOTIFICATION_ID = 42
+
+        fun start(context: Context) {
+            val constraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED).build()
+
+            val sensorWorker =
+                PeriodicWorkRequestBuilder<SensorWorker>(15, TimeUnit.MINUTES)
+                    .setConstraints(constraints)
+                    .build()
+
+            WorkManager.getInstance(context)
+                .enqueueUniquePeriodicWork(TAG, ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE, sensorWorker)
+        }
     }
 
-    private val notificationManager = appContext.getSystemService<NotificationManager>()!!
+    private val notificationManager = context.getSystemService<NotificationManager>()!!
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-        val entryPoint = EntryPointAccessors.fromApplication(appContext, SensorWorkerEntryPoint::class.java)
+        val entryPoint = EntryPointAccessors.fromApplication(context, SensorWorkerEntryPoint::class.java)
         val sensorRepository = entryPoint.sensorRepository()
         val serverManager = entryPoint.serverManager()
         val checkLocalNetworkPermission = entryPoint.checkLocalNetworkPermission()
         val lastUpdateManager = entryPoint.lastUpdateManager()
+        val sensorUpdater = entryPoint.sensorUpdater()
 
         val enabledSensorCount = sensorRepository.getEnabledCount()
         if (
@@ -64,7 +84,7 @@ abstract class SensorWorkerBase(val appContext: Context, workerParams: WorkerPar
             createNotificationChannel()
             val notification = NotificationCompat.Builder(applicationContext, CHANNEL_SENSOR_WORKER)
                 .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
-                .setContentTitle(appContext.getString(commonR.string.updating_sensors))
+                .setContentTitle(context.getString(commonR.string.updating_sensors))
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .build()
 
@@ -91,7 +111,7 @@ abstract class SensorWorkerBase(val appContext: Context, workerParams: WorkerPar
             if (lastUpdateSensor.any { it.enabled }) {
                 lastUpdateManager.sendLastUpdate(TAG)
             }
-            sensorReceiver.updateSensors(appContext, serverManager, sensorRepository, null)
+            sensorUpdater.updateSensors()
         }
 
         // Cleanup orphaned sensors that may have been created by a slow or long running update
@@ -102,11 +122,11 @@ abstract class SensorWorkerBase(val appContext: Context, workerParams: WorkerPar
         Result.success()
     }
 
-    protected fun createNotificationChannel() {
+    private fun createNotificationChannel() {
         if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             val notificationChannel = NotificationChannel(
                 CHANNEL_SENSOR_WORKER,
-                appContext.getString(commonR.string.sensor_updates),
+                context.getString(commonR.string.sensor_updates),
                 NotificationManager.IMPORTANCE_LOW,
             )
             notificationManager.createNotificationChannel(notificationChannel)

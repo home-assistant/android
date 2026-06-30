@@ -16,10 +16,10 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import dagger.hilt.android.testing.UninstallModules
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.sensors.SensorWorker
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.di.ServerManagerModule
 import io.homeassistant.companion.android.sensors.SensorReceiver
-import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.util.ChangeLog
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.mockk.Runs
