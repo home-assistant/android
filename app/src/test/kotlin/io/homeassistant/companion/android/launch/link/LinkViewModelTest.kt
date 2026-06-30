@@ -6,6 +6,7 @@ import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.settings.server.ServerChooserItem
 import io.homeassistant.companion.android.settings.server.ServerChooserItemsUseCase
+import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -16,8 +17,10 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 
 @OptIn(ExperimentalCoroutinesApi::class)
+@ExtendWith(MainDispatcherJUnit5Extension::class)
 class LinkViewModelTest {
 
     private val linkHandler: LinkHandler = mockk()
