@@ -177,6 +177,17 @@ class AudioSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
+
+        @ProvidesSensor
+        val volAssistant = SensorManager.BasicSensor(
+            "volume_assistant",
+            "sensor",
+            commonR.string.sensor_name_volume_assistant,
+            commonR.string.sensor_description_volume_assistant,
+            "mdi:assistant",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            updateType = SensorManager.BasicSensor.UpdateType.INTENT,
+        )
     }
 
     override fun docsLink(): String {
@@ -187,15 +198,20 @@ class AudioSensorManager : SensorManager {
         get() = commonR.string.sensor_name_audio
 
     override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        val allSupportedSensors = listOf(
-            audioSensor, audioState, headphoneState, micMuted, speakerphoneState,
-            musicActive, volAlarm, volCall, volMusic, volRing, volNotification, volSystem,
-            volDTMF,
-        )
-        return if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
-            allSupportedSensors.plus(volAccessibility)
-        } else {
-            allSupportedSensors
+        return buildList {
+            addAll(
+                listOf(
+                    audioSensor, audioState, headphoneState, micMuted, speakerphoneState,
+                    musicActive, volAlarm, volCall, volMusic, volRing, volNotification, volSystem,
+                    volDTMF,
+                ),
+            )
+            if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
+                add(volAccessibility)
+            }
+            if (SdkVersion.isAtLeast(Build.VERSION_CODES.CINNAMON_BUN)) {
+                add(volAssistant)
+            }
         }
     }
 
@@ -220,6 +236,9 @@ class AudioSensorManager : SensorManager {
         updateVolumeDTMF(context, audioManager)
         if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             updateVolumeAccessibility(context, audioManager)
+        }
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.CINNAMON_BUN)) {
+            updateVolumeAssistant(context, audioManager)
         }
     }
 
@@ -265,6 +284,7 @@ class AudioSensorManager : SensorManager {
             AudioManager.MODE_CALL_SCREENING -> "call_screening"
             AudioManager.MODE_CALL_REDIRECT -> "call_redirect"
             AudioManager.MODE_COMMUNICATION_REDIRECT -> "communication_redirect"
+            AudioManager.MODE_ASSISTANT_CONVERSATION -> "assistant_conversation"
             else -> STATE_UNKNOWN
         }
 
@@ -276,6 +296,7 @@ class AudioSensorManager : SensorManager {
             AudioManager.MODE_CALL_SCREENING -> "mdi:microphone-message"
             AudioManager.MODE_CALL_REDIRECT -> "mdi:phone"
             AudioManager.MODE_COMMUNICATION_REDIRECT -> "mdi:message-video"
+            AudioManager.MODE_ASSISTANT_CONVERSATION -> "mdi:assistant"
             else -> "mdi:volume-low"
         }
 
@@ -293,6 +314,7 @@ class AudioSensorManager : SensorManager {
                     "call_screening",
                     "call_redirect",
                     "communication_redirect",
+                    "assistant_conversation",
                 ),
             ),
         )
@@ -412,6 +434,11 @@ class AudioSensorManager : SensorManager {
 
     private suspend fun updateVolumeDTMF(context: Context, audioManager: AudioManager) {
         updateVolumeSensor(context, audioManager, volDTMF, AudioManager.STREAM_DTMF)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.CINNAMON_BUN)
+    private suspend fun updateVolumeAssistant(context: Context, audioManager: AudioManager) {
+        updateVolumeSensor(context, audioManager, volAssistant, AudioManager.STREAM_ASSISTANT)
     }
 
     private suspend fun updateVolumeSensor(

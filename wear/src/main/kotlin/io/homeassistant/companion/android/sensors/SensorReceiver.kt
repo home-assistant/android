@@ -109,6 +109,7 @@ class SensorReceiver : SensorReceiverBase() {
         AudioSensorManager.VOLUME_CHANGED_ACTION to listOf(
             AudioSensorManager.volAccessibility.id,
             AudioSensorManager.volAlarm.id,
+            AudioSensorManager.volAssistant.id,
             AudioSensorManager.volCall.id,
             AudioSensorManager.volDTMF.id,
             AudioSensorManager.volNotification.id,
