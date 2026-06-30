@@ -107,7 +107,7 @@ class MessagingManager @Inject constructor(
     }
 
     @SuppressLint("MissingPermission")
-    private fun sendNotification(data: Map<String, String>, received: Long? = null) {
+    private suspend fun sendNotification(data: Map<String, String>, received: Long? = null) {
         val notificationManagerCompat = NotificationManagerCompat.from(context)
 
         val tag = data["tag"].takeIf { !it.isNullOrBlank() }
