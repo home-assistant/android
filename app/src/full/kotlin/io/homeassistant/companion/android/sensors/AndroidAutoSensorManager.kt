@@ -11,9 +11,11 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.SdkVersion
 import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+@Singleton
 class AndroidAutoSensorManager @Inject constructor(
     @ApplicationContext override val applicationContext: Context,
     override val sensorRepository: SensorRepository,

@@ -6,7 +6,9 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class AndroidOsSensorManager @Inject constructor(
     @ApplicationContext override val applicationContext: Context,
     override val sensorRepository: SensorRepository,

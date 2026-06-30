@@ -17,8 +17,10 @@ import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
 import javax.inject.Inject
+import javax.inject.Singleton
 import timber.log.Timber
 
+@Singleton
 class PhoneStateSensorManager @Inject constructor(
     @ApplicationContext override val applicationContext: Context,
     override val sensorRepository: SensorRepository,

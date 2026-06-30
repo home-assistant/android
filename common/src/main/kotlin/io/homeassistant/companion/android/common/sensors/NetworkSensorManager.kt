@@ -22,6 +22,7 @@ import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.lang.reflect.Method
 import java.net.Inet6Address
 import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.SerializationException
 import okhttp3.Call
@@ -32,6 +33,7 @@ import okhttp3.Response
 import okio.IOException
 import timber.log.Timber
 
+@Singleton
 class NetworkSensorManager @Inject constructor(
     @ApplicationContext override val applicationContext: Context,
     override val sensorRepository: SensorRepository,

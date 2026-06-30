@@ -15,9 +15,11 @@ import java.util.Date
 import java.util.GregorianCalendar
 import java.util.TimeZone
 import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.math.absoluteValue
 import timber.log.Timber
 
+@Singleton
 class LastRebootSensorManager @Inject constructor(
     @ApplicationContext override val applicationContext: Context,
     override val sensorRepository: SensorRepository,

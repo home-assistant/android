@@ -14,7 +14,9 @@ import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.sensor.toSensorsWithAttributes
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class AudioSensorManager @Inject constructor(
     @ApplicationContext override val applicationContext: Context,
     override val sensorRepository: SensorRepository,

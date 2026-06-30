@@ -14,9 +14,11 @@ import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
 import java.math.RoundingMode
 import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.math.floor
 import timber.log.Timber
 
+@Singleton
 class BatterySensorManager @Inject constructor(
     @ApplicationContext override val applicationContext: Context,
     override val sensorRepository: SensorRepository,
