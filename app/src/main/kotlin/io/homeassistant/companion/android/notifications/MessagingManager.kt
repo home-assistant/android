@@ -1311,7 +1311,7 @@ class MessagingManager @Inject constructor(
         builder.setAutoCancel(!sticky)
     }
 
-    private fun handleSubject(builder: NotificationCompat.Builder, data: Map<String, String>) {
+    private suspend fun handleSubject(builder: NotificationCompat.Builder, data: Map<String, String>) {
         val subject = data[SUBJECT]
         if (!subject.isNullOrBlank()) {
             builder.setContentText(prepareText(subject))
