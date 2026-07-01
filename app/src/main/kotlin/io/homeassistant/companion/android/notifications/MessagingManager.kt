@@ -13,6 +13,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
 import android.graphics.drawable.Icon
 import android.media.AudioManager
 import android.media.MediaMetadataRetriever
@@ -40,9 +42,17 @@ import androidx.core.app.RemoteInput
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.content.getSystemService
+import androidx.core.content.withStyledAttributes
 import androidx.core.graphics.scale
 import androidx.core.net.toUri
 import androidx.core.text.isDigitsOnly
+import com.google.android.material.color.DynamicColors
+import com.mikepenz.iconics.IconicsDrawable
+import com.mikepenz.iconics.utils.backgroundColorRes
+import com.mikepenz.iconics.utils.paddingDp
+import com.mikepenz.iconics.utils.roundedCornersDp
+import com.mikepenz.iconics.utils.sizeDp
+import com.mikepenz.iconics.utils.toAndroidIconCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
@@ -111,6 +121,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okio.sink
@@ -152,6 +163,18 @@ class MessagingManager @Inject constructor(
         const val PROGRESS = "progress"
         const val PROGRESS_MAX = "progress_max"
         const val PROGRESS_INDETERMINATE = "progress_indeterminate"
+        const val PROGRESS_SEGMENTS = "progress_segments"
+        const val PROGRESS_SEGMENTS_LENGTH = "length"
+        const val PROGRESS_SEGMENTS_COLOR = "color"
+        const val PROGRESS_POINTS = "progress_points"
+        const val PROGRESS_POINTS_POSITION = "position"
+        const val PROGRESS_POINTS_COLOR = "color"
+        const val PROGRESS_TRACKER_ICON = "progress_tracker_icon"
+        const val PROGRESS_TRACKER_COLOR = "progress_tracker_color"
+        const val PROGRESS_START_ICON = "progress_start_icon"
+        const val PROGRESS_START_COLOR = "progress_start_color"
+        const val PROGRESS_END_ICON = "progress_end_icon"
+        const val PROGRESS_END_COLOR = "progress_end_color"
         const val LIVE_UPDATE = "live_update"
         const val CRITICAL_TEXT = "critical_text"
         const val CAR_UI = "car_ui"
@@ -287,6 +310,8 @@ class MessagingManager @Inject constructor(
 
         // Values for temporarily added keys
         const val THIS_SERVER_ID = "server_id"
+
+        private val lenientJson = Json { isLenient = true }
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -1093,6 +1118,8 @@ class MessagingManager @Inject constructor(
 
         handleProgress(notificationBuilder, data)
 
+        handleProgressStyle(notificationBuilder, data)
+
         handleLive(notificationBuilder, data)
 
         val useCarNotification = handleCarUiVisible(context, notificationBuilder, data)
@@ -1166,6 +1193,161 @@ class MessagingManager @Inject constructor(
             }
         } catch (e: Exception) {
             Timber.e(e, "Error while handling progress notification")
+        }
+    }
+
+    private fun handleProgressStyle(builder: NotificationCompat.Builder, data: Map<String, String>) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.BAKLAVA)) {
+            val progressStyle = NotificationCompat.ProgressStyle().setStyledByProgress(true)
+                .setProgress(data[PROGRESS]?.toIntOrNull() ?: -1)
+
+            val dynamicColorContext = DynamicColors.wrapContextIfAvailable(context)
+            var accentColor = commonR.color.colorAccent
+            dynamicColorContext.withStyledAttributes(null, intArrayOf(android.R.attr.colorAccent)) {
+                accentColor = getResourceId(0, accentColor)
+            }
+
+            var useProgressStyle = false
+            if (applyProgressSegments(progressStyle, accentColor, data)) useProgressStyle = true
+            if (applyProgressPoints(progressStyle, accentColor, data)) useProgressStyle = true
+            if (applyProgressStartIcon(progressStyle, accentColor, data)) useProgressStyle = true
+            if (applyProgressEndIcon(progressStyle, accentColor, data)) useProgressStyle = true
+            if (applyProgressTrackerIcon(progressStyle, accentColor, data)) useProgressStyle = true
+            if (useProgressStyle) {
+                builder.setStyle(progressStyle)
+            }
+        }
+    }
+
+    private fun applyProgressSegments(
+        style: NotificationCompat.ProgressStyle,
+        accentColor: Int,
+        data: Map<String, String>,
+    ): Boolean {
+        val segmentsData = data[PROGRESS_SEGMENTS] ?: ""
+        if (segmentsData.isNotBlank()) {
+            try {
+                val segments: List<Map<String, String>> = lenientJson.decodeFromString(segmentsData)
+                for (segment in segments) {
+                    val length = segment[PROGRESS_SEGMENTS_LENGTH]?.toIntOrNull() ?: 0
+                    val color = segment[PROGRESS_SEGMENTS_COLOR]
+                    val progressSegment = NotificationCompat.ProgressStyle.Segment(length)
+                    if (color != null) {
+                        progressSegment.setColor(parseColor(context, color, accentColor))
+                    }
+                    style.addProgressSegment(progressSegment)
+                }
+                if (segments.isNotEmpty()) {
+                    return true
+                }
+            } catch (e: kotlinx.serialization.SerializationException) {
+                Timber.e(e, "Error while parsing notification progress segments")
+            }
+        }
+        return false
+    }
+
+    private fun applyProgressPoints(
+        style: NotificationCompat.ProgressStyle,
+        accentColor: Int,
+        data: Map<String, String>,
+    ): Boolean {
+        val pointsData = data[PROGRESS_POINTS] ?: ""
+        if (pointsData.isNotBlank()) {
+            try {
+                val points: List<Map<String, String>> = lenientJson.decodeFromString(pointsData)
+                for (point in points) {
+                    val position = point[PROGRESS_POINTS_POSITION]?.toIntOrNull() ?: 0
+                    val color = point[PROGRESS_POINTS_COLOR]
+                    val progressPoint = NotificationCompat.ProgressStyle.Point(position)
+                    if (color != null) {
+                        progressPoint.setColor(parseColor(context, color, accentColor))
+                    }
+                    style.addProgressPoint(progressPoint)
+                }
+                if (points.isNotEmpty()) {
+                    return true
+                }
+            } catch (e: kotlinx.serialization.SerializationException) {
+                Timber.e(e, "Error while parsing notification progress points")
+            }
+        }
+        return false
+    }
+
+    private fun applyProgressTrackerIcon(
+        style: NotificationCompat.ProgressStyle,
+        accentColor: Int,
+        data: Map<String, String>,
+    ): Boolean {
+        val progressTrackerIcon = data[PROGRESS_TRACKER_ICON] ?: ""
+        val progressTrackerColor =
+            parseColor(context, data[PROGRESS_TRACKER_COLOR] ?: "", commonR.color.colorPrimary)
+        val icon = createProgressIcon(context, progressTrackerIcon, progressTrackerColor, accentColor)
+        if (icon != null) {
+            style.setProgressTrackerIcon(icon)
+            return true
+        }
+        return false
+    }
+
+    private fun applyProgressStartIcon(
+        style: NotificationCompat.ProgressStyle,
+        accentColor: Int,
+        data: Map<String, String>,
+    ): Boolean {
+        val progressStartIcon = data[PROGRESS_START_ICON] ?: ""
+        val progressStartColor = parseColor(context, data[PROGRESS_START_COLOR] ?: "", accentColor)
+        val icon = createProgressIcon(context, progressStartIcon, progressStartColor)
+        if (icon != null) {
+            style.setProgressStartIcon(icon)
+            return true
+        }
+        return false
+    }
+
+    private fun applyProgressEndIcon(
+        style: NotificationCompat.ProgressStyle,
+        accentColor: Int,
+        data: Map<String, String>,
+    ): Boolean {
+        val progressEndIcon = data[PROGRESS_END_ICON] ?: ""
+        val progressEndColor = parseColor(context, data[PROGRESS_END_COLOR] ?: "", accentColor)
+        val icon = createProgressIcon(context, progressEndIcon, progressEndColor)
+        if (icon != null) {
+            style.setProgressEndIcon(icon)
+            return true
+        }
+        return false
+    }
+
+    private fun createProgressIcon(
+        context: Context,
+        iconString: String,
+        iconColor: Int,
+        backgroundColor: Int? = null,
+    ): androidx.core.graphics.drawable.IconCompat? {
+        if (!iconString.startsWith("mdi:") || iconString.substringAfter("mdi:").isBlank()) {
+            return null
+        }
+
+        val iconName = iconString.split(":")[1]
+        val iconDrawable = IconicsDrawable(context, "cmd-$iconName").apply {
+            sizeDp = 20
+            colorFilter = PorterDuffColorFilter(iconColor, PorterDuff.Mode.SRC_IN)
+
+            // Apply a circular background if a background color is provided
+            backgroundColor?.let {
+                backgroundColorRes = it
+                roundedCornersDp = 10
+                paddingDp = 4
+            }
+        }
+
+        return if (iconDrawable.icon != null) {
+            iconDrawable.toAndroidIconCompat()
+        } else {
+            null
         }
     }
 
