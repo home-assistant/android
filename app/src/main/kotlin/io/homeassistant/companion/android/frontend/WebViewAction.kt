@@ -6,6 +6,7 @@ import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerforme
 import io.homeassistant.companion.android.util.compose.webview.settings
 import io.homeassistant.companion.android.util.sensitive
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.serialization.json.Json
 import timber.log.Timber
 
 /**
@@ -175,6 +176,29 @@ sealed interface WebViewAction {
             // is the only way to adjust these settings at runtime.
             @OptIn(EvaluateJavascriptUsage::class)
             webView.evaluateJavascript(viewportZoomScript(pinchToZoomEnabled)) {}
+        }
+    }
+
+    /**
+     * Opens the more-info dialog for [entityId] by dispatching the frontend's `hass-more-info`
+     * DOM event.
+     *
+     * Fallback for servers older than HA 2025.6, which ignore the `more-info-entity-id` URL query
+     * parameter. There is no external bus message to open more-info on those servers, so dispatching
+     * the frontend DOM event is the only option.
+     */
+    data class OpenMoreInfo(val entityId: String) : WebViewAction {
+        // [entityId] originates from server/registry data, so it is treated as untrusted: it is
+        // JSON-encoded (quotes/backslashes escaped) so it cannot break out of the JS string literal.
+        private fun moreInfoScript(entityId: String): String {
+            val entityIdJson = Json.encodeToString(entityId)
+            return """document.querySelector("home-assistant")""" +
+                """.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: $entityIdJson }}))"""
+        }
+
+        override fun run(webView: WebView) {
+            @OptIn(EvaluateJavascriptUsage::class)
+            webView.evaluateJavascript(moreInfoScript(entityId)) {}
         }
     }
 }

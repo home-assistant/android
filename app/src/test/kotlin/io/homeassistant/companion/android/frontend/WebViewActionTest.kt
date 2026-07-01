@@ -132,4 +132,30 @@ class WebViewActionTest {
         callbackSlot.captured.onReceiveValue(null)
         assertEquals(null, action.result.await())
     }
+
+    @Test
+    fun `Given OpenMoreInfo when run then it dispatches hass-more-info for the entity`() = runTest {
+        val scriptSlot = slot<String>()
+        every { webView.evaluateJavascript(capture(scriptSlot), any()) } just Runs
+
+        WebViewAction.OpenMoreInfo("light.kitchen").run(webView)
+
+        val script = scriptSlot.captured
+        assertTrue(script.contains("hass-more-info"))
+        assertTrue(script.contains("\"light.kitchen\""))
+    }
+
+    @Test
+    fun `Given OpenMoreInfo with a hostile entity id when run then the value is JSON-escaped and cannot break out`() = runTest {
+        val scriptSlot = slot<String>()
+        every { webView.evaluateJavascript(capture(scriptSlot), any()) } just Runs
+
+        // Crafted to close the string/object and inject code if interpolated raw.
+        WebViewAction.OpenMoreInfo("""x"}});alert(1);//""").run(webView)
+
+        val script = scriptSlot.captured
+        // The embedded double quote must be backslash-escaped (proof of JSON encoding), so the
+        // payload stays inside the entityId string literal instead of becoming executable code.
+        assertTrue(script.contains("\\\""))
+    }
 }

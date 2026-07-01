@@ -44,6 +44,7 @@ import io.homeassistant.companion.android.frontend.improv.ImprovUIState
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridgeFactory
 import io.homeassistant.companion.android.frontend.matterthread.FrontendMatterThreadHandler
 import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
@@ -157,7 +158,7 @@ class FrontendViewModelTest {
     ): FrontendViewModel {
         return FrontendViewModel(
             initialServerId = serverId,
-            initialPath = path,
+            initialTarget = FrontendTarget.fromRawPath(path),
             webViewClientFactory = webViewClientFactory,
             frontendBusObserver = frontendBusObserver,
             externalBusRepository = externalBusRepository,
@@ -336,7 +337,7 @@ class FrontendViewModelTest {
         @Test
         fun `Given url manager returns success with path when initialized then loading state includes path`() = runTest {
             val urlWithPath = "https://example.com/dashboard?external_auth=1"
-            every { urlManager.serverUrlFlow(serverId, "/dashboard") } returns flowOf(
+            every { urlManager.serverUrlFlow(serverId, FrontendTarget.Path("/dashboard")) } returns flowOf(
                 UrlLoadResult.Success(url = urlWithPath, serverId = serverId),
             )
 
@@ -1248,6 +1249,42 @@ class FrontendViewModelTest {
                 val action = awaitItem() as WebViewAction.ApplyZoom
                 assertEquals(150, action.zoomLevel)
                 assertEquals(true, action.pinchToZoomEnabled)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given older-server more-info deep link when page finishes then OpenMoreInfo is dispatched`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId, moreInfoEntityId = "light.kitchen"),
+            )
+
+            val (viewModel, triggerPageFinished) = createViewModelWithPageFinishedCapture()
+
+            viewModel.webViewActions.test {
+                triggerPageFinished()
+
+                assertEquals(WebViewAction.OpenMoreInfo("light.kitchen"), awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given more-info dispatched when page finishes again then OpenMoreInfo is not repeated`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId, moreInfoEntityId = "light.kitchen"),
+            )
+
+            val (viewModel, triggerPageFinished) = createViewModelWithPageFinishedCapture()
+
+            viewModel.webViewActions.test {
+                triggerPageFinished()
+                assertEquals(WebViewAction.OpenMoreInfo("light.kitchen"), awaitItem())
+                awaitItem() // ApplyZoom from the first page load
+
+                triggerPageFinished()
+                // Only the zoom action repeats; the more-info dialog must not be reopened.
+                assertTrue(awaitItem() is WebViewAction.ApplyZoom)
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -2312,8 +2349,8 @@ class FrontendViewModelTest {
             val state = viewModel.viewState.value
             assertTrue(state is FrontendViewState.LoadServer)
             assertEquals(
-                "/_my_redirect/config_flow_start?domain=acme",
-                (state as FrontendViewState.LoadServer).path,
+                FrontendTarget.Path("/_my_redirect/config_flow_start?domain=acme"),
+                (state as FrontendViewState.LoadServer).target,
             )
         }
 

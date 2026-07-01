@@ -12,10 +12,11 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.isSetup
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.LaunchActivity
+import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.qs.ManageTilesViewModel
-import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -62,9 +63,8 @@ class TilePreferenceActivity : BaseActivity() {
             val intent = if (!serverManager.isRegistered()) {
                 Intent(this@TilePreferenceActivity, LaunchActivity::class.java)
             } else if (tileData?.isSetup == true) {
-                WebViewActivity.newInstance(
-                    this@TilePreferenceActivity,
-                    path = "entityId:${tileData.entityId}",
+                this@TilePreferenceActivity.intentLaunchWithNavigateTo(
+                    target = FrontendTarget.EntityMoreInfo(tileData.entityId),
                     serverId = tileData.serverId,
                 )
             } else {

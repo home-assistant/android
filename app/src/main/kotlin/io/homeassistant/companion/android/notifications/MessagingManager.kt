@@ -82,6 +82,8 @@ import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
+import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.NotificationSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
@@ -94,7 +96,6 @@ import io.homeassistant.companion.android.util.UrlUtil
 import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.vehicle.HaCarAppService
 import io.homeassistant.companion.android.websocket.WebsocketManager
-import io.homeassistant.companion.android.webview.WebViewActivity
 import java.io.File
 import java.net.URL
 import java.net.URLDecoder
@@ -1691,7 +1692,7 @@ class MessagingManager @Inject constructor(
         val otherApp = needsPackage || UrlUtil.isAbsoluteUrl(uri) || uri.startsWith(DEEP_LINK_PREFIX)
         val intent = when {
             uri.isBlank() -> {
-                WebViewActivity.newInstance(context, null, serverId)
+                context.intentLaunchWithNavigateTo(FrontendTarget.Default, serverId)
             }
 
             uri.startsWith(APP_PREFIX) -> {
@@ -1711,7 +1712,7 @@ class MessagingManager @Inject constructor(
                 if (uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY) {
                     SettingsActivity.newInstance(context, SettingsActivity.Deeplink.NotificationHistory)
                 } else {
-                    WebViewActivity.newInstance(context, null, serverId)
+                    context.intentLaunchWithNavigateTo(FrontendTarget.Default, serverId)
                 }
             }
 
@@ -1726,9 +1727,9 @@ class MessagingManager @Inject constructor(
             }
 
             else -> {
-                WebViewActivity.newInstance(context, uri, serverId)
+                context.intentLaunchWithNavigateTo(FrontendTarget.fromRawPath(uri), serverId)
             }
-        } ?: WebViewActivity.newInstance(context, null, serverId)
+        } ?: context.intentLaunchWithNavigateTo(FrontendTarget.Default, serverId)
 
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         if (!otherApp) {
@@ -1993,9 +1994,9 @@ class MessagingManager @Inject constructor(
         try {
             val serverId = data[THIS_SERVER_ID]!!.toInt()
             val intent = if (title.isNullOrEmpty()) {
-                WebViewActivity.newInstance(context, null, serverId)
+                context.intentLaunchWithNavigateTo(FrontendTarget.Default, serverId)
             } else {
-                WebViewActivity.newInstance(context, title, serverId)
+                context.intentLaunchWithNavigateTo(FrontendTarget.fromRawPath(title), serverId)
             }
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)

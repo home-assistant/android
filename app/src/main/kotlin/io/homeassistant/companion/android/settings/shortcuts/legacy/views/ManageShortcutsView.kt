@@ -39,6 +39,8 @@ import androidx.compose.ui.unit.sp
 import com.mikepenz.iconics.compose.IconicsPainter
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget.Companion.toRawPath
 import io.homeassistant.companion.android.settings.shortcuts.legacy.ManageShortcutsSettingsFragment
 import io.homeassistant.companion.android.settings.shortcuts.legacy.ManageShortcutsViewModel
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
@@ -274,9 +276,12 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
                 entityRegistry = viewModel.entityRegistry[shortcut.serverId.value],
                 deviceRegistry = viewModel.deviceRegistry[shortcut.serverId.value],
                 areaRegistry = viewModel.areaRegistry[shortcut.serverId.value],
-                selectedEntityId = viewModel.shortcuts[i].path.value.split(":").getOrNull(1),
+                selectedEntityId = (
+                    FrontendTarget.fromRawPath(viewModel.shortcuts[i].path.value)
+                        as? FrontendTarget.EntityMoreInfo
+                    )?.entityId,
                 onEntitySelectedId = { entityId ->
-                    viewModel.shortcuts[i].path.value = "entityId:$entityId"
+                    viewModel.shortcuts[i].path.value = FrontendTarget.EntityMoreInfo(entityId).toRawPath().orEmpty()
                 },
                 onEntityCleared = {
                     viewModel.shortcuts[i].path.value = ""

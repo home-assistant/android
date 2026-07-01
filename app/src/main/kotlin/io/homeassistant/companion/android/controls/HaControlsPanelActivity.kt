@@ -23,17 +23,15 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.getSystemService
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.WIPFeature
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.ServerManager.Companion.SERVER_ID_ACTIVE
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
-import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 @AndroidEntryPoint
 class HaControlsPanelActivity : AppCompatActivity() {
@@ -69,23 +67,14 @@ class HaControlsPanelActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val serverId = prefsRepository.getControlsPanelServer() ?: serverManager.getServer()?.id
             val path = prefsRepository.getControlsPanelPath()
-            val intent = if (WIPFeature.USE_FRONTEND_V2) {
-                Timber.d("Launching LaunchActivity…")
-                LaunchActivity.newInstance(
-                    context = this@HaControlsPanelActivity,
-                    deepLink = LaunchActivity.DeepLink.NavigateTo(path = path, serverId = serverId ?: SERVER_ID_ACTIVE),
-                    showWhenLocked = true,
-                )
-            } else {
-                Timber.d("Launching WebView…")
-                WebViewActivity.newInstance(
-                    context = this@HaControlsPanelActivity,
-                    path = path,
-                    serverId = serverId,
-                ).apply {
-                    putExtra(WebViewActivity.EXTRA_SHOW_WHEN_LOCKED, true)
-                }
-            }
+            val intent = LaunchActivity.newInstance(
+                context = this@HaControlsPanelActivity,
+                deepLink = LaunchActivity.DeepLink.NavigateTo(
+                    target = FrontendTarget.fromRawPath(path),
+                    serverId = serverId ?: SERVER_ID_ACTIVE,
+                ),
+                showWhenLocked = true,
+            )
             startActivity(intent)
             overridePendingTransition(0, 0) // Disable activity start/stop animation
 

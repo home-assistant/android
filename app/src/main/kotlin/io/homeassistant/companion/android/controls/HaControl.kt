@@ -22,24 +22,26 @@ import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.common.util.SdkVersion
-import io.homeassistant.companion.android.webview.WebViewActivity
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
+import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 
 @RequiresApi(Build.VERSION_CODES.R)
 interface HaControl {
 
     @SuppressLint("ResourceType")
     fun createControl(context: Context, entity: Entity, info: HaControlInfo): Control {
-        val controlPath = "entityId:${info.entityId}"
+        val controlIntent =
+            context.applicationContext.intentLaunchWithNavigateTo(
+                FrontendTarget.EntityMoreInfo(info.entityId),
+                info.serverId,
+            )
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         val control = Control.StatefulBuilder(
             info.systemId,
             PendingIntent.getActivity(
                 context,
-                controlPath.hashCode(),
-                WebViewActivity.newInstance(
-                    context.applicationContext,
-                    controlPath,
-                    info.serverId,
-                ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                info.entityId.hashCode(),
+                controlIntent,
                 PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE,
             ),
         )
