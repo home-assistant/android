@@ -244,14 +244,14 @@ class BluetoothSensorManager @Inject constructor(
                 SensorSettingType.TOGGLE,
             ),
         )
-        requestBluetoothSensorUpdate()
+        sendBluetoothSensorUpdate()
     }
 
     /**
-     * Updates and syncs only this manager's Bluetooth sensors, without touching the other managers.
+     * Send Bluetooth sensors update, without touching the other managers.
      * Used after a beacon or BLE transmitter change; runs fire-and-forget on the manager's scope.
      */
-    fun requestBluetoothSensorUpdate() {
+    fun sendBluetoothSensorUpdate() {
         ioScope.launch {
             sensorUpdater.get().updateSensors(
                 intent = null,
