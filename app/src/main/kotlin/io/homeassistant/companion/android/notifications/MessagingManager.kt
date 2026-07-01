@@ -422,7 +422,8 @@ class MessagingManager @Inject constructor(
                         }
 
                         COMMAND_VOLUME_LEVEL,
-                        COMMAND_VOLUME_LEVEL_STEP -> {
+                        COMMAND_VOLUME_LEVEL_STEP,
+                        -> {
                             if (!jsonData[NotificationData.MEDIA_STREAM].isNullOrEmpty() &&
                                 jsonData[NotificationData.MEDIA_STREAM] in CHANNEL_VOLUME_STREAM &&
                                 !jsonData[NotificationData.COMMAND].isNullOrEmpty() &&
@@ -734,7 +735,8 @@ class MessagingManager @Inject constructor(
             }
 
             COMMAND_VOLUME_LEVEL,
-            COMMAND_VOLUME_LEVEL_STEP -> {
+            COMMAND_VOLUME_LEVEL_STEP,
+            -> {
                 val notificationManager = context.getSystemService<NotificationManager>()
                 if (notificationManager?.isNotificationPolicyAccessGranted == false) {
                     notifyMissingPermission(message, serverId)
@@ -743,7 +745,7 @@ class MessagingManager @Inject constructor(
                         stream = data[NotificationData.MEDIA_STREAM].toString(),
                         volume = command!!.toInt(),
                         step = message == COMMAND_VOLUME_LEVEL_STEP,
-                        serverId = serverId ,
+                        serverId = serverId,
                         message = message,
                     )
                 }
@@ -1932,6 +1934,7 @@ class MessagingManager @Inject constructor(
                 Timber.w("Cannot control assistant volume: Not supported by the current version of Android")
                 return
             }
+
             else -> {
                 Timber.d("Skipping command due to invalid channel stream ($stream)")
                 return
@@ -2144,7 +2147,11 @@ class MessagingManager @Inject constructor(
                         when (type) {
                             COMMAND_WEBVIEW, COMMAND_ACTIVITY, COMMAND_LAUNCH_APP -> requestSystemAlertPermission()
 
-                            COMMAND_RINGER_MODE, COMMAND_DND, COMMAND_VOLUME_LEVEL, COMMAND_VOLUME_LEVEL_STEP -> requestDNDPermission()
+                            COMMAND_RINGER_MODE,
+                            COMMAND_DND,
+                            COMMAND_VOLUME_LEVEL,
+                            COMMAND_VOLUME_LEVEL_STEP,
+                            -> requestDNDPermission()
 
                             COMMAND_MEDIA -> requestNotificationPermission()
 
