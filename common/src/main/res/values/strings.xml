@@ -998,6 +998,7 @@
     <string name="webview_creation_failed">WebView failed to initialize, please check and update your system WebView.</string>
     <string name="welcome_hass">Welcome to Home Assistant Companion!</string>
     <string name="widget_attribute_separator_label">Separator between attributes:</string>
+    <string name="widget_attribute_add">Add attribute</string>
     <string name="widget_background_type_title">Select widget theme</string>
     <string name="widget_background_type_label">Widget theme:</string>
     <string name="widget_background_type_daynight">Light/dark theme</string>
