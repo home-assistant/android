@@ -62,8 +62,8 @@ class LocationSensorManager @Inject constructor(
             updateType = SensorManager.BasicSensor.UpdateType.LOCATION,
         )
 
-        fun setHighAccuracyModeSetting(context: Context, enabled: Boolean) {}
-        fun setHighAccuracyModeIntervalSetting(context: Context, updateInterval: Int) {}
+        fun SensorRepository.setHighAccuracyModeSetting(enabled: Boolean) {}
+        fun SensorRepository.setHighAccuracyModeIntervalSetting(updateInterval: Int) {}
 
         /**
          * Builds an explicit-component [Intent] addressed to [LocationSensorReceiver] that triggers a

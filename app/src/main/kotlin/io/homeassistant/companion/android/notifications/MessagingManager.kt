@@ -84,6 +84,8 @@ import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.sensors.LocationSensorManager
+import io.homeassistant.companion.android.sensors.LocationSensorManager.Companion.setHighAccuracyModeIntervalSetting
+import io.homeassistant.companion.android.sensors.LocationSensorManager.Companion.setHighAccuracyModeSetting
 import io.homeassistant.companion.android.sensors.LocationSensorReceiver
 import io.homeassistant.companion.android.sensors.NotificationSensorListenerService
 import io.homeassistant.companion.android.sensors.SensorReceiver
@@ -460,7 +462,7 @@ class MessagingManager @Inject constructor(
                         }
 
                         DeviceCommandData.COMMAND_BEACON_MONITOR -> {
-                            if (!commandBeaconMonitor(context, jsonData)) {
+                            if (!commandBeaconMonitor(context, jsonData, sensorRepository)) {
                                 sendNotification(jsonData)
                             }
                         }
@@ -773,11 +775,12 @@ class MessagingManager @Inject constructor(
 
             COMMAND_HIGH_ACCURACY_MODE -> {
                 when (command) {
-                    DeviceCommandData.TURN_OFF -> LocationSensorManager.setHighAccuracyModeSetting(context, false)
-                    DeviceCommandData.TURN_ON -> LocationSensorManager.setHighAccuracyModeSetting(context, true)
-                    FORCE_ON -> LocationSensorManager.setHighAccuracyModeSetting(context, true)
-                    HIGH_ACCURACY_SET_UPDATE_INTERVAL -> LocationSensorManager.setHighAccuracyModeIntervalSetting(
-                        context,
+                    DeviceCommandData.TURN_OFF -> sensorRepository.setHighAccuracyModeSetting(false)
+                    DeviceCommandData.TURN_ON,
+                    FORCE_ON,
+                    -> sensorRepository.setHighAccuracyModeSetting(true)
+
+                    HIGH_ACCURACY_SET_UPDATE_INTERVAL -> sensorRepository.setHighAccuracyModeIntervalSetting(
                         data[HIGH_ACCURACY_UPDATE_INTERVAL]!!.toInt(),
                     )
                 }

@@ -19,7 +19,6 @@ import io.homeassistant.companion.android.common.bluetooth.ble.name
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
-import io.homeassistant.companion.android.database.DatabaseEntryPoint
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.util.UUID
@@ -136,14 +135,13 @@ class BluetoothSensorManager @Inject constructor(
             updateType = SensorManager.BasicSensor.UpdateType.CUSTOM,
         )
 
-        suspend fun enableDisableBLETransmitter(context: Context, transmitEnabled: Boolean) {
-            val sensorRepository = DatabaseEntryPoint.resolve(context).sensorRepository()
-            val sensorEntity = sensorRepository.get(bleTransmitter.id)
+        suspend fun SensorRepository.enableDisableBLETransmitter(transmitEnabled: Boolean) {
+            val sensorEntity = get(bleTransmitter.id)
             if (sensorEntity.none { it.enabled }) {
                 return
             }
 
-            sensorRepository.add(
+            add(
                 SensorSetting(
                     bleTransmitter.id,
                     SETTING_BLE_TRANSMIT_ENABLED,
@@ -154,8 +152,7 @@ class BluetoothSensorManager @Inject constructor(
         }
 
         suspend fun enableDisableBeaconMonitor(context: Context, monitorEnabled: Boolean) {
-            val sensorRepository = DatabaseEntryPoint.resolve(context).sensorRepository()
-            val sensorEntity = sensorRepository.get(beaconMonitor.id)
+            val sensorEntity = get(beaconMonitor.id)
             if (sensorEntity.none { it.enabled }) {
                 return
             }
@@ -165,7 +162,7 @@ class BluetoothSensorManager @Inject constructor(
             } else {
                 monitoringManager.stopMonitoring(context, beaconMonitoringDevice)
             }
-            sensorRepository.add(
+            add(
                 SensorSetting(
                     beaconMonitor.id,
                     SETTING_BEACON_MONITOR_ENABLED,

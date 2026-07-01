@@ -2,6 +2,8 @@ package io.homeassistant.companion.android.common.notifications
 
 import android.content.Context
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
+import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager.Companion.enableDisableBLETransmitter
+import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager.Companion.enableDisableBeaconMonitor
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.sensors.SensorUpdateReceiver
 import java.util.UUID
@@ -105,7 +107,11 @@ private fun checkCommandFormat(data: Map<String, String>): Boolean {
     }
 }
 
-suspend fun commandBeaconMonitor(context: Context, data: Map<String, String>): Boolean {
+suspend fun commandBeaconMonitor(
+    context: Context,
+    data: Map<String, String>,
+    sensorRepository: SensorRepository,
+): Boolean {
     if (!checkCommandFormat(data)) {
         Timber.d(
             "Invalid beacon monitor command received, posting notification to device",
@@ -115,10 +121,10 @@ suspend fun commandBeaconMonitor(context: Context, data: Map<String, String>): B
     val command = data[NotificationData.COMMAND]
     Timber.d("Processing command: ${data[NotificationData.MESSAGE]}")
     if (command == DeviceCommandData.TURN_OFF) {
-        BluetoothSensorManager.enableDisableBeaconMonitor(context, false)
+        sensorRepository.enableDisableBeaconMonitor(context, false)
     }
     if (command == DeviceCommandData.TURN_ON) {
-        BluetoothSensorManager.enableDisableBeaconMonitor(context, true)
+        sensorRepository.enableDisableBeaconMonitor(context, true)
     }
     return true
 }
@@ -138,10 +144,10 @@ suspend fun commandBleTransmitter(
     val command = data[NotificationData.COMMAND]
     Timber.d("Processing command: ${data[NotificationData.MESSAGE]}")
     if (command == DeviceCommandData.TURN_OFF) {
-        BluetoothSensorManager.enableDisableBLETransmitter(context, false)
+        sensorRepository.enableDisableBLETransmitter(false)
     }
     if (command == DeviceCommandData.TURN_ON) {
-        BluetoothSensorManager.enableDisableBLETransmitter(context, true)
+        sensorRepository.enableDisableBLETransmitter(true)
     }
     if (command in DeviceCommandData.BLE_COMMANDS) {
         sensorRepository.updateSettingValue(
