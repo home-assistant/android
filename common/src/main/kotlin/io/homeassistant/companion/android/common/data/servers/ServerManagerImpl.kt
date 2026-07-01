@@ -168,8 +168,14 @@ internal class ServerManagerImpl @Inject constructor(
 
     private suspend fun getServerIdSanitize(serverId: Int): Int? {
         return if (serverId == SERVER_ID_ACTIVE) {
-            localStorage.getInt(PREF_ACTIVE_SERVER)
-                ?: serverDao.getLastServerId()
+            val storedActiveServerId = localStorage.getInt(PREF_ACTIVE_SERVER)
+            if (storedActiveServerId != null && serverDao.get(storedActiveServerId) == null) {
+                Timber.w("Active server ID $storedActiveServerId no longer exists, removing from storage")
+                localStorage.remove(PREF_ACTIVE_SERVER)
+                serverDao.getLastServerId()
+            } else {
+                storedActiveServerId ?: serverDao.getLastServerId()
+            }
         } else {
             serverId
         }
