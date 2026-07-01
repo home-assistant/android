@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
+import android.view.KeyEvent
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.widget.FrameLayout
@@ -39,6 +40,7 @@ const val BLANK_URL = "about:blank"
  * - Night mode support
  * - Custom user agent
  * - Transparent background
+ * - DPAD_DOWN to TAB remapping for Android TV navigation (via `OnKeyListener`)
  *
  * This composable provides a convenient way to embed a WebView within a Jetpack Compose UI.
  * Further customization of the WebView instance is possible through the [configure] lambda.
@@ -54,6 +56,8 @@ const val BLANK_URL = "about:blank"
  * @param modifier The modifier to be applied to this WebView.
  * @param nightModeTheme current [NightModeTheme]
  * @param configure A lambda that allows for customization of the WebView instance.
+ *                  Note: calling `setOnKeyListener` in this lambda will override the default
+ *                  DPAD_DOWN to TAB remapping.
  * @param factory A lambda that creates the WebView instance. If this returns null, a new
  *                WebView will be created with the current context. This is useful for providing
  *                a pre-configured WebView instance.
@@ -91,6 +95,7 @@ fun HAWebView(
                             FrameLayout.LayoutParams.MATCH_PARENT,
                         )
                         defaultSettings()
+                        remapDpadDownToTab()
                         configure(this)
                     }
                 } catch (t: Throwable) {
@@ -121,6 +126,23 @@ fun HAWebView(
     // handle by the navHost.
     BackHandler(onBackPressed != null) {
         webview.takeIf { it?.canGoBack() == true }?.goBack() ?: onBackPressed?.invoke()
+    }
+}
+
+/**
+ * Remaps DPAD_DOWN key events to TAB for Android TV remote control navigation.
+ *
+ * Android TV remotes send DPAD_DOWN events which don't navigate the web frontend
+ * properly. Remapping to TAB allows basic element-to-element navigation in the WebView.
+ */
+private fun WebView.remapDpadDownToTab() {
+    setOnKeyListener { view, keyCode, event ->
+        if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN && event.action == KeyEvent.ACTION_DOWN) {
+            view.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_TAB))
+            true
+        } else {
+            false
+        }
     }
 }
 
