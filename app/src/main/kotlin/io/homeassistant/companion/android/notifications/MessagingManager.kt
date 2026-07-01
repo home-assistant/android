@@ -129,6 +129,7 @@ class MessagingManager @Inject constructor(
     private val permissionRequestMediator: PermissionRequestMediator,
     private val assistConfigManager: AssistConfigManager,
     private val defaultAssistantManager: DefaultAssistantManager,
+    private val audioManager: AudioManager?,
 ) {
     companion object {
         const val APP_PREFIX = "app://"
@@ -696,7 +697,6 @@ class MessagingManager @Inject constructor(
             }
 
             COMMAND_RINGER_MODE -> {
-                val audioManager = context.getSystemService<AudioManager>()
                 val notificationManager =
                     context.getSystemService<NotificationManager>()
                 if (notificationManager?.isNotificationPolicyAccessGranted == false) {
@@ -1946,18 +1946,14 @@ class MessagingManager @Inject constructor(
     }
 
     private fun stepStreamVolume(streamType: Int, volumeDelta: Int) {
-        val audioManager = context.getSystemService<AudioManager>()!!
-
-        val currentVolume = audioManager.getStreamVolume(streamType)
+        val currentVolume = audioManager!!.getStreamVolume(streamType)
         val newVolume = currentVolume + volumeDelta
 
         setStreamVolume(streamType = streamType, volume = newVolume)
     }
 
     private fun setStreamVolume(streamType: Int, volume: Int) {
-        val audioManager = context.getSystemService<AudioManager>()!!
-
-        val maxVolume = audioManager.getStreamMaxVolume(streamType)
+        val maxVolume = audioManager!!.getStreamMaxVolume(streamType)
         val clampedVolume = volume.coerceIn(0, maxVolume)
 
         audioManager.setStreamVolume(

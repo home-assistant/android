@@ -2,6 +2,7 @@ package io.homeassistant.companion.android
 
 import android.app.DownloadManager
 import android.content.Context
+import android.media.AudioManager
 import androidx.core.content.getSystemService
 import androidx.work.WorkManager
 import dagger.Module
@@ -73,5 +74,11 @@ object ApplicationModule {
     @Singleton
     fun providesDownloadManager(@ApplicationContext context: Context): DownloadManager? {
         return context.getSystemService<DownloadManager>()
+    }
+
+    @Provides
+    @Singleton
+    fun providesAudioManager(@ApplicationContext context: Context): AudioManager? {
+        return context.getSystemService<AudioManager>()
     }
 }
