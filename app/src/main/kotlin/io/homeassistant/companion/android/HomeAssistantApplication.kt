@@ -23,12 +23,12 @@ import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
+import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.HAStrictMode
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.configureComposeDiagnosticStackTrace
 import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.isAutomotive
-import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.sensors.SensorReceiver
@@ -76,7 +76,7 @@ open class HomeAssistantApplication : Application() {
     lateinit var nightModeManager: NightModeManager
 
     @Inject
-    lateinit var sensorDao: SensorDao
+    lateinit var sensorRepository: SensorRepository
 
     @Inject
     lateinit var settingsDao: SettingsDao
@@ -292,7 +292,7 @@ open class HomeAssistantApplication : Application() {
 
         // Register for all saved user intents
         ioScope.launch {
-            val allSettings = sensorDao.getSettings(LastUpdateManager.lastUpdate.id)
+            val allSettings = sensorRepository.getSettings(LastUpdateManager.lastUpdate.id)
             for (setting in allSettings) {
                 if (setting.value != "" && setting.value != "SensorWorker") {
                     val settingSplit = setting.value.split(',')

@@ -62,13 +62,13 @@ class LastRebootSensorManager : SensorManager {
         var local = ""
         var utc = STATE_UNAVAILABLE
 
-        val sensorDao = sensorDao(context)
-        val fullSensor = sensorDao.getFull(lastRebootSensor.id).toSensorWithAttributes()
-        val sensorSetting = sensorDao.getSettings(lastRebootSensor.id)
+        val sensorRepository = sensorRepository(context)
+        val fullSensor = sensorRepository.getFull(lastRebootSensor.id).toSensorWithAttributes()
+        val sensorSetting = sensorRepository.getSettings(lastRebootSensor.id)
         val lastTimeMillis =
             fullSensor?.attributes?.firstOrNull { it.name == TIME_MILLISECONDS }?.value?.toLongOrNull() ?: 0L
         val settingDeadband = sensorSetting.firstOrNull { it.name == SETTING_DEADBAND }?.value?.toIntOrNull() ?: 60000
-        sensorDao.add(
+        sensorRepository.add(
             SensorSetting(lastRebootSensor.id, SETTING_DEADBAND, settingDeadband.toString(), SensorSettingType.NUMBER),
         )
         try {

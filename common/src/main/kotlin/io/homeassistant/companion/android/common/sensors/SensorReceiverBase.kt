@@ -21,7 +21,6 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ge
 import io.homeassistant.companion.android.common.util.CHANNEL_SENSOR_SYNC
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.DatabaseEntryPoint
-import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
 import io.homeassistant.companion.android.database.sensor.toSensorWithAttributes
 import io.homeassistant.companion.android.database.sensor.toSensorsWithAttributes
@@ -32,6 +31,7 @@ import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.util.Locale
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -78,7 +78,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
     lateinit var serverManager: ServerManager
 
     @Inject
-    lateinit var sensorDao: SensorDao
+    lateinit var sensorRepository: SensorRepository
 
     private val chargingActions = listOf(
         Intent.ACTION_BATTERY_LOW,
@@ -123,7 +123,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
             @Suppress("DEPRECATION")
             if (isSensorEnabled(LastUpdateManager.lastUpdate.id)) {
                 LastUpdateManager().sendLastUpdate(context, intent.action)
-                val allSettings = sensorDao.getSettings(LastUpdateManager.lastUpdate.id)
+                val allSettings = sensorRepository.getSettings(LastUpdateManager.lastUpdate.id)
                 for (setting in allSettings) {
                     if (setting.value != "" && intent.action == setting.value) {
                         val eventData = intent.extras?.keySet()
@@ -131,7 +131,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                             ?.plus("intent" to intent.action.toString())
                             ?: mapOf("intent" to intent.action.toString())
                         Timber.d("Event data: $eventData")
-                        sensorDao.get(LastUpdateManager.lastUpdate.id).forEach { sensor ->
+                        sensorRepository.get(LastUpdateManager.lastUpdate.id).forEach { sensor ->
                             if (!sensor.enabled) return@forEach
                             try {
                                 serverManager.integrationRepository(sensor.serverId).fireEvent(
@@ -139,6 +139,8 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                                     eventData as Map<String, Any>,
                                 )
                                 Timber.d("Event successfully sent to Home Assistant")
+                            } catch (e: CancellationException) {
+                                throw e
                             } catch (e: Exception) {
                                 Timber.e(e, "Unable to send event data to Home Assistant")
                             }
@@ -157,22 +159,27 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                     updateSensor(context, sensorId)
                 }
             } else {
-                updateSensors(context, serverManager, sensorDao, intent)
+                updateSensors(context, serverManager, sensorRepository, intent)
                 if (chargingActions.contains(intent.action)) {
                     // Add a 5 second delay to perform another update so charging state updates completely.
                     // This is necessary as the system needs a few seconds to verify the charger.
-                    delay(5000L)
-                    updateSensors(context, serverManager, sensorDao, intent)
+                    delay(5.seconds)
+                    updateSensors(context, serverManager, sensorRepository, intent)
                 }
             }
         }
     }
 
     private suspend fun isSensorEnabled(id: String): Boolean {
-        return sensorDao.get(id).any { it.enabled }
+        return sensorRepository.get(id).any { it.enabled }
     }
 
-    suspend fun updateSensors(context: Context, serverManager: ServerManager, sensorDao: SensorDao, intent: Intent?) {
+    suspend fun updateSensors(
+        context: Context,
+        serverManager: ServerManager,
+        sensorRepository: SensorRepository,
+        intent: Intent?,
+    ) {
         if (!serverManager.isRegistered()) {
             Timber.w("Device not registered, skipping sensor update/registration")
             return
@@ -183,6 +190,8 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
             if (hasSensor) {
                 try {
                     manager.requestSensorUpdate(context, intent)
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Issue requesting updates for ${context.getString(manager.name)}")
                 }
@@ -191,9 +200,11 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
         try {
             serverManager.servers().map { server ->
-                ioScope.async { syncSensorsWithServer(context, serverManager, server, sensorDao) }
+                ioScope.async { syncSensorsWithServer(context, serverManager, server, sensorRepository) }
             }.awaitAll()
             Timber.i("Sensor updates and sync completed")
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.e(e, "Exception while awaiting sensor updates.")
         }
@@ -203,7 +214,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         context: Context,
         serverManager: ServerManager,
         server: Server,
-        sensorDao: SensorDao,
+        sensorRepository: SensorRepository,
     ): Boolean {
         val config: GetConfigResponse
         val integrationRepository: IntegrationRepository
@@ -211,6 +222,8 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         try {
             integrationRepository = serverManager.integrationRepository(server.id)
             config = integrationRepository.getConfig()
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.e(e, "Error while getting core config to sync sensor status aborting")
             return false
@@ -220,7 +233,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         val supportsDisabledSensors = integrationRepository.isHomeAssistantVersionAtLeast(2022, 6, 0)
         val serverIsTrusted = integrationRepository.isTrusted()
         val coreSensorStatus: Map<String, Boolean>? =
-            if (supportsDisabledSensors && (serverIsTrusted || (sensorDao.getEnabledCount() ?: 0) > 0)) {
+            if (supportsDisabledSensors && (serverIsTrusted || sensorRepository.getEnabledCount() > 0)) {
                 config.entities
                     ?.filter { it.value["disabled"] != null }
                     ?.mapValues { !(it.value["disabled"] as Boolean) } // Map to sensor id -> enabled
@@ -237,12 +250,21 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
             val hasSensor = manager.hasSensor(context)
 
             manager.getAvailableSensors(context).forEach sensorForEach@{ basicSensor ->
-                val fullSensor = sensorDao.getFull(basicSensor.id, server.id).toSensorWithAttributes()
+                val fullSensor = sensorRepository.getFull(basicSensor.id, server.id).toSensorWithAttributes()
                 val sensor = fullSensor?.sensor ?: return@sensorForEach
                 val sensorCoreEnabled = coreSensorStatus?.get(basicSensor.id)
                 val canBeRegistered = hasSensor &&
                     basicSensor.type.isNotBlank() &&
                     basicSensor.statelessIcon.isNotBlank()
+                val hasPermission = manager.checkPermission(context, basicSensor.id)
+
+                // A sensor enabled in the database but missing its runtime permission isn't really
+                // enabled. Persist that so the reconciliation below unregisters it on the server instead
+                // of leaving a stale entity behind.
+                if (sensor.enabled && !hasPermission) {
+                    sensor.enabled = false
+                    sensorRepository.update(sensor)
+                }
 
                 // Register sensor and/or update the sensor enabled state. Priority is:
                 // 1. There is a new sensor or change in enabled state according to the app
@@ -265,7 +287,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                         sensor.registered = sensor.enabled
                         sensor.coreRegistration = currentHAversion
                         sensor.appRegistration = currentAppVersion
-                        sensorDao.update(sensor)
+                        sensorRepository.update(sensor)
                     } catch (e: Exception) {
                         Timber.e(e, "Issue registering sensor ${basicSensor.id}")
                     }
@@ -282,7 +304,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                         if (!serverIsTrusted) { // Core changed, but app doesn't trust server so 'override'
                             registerSensor(context, serverManager, fullSensor, basicSensor)
                         } else if (sensorCoreEnabled) { // App disabled, should enable
-                            if (manager.checkPermission(context.applicationContext, basicSensor.id)) {
+                            if (hasPermission) {
                                 sensor.enabled = true
                                 sensor.registered = true
                             } else {
@@ -313,7 +335,9 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
                         sensor.coreRegistration = currentHAversion
                         sensor.appRegistration = currentAppVersion
-                        sensorDao.update(sensor)
+                        sensorRepository.update(sensor)
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         Timber.e(e, "Issue enabling/disabling sensor ${basicSensor.id}")
                     }
@@ -330,7 +354,9 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                         sensor.registered = sensor.enabled
                         sensor.coreRegistration = currentHAversion
                         sensor.appRegistration = currentAppVersion
-                        sensorDao.update(sensor)
+                        sensorRepository.update(sensor)
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         Timber.e(e, "Issue re-registering sensor ${basicSensor.id}")
                         if (e is IntegrationException &&
@@ -359,13 +385,15 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
             success = try {
                 val serverSuccess = integrationRepository.updateSensors(enabledRegistrations)
                 enabledRegistrations.forEach {
-                    sensorDao.updateLastSentStateAndIcon(it.uniqueId, it.serverId, it.state.toString(), it.icon)
+                    sensorRepository.updateLastSentStateAndIcon(it.uniqueId, it.serverId, it.state.toString(), it.icon)
                 }
                 serverSuccess
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 // Don't trigger re-registration when the server is down or job was cancelled
                 val exceptionOk = e is IntegrationException &&
-                    (e.cause is IOException || e.cause is CancellationException)
+                    (e.cause is IOException)
                 if (exceptionOk) {
                     Timber.w(e, "Exception while updating sensors")
                 } else {
@@ -377,12 +405,12 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
             // We failed to update a sensor, we should re register next time
             if (!success) {
                 enabledRegistrations.forEach {
-                    val sensor = sensorDao.get(it.uniqueId, it.serverId)
+                    val sensor = sensorRepository.get(it.uniqueId, it.serverId)
                     if (sensor != null) {
                         sensor.registered = null
                         sensor.lastSentState = null
                         sensor.lastSentIcon = null
-                        sensorDao.update(sensor)
+                        sensorRepository.update(sensor)
                     }
                 }
             }
@@ -412,11 +440,13 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         } ?: return
         try {
             sensorManager.requestSensorUpdate(context)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.e(e, "Issue requesting updates for ${context.getString(sensorManager.name)}")
         }
         val basicSensor = sensorManager.getAvailableSensors(context).firstOrNull { it.id == sensorId } ?: return
-        val fullSensors = sensorDao.getFull(sensorId).toSensorsWithAttributes()
+        val fullSensors = sensorRepository.getFull(sensorId).toSensorsWithAttributes()
         fullSensors.filter {
             it.sensor.enabled &&
                 it.sensor.registered == true &&
@@ -427,12 +457,14 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                     serverManager.integrationRepository(
                         fullSensor.sensor.serverId,
                     ).updateSensors(listOf(fullSensor.toSensorRegistration(basicSensor)))
-                    sensorDao.updateLastSentStateAndIcon(
+                    sensorRepository.updateLastSentStateAndIcon(
                         basicSensor.id,
                         fullSensor.sensor.serverId,
                         fullSensor.sensor.state,
                         fullSensor.sensor.icon,
                     )
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Exception while updating individual sensor.")
                 }

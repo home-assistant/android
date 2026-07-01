@@ -36,8 +36,9 @@ abstract class SensorWorkerBase(val appContext: Context, workerParams: WorkerPar
     private val notificationManager = appContext.getSystemService<NotificationManager>()!!
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-        val sensorDao = DatabaseEntryPoint.resolve(applicationContext).sensorDao()
-        val enabledSensorCount = sensorDao.getEnabledCount() ?: 0
+        val databaseEntryPoint = DatabaseEntryPoint.resolve(applicationContext)
+        val sensorRepository = databaseEntryPoint.sensorRepository()
+        val enabledSensorCount = sensorRepository.getEnabledCount()
         if (
             enabledSensorCount > 0 ||
             serverManager.servers().any {
@@ -74,23 +75,17 @@ abstract class SensorWorkerBase(val appContext: Context, workerParams: WorkerPar
                 Timber.d(e, "Updating all Sensors in background.")
             }
 
-            val lastUpdateSensor = sensorDao.get(LastUpdateManager.lastUpdate.id)
+            val lastUpdateSensor = sensorRepository.get(LastUpdateManager.lastUpdate.id)
             if (lastUpdateSensor.any { it.enabled }) {
                 LastUpdateManager().sendLastUpdate(appContext, TAG)
             }
-            sensorReceiver.updateSensors(appContext, serverManager, sensorDao, null)
+            sensorReceiver.updateSensors(appContext, serverManager, sensorRepository, null)
         }
 
         // Cleanup orphaned sensors that may have been created by a slow or long running update
         // writing data when deleting the server.
         val currentServerIds = serverManager.servers().map { it.id }
-        val orphanedSensors = sensorDao.getAllExceptServer(currentServerIds)
-        if (orphanedSensors.any()) {
-            Timber.i("Cleaning up ${orphanedSensors.size} orphaned sensor entries")
-            orphanedSensors.forEach {
-                sensorDao.removeSensor(it.id, it.serverId)
-            }
-        }
+        sensorRepository.removeSensorsExceptServers(currentServerIds)
 
         Result.success()
     }

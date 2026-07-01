@@ -21,8 +21,8 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ar
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.data.SimplifiedEntity
-import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.wear.CameraTile
 import io.homeassistant.companion.android.database.wear.CameraTileDao
 import io.homeassistant.companion.android.database.wear.FavoriteCaches
@@ -50,7 +50,7 @@ import timber.log.Timber
 class MainViewModel @Inject constructor(
     private val favoritesDao: FavoritesDao,
     private val favoriteCachesDao: FavoriteCachesDao,
-    private val sensorsDao: SensorDao,
+    private val sensorRepository: SensorRepository,
     private val cameraTileDao: CameraTileDao,
     private val thermostatTileDao: ThermostatTileDao,
     application: Application,
@@ -193,7 +193,7 @@ class MainViewModel @Inject constructor(
     fun stringForDomain(domain: String): String? =
         HomePresenterImpl.domainsWithNames[domain]?.let { getApplication<Application>().getString(it) }
 
-    val sensors = sensorsDao.getAllFlow().collectAsState()
+    val sensors = sensorRepository.getAllFlow().collectAsState()
 
     var availableSensors = emptyList<SensorManager.BasicSensor>()
 
@@ -530,7 +530,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             val basicSensor = sensorManager.getAvailableSensors(getApplication())
                 .first { basicSensor -> basicSensor.id == sensorId }
-            updateSensorEntity(sensorsDao, basicSensor, isEnabled)
+            updateSensorEntity(basicSensor, isEnabled)
 
             if (isEnabled) {
                 try {
@@ -542,13 +542,9 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private suspend fun updateSensorEntity(
-        sensorDao: SensorDao,
-        basicSensor: SensorManager.BasicSensor,
-        isEnabled: Boolean,
-    ) {
+    private suspend fun updateSensorEntity(basicSensor: SensorManager.BasicSensor, isEnabled: Boolean) {
         homePresenter.getServerId()?.let { serverId ->
-            sensorDao.setSensorsEnabled(listOf(basicSensor.id), serverId, isEnabled)
+            sensorRepository.setSensorsEnabled(listOf(basicSensor.id), serverId, isEnabled)
             SensorReceiver.updateAllSensors(getApplication())
         }
     }

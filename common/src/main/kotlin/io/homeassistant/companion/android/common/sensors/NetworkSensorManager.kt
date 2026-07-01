@@ -316,25 +316,27 @@ class NetworkSensorManager : SensorManager {
         var bssid = if (conInfo?.bssid == null) "<not connected>" else conInfo.bssid
 
         val settingName = "network_replace_mac_var1:$bssid:"
-        val sensorDao = sensorDao(context)
-        val sensorSettings = sensorDao.getSettings(bssidState.id)
+        val sensorRepository = sensorRepository(context)
+        val sensorSettings = sensorRepository.getSettings(bssidState.id)
         val getCurrentBSSID = sensorSettings.firstOrNull { it.name == SETTING_GET_CURRENT_BSSID }?.value ?: "false"
         val currentSetting = sensorSettings.firstOrNull { it.name == settingName }?.value ?: ""
         if (getCurrentBSSID == "true") {
             if (currentSetting == "") {
-                sensorDao.add(
+                sensorRepository.add(
                     SensorSetting(bssidState.id, SETTING_GET_CURRENT_BSSID, "false", SensorSettingType.TOGGLE),
                 )
-                sensorDao.add(SensorSetting(bssidState.id, settingName, bssid, SensorSettingType.STRING))
+                sensorRepository.add(SensorSetting(bssidState.id, settingName, bssid, SensorSettingType.STRING))
             }
         } else {
             if (currentSetting != "") {
                 bssid = currentSetting
             } else {
-                sensorDao.removeSetting(bssidState.id, settingName)
+                sensorRepository.removeSetting(bssidState.id, settingName)
             }
 
-            sensorDao.add(SensorSetting(bssidState.id, SETTING_GET_CURRENT_BSSID, "false", SensorSettingType.TOGGLE))
+            sensorRepository.add(
+                SensorSetting(bssidState.id, SETTING_GET_CURRENT_BSSID, "false", SensorSettingType.TOGGLE),
+            )
         }
 
         val icon = if (bssid != "<not connected>") "mdi:wifi" else "mdi:wifi-off"

@@ -498,7 +498,7 @@ class AudioSensorManager : SensorManager {
             return true
         }
 
-        val sensorsWithAttributes = sensorDao(context)
+        val sensorsWithAttributes = sensorRepository(context)
             .getFull(sensor.id)
             .toSensorsWithAttributes()
 

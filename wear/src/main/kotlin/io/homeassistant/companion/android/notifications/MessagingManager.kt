@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.common.notifications.handleChannel
 import io.homeassistant.companion.android.common.notifications.handleDeleteIntent
 import io.homeassistant.companion.android.common.notifications.handleSmallIcon
 import io.homeassistant.companion.android.common.notifications.handleText
+import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.getActiveNotification
 import io.homeassistant.companion.android.common.util.toJsonObject
@@ -23,7 +24,6 @@ import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechData
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
-import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.util.sensitive
 import javax.inject.Inject
@@ -36,7 +36,7 @@ import timber.log.Timber
 class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,
     private val serverManager: ServerManager,
-    private val sensorDao: SensorDao,
+    private val sensorRepository: SensorRepository,
     private val notificationDao: NotificationDao,
     private val textToSpeechClient: TextToSpeechClient,
 ) {
@@ -94,7 +94,7 @@ class MessagingManager @Inject constructor(
                     }
                 }
                 message == DeviceCommandData.COMMAND_BLE_TRANSMITTER && allowCommands -> {
-                    if (!commandBleTransmitter(context, notificationData, sensorDao)) {
+                    if (!commandBleTransmitter(context, notificationData, sensorRepository)) {
                         sendNotification(notificationData)
                     }
                 }

@@ -10,8 +10,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.database.sensor.Sensor
-import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @HiltViewModel
-class SensorSettingsViewModel @Inject constructor(sensorDao: SensorDao, application: Application) :
+class SensorSettingsViewModel @Inject constructor(sensorRepository: SensorRepository, application: Application) :
     AndroidViewModel(application) {
 
     enum class SensorFilter(@IdRes val menuItemId: Int) {
@@ -46,7 +46,7 @@ class SensorSettingsViewModel @Inject constructor(sensorDao: SensorDao, applicat
 
     init {
         viewModelScope.launch {
-            sensorDao.getAllFlow().collect {
+            sensorRepository.getAllFlow().collect {
                 withContext(Dispatchers.IO) {
                     // Compare contents, because the worker typically pushes a DB update on
                     // sensor updates even when contents don't change

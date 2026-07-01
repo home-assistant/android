@@ -204,7 +204,7 @@ class LocationSensorManager :
         }
 
         suspend fun setHighAccuracyModeSetting(context: Context, enabled: Boolean) {
-            DatabaseEntryPoint.resolve(context).sensorDao().add(
+            DatabaseEntryPoint.resolve(context).sensorRepository().add(
                 SensorSetting(
                     backgroundLocation.id,
                     SETTING_HIGH_ACCURACY_MODE,
@@ -215,7 +215,7 @@ class LocationSensorManager :
         }
 
         suspend fun getHighAccuracyModeIntervalSetting(context: Context): Int {
-            val sensorSettings = DatabaseEntryPoint.resolve(context).sensorDao()
+            val sensorSettings = DatabaseEntryPoint.resolve(context).sensorRepository()
                 .getSettings(backgroundLocation.id)
             return sensorSettings.firstOrNull {
                 it.name == SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL
@@ -224,7 +224,7 @@ class LocationSensorManager :
         }
 
         suspend fun setHighAccuracyModeIntervalSetting(context: Context, updateInterval: Int) {
-            DatabaseEntryPoint.resolve(context).sensorDao().add(
+            DatabaseEntryPoint.resolve(context).sensorRepository().add(
                 SensorSetting(
                     backgroundLocation.id,
                     SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL,
@@ -584,7 +584,7 @@ class LocationSensorManager :
                 }
             }
             if (updatedBtDeviceNames) {
-                sensorDao(latestContext).add(
+                sensorRepository(latestContext).add(
                     SensorSetting(
                         backgroundLocation.id,
                         SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES,
@@ -773,12 +773,12 @@ class LocationSensorManager :
             lastLocationReceived[it] = System.currentTimeMillis()
         }
         LocationResult.extractResult(intent)?.lastLocation?.let { location ->
-            val sensorDao = sensorDao(latestContext)
-            val sensorSettings = sensorDao.getSettings(backgroundLocation.id)
+            val sensorRepository = sensorRepository(latestContext)
+            val sensorSettings = sensorRepository.getSettings(backgroundLocation.id)
             val minAccuracy = sensorSettings
                 .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
                 ?: DEFAULT_MINIMUM_ACCURACY
-            sensorDao.add(
+            sensorRepository.add(
                 SensorSetting(
                     backgroundLocation.id,
                     SETTING_ACCURACY,
@@ -893,12 +893,12 @@ class LocationSensorManager :
             }
         }
 
-        val sensorDao = sensorDao(latestContext)
-        val sensorSettings = sensorDao.getSettings(zoneLocation.id)
+        val sensorRepository = sensorRepository(latestContext)
+        val sensorSettings = sensorRepository.getSettings(zoneLocation.id)
         val minAccuracy = sensorSettings
             .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
             ?: DEFAULT_MINIMUM_ACCURACY
-        sensorDao.add(
+        sensorRepository.add(
             SensorSetting(zoneLocation.id, SETTING_ACCURACY, minAccuracy.toString(), SensorSettingType.NUMBER),
         )
 
@@ -1216,7 +1216,7 @@ class LocationSensorManager :
         if (highAccuracyTriggerRangeInt < 0) {
             highAccuracyTriggerRangeInt = DEFAULT_TRIGGER_RANGE_METERS
 
-            sensorDao(latestContext).add(
+            sensorRepository(latestContext).add(
                 SensorSetting(
                     backgroundLocation.id,
                     SETTING_HIGH_ACCURACY_MODE_TRIGGER_RANGE_ZONE,
@@ -1261,17 +1261,17 @@ class LocationSensorManager :
         }
 
         val now = System.currentTimeMillis()
-        val sensorDao = sensorDao(latestContext)
-        val fullSensor = sensorDao.getFull(singleAccurateLocation.id).toSensorWithAttributes()
+        val sensorRepository = sensorRepository(latestContext)
+        val fullSensor = sensorRepository.getFull(singleAccurateLocation.id).toSensorWithAttributes()
         val latestAccurateLocation =
             fullSensor?.attributes?.firstOrNull { it.name == "lastAccurateLocationRequest" }?.value?.toLongOrNull()
                 ?: 0L
 
-        val sensorSettings = sensorDao.getSettings(singleAccurateLocation.id)
+        val sensorSettings = sensorRepository.getSettings(singleAccurateLocation.id)
         val minAccuracy = sensorSettings
             .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
             ?: DEFAULT_MINIMUM_ACCURACY
-        sensorDao.add(
+        sensorRepository.add(
             SensorSetting(
                 singleAccurateLocation.id,
                 SETTING_ACCURACY,
@@ -1282,7 +1282,7 @@ class LocationSensorManager :
         val minTimeBetweenUpdates = sensorSettings
             .firstOrNull { it.name == SETTING_ACCURATE_UPDATE_TIME }?.value?.toIntOrNull()
             ?: 60000
-        sensorDao.add(
+        sensorRepository.add(
             SensorSetting(
                 singleAccurateLocation.id,
                 SETTING_ACCURATE_UPDATE_TIME,
@@ -1296,7 +1296,9 @@ class LocationSensorManager :
             Timber.d("Not requesting accurate location, last accurate location was too recent")
             return
         }
-        sensorDao.add(Attribute(singleAccurateLocation.id, "lastAccurateLocationRequest", now.toString(), "string"))
+        sensorRepository.add(
+            Attribute(singleAccurateLocation.id, "lastAccurateLocationRequest", now.toString(), "string"),
+        )
 
         val maxRetries = 5
         val request = LocationRequest.Builder(10000).apply {
@@ -1433,8 +1435,8 @@ class LocationSensorManager :
             setupLocationTracking()
         }
         cleanupLocationHistory(context)
-        val sensorDao = sensorDao(latestContext)
-        val sensorSetting = sensorDao.getSettings(singleAccurateLocation.id)
+        val sensorRepository = sensorRepository(latestContext)
+        val sensorSetting = sensorRepository.getSettings(singleAccurateLocation.id)
         val includeSensorUpdate =
             sensorSetting.firstOrNull { it.name == SETTING_INCLUDE_SENSOR_UPDATE }?.value ?: "false"
         if (includeSensorUpdate == "true") {
@@ -1442,7 +1444,7 @@ class LocationSensorManager :
                 context.sendBroadcast(createRequestAccurateLocationUpdateIntent(context))
             }
         } else {
-            sensorDao.add(
+            sensorRepository.add(
                 SensorSetting(
                     singleAccurateLocation.id,
                     SETTING_INCLUDE_SENSOR_UPDATE,

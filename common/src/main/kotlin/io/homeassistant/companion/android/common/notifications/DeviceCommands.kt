@@ -2,8 +2,8 @@ package io.homeassistant.companion.android.common.notifications
 
 import android.content.Context
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
+import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.sensors.SensorUpdateReceiver
-import io.homeassistant.companion.android.database.sensor.SensorDao
 import java.util.UUID
 import timber.log.Timber
 
@@ -123,7 +123,11 @@ suspend fun commandBeaconMonitor(context: Context, data: Map<String, String>): B
     return true
 }
 
-suspend fun commandBleTransmitter(context: Context, data: Map<String, String>, sensorDao: SensorDao): Boolean {
+suspend fun commandBleTransmitter(
+    context: Context,
+    data: Map<String, String>,
+    sensorRepository: SensorRepository,
+): Boolean {
     if (!checkCommandFormat(data)) {
         Timber.d(
             "Invalid ble transmitter command received, posting notification to device",
@@ -139,7 +143,7 @@ suspend fun commandBleTransmitter(context: Context, data: Map<String, String>, s
         BluetoothSensorManager.enableDisableBLETransmitter(context, true)
     }
     if (command in DeviceCommandData.BLE_COMMANDS) {
-        sensorDao.updateSettingValue(
+        sensorRepository.updateSettingValue(
             BluetoothSensorManager.bleTransmitter.id,
             when (command) {
                 DeviceCommandData.BLE_SET_ADVERTISE_MODE -> BluetoothSensorManager.SETTING_BLE_ADVERTISE_MODE
@@ -178,7 +182,7 @@ suspend fun commandBleTransmitter(context: Context, data: Map<String, String>, s
         )
 
         // Force the transmitter to restart and send updated attributes
-        sensorDao.updateLastSentStatesAndIcons(
+        sensorRepository.updateLastSentStatesAndIcons(
             BluetoothSensorManager.bleTransmitter.id,
             null,
             null,
