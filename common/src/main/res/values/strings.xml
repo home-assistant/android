@@ -375,7 +375,7 @@
     <string name="label_entity_ids">Entity ID(s):</string>
     <string name="label_icon">Icon:</string>
     <string name="label_label">Label:</string>
-    <string name="label_action">Action:</string>
+    <string name="label_action">Action</string>
     <string name="label">Label</string>
     <string name="lang_option_label_default">Device language</string>
     <string name="lang_option_value_default">default</string>
