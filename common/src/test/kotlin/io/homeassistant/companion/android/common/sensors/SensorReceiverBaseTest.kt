@@ -68,7 +68,7 @@ class SensorReceiverBaseTest {
     }
 
     @Test
-    fun `Given a sensor enabled and registered when its runtime permission is revoked then it is disabled and unregistered on the server`() = runTest {
+    fun `Given a sensor enabled and registered when its runtime permission is revoked then it is disabled in repository and on the server`() = runTest {
         val sensor = enabledRegisteredSensor()
         coEvery { sensorRepository.getFull(basicSensor.id, serverId) } returns mapOf(sensor to emptyList())
 
@@ -85,7 +85,7 @@ class SensorReceiverBaseTest {
     }
 
     @Test
-    fun `Given a sensor enabled and registered when its runtime permission is granted then it stays enabled and is not unregistered`() = runTest {
+    fun `Given a sensor enabled and registered when its runtime permission is granted then it stays enabled and is not re-registered`() = runTest {
         val sensor = enabledRegisteredSensor()
         coEvery { sensorRepository.getFull(basicSensor.id, serverId) } returns mapOf(sensor to emptyList())
 

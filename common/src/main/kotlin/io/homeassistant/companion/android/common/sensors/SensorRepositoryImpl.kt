@@ -126,7 +126,7 @@ internal class SensorRepositoryImpl @Inject constructor(
     /**
      * Row-or-default state for [id], one entry per server in [serverIds] plus any server that
      * already has a stored row, using [rows] where present and the sensor definition otherwise. Empty
-     * when [id] isn't a known sensor (no rows and no catalog entry).
+     * when [id] isn't a known sensor (no rows and no defined sensor).
      */
     private fun sensorsByServer(id: String, rows: List<Sensor>, serverIds: Collection<Int>): List<Sensor> {
         val byServer = rows.associateBy { it.serverId }
