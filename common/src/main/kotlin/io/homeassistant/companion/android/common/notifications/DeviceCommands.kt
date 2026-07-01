@@ -187,6 +187,6 @@ suspend fun commandBleTransmitter(
         )
     }
     bluetoothSensorManager.requestSensorUpdate()
-    bluetoothSensorManager.requestBluetoothSensorUpdate()
+    bluetoothSensorManager.sendBluetoothSensorUpdate()
     return true
 }

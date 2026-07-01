@@ -94,7 +94,7 @@ class IBeaconMonitor {
     private fun sendUpdate(tmp: List<IBeacon>) {
         beacons = tmp
         sensorManager.updateBeaconMonitoringSensor()
-        sensorManager.requestBluetoothSensorUpdate()
+        sensorManager.sendBluetoothSensorUpdate()
     }
 
     fun setUUIDFilter(uuidFilter: List<String>, uuidFilterExclude: Boolean) {
