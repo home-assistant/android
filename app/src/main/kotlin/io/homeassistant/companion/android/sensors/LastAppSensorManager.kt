@@ -1,4 +1,5 @@
 package io.homeassistant.companion.android.sensors
+
 import android.Manifest
 import android.app.usage.UsageStatsManager
 import android.content.Context

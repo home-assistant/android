@@ -1,4 +1,5 @@
 package io.homeassistant.companion.android.common.sensors
+
 import android.content.Context
 import android.content.res.Configuration
 import android.hardware.display.DisplayManager

@@ -1,4 +1,5 @@
 package io.homeassistant.companion.android.sensors
+
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR

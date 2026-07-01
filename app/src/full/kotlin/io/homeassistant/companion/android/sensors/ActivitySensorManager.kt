@@ -1,4 +1,5 @@
 package io.homeassistant.companion.android.sensors
+
 import android.Manifest
 import android.app.PendingIntent
 import android.content.Context
@@ -245,14 +246,7 @@ class ActivitySensorManager @Inject constructor(
                 Timber.e(e, "Unable to register for activity updates")
             }
         }
-        if ((
-                isEnabled(sleepConfidence) ||
-                    isEnabled(
-                        sleepSegment,
-                    )
-                ) &&
-            !sleepRegistration
-        ) {
+        if ((isEnabled(sleepConfidence) || isEnabled(sleepSegment)) && !sleepRegistration) {
             val pendingIntent = getSleepPendingIntent(applicationContext)
             Timber.d("Registering for sleep updates")
             try {

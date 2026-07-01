@@ -1,4 +1,5 @@
 package io.homeassistant.companion.android.sensors
+
 import android.content.Context
 import android.hardware.Sensor
 import android.hardware.SensorEvent

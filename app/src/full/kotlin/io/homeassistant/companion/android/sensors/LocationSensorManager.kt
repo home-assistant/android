@@ -1,4 +1,5 @@
 package io.homeassistant.companion.android.sensors
+
 import android.Manifest
 import android.app.PendingIntent
 import android.bluetooth.BluetoothAdapter
@@ -195,8 +196,8 @@ class LocationSensorManager @Inject constructor(
         }
 
         /**
-         * Builds an explicit-component [Intent] addressed to this receiver that triggers a single
-         * accurate location update via [ACTION_REQUEST_ACCURATE_LOCATION_UPDATE].
+         * Builds an explicit-component [Intent] addressed to [LocationSensorReceiver] that triggers a
+         * single accurate location update via [ACTION_REQUEST_ACCURATE_LOCATION_UPDATE].
          */
         fun createRequestAccurateLocationUpdateIntent(context: Context): Intent = Intent(
             context,
@@ -754,7 +755,6 @@ class LocationSensorManager @Inject constructor(
             lastLocationReceived[it] = System.currentTimeMillis()
         }
         LocationResult.extractResult(intent)?.lastLocation?.let { location ->
-            val sensorRepository = sensorRepository
             val sensorSettings = sensorRepository.getSettings(backgroundLocation.id)
             val minAccuracy = sensorSettings
                 .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
@@ -874,7 +874,6 @@ class LocationSensorManager @Inject constructor(
             }
         }
 
-        val sensorRepository = sensorRepository
         val sensorSettings = sensorRepository.getSettings(zoneLocation.id)
         val minAccuracy = sensorSettings
             .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
@@ -1239,7 +1238,6 @@ class LocationSensorManager @Inject constructor(
         }
 
         val now = System.currentTimeMillis()
-        val sensorRepository = sensorRepository
         val fullSensor = sensorRepository.getFull(singleAccurateLocation.id).toSensorWithAttributes()
         val latestAccurateLocation =
             fullSensor?.attributes?.firstOrNull { it.name == "lastAccurateLocationRequest" }?.value?.toLongOrNull()
@@ -1410,7 +1408,6 @@ class LocationSensorManager @Inject constructor(
             setupLocationTracking()
         }
         cleanupLocationHistory()
-        val sensorRepository = sensorRepository
         val sensorSetting = sensorRepository.getSettings(singleAccurateLocation.id)
         val includeSensorUpdate =
             sensorSetting.firstOrNull { it.name == SETTING_INCLUDE_SENSOR_UPDATE }?.value ?: "false"

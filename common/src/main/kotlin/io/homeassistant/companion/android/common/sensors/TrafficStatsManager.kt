@@ -1,4 +1,5 @@
 package io.homeassistant.companion.android.common.sensors
+
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
