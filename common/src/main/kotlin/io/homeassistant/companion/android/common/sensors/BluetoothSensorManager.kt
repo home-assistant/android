@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
+import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.bluetooth.BluetoothDevice
@@ -33,6 +34,8 @@ class BluetoothSensorManager @Inject constructor(
     @ApplicationContext override val applicationContext: Context,
     override val sensorRepository: SensorRepository,
     override val serverManager: ServerManager,
+    // Lazy to break the dependency cycle: SensorUpdater injects the Set<SensorManager> that contains this manager.
+    private val sensorUpdater: Lazy<SensorUpdater>,
 ) : SensorManager {
     companion object {
 
@@ -121,7 +124,7 @@ class BluetoothSensorManager @Inject constructor(
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
-        val monitoringManager = MonitoringManager()
+        private val monitoringManager = MonitoringManager()
 
         @ProvidesSensor
         val beaconMonitor = SensorManager.BasicSensor(
@@ -134,44 +137,6 @@ class BluetoothSensorManager @Inject constructor(
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.CUSTOM,
         )
-
-        suspend fun SensorRepository.enableDisableBLETransmitter(transmitEnabled: Boolean) {
-            val sensorEntity = get(bleTransmitter.id)
-            if (sensorEntity.none { it.enabled }) {
-                return
-            }
-
-            add(
-                SensorSetting(
-                    bleTransmitter.id,
-                    SETTING_BLE_TRANSMIT_ENABLED,
-                    transmitEnabled.toString(),
-                    SensorSettingType.TOGGLE,
-                ),
-            )
-        }
-
-        suspend fun enableDisableBeaconMonitor(context: Context, monitorEnabled: Boolean) {
-            val sensorEntity = get(beaconMonitor.id)
-            if (sensorEntity.none { it.enabled }) {
-                return
-            }
-
-            if (monitorEnabled) {
-                monitoringManager.startMonitoring(context, beaconMonitoringDevice)
-            } else {
-                monitoringManager.stopMonitoring(context, beaconMonitoringDevice)
-            }
-            add(
-                SensorSetting(
-                    beaconMonitor.id,
-                    SETTING_BEACON_MONITOR_ENABLED,
-                    monitorEnabled.toString(),
-                    SensorSettingType.TOGGLE,
-                ),
-            )
-            SensorUpdateReceiver.updateSensors(context)
-        }
     }
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
@@ -242,6 +207,58 @@ class BluetoothSensorManager @Inject constructor(
         updateBLESensor()
         updateBeaconMonitoringDevice()
         updateBeaconMonitoringSensor()
+    }
+
+    suspend fun enableDisableBLETransmitter(transmitEnabled: Boolean) {
+        val sensorEntity = sensorRepository.get(bleTransmitter.id)
+        if (sensorEntity.none { it.enabled }) {
+            return
+        }
+
+        sensorRepository.add(
+            SensorSetting(
+                bleTransmitter.id,
+                SETTING_BLE_TRANSMIT_ENABLED,
+                transmitEnabled.toString(),
+                SensorSettingType.TOGGLE,
+            ),
+        )
+    }
+
+    suspend fun enableDisableBeaconMonitor(monitorEnabled: Boolean) {
+        val sensorEntity = sensorRepository.get(beaconMonitor.id)
+        if (sensorEntity.none { it.enabled }) {
+            return
+        }
+
+        if (monitorEnabled) {
+            monitoringManager.startMonitoring(applicationContext, beaconMonitoringDevice)
+        } else {
+            monitoringManager.stopMonitoring(applicationContext, beaconMonitoringDevice)
+        }
+        sensorRepository.add(
+            SensorSetting(
+                beaconMonitor.id,
+                SETTING_BEACON_MONITOR_ENABLED,
+                monitorEnabled.toString(),
+                SensorSettingType.TOGGLE,
+            ),
+        )
+        sendBluetoothSensorUpdate()
+    }
+
+    /**
+     * Send Bluetooth sensors update, without touching the other managers.
+     * Used after a beacon or BLE transmitter change; runs fire-and-forget on the manager's scope.
+     */
+    fun sendBluetoothSensorUpdate() {
+        ioScope.launch {
+            sensorUpdater.get().updateSensors(
+                intent = null,
+                getSensorSettingsIntent = { _, _, _, _ -> null },
+                managers = setOf(this@BluetoothSensorManager),
+            )
+        }
     }
 
     private suspend fun updateBluetoothConnectionSensor() {

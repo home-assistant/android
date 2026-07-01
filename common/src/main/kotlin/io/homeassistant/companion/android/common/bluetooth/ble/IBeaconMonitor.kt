@@ -1,8 +1,6 @@
 package io.homeassistant.companion.android.common.bluetooth.ble
 
-import android.content.Context
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
-import io.homeassistant.companion.android.common.sensors.SensorUpdateReceiver
 import kotlin.math.abs
 import kotlin.math.round
 import org.altbeacon.beacon.Beacon
@@ -42,7 +40,7 @@ class IBeaconMonitor {
         beacons = listOf()
     }
 
-    fun setBeacons(context: Context, newBeacons: Collection<Beacon>) {
+    fun setBeacons(newBeacons: Collection<Beacon>) {
         lastSeenBeacons = newBeacons // unfiltered list, for the settings UI
         var requireUpdate = false
         val tmp = mutableMapOf<String, IBeacon>()
@@ -73,7 +71,7 @@ class IBeaconMonitor {
         }
         val sorted = sort(tmp.values).toMutableList()
         if (requireUpdate) {
-            sendUpdate(context, sorted)
+            sendUpdate(sorted)
             return
         }
         for ((i, existingBeacon) in beacons.withIndex()) {
@@ -88,15 +86,15 @@ class IBeaconMonitor {
             }
         }
         if (requireUpdate) {
-            sendUpdate(context, sorted)
+            sendUpdate(sorted)
             return
         }
     }
 
-    private fun sendUpdate(context: Context, tmp: List<IBeacon>) {
+    private fun sendUpdate(tmp: List<IBeacon>) {
         beacons = tmp
         sensorManager.updateBeaconMonitoringSensor()
-        SensorUpdateReceiver.updateSensors(context)
+        sensorManager.sendBluetoothSensorUpdate()
     }
 
     fun setUUIDFilter(uuidFilter: List<String>, uuidFilterExclude: Boolean) {
