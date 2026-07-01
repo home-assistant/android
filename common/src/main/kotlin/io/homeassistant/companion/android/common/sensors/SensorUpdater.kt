@@ -251,6 +251,8 @@ class SensorUpdater @VisibleForTesting internal constructor(
                         registerSensor(fullSensor, basicSensor)
                         fullSensor =
                             fullSensor.copy(sensor = persistRegistration(sensor.copy(registered = sensor.enabled)))
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         Timber.e(e, "Issue registering sensor ${basicSensor.id}")
                     }
