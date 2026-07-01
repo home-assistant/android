@@ -1901,27 +1901,32 @@ class MessagingManager @Inject constructor(
     }
 
     private suspend fun processStreamVolume(stream: String, volume: Int, serverId: String) {
-        when (stream) {
-            NotificationData.ALARM_STREAM -> adjustVolumeStream(AudioManager.STREAM_ALARM, volume)
-            NotificationData.MUSIC_STREAM -> adjustVolumeStream(AudioManager.STREAM_MUSIC, volume)
-            NotificationData.NOTIFICATION_STREAM -> adjustVolumeStream(AudioManager.STREAM_NOTIFICATION, volume)
-            NotificationData.RING_STREAM -> adjustVolumeStream(AudioManager.STREAM_RING, volume)
-            NotificationData.CALL_STREAM -> adjustVolumeStream(AudioManager.STREAM_VOICE_CALL, volume)
-            NotificationData.SYSTEM_STREAM -> adjustVolumeStream(AudioManager.STREAM_SYSTEM, volume)
-            NotificationData.DTMF_STREAM -> adjustVolumeStream(AudioManager.STREAM_DTMF, volume)
+        val streamType = when (stream) {
+            NotificationData.ALARM_STREAM -> AudioManager.STREAM_ALARM
+            NotificationData.MUSIC_STREAM -> AudioManager.STREAM_MUSIC
+            NotificationData.NOTIFICATION_STREAM -> AudioManager.STREAM_NOTIFICATION
+            NotificationData.RING_STREAM -> AudioManager.STREAM_RING
+            NotificationData.CALL_STREAM -> AudioManager.STREAM_VOICE_CALL
+            NotificationData.SYSTEM_STREAM -> AudioManager.STREAM_SYSTEM
+            NotificationData.DTMF_STREAM -> AudioManager.STREAM_DTMF
             NotificationData.ASSISTANT_STREAM -> if (SdkVersion.isAtLeast(Build.VERSION_CODES.CINNAMON_BUN)) {
                 if (!defaultAssistantManager.isDefaultAssistant()) {
                     Timber.w("Cannot control assistant volume: app is not the default assistant")
                     notifyDefaultAssistant(command = "$COMMAND_VOLUME_LEVEL($stream)", serverId = serverId)
                     return
                 }
-                adjustVolumeStream(AudioManager.STREAM_ASSISTANT, volume)
+                AudioManager.STREAM_ASSISTANT
             } else {
                 Timber.w("Cannot control assistant volume: Not supported by the current version of Android")
+                return
             }
-
-            else -> Timber.d("Skipping command due to invalid channel stream ($stream)")
+            else -> {
+                Timber.d("Skipping command due to invalid channel stream ($stream)")
+                return
+            }
         }
+
+        adjustVolumeStream(streamType, volume)
     }
 
     private fun adjustVolumeStream(stream: Int, volume: Int) {
