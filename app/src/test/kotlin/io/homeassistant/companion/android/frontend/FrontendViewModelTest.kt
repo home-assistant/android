@@ -15,6 +15,8 @@ import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.data.prefs.ZoomSettings
@@ -28,7 +30,9 @@ import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
+import io.homeassistant.companion.android.frontend.error.ErrorActionIntent
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
+import io.homeassistant.companion.android.frontend.error.errorActions
 import io.homeassistant.companion.android.frontend.exoplayer.ExoPlayerUiState
 import io.homeassistant.companion.android.frontend.exoplayer.FrontendExoPlayerManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
@@ -103,6 +107,7 @@ class FrontendViewModelTest {
     private val downloadManager: FrontendDownloadManager = mockk(relaxed = true)
     private val gestureManager: FrontendGestureManager = mockk(relaxed = true)
     private val serverManager: ServerManager = mockk(relaxed = true)
+    private val keyChainRepository: KeyChainRepository = mockk(relaxed = true)
     private val zoomSettingsFlow = MutableStateFlow(ZoomSettings())
     private val autoPlayVideoFlow = MutableStateFlow(false)
     private val screenOrientationFlow = MutableStateFlow(ScreenOrientation.SYSTEM)
@@ -176,6 +181,7 @@ class FrontendViewModelTest {
             improvHandler = improvHandler,
             barcodeScannerHandler = FrontendBarcodeScannerHandler(externalBusRepository, dialogManager),
             matterThreadHandler = matterThreadHandler,
+            keyChainRepository = keyChainRepository,
         )
     }
 
@@ -316,7 +322,7 @@ class FrontendViewModelTest {
 
             val state = viewModel.viewState.value
             assertTrue(state is FrontendViewState.Error, "Expected Error state but got $state")
-            assertTrue((state as FrontendViewState.Error).error is FrontendConnectionError.AuthenticationError)
+            assertTrue((state as FrontendViewState.Error).error is FrontendConnectionError.AuthRevoked)
         }
 
         @Test
@@ -330,7 +336,7 @@ class FrontendViewModelTest {
 
             val state = viewModel.viewState.value
             assertTrue(state is FrontendViewState.Error)
-            assertTrue((state as FrontendViewState.Error).error is FrontendConnectionError.UnreachableError)
+            assertTrue((state as FrontendViewState.Error).error is FrontendConnectionError.Unreachable)
         }
 
         @Test
@@ -377,7 +383,8 @@ class FrontendViewModelTest {
 
             val state = viewModel.viewState.value
             assertTrue(state is FrontendViewState.Error)
-            assertTrue((state as FrontendViewState.Error).error is FrontendConnectionError.UnreachableError)
+            assertTrue((state as FrontendViewState.Error).error is FrontendConnectionError.Unreachable)
+            assertEquals(errorActions(state.error, isInternalConnection = false), state.actions)
         }
     }
 
@@ -506,7 +513,7 @@ class FrontendViewModelTest {
             val viewModel = createViewModel()
             advanceUntilIdle()
 
-            assertTrue(viewModel.errorFlow.value is FrontendConnectionError.UnreachableError)
+            assertTrue(viewModel.errorFlow.value is FrontendConnectionError.Unreachable)
         }
     }
 
@@ -522,7 +529,7 @@ class FrontendViewModelTest {
             val viewModel = createViewModel()
             advanceUntilIdle()
 
-            assertTrue(viewModel.errorFlow.value is FrontendConnectionError.UnreachableError)
+            assertTrue(viewModel.errorFlow.value is FrontendConnectionError.Unreachable)
         }
 
         @Test
@@ -567,7 +574,7 @@ class FrontendViewModelTest {
             val state = viewModel.viewState.value
             assertTrue(state is FrontendViewState.Error, "Expected Error state but got $state")
             val error = (state as FrontendViewState.Error).error
-            assertTrue(error is FrontendConnectionError.UnrecoverableError.WebViewCreationError)
+            assertTrue(error is FrontendConnectionError.Unrecoverable.WebViewCreationError)
             assertEquals(io.homeassistant.companion.android.common.R.string.webview_creation_failed, error.message)
             assertEquals("dlopen failed: libwebviewchromium.so is 32-bit", error.errorDetails)
             assertEquals("class java.lang.UnsatisfiedLinkError", error.rawErrorType)
@@ -597,7 +604,7 @@ class FrontendViewModelTest {
             // Verify error state
             val errorState = viewModel.viewState.value
             assertTrue(errorState is FrontendViewState.Error)
-            assertTrue((errorState as FrontendViewState.Error).error is FrontendConnectionError.UnrecoverableError.WebViewCreationError)
+            assertTrue((errorState as FrontendViewState.Error).error is FrontendConnectionError.Unrecoverable.WebViewCreationError)
 
             // Now emit a new URL (e.g., switching from external to internal network)
             urlFlow.emit(UrlLoadResult.Success(url = "https://internal.example.com?external_auth=1", serverId = serverId))
@@ -609,7 +616,7 @@ class FrontendViewModelTest {
                 finalState is FrontendViewState.Error,
                 "Expected Error to be preserved but got $finalState",
             )
-            assertTrue((finalState as FrontendViewState.Error).error is FrontendConnectionError.UnrecoverableError.WebViewCreationError)
+            assertTrue((finalState as FrontendViewState.Error).error is FrontendConnectionError.Unrecoverable.WebViewCreationError)
         }
     }
 
@@ -746,7 +753,7 @@ class FrontendViewModelTest {
             assertTrue(viewModel.viewState.value is FrontendViewState.Loading)
 
             // Emit auth error message
-            val authError = FrontendConnectionError.AuthenticationError(
+            val authError = FrontendConnectionError.AuthRevoked(
                 message = io.homeassistant.companion.android.common.R.string.error_connection_failed,
                 errorDetails = "Token expired",
                 rawErrorType = "AuthError",
@@ -1747,7 +1754,7 @@ class FrontendViewModelTest {
 
             val state = viewModel.viewState.value
             assertTrue(state is FrontendViewState.Error, "Expected Error state but got $state")
-            assertTrue((state as FrontendViewState.Error).error is FrontendConnectionError.UnreachableError)
+            assertTrue((state as FrontendViewState.Error).error is FrontendConnectionError.ExternalBusTimeout)
         }
 
         @Test
@@ -2625,6 +2632,110 @@ class FrontendViewModelTest {
             advanceUntilIdle()
 
             coVerify { matterThreadHandler.onMatterThreadIntentResult(result) }
+        }
+    }
+
+    @Nested
+    inner class ErrorActions {
+
+        @Test
+        fun `Given RemoveServerAndRelaunch when onErrorAction then removes server and emits Relaunch`() = runTest {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            viewModel.events.test {
+                viewModel.onErrorAction(ErrorActionIntent.RemoveServerAndRelaunch)
+                assertEquals(FrontendEvent.Relaunch, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+            coVerify { serverManager.removeServer(serverId) }
+        }
+
+        @Test
+        fun `Given ClearKeychainAndRelaunch when onErrorAction then clears keychain and emits Relaunch`() = runTest {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            viewModel.events.test {
+                viewModel.onErrorAction(ErrorActionIntent.ClearKeychainAndRelaunch)
+                assertEquals(FrontendEvent.Relaunch, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+            coVerify { keyChainRepository.clear() }
+        }
+
+        @Test
+        fun `Given GoToSettings when onErrorAction then emits NavigateToSettings`() = runTest {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            viewModel.events.test {
+                viewModel.onErrorAction(ErrorActionIntent.GoToSettings)
+                assertEquals(FrontendEvent.NavigateToSettings, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+    }
+
+    @Nested
+    inner class SecurityVersionWarning {
+
+        private fun stubIntegrationRepository(versionAtLeast: Boolean, shouldNotify: Boolean) {
+            val integrationRepository = mockk<IntegrationRepository> {
+                coEvery { isHomeAssistantVersionAtLeast(2021, 1, 5) } returns versionAtLeast
+                coEvery { shouldNotifySecurityWarning() } returns shouldNotify
+            }
+            coEvery { serverManager.integrationRepository(any()) } returns integrationRepository
+        }
+
+        @Test
+        fun `Given outdated server when connected then shows security warning snackbar`() = runTest {
+            // android.net.Uri is unavailable on the plain JVM; stub parsing for the snackbar link.
+            mockkStatic(Uri::class)
+            every { Uri.parse(any()) } returns mockk(relaxed = true)
+            try {
+                val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+                every { frontendBusObserver.messageResults() } returns messageFlow
+                every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                    UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+                )
+                stubIntegrationRepository(versionAtLeast = false, shouldNotify = true)
+
+                val viewModel = createViewModel()
+                viewModel.events.test {
+                    advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+                    messageFlow.emit(FrontendHandlerEvent.Connected)
+
+                    val event = awaitItem()
+                    assertTrue(event is FrontendEvent.ShowSnackbar)
+                    assertEquals(
+                        commonR.string.security_vulnerably_message,
+                        (event as FrontendEvent.ShowSnackbar).messageResId,
+                    )
+                    cancelAndIgnoreRemainingEvents()
+                }
+            } finally {
+                unmockkStatic(Uri::class)
+            }
+        }
+
+        @Test
+        fun `Given up-to-date server when connected then no security warning snackbar`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            stubIntegrationRepository(versionAtLeast = true, shouldNotify = true)
+
+            val viewModel = createViewModel()
+            viewModel.events.test {
+                advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+                messageFlow.emit(FrontendHandlerEvent.Connected)
+                advanceUntilIdle()
+                expectNoEvents()
+                cancelAndIgnoreRemainingEvents()
+            }
         }
     }
 }

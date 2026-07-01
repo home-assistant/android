@@ -39,6 +39,11 @@ sealed interface FrontendEvent {
     /** Navigate to the app settings screen. */
     data object NavigateToSettings : FrontendEvent
 
+    /**
+     * Restart the app from scratch.
+     */
+    data object Relaunch : FrontendEvent
+
     /** Navigate to the assist settings screen. */
     data object NavigateToAssistSettings : FrontendEvent
 

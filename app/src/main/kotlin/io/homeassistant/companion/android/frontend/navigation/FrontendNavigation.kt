@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend.navigation
 
+import android.content.Intent
 import android.content.IntentSender
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -24,6 +25,7 @@ import io.homeassistant.companion.android.frontend.FrontendViewModel
 import io.homeassistant.companion.android.frontend.url.launchAppOrStore
 import io.homeassistant.companion.android.frontend.url.launchIntentUri
 import io.homeassistant.companion.android.launch.HAStartDestinationRoute
+import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.launch.PipReadiness
 import io.homeassistant.companion.android.nfc.WriteNfcTag
 import io.homeassistant.companion.android.settings.SettingsActivity
@@ -95,6 +97,17 @@ internal fun NavGraphBuilder.frontendScreen(
                 events = viewModel.events,
                 onShowSnackbar = onShowSnackbar,
                 onNavigateToSettings = onNavigateToSettings,
+                onRelaunch = {
+                    val context = navController.context
+                    // Clear the task so the relaunch starts from scratch and back can't return to
+                    // the pre-relaunch state (e.g. after removing the server or clearing credentials).
+                    context.startActivity(
+                        LaunchActivity.newInstance(context).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                        },
+                    )
+                    context.getActivity()?.finish()
+                },
                 onNavigateToAssist = { serverId, pipelineId, startListening ->
                     navController.context.startActivity(
                         AssistActivity.newInstance(
@@ -167,6 +180,7 @@ internal fun FrontendEventHandler(
     onNavigateToWidgetConfig: (entityId: String, widgetType: WidgetType) -> Unit,
     onLaunchApp: (packageName: String) -> Unit = {},
     onLaunchIntent: (intentUri: String) -> Unit = {},
+    onRelaunch: () -> Unit = {},
 ) {
     val resources = LocalResources.current
     LaunchedEffect(Unit) {
@@ -184,6 +198,7 @@ internal fun FrontendEventHandler(
                 }
 
                 is FrontendEvent.NavigateToSettings -> onNavigateToSettings(null)
+                is FrontendEvent.Relaunch -> onRelaunch()
                 is FrontendEvent.NavigateToAssistSettings -> onNavigateToSettings(
                     SettingsActivity.Deeplink.AssistSettings,
                 )

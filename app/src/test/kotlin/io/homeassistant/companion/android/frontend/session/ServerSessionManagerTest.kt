@@ -8,6 +8,9 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
 import io.mockk.mockk
+import java.io.IOException
+import java.net.SocketTimeoutException
+import javax.net.ssl.SSLHandshakeException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -78,7 +81,7 @@ class ServerSessionManagerTest {
     }
 
     @Test
-    fun `Given auth failure with anonymous session when getExternalAuth then returns Failed with AuthenticationError`() = runTest {
+    fun `Given auth failure with anonymous session when getExternalAuth then returns Failed with AuthRevoked`() = runTest {
         val payload = AuthPayload(callback = "externalAuthCallback", force = false)
         coEvery { authRepository.retrieveExternalAuthentication(false) } throws Exception("Auth failed")
         coEvery { authRepository.getSessionState() } returns SessionState.ANONYMOUS
@@ -88,9 +91,52 @@ class ServerSessionManagerTest {
         assertTrue(result is ExternalAuthResult.Failed)
         val failed = result as ExternalAuthResult.Failed
         assertEquals("externalAuthCallback(false)", failed.callbackScript)
-        val error = failed.error as FrontendConnectionError.AuthenticationError
+        val error = failed.error as FrontendConnectionError.AuthRevoked
         assertEquals("Auth failed", error.errorDetails)
         assertEquals("ExternalAuthFailed", error.rawErrorType)
+    }
+
+    @Test
+    fun `Given SSL handshake failure when getExternalAuth then returns Failed with SslError`() = runTest {
+        val payload = AuthPayload(callback = "externalAuthCallback", force = false)
+        coEvery {
+            authRepository.retrieveExternalAuthentication(false)
+        } throws SSLHandshakeException("handshake failed")
+        coEvery { authRepository.getSessionState() } returns SessionState.CONNECTED
+
+        val result = manager.getExternalAuth(serverId = 1, payload = payload)
+
+        val failed = result as ExternalAuthResult.Failed
+        assertTrue(failed.error is FrontendConnectionError.SslError)
+        assertEquals("ExternalAuthSsl", failed.error?.rawErrorType)
+    }
+
+    @Test
+    fun `Given SSL failure wrapped in a cause chain when getExternalAuth then returns Failed with SslError`() = runTest {
+        val payload = AuthPayload(callback = "externalAuthCallback", force = false)
+        coEvery {
+            authRepository.retrieveExternalAuthentication(false)
+        } throws IOException("network", SSLHandshakeException("handshake failed"))
+        coEvery { authRepository.getSessionState() } returns SessionState.CONNECTED
+
+        val result = manager.getExternalAuth(serverId = 1, payload = payload)
+
+        val failed = result as ExternalAuthResult.Failed
+        assertTrue(failed.error is FrontendConnectionError.SslError)
+        assertEquals("ExternalAuthSsl", failed.error?.rawErrorType)
+    }
+
+    @Test
+    fun `Given socket timeout when getExternalAuth then returns Failed with Timeout`() = runTest {
+        val payload = AuthPayload(callback = "externalAuthCallback", force = false)
+        coEvery { authRepository.retrieveExternalAuthentication(false) } throws SocketTimeoutException("timed out")
+        coEvery { authRepository.getSessionState() } returns SessionState.CONNECTED
+
+        val result = manager.getExternalAuth(serverId = 1, payload = payload)
+
+        val failed = result as ExternalAuthResult.Failed
+        assertTrue(failed.error is FrontendConnectionError.Timeout)
+        assertEquals("ExternalAuthTimeout", failed.error?.rawErrorType)
     }
 
     @Test
@@ -108,18 +154,18 @@ class ServerSessionManagerTest {
     }
 
     @Test
-    fun `Given auth failure and session check failure when getExternalAuth then returns Failed with AuthenticationError`() = runTest {
+    fun `Given auth failure and session check failure when getExternalAuth then returns Failed with AuthRevoked`() = runTest {
         val payload = AuthPayload(callback = "externalAuthCallback", force = false)
         coEvery { authRepository.retrieveExternalAuthentication(false) } throws Exception("Auth failed")
         coEvery { authRepository.getSessionState() } throws Exception("Session check failed")
 
         val result = manager.getExternalAuth(serverId = 1, payload = payload)
 
-        // When session check fails, treated as anonymous and returns AuthenticationError
+        // When session check fails, treated as anonymous and returns AuthRevoked
         assertTrue(result is ExternalAuthResult.Failed)
         val failed = result as ExternalAuthResult.Failed
         assertEquals("externalAuthCallback(false)", failed.callbackScript)
-        val error = failed.error as FrontendConnectionError.AuthenticationError
+        val error = failed.error as FrontendConnectionError.AuthRevoked
         assertEquals("Auth failed", error.errorDetails)
         assertEquals("ExternalAuthFailed", error.rawErrorType)
     }

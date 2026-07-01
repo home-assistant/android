@@ -12,7 +12,6 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -38,13 +37,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -56,8 +53,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.zxing.BarcodeFormat
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
-import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
@@ -67,6 +62,9 @@ import io.homeassistant.companion.android.frontend.barcode.BarcodeScannerUiState
 import io.homeassistant.companion.android.frontend.barcode.ui.BarcodeScanner
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
 import io.homeassistant.companion.android.frontend.dialog.PendingDialogHandler
+import io.homeassistant.companion.android.frontend.error.ErrorAction
+import io.homeassistant.companion.android.frontend.error.ErrorActionIntent
+import io.homeassistant.companion.android.frontend.error.ErrorActions
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorScreen
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
@@ -179,6 +177,7 @@ internal fun FrontendScreen(
         onSecurityLevelHelpClick = onSecurityLevelHelpClick,
         onShowSnackbar = onShowSnackbar,
         onWebViewCreationFailed = viewModel::onWebViewCreationFailed,
+        onErrorAction = viewModel::onErrorAction,
         onDownloadRequested = viewModel::onDownloadRequested,
         webViewActions = viewModel.webViewActions,
         onGesture = viewModel::onGesture,
@@ -216,6 +215,7 @@ internal fun FrontendScreenContent(
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onWebViewCreationFailed: (Throwable) -> Unit,
     modifier: Modifier = Modifier,
+    onErrorAction: (ErrorActionIntent) -> Unit = {},
     customView: View? = null,
     autoPlayVideoEnabled: Boolean = false,
     screenOrientation: ScreenOrientation = ScreenOrientation.SYSTEM,
@@ -302,6 +302,7 @@ internal fun FrontendScreenContent(
             onConfigureHomeNetwork = onConfigureHomeNetwork,
             onOpenExternalLink = onOpenExternalLink,
             onShowSnackbar = onShowSnackbar,
+            onErrorAction = onErrorAction,
         )
 
         FrontendBarcodeOverlay(
@@ -392,6 +393,7 @@ private fun StateOverlay(
     onConfigureHomeNetwork: (serverId: Int) -> Unit,
     onOpenExternalLink: suspend (Uri) -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
+    onErrorAction: (ErrorActionIntent) -> Unit,
 ) {
     when (viewState) {
         is FrontendViewState.LoadServer,
@@ -421,9 +423,8 @@ private fun StateOverlay(
 
         is FrontendViewState.Error -> ErrorOverlay(
             errorStateProvider = errorStateProvider,
-            error = viewState.error,
-            onRetry = onRetry,
-            onOpenSettings = onOpenSettings,
+            actions = viewState.actions,
+            onErrorAction = onErrorAction,
             onOpenExternalLink = onOpenExternalLink,
         )
     }
@@ -490,9 +491,8 @@ private fun InsecureOverlay(
 @Composable
 private fun ErrorOverlay(
     errorStateProvider: FrontendConnectionErrorStateProvider,
-    error: FrontendConnectionError?,
-    onRetry: () -> Unit,
-    onOpenSettings: () -> Unit,
+    actions: List<ErrorAction>,
+    onErrorAction: (ErrorActionIntent) -> Unit,
     onOpenExternalLink: suspend (Uri) -> Unit,
 ) {
     FrontendConnectionErrorScreen(
@@ -500,26 +500,11 @@ private fun ErrorOverlay(
         onOpenExternalLink = onOpenExternalLink,
         modifier = Modifier.fillMaxSize(),
         actions = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
-            ) {
-                if (error !is FrontendConnectionError.UnrecoverableError) {
-                    HAAccentButton(
-                        text = stringResource(commonR.string.retry),
-                        onClick = onRetry,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                HAPlainButton(
-                    text = stringResource(commonR.string.open_settings),
-                    onClick = onOpenSettings,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = HADimens.SPACE6),
-                )
-            }
+            ErrorActions(
+                actions = actions,
+                onAction = onErrorAction,
+                modifier = Modifier.padding(bottom = HADimens.SPACE6),
+            )
         },
     )
 }
@@ -883,7 +868,7 @@ private fun FrontendScreenErrorPreview() {
             viewState = FrontendViewState.Error(
                 serverId = 1,
                 url = "https://example.com",
-                error = FrontendConnectionError.UnreachableError(
+                error = FrontendConnectionError.Unreachable(
                     message = commonR.string.webview_error_HOST_LOOKUP,
                     errorDetails = "Connection timed out",
                     rawErrorType = "HostLookupError",
