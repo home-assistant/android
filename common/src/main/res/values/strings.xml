@@ -1223,6 +1223,7 @@
     <string name="thread_store_added_unknown">"%1$s" has been added. The phone\'s preferred Thread network couldn\'t be confirmed.</string>
     <string name="thread_store_failed">Couldn\'t add "%1$s" to this phone: %2$s</string>
     <string name="thread_store_failed_unknown">Couldn\'t add the Thread credential to this phone.</string>
+    <string name="matter_thread_working">Working…</string>
     <string name="tile_vibrate">Vibrate when selected</string>
     <string name="tile_auth_required">Requires unlocked device</string>
     <string name="no_assist_support">You must be at least on Home Assistant %1$s and have the %2$s integration enabled</string>
