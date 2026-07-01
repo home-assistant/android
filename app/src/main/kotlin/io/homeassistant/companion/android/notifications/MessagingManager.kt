@@ -731,14 +731,11 @@ class MessagingManager @Inject constructor(
             }
 
             COMMAND_VOLUME_LEVEL -> {
-                val audioManager =
-                    context.getSystemService<AudioManager>()
                 val notificationManager = context.getSystemService<NotificationManager>()
                 if (notificationManager?.isNotificationPolicyAccessGranted == false) {
                     notifyMissingPermission(message, serverId)
                 } else {
                     processStreamVolume(
-                        audioManager!!,
                         data[NotificationData.MEDIA_STREAM].toString(),
                         command!!.toInt(),
                         serverId,
@@ -1903,27 +1900,22 @@ class MessagingManager @Inject constructor(
         }
     }
 
-    private suspend fun processStreamVolume(audioManager: AudioManager, stream: String, volume: Int, serverId: String) {
+    private suspend fun processStreamVolume(stream: String, volume: Int, serverId: String) {
         when (stream) {
-            NotificationData.ALARM_STREAM -> adjustVolumeStream(AudioManager.STREAM_ALARM, volume, audioManager)
-            NotificationData.MUSIC_STREAM -> adjustVolumeStream(AudioManager.STREAM_MUSIC, volume, audioManager)
-            NotificationData.NOTIFICATION_STREAM -> adjustVolumeStream(
-                AudioManager.STREAM_NOTIFICATION,
-                volume,
-                audioManager,
-            )
-
-            NotificationData.RING_STREAM -> adjustVolumeStream(AudioManager.STREAM_RING, volume, audioManager)
-            NotificationData.CALL_STREAM -> adjustVolumeStream(AudioManager.STREAM_VOICE_CALL, volume, audioManager)
-            NotificationData.SYSTEM_STREAM -> adjustVolumeStream(AudioManager.STREAM_SYSTEM, volume, audioManager)
-            NotificationData.DTMF_STREAM -> adjustVolumeStream(AudioManager.STREAM_DTMF, volume, audioManager)
+            NotificationData.ALARM_STREAM -> adjustVolumeStream(AudioManager.STREAM_ALARM, volume)
+            NotificationData.MUSIC_STREAM -> adjustVolumeStream(AudioManager.STREAM_MUSIC, volume)
+            NotificationData.NOTIFICATION_STREAM -> adjustVolumeStream(AudioManager.STREAM_NOTIFICATION, volume)
+            NotificationData.RING_STREAM -> adjustVolumeStream(AudioManager.STREAM_RING, volume)
+            NotificationData.CALL_STREAM -> adjustVolumeStream(AudioManager.STREAM_VOICE_CALL, volume)
+            NotificationData.SYSTEM_STREAM -> adjustVolumeStream(AudioManager.STREAM_SYSTEM, volume)
+            NotificationData.DTMF_STREAM -> adjustVolumeStream(AudioManager.STREAM_DTMF, volume)
             NotificationData.ASSISTANT_STREAM -> if (SdkVersion.isAtLeast(Build.VERSION_CODES.CINNAMON_BUN)) {
                 if (!defaultAssistantManager.isDefaultAssistant()) {
                     Timber.w("Cannot control assistant volume: app is not the default assistant")
                     notifyDefaultAssistant(command = "$COMMAND_VOLUME_LEVEL($stream)", serverId = serverId)
                     return
                 }
-                adjustVolumeStream(AudioManager.STREAM_ASSISTANT, volume, audioManager)
+                adjustVolumeStream(AudioManager.STREAM_ASSISTANT, volume)
             } else {
                 Timber.w("Cannot control assistant volume: Not supported by the current version of Android")
             }
@@ -1932,7 +1924,8 @@ class MessagingManager @Inject constructor(
         }
     }
 
-    private fun adjustVolumeStream(stream: Int, volume: Int, audioManager: AudioManager) {
+    private fun adjustVolumeStream(stream: Int, volume: Int) {
+        val audioManager = context.getSystemService<AudioManager>()!!
         var volumeLevel = volume
         if (volumeLevel > audioManager.getStreamMaxVolume(stream)) {
             volumeLevel = audioManager.getStreamMaxVolume(stream)
