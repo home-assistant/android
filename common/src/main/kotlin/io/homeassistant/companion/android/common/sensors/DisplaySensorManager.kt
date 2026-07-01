@@ -6,11 +6,20 @@ import android.hardware.display.DisplayManager
 import android.provider.Settings
 import android.view.Display
 import android.view.Surface
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import javax.inject.Inject
+import javax.inject.Singleton
 import timber.log.Timber
 
-class DisplaySensorManager : SensorManager {
+@Singleton
+class DisplaySensorManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager {
     companion object {
         @ProvidesSensor
         val screenBrightness = SensorManager.BasicSensor(
@@ -60,11 +69,11 @@ class DisplaySensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_display_sensors
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return listOf(screenBrightness, screenOffTimeout, screenOrientation, screenRotation)
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 
@@ -72,15 +81,15 @@ class DisplaySensorManager : SensorManager {
         return "https://companion.home-assistant.io/docs/core/sensors#display-sensors"
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
-        updateScreenBrightness(context)
-        updateScreenTimeout(context)
-        updateScreenOrientation(context)
-        updateScreenRotation(context)
+    override suspend fun requestSensorUpdate() {
+        updateScreenBrightness()
+        updateScreenTimeout()
+        updateScreenOrientation()
+        updateScreenRotation()
     }
 
-    private suspend fun updateScreenBrightness(context: Context) {
-        if (!isEnabled(context, screenBrightness)) {
+    private suspend fun updateScreenBrightness() {
+        if (!isEnabled(screenBrightness)) {
             return
         }
 
@@ -89,9 +98,9 @@ class DisplaySensorManager : SensorManager {
 
         try {
             brightness =
-                Settings.System.getInt(context.contentResolver, Settings.System.SCREEN_BRIGHTNESS)
+                Settings.System.getInt(applicationContext.contentResolver, Settings.System.SCREEN_BRIGHTNESS)
             auto = Settings.System.getInt(
-                context.contentResolver,
+                applicationContext.contentResolver,
                 Settings.System.SCREEN_BRIGHTNESS_MODE,
             ) == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
         } catch (e: Exception) {
@@ -100,7 +109,6 @@ class DisplaySensorManager : SensorManager {
 
         val icon = if (auto) "mdi:brightness-auto" else screenBrightness.statelessIcon
         onSensorUpdated(
-            context,
             screenBrightness,
             brightness,
             icon,
@@ -110,8 +118,8 @@ class DisplaySensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateScreenTimeout(context: Context) {
-        if (!isEnabled(context, screenOffTimeout)) {
+    private suspend fun updateScreenTimeout() {
+        if (!isEnabled(screenOffTimeout)) {
             return
         }
 
@@ -119,13 +127,12 @@ class DisplaySensorManager : SensorManager {
 
         try {
             timeout =
-                Settings.System.getInt(context.contentResolver, Settings.System.SCREEN_OFF_TIMEOUT)
+                Settings.System.getInt(applicationContext.contentResolver, Settings.System.SCREEN_OFF_TIMEOUT)
         } catch (e: Exception) {
             Timber.e(e, "Unable to get screen off timeout setting")
         }
 
         onSensorUpdated(
-            context,
             screenOffTimeout,
             timeout,
             screenOffTimeout.statelessIcon,
@@ -133,13 +140,13 @@ class DisplaySensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateScreenOrientation(context: Context) {
-        if (!isEnabled(context, screenOrientation)) {
+    private suspend fun updateScreenOrientation() {
+        if (!isEnabled(screenOrientation)) {
             return
         }
 
         @Suppress("DEPRECATION")
-        val orientation = when (context.resources.configuration.orientation) {
+        val orientation = when (applicationContext.resources.configuration.orientation) {
             Configuration.ORIENTATION_PORTRAIT -> "portrait"
             Configuration.ORIENTATION_LANDSCAPE -> "landscape"
             Configuration.ORIENTATION_SQUARE -> "square"
@@ -155,7 +162,6 @@ class DisplaySensorManager : SensorManager {
         }
 
         onSensorUpdated(
-            context,
             screenOrientation,
             orientation,
             icon,
@@ -165,12 +171,12 @@ class DisplaySensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateScreenRotation(context: Context) {
-        if (!isEnabled(context, screenRotation)) {
+    private suspend fun updateScreenRotation() {
+        if (!isEnabled(screenRotation)) {
             return
         }
 
-        val dm = context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+        val dm = applicationContext.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
 
         val display = getRotationString(dm.getDisplay(Display.DEFAULT_DISPLAY).rotation)
 
@@ -182,7 +188,6 @@ class DisplaySensorManager : SensorManager {
             mapOf("options" to possibleStates)
         }
         onSensorUpdated(
-            context,
             screenRotation,
             display,
             screenRotation.statelessIcon,

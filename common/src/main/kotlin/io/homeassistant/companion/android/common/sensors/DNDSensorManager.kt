@@ -3,11 +3,20 @@ package io.homeassistant.companion.android.common.sensors
 import android.app.NotificationManager
 import android.content.Context
 import androidx.core.content.getSystemService
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.isAutomotive
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class DNDSensorManager : SensorManager {
+@Singleton
+class DNDSensorManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager {
     companion object {
         @ProvidesSensor
         val dndSensor = SensorManager.BasicSensor(
@@ -29,29 +38,29 @@ class DNDSensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_dnd
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return listOf(dndSensor)
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
-        updateDNDState(context)
+    override suspend fun requestSensorUpdate() {
+        updateDNDState()
     }
 
-    override fun hasSensor(context: Context): Boolean {
-        return !context.isAutomotive()
+    override fun hasSensor(): Boolean {
+        return !applicationContext.isAutomotive()
     }
 
-    private suspend fun updateDNDState(context: Context) {
-        if (!isEnabled(context, dndSensor)) {
+    private suspend fun updateDNDState() {
+        if (!isEnabled(dndSensor)) {
             return
         }
 
         val notificationManager =
-            context.getSystemService<NotificationManager>()
+            applicationContext.getSystemService<NotificationManager>()
 
         val state = when (notificationManager?.currentInterruptionFilter) {
             NotificationManager.INTERRUPTION_FILTER_ALARMS -> "alarms_only"
@@ -63,7 +72,6 @@ class DNDSensorManager : SensorManager {
         }
 
         onSensorUpdated(
-            context,
             dndSensor,
             state,
             if (state != "off") dndSensor.statelessIcon else "mdi:minus-circle-off",

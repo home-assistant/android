@@ -1,12 +1,21 @@
 package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
+import javax.inject.Inject
+import javax.inject.Singleton
 import timber.log.Timber
 
-class LastUpdateManager : SensorManager {
+@Singleton
+class LastUpdateManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager {
     companion object {
         private const val SETTING_ADD_NEW_INTENT = "lastupdate_add_new_intent"
         private const val INTENT_SETTING_PREFIX = "lastupdate_intent_var1:"
@@ -29,20 +38,20 @@ class LastUpdateManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_last_update
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return listOf(lastUpdate)
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
+    override suspend fun requestSensorUpdate() {
         // No op
     }
 
-    suspend fun sendLastUpdate(context: Context, intentAction: String?) {
-        if (!isEnabled(context, lastUpdate)) {
+    suspend fun sendLastUpdate(intentAction: String?) {
+        if (!isEnabled(lastUpdate)) {
             return
         }
 
@@ -53,14 +62,13 @@ class LastUpdateManager : SensorManager {
         Timber.d("Last update is $intentAction")
 
         onSensorUpdated(
-            context,
             lastUpdate,
             intentAction,
             lastUpdate.statelessIcon,
             mapOf(),
         )
 
-        val sensorRepository = sensorRepository(context)
+        val sensorRepository = sensorRepository
         val (settingsToRemove, allSettings) = sensorRepository.getSettings(lastUpdate.id).partition { setting ->
             setting.value.isEmpty()
         }

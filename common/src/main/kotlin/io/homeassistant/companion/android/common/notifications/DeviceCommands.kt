@@ -127,6 +127,7 @@ suspend fun commandBleTransmitter(
     context: Context,
     data: Map<String, String>,
     sensorRepository: SensorRepository,
+    bluetoothSensorManager: BluetoothSensorManager,
 ): Boolean {
     if (!checkCommandFormat(data)) {
         Timber.d(
@@ -188,7 +189,7 @@ suspend fun commandBleTransmitter(
             null,
         )
     }
-    BluetoothSensorManager().requestSensorUpdate(context)
+    bluetoothSensorManager.requestSensorUpdate()
     SensorUpdateReceiver.updateSensors(context)
     return true
 }

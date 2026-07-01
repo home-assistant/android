@@ -434,6 +434,7 @@ commons-io:commons-io:2.16.1=androidLintTool,unified-test-platform-android-test-
 commons-logging:commons-logging:1.2=androidLintTool,unified-test-platform-android-test-plugin-result-listener-gradle
 dev.drewhamilton.poko:poko-annotations-jvm:0.18.0=ktlint,ktlintBaselineReporter,ktlintRuleset
 dev.drewhamilton.poko:poko-annotations:0.18.0=ktlint,ktlintBaselineReporter,ktlintRuleset
+io.github.classgraph:classgraph:4.8.184=debugUnitTestCompileClasspath,debugUnitTestLintChecksClasspath,debugUnitTestRuntimeClasspath
 io.github.detekt.sarif4k:sarif4k-jvm:0.6.0=ktlint,ktlintReporter
 io.github.detekt.sarif4k:sarif4k:0.6.0=ktlint,ktlintReporter
 io.github.oshai:kotlin-logging-jvm:7.0.3=ktlint,ktlintBaselineReporter,ktlintReporter,ktlintRuleset

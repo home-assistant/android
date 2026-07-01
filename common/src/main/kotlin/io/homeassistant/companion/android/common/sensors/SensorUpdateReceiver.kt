@@ -5,9 +5,13 @@ import android.content.Context
 import android.content.Intent
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.BuildConfig
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class SensorUpdateReceiver : SensorReceiverBase() {
+
+    @Inject
+    lateinit var bluetoothSensorManager: BluetoothSensorManager
 
     companion object {
         fun updateSensors(context: Context) {
@@ -20,8 +24,8 @@ class SensorUpdateReceiver : SensorReceiverBase() {
     override val currentAppVersion: String
         get() = BuildConfig.VERSION_NAME
 
-    override val managers: List<SensorManager>
-        get() = listOf(BluetoothSensorManager())
+    override val managers: Set<SensorManager>
+        get() = setOf(bluetoothSensorManager)
 
     override val skippableActions: Map<String, List<String>>
         get() = emptyMap()

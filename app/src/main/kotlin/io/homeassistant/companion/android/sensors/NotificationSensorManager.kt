@@ -10,32 +10,42 @@ import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
 import android.os.Build
 import android.os.Bundle
-import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
+import java.util.concurrent.atomic.AtomicBoolean
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-class NotificationSensorManager :
-    NotificationListenerService(),
-    SensorManager {
+/**
+ * Sensor manager for the notification sensors. Owns the basic sensors, availability, permission and
+ * reporting logic.
+ */
+@Singleton
+class NotificationSensorManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager {
     companion object {
         private const val SETTING_ALLOW_LIST = "notification_allow_list"
         private const val SETTING_DISABLE_ALLOW_LIST = "notification_disable_allow_list"
         private const val SETTING_INCLUDE_CONTENTS_AS_ATTRS = "active_notification_count_content_attrs"
-
-        private var listenerConnected = false
 
         @ProvidesSensor
         val lastNotification = SensorManager.BasicSensor(
@@ -84,59 +94,58 @@ class NotificationSensorManager :
         )
     }
 
+    /** Whether the notification listener service is currently connected, set by the service. */
+    private var listenerConnected = AtomicBoolean(false)
+
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#notification-sensors"
     }
-    override fun hasSensor(context: Context): Boolean {
-        return if (!context.isAutomotive()) {
-            val uiManager = context.getSystemService<UiModeManager>()
+
+    override fun hasSensor(): Boolean {
+        return if (!applicationContext.isAutomotive()) {
+            val uiManager = applicationContext.getSystemService<UiModeManager>()
             uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
         } else {
             false
         }
     }
+
     override val name: Int
         get() = commonR.string.sensor_name_last_notification
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return listOf(lastNotification, lastRemovedNotification, activeNotificationCount, mediaSession)
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return arrayOf(Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE)
     }
 
-    override suspend fun checkPermission(context: Context, sensorId: String): Boolean {
+    override suspend fun checkPermission(sensorId: String): Boolean {
         return NotificationManagerCompat
-            .getEnabledListenerPackages(context)
-            .contains(context.packageName)
+            .getEnabledListenerPackages(applicationContext)
+            .contains(applicationContext.packageName)
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
-        updateMediaSession(context)
+    override suspend fun requestSensorUpdate() {
+        updateMediaSession()
     }
 
-    override fun onListenerConnected() {
-        super.onListenerConnected()
-        listenerConnected = true
+    /** Called by [NotificationSensorListenerService] when the listener connects or disconnects. */
+    fun onListenerConnectionChanged(connected: Boolean) {
+        listenerConnected.set(connected)
     }
 
-    override fun onListenerDisconnected() {
-        super.onListenerDisconnected()
-        listenerConnected = false
-    }
-
-    override fun onNotificationPosted(sbn: StatusBarNotification) {
-        super.onNotificationPosted(sbn)
-
-        updateActiveNotificationCount()
+    /** Called by [NotificationSensorListenerService.onNotificationPosted]. */
+    fun onNotificationPosted(sbn: StatusBarNotification, activeNotifications: Array<StatusBarNotification>) {
+        updateActiveNotificationCount(activeNotifications)
 
         sensorWorkerScope.launch {
-            if (!isEnabled(applicationContext, lastNotification)) {
+            if (!isEnabled(lastNotification)) {
                 return@launch
             }
 
             val allowPackages = getSetting(
-                applicationContext,
                 lastNotification,
                 SETTING_ALLOW_LIST,
                 SensorSettingType.LIST_APPS,
@@ -144,13 +153,12 @@ class NotificationSensorManager :
             ).split(", ").filter { it.isNotBlank() }
 
             val disableAllowListRequirement = getToggleSetting(
-                applicationContext,
                 lastNotification,
                 SETTING_DISABLE_ALLOW_LIST,
                 default = false,
             )
 
-            if (sbn.packageName == application.packageName ||
+            if (sbn.packageName == applicationContext.packageName ||
                 (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages) ||
                 (!disableAllowListRequirement && allowPackages.isEmpty())
             ) {
@@ -179,7 +187,6 @@ class NotificationSensorManager :
             val state = attrs["android.text"] ?: attrs["android.title"] ?: sbn.packageName
 
             onSensorUpdated(
-                applicationContext,
                 lastNotification,
                 state.toString().take(255),
                 lastNotification.statelessIcon,
@@ -192,18 +199,16 @@ class NotificationSensorManager :
         }
     }
 
-    override fun onNotificationRemoved(sbn: StatusBarNotification) {
-        super.onNotificationPosted(sbn)
-
-        updateActiveNotificationCount()
+    /** Called by [NotificationSensorListenerService.onNotificationRemoved]. */
+    fun onNotificationRemoved(sbn: StatusBarNotification, activeNotifications: Array<StatusBarNotification>) {
+        updateActiveNotificationCount(activeNotifications)
 
         sensorWorkerScope.launch {
-            if (!isEnabled(applicationContext, lastRemovedNotification)) {
+            if (!isEnabled(lastRemovedNotification)) {
                 return@launch
             }
 
             val allowPackages = getSetting(
-                applicationContext,
                 lastRemovedNotification,
                 SETTING_ALLOW_LIST,
                 SensorSettingType.LIST_APPS,
@@ -211,13 +216,12 @@ class NotificationSensorManager :
             ).split(", ").filter { it.isNotBlank() }
 
             val disableAllowListRequirement = getToggleSetting(
-                applicationContext,
                 lastRemovedNotification,
                 SETTING_DISABLE_ALLOW_LIST,
                 default = false,
             )
 
-            if (sbn.packageName == application.packageName ||
+            if (sbn.packageName == applicationContext.packageName ||
                 (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages) ||
                 (!disableAllowListRequirement && allowPackages.isEmpty())
             ) {
@@ -242,7 +246,6 @@ class NotificationSensorManager :
             val state = attrs["android.text"] ?: attrs["android.title"] ?: sbn.packageName
 
             onSensorUpdated(
-                applicationContext,
                 lastRemovedNotification,
                 state.toString().take(255),
                 lastRemovedNotification.statelessIcon,
@@ -255,16 +258,15 @@ class NotificationSensorManager :
         }
     }
 
-    private fun updateActiveNotificationCount() {
+    private fun updateActiveNotificationCount(activeNotifications: Array<StatusBarNotification>) {
         sensorWorkerScope.launch {
-            if (!isEnabled(applicationContext, activeNotificationCount) || !listenerConnected) {
+            if (!isEnabled(activeNotificationCount) || !listenerConnected.get()) {
                 return@launch
             }
 
             try {
                 val includeContentsAsAttrsSetting =
                     getToggleSetting(
-                        applicationContext,
                         activeNotificationCount,
                         SETTING_INCLUDE_CONTENTS_AS_ATTRS,
                         default = true,
@@ -288,7 +290,6 @@ class NotificationSensorManager :
                     emptyMap()
                 }
                 onSensorUpdated(
-                    applicationContext,
                     activeNotificationCount,
                     activeNotifications.size,
                     activeNotificationCount.statelessIcon,
@@ -315,14 +316,14 @@ class NotificationSensorManager :
         PlaybackState.STATE_SKIPPING_TO_QUEUE_ITEM to "Skip to Queue Item",
     )
 
-    private suspend fun updateMediaSession(context: Context) {
-        if (!isEnabled(context, mediaSession)) {
+    private suspend fun updateMediaSession() {
+        if (!isEnabled(mediaSession)) {
             return
         }
 
-        val mediaSessionManager = context.getSystemService<MediaSessionManager>()!!
+        val mediaSessionManager = applicationContext.getSystemService<MediaSessionManager>()!!
         val mediaList = mediaSessionManager.getActiveSessions(
-            ComponentName(context, NotificationSensorManager::class.java),
+            ComponentName(applicationContext, NotificationSensorListenerService::class.java),
         )
         val sessionCount = mediaList.size
         val primaryPlaybackState = if (sessionCount >
@@ -333,7 +334,7 @@ class NotificationSensorManager :
             STATE_UNAVAILABLE
         }
         val attr: MutableMap<String, Any?> = mutableMapOf()
-        if (mediaList.size > 0) {
+        if (mediaList.isNotEmpty()) {
             for (item in mediaList) {
                 attr += mapOf(
                     "artist_" + item.packageName to item.metadata?.getString(MediaMetadata.METADATA_KEY_ARTIST),
@@ -351,7 +352,6 @@ class NotificationSensorManager :
             "options" to mediaStates.values.toList(),
         )
         onSensorUpdated(
-            context,
             mediaSession,
             primaryPlaybackState,
             mediaSession.statelessIcon,
@@ -383,6 +383,7 @@ class NotificationSensorManager :
                             value.toList()
                         }
                     }
+
                     is BooleanArray -> value.toList()
                     is Bundle -> mappedBundle(value) ?: value
                     is ByteArray -> value.toList()

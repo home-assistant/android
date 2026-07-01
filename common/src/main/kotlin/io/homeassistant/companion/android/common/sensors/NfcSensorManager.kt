@@ -2,9 +2,18 @@ package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
 import android.nfc.NfcAdapter
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class NfcSensorManager : SensorManager {
+@Singleton
+class NfcSensorManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager {
     companion object {
         @ProvidesSensor
         val nfcStateSensor = SensorManager.BasicSensor(
@@ -21,26 +30,25 @@ class NfcSensorManager : SensorManager {
     override fun docsLink() = "https://companion.home-assistant.io/docs/core/sensors#nfc-state-sensor"
     override val name = commonR.string.sensor_name_nfc
 
-    override suspend fun getAvailableSensors(context: Context) = listOf(nfcStateSensor)
+    override suspend fun getAvailableSensors() = listOf(nfcStateSensor)
 
-    override fun requiredPermissions(context: Context, sensorId: String) = emptyArray<String>()
+    override fun requiredPermissions(sensorId: String) = emptyArray<String>()
 
-    override suspend fun requestSensorUpdate(context: Context) = updateNfcState(context)
+    override suspend fun requestSensorUpdate() = updateNfcState()
 
-    override fun hasSensor(context: Context): Boolean {
-        return NfcAdapter.getDefaultAdapter(context) != null
+    override fun hasSensor(): Boolean {
+        return NfcAdapter.getDefaultAdapter(applicationContext) != null
     }
 
-    private suspend fun updateNfcState(context: Context) {
-        if (!isEnabled(context, nfcStateSensor)) {
+    private suspend fun updateNfcState() {
+        if (!isEnabled(nfcStateSensor)) {
             return
         }
 
-        val nfcAdapter = NfcAdapter.getDefaultAdapter(context)
+        val nfcAdapter = NfcAdapter.getDefaultAdapter(applicationContext)
         val nfcEnabled = nfcAdapter?.isEnabled == true
 
         onSensorUpdated(
-            context,
             nfcStateSensor,
             nfcEnabled,
             nfcStateSensor.statelessIcon,

@@ -9,8 +9,12 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import android.os.Build
 import androidx.core.content.getSystemService
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.SdkVersion
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,8 +22,12 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-class StepsSensorManager :
-    SensorManager,
+@Singleton
+class StepsSensorManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager,
     SensorEventListener {
     companion object {
         private var isListenerRegistered = false
@@ -46,14 +54,13 @@ class StepsSensorManager :
     override val name: Int
         get() = commonR.string.sensor_name_steps
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return listOf(stepsSensor)
     }
 
-    private lateinit var latestContext: Context
     private lateinit var mySensorManager: android.hardware.SensorManager
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
             arrayOf(Manifest.permission.ACTIVITY_RECOGNITION)
         } else {
@@ -61,29 +68,28 @@ class StepsSensorManager :
         }
     }
 
-    override fun hasSensor(context: Context): Boolean {
-        val packageManager: PackageManager = context.packageManager
+    override fun hasSensor(): Boolean {
+        val packageManager: PackageManager = applicationContext.packageManager
         return packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_COUNTER)
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
-        latestContext = context
+    override suspend fun requestSensorUpdate() {
         updateStepsSensor()
     }
 
     private suspend fun updateStepsSensor() {
-        if (!isEnabled(latestContext, stepsSensor)) {
+        if (!isEnabled(stepsSensor)) {
             return
         }
 
-        if (checkPermission(latestContext, stepsSensor.id)) {
+        if (checkPermission(stepsSensor.id)) {
             val now = System.currentTimeMillis()
             if (listenerLastRegistered + SensorManager.SENSOR_LISTENER_TIMEOUT < now && isListenerRegistered) {
                 Timber.d("Re-registering listener as it appears to be stuck")
                 mySensorManager.unregisterListener(this)
                 isListenerRegistered = false
             }
-            mySensorManager = latestContext.getSystemService()!!
+            mySensorManager = applicationContext.getSystemService()!!
 
             val stepsSensors = mySensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
             if (stepsSensors != null && !isListenerRegistered) {
@@ -107,7 +113,6 @@ class StepsSensorManager :
         if (event?.sensor?.type == Sensor.TYPE_STEP_COUNTER) {
             ioScope.launch {
                 onSensorUpdated(
-                    latestContext,
                     stepsSensor,
                     event.values[0].roundToInt().toString(),
                     stepsSensor.statelessIcon,

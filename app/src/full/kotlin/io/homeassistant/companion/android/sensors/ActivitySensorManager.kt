@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.sensors
 
 import android.Manifest
 import android.app.PendingIntent
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -12,25 +11,31 @@ import com.google.android.gms.location.DetectedActivity
 import com.google.android.gms.location.SleepClassifyEvent
 import com.google.android.gms.location.SleepSegmentEvent
 import com.google.android.gms.location.SleepSegmentRequest
-import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
+import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.isAutomotive
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-@AndroidEntryPoint
-class ActivitySensorManager :
-    BroadcastReceiver(),
-    SensorManager {
+@Singleton
+class ActivitySensorManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager {
 
     companion object {
         const val ACTION_UPDATE_ACTIVITY =
@@ -77,37 +82,37 @@ class ActivitySensorManager :
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
-    override fun onReceive(context: Context, intent: Intent) {
+    fun onReceive(intent: Intent) {
         when (intent.action) {
-            ACTION_UPDATE_ACTIVITY -> ioScope.launch { handleActivityUpdate(intent, context) }
-            ACTION_SLEEP_ACTIVITY -> ioScope.launch { handleSleepUpdate(intent, context) }
+            ACTION_UPDATE_ACTIVITY -> ioScope.launch { handleActivityUpdate(intent) }
+            ACTION_SLEEP_ACTIVITY -> ioScope.launch { handleSleepUpdate(intent) }
             else -> Timber.w("Unknown intent action: ${intent.action}!")
         }
     }
 
-    private fun getActivityPendingIntent(context: Context): PendingIntent {
-        val intent = Intent(context, ActivitySensorManager::class.java)
+    private fun getActivityPendingIntent(applicationContext: Context): PendingIntent {
+        val intent = Intent(applicationContext, ActivitySensorReceiver::class.java)
         intent.action = ACTION_UPDATE_ACTIVITY
         return PendingIntent.getBroadcast(
-            context,
+            applicationContext,
             0,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
         )
     }
 
-    private fun getSleepPendingIntent(context: Context): PendingIntent {
-        val intent = Intent(context, ActivitySensorManager::class.java)
+    private fun getSleepPendingIntent(applicationContext: Context): PendingIntent {
+        val intent = Intent(applicationContext, ActivitySensorReceiver::class.java)
         intent.action = ACTION_SLEEP_ACTIVITY
         return PendingIntent.getBroadcast(
-            context,
+            applicationContext,
             1,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
         )
     }
 
-    private suspend fun handleActivityUpdate(intent: Intent, context: Context) {
+    private suspend fun handleActivityUpdate(intent: Intent) {
         Timber.d("Received activity update.")
         if (ActivityRecognitionResult.hasResult(intent)) {
             val result = ActivityRecognitionResult.extractResult(intent)
@@ -119,7 +124,6 @@ class ActivitySensorManager :
 
             if (probActivity != null && result != null) {
                 onSensorUpdated(
-                    context,
                     activity,
                     probActivity,
                     getSensorIcon(probActivity),
@@ -132,15 +136,14 @@ class ActivitySensorManager :
         }
     }
 
-    private suspend fun handleSleepUpdate(intent: Intent, context: Context) {
+    private suspend fun handleSleepUpdate(intent: Intent) {
         Timber.d("Received sleep update")
-        if (SleepClassifyEvent.hasEvents(intent) && isEnabled(context, sleepConfidence)) {
+        if (SleepClassifyEvent.hasEvents(intent) && isEnabled(sleepConfidence)) {
             Timber.d("Sleep classify event detected")
             val sleepClassifyEvent = SleepClassifyEvent.extractEvents(intent)
-            if (sleepClassifyEvent.size > 0) {
+            if (sleepClassifyEvent.isNotEmpty()) {
                 Timber.d("Sleep classify has an actual event")
                 onSensorUpdated(
-                    context,
                     sleepConfidence,
                     sleepClassifyEvent.last().confidence,
                     sleepConfidence.statelessIcon,
@@ -152,16 +155,15 @@ class ActivitySensorManager :
                 )
 
                 // Send the update immediately
-                SensorReceiver.updateAllSensors(context)
+                SensorReceiver.updateAllSensors(applicationContext)
             }
         }
-        if (SleepSegmentEvent.hasEvents(intent) && isEnabled(context, sleepSegment)) {
+        if (SleepSegmentEvent.hasEvents(intent) && isEnabled(sleepSegment)) {
             Timber.d("Sleep segment event detected")
             val sleepSegmentEvent = SleepSegmentEvent.extractEvents(intent)
-            if (sleepSegmentEvent.size > 0) {
+            if (sleepSegmentEvent.isNotEmpty()) {
                 Timber.d("Sleep segment has an actual event")
                 onSensorUpdated(
-                    context,
                     sleepSegment,
                     sleepSegmentEvent.last().segmentDurationMillis,
                     sleepSegment.statelessIcon,
@@ -211,11 +213,11 @@ class ActivitySensorManager :
     override val name: Int
         get() = commonR.string.sensor_name_activity
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return listOf(activity, sleepConfidence, sleepSegment)
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
             arrayOf(
                 Manifest.permission.ACTIVITY_RECOGNITION,
@@ -225,49 +227,41 @@ class ActivitySensorManager :
         }
     }
 
-    override fun hasSensor(context: Context): Boolean {
-        return !context.isAutomotive()
+    override fun hasSensor(): Boolean {
+        return !applicationContext.isAutomotive()
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
-        if (isEnabled(context, activity)) {
-            val actReg = ActivityRecognition.getClient(context)
-            val pendingIntent = getActivityPendingIntent(context)
+    override suspend fun requestSensorUpdate() {
+        if (isEnabled(activity)) {
+            val actReg = ActivityRecognition.getClient(applicationContext)
+            val pendingIntent = getActivityPendingIntent(applicationContext)
             Timber.d("Unregistering for activity updates.")
             actReg.removeActivityUpdates(pendingIntent)
 
             Timber.d("Registering for activity updates.")
-            val fastUpdate = SensorReceiverBase.shouldDoFastUpdates(context)
+            val fastUpdate = SensorReceiverBase.shouldDoFastUpdates(applicationContext)
             try {
                 actReg.requestActivityUpdates(TimeUnit.MINUTES.toMillis(if (fastUpdate) 1 else 2), pendingIntent)
             } catch (e: Exception) {
                 Timber.e(e, "Unable to register for activity updates")
             }
         }
-        if ((
-                isEnabled(context, sleepConfidence) ||
-                    isEnabled(
-                        context,
-                        sleepSegment,
-                    )
-                ) &&
-            !sleepRegistration
-        ) {
-            val pendingIntent = getSleepPendingIntent(context)
+        if ((isEnabled(sleepConfidence) || isEnabled(sleepSegment)) && !sleepRegistration) {
+            val pendingIntent = getSleepPendingIntent(applicationContext)
             Timber.d("Registering for sleep updates")
             try {
                 val task = when {
-                    (isEnabled(context, sleepConfidence) && !isEnabled(context, sleepSegment)) -> {
+                    (isEnabled(sleepConfidence) && !isEnabled(sleepSegment)) -> {
                         Timber.d("Registering for sleep confidence updates only")
-                        ActivityRecognition.getClient(context).requestSleepSegmentUpdates(
+                        ActivityRecognition.getClient(applicationContext).requestSleepSegmentUpdates(
                             pendingIntent,
                             SleepSegmentRequest(SleepSegmentRequest.CLASSIFY_EVENTS_ONLY),
                         )
                     }
 
-                    (!isEnabled(context, sleepConfidence) && isEnabled(context, sleepSegment)) -> {
+                    (!isEnabled(sleepConfidence) && isEnabled(sleepSegment)) -> {
                         Timber.d("Registering for sleep segment updates only")
-                        ActivityRecognition.getClient(context).requestSleepSegmentUpdates(
+                        ActivityRecognition.getClient(applicationContext).requestSleepSegmentUpdates(
                             pendingIntent,
                             SleepSegmentRequest(SleepSegmentRequest.SEGMENT_EVENTS_ONLY),
                         )
@@ -275,7 +269,7 @@ class ActivitySensorManager :
 
                     else -> {
                         Timber.d("Registering for both sleep confidence and segment updates")
-                        ActivityRecognition.getClient(context).requestSleepSegmentUpdates(
+                        ActivityRecognition.getClient(applicationContext).requestSleepSegmentUpdates(
                             pendingIntent,
                             SleepSegmentRequest.getDefaultSleepSegmentRequest(),
                         )
@@ -287,7 +281,7 @@ class ActivitySensorManager :
                 }
                 task.addOnFailureListener {
                     Timber.e(it, "Failed to register for sleep updates")
-                    ActivityRecognition.getClient(context).removeSleepSegmentUpdates(pendingIntent)
+                    ActivityRecognition.getClient(applicationContext).removeSleepSegmentUpdates(pendingIntent)
                     sleepRegistration = false
                 }
             } catch (e: Exception) {

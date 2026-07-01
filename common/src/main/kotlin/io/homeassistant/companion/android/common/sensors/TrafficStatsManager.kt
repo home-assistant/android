@@ -5,12 +5,21 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.TrafficStats
 import androidx.core.content.getSystemService
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import java.math.RoundingMode
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.math.absoluteValue
 import timber.log.Timber
 
-class TrafficStatsManager : SensorManager {
+@Singleton
+class TrafficStatsManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager {
     companion object {
         private const val GB = 1000000000
 
@@ -70,7 +79,7 @@ class TrafficStatsManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_traffic_stats
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return if (hasCellular) {
             listOf(rxBytesMobile, txBytesMobile, rxBytesTotal, txBytesTotal)
         } else {
@@ -78,13 +87,13 @@ class TrafficStatsManager : SensorManager {
         }
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 
     @Suppress("DEPRECATION") // No synchronous option to get all networks
-    override fun hasSensor(context: Context): Boolean {
-        val cm = context.getSystemService<ConnectivityManager>()!!
+    override fun hasSensor(): Boolean {
+        val cm = applicationContext.getSystemService<ConnectivityManager>()!!
         val networkInfo = cm.allNetworks
         var networkCapabilities: NetworkCapabilities?
         for (item in networkInfo) {
@@ -95,15 +104,15 @@ class TrafficStatsManager : SensorManager {
         }
         return true
     }
-    override suspend fun requestSensorUpdate(context: Context) {
-        updateMobileRxBytes(context)
-        updateMobileTxBytes(context)
-        updateTotalRxBytes(context)
-        updateTotalTxBytes(context)
+    override suspend fun requestSensorUpdate() {
+        updateMobileRxBytes()
+        updateMobileTxBytes()
+        updateTotalRxBytes()
+        updateTotalTxBytes()
     }
 
-    private suspend fun updateMobileRxBytes(context: Context) {
-        if (!isEnabled(context, rxBytesMobile)) {
+    private suspend fun updateMobileRxBytes() {
+        if (!isEnabled(rxBytesMobile)) {
             return
         }
 
@@ -115,7 +124,6 @@ class TrafficStatsManager : SensorManager {
         }
 
         onSensorUpdated(
-            context,
             rxBytesMobile,
             mobileRx.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
             rxBytesMobile.statelessIcon,
@@ -123,8 +131,8 @@ class TrafficStatsManager : SensorManager {
         )
     }
 
-    private suspend fun updateMobileTxBytes(context: Context) {
-        if (!isEnabled(context, txBytesMobile)) {
+    private suspend fun updateMobileTxBytes() {
+        if (!isEnabled(txBytesMobile)) {
             return
         }
 
@@ -136,15 +144,14 @@ class TrafficStatsManager : SensorManager {
         }
 
         onSensorUpdated(
-            context,
             txBytesMobile,
             mobileTx.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
             txBytesMobile.statelessIcon,
             mapOf(),
         )
     }
-    private suspend fun updateTotalRxBytes(context: Context) {
-        if (!isEnabled(context, rxBytesTotal)) {
+    private suspend fun updateTotalRxBytes() {
+        if (!isEnabled(rxBytesTotal)) {
             return
         }
 
@@ -156,7 +163,6 @@ class TrafficStatsManager : SensorManager {
         }
 
         onSensorUpdated(
-            context,
             rxBytesTotal,
             totalRx.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
             rxBytesTotal.statelessIcon,
@@ -164,8 +170,8 @@ class TrafficStatsManager : SensorManager {
         )
     }
 
-    private suspend fun updateTotalTxBytes(context: Context) {
-        if (!isEnabled(context, txBytesTotal)) {
+    private suspend fun updateTotalTxBytes() {
+        if (!isEnabled(txBytesTotal)) {
             return
         }
 
@@ -177,7 +183,6 @@ class TrafficStatsManager : SensorManager {
         }
 
         onSensorUpdated(
-            context,
             txBytesTotal,
             totalTx.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
             txBytesTotal.statelessIcon,

@@ -11,13 +11,22 @@ import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
+import javax.inject.Inject
+import javax.inject.Singleton
 import timber.log.Timber
 
-class PhoneStateSensorManager : SensorManager {
+@Singleton
+class PhoneStateSensorManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager {
 
     companion object {
         @ProvidesSensor
@@ -129,14 +138,14 @@ class PhoneStateSensorManager : SensorManager {
     }
     override val name: Int
         get() = commonR.string.sensor_name_phone
-    override fun hasSensor(context: Context): Boolean {
-        return context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
+    override fun hasSensor(): Boolean {
+        return applicationContext.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
     }
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return when {
             (
                 SdkVersion.isAtLeast(Build.VERSION_CODES.Q) &&
-                    context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS)
+                    applicationContext.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS)
                 ) ->
                 listOf(
                     phoneState,
@@ -150,7 +159,7 @@ class PhoneStateSensorManager : SensorManager {
 
             (
                 SdkVersion.isAtLeast(Build.VERSION_CODES.N) &&
-                    context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS)
+                    applicationContext.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS)
                 ) ->
                 listOf(phoneState, sim_1, sim_2, sim1DataNetworkType, sim2DataNetworkType)
 
@@ -160,32 +169,32 @@ class PhoneStateSensorManager : SensorManager {
         }
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return arrayOf(Manifest.permission.READ_PHONE_STATE)
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
-        checkPhoneState(context)
-        updateSimSensor(context, 0)
-        updateSimSensor(context, 1)
+    override suspend fun requestSensorUpdate() {
+        checkPhoneState()
+        updateSimSensor(0)
+        updateSimSensor(1)
         if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
-            updateSignalStrength(context, 0)
-            updateSignalStrength(context, 1)
+            updateSignalStrength(0)
+            updateSignalStrength(1)
         }
         if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
-            updateDataNetworkType(context, 0)
-            updateDataNetworkType(context, 1)
+            updateDataNetworkType(0)
+            updateDataNetworkType(1)
         }
     }
 
     @SuppressLint("MissingPermission")
-    private suspend fun checkPhoneState(context: Context) {
-        if (isEnabled(context, phoneState)) {
+    private suspend fun checkPhoneState() {
+        if (isEnabled(phoneState)) {
             var currentPhoneState = STATE_UNKNOWN
 
-            if (checkPermission(context, phoneState.id)) {
+            if (checkPermission(phoneState.id)) {
                 val telephonyManager =
-                    context.applicationContext.getSystemService<TelephonyManager>()!!
+                    applicationContext.getSystemService<TelephonyManager>()!!
 
                 // Deprecated function provides state for any call, not for a specific subscription only
                 @Suppress("DEPRECATION")
@@ -197,18 +206,17 @@ class PhoneStateSensorManager : SensorManager {
                 }
             }
 
-            updatePhoneStateSensor(context, currentPhoneState)
+            updatePhoneStateSensor(currentPhoneState)
         }
     }
 
-    private suspend fun updatePhoneStateSensor(context: Context, state: String) {
+    private suspend fun updatePhoneStateSensor(state: String) {
         var phoneIcon = "mdi:phone"
         if (state == "ringing" || state == "offhook") {
             phoneIcon += "-in-talk"
         }
 
         onSensorUpdated(
-            context,
             phoneState,
             state,
             phoneIcon,
@@ -219,21 +227,21 @@ class PhoneStateSensorManager : SensorManager {
     }
 
     @SuppressLint("MissingPermission")
-    private suspend fun updateSimSensor(context: Context, slotIndex: Int) {
+    private suspend fun updateSimSensor(slotIndex: Int) {
         val basicSimSensor = when (slotIndex) {
             0 -> sim_1
             1 -> sim_2
             else -> throw IllegalArgumentException("Invalid sim slot: $slotIndex")
         }
-        if (!isEnabled(context, basicSimSensor)) {
+        if (!isEnabled(basicSimSensor)) {
             return
         }
         var displayName = STATE_UNAVAILABLE
         val attrs = mutableMapOf<String, Any>()
 
-        if (checkPermission(context, basicSimSensor.id)) {
+        if (checkPermission(basicSimSensor.id)) {
             val subscriptionManager =
-                context.applicationContext.getSystemService<SubscriptionManager>()
+                applicationContext.getSystemService<SubscriptionManager>()
             val info: SubscriptionInfo? =
                 subscriptionManager?.getActiveSubscriptionInfoForSimSlotIndex(slotIndex)
 
@@ -257,7 +265,6 @@ class PhoneStateSensorManager : SensorManager {
         }
 
         onSensorUpdated(
-            context,
             basicSimSensor,
             displayName,
             basicSimSensor.statelessIcon,
@@ -266,19 +273,19 @@ class PhoneStateSensorManager : SensorManager {
     }
 
     @RequiresApi(Build.VERSION_CODES.Q)
-    private suspend fun updateSignalStrength(context: Context, slotIndex: Int) {
+    private suspend fun updateSignalStrength(slotIndex: Int) {
         val signalStrengthSensor = when (slotIndex) {
             0 -> sim1SignalStrength
             1 -> sim2SignalStrength
             else -> throw IllegalArgumentException("Invalid sim slot: $slotIndex")
         }
-        if (!isEnabled(context, signalStrengthSensor)) {
+        if (!isEnabled(signalStrengthSensor)) {
             return
         }
 
         val baseTelephonyManager =
-            context.applicationContext.getSystemService<TelephonyManager>()!!
-        val subscription = context.applicationContext.getSystemService<SubscriptionManager>()
+            applicationContext.getSystemService<TelephonyManager>()!!
+        val subscription = applicationContext.getSystemService<SubscriptionManager>()
             ?.getActiveSubscriptionInfoForSimSlotIndex(slotIndex)
 
         var state = STATE_UNAVAILABLE
@@ -302,7 +309,6 @@ class PhoneStateSensorManager : SensorManager {
         }
 
         onSensorUpdated(
-            context,
             signalStrengthSensor,
             state,
             signalStrengthSensor.statelessIcon,
@@ -311,19 +317,19 @@ class PhoneStateSensorManager : SensorManager {
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    private suspend fun updateDataNetworkType(context: Context, slotIndex: Int) {
+    private suspend fun updateDataNetworkType(slotIndex: Int) {
         val dataNetworkTypeSensor = when (slotIndex) {
             0 -> sim1DataNetworkType
             1 -> sim2DataNetworkType
             else -> throw IllegalArgumentException("Invalid sim slot: $slotIndex")
         }
-        if (!isEnabled(context, dataNetworkTypeSensor)) {
+        if (!isEnabled(dataNetworkTypeSensor)) {
             return
         }
 
         val baseTelephonyManager =
-            context.applicationContext.getSystemService<TelephonyManager>()!!
-        val subscription = context.applicationContext.getSystemService<SubscriptionManager>()
+            applicationContext.getSystemService<TelephonyManager>()!!
+        val subscription = applicationContext.getSystemService<SubscriptionManager>()
             ?.getActiveSubscriptionInfoForSimSlotIndex(slotIndex)
 
         var state = STATE_UNAVAILABLE
@@ -336,7 +342,6 @@ class PhoneStateSensorManager : SensorManager {
         }
 
         onSensorUpdated(
-            context,
             dataNetworkTypeSensor,
             state,
             dataNetworkTypeSensor.statelessIcon,

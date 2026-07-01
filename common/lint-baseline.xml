@@ -4,44 +4,44 @@
     <issue
         id="MissingPermission"
         message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
-        errorLine1="                telephonyManager.isDataRoamingEnabled"
-        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                    telephonyManager.isDataRoamingEnabled"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/MobileDataManager.kt"
-            line="77"
-            column="17"/>
+            line="82"
+            column="21"/>
     </issue>
 
     <issue
         id="MissingPermission"
         message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
-        errorLine1="                telephonyManager.isDataEnabled"
-        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                    telephonyManager.isDataEnabled"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/MobileDataManager.kt"
-            line="79"
-            column="17"/>
+            line="85"
+            column="21"/>
     </issue>
 
     <issue
         id="MissingPermission"
         message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
-        errorLine1="        val subscription = context.applicationContext.getSystemService&lt;SubscriptionManager>()"
+        errorLine1="        val subscription = applicationContext.getSystemService&lt;SubscriptionManager>()"
         errorLine2="                           ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/PhoneStateSensorManager.kt"
-            line="274"
+            line="285"
             column="28"/>
     </issue>
 
     <issue
         id="MissingPermission"
         message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
-        errorLine1="        val subscription = context.applicationContext.getSystemService&lt;SubscriptionManager>()"
+        errorLine1="        val subscription = applicationContext.getSystemService&lt;SubscriptionManager>()"
         errorLine2="                           ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/PhoneStateSensorManager.kt"
-            line="319"
+            line="329"
             column="28"/>
     </issue>
 
@@ -52,7 +52,7 @@
         errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/PhoneStateSensorManager.kt"
-            line="327"
+            line="337"
             column="46"/>
     </issue>
 
@@ -85,8 +85,30 @@
         errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/StorageSensorManager.kt"
-            line="138"
+            line="145"
             column="42"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 29 (current min is 23): `android.telephony.TelephonyManager#isDataRoamingEnabled`"
+        errorLine1="                    telephonyManager.isDataRoamingEnabled"
+        errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/MobileDataManager.kt"
+            line="82"
+            column="38"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 26 (current min is 23): `android.telephony.TelephonyManager#isDataEnabled`"
+        errorLine1="                    telephonyManager.isDataEnabled"
+        errorLine2="                                     ~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/MobileDataManager.kt"
+            line="85"
+            column="38"/>
     </issue>
 
     <issue
@@ -96,7 +118,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/SensorReceiverBase.kt"
-            line="403"
+            line="411"
             column="9"/>
     </issue>
 
@@ -129,7 +151,7 @@
         errorLine2="                                                            ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/SensorManager.kt"
-            line="299"
+            line="296"
             column="61"/>
     </issue>
 

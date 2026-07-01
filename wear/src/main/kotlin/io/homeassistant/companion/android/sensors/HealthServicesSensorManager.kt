@@ -17,12 +17,17 @@ import androidx.health.services.client.data.PassiveListenerConfig
 import androidx.health.services.client.data.PassiveMonitoringCapabilities
 import androidx.health.services.client.data.UserActivityInfo
 import androidx.health.services.client.data.UserActivityState
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
 import java.time.Instant
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -31,7 +36,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
-class HealthServicesSensorManager : SensorManager {
+@Singleton
+class HealthServicesSensorManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager {
     companion object {
 
         private var callbackLastUpdated = 0L
@@ -103,7 +113,6 @@ class HealthServicesSensorManager : SensorManager {
         )
     }
 
-    private lateinit var latestContext: Context
     private var healthClient: HealthServicesClient? = null
     private var passiveMonitoringClient: PassiveMonitoringClient? = null
     private var passiveMonitoringCapabilities: PassiveMonitoringCapabilities? = null
@@ -123,10 +132,9 @@ class HealthServicesSensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_health_services
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        latestContext = context
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         if (healthClient == null) {
-            healthClient = HealthServices.getClient(latestContext)
+            healthClient = HealthServices.getClient(applicationContext)
         }
         if (passiveMonitoringClient == null) {
             passiveMonitoringClient = healthClient?.passiveMonitoringClient
@@ -161,7 +169,7 @@ class HealthServicesSensorManager : SensorManager {
         return supportedSensors
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return if (areHealthServicesSensorApisAvailable) {
             arrayOf(Manifest.permission.ACTIVITY_RECOGNITION)
         } else {
@@ -169,21 +177,20 @@ class HealthServicesSensorManager : SensorManager {
         }
     }
 
-    override fun hasSensor(context: Context): Boolean {
+    override fun hasSensor(): Boolean {
         return areHealthServicesSensorApisAvailable
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
-        latestContext = context
+    override suspend fun requestSensorUpdate() {
         updateHealthServices()
     }
 
     private suspend fun updateHealthServices() {
-        val activityStateEnabled = isEnabled(latestContext, userActivityState)
-        val dailyFloorEnabled = isEnabled(latestContext, dailyFloors)
-        val dailyDistanceEnabled = isEnabled(latestContext, dailyDistance)
-        val dailyCaloriesEnabled = isEnabled(latestContext, dailyCalories)
-        val dailyStepsEnabled = isEnabled(latestContext, dailySteps)
+        val activityStateEnabled = isEnabled(userActivityState)
+        val dailyFloorEnabled = isEnabled(dailyFloors)
+        val dailyDistanceEnabled = isEnabled(dailyDistance)
+        val dailyCaloriesEnabled = isEnabled(dailyCalories)
+        val dailyStepsEnabled = isEnabled(dailySteps)
 
         if (
             !activityStateEnabled &&
@@ -196,7 +203,7 @@ class HealthServicesSensorManager : SensorManager {
             return
         }
 
-        if (healthClient == null) healthClient = HealthServices.getClient(latestContext)
+        if (healthClient == null) healthClient = HealthServices.getClient(applicationContext)
         if (passiveMonitoringClient == null) passiveMonitoringClient = healthClient?.passiveMonitoringClient
 
         val dataTypes = mutableSetOf<DataType<*, *>>()
@@ -235,7 +242,6 @@ class HealthServicesSensorManager : SensorManager {
                     callbackLastUpdated = System.currentTimeMillis()
                     val forceUpdate = info.userActivityState == UserActivityState.USER_ACTIVITY_EXERCISE
                     onSensorUpdated(
-                        latestContext,
                         userActivityState,
                         when (info.userActivityState) {
                             UserActivityState.USER_ACTIVITY_ASLEEP -> "asleep"
@@ -251,10 +257,10 @@ class HealthServicesSensorManager : SensorManager {
                         ),
                         forceUpdate = forceUpdate,
                     )
-                    val sensorData = sensorRepository(latestContext).get(userActivityState.id)
+                    val sensorData = sensorRepository.get(userActivityState.id)
 
                     if (sensorData.any { it.state != it.lastSentState } || forceUpdate) {
-                        SensorReceiver.updateAllSensors(latestContext)
+                        SensorReceiver.updateAllSensors(applicationContext)
                     }
                 }
             }
@@ -291,9 +297,9 @@ class HealthServicesSensorManager : SensorManager {
             }
 
             override fun onPermissionLost() {
-                val sensorRepository = sensorRepository(latestContext)
+                val sensorRepository = sensorRepository
                 runBlocking {
-                    serverManager(latestContext).servers().forEach {
+                    serverManager.servers().forEach {
                         sensorRepository.setSensorsEnabled(listOf(userActivityState.id), it.id, false)
                     }
                 }
@@ -399,7 +405,6 @@ class HealthServicesSensorManager : SensorManager {
             }
             ioScope.launch {
                 onSensorUpdated(
-                    latestContext,
                     basicSensor,
                     dataPoints[lastIndex].value,
                     basicSensor.statelessIcon,

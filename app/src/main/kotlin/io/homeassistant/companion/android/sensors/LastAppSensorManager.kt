@@ -6,15 +6,25 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.getSystemService
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.isAutomotive
+import javax.inject.Inject
+import javax.inject.Singleton
 import timber.log.Timber
 
-class LastAppSensorManager : SensorManager {
+@Singleton
+class LastAppSensorManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager {
     companion object {
         @ProvidesSensor
         val last_used = SensorManager.BasicSensor(
@@ -32,28 +42,28 @@ class LastAppSensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_last_app
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return listOf(last_used)
     }
 
-    override fun hasSensor(context: Context): Boolean {
-        return !context.isAutomotive()
+    override fun hasSensor(): Boolean {
+        return !applicationContext.isAutomotive()
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return arrayOf(Manifest.permission.PACKAGE_USAGE_STATS)
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
-        updateLastApp(context)
+    override suspend fun requestSensorUpdate() {
+        updateLastApp(applicationContext)
     }
 
-    private suspend fun updateLastApp(context: Context) {
-        if (!isEnabled(context, last_used)) {
+    private suspend fun updateLastApp(applicationContext: Context) {
+        if (!isEnabled(last_used)) {
             return
         }
 
-        val usageStats = context.getSystemService<UsageStatsManager>()!!
+        val usageStats = applicationContext.getSystemService<UsageStatsManager>()!!
         val current = System.currentTimeMillis()
         val lastApp =
             usageStats.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, current - 1000 * 1000, current).maxByOrNull {
@@ -64,7 +74,7 @@ class LastAppSensorManager : SensorManager {
         var appLabel = STATE_UNKNOWN
 
         try {
-            val pm = context.packageManager
+            val pm = applicationContext.packageManager
             val appInfo = if (SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
                 pm.getApplicationInfo(
                     lastApp,
@@ -80,7 +90,6 @@ class LastAppSensorManager : SensorManager {
         }
 
         onSensorUpdated(
-            context,
             last_used,
             lastApp,
             last_used.statelessIcon,

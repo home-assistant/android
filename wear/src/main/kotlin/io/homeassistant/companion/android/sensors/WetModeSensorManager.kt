@@ -2,11 +2,21 @@ package io.homeassistant.companion.android.sensors
 
 import android.content.Context
 import android.content.Intent
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorRepository
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class WetModeSensorManager : SensorManager {
+@Singleton
+class WetModeSensorManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager {
     companion object {
         @ProvidesSensor
         val wetModeSensor = SensorManager.BasicSensor(
@@ -29,37 +39,36 @@ class WetModeSensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_wet_mode
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return listOf(
             wetModeSensor,
         )
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(context: Context, intent: Intent?) {
+    override suspend fun requestSensorUpdate(intent: Intent?) {
         if (intent?.action == "com.google.android.clockwork.actions.WET_MODE_STARTED") {
             wetModeEnabled = true
         } else if (intent?.action == "com.google.android.clockwork.actions.WET_MODE_ENDED") {
             wetModeEnabled = false
         }
 
-        updateWetMode(context)
+        updateWetMode()
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
+    override suspend fun requestSensorUpdate() {
         // No Op
     }
 
-    private suspend fun updateWetMode(context: Context) {
-        if (!isEnabled(context, wetModeSensor)) {
+    private suspend fun updateWetMode() {
+        if (!isEnabled(wetModeSensor)) {
             return
         }
 
         onSensorUpdated(
-            context,
             wetModeSensor,
             wetModeEnabled,
             if (wetModeEnabled) "mdi:water" else wetModeSensor.statelessIcon,

@@ -12,15 +12,17 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.database.sensor.Sensor
-import io.homeassistant.companion.android.sensors.SensorReceiver
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @HiltViewModel
-class SensorSettingsViewModel @Inject constructor(sensorRepository: SensorRepository, application: Application) :
-    AndroidViewModel(application) {
+class SensorSettingsViewModel @Inject constructor(
+    sensorRepository: SensorRepository,
+    private val managers: Set<@JvmSuppressWildcards SensorManager>,
+    application: Application,
+) : AndroidViewModel(application) {
 
     enum class SensorFilter(@IdRes val menuItemId: Int) {
         ALL(R.id.action_show_sensors_all),
@@ -29,7 +31,7 @@ class SensorSettingsViewModel @Inject constructor(sensorRepository: SensorReposi
         ;
 
         companion object {
-            val menuItemIdToFilter = values().associateBy { it.menuItemId }
+            val menuItemIdToFilter = entries.associateBy { it.menuItemId }
         }
     }
 
@@ -74,11 +76,11 @@ class SensorSettingsViewModel @Inject constructor(sensorRepository: SensorReposi
 
     private suspend fun filterSensorsList() = withContext(Dispatchers.IO) {
         val app = getApplication<Application>()
-        val managers = SensorReceiver.MANAGERS.sortedBy { app.getString(it.name) }
-        sensors = SensorReceiver.MANAGERS
-            .filter { it.hasSensor(app.applicationContext) }
+        val sortedManagers = managers.sortedBy { app.getString(it.name) }
+        sensors = managers
+            .filter { it.hasSensor() }
             .flatMap { manager ->
-                manager.getAvailableSensors(app.applicationContext)
+                manager.getAvailableSensors()
                     .filter { sensor ->
                         (
                             searchQuery.isNullOrEmpty() ||
@@ -91,11 +93,11 @@ class SensorSettingsViewModel @Inject constructor(sensorRepository: SensorReposi
                                 sensorFilter == SensorFilter.ALL ||
                                     (
                                         sensorFilter == SensorFilter.ENABLED &&
-                                            manager.isEnabled(app.applicationContext, sensor)
+                                            manager.isEnabled(sensor)
                                         ) ||
                                     (
                                         sensorFilter == SensorFilter.DISABLED &&
-                                            !manager.isEnabled(app.applicationContext, sensor)
+                                            !manager.isEnabled(sensor)
                                         )
                                 )
                     }
@@ -106,8 +108,8 @@ class SensorSettingsViewModel @Inject constructor(sensorRepository: SensorReposi
             }
             .associateBy { it.id }
 
-        allSensors = managers.associateWith { manager ->
-            manager.getAvailableSensors(app)
+        allSensors = sortedManagers.associateWith { manager ->
+            manager.getAvailableSensors()
                 .filter { basicSensor ->
                     sensors.containsKey(basicSensor.id)
                 }

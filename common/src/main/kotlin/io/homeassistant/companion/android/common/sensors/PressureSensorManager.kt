@@ -7,16 +7,24 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import androidx.core.content.getSystemService
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import java.math.RoundingMode
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-class PressureSensorManager :
-    SensorManager,
+@Singleton
+class PressureSensorManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager,
     SensorEventListener {
     companion object {
         private var isListenerRegistered = false
@@ -35,7 +43,6 @@ class PressureSensorManager :
         )
     }
 
-    private lateinit var latestContext: Context
     private lateinit var mySensorManager: android.hardware.SensorManager
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
@@ -47,26 +54,25 @@ class PressureSensorManager :
     override val name: Int
         get() = commonR.string.sensor_name_pressure
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return listOf(pressureSensor)
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
-        latestContext = context
+    override suspend fun requestSensorUpdate() {
         updatePressureSensor()
     }
 
-    override fun hasSensor(context: Context): Boolean {
-        val packageManager: PackageManager = context.packageManager
+    override fun hasSensor(): Boolean {
+        val packageManager: PackageManager = applicationContext.packageManager
         return packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_BAROMETER)
     }
 
     private suspend fun updatePressureSensor() {
-        if (!isEnabled(latestContext, pressureSensor)) {
+        if (!isEnabled(pressureSensor)) {
             return
         }
 
@@ -77,7 +83,7 @@ class PressureSensorManager :
             isListenerRegistered = false
         }
 
-        mySensorManager = latestContext.getSystemService()!!
+        mySensorManager = applicationContext.getSystemService()!!
 
         val pressureSensors = mySensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
         if (pressureSensors != null && !isListenerRegistered) {
@@ -101,7 +107,6 @@ class PressureSensorManager :
             if (event.sensor.type == Sensor.TYPE_PRESSURE && !event.values[0].isNaN()) {
                 ioScope.launch {
                     onSensorUpdated(
-                        latestContext,
                         pressureSensor,
                         event.values[0].toBigDecimal().setScale(1, RoundingMode.HALF_EVEN).toString(),
                         pressureSensor.statelessIcon,

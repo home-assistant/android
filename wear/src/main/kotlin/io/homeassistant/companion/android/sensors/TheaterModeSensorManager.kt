@@ -3,12 +3,22 @@ package io.homeassistant.companion.android.sensors
 import android.content.Context
 import android.os.Build
 import android.provider.Settings
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorRepository
+import javax.inject.Inject
+import javax.inject.Singleton
 import timber.log.Timber
 
-class TheaterModeSensorManager : SensorManager {
+@Singleton
+class TheaterModeSensorManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager {
     companion object {
         @ProvidesSensor
         val theaterMode = SensorManager.BasicSensor(
@@ -28,26 +38,26 @@ class TheaterModeSensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_theater_mode
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return listOf(theaterMode)
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
-        updateTheaterMode(context)
+    override suspend fun requestSensorUpdate() {
+        updateTheaterMode()
     }
 
-    private suspend fun updateTheaterMode(context: Context) {
-        if (!isEnabled(context, theaterMode)) {
+    private suspend fun updateTheaterMode() {
+        if (!isEnabled(theaterMode)) {
             return
         }
 
         val state = try {
             Settings.Global.getInt(
-                context.contentResolver,
+                applicationContext.contentResolver,
                 if (Build.MANUFACTURER ==
                     "samsung"
                 ) {
@@ -63,7 +73,6 @@ class TheaterModeSensorManager : SensorManager {
         }
 
         onSensorUpdated(
-            context,
             theaterMode,
             state,
             if (!state) "mdi:movie-open-off" else theaterMode.statelessIcon,

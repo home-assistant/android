@@ -28,6 +28,7 @@ biometric = "1.1.0"
 blurView = "version-2.0.6"
 car-versions = "1.7.0"
 changeLog = "3.8.2"
+classgraph = "4.8.184"
 cmake = "4.1.2"
 community-material-typeface = "7.0.96.2-kotlin"
 compose-bom = "2026.06.00"
@@ -166,6 +167,7 @@ car-core = { module = "androidx.car.app:app", version.ref = "car-versions" }
 car-automotive = { module = "androidx.car.app:app-automotive", version.ref = "car-versions" }
 car-projected = { module = "androidx.car.app:app-projected", version.ref = "car-versions" }
 changeLog = { module = "com.github.AppDevNext:ChangeLog", version.ref = "changeLog" }
+classgraph = { module = "io.github.classgraph:classgraph", version.ref = "classgraph" }
 coil-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
 coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
 coil-views = { module = "io.coil-kt.coil3:coil", version.ref = "coil" }

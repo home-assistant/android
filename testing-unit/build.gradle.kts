@@ -9,6 +9,10 @@ android {
 
     compileSdk = libs.versions.androidSdk.compile.get().toInt()
 
+    defaultConfig {
+        minSdk = libs.versions.androidSdk.min.get().toInt()
+    }
+
     compileOptions {
         sourceCompatibility(libs.versions.javaVersion.get())
         targetCompatibility(libs.versions.javaVersion.get())

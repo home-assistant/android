@@ -1,12 +1,21 @@
 package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class TimeZoneManager : SensorManager {
+@Singleton
+class TimeZoneManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager {
     companion object {
         @ProvidesSensor
         val currentTimeZone = SensorManager.BasicSensor(
@@ -25,20 +34,20 @@ class TimeZoneManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_time_zone
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return listOf(currentTimeZone)
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
-        updateTimeZone(context)
+    override suspend fun requestSensorUpdate() {
+        updateTimeZone()
     }
 
-    private suspend fun updateTimeZone(context: Context) {
-        if (!isEnabled(context, currentTimeZone)) {
+    private suspend fun updateTimeZone() {
+        if (!isEnabled(currentTimeZone)) {
             return
         }
 
@@ -46,7 +55,6 @@ class TimeZoneManager : SensorManager {
         val currentlyInDst = timeZone.inDaylightTime(Date())
 
         onSensorUpdated(
-            context,
             currentTimeZone,
             timeZone.getDisplayName(currentlyInDst, TimeZone.LONG, Locale.ENGLISH),
             currentTimeZone.statelessIcon,

@@ -6,13 +6,22 @@ import android.media.AudioManager
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.sensor.toSensorsWithAttributes
 import java.util.concurrent.ConcurrentHashMap
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class AudioSensorManager : SensorManager {
+@Singleton
+class AudioSensorManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager {
     private val sensorIdsWithMatchingAttributes: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
     companion object {
@@ -197,7 +206,7 @@ class AudioSensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_audio
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return buildList {
             addAll(
                 listOf(
@@ -215,35 +224,35 @@ class AudioSensorManager : SensorManager {
         }
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
-        val audioManager = context.getSystemService<AudioManager>()!!
-        updateAudioSensor(context, audioManager)
-        updateAudioState(context, audioManager)
-        updateHeadphoneState(context, audioManager)
-        updateMicMuted(context, audioManager)
-        updateMusicActive(context, audioManager)
-        updateSpeakerphoneState(context, audioManager)
-        updateVolumeAlarm(context, audioManager)
-        updateVolumeCall(context, audioManager)
-        updateVolumeMusic(context, audioManager)
-        updateVolumeRing(context, audioManager)
-        updateVolumeNotification(context, audioManager)
-        updateVolumeSystem(context, audioManager)
-        updateVolumeDTMF(context, audioManager)
+    override suspend fun requestSensorUpdate() {
+        val audioManager = applicationContext.getSystemService<AudioManager>()!!
+        updateAudioSensor(audioManager)
+        updateAudioState(audioManager)
+        updateHeadphoneState(audioManager)
+        updateMicMuted(audioManager)
+        updateMusicActive(audioManager)
+        updateSpeakerphoneState(audioManager)
+        updateVolumeAlarm(audioManager)
+        updateVolumeCall(audioManager)
+        updateVolumeMusic(audioManager)
+        updateVolumeRing(audioManager)
+        updateVolumeNotification(audioManager)
+        updateVolumeSystem(audioManager)
+        updateVolumeDTMF(audioManager)
         if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
-            updateVolumeAccessibility(context, audioManager)
+            updateVolumeAccessibility(audioManager)
         }
         if (SdkVersion.isAtLeast(Build.VERSION_CODES.CINNAMON_BUN)) {
-            updateVolumeAssistant(context, audioManager)
+            updateVolumeAssistant(audioManager)
         }
     }
 
-    private suspend fun updateAudioSensor(context: Context, audioManager: AudioManager) {
-        if (!isEnabled(context, audioSensor)) {
+    private suspend fun updateAudioSensor(audioManager: AudioManager) {
+        if (!isEnabled(audioSensor)) {
             return
         }
 
@@ -262,7 +271,6 @@ class AudioSensorManager : SensorManager {
         }
 
         onSensorUpdated(
-            context,
             audioSensor,
             ringerMode,
             icon,
@@ -272,8 +280,8 @@ class AudioSensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateAudioState(context: Context, audioManager: AudioManager) {
-        if (!isEnabled(context, audioState)) {
+    private suspend fun updateAudioState(audioManager: AudioManager) {
+        if (!isEnabled(audioState)) {
             return
         }
         val audioMode = when (audioManager.mode) {
@@ -301,7 +309,6 @@ class AudioSensorManager : SensorManager {
         }
 
         onSensorUpdated(
-            context,
             audioState,
             audioMode,
             icon,
@@ -320,8 +327,8 @@ class AudioSensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateHeadphoneState(context: Context, audioManager: AudioManager) {
-        if (!isEnabled(context, headphoneState)) {
+    private suspend fun updateHeadphoneState(audioManager: AudioManager) {
+        if (!isEnabled(headphoneState)) {
             return
         }
 
@@ -339,7 +346,6 @@ class AudioSensorManager : SensorManager {
         val icon = if (isHeadphones) "mdi:headphones" else "mdi:headphones-off"
 
         onSensorUpdated(
-            context,
             headphoneState,
             isHeadphones,
             icon,
@@ -347,8 +353,8 @@ class AudioSensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateMicMuted(context: Context, audioManager: AudioManager) {
-        if (!isEnabled(context, micMuted)) {
+    private suspend fun updateMicMuted(audioManager: AudioManager) {
+        if (!isEnabled(micMuted)) {
             return
         }
 
@@ -357,7 +363,6 @@ class AudioSensorManager : SensorManager {
         val icon = if (!isMicMuted) "mdi:microphone" else "mdi:microphone-off"
 
         onSensorUpdated(
-            context,
             micMuted,
             isMicMuted,
             icon,
@@ -365,8 +370,8 @@ class AudioSensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateMusicActive(context: Context, audioManager: AudioManager) {
-        if (!isEnabled(context, musicActive)) {
+    private suspend fun updateMusicActive(audioManager: AudioManager) {
+        if (!isEnabled(musicActive)) {
             return
         }
 
@@ -375,7 +380,6 @@ class AudioSensorManager : SensorManager {
         val icon = if (isMusicActive) "mdi:music" else "mdi:music-off"
 
         onSensorUpdated(
-            context,
             musicActive,
             isMusicActive,
             icon,
@@ -383,8 +387,8 @@ class AudioSensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateSpeakerphoneState(context: Context, audioManager: AudioManager) {
-        if (!isEnabled(context, speakerphoneState)) {
+    private suspend fun updateSpeakerphoneState(audioManager: AudioManager) {
+        if (!isEnabled(speakerphoneState)) {
             return
         }
 
@@ -395,7 +399,6 @@ class AudioSensorManager : SensorManager {
         val icon = if (isSpeakerOn) "mdi:volume-high" else "mdi:volume-off"
 
         onSensorUpdated(
-            context,
             speakerphoneState,
             isSpeakerOn,
             icon,
@@ -403,51 +406,50 @@ class AudioSensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateVolumeAlarm(context: Context, audioManager: AudioManager) {
-        updateVolumeSensor(context, audioManager, volAlarm, AudioManager.STREAM_ALARM)
+    private suspend fun updateVolumeAlarm(audioManager: AudioManager) {
+        updateVolumeSensor(audioManager, volAlarm, AudioManager.STREAM_ALARM)
     }
 
-    private suspend fun updateVolumeCall(context: Context, audioManager: AudioManager) {
-        updateVolumeSensor(context, audioManager, volCall, AudioManager.STREAM_VOICE_CALL)
+    private suspend fun updateVolumeCall(audioManager: AudioManager) {
+        updateVolumeSensor(audioManager, volCall, AudioManager.STREAM_VOICE_CALL)
     }
 
-    private suspend fun updateVolumeMusic(context: Context, audioManager: AudioManager) {
-        updateVolumeSensor(context, audioManager, volMusic, AudioManager.STREAM_MUSIC)
+    private suspend fun updateVolumeMusic(audioManager: AudioManager) {
+        updateVolumeSensor(audioManager, volMusic, AudioManager.STREAM_MUSIC)
     }
 
-    private suspend fun updateVolumeRing(context: Context, audioManager: AudioManager) {
-        updateVolumeSensor(context, audioManager, volRing, AudioManager.STREAM_RING)
+    private suspend fun updateVolumeRing(audioManager: AudioManager) {
+        updateVolumeSensor(audioManager, volRing, AudioManager.STREAM_RING)
     }
 
-    private suspend fun updateVolumeNotification(context: Context, audioManager: AudioManager) {
-        updateVolumeSensor(context, audioManager, volNotification, AudioManager.STREAM_NOTIFICATION)
+    private suspend fun updateVolumeNotification(audioManager: AudioManager) {
+        updateVolumeSensor(audioManager, volNotification, AudioManager.STREAM_NOTIFICATION)
     }
 
-    private suspend fun updateVolumeSystem(context: Context, audioManager: AudioManager) {
-        updateVolumeSensor(context, audioManager, volSystem, AudioManager.STREAM_SYSTEM)
+    private suspend fun updateVolumeSystem(audioManager: AudioManager) {
+        updateVolumeSensor(audioManager, volSystem, AudioManager.STREAM_SYSTEM)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private suspend fun updateVolumeAccessibility(context: Context, audioManager: AudioManager) {
-        updateVolumeSensor(context, audioManager, volAccessibility, AudioManager.STREAM_ACCESSIBILITY)
+    private suspend fun updateVolumeAccessibility(audioManager: AudioManager) {
+        updateVolumeSensor(audioManager, volAccessibility, AudioManager.STREAM_ACCESSIBILITY)
     }
 
-    private suspend fun updateVolumeDTMF(context: Context, audioManager: AudioManager) {
-        updateVolumeSensor(context, audioManager, volDTMF, AudioManager.STREAM_DTMF)
+    private suspend fun updateVolumeDTMF(audioManager: AudioManager) {
+        updateVolumeSensor(audioManager, volDTMF, AudioManager.STREAM_DTMF)
     }
 
     @RequiresApi(Build.VERSION_CODES.CINNAMON_BUN)
-    private suspend fun updateVolumeAssistant(context: Context, audioManager: AudioManager) {
-        updateVolumeSensor(context, audioManager, volAssistant, AudioManager.STREAM_ASSISTANT)
+    private suspend fun updateVolumeAssistant(audioManager: AudioManager) {
+        updateVolumeSensor(audioManager, volAssistant, AudioManager.STREAM_ASSISTANT)
     }
 
     private suspend fun updateVolumeSensor(
-        context: Context,
         audioManager: AudioManager,
         sensor: SensorManager.BasicSensor,
         streamType: Int,
     ) {
-        if (!isEnabled(context, sensor)) {
+        if (!isEnabled(sensor)) {
             return
         }
 
@@ -459,10 +461,9 @@ class AudioSensorManager : SensorManager {
         }
         val max = audioManager.getStreamMaxVolume(streamType)
 
-        val force = !areAttributesOfSensorAlreadyForcedAtRuntimeOrMatching(context, sensor, min, max)
+        val force = !areAttributesOfSensorAlreadyForcedAtRuntimeOrMatching(sensor, min, max)
 
         onSensorUpdated(
-            context,
             sensor,
             current,
             sensor.statelessIcon,
@@ -489,7 +490,6 @@ class AudioSensorManager : SensorManager {
      * they do.
      */
     private suspend fun areAttributesOfSensorAlreadyForcedAtRuntimeOrMatching(
-        context: Context,
         sensor: SensorManager.BasicSensor,
         currentMin: Int,
         currentMax: Int,
@@ -498,7 +498,7 @@ class AudioSensorManager : SensorManager {
             return true
         }
 
-        val sensorsWithAttributes = sensorRepository(context)
+        val sensorsWithAttributes = sensorRepository
             .getFull(sensor.id)
             .toSensorsWithAttributes()
 

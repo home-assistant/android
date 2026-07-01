@@ -4,15 +4,24 @@ import android.content.Context
 import android.os.Build
 import androidx.car.app.connection.CarConnection
 import androidx.lifecycle.Observer
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.SdkVersion
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-class AndroidAutoSensorManager :
-    SensorManager,
+@Singleton
+class AndroidAutoSensorManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager,
     Observer<Int> {
 
     companion object {
@@ -31,7 +40,7 @@ class AndroidAutoSensorManager :
     override val name: Int
         get() = commonR.string.sensor_name_android_auto
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             listOf(androidAutoConnected)
         } else {
@@ -39,26 +48,24 @@ class AndroidAutoSensorManager :
         }
     }
 
-    override fun hasSensor(context: Context): Boolean {
+    override fun hasSensor(): Boolean {
         return SdkVersion.isAtLeast(Build.VERSION_CODES.O)
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 
-    private lateinit var context: Context
     private var carConnection: CarConnection? = null
 
-    override suspend fun requestSensorUpdate(context: Context) {
-        this.context = context.applicationContext
-        if (!isEnabled(context, androidAutoConnected)) {
+    override suspend fun requestSensorUpdate() {
+        if (!isEnabled(androidAutoConnected)) {
             return
         }
         sensorWorkerScope.launch {
             if (carConnection == null) {
                 carConnection = try {
-                    CarConnection(context.applicationContext)
+                    CarConnection(applicationContext)
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to get car connection")
                     null
@@ -70,7 +77,7 @@ class AndroidAutoSensorManager :
 
     override fun onChanged(value: Int) {
         sensorWorkerScope.launch {
-            if (!isEnabled(context, androidAutoConnected)) {
+            if (!isEnabled(androidAutoConnected)) {
                 carConnection?.type?.removeObserver(this@AndroidAutoSensorManager)
                 return@launch
             }
@@ -90,7 +97,6 @@ class AndroidAutoSensorManager :
                 }
             }
             onSensorUpdated(
-                context,
                 androidAutoConnected,
                 connected,
                 if (connected) androidAutoConnected.statelessIcon else "mdi:car-off",

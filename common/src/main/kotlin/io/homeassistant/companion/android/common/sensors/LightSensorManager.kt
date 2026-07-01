@@ -7,7 +7,11 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import androidx.core.content.getSystemService
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -15,8 +19,12 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-class LightSensorManager :
-    SensorManager,
+@Singleton
+class LightSensorManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager,
     SensorEventListener {
     companion object {
         private var isListenerRegistered = false
@@ -43,29 +51,27 @@ class LightSensorManager :
     override val name: Int
         get() = commonR.string.sensor_name_light
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return listOf(lightSensor)
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 
-    override fun hasSensor(context: Context): Boolean {
-        val packageManager: PackageManager = context.packageManager
+    override fun hasSensor(): Boolean {
+        val packageManager: PackageManager = applicationContext.packageManager
         return packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_LIGHT)
     }
 
-    private lateinit var latestContext: Context
     private lateinit var mySensorManager: android.hardware.SensorManager
 
-    override suspend fun requestSensorUpdate(context: Context) {
-        latestContext = context
+    override suspend fun requestSensorUpdate() {
         updateLightSensor()
     }
 
     private suspend fun updateLightSensor() {
-        if (!isEnabled(latestContext, lightSensor)) {
+        if (!isEnabled(lightSensor)) {
             return
         }
 
@@ -75,7 +81,7 @@ class LightSensorManager :
             mySensorManager.unregisterListener(this)
             isListenerRegistered = false
         }
-        mySensorManager = latestContext.getSystemService()!!
+        mySensorManager = applicationContext.getSystemService()!!
 
         val lightSensors = mySensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
         if (lightSensors != null && !isListenerRegistered) {
@@ -98,7 +104,6 @@ class LightSensorManager :
         if (event?.sensor?.type == Sensor.TYPE_LIGHT) {
             ioScope.launch {
                 onSensorUpdated(
-                    latestContext,
                     lightSensor,
                     event.values[0].roundToInt().toString(),
                     lightSensor.statelessIcon,

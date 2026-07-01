@@ -72,13 +72,16 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
     protected abstract val currentAppVersion: String
-    protected abstract val managers: List<SensorManager>
+    protected abstract val managers: Set<SensorManager>
 
     @Inject
     lateinit var serverManager: ServerManager
 
     @Inject
     lateinit var sensorRepository: SensorRepository
+
+    @Inject
+    lateinit var lastUpdateManager: LastUpdateManager
 
     private val chargingActions = listOf(
         Intent.ACTION_BATTERY_LOW,
@@ -122,7 +125,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
             @Suppress("DEPRECATION")
             if (isSensorEnabled(LastUpdateManager.lastUpdate.id)) {
-                LastUpdateManager().sendLastUpdate(context, intent.action)
+                lastUpdateManager.sendLastUpdate(intent.action)
                 val allSettings = sensorRepository.getSettings(LastUpdateManager.lastUpdate.id)
                 for (setting in allSettings) {
                     if (setting.value != "" && intent.action == setting.value) {
@@ -186,10 +189,10 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         }
 
         managers.forEach { manager ->
-            val hasSensor = manager.hasSensor(context)
+            val hasSensor = manager.hasSensor()
             if (hasSensor) {
                 try {
-                    manager.requestSensorUpdate(context, intent)
+                    manager.requestSensorUpdate(intent)
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
@@ -247,16 +250,16 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
         managers.forEach { manager ->
             // Each manager was already asked to update in updateSensors
-            val hasSensor = manager.hasSensor(context)
+            val hasSensor = manager.hasSensor()
 
-            manager.getAvailableSensors(context).forEach sensorForEach@{ basicSensor ->
+            manager.getAvailableSensors().forEach sensorForEach@{ basicSensor ->
                 val fullSensor = sensorRepository.getFull(basicSensor.id, server.id).toSensorWithAttributes()
                 val sensor = fullSensor?.sensor ?: return@sensorForEach
                 val sensorCoreEnabled = coreSensorStatus?.get(basicSensor.id)
                 val canBeRegistered = hasSensor &&
                     basicSensor.type.isNotBlank() &&
                     basicSensor.statelessIcon.isNotBlank()
-                val hasPermission = manager.checkPermission(context, basicSensor.id)
+                val hasPermission = manager.checkPermission(basicSensor.id)
 
                 // A sensor enabled in the database but missing its runtime permission isn't really
                 // enabled. Persist that so the reconciliation below unregisters it on the server instead
@@ -436,16 +439,16 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
     private suspend fun updateSensor(context: Context, sensorId: String) {
         val sensorManager = managers.firstOrNull {
-            it.getAvailableSensors(context).any { s -> s.id == sensorId }
+            it.getAvailableSensors().any { s -> s.id == sensorId }
         } ?: return
         try {
-            sensorManager.requestSensorUpdate(context)
+            sensorManager.requestSensorUpdate()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             Timber.e(e, "Issue requesting updates for ${context.getString(sensorManager.name)}")
         }
-        val basicSensor = sensorManager.getAvailableSensors(context).firstOrNull { it.id == sensorId } ?: return
+        val basicSensor = sensorManager.getAvailableSensors().firstOrNull { it.id == sensorId } ?: return
         val fullSensors = sensorRepository.getFull(sensorId).toSensorsWithAttributes()
         fullSensors.filter {
             it.sensor.enabled &&

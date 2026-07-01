@@ -7,9 +7,12 @@ import android.location.Geocoder
 import android.location.Location
 import android.os.Build
 import androidx.annotation.VisibleForTesting
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.instant
@@ -18,6 +21,8 @@ import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import io.homeassistant.companion.android.location.getLastLocation
 import io.homeassistant.companion.android.sensors.GeocodeSensorManager.Companion.LOCATION_OUTDATED_THRESHOLD
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -46,7 +51,13 @@ private val GPS_ROLLOVER_WEEKS1024 = (7 * 1024).days
  */
 private val TIME_INACCURACY_FACTOR = 10.seconds
 private const val SETTING_ACCURACY = "geocode_minimum_accuracy"
-class GeocodeSensorManager : SensorManager {
+
+@Singleton
+class GeocodeSensorManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager {
 
     companion object {
         const val SETTINGS_INCLUDE_LOCATION = "geocode_include_location_updates"
@@ -67,15 +78,15 @@ class GeocodeSensorManager : SensorManager {
     }
     override val name: Int
         get() = commonR.string.sensor_name_geolocation
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return listOf(geocodedLocation)
     }
 
-    override fun hasSensor(context: Context): Boolean {
+    override fun hasSensor(): Boolean {
         return Geocoder.isPresent()
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
             arrayOf(
                 Manifest.permission.ACCESS_FINE_LOCATION,
@@ -86,23 +97,23 @@ class GeocodeSensorManager : SensorManager {
         }
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
-        updateGeocodedLocation(context)
+    override suspend fun requestSensorUpdate() {
+        updateGeocodedLocation()
     }
 
-    private suspend fun updateGeocodedLocation(context: Context) {
-        if (!isEnabled(context, geocodedLocation) || !checkPermission(context, geocodedLocation.id)) {
+    private suspend fun updateGeocodedLocation() {
+        if (!isEnabled(geocodedLocation) || !checkPermission(geocodedLocation.id)) {
             return
         }
 
-        val location = getLastLocation(context)
+        val location = getLastLocation(applicationContext)
         if (location == null) {
             Timber.w("No location skipping geocoded update")
             return
         }
 
         var address: Address? = null
-        val sensorRepository = sensorRepository(context)
+        val sensorRepository = sensorRepository
         val sensorSettings = sensorRepository.getSettings(geocodedLocation.id)
         val minAccuracy = sensorSettings
             .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
@@ -117,7 +128,7 @@ class GeocodeSensorManager : SensorManager {
 
         // We check first if the location is still valid to avoid a useless call to the Geocoder
         if (location.accuracy <= minAccuracy) {
-            address = Geocoder(context)
+            address = Geocoder(applicationContext)
                 .getFromLocationAwait(location.latitude, location.longitude, 1)
                 .firstOrNull()
         } else {
@@ -128,13 +139,16 @@ class GeocodeSensorManager : SensorManager {
         val prettyAddress = address?.getAddressLine(0)
 
         HighAccuracyLocationService.updateNotificationAddress(
-            context,
+            applicationContext,
             location,
-            if (!prettyAddress.isNullOrEmpty()) prettyAddress else context.getString(commonR.string.unknown_address),
+            if (!prettyAddress.isNullOrEmpty()) {
+                prettyAddress
+            } else {
+                applicationContext.getString(commonR.string.unknown_address)
+            },
         )
 
         onSensorUpdated(
-            context,
             geocodedLocation,
             if (!prettyAddress.isNullOrEmpty()) prettyAddress else STATE_UNKNOWN,
             geocodedLocation.statelessIcon,

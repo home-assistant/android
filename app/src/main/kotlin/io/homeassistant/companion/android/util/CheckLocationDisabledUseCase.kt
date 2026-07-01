@@ -4,8 +4,8 @@ import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
-import io.homeassistant.companion.android.sensors.SensorReceiver
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -20,6 +20,7 @@ import kotlinx.coroutines.withContext
 class CheckLocationDisabledUseCase @Inject constructor(
     @ApplicationContext private val context: Context,
     private val serverManager: ServerManager,
+    private val managers: Set<@JvmSuppressWildcards SensorManager>,
 ) {
 
     /**
@@ -38,11 +39,11 @@ class CheckLocationDisabledUseCase @Inject constructor(
             settingsRequiringLocation.add(context.getString(R.string.pref_connection_homenetwork))
         }
 
-        for (manager in SensorReceiver.MANAGERS) {
-            for (sensor in manager.getAvailableSensors(context)) {
-                if (!manager.isEnabled(context, sensor)) continue
+        for (manager in managers) {
+            for (sensor in manager.getAvailableSensors()) {
+                if (!manager.isEnabled(sensor)) continue
 
-                val permissions = manager.requiredPermissions(context, sensor.id)
+                val permissions = manager.requiredPermissions(sensor.id)
                 val needsLocation =
                     DisabledLocationHandler.containsLocationPermission(
                         permissions,

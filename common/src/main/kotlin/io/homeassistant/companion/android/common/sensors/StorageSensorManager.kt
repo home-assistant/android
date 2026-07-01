@@ -3,12 +3,21 @@ package io.homeassistant.companion.android.common.sensors
 import android.content.Context
 import android.os.Environment
 import android.os.StatFs
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import java.io.File
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.math.roundToInt
 import timber.log.Timber
 
-class StorageSensorManager : SensorManager {
+@Singleton
+class StorageSensorManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager {
     companion object {
 
         @ProvidesSensor
@@ -35,8 +44,8 @@ class StorageSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        private fun getExternalStoragePathIfAvailable(context: Context): File? {
-            val pathsSD = context.getExternalFilesDirs(null)
+        private fun getExternalStoragePathIfAvailable(applicationContext: Context): File? {
+            val pathsSD = applicationContext.getExternalFilesDirs(null)
             var removable: Boolean
             var externalPath: File? = null
             Timber.d("PATHS SD ${pathsSD.size}")
@@ -66,21 +75,21 @@ class StorageSensorManager : SensorManager {
     }
     override val name: Int
         get() = commonR.string.sensor_name_storage
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return listOf(storageSensor, externalStorage)
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
-        updateInternalStorageSensor(context)
-        updateExternalStorageSensor(context)
+    override suspend fun requestSensorUpdate() {
+        updateInternalStorageSensor()
+        updateExternalStorageSensor()
     }
 
-    private suspend fun updateInternalStorageSensor(context: Context) {
-        if (!isEnabled(context, storageSensor)) {
+    private suspend fun updateInternalStorageSensor() {
+        if (!isEnabled(storageSensor)) {
             return
         }
 
@@ -88,7 +97,6 @@ class StorageSensorManager : SensorManager {
         val internalStorageStats = getStorageStats(path)
 
         onSensorUpdated(
-            context,
             storageSensor,
             internalStorageStats.percentage,
             storageSensor.statelessIcon,
@@ -99,18 +107,17 @@ class StorageSensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateExternalStorageSensor(context: Context) {
-        if (!isEnabled(context, externalStorage)) {
+    private suspend fun updateExternalStorageSensor() {
+        if (!isEnabled(externalStorage)) {
             return
         }
 
-        val externalStoragePath = getExternalStoragePathIfAvailable(context)
+        val externalStoragePath = getExternalStoragePathIfAvailable(applicationContext)
         val externalStorageStats = externalStoragePath?.let {
             getStorageStats(it)
         }
 
         onSensorUpdated(
-            context,
             externalStorage,
             externalStorageStats?.percentage ?: 0,
             externalStorage.statelessIcon,

@@ -3,9 +3,18 @@ package io.homeassistant.companion.android.common.sensors
 import android.app.KeyguardManager
 import android.content.Context
 import androidx.core.content.getSystemService
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class KeyguardSensorManager : SensorManager {
+@Singleton
+class KeyguardSensorManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager {
     companion object {
         @ProvidesSensor
         val deviceLocked = SensorManager.BasicSensor(
@@ -55,25 +64,25 @@ class KeyguardSensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_keyguard
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return listOf(deviceLocked, deviceSecure, keyguardLocked, keyguardSecure)
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
-        val km = context.getSystemService<KeyguardManager>()!!
-        updateDeviceLocked(context, km)
-        updateDeviceSecure(context, km)
+    override suspend fun requestSensorUpdate() {
+        val km = applicationContext.getSystemService<KeyguardManager>()!!
+        updateDeviceLocked(km)
+        updateDeviceSecure(km)
 
-        updateKeyguardLocked(context, km)
-        updateKeyguardSecure(context, km)
+        updateKeyguardLocked(km)
+        updateKeyguardSecure(km)
     }
 
-    private suspend fun updateDeviceLocked(context: Context, km: KeyguardManager) {
-        if (!isEnabled(context, deviceLocked)) {
+    private suspend fun updateDeviceLocked(km: KeyguardManager) {
+        if (!isEnabled(deviceLocked)) {
             return
         }
 
@@ -81,7 +90,6 @@ class KeyguardSensorManager : SensorManager {
         val icon = if (isLocked) "mdi:cellphone-lock" else "mdi:cellphone"
 
         onSensorUpdated(
-            context,
             deviceLocked,
             isLocked,
             icon,
@@ -89,8 +97,8 @@ class KeyguardSensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateDeviceSecure(context: Context, km: KeyguardManager) {
-        if (!isEnabled(context, deviceSecure)) {
+    private suspend fun updateDeviceSecure(km: KeyguardManager) {
+        if (!isEnabled(deviceSecure)) {
             return
         }
 
@@ -98,7 +106,6 @@ class KeyguardSensorManager : SensorManager {
         val icon = if (isSecure) "mdi:cellphone-key" else "mdi:cellphone"
 
         onSensorUpdated(
-            context,
             deviceSecure,
             isSecure,
             icon,
@@ -106,8 +113,8 @@ class KeyguardSensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateKeyguardLocked(context: Context, km: KeyguardManager) {
-        if (!isEnabled(context, keyguardLocked)) {
+    private suspend fun updateKeyguardLocked(km: KeyguardManager) {
+        if (!isEnabled(keyguardLocked)) {
             return
         }
 
@@ -115,7 +122,6 @@ class KeyguardSensorManager : SensorManager {
         val icon = if (isLocked) "mdi:cellphone-lock" else "mdi:cellphone"
 
         onSensorUpdated(
-            context,
             keyguardLocked,
             isLocked,
             icon,
@@ -123,8 +129,8 @@ class KeyguardSensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateKeyguardSecure(context: Context, km: KeyguardManager) {
-        if (!isEnabled(context, keyguardSecure)) {
+    private suspend fun updateKeyguardSecure(km: KeyguardManager) {
+        if (!isEnabled(keyguardSecure)) {
             return
         }
 
@@ -132,7 +138,6 @@ class KeyguardSensorManager : SensorManager {
         val icon = if (isSecure) "mdi:cellphone-key" else "mdi:cellphone"
 
         onSensorUpdated(
-            context,
             keyguardSecure,
             isSecure,
             icon,

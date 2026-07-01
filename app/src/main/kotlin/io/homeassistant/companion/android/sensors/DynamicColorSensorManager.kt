@@ -5,11 +5,21 @@ import androidx.core.graphics.blue
 import androidx.core.graphics.green
 import androidx.core.graphics.red
 import com.google.android.material.color.DynamicColors
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorRepository
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class DynamicColorSensorManager : SensorManager {
+@Singleton
+class DynamicColorSensorManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager {
     companion object {
         @ProvidesSensor
         val accentColorSensor = SensorManager.BasicSensor(
@@ -28,28 +38,28 @@ class DynamicColorSensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_dynamic_color
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return listOf(accentColorSensor)
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
-        updateAccentColor(context)
+    override suspend fun requestSensorUpdate() {
+        updateAccentColor(applicationContext)
     }
 
-    override fun hasSensor(context: Context): Boolean {
+    override fun hasSensor(): Boolean {
         return DynamicColors.isDynamicColorAvailable()
     }
 
-    private suspend fun updateAccentColor(context: Context) {
-        if (!isEnabled(context, accentColorSensor)) {
+    private suspend fun updateAccentColor(applicationContext: Context) {
+        if (!isEnabled(accentColorSensor)) {
             return
         }
 
-        val dynamicColorContext = DynamicColors.wrapContextIfAvailable(context)
+        val dynamicColorContext = DynamicColors.wrapContextIfAvailable(applicationContext)
         val attrsToResolve = intArrayOf(
             android.R.attr.colorAccent,
         )
@@ -59,7 +69,6 @@ class DynamicColorSensorManager : SensorManager {
         test.recycle()
 
         onSensorUpdated(
-            context,
             accentColorSensor,
             accentHex,
             accentColorSensor.statelessIcon,
