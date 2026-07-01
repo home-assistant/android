@@ -79,7 +79,7 @@ class SensorDetailViewModel @Inject constructor(
         data class SettingDialogState(
             val setting: SensorSetting,
             /** Indicates if this is still loading entries in the background */
-            val loading: Boolean,
+            val isLoading: Boolean,
             /** List of entity ID to entity pairs */
             val entries: List<Pair<String, String>>,
             /** List of selected entity ID */
@@ -262,7 +262,7 @@ class SensorDetailViewModel @Inject constructor(
             delay(1000L)
             sensorSettingsDialog = SettingDialogState(
                 setting = setting,
-                loading = true,
+                isLoading = true,
                 entries = listOf(),
                 entriesSelected = listOf(),
             )
@@ -272,7 +272,7 @@ class SensorDetailViewModel @Inject constructor(
         val listEntries = getSettingEntries(setting, null)
         val state = SettingDialogState(
             setting = setting,
-            loading = false,
+            isLoading = false,
             entries = when {
                 setting.valueType == SensorSettingType.LIST ||
                     setting.valueType == SensorSettingType.LIST_APPS ||

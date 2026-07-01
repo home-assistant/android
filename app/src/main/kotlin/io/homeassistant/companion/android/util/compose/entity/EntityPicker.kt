@@ -6,7 +6,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -41,12 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
@@ -55,7 +49,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.IIcon
@@ -65,7 +58,9 @@ import io.homeassistant.companion.android.common.compose.composable.ButtonSize
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.composable.HAHorizontalDivider
 import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
+import io.homeassistant.companion.android.common.compose.composable.HASearchField
 import io.homeassistant.companion.android.common.compose.composable.HATextField
+import io.homeassistant.companion.android.common.compose.composable.consumeSheetScrollFling
 import io.homeassistant.companion.android.common.compose.composable.rememberHAModalBottomSheetState
 import io.homeassistant.companion.android.common.compose.theme.HABorderWidth
 import io.homeassistant.companion.android.common.compose.theme.HAColorScheme
@@ -85,9 +80,7 @@ import io.homeassistant.companion.android.util.RegistriesDataHandler
 import io.homeassistant.companion.android.util.compose.safeScreenHeight
 import io.homeassistant.companion.android.util.compose.screenWidth
 import kotlin.coroutines.CoroutineContext
-import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -247,6 +240,7 @@ internal fun EntityPicker(
     var isExpanded by remember { mutableStateOf(isExpanded) }
     var searchQuery by remember { mutableStateOf("") }
 
+<<<<<<< HEAD
     val bottomSheetState = rememberHAModalBottomSheetState()
     val scope = rememberCoroutineScope()
 
@@ -412,16 +406,6 @@ private fun EntityPickerBottomSheet(
 ) {
     val screenHeight = safeScreenHeight() - HADimens.SPACE16
 
-    // Consume fling velocity at content boundaries to prevent BottomSheet bounce
-    val consumeFlingNestedScrollConnection = remember {
-        object : NestedScrollConnection {
-            override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset =
-                available
-
-            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity = available
-        }
-    }
-
     HAModalBottomSheet(
         bottomSheetState = bottomSheetState,
         onDismissRequest = onDismissRequest,
@@ -433,11 +417,7 @@ private fun EntityPickerBottomSheet(
             onEntitySelected = onEntitySelected,
             modifier = Modifier
                 .height(screenHeight)
-                .nestedScroll(consumeFlingNestedScrollConnection)
-                .pointerInput(Unit) {
-                    // Consume vertical drag gestures to prevent BottomSheet from interpreting them as collapse gestures
-                    detectVerticalDragGestures { _, _ -> }
-                },
+                .consumeSheetScrollFling(),
             dispatcher = dispatcher,
         )
     }
@@ -488,7 +468,13 @@ private fun EntityPickerContent(
     )
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(HADimens.SPACE3)) {
-        SearchField(searchQuery, onSearchQueryChange)
+        HASearchField(
+            query = searchQuery,
+            onQueryChange = onSearchQueryChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = HADimens.SPACE3),
+        )
 
         if (filteredEntities.isNotEmpty()) {
             LazyColumn(
@@ -512,50 +498,6 @@ private fun EntityPickerContent(
             EmptyResultPlaceholder(searchQuery)
         }
     }
-}
-
-@Composable
-private fun SearchField(searchQuery: String, onSearchQueryChange: (String) -> Unit) {
-    val colorScheme = LocalHAColorScheme.current
-    var searchQueryRaw by remember { mutableStateOf(searchQuery) }
-
-    // Sync local state when parent state changes (e.g., when cleared externally)
-    LaunchedEffect(searchQuery) {
-        if (searchQuery != searchQueryRaw) {
-            searchQueryRaw = searchQuery
-        }
-    }
-
-    // Debounced update to parent
-    LaunchedEffect(searchQueryRaw) {
-        // Skip debounce for empty strings to provide instant clear feedback
-        if (searchQueryRaw.isEmpty()) {
-            onSearchQueryChange(searchQueryRaw)
-        } else {
-            delay(300.milliseconds)
-            onSearchQueryChange(searchQueryRaw)
-        }
-    }
-
-    HATextField(
-        value = searchQueryRaw,
-        onValueChange = { searchQueryRaw = it },
-        label = { Text(stringResource(commonR.string.search)) },
-        trailingIcon = {
-            if (searchQueryRaw.isNotEmpty()) {
-                IconButton(onClick = { searchQueryRaw = "" }) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(commonR.string.clear_search),
-                        tint = colorScheme.colorOnNeutralNormal,
-                    )
-                }
-            }
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = HADimens.SPACE3),
-    )
 }
 
 @Composable
