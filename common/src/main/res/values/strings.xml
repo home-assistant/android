@@ -1082,6 +1082,7 @@
     <string name="enable_change_log_popup">Show change log after updating</string>
     <string name="enable_change_log_popup_summary">Allow the change log dialog to automatically appear when the app is updated</string>
     <string name="tile_icon">Tile icon</string>
+    <string name="tile_reset_icon">Reset icon</string>
     <string name="tile_icon_original">Use entity icon</string>
     <string name="tile_select">Select a tile to edit</string>
     <string name="tile_fetch_entity_error">Cannot fetch entity</string>
