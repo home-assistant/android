@@ -2,6 +2,7 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2026.7.1 - Main" versioncode="3">
+        <change>Added command_volume_level_step notification command for relative volume adjustments</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2026.7.1 - Wear" versioncode="2">
