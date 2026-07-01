@@ -178,6 +178,7 @@ class MessagingManager @Inject constructor(
         const val COMMAND_RINGER_MODE = "command_ringer_mode"
         const val COMMAND_BROADCAST_INTENT = "command_broadcast_intent"
         const val COMMAND_VOLUME_LEVEL = "command_volume_level"
+        const val COMMAND_VOLUME_LEVEL_STEP = "command_volume_level_step"
         const val COMMAND_BLUETOOTH = "command_bluetooth"
         const val COMMAND_SCREEN_ON = "command_screen_on"
         const val COMMAND_MEDIA = "command_media"
@@ -234,6 +235,7 @@ class MessagingManager @Inject constructor(
             COMMAND_RINGER_MODE,
             COMMAND_BROADCAST_INTENT,
             COMMAND_VOLUME_LEVEL,
+            COMMAND_VOLUME_LEVEL_STEP,
             COMMAND_BLUETOOTH,
             DeviceCommandData.COMMAND_BLE_TRANSMITTER,
             DeviceCommandData.COMMAND_BEACON_MONITOR,
@@ -418,7 +420,8 @@ class MessagingManager @Inject constructor(
                             }
                         }
 
-                        COMMAND_VOLUME_LEVEL -> {
+                        COMMAND_VOLUME_LEVEL,
+                        COMMAND_VOLUME_LEVEL_STEP -> {
                             if (!jsonData[NotificationData.MEDIA_STREAM].isNullOrEmpty() &&
                                 jsonData[NotificationData.MEDIA_STREAM] in CHANNEL_VOLUME_STREAM &&
                                 !jsonData[NotificationData.COMMAND].isNullOrEmpty() &&
@@ -730,15 +733,18 @@ class MessagingManager @Inject constructor(
                 }
             }
 
-            COMMAND_VOLUME_LEVEL -> {
+            COMMAND_VOLUME_LEVEL,
+            COMMAND_VOLUME_LEVEL_STEP -> {
                 val notificationManager = context.getSystemService<NotificationManager>()
                 if (notificationManager?.isNotificationPolicyAccessGranted == false) {
                     notifyMissingPermission(message, serverId)
                 } else {
                     processStreamVolume(
-                        data[NotificationData.MEDIA_STREAM].toString(),
-                        command!!.toInt(),
-                        serverId,
+                        stream = data[NotificationData.MEDIA_STREAM].toString(),
+                        volume = command!!.toInt(),
+                        step = message == COMMAND_VOLUME_LEVEL_STEP,
+                        serverId = serverId ,
+                        message = message,
                     )
                 }
             }
@@ -1900,7 +1906,13 @@ class MessagingManager @Inject constructor(
         }
     }
 
-    private suspend fun processStreamVolume(stream: String, volume: Int, serverId: String) {
+    private suspend fun processStreamVolume(
+        stream: String,
+        volume: Int,
+        step: Boolean,
+        serverId: String,
+        message: String,
+    ) {
         val streamType = when (stream) {
             NotificationData.ALARM_STREAM -> AudioManager.STREAM_ALARM
             NotificationData.MUSIC_STREAM -> AudioManager.STREAM_MUSIC
@@ -1912,7 +1924,7 @@ class MessagingManager @Inject constructor(
             NotificationData.ASSISTANT_STREAM -> if (SdkVersion.isAtLeast(Build.VERSION_CODES.CINNAMON_BUN)) {
                 if (!defaultAssistantManager.isDefaultAssistant()) {
                     Timber.w("Cannot control assistant volume: app is not the default assistant")
-                    notifyDefaultAssistant(command = "$COMMAND_VOLUME_LEVEL($stream)", serverId = serverId)
+                    notifyDefaultAssistant(command = "$message($stream)", serverId = serverId)
                     return
                 }
                 AudioManager.STREAM_ASSISTANT
@@ -1926,20 +1938,31 @@ class MessagingManager @Inject constructor(
             }
         }
 
-        adjustVolumeStream(streamType, volume)
+        if (step) {
+            stepStreamVolume(streamType = streamType, volumeDelta = volume)
+        } else {
+            setStreamVolume(streamType = streamType, volume = volume)
+        }
     }
 
-    private fun adjustVolumeStream(stream: Int, volume: Int) {
+    private fun stepStreamVolume(streamType: Int, volumeDelta: Int) {
         val audioManager = context.getSystemService<AudioManager>()!!
-        var volumeLevel = volume
-        if (volumeLevel > audioManager.getStreamMaxVolume(stream)) {
-            volumeLevel = audioManager.getStreamMaxVolume(stream)
-        } else if (volumeLevel < 0) {
-            volumeLevel = 0
-        }
+
+        val currentVolume = audioManager.getStreamVolume(streamType)
+        val newVolume = currentVolume + volumeDelta
+
+        setStreamVolume(streamType = streamType, volume = newVolume)
+    }
+
+    private fun setStreamVolume(streamType: Int, volume: Int) {
+        val audioManager = context.getSystemService<AudioManager>()!!
+
+        val maxVolume = audioManager.getStreamMaxVolume(streamType)
+        val clampedVolume = volume.coerceIn(0, maxVolume)
+
         audioManager.setStreamVolume(
-            stream,
-            volumeLevel,
+            streamType,
+            clampedVolume,
             AudioManager.FLAG_SHOW_UI,
         )
     }
@@ -2125,7 +2148,7 @@ class MessagingManager @Inject constructor(
                         when (type) {
                             COMMAND_WEBVIEW, COMMAND_ACTIVITY, COMMAND_LAUNCH_APP -> requestSystemAlertPermission()
 
-                            COMMAND_RINGER_MODE, COMMAND_DND, COMMAND_VOLUME_LEVEL -> requestDNDPermission()
+                            COMMAND_RINGER_MODE, COMMAND_DND, COMMAND_VOLUME_LEVEL, COMMAND_VOLUME_LEVEL_STEP -> requestDNDPermission()
 
                             COMMAND_MEDIA -> requestNotificationPermission()
 
