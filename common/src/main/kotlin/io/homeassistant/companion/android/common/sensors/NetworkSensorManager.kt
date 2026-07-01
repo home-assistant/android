@@ -1,4 +1,5 @@
 package io.homeassistant.companion.android.common.sensors
+
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context

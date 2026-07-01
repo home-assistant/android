@@ -1,4 +1,5 @@
 package io.homeassistant.companion.android.common.sensors
+
 import android.content.Context
 import android.nfc.NfcAdapter
 import dagger.hilt.android.qualifiers.ApplicationContext

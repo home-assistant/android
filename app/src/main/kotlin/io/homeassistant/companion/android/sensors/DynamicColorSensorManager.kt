@@ -1,4 +1,5 @@
 package io.homeassistant.companion.android.sensors
+
 import android.content.Context
 import androidx.core.graphics.blue
 import androidx.core.graphics.green

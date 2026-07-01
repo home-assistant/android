@@ -1,4 +1,5 @@
 package io.homeassistant.companion.android.common.sensors
+
 import android.app.NotificationManager
 import android.content.Context
 import androidx.core.content.getSystemService

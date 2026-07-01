@@ -1,4 +1,5 @@
 package io.homeassistant.companion.android.sensors
+
 import android.Manifest
 import android.content.Context
 import android.location.Address
@@ -97,10 +98,10 @@ class GeocodeSensorManager @Inject constructor(
     }
 
     override suspend fun requestSensorUpdate() {
-        updateGeocodedLocation(applicationContext)
+        updateGeocodedLocation()
     }
 
-    private suspend fun updateGeocodedLocation(applicationContext: Context) {
+    private suspend fun updateGeocodedLocation() {
         if (!isEnabled(geocodedLocation) || !checkPermission(geocodedLocation.id)) {
             return
         }
@@ -143,9 +144,7 @@ class GeocodeSensorManager @Inject constructor(
             if (!prettyAddress.isNullOrEmpty()) {
                 prettyAddress
             } else {
-                applicationContext.getString(
-                    commonR.string.unknown_address,
-                )
+                applicationContext.getString(commonR.string.unknown_address)
             },
         )
 

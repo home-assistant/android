@@ -1,4 +1,5 @@
 package io.homeassistant.companion.android.common.sensors
+
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
@@ -135,8 +136,8 @@ class BluetoothSensorManager @Inject constructor(
             updateType = SensorManager.BasicSensor.UpdateType.CUSTOM,
         )
 
-        suspend fun enableDisableBLETransmitter(applicationContext: Context, transmitEnabled: Boolean) {
-            val sensorRepository = DatabaseEntryPoint.resolve(applicationContext).sensorRepository()
+        suspend fun enableDisableBLETransmitter(context: Context, transmitEnabled: Boolean) {
+            val sensorRepository = DatabaseEntryPoint.resolve(context).sensorRepository()
             val sensorEntity = sensorRepository.get(bleTransmitter.id)
             if (sensorEntity.none { it.enabled }) {
                 return
@@ -152,17 +153,17 @@ class BluetoothSensorManager @Inject constructor(
             )
         }
 
-        suspend fun enableDisableBeaconMonitor(applicationContext: Context, monitorEnabled: Boolean) {
-            val sensorRepository = DatabaseEntryPoint.resolve(applicationContext).sensorRepository()
+        suspend fun enableDisableBeaconMonitor(context: Context, monitorEnabled: Boolean) {
+            val sensorRepository = DatabaseEntryPoint.resolve(context).sensorRepository()
             val sensorEntity = sensorRepository.get(beaconMonitor.id)
             if (sensorEntity.none { it.enabled }) {
                 return
             }
 
             if (monitorEnabled) {
-                monitoringManager.startMonitoring(applicationContext, beaconMonitoringDevice)
+                monitoringManager.startMonitoring(context, beaconMonitoringDevice)
             } else {
-                monitoringManager.stopMonitoring(applicationContext, beaconMonitoringDevice)
+                monitoringManager.stopMonitoring(context, beaconMonitoringDevice)
             }
             sensorRepository.add(
                 SensorSetting(
@@ -172,7 +173,7 @@ class BluetoothSensorManager @Inject constructor(
                     SensorSettingType.TOGGLE,
                 ),
             )
-            SensorUpdateReceiver.updateSensors(applicationContext)
+            SensorUpdateReceiver.updateSensors(context)
         }
     }
 

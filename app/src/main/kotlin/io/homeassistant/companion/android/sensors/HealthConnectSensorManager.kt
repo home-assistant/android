@@ -1,4 +1,5 @@
 package io.homeassistant.companion.android.sensors
+
 import android.content.Context
 import android.content.Intent
 import androidx.activity.result.contract.ActivityResultContract
