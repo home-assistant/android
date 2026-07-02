@@ -101,17 +101,6 @@
     </issue>
 
     <issue
-        id="MissingClass"
-        message="Class referenced in the manifest, `io.homeassistant.companion.android.barcode.BarcodeScannerActivity`, was not found in the project or the libraries"
-        errorLine1="            android:name=&quot;.barcode.BarcodeScannerActivity&quot;"
-        errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="536"
-            column="27"/>
-    </issue>
-
-    <issue
         id="DefaultLocale"
         message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
         errorLine1="                    &quot;&quot; + String.format(&quot;%8.5f&quot;, latitude) + &quot;  &quot; +"
@@ -514,7 +503,7 @@
         errorLine2="      ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/launch/LaunchActivity.kt"
-            line="89"
+            line="88"
             column="7"/>
     </issue>
 
@@ -1081,39 +1070,6 @@
 
     <issue
         id="UnusedResources"
-        message="The resource `R.layout.dialog_authentication` appears to be unused"
-        errorLine1="&lt;LinearLayout xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
-        errorLine2="^">
-        <location
-            file="src/main/res/layout/dialog_authentication.xml"
-            line="2"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.dimen.activity_margin` appears to be unused"
-        errorLine1="    &lt;dimen name=&quot;activity_margin&quot;>16dp&lt;/dimen>"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/dimens.xml"
-            line="3"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.drawable.ic_baseline_info_24` appears to be unused"
-        errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
-        errorLine2="^">
-        <location
-            file="src/main/res/drawable/ic_baseline_info_24.xml"
-            line="1"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
         message="The resource `R.drawable.ic_delete` appears to be unused"
         errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
         errorLine2="^">
@@ -1186,17 +1142,6 @@
         <location
             file="src/main/res/values/styles.xml"
             line="67"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.style.Authentication_Dialog` appears to be unused"
-        errorLine1="    &lt;style name=&quot;Authentication_Dialog&quot; parent=&quot;Theme.MaterialComponents.Light.Dialog&quot;>"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/styles.xml"
-            line="110"
             column="12"/>
     </issue>
 

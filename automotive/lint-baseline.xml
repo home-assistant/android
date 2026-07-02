@@ -107,7 +107,7 @@
         errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="943"
+            line="941"
             column="27"/>
     </issue>
 
@@ -448,7 +448,7 @@
         errorLine2="      ~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/launch/LaunchActivity.kt"
-            line="89"
+            line="88"
             column="7"/>
     </issue>
 
@@ -492,7 +492,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="460"
+            line="458"
             column="13"/>
     </issue>
 
@@ -1930,39 +1930,6 @@
 
     <issue
         id="UnusedResources"
-        message="The resource `R.layout.dialog_authentication` appears to be unused"
-        errorLine1="&lt;LinearLayout xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
-        errorLine2="^">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/dialog_authentication.xml"
-            line="2"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.dimen.activity_margin` appears to be unused"
-        errorLine1="    &lt;dimen name=&quot;activity_margin&quot;>16dp&lt;/dimen>"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/values/dimens.xml"
-            line="3"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.drawable.ic_baseline_info_24` appears to be unused"
-        errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
-        errorLine2="^">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/drawable/ic_baseline_info_24.xml"
-            line="1"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
         message="The resource `R.drawable.ic_delete` appears to be unused"
         errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
         errorLine2="^">
@@ -2046,17 +2013,6 @@
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/values/styles.xml"
             line="67"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.style.Authentication_Dialog` appears to be unused"
-        errorLine1="    &lt;style name=&quot;Authentication_Dialog&quot; parent=&quot;Theme.MaterialComponents.Light.Dialog&quot;>"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/values/styles.xml"
-            line="110"
             column="12"/>
     </issue>
 

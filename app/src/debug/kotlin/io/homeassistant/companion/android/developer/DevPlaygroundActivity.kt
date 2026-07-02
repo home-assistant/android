@@ -103,7 +103,6 @@ private fun DevPlayGroundScreen(context: Context? = null) {
                 HAFilledButton(
                     text = "Start barcode",
                     onClick = {
-                        // TODO use the BarcodeOverlay
                         showBarcodeScanner = true
                     },
                 )
@@ -170,9 +169,9 @@ private fun DevPlayGroundScreen(context: Context? = null) {
             }
             if (showBarcodeScanner) {
                 BarcodeScanner(
-                    "Barcode Title",
-                    "demo description",
-                    null,
+                    title = "Barcode Title",
+                    description = "demo description",
+                    alternativeOptionLabel = null,
                     onResult = { _, _ ->
                         showBarcodeScanner = false
                     },
