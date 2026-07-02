@@ -2,7 +2,7 @@ package io.homeassistant.lint.annotation
 
 import com.android.tools.lint.checks.infrastructure.TestFiles
 import com.android.tools.lint.checks.infrastructure.TestLintTask
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class ProvidesSensorMissingDetectorTest {
 
