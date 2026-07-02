@@ -8,7 +8,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/MobileDataManager.kt"
-            line="82"
+            line="85"
             column="21"/>
     </issue>
 
@@ -19,7 +19,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/MobileDataManager.kt"
-            line="85"
+            line="88"
             column="21"/>
     </issue>
 
@@ -30,7 +30,7 @@
         errorLine2="                           ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/PhoneStateSensorManager.kt"
-            line="285"
+            line="288"
             column="28"/>
     </issue>
 
@@ -41,7 +41,7 @@
         errorLine2="                           ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/PhoneStateSensorManager.kt"
-            line="329"
+            line="332"
             column="28"/>
     </issue>
 
@@ -52,7 +52,7 @@
         errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/PhoneStateSensorManager.kt"
-            line="337"
+            line="340"
             column="46"/>
     </issue>
 
@@ -85,7 +85,7 @@
         errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/StorageSensorManager.kt"
-            line="145"
+            line="148"
             column="42"/>
     </issue>
 
@@ -96,7 +96,7 @@
         errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/MobileDataManager.kt"
-            line="82"
+            line="85"
             column="38"/>
     </issue>
 
@@ -107,7 +107,7 @@
         errorLine2="                                     ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/MobileDataManager.kt"
-            line="85"
+            line="88"
             column="38"/>
     </issue>
 
@@ -117,8 +117,8 @@
         errorLine1="        config.setLocale(Locale(&quot;en&quot;))"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/SensorReceiverBase.kt"
-            line="411"
+            file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/SensorUpdater.kt"
+            line="370"
             column="9"/>
     </issue>
 
