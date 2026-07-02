@@ -426,7 +426,7 @@
         errorLine2="                ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="157"
+            line="162"
             column="17"/>
     </issue>
 
@@ -624,7 +624,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="118"
+            line="123"
             column="17"/>
     </issue>
 
@@ -635,7 +635,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="119"
+            line="124"
             column="17"/>
     </issue>
 
@@ -646,7 +646,7 @@
         errorLine2="                                     ~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/sensor/SensorDetailViewModel.kt"
-            line="371"
+            line="385"
             column="38"/>
     </issue>
 
