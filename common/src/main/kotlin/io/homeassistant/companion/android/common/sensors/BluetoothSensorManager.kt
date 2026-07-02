@@ -151,7 +151,7 @@ class BluetoothSensorManager @Inject constructor(
             )
         }
 
-        suspend fun enableDisableBeaconMonitor(context: Context, monitorEnabled: Boolean) {
+        suspend fun SensorRepository.enableDisableBeaconMonitor(context: Context, monitorEnabled: Boolean) {
             val sensorEntity = get(beaconMonitor.id)
             if (sensorEntity.none { it.enabled }) {
                 return
