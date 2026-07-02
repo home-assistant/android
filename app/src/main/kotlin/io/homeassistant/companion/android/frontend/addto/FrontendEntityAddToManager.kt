@@ -18,8 +18,6 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.frontend.navigation.WidgetType
 import io.homeassistant.companion.android.util.QuestUtil
 import io.homeassistant.companion.android.util.vehicle.isVehicleDomain
-import io.homeassistant.companion.android.webview.addto.EntityAddToAction
-import io.homeassistant.companion.android.webview.externalbus.ExternalEntityAddToAction
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers

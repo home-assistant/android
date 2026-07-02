@@ -83,6 +83,7 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserEffect
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserRequest
 import io.homeassistant.companion.android.frontend.improv.ui.ImprovOverlay
+import io.homeassistant.companion.android.frontend.insecure.BlockInsecureScreen
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge
 import io.homeassistant.companion.android.frontend.js.FrontendJsCallback
 import io.homeassistant.companion.android.frontend.permissions.PendingPermissionHandler
@@ -97,7 +98,6 @@ import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.compose.media.player.HAMediaPlayer
 import io.homeassistant.companion.android.util.compose.webview.HAWebView
 import io.homeassistant.companion.android.util.sensitive
-import io.homeassistant.companion.android.webview.insecure.BlockInsecureScreen
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import timber.log.Timber

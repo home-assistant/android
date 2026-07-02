@@ -1,7 +1,7 @@
-package io.homeassistant.companion.android.webview.addto
+package io.homeassistant.companion.android.frontend.addto
 
 import android.content.Context
-import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.util.isAutomotive
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -74,9 +74,9 @@ sealed interface EntityAddToAction {
 
         override fun text(context: Context): String {
             return if (context.isAutomotive()) {
-                context.getString(commonR.string.add_to_android_auto_driving_favorite)
+                context.getString(R.string.add_to_android_auto_driving_favorite)
             } else {
-                context.getString(commonR.string.add_to_android_auto_favorite)
+                context.getString(R.string.add_to_android_auto_favorite)
             }
         }
     }
@@ -95,11 +95,11 @@ sealed interface EntityAddToAction {
         override val mdiIcon: String = "mdi:open-in-new"
 
         override fun text(context: Context): String {
-            return context.getString(commonR.string.add_to_shortcut)
+            return context.getString(R.string.add_to_shortcut)
         }
 
         override fun details(context: Context): String? {
-            return if (enabled) null else context.getString(commonR.string.add_to_shortcut_limit)
+            return if (enabled) null else context.getString(R.string.add_to_shortcut_limit)
         }
     }
 
@@ -111,7 +111,7 @@ sealed interface EntityAddToAction {
         override val mdiIcon: String = "mdi:tune"
 
         override fun text(context: Context): String {
-            return context.getString(commonR.string.add_to_tile)
+            return context.getString(R.string.add_to_tile)
         }
     }
 
@@ -123,7 +123,7 @@ sealed interface EntityAddToAction {
         override val mdiIcon: String = "mdi:shape"
 
         override fun text(context: Context): String {
-            return context.getString(commonR.string.add_to_entity_widget)
+            return context.getString(R.string.add_to_entity_widget)
         }
     }
 
@@ -135,7 +135,7 @@ sealed interface EntityAddToAction {
         override val mdiIcon: String = "mdi:play-box-multiple"
 
         override fun text(context: Context): String {
-            return context.getString(commonR.string.add_to_media_player_widget)
+            return context.getString(R.string.add_to_media_player_widget)
         }
     }
 
@@ -147,7 +147,7 @@ sealed interface EntityAddToAction {
         override val mdiIcon: String = "mdi:camera-image"
 
         override fun text(context: Context): String {
-            return context.getString(commonR.string.add_to_camera_widget)
+            return context.getString(R.string.add_to_camera_widget)
         }
     }
 
@@ -159,7 +159,7 @@ sealed interface EntityAddToAction {
         override val mdiIcon: String = "mdi:clipboard-list"
 
         override fun text(context: Context): String {
-            return context.getString(commonR.string.add_to_todo_widget)
+            return context.getString(R.string.add_to_todo_widget)
         }
     }
 
@@ -177,11 +177,11 @@ sealed interface EntityAddToAction {
         override val mdiIcon: String = "mdi:watch-import"
 
         override fun text(context: Context): String {
-            return context.getString(commonR.string.add_to_watch_favorite, name)
+            return context.getString(R.string.add_to_watch_favorite, name)
         }
 
         override fun details(context: Context): String? {
-            return if (enabled) null else context.getString(commonR.string.add_to_watch_favorite_disconnected)
+            return if (enabled) null else context.getString(R.string.add_to_watch_favorite_disconnected)
         }
     }
 }

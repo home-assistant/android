@@ -85,7 +85,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1119"
+            line="1120"
             column="17"/>
     </issue>
 
@@ -97,6 +97,17 @@
         <location
             file="src/full/AndroidManifest.xml"
             line="93"
+            column="27"/>
+    </issue>
+
+    <issue
+        id="MissingClass"
+        message="Class referenced in the manifest, `io.homeassistant.companion.android.barcode.BarcodeScannerActivity`, was not found in the project or the libraries"
+        errorLine1="            android:name=&quot;.barcode.BarcodeScannerActivity&quot;"
+        errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="536"
             column="27"/>
     </issue>
 
@@ -437,7 +448,7 @@
         errorLine2="            ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="76"
+            line="78"
             column="13"/>
     </issue>
 
@@ -448,7 +459,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="251"
+            line="253"
             column="9"/>
     </issue>
 
@@ -459,7 +470,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="252"
+            line="254"
             column="9"/>
     </issue>
 
@@ -470,7 +481,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="347"
+            line="352"
             column="9"/>
     </issue>
 
@@ -503,7 +514,7 @@
         errorLine2="      ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/launch/LaunchActivity.kt"
-            line="88"
+            line="89"
             column="7"/>
     </issue>
 
@@ -1070,6 +1081,17 @@
 
     <issue
         id="UnusedResources"
+        message="The resource `R.layout.dialog_authentication` appears to be unused"
+        errorLine1="&lt;LinearLayout xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="^">
+        <location
+            file="src/main/res/layout/dialog_authentication.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
         message="The resource `R.dimen.activity_margin` appears to be unused"
         errorLine1="    &lt;dimen name=&quot;activity_margin&quot;>16dp&lt;/dimen>"
         errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~">
@@ -1164,6 +1186,17 @@
         <location
             file="src/main/res/values/styles.xml"
             line="67"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.style.Authentication_Dialog` appears to be unused"
+        errorLine1="    &lt;style name=&quot;Authentication_Dialog&quot; parent=&quot;Theme.MaterialComponents.Light.Dialog&quot;>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/styles.xml"
+            line="110"
             column="12"/>
     </issue>
 
@@ -1308,7 +1341,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/legacy/ManageShortcutsViewModel.kt"
-            line="217"
+            line="184"
             column="13"/>
     </issue>
 
@@ -1341,7 +1374,7 @@
         errorLine2="^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="85"
+            line="87"
             column="1"/>
     </issue>
 

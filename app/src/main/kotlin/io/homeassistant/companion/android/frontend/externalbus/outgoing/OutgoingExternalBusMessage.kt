@@ -2,8 +2,8 @@ package io.homeassistant.companion.android.frontend.externalbus.outgoing
 
 import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.util.AppVersion
+import io.homeassistant.companion.android.frontend.addto.ExternalEntityAddToAction
 import io.homeassistant.companion.android.frontend.externalbus.frontendExternalBusJson
-import io.homeassistant.companion.android.webview.externalbus.ExternalEntityAddToAction
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement

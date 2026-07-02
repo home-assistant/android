@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.webview.insecure
+package io.homeassistant.companion.android.frontend.insecure
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
