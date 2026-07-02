@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,6 +31,8 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -43,12 +46,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.graphics.ColorUtils
+import androidx.core.util.TypedValueCompat.pxToDp
 import androidx.core.view.WindowCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -66,6 +73,7 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.util.GestureDirection
+import io.homeassistant.companion.android.frontend.WebViewAction.ApplySafeAreaInsets.Companion.SafeAreaInsets
 import io.homeassistant.companion.android.frontend.barcode.BarcodeScannerUiState
 import io.homeassistant.companion.android.frontend.barcode.ui.BarcodeScanner
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
@@ -184,6 +192,7 @@ internal fun FrontendScreen(
         onWebViewCreationFailed = viewModel::onWebViewCreationFailed,
         onDownloadRequested = viewModel::onDownloadRequested,
         webViewActions = viewModel.webViewActions,
+        onSafeAreaInsetsChanged = viewModel::onSafeAreaInsetsChanged,
         onGesture = viewModel::onGesture,
         onLeavingApp = viewModel::onLeavingApp,
         onExoPlayerFullscreenChanged = viewModel::onExoPlayerFullscreenChanged,
@@ -231,6 +240,7 @@ internal fun FrontendScreenContent(
     onSecurityLevelDone: () -> Unit = {},
     onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit = { _, _, _ -> },
     webViewActions: Flow<WebViewAction> = emptyFlow(),
+    onSafeAreaInsetsChanged: (SafeAreaInsets) -> Unit = {},
     onGesture: (GestureDirection, Int) -> Unit = { _, _ -> },
     onLeavingApp: (String?) -> Unit = {},
     onExoPlayerFullscreenChanged: (Boolean) -> Unit = {},
@@ -245,6 +255,10 @@ internal fun FrontendScreenContent(
 ) {
     var webView by remember { mutableStateOf<WebView?>(null) }
     val content = (viewState as? FrontendViewState.Content)
+
+    // Until the frontend theme is read, fall back to the loading surface color (shown behind the
+    // transparent system bars) so their icons stay legible, mirroring the launch screen.
+    val loadingSurfaceColor = LocalHAColorScheme.current.colorSurfaceDefault
 
     // Consume back only while the dashboard (Content) is shown and the WebView has history to pop.
     BackHandler(enabled = content?.canGoBack == true) { webView?.goBack() }
@@ -261,8 +275,9 @@ internal fun FrontendScreenContent(
         screenOrientation = screenOrientation,
         keepScreenOnEnabled = keepScreenOnEnabled,
         onLeavingApp = onLeavingApp,
-        statusBarColor = content?.statusBarColor,
-        navigationBarColor = content?.statusBarColor,
+        statusBarColor = content?.statusBarColor ?: loadingSurfaceColor,
+        navigationBarColor = content?.backgroundColor ?: loadingSurfaceColor,
+        onSafeAreaInsetsChanged = onSafeAreaInsetsChanged,
     )
 
     FrontendScreenHandlers(pendingPermissionRequest = pendingPermissionRequest, pendingDialog = pendingDialog)
@@ -344,11 +359,14 @@ private fun FrontendScreenEffects(
     onLeavingApp: (String?) -> Unit,
     statusBarColor: Color?,
     navigationBarColor: Color?,
+    onSafeAreaInsetsChanged: (SafeAreaInsets) -> Unit,
 ) {
     SystemBarsAppearanceEffect(
         statusBarColor = statusBarColor,
         navigationBarColor = navigationBarColor,
     )
+
+    ReportSafeAreaInsetsEffect(onSafeAreaInsetsChanged = onSafeAreaInsetsChanged)
 
     ImprovScanLifecycleEffect(
         scanRequested = improvScanRequested,
@@ -552,14 +570,19 @@ private fun SafeHAWebView(
     onGesture: (GestureDirection, Int) -> Unit = { _, _ -> },
 ) {
     val serverHandleInsets = contentState?.serverHandleInsets ?: false
-    val backgroundColor = contentState?.backgroundColor
     val insets = WindowInsets.safeDrawing
     val insetsPaddingValues = insets.asPaddingValues()
 
+    // Until the frontend theme is read, fall back to the loading surface color so the reserved
+    // system bar areas match the screen behind them instead of leaving the WebView to bleed through.
+    val fallbackColor = LocalHAColorScheme.current.colorSurfaceDefault
+    val statusBarColor = contentState?.statusBarColor ?: fallbackColor
+    val backgroundColor = contentState?.backgroundColor ?: fallbackColor
+
     Column(modifier = Modifier.fillMaxSize()) {
-        // We can't be fully edge to edge at the top until the frontend address
-        // https://github.com/home-assistant/frontend/issues/29125
-        contentState?.statusBarColor?.Overlay(
+        // The top is never drawn edge-to-edge: we always reserve and color the status bar strip until
+        // the frontend addresses https://github.com/home-assistant/frontend/issues/29125
+        statusBarColor.Overlay(
             modifier = Modifier
                 .height(insetsPaddingValues.calculateTopPadding())
                 .fillMaxWidth()
@@ -571,7 +594,7 @@ private fun SafeHAWebView(
         Row(modifier = Modifier.weight(1f)) {
             // Left safe area
             if (!serverHandleInsets) {
-                backgroundColor?.Overlay(
+                backgroundColor.Overlay(
                     modifier = Modifier
                         .fillMaxHeight()
                         .width(insetsPaddingValues.calculateLeftPadding(LayoutDirection.Ltr)),
@@ -598,7 +621,7 @@ private fun SafeHAWebView(
 
             // Right safe area
             if (!serverHandleInsets) {
-                backgroundColor?.Overlay(
+                backgroundColor.Overlay(
                     modifier = Modifier
                         .fillMaxHeight()
                         .width(insetsPaddingValues.calculateRightPadding(LayoutDirection.Ltr)),
@@ -608,7 +631,7 @@ private fun SafeHAWebView(
 
         // Bottom navigation bar overlay (when server doesn't handle insets)
         if (!serverHandleInsets) {
-            backgroundColor?.Overlay(
+            backgroundColor.Overlay(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(insetsPaddingValues.calculateBottomPadding()),
@@ -794,6 +817,32 @@ private fun SystemBarsAppearanceEffect(statusBarColor: Color?, navigationBarColo
 
 /** Whether this color is light enough that dark foreground icons are needed for contrast. */
 private fun Color.isLight(): Boolean = ColorUtils.calculateLuminance(toArgb()) >= 0.5
+
+/**
+ * Reports the device safe-area insets (system bars and display cutouts, in dp) to
+ * [onSafeAreaInsetsChanged] whenever they change, so the ViewModel can forward them to the frontend
+ * for edge-to-edge layout. Reading window insets is a UI concern, so only the reporting lives here.
+ */
+@Composable
+private fun ReportSafeAreaInsetsEffect(onSafeAreaInsetsChanged: (SafeAreaInsets) -> Unit) {
+    val insets = WindowInsets.systemBars.union(WindowInsets.displayCutout)
+    val density = LocalDensity.current
+    val displayMetrics = LocalResources.current.displayMetrics
+    val layoutDirection = LocalLayoutDirection.current
+
+    // The app already reserves and colors the status bar strip itself (see SafeHAWebView), so the
+    // frontend must not add its own top inset — otherwise the top spacing would be applied twice.
+    // Kept 0 until the frontend can go edge-to-edge at the top.
+    // https://github.com/home-assistant/frontend/issues/29125
+    val top = 0f
+    val bottom = pxToDp(insets.getBottom(density).toFloat(), displayMetrics)
+    val left = pxToDp(insets.getLeft(density, layoutDirection).toFloat(), displayMetrics)
+    val right = pxToDp(insets.getRight(density, layoutDirection).toFloat(), displayMetrics)
+
+    LaunchedEffect(top, bottom, left, right) {
+        onSafeAreaInsetsChanged(SafeAreaInsets(top = top, bottom = bottom, left = left, right = right))
+    }
+}
 
 /**
  * Renders PiP-eligible overlays and reports their combined [PipReadiness] to the host.

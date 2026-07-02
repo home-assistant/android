@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.frontend
 import android.webkit.ValueCallback
 import android.webkit.WebView
 import androidx.compose.ui.graphics.Color
+import io.homeassistant.companion.android.frontend.WebViewAction.ApplySafeAreaInsets.Companion.SafeAreaInsets
 import io.homeassistant.companion.android.frontend.WebViewAction.ReadThemeColors.Companion.ThemeColors
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
@@ -182,6 +183,25 @@ class WebViewActionTest {
             ThemeColors(statusBarColor = null, backgroundColor = null),
             readThemeColors("\"not-a-color-SPACER-rgb(300, 0, 0)\""),
         )
+    }
+
+    @Test
+    fun `Given ApplySafeAreaInsets when run then the safe area CSS properties are set`() = runTest {
+        val action = WebViewAction.ApplySafeAreaInsets(SafeAreaInsets(top = 10f, bottom = 20f, left = 5f, right = 8f))
+
+        action.run(webView)
+
+        verify {
+            webView.evaluateJavascript(
+                match {
+                    it.contains("--app-safe-area-inset-top', '10.0px'") &&
+                        it.contains("--app-safe-area-inset-bottom', '20.0px'") &&
+                        it.contains("--app-safe-area-inset-left', '5.0px'") &&
+                        it.contains("--app-safe-area-inset-right', '8.0px'")
+                },
+                null,
+            )
+        }
     }
 
     /**
