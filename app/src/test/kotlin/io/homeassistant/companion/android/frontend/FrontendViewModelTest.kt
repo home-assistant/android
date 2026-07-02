@@ -6,8 +6,10 @@ import android.webkit.HttpAuthHandler
 import android.webkit.JsResult
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.media3.common.Player
+import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
 import com.google.zxing.BarcodeFormat
 import io.homeassistant.companion.android.common.R as commonR
@@ -70,6 +72,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -1543,6 +1546,141 @@ class FrontendViewModelTest {
 
             assertEquals(2, viewModel.viewState.value.serverId)
             assertFalse(viewModel.canGoBack())
+        }
+    }
+
+    @Nested
+    inner class SystemBarTheming {
+
+        private fun connectedMessageFlow(): MutableSharedFlow<FrontendHandlerEvent> {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            return messageFlow
+        }
+
+        /**
+         * Consumes the actions emitted while connecting (the history reset and the theme color read),
+         * completing the [WebViewAction.ReadThemeColors] with [themeColors] so the ViewModel applies
+         * them, and returns once the resulting state update has been processed.
+         */
+        private suspend fun ReceiveTurbine<WebViewAction>.completeConnect(
+            scope: TestScope,
+            themeColors: WebViewAction.ReadThemeColors.Companion.ThemeColors?,
+        ) {
+            assertInstanceOf(WebViewAction.ClearHistory::class.java, awaitItem())
+            val readThemeColors = assertInstanceOf(WebViewAction.ReadThemeColors::class.java, awaitItem())
+            readThemeColors.result.complete(themeColors)
+            scope.advanceUntilIdle()
+        }
+
+        @Test
+        fun `Given the frontend returns theme colors when connected then content colors are applied`() = runTest {
+            val statusBarColor = Color(0xFF123456)
+            val backgroundColor = Color(0xFF654321)
+            val messageFlow = connectedMessageFlow()
+            val viewModel = createViewModel()
+
+            viewModel.webViewActions.test {
+                advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+                messageFlow.emit(FrontendHandlerEvent.Connected)
+                advanceUntilIdle()
+
+                completeConnect(this@runTest, WebViewAction.ReadThemeColors.Companion.ThemeColors(statusBarColor, backgroundColor))
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            val state = assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
+            assertEquals(statusBarColor, state.statusBarColor)
+            assertEquals(backgroundColor, state.backgroundColor)
+        }
+
+        @Test
+        fun `Given a theme update then the frontend theme colors are re-read`() = runTest {
+            val messageFlow = connectedMessageFlow()
+            val viewModel = createViewModel()
+
+            viewModel.webViewActions.test {
+                advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+                messageFlow.emit(FrontendHandlerEvent.Connected)
+                advanceUntilIdle()
+                completeConnect(this@runTest, themeColors = null)
+
+                messageFlow.emit(FrontendHandlerEvent.ThemeUpdated)
+                advanceUntilIdle()
+
+                assertInstanceOf(WebViewAction.ReadThemeColors::class.java, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given the frontend colors cannot be read when connected then content colors stay null`() = runTest {
+            val messageFlow = connectedMessageFlow()
+            val viewModel = createViewModel()
+
+            viewModel.webViewActions.test {
+                advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+                messageFlow.emit(FrontendHandlerEvent.Connected)
+                advanceUntilIdle()
+
+                completeConnect(this@runTest, themeColors = null)
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            val state = assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
+            assertNull(state.statusBarColor)
+            assertNull(state.backgroundColor)
+        }
+
+        @Test
+        fun `Given a server supporting edge-to-edge when connected then content handles insets`() = runTest {
+            val messageFlow = connectedMessageFlow()
+            coEvery { serverManager.getServer(serverId) } returns mockServer(
+                url = "https://example.com",
+                name = "test",
+                haVersion = HomeAssistantVersion(2026, 6, 0),
+                serverId = serverId,
+            )
+            val viewModel = createViewModel()
+
+            viewModel.webViewActions.test {
+                advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+                messageFlow.emit(FrontendHandlerEvent.Connected)
+                advanceUntilIdle()
+
+                completeConnect(this@runTest, themeColors = null)
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            val state = assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
+            assertTrue(state.serverHandleInsets)
+        }
+
+        @Test
+        fun `Given a server without edge-to-edge support when connected then content does not handle insets`() = runTest {
+            val messageFlow = connectedMessageFlow()
+            coEvery { serverManager.getServer(serverId) } returns mockServer(
+                url = "https://example.com",
+                name = "test",
+                haVersion = HomeAssistantVersion(2025, 1, 1),
+                serverId = serverId,
+            )
+            val viewModel = createViewModel()
+
+            viewModel.webViewActions.test {
+                advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+                messageFlow.emit(FrontendHandlerEvent.Connected)
+                advanceUntilIdle()
+
+                completeConnect(this@runTest, themeColors = null)
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            val state = assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
+            assertFalse(state.serverHandleInsets)
         }
     }
 

@@ -41,12 +41,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.graphics.ColorUtils
+import androidx.core.view.WindowCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
@@ -241,9 +244,10 @@ internal fun FrontendScreenContent(
     processImprovScanRequests: suspend () -> Unit = {},
 ) {
     var webView by remember { mutableStateOf<WebView?>(null) }
+    val content = (viewState as? FrontendViewState.Content)
 
     // Consume back only while the dashboard (Content) is shown and the WebView has history to pop.
-    BackHandler(enabled = (viewState as? FrontendViewState.Content)?.canGoBack == true) { webView?.goBack() }
+    BackHandler(enabled = content?.canGoBack == true) { webView?.goBack() }
 
     FrontendScreenEffects(
         webView = webView,
@@ -257,6 +261,8 @@ internal fun FrontendScreenContent(
         screenOrientation = screenOrientation,
         keepScreenOnEnabled = keepScreenOnEnabled,
         onLeavingApp = onLeavingApp,
+        statusBarColor = content?.statusBarColor,
+        navigationBarColor = content?.statusBarColor,
     )
 
     FrontendScreenHandlers(pendingPermissionRequest = pendingPermissionRequest, pendingDialog = pendingDialog)
@@ -336,7 +342,14 @@ private fun FrontendScreenEffects(
     screenOrientation: ScreenOrientation,
     keepScreenOnEnabled: Boolean,
     onLeavingApp: (String?) -> Unit,
+    statusBarColor: Color?,
+    navigationBarColor: Color?,
 ) {
+    SystemBarsAppearanceEffect(
+        statusBarColor = statusBarColor,
+        navigationBarColor = navigationBarColor,
+    )
+
     ImprovScanLifecycleEffect(
         scanRequested = improvScanRequested,
         processImprovScanRequests = processImprovScanRequests,
@@ -544,16 +557,15 @@ private fun SafeHAWebView(
     val insetsPaddingValues = insets.asPaddingValues()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // Status bar overlay (when server doesn't handle insets)
-        if (!serverHandleInsets) {
-            contentState?.statusBarColor?.Overlay(
-                modifier = Modifier
-                    .height(insetsPaddingValues.calculateTopPadding())
-                    .fillMaxWidth()
-                    // We don't want the status bar to color the left and right areas
-                    .padding(insets.only(WindowInsetsSides.Horizontal).asPaddingValues()),
-            )
-        }
+        // We can't be fully edge to edge at the top until the frontend address
+        // https://github.com/home-assistant/frontend/issues/29125
+        contentState?.statusBarColor?.Overlay(
+            modifier = Modifier
+                .height(insetsPaddingValues.calculateTopPadding())
+                .fillMaxWidth()
+                // We don't want the status bar to color the left and right areas
+                .padding(insets.only(WindowInsetsSides.Horizontal).asPaddingValues()),
+        )
 
         // Main content row with left/right safe areas
         Row(modifier = Modifier.weight(1f)) {
@@ -752,6 +764,36 @@ private fun KeepScreenOnEffect(enabled: Boolean) {
         }
     }
 }
+
+/**
+ * Adjusts the system bar icon appearance (light or dark) to keep the icons legible against the
+ * frontend theme colors: status bar icons contrast with [statusBarColor] and navigation bar icons
+ * with [navigationBarColor].
+ *
+ * The previous appearance is restored on dispose so it does not leak to other screens that share
+ * the hosting activity window.
+ */
+@Composable
+private fun SystemBarsAppearanceEffect(statusBarColor: Color?, navigationBarColor: Color?) {
+    val activity = LocalActivity.current ?: return
+    val view = LocalView.current
+    DisposableEffect(activity, view, statusBarColor, navigationBarColor) {
+        val controller = WindowCompat.getInsetsController(activity.window, view)
+        val previousLightStatusBars = controller.isAppearanceLightStatusBars
+        val previousLightNavigationBars = controller.isAppearanceLightNavigationBars
+
+        statusBarColor?.let { controller.isAppearanceLightStatusBars = it.isLight() }
+        navigationBarColor?.let { controller.isAppearanceLightNavigationBars = it.isLight() }
+
+        onDispose {
+            controller.isAppearanceLightStatusBars = previousLightStatusBars
+            controller.isAppearanceLightNavigationBars = previousLightNavigationBars
+        }
+    }
+}
+
+/** Whether this color is light enough that dark foreground icons are needed for contrast. */
+private fun Color.isLight(): Boolean = ColorUtils.calculateLuminance(toArgb()) >= 0.5
 
 /**
  * Renders PiP-eligible overlays and reports their combined [PipReadiness] to the host.

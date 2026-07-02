@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.frontend
 
 import android.webkit.WebView
+import androidx.compose.ui.graphics.Color
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
 import io.homeassistant.companion.android.util.compose.webview.settings
@@ -118,6 +119,82 @@ sealed interface WebViewAction {
             webView.evaluateJavascript(script) { scriptResult ->
                 result.complete(scriptResult)
             }
+        }
+    }
+
+    /**
+     * Reads the frontend's current theme colors (status bar and page background) and completes
+     * [result] with the parsed [ThemeColors], or `null` when the frontend response is unreadable.
+     */
+    data class ReadThemeColors(override val result: CompletableDeferred<ThemeColors?> = CompletableDeferred()) :
+        AwaitableAction<ReadThemeColors.Companion.ThemeColors?> {
+        /**
+         * Opts into [EvaluateJavascriptUsage] because these values only exist as computed CSS custom
+         * properties in the frontend; no external bus message exposes them.
+         */
+        override fun run(webView: WebView) {
+            @OptIn(EvaluateJavascriptUsage::class)
+            webView.evaluateJavascript(THEME_COLORS_SCRIPT) { raw ->
+                result.complete(parse(raw))
+            }
+        }
+
+        companion object {
+            /**
+             * The frontend theme colors applied to the system chrome: [statusBarColor] from
+             * `--app-header-background-color` and [backgroundColor] from `--primary-background-color`. A `null`
+             * field means the corresponding token could not be parsed.
+             */
+            data class ThemeColors(val statusBarColor: Color?, val backgroundColor: Color?)
+
+            /** Separator used to join the two theme color tokens read from the frontend into a single string. */
+            private const val THEME_COLOR_SPACER = "-SPACER-"
+
+            /** Reads the computed value of the CSS custom property [property] from the document root. */
+            private fun computedStyleToken(property: String) =
+                "document.getElementsByTagName('html')[0].computedStyleMap().get('$property')[0]"
+
+            /**
+             * Reads the frontend theme tokens for the status bar (`--app-header-background-color`) and the
+             * page background (`--primary-background-color`) as a single string joined by [THEME_COLOR_SPACER].
+             */
+            private val THEME_COLORS_SCRIPT =
+                "[${computedStyleToken(
+                    "--app-header-background-color",
+                )},${computedStyleToken("--primary-background-color")}].join('$THEME_COLOR_SPACER')"
+
+            /** Matches the CSS `rgb(r, g, b)` notation the frontend emits for its computed theme tokens. */
+            private val RGB_REGEX = Regex("""rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)""")
+
+            /**
+             * Parses the [THEME_COLORS_SCRIPT] result into [ThemeColors]. Returns `null` when [raw]
+             * is absent or does not contain exactly two tokens.
+             *
+             * The result is a JSON string literal, e.g. `"\"rgb(1,2,3)-SPACER-rgb(4,5,6)\""`.
+             */
+            private fun parse(raw: String?): ThemeColors? {
+                val tokens = raw?.trim('"')?.split(THEME_COLOR_SPACER)
+                if (tokens?.size != 2) return null
+                return ThemeColors(
+                    statusBarColor = tokens[0].trim().toWebViewColorOrNull(),
+                    backgroundColor = tokens[1].trim().toWebViewColorOrNull(),
+                )
+            }
+
+            /**
+             * Parses a `rgb(r, g, b)` color read from the frontend into a Compose [Color]. Returns
+             * `null` when the value is not a valid `rgb()` triple in the 0-255 range.
+             */
+            private fun String.toWebViewColorOrNull(): Color? {
+                val (r, g, b) = RGB_REGEX.matchEntire(trim())?.destructured ?: return null
+                val red = r.toColorChannelOrNull() ?: return null
+                val green = g.toColorChannelOrNull() ?: return null
+                val blue = b.toColorChannelOrNull() ?: return null
+                return Color(red = red, green = green, blue = blue)
+            }
+
+            /** Parses a 0-255 color channel, returning `null` when out of range. */
+            private fun String.toColorChannelOrNull(): Int? = toIntOrNull()?.takeIf { it in 0..255 }
         }
     }
 

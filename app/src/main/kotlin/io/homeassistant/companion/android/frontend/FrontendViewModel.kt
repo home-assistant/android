@@ -736,31 +736,14 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
     private suspend fun handleMessageResult(result: FrontendHandlerEvent) {
         when (result) {
-            is FrontendHandlerEvent.Connected -> {
-                val wasLoading = _viewState.value is FrontendViewState.Loading
-                _viewState.update { currentState ->
-                    if (currentState is FrontendViewState.Loading) {
-                        FrontendViewState.Content(
-                            serverId = currentState.serverId,
-                            url = currentState.url,
-                        )
-                    } else {
-                        currentState
-                    }
-                }
-                if (wasLoading) {
-                    // Remove any previous navigation
-                    _webViewActions.emit(WebViewAction.ClearHistory())
-                }
-                permissionManager.checkNotificationPermission(_viewState.value.serverId)
-            }
+            is FrontendHandlerEvent.Connected -> onConnected()
 
             is FrontendHandlerEvent.Disconnected -> {
                 // Disconnection handling not yet implemented
             }
 
             is FrontendHandlerEvent.ThemeUpdated -> {
-                // Theme update handling not yet implemented
+                viewModelScope.launch { updateThemeColors() }
             }
 
             is FrontendHandlerEvent.OpenSettings -> {
@@ -1012,6 +995,64 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                         pinchToZoomEnabled = settings.pinchToZoomEnabled,
                     ),
                 )
+            }
+        }
+    }
+
+    /**
+     * Whether the server's frontend handles safe-area insets itself,
+     * allowing the WebView to be drawn edge-to-edge behind the navigation bar and display cutouts.
+     */
+    private suspend fun serverHandlesInsets(serverId: Int): Boolean {
+        return serverManager.getServer(serverId)?.version?.isAtLeast(2026, 2, 0) == true
+    }
+
+    /**
+     * Transitions from [FrontendViewState.Loading] to [FrontendViewState.Content] once the frontend
+     * connects, clearing the intermediate navigation history and syncing the system bar colors to
+     * the now-available frontend theme.
+     */
+    private suspend fun onConnected() {
+        val wasLoading = _viewState.value is FrontendViewState.Loading
+        val serverHandleInsets = serverHandlesInsets(_viewState.value.serverId)
+        _viewState.update { currentState ->
+            if (currentState is FrontendViewState.Loading) {
+                FrontendViewState.Content(
+                    serverId = currentState.serverId,
+                    url = currentState.url,
+                    serverHandleInsets = serverHandleInsets,
+                )
+            } else {
+                currentState
+            }
+        }
+        if (wasLoading) {
+            // Remove any previous navigation
+            _webViewActions.emit(WebViewAction.ClearHistory())
+        }
+        permissionManager.checkNotificationPermission(_viewState.value.serverId)
+        viewModelScope.launch { updateThemeColors() }
+    }
+
+    /**
+     * Reads the frontend's current theme colors and applies them to the status bar and page
+     * background of the [FrontendViewState.Content] state. No-op when not in the content state or
+     * when the frontend colors cannot be read.
+     */
+    private suspend fun updateThemeColors() {
+        val action = WebViewAction.ReadThemeColors()
+        _webViewActions.emit(action)
+        val colors = action.result.await()
+        if (colors == null) {
+            Timber.w("Could not read theme colors from the frontend")
+            return
+        }
+
+        _viewState.update { state ->
+            if (state is FrontendViewState.Content) {
+                state.copy(statusBarColor = colors.statusBarColor, backgroundColor = colors.backgroundColor)
+            } else {
+                state
             }
         }
     }
