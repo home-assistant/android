@@ -2057,29 +2057,25 @@ class MessagingManager @Inject constructor(
         when (mode.uppercase()) {
             WebsocketSetting.NEVER.name -> {
                 settingsDao.get(serverId)?.let {
-                    it.websocketSetting = WebsocketSetting.NEVER
-                    settingsDao.update(it)
+                    settingsDao.update(it.copy(websocketSetting = WebsocketSetting.NEVER))
                 }
             }
 
             WebsocketSetting.ALWAYS.name -> {
                 settingsDao.get(serverId)?.let {
-                    it.websocketSetting = WebsocketSetting.ALWAYS
-                    settingsDao.update(it)
+                    settingsDao.update(it.copy(websocketSetting = WebsocketSetting.ALWAYS))
                 }
             }
 
             WebsocketSetting.HOME_WIFI.name -> {
                 settingsDao.get(serverId)?.let {
-                    it.websocketSetting = WebsocketSetting.HOME_WIFI
-                    settingsDao.update(it)
+                    settingsDao.update(it.copy(websocketSetting = WebsocketSetting.HOME_WIFI))
                 }
             }
 
             WebsocketSetting.SCREEN_ON.name -> {
                 settingsDao.get(serverId)?.let {
-                    it.websocketSetting = WebsocketSetting.SCREEN_ON
-                    settingsDao.update(it)
+                    settingsDao.update(it.copy(websocketSetting = WebsocketSetting.SCREEN_ON))
                 }
             }
         }
