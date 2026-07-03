@@ -27,10 +27,10 @@ object RoomEntityMutablePropertiesIssue {
     @JvmField
     val ISSUE = Issue.create(
         id = "RoomEntityMutableProperty",
-        briefDescription = "Room entity properties should be immutable",
+        briefDescription = "Room entity/view properties should be immutable",
         explanation = """
-            Room entity classes should use immutable properties to avoid mutating persisted state in place.
-            Use `val` properties and create updated copies instead.
+            Room entity and view classes should use immutable properties to avoid mutating persisted state
+            in place. Use `val` properties and create updated copies instead.
         """.trimIndent(),
         category = Category.CORRECTNESS,
         severity = Severity.ERROR,
@@ -57,7 +57,7 @@ object RoomEntityMutablePropertiesIssue {
                                     ISSUE,
                                     field,
                                     context.getNameLocation(field),
-                                    "Room entity properties should be immutable. Use `val` instead of `var`.",
+                                    "Room entity/view properties should be immutable. Use `val` instead of `var`.",
                                 )
                             }
                     }
