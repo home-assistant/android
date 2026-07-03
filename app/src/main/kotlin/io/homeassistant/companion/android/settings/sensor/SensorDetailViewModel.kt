@@ -35,6 +35,7 @@ import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.sensors.LastAppSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -44,6 +45,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
@@ -68,7 +70,7 @@ class SensorDetailViewModel @Inject constructor(
         private const val SENSOR_SETTING_TRANS_KEY_PREFIX = "sensor_setting_"
 
         // Keep the database-backed flows hot briefly across config changes before stopping collection.
-        private const val STOP_TIMEOUT_MILLIS = 5_000L
+        private const val STOP_TIMEOUT = 500.milliseconds
 
         data class PermissionsDialog(val serverId: Int?, val permissions: Array<String>? = null)
         data class LocationPermissionsDialog(
@@ -120,20 +122,20 @@ class SensorDetailViewModel @Inject constructor(
     val sensors: StateFlow<List<SensorWithAttributes>> =
         sensorRepository.getFullFlow(sensorId)
             .map { it.toSensorsWithAttributes() }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), emptyList())
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT), emptyList())
 
     /** A sensor for displaying the main state in the UI. */
     val sensor: StateFlow<SensorWithAttributes?> =
         sensors
             .map { list -> list.maxByOrNull { it.sensor.enabled } }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), null)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT), null)
 
     private var sensorCheckedEnabled = false
 
     /** The sensor's settings, kept in sync with the database. */
     val sensorSettings: StateFlow<List<SensorSetting>> =
         sensorRepository.getSettingsFlow(sensorId)
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), emptyList())
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT), emptyList())
     var sensorSettingsDialog by mutableStateOf<SettingDialogState?>(null)
         private set
 
