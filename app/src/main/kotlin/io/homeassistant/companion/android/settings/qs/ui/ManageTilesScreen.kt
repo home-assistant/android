@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -57,7 +56,6 @@ import io.homeassistant.companion.android.common.compose.theme.HARadius
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
-import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.settings.qs.ManageTilesState
 import io.homeassistant.companion.android.settings.qs.ManageTilesViewModel
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
@@ -144,8 +142,7 @@ internal fun ManageTilesContent(
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
                 .padding(contentPadding)
-                .padding(all = HADimens.SPACE4)
-                .widthIn(max = MaxButtonWidth),
+                .padding(all = HADimens.SPACE4),
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
         ) {

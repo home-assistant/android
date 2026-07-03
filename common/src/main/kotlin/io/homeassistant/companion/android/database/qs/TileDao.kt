@@ -15,7 +15,7 @@ interface TileDao {
     suspend fun getAll(): List<TileEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun add(tileEntity: TileEntity)
+    suspend fun add(tileEntity: TileEntity): Long
 }
 
 suspend fun TileDao.getHighestInUse(): TileEntity? {
