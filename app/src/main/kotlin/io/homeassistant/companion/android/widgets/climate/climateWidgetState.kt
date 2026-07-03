@@ -15,7 +15,6 @@ import io.homeassistant.companion.android.database.widget.ClimateWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.compose.HomeAssistantGlanceTheme
 import io.homeassistant.companion.android.util.compose.glanceHaLightColors
-import timber.log.Timber
 
 internal sealed interface ClimateState {
     val backgroundType: WidgetBackgroundType
@@ -55,11 +54,11 @@ internal data class ClimateStateWithData(
     override val textColor: String?,
     val serverId: Int,
     val listEntityId: String,
-    val climateName: String? = null,
+    val climateName: String,
     val currentTemp: Float? = null,
     val climateTemp: Float? = null,
-    val hvacSelectedMode: String,
-    val hvacSupportedModes: List<String> = emptyList(),
+    val hvacSelectedMode: HvacMode? = null,
+    val hvacSupportedModes: List<HvacMode> = emptyList(),
     val lastUpdate: String? = null,
     val outOfSync: Boolean,
     val showComplete: Boolean,
@@ -79,15 +78,9 @@ internal data class ClimateStateWithData(
             climateEntity: ClimateWidgetEntity,
             entity: Entity,
         ): ClimateStateWithData {
-
-            val attributes = entity.attributes
-            val min = attributes["min_temp"] as? Double
-            val max = attributes["max_temp"] as? Double
-            val currentTemp = attributes["current_temperature"] as? Double
-            val climateTemp = attributes["temperature"] as? Double ?: 0f
-            val hvacSupportedModes = attributes.getStringList("hvac_modes")
-
-            Timber.d("entityUpdate: min: $min, max: $max, currentTemp: $currentTemp, climateTemp: $climateTemp, hvacMode: $hvacSupportedModes")
+            val currentTemp = entity.attributes["current_temperature"] as? Double
+            val climateTemp = entity.attributes["temperature"] as? Double ?: 0f
+            val hvacSupportedModes = entity.attributes.toHvacModes("hvac_modes")
 
             return ClimateStateWithData(
                 backgroundType = climateEntity.backgroundType,
@@ -97,7 +90,7 @@ internal data class ClimateStateWithData(
                 climateName = entity.friendlyName,
                 currentTemp = currentTemp?.toFloat(),
                 climateTemp = climateTemp.toFloat(),
-                hvacSelectedMode = entity.state,
+                hvacSelectedMode = HvacMode.from(entity.state),
                 hvacSupportedModes = hvacSupportedModes,
                 outOfSync = false,
                 showComplete = climateEntity.showCompleted,
@@ -116,7 +109,7 @@ internal data class ClimateStateWithData(
                 listEntityId = climateEntity.entityId,
                 climateName = "",
                 climateTemp = 10f,
-                hvacSelectedMode = "unknown",
+                hvacSelectedMode = null,
                 outOfSync = true,
                 showComplete = climateEntity.showCompleted,
             )
@@ -124,5 +117,28 @@ internal data class ClimateStateWithData(
     }
 }
 
+
+enum class HvacMode(
+    val key: String,
+    val displayName: String,
+) {
+    OFF("off", "Off"),
+    AUTO("auto", "Auto"),
+    COOL("cool", "Cool"),
+    HEAT("heat", "Heat"),
+    DRY("dry", "Dry"),
+    FAN("fan_only", "Fan");
+
+    companion object {
+        fun from(value: String?): HvacMode? {
+            return entries.firstOrNull { it.key == value }
+        }
+    }
+}
+
 fun Map<String, Any?>.getStringList(key: String): List<String> =
     (this[key] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+
+fun Map<String, Any?>.toHvacModes(key: String): List<HvacMode> =
+    ((this[key] as? List<*>) ?: emptyList<Any>())
+        .mapNotNull { HvacMode.from(it as? String) }

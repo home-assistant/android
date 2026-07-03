@@ -1048,6 +1048,8 @@
     <string name="widget_climate_plus">Plus temperature</string>
     <string name="widget_climate_minus">Minus temperature</string>
     <string name="widget_climate_format_temp">%.1f °C</string>
+    <string name="widget_climate_empty_temp">- - °C</string>
+    <string name="widget_climate_refresh">Refresh climate</string>
 
 
     <string name="widget_tap_action_label">Tap action:</string>

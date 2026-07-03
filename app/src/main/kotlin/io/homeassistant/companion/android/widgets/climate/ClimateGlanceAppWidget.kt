@@ -3,13 +3,9 @@ package io.homeassistant.companion.android.widgets.climate
 import android.content.Context
 import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
@@ -22,21 +18,21 @@ import androidx.glance.appwidget.CircularProgressIndicator
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.appWidgetBackground
-import androidx.glance.appwidget.background
 import androidx.glance.appwidget.components.CircleIconButton
 import androidx.glance.appwidget.components.Scaffold
 import androidx.glance.appwidget.components.SquareIconButton
+import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
 import androidx.glance.layout.Row
-import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
+import androidx.glance.layout.wrapContentWidth
 import androidx.glance.preview.ExperimentalGlancePreviewApi
 import androidx.glance.preview.Preview
 import androidx.glance.semantics.semantics
@@ -55,17 +51,14 @@ import io.homeassistant.companion.android.util.compose.HomeAssistantGlanceTheme
 import io.homeassistant.companion.android.util.compose.HomeAssistantGlanceTypography
 import io.homeassistant.companion.android.util.compose.glanceStringResource
 import io.homeassistant.companion.android.widgets.climate.ClimateState.Companion.getColors
-import timber.log.Timber
-
-// TODO: agregar widget_example_climate.png
 
 /**
  * Glance widget for managing and displaying a Climate component.
  *
  * This widget tries to follow guidelines from https://developer.android.com/design/ui/mobile/guides/widgets/widget_quality_guide
  *
- * This widget display a list from a specified `entity_id` of `climate` domain.
- * It provides functionality to add new items, refresh the list, and toggle the completion status of tasks.
+ * This widget display a control UI from a specified `entity_id` of `climate` domain.
+ * It provides functionality to set temperature and change hvac modes.
  * The widget's `climate` entity and theme can be set via the [ClimateWidgetConfigureActivity].
  *
  * ### Limitations:
@@ -158,17 +151,14 @@ private fun EmptyScreen() {
 private fun Screen(state: ClimateStateWithData) {
     Scaffold(
         titleBar = {
-            TitleBar(outOfSync = state.outOfSync)
+            TitleBar(climateName = state.climateName, outOfSync = state.outOfSync)
         },
         horizontalPadding = 0.dp,
         modifier = GlanceModifier.climateWidgetBackground().semantics { testTag = "Screen" },
     ) {
         if (state.hasDisplayableItems()) {
             ShowClimateContent(
-                climateName = state.climateName!!,
                 climateTemp = state.climateTemp!!,
-                currentTemp = state.currentTemp,
-                displayComplete = state.showComplete,
                 hvacMode = state.hvacSelectedMode,
                 hvacSupportedModes = state.hvacSupportedModes
             )
@@ -180,13 +170,11 @@ private fun Screen(state: ClimateStateWithData) {
 
 @Composable
 private fun ShowClimateContent(
-    climateName: String,
     climateTemp: Float?,
-    currentTemp: Float?,
-    hvacMode: String,
-    hvacSupportedModes: List<String>,
-    displayComplete: Boolean,
+    hvacMode: HvacMode?,
+    hvacSupportedModes: List<HvacMode>,
 ) {
+    val isControlTempEnabled = hvacMode == HvacMode.HEAT || hvacMode == HvacMode.COOL
     Column(
         modifier = GlanceModifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -199,17 +187,19 @@ private fun ShowClimateContent(
         ) {
             SquareIconButton(
                 modifier = GlanceModifier.size(HomeAssistantGlanceTheme.dimensions.iconSize)
-                    .semantics { testTag = "Add" },
-                imageProvider = ImageProvider(androidx.media3.session.R.drawable.media3_icon_minus),    // TODO: ajustar ICON, no viene de donde viene el resto
+                    .semantics { testTag = "Substract" },
+                imageProvider = ImageProvider(androidx.media3.session.R.drawable.media3_icon_minus),
                 contentDescription = LocalContext.current.getString(commonR.string.widget_climate_plus),
                 backgroundColor = GlanceTheme.colors.primary,
-                onClick = actionDecreaseTemp()
-
+                enabled = isControlTempEnabled,
+                onClick =  if (isControlTempEnabled) actionDecreaseTemp() else actionNoOp()     // For some reason the enabled param doesn't prevent clicks being triggered
             )
 
+            val tempString = if (isControlTempEnabled) commonR.string.widget_climate_format_temp
+                    else commonR.string.widget_climate_empty_temp
             Text(
                 modifier = GlanceModifier.padding(horizontal = 16.dp),
-                text = LocalContext.current.getString(commonR.string.widget_climate_format_temp, climateTemp),
+                text = LocalContext.current.getString(tempString, climateTemp),
                 style = HomeAssistantGlanceTypography.titleLarge.copy(
                     fontSize = 48.sp,
                     fontWeight = FontWeight.Bold
@@ -222,49 +212,49 @@ private fun ShowClimateContent(
                 imageProvider = ImageProvider(R.drawable.ic_plus),
                 contentDescription = LocalContext.current.getString(commonR.string.widget_climate_minus),
                 backgroundColor = GlanceTheme.colors.primary,
-                onClick = actionIncreaseTemp()
+                enabled = isControlTempEnabled,
+                onClick = if (isControlTempEnabled) actionIncreaseTemp() else actionNoOp()          // For some reason the enabled param doesn't prevent clicks being triggered
             )
         }
 
         HvacModeSelector(hvacMode, hvacSupportedModes)
-
-        Text(
-            modifier = GlanceModifier.padding(16.dp),
-            text = climateName,
-            style = HomeAssistantGlanceTypography.bodySmall.copy(
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Bold
-            ),
-        )
     }
 }
 
 @Composable
 private fun HvacModeSelector(
-    hvacSelectedMode: String,
-    supportedModes: List<String>,
+    hvacSelectedMode: HvacMode?,
+    supportedModes: List<HvacMode>,
 ) {
     Row(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = GlanceModifier.padding(top = 8.dp),
+        modifier = GlanceModifier
+            .padding(8.dp)
+            .wrapContentWidth()
+            .background(GlanceTheme.colors.surface)
+            .cornerRadius(16.dp)
     ) {
         supportedModes.forEach { mode ->
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(
+                modifier = GlanceModifier.padding(horizontal = 4.dp).width(56.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 val isEnabled = mode != hvacSelectedMode
                 SquareIconButton(
                     modifier = GlanceModifier
                         .size(48.dp)
-                        .padding(4.dp),
+                        .padding(horizontal = 4.dp),
                     imageProvider = hvacModeIcon(mode),
                     enabled = isEnabled,
-                    contentDescription = mode,
-                    backgroundColor = if (isEnabled) { GlanceTheme.colors.primary } else GlanceTheme.colors.inversePrimary ,
-                    onClick = actionSetHvacMode(mode)
+                    contentDescription = mode.displayName,
+                    backgroundColor = if (isEnabled) { GlanceTheme.colors.surface } else GlanceTheme.colors.primary ,
+                    onClick = if (isEnabled) actionSetHvacMode(mode) else actionNoOp()
                 )
 
                 Text(
-                    modifier = GlanceModifier.padding(16.dp),
-                    text = mode,
+                    modifier = GlanceModifier.padding(horizontal = 4.dp),
+                    text = mode.displayName,
+                    maxLines = 1,
                     style = HomeAssistantGlanceTypography.bodySmall.copy(
                         textAlign = TextAlign.Center,
                         fontWeight = FontWeight.Bold,
@@ -275,28 +265,28 @@ private fun HvacModeSelector(
     }
 }
 
-private fun hvacModeIcon(hvacMode: String): ImageProvider {
-    val drawable = when (hvacMode) {            // TODO: cargar los estados en el state
-        "off" -> R.drawable.hvac_mode_off
-        "heat" -> R.drawable.hvac_mode_heat
-        "cool" -> R.drawable.hvac_mode_cool
-        "dry" -> R.drawable.hvac_mode_dry
-        "fan_only" -> R.drawable.hvac_mode_fan
-        "auto" -> R.drawable.hvac_mode_auto
+private fun hvacModeIcon(hvacMode: HvacMode): ImageProvider {
+    val drawable = when (hvacMode) {
+        HvacMode.OFF -> R.drawable.hvac_mode_off
+        HvacMode.HEAT -> R.drawable.hvac_mode_heat
+        HvacMode.COOL -> R.drawable.hvac_mode_cool
+        HvacMode.DRY -> R.drawable.hvac_mode_dry
+        HvacMode.FAN-> R.drawable.hvac_mode_fan
+        HvacMode.AUTO -> R.drawable.hvac_mode_auto
         else -> null
     }
     return ImageProvider(drawable ?: R.drawable.ic_bug_report)  // TODO: revisar el failsafe del icon
 }
 
 @Composable
-private fun TitleBar(outOfSync: Boolean) {
+private fun TitleBar(climateName: String, outOfSync: Boolean) {
     Row(
         // Try to align the paddings with Google Calendar widget
         modifier = GlanceModifier.padding(top = 12.dp, end = 12.dp, start = 16.dp).fillMaxWidth(),
         verticalAlignment = Alignment.Vertical.CenterVertically,
     ) {
         Text(
-            text = "Climate Control",    // TODO: mover string hardcode
+            text = climateName,
             style = HomeAssistantGlanceTypography.titleLarge,
             maxLines = 1,
             modifier = GlanceModifier.padding(end = 4.dp).defaultWeight(),
@@ -313,7 +303,7 @@ private fun TitleBar(outOfSync: Boolean) {
             } else {
                 ImageProvider(R.drawable.ic_refresh)
             },
-            contentDescription = LocalContext.current.getString(commonR.string.widget_todo_refresh),
+            contentDescription = LocalContext.current.getString(commonR.string.widget_climate_refresh),
             backgroundColor = GlanceTheme.colors.widgetBackground,
             onClick = actionRefreshClimate()
         )
@@ -334,11 +324,11 @@ private fun ScreenPreview() {
                 listEntityId = "",
                 currentTemp = null,
                 climateTemp = 12f,
-                hvacSelectedMode = "heat",
-                hvacSupportedModes = listOf("off", "heat", "cool", "dry"),
+                hvacSelectedMode = HvacMode.HEAT,
+                hvacSupportedModes = listOf(HvacMode.OFF, HvacMode.HEAT, HvacMode.COOL, HvacMode.DRY),
                 outOfSync = false,
                 showComplete = true,
-            ),
+            )
         )
     }
 }
@@ -357,8 +347,8 @@ private fun ScreenPreviewPowerOff() {
                 listEntityId = "",
                 currentTemp = null,
                 climateTemp = 12f,
-                hvacSelectedMode = "off",
-                hvacSupportedModes = listOf("off", "heat", "cool", "dry"),
+                hvacSelectedMode = HvacMode.OFF,
+                hvacSupportedModes = listOf(HvacMode.OFF, HvacMode.HEAT, HvacMode.COOL, HvacMode.DRY),
                 outOfSync = true,
                 showComplete = true,
             ),
@@ -380,8 +370,8 @@ private fun ScreenPreviewOutOfSync() {
                 listEntityId = "",
                 currentTemp = null,
                 climateTemp = 12f,
-                hvacSelectedMode = "heat",
-                hvacSupportedModes = listOf("off", "heat", "cool", "dry"),
+                hvacSelectedMode = HvacMode.HEAT,
+                hvacSupportedModes = listOf(HvacMode.OFF, HvacMode.HEAT, HvacMode.COOL, HvacMode.DRY),
                 outOfSync = true,
                 showComplete = true,
             ),

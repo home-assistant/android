@@ -35,7 +35,7 @@ internal fun actionDecreaseTemp(): Action {
 /**
  * Get an Action that will set the given temp of a Climate widget once given to Glance.
  */
-internal fun actionSetHvacMode(hvcaMode: String): Action {
+internal fun actionSetHvacMode(hvcaMode: HvacMode): Action {
     return actionRunCallback<ControlClimateAction>(actionParametersOf(HVAC_MODE_KEY to hvcaMode))
 }
 
@@ -45,6 +45,21 @@ internal fun actionSetHvacMode(hvcaMode: String): Action {
 internal fun actionRefreshClimate(): Action {
     return actionRunCallback<RefreshAction>()
 }
+
+class NoOpAction : ActionCallback {
+    override suspend fun onAction(
+        context: Context,
+        glanceId: GlanceId,
+        parameters: ActionParameters
+    ) {
+        // nada
+    }
+}
+
+/**
+ * Get a dummy Action that does nothing.
+ */
+fun actionNoOp(): Action = actionRunCallback<NoOpAction>()
 
 
 /**
@@ -149,11 +164,11 @@ class ControlClimateAction : ActionCallback {
         }
     }
 
-    private suspend fun ServerManager.setClimateHvacMode(widgetEntity: ClimateWidgetEntity, hvacMode: String) {
+    private suspend fun ServerManager.setClimateHvacMode(widgetEntity: ClimateWidgetEntity, hvacMode: HvacMode) {
 
         val result = webSocketRepository(widgetEntity.serverId).setClimateHvacMode(
             entityId = widgetEntity.entityId,
-            hvacMode = hvacMode
+            hvacMode = hvacMode.key
         )
 
         if (!result) {
@@ -176,4 +191,4 @@ internal val SET_TEMP_KEY = ActionParameters.Key<Double>("TEMP_SETTING_KEY")
 @VisibleForTesting
 internal val IS_INCREASE_KEY = ActionParameters.Key<Boolean>("IS_INCREASY_KEY")
 @VisibleForTesting
-internal val HVAC_MODE_KEY = ActionParameters.Key<String>("HVAC_MODE_KEY")
+internal val HVAC_MODE_KEY = ActionParameters.Key<HvacMode>("HVAC_MODE_KEY")
