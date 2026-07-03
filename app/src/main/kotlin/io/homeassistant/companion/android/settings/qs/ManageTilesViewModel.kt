@@ -76,7 +76,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -154,11 +154,6 @@ internal class ManageTilesViewModel @Inject constructor(
     )
     val state: StateFlow<ManageTilesState> = _state.asStateFlow()
 
-    private val entities = mutableMapOf<Int, List<Entity>>()
-    private val entityRegistries = mutableMapOf<Int, List<EntityRegistryResponse>>()
-    private val deviceRegistries = mutableMapOf<Int, List<DeviceRegistryResponse>>()
-    private val areaRegistries = mutableMapOf<Int, List<AreaRegistryResponse>>()
-
     private val _tileInfoSnackbar = MutableSharedFlow<Int>(replay = 1)
     var tileInfoSnackbar = _tileInfoSnackbar.asSharedFlow()
 
@@ -183,17 +178,6 @@ internal class ManageTilesViewModel @Inject constructor(
                     },
                 )
             }
-            loadedServers.map { server ->
-                val serverId = server.id
-                async {
-                    launch { entities[serverId] = loadEntitiesForServer(serverId) }
-                    launch { entityRegistries[serverId] = loadEntityRegistry(serverId) }
-                    launch { deviceRegistries[serverId] = loadDeviceRegistry(serverId) }
-                    launch { areaRegistries[serverId] = loadAreaRegistry(serverId) }
-                }
-            }.awaitAll()
-            // The entities list might not have been loaded when the tile data was loaded
-            selectTile(_state.value.selectedTileId)
         }
     }
 
@@ -229,24 +213,27 @@ internal class ManageTilesViewModel @Inject constructor(
     }
 
     fun selectServerId(serverId: Int) {
-        val current = _state.value
-        val resetEntity =
-            serverId != current.selectedServerId &&
-                entities[serverId]?.none { it.entityId == current.selectedEntityId } == true
-        _state.update {
-            it.copy(selectedServerId = serverId)
+        if (serverId == _state.value.selectedServerId) return
+        viewModelScope.launch {
+            val previousEntityId = _state.value.selectedEntityId
+            _state.update { it.copy(selectedServerId = serverId) }
+            loadEntities(serverId)
+            val resetEntity = _state.value.sortedEntities.none { it.entityId == previousEntityId }
+            selectEntityId(if (resetEntity) "" else previousEntityId)
         }
-        loadEntities(serverId)
-        selectEntityId(if (resetEntity) "" else current.selectedEntityId)
     }
 
-    private fun loadEntities(serverId: Int) {
+    private suspend fun loadEntities(serverId: Int) = coroutineScope {
+        val entitiesDeferred = async { loadEntitiesForServer(serverId) }
+        val entityRegistryDeferred = async { loadEntityRegistry(serverId) }
+        val deviceRegistryDeferred = async { loadDeviceRegistry(serverId) }
+        val areaRegistryDeferred = async { loadAreaRegistry(serverId) }
         _state.update {
             it.copy(
-                sortedEntities = entities[serverId] ?: emptyList(),
-                entityRegistry = entityRegistries[serverId] ?: emptyList(),
-                deviceRegistry = deviceRegistries[serverId] ?: emptyList(),
-                areaRegistry = areaRegistries[serverId] ?: emptyList(),
+                sortedEntities = entitiesDeferred.await(),
+                entityRegistry = entityRegistryDeferred.await(),
+                deviceRegistry = deviceRegistryDeferred.await(),
+                areaRegistry = areaRegistryDeferred.await(),
             )
         }
     }
