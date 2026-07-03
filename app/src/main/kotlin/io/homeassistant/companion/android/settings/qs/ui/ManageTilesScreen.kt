@@ -136,7 +136,6 @@ internal fun ManageTilesContent(
         snackbarHost = {
             SnackbarHost(
                 hostState = snackbarHostState,
-                modifier = Modifier.windowInsetsPadding(safeBottomWindowInsets(applyHorizontal = false)),
             )
         },
         contentWindowInsets = safeBottomWindowInsets(applyHorizontal = true),
