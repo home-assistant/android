@@ -53,7 +53,7 @@ class RoomEntityMutablePropertiesIssueTest {
             )
             .run()
             .expect(
-                """src/io/homeassistant/Home.kt:8: Error: Room entity properties should be immutable. Use val instead of var. [RoomEntityMutableProperty]
+                """src/io/homeassistant/Home.kt:8: Error: Room entity/view properties should be immutable. Use val instead of var. [RoomEntityMutableProperty]
     var name: String,
         ~~~~
 1 error""",
@@ -82,7 +82,7 @@ class RoomEntityMutablePropertiesIssueTest {
             )
             .run()
             .expect(
-                """src/io/homeassistant/HomeView.kt:8: Error: Room entity properties should be immutable. Use val instead of var. [RoomEntityMutableProperty]
+                """src/io/homeassistant/HomeView.kt:8: Error: Room entity/view properties should be immutable. Use val instead of var. [RoomEntityMutableProperty]
     var name: String,
         ~~~~
 1 error""",
@@ -110,7 +110,7 @@ class RoomEntityMutablePropertiesIssueTest {
             )
             .run()
             .expect(
-                """src/io/homeassistant/Home.kt:7: Error: Room entity properties should be immutable. Use val instead of var. [RoomEntityMutableProperty]
+                """src/io/homeassistant/Home.kt:7: Error: Room entity/view properties should be immutable. Use val instead of var. [RoomEntityMutableProperty]
     var name: String = ""
         ~~~~
 1 error""",
