@@ -70,7 +70,7 @@ class SensorDetailViewModel @Inject constructor(
         private const val SENSOR_SETTING_TRANS_KEY_PREFIX = "sensor_setting_"
 
         // Keep the database-backed flows hot briefly across config changes before stopping collection.
-        private const val STOP_TIMEOUT = 500.milliseconds
+        private val STOP_TIMEOUT = 500.milliseconds
 
         data class PermissionsDialog(val serverId: Int?, val permissions: Array<String>? = null)
         data class LocationPermissionsDialog(
