@@ -3,8 +3,8 @@ package io.homeassistant.companion.android.util.icondialog
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,7 +16,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
+import io.homeassistant.companion.android.common.compose.theme.HARadius
+import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 
 @Composable
 fun IconDialogContent(
@@ -48,7 +50,8 @@ fun IconDialog(
             modifier = modifier
                 .width(480.dp)
                 .height(500.dp),
-            shape = MaterialTheme.shapes.medium,
+            color = LocalHAColorScheme.current.colorSurfaceDefault,
+            shape = RoundedCornerShape(HARadius.L),
         ) {
             IconDialogContent(iconFilter = iconFilter, onSelect = onSelect)
         }
@@ -58,12 +61,13 @@ fun IconDialog(
 @Preview
 @Composable
 private fun IconDialogPreview() {
-    HomeAssistantAppTheme {
+    HAThemeForPreview {
         Surface(
             modifier = Modifier
                 .width(480.dp)
                 .height(500.dp),
-            shape = MaterialTheme.shapes.medium,
+            color = LocalHAColorScheme.current.colorSurfaceDefault,
+            shape = RoundedCornerShape(HARadius.L),
         ) {
             IconDialogContent(onSelect = {})
         }
