@@ -18,10 +18,8 @@ import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
-import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.just
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
@@ -58,7 +56,7 @@ class ManageTilesViewModelTest {
         coEvery { serverManager.getServer(any<Int>()) } returns null
         coEvery { tileDao.get(any()) } returns null
         coEvery { tileDao.getAll() } returns emptyList()
-        coEvery { tileDao.add(any()) } just Runs
+        coEvery { tileDao.add(any()) } returns 1L
     }
 
     private fun fakeServer(id: Int) = Server(

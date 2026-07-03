@@ -280,7 +280,7 @@ internal class ManageTilesViewModel @Inject constructor(
                 shouldVibrate = current.selectedShouldVibrate,
                 authRequired = current.tileAuthRequired,
             )
-            tileDao.add(tileData)
+            val insertedId = tileDao.add(tileData)
 
             val highestInUse = tileDao.getHighestInUse()?.numberedId ?: 0
             updateActiveTileServices(highestInUse, app)
@@ -306,7 +306,7 @@ internal class ManageTilesViewModel @Inject constructor(
                         ) {
                             _tileInfoSnackbar.emit(commonR.string.tile_added)
                             withContext(Dispatchers.IO) {
-                                tileDao.get(current.selectedTileId)?.let { tileDao.add(it.copy(added = true)) }
+                                tileDao.add(tileData.copy(id = insertedId.toInt(), added = true))
                             }
                             _state.update { it.copy(submitButtonLabel = commonR.string.tile_save) }
                         } else { // Silently ignore error, database was still updated
