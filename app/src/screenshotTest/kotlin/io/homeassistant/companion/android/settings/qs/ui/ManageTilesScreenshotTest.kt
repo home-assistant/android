@@ -4,6 +4,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.android.tools.screenshot.PreviewTest
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
@@ -12,8 +13,8 @@ import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.settings.qs.ManageTilesState
-import io.homeassistant.companion.android.settings.qs.TileSlot
 import io.homeassistant.companion.android.util.compose.HAPreviews
+import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 
 class ManageTilesScreenshotTest {
 
@@ -22,7 +23,7 @@ class ManageTilesScreenshotTest {
     @Composable
     fun `ManageTiles add tile`() {
         HAThemeForPreview {
-            ManageTiles(
+            ManageTilesContent(
                 snackbarHostState = remember { SnackbarHostState() },
                 state = addTileState,
                 submitEnabled = false,
@@ -46,10 +47,19 @@ class ManageTilesScreenshotTest {
     @Composable
     fun `ManageTiles update tile`() {
         HAThemeForPreview {
-            ManageTiles(
+            ManageTilesContent(
                 snackbarHostState = remember { SnackbarHostState() },
                 state = addTileState.copy(
-                    selectedTileId = addTileState.tileSlots[1].id,
+                    selectedTileId = addTileState.tileSlotsDropdownItems[1].key,
+                    servers = listOf(
+                        fakeServer(id = 1, name = "Home"),
+                        fakeServer(id = 2, name = "Vacation home"),
+                    ),
+                    serversDropdownItems = listOf(
+                        HADropdownItem(key = 1, label = "Home"),
+                        HADropdownItem(key = 2, label = "Vacation home"),
+                    ),
+                    selectedServerId = 1,
                     tileLabel = "Living room",
                     tileSubtitle = "Lights",
                     selectedEntityId = "light.living_room",
@@ -74,11 +84,15 @@ class ManageTilesScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `ManageTiles multiple servers`() {
+    fun `ManageTiles icon selected`() {
         HAThemeForPreview {
-            ManageTiles(
+            ManageTilesContent(
                 snackbarHostState = remember { SnackbarHostState() },
-                state = multipleServersState,
+                state = addTileState.copy(
+                    selectedIconId = "mdi:account",
+                    selectedIcon = CommunityMaterial.getIconByMdiName("mdi:account"),
+                    selectedEntityId = "light.living_room",
+                ),
                 submitEnabled = false,
                 onTileSelected = {},
                 onServerSelected = {},
@@ -105,19 +119,20 @@ class ManageTilesScreenshotTest {
         )
 
         val addTileState = ManageTilesState(
-            tileSlots = listOf(
-                TileSlot(id = "tile_1", name = "Tile 1"),
-                TileSlot(id = "tile_2", name = "Tile 2"),
+            tileSlotsDropdownItems = listOf(
+                HADropdownItem(key = "tile_1", label = "Tile 1"),
+                HADropdownItem(key = "tile_2", label = "Tile 2"),
             ),
             selectedTileId = "tile_1",
             servers = listOf(
                 fakeServer(id = 1, name = "Home"),
             ),
-            serversDropdownItems = listOf(
-                HADropdownItem(1, "Home"),
-            ),
+            serversDropdownItems = listOf(HADropdownItem(key = 1, label = "Home")),
             selectedServerId = 1,
             tileLabel = "",
+            // Non-blank showSubtitle + empty tileSubtitle demonstrates the subtitle field is
+            // rendered (and empty) for a brand-new tile, validating the subtitle-null bug fix.
+            showSubtitle = true,
             tileSubtitle = "",
             selectedEntityId = "",
             entityRegistry = emptyList(),
@@ -125,21 +140,6 @@ class ManageTilesScreenshotTest {
             areaRegistry = emptyList(),
             selectedIcon = null,
             submitButtonLabel = commonR.string.tile_add,
-        )
-
-        val multipleServersState = addTileState.copy(
-            servers = listOf(
-                fakeServer(id = 1, name = "Home"),
-                fakeServer(id = 2, name = "Vacation home"),
-            ),
-            serversDropdownItems = listOf(
-                HADropdownItem(1, "Home"),
-                HADropdownItem(2, "Vacation home"),
-            ),
-            selectedServerId = 1,
-            tileLabel = "Living room",
-            selectedEntityId = "light.living_room",
-            submitButtonLabel = commonR.string.tile_save,
         )
     }
 }
