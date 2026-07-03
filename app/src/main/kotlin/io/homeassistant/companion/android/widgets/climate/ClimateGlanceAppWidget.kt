@@ -201,7 +201,7 @@ private fun ShowClimateContent(
                 modifier = GlanceModifier.padding(horizontal = 16.dp),
                 text = LocalContext.current.getString(tempString, climateTemp),
                 style = HomeAssistantGlanceTypography.titleLarge.copy(
-                    fontSize = 48.sp,
+                    fontSize = 42.sp,
                     fontWeight = FontWeight.Bold
                 ),
             )
@@ -236,19 +236,37 @@ private fun HvacModeSelector(
     ) {
         supportedModes.forEach { mode ->
             Column(
-                modifier = GlanceModifier.padding(horizontal = 4.dp).width(56.dp),
+                modifier = GlanceModifier
+                    .padding(horizontal = 4.dp)
+                    .width(56.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                val isEnabled = mode != hvacSelectedMode
+                val selected = mode == hvacSelectedMode
+
                 SquareIconButton(
                     modifier = GlanceModifier
                         .size(48.dp)
                         .padding(horizontal = 4.dp),
                     imageProvider = hvacModeIcon(mode),
-                    enabled = isEnabled,
-                    contentDescription = mode.displayName,
-                    backgroundColor = if (isEnabled) { GlanceTheme.colors.surface } else GlanceTheme.colors.primary ,
-                    onClick = if (isEnabled) actionSetHvacMode(mode) else actionNoOp()
+                    enabled = !selected,
+                    contentDescription = "Selector mode button",
+                    backgroundColor =
+                        if (selected)
+                            GlanceTheme.colors.secondary
+                        else
+                            GlanceTheme.colors.surface,
+                    contentColor =
+                        if (selected)
+                            GlanceTheme.colors.onPrimary
+                        else
+                            GlanceTheme.colors.onSurface,
+
+
+                    onClick = if (!selected) {
+                        actionSetHvacMode(mode)
+                    } else {
+                        actionNoOp()
+                    }
                 )
 
                 Text(

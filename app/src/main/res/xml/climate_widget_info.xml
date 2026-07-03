@@ -14,5 +14,5 @@
     android:widgetFeatures="reconfigurable"
     android:description="@string/climate_widget_desc"
     android:widgetCategory="keyguard|home_screen"
-    android:previewImage="@drawable/widget_example_todo"
+    android:previewImage="@drawable/widget_example_climate"
     tools:ignore="UnusedAttribute,UnusedResources" />
