@@ -11,7 +11,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.settings.addHelpMenuProvider
-import io.homeassistant.companion.android.settings.qs.ui.ManageTiles
+import io.homeassistant.companion.android.settings.qs.ui.ManageTilesScreen
 
 @AndroidEntryPoint
 class ManageTilesFragment : Fragment() {
@@ -21,7 +21,7 @@ class ManageTilesFragment : Fragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 HATheme {
-                    ManageTiles(viewModel = viewModel)
+                    ManageTilesScreen(viewModel = viewModel)
                 }
             }
         }
