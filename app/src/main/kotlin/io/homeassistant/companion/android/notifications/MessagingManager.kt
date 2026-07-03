@@ -87,7 +87,7 @@ import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.LocationSensorManager.Companion.setHighAccuracyModeIntervalSetting
 import io.homeassistant.companion.android.sensors.LocationSensorManager.Companion.setHighAccuracyModeSetting
 import io.homeassistant.companion.android.sensors.LocationSensorReceiver
-import io.homeassistant.companion.android.sensors.NotificationSensorListenerService
+import io.homeassistant.companion.android.sensors.NotificationSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.assist.AssistConfigManager
@@ -1856,7 +1856,7 @@ class MessagingManager @Inject constructor(
         val mediaList = mediaSessionManager.getActiveSessions(
             ComponentName(
                 context,
-                NotificationSensorListenerService::class.java,
+                NotificationSensorManager::class.java,
             ),
         )
         var hasCorrectPackage = false
