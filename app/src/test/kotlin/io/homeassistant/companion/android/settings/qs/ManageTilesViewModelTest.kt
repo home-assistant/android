@@ -7,6 +7,7 @@ import androidx.test.core.app.ApplicationProvider
 import app.cash.turbine.turbineScope
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.testing.HiltTestApplication
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.qs.TileDao
@@ -35,15 +36,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-
-/**
- * Tests for [ManageTilesViewModel].
- *
- * Note: the ViewModel's init block dispatches to [kotlinx.coroutines.Dispatchers.Default] with a
- * hardcoded dispatcher. [serverManager.servers] is parked via [kotlinx.coroutines.awaitCancellation]
- * so the Default block suspends indefinitely and never reaches the `withContext(Main){ selectTile() }`
- * re-invocation that would otherwise clobber state set by individual tests.
- */
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [Build.VERSION_CODES.S])
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -62,9 +54,6 @@ class ManageTilesViewModelTest {
     fun setUp() {
         application = ApplicationProvider.getApplicationContext()
         slots = loadTileSlots(application.resources)
-
-        // Park the init IO block so it never re-invokes selectTile() and clobbers state set by tests.
-        // (The block dispatches to a hardcoded Dispatchers.IO that the test scheduler cannot control.)
         coEvery { serverManager.servers() } coAnswers { awaitCancellation() }
         coEvery { serverManager.getServer(any<Int>()) } returns null
         coEvery { tileDao.get(any()) } returns null
@@ -130,7 +119,11 @@ class ManageTilesViewModelTest {
             advanceUntilIdle()
 
             assertEquals(viewModel.slots[1].id, viewModel.state.value.selectedTileId)
-            assertEquals(TileInfoSnackbarEvent.DataMissing, snackbar.awaitItem())
+            assertEquals(commonR.string.tile_data_missing, snackbar.awaitItem())
+            assertEquals(
+                application.resources.getStringArray(R.array.tile_ids).size,
+                viewModel.slots.size,
+            )
             snackbar.cancelAndConsumeRemainingEvents()
         }
     }
@@ -289,7 +282,8 @@ class ManageTilesViewModelTest {
             coVerify(exactly = 1) {
                 tileDao.add(
                     match {
-                        it.label == "Living" &&
+                        it.id == 42 &&
+                            it.label == "Living" &&
                             it.subtitle == "Lights" &&
                             it.entityId == "light.z" &&
                             it.shouldVibrate &&
@@ -299,8 +293,113 @@ class ManageTilesViewModelTest {
                     },
                 )
             }
-            assertEquals(TileInfoSnackbarEvent.Updated, snackbar.awaitItem())
+            assertEquals(commonR.string.tile_updated, snackbar.awaitItem())
             snackbar.cancelAndConsumeRemainingEvents()
         }
+    }
+
+    @Test
+    fun `Given no existing tile row when addTile then a new row is inserted with id 0 and added false`() = runTest {
+        val tileId = slots[0].id
+        coEvery { tileDao.get(tileId) } returns null // no existing row for this tile slot
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.setTileLabel("New tile")
+        viewModel.selectEntityId("light.new")
+
+        turbineScope {
+            val snackbar = viewModel.tileInfoSnackbar.testIn(backgroundScope)
+
+            viewModel.addTile()
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) {
+                tileDao.add(
+                    match {
+                        it.id == 0 &&
+                            it.added == false &&
+                            it.label == "New tile" &&
+                            it.entityId == "light.new" &&
+                            it.tileId == tileId
+                    },
+                )
+            }
+            assertEquals(commonR.string.tile_updated, snackbar.awaitItem())
+            snackbar.cancelAndConsumeRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `Given a tile saved once when addTile is called again then the second save reuses the same persisted id`() = runTest {
+        val tileId = slots[0].id
+        // First save: no existing row.
+        coEvery { tileDao.get(tileId) } returns null andThen fakeTile(dbId = 7, tileId = tileId, label = "First save")
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        turbineScope {
+            val snackbar = viewModel.tileInfoSnackbar.testIn(backgroundScope)
+
+            viewModel.setTileLabel("First save")
+            viewModel.selectEntityId("light.a")
+            viewModel.addTile()
+            advanceUntilIdle()
+            assertEquals(commonR.string.tile_updated, snackbar.awaitItem())
+
+            // Second save: DAO now returns the row that was persisted with id = 7 by the first save.
+            viewModel.setTileLabel("Second save")
+            viewModel.addTile()
+            advanceUntilIdle()
+            assertEquals(commonR.string.tile_updated, snackbar.awaitItem())
+
+            coVerify(exactly = 1) {
+                tileDao.add(match { it.id == 7 && it.label == "Second save" })
+            }
+            snackbar.cancelAndConsumeRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `Given showSubtitle when setTileSubtitle then state tileSubtitle is set`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.setTileSubtitle("My subtitle")
+
+        assertEquals("My subtitle", viewModel.state.value.tileSubtitle)
+    }
+
+    @Test
+    fun `Given a blank subtitle when addTile then persisted subtitle is null`() = runTest {
+        val tileId = slots[0].id
+        coEvery { tileDao.get(tileId) } returns fakeTile(dbId = 9, tileId = tileId)
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.setTileLabel("Label")
+        viewModel.selectEntityId("light.b")
+        // tileSubtitle left as default "" (blank)
+
+        viewModel.addTile()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) {
+            tileDao.add(match { it.subtitle == null })
+        }
+    }
+
+    @Test
+    fun `Given existing tile with null subtitle when selectTile then state tileSubtitle is empty string`() = runTest {
+        val tileId = slots[0].id
+        coEvery { tileDao.get(tileId) } returns fakeTile(dbId = 11, tileId = tileId, subtitle = null)
+
+        val viewModel = createViewModel()
+        viewModel.selectTile()
+        advanceUntilIdle()
+
+        assertEquals("", viewModel.state.value.tileSubtitle)
     }
 }

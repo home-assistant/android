@@ -24,7 +24,6 @@ import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.settings.qs.ManageTilesState
-import io.homeassistant.companion.android.settings.qs.TileSlot
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -60,7 +59,7 @@ class ManageTilesTest {
     fun `Given multiple servers state when displayed then server selector and reset are shown and submit is enabled`() {
         composeTestRule.apply {
             testScreen(multipleServersState, submitEnabled = true) {
-                onNodeWithText(activity.getString(commonR.string.tile_server)).performScrollTo().assertIsDisplayed()
+                onNodeWithText(activity.getString(commonR.string.tile_server), substring = true).performScrollTo().assertIsDisplayed()
                 onNodeWithContentDescription(activity.getString(commonR.string.tile_reset_icon)).performScrollTo().assertIsDisplayed()
                 onNodeWithText(activity.getString(commonR.string.tile_save)).performScrollTo().assertIsEnabled()
             }
@@ -71,7 +70,7 @@ class ManageTilesTest {
     fun `Given screen when typing label then onTileLabelChange is triggered`() {
         composeTestRule.apply {
             testScreen(addTileState) {
-                onNodeWithText(activity.getString(commonR.string.tile_label)).performScrollTo().performTextInput("Living room")
+                onNodeWithText(activity.getString(commonR.string.tile_label), substring = true).performScrollTo().performTextInput("Living room")
                 assertEquals("Living room", tileLabel)
             }
         }
@@ -158,7 +157,7 @@ class ManageTilesTest {
     ) {
         TestHelper().apply {
             setContent {
-                ManageTiles(
+                ManageTilesContent(
                     snackbarHostState = remember { SnackbarHostState() },
                     state = state,
                     submitEnabled = submitEnabled,
@@ -189,14 +188,16 @@ class ManageTilesTest {
         )
 
         val addTileState = ManageTilesState(
-            tileSlots = listOf(
-                TileSlot(id = "tile_1", name = "Tile 1"),
-                TileSlot(id = "tile_2", name = "Tile 2"),
+            tileSlotsDropdownItems = listOf(
+                HADropdownItem(key = "tile_1", label = "Tile 1"),
+                HADropdownItem(key = "tile_2", label = "Tile 2"),
             ),
             selectedTileId = "tile_1",
             servers = listOf(fakeServer(id = 1, name = "Home")),
+            serversDropdownItems = listOf(HADropdownItem(key = 1, label = "Home")),
             selectedServerId = 1,
             tileLabel = "",
+            showSubtitle = true,
             tileSubtitle = "",
             selectedEntityId = "",
             entityRegistry = emptyList(),

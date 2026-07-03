@@ -84,6 +84,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 @HiltViewModel
@@ -147,20 +148,18 @@ internal class ManageTilesViewModel @Inject constructor(
     private val _state = MutableStateFlow(
         ManageTilesState(
             selectedTileId = slots[0].id,
-            tileSlots = slots,
+            showSubtitle = SdkVersion.isAtLeast(Build.VERSION_CODES.Q),
+            tileSlotsDropdownItems = slots.map { HADropdownItem(key = it.id, label = it.name) },
         ),
     )
-    internal val state: StateFlow<ManageTilesState> = _state.asStateFlow()
-
-    private var selectedTileEntityId = 0
-    private var selectedTileEntityAdded = false
+    val state: StateFlow<ManageTilesState> = _state.asStateFlow()
 
     private val entities = mutableMapOf<Int, List<Entity>>()
     private val entityRegistries = mutableMapOf<Int, List<EntityRegistryResponse>>()
     private val deviceRegistries = mutableMapOf<Int, List<DeviceRegistryResponse>>()
     private val areaRegistries = mutableMapOf<Int, List<AreaRegistryResponse>>()
 
-    private val _tileInfoSnackbar = MutableSharedFlow<TileInfoSnackbarEvent>(replay = 1)
+    private val _tileInfoSnackbar = MutableSharedFlow<Int>(replay = 1)
     var tileInfoSnackbar = _tileInfoSnackbar.asSharedFlow()
 
     init {
@@ -168,8 +167,7 @@ internal class ManageTilesViewModel @Inject constructor(
         savedStateHandle.get<String>("id")?.let { id ->
             selectTile(id)
             viewModelScope.launch {
-                // A deeplink only happens when tapping on a tile that hasn't been setup
-                _tileInfoSnackbar.emit(TileInfoSnackbarEvent.DataMissing)
+                _tileInfoSnackbar.emit(commonR.string.tile_data_missing)
             }
         } ?: run {
             selectTile()
@@ -203,8 +201,6 @@ internal class ManageTilesViewModel @Inject constructor(
         viewModelScope.launch {
             val tile = slots.find { it.id == id } ?: slots.first()
             val entity = tileDao.get(tile.id)
-            selectedTileEntityId = entity?.id ?: 0
-            selectedTileEntityAdded = entity?.added ?: false
             val serverId = if (entity?.serverId == null || entity.serverId == 0) {
                 serverManager.getServer()?.id ?: 0
             } else {
@@ -272,7 +268,7 @@ internal class ManageTilesViewModel @Inject constructor(
         _state.update {
             it.copy(
                 tileLabel = currentTile.label,
-                tileSubtitle = currentTile.subtitle,
+                tileSubtitle = currentTile.subtitle.orEmpty(),
                 selectedEntityId = currentTile.entityId,
                 selectedShouldVibrate = currentTile.shouldVibrate,
                 tileAuthRequired = currentTile.authRequired,
@@ -284,15 +280,16 @@ internal class ManageTilesViewModel @Inject constructor(
     fun addTile() {
         viewModelScope.launch(Dispatchers.IO) {
             val current = _state.value
+            val existing = tileDao.get(current.selectedTileId)
             val tileData = TileEntity(
-                id = selectedTileEntityId,
+                id = existing?.id ?: 0,
                 tileId = current.selectedTileId,
                 serverId = current.selectedServerId,
-                added = selectedTileEntityAdded,
+                added = existing?.added ?: false,
                 iconName = current.selectedIconId,
                 entityId = current.selectedEntityId,
                 label = current.tileLabel,
-                subtitle = current.tileSubtitle,
+                subtitle = current.tileSubtitle.ifBlank { null },
                 shouldVibrate = current.selectedShouldVibrate,
                 authRequired = current.tileAuthRequired,
             )
@@ -301,7 +298,7 @@ internal class ManageTilesViewModel @Inject constructor(
             val highestInUse = tileDao.getHighestInUse()?.numberedId ?: 0
             updateActiveTileServices(highestInUse, app)
 
-            if (SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) && !selectedTileEntityAdded) {
+            if (SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) && existing?.added != true) {
                 val statusBarManager = app.getSystemService<StatusBarManager>()
                 val service = idToTileService[current.selectedTileId] ?: Tile1Service::class.java
                 val icon = current.selectedIcon?.let {
@@ -320,16 +317,18 @@ internal class ManageTilesViewModel @Inject constructor(
                         if (result == StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED ||
                             result == StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED
                         ) {
-                            _tileInfoSnackbar.emit(TileInfoSnackbarEvent.Added)
-                            selectedTileEntityAdded = true
+                            _tileInfoSnackbar.emit(commonR.string.tile_added)
+                            withContext(Dispatchers.IO) {
+                                tileDao.get(current.selectedTileId)?.let { tileDao.add(it.copy(added = true)) }
+                            }
                             _state.update { it.copy(submitButtonLabel = commonR.string.tile_save) }
                         } else { // Silently ignore error, database was still updated
-                            _tileInfoSnackbar.emit(TileInfoSnackbarEvent.Updated)
+                            _tileInfoSnackbar.emit(commonR.string.tile_updated)
                         }
                     }
                 }
             } else {
-                _tileInfoSnackbar.emit(TileInfoSnackbarEvent.Updated)
+                _tileInfoSnackbar.emit(commonR.string.tile_updated)
             }
         }
     }
