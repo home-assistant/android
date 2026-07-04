@@ -422,9 +422,8 @@ class HaMediaSession @AssistedInject constructor(
      * Loads album art at its native resolution and returns JPEG-compressed bytes for media
      * metadata alongside a notification-icon-sized bitmap for [setLargeIcon][android.app.Notification.Builder.setLargeIcon].
      *
-     * The bitmap is explicitly scaled to [android.R.dimen.notification_large_icon_width] on IO so
-     * that [scaleDownIfNecessary] has nothing to do on the Main
-     * thread, preventing a StrictMode CustomViolation on API 36+.
+     * The bitmap is scaled to [android.R.dimen.notification_large_icon_width] with
+     * [scaleDownIfNecessary] here on IO rather than during notification rendering.
      */
     private suspend fun loadArtworkData(url: String): Pair<ByteArray, Bitmap>? = withContext(Dispatchers.IO) {
         try {
