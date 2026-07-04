@@ -6,7 +6,6 @@ import android.app.PictureInPictureParams
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.graphics.Rect
 import android.net.Uri
@@ -65,6 +64,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.ColorUtils
@@ -95,10 +95,13 @@ import io.homeassistant.companion.android.common.data.keychain.KeyChainRepositor
 import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.sensors.SensorWorker
 import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
+import io.homeassistant.companion.android.common.util.SdkVersion
+import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.getBooleanOrElse
 import io.homeassistant.companion.android.common.util.getBooleanOrNull
 import io.homeassistant.companion.android.common.util.getDoubleOrElse
@@ -110,6 +113,7 @@ import io.homeassistant.companion.android.common.util.getStringOrNull
 import io.homeassistant.companion.android.common.util.initializePlayer
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.jsonObjectOrNull
+import io.homeassistant.companion.android.common.util.parseExternalIntentUri
 import io.homeassistant.companion.android.common.util.runFragmentTransactionIfStateSafe
 import io.homeassistant.companion.android.common.util.toJsonObject
 import io.homeassistant.companion.android.common.util.toJsonObjectOrNull
@@ -118,6 +122,7 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
 import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
+import io.homeassistant.companion.android.frontend.addto.FrontendEntityAddToManager
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.EXPECTED_GET_AUTH_CALLBACK
@@ -126,13 +131,13 @@ import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.EXTERNAL_APP_V2_LISTENER
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.externalBusCallback
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.isServerSupportingExternalAppV2
+import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.improv.ui.ImprovPermissionDialog
 import io.homeassistant.companion.android.improv.ui.ImprovSetupDialog
 import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.mediacontrol.HaMediaSessionService
 import io.homeassistant.companion.android.nfc.WriteNfcTag
 import io.homeassistant.companion.android.sensors.SensorReceiver
-import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.ConnectionSecurityLevelFragment
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
@@ -145,13 +150,15 @@ import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.TLSWebViewClient
 import io.homeassistant.companion.android.util.applyInsets
 import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
+import io.homeassistant.companion.android.util.compose.webview.BackAction
+import io.homeassistant.companion.android.util.compose.webview.resolveBackAction
 import io.homeassistant.companion.android.util.hasNonRootPath
 import io.homeassistant.companion.android.util.hasSameOrigin
 import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.util.sensitive
+import io.homeassistant.companion.android.util.toRelativeUrl
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
-import io.homeassistant.companion.android.webview.addto.EntityAddToHandler
 import io.homeassistant.companion.android.webview.externalbus.EntityAddToActionsResponse
 import io.homeassistant.companion.android.webview.externalbus.ExternalBusMessage
 import io.homeassistant.companion.android.webview.externalbus.ExternalConfigResponse
@@ -214,6 +221,19 @@ class WebViewActivity :
                 presenter.startScanningForImprov()
             }
         }
+
+    /**
+     * Android 17+ requires `ACCESS_LOCAL_NETWORK` for any LAN traffic. Once the user grants it
+     * after the WebView has already attempted to load, reload so the in-flight or failed-LAN
+     * connection is retried with permission. Denial is left to surface through the existing
+     * connection-error UI.
+     */
+    private val requestLocalNetworkPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted && ::webView.isInitialized) {
+                webView.reload()
+            }
+        }
     private val writeNfcTag = registerForActivityResult(WriteNfcTag()) { messageId ->
         sendExternalBusMessage(
             ExternalBusMessage(
@@ -233,7 +253,7 @@ class WebViewActivity :
     }
     private val commissionMatterDevice =
         registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-            presenter.onMatterThreadIntentResult(this, result)
+            presenter.onMatterThreadIntentResult(result)
         }
 
     @Inject
@@ -259,7 +279,7 @@ class WebViewActivity :
     lateinit var appVersionProvider: AppVersionProvider
 
     @Inject
-    lateinit var entityAddToHandler: EntityAddToHandler
+    lateinit var entityAddToManager: FrontendEntityAddToManager
 
     @Inject
     lateinit var dataUriDownloadManager: DataUriDownloadManager
@@ -268,7 +288,7 @@ class WebViewActivity :
     lateinit var checkLocationDisabled: CheckLocationDisabledUseCase
 
     @Inject
-    lateinit var dataSourceFactory: DataSource.Factory
+    lateinit var dataSourceFactoryProvider: SuspendProvider<DataSource.Factory>
 
     private lateinit var webView: WebView
     private var loadedUrl: Uri? = null
@@ -352,13 +372,15 @@ class WebViewActivity :
     override fun onCreate(savedInstanceState: Bundle?) {
         if (
             intent.extras?.containsKey(EXTRA_SHOW_WHEN_LOCKED) == true &&
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1
+            SdkVersion.isAtLeast(Build.VERSION_CODES.O_MR1)
         ) {
             // Allow showing this on the lock screen when using device controls panel
             setShowWhenLocked(intent.extras?.getBoolean(EXTRA_SHOW_WHEN_LOCKED) ?: false)
         }
 
         super.onCreate(savedInstanceState)
+
+        maybeRequestLocalNetworkPermission()
 
         if (intent.extras?.containsKey(EXTRA_SERVER) == true) {
             intent.extras?.getInt(EXTRA_SERVER)?.let {
@@ -456,7 +478,25 @@ class WebViewActivity :
 
         val onBackPressed = object : OnBackPressedCallback(webView.canGoBack()) {
             override fun handleOnBackPressed() {
-                if (webView.canGoBack()) webView.goBack()
+                when (val action = resolveBackAction(webView, loadedUrl)) {
+                    BackAction.GoBack -> webView.goBack()
+                    is BackAction.NavigateToRoot -> {
+                        clearHistory = true
+                        loadedUrl = action.rootUrl
+                        webView.loadUrl(action.rootUrl.toString())
+                    }
+                    BackAction.None -> {
+                        // Already on root — let the system handle back (exit app).
+                        // We must temporarily disable this callback so that the
+                        // dispatcher invokes the next handler in the chain (the
+                        // default Activity handler which finishes the activity).
+                        // Re-enabling afterwards keeps the callback functional in
+                        // case the activity is not destroyed (e.g. multi-window).
+                        isEnabled = false
+                        onBackPressedDispatcher.onBackPressed()
+                        isEnabled = true
+                    }
+                }
             }
         }
 
@@ -620,8 +660,7 @@ class WebViewActivity :
                                 return true
                             } else if (it.startsWith(INTENT_PREFIX)) {
                                 Timber.d("Launching the intent")
-                                val intent =
-                                    Intent.parseUri(it, Intent.URI_INTENT_SCHEME)
+                                val intent = parseExternalIntentUri(it)
                                 val intentPackage = intent.`package`?.let { it1 ->
                                     packageManager.getLaunchIntentForPackage(
                                         it1,
@@ -654,13 +693,17 @@ class WebViewActivity :
 
                 override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
                     super.doUpdateVisitedHistory(view, url, isReload)
+                    // Enable the callback only when there's browser history. On a fresh
+                    // load (e.g. deeplink to a sub-path) the callback stays disabled so
+                    // the system can handle the gesture and show the Android 14+
+                    // predictive-back peek animation.
                     onBackPressed.isEnabled = canGoBack()
                     presenter.stopScanningForImprov(false)
                 }
             }
 
             setDownloadListener { url, _, contentDisposition, mimetype, _ ->
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
+                if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q) ||
                     ActivityCompat.checkSelfPermission(
                         context,
                         android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -766,13 +809,6 @@ class WebViewActivity :
                     }
                 }
             }
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val webviewPackage = WebViewCompat.getCurrentWebViewPackage(this)
-            Timber.d(
-                "Current webview package ${webviewPackage?.packageName} and version ${webviewPackage?.versionName}",
-            )
         }
 
         lifecycleScope.launch {
@@ -1103,9 +1139,9 @@ class WebViewActivity :
                     ),
                 )
 
-            "matter/commission" -> presenter.startCommissioningMatterDevice(this@WebViewActivity)
+            "matter/commission" -> presenter.startCommissioningMatterDevice()
             "thread/import_credentials" -> {
-                presenter.exportThreadCredentials(this@WebViewActivity)
+                presenter.exportThreadCredentials()
 
                 alertDialog = AlertDialog.Builder(this@WebViewActivity)
                     .setMessage(commonR.string.thread_debug_active)
@@ -1182,12 +1218,18 @@ class WebViewActivity :
         if (entityId != null && appPayload != null) {
             val action = ExternalEntityAddToAction.appPayloadToAction(appPayload)
             lifecycleScope.launch {
-                entityAddToHandler.execute(this@WebViewActivity, action, entityId) { message, action ->
-                    snackbarHostState.showSnackbar(
-                        message,
-                        action,
-                        duration = SnackbarDuration.Short,
-                    ) == SnackbarResult.ActionPerformed
+                when (val event = entityAddToManager.execute(entityId, action)) {
+                    is FrontendEvent.NavigateToWidgetConfig -> {
+                        startActivity(event.widgetType.toConfigureIntent(this@WebViewActivity, event.entityId))
+                    }
+                    is FrontendEvent.ShowSnackbar -> {
+                        snackbarHostState.showSnackbar(
+                            getString(event.messageResId),
+                            duration = SnackbarDuration.Short,
+                        )
+                    }
+                    null -> Unit
+                    else -> FailFast.fail { "Unexpected event $event from EntityAddTo execute" }
                 }
             }
         } else {
@@ -1200,13 +1242,11 @@ class WebViewActivity :
         val entityId = payload?.getStringOrNull("entity_id")
         entityId?.let {
             lifecycleScope.launch {
-                val actions = entityAddToHandler.actionsForEntity(this@WebViewActivity, entityId)
+                val actions = entityAddToManager.getActionsForEntity(entityId)
                 sendExternalBusMessage(
                     EntityAddToActionsResponse(
                         id = json["id"],
-                        actions = actions.map { action ->
-                            ExternalEntityAddToAction.fromAction(this@WebViewActivity, action)
-                        },
+                        actions = actions,
                     ),
                 )
             }
@@ -1337,6 +1377,25 @@ class WebViewActivity :
         presenter.onStart(this)
     }
 
+    /**
+     * Requests `ACCESS_LOCAL_NETWORK` on Android 17+ if it is not already granted.
+     *
+     * The system permission dialog is asynchronous: the WebView keeps loading in parallel, and
+     * a successful grant triggers a reload via [requestLocalNetworkPermission]. On pre-API 37
+     * devices the permission does not exist and no action is taken.
+     */
+    private fun maybeRequestLocalNetworkPermission() {
+        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.CINNAMON_BUN)) return
+        if (ContextCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.ACCESS_LOCAL_NETWORK,
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        requestLocalNetworkPermission.launch(android.Manifest.permission.ACCESS_LOCAL_NETWORK)
+    }
+
     override fun onResume() {
         super.onResume()
         lifecycleScope.launch {
@@ -1356,19 +1415,7 @@ class WebViewActivity :
             WebsocketManager.start(this@WebViewActivity)
             HaMediaSessionService.start(this@WebViewActivity)
 
-            requestedOrientation = when (presenter.getScreenOrientation()) {
-                getString(
-                    R.string.screen_orientation_option_array_value_portrait,
-                ),
-                -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-
-                getString(
-                    R.string.screen_orientation_option_array_value_landscape,
-                ),
-                -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-
-                else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-            }
+            requestedOrientation = presenter.getScreenOrientation().activityInfo
 
             if (presenter.isKeepScreenOnEnabled()) {
                 window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -1405,7 +1452,7 @@ class WebViewActivity :
         val uri = payload?.getStringOrNull("url")?.toUri() ?: return
         val isMuted = payload.getBooleanOrElse("muted", false)
         lifecycleScope.launch {
-            exoPlayer.value = initializePlayer(this@WebViewActivity, dataSourceFactory).apply {
+            exoPlayer.value = initializePlayer(this@WebViewActivity, dataSourceFactoryProvider()).apply {
                 setMediaItem(MediaItem.fromUri(uri))
                 playWhenReady = true
                 addListener(
@@ -1530,12 +1577,15 @@ class WebViewActivity :
                     showSystemUI()
                 }
 
-                var path = intent.getStringExtra(EXTRA_PATH)
-                if (path?.startsWith("entityId:") == true) {
+                val intentPath = intent.getStringExtra(EXTRA_PATH)
+                // Let the presenter handle falling back to the current WebView path
+                // when no explicit navigation path is set. See https://github.com/home-assistant/android/issues/4983
+                var path: String? = intentPath
+                if (intentPath?.startsWith("entityId:") == true) {
                     // Get the entity ID from a string formatted "entityId:domain.entity"
                     // https://github.com/home-assistant/core/blob/dev/homeassistant/core.py#L159
                     val pattern = "(?<=^entityId:)((?!.+__)(?!_)[\\da-z_]+(?<!_)\\.(?!_)[\\da-z_]+(?<!_)$)".toRegex()
-                    val entity = pattern.find(path)?.value ?: ""
+                    val entity = pattern.find(intentPath)?.value ?: ""
                     if (
                         entity.isNotBlank() &&
                         serverManager.getServer(presenter.getActiveServer())?.version?.isAtLeast(2025, 6, 0) == true
@@ -1549,6 +1599,10 @@ class WebViewActivity :
                 presenter.load(lifecycle, path, isInternalOverride)
             }
         }
+    }
+
+    override fun getCurrentWebViewRelativeUrl(): String? {
+        return webView.url?.toUri()?.toRelativeUrl(excludeParams = setOf("external_auth"))
     }
 
     override suspend fun unlockAppIfNeeded() {
@@ -1578,7 +1632,7 @@ class WebViewActivity :
         videoHeight = decor.height
         val bounds = Rect(0, 0, 1920, 1080)
         if (isVideoFullScreen or isExoFullScreen) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
                 val mPictureInPictureParamsBuilder = PictureInPictureParams.Builder()
                 mPictureInPictureParamsBuilder.setAspectRatio(
                     Rational(
@@ -2167,7 +2221,7 @@ class WebViewActivity :
             bubbles: true,
             cancelable: true
         });
-        document.dispatchEvent(event);
+         (document.body || document.documentElement || document).dispatchEvent(event);
         """.trimIndent()
         // Opts into [EvaluateJavascriptUsage] to simulate a keyboard input, which is an
         // interaction the frontend already handles through its normal DOM event listeners — no

@@ -6,12 +6,10 @@
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
     <application>
-        <receiver android:name=".sensors.SensorUpdateReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="io.homeassistant.companion.android.UPDATE_SENSORS" />
-            </intent-filter>
-        </receiver>
+        <!-- Registered for the explicit ACTION_STOP_BEACON_SCANNING PendingIntent (beacon notification action) -->
+        <receiver
+            android:name=".sensors.StopBeaconScanningReceiver"
+            android:exported="false" />
 
         <receiver
             android:name=".notifications.NotificationDeleteReceiver"

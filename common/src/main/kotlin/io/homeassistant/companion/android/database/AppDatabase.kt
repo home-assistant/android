@@ -77,7 +77,7 @@ import io.homeassistant.companion.android.database.widget.WidgetTapActionConvert
         Setting::class,
         MediaControlConfig::class,
     ],
-    version = 52,
+    version = 53,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
@@ -105,6 +105,7 @@ import io.homeassistant.companion.android.database.widget.WidgetTapActionConvert
         AutoMigration(from = 49, to = 50),
         AutoMigration(from = 50, to = 51),
         AutoMigration(from = 51, to = 52),
+        AutoMigration(from = 52, to = 53),
     ],
 )
 @TypeConverters(

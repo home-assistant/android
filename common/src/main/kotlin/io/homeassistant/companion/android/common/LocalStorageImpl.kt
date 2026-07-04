@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -115,16 +114,14 @@ class LocalStorageImpl(sharedPreferences: suspend () -> SharedPreferences) : Loc
 
     override fun observeChanges(vararg keys: String): Flow<String> = callbackFlow {
         val prefs = sharedPreferences()
-        keys.forEach { key ->
-            val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, changedKey ->
-                if (changedKey == key) {
-                    launch { send(key) }
-                }
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, changedKey ->
+            if (changedKey != null && changedKey in keys) {
+                trySend(changedKey)
             }
-            prefs.registerOnSharedPreferenceChangeListener(listener)
-            awaitClose {
-                prefs.unregisterOnSharedPreferenceChangeListener(listener)
-            }
+        }
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        awaitClose {
+            prefs.unregisterOnSharedPreferenceChangeListener(listener)
         }
     }
 

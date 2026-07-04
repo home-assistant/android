@@ -11,14 +11,12 @@ import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MessageSocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
-import io.homeassistant.companion.android.common.util.FailFastExtension
 import io.homeassistant.companion.android.common.util.MapAnySerializer
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -41,6 +39,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
@@ -60,13 +59,11 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
-import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.fail
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(ConsoleLogExtension::class, FailFastExtension::class)
 class WebSocketCoreImplTest {
     private lateinit var mockOkHttpClient: OkHttpClient
     private lateinit var mockConnection: WebSocket
@@ -871,7 +868,43 @@ shutdown()
 
         webSocketCore.shutdown()
 
+        // Wait for close() to be called
+        advanceUntilIdle()
+
         verify { mockConnection.close(1001, "Session removed from app.") }
+    }
+
+    @Test
+    fun `Given a shutdown connection When connect is invoked before onClosed Then it reconnects`() = runTest {
+        setupServer(backgroundScope = backgroundScope)
+        every {
+            mockConnection.close(1001, "Session removed from app.")
+        } answers {
+            backgroundScope.launch {
+                // Simulate queue delay before onClosed is called after close
+                delay(100)
+                webSocketListener.onClosed(mockConnection, 1001, "Session removed from app.")
+            }
+            true
+        }
+
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+        // Should connect for the first time
+        verify(exactly = 1) { mockOkHttpClient.newWebSocket(any(), webSocketListener) }
+
+        advanceTimeBy(100)
+
+        webSocketCore.shutdown()
+        runCurrent()
+        verify(exactly = 1) { mockConnection.close(1001, "Session removed from app.") }
+
+        advanceTimeBy(50)
+
+        assertTrue(webSocketCore.connect())
+        advanceUntilIdle()
+        // Should connect again
+        verify(exactly = 2) { mockOkHttpClient.newWebSocket(any(), webSocketListener) }
     }
 
     /*

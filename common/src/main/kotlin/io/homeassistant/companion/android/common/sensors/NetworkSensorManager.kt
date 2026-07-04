@@ -10,15 +10,20 @@ import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
 import androidx.core.content.getSystemService
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.getStringOrElse
 import io.homeassistant.companion.android.common.util.toJsonObjectOrNull
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.lang.reflect.Method
 import java.net.Inet6Address
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.SerializationException
 import okhttp3.Call
@@ -29,8 +34,14 @@ import okhttp3.Response
 import okio.IOException
 import timber.log.Timber
 
-class NetworkSensorManager : SensorManager {
+@Singleton
+class NetworkSensorManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager {
     companion object {
+        @ProvidesSensor
         val hotspotState = SensorManager.BasicSensor(
             "hotspot_state",
             "binary_sensor",
@@ -40,6 +51,8 @@ class NetworkSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
+
+        @ProvidesSensor
         val wifiConnection = SensorManager.BasicSensor(
             "wifi_connection",
             "sensor",
@@ -49,6 +62,8 @@ class NetworkSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
+
+        @ProvidesSensor
         val bssidState = SensorManager.BasicSensor(
             "wifi_bssid",
             "sensor",
@@ -58,6 +73,8 @@ class NetworkSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
+
+        @ProvidesSensor
         val wifiIp = SensorManager.BasicSensor(
             "wifi_ip_address",
             "sensor",
@@ -67,6 +84,8 @@ class NetworkSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
+
+        @ProvidesSensor
         val wifiLinkSpeed = SensorManager.BasicSensor(
             "wifi_link_speed",
             "sensor",
@@ -77,6 +96,8 @@ class NetworkSensorManager : SensorManager {
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
+
+        @ProvidesSensor
         val wifiState = SensorManager.BasicSensor(
             "wifi_state",
             "binary_sensor",
@@ -86,6 +107,8 @@ class NetworkSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
+
+        @ProvidesSensor
         val wifiFrequency = SensorManager.BasicSensor(
             "wifi_frequency",
             "sensor",
@@ -97,6 +120,8 @@ class NetworkSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
+
+        @ProvidesSensor
         val wifiSignalStrength = SensorManager.BasicSensor(
             "wifi_signal_strength",
             "sensor",
@@ -108,6 +133,8 @@ class NetworkSensorManager : SensorManager {
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
+
+        @ProvidesSensor
         val publicIp = SensorManager.BasicSensor(
             "public_ip_address",
             "sensor",
@@ -117,6 +144,8 @@ class NetworkSensorManager : SensorManager {
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#public-ip-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
+
+        @ProvidesSensor
         val ip6Addresses = SensorManager.BasicSensor(
             "ip6_addresses",
             "sensor",
@@ -128,6 +157,8 @@ class NetworkSensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
+
+        @ProvidesSensor
         val networkType = SensorManager.BasicSensor(
             "network_type",
             "sensor",
@@ -147,7 +178,7 @@ class NetworkSensorManager : SensorManager {
     }
     override val name: Int
         get() = commonR.string.sensor_name_network
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         val wifiSensors = listOf(
             wifiConnection,
             bssidState,
@@ -157,9 +188,9 @@ class NetworkSensorManager : SensorManager {
             wifiFrequency,
             wifiSignalStrength,
         )
-        val list = if (hasWifi(context)) {
+        val list = if (hasWifi()) {
             val withPublicIp = wifiSensors + publicIp
-            if (hasHotspot(context)) {
+            if (hasHotspot()) {
                 withPublicIp + hotspotState
             } else {
                 withPublicIp
@@ -170,13 +201,13 @@ class NetworkSensorManager : SensorManager {
         return list + networkType + ip6Addresses
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return when {
             sensorId == hotspotState.id || sensorId == publicIp.id || sensorId == networkType.id -> {
                 arrayOf()
             }
 
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> {
+            SdkVersion.isAtLeast(Build.VERSION_CODES.Q) -> {
                 arrayOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_BACKGROUND_LOCATION,
@@ -189,29 +220,29 @@ class NetworkSensorManager : SensorManager {
         }
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
-        updateHotspotEnabledSensor(context)
-        updateWifiConnectionSensor(context)
-        updateBSSIDSensor(context)
-        updateWifiIPSensor(context)
-        updateWifiLinkSpeedSensor(context)
-        updateWifiSensor(context)
-        updateWifiFrequencySensor(context)
-        updateWifiSignalStrengthSensor(context)
-        updatePublicIpSensor(context)
-        updateNetworkType(context)
-        updateIP6Sensor(context)
+    override suspend fun requestSensorUpdate() {
+        updateHotspotEnabledSensor()
+        updateWifiConnectionSensor()
+        updateBSSIDSensor()
+        updateWifiIPSensor()
+        updateWifiLinkSpeedSensor()
+        updateWifiSensor()
+        updateWifiFrequencySensor()
+        updateWifiSignalStrengthSensor()
+        updatePublicIpSensor()
+        updateNetworkType()
+        updateIP6Sensor()
     }
 
-    private fun hasWifi(context: Context): Boolean = context.applicationContext.getSystemService<WifiManager>() != null
+    private fun hasWifi(): Boolean = applicationContext.getSystemService<WifiManager>() != null
 
     @SuppressLint("PrivateApi")
-    private fun hasHotspot(context: Context): Boolean {
+    private fun hasHotspot(): Boolean {
         // Watch doesn't have hotspot.
-        if (context.packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+        if (applicationContext.packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
             return false
         }
-        val wifiManager: WifiManager = context.applicationContext.getSystemService()!!
+        val wifiManager: WifiManager = applicationContext.getSystemService()!!
         return try {
             wifiManager.javaClass.getDeclaredMethod("isWifiApEnabled")
             true
@@ -219,11 +250,11 @@ class NetworkSensorManager : SensorManager {
             false
         }
     }
-    private suspend fun updateHotspotEnabledSensor(context: Context) {
-        if (!isEnabled(context, hotspotState)) {
+    private suspend fun updateHotspotEnabledSensor() {
+        if (!isEnabled(hotspotState)) {
             return
         }
-        val wifiManager: WifiManager = context.getSystemService()!!
+        val wifiManager: WifiManager = applicationContext.getSystemService()!!
 
         @SuppressLint("PrivateApi")
         val method: Method = wifiManager.javaClass.getDeclaredMethod("isWifiApEnabled")
@@ -231,15 +262,14 @@ class NetworkSensorManager : SensorManager {
         val enabled = method.invoke(wifiManager) as Boolean
         val icon = if (enabled) "mdi:access-point" else "mdi:access-point-off"
         onSensorUpdated(
-            context,
             hotspotState,
             enabled,
             icon,
             mapOf(),
         )
     }
-    private suspend fun updateWifiConnectionSensor(context: Context) {
-        if (!isEnabled(context, wifiConnection) || !hasWifi(context)) {
+    private suspend fun updateWifiConnectionSensor() {
+        if (!isEnabled(wifiConnection) || !hasWifi()) {
             return
         }
 
@@ -247,9 +277,9 @@ class NetworkSensorManager : SensorManager {
         var ssid = STATE_UNKNOWN
         var connected = false
 
-        if (checkPermission(context, wifiConnection.id)) {
+        if (checkPermission(wifiConnection.id)) {
             @Suppress("DEPRECATION") // Unable to get SSID info (instantly) using callback
-            conInfo = context.getSystemService<WifiManager>()?.connectionInfo
+            conInfo = applicationContext.getSystemService<WifiManager>()?.connectionInfo
 
             if (conInfo == null || conInfo.networkId == -1) {
                 if (conInfo == null || conInfo.linkSpeed == -1) {
@@ -271,7 +301,6 @@ class NetworkSensorManager : SensorManager {
         }.orEmpty()
 
         onSensorUpdated(
-            context,
             wifiConnection,
             ssid,
             icon,
@@ -279,45 +308,46 @@ class NetworkSensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateBSSIDSensor(context: Context) {
-        if (!isEnabled(context, bssidState) || !hasWifi(context)) {
+    private suspend fun updateBSSIDSensor() {
+        if (!isEnabled(bssidState) || !hasWifi()) {
             return
         }
 
         var conInfo: WifiInfo? = null
 
-        if (checkPermission(context, bssidState.id)) {
+        if (checkPermission(bssidState.id)) {
             @Suppress("DEPRECATION") // Unable to get BSSID info (instantly) using callback
-            conInfo = context.getSystemService<WifiManager>()?.connectionInfo
+            conInfo = applicationContext.getSystemService<WifiManager>()?.connectionInfo
         }
 
         var bssid = if (conInfo?.bssid == null) "<not connected>" else conInfo.bssid
 
         val settingName = "network_replace_mac_var1:$bssid:"
-        val sensorDao = sensorDao(context)
-        val sensorSettings = sensorDao.getSettings(bssidState.id)
+        val sensorRepository = sensorRepository
+        val sensorSettings = sensorRepository.getSettings(bssidState.id)
         val getCurrentBSSID = sensorSettings.firstOrNull { it.name == SETTING_GET_CURRENT_BSSID }?.value ?: "false"
         val currentSetting = sensorSettings.firstOrNull { it.name == settingName }?.value ?: ""
         if (getCurrentBSSID == "true") {
             if (currentSetting == "") {
-                sensorDao.add(
+                sensorRepository.add(
                     SensorSetting(bssidState.id, SETTING_GET_CURRENT_BSSID, "false", SensorSettingType.TOGGLE),
                 )
-                sensorDao.add(SensorSetting(bssidState.id, settingName, bssid, SensorSettingType.STRING))
+                sensorRepository.add(SensorSetting(bssidState.id, settingName, bssid, SensorSettingType.STRING))
             }
         } else {
             if (currentSetting != "") {
                 bssid = currentSetting
             } else {
-                sensorDao.removeSetting(bssidState.id, settingName)
+                sensorRepository.removeSetting(bssidState.id, settingName)
             }
 
-            sensorDao.add(SensorSetting(bssidState.id, SETTING_GET_CURRENT_BSSID, "false", SensorSettingType.TOGGLE))
+            sensorRepository.add(
+                SensorSetting(bssidState.id, SETTING_GET_CURRENT_BSSID, "false", SensorSettingType.TOGGLE),
+            )
         }
 
         val icon = if (bssid != "<not connected>") "mdi:wifi" else "mdi:wifi-off"
         onSensorUpdated(
-            context,
             bssidState,
             bssid,
             icon,
@@ -325,21 +355,21 @@ class NetworkSensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateWifiIPSensor(context: Context) {
-        if (!isEnabled(context, wifiIp) || !hasWifi(context)) {
+    private suspend fun updateWifiIPSensor() {
+        if (!isEnabled(wifiIp) || !hasWifi()) {
             return
         }
 
         var deviceIp = STATE_UNKNOWN
 
-        if (checkPermission(context, wifiIp.id)) {
-            val conInfo = getWifiConnectionInfo(context)
+        if (checkPermission(wifiIp.id)) {
+            val conInfo = getWifiConnectionInfo()
 
             deviceIp = if (conInfo == null || (conInfo.networkId == -1 && conInfo.linkSpeed == -1)) {
                 "<not connected>"
             } else {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    val connectivityManager = context.applicationContext.getSystemService<ConnectivityManager>()
+                if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
+                    val connectivityManager = applicationContext.getSystemService<ConnectivityManager>()
                     connectivityManager?.activeNetwork?.let {
                         // Get the IPv4 address without prefix length
                         connectivityManager.getLinkProperties(it)?.linkAddresses
@@ -354,7 +384,6 @@ class NetworkSensorManager : SensorManager {
         }
 
         onSensorUpdated(
-            context,
             wifiIp,
             deviceIp,
             wifiIp.statelessIcon,
@@ -362,15 +391,15 @@ class NetworkSensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateIP6Sensor(context: Context) {
-        if (!isEnabled(context, ip6Addresses)) {
+    private suspend fun updateIP6Sensor() {
+        if (!isEnabled(ip6Addresses)) {
             return
         }
         var ipAddressList: List<String> = ArrayList()
         var totalAddresses = 0
 
-        if (checkPermission(context, ip6Addresses.id)) {
-            val connectivityManager = context.applicationContext.getSystemService<ConnectivityManager>()
+        if (checkPermission(ip6Addresses.id)) {
+            val connectivityManager = applicationContext.getSystemService<ConnectivityManager>()
             val activeNetwork = connectivityManager?.activeNetwork
             val ipAddresses = connectivityManager?.getLinkProperties(activeNetwork)?.linkAddresses
             if (!ipAddresses.isNullOrEmpty()) {
@@ -383,7 +412,6 @@ class NetworkSensorManager : SensorManager {
             }
         }
         onSensorUpdated(
-            context,
             ip6Addresses,
             totalAddresses,
             ip6Addresses.statelessIcon,
@@ -393,16 +421,16 @@ class NetworkSensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateWifiLinkSpeedSensor(context: Context) {
-        if (!isEnabled(context, wifiLinkSpeed) || !hasWifi(context)) {
+    private suspend fun updateWifiLinkSpeedSensor() {
+        if (!isEnabled(wifiLinkSpeed) || !hasWifi()) {
             return
         }
 
         var linkSpeed = 0
         var rssi = -1
 
-        if (checkPermission(context, wifiLinkSpeed.id)) {
-            val conInfo = getWifiConnectionInfo(context)
+        if (checkPermission(wifiLinkSpeed.id)) {
+            val conInfo = getWifiConnectionInfo()
 
             linkSpeed = if (conInfo == null || conInfo.linkSpeed == -1) {
                 0
@@ -428,7 +456,6 @@ class NetworkSensorManager : SensorManager {
         }
 
         onSensorUpdated(
-            context,
             wifiLinkSpeed,
             linkSpeed,
             icon,
@@ -436,23 +463,22 @@ class NetworkSensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateWifiSensor(context: Context) {
-        if (!isEnabled(context, wifiState) || !hasWifi(context)) {
+    private suspend fun updateWifiSensor() {
+        if (!isEnabled(wifiState) || !hasWifi()) {
             return
         }
 
         var wifiEnabled = false
 
-        if (checkPermission(context, wifiState.id)) {
+        if (checkPermission(wifiState.id)) {
             val wifiManager =
-                context.applicationContext.getSystemService<WifiManager>()!!
+                applicationContext.getSystemService<WifiManager>()!!
 
             wifiEnabled = wifiManager.isWifiEnabled
         }
         val icon = if (wifiEnabled) "mdi:wifi" else "mdi:wifi-off"
 
         onSensorUpdated(
-            context,
             wifiState,
             wifiEnabled,
             icon,
@@ -460,15 +486,15 @@ class NetworkSensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateWifiFrequencySensor(context: Context) {
-        if (!isEnabled(context, wifiFrequency) || !hasWifi(context)) {
+    private suspend fun updateWifiFrequencySensor() {
+        if (!isEnabled(wifiFrequency) || !hasWifi()) {
             return
         }
 
         var frequency = 0
 
-        if (checkPermission(context, wifiFrequency.id)) {
-            val conInfo = getWifiConnectionInfo(context)
+        if (checkPermission(wifiFrequency.id)) {
+            val conInfo = getWifiConnectionInfo()
 
             frequency = if (conInfo == null || (conInfo.networkId == -1 && conInfo.linkSpeed == -1)) {
                 0
@@ -478,7 +504,6 @@ class NetworkSensorManager : SensorManager {
         }
 
         onSensorUpdated(
-            context,
             wifiFrequency,
             frequency,
             wifiFrequency.statelessIcon,
@@ -486,15 +511,15 @@ class NetworkSensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateWifiSignalStrengthSensor(context: Context) {
-        if (!isEnabled(context, wifiSignalStrength) || !hasWifi(context)) {
+    private suspend fun updateWifiSignalStrengthSensor() {
+        if (!isEnabled(wifiSignalStrength) || !hasWifi()) {
             return
         }
 
         var rssi = -1
 
-        if (checkPermission(context, wifiSignalStrength.id)) {
-            val conInfo = getWifiConnectionInfo(context)
+        if (checkPermission(wifiSignalStrength.id)) {
+            val conInfo = getWifiConnectionInfo()
 
             if (conInfo != null && (conInfo.networkId != -1 || conInfo.linkSpeed != -1)) {
                 rssi = conInfo.rssi
@@ -514,7 +539,6 @@ class NetworkSensorManager : SensorManager {
         }
 
         onSensorUpdated(
-            context,
             wifiSignalStrength,
             rssi,
             icon,
@@ -529,8 +553,8 @@ class NetworkSensorManager : SensorManager {
             (ip shr 24 and 0xFF)
     }
 
-    private suspend fun updatePublicIpSensor(context: Context) {
-        if (!isEnabled(context, publicIp)) {
+    private suspend fun updatePublicIpSensor() {
+        if (!isEnabled(publicIp)) {
             return
         }
 
@@ -542,7 +566,7 @@ class NetworkSensorManager : SensorManager {
             client.newCall(request).enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
                     Timber.e(e, "Error getting response from external service")
-                    continuation.resume(Unit) { cause, _, _ ->
+                    continuation.resume(Unit) { _, _, _ ->
                         // no-op
                     }
                 }
@@ -556,14 +580,13 @@ class NetworkSensorManager : SensorManager {
                         Timber.e(e, "Unable to parse ip address from response")
                     }
 
-                    continuation.resume(Unit) { cause, _, _ ->
+                    continuation.resume(Unit) { _, _, _ ->
                         // no-op
                     }
                 }
             })
         }
         onSensorUpdated(
-            context,
             publicIp,
             ip,
             publicIp.statelessIcon,
@@ -572,12 +595,12 @@ class NetworkSensorManager : SensorManager {
     }
 
     @SuppressLint("MissingPermission")
-    private suspend fun updateNetworkType(context: Context) {
-        if (!isEnabled(context, networkType)) {
+    private suspend fun updateNetworkType() {
+        if (!isEnabled(networkType)) {
             return
         }
 
-        val connectivityManager = context.getSystemService<ConnectivityManager>()
+        val connectivityManager = applicationContext.getSystemService<ConnectivityManager>()
         val activeNetwork = connectivityManager?.activeNetwork
         val capabilities = connectivityManager?.getNetworkCapabilities(activeNetwork)
 
@@ -610,7 +633,6 @@ class NetworkSensorManager : SensorManager {
         }
 
         onSensorUpdated(
-            context,
             networkType,
             networkCapability,
             icon,
@@ -622,19 +644,18 @@ class NetworkSensorManager : SensorManager {
     }
 
     /** Get WiFi connection info (without location data such as (B)SSID on Android >=S) */
-    private fun getWifiConnectionInfo(context: Context): WifiInfo? =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val connectivityManager = context.applicationContext.getSystemService<ConnectivityManager>()
-            connectivityManager?.activeNetwork?.let {
-                val info = connectivityManager.getNetworkCapabilities(it)?.transportInfo
+    private fun getWifiConnectionInfo(): WifiInfo? = if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
+        val connectivityManager = applicationContext.getSystemService<ConnectivityManager>()
+        connectivityManager?.activeNetwork?.let {
+            val info = connectivityManager.getNetworkCapabilities(it)?.transportInfo
 
-                // If WifiInfo is null default to the deprecated method as a fix for some devices that may return null
-                @Suppress("DEPRECATION")
-                return@let info as? WifiInfo
-                    ?: context.applicationContext.getSystemService<WifiManager>()?.connectionInfo
-            }
-        } else {
+            // If WifiInfo is null default to the deprecated method as a fix for some devices that may return null
             @Suppress("DEPRECATION")
-            context.applicationContext.getSystemService<WifiManager>()?.connectionInfo
+            return@let info as? WifiInfo
+                ?: applicationContext.getSystemService<WifiManager>()?.connectionInfo
         }
+    } else {
+        @Suppress("DEPRECATION")
+        applicationContext.getSystemService<WifiManager>()?.connectionInfo
+    }
 }

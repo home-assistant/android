@@ -16,6 +16,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -75,7 +76,7 @@ class MediaPlayerControlsWidgetConfigureActivity :
             lifecycleScope.launch {
                 if (requestLauncherSetup) {
                     if (
-                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                        SdkVersion.isAtLeast(Build.VERSION_CODES.O) &&
                         isValidServerId() &&
                         binding.widgetTextConfigEntityId.text.split(",").any {
                             entities[selectedServerId!!].orEmpty().any { e -> e.entityId == it.trim() }

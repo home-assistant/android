@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding
 
+import android.content.Context
 import android.content.pm.PackageManager
 import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.result.ActivityResultRegistry
@@ -13,9 +14,10 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.compose.NavHost
 import androidx.navigation.testing.TestNavHostController
+import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltAndroidRule
 import io.homeassistant.companion.android.HiltComponentActivity
-import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
+import io.homeassistant.companion.android.testing.unit.seedFakeAndroidId
 import io.homeassistant.companion.android.util.FakePermissionResultRegistry
 import io.homeassistant.companion.android.util.compose.navigateToUri
 import io.mockk.Runs
@@ -36,12 +38,9 @@ import org.junit.Rule
 internal abstract class BaseOnboardingNavigationTest {
 
     @get:Rule(order = 0)
-    var consoleLog = ConsoleLogRule()
-
-    @get:Rule(order = 1)
     val hiltRule = HiltAndroidRule(this)
 
-    @get:Rule(order = 2)
+    @get:Rule(order = 1)
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
     protected lateinit var navController: TestNavHostController
@@ -50,6 +49,7 @@ internal abstract class BaseOnboardingNavigationTest {
 
     @Before
     fun baseSetup() {
+        ApplicationProvider.getApplicationContext<Context>().seedFakeAndroidId()
         mockkStatic(NavController::navigateToUri)
         coEvery { any<NavController>().navigateToUri(any(), any()) } just Runs
     }
@@ -59,6 +59,8 @@ internal abstract class BaseOnboardingNavigationTest {
         hideExistingServers: Boolean = false,
         skipWelcome: Boolean = false,
         hasLocationTracking: Boolean = true,
+        fromInvitation: Boolean = false,
+        permissionResultRegistry: ActivityResultRegistry = FakePermissionResultRegistry(grantAll = true),
     ) {
         composeTestRule.setContent {
             navController = TestNavHostController(LocalContext.current)
@@ -66,8 +68,7 @@ internal abstract class BaseOnboardingNavigationTest {
 
             CompositionLocalProvider(
                 LocalActivityResultRegistryOwner provides object : ActivityResultRegistryOwner {
-                    override val activityResultRegistry: ActivityResultRegistry =
-                        FakePermissionResultRegistry(true)
+                    override val activityResultRegistry: ActivityResultRegistry = permissionResultRegistry
                 },
             ) {
                 NavHost(
@@ -84,6 +85,7 @@ internal abstract class BaseOnboardingNavigationTest {
                         hideExistingServers = hideExistingServers,
                         skipWelcome = skipWelcome,
                         hasLocationTracking = hasLocationTracking,
+                        fromInvitation = fromInvitation,
                     )
                 }
             }
@@ -95,6 +97,7 @@ internal abstract class BaseOnboardingNavigationTest {
         hideExistingServers: Boolean = false,
         skipWelcome: Boolean = false,
         hasLocationTracking: Boolean = true,
+        fromInvitation: Boolean = false,
         testContent: suspend AndroidComposeTestRule<*, *>.() -> Unit,
     ) {
         setContent(
@@ -102,6 +105,7 @@ internal abstract class BaseOnboardingNavigationTest {
             hideExistingServers = hideExistingServers,
             skipWelcome = skipWelcome,
             hasLocationTracking = hasLocationTracking,
+            fromInvitation = fromInvitation,
         )
         runTest {
             composeTestRule.testContent()

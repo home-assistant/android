@@ -29,7 +29,7 @@ import kotlinx.coroutines.flow.merge
 import okhttp3.HttpUrl
 import timber.log.Timber
 
-class ServerConnectionStateProviderImpl @AssistedInject constructor(
+internal class ServerConnectionStateProviderImpl @AssistedInject constructor(
     @param:ApplicationContext private val context: Context,
     private val serverManager: ServerManager,
     private val serverDao: ServerDao,

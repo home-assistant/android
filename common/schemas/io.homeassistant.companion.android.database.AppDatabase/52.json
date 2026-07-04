@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 52,
-    "identityHash": "2001b0522c75782b992b5b833528b0dc",
+    "identityHash": "c6c1ea610cb50bc14cffeac69ce49216",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -658,7 +658,7 @@
       },
       {
         "tableName": "location_history",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `created` INTEGER NOT NULL, `trigger` TEXT NOT NULL, `result` TEXT NOT NULL, `latitude` REAL, `longitude` REAL, `location_name` TEXT, `accuracy` INTEGER, `data` TEXT, `server_id` INTEGER)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `created` INTEGER NOT NULL, `trigger` TEXT NOT NULL, `result` TEXT NOT NULL, `latitude` REAL, `longitude` REAL, `location_name` TEXT, `in_zones` TEXT NOT NULL DEFAULT '[]', `accuracy` INTEGER, `data` TEXT, `server_id` INTEGER)",
         "fields": [
           {
             "fieldPath": "id",
@@ -698,6 +698,13 @@
             "fieldPath": "locationName",
             "columnName": "location_name",
             "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "inZones",
+            "columnName": "in_zones",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'[]'"
           },
           {
             "fieldPath": "accuracy",
@@ -1141,41 +1148,11 @@
             "id"
           ]
         }
-      },
-      {
-        "tableName": "media_control_entity_config",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `server_id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL)",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "serverId",
-            "columnName": "server_id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "entityId",
-            "columnName": "entity_id",
-            "affinity": "TEXT",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": true,
-          "columnNames": [
-            "id"
-          ]
-        }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '2001b0522c75782b992b5b833528b0dc')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c6c1ea610cb50bc14cffeac69ce49216')"
     ]
   }
 }

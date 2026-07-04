@@ -38,7 +38,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import okhttp3.OkHttpClient
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -56,9 +55,6 @@ class CameraWidget : AppWidgetProvider() {
 
     @Inject
     lateinit var cameraWidgetDao: CameraWidgetDao
-
-    @Inject
-    lateinit var okHttpClient: OkHttpClient
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         // There may be multiple widgets active, so update all of them

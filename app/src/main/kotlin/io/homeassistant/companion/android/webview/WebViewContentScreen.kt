@@ -46,6 +46,7 @@ import dev.chrisbanes.haze.materials.HazeMaterials
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.frontend.permissions.NotificationPermissionPrompt
 import io.homeassistant.companion.android.util.compose.media.player.HAMediaPlayer
 import io.homeassistant.companion.android.util.compose.webview.HAWebView
@@ -71,7 +72,7 @@ internal fun WebViewContentScreen(
     nightModeTheme: NightModeTheme? = null,
     statusBarColor: Color? = null,
     backgroundColor: Color? = null,
-    supportsNotificationPermission: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU,
+    supportsNotificationPermission: Boolean = SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU),
 ) {
     HATheme {
         Scaffold(

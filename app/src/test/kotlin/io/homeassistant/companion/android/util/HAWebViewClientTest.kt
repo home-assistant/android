@@ -16,7 +16,6 @@ import androidx.annotation.StringRes
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.every
 import io.mockk.mockk
@@ -24,13 +23,15 @@ import io.mockk.slot
 import kotlin.reflect.KClass
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 
-@ExtendWith(MainDispatcherJUnit5Extension::class, ConsoleLogExtension::class)
+@ExtendWith(MainDispatcherJUnit5Extension::class)
 class HAWebViewClientTest {
 
     private val keyChainRepository: KeyChainRepository = mockk(relaxed = true)
@@ -51,6 +52,24 @@ class HAWebViewClientTest {
             onPageFinished = null,
             onReceivedHttpAuthRequest = null,
         )
+    }
+
+    @Test
+    fun `Given onPageFinished callback when onPageFinished then invokes callback with final url`() {
+        var finishedUrl: String? = null
+        val client = HAWebViewClient(
+            keyChainRepository = keyChainRepository,
+            currentUrlFlow = currentUrlFlow,
+            onFrontendError = { capturedError = it },
+            onCrash = null,
+            onUrlIntercepted = null,
+            onPageFinished = { finishedUrl = it },
+            onReceivedHttpAuthRequest = null,
+        )
+
+        client.onPageFinished(null, "http://homeassistant.local:80/onboarding")
+
+        assertEquals("http://homeassistant.local:80/onboarding", finishedUrl)
     }
 
     @Test
@@ -395,6 +414,29 @@ class HAWebViewClientTest {
         assertEquals("example.com", capturedHost)
         assertEquals("https://example.com/protected", capturedResource)
         assertEquals("myrealm", capturedRealm)
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = [true, false])
+    fun `Given onCanGoBackChanged callback when doUpdateVisitedHistory then reports webView canGoBack`(
+        canGoBack: Boolean,
+    ) {
+        var captured: Boolean? = null
+        val client = HAWebViewClient(
+            keyChainRepository = keyChainRepository,
+            currentUrlFlow = currentUrlFlow,
+            onFrontendError = { capturedError = it },
+            onCrash = null,
+            onUrlIntercepted = null,
+            onPageFinished = null,
+            onReceivedHttpAuthRequest = null,
+            onCanGoBackChanged = { captured = it },
+        )
+        val webView = mockk<WebView> { every { canGoBack() } returns canGoBack }
+
+        client.doUpdateVisitedHistory(webView, "https://example.com", false)
+
+        assertEquals(canGoBack, captured)
     }
 
     @Test

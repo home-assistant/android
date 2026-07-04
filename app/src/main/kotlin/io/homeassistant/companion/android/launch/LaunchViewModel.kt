@@ -211,6 +211,11 @@ internal class LaunchViewModel @VisibleForTesting constructor(
                 skipWelcome = initialDeepLink.skipWelcome,
             )
 
+            is LaunchActivity.DeepLink.OpenInvitation -> navigateToOnboarding(
+                initialDeepLink.serverUrl,
+                fromInvitation = true,
+            )
+
             is LaunchActivity.DeepLink.NavigateTo,
             -> connectToServer(initialDeepLink.serverId, initialDeepLink.path)
 
@@ -270,6 +275,7 @@ internal class LaunchViewModel @VisibleForTesting constructor(
         urlToOnboard: String? = null,
         hideExistingServers: Boolean = false,
         skipWelcome: Boolean = false,
+        fromInvitation: Boolean = false,
     ) {
         _uiState.value = LaunchUiState.Ready(
             OnboardingRoute(
@@ -277,6 +283,7 @@ internal class LaunchViewModel @VisibleForTesting constructor(
                 urlToOnboard = urlToOnboard,
                 hideExistingServers = hideExistingServers,
                 skipWelcome = skipWelcome,
+                fromInvitation = fromInvitation,
             ),
         )
     }

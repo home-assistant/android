@@ -6,7 +6,6 @@ import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.integration.PushWebsocketSupport
 import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.frontend.permissions.FcmSupport
-import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import javax.inject.Inject
 import org.junit.Before
 import org.junit.Rule
@@ -25,9 +24,6 @@ class ApplicationModuleTest {
 
     @get:Rule
     var hiltRule = HiltAndroidRule(this)
-
-    @get:Rule
-    var consoleLog = ConsoleLogRule()
 
     @Inject
     lateinit var appVersionProvider: AppVersionProvider

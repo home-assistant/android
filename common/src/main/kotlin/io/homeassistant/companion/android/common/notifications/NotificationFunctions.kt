@@ -25,8 +25,11 @@ import com.mikepenz.iconics.utils.toAndroidIconCompat
 import com.vdurmont.emoji.EmojiParser
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.util.CHANNEL_GENERAL
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.cancel
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 object NotificationData {
@@ -38,8 +41,10 @@ object NotificationData {
     const val CHANNEL = "channel"
     const val IMPORTANCE = "importance"
     const val LED_COLOR = "ledColor"
+    const val COLOR = "color"
     const val VIBRATION_PATTERN = "vibrationPattern"
     const val NOTIFICATION_ICON = "notification_icon"
+    const val NOTIFICATION_ICON_COLOR = "notification_icon_color"
     const val ALERT_ONCE = "alert_once"
     const val COMMAND = "command"
 
@@ -54,6 +59,7 @@ object NotificationData {
     const val DTMF_STREAM = "dtmf_stream"
 
     const val MEDIA_STREAM = "media_stream"
+    const val ASSISTANT_STREAM = "assistant_stream"
     val ALARM_STREAMS = listOf(ALARM_STREAM, ALARM_STREAM_MAX)
 
     // special action constants
@@ -82,7 +88,7 @@ fun handleChannel(
     }
 
     // Since android Oreo notification channel is needed.
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+    if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
         val channel = NotificationChannel(
             channelID,
             channelName,
@@ -143,7 +149,7 @@ fun handleChannelSound(context: Context, channel: NotificationChannel) {
 }
 
 fun setChannelLedColor(context: Context, data: Map<String, String>, channel: NotificationChannel) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+    if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
         val ledColor = data[NotificationData.LED_COLOR]
         if (!ledColor.isNullOrBlank()) {
             channel.enableLights(true)
@@ -153,7 +159,7 @@ fun setChannelLedColor(context: Context, data: Map<String, String>, channel: Not
 }
 
 fun setChannelVibrationPattern(data: Map<String, String>, channel: NotificationChannel) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+    if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
         val vibrationPattern = data[NotificationData.VIBRATION_PATTERN]
         val arrVibrationPattern = parseVibrationPattern(vibrationPattern)
         if (arrVibrationPattern.isNotEmpty()) {
@@ -212,7 +218,7 @@ fun handleSmallIcon(context: Context, builder: NotificationCompat.Builder, data:
     }
 }
 
-fun getGroupNotificationBuilder(
+suspend fun getGroupNotificationBuilder(
     context: Context,
     channelId: String,
     group: String,
@@ -236,20 +242,21 @@ fun getGroupNotificationBuilder(
     return groupNotificationBuilder
 }
 
-fun prepareText(text: String): Spanned {
+// Emoji parser can trigger a read from the disk so it needs to happen on IO
+suspend fun prepareText(text: String): Spanned = withContext(Dispatchers.IO) {
     // Replace control char \r\n, \r, \n and also \r\n, \r, \n as text literals in strings to <br>
     val brText = text.replace("(\r\n|\r|\n)|(\\\\r\\\\n|\\\\r|\\\\n)".toRegex(), "<br>")
     val emojiParsedText = EmojiParser.parseToUnicode(brText)
-    return HtmlCompat.fromHtml(emojiParsedText, HtmlCompat.FROM_HTML_MODE_LEGACY)
+    return@withContext HtmlCompat.fromHtml(emojiParsedText, HtmlCompat.FROM_HTML_MODE_LEGACY)
 }
 
 fun handleColor(context: Context, builder: NotificationCompat.Builder, data: Map<String, String>) {
-    val colorString = data["color"]
+    val colorString = data[NotificationData.NOTIFICATION_ICON_COLOR] ?: data[NotificationData.COLOR]
     val color = parseColor(context, colorString, R.color.colorPrimary)
     builder.color = color
 }
 
-fun handleText(builder: NotificationCompat.Builder, data: Map<String, String>) {
+suspend fun handleText(builder: NotificationCompat.Builder, data: Map<String, String>) {
     data[NotificationData.TITLE]?.let {
         builder.setContentTitle(prepareText(it))
     }

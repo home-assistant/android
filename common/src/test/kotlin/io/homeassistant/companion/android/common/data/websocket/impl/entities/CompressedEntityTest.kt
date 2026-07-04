@@ -1,16 +1,13 @@
 package io.homeassistant.companion.android.common.data.websocket.impl.entities
 
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import kotlin.random.Random
 import kotlinx.serialization.json.JsonPrimitive
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.assertNull
 
-@ExtendWith(ConsoleLogExtension::class)
 class CompressedEntityTest {
 
     @Test

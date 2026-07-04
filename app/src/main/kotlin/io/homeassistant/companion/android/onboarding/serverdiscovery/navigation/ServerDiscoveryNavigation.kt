@@ -40,6 +40,7 @@ internal fun NavGraphBuilder.serverDiscoveryScreen(
     onBackClick: () -> Unit,
     onHelpClick: suspend () -> Unit,
     onManualSetupClick: () -> Unit,
+    onLocalNetworkPermissionDenied: () -> Unit,
 ) {
     composable<ServerDiscoveryRoute> {
         ServerDiscoveryScreen(
@@ -47,6 +48,7 @@ internal fun NavGraphBuilder.serverDiscoveryScreen(
             onBackClick = onBackClick,
             onHelpClick = onHelpClick,
             onManualSetupClick = onManualSetupClick,
+            onLocalNetworkPermissionDenied = onLocalNetworkPermissionDenied,
             viewModel = hiltViewModel(),
         )
     }

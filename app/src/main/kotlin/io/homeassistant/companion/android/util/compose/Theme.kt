@@ -127,7 +127,6 @@ object HomeAssistantGlanceTypography {
 
 object HomeAssistantGlanceDimensions {
     val iconSize: Dp
-        @Composable
         get() = 48.dp
 }
 
@@ -161,9 +160,7 @@ object HomeAssistantGlanceTheme {
         @Composable
         get() = LocalGlanceColors.current
     val typography: HomeAssistantGlanceTypography
-        @Composable
         get() = HomeAssistantGlanceTypography
     val dimensions: HomeAssistantGlanceDimensions
-        @Composable
         get() = HomeAssistantGlanceDimensions
 }

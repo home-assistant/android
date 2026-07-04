@@ -100,7 +100,14 @@
                 '!androidx.compose{/,}**',
                 '!androidx.navigation:navigation-compose{/,}**',
                 '!androidx.wear.compose{/,}**',
+                '!androidx.webkit{/,}**',
                 'androidx.{/,}**',
+            ],
+        },
+        {
+            groupName: 'androidx.webkit:*',
+            matchPackageNames: [
+                'androidx.webkit:{/,}**',
             ],
         },
         {

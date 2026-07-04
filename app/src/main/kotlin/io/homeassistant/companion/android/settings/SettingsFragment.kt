@@ -26,8 +26,10 @@ import androidx.preference.SwitchPreference
 import com.google.android.material.snackbar.Snackbar
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.WIPFeature
 import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.isIgnoringBatteryOptimizations
 import io.homeassistant.companion.android.common.util.maybeAskForIgnoringBatteryOptimizations
@@ -49,6 +51,7 @@ import io.homeassistant.companion.android.settings.sensor.SensorSettingsFragment
 import io.homeassistant.companion.android.settings.sensor.SensorUpdateFrequencyFragment
 import io.homeassistant.companion.android.settings.server.ServerSettingsFragment
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment
+import io.homeassistant.companion.android.settings.shortcuts.legacy.ManageShortcutsSettingsFragment as LegacyManageShortcutsSettingsFragment
 import io.homeassistant.companion.android.settings.vehicle.ManageAndroidAutoSettingsFragment
 import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
 import io.homeassistant.companion.android.settings.wear.SettingsWearDetection
@@ -209,20 +212,24 @@ class SettingsFragment(
         }
 
         if (!QuestUtil.isQuest) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
+            if (SdkVersion.isAtLeast(Build.VERSION_CODES.N_MR1)) {
                 findPreference<PreferenceCategory>("shortcuts")?.let {
                     it.isVisible = true
                 }
                 findPreference<Preference>("manage_shortcuts")?.setOnPreferenceClickListener {
                     parentFragmentManager.commit {
-                        replace(R.id.content, ManageShortcutsSettingsFragment::class.java, null)
+                        if (WIPFeature.USE_SHORTCUTS_V2) {
+                            replace(R.id.content, ManageShortcutsSettingsFragment::class.java, null)
+                        } else {
+                            replace(R.id.content, LegacyManageShortcutsSettingsFragment::class.java, null)
+                        }
                         addToBackStack(getString(commonR.string.shortcuts))
                     }
                     return@setOnPreferenceClickListener true
                 }
             }
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
                 findPreference<PreferenceCategory>("quick_settings")?.let {
                     it.isVisible = true
                 }
@@ -250,7 +257,7 @@ class SettingsFragment(
                 return@setOnPreferenceClickListener true
             }
 
-            if (!isAutomotive && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (!isAutomotive && SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
                 findPreference<PreferenceCategory>("device_controls")?.let {
                     it.isVisible = true
                 }
@@ -270,7 +277,7 @@ class SettingsFragment(
 
         updateNotificationChannelPrefs()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             findPreference<Preference>("notification_permission")?.let {
                 it.setOnPreferenceClickListener {
                     openNotificationSettings()
@@ -308,7 +315,7 @@ class SettingsFragment(
 
                     if (rateLimits != null) {
                         var formattedDate = rateLimits.resetsAt
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
                             try {
                                 val utcDateTime = Instant.parse(rateLimits.resetsAt)
                                 formattedDate =
@@ -416,7 +423,7 @@ class SettingsFragment(
 
         findPreference<PreferenceCategory>("android_auto")?.let {
             it.isVisible =
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                SdkVersion.isAtLeast(Build.VERSION_CODES.O) &&
                 (BuildConfig.FLAVOR == "full" || isAutomotive)
             if (isAutomotive) {
                 it.title = getString(commonR.string.android_automotive)
@@ -449,7 +456,7 @@ class SettingsFragment(
     }
 
     private fun removeSystemFromThemesIfNeeded() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.P)) {
             val pref = findPreference<ListPreference>("themes")
             if (pref != null) {
                 val systemIndex = pref.findIndexOfValue("system")
@@ -545,7 +552,7 @@ class SettingsFragment(
 
     private fun updateNotificationChannelPrefs() {
         val notificationsEnabled =
-            Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
+            !SdkVersion.isAtLeast(Build.VERSION_CODES.O) ||
                 NotificationManagerCompat.from(requireContext()).areNotificationsEnabled()
 
         findPreference<Preference>("notification_permission")?.let {
@@ -555,7 +562,7 @@ class SettingsFragment(
             val uiManager = requireContext().getSystemService<UiModeManager>()
             it.isVisible =
                 notificationsEnabled &&
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                SdkVersion.isAtLeast(Build.VERSION_CODES.O) &&
                 uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
         }
     }
@@ -577,7 +584,7 @@ class SettingsFragment(
     }
 
     private fun openNotificationSettings() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             requestNotificationPermissionResult.launch(
                 Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
                     putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().packageName)

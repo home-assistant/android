@@ -1,12 +1,9 @@
 package io.homeassistant.companion.android.frontend.externalbus.outgoing
 
 import io.homeassistant.companion.android.frontend.externalbus.frontendExternalBusJson
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 
-@ExtendWith(ConsoleLogExtension::class)
 class CommandMessageTest {
 
     @Test
@@ -61,6 +58,42 @@ class CommandMessageTest {
 
         assertEquals(
             """{"type":"command","id":null,"command":"improv/device_setup_done","payload":null}""",
+            json,
+        )
+    }
+
+    @Test
+    fun `Given BarcodeScanResultMessage when serializing then produces bar_code scan_result command`() {
+        val message = BarcodeScanResultMessage(id = 7, rawValue = "HA-12345", format = "qr_code")
+
+        val json = frontendExternalBusJson.encodeToString<OutgoingExternalBusMessage>(message)
+
+        assertEquals(
+            """{"type":"command","id":7,"command":"bar_code/scan_result","payload":{"rawValue":"HA-12345","format":"qr_code"}}""",
+            json,
+        )
+    }
+
+    @Test
+    fun `Given BarcodeScanAbortedMessage forAction true when serializing then reason is alternative_options`() {
+        val message = BarcodeScanAbortedMessage(id = 7, forAction = true)
+
+        val json = frontendExternalBusJson.encodeToString<OutgoingExternalBusMessage>(message)
+
+        assertEquals(
+            """{"type":"command","id":7,"command":"bar_code/aborted","payload":{"reason":"alternative_options"}}""",
+            json,
+        )
+    }
+
+    @Test
+    fun `Given BarcodeScanAbortedMessage forAction false when serializing then reason is canceled`() {
+        val message = BarcodeScanAbortedMessage(id = 7, forAction = false)
+
+        val json = frontendExternalBusJson.encodeToString<OutgoingExternalBusMessage>(message)
+
+        assertEquals(
+            """{"type":"command","id":7,"command":"bar_code/aborted","payload":{"reason":"canceled"}}""",
             json,
         )
     }

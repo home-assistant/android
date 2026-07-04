@@ -1,12 +1,16 @@
 package io.homeassistant.companion.android.frontend.permissions
 
-import android.annotation.SuppressLint
+import android.Manifest
 import android.os.Build
 import android.webkit.PermissionRequest as WebViewPermissionRequest
 import androidx.annotation.VisibleForTesting
+import dagger.hilt.android.scopes.ViewModelScoped
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissionUseCase
 import io.homeassistant.companion.android.common.util.NotificationStatusProvider
 import io.homeassistant.companion.android.common.util.PermissionChecker
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.SingleSlotQueue
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.database.settings.Setting
@@ -28,6 +32,13 @@ private data class WebViewPermissionStatus(
 )
 
 /**
+ * Caps how many times the Improv permission rationale bottom sheet is shown to a user before
+ * skipping straight to the system multi-permission dialog.
+ */
+@VisibleForTesting
+internal const val IMPROV_RATIONALE_MAX_SHOWS = 2
+
+/**
  * Centralises all Android runtime permission request/result for the frontend screen.
  *
  * Each `check*` / `on*` method runs the full request/response cycle: build a [PermissionRequest],
@@ -38,31 +49,16 @@ private data class WebViewPermissionStatus(
  * Concurrent triggers are waiting in FIFO order: a second method call suspends until the
  * current request is resolved.
  */
-internal class PermissionManager @VisibleForTesting constructor(
+@ViewModelScoped
+internal class PermissionManager @Inject constructor(
     private val serverManager: ServerManager,
     private val settingsDao: SettingsDao,
     @FcmSupport private val fcmSupport: Boolean,
     private val notificationStatusProvider: NotificationStatusProvider,
     private val permissionChecker: PermissionChecker,
-    // Need for testing to avoid the need of Robolectric
-    private val sdkInt: Int,
+    private val checkLocalNetworkPermissionUseCase: CheckLocalNetworkPermissionUseCase,
+    private val prefsRepository: PrefsRepository,
 ) {
-
-    @Inject
-    constructor(
-        serverManager: ServerManager,
-        settingsDao: SettingsDao,
-        @FcmSupport fcmSupport: Boolean,
-        notificationStatusProvider: NotificationStatusProvider,
-        permissionChecker: PermissionChecker,
-    ) : this(
-        serverManager = serverManager,
-        settingsDao = settingsDao,
-        fcmSupport = fcmSupport,
-        notificationStatusProvider = notificationStatusProvider,
-        permissionChecker = permissionChecker,
-        sdkInt = Build.VERSION.SDK_INT,
-    )
 
     private val queue = SingleSlotQueue<PermissionRequest>()
 
@@ -85,9 +81,8 @@ internal class PermissionManager @VisibleForTesting constructor(
      *
      * @param serverId The server to check notification preferences for
      */
-    @SuppressLint("NewApi")
     suspend fun checkNotificationPermission(serverId: Int) {
-        if (sdkInt < Build.VERSION_CODES.TIRAMISU) return
+        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) return
         if (!shouldAskNotificationPermission(serverId)) return
 
         val granted: Boolean? = queue.awaitResult { resolve ->
@@ -103,6 +98,32 @@ internal class PermissionManager @VisibleForTesting constructor(
     }
 
     /**
+     * Ensures the app has Android 17+'s local network access permission so the WebView and
+     * websocket layers can reach a Home Assistant instance over the LAN.
+     *
+     * Returns `true` immediately on pre-API 37 devices (local network access is implicit) and when
+     * the permission is already granted. Otherwise enqueues a [PermissionRequest.LocalNetwork],
+     * suspends until the user responds, and returns whether they granted it. Callers should still
+     * attempt the URL load on denial — the cloud fallback or non-LAN setups may continue to work.
+     *
+     * @return `true` if local network access is available (granted or not required); `false` if the
+     *         user declined the permission
+     */
+    suspend fun checkLocalNetworkPermission(): Boolean {
+        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.CINNAMON_BUN)) return true
+        if (permissionChecker.hasPermission(Manifest.permission.ACCESS_LOCAL_NETWORK)) return true
+
+        Timber.d("Local network permission required, awaiting user response")
+        val granted = queue.awaitResult { onResult ->
+            PermissionRequest.LocalNetwork(onResult = onResult)
+        }
+        // Idempotent reconcile so the background-work notification (if any) is cleared as soon
+        // as the user grants the permission via this flow.
+        checkLocalNetworkPermissionUseCase()
+        return granted
+    }
+
+    /**
      * Ensures the app has permission to write to external storage for a download.
      *
      * Returns `true` immediately on API 29+ (scoped storage no permission needed) and when the
@@ -114,13 +135,52 @@ internal class PermissionManager @VisibleForTesting constructor(
      *         the user declined the permission
      */
     suspend fun checkStoragePermissionForDownload(): Boolean {
-        if (sdkInt >= Build.VERSION_CODES.Q) return true
-        if (permissionChecker.hasPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)) return true
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) return true
+        if (permissionChecker.hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)) return true
 
         Timber.d("Storage permission required for download, awaiting user response")
         return queue.awaitResult { onResult ->
             PermissionRequest.ExternalStorage(onResult = onResult)
         }
+    }
+
+    /**
+     * Drives the full permission flow for the Improv Wi-Fi onboarding session.
+     *
+     * Returns `true` immediately when every permission in [requiredPermissions] is already
+     * granted. Otherwise enqueues a single [PermissionRequest.Improv] whose `showRationale` flag
+     * is `true` only while the displayed-count is below [IMPROV_RATIONALE_MAX_SHOWS]. The UI owns
+     * both stages: the optional rationale bottom sheet and the system multi-permission dialog.
+     * The call resolves to:
+     * - `true` after the user answered the system dialog (whether granting or denying — the
+     *   final return value reflects whether everything is granted),
+     * - `false` when the user skipped the rationale without reaching the system dialog.
+     *
+     * @param requiredPermissions The full set of Android runtime permissions Improv needs (BLE +
+     *   Location). Variants of the list that depend on SDK level are owned by the caller.
+     * @return `true` when every permission in [requiredPermissions] is granted after the user
+     *   responded; `false` when the user skipped the rationale or at least one permission is
+     *   still missing.
+     */
+    suspend fun checkImprovPermissions(requiredPermissions: List<String>): Boolean {
+        val toRequest = requiredPermissions.filterNot { permissionChecker.hasPermission(it) }
+        if (toRequest.isEmpty()) return true
+
+        val showRationale = prefsRepository.getImprovPermissionDisplayedCount() < IMPROV_RATIONALE_MAX_SHOWS
+        if (showRationale) {
+            prefsRepository.addImprovPermissionDisplayedCount()
+        }
+
+        val responded = queue.awaitResult { resolve ->
+            PermissionRequest.Improv(
+                permissions = toRequest,
+                showRationale = showRationale,
+                onResult = { _ -> resolve(true) },
+                onDismiss = { resolve(false) },
+            )
+        }
+        if (!responded) return false
+        return requiredPermissions.all { permissionChecker.hasPermission(it) }
     }
 
     /**

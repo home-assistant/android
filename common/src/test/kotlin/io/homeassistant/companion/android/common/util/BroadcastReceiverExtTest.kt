@@ -16,11 +16,12 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNotNull
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.fail
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -71,7 +72,7 @@ class BroadcastReceiverExtTest {
 
         verify { pendingResult.finish() }
         assertNotNull(caughtException)
-        assertTrue(caughtException is IllegalStateException)
+        assertInstanceOf(IllegalStateException::class.java, caughtException)
     }
 
     @Test

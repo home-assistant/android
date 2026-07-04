@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.os.bundleOf
@@ -12,19 +13,24 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import com.wifi.improv.DeviceState
+import com.wifi.improv.ImprovDevice
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
+import io.homeassistant.companion.android.common.compose.composable.rememberHAModalBottomSheetState
+import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.network.WifiHelper
-import io.homeassistant.companion.android.improv.ImprovRepository
-import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
+import io.homeassistant.companion.android.frontend.improv.ImprovRepository
+import io.homeassistant.companion.android.frontend.improv.ImprovUIState
+import io.homeassistant.companion.android.frontend.improv.ProvisioningEvent
+import io.homeassistant.companion.android.frontend.improv.ui.ImprovSheet
 import io.homeassistant.companion.android.util.setLayoutAndExpandedByDefault
 import io.homeassistant.companion.android.webview.externalbus.ExternalBusMessage
 import io.homeassistant.companion.android.webview.externalbus.ExternalBusRepository
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 @AndroidEntryPoint
 class ImprovSetupDialog : BottomSheetDialogFragment() {
@@ -46,94 +52,77 @@ class ImprovSetupDialog : BottomSheetDialogFragment() {
         const val RESULT_KEY = "ImprovSetupResult"
         const val RESULT_DOMAIN = "domain"
 
-        fun newInstance(deviceName: String?): ImprovSetupDialog {
+        fun newInstance(deviceName: String): ImprovSetupDialog {
             return ImprovSetupDialog().apply {
                 arguments = bundleOf(ARG_NAME to deviceName)
             }
         }
     }
 
-    private val screenState = MutableStateFlow(
-        ImprovSheetState(
-            scanning = false,
-            devices = listOf(),
-            deviceState = null,
-            errorState = null,
-        ),
-    )
+    private val screenState: MutableStateFlow<ImprovUIState> =
+        MutableStateFlow(ImprovUIState.SearchingDevice(deviceName = ""))
 
-    private var initialDeviceName: String? = null
+    private var provisioningJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (savedInstanceState == null) {
+            val name = arguments?.getString(ARG_NAME).orEmpty()
+            screenState.value = ImprovUIState.SearchingDevice(deviceName = name)
+        }
         lifecycleScope.launch {
-            if (savedInstanceState == null) {
-                if (arguments?.containsKey(ARG_NAME) == true) {
-                    val name = arguments?.getString(ARG_NAME, "").takeIf { !it.isNullOrBlank() }
-                    name?.let {
-                        initialDeviceName = it
-                        screenState.emit(screenState.value.copy(initialDeviceName = it))
-                    }
-                }
-            }
             repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                screenState.emit(screenState.value.copy(activeSsid = wifiHelper.getWifiSsid()?.removeSurrounding("\"")))
-                launch {
-                    improvRepository.getScanningState().collect {
-                        screenState.emit(screenState.value.copy(scanning = it))
-                    }
+                val ssid = wifiHelper.getWifiSsid()?.removeSurrounding("\"")
+                screenState.update { state ->
+                    if (state is ImprovUIState.ConfiguringDevice) state.copy(activeSsid = ssid) else state
                 }
-                launch {
-                    improvRepository.getDevices().collect {
-                        screenState.emit(screenState.value.copy(devices = it))
-                        if (initialDeviceName != null) {
-                            it.firstOrNull { device -> device.name == initialDeviceName }
-                                ?.let { foundDevice ->
-                                    screenState.emit(
-                                        screenState.value.copy(
-                                            initialDeviceAddress = foundDevice.address,
-                                        ),
-                                    )
-                                    initialDeviceName = null
-                                }
+                // Subscribing to scanDevices() auto-starts the BLE scan; cancellation on lifecycle
+                // exit auto-stops it via the repository's shareIn(WhileSubscribed).
+                improvRepository.scanDevices().collect { devices ->
+                    screenState.update { state ->
+                        if (state is ImprovUIState.SearchingDevice) {
+                            val matched = devices.firstOrNull { it.name == state.deviceName }?.address
+                            if (matched != null) {
+                                ImprovUIState.ConfiguringDevice(
+                                    deviceName = state.deviceName,
+                                    deviceAddress = matched,
+                                    activeSsid = wifiHelper.getWifiSsid()?.removeSurrounding("\""),
+                                )
+                            } else {
+                                state
+                            }
+                        } else {
+                            state
                         }
-                    }
-                }
-                launch {
-                    improvRepository.getDeviceState().collect {
-                        screenState.emit(screenState.value.copy(deviceState = it))
-                        if (it == DeviceState.PROVISIONED) notifyFrontend()
-                    }
-                }
-                launch {
-                    improvRepository.getErrorState().collect {
-                        screenState.emit(screenState.value.copy(errorState = it))
                     }
                 }
             }
         }
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
-                HomeAssistantAppTheme {
-                    val state = screenState.collectAsState()
-                    ImprovSheetView(
-                        screenState = state.value,
-                        onConnect = improvRepository::connectAndSubmit,
-                        onRestart = {
-                            improvRepository.clearStatesForDevice()
-                            startScanning()
-                        },
-                        onDismiss = {
-                            val domain = improvRepository.getResultState().firstOrNull()?.toHttpUrlOrNull()
-                                ?.queryParameter("domain")
-                            setFragmentResult(RESULT_KEY, bundleOf(RESULT_DOMAIN to domain))
-                            improvRepository.clearStatesForDevice()
-                            dismiss()
-                        },
-                    )
+                HATheme {
+                    val sheetState = rememberHAModalBottomSheetState()
+                    HAModalBottomSheet(
+                        bottomSheetState = sheetState,
+                        onDismissRequest = ::dismiss,
+                        dragHandle = {},
+                    ) {
+                        val state = screenState.collectAsState()
+                        ImprovSheet(
+                            screenState = state.value,
+                            onConnect = { ssid, password -> startProvisioning(ssid, password) },
+                            onRestart = { restartConfiguringDevice() },
+                            onDismiss = {
+                                val domain = (screenState.value as? ImprovUIState.Provisioned)?.domain
+                                setFragmentResult(RESULT_KEY, bundleOf(RESULT_DOMAIN to domain))
+                                dismiss()
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -144,22 +133,43 @@ class ImprovSetupDialog : BottomSheetDialogFragment() {
         setLayoutAndExpandedByDefault()
     }
 
-    override fun onResume() {
-        super.onResume()
-        if (screenState.value.deviceState == null) startScanning()
-    }
-
-    override fun onPause() {
-        improvRepository.stopScanning()
-        super.onPause()
-    }
-
-    private fun startScanning() {
-        context?.let {
-            lifecycleScope.launch(Dispatchers.IO) {
-                improvRepository.startScanning(it)
+    private fun startProvisioning(ssid: String, password: String) {
+        val current = screenState.value as? ImprovUIState.ConfiguringDevice ?: return
+        val deviceAddress = current.deviceAddress
+        val deviceName = current.deviceName
+        screenState.value = ImprovUIState.Provisioning(deviceName = deviceName, deviceAddress = deviceAddress)
+        provisioningJob?.cancel()
+        provisioningJob = lifecycleScope.launch {
+            improvRepository.provisionDevice(ImprovDevice(deviceName, deviceAddress), ssid, password).collect { event ->
+                when (event) {
+                    is ProvisioningEvent.StateChanged -> screenState.update { state ->
+                        if (state is ImprovUIState.Provisioning) state.copy(state = event.state) else state
+                    }
+                    is ProvisioningEvent.ErrorOccurred -> screenState.update { state ->
+                        if (state is ImprovUIState.Provisioning) {
+                            ImprovUIState.Errored(deviceName, deviceAddress, event.error)
+                        } else {
+                            state
+                        }
+                    }
+                    is ProvisioningEvent.Provisioned -> {
+                        screenState.value = ImprovUIState.Provisioned(domain = event.domain)
+                        notifyFrontend()
+                    }
+                }
             }
         }
+    }
+
+    private fun restartConfiguringDevice() {
+        provisioningJob?.cancel()
+        provisioningJob = null
+        val current = screenState.value as? ImprovUIState.WithResolvedDevice ?: return
+        screenState.value = ImprovUIState.ConfiguringDevice(
+            deviceName = current.deviceName,
+            deviceAddress = current.deviceAddress,
+            activeSsid = wifiHelper.getWifiSsid()?.removeSurrounding("\""),
+        )
     }
 
     private fun notifyFrontend() {

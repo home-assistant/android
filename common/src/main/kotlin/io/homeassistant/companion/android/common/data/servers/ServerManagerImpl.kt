@@ -10,9 +10,9 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager.Companion.SERVER_ID_ACTIVE
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepositoryFactory
+import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.mediacontrol.MediaControlDao
-import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerDao
 import io.homeassistant.companion.android.database.server.TemporaryServer
@@ -74,7 +74,7 @@ internal class ServerManagerImpl @Inject constructor(
     private val serverConnectionStateProviderFactory: ServerConnectionStateProviderFactory,
     private val prefsRepository: PrefsRepository,
     private val serverDao: ServerDao,
-    private val sensorDao: SensorDao,
+    private val sensorRepository: SensorRepository,
     private val settingsDao: SettingsDao,
     private val mediaControlDao: MediaControlDao,
     @NamedSessionStorage private val localStorage: LocalStorage,
@@ -144,7 +144,7 @@ internal class ServerManagerImpl @Inject constructor(
 
         if (localStorage.getInt(PREF_ACTIVE_SERVER) == id) localStorage.remove(PREF_ACTIVE_SERVER)
         settingsDao.delete(id)
-        sensorDao.removeServer(id)
+        sensorRepository.removeServer(id)
         mediaControlDao.deleteByServerId(id)
         serverDao.delete(id)
     }

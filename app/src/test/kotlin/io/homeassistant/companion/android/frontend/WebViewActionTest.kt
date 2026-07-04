@@ -87,6 +87,25 @@ class WebViewActionTest {
         assertTrue(action.result.isCompleted)
     }
 
+    @Suppress("DEPRECATION")
+    @Test
+    fun `Given NavigateToDefaultPanelViaSidebar when run then evaluateJavascript is called and result completes`() = runTest {
+        val callbackSlot = slot<ValueCallback<String>>()
+        every { webView.evaluateJavascript(any(), capture(callbackSlot)) } just Runs
+        val action = WebViewAction.NavigateToDefaultPanelViaSidebar()
+
+        action.run(webView)
+
+        verify {
+            webView.evaluateJavascript(
+                match { it.contains("defaultPanel") && it.contains("ha-sidebar") },
+                any(),
+            )
+        }
+        callbackSlot.captured.onReceiveValue(null)
+        assertTrue(action.result.isCompleted)
+    }
+
     @Test
     fun `Given EvaluateScript when run then evaluateJavascript is called and result completes with callback value`() = runTest {
         val callbackSlot = slot<ValueCallback<String>>()

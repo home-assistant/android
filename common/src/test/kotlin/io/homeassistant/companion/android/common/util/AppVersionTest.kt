@@ -1,11 +1,8 @@
 package io.homeassistant.companion.android.common.util
 
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 
-@ExtendWith(ConsoleLogExtension::class)
 class AppVersionTest {
 
     @Test

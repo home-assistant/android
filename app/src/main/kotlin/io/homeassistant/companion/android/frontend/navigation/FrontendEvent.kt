@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend.navigation
 
+import android.content.IntentSender
 import android.net.Uri
 import androidx.annotation.StringRes
 
@@ -15,11 +16,25 @@ import androidx.annotation.StringRes
 sealed interface FrontendEvent {
 
     /**
-     * Show a snackbar with the given string resource message.
+     * Show a snackbar with the given string resource message and, optionally, an action button
+     * whose tap fires another [FrontendEvent].
+     *
+     * Chaining via [Action.event] keeps `ShowSnackbar` agnostic to what the action *does*: the
+     * emitter decides whether the tap opens a link, navigates somewhere, retries, etc. The
+     * handler dispatches the inner event.
      *
      * @param messageResId String resource ID for the message to display
+     * @param action Optional action button. `null` renders a plain message snackbar.
      */
-    data class ShowSnackbar(@StringRes val messageResId: Int) : FrontendEvent
+    data class ShowSnackbar(@param:StringRes val messageResId: Int, val action: Action? = null) : FrontendEvent {
+
+        /**
+         * @param labelResId String resource for the action button label (e.g. "Get help").
+         * @param event Fired when the user taps the action; routed back through
+         *   [FrontendEventHandler] like any other [FrontendEvent].
+         */
+        data class Action(@param:StringRes val labelResId: Int, val event: FrontendEvent)
+    }
 
     /** Navigate to the app settings screen. */
     data object NavigateToSettings : FrontendEvent
@@ -33,6 +48,22 @@ sealed interface FrontendEvent {
 
     /** Open a URI externally using the host-provided external link handler. */
     data class OpenExternalLink(val uri: Uri) : FrontendEvent
+
+    /**
+     * Launch an installed app by its [packageName].
+     *
+     * The host is responsible for opening the app store when no app with this package is installed.
+     */
+    data class LaunchApp(val packageName: String) : FrontendEvent
+
+    /**
+     * Parse and launch an Android `intent:` URI.
+     *
+     * The host is responsible for opening the app store when the intent targets a package that is not installed.
+     *
+     * @param intentUri The raw `intent:` URI as provided by the frontend.
+     */
+    data class LaunchIntent(val intentUri: String) : FrontendEvent
 
     /** Navigate to the developer tools settings screen */
     data object NavigateToDeveloperSettings : FrontendEvent
@@ -64,4 +95,21 @@ sealed interface FrontendEvent {
      * the preference already enables fullscreen, a `false` request won't leave fullscreen.
      */
     data class RequestFullscreen(val fullscreen: Boolean) : FrontendEvent
+
+    /**
+     * Navigate to a widget configuration screen for the given entity.
+     *
+     * @param entityId The entity to pre-fill in the widget configuration
+     * @param widgetType The type of widget to configure
+     */
+    data class NavigateToWidgetConfig(val entityId: String, val widgetType: WidgetType) : FrontendEvent
+
+    /**
+     * Launch a Play Services Matter/Thread intent. The host is responsible for launching the
+     * [intentSender] via an `ActivityResultLauncher` and forwarding the result back to the
+     * ViewModel via [io.homeassistant.companion.android.frontend.FrontendViewModel.onMatterThreadIntentResult].
+     *
+     * One event covers both flows because only one launcher needs to be registered.
+     */
+    data class LaunchMatterThreadIntent(val intentSender: IntentSender) : FrontendEvent
 }

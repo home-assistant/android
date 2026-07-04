@@ -6,7 +6,6 @@ import com.google.android.gms.wearable.Node
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.fakes.FakeCapabilityClient
 import io.homeassistant.companion.android.fakes.FakeNodeClient
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -16,12 +15,10 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 
 private const val CAPABILITY_WEAR_APP = "verify_wear_app"
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(ConsoleLogExtension::class)
 class SettingsWearViewModelTest {
 
     private val settingsWearRepository: SettingsWearRepository = mockk()

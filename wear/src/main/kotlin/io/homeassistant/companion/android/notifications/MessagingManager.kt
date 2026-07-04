@@ -16,6 +16,8 @@ import io.homeassistant.companion.android.common.notifications.handleChannel
 import io.homeassistant.companion.android.common.notifications.handleDeleteIntent
 import io.homeassistant.companion.android.common.notifications.handleSmallIcon
 import io.homeassistant.companion.android.common.notifications.handleText
+import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
+import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.getActiveNotification
 import io.homeassistant.companion.android.common.util.toJsonObject
@@ -23,8 +25,8 @@ import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechData
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
-import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.sensors.SensorReceiver
+import io.homeassistant.companion.android.util.sensitive
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -35,9 +37,10 @@ import timber.log.Timber
 class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,
     private val serverManager: ServerManager,
-    private val sensorDao: SensorDao,
+    private val sensorRepository: SensorRepository,
     private val notificationDao: NotificationDao,
     private val textToSpeechClient: TextToSpeechClient,
+    private val bluetoothSensorManager: BluetoothSensorManager,
 ) {
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -47,9 +50,10 @@ class MessagingManager @Inject constructor(
 
             val jsonData = notificationData as Map<String, String>?
             val jsonObject = jsonData?.toJsonObject()
-            val serverId = jsonData?.get(NotificationData.WEBHOOK_ID)?.let {
+            val receivedWebhookId = jsonData?.get(NotificationData.WEBHOOK_ID)
+            val receivedServerId = receivedWebhookId?.let {
                 serverManager.getServer(webhookId = it)?.id
-            } ?: ServerManager.SERVER_ID_ACTIVE
+            }
             val notificationRow =
                 NotificationItem(
                     0,
@@ -57,27 +61,42 @@ class MessagingManager @Inject constructor(
                     notificationData[NotificationData.MESSAGE].toString(),
                     jsonObject.toString(),
                     source,
-                    serverId,
+                    receivedServerId,
                 )
             notificationDao.add(notificationRow)
-            if (serverManager.getServer(serverId) == null) {
-                Timber.w("Received notification but no server for it, discarding")
+
+            val webhookServerId = receivedWebhookId?.let { webhookId ->
+                val serverForWebhook = serverManager.getServer(webhookId = webhookId)
+                if (serverForWebhook == null) {
+                    Timber.w(
+                        "Received notification with webhook ID ${sensitive(
+                            webhookId,
+                        )} but no matching server, ignoring",
+                    )
+                    return@launch
+                }
+
+                serverForWebhook.id
+            } ?: ServerManager.SERVER_ID_ACTIVE
+
+            if (serverManager.getServer(webhookServerId) == null) {
+                Timber.w("Received notification but no server available, ignoring")
                 return@launch
             }
 
-            val allowCommands = serverManager.integrationRepository(serverId).isTrusted()
+            val allowCommands = serverManager.integrationRepository(webhookServerId).isTrusted()
             val message = notificationData[NotificationData.MESSAGE]
             when {
                 message == NotificationData.CLEAR_NOTIFICATION && !notificationData["tag"].isNullOrBlank() -> {
                     clearNotification(context, notificationData["tag"]!!)
                 }
                 message == DeviceCommandData.COMMAND_BEACON_MONITOR && allowCommands -> {
-                    if (!commandBeaconMonitor(context, notificationData)) {
+                    if (!commandBeaconMonitor(notificationData, bluetoothSensorManager)) {
                         sendNotification(notificationData, now)
                     }
                 }
                 message == DeviceCommandData.COMMAND_BLE_TRANSMITTER && allowCommands -> {
-                    if (!commandBleTransmitter(context, notificationData, sensorDao)) {
+                    if (!commandBleTransmitter(notificationData, sensorRepository, bluetoothSensorManager)) {
                         sendNotification(notificationData)
                     }
                 }
@@ -90,7 +109,7 @@ class MessagingManager @Inject constructor(
     }
 
     @SuppressLint("MissingPermission")
-    private fun sendNotification(data: Map<String, String>, received: Long? = null) {
+    private suspend fun sendNotification(data: Map<String, String>, received: Long? = null) {
         val notificationManagerCompat = NotificationManagerCompat.from(context)
 
         val tag = data["tag"].takeIf { !it.isNullOrBlank() }

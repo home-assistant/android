@@ -2,29 +2,24 @@ package io.homeassistant.companion.android.frontend.externalbus.outgoing
 
 import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.frontend.externalbus.frontendExternalBusJson
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
+import io.homeassistant.companion.android.webview.externalbus.ExternalEntityAddToAction
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 
-@ExtendWith(ConsoleLogExtension::class)
 class OutgoingExternalBusMessageTest {
 
     @Test
     fun `Given a result config message when serializing then it generates valid JSON`() {
         val json = frontendExternalBusJson.encodeToString<OutgoingExternalBusMessage>(
-            ResultMessage.config(
+            ConfigResultMessage(
                 id = 1,
-                config = ConfigResult.create(
-                    hasNfc = true,
-                    canCommissionMatter = true,
-                    canExportThread = true,
-                    hasBarCodeScanner = 0,
-                    canSetupImprov = true,
-                    appVersion = AppVersion.from("1.0.0 (1)"),
-                ),
+                hasNfc = true,
+                canCommissionMatter = true,
+                canExportThread = true,
+                hasBarCodeScanner = 0,
+                canSetupImprov = true,
+                appVersion = AppVersion.from("1.0.0 (1)"),
             ),
         )
         assertEquals(
@@ -36,16 +31,14 @@ class OutgoingExternalBusMessageTest {
     @Test
     fun `Given device without BLE when serializing config then canSetupImprov is false`() {
         val json = frontendExternalBusJson.encodeToString<OutgoingExternalBusMessage>(
-            ResultMessage.config(
+            ConfigResultMessage(
                 id = 2,
-                config = ConfigResult.create(
-                    hasNfc = false,
-                    canCommissionMatter = false,
-                    canExportThread = false,
-                    hasBarCodeScanner = 0,
-                    canSetupImprov = false,
-                    appVersion = AppVersion.from("1.0.0 (1)"),
-                ),
+                hasNfc = false,
+                canCommissionMatter = false,
+                canExportThread = false,
+                hasBarCodeScanner = 0,
+                canSetupImprov = false,
+                appVersion = AppVersion.from("1.0.0 (1)"),
             ),
         )
         assertTrue(json.contains(""""canSetupImprov":false"""))
@@ -53,7 +46,7 @@ class OutgoingExternalBusMessageTest {
 
     @Test
     fun `Given ConfigResult then default values are correct`() {
-        val config = ConfigResult.create(
+        val config = ConfigResultMessage.ConfigResult.create(
             hasNfc = false,
             canCommissionMatter = false,
             canExportThread = false,
@@ -72,16 +65,21 @@ class OutgoingExternalBusMessageTest {
     }
 
     @Test
-    fun `Given canSetupImprov passed false to create then ConfigResult exposes canSetupImprov false`() {
-        val config = ConfigResult.create(
-            hasNfc = false,
-            canCommissionMatter = false,
-            canExportThread = false,
-            hasBarCodeScanner = 0,
-            canSetupImprov = false,
-            appVersion = AppVersion.from("1.0.0 (1)"),
+    fun `Given EntityAddToActions response when serializing then JSON uses snake_case fields`() {
+        val actions = listOf(
+            ExternalEntityAddToAction(
+                appPayload = "dGVzdA==",
+                enabled = true,
+                name = "Entity Widget",
+                details = null,
+                mdiIcon = "mdi:shape",
+            ),
         )
+        val json = frontendExternalBusJson.encodeToString<OutgoingExternalBusMessage>(EntityAddToActionsResultMessage(id = 20, actions = actions))
 
-        assertFalse(config.canSetupImprov)
+        assertEquals(
+            """{"type":"result","id":20,"success":true,"result":{"actions":[{"app_payload":"dGVzdA==","enabled":true,"name":"Entity Widget","details":null,"mdi_icon":"mdi:shape"}]},"error":null}""",
+            json,
+        )
     }
 }

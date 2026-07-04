@@ -8,6 +8,7 @@ import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.common.util.toJsonObject
 import io.homeassistant.companion.android.webview.addto.EntityAddToAction
 import kotlin.io.encoding.Base64
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import timber.log.Timber
 
@@ -85,11 +86,11 @@ class ExternalConfigResponse(
 
 @Serializable
 data class ExternalEntityAddToAction(
-    val appPayload: String,
+    @SerialName("app_payload") val appPayload: String,
     val enabled: Boolean,
     val name: String,
     val details: String?,
-    val mdiIcon: String,
+    @SerialName("mdi_icon") val mdiIcon: String,
 ) {
     companion object {
         fun fromAction(context: Context, action: EntityAddToAction): ExternalEntityAddToAction {

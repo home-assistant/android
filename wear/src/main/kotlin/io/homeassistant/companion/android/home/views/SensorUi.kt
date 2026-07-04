@@ -22,6 +22,7 @@ import androidx.wear.compose.material3.SwitchButton
 import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.theme.getSwitchButtonColors
 import io.homeassistant.companion.android.util.batterySensorManager
@@ -51,13 +52,11 @@ fun SensorUi(
         isGranted.forEach {
             if (
                 it.key == Manifest.permission.ACCESS_FINE_LOCATION &&
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+                SdkVersion.isAtLeast(Build.VERSION_CODES.R) &&
                 manager.requiredPermissions(
-                    context,
                     basicSensor.id,
                 ).contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
                 manager.requiredPermissions(
-                    context,
                     basicSensor.id,
                 ).contains(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
             ) {
@@ -66,10 +65,9 @@ fun SensorUi(
             }
             if (
                 it.key == Manifest.permission.BODY_SENSORS &&
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                manager.requiredPermissions(context, basicSensor.id).contains(Manifest.permission.BODY_SENSORS) &&
+                SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) &&
+                manager.requiredPermissions(basicSensor.id).contains(Manifest.permission.BODY_SENSORS) &&
                 manager.requiredPermissions(
-                    context,
                     basicSensor.id,
                 ).contains(Manifest.permission.BODY_SENSORS_BACKGROUND)
             ) {
@@ -84,13 +82,13 @@ fun SensorUi(
         perm = allGranted
     }
 
-    LaunchedEffect(Unit) { perm = manager.checkPermission(context, basicSensor.id) }
+    LaunchedEffect(Unit) { perm = manager.checkPermission(basicSensor.id) }
     val isChecked = (sensor == null && basicSensor.enabledByDefault) ||
         (sensor?.enabled == true && perm)
     SwitchButton(
         checked = isChecked,
         onCheckedChange = { enabled ->
-            val permissions = manager.requiredPermissions(context, basicSensor.id)
+            val permissions = manager.requiredPermissions(basicSensor.id)
             if (perm || !enabled) {
                 onSensorClicked(basicSensor.id, enabled)
             } else {
@@ -143,7 +141,8 @@ fun SensorUi(
 @Composable
 private fun PreviewSensorUI() {
     val context = LocalContext.current
-    val batterySensors = runBlocking { batterySensorManager.getAvailableSensors(context) }
+    val batterySensorManager = batterySensorManager(context)
+    val batterySensors = runBlocking { batterySensorManager.getAvailableSensors() }
     CompositionLocalProvider {
         ThemeLazyColumn {
             item {

@@ -10,8 +10,8 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager.Companion.SERVER_ID_ACTIVE
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepositoryFactory
+import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.database.mediacontrol.MediaControlDao
-import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerDao
@@ -19,7 +19,6 @@ import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.database.server.TemporaryServer
 import io.homeassistant.companion.android.database.settings.SettingsDao
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -37,16 +36,14 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.assertNull
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-@ExtendWith(ConsoleLogExtension::class)
 class ServerManagerImplTest {
 
     private val authenticationRepositoryFactory: AuthenticationRepositoryFactory = mockk()
@@ -55,7 +52,7 @@ class ServerManagerImplTest {
     private val serverConnectionStateProviderFactory: ServerConnectionStateProviderFactory = mockk()
     private val prefsRepository: PrefsRepository = mockk()
     private val serverDao: ServerDao = mockk()
-    private val sensorDao: SensorDao = mockk()
+    private val sensorRepository: SensorRepository = mockk()
     private val settingsDao: SettingsDao = mockk()
     private val mediaControlDao: MediaControlDao = mockk()
     private val localStorage: LocalStorage = mockk()
@@ -84,7 +81,7 @@ class ServerManagerImplTest {
             serverConnectionStateProviderFactory = serverConnectionStateProviderFactory,
             prefsRepository = prefsRepository,
             serverDao = serverDao,
-            sensorDao = sensorDao,
+            sensorRepository = sensorRepository,
             settingsDao = settingsDao,
             mediaControlDao = mediaControlDao,
             localStorage = localStorage,
@@ -348,7 +345,7 @@ class ServerManagerImplTest {
             coEvery { prefsRepository.removeServer(serverId) } just Runs
             coEvery { localStorage.getInt("active_server") } returns null
             coEvery { settingsDao.delete(serverId) } just Runs
-            coEvery { sensorDao.removeServer(serverId) } just Runs
+            coEvery { sensorRepository.removeServer(serverId) } just Runs
             coEvery { mediaControlDao.deleteByServerId(serverId) } just Runs
             coEvery { serverDao.delete(serverId) } just Runs
             coEvery { webSocketRepo.shutdown() } just Runs
@@ -363,7 +360,7 @@ class ServerManagerImplTest {
                 prefsRepository.removeServer(serverId)
                 webSocketRepo.shutdown()
                 settingsDao.delete(serverId)
-                sensorDao.removeServer(serverId)
+                sensorRepository.removeServer(serverId)
                 mediaControlDao.deleteByServerId(serverId)
                 serverDao.delete(serverId)
             }
@@ -384,7 +381,7 @@ class ServerManagerImplTest {
             coEvery { localStorage.getInt("active_server") } returns serverId
             coEvery { localStorage.remove("active_server") } just Runs
             coEvery { settingsDao.delete(serverId) } just Runs
-            coEvery { sensorDao.removeServer(serverId) } just Runs
+            coEvery { sensorRepository.removeServer(serverId) } just Runs
             coEvery { mediaControlDao.deleteByServerId(serverId) } just Runs
             coEvery { serverDao.delete(serverId) } just Runs
 
@@ -407,7 +404,7 @@ class ServerManagerImplTest {
             coEvery { prefsRepository.removeServer(serverId) } just Runs
             coEvery { localStorage.getInt("active_server") } returns 10
             coEvery { settingsDao.delete(serverId) } just Runs
-            coEvery { sensorDao.removeServer(serverId) } just Runs
+            coEvery { sensorRepository.removeServer(serverId) } just Runs
             coEvery { mediaControlDao.deleteByServerId(serverId) } just Runs
             coEvery { serverDao.delete(serverId) } just Runs
 
@@ -432,7 +429,7 @@ class ServerManagerImplTest {
             coEvery { prefsRepository.removeServer(serverId) } just Runs
             coEvery { localStorage.getInt("active_server") } returns null
             coEvery { settingsDao.delete(serverId) } just Runs
-            coEvery { sensorDao.removeServer(serverId) } just Runs
+            coEvery { sensorRepository.removeServer(serverId) } just Runs
             coEvery { mediaControlDao.deleteByServerId(serverId) } just Runs
             coEvery { serverDao.delete(serverId) } just Runs
             coEvery { webSocketRepo.shutdown() } just Runs

@@ -8,6 +8,8 @@ import android.webkit.CookieManager
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -40,19 +42,29 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
+import com.google.zxing.BarcodeFormat
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.util.GestureDirection
+import io.homeassistant.companion.android.frontend.barcode.BarcodeScannerUiState
+import io.homeassistant.companion.android.frontend.barcode.ui.BarcodeScanner
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
 import io.homeassistant.companion.android.frontend.dialog.PendingDialogHandler
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
@@ -60,12 +72,11 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserEffect
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserRequest
+import io.homeassistant.companion.android.frontend.improv.ui.ImprovOverlay
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge
 import io.homeassistant.companion.android.frontend.js.FrontendJsCallback
-import io.homeassistant.companion.android.frontend.permissions.MultiplePermissionsEffect
-import io.homeassistant.companion.android.frontend.permissions.NotificationPermissionPrompt
+import io.homeassistant.companion.android.frontend.permissions.PendingPermissionHandler
 import io.homeassistant.companion.android.frontend.permissions.PermissionRequest
-import io.homeassistant.companion.android.frontend.permissions.SinglePermissionEffect
 import io.homeassistant.companion.android.launch.PipReadiness
 import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionScreen
@@ -94,7 +105,6 @@ internal const val CUSTOM_VIEW_OVERLAY_TAG = "custom_view_overlay"
  * The WebView is always rendered at the base layer to prevent it to not load the URL.
  * Loading indicators, error screens, and blocking screens are overlaid on top.
  *
- * @param onBackClick Callback when user navigates back
  * @param viewModel The ViewModel providing state and handling actions
  * @param onOpenExternalLink Callback to open external links
  * @param onBlockInsecureHelpClick Callback when user taps help on the insecure screen
@@ -107,7 +117,6 @@ internal const val CUSTOM_VIEW_OVERLAY_TAG = "custom_view_overlay"
  */
 @Composable
 internal fun FrontendScreen(
-    onBackClick: () -> Unit,
     viewModel: FrontendViewModel,
     onOpenExternalLink: suspend (Uri) -> Unit,
     onBlockInsecureHelpClick: suspend () -> Unit,
@@ -124,6 +133,9 @@ internal fun FrontendScreen(
     val pendingDialog by viewModel.pendingDialog.collectAsStateWithLifecycle()
     val pendingFileChooser by viewModel.pendingFileChooser.collectAsStateWithLifecycle()
     val autoPlayVideoEnabled by viewModel.autoPlayVideoEnabled.collectAsStateWithLifecycle()
+    val screenOrientation by viewModel.screenOrientation.collectAsStateWithLifecycle()
+    val keepScreenOnEnabled by viewModel.keepScreenOnEnabled.collectAsStateWithLifecycle()
+    val improvScanRequested by viewModel.improvScanRequested.collectAsStateWithLifecycle()
 
     // The fullscreen View handed over by the WebView is Activity-scoped. Keep it in screen
     // state so it does not leak across configuration changes via the ViewModel.
@@ -146,7 +158,6 @@ internal fun FrontendScreen(
         }
 
     FrontendScreenContent(
-        onBackClick = onBackClick,
         viewState = viewState,
         errorStateProvider = viewModel as FrontendConnectionErrorStateProvider,
         webViewClient = viewModel.webViewClient,
@@ -171,16 +182,25 @@ internal fun FrontendScreen(
         onDownloadRequested = viewModel::onDownloadRequested,
         webViewActions = viewModel.webViewActions,
         onGesture = viewModel::onGesture,
+        onLeavingApp = viewModel::onLeavingApp,
         onExoPlayerFullscreenChanged = viewModel::onExoPlayerFullscreenChanged,
+        onImprovConnectDevice = viewModel::onImprovConnectDevice,
+        onImprovRestart = viewModel::onImprovRestart,
+        onImprovDismiss = viewModel::onImprovSheetDismissed,
+        onBarcodeScanned = viewModel::onBarcodeScanned,
+        onBarcodeCancelled = viewModel::onBarcodeCancelled,
         autoPlayVideoEnabled = autoPlayVideoEnabled,
+        screenOrientation = screenOrientation,
+        keepScreenOnEnabled = keepScreenOnEnabled,
         onPipReadinessChanged = onPipReadinessChanged,
+        improvScanRequested = improvScanRequested,
+        processImprovScanRequests = viewModel::processImprovScanRequests,
         modifier = modifier,
     )
 }
 
 @Composable
 internal fun FrontendScreenContent(
-    onBackClick: () -> Unit,
     viewState: FrontendViewState,
     webViewClient: WebViewClient,
     webChromeClient: WebChromeClient,
@@ -198,6 +218,8 @@ internal fun FrontendScreenContent(
     modifier: Modifier = Modifier,
     customView: View? = null,
     autoPlayVideoEnabled: Boolean = false,
+    screenOrientation: ScreenOrientation = ScreenOrientation.SYSTEM,
+    keepScreenOnEnabled: Boolean = false,
     pendingPermissionRequest: PermissionRequest? = null,
     pendingDialog: FrontendDialog? = null,
     pendingFileChooser: FileChooserRequest? = null,
@@ -207,35 +229,41 @@ internal fun FrontendScreenContent(
     onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit = { _, _, _ -> },
     webViewActions: Flow<WebViewAction> = emptyFlow(),
     onGesture: (GestureDirection, Int) -> Unit = { _, _ -> },
+    onLeavingApp: (String?) -> Unit = {},
     onExoPlayerFullscreenChanged: (Boolean) -> Unit = {},
+    onBarcodeScanned: (rawValue: String, format: BarcodeFormat) -> Unit = { _, _ -> },
+    onBarcodeCancelled: (forAction: Boolean) -> Unit = {},
     onPipReadinessChanged: (PipReadiness?) -> Unit = {},
+    onImprovConnectDevice: (ssid: String, password: String) -> Unit = { _, _ -> },
+    onImprovRestart: () -> Unit = {},
+    onImprovDismiss: () -> Unit = {},
+    improvScanRequested: Boolean = false,
+    processImprovScanRequests: suspend () -> Unit = {},
 ) {
     var webView by remember { mutableStateOf<WebView?>(null) }
 
-    WebViewEffects(
+    // Consume back only while the dashboard (Content) is shown and the WebView has history to pop.
+    BackHandler(enabled = (viewState as? FrontendViewState.Content)?.canGoBack == true) { webView?.goBack() }
+
+    FrontendScreenEffects(
         webView = webView,
         url = viewState.url,
         frontendJsCallback = frontendJsCallback,
         webViewActions = webViewActions,
+        pendingFileChooser = pendingFileChooser,
         autoPlayVideoEnabled = autoPlayVideoEnabled,
+        improvScanRequested = improvScanRequested,
+        processImprovScanRequests = processImprovScanRequests,
+        screenOrientation = screenOrientation,
+        keepScreenOnEnabled = keepScreenOnEnabled,
+        onLeavingApp = onLeavingApp,
     )
 
-    PendingPermissionHandler(
-        pendingRequest = pendingPermissionRequest,
-    )
-
-    PendingDialogHandler(
-        pendingDialog = pendingDialog,
-    )
-
-    FileChooserEffect(
-        pendingRequest = pendingFileChooser,
-    )
+    FrontendScreenHandlers(pendingPermissionRequest = pendingPermissionRequest, pendingDialog = pendingDialog)
 
     Box(modifier = modifier.fillMaxSize()) {
         // Always render WebView at base layer
         SafeHAWebView(
-            onBackClick = onBackClick,
             onWebViewCreated = { webView = it },
             webViewClient = webViewClient,
             webChromeClient = webChromeClient,
@@ -253,6 +281,13 @@ internal fun FrontendScreenContent(
             onPipReadinessChanged = onPipReadinessChanged,
         )
 
+        ImprovOverlay(
+            state = (viewState as? FrontendViewState.Content)?.improvUiState,
+            onConnectDevice = onImprovConnectDevice,
+            onRestart = onImprovRestart,
+            onDismiss = onImprovDismiss,
+        )
+
         StateOverlay(
             viewState = viewState,
             errorStateProvider = errorStateProvider,
@@ -268,6 +303,74 @@ internal fun FrontendScreenContent(
             onOpenExternalLink = onOpenExternalLink,
             onShowSnackbar = onShowSnackbar,
         )
+
+        FrontendBarcodeOverlay(
+            barcodeScanner = (viewState as? FrontendViewState.Content)?.barcodeScanner,
+            onScanned = onBarcodeScanned,
+            onCancelled = onBarcodeCancelled,
+        )
+    }
+}
+
+@Composable
+private fun FrontendScreenHandlers(pendingPermissionRequest: PermissionRequest?, pendingDialog: FrontendDialog?) {
+    PendingPermissionHandler(
+        pendingRequest = pendingPermissionRequest,
+    )
+
+    PendingDialogHandler(
+        pendingDialog = pendingDialog,
+    )
+}
+
+@Composable
+private fun FrontendScreenEffects(
+    webView: WebView?,
+    url: String,
+    frontendJsCallback: FrontendJsCallback,
+    webViewActions: Flow<WebViewAction>,
+    pendingFileChooser: FileChooserRequest?,
+    autoPlayVideoEnabled: Boolean,
+    improvScanRequested: Boolean,
+    processImprovScanRequests: suspend () -> Unit,
+    screenOrientation: ScreenOrientation,
+    keepScreenOnEnabled: Boolean,
+    onLeavingApp: (String?) -> Unit,
+) {
+    ImprovScanLifecycleEffect(
+        scanRequested = improvScanRequested,
+        processImprovScanRequests = processImprovScanRequests,
+    )
+
+    WebViewEffects(
+        webView = webView,
+        url = url,
+        frontendJsCallback = frontendJsCallback,
+        webViewActions = webViewActions,
+        autoPlayVideoEnabled = autoPlayVideoEnabled,
+    )
+
+    FileChooserEffect(
+        pendingRequest = pendingFileChooser,
+    )
+
+    ScreenOrientationEffect(orientation = screenOrientation)
+
+    KeepScreenOnEffect(enabled = keepScreenOnEnabled)
+
+    LeavingAppEffect(webView = webView, onLeavingApp = onLeavingApp)
+}
+
+/**
+ * Calls [onLeavingApp] with the WebView's current URL when the host activity stops (the app leaves
+ * the foreground). Uses the activity lifecycle — not the navigation back-stack entry — so in-app
+ * navigation (e.g. opening Settings) does not trigger it.
+ */
+@Composable
+private fun LeavingAppEffect(webView: WebView?, onLeavingApp: (String?) -> Unit) {
+    val lifecycleOwner = LocalActivity.current as? LifecycleOwner ?: return
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP, lifecycleOwner) {
+        onLeavingApp(webView?.url)
     }
 }
 
@@ -426,7 +529,6 @@ private fun ErrorOverlay(
  */
 @Composable
 private fun SafeHAWebView(
-    onBackClick: () -> Unit,
     onWebViewCreated: (WebView) -> Unit,
     webViewClient: WebViewClient,
     contentState: FrontendViewState.Content?,
@@ -479,7 +581,6 @@ private fun SafeHAWebView(
                         autoPlayVideoEnabled = autoPlayVideoEnabled,
                     )
                 },
-                onBackPressed = onBackClick,
                 onWebViewCreationFailed = onWebViewCreationFailed,
             )
 
@@ -567,48 +668,6 @@ private fun WebView.configureForFrontend(
 }
 
 /**
- * Routes a [PermissionRequest] to the appropriate UI and delivers the result back through the
- * request's own callback. The slot is freed automatically by the manager once the callback is
- * invoked, so this composable doesn't have to clear anything itself.
- *
- * Types with custom UI (e.g. [PermissionRequest.Notification] bottom sheet) are matched first.
- * Remaining types fall through to the system dialog based on their category:
- * [PermissionRequest.MultiplePermissions] or [PermissionRequest.SinglePermission].
- *
- * Adding a new permission type that uses the system dialog requires no changes here.
- */
-@Composable
-private fun PendingPermissionHandler(pendingRequest: PermissionRequest?) {
-    when (pendingRequest) {
-        is PermissionRequest.Notification -> {
-            @SuppressLint("InlinedApi")
-            NotificationPermissionPrompt(
-                onPermissionResult = pendingRequest.onResult,
-                onDismiss = pendingRequest.onDismiss,
-            )
-        }
-
-        is PermissionRequest.MultiplePermissions -> {
-            MultiplePermissionsEffect(
-                pendingRequest = pendingRequest,
-                onPermissionResult = pendingRequest.onResult,
-            )
-        }
-
-        is PermissionRequest.SinglePermission -> {
-            SinglePermissionEffect(
-                pendingRequest = pendingRequest,
-                onPermissionResult = pendingRequest.onResult,
-            )
-        }
-
-        null -> {
-            /* No pending permission */
-        }
-    }
-}
-
-/**
  * Handles WebView side effects: URL loading, [WebViewAction] dispatch, and reapplying the
  * "Autoplay video" preference (which requires a [WebView.reload] to take effect on the loaded page).
  */
@@ -645,6 +704,55 @@ private fun WebViewEffects(
     }
 }
 
+@Composable
+private fun ImprovScanLifecycleEffect(scanRequested: Boolean, processImprovScanRequests: suspend () -> Unit) {
+    if (scanRequested) {
+        val lifecycle = LocalLifecycleOwner.current.lifecycle
+        LaunchedEffect(lifecycle) {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                processImprovScanRequests()
+            }
+        }
+    }
+}
+
+/**
+ * Applies the user's "Screen orientation" preference to the hosting activity's
+ * `requestedOrientation` while the frontend is composed.
+ *
+ * On dispose the previous value is restored so leaving the dashboard (e.g. navigating to
+ * settings) does not leak this preference to other screens that share the same activity.
+ */
+@Composable
+private fun ScreenOrientationEffect(orientation: ScreenOrientation) {
+    val activity = LocalActivity.current ?: return
+    DisposableEffect(activity, orientation) {
+        val previous = activity.requestedOrientation
+        activity.requestedOrientation = orientation.activityInfo
+        onDispose {
+            activity.requestedOrientation = previous
+        }
+    }
+}
+
+/**
+ * Toggles `View.keepScreenOn` (mapped by the platform to `WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON`)
+ * based on the user's "Keep screen on" preference while the frontend is composed.
+ *
+ * The flag is always cleared on dispose so it does not leak to other screens that share the
+ * hosting activity window.
+ */
+@Composable
+private fun KeepScreenOnEffect(enabled: Boolean) {
+    val view = LocalView.current
+    DisposableEffect(view, enabled) {
+        view.keepScreenOn = enabled
+        onDispose {
+            view.keepScreenOn = false
+        }
+    }
+}
+
 /**
  * Renders PiP-eligible overlays and reports their combined [PipReadiness] to the host.
  */
@@ -672,6 +780,11 @@ private fun BoxScope.PipEligibleOverlays(
     CustomViewOverlay(customView = customView)
 }
 
+/**
+ * Renders the WebView's HTML5 fullscreen view (e.g. a fullscreen `<video>`) over the WebView.
+ *
+ * Back handling is intentionally not added here: the WebView owns its fullscreen lifecycle.
+ */
 @Composable
 private fun CustomViewOverlay(customView: View?) {
     val view: View = customView ?: return
@@ -683,6 +796,14 @@ private fun CustomViewOverlay(customView: View?) {
     )
 }
 
+/**
+ * Renders the native ExoPlayer surface over the WebView.
+ *
+ * Back handling is intentionally not added here: the Home Assistant frontend reacts to the back event
+ * itself and closes the player by emitting an external-bus event that collapses
+ * [FrontendViewState.Content.exoPlayerState] (and clears this overlay). An app-side back handler would
+ * pre-empt the frontend and break that flow, so back is left to propagate to the frontend.
+ */
 @Composable
 private fun ExoPlayerOverlay(contentState: FrontendViewState.Content?, onFullscreenChanged: (Boolean) -> Unit) {
     val exoState = contentState?.exoPlayerState ?: return
@@ -700,12 +821,39 @@ private fun ExoPlayerOverlay(contentState: FrontendViewState.Content?, onFullscr
     )
 }
 
+/**
+ * Renders the barcode scanner over the WebView while [barcodeScanner] is non-null.
+ *
+ * The scanner owns the camera and its permission (see
+ * [io.homeassistant.companion.android.frontend.barcode.ui.BarcodeScanner]); this overlay only adds
+ * the back-press-to-cancel behaviour. The [BackHandler] is composed only while the overlay is shown,
+ * so it takes priority over the WebView's own back handling and a back press cancels the scan.
+ */
+@Composable
+private fun FrontendBarcodeOverlay(
+    barcodeScanner: BarcodeScannerUiState?,
+    onScanned: (rawValue: String, format: BarcodeFormat) -> Unit,
+    onCancelled: (forAction: Boolean) -> Unit,
+) {
+    val state = barcodeScanner ?: return
+
+    BackHandler { onCancelled(false) }
+
+    BarcodeScanner(
+        title = state.title,
+        description = state.description,
+        alternativeOptionLabel = state.alternativeOptionLabel,
+        onResult = onScanned,
+        onCancel = onCancelled,
+        modifier = Modifier.fillMaxSize(),
+    )
+}
+
 @HAPreviews
 @Composable
 private fun FrontendScreenLoadingPreview() {
     HAThemeForPreview {
         FrontendScreenContent(
-            onBackClick = {},
             viewState = FrontendViewState.Loading(
                 serverId = 1,
                 url = "https://example.com",
@@ -732,7 +880,6 @@ private fun FrontendScreenLoadingPreview() {
 private fun FrontendScreenErrorPreview() {
     HAThemeForPreview {
         FrontendScreenContent(
-            onBackClick = {},
             viewState = FrontendViewState.Error(
                 serverId = 1,
                 url = "https://example.com",
@@ -764,7 +911,6 @@ private fun FrontendScreenErrorPreview() {
 private fun FrontendScreenInsecurePreview() {
     HAThemeForPreview {
         FrontendScreenContent(
-            onBackClick = {},
             viewState = FrontendViewState.Insecure(
                 serverId = 1,
                 missingHomeSetup = true,
@@ -792,7 +938,6 @@ private fun FrontendScreenInsecurePreview() {
 private fun FrontendScreenSecurityLevelRequiredPreview() {
     HAThemeForPreview {
         FrontendScreenContent(
-            onBackClick = {},
             viewState = FrontendViewState.SecurityLevelRequired(
                 serverId = 1,
             ),

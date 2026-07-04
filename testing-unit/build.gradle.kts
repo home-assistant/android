@@ -9,6 +9,10 @@ android {
 
     compileSdk = libs.versions.androidSdk.compile.get().toInt()
 
+    defaultConfig {
+        minSdk = libs.versions.androidSdk.min.get().toInt()
+    }
+
     compileOptions {
         sourceCompatibility(libs.versions.javaVersion.get())
         targetCompatibility(libs.versions.javaVersion.get())
@@ -26,6 +30,7 @@ dependencies {
 
     implementation(platform(libs.junit.bom))
     implementation(libs.junit.jupiter)
+    implementation(libs.junit.platform.launcher)
     implementation(libs.junit.vintage.engine)
     implementation(libs.kotlinx.coroutines.test)
     implementation(platform(libs.compose.bom))

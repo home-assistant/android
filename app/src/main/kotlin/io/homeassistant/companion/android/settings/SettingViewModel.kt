@@ -42,8 +42,7 @@ class SettingViewModel @Inject constructor(private val settingsDao: SettingsDao,
     fun updateWebsocketSetting(id: Int, setting: WebsocketSetting) {
         viewModelScope.launch {
             settingsDao.get(id)?.let {
-                it.websocketSetting = setting
-                settingsDao.update(it)
+                settingsDao.update(it.copy(websocketSetting = setting))
             }
             WebsocketManager.start(getApplication())
         }
@@ -52,8 +51,7 @@ class SettingViewModel @Inject constructor(private val settingsDao: SettingsDao,
     fun updateSensorSetting(id: Int, setting: SensorUpdateFrequencySetting) {
         viewModelScope.launch {
             settingsDao.get(id)?.let {
-                it.sensorUpdateFrequency = setting
-                settingsDao.update(it)
+                settingsDao.update(it.copy(sensorUpdateFrequency = setting))
             }
         }
     }

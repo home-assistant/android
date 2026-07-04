@@ -224,7 +224,11 @@ fun LocationTrackingHistoryRow(item: LocationHistoryItem?, servers: List<Server>
                     Column {
                         ReadOnlyRow(
                             primaryText = stringResource(commonR.string.location),
-                            secondaryText = (item?.locationName ?: "${item?.latitude}, ${item?.longitude}"),
+                            secondaryText = if (item?.inZones?.isNotEmpty() == true) {
+                                item.inZones.joinToString()
+                            } else {
+                                item?.locationName ?: "${item?.latitude}, ${item?.longitude}"
+                            },
                         )
                         ReadOnlyRow(
                             primaryText = stringResource(commonR.string.accuracy),

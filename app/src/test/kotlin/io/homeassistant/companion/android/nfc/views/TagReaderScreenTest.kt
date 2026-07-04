@@ -1,16 +1,17 @@
 package io.homeassistant.companion.android.nfc.views
 
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.nfc.TagReaderUiState
-import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -26,12 +27,9 @@ import org.robolectric.annotation.Config
 class TagReaderScreenTest {
 
     @get:Rule(order = 0)
-    var consoleLog = ConsoleLogRule()
-
-    @get:Rule(order = 1)
     val hiltRule = HiltAndroidRule(this)
 
-    @get:Rule(order = 2)
+    @get:Rule(order = 1)
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
     @Test
@@ -83,7 +81,7 @@ class TagReaderScreenTest {
     }
 
     @Test
-    fun `Given ApprovingTag state when Allow always is clicked then onAllowAlways is invoked`() {
+    fun `Given ApprovingTag state when Allow always is scrolled to and clicked then onAllowAlways is invoked`() {
         var allowOnceCalled = false
         var allowAlwaysCalled = false
 
@@ -99,7 +97,10 @@ class TagReaderScreenTest {
                 )
             }
 
-            onNodeWithText(stringResource(commonR.string.tag_allow_always)).performClick()
+            onNodeWithText(stringResource(commonR.string.tag_allow_always))
+                .performScrollTo()
+                .assertIsDisplayed()
+                .performClick()
 
             assertTrue("onAllowAlways should be invoked", allowAlwaysCalled)
             assertFalse("onAllowOnce should not be invoked", allowOnceCalled)

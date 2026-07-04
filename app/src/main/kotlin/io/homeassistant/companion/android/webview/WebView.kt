@@ -35,6 +35,14 @@ interface WebView {
      */
     fun loadUrl(url: Uri, keepHistory: Boolean, openInApp: Boolean, serverHandleInsets: Boolean)
 
+    /**
+     * Returns the relative part (path, query parameters, fragment) of the currently loaded
+     * WebView URL, or `null` if the URL has no meaningful path (empty or root `/`).
+     *
+     * The `external_auth` query parameter is stripped since the presenter re-adds it on every load.
+     */
+    fun getCurrentWebViewRelativeUrl(): String?
+
     fun setStatusBarAndBackgroundColor(statusBarColor: Int, backgroundColor: Int)
 
     fun setExternalAuth(script: String)

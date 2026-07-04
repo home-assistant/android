@@ -24,6 +24,7 @@ import androidx.wear.protolayout.material.layouts.PrimaryLayout
 import androidx.wear.tiles.RequestBuilders
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.splash.SplashActivity
 
@@ -32,7 +33,7 @@ const val MODIFIER_CLICK_REFRESH = "refresh"
 
 /** Performs a [VibrationEffect.EFFECT_CLICK] or equivalent on older Android versions */
 fun hapticClick(context: Context) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+    if (SdkVersion.isAtLeast(Build.VERSION_CODES.S)) {
         val vibratorManager = context.getSystemService<VibratorManager>()
         val vibrator = vibratorManager?.defaultVibrator
         vibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))

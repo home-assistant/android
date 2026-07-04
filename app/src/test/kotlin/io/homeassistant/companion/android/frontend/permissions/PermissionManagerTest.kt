@@ -4,15 +4,16 @@ import android.os.Build
 import android.webkit.PermissionRequest as WebViewPermissionRequest
 import app.cash.turbine.turbineScope
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissionUseCase
 import io.homeassistant.companion.android.common.util.NotificationStatusProvider
 import io.homeassistant.companion.android.common.util.PermissionChecker
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
-import io.homeassistant.companion.android.util.FailFastExtension
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -24,20 +25,19 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.ValueSource
 
-@ExtendWith(ConsoleLogExtension::class, FailFastExtension::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class PermissionManagerTest {
 
@@ -46,6 +46,8 @@ class PermissionManagerTest {
     private val integrationRepository: IntegrationRepository = mockk(relaxed = true)
     private val notificationStatusProvider: NotificationStatusProvider = mockk()
     private val permissionChecker: PermissionChecker = mockk()
+    private val checkLocalNetworkPermissionUseCase: CheckLocalNetworkPermissionUseCase = mockk(relaxed = true)
+    private val prefsRepository: PrefsRepository = mockk(relaxed = true)
 
     private val serverId = 1
 
@@ -54,17 +56,24 @@ class PermissionManagerTest {
         coEvery { serverManager.integrationRepository(serverId) } returns integrationRepository
     }
 
+    @AfterEach
+    fun tearDown() {
+        SdkVersion.sdkInt = 0
+    }
+
     private fun createManager(
         hasFcmPushSupport: Boolean = false,
         sdkInt: Int = 0,
     ): PermissionManager {
+        SdkVersion.sdkInt = sdkInt
         return PermissionManager(
             serverManager = serverManager,
             settingsDao = settingsDao,
             fcmSupport = hasFcmPushSupport,
             notificationStatusProvider = notificationStatusProvider,
             permissionChecker = permissionChecker,
-            sdkInt = sdkInt,
+            checkLocalNetworkPermissionUseCase = checkLocalNetworkPermissionUseCase,
+            prefsRepository = prefsRepository,
         )
     }
 
@@ -533,7 +542,165 @@ class PermissionManagerTest {
 
     // endregion
 
+    // region Local network permission (Android 17+)
+
+    @Nested
+    inner class CheckLocalNetworkPermission {
+
+        @Test
+        fun `Given pre-API 37 then returns true without checking permission`() = runTest {
+            val manager = createManager(sdkInt = Build.VERSION_CODES.CINNAMON_BUN - 1)
+            assertTrue(manager.checkLocalNetworkPermission())
+            assertNull(manager.pendingPermissionRequest.value)
+        }
+
+        @Test
+        fun `Given API 37 when permission already granted then returns true`() = runTest {
+            every { permissionChecker.hasPermission(android.Manifest.permission.ACCESS_LOCAL_NETWORK) } returns true
+
+            val manager = createManager(sdkInt = Build.VERSION_CODES.CINNAMON_BUN)
+            assertTrue(manager.checkLocalNetworkPermission())
+            assertNull(manager.pendingPermissionRequest.value)
+        }
+
+        @Test
+        fun `Given API 37 when permission not granted then emits pending request`() = runTest {
+            every { permissionChecker.hasPermission(android.Manifest.permission.ACCESS_LOCAL_NETWORK) } returns false
+
+            val manager = createManager(sdkInt = Build.VERSION_CODES.CINNAMON_BUN)
+            val result = async { manager.checkLocalNetworkPermission() }
+            advanceUntilIdle()
+
+            val pending = manager.pendingPermissionRequest.value
+            assertInstanceOf(PermissionRequest.LocalNetwork::class.java, pending)
+            assertEquals(listOf(android.Manifest.permission.ACCESS_LOCAL_NETWORK), pending?.permissions)
+
+            (pending as PermissionRequest.LocalNetwork).onResult(true)
+            advanceUntilIdle()
+            assertTrue(result.await())
+            assertNull(manager.pendingPermissionRequest.value)
+        }
+
+        @Test
+        fun `Given API 37 when user denies then returns false`() = runTest {
+            every { permissionChecker.hasPermission(android.Manifest.permission.ACCESS_LOCAL_NETWORK) } returns false
+
+            val manager = createManager(sdkInt = Build.VERSION_CODES.CINNAMON_BUN)
+            val result = async { manager.checkLocalNetworkPermission() }
+            advanceUntilIdle()
+            (manager.pendingPermissionRequest.value as PermissionRequest.LocalNetwork).onResult(false)
+            advanceUntilIdle()
+
+            assertFalse(result.await())
+            assertNull(manager.pendingPermissionRequest.value)
+        }
+    }
+
+    // endregion
+
     // region Guard against concurrent requests
+
+    @Nested
+    inner class CheckImprovPermissions {
+
+        private val improvPermissions = listOf(
+            android.Manifest.permission.BLUETOOTH_SCAN,
+            android.Manifest.permission.BLUETOOTH_CONNECT,
+            android.Manifest.permission.ACCESS_FINE_LOCATION,
+        )
+
+        private fun grantAll() {
+            improvPermissions.forEach { every { permissionChecker.hasPermission(it) } returns true }
+        }
+
+        private fun denyAll() {
+            improvPermissions.forEach { every { permissionChecker.hasPermission(it) } returns false }
+        }
+
+        @Test
+        fun `Given all permissions granted then returns true without enqueuing`() = runTest {
+            grantAll()
+            val manager = createManager()
+
+            assertTrue(manager.checkImprovPermissions(improvPermissions))
+            assertNull(manager.pendingPermissionRequest.value)
+        }
+
+        @Test
+        fun `Given rationale below cap when called then enqueues Improv with showRationale true`() = runTest {
+            denyAll()
+            coEvery { prefsRepository.getImprovPermissionDisplayedCount() } returns 0
+
+            val manager = createManager()
+            val result = async { manager.checkImprovPermissions(improvPermissions) }
+            advanceUntilIdle()
+
+            val improv = assertInstanceOf(PermissionRequest.Improv::class.java, manager.pendingPermissionRequest.value)
+
+            assertTrue(improv.showRationale)
+            assertTrue(improv.needsBluetooth)
+            assertTrue(improv.needsLocation)
+            assertEquals(improvPermissions, improv.permissions)
+            coVerify { prefsRepository.addImprovPermissionDisplayedCount() }
+
+            improv.onDismiss()
+            advanceUntilIdle()
+            assertFalse(result.await())
+        }
+
+        @Test
+        fun `Given rationale below cap when system dialog grants then returns true`() = runTest {
+            denyAll()
+            coEvery { prefsRepository.getImprovPermissionDisplayedCount() } returns 0
+
+            val manager = createManager()
+            val result = async { manager.checkImprovPermissions(improvPermissions) }
+            advanceUntilIdle()
+
+            grantAll()
+            val request = assertInstanceOf(PermissionRequest.Improv::class.java, manager.pendingPermissionRequest.value)
+            request.onResult(improvPermissions.associateWith { true })
+            advanceUntilIdle()
+
+            assertTrue(result.await())
+        }
+
+        @Test
+        fun `Given rationale cap reached when called then enqueues Improv with showRationale false`() = runTest {
+            denyAll()
+            coEvery { prefsRepository.getImprovPermissionDisplayedCount() } returns IMPROV_RATIONALE_MAX_SHOWS
+
+            val manager = createManager()
+            val result = async { manager.checkImprovPermissions(improvPermissions) }
+            advanceUntilIdle()
+
+            val improv = assertInstanceOf(PermissionRequest.Improv::class.java, manager.pendingPermissionRequest.value)
+            assertFalse(improv.showRationale)
+            coVerify(exactly = 0) { prefsRepository.addImprovPermissionDisplayedCount() }
+
+            improv.onResult(improvPermissions.associateWith { false })
+            advanceUntilIdle()
+            assertFalse(result.await())
+        }
+
+        @Test
+        fun `Given system dialog returns partial grant when called then returns false`() = runTest {
+            denyAll()
+            coEvery { prefsRepository.getImprovPermissionDisplayedCount() } returns IMPROV_RATIONALE_MAX_SHOWS
+
+            val manager = createManager()
+            val result = async { manager.checkImprovPermissions(improvPermissions) }
+            advanceUntilIdle()
+
+            every { permissionChecker.hasPermission(android.Manifest.permission.BLUETOOTH_SCAN) } returns true
+            val request = assertInstanceOf(PermissionRequest.Improv::class.java, manager.pendingPermissionRequest.value)
+
+            request.onResult(mapOf(android.Manifest.permission.BLUETOOTH_SCAN to true))
+            advanceUntilIdle()
+
+            assertFalse(result.await())
+        }
+    }
 
     @Nested
     inner class ConcurrentRequestQueuing {
@@ -558,17 +725,17 @@ class PermissionManagerTest {
             advanceUntilIdle()
 
             // Still waiting — storage request is pending
-            assertInstanceOf(PermissionRequest.ExternalStorage::class.java, manager.pendingPermissionRequest.value)
+            val externalRequest = assertInstanceOf(PermissionRequest.ExternalStorage::class.java, manager.pendingPermissionRequest.value)
 
             // Resolve storage
-            (manager.pendingPermissionRequest.value as PermissionRequest.ExternalStorage).onResult(true)
+            externalRequest.onResult(true)
             advanceUntilIdle()
             storageJob.join()
 
             // Now WebView request is pending
-            assertInstanceOf(PermissionRequest.WebView::class.java, manager.pendingPermissionRequest.value)
+            val webviewRequest = assertInstanceOf(PermissionRequest.WebView::class.java, manager.pendingPermissionRequest.value)
 
-            (manager.pendingPermissionRequest.value as PermissionRequest.WebView).onResult(emptyMap())
+            webviewRequest.onResult(emptyMap())
             advanceUntilIdle()
             webViewJob.join()
         }
@@ -595,18 +762,17 @@ class PermissionManagerTest {
             advanceUntilIdle()
 
             // Still waiting — WebView request is pending
-            assertInstanceOf(PermissionRequest.WebView::class.java, manager.pendingPermissionRequest.value)
+            val webViewRequest = assertInstanceOf(PermissionRequest.WebView::class.java, manager.pendingPermissionRequest.value)
 
             // Resolve WebView
-            (manager.pendingPermissionRequest.value as PermissionRequest.WebView)
-                .onResult(mapOf(android.Manifest.permission.CAMERA to true))
+            webViewRequest.onResult(mapOf(android.Manifest.permission.CAMERA to true))
             advanceUntilIdle()
             webViewJob.join()
 
             // Now storage request is pending
-            assertInstanceOf(PermissionRequest.ExternalStorage::class.java, manager.pendingPermissionRequest.value)
+            val externalRequest = assertInstanceOf(PermissionRequest.ExternalStorage::class.java, manager.pendingPermissionRequest.value)
 
-            (manager.pendingPermissionRequest.value as PermissionRequest.ExternalStorage).onResult(false)
+            externalRequest.onResult(false)
             advanceUntilIdle()
             storageJob.join()
         }
@@ -634,24 +800,23 @@ class PermissionManagerTest {
                 runCurrent()
 
                 // Resolve storage — slot becomes null briefly, then first waiter takes it
-                (manager.pendingPermissionRequest.value as PermissionRequest.ExternalStorage).onResult(false)
+                assertInstanceOf(PermissionRequest.ExternalStorage::class.java, manager.pendingPermissionRequest.value)
+                    .onResult(false)
                 storageJob.join()
                 assertNull(turbine.awaitItem())
-                val firstPending = turbine.awaitItem()
-                assertInstanceOf(PermissionRequest.WebView::class.java, firstPending)
+                val firstPending = assertInstanceOf(PermissionRequest.WebView::class.java, turbine.awaitItem())
                 turbine.expectNoEvents()
 
                 // Resolve first waiter — slot becomes null briefly, second waiter takes it
-                (firstPending as PermissionRequest.WebView).onResult(emptyMap())
+                firstPending.onResult(emptyMap())
                 assertNull(turbine.awaitItem())
-                val secondPending = turbine.awaitItem()
-                assertInstanceOf(PermissionRequest.WebView::class.java, secondPending)
+                val secondPending = assertInstanceOf(PermissionRequest.WebView::class.java, turbine.awaitItem())
 
                 // FIFO order: first waiter gets CAMERA (video), second gets RECORD_AUDIO (audio)
                 assertEquals(listOf(android.Manifest.permission.CAMERA), firstPending.permissions)
-                assertEquals(listOf(android.Manifest.permission.RECORD_AUDIO), secondPending?.permissions)
+                assertEquals(listOf(android.Manifest.permission.RECORD_AUDIO), secondPending.permissions)
 
-                (secondPending as PermissionRequest.WebView).onResult(emptyMap())
+                secondPending.onResult(emptyMap())
                 firstWebViewJob.join()
                 secondWebViewJob.join()
                 turbine.cancelAndIgnoreRemainingEvents()
@@ -677,18 +842,17 @@ class PermissionManagerTest {
             advanceUntilIdle()
 
             // Still waiting — WebView request is pending
-            assertInstanceOf(PermissionRequest.WebView::class.java, manager.pendingPermissionRequest.value)
+            val webViewRequest = assertInstanceOf(PermissionRequest.WebView::class.java, manager.pendingPermissionRequest.value)
 
             // Resolve the WebView request
-            (manager.pendingPermissionRequest.value as PermissionRequest.WebView)
-                .onResult(mapOf(android.Manifest.permission.CAMERA to true))
+            webViewRequest.onResult(mapOf(android.Manifest.permission.CAMERA to true))
             advanceUntilIdle()
             webViewJob.join()
 
             // Now the notification request should be set
-            assertInstanceOf(PermissionRequest.Notification::class.java, manager.pendingPermissionRequest.value)
+            val notificationRequest = assertInstanceOf(PermissionRequest.Notification::class.java, manager.pendingPermissionRequest.value)
 
-            (manager.pendingPermissionRequest.value as PermissionRequest.Notification).onDismiss()
+            notificationRequest.onDismiss()
             advanceUntilIdle()
             notificationJob.join()
         }

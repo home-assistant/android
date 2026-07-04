@@ -10,6 +10,7 @@ import androidx.work.testing.TestListenableWorkerBuilder
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissionUseCase
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.database.settings.Setting
@@ -53,10 +54,14 @@ class WebsocketManagerTest {
             // Test does not cover websocket monitoring right now, failsafe to end quickly if it tries
             coEvery { webSocketRepository(any()) } throws IllegalStateException("Test should not interact with WS")
         }
+        val checkLocalNetworkPermission = mockk<CheckLocalNetworkPermissionUseCase>().also {
+            coEvery { it() } returns true
+        }
 
         override fun serverManager(): ServerManager = serverManager
         override fun messagingManager(): MessagingManager = messagingManager
         override fun settingsDao(): SettingsDao = dao
+        override fun checkLocalNetworkPermission(): CheckLocalNetworkPermissionUseCase = checkLocalNetworkPermission
     }
 
     private fun mockSetting(setting: WebsocketSetting) {

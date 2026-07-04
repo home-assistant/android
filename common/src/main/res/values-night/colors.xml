@@ -23,5 +23,4 @@
     <color name="colorAlertInfo">#182b35</color>
     <color name="colorAlertWarning">#382d18</color>
     <color name="colorOnSurfaceVariant">#CAC4D0</color> <!-- M3 On Surface Variant -->
-    <color name="colorBottomSheetHandle">#66CAC4D0</color> <!-- M3 On Surface Variant 40% opacity -->
 </resources>

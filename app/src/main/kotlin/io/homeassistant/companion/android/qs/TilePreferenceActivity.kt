@@ -9,6 +9,7 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.isSetup
 import io.homeassistant.companion.android.launch.LaunchActivity
@@ -34,7 +35,7 @@ class TilePreferenceActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
 
         var tileId = "-1"
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             intent.extras?.let { extras ->
                 BundleCompat.getParcelable(
                     extras,

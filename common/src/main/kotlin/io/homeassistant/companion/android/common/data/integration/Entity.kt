@@ -13,10 +13,12 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.PERSON_DOMAIN
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateDiff
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryOptions
 import io.homeassistant.companion.android.common.util.LocalDateTimeSerializer
 import io.homeassistant.companion.android.common.util.MapAnySerializer
+import io.homeassistant.companion.android.common.util.SdkVersion
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
@@ -183,7 +185,7 @@ object EntityExt {
         "light",
         "lock",
         MEDIA_PLAYER_DOMAIN,
-        "person",
+        PERSON_DOMAIN,
         "plant",
         "remote",
         "schedule",
@@ -670,7 +672,7 @@ fun Entity.getIcon(context: Context): IIcon {
             }
 
             "persistent_notification" -> Icon.cmd_bell
-            "person" -> if (compareState == "not_home") {
+            PERSON_DOMAIN -> if (compareState == "not_home") {
                 Icon.cmd_account_arrow_right
             } else {
                 Icon.cmd_account
@@ -1224,7 +1226,7 @@ fun Entity.friendlyState(
             }
         }
     }
-    if (friendlyState == state && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+    if (friendlyState == state && SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
         try {
             val stateInMillis = ZonedDateTime.parse(state, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
                 .toInstant()
@@ -1288,7 +1290,7 @@ fun Entity.isActive() = when {
     (domain == "alarm_control_panel") -> state != "disarmed"
     (domain == "alert") -> state != "idle"
     (domain == "cover") -> state != "closed"
-    (domain in listOf("device_tracker", "person")) -> state != "not_home"
+    (domain in listOf("device_tracker", PERSON_DOMAIN)) -> state != "not_home"
     (domain == "lawn_mower") -> state in listOf("mowing", "error")
     // on Android, contrary to HA Frontend, a lock is considered active when locked
     (domain == "lock") -> state == "locked"
@@ -1300,6 +1302,12 @@ fun Entity.isActive() = when {
     (domain == CAMERA_DOMAIN) -> state == "streaming"
     else -> true
 }
+
+/**
+ * Whether this entity is the `person` entity linked to the user identified by [userId], i.e. a
+ * `person` entity whose `user_id` attribute matches.
+ */
+fun Entity.isPersonOf(userId: String): Boolean = domain == PERSON_DOMAIN && attributes["user_id"] == userId
 
 /** Returns the bitmask of supported features for this entity, or 0 if unavailable. */
 private fun Entity.supportedFeatures(): Int = (attributes["supported_features"] as? Number)?.toInt() ?: 0

@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.frontend.filechooser
 
 import android.net.Uri
 import android.webkit.WebChromeClient
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -10,14 +9,12 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.assertNotNull
+import org.junit.jupiter.api.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(ConsoleLogExtension::class)
 class FileChooserManagerTest {
 
     @Test
@@ -30,7 +27,7 @@ class FileChooserManagerTest {
 
         val pending = manager.pendingFileChooser.value
         assertNotNull(pending)
-        assertEquals(params, pending!!.fileChooserParams)
+        assertEquals(params, pending.fileChooserParams)
         assertFalse(outcome.isCompleted)
 
         val uris = arrayOf(mockk<Uri>())

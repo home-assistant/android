@@ -26,6 +26,7 @@ import io.homeassistant.companion.android.assist.wakeword.WakeWordListener
 import io.homeassistant.companion.android.assist.wakeword.WakeWordListenerFactory
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.CHANNEL_ASSIST_LISTENING
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.settings.assist.AssistConfigManager
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -68,11 +69,21 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     }
     private var isServiceReady = false
 
+    /** One-way latch set once the service has begun tearing down (via [onShutdown] or [onDestroy]). */
+    private var isTornDown = false
+
     /** Non-null only while the receiver is registered (between [onReady] and [onShutdown]). */
     private var actionReceiver: BroadcastReceiver? = null
 
     override fun onReady() {
         super.onReady()
+        if (isTornDown) {
+            // The system can deliver onReady even after onShutdown/onDestroy while it is winding the
+            // service down. Registering a receiver on the dying context would later crash in
+            // onShutdown, so ignore this spurious signal
+            Timber.w("Ignoring onReady delivered after shutdown")
+            return
+        }
         isServiceReady = true
         Timber.d("VoiceInteractionService is ready")
         actionReceiver = object : BroadcastReceiver() {
@@ -102,12 +113,30 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
 
     override fun onShutdown() {
         super.onShutdown()
+        isTornDown = true
         isServiceReady = false
         Timber.d("VoiceInteractionService is shutting down")
-        actionReceiver?.let(::unregisterReceiver)
-        actionReceiver = null
+        actionReceiver?.let { receiver ->
+            actionReceiver = null
+            try {
+                unregisterReceiver(receiver)
+            } catch (e: IllegalArgumentException) {
+                // On some devices the framework tears down the receiver registration before
+                // onShutdown() runs while the service instance (and this field) survives. There is
+                // no API to query whether a receiver is still registered, so swallowing this is the
+                // documented way to handle the resulting "Receiver not registered" error
+                Timber.w(e, "Action receiver was already unregistered")
+            }
+        }
         // Don't use stopListening() as it launches a coroutine that may not complete before cancel
         serviceScope.cancel()
+    }
+
+    override fun onDestroy() {
+        // onShutdown is not guaranteed to run before onDestroy, so latch teardown here too to keep
+        // a late onReady from re-initializing an already-destroyed instance
+        isTornDown = true
+        super.onDestroy()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -222,7 +251,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
             PackageManager.PERMISSION_GRANTED
 
     private fun startForegroundWithNotification(model: MicroWakeWordModelConfig) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
             startForeground(
                 NOTIFICATION_ID,
                 createNotification(model),
@@ -234,7 +263,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     }
 
     private fun stopForegroundCompat() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
             stopForeground(STOP_FOREGROUND_REMOVE)
         } else {
             @Suppress("DEPRECATION")
@@ -281,7 +310,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     }
 
     private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             val channel = NotificationChannel(
                 CHANNEL_ASSIST_LISTENING,
                 getString(commonR.string.assist_listening_channel),

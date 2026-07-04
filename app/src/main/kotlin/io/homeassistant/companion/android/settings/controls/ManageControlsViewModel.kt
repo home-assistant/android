@@ -18,6 +18,7 @@ import io.homeassistant.companion.android.common.data.integration.ControlsAuthRe
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.controls.HaControlsPanelActivity
 import io.homeassistant.companion.android.controls.HaControlsProviderService
 import io.homeassistant.companion.android.database.server.Server
@@ -63,7 +64,7 @@ class ManageControlsViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             servers = serverManager.servers()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            if (SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
                 panelEnabled =
                     application.packageManager.getComponentEnabledSetting(
                         ComponentName(application, HaControlsPanelActivity::class.java),
@@ -167,7 +168,7 @@ class ManageControlsViewModel @Inject constructor(
     }
 
     fun enablePanelForControls(enabled: Boolean) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) return
+        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) return
 
         application.packageManager.setComponentEnabledSetting(
             ComponentName(application, HaControlsPanelActivity::class.java),

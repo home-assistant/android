@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.webview
 
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.IntentSender
 import android.net.Uri
 import android.net.http.SslError
 import androidx.lifecycle.Lifecycle
@@ -16,9 +17,8 @@ import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.settings.SettingsDao
-import io.homeassistant.companion.android.improv.ImprovRepository
+import io.homeassistant.companion.android.frontend.improv.ImprovRepository
 import io.homeassistant.companion.android.matter.MatterManager
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.thread.ThreadManager
 import io.homeassistant.companion.android.webview.externalbus.ExternalBusMessage
@@ -34,6 +34,7 @@ import java.net.URL
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -44,7 +45,6 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
 
 /**
@@ -90,10 +90,13 @@ private class FakeWebViewContext(
     override fun showConnectionSecurityLevel(serverId: Int) {
         webViewDelegate.showConnectionSecurityLevel(serverId)
     }
+
+    override fun getCurrentWebViewRelativeUrl(): String? {
+        return webViewDelegate.getCurrentWebViewRelativeUrl()
+    }
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(ConsoleLogExtension::class)
 class WebViewPresenterImplTest {
 
     private val testDispatcher = UnconfinedTestDispatcher()
@@ -123,6 +126,7 @@ class WebViewPresenterImplTest {
     fun setUp() {
         mockkStatic(Uri::class)
         mockUriParse()
+        every { webView.getCurrentWebViewRelativeUrl() } returns null
         fakeContext = FakeWebViewContext(mockk<Context>(), webView)
 
         lifecycleOwner = object : LifecycleOwner {
@@ -143,8 +147,8 @@ class WebViewPresenterImplTest {
             externalBusRepository = externalBusRepository,
             improvRepository = improvRepository,
             prefsRepository = prefsRepository,
-            matterUseCase = matterManager,
-            threadUseCase = threadManager,
+            matterManager = matterManager,
+            threadManager = threadManager,
             settingsDao = settingsDao,
         )
         return presenter
@@ -411,6 +415,49 @@ class WebViewPresenterImplTest {
     }
 
     @Test
+    fun `Given base url changes when collecting then preserves current path and keeps history`() = runTest(testDispatcher) {
+        val server = mockk<Server>(relaxed = true)
+        val urlFlow = MutableStateFlow<UrlState>(UrlState.HasUrl(URL("https://internal.example.com")))
+
+        coEvery { serverManager.getServer(any<Int>()) } returns server
+        coEvery { authenticationRepository.getSessionState() } returns SessionState.CONNECTED
+        coEvery { connectionStateProvider.urlFlow(any()) } returns urlFlow
+        every { webView.getCurrentWebViewRelativeUrl() } returns "/history?start_date=2026-01-01"
+
+        lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
+        lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_START)
+
+        createPresenter()
+
+        backgroundScope.launch {
+            presenter.load(lifecycle, path = null, isInternalOverride = null)
+        }
+
+        // Emit a new base URL (e.g. WiFi -> mobile data switch)
+        urlFlow.emit(UrlState.HasUrl(URL("https://external.example.com")))
+
+        val urlSlot = mutableListOf<Uri>()
+        val keepHistorySlot = mutableListOf<Boolean>()
+        verify(exactly = 2) {
+            webView.loadUrl(capture(urlSlot), capture(keepHistorySlot), any(), any())
+        }
+
+        // First load: initial internal URL, keeps history (no base URL change yet)
+        assertTrue(urlSlot[0].toString().startsWith("https://internal.example.com"))
+        assertTrue(keepHistorySlot[0])
+
+        // Second load: external URL with preserved path. History is kept so the
+        // stale cross-origin entry survives long enough for resolveBackAction to
+        // detect it and emit NavigateToRoot before the user exits the app.
+        assertTrue(urlSlot[1].toString().startsWith("https://external.example.com"))
+        assertTrue(urlSlot[1].toString().contains("/history"))
+        assertTrue(urlSlot[1].toString().contains("start_date=2026-01-01"))
+        assertTrue(keepHistorySlot[1])
+
+        verify { webView.getCurrentWebViewRelativeUrl() }
+    }
+
+    @Test
     fun `Given IllegalStateException when getting session state then does not collect url flow`() = runTest {
         val server = mockk<Server>(relaxed = true)
 
@@ -659,5 +706,78 @@ class WebViewPresenterImplTest {
 
         verify { webView.loadUrl(any(), any(), any(), any()) }
         verify(exactly = 0) { webView.showConnectionSecurityLevel(serverId = any()) }
+    }
+
+    @Test
+    fun `Given Matter Ready result when startCommissioningMatterDevice then step is MATTER_IN_PROGRESS and intent is captured`() = runTest(testDispatcher) {
+        val intentSender = mockk<IntentSender>()
+        coEvery { matterManager.prepareMatterDeviceCommissioning() } returns
+            MatterManager.CommissioningResult.Ready(intentSender)
+        createPresenter()
+
+        presenter.startCommissioningMatterDevice()
+        advanceUntilIdle()
+
+        assertEquals(MatterThreadStep.MATTER_IN_PROGRESS, presenter.getMatterThreadStepFlow().first())
+        assertEquals(intentSender, presenter.getMatterThreadIntent())
+    }
+
+    @Test
+    fun `Given Matter Error result when startCommissioningMatterDevice then step is ERROR_MATTER_OTHER`() = runTest(testDispatcher) {
+        coEvery { matterManager.prepareMatterDeviceCommissioning() } returns
+            MatterManager.CommissioningResult.Error(IllegalStateException("nope"))
+        createPresenter()
+
+        presenter.startCommissioningMatterDevice()
+        advanceUntilIdle()
+
+        assertEquals(MatterThreadStep.ERROR_MATTER_OTHER, presenter.getMatterThreadStepFlow().first())
+    }
+
+    @Test
+    fun `Given Thread Ready result when exportThreadCredentials then step is THREAD_EXPORT_TO_SERVER_ONLY and intent is captured`() = runTest(testDispatcher) {
+        val intentSender = mockk<IntentSender>()
+        coEvery { threadManager.exportPreferredDataset(any()) } returns
+            ThreadManager.SyncResult.OnlyOnDevice(exportIntent = intentSender)
+        createPresenter()
+
+        presenter.exportThreadCredentials()
+        advanceUntilIdle()
+
+        assertEquals(MatterThreadStep.THREAD_EXPORT_TO_SERVER_ONLY, presenter.getMatterThreadStepFlow().first())
+        assertEquals(intentSender, presenter.getMatterThreadIntent())
+    }
+
+    @Test
+    fun `Given Thread NoneHaveCredentials result when exportThreadCredentials then step is THREAD_NONE`() = runTest(testDispatcher) {
+        coEvery { threadManager.exportPreferredDataset(any()) } returns ThreadManager.SyncResult.NoneHaveCredentials
+        createPresenter()
+
+        presenter.exportThreadCredentials()
+        advanceUntilIdle()
+
+        assertEquals(MatterThreadStep.THREAD_NONE, presenter.getMatterThreadStepFlow().first())
+    }
+
+    @Test
+    fun `Given Thread NotConnected result when exportThreadCredentials then step is ERROR_THREAD_LOCAL_NETWORK`() = runTest(testDispatcher) {
+        coEvery { threadManager.exportPreferredDataset(any()) } returns ThreadManager.SyncResult.NotConnected
+        createPresenter()
+
+        presenter.exportThreadCredentials()
+        advanceUntilIdle()
+
+        assertEquals(MatterThreadStep.ERROR_THREAD_LOCAL_NETWORK, presenter.getMatterThreadStepFlow().first())
+    }
+
+    @Test
+    fun `Given Thread AppUnsupported result when exportThreadCredentials then step is ERROR_THREAD_OTHER`() = runTest(testDispatcher) {
+        coEvery { threadManager.exportPreferredDataset(any()) } returns ThreadManager.SyncResult.AppUnsupported
+        createPresenter()
+
+        presenter.exportThreadCredentials()
+        advanceUntilIdle()
+
+        assertEquals(MatterThreadStep.ERROR_THREAD_OTHER, presenter.getMatterThreadStepFlow().first())
     }
 }
