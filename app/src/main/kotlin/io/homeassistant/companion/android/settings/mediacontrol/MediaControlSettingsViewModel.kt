@@ -14,9 +14,9 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
+import io.homeassistant.companion.android.common.util.loadListOrEmpty
 import io.homeassistant.companion.android.database.server.Server
 import javax.inject.Inject
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -29,7 +29,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 /** One-shot events emitted by [MediaControlSettingsViewModel] for the UI layer to act on. */
 sealed interface MediaControlServiceEvent {
@@ -108,22 +107,22 @@ class MediaControlSettingsViewModel @VisibleForTesting constructor(
             }
             val entityRegistryDeferred = loadedServers.map { server ->
                 async {
-                    server.id to loadRegistry(server.id, "entity registry") {
-                        serverManager.webSocketRepository(it).getEntityRegistry()
+                    server.id to loadListOrEmpty("entity registry for server ${server.id}") {
+                        serverManager.webSocketRepository(server.id).getEntityRegistry()
                     }
                 }
             }
             val deviceRegistryDeferred = loadedServers.map { server ->
                 async {
-                    server.id to loadRegistry(server.id, "device registry") {
-                        serverManager.webSocketRepository(it).getDeviceRegistry()
+                    server.id to loadListOrEmpty("device registry for server ${server.id}") {
+                        serverManager.webSocketRepository(server.id).getDeviceRegistry()
                     }
                 }
             }
             val areaRegistryDeferred = loadedServers.map { server ->
                 async {
-                    server.id to loadRegistry(server.id, "area registry") {
-                        serverManager.webSocketRepository(it).getAreaRegistry()
+                    server.id to loadListOrEmpty("area registry for server ${server.id}") {
+                        serverManager.webSocketRepository(server.id).getAreaRegistry()
                     }
                 }
             }
@@ -208,23 +207,8 @@ class MediaControlSettingsViewModel @VisibleForTesting constructor(
         )
     }
 
-    private suspend fun loadMediaPlayerEntities(serverId: Int): List<Entity> = try {
-        serverManager.integrationRepository(serverId).getEntities().orEmpty()
-            .filter { it.domain == MEDIA_PLAYER_DOMAIN }
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        Timber.e(e, "Couldn't load media_player entities for server $serverId")
-        emptyList()
-    }
-
-    private suspend fun <T> loadRegistry(serverId: Int, name: String, loader: suspend (Int) -> List<T>?): List<T> =
-        try {
-            loader(serverId).orEmpty()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Timber.e(e, "Couldn't load $name for server $serverId")
-            emptyList()
-        }
+    private suspend fun loadMediaPlayerEntities(serverId: Int): List<Entity> =
+        loadListOrEmpty("media_player entities for server $serverId") {
+            serverManager.integrationRepository(serverId).getEntities()
+        }.filter { it.domain == MEDIA_PLAYER_DOMAIN }
 }
