@@ -9,7 +9,6 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Co
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
 import io.homeassistant.companion.android.database.mediacontrol.MediaControlConfig
 import io.homeassistant.companion.android.database.mediacontrol.MediaControlDao
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -25,9 +24,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 
-@ExtendWith(ConsoleLogExtension::class)
 class MediaControlRepositoryImplTest {
 
     private val dao: MediaControlDao = mockk(relaxed = true)

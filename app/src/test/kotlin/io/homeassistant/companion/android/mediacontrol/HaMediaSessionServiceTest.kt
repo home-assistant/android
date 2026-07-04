@@ -9,7 +9,6 @@ import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlS
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaPlaybackState
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaRepeatMode
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.mockk.coEvery
 import io.mockk.every
@@ -28,7 +27,6 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -67,9 +65,6 @@ private val sessionCounter = AtomicInteger(0)
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
 class HaMediaSessionServiceTest {
-
-    @get:Rule
-    val consoleLogRule = ConsoleLogRule()
 
     private val mediaControlRepository: MediaControlRepository = mockk(relaxed = true)
     private val serverManager: ServerManager = mockk(relaxed = true)

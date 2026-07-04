@@ -81,13 +81,15 @@ internal class HaRemoteMediaPlayer(
      */
     @MainThread
     fun updateState(state: MediaControlState?, artworkBytes: ByteArray?) {
-        val stateHasChanged = mediaState == null ||
-            state.mediaPosition != mediaState?.mediaPosition ||
+        val shouldResetAnchor = state != null &&
             (
-                state.playbackState is MediaPlaybackState.Playing &&
-                    mediaState?.playbackState !is MediaPlaybackState.Playing
+                mediaState == null ||
+                    state.mediaPosition != mediaState?.mediaPosition ||
+                    (
+                        state.playbackState is MediaPlaybackState.Playing &&
+                            mediaState?.playbackState !is MediaPlaybackState.Playing
+                        )
                 )
-        val shouldResetAnchor = state != null && stateHasChanged
         mediaState = state
         this.artworkBytes = artworkBytes
         if (shouldResetAnchor && state != null) {
