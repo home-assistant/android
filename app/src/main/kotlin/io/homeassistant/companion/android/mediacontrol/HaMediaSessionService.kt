@@ -18,6 +18,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlRepository
 import io.homeassistant.companion.android.common.util.CHANNEL_MEDIA_SESSION
+import io.homeassistant.companion.android.common.util.SdkVersion
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -259,7 +260,7 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
     }
 
     private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             val channel = NotificationChannel(
                 CHANNEL_MEDIA_SESSION,
                 getString(commonR.string.media_controls),
