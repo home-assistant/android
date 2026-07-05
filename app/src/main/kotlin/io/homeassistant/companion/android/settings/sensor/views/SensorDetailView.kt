@@ -90,6 +90,7 @@ import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 import io.homeassistant.companion.android.util.compose.TransparentChip
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
+import java.util.Locale
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
@@ -110,11 +111,11 @@ private const val MIN_ENTRIES_FOR_SEARCH = 10
  * query returns [entries] unchanged.
  */
 internal fun filterSettingEntries(entries: List<Pair<String, String>>, query: String): List<Pair<String, String>> {
-    val searchTerms = query.trim().lowercase().split(WHITESPACE_REGEX).filter { it.isNotEmpty() }
+    val searchTerms = query.trim().lowercase(Locale.ROOT).split(WHITESPACE_REGEX).filter { it.isNotEmpty() }
     if (searchTerms.isEmpty()) return entries
 
     return entries.filter { (_, label) ->
-        val lowercaseLabel = label.lowercase()
+        val lowercaseLabel = label.lowercase(Locale.ROOT)
         searchTerms.all { term -> lowercaseLabel.contains(term) }
     }
 }

@@ -34,6 +34,7 @@ import io.homeassistant.companion.android.database.settings.SensorUpdateFrequenc
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.sensors.LastAppSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
+import java.util.Locale
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Dispatchers
@@ -480,10 +481,10 @@ class SensorDetailViewModel @Inject constructor(
                             packageManager.getApplicationLabel(it).let { label ->
                                 when {
                                     label.isBlank() -> it.packageName
-                                    label != it.packageName -> "$label\n(${it.packageName}"
+                                    label != it.packageName -> "$label\n(${it.packageName})"
                                     else -> label.toString()
                                 }
-                            }.lowercase()
+                            }.lowercase(Locale.ROOT)
                         }
                         .map { it.packageName }
                 }
@@ -531,7 +532,7 @@ class SensorDetailViewModel @Inject constructor(
                                     label.toString()
                             }
                         }
-                        .sortedBy { it.lowercase() }
+                        .sortedBy { it.lowercase(Locale.ROOT) }
                 }
             }
             SensorSettingType.LIST_BLUETOOTH -> {
