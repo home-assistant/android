@@ -97,6 +97,12 @@ import kotlinx.coroutines.flow.onEach
 private val WHITESPACE_REGEX = Regex("\\s+")
 
 /**
+ * Minimum number of entries in a list setting dialog before the search field is shown. Short lists,
+ * such as the single-select option pickers used by some sensors, are quicker to scan than to filter.
+ */
+private const val MIN_ENTRIES_FOR_SEARCH = 10
+
+/**
  * Filters list setting dialog entries (ID to label pairs) against a free-text search query.
  *
  * The query is split on whitespace and an entry matches only if its label contains every term
@@ -636,30 +642,32 @@ fun SensorDetailSettingDialog(
                 }
             } else if (listSettingDialog) {
                 Column(modifier = Modifier.fillMaxHeight()) {
-                    TextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        singleLine = true,
-                        placeholder = { Text(stringResource(commonR.string.search)) },
-                        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                        trailingIcon = if (searchQuery.isNotBlank()) {
-                            {
-                                IconButton(onClick = { searchQuery = "" }) {
-                                    Icon(
-                                        Icons.Filled.Clear,
-                                        contentDescription = stringResource(commonR.string.clear_search),
-                                    )
+                    if (state.entries.size >= MIN_ENTRIES_FOR_SEARCH) {
+                        TextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            singleLine = true,
+                            placeholder = { Text(stringResource(commonR.string.search)) },
+                            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                            trailingIcon = if (searchQuery.isNotBlank()) {
+                                {
+                                    IconButton(onClick = { searchQuery = "" }) {
+                                        Icon(
+                                            Icons.Filled.Clear,
+                                            contentDescription = stringResource(commonR.string.clear_search),
+                                        )
+                                    }
                                 }
-                            }
-                        } else {
-                            null
-                        },
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        keyboardActions = KeyboardActions(onSearch = { keyboardController?.hide() }),
-                    )
+                            } else {
+                                null
+                            },
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                            keyboardActions = KeyboardActions(onSearch = { keyboardController?.hide() }),
+                        )
+                    }
                     LazyColumn(modifier = Modifier.weight(1f)) {
                         items(filteredEntries, key = { (id) -> id }) { (id, entry) ->
                             SensorDetailSettingRow(
