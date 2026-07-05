@@ -28,6 +28,8 @@ import androidx.compose.material.Checkbox
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Divider
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.RadioButton
@@ -40,6 +42,9 @@ import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.contentColorFor
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -87,6 +92,9 @@ import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+
+/** Splits a setting dialog search query into its space-separated search terms. */
+private val WHITESPACE_REGEX = Regex("\\s+")
 
 @Composable
 fun SensorDetailView(
@@ -590,6 +598,18 @@ fun SensorDetailSettingDialog(
     val inputValue = remember(state.loading) { mutableStateOf(state.setting.value) }
     val checkedValue =
         remember(state.loading) { mutableStateListOf<String>().also { it.addAll(state.entriesSelected) } }
+    var searchQuery by remember(state.loading) { mutableStateOf("") }
+    val filteredEntries = remember(state.entries, searchQuery) {
+        val searchTerms = searchQuery.trim().lowercase().split(WHITESPACE_REGEX).filter { it.isNotEmpty() }
+        if (searchTerms.isEmpty()) {
+            state.entries
+        } else {
+            state.entries.filter { (_, label) ->
+                val lowercaseLabel = label.lowercase()
+                searchTerms.all { term -> lowercaseLabel.contains(term) }
+            }
+        }
+    }
 
     MdcAlertDialog(
         modifier = modifier,
@@ -606,31 +626,57 @@ fun SensorDetailSettingDialog(
                     CircularProgressIndicator()
                 }
             } else if (listSettingDialog) {
-                LazyColumn {
-                    items(state.entries, key = { (id) -> id }) { (id, entry) ->
-                        SensorDetailSettingRow(
-                            label = entry,
-                            checked = if (state.setting.valueType ==
-                                SensorSettingType.LIST
-                            ) {
-                                inputValue.value == id
-                            } else {
-                                checkedValue.contains(id)
-                            },
-                            multiple = state.setting.valueType != SensorSettingType.LIST,
-                            onClick = { isChecked ->
-                                if (state.setting.valueType == SensorSettingType.LIST) {
-                                    inputValue.value = id
-                                    onSubmit(state.copy(setting = state.setting.copy(value = inputValue.value)))
-                                } else {
-                                    if (checkedValue.contains(id) && !isChecked) {
-                                        checkedValue.remove(id)
-                                    } else if (!checkedValue.contains(id) && isChecked) {
-                                        checkedValue.add(id)
-                                    }
+                Column(modifier = Modifier.fillMaxHeight()) {
+                    TextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        singleLine = true,
+                        placeholder = { Text(stringResource(commonR.string.search)) },
+                        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                        trailingIcon = if (searchQuery.isNotBlank()) {
+                            {
+                                IconButton(onClick = { searchQuery = "" }) {
+                                    Icon(
+                                        Icons.Filled.Clear,
+                                        contentDescription = stringResource(commonR.string.clear_search),
+                                    )
                                 }
-                            },
-                        )
+                            }
+                        } else {
+                            null
+                        },
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(onSearch = { keyboardController?.hide() }),
+                    )
+                    LazyColumn(modifier = Modifier.weight(1f)) {
+                        items(filteredEntries, key = { (id) -> id }) { (id, entry) ->
+                            SensorDetailSettingRow(
+                                label = entry,
+                                checked = if (state.setting.valueType ==
+                                    SensorSettingType.LIST
+                                ) {
+                                    inputValue.value == id
+                                } else {
+                                    checkedValue.contains(id)
+                                },
+                                multiple = state.setting.valueType != SensorSettingType.LIST,
+                                onClick = { isChecked ->
+                                    if (state.setting.valueType == SensorSettingType.LIST) {
+                                        inputValue.value = id
+                                        onSubmit(state.copy(setting = state.setting.copy(value = inputValue.value)))
+                                    } else {
+                                        if (checkedValue.contains(id) && !isChecked) {
+                                            checkedValue.remove(id)
+                                        } else if (!checkedValue.contains(id) && isChecked) {
+                                            checkedValue.add(id)
+                                        }
+                                    }
+                                },
+                            )
+                        }
                     }
                 }
             } else {

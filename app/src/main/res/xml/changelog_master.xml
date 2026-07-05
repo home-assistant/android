@@ -3,6 +3,7 @@
     tools:ignore="MissingDefaultResource">
     <release version="2026.7.1 - Main" versioncode="3">
         <change>Android 17: added assistant volume level sensor + notification command for control</change>
+        <change>Sensor app allow list: added a loading indicator and search</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2026.7.1 - Wear" versioncode="2">

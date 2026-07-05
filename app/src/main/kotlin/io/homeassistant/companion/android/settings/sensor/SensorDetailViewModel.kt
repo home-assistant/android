@@ -36,6 +36,7 @@ import io.homeassistant.companion.android.sensors.LastAppSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -53,6 +54,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 @HiltViewModel
@@ -462,19 +464,23 @@ class SensorDetailViewModel @Inject constructor(
             SensorSettingType.LIST ->
                 setting.entries
             SensorSettingType.LIST_APPS -> {
-                val packageManager = getApplication<Application>().packageManager
-                getApplicationInfoForEntries(null)
-                    .filterNotNull()
-                    .sortedBy {
-                        packageManager.getApplicationLabel(it).let { label ->
-                            when {
-                                label.isBlank() -> it.packageName
-                                label != it.packageName -> "$label\n(${it.packageName}"
-                                else -> label.toString()
-                            }
-                        }.lowercase()
-                    }
-                    .map { it.packageName }
+                // Enumerating and sorting all installed packages is expensive on devices with many
+                // apps, so this must not run on the main thread.
+                withContext(Dispatchers.Default) {
+                    val packageManager = getApplication<Application>().packageManager
+                    getApplicationInfoForEntries(null)
+                        .filterNotNull()
+                        .sortedBy {
+                            packageManager.getApplicationLabel(it).let { label ->
+                                when {
+                                    label.isBlank() -> it.packageName
+                                    label != it.packageName -> "$label\n(${it.packageName}"
+                                    else -> label.toString()
+                                }
+                            }.lowercase()
+                        }
+                        .map { it.packageName }
+                }
             }
             SensorSettingType.LIST_BLUETOOTH ->
                 BluetoothUtils.getBluetoothDevices(getApplication()).map { it.address }
@@ -497,22 +503,30 @@ class SensorDetailViewModel @Inject constructor(
             SensorSettingType.LIST ->
                 getSettingTranslatedEntries(setting.name, entries ?: setting.entries)
             SensorSettingType.LIST_APPS -> {
-                val packageManager = getApplication<Application>().packageManager
-                val apps = getApplicationInfoForEntries(entries)
-                apps
-                    .mapIndexed { index, info ->
-                        if (info == null) return@mapIndexed entries?.get(index) ?: ""
-                        val label = packageManager.getApplicationLabel(info)
-                        when {
-                            label.isBlank() ->
-                                info.packageName
-                            label != info.packageName ->
-                                if (entries?.isNotEmpty() == true) label.toString() else "$label\n(${info.packageName})"
-                            else ->
-                                label.toString()
+                // Enumerating and sorting all installed packages is expensive on devices with many
+                // apps, so this must not run on the main thread.
+                withContext(Dispatchers.Default) {
+                    val packageManager = getApplication<Application>().packageManager
+                    val apps = getApplicationInfoForEntries(entries)
+                    apps
+                        .mapIndexed { index, info ->
+                            if (info == null) return@mapIndexed entries?.get(index) ?: ""
+                            val label = packageManager.getApplicationLabel(info)
+                            when {
+                                label.isBlank() ->
+                                    info.packageName
+                                label != info.packageName ->
+                                    if (entries?.isNotEmpty() == true) {
+                                        label.toString()
+                                    } else {
+                                        "$label\n(${info.packageName})"
+                                    }
+                                else ->
+                                    label.toString()
+                            }
                         }
-                    }
-                    .sortedBy { it.lowercase() }
+                        .sortedBy { it.lowercase() }
+                }
             }
             SensorSettingType.LIST_BLUETOOTH -> {
                 val devices = BluetoothUtils.getBluetoothDevices(getApplication())
