@@ -287,38 +287,59 @@ class SensorDetailViewModel @Inject constructor(
 
         val listKeys = getSettingKeys(setting)
         val listEntries = getSettingEntries(setting, null)
+        val entries = when {
+            setting.valueType == SensorSettingType.LIST ||
+                setting.valueType == SensorSettingType.LIST_APPS ||
+                setting.valueType == SensorSettingType.LIST_BLUETOOTH ||
+                setting.valueType == SensorSettingType.LIST_ZONES ->
+                listKeys.zip(listEntries)
+
+            setting.valueType.listType ->
+                listEntries.map { it to it }
+
+            else ->
+                emptyList()
+        }
+        val entriesSelected = when {
+            setting.valueType == SensorSettingType.LIST ||
+                setting.valueType == SensorSettingType.LIST_APPS ||
+                setting.valueType == SensorSettingType.LIST_BLUETOOTH ||
+                setting.valueType == SensorSettingType.LIST_ZONES ->
+                setting.value.split(", ").filter { listKeys.contains(it) }
+
+            setting.valueType.listType ->
+                setting.value.split(", ").filter { listEntries.contains(it) }
+
+            else ->
+                emptyList()
+        }
         val state = SettingDialogState(
             setting = setting,
             loading = false,
-            entries = when {
-                setting.valueType == SensorSettingType.LIST ||
-                    setting.valueType == SensorSettingType.LIST_APPS ||
-                    setting.valueType == SensorSettingType.LIST_BLUETOOTH ||
-                    setting.valueType == SensorSettingType.LIST_ZONES ->
-                    listKeys.zip(listEntries)
-
-                setting.valueType.listType ->
-                    listEntries.map { it to it }
-
-                else ->
-                    emptyList()
-            },
-            entriesSelected = when {
-                setting.valueType == SensorSettingType.LIST ||
-                    setting.valueType == SensorSettingType.LIST_APPS ||
-                    setting.valueType == SensorSettingType.LIST_BLUETOOTH ||
-                    setting.valueType == SensorSettingType.LIST_ZONES ->
-                    setting.value.split(", ").filter { listKeys.contains(it) }
-
-                setting.valueType.listType ->
-                    setting.value.split(", ").filter { listEntries.contains(it) }
-
-                else ->
-                    emptyList()
-            },
+            entries = sortEntriesSelectedFirst(setting, entries, entriesSelected),
+            entriesSelected = entriesSelected,
         )
         dialogLoadingJob.cancel()
         sensorSettingsDialog = state
+    }
+
+    /**
+     * Moves the entries that are currently selected to the front of the list, so users can review
+     * their existing selection without hunting through the full list. The relative order within
+     * the selected and unselected groups is preserved. This is only applied when building the
+     * dialog state, so toggling entries while the dialog is open does not reorder the list.
+     */
+    private fun sortEntriesSelectedFirst(
+        setting: SensorSetting,
+        entries: List<Pair<String, String>>,
+        entriesSelected: List<String>,
+    ): List<Pair<String, String>> {
+        // Single-select lists (radio buttons) keep their fixed order as it can be meaningful
+        if (setting.valueType == SensorSettingType.LIST || entriesSelected.isEmpty()) return entries
+
+        val selected = entriesSelected.toSet()
+        val (checked, unchecked) = entries.partition { (id, _) -> id in selected }
+        return checked + unchecked
     }
 
     fun cancelSettingWithDialog() {
