@@ -316,30 +316,15 @@ class SensorDetailViewModel @Inject constructor(
         val state = SettingDialogState(
             setting = setting,
             loading = false,
-            entries = sortEntriesSelectedFirst(setting, entries, entriesSelected),
+            entries = sortEntriesSelectedFirst(
+                entries = entries,
+                entriesSelected = entriesSelected,
+                singleSelect = setting.valueType == SensorSettingType.LIST,
+            ),
             entriesSelected = entriesSelected,
         )
         dialogLoadingJob.cancel()
         sensorSettingsDialog = state
-    }
-
-    /**
-     * Moves the entries that are currently selected to the front of the list, so users can review
-     * their existing selection without hunting through the full list. The relative order within
-     * the selected and unselected groups is preserved. This is only applied when building the
-     * dialog state, so toggling entries while the dialog is open does not reorder the list.
-     */
-    private fun sortEntriesSelectedFirst(
-        setting: SensorSetting,
-        entries: List<Pair<String, String>>,
-        entriesSelected: List<String>,
-    ): List<Pair<String, String>> {
-        // Single-select lists (radio buttons) keep their fixed order as it can be meaningful
-        if (setting.valueType == SensorSettingType.LIST || entriesSelected.isEmpty()) return entries
-
-        val selected = entriesSelected.toSet()
-        val (checked, unchecked) = entries.partition { (id, _) -> id in selected }
-        return checked + unchecked
     }
 
     fun cancelSettingWithDialog() {
@@ -653,4 +638,24 @@ class SensorDetailViewModel @Inject constructor(
         }
         return state
     }
+}
+
+/**
+ * Moves the entries (ID to label pairs) that are currently selected to the front of the list, so
+ * users can review their existing selection without hunting through the full list. The relative
+ * order within the selected and unselected groups is preserved. This should only be applied when
+ * building the dialog state, so toggling entries while the dialog is open does not reorder the
+ * list. When [singleSelect] is true the entries are returned unchanged, since the fixed order of
+ * a single-select (radio button) list can be meaningful.
+ */
+internal fun sortEntriesSelectedFirst(
+    entries: List<Pair<String, String>>,
+    entriesSelected: List<String>,
+    singleSelect: Boolean,
+): List<Pair<String, String>> {
+    if (singleSelect || entriesSelected.isEmpty()) return entries
+
+    val selected = entriesSelected.toSet()
+    val (checked, unchecked) = entries.partition { (id, _) -> id in selected }
+    return checked + unchecked
 }

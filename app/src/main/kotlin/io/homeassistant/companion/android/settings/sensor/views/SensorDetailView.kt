@@ -96,6 +96,23 @@ import kotlinx.coroutines.flow.onEach
 /** Splits a setting dialog search query into its space-separated search terms. */
 private val WHITESPACE_REGEX = Regex("\\s+")
 
+/**
+ * Filters list setting dialog entries (ID to label pairs) against a free-text search query.
+ *
+ * The query is split on whitespace and an entry matches only if its label contains every term
+ * (case-insensitive), so `google maps` matches "Google Maps" but not other Google apps. A blank
+ * query returns [entries] unchanged.
+ */
+internal fun filterSettingEntries(entries: List<Pair<String, String>>, query: String): List<Pair<String, String>> {
+    val searchTerms = query.trim().lowercase().split(WHITESPACE_REGEX).filter { it.isNotEmpty() }
+    if (searchTerms.isEmpty()) return entries
+
+    return entries.filter { (_, label) ->
+        val lowercaseLabel = label.lowercase()
+        searchTerms.all { term -> lowercaseLabel.contains(term) }
+    }
+}
+
 @Composable
 fun SensorDetailView(
     viewModel: SensorDetailViewModel,
@@ -600,15 +617,7 @@ fun SensorDetailSettingDialog(
         remember(state.loading) { mutableStateListOf<String>().also { it.addAll(state.entriesSelected) } }
     var searchQuery by remember(state.loading) { mutableStateOf("") }
     val filteredEntries = remember(state.entries, searchQuery) {
-        val searchTerms = searchQuery.trim().lowercase().split(WHITESPACE_REGEX).filter { it.isNotEmpty() }
-        if (searchTerms.isEmpty()) {
-            state.entries
-        } else {
-            state.entries.filter { (_, label) ->
-                val lowercaseLabel = label.lowercase()
-                searchTerms.all { term -> lowercaseLabel.contains(term) }
-            }
-        }
+        filterSettingEntries(entries = state.entries, query = searchQuery)
     }
 
     MdcAlertDialog(
