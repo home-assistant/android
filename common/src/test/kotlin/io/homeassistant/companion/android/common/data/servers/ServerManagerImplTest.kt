@@ -11,6 +11,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager.Comp
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepositoryFactory
 import io.homeassistant.companion.android.common.sensors.SensorRepository
+import io.homeassistant.companion.android.database.mediacontrol.MediaControlDao
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerDao
@@ -53,6 +54,7 @@ class ServerManagerImplTest {
     private val serverDao: ServerDao = mockk()
     private val sensorRepository: SensorRepository = mockk()
     private val settingsDao: SettingsDao = mockk()
+    private val mediaControlDao: MediaControlDao = mockk()
     private val localStorage: LocalStorage = mockk()
 
     private lateinit var serverManager: ServerManagerImpl
@@ -81,6 +83,7 @@ class ServerManagerImplTest {
             serverDao = serverDao,
             sensorRepository = sensorRepository,
             settingsDao = settingsDao,
+            mediaControlDao = mediaControlDao,
             localStorage = localStorage,
         )
     }
@@ -343,6 +346,7 @@ class ServerManagerImplTest {
             coEvery { localStorage.getInt("active_server") } returns null
             coEvery { settingsDao.delete(serverId) } just Runs
             coEvery { sensorRepository.removeServer(serverId) } just Runs
+            coEvery { mediaControlDao.deleteByServerId(serverId) } just Runs
             coEvery { serverDao.delete(serverId) } just Runs
             coEvery { webSocketRepo.shutdown() } just Runs
 
@@ -357,6 +361,7 @@ class ServerManagerImplTest {
                 webSocketRepo.shutdown()
                 settingsDao.delete(serverId)
                 sensorRepository.removeServer(serverId)
+                mediaControlDao.deleteByServerId(serverId)
                 serverDao.delete(serverId)
             }
         }
@@ -377,6 +382,7 @@ class ServerManagerImplTest {
             coEvery { localStorage.remove("active_server") } just Runs
             coEvery { settingsDao.delete(serverId) } just Runs
             coEvery { sensorRepository.removeServer(serverId) } just Runs
+            coEvery { mediaControlDao.deleteByServerId(serverId) } just Runs
             coEvery { serverDao.delete(serverId) } just Runs
 
             serverManager.removeServer(serverId)
@@ -399,6 +405,7 @@ class ServerManagerImplTest {
             coEvery { localStorage.getInt("active_server") } returns 10
             coEvery { settingsDao.delete(serverId) } just Runs
             coEvery { sensorRepository.removeServer(serverId) } just Runs
+            coEvery { mediaControlDao.deleteByServerId(serverId) } just Runs
             coEvery { serverDao.delete(serverId) } just Runs
 
             serverManager.removeServer(serverId)
@@ -423,6 +430,7 @@ class ServerManagerImplTest {
             coEvery { localStorage.getInt("active_server") } returns null
             coEvery { settingsDao.delete(serverId) } just Runs
             coEvery { sensorRepository.removeServer(serverId) } just Runs
+            coEvery { mediaControlDao.deleteByServerId(serverId) } just Runs
             coEvery { serverDao.delete(serverId) } just Runs
             coEvery { webSocketRepo.shutdown() } just Runs
 

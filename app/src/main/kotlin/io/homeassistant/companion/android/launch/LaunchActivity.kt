@@ -46,6 +46,7 @@ import io.homeassistant.companion.android.common.sensors.SensorWorker
 import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissionUseCase
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.launch.applock.HazeLockOverlay
+import io.homeassistant.companion.android.mediacontrol.HaMediaSessionService
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.util.ChangeLog
 import io.homeassistant.companion.android.util.CheckLocationDisabledUseCase
@@ -244,6 +245,7 @@ class LaunchActivity : AppCompatActivity() {
             SensorWorker.start(this)
             lifecycleScope.launch {
                 WebsocketManager.start(this@LaunchActivity)
+                HaMediaSessionService.start(this@LaunchActivity)
                 checkLocationDisabled()
                 checkLocalNetworkPermission()
                 changeLog.showChangeLog(this@LaunchActivity, forceShow = false)

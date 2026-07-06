@@ -2,6 +2,7 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2026.7.1 - Main" versioncode="3">
+        <change>Add native media controls in notification shade for HA media player entities</change>
         <change>Android 17: added assistant volume level sensor + notification command for control</change>
         <change>Bug fixes and dependency updates</change>
     </release>

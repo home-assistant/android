@@ -12,6 +12,7 @@ import io.homeassistant.companion.android.common.data.websocket.WebSocketReposit
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepositoryFactory
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.database.mediacontrol.MediaControlDao
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerDao
 import io.homeassistant.companion.android.database.server.TemporaryServer
@@ -75,6 +76,7 @@ internal class ServerManagerImpl @Inject constructor(
     private val serverDao: ServerDao,
     private val sensorRepository: SensorRepository,
     private val settingsDao: SettingsDao,
+    private val mediaControlDao: MediaControlDao,
     @NamedSessionStorage private val localStorage: LocalStorage,
 ) : ServerManager {
 
@@ -143,6 +145,7 @@ internal class ServerManagerImpl @Inject constructor(
         if (localStorage.getInt(PREF_ACTIVE_SERVER) == id) localStorage.remove(PREF_ACTIVE_SERVER)
         settingsDao.delete(id)
         sensorRepository.removeServer(id)
+        mediaControlDao.deleteByServerId(id)
         serverDao.delete(id)
     }
 

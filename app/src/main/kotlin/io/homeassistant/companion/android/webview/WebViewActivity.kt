@@ -135,6 +135,7 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.improv.ui.ImprovPermissionDialog
 import io.homeassistant.companion.android.improv.ui.ImprovSetupDialog
 import io.homeassistant.companion.android.launch.LaunchActivity
+import io.homeassistant.companion.android.mediacontrol.HaMediaSessionService
 import io.homeassistant.companion.android.nfc.WriteNfcTag
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.ConnectionSecurityLevelFragment
@@ -1412,6 +1413,7 @@ class WebViewActivity :
         lifecycleScope.launch {
             SensorWorker.start(this@WebViewActivity)
             WebsocketManager.start(this@WebViewActivity)
+            HaMediaSessionService.start(this@WebViewActivity)
 
             requestedOrientation = presenter.getScreenOrientation().activityInfo
 
