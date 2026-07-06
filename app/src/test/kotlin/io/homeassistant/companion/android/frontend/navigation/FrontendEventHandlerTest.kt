@@ -366,6 +366,90 @@ class FrontendEventHandlerTest {
     }
 
     @Test
+    fun `Given OpenSecuritySettings event then onOpenSecuritySettings is called`() {
+        var securitySettingsOpened = false
+        val events = TestSharedFlow<FrontendEvent>()
+
+        composeTestRule.setContent {
+            FrontendEventHandler(
+                events = events,
+                onShowSnackbar = { _, _ -> false },
+                onNavigateToSettings = {},
+                onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = {},
+                onShowServerSwitcher = {},
+                onNavigateToNfcWrite = { _, _ -> },
+                onLaunchMatterThreadIntent = {},
+                onRequestFullscreen = {},
+                onNavigateToWidgetConfig = { _, _ -> },
+                onOpenSecuritySettings = { securitySettingsOpened = true },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        events.emit(FrontendEvent.OpenSecuritySettings)
+        composeTestRule.waitForIdle()
+
+        assertEquals(true, securitySettingsOpened)
+    }
+
+    @Test
+    fun `Given UpdateWebView event then onUpdateWebView is called`() {
+        var webViewUpdated = false
+        val events = TestSharedFlow<FrontendEvent>()
+
+        composeTestRule.setContent {
+            FrontendEventHandler(
+                events = events,
+                onShowSnackbar = { _, _ -> false },
+                onNavigateToSettings = {},
+                onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = {},
+                onShowServerSwitcher = {},
+                onNavigateToNfcWrite = { _, _ -> },
+                onLaunchMatterThreadIntent = {},
+                onRequestFullscreen = {},
+                onNavigateToWidgetConfig = { _, _ -> },
+                onUpdateWebView = { webViewUpdated = true },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        events.emit(FrontendEvent.UpdateWebView)
+        composeTestRule.waitForIdle()
+
+        assertEquals(true, webViewUpdated)
+    }
+
+    @Test
+    fun `Given Relaunch event then onRelaunch is called`() {
+        var relaunched = false
+        val events = TestSharedFlow<FrontendEvent>()
+
+        composeTestRule.setContent {
+            FrontendEventHandler(
+                events = events,
+                onShowSnackbar = { _, _ -> false },
+                onNavigateToSettings = {},
+                onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = {},
+                onShowServerSwitcher = {},
+                onNavigateToNfcWrite = { _, _ -> },
+                onLaunchMatterThreadIntent = {},
+                onRequestFullscreen = {},
+                onNavigateToWidgetConfig = { _, _ -> },
+                onRelaunch = { relaunched = true },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        events.emit(FrontendEvent.Relaunch)
+        composeTestRule.waitForIdle()
+
+        assertEquals(true, relaunched)
+    }
+
+    @Test
     fun `Given ShowServerSwitcher event then onShowServerSwitcher is called`() {
         var serverSwitcherShown = false
         val events = TestSharedFlow<FrontendEvent>()

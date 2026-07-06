@@ -19,10 +19,12 @@ class ErrorActionsTest {
     private val webViewCreation = FrontendConnectionError.Unrecoverable.WebViewCreationError(RuntimeException("boom"))
 
     @Test
-    fun `Given TlsCertNotFound when building actions then remove-server primary then settings`() {
+    fun `Given TlsCertNotFound when building actions then install-cert primary then retry remove settings`() {
         assertEquals(
             listOf(
-                ErrorAction(commonR.string.error_action_remove_server, ErrorAction.Style.Primary, ErrorActionIntent.RemoveServerAndRelaunch),
+                ErrorAction(commonR.string.error_action_install_certificate, ErrorAction.Style.Primary, ErrorActionIntent.OpenSecuritySettings),
+                ErrorAction(commonR.string.refresh_internal, ErrorAction.Style.Secondary, ErrorActionIntent.Refresh),
+                ErrorAction(commonR.string.error_action_remove_server, ErrorAction.Style.Secondary, ErrorActionIntent.RemoveServerAndRelaunch),
                 ErrorAction(commonR.string.open_settings, ErrorAction.Style.Secondary, ErrorActionIntent.GoToSettings),
             ),
             actionsFor(tlsNotFound),
@@ -38,10 +40,12 @@ class ErrorActionsTest {
     }
 
     @Test
-    fun `Given TlsCertExpired when building actions then clear-credentials primary then settings`() {
+    fun `Given TlsCertExpired when building actions then install-cert primary then clear retry settings`() {
         assertEquals(
             listOf(
-                ErrorAction(commonR.string.error_action_clear_credentials, ErrorAction.Style.Primary, ErrorActionIntent.ClearKeychainAndRelaunch),
+                ErrorAction(commonR.string.error_action_install_certificate, ErrorAction.Style.Primary, ErrorActionIntent.OpenSecuritySettings),
+                ErrorAction(commonR.string.error_action_clear_credentials, ErrorAction.Style.Secondary, ErrorActionIntent.ClearKeychainAndRelaunch),
+                ErrorAction(commonR.string.refresh_internal, ErrorAction.Style.Secondary, ErrorActionIntent.Refresh),
                 ErrorAction(commonR.string.open_settings, ErrorAction.Style.Secondary, ErrorActionIntent.GoToSettings),
             ),
             actionsFor(tlsExpired),
@@ -57,9 +61,12 @@ class ErrorActionsTest {
     }
 
     @Test
-    fun `Given WebViewCreationError when building actions then only settings as primary`() {
+    fun `Given WebViewCreationError when building actions then update-webview primary then settings`() {
         assertEquals(
-            listOf(ErrorAction(commonR.string.open_settings, ErrorAction.Style.Primary, ErrorActionIntent.GoToSettings)),
+            listOf(
+                ErrorAction(commonR.string.error_action_update_webview, ErrorAction.Style.Primary, ErrorActionIntent.UpdateWebView),
+                ErrorAction(commonR.string.open_settings, ErrorAction.Style.Secondary, ErrorActionIntent.GoToSettings),
+            ),
             actionsFor(webViewCreation),
         )
     }
@@ -85,14 +92,22 @@ class ErrorActionsTest {
     }
 
     @Test
-    fun `Given Unreachable and Unknown when building actions then refresh and settings`() {
-        listOf(unreachable, unknown).forEach { error ->
-            assertEquals(
-                listOf(ErrorActionIntent.Refresh, ErrorActionIntent.GoToSettings),
-                actionsFor(error, isInternalConnection = false).map { it.intent },
-                "actions for $error",
-            )
-        }
+    fun `Given Unreachable when building actions then refresh and settings`() {
+        assertEquals(
+            listOf(ErrorActionIntent.Refresh, ErrorActionIntent.GoToSettings),
+            actionsFor(unreachable, isInternalConnection = false).map { it.intent },
+        )
+    }
+
+    @Test
+    fun `Given Unknown when building actions then settings primary then retry`() {
+        assertEquals(
+            listOf(
+                ErrorAction(commonR.string.open_settings, ErrorAction.Style.Primary, ErrorActionIntent.GoToSettings),
+                ErrorAction(commonR.string.refresh_internal, ErrorAction.Style.Secondary, ErrorActionIntent.Refresh),
+            ),
+            actionsFor(unknown, isInternalConnection = true),
+        )
     }
 
     @Test

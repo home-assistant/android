@@ -30,29 +30,32 @@ fun errorActions(error: FrontendConnectionError, isInternalConnection: Boolean):
         intent = ErrorActionIntent.GoToSettings,
     )
 
-    fun refresh() = ErrorAction(
-        labelRes = if (isInternalConnection) commonR.string.refresh_internal else commonR.string.refresh_external,
-        style = ErrorAction.Style.Primary,
-        intent = ErrorActionIntent.Refresh,
-    )
-
     return when (error) {
-        is FrontendConnectionError.TlsCertNotFound,
-        is FrontendConnectionError.AuthRevoked,
-        -> listOf(
-            ErrorAction(
-                labelRes = commonR.string.error_action_remove_server,
-                style = ErrorAction.Style.Primary,
-                intent = ErrorActionIntent.RemoveServerAndRelaunch,
-            ),
+        is FrontendConnectionError.TlsCertNotFound -> listOf(
+            installCertificate(),
+            refresh(isInternalConnection, ErrorAction.Style.Secondary),
+            removeServer(style = ErrorAction.Style.Secondary),
             settings,
         )
 
         is FrontendConnectionError.TlsCertExpired -> listOf(
+            installCertificate(),
             ErrorAction(
                 labelRes = commonR.string.error_action_clear_credentials,
-                style = ErrorAction.Style.Primary,
+                style = ErrorAction.Style.Secondary,
                 intent = ErrorActionIntent.ClearKeychainAndRelaunch,
+            ),
+            refresh(isInternalConnection, ErrorAction.Style.Secondary),
+            settings,
+        )
+
+        is FrontendConnectionError.AuthRevoked -> listOf(removeServer(), settings)
+
+        is FrontendConnectionError.Unrecoverable.WebViewCreationError -> listOf(
+            ErrorAction(
+                labelRes = commonR.string.error_action_update_webview,
+                style = ErrorAction.Style.Primary,
+                intent = ErrorActionIntent.UpdateWebView,
             ),
             settings,
         )
@@ -62,7 +65,7 @@ fun errorActions(error: FrontendConnectionError, isInternalConnection: Boolean):
         -> listOf(settings.copy(style = ErrorAction.Style.Primary))
 
         is FrontendConnectionError.ExternalBusTimeout -> listOf(
-            refresh(),
+            refresh(isInternalConnection),
             settings,
             ErrorAction(
                 labelRes = commonR.string.wait,
@@ -71,9 +74,31 @@ fun errorActions(error: FrontendConnectionError, isInternalConnection: Boolean):
             ),
         )
 
+        is FrontendConnectionError.Unknown -> listOf(
+            settings.copy(style = ErrorAction.Style.Primary),
+            refresh(isInternalConnection, ErrorAction.Style.Secondary),
+        )
+
         is FrontendConnectionError.Timeout,
         is FrontendConnectionError.Unreachable,
-        is FrontendConnectionError.Unknown,
-        -> listOf(refresh(), settings)
+        -> listOf(refresh(isInternalConnection), settings)
     }
 }
+
+private fun refresh(isInternalConnection: Boolean, style: ErrorAction.Style = ErrorAction.Style.Primary) = ErrorAction(
+    labelRes = if (isInternalConnection) commonR.string.refresh_internal else commonR.string.refresh_external,
+    style = style,
+    intent = ErrorActionIntent.Refresh,
+)
+
+private fun installCertificate(style: ErrorAction.Style = ErrorAction.Style.Primary) = ErrorAction(
+    labelRes = commonR.string.error_action_install_certificate,
+    style = style,
+    intent = ErrorActionIntent.OpenSecuritySettings,
+)
+
+private fun removeServer(style: ErrorAction.Style = ErrorAction.Style.Primary) = ErrorAction(
+    labelRes = commonR.string.error_action_remove_server,
+    style = style,
+    intent = ErrorActionIntent.RemoveServerAndRelaunch,
+)

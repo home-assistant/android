@@ -2675,6 +2675,30 @@ class FrontendViewModelTest {
                 cancelAndIgnoreRemainingEvents()
             }
         }
+
+        @Test
+        fun `Given OpenSecuritySettings when onErrorAction then emits OpenSecuritySettings`() = runTest {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            viewModel.events.test {
+                viewModel.onErrorAction(ErrorActionIntent.OpenSecuritySettings)
+                assertEquals(FrontendEvent.OpenSecuritySettings, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given UpdateWebView when onErrorAction then emits UpdateWebView`() = runTest {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            viewModel.events.test {
+                viewModel.onErrorAction(ErrorActionIntent.UpdateWebView)
+                assertEquals(FrontendEvent.UpdateWebView, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
     }
 
     @Nested

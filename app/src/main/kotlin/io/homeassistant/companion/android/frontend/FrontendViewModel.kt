@@ -486,6 +486,10 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
             ErrorActionIntent.GoToSettings -> _events.tryEmit(FrontendEvent.NavigateToSettings)
 
+            ErrorActionIntent.OpenSecuritySettings -> _events.tryEmit(FrontendEvent.OpenSecuritySettings)
+
+            ErrorActionIntent.UpdateWebView -> _events.tryEmit(FrontendEvent.UpdateWebView)
+
             ErrorActionIntent.Refresh -> onRetry()
 
             ErrorActionIntent.Wait -> _viewState.update { state ->

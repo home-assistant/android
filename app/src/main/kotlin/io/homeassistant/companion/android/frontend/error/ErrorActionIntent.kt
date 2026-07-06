@@ -20,4 +20,10 @@ sealed interface ErrorActionIntent {
 
     /** Open the app settings. */
     data object GoToSettings : ErrorActionIntent
+
+    /** Open the OS security settings where the user can install a client certificate. */
+    data object OpenSecuritySettings : ErrorActionIntent
+
+    /** Open the store/app page for the device's current WebView provider so it can be updated. */
+    data object UpdateWebView : ErrorActionIntent
 }

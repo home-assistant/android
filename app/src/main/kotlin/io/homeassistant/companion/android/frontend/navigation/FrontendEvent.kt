@@ -39,6 +39,12 @@ sealed interface FrontendEvent {
     /** Navigate to the app settings screen. */
     data object NavigateToSettings : FrontendEvent
 
+    /** Open the OS security settings screen (client-certificate installation). */
+    data object OpenSecuritySettings : FrontendEvent
+
+    /** Open the store/app page of the device's current WebView provider so the user can update it. */
+    data object UpdateWebView : FrontendEvent
+
     /**
      * Restart the app from scratch.
      */
