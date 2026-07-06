@@ -361,7 +361,7 @@ private fun FrontendScreenEffects(
 
     LeavingAppEffect(webView = webView, onLeavingApp = onLeavingApp)
 
-    WebViewPauseLifecycleEffect(webView = webView)
+    WebViewStopLifecycleEffect(webView = webView)
 }
 
 /**
@@ -369,13 +369,13 @@ private fun FrontendScreenEffects(
  * resumes it when the activity starts again.
  */
 @Composable
-private fun WebViewPauseLifecycleEffect(webView: WebView?) {
+private fun WebViewStopLifecycleEffect(webView: WebView?) {
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(webView, lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_STOP -> webView?.apply {
-                    Timber.d("Webview paused")
+                    Timber.d("Webview stopped")
                     onPause()
                     pauseTimers()
                 }
