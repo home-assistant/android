@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.frontend.addto
 import android.content.Context
 import androidx.annotation.VisibleForTesting
 import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
@@ -35,6 +36,7 @@ import timber.log.Timber
  * The available actions depend on the entity's domain and current system state (for example, watch connectivity,
  * shortcut limits).
  */
+@ViewModelScoped
 class FrontendEntityAddToManager @VisibleForTesting constructor(
     private val context: Context,
     private val serverManager: ServerManager,
