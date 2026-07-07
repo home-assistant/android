@@ -368,9 +368,10 @@ private fun FrontendScreenEffects(
  * Freezes the WebView while the host activity is stopped (screen off or app backgrounded) and
  * resumes it when the activity starts again.
  */
+@VisibleForTesting
 @Composable
-private fun WebViewStopLifecycleEffect(webView: WebView?) {
-    val lifecycleOwner = LocalLifecycleOwner.current
+internal fun WebViewStopLifecycleEffect(webView: WebView?) {
+    val lifecycleOwner = LocalActivity.current as? LifecycleOwner ?: return
     DisposableEffect(webView, lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
