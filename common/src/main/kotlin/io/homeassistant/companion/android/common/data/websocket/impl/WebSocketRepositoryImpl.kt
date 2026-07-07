@@ -13,6 +13,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketCo
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.EVENT_ENTITY_REGISTRY_UPDATED
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.EVENT_STATE_CHANGED
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN
+import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_CAMERA_WEBRTC_OFFER
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_PUSH_NOTIFICATION_CHANNEL
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_RENDER_TEMPLATE
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES
@@ -23,6 +24,8 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ar
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineListResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraCapabilitiesResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraWebRtcClientConfigResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ConversationResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CurrentUserResponse
@@ -41,6 +44,9 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Te
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetTlvResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcCandidate
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.webRtcJsonMapper
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.common.util.toHexString
 import io.homeassistant.companion.android.database.server.ServerUserInfo
@@ -50,6 +56,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.intOrNull
 import okhttp3.WebSocketListener
 
@@ -415,6 +422,57 @@ class WebSocketRepositoryImpl internal constructor(
                 "type" to "thread/add_dataset_tlv",
                 "source" to "Google",
                 "tlv" to tlv.toHexString(),
+            ),
+        )
+        return response?.success == true
+    }
+
+    override suspend fun getCameraCapabilities(entityId: String): CameraCapabilitiesResponse? {
+        val socketResponse = webSocketCore.sendMessage(
+            mapOf(
+                "type" to "camera/capabilities",
+                "entity_id" to entityId,
+            ),
+        )
+
+        return mapResponse(socketResponse)
+    }
+
+    override suspend fun getCameraWebRtcClientConfig(entityId: String): CameraWebRtcClientConfigResponse? {
+        val socketResponse = webSocketCore.sendMessage(
+            mapOf(
+                "type" to "camera/webrtc/get_client_config",
+                "entity_id" to entityId,
+            ),
+        )
+
+        // The response follows the camelCase W3C dictionaries so it cannot be decoded with the
+        // shared snake_case mapper used by mapResponse
+        return socketResponse?.result?.let { webRtcJsonMapper.decodeFromJsonElement(it) }
+    }
+
+    override suspend fun startCameraWebRtcSession(entityId: String, offerSdp: String): Flow<WebRtcEvent>? =
+        webSocketCore.subscribeTo(
+            SUBSCRIBE_TYPE_CAMERA_WEBRTC_OFFER,
+            mapOf(
+                "entity_id" to entityId,
+                "offer" to offerSdp,
+            ),
+        )
+
+    override suspend fun sendCameraWebRtcCandidate(
+        entityId: String,
+        sessionId: String,
+        candidate: WebRtcCandidate,
+    ): Boolean {
+        val response = webSocketCore.sendMessage(
+            mapOf(
+                "type" to "camera/webrtc/candidate",
+                "entity_id" to entityId,
+                "session_id" to sessionId,
+                // Pre-encoded with the WebRTC mapper to keep the camelCase keys, the message
+                // serializer passes JsonElement values through untouched
+                "candidate" to webRtcJsonMapper.encodeToJsonElement(candidate),
             ),
         )
         return response?.success == true

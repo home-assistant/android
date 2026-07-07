@@ -8,6 +8,9 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ar
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineListResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraCapabilitiesResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraStreamTypes
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraWebRtcClientConfigResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ConversationResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CurrentUserResponse
@@ -24,6 +27,8 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Te
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetTlvResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcCandidate
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcEvent
 import javax.inject.Inject
 import javax.inject.Provider
 import kotlinx.coroutines.flow.Flow
@@ -134,6 +139,55 @@ interface WebSocketRepository {
      * @return `true`/`false` indicating if it was enqueued, or `null` on unexpected failures
      */
     suspend fun sendVoiceData(binaryHandlerId: Int, data: ByteArray): Boolean
+
+    /**
+     * Get the stream types the frontend can use for a camera entity. Consumers should only start
+     * a WebRTC session when [CameraStreamTypes.WEB_RTC] is reported and fall back to HLS
+     * otherwise.
+     *
+     * Requires Home Assistant Core 2024.11 or later.
+     *
+     * @return [CameraCapabilitiesResponse] for the entity, or `null` if the server did not return
+     * a successful response.
+     */
+    suspend fun getCameraCapabilities(entityId: String): CameraCapabilitiesResponse?
+
+    /**
+     * Get the WebRTC client configuration (STUN/TURN servers and optional data channel label) to
+     * use when creating a peer connection for a camera entity.
+     *
+     * Requires Home Assistant Core 2024.11 or later.
+     *
+     * @return [CameraWebRtcClientConfigResponse] for the entity, or `null` if the server did not
+     * return a successful response, for example when the camera does not support WebRTC
+     * (`webrtc_get_client_config_failed`).
+     */
+    suspend fun getCameraWebRtcClientConfig(entityId: String): CameraWebRtcClientConfigResponse?
+
+    /**
+     * Start a WebRTC session for a camera entity by sending the SDP offer, and subscribe to the
+     * signaling events for this session.
+     *
+     * The subscription lifetime is the session lifetime: when the returned Flow is no longer
+     * collected the subscription is cancelled with `unsubscribe_events`, which closes the WebRTC
+     * session on the server (there is no dedicated close command).
+     *
+     * Requires Home Assistant Core 2024.11 or later (2024.12 or later for trickle ICE with
+     * `RTCIceCandidateInit` dictionaries).
+     *
+     * @return a Flow that will emit all [WebRtcEvent]s for the session, or `null` if the
+     * subscription could not be started.
+     */
+    suspend fun startCameraWebRtcSession(entityId: String, offerSdp: String): Flow<WebRtcEvent>?
+
+    /**
+     * Send a local ICE candidate for a WebRTC session previously started with
+     * [startCameraWebRtcSession].
+     *
+     * @param sessionId the session identifier received in [WebRtcEvent.Session]
+     * @return `true` if the server accepted the candidate
+     */
+    suspend fun sendCameraWebRtcCandidate(entityId: String, sessionId: String, candidate: WebRtcCandidate): Boolean
 }
 
 internal class WebSocketRepositoryFactory @Inject internal constructor(

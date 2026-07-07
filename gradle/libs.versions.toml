@@ -96,6 +96,7 @@ wear-tooling = "1.0.0"
 wearPhoneInteractions = "1.1.0"
 wearInput = "1.2.0"
 webkit = "1.15.0"
+webrtcSdk = "144.7559.09"
 wear-remote-interactions = "1.2.0"
 work = "2.11.2"
 zxing = "4.3.0"
@@ -275,6 +276,7 @@ wear-remote-interactions = { module = "androidx.wear:wear-remote-interactions", 
 wear-tiles = { module = "androidx.wear.tiles:tiles", version.ref = "wear-tiles" }
 wear-tooling = { module = "androidx.wear:wear-tooling-preview", version.ref = "wear-tooling" }
 webkit = { module = "androidx.webkit:webkit", version.ref = "webkit" }
+webrtc-sdk = { module = "io.github.webrtc-sdk:android-prefixed", version.ref = "webrtcSdk" }
 zxing = { module = "com.journeyapps:zxing-android-embedded", version.ref = "zxing" }
 
 [bundles]
