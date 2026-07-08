@@ -381,7 +381,7 @@ internal fun WebViewStopLifecycleEffect(webView: WebView?) {
                     pauseTimers()
                 }
                 Lifecycle.Event.ON_START -> webView?.apply {
-                    Timber.d("Webview resumed")
+                    Timber.d("Webview started")
                     resumeTimers()
                     onResume()
                 }
