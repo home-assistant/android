@@ -19,7 +19,7 @@ import timber.log.Timber
 
 /**
  * [SignalingClient] implementation over the Home Assistant WebSocket API
- * (`camera/capabilities` and the `camera/webrtc/*` commands).
+ * (`camera/capabilities` and the `camera/webrtc` commands).
  *
  * The WebRTC signaling API requires Home Assistant Core 2024.12 or later; consumers should
  * check the server version and the camera capabilities before starting a session.

@@ -27,8 +27,7 @@ class WebRtcSessionTest {
     private val signaling = FakeSignalingClient()
     private val factory = FakePeerConnectionControllerFactory()
 
-    private fun TestScope.createSession() =
-        WebRtcSession(ENTITY_ID, signaling, factory, StandardTestDispatcher(testScheduler))
+    private fun TestScope.createSession() = WebRtcSession(ENTITY_ID, signaling, factory, StandardTestDispatcher(testScheduler))
 
     private fun TestScope.startConnectedSession(session: WebRtcSession) {
         session.start()
@@ -88,29 +87,28 @@ class WebRtcSessionTest {
     }
 
     @Test
-    fun `Given trickle ICE When local candidates are found before the session id Then they are sent after it`() =
-        runTest {
-            val session = createSession()
-            session.start()
-            advanceUntilIdle()
+    fun `Given trickle ICE When local candidates are found before the session id Then they are sent after it`() = runTest {
+        val session = createSession()
+        session.start()
+        advanceUntilIdle()
 
-            val earlyCandidate = IceCandidateInit(candidate = "candidate:local-early")
-            factory.lastController.emit(PeerConnectionEvent.LocalCandidate(earlyCandidate))
-            advanceUntilIdle()
-            assertTrue(signaling.sentCandidates.isEmpty())
+        val earlyCandidate = IceCandidateInit(candidate = "candidate:local-early")
+        factory.lastController.emit(PeerConnectionEvent.LocalCandidate(earlyCandidate))
+        advanceUntilIdle()
+        assertTrue(signaling.sentCandidates.isEmpty())
 
-            signaling.currentSession.trySend(SignalingEvent.Session(SESSION_ID))
-            advanceUntilIdle()
-            assertEquals(listOf(SESSION_ID to earlyCandidate), signaling.sentCandidates)
+        signaling.currentSession.trySend(SignalingEvent.Session(SESSION_ID))
+        advanceUntilIdle()
+        assertEquals(listOf(SESSION_ID to earlyCandidate), signaling.sentCandidates)
 
-            val lateCandidate = IceCandidateInit(candidate = "candidate:local-late")
-            factory.lastController.emit(PeerConnectionEvent.LocalCandidate(lateCandidate))
-            advanceUntilIdle()
-            assertEquals(
-                listOf(SESSION_ID to earlyCandidate, SESSION_ID to lateCandidate),
-                signaling.sentCandidates,
-            )
-        }
+        val lateCandidate = IceCandidateInit(candidate = "candidate:local-late")
+        factory.lastController.emit(PeerConnectionEvent.LocalCandidate(lateCandidate))
+        advanceUntilIdle()
+        assertEquals(
+            listOf(SESSION_ID to earlyCandidate, SESSION_ID to lateCandidate),
+            signaling.sentCandidates,
+        )
+    }
 
     @Test
     fun `Given an error event When negotiating Then the session fails and releases everything`() = runTest {
@@ -193,22 +191,21 @@ class WebRtcSessionTest {
     }
 
     @Test
-    fun `Given a transient disconnection When it recovers within the grace period Then nothing is renegotiated`() =
-        runTest {
-            val session = createSession()
-            startConnectedSession(session)
+    fun `Given a transient disconnection When it recovers within the grace period Then nothing is renegotiated`() = runTest {
+        val session = createSession()
+        startConnectedSession(session)
 
-            factory.lastController.emit(PeerConnectionEvent.ConnectionStateChanged(RtcConnectionState.DISCONNECTED))
-            advanceTimeBy(2.seconds)
-            assertEquals(PlayerState.Buffering, session.state.value)
+        factory.lastController.emit(PeerConnectionEvent.ConnectionStateChanged(RtcConnectionState.DISCONNECTED))
+        advanceTimeBy(2.seconds)
+        assertEquals(PlayerState.Buffering, session.state.value)
 
-            factory.lastController.emit(PeerConnectionEvent.ConnectionStateChanged(RtcConnectionState.CONNECTED))
-            advanceUntilIdle()
+        factory.lastController.emit(PeerConnectionEvent.ConnectionStateChanged(RtcConnectionState.CONNECTED))
+        advanceUntilIdle()
 
-            assertEquals(PlayerState.Playing, session.state.value)
-            assertEquals(1, signaling.openSessionCount)
-            assertFalse(factory.lastController.disposed)
-        }
+        assertEquals(PlayerState.Playing, session.state.value)
+        assertEquals(1, signaling.openSessionCount)
+        assertFalse(factory.lastController.disposed)
+    }
 
     @Test
     fun `Given repeated connection failures When reconnecting Then the session gives up after the cap`() = runTest {

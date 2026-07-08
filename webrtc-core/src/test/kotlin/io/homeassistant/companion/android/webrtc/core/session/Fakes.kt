@@ -28,8 +28,7 @@ internal class FakeSignalingClient : SignalingClient {
     val currentSession: Channel<SignalingEvent>
         get() = sessionChannels.last()
 
-    override suspend fun getStreamCapabilities(entityId: String): Set<StreamType> =
-        setOf(StreamType.HLS, StreamType.WEB_RTC)
+    override suspend fun getStreamCapabilities(entityId: String): Set<StreamType> = setOf(StreamType.HLS, StreamType.WEB_RTC)
 
     override suspend fun getClientConfig(entityId: String): RtcClientConfig {
         clientConfigException?.let { throw it }

@@ -10,7 +10,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.modules.SerializersModule
 
 /**
- * JSON mapper dedicated to the `camera/webrtc/*` WebSocket commands.
+ * JSON mapper dedicated to the `camera/webrtc` WebSocket commands.
  *
  * These payloads cannot be handled by the shared [io.homeassistant.companion.android.common.util.kotlinJsonMapper]:
  * its global snake_case naming strategy would also rewrite explicit `@SerialName` values, while

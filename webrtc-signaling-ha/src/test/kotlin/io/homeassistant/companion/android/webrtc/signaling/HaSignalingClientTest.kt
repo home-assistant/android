@@ -26,7 +26,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 
 private const val ENTITY_ID = "camera.front_door"
 private const val SESSION_ID = "01JAYSESSION"
@@ -55,7 +54,9 @@ class HaSignalingClientTest {
     fun `Given no response When getting capabilities Then a SignalingException is thrown`() = runTest {
         coEvery { webSocketRepository.getCameraCapabilities(ENTITY_ID) } returns null
 
-        assertThrows<SignalingException> { client.getStreamCapabilities(ENTITY_ID) }
+        val result = runCatching { client.getStreamCapabilities(ENTITY_ID) }
+
+        assertTrue(result.exceptionOrNull() is SignalingException)
     }
 
     @Test
@@ -91,7 +92,9 @@ class HaSignalingClientTest {
     fun `Given no response When getting the client config Then a SignalingException is thrown`() = runTest {
         coEvery { webSocketRepository.getCameraWebRtcClientConfig(ENTITY_ID) } returns null
 
-        assertThrows<SignalingException> { client.getClientConfig(ENTITY_ID) }
+        val result = runCatching { client.getClientConfig(ENTITY_ID) }
+
+        assertTrue(result.exceptionOrNull() is SignalingException)
     }
 
     @Test

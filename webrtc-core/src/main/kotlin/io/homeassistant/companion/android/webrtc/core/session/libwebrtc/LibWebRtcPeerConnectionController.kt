@@ -38,10 +38,8 @@ private const val MICROPHONE_TRACK_ID = "ha_microphone"
  * audio transceiver whose microphone track starts disabled, so talk-back can be toggled later
  * without renegotiating.
  */
-internal class LibWebRtcPeerConnectionController(
-    factory: PeerConnectionFactory,
-    config: RtcClientConfig,
-) : PeerConnectionController {
+internal class LibWebRtcPeerConnectionController(factory: PeerConnectionFactory, config: RtcClientConfig) :
+    PeerConnectionController {
 
     private val eventsChannel = Channel<PeerConnectionEvent>(Channel.UNLIMITED)
     override val events: Flow<PeerConnectionEvent> = eventsChannel.receiveAsFlow()
