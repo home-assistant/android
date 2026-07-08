@@ -45,9 +45,7 @@ sealed interface FrontendEvent {
     /** Open the store/app page of the device's current WebView provider so the user can update it. */
     data object UpdateWebView : FrontendEvent
 
-    /**
-     * Restart the app from scratch.
-     */
+    /** Restart the app from scratch. */
     data object Relaunch : FrontendEvent
 
     /** Navigate to the assist settings screen. */
