@@ -149,7 +149,7 @@ class LaunchActivity : AppCompatActivity() {
          *   apps cannot reach the alias and therefore cannot opt into this behavior.
          */
         fun newInstance(context: Context, deepLink: DeepLink? = null, showWhenLocked: Boolean = false): Intent {
-            return Intent().apply {
+            return Intent(Intent.ACTION_MAIN).apply {
                 component = if (showWhenLocked) {
                     ComponentName(context, LOCK_SCREEN_ALIAS_CLASS)
                 } else {
