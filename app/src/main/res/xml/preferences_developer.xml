@@ -21,6 +21,11 @@
         android:title="@string/thread_debug"
         android:summary="@string/thread_debug_summary"/>
     <Preference
+        android:key="webrtc_debug"
+        android:icon="@drawable/ic_play"
+        android:title="@string/webrtc_debug"
+        android:summary="@string/webrtc_debug_summary"/>
+    <Preference
         android:key="tag_clear_allowed"
         android:icon="@drawable/ic_tag_remove"
         android:title="@string/clear_allowed_tags"/>

@@ -29,6 +29,9 @@ EXCEPTED_LIBRARIES = [
     "org.chromium.net:*",
     # https://github.com/Dimezis/BlurView/issues/259
     "com.github.Dimezis:BlurView",
+    # libwebrtc is BSD-3-Clause but the POM declares the non-SPDX name
+    # "The 3-Clause BSD License" which aboutlibraries cannot map
+    "io.github.webrtc-sdk:android-prefixed",
 ]
 
 

@@ -27,6 +27,9 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                 dependencies {
                     "implementation"(project(":common"))
                     "implementation"(project(":microwakeword"))
+                    "implementation"(project(":webrtc-compose"))
+                    "implementation"(project(":webrtc-core"))
+                    "implementation"(project(":webrtc-signaling-ha"))
 
                     "implementation"(libs.blurView)
                     "implementation"(libs.haze)
