@@ -72,6 +72,9 @@ interface WebViewPresenter {
     suspend fun parseWebViewColor(webViewColor: String): Int
 
     fun appCanCommissionMatterDevice(): Boolean
+
+    /** Whether the beta native WebRTC camera player is enabled in the developer settings. */
+    suspend fun isNativeWebRtcPlayerEnabled(): Boolean
     fun startCommissioningMatterDevice()
 
     /** @return `true` if the app can send this device's preferred Thread credential to the server */

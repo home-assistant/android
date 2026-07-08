@@ -156,6 +156,11 @@ import io.homeassistant.companion.android.util.hasSameOrigin
 import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.util.toRelativeUrl
+import io.homeassistant.companion.android.webrtc.core.PlayerFailure
+import io.homeassistant.companion.android.webrtc.core.PlayerState
+import io.homeassistant.companion.android.webrtc.core.session.WebRtcSession
+import io.homeassistant.companion.android.webrtc.core.session.libwebrtc.LibWebRtcPeerConnectionControllerFactory
+import io.homeassistant.companion.android.webrtc.signaling.HaSignalingClient
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.webview.WebView.ErrorType
 import io.homeassistant.companion.android.webview.externalbus.EntityAddToActionsResponse
@@ -164,6 +169,7 @@ import io.homeassistant.companion.android.webview.externalbus.ExternalConfigResp
 import io.homeassistant.companion.android.webview.externalbus.ExternalEntityAddToAction
 import io.homeassistant.companion.android.webview.externalbus.NavigateTo
 import io.homeassistant.companion.android.webview.externalbus.ShowSidebar
+import io.homeassistant.companion.android.webview.externalbus.WebRtcErrorEvent
 import io.homeassistant.companion.android.webview.insecure.BlockInsecureFragment
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -177,6 +183,8 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import org.json.JSONObject
 import timber.log.Timber
+
+private const val WEBRTC_DEFAULT_VIDEO_HEIGHT_RATIO = 9.0 / 16.0
 
 @AndroidEntryPoint
 class WebViewActivity :
@@ -289,6 +297,9 @@ class WebViewActivity :
     @Inject
     lateinit var dataSourceFactoryProvider: SuspendProvider<DataSource.Factory>
 
+    @Inject
+    lateinit var peerConnectionControllerFactory: LibWebRtcPeerConnectionControllerFactory
+
     private lateinit var webView: WebView
     private var loadedUrl: Uri? = null
     private lateinit var decor: FrameLayout
@@ -314,6 +325,11 @@ class WebViewActivity :
     private var playerSize = mutableStateOf<DpSize?>(null)
     private var playerTop = mutableStateOf(0.dp)
     private var playerLeft = mutableStateOf(0.dp)
+    private var webRtcSession = mutableStateOf<WebRtcSession?>(null)
+    private var webRtcPlayerSize = mutableStateOf<DpSize?>(null)
+    private var webRtcPlayerTop = mutableStateOf(0.dp)
+    private var webRtcPlayerLeft = mutableStateOf(0.dp)
+    private var webRtcStateJob: Job? = null
     private var statusBarColor = mutableStateOf<Color?>(null)
     private var backgroundColor = mutableStateOf<Color?>(null)
 
@@ -412,6 +428,10 @@ class WebViewActivity :
             val playerSize by remember { playerSize }
             val playerTop by remember { playerTop }
             val playerLeft by remember { playerLeft }
+            val webRtcPlayer by remember { webRtcSession }
+            val webRtcPlayerSize by remember { webRtcPlayerSize }
+            val webRtcPlayerTop by remember { webRtcPlayerTop }
+            val webRtcPlayerLeft by remember { webRtcPlayerLeft }
             val currentAppLocked by remember { appLocked }
             val customViewFromWebView by remember { customViewFromWebView }
             val statusBarColor by remember { statusBarColor }
@@ -450,6 +470,15 @@ class WebViewActivity :
                 playerSize = playerSize,
                 playerTop = playerTop,
                 playerLeft = playerLeft,
+                webRtcPlayer = webRtcPlayer,
+                webRtcEglContext = if (webRtcPlayer != null) {
+                    peerConnectionControllerFactory.eglBase.eglBaseContext
+                } else {
+                    null
+                },
+                webRtcPlayerSize = webRtcPlayerSize,
+                webRtcPlayerTop = webRtcPlayerTop,
+                webRtcPlayerLeft = webRtcPlayerLeft,
                 currentAppLocked,
                 customViewFromWebView,
                 shouldAskNotificationPermission = shouldAskNotificationPermission,
@@ -1075,16 +1104,19 @@ class WebViewActivity :
                     } else {
                         0
                     }
-                sendExternalBusMessage(
-                    ExternalConfigResponse(
-                        id = messageId,
-                        hasNfc = hasNfc,
-                        canCommissionMatter = canCommissionMatter,
-                        canExportThread = canExportThread,
-                        hasBarCodeScanner = hasBarCodeScanner,
-                        appVersion = appVersionProvider(),
-                    ),
-                )
+                lifecycleScope.launch {
+                    sendExternalBusMessage(
+                        ExternalConfigResponse(
+                            id = messageId,
+                            hasNfc = hasNfc,
+                            canCommissionMatter = canCommissionMatter,
+                            canExportThread = canExportThread,
+                            hasBarCodeScanner = hasBarCodeScanner,
+                            hasNativeWebRtc = presenter.isNativeWebRtcPlayerEnabled(),
+                            appVersion = appVersionProvider(),
+                        ),
+                    )
+                }
 
                 // TODO This feature is deprecated and should be removed after 2022.6
                 getAndSetStatusBarNavigationBarColors()
@@ -1178,6 +1210,9 @@ class WebViewActivity :
             "exoplayer/play_hls" -> exoPlayHls(json)
             "exoplayer/stop" -> exoStopHls()
             "exoplayer/resize" -> exoResizeHls(json)
+            "webrtc/play_camera" -> webRtcPlayCamera(json)
+            "webrtc/stop" -> webRtcStop()
+            "webrtc/resize" -> webRtcResize(json)
             "haptic" -> processHaptic(
                 json["payload"]?.jsonObjectOrNull()?.getStringOrNull("hapticType") ?: "",
             )
@@ -1526,6 +1561,92 @@ class WebViewActivity :
         playerSize.value = DpSize((right - left).dp, (bottom - top).dp)
     }
 
+    private fun webRtcPlayCamera(json: JsonObject) {
+        val payload = json["payload"]?.jsonObjectOrNull()
+        val entityId = payload?.getStringOrNull("entity_id") ?: return
+        val muted = payload.getBooleanOrElse("muted", false)
+        lifecycleScope.launch {
+            releaseWebRtcSession()
+            val signalingClient = HaSignalingClient(
+                serverManager.webSocketRepository(presenter.getActiveServer()),
+            )
+            val session = WebRtcSession(
+                entityId = entityId,
+                signalingClient = signalingClient,
+                controllerFactory = peerConnectionControllerFactory,
+            )
+            session.setAudioEnabled(!muted)
+            session.start()
+            webRtcSession.value = session
+            webRtcStateJob = lifecycleScope.launch {
+                session.state.collect { state ->
+                    if (state is PlayerState.Failed) {
+                        onWebRtcSessionFailed(entityId, state.failure)
+                    }
+                }
+            }
+            sendExternalBusMessage(
+                ExternalBusMessage(
+                    id = json["id"],
+                    type = "result",
+                    success = true,
+                    callback = {
+                        Timber.d("Callback $it")
+                    },
+                ),
+            )
+        }
+    }
+
+    private fun onWebRtcSessionFailed(entityId: String, failure: PlayerFailure) {
+        Timber.w("Native WebRTC session failed: $failure")
+        // Let the frontend fall back to its own in-WebView playback
+        sendExternalBusMessage(
+            WebRtcErrorEvent(
+                entityId = entityId,
+                code = (failure as? PlayerFailure.Signaling)?.code,
+                message = when (failure) {
+                    is PlayerFailure.Signaling -> failure.message
+                    is PlayerFailure.Internal -> failure.message
+                    PlayerFailure.ConnectionLost -> null
+                },
+            ),
+        )
+        webRtcStop()
+    }
+
+    private fun webRtcStop() {
+        runOnUiThread {
+            releaseWebRtcSession()
+            webRtcPlayerSize.value = null
+            webRtcPlayerTop.value = 0.dp
+            webRtcPlayerLeft.value = 0.dp
+        }
+    }
+
+    private fun releaseWebRtcSession() {
+        webRtcStateJob?.cancel()
+        webRtcStateJob = null
+        webRtcSession.value?.release()
+        webRtcSession.value = null
+    }
+
+    private fun webRtcResize(json: JsonObject) {
+        val payload = json["payload"]?.jsonObjectOrNull() ?: return
+        // Payload is https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect
+        // like in exoResizeHls. The video size is not known before the first frame, so when the
+        // frontend does not constrain the height a 16:9 ratio is used until it does.
+        val left = payload.getDoubleOrElse("left", 0.0)
+        val top = payload.getDoubleOrElse("top", 0.0)
+        val right = payload.getDoubleOrElse("right", 0.0)
+        val bottom = payload.getDoubleOrNull("bottom")?.takeIf { it > 0 }
+            ?: (top + (right - left) * WEBRTC_DEFAULT_VIDEO_HEIGHT_RATIO)
+
+        webRtcPlayerTop.value = top.dp
+        webRtcPlayerLeft.value = left.dp
+        webRtcPlayerSize.value = DpSize((right - left).dp, (bottom - top).dp)
+    }
+
     fun processHaptic(hapticType: String) {
         Timber.d("Processing haptic tag for $hapticType")
         HapticFeedbackPerformer.perform(
@@ -1815,6 +1936,7 @@ class WebViewActivity :
             WebViewCompat.removeWebMessageListener(webView, EXTERNAL_APP_V2_LISTENER)
         }
 
+        releaseWebRtcSession()
         presenter.onFinish()
         super.onDestroy()
     }

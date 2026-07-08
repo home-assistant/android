@@ -981,6 +981,8 @@
     <string name="webrtc_debug_start">Start</string>
     <string name="webrtc_debug_stop">Stop</string>
     <string name="webrtc_debug_summary">Test the native WebRTC player against a camera entity of the active server</string>
+    <string name="webrtc_native_player">Native WebRTC player (beta)</string>
+    <string name="webrtc_native_player_summary">Let dashboards play camera WebRTC streams with the native player instead of the WebView</string>
     <string name="websocket_listening">Connected to Home Assistant</string>
     <string name="websocket_restricted_title">Unable to open connection to Home Assistant</string>
     <string name="websocket_restricted_fix">Update settings to fix or disable</string>

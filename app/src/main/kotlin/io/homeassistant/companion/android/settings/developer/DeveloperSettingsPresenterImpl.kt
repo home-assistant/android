@@ -46,6 +46,7 @@ class DeveloperSettingsPresenterImpl @Inject constructor(
     override fun getBoolean(key: String?, defValue: Boolean): Boolean = runBlocking {
         return@runBlocking when (key) {
             "webview_debug" -> prefsRepository.isWebViewDebugEnabled()
+            "webrtc_native_player" -> prefsRepository.isNativeWebRtcPlayerEnabled()
             else -> throw IllegalArgumentException("No boolean found by this key: $key")
         }
     }
@@ -57,6 +58,7 @@ class DeveloperSettingsPresenterImpl @Inject constructor(
                     prefsRepository.setWebViewDebugEnabled(value)
                     WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG || value)
                 }
+                "webrtc_native_player" -> prefsRepository.setNativeWebRtcPlayerEnabled(value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }

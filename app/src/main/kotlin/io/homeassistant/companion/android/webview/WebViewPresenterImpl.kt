@@ -529,6 +529,8 @@ class WebViewPresenterImpl @Inject constructor(
 
     override fun appCanCommissionMatterDevice(): Boolean = matterManager.appSupportsCommissioning()
 
+    override suspend fun isNativeWebRtcPlayerEnabled(): Boolean = prefsRepository.isNativeWebRtcPlayerEnabled()
+
     override fun startCommissioningMatterDevice() {
         if (mutableMatterThreadStep.value != MatterThreadStep.REQUESTED) {
             mutableMatterThreadStep.tryEmit(MatterThreadStep.REQUESTED)

@@ -31,6 +31,7 @@ private const val PREF_PINCH_TO_ZOOM_ENABLED = "pinch_to_zoom_enabled"
 private const val PREF_AUTOPLAY_VIDEO = "autoplay_video"
 private const val PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START = "always_show_first_view_on_app_start"
 private const val PREF_WEBVIEW_DEBUG_ENABLED = "webview_debug_enabled"
+private const val PREF_NATIVE_WEBRTC_PLAYER_ENABLED = "native_webrtc_player_enabled"
 private const val PREF_KEY_ALIAS = "key-alias"
 private const val PREF_CRASH_REPORTING_DISABLED = "crash_reporting"
 private const val PREF_IGNORED_SUGGESTIONS = "ignored_suggestions"
@@ -289,6 +290,14 @@ internal class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setWebViewDebugEnabled(enabled: Boolean) {
         localStorage().putBoolean(PREF_WEBVIEW_DEBUG_ENABLED, enabled)
+    }
+
+    override suspend fun isNativeWebRtcPlayerEnabled(): Boolean {
+        return localStorage().getBoolean(PREF_NATIVE_WEBRTC_PLAYER_ENABLED)
+    }
+
+    override suspend fun setNativeWebRtcPlayerEnabled(enabled: Boolean) {
+        localStorage().putBoolean(PREF_NATIVE_WEBRTC_PLAYER_ENABLED, enabled)
     }
 
     override suspend fun isCrashReporting(): Boolean {

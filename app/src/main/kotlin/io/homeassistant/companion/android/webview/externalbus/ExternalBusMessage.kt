@@ -59,6 +59,7 @@ class ExternalConfigResponse(
     canCommissionMatter: Boolean,
     canExportThread: Boolean,
     hasBarCodeScanner: Int,
+    hasNativeWebRtc: Boolean,
     appVersion: AppVersion,
 ) : ExternalBusMessage(
     id = id,
@@ -78,11 +79,28 @@ class ExternalConfigResponse(
         "appVersion" to appVersion.value,
         "hasEntityAddTo" to true,
         "hasAssistSettings" to true,
+        "hasNativeWebRTC" to hasNativeWebRtc,
     ).toJsonObject(),
     callback = {
         Timber.d("Callback from external config (id=$id): $it")
     },
 )
+
+/**
+ * Notifies the frontend that the native WebRTC session of a camera failed, so it can fall back
+ * to its own in-WebView playback.
+ */
+class WebRtcErrorEvent(entityId: String, code: String?, message: String?) :
+    ExternalBusMessage(
+        id = -1,
+        type = "command",
+        command = "webrtc/error",
+        payload = buildMap {
+            put("entity_id", entityId)
+            code?.let { put("code", it) }
+            message?.let { put("message", it) }
+        },
+    )
 
 @Serializable
 data class ExternalEntityAddToAction(
