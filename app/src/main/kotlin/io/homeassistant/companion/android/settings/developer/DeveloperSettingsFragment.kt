@@ -17,6 +17,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.settings.developer.location.LocationTrackingFragment
+import io.homeassistant.companion.android.settings.developer.webrtc.WebRtcDebugFragment
 import io.homeassistant.companion.android.settings.log.LogFragment
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
 import io.homeassistant.companion.android.util.applyBottomSafeDrawingInsets
@@ -93,6 +94,13 @@ class DeveloperSettingsFragment :
             }
         }
 
+        findPreference<Preference>("webrtc_debug")?.setOnPreferenceClickListener {
+            parentFragmentManager.commit {
+                replace(R.id.content, WebRtcDebugFragment::class.java, null)
+                addToBackStack(getString(commonR.string.webrtc_debug))
+            }
+            return@setOnPreferenceClickListener true
+        }
         findPreference<Preference>("webview_clear_cache")?.let {
             it.isVisible = presenter.webViewSupportsClearCache()
             it.setOnPreferenceClickListener {

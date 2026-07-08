@@ -7,6 +7,7 @@ include(
     ":lint",
     ":microwakeword",
     ":provides-sensor-processor",
+    ":webrtc-compose",
     ":webrtc-core",
     ":webrtc-signaling-ha",
 )
