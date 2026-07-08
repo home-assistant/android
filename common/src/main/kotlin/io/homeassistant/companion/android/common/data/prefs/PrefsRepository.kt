@@ -143,6 +143,10 @@ interface PrefsRepository {
 
     suspend fun setWebViewDebugEnabled(enabled: Boolean)
 
+    suspend fun isNativeWebRtcPlayerEnabled(): Boolean
+
+    suspend fun setNativeWebRtcPlayerEnabled(enabled: Boolean)
+
     suspend fun isCrashReporting(): Boolean
 
     suspend fun setCrashReporting(crashReportingEnabled: Boolean)

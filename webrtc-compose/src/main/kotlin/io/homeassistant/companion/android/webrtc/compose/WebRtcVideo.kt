@@ -40,6 +40,8 @@ import livekit.org.webrtc.VideoSink
  * decoder and this renderer use the same context
  * @param modifier the modifier for the video container
  * @param scalingType how the video is scaled inside the container
+ * @param zOrderMediaOverlay places the video surface on top of other surface views, for example
+ * when the video overlays a WebView
  * @param connectingContent overlay shown until the first frame is rendered, defaults to a
  * progress indicator
  * @param failedContent overlay shown when the player reaches [PlayerState.Failed], for example to
@@ -51,6 +53,7 @@ fun WebRtcVideo(
     eglContext: EglBase.Context?,
     modifier: Modifier = Modifier,
     scalingType: RendererCommon.ScalingType = RendererCommon.ScalingType.SCALE_ASPECT_FIT,
+    zOrderMediaOverlay: Boolean = false,
     connectingContent: @Composable BoxScope.() -> Unit = { DefaultConnectingContent() },
     failedContent: @Composable BoxScope.(PlayerFailure) -> Unit = {},
 ) {
@@ -71,6 +74,7 @@ fun WebRtcVideo(
                 )
                 setScalingType(scalingType)
                 setEnableHardwareScaler(true)
+                setZOrderMediaOverlay(zOrderMediaOverlay)
             }
         },
         releaseRenderer = SurfaceViewRenderer::release,

@@ -25,6 +25,11 @@
         android:icon="@drawable/ic_play"
         android:title="@string/webrtc_debug"
         android:summary="@string/webrtc_debug_summary"/>
+    <SwitchPreference
+        android:key="webrtc_native_player"
+        android:icon="@drawable/ic_play"
+        android:title="@string/webrtc_native_player"
+        android:summary="@string/webrtc_native_player_summary"/>
     <Preference
         android:key="tag_clear_allowed"
         android:icon="@drawable/ic_tag_remove"

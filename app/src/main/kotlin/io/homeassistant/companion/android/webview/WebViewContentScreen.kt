@@ -50,7 +50,10 @@ import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.frontend.permissions.NotificationPermissionPrompt
 import io.homeassistant.companion.android.util.compose.media.player.HAMediaPlayer
 import io.homeassistant.companion.android.util.compose.webview.HAWebView
+import io.homeassistant.companion.android.webrtc.compose.WebRtcVideo
+import io.homeassistant.companion.android.webrtc.core.CameraPlayer
 import kotlinx.coroutines.launch
+import livekit.org.webrtc.EglBase
 import timber.log.Timber
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -62,6 +65,11 @@ internal fun WebViewContentScreen(
     playerSize: DpSize?,
     playerTop: Dp,
     playerLeft: Dp,
+    webRtcPlayer: CameraPlayer?,
+    webRtcEglContext: EglBase.Context?,
+    webRtcPlayerSize: DpSize?,
+    webRtcPlayerTop: Dp,
+    webRtcPlayerLeft: Dp,
     currentAppLocked: Boolean,
     customViewFromWebView: View?,
     shouldAskNotificationPermission: Boolean,
@@ -112,6 +120,18 @@ internal fun WebViewContentScreen(
                                 .fillMaxSize()
                                 .background(Color.Black),
                             onFullscreenClicked = onFullscreenClicked,
+                        )
+                    }
+                }
+                webRtcPlayer?.let { webRtcPlayer ->
+                    webRtcPlayerSize?.let { webRtcPlayerSize ->
+                        WebRtcVideo(
+                            player = webRtcPlayer,
+                            eglContext = webRtcEglContext,
+                            zOrderMediaOverlay = true,
+                            modifier = Modifier
+                                .offset(webRtcPlayerLeft, webRtcPlayerTop)
+                                .size(webRtcPlayerSize),
                         )
                     }
                 }
@@ -233,6 +253,11 @@ private fun WebViewContentScreenPreview() {
         playerSize = null,
         playerTop = 0.dp,
         playerLeft = 0.dp,
+        webRtcPlayer = null,
+        webRtcEglContext = null,
+        webRtcPlayerSize = null,
+        webRtcPlayerTop = 0.dp,
+        webRtcPlayerLeft = 0.dp,
         currentAppLocked = false,
         shouldAskNotificationPermission = false,
         webViewInitialized = true,
