@@ -6,6 +6,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import io.homeassistant.companion.android.webrtc.core.audio.AndroidAudioController
+import io.homeassistant.companion.android.webrtc.core.audio.AudioController
 import io.homeassistant.companion.android.webrtc.core.session.PeerConnectionController
 import io.homeassistant.companion.android.webrtc.core.session.libwebrtc.LibWebRtcPeerConnectionControllerFactory
 import javax.inject.Singleton
@@ -29,4 +31,12 @@ object WebRtcModule {
     fun providePeerConnectionControllerFactoryInterface(
         factory: LibWebRtcPeerConnectionControllerFactory,
     ): PeerConnectionController.Factory = factory
+
+    /**
+     * A single controller for the whole process: it reference counts the communication audio mode
+     * across all sessions, so it must be shared to balance correctly.
+     */
+    @Provides
+    @Singleton
+    fun provideAudioController(@ApplicationContext context: Context): AudioController = AndroidAudioController(context)
 }

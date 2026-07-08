@@ -1,5 +1,11 @@
 package io.homeassistant.companion.android.settings.developer.webrtc.views
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,18 +20,23 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.webrtc.compose.WebRtcVideo
 import io.homeassistant.companion.android.webrtc.core.CameraPlayer
+import io.homeassistant.companion.android.webrtc.core.MicState
 import io.homeassistant.companion.android.webrtc.core.PlayerFailure
 import io.homeassistant.companion.android.webrtc.core.PlayerState
 import livekit.org.webrtc.EglBase
@@ -40,9 +51,11 @@ private const val VIDEO_ASPECT_RATIO = 16f / 9f
 fun WebRtcDebugView(
     player: CameraPlayer?,
     playerState: PlayerState,
+    micState: MicState,
     eglContext: EglBase.Context?,
     onStart: (String) -> Unit,
     onStop: () -> Unit,
+    onMicEnabled: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var entityId by rememberSaveable { mutableStateOf("") }
@@ -68,10 +81,14 @@ fun WebRtcDebugView(
             Button(onClick = onStop, enabled = player != null) {
                 Text(stringResource(commonR.string.webrtc_debug_stop))
             }
+            PushToTalkButton(
+                enabled = player != null,
+                onMicEnabled = onMicEnabled,
+            )
         }
         // Raw technical state, on purpose not localized on this developer-only screen
         Text(
-            text = playerState.toDebugLabel(),
+            text = "${playerState.toDebugLabel()} | mic: ${micState.toDebugLabel()}",
             style = MaterialTheme.typography.bodyMedium,
         )
         player?.let {
@@ -93,6 +110,44 @@ fun WebRtcDebugView(
         }
     }
 }
+
+/**
+ * Push-to-talk: the microphone is live only while the button is pressed. The first press requests
+ * the `RECORD_AUDIO` permission instead of enabling the microphone.
+ */
+@Composable
+private fun PushToTalkButton(enabled: Boolean, onMicEnabled: (Boolean) -> Unit) {
+    val context = LocalContext.current
+    var hasMicPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) ==
+                PackageManager.PERMISSION_GRANTED,
+        )
+    }
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        hasMicPermission = granted
+    }
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    LaunchedEffect(isPressed, hasMicPermission, enabled) {
+        onMicEnabled(isPressed && hasMicPermission && enabled)
+    }
+
+    Button(
+        onClick = {
+            if (!hasMicPermission) {
+                permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            }
+        },
+        enabled = enabled,
+        interactionSource = interactionSource,
+    ) {
+        Text(stringResource(commonR.string.webrtc_debug_talk))
+    }
+}
+
+private fun MicState.toDebugLabel(): String = this::class.simpleName.orEmpty()
 
 private fun PlayerState.toDebugLabel(): String = when (this) {
     is PlayerState.Failed -> "${this::class.simpleName}: ${failure.toDebugLabel()}"

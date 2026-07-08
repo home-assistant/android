@@ -26,8 +26,15 @@ class WebRtcSessionTest {
 
     private val signaling = FakeSignalingClient()
     private val factory = FakePeerConnectionControllerFactory()
+    private val audio = FakeAudioController()
 
-    private fun TestScope.createSession() = WebRtcSession(ENTITY_ID, signaling, factory, StandardTestDispatcher(testScheduler))
+    private fun TestScope.createSession() = WebRtcSession(
+        ENTITY_ID,
+        signaling,
+        factory,
+        audio,
+        StandardTestDispatcher(testScheduler),
+    )
 
     private fun TestScope.startConnectedSession(session: WebRtcSession) {
         session.start()
@@ -320,6 +327,104 @@ class WebRtcSessionTest {
         advanceUntilIdle()
 
         assertEquals(MicState.Off, session.micState.value)
+    }
+
+    @Test
+    fun `Given a mic request When the session is not connected yet Then no audio mode is acquired`() = runTest {
+        val session = createSession()
+
+        session.setMicEnabled(true)
+
+        assertEquals(0, audio.acquireCount)
+
+        startConnectedSession(session)
+
+        assertEquals(1, audio.acquireCount)
+    }
+
+    @Test
+    fun `Given a live mic When toggling it Then the audio mode is acquired and released exactly once`() = runTest {
+        val session = createSession()
+        startConnectedSession(session)
+
+        session.setMicEnabled(true)
+        assertEquals(1, audio.acquireCount)
+        // Enabling again while live must not stack another hold
+        session.setMicEnabled(true)
+        assertEquals(1, audio.acquireCount)
+
+        session.setMicEnabled(false)
+        assertEquals(0, audio.activeHolds)
+        // Disabling again must not over-release
+        session.setMicEnabled(false)
+        assertEquals(1, audio.releaseCount)
+    }
+
+    @Test
+    fun `Given a live mic When the session reconnects Then the audio mode is held through the reconnection`() = runTest {
+        val session = createSession()
+        startConnectedSession(session)
+        session.setMicEnabled(true)
+
+        factory.lastController.emit(PeerConnectionEvent.ConnectionStateChanged(RtcConnectionState.FAILED))
+        advanceUntilIdle()
+
+        assertEquals(2, factory.controllers.size)
+        assertEquals(1, audio.acquireCount)
+        assertEquals(1, audio.activeHolds)
+    }
+
+    @Test
+    fun `Given a live mic When the session stops Then the audio mode is released`() = runTest {
+        val session = createSession()
+        startConnectedSession(session)
+        session.setMicEnabled(true)
+
+        session.stop()
+        advanceUntilIdle()
+
+        assertEquals(0, audio.activeHolds)
+    }
+
+    @Test
+    fun `Given a live mic When the session is released Then the audio mode is released`() = runTest {
+        val session = createSession()
+        startConnectedSession(session)
+        session.setMicEnabled(true)
+
+        session.release()
+        advanceUntilIdle()
+
+        assertEquals(0, audio.activeHolds)
+    }
+
+    @Test
+    fun `Given a live mic When signaling fails Then the audio mode is released`() = runTest {
+        val session = createSession()
+        startConnectedSession(session)
+        session.setMicEnabled(true)
+
+        signaling.currentSession.trySend(SignalingEvent.Error(code = "webrtc_offer_failed", message = null))
+        advanceUntilIdle()
+
+        assertTrue(session.state.value is PlayerState.Failed)
+        assertEquals(MicState.Off, session.micState.value)
+        assertEquals(0, audio.activeHolds)
+    }
+
+    @Test
+    fun `Given a live mic When the connection is lost for good Then the audio mode is released`() = runTest {
+        val session = createSession()
+        startConnectedSession(session)
+        session.setMicEnabled(true)
+
+        repeat(4) {
+            factory.lastController.emit(PeerConnectionEvent.ConnectionStateChanged(RtcConnectionState.FAILED))
+            advanceUntilIdle()
+        }
+
+        assertEquals(PlayerState.Failed(PlayerFailure.ConnectionLost), session.state.value)
+        assertEquals(0, audio.activeHolds)
     }
 
     @Test

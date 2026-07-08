@@ -13,6 +13,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
+import livekit.org.webrtc.AudioSource
 import livekit.org.webrtc.AudioTrack
 import livekit.org.webrtc.DataChannel
 import livekit.org.webrtc.IceCandidate
@@ -35,10 +36,14 @@ private const val MICROPHONE_TRACK_ID = "ha_microphone"
  * [PeerConnectionController] implementation backed by libwebrtc.
  *
  * The peer connection is created with a receive-only video transceiver and a send-and-receive
- * audio transceiver whose microphone track starts disabled, so talk-back can be toggled later
- * without renegotiating.
+ * audio transceiver that is negotiated up front but has no track: the microphone capture is only
+ * created and attached (via `RtpSender.setTrack`, which does not renegotiate) the first time the
+ * microphone is enabled. Creating the capture eagerly would start the platform audio record
+ * pipeline for every session — libwebrtc supports only one capture at a time, so a session that
+ * never uses the microphone would break talk-back for every session after it, and the microphone
+ * privacy indicator would show without the microphone being used.
  */
-internal class LibWebRtcPeerConnectionController(factory: PeerConnectionFactory, config: RtcClientConfig) :
+internal class LibWebRtcPeerConnectionController(private val factory: PeerConnectionFactory, config: RtcClientConfig) :
     PeerConnectionController {
 
     private val eventsChannel = Channel<PeerConnectionEvent>(Channel.UNLIMITED)
@@ -106,11 +111,15 @@ internal class LibWebRtcPeerConnectionController(factory: PeerConnectionFactory,
     private val peerConnection = checkNotNull(factory.createPeerConnection(config.toRtcConfiguration(), observer)) {
         "PeerConnection could not be created"
     }
-    private val audioSource = factory.createAudioSource(MediaConstraints())
-    private val microphoneTrack = factory.createAudioTrack(MICROPHONE_TRACK_ID, audioSource).apply {
-        setEnabled(false)
-    }
+
+    @Volatile
+    private var audioSource: AudioSource? = null
+
+    @Volatile
+    private var microphoneTrack: AudioTrack? = null
+
     private var dataChannel: DataChannel? = null
+    private val audioTransceiver: RtpTransceiver
 
     init {
         // The data channel (when the provider uses one, like go2rtc) and the transceivers must
@@ -122,8 +131,8 @@ internal class LibWebRtcPeerConnectionController(factory: PeerConnectionFactory,
             MediaStreamTrack.MediaType.MEDIA_TYPE_VIDEO,
             RtpTransceiver.RtpTransceiverInit(RtpTransceiver.RtpTransceiverDirection.RECV_ONLY),
         )
-        peerConnection.addTransceiver(
-            microphoneTrack,
+        audioTransceiver = peerConnection.addTransceiver(
+            MediaStreamTrack.MediaType.MEDIA_TYPE_AUDIO,
             RtpTransceiver.RtpTransceiverInit(RtpTransceiver.RtpTransceiverDirection.SEND_RECV),
         )
     }
@@ -190,7 +199,22 @@ internal class LibWebRtcPeerConnectionController(factory: PeerConnectionFactory,
     )
 
     override fun setMicrophoneEnabled(enabled: Boolean) {
-        microphoneTrack.setEnabled(enabled)
+        if (!enabled) {
+            microphoneTrack?.setEnabled(false)
+            return
+        }
+        if (disposed.get()) return
+        val track = microphoneTrack ?: run {
+            // First use: create the capture now and attach it to the negotiated transceiver.
+            // setTrack does not renegotiate, so the session stays untouched.
+            val source = factory.createAudioSource(MediaConstraints())
+            val newTrack = factory.createAudioTrack(MICROPHONE_TRACK_ID, source)
+            audioSource = source
+            microphoneTrack = newTrack
+            audioTransceiver.sender.setTrack(newTrack, false)
+            newTrack
+        }
+        track.setEnabled(true)
     }
 
     override fun setRemoteAudioEnabled(enabled: Boolean) {
@@ -223,11 +247,14 @@ internal class LibWebRtcPeerConnectionController(factory: PeerConnectionFactory,
         remoteAudioTrack = null
         dataChannel?.dispose()
         dataChannel = null
-        // Disposal order matters: peer connection (closes transports and its receivers/senders),
-        // then our local track wrapper, then its source
+        // Disposal order matters: peer connection (closes transports and its receivers/senders,
+        // which releases the platform audio capture), then our local track wrapper, then its
+        // source
         peerConnection.dispose()
-        microphoneTrack.dispose()
-        audioSource.dispose()
+        microphoneTrack?.dispose()
+        microphoneTrack = null
+        audioSource?.dispose()
+        audioSource = null
         eventsChannel.close()
     }
 }

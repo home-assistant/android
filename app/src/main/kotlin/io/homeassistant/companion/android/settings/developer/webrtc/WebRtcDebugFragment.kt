@@ -25,12 +25,15 @@ class WebRtcDebugFragment : Fragment() {
                 HomeAssistantAppTheme {
                     val session by viewModel.session.collectAsStateWithLifecycle()
                     val playerState by viewModel.playerState.collectAsStateWithLifecycle()
+                    val micState by viewModel.micState.collectAsStateWithLifecycle()
                     WebRtcDebugView(
                         player = session,
                         playerState = playerState,
+                        micState = micState,
                         eglContext = viewModel.eglContext,
                         onStart = viewModel::startSession,
                         onStop = viewModel::stopSession,
+                        onMicEnabled = viewModel::setMicEnabled,
                     )
                 }
             }
