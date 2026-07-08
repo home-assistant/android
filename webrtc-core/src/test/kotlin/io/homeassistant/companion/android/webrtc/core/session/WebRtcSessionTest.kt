@@ -174,6 +174,41 @@ class WebRtcSessionTest {
     }
 
     @Test
+    fun `Given a stopped session When starting again Then a new session starts after full cleanup`() = runTest {
+        val session = createSession()
+        startConnectedSession(session)
+
+        session.stop()
+        // Restart immediately, without letting the cancelled session finish its cleanup first
+        session.start()
+        advanceUntilIdle()
+
+        assertEquals(2, factory.controllers.size)
+        assertTrue(factory.controllers.first().disposed)
+        assertFalse(factory.lastController.disposed)
+        assertEquals(2, signaling.openSessionCount)
+        assertEquals(1, signaling.activeSessionCount)
+    }
+
+    @Test
+    fun `Given repeated disconnections When recovering before the grace period Then no stale timer fires`() = runTest {
+        val session = createSession()
+        startConnectedSession(session)
+
+        factory.lastController.emit(PeerConnectionEvent.ConnectionStateChanged(RtcConnectionState.DISCONNECTED))
+        advanceTimeBy(3.seconds)
+        factory.lastController.emit(PeerConnectionEvent.ConnectionStateChanged(RtcConnectionState.DISCONNECTED))
+        advanceTimeBy(3.seconds)
+        // The first timer would fire now if it were not cancelled by the second DISCONNECTED
+        factory.lastController.emit(PeerConnectionEvent.ConnectionStateChanged(RtcConnectionState.CONNECTED))
+        advanceUntilIdle()
+
+        assertEquals(PlayerState.Playing, session.state.value)
+        assertEquals(1, signaling.openSessionCount)
+        assertFalse(factory.lastController.disposed)
+    }
+
+    @Test
     fun `Given a lost connection When the grace period expires Then the session renegotiates`() = runTest {
         val session = createSession()
         startConnectedSession(session)

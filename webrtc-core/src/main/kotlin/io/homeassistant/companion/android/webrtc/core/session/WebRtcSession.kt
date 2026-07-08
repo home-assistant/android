@@ -90,14 +90,20 @@ class WebRtcSession(
     override fun start() {
         synchronized(this) {
             if (released || sessionJob?.isActive == true) return
-            sessionJob = scope.launch { runSession() }
+            // A cancelled session may still be running its cleanup: wait for it so two sessions
+            // never overlap and the previous controller is always disposed before a new one exists
+            val previousJob = sessionJob
+            sessionJob = scope.launch {
+                previousJob?.join()
+                runSession()
+            }
         }
     }
 
     override fun stop() {
         synchronized(this) {
+            // The job reference is kept so a subsequent start() can await the cleanup
             sessionJob?.cancel()
-            sessionJob = null
             micEnabled = false
             _micState.value = MicState.Off
             _state.value = PlayerState.Idle
@@ -223,6 +229,9 @@ class WebRtcSession(
 
                             RtcConnectionState.DISCONNECTED -> {
                                 _state.value = PlayerState.Buffering
+                                // Restart the grace period so a stale timer from a previous drop
+                                // cannot force a reconnection after the connection recovered
+                                disconnectedJob?.cancel()
                                 disconnectedJob = launch {
                                     delay(DISCONNECTED_GRACE_PERIOD)
                                     throw SessionRetryException()

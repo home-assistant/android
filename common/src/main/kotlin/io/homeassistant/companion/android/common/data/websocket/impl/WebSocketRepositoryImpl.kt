@@ -447,8 +447,11 @@ class WebSocketRepositoryImpl internal constructor(
         )
 
         // The response follows the camelCase W3C dictionaries so it cannot be decoded with the
-        // shared snake_case mapper used by mapResponse
-        return socketResponse?.result?.let { webRtcJsonMapper.decodeFromJsonElement(it) }
+        // shared snake_case mapper used by mapResponse. The success check avoids decoding an
+        // error payload when the camera does not support WebRTC.
+        return socketResponse?.takeIf { it.success == true }?.result?.let {
+            webRtcJsonMapper.decodeFromJsonElement(it)
+        }
     }
 
     override suspend fun startCameraWebRtcSession(entityId: String, offerSdp: String): Flow<WebRtcEvent>? =
