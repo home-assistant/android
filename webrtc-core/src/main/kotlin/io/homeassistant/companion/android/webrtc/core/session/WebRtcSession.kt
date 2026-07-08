@@ -5,6 +5,7 @@ import io.homeassistant.companion.android.webrtc.core.MicState
 import io.homeassistant.companion.android.webrtc.core.PlayerFailure
 import io.homeassistant.companion.android.webrtc.core.PlayerState
 import io.homeassistant.companion.android.webrtc.core.TwoWayAudio
+import io.homeassistant.companion.android.webrtc.core.audio.AudioController
 import io.homeassistant.companion.android.webrtc.core.signaling.IceCandidateInit
 import io.homeassistant.companion.android.webrtc.core.signaling.SignalingClient
 import io.homeassistant.companion.android.webrtc.core.signaling.SignalingEvent
@@ -54,6 +55,8 @@ private val RECONNECT_BASE_DELAY = 2.seconds
  * @param entityId the camera entity to stream
  * @param signalingClient the signaling backend, scoped to the right server
  * @param controllerFactory creates one peer connection per negotiation
+ * @param audioController drives the device audio mode while the microphone is live; the session
+ * guarantees the release on every exit path
  * @param dispatcher dispatcher running the session state machine, it must be serial (the default
  * already is)
  */
@@ -61,6 +64,7 @@ class WebRtcSession(
     private val entityId: String,
     private val signalingClient: SignalingClient,
     private val controllerFactory: PeerConnectionController.Factory,
+    private val audioController: AudioController = AudioController.None,
     dispatcher: CoroutineDispatcher = Dispatchers.Default.limitedParallelism(1),
 ) : CameraPlayer,
     TwoWayAudio {
@@ -80,6 +84,9 @@ class WebRtcSession(
 
     @Volatile
     private var micEnabled = false
+
+    @Volatile
+    private var audioAcquired = false
 
     @Volatile
     private var audioEnabled = true
@@ -105,6 +112,7 @@ class WebRtcSession(
             // The job reference is kept so a subsequent start() can await the cleanup
             sessionJob?.cancel()
             micEnabled = false
+            releaseAudio()
             _micState.value = MicState.Off
             _state.value = PlayerState.Idle
         }
@@ -141,13 +149,29 @@ class WebRtcSession(
         val activeController = controller
         if (!enabled) {
             activeController?.setMicrophoneEnabled(false)
+            releaseAudio()
             _micState.value = MicState.Off
         } else if (activeController != null) {
-            activeController.setMicrophoneEnabled(true)
-            _micState.value = MicState.Live
+            enableMicrophone(activeController)
         } else {
             // Remembered and applied when the session (re)connects
             _micState.value = MicState.Unavailable
+        }
+    }
+
+    private fun enableMicrophone(controller: PeerConnectionController) {
+        controller.setMicrophoneEnabled(true)
+        if (!audioAcquired) {
+            audioAcquired = true
+            audioController.acquire()
+        }
+        _micState.value = MicState.Live
+    }
+
+    private fun releaseAudio() {
+        if (audioAcquired) {
+            audioAcquired = false
+            audioController.release()
         }
     }
 
@@ -194,8 +218,7 @@ class WebRtcSession(
         controller.setRemoteAudioEnabled(audioEnabled)
         val offerSdp = controller.createOffer()
         if (micEnabled) {
-            controller.setMicrophoneEnabled(true)
-            _micState.value = MicState.Live
+            enableMicrophone(controller)
         }
 
         var sessionId: String? = null
@@ -301,6 +324,7 @@ class WebRtcSession(
 
     private fun failWith(failure: PlayerFailure) {
         _state.value = PlayerState.Failed(failure)
+        releaseAudio()
         _micState.value = MicState.Off
     }
 

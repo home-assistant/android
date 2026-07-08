@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.webrtc.core.MicState
 import io.homeassistant.companion.android.webrtc.core.PlayerState
+import io.homeassistant.companion.android.webrtc.core.audio.AudioController
 import io.homeassistant.companion.android.webrtc.core.session.WebRtcSession
 import io.homeassistant.companion.android.webrtc.core.session.libwebrtc.LibWebRtcPeerConnectionControllerFactory
 import io.homeassistant.companion.android.webrtc.signaling.HaSignalingClient
@@ -31,6 +33,7 @@ private val STATE_SHARING_TIMEOUT = 5.seconds
 class WebRtcDebugViewModel @Inject constructor(
     private val serverManager: ServerManager,
     private val controllerFactory: LibWebRtcPeerConnectionControllerFactory,
+    private val audioController: AudioController,
 ) : ViewModel() {
 
     private val _session = MutableStateFlow<WebRtcSession?>(null)
@@ -43,6 +46,15 @@ class WebRtcDebugViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(STATE_SHARING_TIMEOUT.inWholeMilliseconds),
             initialValue = PlayerState.Idle,
+        )
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val micState: StateFlow<MicState> = _session
+        .flatMapLatest { session -> session?.micState ?: flowOf(MicState.Off) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(STATE_SHARING_TIMEOUT.inWholeMilliseconds),
+            initialValue = MicState.Off,
         )
 
     /** EGL context the renderer must share with the hardware decoder. */
@@ -59,8 +71,14 @@ class WebRtcDebugViewModel @Inject constructor(
                 entityId = trimmedEntityId,
                 signalingClient = signalingClient,
                 controllerFactory = controllerFactory,
+                audioController = audioController,
             ).also { it.start() }
         }
+    }
+
+    /** The caller must hold the `RECORD_AUDIO` permission before enabling the microphone. */
+    fun setMicEnabled(enabled: Boolean) {
+        _session.value?.setMicEnabled(enabled)
     }
 
     fun stopSession() {

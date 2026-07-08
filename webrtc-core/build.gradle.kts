@@ -11,10 +11,14 @@ dependencies {
     implementation(libs.kotlin.stdlib)
     implementation(libs.kotlinx.coroutines.core)
 
+    // AudioFocusRequestCompat, the audio focus API compatible with the min SDK
+    implementation(libs.androidx.media)
+
     // This module is the only one allowed to depend on libwebrtc directly so the artifact can be
     // swapped without touching consumers. `api` because VideoSink is part of the public player
     // interfaces used by renderers.
     api(libs.webrtc.sdk)
 
     testImplementation(libs.junit.jupiter.params)
+    testImplementation(libs.androidx.test.core)
 }

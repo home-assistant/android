@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.webrtc.core.session
 
+import io.homeassistant.companion.android.webrtc.core.audio.AudioController
 import io.homeassistant.companion.android.webrtc.core.signaling.IceCandidateInit
 import io.homeassistant.companion.android.webrtc.core.signaling.RtcClientConfig
 import io.homeassistant.companion.android.webrtc.core.signaling.SignalingClient
@@ -108,6 +109,24 @@ internal class FakePeerConnectionController(private val offerSdp: String) : Peer
     override fun dispose() {
         disposed = true
         eventsChannel.close()
+    }
+}
+
+internal class FakeAudioController : AudioController {
+
+    var acquireCount = 0
+    var releaseCount = 0
+
+    /** How many acquisitions are currently unbalanced by a release. */
+    val activeHolds: Int
+        get() = acquireCount - releaseCount
+
+    override fun acquire() {
+        acquireCount++
+    }
+
+    override fun release() {
+        releaseCount++
     }
 }
 

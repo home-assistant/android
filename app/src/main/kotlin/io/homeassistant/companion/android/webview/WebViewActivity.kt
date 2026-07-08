@@ -158,6 +158,7 @@ import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.util.toRelativeUrl
 import io.homeassistant.companion.android.webrtc.core.PlayerFailure
 import io.homeassistant.companion.android.webrtc.core.PlayerState
+import io.homeassistant.companion.android.webrtc.core.audio.AudioController
 import io.homeassistant.companion.android.webrtc.core.session.WebRtcSession
 import io.homeassistant.companion.android.webrtc.core.session.libwebrtc.LibWebRtcPeerConnectionControllerFactory
 import io.homeassistant.companion.android.webrtc.signaling.HaSignalingClient
@@ -299,6 +300,9 @@ class WebViewActivity :
 
     @Inject
     lateinit var peerConnectionControllerFactory: LibWebRtcPeerConnectionControllerFactory
+
+    @Inject
+    lateinit var webRtcAudioController: AudioController
 
     private lateinit var webView: WebView
     private var loadedUrl: Uri? = null
@@ -1574,6 +1578,7 @@ class WebViewActivity :
                 entityId = entityId,
                 signalingClient = signalingClient,
                 controllerFactory = peerConnectionControllerFactory,
+                audioController = webRtcAudioController,
             )
             session.setAudioEnabled(!muted)
             session.start()
