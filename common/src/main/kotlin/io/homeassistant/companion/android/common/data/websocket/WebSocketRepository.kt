@@ -14,8 +14,10 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Cu
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DomainResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryDisplayResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.FloorRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
@@ -38,7 +40,24 @@ interface WebSocketRepository {
     suspend fun getAreaRegistry(): List<AreaRegistryResponse>?
     suspend fun getDeviceRegistry(): List<DeviceRegistryResponse>?
     suspend fun getEntityRegistry(): List<EntityRegistryResponse>?
+
+    /**
+     * Returns a bandwidth-efficient version of the entity registry meant for display, using
+     * the `config/entity_registry/list_for_display` websocket command.
+     *
+     * The command requires Home Assistant 2023.3 or later; older servers reply with an error and this
+     * returns null.
+     * See [EntityRegistryDisplayResponse] for per-field availability.
+     */
+    suspend fun getEntityRegistryDisplay(): EntityRegistryDisplayResponse?
     suspend fun getEntityRegistryFor(entityId: String): EntityRegistryResponse?
+
+    /**
+     * Returns the floor registry using the `config/floor_registry/list` websocket command.
+     * Requires Home Assistant 2024.3 or later; older servers reply with an error and this
+     * returns null.
+     */
+    suspend fun getFloorRegistry(): List<FloorRegistryResponse>?
     suspend fun getServices(): List<DomainResponse>?
     suspend fun getStateChanges(): Flow<StateChangedEvent>?
     suspend fun getStateChanges(entityIds: List<String>): Flow<TriggerEvent>?
