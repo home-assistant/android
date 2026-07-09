@@ -597,8 +597,9 @@ private fun SafeHAWebView(
     val backgroundColor = contentState?.backgroundColor ?: fallbackColor
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // The top is never drawn edge-to-edge: we always reserve and color the status bar strip until
-        // the frontend addresses https://github.com/home-assistant/frontend/issues/29125
+        // The top is never drawn edge-to-edge: we always reserve and color the status bar strip.
+        // Before considering removal, https://github.com/home-assistant/frontend/issues/29125 and
+        // contrast with drawers (left/right status bar cannot be different colors) should be addressed.
         statusBarColor.Overlay(
             modifier = Modifier
                 .height(insetsPaddingValues.calculateTopPadding())
