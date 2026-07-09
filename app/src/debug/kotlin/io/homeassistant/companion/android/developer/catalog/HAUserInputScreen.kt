@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Devices.TABLET
 import androidx.compose.ui.tooling.preview.Preview
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.compose.composable.HACheckbox
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
@@ -33,10 +34,8 @@ import io.homeassistant.companion.android.common.compose.composable.rememberSele
 import io.homeassistant.companion.android.common.compose.composable.rememberSelectedOption
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
-import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import java.time.LocalDateTime
 
@@ -295,13 +294,23 @@ private fun LazyListScope.entityPicker() {
         var selectedEntityId by remember { mutableStateOf<String?>(null) }
 
         EntityPicker(
-            entities = sampleEntities,
-            entityRegistry = sampleEntityRegistry,
-            deviceRegistry = sampleDeviceRegistry,
-            areaRegistry = sampleAreaRegistry,
+            displayState = EntityDisplayState.Loaded(sampleDisplayEntities),
             selectedEntityId = selectedEntityId,
-            onEntitySelectedId = { selectedEntityId = it },
-            onEntityCleared = { selectedEntityId = null },
+            onSelectionChanged = { selectedEntityId = it },
+        )
+    }
+    catalogSection(title = "Entity Picker loading") {
+        EntityPicker(
+            displayState = EntityDisplayState.Loading,
+            selectedEntityId = "light.living_room",
+            onSelectionChanged = {},
+        )
+    }
+    catalogSection(title = "Entity Picker error") {
+        EntityPicker(
+            displayState = EntityDisplayState.Error,
+            selectedEntityId = "light.living_room",
+            onSelectionChanged = {},
         )
     }
 }
@@ -312,61 +321,39 @@ private val sampleDropdownItems = (1..30).map { index ->
     HADropdownItem(key = index, label = "Server $index")
 }
 
-private val sampleAreaRegistry = listOf(
-    AreaRegistryResponse(areaId = "living_room", name = "Living Room"),
-    AreaRegistryResponse(areaId = "bedroom", name = "Bedroom"),
-)
-
-private val sampleDeviceRegistry = listOf(
-    DeviceRegistryResponse(id = "device_1", name = "Smart Bulb Pro", areaId = "living_room"),
-)
-
-private val sampleEntityRegistry = listOf(
-    EntityRegistryResponse(entityId = "light.living_room", deviceId = "device_1", areaId = "living_room"),
-)
-
-private val sampleEntities = listOf(
-    Entity(
+private val sampleDisplayEntities = listOf(
+    EntityDisplayItem(
         entityId = "light.living_room",
-        state = "on",
-        attributes = mapOf("friendly_name" to "Living Room Light", "icon" to "mdi:lightbulb"),
-        lastChanged = now,
-        lastUpdated = now,
+        name = "Living Room Light",
+        icon = CommunityMaterial.Icon2.cmd_lightbulb,
+        areaName = "Living Room",
+        deviceName = "Smart Bulb Pro",
     ),
-    Entity(
+    EntityDisplayItem(
         entityId = "light.bedroom",
-        state = "off",
-        attributes = mapOf("friendly_name" to "Bedroom Light"),
-        lastChanged = now,
-        lastUpdated = now,
+        name = "Bedroom Light",
+        icon = CommunityMaterial.Icon2.cmd_lightbulb,
+        areaName = "Bedroom",
     ),
-    Entity(
+    EntityDisplayItem(
         entityId = "sensor.temperature",
-        state = "22.5",
-        attributes = mapOf("friendly_name" to "Temperature Sensor", "unit_of_measurement" to "°C"),
-        lastChanged = now,
-        lastUpdated = now,
+        name = "Temperature Sensor",
+        icon = CommunityMaterial.Icon3.cmd_thermometer,
     ),
-    Entity(
+    EntityDisplayItem(
         entityId = "switch.fan",
-        state = "off",
-        attributes = mapOf("friendly_name" to "Ceiling Fan"),
-        lastChanged = now,
-        lastUpdated = now,
+        name = "Ceiling Fan",
+        icon = CommunityMaterial.Icon2.cmd_fan,
     ),
-    Entity(
+    EntityDisplayItem(
         entityId = "binary_sensor.motion",
-        state = "off",
-        attributes = mapOf("friendly_name" to "Motion Sensor", "device_class" to "motion"),
-        lastChanged = now,
-        lastUpdated = now,
+        name = "Motion Sensor",
+        icon = CommunityMaterial.Icon3.cmd_motion_sensor,
     ),
-    Entity(
+    EntityDisplayItem(
         entityId = "cover.garage_door",
-        state = "closed",
-        attributes = mapOf("friendly_name" to "Garage Door", "device_class" to "garage"),
-        lastChanged = now,
-        lastUpdated = now,
+        name = "Garage Door",
+        icon = CommunityMaterial.Icon2.cmd_garage,
     ),
 )
 

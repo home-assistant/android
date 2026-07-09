@@ -80,7 +80,7 @@ class GetEntitiesForDisplayUseCaseTest {
         var items: List<EntityDisplayItem> = emptyList()
         test {
             assertEquals(EntityDisplayState.Loading, awaitItem())
-            items = assertInstanceOf(EntityDisplayState.Loaded::class.java, awaitItem()).entities
+            items = assertInstanceOf(EntityDisplayState.Loaded::class.java, awaitItem()).entities.toList()
             awaitComplete()
         }
         return items
