@@ -2,6 +2,12 @@ package io.homeassistant.companion.android.frontend
 
 import android.webkit.WebView
 import androidx.compose.ui.graphics.Color
+import androidx.core.graphics.blue
+import androidx.core.graphics.green
+import androidx.core.graphics.red
+import androidx.core.graphics.toColorInt
+import io.homeassistant.companion.android.frontend.WebViewAction.ReadThemeColors.Companion.THEME_COLORS_SCRIPT
+import io.homeassistant.companion.android.frontend.WebViewAction.ReadThemeColors.Companion.THEME_COLOR_SPACER
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
 import io.homeassistant.companion.android.util.compose.webview.settings
@@ -170,8 +176,6 @@ sealed interface WebViewAction {
             /**
              * Parses the [THEME_COLORS_SCRIPT] result into [ThemeColors]. Returns `null` when [raw]
              * is absent or does not contain exactly two tokens.
-             *
-             * The result is a JSON string literal, e.g. `"\"rgb(1,2,3)-SPACER-rgb(4,5,6)\""`.
              */
             private fun parse(raw: String?): ThemeColors? {
                 val tokens = raw?.trim('"')?.split(THEME_COLOR_SPACER)
@@ -183,15 +187,27 @@ sealed interface WebViewAction {
             }
 
             /**
-             * Parses a `rgb(r, g, b)` color read from the frontend into a Compose [Color]. Returns
-             * `null` when the value is not a valid `rgb()` triple in the 0-255 range.
+             * Parses a color read from the frontend into a Compose [Color]. Returns `null` when
+             * - the value is not a valid `rgb()` triple in the 0-255 range
+             * - the value is not a valid hex color
+             * - the value is not a supported color name like `red`, `blue`, `fuchsia`, ...
              */
             private fun String.toWebViewColorOrNull(): Color? {
-                val (r, g, b) = RGB_REGEX.matchEntire(trim())?.destructured ?: return null
-                val red = r.toColorChannelOrNull() ?: return null
-                val green = g.toColorChannelOrNull() ?: return null
-                val blue = b.toColorChannelOrNull() ?: return null
-                return Color(red = red, green = green, blue = blue)
+                val match = RGB_REGEX.matchEntire(trim())
+                return if (match != null) {
+                    val (r, g, b) = match.destructured
+                    val red = r.toColorChannelOrNull() ?: return null
+                    val green = g.toColorChannelOrNull() ?: return null
+                    val blue = b.toColorChannelOrNull() ?: return null
+                    Color(red = red, green = green, blue = blue)
+                } else {
+                    try {
+                        val asInt = trim().toColorInt()
+                        Color(red = asInt.red, green = asInt.green, blue = asInt.blue)
+                    } catch (_: IllegalArgumentException) {
+                        null
+                    }
+                }
             }
 
             /** Parses a 0-255 color channel, returning `null` when out of range. */

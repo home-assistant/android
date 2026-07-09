@@ -2,9 +2,7 @@ package io.homeassistant.companion.android.frontend
 
 import android.webkit.ValueCallback
 import android.webkit.WebView
-import androidx.compose.ui.graphics.Color
 import io.homeassistant.companion.android.frontend.WebViewAction.ApplySafeAreaInsets.Companion.SafeAreaInsets
-import io.homeassistant.companion.android.frontend.WebViewAction.ReadThemeColors.Companion.ThemeColors
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
 import io.mockk.Runs
@@ -18,7 +16,6 @@ import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -164,54 +161,6 @@ class WebViewActionTest {
     }
 
     @Test
-    fun `Given ReadThemeColors when run then evaluateJavascript reads the theme tokens`() = runTest {
-        val callbackSlot = slot<ValueCallback<String>>()
-        every { webView.evaluateJavascript(any(), capture(callbackSlot)) } just Runs
-        val action = WebViewAction.ReadThemeColors()
-
-        action.run(webView)
-
-        verify {
-            webView.evaluateJavascript(
-                match { it.contains("--app-header-background-color") && it.contains("--primary-background-color") },
-                any(),
-            )
-        }
-    }
-
-    @Test
-    fun `Given a null result when reading theme colors then null is returned`() = runTest {
-        assertNull(readThemeColors(null))
-    }
-
-    @Test
-    fun `Given a result without exactly two tokens when reading theme colors then null is returned`() = runTest {
-        assertNull(readThemeColors("\"rgb(1, 2, 3)\""))
-        assertNull(readThemeColors("\"a-SPACER-b-SPACER-c\""))
-    }
-
-    @Test
-    fun `Given null tokens when reading theme colors then both colors are null`() = runTest {
-        assertEquals(ThemeColors(statusBarColor = null, backgroundColor = null), readThemeColors("\"null-SPACER-null\""))
-    }
-
-    @Test
-    fun `Given rgb tokens when reading theme colors then the matching colors are returned`() = runTest {
-        assertEquals(
-            ThemeColors(statusBarColor = Color(18, 52, 86), backgroundColor = Color(4, 5, 6)),
-            readThemeColors("\"rgb(18, 52, 86)-SPACER-rgb(4, 5, 6)\""),
-        )
-    }
-
-    @Test
-    fun `Given unparseable or out-of-range tokens when reading theme colors then the colors are null`() = runTest {
-        assertEquals(
-            ThemeColors(statusBarColor = null, backgroundColor = null),
-            readThemeColors("\"not-a-color-SPACER-rgb(300, 0, 0)\""),
-        )
-    }
-
-    @Test
     fun `Given ApplySafeAreaInsets when run then the safe area CSS properties are set`() = runTest {
         val action = WebViewAction.ApplySafeAreaInsets(SafeAreaInsets(top = 10f, bottom = 20f, left = 5f, right = 8f))
 
@@ -228,20 +177,5 @@ class WebViewActionTest {
                 null,
             )
         }
-    }
-
-    /**
-     * Runs a [WebViewAction.ReadThemeColors] and feeds [raw] back as the WebView's script result,
-     * returning the parsed [ThemeColors] the action completes with.
-     */
-    private suspend fun readThemeColors(raw: String?): ThemeColors? {
-        val callbackSlot = slot<ValueCallback<String>>()
-        every { webView.evaluateJavascript(any(), capture(callbackSlot)) } just Runs
-        val action = WebViewAction.ReadThemeColors()
-
-        action.run(webView)
-        callbackSlot.captured.onReceiveValue(raw)
-
-        return action.result.await()
     }
 }
