@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.webrtc.core.session.libwebrtc
 
 import android.content.Context
+import io.homeassistant.companion.android.webrtc.core.MediaOptions
 import io.homeassistant.companion.android.webrtc.core.session.PeerConnectionController
 import io.homeassistant.companion.android.webrtc.core.signaling.RtcClientConfig
 import livekit.org.webrtc.DefaultVideoDecoderFactory
@@ -50,6 +51,6 @@ class LibWebRtcPeerConnectionControllerFactory(context: Context) : PeerConnectio
             .createPeerConnectionFactory()
     }
 
-    override fun create(config: RtcClientConfig): PeerConnectionController =
-        LibWebRtcPeerConnectionController(peerConnectionFactory, config)
+    override fun create(config: RtcClientConfig, mediaOptions: MediaOptions): PeerConnectionController =
+        LibWebRtcPeerConnectionController(peerConnectionFactory, config, mediaOptions)
 }

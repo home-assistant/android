@@ -25,6 +25,22 @@ data class CameraWebRtcClientConfigResponse(
 )
 
 /**
+ * Result of the `camera/webrtc/get_client_config` command, keeping the server error visible to
+ * the caller so it can be surfaced to the user (for example when the camera does not support
+ * WebRTC).
+ */
+sealed interface CameraWebRtcClientConfigResult {
+    /** The server returned a configuration. */
+    data class Success(val config: CameraWebRtcClientConfigResponse) : CameraWebRtcClientConfigResult
+
+    /**
+     * The command failed. [code] and [message] carry the server error when one was received
+     * (like `webrtc_get_client_config_failed`), or are `null` on a transport failure.
+     */
+    data class Failure(val code: String?, val message: String?) : CameraWebRtcClientConfigResult
+}
+
+/**
  * The subset of the W3C `RTCConfiguration` dictionary sent by Home Assistant Core.
  */
 @Serializable

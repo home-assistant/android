@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.webrtc.signaling
 
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraStreamTypes
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraWebRtcClientConfigResult
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcCandidate
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcEvent
 import io.homeassistant.companion.android.webrtc.core.signaling.IceCandidateInit
@@ -44,8 +45,13 @@ class HaSignalingClient(private val webSocketRepository: WebSocketRepository) : 
     }
 
     override suspend fun getClientConfig(entityId: String): RtcClientConfig {
-        val config = webSocketRepository.getCameraWebRtcClientConfig(entityId)
-            ?: throw SignalingException(message = "Unable to get the WebRTC client configuration")
+        val config = when (val result = webSocketRepository.getCameraWebRtcClientConfig(entityId)) {
+            is CameraWebRtcClientConfigResult.Success -> result.config
+            is CameraWebRtcClientConfigResult.Failure -> throw SignalingException(
+                code = result.code,
+                message = result.message ?: "Unable to get the WebRTC client configuration",
+            )
+        }
         return RtcClientConfig(
             iceServers = config.configuration.iceServers.map { server ->
                 RtcIceServer(urls = server.urls, username = server.username, credential = server.credential)

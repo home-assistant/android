@@ -26,10 +26,12 @@ class WebRtcDebugFragment : Fragment() {
                     val session by viewModel.session.collectAsStateWithLifecycle()
                     val playerState by viewModel.playerState.collectAsStateWithLifecycle()
                     val micState by viewModel.micState.collectAsStateWithLifecycle()
+                    val debugStats by viewModel.debugStats.collectAsStateWithLifecycle()
                     WebRtcDebugView(
                         player = session,
                         playerState = playerState,
                         micState = micState,
+                        debugStats = debugStats,
                         eglContext = viewModel.eglContext,
                         onStart = viewModel::startSession,
                         onStop = viewModel::stopSession,

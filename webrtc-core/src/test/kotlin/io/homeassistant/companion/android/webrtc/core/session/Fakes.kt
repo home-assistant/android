@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.webrtc.core.session
 
+import io.homeassistant.companion.android.webrtc.core.MediaOptions
 import io.homeassistant.companion.android.webrtc.core.audio.AudioController
 import io.homeassistant.companion.android.webrtc.core.signaling.IceCandidateInit
 import io.homeassistant.companion.android.webrtc.core.signaling.RtcClientConfig
@@ -71,10 +72,15 @@ internal class FakePeerConnectionController(private val offerSdp: String) : Peer
     var remoteAudioEnabled: Boolean? = null
     var disposed = false
     var createOfferException: Exception? = null
+    var debugStats: RtcDebugStats? = null
+
+    override var isMicrophoneSupported = true
 
     fun emit(event: PeerConnectionEvent) {
         eventsChannel.trySend(event)
     }
+
+    override suspend fun getStats(): RtcDebugStats? = debugStats
 
     override suspend fun createOffer(): String {
         createOfferException?.let { throw it }
@@ -134,13 +140,17 @@ internal class FakePeerConnectionControllerFactory : PeerConnectionController.Fa
 
     val controllers = mutableListOf<FakePeerConnectionController>()
     var createException: Exception? = null
+    var micSupported = true
+    var lastMediaOptions: MediaOptions? = null
 
     val lastController: FakePeerConnectionController
         get() = controllers.last()
 
-    override fun create(config: RtcClientConfig): PeerConnectionController {
+    override fun create(config: RtcClientConfig, mediaOptions: MediaOptions): PeerConnectionController {
         createException?.let { throw it }
+        lastMediaOptions = mediaOptions
         return FakePeerConnectionController(offerSdp = "v=0 fake-offer-${controllers.size}").also {
+            it.isMicrophoneSupported = micSupported
             controllers += it
         }
     }

@@ -25,7 +25,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineListResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraCapabilitiesResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraWebRtcClientConfigResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraWebRtcClientConfigResult
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ConversationResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CurrentUserResponse
@@ -55,6 +55,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.intOrNull
@@ -438,20 +439,27 @@ class WebSocketRepositoryImpl internal constructor(
         return mapResponse(socketResponse)
     }
 
-    override suspend fun getCameraWebRtcClientConfig(entityId: String): CameraWebRtcClientConfigResponse? {
+    override suspend fun getCameraWebRtcClientConfig(entityId: String): CameraWebRtcClientConfigResult {
         val socketResponse = webSocketCore.sendMessage(
             mapOf(
                 "type" to "camera/webrtc/get_client_config",
                 "entity_id" to entityId,
             ),
-        )
+        ) ?: return CameraWebRtcClientConfigResult.Failure(code = null, message = null)
 
         // The response follows the camelCase W3C dictionaries so it cannot be decoded with the
         // shared snake_case mapper used by mapResponse. The success check avoids decoding an
         // error payload when the camera does not support WebRTC.
-        return socketResponse?.takeIf { it.success == true }?.result?.let {
-            webRtcJsonMapper.decodeFromJsonElement(it)
+        val result = socketResponse.takeIf { it.success == true }?.result
+        if (result != null) {
+            return CameraWebRtcClientConfigResult.Success(webRtcJsonMapper.decodeFromJsonElement(result))
         }
+        // Surface the server error so callers can show why the camera has no WebRTC stream
+        val error = socketResponse.error as? JsonObject
+        return CameraWebRtcClientConfigResult.Failure(
+            code = (error?.get("code") as? JsonPrimitive)?.contentOrNull,
+            message = (error?.get("message") as? JsonPrimitive)?.contentOrNull,
+        )
     }
 
     override suspend fun startCameraWebRtcSession(entityId: String, offerSdp: String): Flow<WebRtcEvent>? =

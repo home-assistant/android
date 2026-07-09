@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.webrtc.core.session
 
 import io.homeassistant.companion.android.webrtc.core.CameraPlayer
+import io.homeassistant.companion.android.webrtc.core.MediaOptions
 import io.homeassistant.companion.android.webrtc.core.MicState
 import io.homeassistant.companion.android.webrtc.core.PlayerFailure
 import io.homeassistant.companion.android.webrtc.core.PlayerState
@@ -57,6 +58,7 @@ private val RECONNECT_BASE_DELAY = 2.seconds
  * @param controllerFactory creates one peer connection per negotiation
  * @param audioController drives the device audio mode while the microphone is live; the session
  * guarantees the release on every exit path
+ * @param mediaOptions which media the session negotiates, video by default; see [MediaOptions]
  * @param dispatcher dispatcher running the session state machine, it must be serial (the default
  * already is)
  */
@@ -65,6 +67,7 @@ class WebRtcSession(
     private val signalingClient: SignalingClient,
     private val controllerFactory: PeerConnectionController.Factory,
     private val audioController: AudioController = AudioController.None,
+    private val mediaOptions: MediaOptions = MediaOptions(),
     dispatcher: CoroutineDispatcher = Dispatchers.Default.limitedParallelism(1),
 ) : CameraPlayer,
     TwoWayAudio {
@@ -159,7 +162,22 @@ class WebRtcSession(
         }
     }
 
+    /**
+     * Snapshot of the WebRTC statistics of the active connection, for debugging.
+     *
+     * @return the snapshot, or `null` when no negotiation is active
+     */
+    suspend fun debugStats(): RtcDebugStats? = controller?.getStats()
+
     private fun enableMicrophone(controller: PeerConnectionController) {
+        if (!controller.isMicrophoneSupported) {
+            // The camera has no audio return path; make sure a capture enabled optimistically
+            // before the answer arrived is stopped again
+            controller.setMicrophoneEnabled(false)
+            releaseAudio()
+            _micState.value = MicState.Unavailable
+            return
+        }
         controller.setMicrophoneEnabled(true)
         if (!audioAcquired) {
             audioAcquired = true
@@ -212,7 +230,7 @@ class WebRtcSession(
 
     private suspend fun negotiateAndStream(onConnected: () -> Unit) {
         val config = signalingClient.getClientConfig(entityId)
-        val controller = controllerFactory.create(config)
+        val controller = controllerFactory.create(config, mediaOptions)
         this.controller = controller
         videoSinks.forEach(controller::addVideoSink)
         controller.setRemoteAudioEnabled(audioEnabled)
@@ -281,6 +299,12 @@ class WebRtcSession(
                         controller.setAnswer(event.sdp)
                         answerApplied = true
                         _state.value = PlayerState.Buffering
+                        if (micEnabled) {
+                            // Re-validate the microphone against the negotiated answer: the offer
+                            // enabled it optimistically, but the camera may have no audio return
+                            // path (the answer direction excludes receiving)
+                            enableMicrophone(controller)
+                        }
                         pendingRemoteCandidates.forEach { addRemoteCandidate(controller, it) }
                         pendingRemoteCandidates.clear()
                     }

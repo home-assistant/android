@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.webrtc.core.session
 
+import io.homeassistant.companion.android.webrtc.core.MediaOptions
 import io.homeassistant.companion.android.webrtc.core.MicState
 import io.homeassistant.companion.android.webrtc.core.PlayerFailure
 import io.homeassistant.companion.android.webrtc.core.PlayerState
@@ -28,12 +29,13 @@ class WebRtcSessionTest {
     private val factory = FakePeerConnectionControllerFactory()
     private val audio = FakeAudioController()
 
-    private fun TestScope.createSession() = WebRtcSession(
-        ENTITY_ID,
-        signaling,
-        factory,
-        audio,
-        StandardTestDispatcher(testScheduler),
+    private fun TestScope.createSession(mediaOptions: MediaOptions = MediaOptions()) = WebRtcSession(
+        entityId = ENTITY_ID,
+        signalingClient = signaling,
+        controllerFactory = factory,
+        audioController = audio,
+        mediaOptions = mediaOptions,
+        dispatcher = StandardTestDispatcher(testScheduler),
     )
 
     private fun TestScope.startConnectedSession(session: WebRtcSession) {
@@ -425,6 +427,60 @@ class WebRtcSessionTest {
 
         assertEquals(PlayerState.Failed(PlayerFailure.ConnectionLost), session.state.value)
         assertEquals(0, audio.activeHolds)
+    }
+
+    @Test
+    fun `Given audio only media options When negotiating Then they are passed to the controller factory`() = runTest {
+        val session = createSession(MediaOptions(video = false))
+        startConnectedSession(session)
+
+        assertEquals(MediaOptions(video = false), factory.lastMediaOptions)
+        assertEquals(PlayerState.Playing, session.state.value)
+    }
+
+    @Test
+    fun `Given a camera without audio return path When the answer arrives Then the mic is Unavailable and released`() = runTest {
+        val session = createSession()
+        session.setMicEnabled(true)
+        session.start()
+        advanceUntilIdle()
+        // The mic was enabled optimistically at offer time
+        assertEquals(true, factory.lastController.microphoneEnabled)
+
+        factory.lastController.isMicrophoneSupported = false
+        signaling.currentSession.trySend(SignalingEvent.Session(SESSION_ID))
+        signaling.currentSession.trySend(SignalingEvent.Answer("v=0 answer"))
+        advanceUntilIdle()
+
+        assertEquals(MicState.Unavailable, session.micState.value)
+        assertEquals(false, factory.lastController.microphoneEnabled)
+        assertEquals(0, audio.activeHolds)
+    }
+
+    @Test
+    fun `Given a connected camera without audio return path When enabling the mic Then it stays Unavailable`() = runTest {
+        factory.micSupported = false
+        val session = createSession()
+        startConnectedSession(session)
+
+        session.setMicEnabled(true)
+
+        assertEquals(MicState.Unavailable, session.micState.value)
+        assertEquals(0, audio.acquireCount)
+    }
+
+    @Test
+    fun `Given a connected session When reading debug stats Then the controller snapshot is returned`() = runTest {
+        val session = createSession()
+        startConnectedSession(session)
+        val stats = RtcDebugStats(videoCodec = "video/H264", frameWidth = 1280, frameHeight = 720)
+        factory.lastController.debugStats = stats
+
+        assertEquals(stats, session.debugStats())
+
+        session.stop()
+        advanceUntilIdle()
+        assertNull(session.debugStats())
     }
 
     @Test

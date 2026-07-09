@@ -1,8 +1,10 @@
 package io.homeassistant.companion.android.webrtc.core.session.libwebrtc
 
+import io.homeassistant.companion.android.webrtc.core.MediaOptions
 import io.homeassistant.companion.android.webrtc.core.session.PeerConnectionController
 import io.homeassistant.companion.android.webrtc.core.session.PeerConnectionEvent
 import io.homeassistant.companion.android.webrtc.core.session.RtcConnectionState
+import io.homeassistant.companion.android.webrtc.core.session.RtcDebugStats
 import io.homeassistant.companion.android.webrtc.core.signaling.IceCandidateInit
 import io.homeassistant.companion.android.webrtc.core.signaling.RtcClientConfig
 import java.util.concurrent.CopyOnWriteArraySet
@@ -22,6 +24,8 @@ import livekit.org.webrtc.MediaStream
 import livekit.org.webrtc.MediaStreamTrack
 import livekit.org.webrtc.PeerConnection
 import livekit.org.webrtc.PeerConnectionFactory
+import livekit.org.webrtc.RTCStats
+import livekit.org.webrtc.RTCStatsReport
 import livekit.org.webrtc.RtpReceiver
 import livekit.org.webrtc.RtpTransceiver
 import livekit.org.webrtc.SdpObserver
@@ -43,8 +47,11 @@ private const val MICROPHONE_TRACK_ID = "ha_microphone"
  * never uses the microphone would break talk-back for every session after it, and the microphone
  * privacy indicator would show without the microphone being used.
  */
-internal class LibWebRtcPeerConnectionController(private val factory: PeerConnectionFactory, config: RtcClientConfig) :
-    PeerConnectionController {
+internal class LibWebRtcPeerConnectionController(
+    private val factory: PeerConnectionFactory,
+    config: RtcClientConfig,
+    mediaOptions: MediaOptions,
+) : PeerConnectionController {
 
     private val eventsChannel = Channel<PeerConnectionEvent>(Channel.UNLIMITED)
     override val events: Flow<PeerConnectionEvent> = eventsChannel.receiveAsFlow()
@@ -127,10 +134,12 @@ internal class LibWebRtcPeerConnectionController(private val factory: PeerConnec
         config.dataChannelLabel?.let { label ->
             dataChannel = peerConnection.createDataChannel(label, DataChannel.Init())
         }
-        peerConnection.addTransceiver(
-            MediaStreamTrack.MediaType.MEDIA_TYPE_VIDEO,
-            RtpTransceiver.RtpTransceiverInit(RtpTransceiver.RtpTransceiverDirection.RECV_ONLY),
-        )
+        if (mediaOptions.video) {
+            peerConnection.addTransceiver(
+                MediaStreamTrack.MediaType.MEDIA_TYPE_VIDEO,
+                RtpTransceiver.RtpTransceiverInit(RtpTransceiver.RtpTransceiverDirection.RECV_ONLY),
+            )
+        }
         audioTransceiver = peerConnection.addTransceiver(
             MediaStreamTrack.MediaType.MEDIA_TYPE_AUDIO,
             RtpTransceiver.RtpTransceiverInit(RtpTransceiver.RtpTransceiverDirection.SEND_RECV),
@@ -173,6 +182,10 @@ internal class LibWebRtcPeerConnectionController(private val factory: PeerConnec
         return offer.description
     }
 
+    @Volatile
+    override var isMicrophoneSupported = true
+        private set
+
     override suspend fun setAnswer(sdp: String) {
         suspendCancellableCoroutine<Unit> { continuation ->
             peerConnection.setRemoteDescription(
@@ -188,6 +201,18 @@ internal class LibWebRtcPeerConnectionController(private val factory: PeerConnec
                 SessionDescription(SessionDescription.Type.ANSWER, sdp),
             )
         }
+        isMicrophoneSupported = sdp.answerAcceptsClientAudio()
+    }
+
+    override suspend fun getStats(): RtcDebugStats? {
+        if (disposed.get()) return null
+        return runCatching {
+            suspendCancellableCoroutine<RtcDebugStats> { continuation ->
+                peerConnection.getStats { report ->
+                    continuation.resume(report.toDebugStats())
+                }
+            }
+        }.getOrNull()
     }
 
     override fun addRemoteCandidate(candidate: IceCandidateInit): Boolean = peerConnection.addIceCandidate(
@@ -258,6 +283,79 @@ internal class LibWebRtcPeerConnectionController(private val factory: PeerConnec
         eventsChannel.close()
     }
 }
+
+/**
+ * Whether the answerer accepts audio from us: the direction attribute of its audio m-section
+ * must be `recvonly` or `sendrecv` (the default when absent, per RFC 3264). No audio m-section
+ * means the camera has no audio support at all.
+ *
+ * Internal for testing, the production entry point is [LibWebRtcPeerConnectionController.setAnswer].
+ */
+internal fun String.answerAcceptsClientAudio(): Boolean {
+    var inAudioSection = false
+    for (rawLine in lineSequence()) {
+        val line = rawLine.trim()
+        if (line.startsWith("m=")) {
+            if (inAudioSection) break
+            inAudioSection = line.startsWith("m=audio")
+        } else if (inAudioSection) {
+            when (line) {
+                "a=recvonly", "a=sendrecv" -> return true
+                "a=sendonly", "a=inactive" -> return false
+            }
+        }
+    }
+    // The direction defaults to sendrecv when the audio section has no direction attribute
+    return inAudioSection
+}
+
+/**
+ * Map the standardized stats report to the debugging snapshot. Only the nominated candidate pair
+ * and the inbound/outbound RTP streams are extracted.
+ */
+private fun RTCStatsReport.toDebugStats(): RtcDebugStats {
+    val stats = statsMap.values
+    val inboundVideo = stats.firstOrNull { it.type == "inbound-rtp" && it.members["kind"] == "video" }
+    val inboundAudio = stats.firstOrNull { it.type == "inbound-rtp" && it.members["kind"] == "audio" }
+    val outboundAudio = stats.firstOrNull { it.type == "outbound-rtp" && it.members["kind"] == "audio" }
+    val candidatePair = stats.firstOrNull {
+        it.type == "candidate-pair" && it.members["state"] == "succeeded" && it.members["nominated"] == true
+    }
+    val videoCodec = inboundVideo?.members?.get("codecId")?.let { codecId ->
+        statsMap[codecId]?.members?.get("mimeType") as? String
+    }
+    return RtcDebugStats(
+        videoCodec = videoCodec,
+        frameWidth = inboundVideo?.member("frameWidth"),
+        frameHeight = inboundVideo?.member("frameHeight"),
+        framesPerSecond = inboundVideo?.member("framesPerSecond"),
+        framesDecoded = inboundVideo?.member("framesDecoded"),
+        videoBytesReceived = inboundVideo?.member("bytesReceived"),
+        videoPacketsLost = inboundVideo?.member("packetsLost"),
+        audioBytesReceived = inboundAudio?.member("bytesReceived"),
+        audioBytesSent = outboundAudio?.member("bytesSent"),
+        roundTripTimeMs = candidatePair?.member<Double>("currentRoundTripTime")?.let { it * 1000 },
+        localCandidateType = candidatePair?.relatedCandidateMember(this, "localCandidateId", "candidateType"),
+        remoteCandidateType = candidatePair?.relatedCandidateMember(this, "remoteCandidateId", "candidateType"),
+        transportProtocol = candidatePair?.relatedCandidateMember(this, "localCandidateId", "protocol"),
+    )
+}
+
+/** Read a numeric stats member as [T], tolerating the varying boxed number types of libwebrtc. */
+private inline fun <reified T> RTCStats.member(key: String): T? {
+    val value = members[key] ?: return null
+    return when (T::class) {
+        Long::class -> (value as? Number)?.toLong() as? T
+        Double::class -> (value as? Number)?.toDouble() as? T
+        else -> value as? T
+    }
+}
+
+/** Follow a candidate reference of a candidate-pair and read one member of the candidate. */
+private fun RTCStats.relatedCandidateMember(report: RTCStatsReport, referenceKey: String, memberKey: String): String? =
+    (members[referenceKey] as? String)?.let { candidateId ->
+        report.statsMap[candidateId]?.members?.get(memberKey) as? String
+    }
 
 private fun RtcClientConfig.toRtcConfiguration(): PeerConnection.RTCConfiguration {
     val servers = iceServers.filter { it.urls.isNotEmpty() }.map { server ->

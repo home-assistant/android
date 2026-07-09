@@ -7,6 +7,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketCo
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraStreamTypes
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraWebRtcClientConfigResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraWebRtcClientConfigResult
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MessageSocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcCandidate
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcConfiguration
@@ -33,7 +34,6 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -295,28 +295,54 @@ class WebSocketRepositoryImplTest {
             assertEquals("camera/webrtc/get_client_config", messageSlot.captured["type"])
             assertEquals("camera.front_door", messageSlot.captured["entity_id"])
             assertEquals(
-                CameraWebRtcClientConfigResponse(
-                    configuration = WebRtcConfiguration(
-                        iceServers = listOf(
-                            WebRtcIceServer(urls = listOf("stun:stun.home-assistant.io:80")),
-                            WebRtcIceServer(
-                                urls = listOf("turn:example.org:3478"),
-                                username = "user",
-                                credential = "secret",
+                CameraWebRtcClientConfigResult.Success(
+                    CameraWebRtcClientConfigResponse(
+                        configuration = WebRtcConfiguration(
+                            iceServers = listOf(
+                                WebRtcIceServer(urls = listOf("stun:stun.home-assistant.io:80")),
+                                WebRtcIceServer(
+                                    urls = listOf("turn:example.org:3478"),
+                                    username = "user",
+                                    credential = "secret",
+                                ),
                             ),
                         ),
+                        dataChannel = "webrtc",
                     ),
-                    dataChannel = "webrtc",
                 ),
                 config,
             )
         }
 
         @Test
-        fun `Given a failing command When getting WebRTC client config Then null is returned`() = runTest {
-            captureSentMessage(MessageSocketResponse(id = 1, success = false))
+        fun `Given a failing command When getting WebRTC client config Then the server error is surfaced`() = runTest {
+            captureSentMessage(
+                MessageSocketResponse(
+                    id = 1,
+                    success = false,
+                    error = kotlinJsonMapper.parseToJsonElement(
+                        """{"code": "webrtc_get_client_config_failed", "message": "Camera does not support WebRTC"}""",
+                    ),
+                ),
+            )
 
-            assertNull(repository.getCameraWebRtcClientConfig("camera.front_door"))
+            assertEquals(
+                CameraWebRtcClientConfigResult.Failure(
+                    code = "webrtc_get_client_config_failed",
+                    message = "Camera does not support WebRTC",
+                ),
+                repository.getCameraWebRtcClientConfig("camera.front_door"),
+            )
+        }
+
+        @Test
+        fun `Given no response When getting WebRTC client config Then a failure without error is returned`() = runTest {
+            coEvery { webSocketCore.sendMessage(any<Map<String, Any?>>()) } returns null
+
+            assertEquals(
+                CameraWebRtcClientConfigResult.Failure(code = null, message = null),
+                repository.getCameraWebRtcClientConfig("camera.front_door"),
+            )
         }
 
         @Test

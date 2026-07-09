@@ -10,7 +10,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraCapabilitiesResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraStreamTypes
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraWebRtcClientConfigResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraWebRtcClientConfigResult
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ConversationResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CurrentUserResponse
@@ -158,11 +158,11 @@ interface WebSocketRepository {
      *
      * Requires Home Assistant Core 2024.11 or later.
      *
-     * @return [CameraWebRtcClientConfigResponse] for the entity, or `null` if the server did not
-     * return a successful response, for example when the camera does not support WebRTC
-     * (`webrtc_get_client_config_failed`).
+     * @return [CameraWebRtcClientConfigResult.Success] with the configuration, or
+     * [CameraWebRtcClientConfigResult.Failure] carrying the server error when the command failed,
+     * for example when the camera does not support WebRTC (`webrtc_get_client_config_failed`).
      */
-    suspend fun getCameraWebRtcClientConfig(entityId: String): CameraWebRtcClientConfigResponse?
+    suspend fun getCameraWebRtcClientConfig(entityId: String): CameraWebRtcClientConfigResult
 
     /**
      * Start a WebRTC session for a camera entity by sending the SDP offer, and subscribe to the

@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraCapabilitiesResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraWebRtcClientConfigResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraWebRtcClientConfigResult
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcCandidate
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcConfiguration
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcEvent
@@ -62,17 +63,19 @@ class HaSignalingClientTest {
     @Test
     fun `Given a client config When getting it Then it is mapped to the core model`() = runTest {
         coEvery { webSocketRepository.getCameraWebRtcClientConfig(ENTITY_ID) } returns
-            CameraWebRtcClientConfigResponse(
-                configuration = WebRtcConfiguration(
-                    iceServers = listOf(
-                        WebRtcIceServer(
-                            urls = listOf("turn:example.org:3478"),
-                            username = "user",
-                            credential = "secret",
+            CameraWebRtcClientConfigResult.Success(
+                CameraWebRtcClientConfigResponse(
+                    configuration = WebRtcConfiguration(
+                        iceServers = listOf(
+                            WebRtcIceServer(
+                                urls = listOf("turn:example.org:3478"),
+                                username = "user",
+                                credential = "secret",
+                            ),
                         ),
                     ),
+                    dataChannel = "webrtc",
                 ),
-                dataChannel = "webrtc",
             )
 
         val config = client.getClientConfig(ENTITY_ID)
@@ -89,8 +92,24 @@ class HaSignalingClientTest {
     }
 
     @Test
+    fun `Given a failing command When getting the client config Then the server error is propagated`() = runTest {
+        coEvery { webSocketRepository.getCameraWebRtcClientConfig(ENTITY_ID) } returns
+            CameraWebRtcClientConfigResult.Failure(
+                code = "webrtc_get_client_config_failed",
+                message = "Camera does not support WebRTC",
+            )
+
+        val result = runCatching { client.getClientConfig(ENTITY_ID) }
+
+        val exception = result.exceptionOrNull() as? SignalingException
+        assertEquals("webrtc_get_client_config_failed", exception?.code)
+        assertEquals("Camera does not support WebRTC", exception?.message)
+    }
+
+    @Test
     fun `Given no response When getting the client config Then a SignalingException is thrown`() = runTest {
-        coEvery { webSocketRepository.getCameraWebRtcClientConfig(ENTITY_ID) } returns null
+        coEvery { webSocketRepository.getCameraWebRtcClientConfig(ENTITY_ID) } returns
+            CameraWebRtcClientConfigResult.Failure(code = null, message = null)
 
         val result = runCatching { client.getClientConfig(ENTITY_ID) }
 

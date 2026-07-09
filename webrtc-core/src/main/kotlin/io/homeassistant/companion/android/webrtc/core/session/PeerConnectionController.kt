@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.webrtc.core.session
 
+import io.homeassistant.companion.android.webrtc.core.MediaOptions
 import io.homeassistant.companion.android.webrtc.core.signaling.IceCandidateInit
 import io.homeassistant.companion.android.webrtc.core.signaling.RtcClientConfig
 import kotlinx.coroutines.flow.Flow
@@ -21,8 +22,8 @@ interface PeerConnectionController {
     val events: Flow<PeerConnectionEvent>
 
     /**
-     * Create the SDP offer (video receive-only, audio send-and-receive with the microphone
-     * disabled) and set it as local description, which starts ICE gathering.
+     * Create the SDP offer (video receive-only when negotiated, audio send-and-receive with the
+     * microphone off) and set it as local description, which starts ICE gathering.
      *
      * @return the SDP of the offer to send to the server
      */
@@ -32,6 +33,19 @@ interface PeerConnectionController {
      * Apply the SDP answer received from the server as remote description.
      */
     suspend fun setAnswer(sdp: String)
+
+    /**
+     * Whether the remote end accepts microphone audio. Only meaningful once [setAnswer] was
+     * applied (the answer carries the negotiated audio direction); `true` before that.
+     */
+    val isMicrophoneSupported: Boolean
+
+    /**
+     * Snapshot of the standardized WebRTC statistics of this connection, for debugging.
+     *
+     * @return the snapshot, or `null` when the controller is disposed or stats are unavailable
+     */
+    suspend fun getStats(): RtcDebugStats?
 
     /**
      * Add a remote ICE candidate. Must only be called after [setAnswer] succeeded.
@@ -62,7 +76,7 @@ interface PeerConnectionController {
      * Creates one [PeerConnectionController] per negotiation.
      */
     fun interface Factory {
-        fun create(config: RtcClientConfig): PeerConnectionController
+        fun create(config: RtcClientConfig, mediaOptions: MediaOptions): PeerConnectionController
     }
 }
 

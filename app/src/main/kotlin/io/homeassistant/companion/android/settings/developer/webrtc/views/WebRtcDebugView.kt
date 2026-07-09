@@ -17,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -31,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import io.homeassistant.companion.android.common.R as commonR
@@ -52,13 +54,15 @@ fun WebRtcDebugView(
     player: CameraPlayer?,
     playerState: PlayerState,
     micState: MicState,
+    debugStats: String?,
     eglContext: EglBase.Context?,
-    onStart: (String) -> Unit,
+    onStart: (entityId: String, audioOnly: Boolean) -> Unit,
     onStop: () -> Unit,
     onMicEnabled: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var entityId by rememberSaveable { mutableStateOf("") }
+    var audioOnly by rememberSaveable { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -74,8 +78,15 @@ fun WebRtcDebugView(
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Switch(checked = audioOnly, onCheckedChange = { audioOnly = it })
+            Text(stringResource(commonR.string.webrtc_debug_audio_only))
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { onStart(entityId) }, enabled = entityId.isNotBlank()) {
+            Button(onClick = { onStart(entityId, audioOnly) }, enabled = entityId.isNotBlank()) {
                 Text(stringResource(commonR.string.webrtc_debug_start))
             }
             Button(onClick = onStop, enabled = player != null) {
@@ -91,6 +102,13 @@ fun WebRtcDebugView(
             text = "${playerState.toDebugLabel()} | mic: ${micState.toDebugLabel()}",
             style = MaterialTheme.typography.bodyMedium,
         )
+        debugStats?.let { stats ->
+            Text(
+                text = stats,
+                style = MaterialTheme.typography.bodySmall,
+                fontFamily = FontFamily.Monospace,
+            )
+        }
         player?.let {
             WebRtcVideo(
                 player = it,
