@@ -28,8 +28,8 @@ import io.homeassistant.companion.android.common.compose.theme.LocalHAColorSchem
  * because [rememberModalBottomSheetState] requires a fully running Compose runtime, and [rememberStandardBottomSheetState]
  * doesn't animate properly.
  *
- * @param skipPartiallyExpanded When true, the sheet skips the partially expanded state and goes
- * straight to fully expanded. No effect in inspection mode.
+ * @param skipPartiallyExpanded Whether the runtime modal sheet should always open fully expanded.
+ * No effect in inspection mode.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
