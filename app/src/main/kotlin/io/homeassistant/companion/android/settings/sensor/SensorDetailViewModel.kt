@@ -34,11 +34,12 @@ import io.homeassistant.companion.android.database.settings.SensorUpdateFrequenc
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.sensors.LastAppSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
+import io.homeassistant.companion.android.settings.sensor.views.SettingEntry
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,7 +48,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import timber.log.Timber
+
+/** Threshold above which the allow-list sheet search field becomes visible. */
+private const val SEARCH_VISIBILITY_THRESHOLD = 10
 
 @HiltViewModel
 class SensorDetailViewModel @Inject constructor(
@@ -80,11 +85,14 @@ class SensorDetailViewModel @Inject constructor(
             val setting: SensorSetting,
             /** Indicates if this is still loading entries in the background */
             val isLoading: Boolean,
-            /** List of entity ID to entity pairs */
-            val entries: List<Pair<String, String>>,
+            /** List of selectable entries */
+            val entries: List<SettingEntry>,
             /** List of selected entity ID */
             val entriesSelected: List<String>,
-        )
+        ) {
+            /** Whether a search field should be shown to help navigate the entry list. */
+            val showSearch: Boolean = entries.size > SEARCH_VISIBILITY_THRESHOLD
+        }
     }
 
     val sensorId: String = state["id"]!!
@@ -256,36 +264,32 @@ class SensorDetailViewModel @Inject constructor(
      * Should trigger a dialog open in view.
      */
     fun onSettingWithDialogPressed(setting: SensorSetting) = viewModelScope.launch {
-        val dialogLoadingJob = launch {
-            // In case getting entries takes too long, display a temporary loading dialog
-            delay(1000L)
-            sensorSettingsDialog = SettingDialogState(
-                setting = setting,
-                isLoading = true,
-                entries = listOf(),
-                entriesSelected = listOf(),
-            )
-        }
-
-        val listKeys = getSettingKeys(setting)
-        val listEntries = getSettingEntries(setting, null)
-        val state = SettingDialogState(
+        // Open the dialog right away in a loading state; enumerating entries (for example every
+        // installed application) can take seconds and must not block the main thread.
+        sensorSettingsDialog = SettingDialogState(
             setting = setting,
-            isLoading = false,
-            entries = when {
+            isLoading = true,
+            entries = listOf(),
+            entriesSelected = listOf(),
+        )
+
+        sensorSettingsDialog = withContext(Dispatchers.Default) {
+            val listKeys = getSettingKeys(setting)
+            val listEntries = getSettingEntries(setting, null)
+            val entries = when {
                 setting.valueType == SensorSettingType.LIST ||
                     setting.valueType == SensorSettingType.LIST_APPS ||
                     setting.valueType == SensorSettingType.LIST_BLUETOOTH ||
                     setting.valueType == SensorSettingType.LIST_ZONES ->
-                    listKeys.zip(listEntries)
+                    listKeys.zip(listEntries).map { (id, label) -> SettingEntry(id = id, label = label) }
 
                 setting.valueType.listType ->
-                    listEntries.map { it to it }
+                    listEntries.map { SettingEntry(id = it, label = it) }
 
                 else ->
                     emptyList()
-            },
-            entriesSelected = when {
+            }
+            val entriesSelected = when {
                 setting.valueType == SensorSettingType.LIST ||
                     setting.valueType == SensorSettingType.LIST_APPS ||
                     setting.valueType == SensorSettingType.LIST_BLUETOOTH ||
@@ -297,10 +301,30 @@ class SensorDetailViewModel @Inject constructor(
 
                 else ->
                     emptyList()
-            },
-        )
-        dialogLoadingJob.cancel()
-        sensorSettingsDialog = state
+            }
+            SettingDialogState(
+                setting = setting,
+                isLoading = false,
+                entries = sortSelectedFirst(setting = setting, entries = entries, entriesSelected = entriesSelected),
+                entriesSelected = entriesSelected,
+            )
+        }
+    }
+
+    /**
+     * Moves the selected entries of a multi-select setting to the top of the list, preserving the
+     * existing (alphabetical) order within the selected and unselected groups. Single-select and
+     * non-list settings keep their original order.
+     */
+    private fun sortSelectedFirst(
+        setting: SensorSetting,
+        entries: List<SettingEntry>,
+        entriesSelected: List<String>,
+    ): List<SettingEntry> {
+        val isMultiSelect = setting.valueType.listType && setting.valueType != SensorSettingType.LIST
+        if (!isMultiSelect) return entries
+        val selected = entriesSelected.toSet()
+        return entries.sortedByDescending { it.id in selected }
     }
 
     fun cancelSettingWithDialog() {
@@ -317,7 +341,14 @@ class SensorDetailViewModel @Inject constructor(
 
     fun submitSettingWithDialog(data: SettingDialogState?) {
         if (data != null) {
-            setSetting(data.setting)
+            val setting = if (data.setting.valueType.listType && data.setting.valueType != SensorSettingType.LIST) {
+                // Multi-select settings keep their selection as a list in the state; serialize it
+                // here into the comma-separated format read back by [onSettingWithDialogPressed]
+                data.setting.copy(value = data.entriesSelected.joinToString())
+            } else {
+                data.setting
+            }
+            setSetting(setting)
         }
         sensorSettingsDialog = null
     }

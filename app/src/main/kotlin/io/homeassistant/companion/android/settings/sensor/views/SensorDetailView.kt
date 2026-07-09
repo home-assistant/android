@@ -625,26 +625,26 @@ fun SensorDetailSettingDialog(
                 }
             } else if (listSettingDialog) {
                 LazyColumn {
-                    items(state.entries, key = { (id) -> id }) { (id, entry) ->
+                    items(state.entries, key = { it.id }) { entry ->
                         SensorDetailSettingRow(
-                            label = entry,
+                            entry = entry,
                             checked = if (state.setting.valueType ==
                                 SensorSettingType.LIST
                             ) {
-                                inputValue.value == id
+                                inputValue.value == entry.id
                             } else {
-                                checkedValue.contains(id)
+                                checkedValue.contains(entry.id)
                             },
                             multiple = state.setting.valueType != SensorSettingType.LIST,
                             onClick = { isChecked ->
                                 if (state.setting.valueType == SensorSettingType.LIST) {
-                                    inputValue.value = id
+                                    inputValue.value = entry.id
                                     onSubmit(state.copy(setting = state.setting.copy(value = inputValue.value)))
                                 } else {
-                                    if (checkedValue.contains(id) && !isChecked) {
-                                        checkedValue.remove(id)
-                                    } else if (!checkedValue.contains(id) && isChecked) {
-                                        checkedValue.add(id)
+                                    if (checkedValue.contains(entry.id) && !isChecked) {
+                                        checkedValue.remove(entry.id)
+                                    } else if (!checkedValue.contains(entry.id) && isChecked) {
+                                        checkedValue.add(entry.id)
                                     }
                                 }
                             },
@@ -675,9 +675,11 @@ fun SensorDetailSettingDialog(
         } else if (state.setting.valueType != SensorSettingType.LIST) {
             {
                 if (listSettingDialog) {
-                    inputValue.value = joinSelectedValues(checkedValue)
+                    // Multi-select selection is kept as a list; the ViewModel serializes it on submit
+                    onSubmit(state.copy(entriesSelected = checkedValue.toList()))
+                } else {
+                    onSubmit(state.copy(setting = state.setting.copy(value = inputValue.value)))
                 }
-                onSubmit(state.copy(setting = state.setting.copy(value = inputValue.value)))
             }
         } else { // list is saved when selecting a value
             null
@@ -751,15 +753,13 @@ fun SensorDetailUpdateInfoDialog(
 }
 
 @Composable
-fun SensorDetailSettingRow(
-    label: String,
+internal fun SensorDetailSettingRow(
+    entry: SettingEntry,
     checked: Boolean,
     multiple: Boolean,
     onClick: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val parsed = parseSettingLabel(label)
-
     Row(
         modifier = modifier
             .clickable { onClick(!checked) }
@@ -783,13 +783,13 @@ fun SensorDetailSettingRow(
         }
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = parsed.primary,
+                text = entry.primary,
                 style = HATextStyle.Body.copy(textAlign = TextAlign.Start),
             )
-            if (parsed.secondary != null) {
+            if (entry.secondary != null) {
                 Spacer(Modifier.height(HADimens.SPACE1))
                 Text(
-                    text = parsed.secondary,
+                    text = entry.secondary,
                     style = HATextStyle.BodyMedium.copy(textAlign = TextAlign.Start),
                 )
             }

@@ -5,20 +5,20 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 
-class ParseSettingLabelTest {
+class SettingEntryTest {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("labels")
-    fun `Given label when parsing then primary and secondary match expectations`(
+    fun `Given label when creating entry then primary and secondary match expectations`(
         @Suppress("UNUSED_PARAMETER") description: String,
         label: String,
         expectedPrimary: String,
         expectedSecondary: String?,
     ) {
-        val parsed = parseSettingLabel(label)
+        val entry = SettingEntry(id = "id", label = label)
 
-        assertEquals(expectedPrimary, parsed.primary)
-        assertEquals(expectedSecondary, parsed.secondary)
+        assertEquals(expectedPrimary, entry.primary)
+        assertEquals(expectedSecondary, entry.secondary)
     }
 
     companion object {
