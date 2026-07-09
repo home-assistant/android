@@ -16,13 +16,9 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
-import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.getIcon
-import io.homeassistant.companion.android.common.data.integration.isUsableInTile
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.GetEntitiesForDisplayUseCase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
@@ -73,10 +69,8 @@ import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import io.homeassistant.companion.android.util.icondialog.mdiName
 import java.util.concurrent.Executors
 import javax.inject.Inject
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -91,6 +85,7 @@ import timber.log.Timber
 internal class ManageTilesViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val serverManager: ServerManager,
+    private val getEntitiesForDisplay: GetEntitiesForDisplayUseCase,
     private val tileDao: TileDao,
     application: Application,
 ) : AndroidViewModel(application) {
@@ -216,34 +211,23 @@ internal class ManageTilesViewModel @Inject constructor(
     fun selectServerId(serverId: Int) {
         if (serverId == _state.value.selectedServerId) return
         viewModelScope.launch {
-            val previousEntityId = _state.value.selectedEntityId
             _state.update { it.copy(selectedServerId = serverId) }
             loadEntities(serverId)
-            val resetEntity = _state.value.entities.none { it.entityId == previousEntityId }
-            selectEntityId(if (resetEntity) "" else previousEntityId)
+            selectEntityId("")
         }
     }
 
     private suspend fun loadEntities(serverId: Int) {
         loadEntitiesJob?.cancel()
         loadEntitiesJob = viewModelScope.launch {
-            val entitiesDeferred = async { loadEntitiesForServer(serverId) }
-            val entityRegistryDeferred = async { loadEntityRegistry(serverId) }
-            val deviceRegistryDeferred = async { loadDeviceRegistry(serverId) }
-            val areaRegistryDeferred = async { loadAreaRegistry(serverId) }
-            _state.update {
-                it.copy(
-                    entities = entitiesDeferred.await(),
-                    entityRegistry = entityRegistryDeferred.await(),
-                    deviceRegistry = deviceRegistryDeferred.await(),
-                    areaRegistry = areaRegistryDeferred.await(),
-                )
+            getEntitiesForDisplay(serverId).collect { state ->
+                _state.update { it.copy(entityDisplayState = state) }
             }
         }
         loadEntitiesJob?.join()
     }
 
-    fun selectEntityId(entityId: String) {
+    fun selectEntityId(entityId: String?) {
         _state.update { it.copy(selectedEntityId = entityId) }
         if (_state.value.selectedIconId == null) selectIcon(null) // trigger drawable update
     }
@@ -255,9 +239,9 @@ internal class ManageTilesViewModel @Inject constructor(
         }
         viewModelScope.launch(Dispatchers.Default) {
             val current = _state.value
-            val resolvedIcon = current.entities
-                .firstOrNull { it.entityId == current.selectedEntityId }
-                ?.getIcon(app)
+            val resolvedIcon = (current.entityDisplayState as? EntityDisplayState.Loaded)?.entities
+                ?.firstOrNull { it.entityId == current.selectedEntityId }
+                ?.icon
             _state.update { it.copy(selectedIconId = null, selectedIcon = resolvedIcon) }
         }
     }
@@ -285,7 +269,9 @@ internal class ManageTilesViewModel @Inject constructor(
                 serverId = current.selectedServerId,
                 added = existing?.added ?: false,
                 iconName = current.selectedIconId,
-                entityId = current.selectedEntityId,
+                entityId = checkNotNull(current.selectedEntityId) {
+                    "EntityID should not be null when adding a tile, UI should forbid that"
+                },
                 label = current.tileLabel,
                 subtitle = current.tileSubtitle.ifBlank { null },
                 shouldVibrate = current.selectedShouldVibrate,
@@ -338,43 +324,4 @@ internal class ManageTilesViewModel @Inject constructor(
     fun setShouldVibrate(value: Boolean) = _state.update { it.copy(selectedShouldVibrate = value) }
 
     fun setAuthRequired(value: Boolean) = _state.update { it.copy(tileAuthRequired = value) }
-
-    private suspend fun loadEntitiesForServer(serverId: Int): List<Entity> = try {
-        val entities = serverManager.integrationRepository(serverId).getEntities().orEmpty()
-        withContext(Dispatchers.Default) {
-            entities.filter(Entity::isUsableInTile)
-        }
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        Timber.e(e, "Couldn't load entities for server")
-        emptyList()
-    }
-
-    private suspend fun loadEntityRegistry(serverId: Int): List<EntityRegistryResponse> = try {
-        serverManager.webSocketRepository(serverId).getEntityRegistry().orEmpty()
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        Timber.e(e, "Couldn't load entity registry for server")
-        emptyList()
-    }
-
-    private suspend fun loadDeviceRegistry(serverId: Int): List<DeviceRegistryResponse> = try {
-        serverManager.webSocketRepository(serverId).getDeviceRegistry().orEmpty()
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        Timber.e(e, "Couldn't load device registry for server")
-        emptyList()
-    }
-
-    private suspend fun loadAreaRegistry(serverId: Int): List<AreaRegistryResponse> = try {
-        serverManager.webSocketRepository(serverId).getAreaRegistry().orEmpty()
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        Timber.e(e, "Couldn't load area registry for server")
-        emptyList()
-    }
 }

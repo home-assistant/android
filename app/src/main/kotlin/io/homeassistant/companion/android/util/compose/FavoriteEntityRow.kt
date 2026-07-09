@@ -24,17 +24,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 
+/**
+ * A row displaying a favorite entity using the same display model as the entity picker:
+ * resolved icon and name with the area/device context as subtitle, falling back to the
+ * entity id when no metadata is available.
+ */
 @Composable
 fun ReorderableCollectionItemScope.FavoriteEntityRow(
-    entityName: String,
-    entityId: String,
+    entity: EntityDisplayItem,
     onClick: () -> Unit,
     checked: Boolean,
     modifier: Modifier = Modifier,
@@ -54,12 +60,21 @@ fun ReorderableCollectionItemScope.FavoriteEntityRow(
             verticalAlignment = Alignment.CenterVertically,
             modifier = rowModifier,
         ) {
+            Image(
+                asset = entity.icon,
+                colorFilter = ColorFilter.tint(LocalContentColor.current),
+                contentDescription = null,
+                modifier = Modifier.padding(start = 16.dp).size(24.dp),
+            )
             Column(
                 modifier = Modifier.weight(1f).padding(start = 16.dp),
             ) {
-                Text(text = entityName, style = MaterialTheme.typography.body1)
+                Text(text = entity.name, style = MaterialTheme.typography.body1)
                 CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-                    Text(text = entityId, style = MaterialTheme.typography.body2)
+                    Text(
+                        text = entity.subtitle(LocalLayoutDirection.current) ?: entity.entityId,
+                        style = MaterialTheme.typography.body2,
+                    )
                 }
             }
             IconButton(onClick = onClick) {

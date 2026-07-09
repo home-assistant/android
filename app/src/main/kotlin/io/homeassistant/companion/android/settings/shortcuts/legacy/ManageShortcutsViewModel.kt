@@ -18,11 +18,9 @@ import androidx.lifecycle.viewModelScope
 import com.mikepenz.iconics.typeface.IIcon
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.GetEntitiesForDisplayUseCase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.settings.shortcuts.HaShortcutManager
@@ -30,7 +28,6 @@ import io.homeassistant.companion.android.settings.shortcuts.SHORTCUT_EXTRA_PATH
 import io.homeassistant.companion.android.settings.shortcuts.SHORTCUT_EXTRA_SERVER
 import io.homeassistant.companion.android.widgets.assist.AssistShortcutActivity
 import javax.inject.Inject
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -39,6 +36,7 @@ import timber.log.Timber
 class ManageShortcutsViewModel @Inject constructor(
     private val serverManager: ServerManager,
     private val shortcutManager: HaShortcutManager,
+    private val getEntitiesForDisplay: GetEntitiesForDisplayUseCase,
     application: Application,
 ) : AndroidViewModel(application) {
 
@@ -55,13 +53,7 @@ class ManageShortcutsViewModel @Inject constructor(
 
     var servers by mutableStateOf(emptyList<Server>())
         private set
-    var entities = mutableStateMapOf<Int, List<Entity>>()
-        private set
-    var entityRegistry = mutableStateMapOf<Int, List<EntityRegistryResponse>>()
-        private set
-    var deviceRegistry = mutableStateMapOf<Int, List<DeviceRegistryResponse>>()
-        private set
-    var areaRegistry = mutableStateMapOf<Int, List<AreaRegistryResponse>>()
+    var displayEntities = mutableStateMapOf<Int, EntityDisplayState>()
         private set
 
     private suspend fun currentServerId() = serverManager.getServer()?.id ?: 0
@@ -104,44 +96,8 @@ class ManageShortcutsViewModel @Inject constructor(
             this@ManageShortcutsViewModel.servers = servers
             servers.forEach { server ->
                 launch {
-                    entities[server.id] = try {
-                        serverManager.integrationRepository(server.id).getEntities().orEmpty()
-                            .sortedBy { it.entityId }
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        Timber.e(e, "Couldn't load entities for server")
-                        emptyList()
-                    }
-                }
-                launch {
-                    entityRegistry[server.id] = try {
-                        serverManager.webSocketRepository(server.id).getEntityRegistry().orEmpty()
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        Timber.e(e, "Couldn't load entity registry for server")
-                        emptyList()
-                    }
-                }
-                launch {
-                    deviceRegistry[server.id] = try {
-                        serverManager.webSocketRepository(server.id).getDeviceRegistry().orEmpty()
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        Timber.e(e, "Couldn't load device registry for server")
-                        emptyList()
-                    }
-                }
-                launch {
-                    areaRegistry[server.id] = try {
-                        serverManager.webSocketRepository(server.id).getAreaRegistry().orEmpty()
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        Timber.e(e, "Couldn't load area registry for server")
-                        emptyList()
+                    getEntitiesForDisplay(serverId = server.id).collect { state ->
+                        displayEntities[server.id] = state
                     }
                 }
             }

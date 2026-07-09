@@ -9,9 +9,11 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.GetEntitiesForDisplayUseCase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
 import io.homeassistant.companion.android.database.server.Server
@@ -22,16 +24,21 @@ import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.assertNull
 import org.junit.runner.RunWith
@@ -51,6 +58,7 @@ class ManageTilesViewModelTest {
 
     private val serverManager: ServerManager = mockk(relaxed = false)
     private val tileDao: TileDao = mockk(relaxed = false)
+    private val getEntitiesForDisplay: GetEntitiesForDisplayUseCase = mockk()
 
     @Before
     fun setUp() {
@@ -61,6 +69,7 @@ class ManageTilesViewModelTest {
         coEvery { tileDao.get(any()) } returns null
         coEvery { tileDao.getAll() } returns emptyList()
         coEvery { tileDao.add(any()) } returns 1L
+        every { getEntitiesForDisplay(any(), any<(Entity) -> Boolean>()) } returns flowOf(EntityDisplayState.Loading)
     }
 
     private fun fakeServer(id: Int) = Server(
@@ -99,6 +108,7 @@ class ManageTilesViewModelTest {
         savedStateHandle = savedState,
         serverManager = serverManager,
         tileDao = tileDao,
+        getEntitiesForDisplay = getEntitiesForDisplay,
         application = application,
     )
 
@@ -323,11 +333,7 @@ class ManageTilesViewModelTest {
             coVerify(exactly = 1) {
                 tileDao.add(
                     match {
-                        it.id == 0 &&
-                            it.added == false &&
-                            it.label == "New tile" &&
-                            it.entityId == "light.new" &&
-                            it.tileId == tileId
+                        it.id == 0 && !it.added && it.label == "New tile" && it.entityId == "light.new" && it.tileId == tileId
                     },
                 )
             }
@@ -409,44 +415,31 @@ class ManageTilesViewModelTest {
     }
 
     @Test
-    fun `Given a fast server switch while the first server is still loading when the slower response resolves then it does not overwrite the newer server's registry`() = runTest {
-        // The first server responds slowly (simulates a slow network) with a registry entry that must
-        // never reach the final state, while the second (newer) server responds quickly with the entry
-        // that is expected to win. Without cancelling the stale in-flight load, the slow response would
-        // resolve last and clobber the fresh one. This uses the entity registry (rather than the entity
-        // list itself) because loading entities involves a Dispatchers.Default hop that is not
-        // deterministic under the test dispatcher's virtual clock, while the registry loaders run
-        // entirely on the (virtual-time controlled) calling dispatcher.
-        val staleWebSocket: WebSocketRepository = mockk()
-        val freshWebSocket: WebSocketRepository = mockk()
-        coEvery { serverManager.webSocketRepository(1) } returns staleWebSocket
-        coEvery { serverManager.webSocketRepository(2) } returns freshWebSocket
-        coEvery { staleWebSocket.getEntityRegistry() } coAnswers {
-            delay(100)
-            listOf(EntityRegistryResponse(entityId = "light.stale"))
+    fun `Given a fast server switch while the first server is still loading when the slower flow resolves then it does not overwrite the newer server's entities`() = runTest {
+        // The first server resolves slowly (simulates a slow network) with an entity that must never
+        // reach the final state, while the second (newer) server resolves quickly with the entity
+        // that is expected to win. Without cancelling the stale in-flight collection, the slow flow
+        // would emit last and clobber the fresh one.
+        val icon = CommunityMaterial.getIconByMdiName("mdi:account")!!
+        every { getEntitiesForDisplay(1, any<(Entity) -> Boolean>()) } returns flow {
+            emit(EntityDisplayState.Loading)
+            delay(100.milliseconds)
+            emit(EntityDisplayState.Loaded(listOf(EntityDisplayItem(entityId = "light.stale", name = "Stale", icon = icon))))
         }
-        coEvery { staleWebSocket.getDeviceRegistry() } returns emptyList()
-        coEvery { staleWebSocket.getAreaRegistry() } returns emptyList()
-        coEvery { freshWebSocket.getEntityRegistry() } coAnswers {
-            delay(10)
-            listOf(EntityRegistryResponse(entityId = "light.fresh"))
+        every { getEntitiesForDisplay(2, any<(Entity) -> Boolean>()) } returns flow {
+            emit(EntityDisplayState.Loading)
+            delay(10.milliseconds)
+            emit(EntityDisplayState.Loaded(listOf(EntityDisplayItem(entityId = "light.fresh", name = "Fresh", icon = icon))))
         }
-        coEvery { freshWebSocket.getDeviceRegistry() } returns emptyList()
-        coEvery { freshWebSocket.getAreaRegistry() } returns emptyList()
 
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        turbineScope {
-            val states = viewModel.state.testIn(backgroundScope)
+        viewModel.selectServerId(1)
+        viewModel.selectServerId(2)
+        advanceUntilIdle()
 
-            viewModel.selectServerId(1)
-            viewModel.selectServerId(2)
-            advanceUntilIdle()
-
-            val finalRegistryIds = states.expectMostRecentItem().entityRegistry.map { it.entityId }
-            assertEquals(listOf("light.fresh"), finalRegistryIds)
-            states.cancelAndConsumeRemainingEvents()
-        }
+        val finalState = assertInstanceOf(EntityDisplayState.Loaded::class.java, viewModel.state.value.entityDisplayState)
+        assertEquals(listOf("light.fresh"), finalState.entities.map { it.entityId })
     }
 }

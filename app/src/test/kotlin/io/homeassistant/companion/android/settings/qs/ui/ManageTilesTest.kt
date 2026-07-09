@@ -137,7 +137,6 @@ class ManageTilesTest {
         var tileLabel: String? = null
         var tileSubtitle: String? = null
         var entitySelected: String? = null
-        var entityCleared = false
         var iconDialogShown = false
         var iconReset = false
         var shouldVibrate: Boolean? = null
@@ -160,8 +159,7 @@ class ManageTilesTest {
                     onServerSelected = { serverSelected = it },
                     onTileLabelChange = { tileLabel = it },
                     onTileSubtitleChange = { tileSubtitle = it },
-                    onEntitySelectedId = { entitySelected = it },
-                    onEntityCleared = { entityCleared = true },
+                    onSelectionChanged = { entitySelected = it },
                     onShowIconDialog = { iconDialogShown = true },
                     onResetIcon = { iconReset = true },
                     onShouldVibrateChange = { shouldVibrate = it },
@@ -186,9 +184,6 @@ class ManageTilesTest {
             showSubtitle = true,
             tileSubtitle = "",
             selectedEntityId = "",
-            entityRegistry = emptyList(),
-            deviceRegistry = emptyList(),
-            areaRegistry = emptyList(),
             selectedIcon = null,
             submitButtonLabel = commonR.string.tile_add,
         )

@@ -4,23 +4,17 @@ import androidx.compose.runtime.Stable
 import com.mikepenz.iconics.typeface.IIcon
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
-import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 
 @Stable
 internal data class ManageTilesState(
     val selectedTileId: String = "",
-    val entities: List<Entity> = emptyList(),
-    val entityRegistry: List<EntityRegistryResponse> = emptyList(),
-    val deviceRegistry: List<DeviceRegistryResponse> = emptyList(),
-    val areaRegistry: List<AreaRegistryResponse> = emptyList(),
     val selectedServerId: Int = ServerManager.SERVER_ID_ACTIVE,
+    val entityDisplayState: EntityDisplayState = EntityDisplayState.Loading,
     val selectedIconId: String? = null,
     val selectedIcon: IIcon? = null,
-    val selectedEntityId: String = "",
+    val selectedEntityId: String? = null,
     val tileLabel: String = "",
     val tileSubtitle: String = "",
     val submitButtonLabel: Int = commonR.string.tile_save,
@@ -33,9 +27,10 @@ internal data class ManageTilesState(
     val showServerSelector = serversDropdownItems.size > 1 ||
         serversDropdownItems.none { server -> server.key == selectedServerId }
 
-    val showResetIcon = selectedIconId != null && selectedEntityId.isNotBlank()
+    val showResetIcon = selectedIconId != null && !selectedEntityId.isNullOrBlank()
 
     val submitEnabled = tileLabel.isNotBlank() &&
+        selectedEntityId != null &&
         serversDropdownItems.any { it.key == selectedServerId } &&
-        entities.any { it.entityId == selectedEntityId }
+        (entityDisplayState as? EntityDisplayState.Loaded)?.entities?.any { it.entityId == selectedEntityId } == true
 }

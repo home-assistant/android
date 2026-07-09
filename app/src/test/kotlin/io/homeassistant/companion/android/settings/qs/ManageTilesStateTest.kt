@@ -1,8 +1,9 @@
 package io.homeassistant.companion.android.settings.qs
 
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
-import io.homeassistant.companion.android.common.data.integration.Entity
-import java.time.LocalDateTime
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -11,12 +12,10 @@ class ManageTilesStateTest {
 
     private fun serverItems(vararg ids: Int) = ids.map { HADropdownItem(key = it, label = "Server $it") }
 
-    private fun fakeEntity(entityId: String) = Entity(
+    private fun fakeEntity(entityId: String) = EntityDisplayItem(
         entityId = entityId,
-        state = "on",
-        attributes = emptyMap(),
-        lastChanged = LocalDateTime.now(),
-        lastUpdated = LocalDateTime.now(),
+        name = entityId,
+        icon = mockk(),
     )
 
     @Test
@@ -25,7 +24,7 @@ class ManageTilesStateTest {
             tileLabel = "",
             serversDropdownItems = serverItems(1),
             selectedServerId = 1,
-            entities = listOf(fakeEntity("light.test")),
+            entityDisplayState = EntityDisplayState.Loaded(listOf(fakeEntity("light.test"))),
             selectedEntityId = "light.test",
         )
         assertFalse(state.submitEnabled)
@@ -37,7 +36,7 @@ class ManageTilesStateTest {
             tileLabel = "Label",
             serversDropdownItems = serverItems(1),
             selectedServerId = 2,
-            entities = listOf(fakeEntity("light.test")),
+            entityDisplayState = EntityDisplayState.Loaded(listOf(fakeEntity("light.test"))),
             selectedEntityId = "light.test",
         )
         assertFalse(state.submitEnabled)
@@ -49,7 +48,7 @@ class ManageTilesStateTest {
             tileLabel = "Label",
             serversDropdownItems = serverItems(1),
             selectedServerId = 1,
-            entities = listOf(fakeEntity("light.other")),
+            entityDisplayState = EntityDisplayState.Loaded(listOf(fakeEntity("light.other"))),
             selectedEntityId = "light.test",
         )
         assertFalse(state.submitEnabled)
@@ -61,7 +60,7 @@ class ManageTilesStateTest {
             tileLabel = "Label",
             serversDropdownItems = serverItems(1),
             selectedServerId = 1,
-            entities = listOf(fakeEntity("light.test")),
+            entityDisplayState = EntityDisplayState.Loaded(listOf(fakeEntity("light.test"))),
             selectedEntityId = "light.test",
         )
         assertTrue(state.submitEnabled)
