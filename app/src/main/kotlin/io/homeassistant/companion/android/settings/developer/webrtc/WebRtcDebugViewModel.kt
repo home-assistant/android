@@ -80,7 +80,7 @@ class WebRtcDebugViewModel @Inject constructor(
     val eglContext: EglBase.Context
         get() = controllerFactory.eglBase.eglBaseContext
 
-    fun startSession(entityId: String, audioOnly: Boolean) {
+    fun startSession(entityId: String, audioOnly: Boolean, sendOnlyAudio: Boolean) {
         val trimmedEntityId = entityId.trim()
         if (trimmedEntityId.isEmpty()) return
         viewModelScope.launch {
@@ -91,7 +91,14 @@ class WebRtcDebugViewModel @Inject constructor(
                 signalingClient = signalingClient,
                 controllerFactory = controllerFactory,
                 audioController = audioController,
-                mediaOptions = MediaOptions(video = !audioOnly),
+                mediaOptions = MediaOptions(
+                    video = !audioOnly,
+                    audio = if (sendOnlyAudio) {
+                        MediaOptions.AudioDirection.SEND_ONLY
+                    } else {
+                        MediaOptions.AudioDirection.SEND_RECEIVE
+                    },
+                ),
             ).also { it.start() }
         }
     }

@@ -39,13 +39,14 @@ private const val MICROPHONE_TRACK_ID = "ha_microphone"
 /**
  * [PeerConnectionController] implementation backed by libwebrtc.
  *
- * The peer connection is created with a receive-only video transceiver and a send-and-receive
- * audio transceiver that is negotiated up front but has no track: the microphone capture is only
- * created and attached (via `RtpSender.setTrack`, which does not renegotiate) the first time the
- * microphone is enabled. Creating the capture eagerly would start the platform audio record
- * pipeline for every session — libwebrtc supports only one capture at a time, so a session that
- * never uses the microphone would break talk-back for every session after it, and the microphone
- * privacy indicator would show without the microphone being used.
+ * The transceivers mirror [MediaOptions]: an optional receive-only video transceiver and an audio
+ * transceiver with the configured direction. A sending-capable audio transceiver is negotiated up
+ * front but has no track: the microphone capture is only created and attached (via
+ * `RtpSender.setTrack`, which does not renegotiate) the first time the microphone is enabled.
+ * Creating the capture eagerly would start the platform audio record pipeline for every session —
+ * libwebrtc supports only one capture at a time, so a session that never uses the microphone
+ * would break talk-back for every session after it, and the microphone privacy indicator would
+ * show without the microphone being used.
  */
 internal class LibWebRtcPeerConnectionController(
     private val factory: PeerConnectionFactory,
@@ -142,7 +143,7 @@ internal class LibWebRtcPeerConnectionController(
         }
         audioTransceiver = peerConnection.addTransceiver(
             MediaStreamTrack.MediaType.MEDIA_TYPE_AUDIO,
-            RtpTransceiver.RtpTransceiverInit(RtpTransceiver.RtpTransceiverDirection.SEND_RECV),
+            RtpTransceiver.RtpTransceiverInit(mediaOptions.audio.toTransceiverDirection()),
         )
     }
 
@@ -183,7 +184,7 @@ internal class LibWebRtcPeerConnectionController(
     }
 
     @Volatile
-    override var isMicrophoneSupported = true
+    override var isMicrophoneSupported = mediaOptions.audio != MediaOptions.AudioDirection.RECEIVE_ONLY
         private set
 
     override suspend fun setAnswer(sdp: String) {
@@ -201,7 +202,8 @@ internal class LibWebRtcPeerConnectionController(
                 SessionDescription(SessionDescription.Type.ANSWER, sdp),
             )
         }
-        isMicrophoneSupported = sdp.answerAcceptsClientAudio()
+        // A receive-only negotiation can never send, whatever the answer says
+        isMicrophoneSupported = isMicrophoneSupported && sdp.answerAcceptsClientAudio()
     }
 
     override suspend fun getStats(): RtcDebugStats? {
@@ -356,6 +358,12 @@ private fun RTCStats.relatedCandidateMember(report: RTCStatsReport, referenceKey
     (members[referenceKey] as? String)?.let { candidateId ->
         report.statsMap[candidateId]?.members?.get(memberKey) as? String
     }
+
+private fun MediaOptions.AudioDirection.toTransceiverDirection(): RtpTransceiver.RtpTransceiverDirection = when (this) {
+    MediaOptions.AudioDirection.SEND_RECEIVE -> RtpTransceiver.RtpTransceiverDirection.SEND_RECV
+    MediaOptions.AudioDirection.RECEIVE_ONLY -> RtpTransceiver.RtpTransceiverDirection.RECV_ONLY
+    MediaOptions.AudioDirection.SEND_ONLY -> RtpTransceiver.RtpTransceiverDirection.SEND_ONLY
+}
 
 private fun RtcClientConfig.toRtcConfiguration(): PeerConnection.RTCConfiguration {
     val servers = iceServers.filter { it.urls.isNotEmpty() }.map { server ->

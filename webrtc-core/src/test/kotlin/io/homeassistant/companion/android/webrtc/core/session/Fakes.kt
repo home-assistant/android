@@ -150,7 +150,9 @@ internal class FakePeerConnectionControllerFactory : PeerConnectionController.Fa
         createException?.let { throw it }
         lastMediaOptions = mediaOptions
         return FakePeerConnectionController(offerSdp = "v=0 fake-offer-${controllers.size}").also {
-            it.isMicrophoneSupported = micSupported
+            // Mirrors the real controller: a receive-only negotiation can never send
+            it.isMicrophoneSupported = micSupported &&
+                mediaOptions.audio != MediaOptions.AudioDirection.RECEIVE_ONLY
             controllers += it
         }
     }

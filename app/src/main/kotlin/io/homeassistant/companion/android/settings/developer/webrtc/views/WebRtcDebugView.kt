@@ -56,13 +56,14 @@ fun WebRtcDebugView(
     micState: MicState,
     debugStats: String?,
     eglContext: EglBase.Context?,
-    onStart: (entityId: String, audioOnly: Boolean) -> Unit,
+    onStart: (entityId: String, audioOnly: Boolean, sendOnlyAudio: Boolean) -> Unit,
     onStop: () -> Unit,
     onMicEnabled: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var entityId by rememberSaveable { mutableStateOf("") }
     var audioOnly by rememberSaveable { mutableStateOf(false) }
+    var sendOnlyAudio by rememberSaveable { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -84,9 +85,11 @@ fun WebRtcDebugView(
         ) {
             Switch(checked = audioOnly, onCheckedChange = { audioOnly = it })
             Text(stringResource(commonR.string.webrtc_debug_audio_only))
+            Switch(checked = sendOnlyAudio, onCheckedChange = { sendOnlyAudio = it })
+            Text(stringResource(commonR.string.webrtc_debug_send_only_audio))
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { onStart(entityId, audioOnly) }, enabled = entityId.isNotBlank()) {
+            Button(onClick = { onStart(entityId, audioOnly, sendOnlyAudio) }, enabled = entityId.isNotBlank()) {
                 Text(stringResource(commonR.string.webrtc_debug_start))
             }
             Button(onClick = onStop, enabled = player != null) {

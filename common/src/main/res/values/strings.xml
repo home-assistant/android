@@ -982,6 +982,7 @@
     <string name="webrtc_debug_stop">Stop</string>
     <string name="webrtc_debug_summary">Test the native WebRTC player against a camera entity of the active server</string>
     <string name="webrtc_debug_audio_only">Audio only</string>
+    <string name="webrtc_debug_send_only_audio">Send-only audio</string>
     <string name="webrtc_debug_talk">Hold to talk</string>
     <string name="webrtc_native_player">Native WebRTC player (beta)</string>
     <string name="webrtc_native_player_summary">Let dashboards play camera WebRTC streams with the native player instead of the WebView</string>

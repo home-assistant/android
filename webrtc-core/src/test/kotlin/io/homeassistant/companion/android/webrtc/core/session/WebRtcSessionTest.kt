@@ -439,6 +439,32 @@ class WebRtcSessionTest {
     }
 
     @Test
+    fun `Given a send only audio session When enabling the mic Then it goes live`() = runTest {
+        val session = createSession(MediaOptions(video = false, audio = MediaOptions.AudioDirection.SEND_ONLY))
+        startConnectedSession(session)
+
+        session.setMicEnabled(true)
+
+        assertEquals(
+            MediaOptions(video = false, audio = MediaOptions.AudioDirection.SEND_ONLY),
+            factory.lastMediaOptions,
+        )
+        assertEquals(MicState.Live, session.micState.value)
+        assertEquals(1, audio.acquireCount)
+    }
+
+    @Test
+    fun `Given a receive only audio session When enabling the mic Then it is Unavailable`() = runTest {
+        val session = createSession(MediaOptions(audio = MediaOptions.AudioDirection.RECEIVE_ONLY))
+        startConnectedSession(session)
+
+        session.setMicEnabled(true)
+
+        assertEquals(MicState.Unavailable, session.micState.value)
+        assertEquals(0, audio.acquireCount)
+    }
+
+    @Test
     fun `Given a camera without audio return path When the answer arrives Then the mic is Unavailable and released`() = runTest {
         val session = createSession()
         session.setMicEnabled(true)
